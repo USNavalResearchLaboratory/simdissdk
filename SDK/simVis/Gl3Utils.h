@@ -107,7 +107,7 @@ inline void applyMesaGeometryShaderFix(osg::GraphicsContext* graphicsContext)
     return;
   graphicsContext->makeCurrent();
   const char* glVersionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-  if (glVersionString == NULL)
+  if (glVersionString == nullptr)
     return;
 
   // Only apply the fix to Mesa.  It might apply to non-Mesa drivers too, but we'll just fix Mesa for
@@ -146,7 +146,7 @@ inline void applyMesaGlVersionOverride()
 #ifdef __linux__
   // To compound the problem, certain MESA drivers on Linux have an additional requirement of setting
   // the MESA_GL_VERSION_OVERRIDE environment variable, else we get a bad version.
-  if (getenv("MESA_GL_VERSION_OVERRIDE") == NULL)
+  if (getenv("MESA_GL_VERSION_OVERRIDE") == nullptr)
     setenv("MESA_GL_VERSION_OVERRIDE", instance->getGLContextVersion().c_str(), 1);
 #endif
 #endif
@@ -163,7 +163,7 @@ inline void applyMesaGlVersionOverride()
 class Gl3RealizeOperation : public osg::Operation
 {
 public:
-  explicit Gl3RealizeOperation(osg::Operation* nested = NULL)
+  explicit Gl3RealizeOperation(osg::Operation* nested = nullptr)
     : nested_(nested)
   {
   }

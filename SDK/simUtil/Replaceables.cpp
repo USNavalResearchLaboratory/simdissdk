@@ -39,7 +39,7 @@ namespace {
 const simVis::View* getView(simVis::View* view)
 {
   if (!view)
-    return NULL;
+    return nullptr;
   const simVis::FocusManager* focusManager =view->getFocusManager();
   if (focusManager && focusManager->getFocusedView())
     return focusManager->getFocusedView();
@@ -100,9 +100,9 @@ std::string AzimuthVariable::getText() const
   const osgEarth::Util::EarthManipulator* manip = view->getEarthManipulator();
   double azimuth = 0.0;
   // Prefer the azimuth from getCompositeEulerAngles on the manipulator
-  if (manip != NULL)
+  if (manip != nullptr)
   {
-    manip->getCompositeEulerAngles(&azimuth, NULL);
+    manip->getCompositeEulerAngles(&azimuth, nullptr);
     azimuth *= simCore::RAD2DEG; // format_() expects degrees
   }
   else // Fall back to the viewpoint
@@ -139,9 +139,9 @@ std::string ElevationVariable::getText() const
   const osgEarth::Util::EarthManipulator* manip = view->getEarthManipulator();
   double elevation = 0.0;
   // Prefer the azimuth from getCompositeEulerAngles on the manipulator
-  if (manip != NULL)
+  if (manip != nullptr)
   {
-    manip->getCompositeEulerAngles(NULL, &elevation);
+    manip->getCompositeEulerAngles(nullptr, &elevation);
     elevation = -elevation * simCore::RAD2DEG; // format_() expects degrees
   }
   else // Fall back to the viewpoint
@@ -269,10 +269,10 @@ std::string CenteredVariable::getText() const
 
     // Pull out the centered node; note that in a Watched view, the Watcher is considered centered
     // even though the tether is set (the tether in this case is the watched)
-    const simVis::EntityNode* entityNode = NULL;
+    const simVis::EntityNode* entityNode = nullptr;
     if (focusedView->isWatchEnabled())
       entityNode = focusedView->getWatcherNode();
-    else if ((focusedView->getCameraTether() != NULL) && !focusedView->getCameraTether()->getParents().empty())
+    else if ((focusedView->getCameraTether() != nullptr) && !focusedView->getCameraTether()->getParents().empty())
       entityNode = dynamic_cast<simVis::EntityNode*>(focusedView->getCameraTether()->getParent(0));
 
     // Return the name
@@ -283,7 +283,7 @@ std::string CenteredVariable::getText() const
         rv = " ";
       return rv;
     }
-    else if (focusedView->getCameraTether() != NULL)
+    else if (focusedView->getCameraTether() != nullptr)
     {
       // See if the camera is tethered to a centroid
       const simVis::AveragePositionNode* centroid = dynamic_cast<simVis::AveragePositionNode*>(focusedView->getCameraTether());

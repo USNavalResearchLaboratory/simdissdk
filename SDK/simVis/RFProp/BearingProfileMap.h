@@ -54,7 +54,7 @@ public:
   /**
    * Retrieve the profile for the specified bearing
    * @param bearingR bearing in radians
-   * @return profile at specified bearing, or NULL if none
+   * @return profile at specified bearing, or nullptr if none
    */
   Profile* getProfileByBearing(double bearingR) const;
 

@@ -35,7 +35,7 @@ namespace SdkQThreadExample
 
 Reader::Reader(simData::DataStore& dataStore)
   : dataStore_(dataStore),
-    threadedDataGen_(NULL),
+    threadedDataGen_(nullptr),
     id_(0),
     numberProcessed_(0)
 {
@@ -48,7 +48,7 @@ Reader::~Reader()
 
 void Reader::start()
 {
-  if (threadedDataGen_ != NULL)
+  if (threadedDataGen_ != nullptr)
     return;
 
 
@@ -70,7 +70,7 @@ void Reader::start()
 
 void Reader::stop()
 {
-  if (threadedDataGen_ != NULL)
+  if (threadedDataGen_ != nullptr)
   {
     // Disconnect before shutting down to prevent race condition
     disconnect(threadedDataGen_, SIGNAL(newData(double, double, double)), this, SLOT(addDataPoint_(double, double, double)));
@@ -78,7 +78,7 @@ void Reader::stop()
   }
 
   // thread_ gets deleted automatically with deleteLater() signal
-  threadedDataGen_ = NULL;
+  threadedDataGen_ = nullptr;
   id_ = 0;
 }
 

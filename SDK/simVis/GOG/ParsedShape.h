@@ -109,6 +109,8 @@ enum ShapeParameter
   GOG_REF_LAT, // Reference LLA
   GOG_REF_LON, // Reference LLA
   GOG_REF_ALT, // Reference LLA
+  GOG_CENTERLL2,
+  GOG_CENTERXY2,
 
   // GOG Unit Commands
   GOG_ALTITUDEUNITS = 50,

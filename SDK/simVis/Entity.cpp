@@ -78,7 +78,7 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
   if (useMaxElevPrec_)
   {
     osgEarth::GeoPoint point(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0, osgEarth::ALTMODE_ABSOLUTE);
-    osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, &workingSet_);
+    osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, osgEarth::Distance(1.0, osgEarth::Units::METERS), &workingSet_);
     if (sample.hasData())
       elevation = sample.elevation().as(osgEarth::Units::METERS);
   }
@@ -130,7 +130,7 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord, os
   if (useMaxElevPrec_)
   {
     osgEarth::GeoPoint point(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0, osgEarth::ALTMODE_ABSOLUTE);
-    osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, &workingSet_);
+    osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, osgEarth::Distance(1.0, osgEarth::Units::METERS), &workingSet_);
     if (sample.hasData())
       elevation = sample.elevation().as(osgEarth::Units::METERS);
   }
@@ -160,7 +160,11 @@ bool CoordSurfaceClamping::isValid() const
 void CoordSurfaceClamping::setMapNode(const osgEarth::MapNode* map)
 {
   mapNode_ = map;
+#ifdef HAVE_WORKINGSET_STRONGLRU
   workingSet_.clear();
+#else
+  workingSet_._lru.clear();
+#endif
 }
 
 void CoordSurfaceClamping::setUseMaxElevPrec(bool useMaxElevPrec)
@@ -183,7 +187,7 @@ EntityNode::EntityNode(simData::ObjectType type, Locator* locator)
 
 EntityNode::~EntityNode()
 {
-  setLocator(NULL);
+  setLocator(nullptr);
 }
 
 bool EntityNode::isVisible() const
@@ -267,7 +271,7 @@ std::string EntityNode::getEntityName_(const simData::CommonPrefs& common, Entit
 
 void EntityNode::setLabelContentCallback(LabelContentCallback* cb)
 {
-  if (cb == NULL)
+  if (cb == nullptr)
     contentCallback_ = new NullEntityCallback();
   else
     contentCallback_ = cb;

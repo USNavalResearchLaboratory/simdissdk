@@ -42,7 +42,7 @@ public:
   * if no RFPropagationFacade instance is provided, only PPF and Loss providers are supported
   * @param beamHandler ptr to a RFPropagationFacade instance
   */
-  ArepsLoader(RFPropagationFacade* beamHandler = NULL);
+  ArepsLoader(RFPropagationFacade* beamHandler = nullptr);
   ~ArepsLoader();
 
   /**

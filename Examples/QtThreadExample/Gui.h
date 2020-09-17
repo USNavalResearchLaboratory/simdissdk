@@ -36,7 +36,7 @@ class Gui : public QDialog
   Q_OBJECT;
 
 public:
-  explicit Gui(QWidget* parent = NULL);
+  explicit Gui(QWidget* parent = nullptr);
   virtual ~Gui();
 
   /** Update the text for the number of updates processed */

@@ -37,7 +37,7 @@ class SDKQT_EXPORT SettingsSearchFilter : public QSortFilterProxyModel
   Q_OBJECT;
 public:
   /** Constructor */
-  SettingsSearchFilter(QAbstractItemModel* settingsModel, QWidget* parent=NULL);
+  SettingsSearchFilter(QAbstractItemModel* settingsModel, QWidget* parent=nullptr);
 
   /** Implements the QSortFilterProxyModel method to apply filtering to the row */
   virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
@@ -62,7 +62,7 @@ class SDKQT_EXPORT SettingsDataLevelFilter : public QSortFilterProxyModel
   Q_OBJECT;
 public:
   /** Constructor */
-  SettingsDataLevelFilter(QAbstractItemModel* settingsModel, QWidget* parent=NULL);
+  SettingsDataLevelFilter(QAbstractItemModel* settingsModel, QWidget* parent=nullptr);
 
   /** Implements the QSortFilterProxyModel method to apply filtering to the row  */
   virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
@@ -100,7 +100,7 @@ class SDKQT_EXPORT SettingsNoEmptyFoldersFilter : public QSortFilterProxyModel
   Q_OBJECT;
 public:
   /** Constructor */
-  SettingsNoEmptyFoldersFilter(QAbstractItemModel* settingsModel, QWidget* parent=NULL);
+  SettingsNoEmptyFoldersFilter(QAbstractItemModel* settingsModel, QWidget* parent=nullptr);
 
   /** Implements the QSortFilterProxyModel method to apply filtering to the row  */
   virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
@@ -122,7 +122,7 @@ class SDKQT_EXPORT SettingsProxyModel : public QSortFilterProxyModel
   Q_OBJECT;
 public:
   /** Constructor */
-  SettingsProxyModel(QAbstractItemModel* settingsModel, QWidget* parent=NULL);
+  SettingsProxyModel(QAbstractItemModel* settingsModel, QWidget* parent=nullptr);
   /** Destructor */
   virtual ~SettingsProxyModel();
 

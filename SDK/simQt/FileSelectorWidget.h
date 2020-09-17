@@ -67,7 +67,7 @@ class SDKQT_EXPORT FileSelectorWidget : public QWidget
 
 public:
   /** Constructor */
-  FileSelectorWidget(QWidget* parent=NULL);
+  FileSelectorWidget(QWidget* parent=nullptr);
   virtual ~FileSelectorWidget();
 
   /** Declare options for the file selector */
@@ -178,9 +178,14 @@ public:
   /** Retrieve currently set filename */
   QString filename() const;
 
+  /** Returns the valid state */
+  bool isValid() const;
+
 public slots:
   /** Sets the filename this selector represents */
   void setFilename(const QString& filename);
+  /** Sets the valid state; if invalid the background is turned red */
+  void setValid(bool valid);
 
 signals:
   /** Emitted when the filename changes */
@@ -215,13 +220,14 @@ private:
   QString customFileFilter_;
   /** Indicates if icon is placed before the text widgets */
   bool iconBeforeText_;
+  /** The valid state of the control as dictated by a caller */
+  bool isValid_;
 
   /** Re-implement eventFilter() */
   virtual bool eventFilter(QObject* obj, QEvent* evt);
 
   /** Converts the filter option enum to a readable text */
   QString filterOptions2QString_(FileSelectorWidget::FilterOptions option) const;
-
 };
 
 }

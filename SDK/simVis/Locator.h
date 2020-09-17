@@ -212,7 +212,7 @@ public:
   * function that extracts the Position information (not rotation) from the
   * locator matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
@@ -224,8 +224,8 @@ public:
   * function that extracts the Position information and rotation from the
   * locator matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
-  * @param[out] out_orientation If not NULL, resulting orientation stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
+  * @param[out] out_orientation If not nullptr, resulting orientation stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
@@ -288,13 +288,13 @@ public:
 
   /**
   * Get the parent locator.
-  * @return Locator, or NULL if no parent exists
+  * @return Locator, or nullptr if no parent exists
   */
   Locator* getParentLocator() { return parentLoc_.get(); }
 
   /**
   * Get the parent locator (tail const version)
-  * @return Locator, or NULL if no parent exists
+  * @return Locator, or nullptr if no parent exists
   */
   const Locator* getParentLocator() const { return parentLoc_.get(); }
 
@@ -369,6 +369,13 @@ protected:
   virtual bool getOrientation_(osg::Matrixd& ori, unsigned int comps) const;
 
   /**
+  * Returns the base rotation of this locator
+  * @param[out] rotation matrix with rotation
+  * @return true if there is a non-trivial rotation returned
+  */
+  virtual bool getRotation_(osg::Matrixd& rotation) const;
+
+  /**
   * Returns the input locator matrix with all local offsets (including those of parents) applied, as filtered by the specified inheritance components
   * @param[in,out] output matrix containing the new locator matrix with offsets applied
   * @param[in    ] comps inheritance components to use
@@ -389,13 +396,6 @@ private:
   void notifyListeners_();
 
   SDK_DEPRECATE(bool inherits_(unsigned int mask) const, "Method will be removed in future SDK release.");
-
-  /**
-  * Returns the base rotation of this locator
-  * @param[out] rotation matrix with rotation
-  * @return true if there is a non-trivial rotation returned
-  */
-  bool getRotation_(osg::Matrixd& rotation) const;
 
   /**
   * Returns an ENU local tangent plane at the specified position
@@ -439,25 +439,25 @@ public:
   * function that extracts the Position information (not rotation) from the
   * locator matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
   virtual bool getLocatorPosition(simCore::Vec3* out_position,
-    const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
+    const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const override;
 
   /**
   * Gets the world position reflected by this Locator. This is just a convenience
   * function that extracts the Position information and rotation from the
   * locator matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
-  * @param[out] out_orientation If not NULL, resulting orientation stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
+  * @param[out] out_orientation If not nullptr, resulting orientation stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
   virtual bool getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
-    const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
+    const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const override;
 protected:
   /// osg::Referenced-derived
   virtual ~CachingLocator() {}
@@ -493,9 +493,11 @@ protected:
   virtual ~ResolvedPositionOrientationLocator() {}
 private:
   /** @copydoc Locator::getPosition_() */
-  virtual bool getPosition_(osg::Vec3d& pos, unsigned int comps) const;
+  virtual bool getPosition_(osg::Vec3d& pos, unsigned int comps) const override;
+  /** @copydoc Locator::getRotation_() */
+  virtual bool getRotation_(osg::Matrixd& rotation) const override;
   /** @copydoc Locator::applyOffsets_() */
-  virtual void applyOffsets_(osg::Matrixd& output, unsigned int comps) const;
+  virtual void applyOffsets_(osg::Matrixd& output, unsigned int comps) const override;
 };
 
 /**
@@ -517,7 +519,7 @@ protected:
   virtual ~ResolvedPositionLocator() {}
 private:
   /** @copydoc Locator::getOrientation_() */
-  virtual bool getOrientation_(osg::Matrixd& ori, unsigned int comps) const;
+  virtual bool getOrientation_(osg::Matrixd& ori, unsigned int comps) const override;
 };
 }
 

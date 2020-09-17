@@ -114,7 +114,7 @@ void PlanetariumViewTool::setRange(double range)
       for (EntityVector::const_iterator i = entities.begin(); i != entities.end(); ++i)
       {
         PlatformNode* platform = dynamic_cast<PlatformNode*>(i->get());
-        if (platform != NULL && platform != host_.get() && platform->isActive())
+        if (platform != nullptr && platform != host_.get() && platform->isActive())
           targets_->addOrUpdate(platform);
       }
     }
@@ -198,9 +198,9 @@ void PlanetariumViewTool::onUninstall(const ScenarioManager& scenario)
     targets_->removeChildren(0, targets_->getNumChildren());
 
   // scenario has already removed us from the scenegraph
-  root_ = NULL;
-  targets_ = NULL;
-  dome_ = NULL;
+  root_ = nullptr;
+  targets_ = nullptr;
+  dome_ = nullptr;
 }
 
 void PlanetariumViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNode* entity)

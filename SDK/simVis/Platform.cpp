@@ -84,7 +84,7 @@ public:
   virtual bool run(osg::Object* object, osg::Object* data)
   {
     AxisVector* vector = dynamic_cast<AxisVector*>(object);
-    if (vector != NULL && platform_.valid())
+    if (vector != nullptr && platform_.valid())
     {
       const float axisScale = platform_->getPrefs().axisscale();
       const float lineLength = VectorScaling::lineLength(platform_->getModel(), axisScale);
@@ -114,7 +114,7 @@ public:
   {
     CompositeHighlightNode* area = dynamic_cast<CompositeHighlightNode*>(object);
     // Scale down the radius by a small amount -- 80% -- to reduce highlight size
-    if (area != NULL && platform_.valid())
+    if (area != nullptr && platform_.valid())
       area->setRadius(VectorScaling::lineLength(platform_->getModel(), 0.8));
     return traverse(object, data);
   }
@@ -163,18 +163,18 @@ PlatformNode::PlatformNode(const simData::PlatformProperties& props,
   firstHistoryTime_(std::numeric_limits<float>::max()),
   eciLocator_(eciLocator),
   expireModeGroupAttach_(expireModeGroupAttach),
-  track_(NULL),
-  timeTicks_(NULL),
-  localGrid_(NULL),
-  bodyAxisVector_(NULL),
-  inertialAxisVector_(NULL),
+  track_(nullptr),
+  timeTicks_(nullptr),
+  localGrid_(nullptr),
+  bodyAxisVector_(nullptr),
+  inertialAxisVector_(nullptr),
   scaledInertialTransform_(new PlatformInertialTransform),
-  velocityAxisVector_(NULL),
-  ephemerisVector_(NULL),
-  model_(NULL),
-  losCreator_(NULL),
-  opticalLosNode_(NULL),
-  radioLosNode_(NULL),
+  velocityAxisVector_(nullptr),
+  ephemerisVector_(nullptr),
+  model_(nullptr),
+  losCreator_(nullptr),
+  opticalLosNode_(nullptr),
+  radioLosNode_(nullptr),
   frontOffset_(0.0),
   valid_(false),
   lastPrefsValid_(false),
@@ -209,14 +209,14 @@ PlatformNode::~PlatformNode()
 {
   if (track_.valid())
     expireModeGroup_->removeChild(track_);
-  track_ = NULL;
+  track_ = nullptr;
   if (timeTicks_.valid())
     expireModeGroup_->removeChild(timeTicks_);
-  timeTicks_ = NULL;
+  timeTicks_ = nullptr;
 
   if (expireModeGroupAttach_.valid())
     expireModeGroupAttach_->removeChild(expireModeGroup_);
-  expireModeGroup_ = NULL;
+  expireModeGroup_ = nullptr;
 }
 
 void PlatformNode::setProperties(const simData::PlatformProperties& props)
@@ -244,7 +244,7 @@ void PlatformNode::setRcsPrefs_(const simData::PlatformPrefs& prefs)
       if (!uri.empty())
       {
         rcs_.reset(simCore::RcsFileParser::loadRCSFile(uri));
-        if (rcs_ == NULL)
+        if (rcs_ == nullptr)
         {
           SIM_WARN << LC << "Failed to load RCS file \"" << uri << "\"" << std::endl;
         }
@@ -275,28 +275,16 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   if (!lastPrefsValid_ ||
     PB_FIELD_CHANGED((&lastPrefs_), (&prefs), ecidatamode))
   {
-    if (prefs.ecidatamode())
-    {
-      // for eci mode, platforms need to parent their EntityNode locator to the scenario ECI locator
-      if (!getLocator()->getParentLocator())
-        getLocator()->setParentLocator(eciLocator_.get());
-    }
-    else if (getLocator()->getParentLocator() == eciLocator_)
-    {
-      // eci mode turned off, platform locator should not have a parent
-      getLocator()->setParentLocator(NULL);
-      getLocator()->setEciRotationTime(0., lastUpdateTime_, false);
-    }
     // on change of eci data mode, track and timeticks need to be completely recreated
     if (track_.valid())
     {
       expireModeGroup_->removeChild(track_);
-      track_ = NULL;
+      track_ = nullptr;
     }
     if (timeTicks_.valid())
     {
       expireModeGroup_->removeChild(timeTicks_);
-      timeTicks_ = NULL;
+      timeTicks_ = nullptr;
     }
     forceUpdateFromDataStore_ = true;
   }
@@ -325,7 +313,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     else if (timeTicks_.valid())
     {
       expireModeGroup_->removeChild(timeTicks_);
-      timeTicks_ = NULL;
+      timeTicks_ = nullptr;
     }
 
     if (!track_.valid())
@@ -362,10 +350,10 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   else
   {
     expireModeGroup_->removeChild(track_);
-    track_ = NULL;
+    track_ = nullptr;
     // time ticks is always hidden if track history is hidden
     expireModeGroup_->removeChild(timeTicks_);
-    timeTicks_ = NULL;
+    timeTicks_ = nullptr;
   }
 
   // validate localgrid prefs changes that might provide user notifications
@@ -453,12 +441,6 @@ TrackHistoryNode* PlatformNode::getTrackHistory()
 
 void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
 {
-  if (u.time() != -1.0 && lastPrefs_.ecidatamode())
-  {
-    // all non-static eci platforms get this corrective rotation; updates at current time should have a total rotation of 0
-    getLocator()->setEciRotationTime(-u.time(), u.time(), false);
-  }
-
   // static platforms by convention have elapsedEciTime 0
   const simCore::Coordinate coord(
         simCore::COORD_SYS_ECEF,
@@ -501,7 +483,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   }
 
   // in file mode, a platform is not valid until time reaches its first datapoint time.
-  // standard interfaces will return NULL or a sentinel value to indicate that the platform does not have a valid position.
+  // standard interfaces will return nullptr or a sentinel value to indicate that the platform does not have a valid position.
   // but there are cases where it is useful to know the position the platform will have when it becomes valid.
   // as an example, you may want to create a viewport to show the moment the platform becomes valid and starts to move.
   // to best show this, you want to be able to create the viewport's eyeposition based on that position in advance.
@@ -591,7 +573,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   }
   else
   {
-    // a NULL update means the platform should be disabled
+    // a nullptr update means the platform should be disabled
     setInvalid_();
   }
 
@@ -617,12 +599,12 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
     if (track_.valid())
     {
       expireModeGroup_->removeChild(track_);
-      track_ = NULL;
+      track_ = nullptr;
     }
     if (timeTicks_.valid())
     {
       expireModeGroup_->removeChild(timeTicks_);
-      timeTicks_ = NULL;
+      timeTicks_ = nullptr;
     }
   }
   // avoid applying a null update over and over
@@ -686,7 +668,7 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
   if (prefs.ecidatamode())
   {
     // trackhistory for an ECI platform gets a locator derived from the scenario ECI locator
-    // dev error to construct a platform with a NULL locator
+    // dev error to construct a platform with a nullptr locator
     assert(eciLocator_);
     if (eciLocator_)
       track_ = new TrackHistoryNode(ds_, eciLocator_.get(), platformTspiFilterManager_, getId());
@@ -717,7 +699,7 @@ bool PlatformNode::createTimeTicks_(const simData::PlatformPrefs& prefs)
 
   if (prefs.ecidatamode())
   {
-    // dev error to construct a platform with a NULL locator argument
+    // dev error to construct a platform with a nullptr locator argument
     assert(eciLocator_);
     if (eciLocator_)
       timeTicks_ = new TimeTicks(ds_, eciLocator_.get(), platformTspiFilterManager_, getId());
@@ -768,12 +750,12 @@ double PlatformNode::range() const
 
 const simData::PlatformUpdate* PlatformNode::update() const
 {
-  return isActive() ? &lastUpdate_ : NULL;
+  return isActive() ? &lastUpdate_ : nullptr;
 }
 
 const simData::PlatformUpdate* PlatformNode::labelUpdate() const
 {
-  return isActive() ? labelUpdate_(lastPrefs_) : NULL;
+  return isActive() ? labelUpdate_(lastPrefs_) : nullptr;
 }
 
 const std::string PlatformNode::getEntityName(EntityNode::NameType nameType, bool allowBlankAlias) const
@@ -883,7 +865,7 @@ void PlatformNode::updateOrRemoveBodyAxis_(bool prefsDraw, const simData::Platfo
   else if (bodyAxisVector_.valid()) // remove if present
   {
     model_->removeScaledChild(bodyAxisVector_.get());
-    bodyAxisVector_ = NULL;
+    bodyAxisVector_ = nullptr;
   }
 }
 
@@ -905,7 +887,7 @@ void PlatformNode::updateOrRemoveInertialAxis_(bool prefsDraw, const simData::Pl
   else if (inertialAxisVector_.valid()) // remove if present
   {
     scaledInertialTransform_->removeChild(inertialAxisVector_);
-    inertialAxisVector_ = NULL;
+    inertialAxisVector_ = nullptr;
   }
 }
 
@@ -928,7 +910,7 @@ void PlatformNode::updateOrRemoveVelocityVector_(bool prefsDraw, const simData::
   else if (velocityAxisVector_.valid()) // remove if present
   {
     removeChild(velocityAxisVector_);
-    velocityAxisVector_ = NULL;
+    velocityAxisVector_ = nullptr;
   }
 }
 
@@ -952,7 +934,7 @@ void PlatformNode::updateOrRemoveEphemerisVector_(bool prefsDraw, const simData:
   else if (ephemerisVector_.valid()) // remove if present
   {
     scaledInertialTransform_->removeChild(ephemerisVector_);
-    ephemerisVector_ = NULL;
+    ephemerisVector_ = nullptr;
   }
 }
 
@@ -973,7 +955,7 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
   else if (highlight_.valid()) // remove if present
   {
     scaledInertialTransform_->removeChild(highlight_);
-    highlight_ = NULL;
+    highlight_ = nullptr;
   }
 }
 
@@ -985,7 +967,7 @@ void PlatformNode::updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs, 
 
 void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs, bool force)
 {
-  RadialLOSNode* los = NULL;
+  RadialLOSNode* los = nullptr;
   bool drawHorizon = false;
   switch (horizonType)
   {
@@ -1104,7 +1086,7 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     simCore::Coordinate losLlaCoord;
     converter.convert(losCoord, losLlaCoord, simCore::COORD_SYS_LLA);
 
-    rangeDist = simCore::calculateGroundDist(losLlaCoord.position(), platLlaCoord.position(), simCore::WGS_84, NULL);
+    rangeDist = simCore::calculateGroundDist(losLlaCoord.position(), platLlaCoord.position(), simCore::WGS_84, nullptr);
     altDist = fabs(losLlaCoord.alt() - platLlaCoord.alt());
   }
   else

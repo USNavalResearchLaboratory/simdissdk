@@ -245,12 +245,12 @@ void IntersectPicker::pickThisFrame_()
   pickedThisFrame_ = true;
   // Intersect picker should only pick on Platforms and Platform Models
   unsigned int acceptMask = DEFAULT_PICK_MASK;
-  simVis::EntityNode* pickedEntity = NULL;
+  simVis::EntityNode* pickedEntity = nullptr;
   if (lastMouseView_.valid())
     pickedEntity = scenario_->find(lastMouseView_.get(), mx_, my_, acceptMask);
-  if (pickedEntity == NULL)
+  if (pickedEntity == nullptr)
   {
-    setPicked_(0, NULL);
+    setPicked_(0, nullptr);
     return;
   }
 
@@ -387,7 +387,7 @@ RTTPicker::RTTPicker(simVis::ViewManager* viewManager, simVis::ScenarioManager* 
 RTTPicker::~RTTPicker()
 {
   // Reset RTT Picker's callback to avoid possible invalid-memory situation if RTT Picker outlives us
-  rttPicker_->setDefaultCallback(NULL);
+  rttPicker_->setDefaultCallback(nullptr);
   osg::ref_ptr<simVis::ViewManager> viewManager;
   if (viewManager_.lock(viewManager))
     viewManager->removeCallback(viewManagerCallback_.get());

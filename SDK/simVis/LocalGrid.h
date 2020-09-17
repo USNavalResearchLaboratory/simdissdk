@@ -47,7 +47,7 @@ namespace simVis
     * @param[in ] host Host entity node
     * @param[in ] referenceYear The calculations for the Speed Rings Fixed Time preference needs the scenario reference year
     */
-    LocalGridNode(Locator* hostLocator, const EntityNode* host = NULL, int referenceYear = 1970);
+    LocalGridNode(Locator* hostLocator, const EntityNode* host = nullptr, int referenceYear = 1970);
 
     /**
     * Checks new preferences for this object, messages to console if there are issues

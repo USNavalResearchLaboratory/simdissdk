@@ -37,7 +37,7 @@ class Console : public QWidget
   Q_OBJECT;
 
 public:
-  Console(simQt::ConsoleDataModel& dataModel, QWidget* parent=NULL);
+  Console(simQt::ConsoleDataModel& dataModel, QWidget* parent=nullptr);
   virtual ~Console();
 
 private slots:

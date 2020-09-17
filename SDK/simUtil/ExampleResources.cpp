@@ -139,7 +139,7 @@ Map* simExamples::createHawaiiTMSMap()
   if (node.valid() && dynamic_cast<MapNode*>(node.get()))
     map = dynamic_cast<MapNode*>(node.get())->getMap();
 
-  node = NULL;
+  node = nullptr;
   return map.release();
 }
 
@@ -430,7 +430,7 @@ void simExamples::SkyNodeTimeUpdater::setSceneManager(simVis::SceneManager* mgr)
 void simExamples::SkyNodeTimeUpdater::onSetTime(const simCore::TimeStamp &t, bool isJump)
 {
   lastTime_ = t;
-  if (sceneManager_.valid() && sceneManager_->getSkyNode() != NULL)
+  if (sceneManager_.valid() && sceneManager_->getSkyNode() != nullptr)
   {
     sceneManager_->getSkyNode()->setDateTime(osgEarth::DateTime(t.secondsSinceRefYear(1970) + simCore::Seconds(hoursOffset_ * simCore::SECPERHOUR)));
   }

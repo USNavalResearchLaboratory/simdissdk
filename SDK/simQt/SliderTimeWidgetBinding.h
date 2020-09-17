@@ -46,7 +46,7 @@ class SDKQT_EXPORT SliderTimeWidgetBinding : public QObject
 
 public:
   /** Constructor */
-  SliderTimeWidgetBinding(QSlider* slider, TimeWidget* timeWidget, QWidget *parent = NULL);
+  SliderTimeWidgetBinding(QSlider* slider, TimeWidget* timeWidget, QWidget *parent = nullptr);
 
 private slots:
   void setTimeWidgetValue_(int value);

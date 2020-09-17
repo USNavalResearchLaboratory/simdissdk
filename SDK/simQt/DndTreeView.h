@@ -40,7 +40,7 @@ class SDKQT_EXPORT DndTreeView : public QTreeView
 
 public:
   /** Constructor */
-  explicit DndTreeView(QWidget* parent = NULL);
+  explicit DndTreeView(QWidget* parent = nullptr);
 
   /** Destructor */
   virtual ~DndTreeView();

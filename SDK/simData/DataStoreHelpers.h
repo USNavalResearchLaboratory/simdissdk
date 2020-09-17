@@ -66,7 +66,7 @@ public:
   static std::string description(const simData::DataStore* dataStore);
   /// Adds a media file if not already in the dataStore, the argument fileName must be full path. Returns zero on success.
   static int addMediaFile(const std::string& fileName, simData::DataStore* dataStore);
-  /// Gets or creates a table for the given object with the given name;  returns NULL on error
+  /// Gets or creates a table for the given object with the given name;  returns nullptr on error
   static simData::DataTable* getOrCreateDataTable(ObjectId objectId, const std::string& tableName, simData::DataStore* dataStore);
   /// Gets or creates a column for the given table with the given name; return 0 on success
   static int getOrCreateColumn(simData::DataTable* table, const std::string& columnName, VariableType storageType, UnitType unitType, simData::DataStore* dataStore, simData::TableColumnId& id);

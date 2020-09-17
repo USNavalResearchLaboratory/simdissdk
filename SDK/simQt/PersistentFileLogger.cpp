@@ -58,8 +58,8 @@ PersistentFileLogger::PersistentFileLogger(const QString& prefix, QObject* paren
   : QObject(parent),
     prefix_(sanitizeFilename_(prefix)),
     startTime_(QDateTime::currentDateTime().toUTC()),
-    file_(NULL),
-    stream_(NULL),
+    file_(nullptr),
+    stream_(nullptr),
     openAttempted_(false)
 {
 }
@@ -82,7 +82,7 @@ int PersistentFileLogger::addText(const QString& text)
 
 bool PersistentFileLogger::isOpen() const
 {
-  return stream_ != NULL && file_ != NULL  && stream_->status() == QTextStream::Ok;
+  return stream_ != nullptr && file_ != nullptr  && stream_->status() == QTextStream::Ok;
 }
 
 QString PersistentFileLogger::filePath() const
@@ -93,10 +93,10 @@ QString PersistentFileLogger::filePath() const
 int PersistentFileLogger::open()
 {
   // make sure stream is not open
-  if (stream_ != NULL || file_ != NULL || openAttempted_)
+  if (stream_ != nullptr || file_ != nullptr || openAttempted_)
   {
     // Check for an error on the stream before returning
-    if (stream_ == NULL || stream_->status() != QTextStream::Ok)
+    if (stream_ == nullptr || stream_->status() != QTextStream::Ok)
       return 1;
     // File is open, all is good for writing
     return 0; // success
@@ -119,7 +119,7 @@ int PersistentFileLogger::open()
   {
     SIM_DEBUG << "Unable to open: " << filename_.toStdString() << "\n";
     delete file_;
-    file_ = NULL;
+    file_ = nullptr;
     return 1;
   }
   // Create the stream to write to the file

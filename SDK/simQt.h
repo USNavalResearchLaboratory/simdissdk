@@ -102,6 +102,7 @@
 #include "simQt/Toast.h"
 #include "simQt/UnitContext.h"
 #include "simQt/UnitsComboBox.h"
+#include "simQt/ValueMerge.h"
 #include "simQt/ViewManagerDataModel.h"
 #include "simQt/ViewWidget.h"
 #include "simQt/WeightedMenuManager.h"

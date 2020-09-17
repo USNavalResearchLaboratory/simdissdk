@@ -61,7 +61,7 @@ public:
   virtual DataTable* findTable(const std::string& tableName) const
   {
     std::map<std::string, simData::DataTable*>::const_iterator i = tables_.find(tableName);
-    return (i == tables_.end()) ? NULL : i->second;
+    return (i == tables_.end()) ? nullptr : i->second;
   }
 
   // Inherits parent's documentation
@@ -136,22 +136,22 @@ TableStatus TableManager::addDataTable(ObjectId ownerId, const std::string& tabl
   // Don't allow empty string
   if (tableName.empty())
   {
-    if (newTable != NULL) *newTable = NULL;
+    if (newTable != nullptr) *newTable = nullptr;
     return TableStatus::Error("Empty name not permitted for new data tables.");
   }
 
   // Make sure we don't add duplicates
   std::map<ObjectId, MemTableList*>::const_iterator i = listsByOwner_.find(ownerId);
-  MemTableList* list = NULL;
+  MemTableList* list = nullptr;
   if (i != listsByOwner_.end())
   {
     list = i->second;
     // Assertion failure means internal code forgot to erase() an iterator, shouldn't happen
-    assert(list != NULL);
+    assert(list != nullptr);
     DataTable* table = list->findTable(tableName);
-    if (table != NULL)
-    { // NULL == table already exists
-      if (newTable != NULL) *newTable = table;
+    if (table != nullptr)
+    { // nullptr == table already exists
+      if (newTable != nullptr) *newTable = table;
       return TableStatus::Error("Table with name already exists for specified entity.");
     }
   }
@@ -168,7 +168,7 @@ TableStatus TableManager::addDataTable(ObjectId ownerId, const std::string& tabl
   // Assertion failure means reuse of IDs or invalidly saved ID in constructor
   assert(tablesById_.find(table->tableId()) == tablesById_.end());
   tablesById_[table->tableId()] = table;
-  if (newTable != NULL) *newTable = table;
+  if (newTable != nullptr) *newTable = table;
 
   // notify observers table was added
   fireOnAddTable_(table);
@@ -191,7 +191,7 @@ TableStatus TableManager::deleteTable(TableId tableId)
 
 void TableManager::removeTable(MemoryTable::Table* table)
 {
-  if (table == NULL)
+  if (table == nullptr)
     return;
 
   // notify observers table is being removed
@@ -199,14 +199,14 @@ void TableManager::removeTable(MemoryTable::Table* table)
 
   std::map<TableId, DataTable*>::iterator tableIter = tablesById_.find(table->tableId());
   // Table not found
-  if (tableIter == tablesById_.end() || tableIter->second == NULL)
+  if (tableIter == tablesById_.end() || tableIter->second == nullptr)
     return;
 
   // Find the entry in the listsByOwner_
   std::map<ObjectId, MemTableList*>::iterator listIter = listsByOwner_.find(table->ownerId());
   // Assertion failure means the list got out of sync with our maps
-  assert(listIter != listsByOwner_.end() && listIter->second != NULL);
-  if (listIter != listsByOwner_.end() && listIter->second != NULL)
+  assert(listIter != listsByOwner_.end() && listIter->second != nullptr);
+  if (listIter != listsByOwner_.end() && listIter->second != nullptr)
   {
     MemTableList* list = listIter->second;
     // Assertion failure means we lost sync with the list
@@ -229,7 +229,7 @@ void TableManager::removeTable(MemoryTable::Table* table)
 
 void TableManager::setNewRowDataListener(TableManager::NewRowDataListenerPtr listener)
 {
-  if (listener == NULL)
+  if (listener == nullptr)
     newRowDataListener_.reset(new DefaultNewRowDataListener);
   else
     newRowDataListener_ = listener;
@@ -281,7 +281,7 @@ private:
 void TableManager::deleteTablesByOwner(ObjectId ownerId)
 {
   std::map<ObjectId, MemTableList*>::iterator listIter = listsByOwner_.find(ownerId);
-  if (listIter == listsByOwner_.end() || listIter->second == NULL)
+  if (listIter == listsByOwner_.end() || listIter->second == nullptr)
     return; // nothing to do
   MemTableList* list = listIter->second;
   // TODO: Test this; might have iterator invalidation issues
@@ -301,19 +301,19 @@ size_t TableManager::tableCount() const
 const TableList* TableManager::tablesForOwner(ObjectId ownerId) const
 {
   std::map<ObjectId, MemTableList*>::const_iterator i = listsByOwner_.find(ownerId);
-  return (i == listsByOwner_.end()) ? NULL : i->second;
+  return (i == listsByOwner_.end()) ? nullptr : i->second;
 }
 
 DataTable* TableManager::getTable(simData::TableId tableId) const
 {
   std::map<TableId, DataTable*>::const_iterator i = tablesById_.find(tableId);
-  return (i == tablesById_.end() ? NULL : i->second);
+  return (i == tablesById_.end() ? nullptr : i->second);
 }
 
 DataTable* TableManager::findTable(ObjectId ownerId, const std::string& tableName) const
 {
   const TableList* list = tablesForOwner(ownerId);
-  return (list != NULL) ? list->findTable(tableName) : NULL;
+  return (list != nullptr) ? list->findTable(tableName) : nullptr;
 }
 
 void TableManager::fireOnAddTable_(DataTable* table) const

@@ -52,13 +52,13 @@ GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
   if (radius_m <= 0.f)
   {
     SIM_WARN << "Cannot create hemisphere with no radius\n";
-    return NULL;
+    return nullptr;
   }
   osg::Node* shape = osgEarth::AnnotationUtils::createHemisphere(
     radius_m, color);
   shape->setName("GOG Hemisphere");
 
-  osgEarth::LocalGeometryNode* node = NULL;
+  osgEarth::LocalGeometryNode* node = nullptr;
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
@@ -76,7 +76,7 @@ GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
     node = new HostedLocalGeometryNode(shape, p.style_);
   node->setName("GOG Hemisphere Position");
 
-  GogNodeInterface* rv = NULL;
+  GogNodeInterface* rv = nullptr;
   if (node)
   {
     Utils::applyLocalGeometryOffsets(*node, p, nodeType);

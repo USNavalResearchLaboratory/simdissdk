@@ -94,7 +94,7 @@ GogNodeInterface* Points::deserializeImpl_(const ParsedShape& parsedShape,
                     const GogMetaData&       metaData,
                     MapNode*                 mapNode)
 {
-  GogNodeInterface* rv = NULL;
+  GogNodeInterface* rv = nullptr;
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
     // Try to prevent terrain z-fighting.

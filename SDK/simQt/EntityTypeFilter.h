@@ -59,8 +59,8 @@ namespace simQt {
     virtual bool acceptEntity(simData::ObjectId id) const;
 
     /**
-    * Inherited from EntityFilter, returns a new instance of the widget to be displayed, otherwise returns NULL
-    * @param newWidgetParent QWidget parent, useful for memory management purposes; may be NULL if desired
+    * Inherited from EntityFilter, returns a new instance of the widget to be displayed, otherwise returns nullptr
+    * @param newWidgetParent QWidget parent, useful for memory management purposes; may be nullptr if desired
     * @return QWidget used for changing filter settings
     */
     virtual QWidget* widget(QWidget* newWidgetParent) const;

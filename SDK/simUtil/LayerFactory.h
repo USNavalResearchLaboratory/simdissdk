@@ -59,14 +59,14 @@ namespace simUtil {
 class SDKUTIL_EXPORT LayerFactory
 {
 public:
-  /** Returns an image layer properly configured for DB layer. May return NULL if not configured with DB support. */
+  /** Returns an image layer properly configured for DB layer. May return nullptr if not configured with DB support. */
   simVis::DBImageLayer* newDbImageLayer(const std::string& fullPath) const;
   /** Returns an image layer properly configured for MBTiles layer. */
   osgEarth::MBTilesImageLayer* newMbTilesImageLayer(const std::string& fullPath) const;
   /** Returns an image layer properly configured for GDAL layer. */
   osgEarth::GDALImageLayer* newGdalImageLayer(const std::string& fullPath) const;
 
-  /** Returns an elevation layer properly configured for DB layer. May return NULL if not configured with DB support. */
+  /** Returns an elevation layer properly configured for DB layer. May return nullptr if not configured with DB support. */
   simVis::DBElevationLayer* newDbElevationLayer(const std::string& fullPath) const;
   /** Returns an elevation layer properly configured for MBTiles layer. */
   osgEarth::MBTilesElevationLayer* newMbTilesElevationLayer(const std::string& fullPath) const;
@@ -79,7 +79,7 @@ public:
   /**
    * Factory method for creating a new feature model layer.
    * @param options Configuration options for the layer.
-   * @return Feature model layer on success; NULL on failure.  Caller responsible for memory.
+   * @return Feature model layer on success; nullptr on failure.  Caller responsible for memory.
    *   (put in ref_ptr)
    */
   static osgEarth::FeatureModelLayer* newFeatureLayer(const osgEarth::FeatureModelLayer::Options& options);

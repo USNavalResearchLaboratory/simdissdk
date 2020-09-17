@@ -96,7 +96,7 @@ struct AppData
   {
     float mag = ambient->getValue();
 
-    if (sceneManager->getSkyNode() != NULL)
+    if (sceneManager->getSkyNode() != nullptr)
       sceneManager->getSkyNode()->getSunLight()->setAmbient(osg::Vec4f(mag, mag, mag, 1.f));
   }
 

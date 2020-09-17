@@ -39,19 +39,19 @@ EntityNameFilter::EntityNameFilter(AbstractEntityTreeModel* model)
   : EntityFilter(),
     model_(model),
     regExp_(new RegExpImpl("")),
-    widget_(NULL)
+    widget_(nullptr)
 {
 }
 
 EntityNameFilter::~EntityNameFilter()
 {
   delete regExp_;
-  regExp_ = NULL;
+  regExp_ = nullptr;
 }
 
 bool EntityNameFilter::acceptEntity(simData::ObjectId id) const
 {
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return false;
 
   return acceptIndex_(model_->index(id));
@@ -59,7 +59,7 @@ bool EntityNameFilter::acceptEntity(simData::ObjectId id) const
 
 QWidget* EntityNameFilter::widget(QWidget* newWidgetParent) const
 {
-  return NULL;
+  return nullptr;
 }
 
 void EntityNameFilter::getFilterSettings(QMap<QString, QVariant>& settings) const
@@ -87,7 +87,7 @@ void EntityNameFilter::setFilterSettings(const QMap<QString, QVariant>& settings
 void EntityNameFilter::bindToWidget(EntityFilterLineEdit* widget)
 {
   widget_ = widget;
-  if (widget_ == NULL)
+  if (widget_ == nullptr)
     return;
   connect(widget_, SIGNAL(changed(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)), this, SLOT(setRegExpAttributes_(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)));
 }
@@ -100,7 +100,7 @@ void EntityNameFilter::setModel(AbstractEntityTreeModel* model)
 void EntityNameFilter::setRegExp(const QRegExp& regExp)
 {
   // Update the GUI if it's valid
-  if (widget_ != NULL)
+  if (widget_ != nullptr)
   {
     ScopedSignalBlocker block(*widget_);
     widget_->configure(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
@@ -144,9 +144,9 @@ bool EntityNameFilter::acceptIndex_(const QModelIndex& index) const
 {
   // Should only pass in a valid index
   const QAbstractItemModel* model = index.model();
-  assert(model != NULL);
+  assert(model != nullptr);
   // Make sure pointers are valid
-  if ((model == NULL) || (regExp_ == NULL))
+  if ((model == nullptr) || (regExp_ == nullptr))
     return false;
 
   // Check if this index passes the filter, return true if it does

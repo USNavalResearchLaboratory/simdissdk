@@ -155,9 +155,9 @@ public:
    * Either returns the iterator representing the time value, or adds the time
    * value and returns an iterator such that its next() is the new time value.
    * @param timeValue Time to find, or add if it didn't exist
-   * @param exactMatch If non-NULL, will be set to false if added row, or true if found row
+   * @param exactMatch If non-nullptr, will be set to false if added row, or true if found row
    */
-  virtual Iterator findOrAddTime(double timeValue, bool* exactMatch=NULL) = 0;
+  virtual Iterator findOrAddTime(double timeValue, bool* exactMatch=nullptr) = 0;
 
   /**
    * Performs data limiting for the container and associated columns

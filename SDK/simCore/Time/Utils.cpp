@@ -47,7 +47,7 @@ int simCore::currentYear()
   const time_t t(tp.tv_sec);
   const struct tm* pTime = gmtime(&t);
 
-  if (pTime == NULL)
+  if (pTime == nullptr)
     return std::numeric_limits<int>::max();
 
   // years are stored as values since 1900
@@ -81,7 +81,7 @@ double simCore::systemTimeToSecsBgnYr()
   const time_t t(tp.tv_sec);
   const struct tm* pTime = gmtime(&t);
 
-  if (pTime == NULL)
+  if (pTime == nullptr)
     return std::numeric_limits<double>::max();
 
   // assemble a UTC "system time"
@@ -107,7 +107,7 @@ void simCore::systemTimeToSecsBgnYr(unsigned int &pSecs, unsigned short &pMillis
   const time_t t(tp.tv_sec);
   const struct tm* pTime = gmtime(&t);
 
-  if (pTime == NULL)
+  if (pTime == nullptr)
   {
     pSecs = std::numeric_limits<unsigned int>::max();
     pMillisec = std::numeric_limits<unsigned short>::max();
@@ -138,7 +138,7 @@ double simCore::systemTimeToSecsBgnDay()
   time_t t(tp.tv_sec);
   struct tm* pTime = gmtime(&t);
 
-  if (pTime == NULL)
+  if (pTime == nullptr)
     return std::numeric_limits<double>::max();
 
   // assemble a UTC "system time"
@@ -160,7 +160,7 @@ void simCore::timeSinceJan1970ToSecsBgnYr(double timeSinceJan1970, unsigned int 
   time_t t(seconds);
   const struct tm* pTime = gmtime(&t);
 
-  if (pTime == NULL)
+  if (pTime == nullptr)
   {
     // timeSinceJan1970 is invalid
     pSecs = 0;

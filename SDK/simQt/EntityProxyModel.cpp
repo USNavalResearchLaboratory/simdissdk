@@ -30,7 +30,7 @@ namespace simQt {
   EntityProxyModel::EntityProxyModel(QObject *parent)
     : QSortFilterProxyModel(parent),
       alwaysShow_(0),
-      model_(NULL)
+      model_(nullptr)
   {
   }
 
@@ -43,7 +43,7 @@ namespace simQt {
 
   void EntityProxyModel::setSourceModel(QAbstractItemModel *sourceModel)
   {
-    if (model_ != NULL)
+    if (model_ != nullptr)
     {
       disconnect(model_, SIGNAL(rowsAboutToBeRemoved(const QModelIndex&, int, int)), this, SLOT(entitiesRemoved_(const QModelIndex&, int, int)));
       disconnect(model_, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(entitiesUpdated_()));
@@ -54,7 +54,7 @@ namespace simQt {
     model_ = dynamic_cast<AbstractEntityTreeModel*>(sourceModel);
     QSortFilterProxyModel::setSourceModel(sourceModel);
 
-    if (model_ != NULL)
+    if (model_ != nullptr)
     {
       connect(model_, SIGNAL(rowsAboutToBeRemoved(const QModelIndex&, int, int)), this, SLOT(entitiesRemoved_(const QModelIndex&, int, int)));
       connect(model_, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(entitiesUpdated_()));
@@ -108,7 +108,7 @@ namespace simQt {
     for (auto it = entityFilters_.begin(); it != entityFilters_.end(); ++it)
     {
       QWidget* filterWidget = (*it)->widget(newWidgetParent);
-      if (filterWidget != NULL) // only add the widget if not NULL
+      if (filterWidget != nullptr) // only add the widget if not nullptr
         rv.push_back(filterWidget);
     }
     return rv;
@@ -121,7 +121,7 @@ namespace simQt {
 
   void EntityProxyModel::setAlwaysShow(simData::ObjectId id)
   {
-    if ((alwaysShow_ == id) || (model_ == NULL))
+    if ((alwaysShow_ == id) || (model_ == nullptr))
       return;
 
     // If item passes the filters, no need to set it to always show
@@ -138,7 +138,7 @@ namespace simQt {
     // now get entity id
     AbstractEntityTreeItem *item = static_cast<AbstractEntityTreeItem*>(index0.internalPointer());
     simData::ObjectId id = 0;
-    if (item != NULL)
+    if (item != nullptr)
       id = item->id();
     else
     {

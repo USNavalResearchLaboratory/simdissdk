@@ -139,7 +139,7 @@ void CylinderStorage::addCylinderData(simData::ObjectId platId, uint64_t cylinde
       return;
     }
 
-    if (dataStoreListener_ == NULL)
+    if (dataStoreListener_ == nullptr)
     {
       // Listens for changes to the dataStore
       dataStoreListener_.reset(new DataStoreListener(*this));

@@ -104,9 +104,9 @@ void Viewer::setMapNode(osgEarth::MapNode* mapNode)
   getViews(views);
   for (std::vector<simVis::View*>::const_iterator i = views.begin(); i != views.end(); ++i)
   {
-    // Each view in the views list should be valid and non-NULL
+    // Each view in the views list should be valid and non-nullptr
     assert(*i);
-    if (*i == NULL)
+    if (*i == nullptr)
       continue;
 
     // Not every view necessarily has a camera manipulator (e.g. SuperHud doesn't)
@@ -115,7 +115,7 @@ void Viewer::setMapNode(osgEarth::MapNode* mapNode)
     {
       // Changing the manipulator attach point will reset the view; save and restore the view.
       simVis::Viewpoint vp = (*i)->getViewpoint();
-      manip->setNode(NULL);
+      manip->setNode(nullptr);
       manip->setNode(scene_->getManipulatorAttachPoint());
       (*i)->setViewpoint(vp, 0);
     }
@@ -130,7 +130,7 @@ void Viewer::setMap(osgEarth::Map* map)
 
 int Viewer::run()
 {
-  bool hasManip = getMainView()->getCameraManipulator() != NULL;
+  bool hasManip = getMainView()->getCameraManipulator() != nullptr;
   osg::Matrix savedViewMatrix;
 
   // do some final set up before running the frame loop.
@@ -151,7 +151,7 @@ int Viewer::run()
 
   if (!hasManip)
   {
-    getMainView()->setCameraManipulator(NULL);
+    getMainView()->setCameraManipulator(nullptr);
     getMainView()->getCamera()->setViewMatrix(savedViewMatrix);
   }
 
@@ -164,12 +164,12 @@ int Viewer::run()
 
 View* Viewer::getMainView()
 {
-  return getNumViews() > 0 ? getView(0) : NULL;
+  return getNumViews() > 0 ? getView(0) : nullptr;
 }
 
 const View* Viewer::getMainView() const
 {
-  return getNumViews() > 0 ? getView(0) : NULL;
+  return getNumViews() > 0 ? getView(0) : nullptr;
 }
 
 void Viewer::addEventHandler(osgGA::GUIEventHandler* handler)

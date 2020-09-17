@@ -52,7 +52,7 @@ DataStore::Transaction& DataStore::Transaction::operator=(const Transaction &rhs
 
 void DataStore::Transaction::commit()
 {
-  assert(transaction_.get() != NULL);
+  assert(transaction_.get() != nullptr);
   transaction_->commit();
 }
 

@@ -128,7 +128,7 @@ void RCSNode::setRcs(simCore::RadarCrossSectionPtr newRcs)
 
 void RCSNode::rebuild()
 {
-  loadedOK_ = (rcsData_ != NULL) ? true : false;
+  loadedOK_ = (rcsData_ != nullptr) ? true : false;
   this->removeChildren(0, this->getNumChildren());
 
   if (rcsData_ && (lastPrefs_->drawrcs() || lastPrefs_->draw3drcs()))
@@ -164,7 +164,7 @@ RCSRenderer::RCSRenderer(double frequency,
   float detail,
   const osg::Vec4& color,
   bool colorOverride) :
-  rcs_(NULL),
+  rcs_(nullptr),
   polarity_(polarity),
   freq_(frequency),
   elev_(elevation),
@@ -220,8 +220,8 @@ void RCSRenderer::renderRcs_()
   }
   else
   {
-    rcs3D_ = NULL;
-    rcs2D_ = NULL;
+    rcs3D_ = nullptr;
+    rcs2D_ = nullptr;
   }
 }
 

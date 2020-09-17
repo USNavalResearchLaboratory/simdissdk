@@ -54,7 +54,7 @@ class SDKQT_EXPORT IncrementalCompileSettings : public QObject
 {
   Q_OBJECT;
 public:
-  IncrementalCompileSettings(simQt::Settings& settings, osgViewer::ViewerBase* viewer, QObject* parent=NULL);
+  IncrementalCompileSettings(simQt::Settings& settings, osgViewer::ViewerBase* viewer, QObject* parent=nullptr);
   virtual ~IncrementalCompileSettings();
 
 private slots:

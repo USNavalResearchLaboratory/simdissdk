@@ -112,7 +112,7 @@ public:
   /// Specify the interpolator to use
   virtual void setInterpolator(Interpolator *interpolator);
 
-  /// Get the current interpolator (NULL if disabled)
+  /// Get the current interpolator (nullptr if disabled)
   virtual Interpolator* interpolator() const;
   ///@}
 
@@ -159,7 +159,7 @@ public:
   ///@}
 
   /**@name Properties
-   * @note should always return a valid object (never NULL)
+   * @note should always return a valid object (never nullptr)
    * @{
    */
   virtual const ScenarioProperties *scenarioProperties(Transaction *transaction) const;
@@ -182,7 +182,7 @@ public:
   ///@}
 
   /**@name Object Preferences
-   * @note will return NULL if no object is associated with the specified id
+   * @note will return nullptr if no object is associated with the specified id
    * @{
    */
   virtual const PlatformPrefs *platformPrefs(ObjectId id, Transaction *transaction) const;
@@ -240,7 +240,7 @@ public:
   virtual int removeGenericDataTag(ObjectId id, const std::string& tag);
 
   /**@name Add data update, command, generic data, or category data
-   *@note Returns NULL if platform for specified ID does not exist
+   *@note Returns nullptr if platform for specified ID does not exist
    * @{
    */
   virtual PlatformUpdate *addPlatformUpdate(ObjectId id, Transaction *transaction);
@@ -316,7 +316,7 @@ public:
   /**@name NewUpdatesListener
   * @{
   */
-  /// Sets a listener for when entity updates are added; use NULL to remove.
+  /// Sets a listener for when entity updates are added; use nullptr to remove.
   virtual void setNewUpdatesListener(NewUpdatesListenerPtr callback);
   /// Retrieves the listener for new updates (internal)
   NewUpdatesListener& newUpdatesListener() const;

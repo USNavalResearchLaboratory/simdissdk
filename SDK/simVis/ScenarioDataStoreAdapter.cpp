@@ -377,7 +377,7 @@ ScenarioDataStoreAdapter::ScenarioDataStoreAdapter(simData::DataStore* dataStore
 
 void ScenarioDataStoreAdapter::bind(simData::DataStore* dataStore, ScenarioManager* scenario)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
   {
     unbind(dataStore);
   }
@@ -421,7 +421,7 @@ void ScenarioDataStoreAdapter::bind(simData::DataStore* dataStore, ScenarioManag
 
 void ScenarioDataStoreAdapter::unbind(simData::DataStore* dataStore)
 {
-  if (dataStore != NULL)
+  if (dataStore != nullptr)
   {
     // remove data store listeners
     std::map<simData::DataStore*, simData::DataStore::ListenerPtr>::iterator li = listeners_.find(dataStore);

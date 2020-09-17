@@ -42,12 +42,12 @@ struct NewRegistry
   QAction* pluginManager;
   QAction* help;
   NewRegistry()
-   : reg(new ActionRegistry(NULL)),
-     superform(new QAction("superform", NULL)),
-     rangeTool(new QAction("rangeTool...", NULL)),
-     views(new QAction("views...", NULL)),
-     pluginManager(new QAction("pluginManager...", NULL)),
-     help(new QAction("help...", NULL))
+   : reg(new ActionRegistry(nullptr)),
+     superform(new QAction("superform", nullptr)),
+     rangeTool(new QAction("rangeTool...", nullptr)),
+     views(new QAction("views...", nullptr)),
+     pluginManager(new QAction("pluginManager...", nullptr)),
+     help(new QAction("help...", nullptr))
   {
     superform->setShortcuts(QList<QKeySequence>() << QKeySequence("Alt+S") << QKeySequence("Ctrl+S"));
     reg->registerAction("Tools", "SuperForm", superform);
@@ -79,24 +79,24 @@ int testFind()
   rv += SDK_ASSERT(!reg.reg->actions().empty());
 
   Action* action = reg.reg->findAction("Views");
-  rv += SDK_ASSERT(action != NULL);
-  if (action != NULL)
+  rv += SDK_ASSERT(action != nullptr);
+  if (action != nullptr)
   {
     rv += SDK_ASSERT(action->description() == "Views");
     rv += SDK_ASSERT(action->hotkeys().empty());
   }
   action = reg.reg->findAction("View");
-  rv += SDK_ASSERT(action == NULL);
+  rv += SDK_ASSERT(action == nullptr);
 
   // Re-register should not work; throw an exception for testing?
   //Action* badAction = reg.reg->registerAction("Unknown", "Views", reg.superform);
-  //rv += SDK_ASSERT(badAction != NULL);
+  //rv += SDK_ASSERT(badAction != nullptr);
   //rv += SDK_ASSERT(badAction->action() != reg.superform);
   //rv += SDK_ASSERT(badAction->group() != "Unknown");
 
   // Re-register of same action with different name should also fail; throw an exception?
   //Action* badAction2 = reg.reg->registerAction("Another", "Another", reg.superform);
-  //if (badAction2 != NULL)
+  //if (badAction2 != nullptr)
   //{
   //  rv += SDK_ASSERT(badAction2->action() == reg.superform);
   //  rv += SDK_ASSERT(badAction2->description() != "Another");
@@ -104,12 +104,12 @@ int testFind()
   //}
 
   action = reg.reg->findAction(QKeySequence("Alt+S"));
-  rv += SDK_ASSERT(action != NULL);
-  if (action != NULL)
+  rv += SDK_ASSERT(action != nullptr);
+  if (action != nullptr)
     rv += SDK_ASSERT(action->description() == "SuperForm");
   action = reg.reg->findAction(QKeySequence("Ctrl+S"));
-  rv += SDK_ASSERT(action != NULL);
-  if (action != NULL)
+  rv += SDK_ASSERT(action != nullptr);
+  if (action != nullptr)
   {
     rv += SDK_ASSERT(action->description() == "SuperForm");
     rv += SDK_ASSERT(action->hotkeys().size() == 2);
@@ -118,14 +118,14 @@ int testFind()
   // Remove hotkey from SuperForm and re-search
   reg.reg->removeHotKey(action, 0); // should remove Alt+S
   action = reg.reg->findAction(QKeySequence("Alt+S"));
-  rv += SDK_ASSERT(action == NULL);
+  rv += SDK_ASSERT(action == nullptr);
   action = reg.reg->findAction(QKeySequence("Ctrl+S"));
-  rv += SDK_ASSERT(action != NULL);
-  if (action != NULL)
+  rv += SDK_ASSERT(action != nullptr);
+  if (action != nullptr)
     rv += SDK_ASSERT(action->hotkeys().size() == 1);
 
   // Search for nonexistent hotkey
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q")) == NULL);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q")) == nullptr);
 
   return rv;
 }
@@ -134,20 +134,20 @@ int testSetHotKey()
 {
   int rv = 0;
   NewRegistry reg;
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("V")) == NULL);
-  rv += SDK_ASSERT(reg.reg->findAction("Views") != NULL);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("V")) == nullptr);
+  rv += SDK_ASSERT(reg.reg->findAction("Views") != nullptr);
   rv += SDK_ASSERT(reg.reg->setHotKey(reg.reg->findAction("Views"), QKeySequence("V")) == 0);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("V")) != NULL);
-  rv += SDK_ASSERT(reg.reg->setHotKey(NULL, QKeySequence("V")) != 0);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("V")) != nullptr);
+  rv += SDK_ASSERT(reg.reg->setHotKey(nullptr, QKeySequence("V")) != 0);
   Action* views = reg.reg->findAction(QKeySequence("V"));
-  rv += SDK_ASSERT(views != NULL);
+  rv += SDK_ASSERT(views != nullptr);
   if (views)
     rv += SDK_ASSERT(views->description() == "Views");
 
   // Test an override
   reg.reg->setHotKey(views, QKeySequence("Alt+S"));
   views = reg.reg->findAction(QKeySequence("Alt+S"));
-  rv += SDK_ASSERT(views != NULL);
+  rv += SDK_ASSERT(views != nullptr);
   if (views)
   {
     rv += SDK_ASSERT(views->description() == "Views");
@@ -159,7 +159,7 @@ int testSetHotKey()
 bool hasKey(const NewRegistry& reg, const QString& desc, const QString& hotkey)
 {
   Action* act = reg.reg->findAction(QKeySequence(hotkey));
-  return act != NULL && act->description() == desc;
+  return act != nullptr && act->description() == desc;
 }
 
 int testAddHotKey()
@@ -181,24 +181,24 @@ int testAddHotKey()
   // Now look at the action-doesn't-exist cases...
 
   // case 1: action has no shortcuts during add
-  QAction test1("test1", NULL);
+  QAction test1("test1", nullptr);
   reg.reg->addHotKey("test1", QKeySequence("D"));
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("D")) == NULL);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("D")) == nullptr);
   reg.reg->registerAction("test1", "test1", &test1);
   rv += SDK_ASSERT(hasKey(reg, "test1", "D"));
 
   // case 2: action has shortcuts during add
-  QAction test2("test2", NULL);
+  QAction test2("test2", nullptr);
   reg.reg->addHotKey("test2", QKeySequence("E"));
   test2.setShortcut(QKeySequence("F"));
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("E")) == NULL);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("F")) == NULL);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("E")) == nullptr);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("F")) == nullptr);
   reg.reg->registerAction("test2", "test2", &test2);
   rv += SDK_ASSERT(hasKey(reg, "test2", "E"));
   rv += SDK_ASSERT(!hasKey(reg, "test2", "F"));
 
   // case 3: action has conflicting shortcuts during add
-  QAction test3("test3", NULL);
+  QAction test3("test3", nullptr);
   reg.reg->addHotKey("test3", QKeySequence("G"));
   test3.setShortcut(QKeySequence("E")); // Belongs to test2
   rv += SDK_ASSERT(hasKey(reg, "test2", "E"));
@@ -208,7 +208,7 @@ int testAddHotKey()
   rv += SDK_ASSERT(t3act->hotkeys().size() == 1); // only G
 
   // case 4: addAction's hotkey ends up being in use already
-  QAction test4("test4", NULL);
+  QAction test4("test4", nullptr);
   reg.reg->addHotKey("test4", QKeySequence("G"));
   rv += SDK_ASSERT(!hasKey(reg, "test3", "G"));
   auto t4act = reg.reg->registerAction("test4", "test4", &test4);
@@ -253,7 +253,7 @@ int testExecute()
   NewRegistry reg;
   QPushButton testButton;
   testButton.setCheckable(true);
-  QAction action("exec", NULL);
+  QAction action("exec", nullptr);
   QObject::connect(&action, SIGNAL(triggered()), &testButton, SLOT(toggle()));
   rv += SDK_ASSERT(!testButton.isChecked());
   action.trigger();
@@ -276,18 +276,18 @@ int testMemento()
   int rv = 0;
   NewRegistry reg;
   ActionRegistry::SettingsMemento* defaultSettings = reg.reg->createMemento();
-  rv += SDK_ASSERT(defaultSettings != NULL);
+  rv += SDK_ASSERT(defaultSettings != nullptr);
   rv += SDK_ASSERT(reg.superform->shortcuts().size() == 2);
   rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Alt+S"))->action() == reg.superform);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q")) == NULL);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == NULL);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q")) == nullptr);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == nullptr);
   // Make some changes
   rv += SDK_ASSERT(0 == reg.reg->addHotKey("Views", QKeySequence("Q")));
   rv += SDK_ASSERT(0 == reg.reg->addHotKey("Plugin Manager", QKeySequence("Alt+S")));
   rv += SDK_ASSERT(reg.superform->shortcuts().size() == 1);
   rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Alt+S"))->action() == reg.pluginManager);
   rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q"))->action() == reg.views);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == NULL);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == nullptr);
   // Save a new memento
   ActionRegistry::SettingsMemento* newSettings = reg.reg->createMemento();
   // Restore last one
@@ -295,29 +295,29 @@ int testMemento()
   // Test the original conditions again
   rv += SDK_ASSERT(reg.superform->shortcuts().size() == 2);
   rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Alt+S"))->action() == reg.superform);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q")) == NULL);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == NULL);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q")) == nullptr);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == nullptr);
   // Test restoring the new one
   newSettings->restore(*reg.reg);
   rv += SDK_ASSERT(reg.superform->shortcuts().size() == 1);
   rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Alt+S"))->action() == reg.pluginManager);
   rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q"))->action() == reg.views);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == NULL);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == nullptr);
   // Go back to default; restore an action that doesn't exist (i.e. delete views)
   defaultSettings->restore(*reg.reg);
   rv += SDK_ASSERT(0 == reg.reg->removeAction("Views"));
   // Restore the configuration that had a views hotkey, make sure no crash
   newSettings->restore(*reg.reg);
   rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Alt+S"))->action() == reg.pluginManager);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q")) == NULL);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == NULL);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q")) == nullptr);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == nullptr);
   delete newSettings;
   // Restore the original settings, after deleting the new ones
   defaultSettings->restore(*reg.reg);
   rv += SDK_ASSERT(reg.superform->shortcuts().size() == 2);
   rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Alt+S"))->action() == reg.superform);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q")) == NULL);
-  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == NULL);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("Q")) == nullptr);
+  rv += SDK_ASSERT(reg.reg->findAction(QKeySequence("R")) == nullptr);
 
   // Looks good, return
   delete defaultSettings;
@@ -328,12 +328,12 @@ int testAlias()
 {
   int rv = 0;
 
-  ActionRegistry* ar = new ActionRegistry(NULL);
+  ActionRegistry* ar = new ActionRegistry(nullptr);
 
   // Make an action
-  QAction* action1 = new QAction("acttion1", NULL);
+  QAction* action1 = new QAction("acttion1", nullptr);
   simQt::Action* firstAction = ar->registerAction("Test", "First", action1);
-  rv += SDK_ASSERT(firstAction != NULL);
+  rv += SDK_ASSERT(firstAction != nullptr);
 
   // Add an alias; which should work
   rv += SDK_ASSERT(ar->registerAlias("First", "FirstAlias1") == 0);
@@ -359,7 +359,7 @@ int testAlias()
   rv += SDK_ASSERT(ar->findAction("FirstAlias2") == firstAction);
 
   // Find a bogus name that should fail
-  rv += SDK_ASSERT(ar->findAction("ShouldNotWork") == NULL);
+  rv += SDK_ASSERT(ar->findAction("ShouldNotWork") == nullptr);
 
   delete ar;
   delete action1;
@@ -372,7 +372,7 @@ int testHotKeyAssignment()
   int rv = 0;
   NewRegistry reg;
 
-  QAction exec1("exec1", NULL);
+  QAction exec1("exec1", nullptr);
   const QKeySequence ks1("1");
   exec1.setShortcut(ks1);
 
@@ -383,14 +383,14 @@ int testHotKeyAssignment()
 
   // Add action; it should recognize shortcut and be correct
   simQt::Action* qAction = reg.reg->registerAction("Temp", "exec1", &exec1);
-  rv += SDK_ASSERT(qAction != NULL);
+  rv += SDK_ASSERT(qAction != nullptr);
   rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks1, actionName) == simQt::ActionRegistry::ASSIGNED_TO_ACTION);
   rv += SDK_ASSERT(actionName == "exec1");
 
   // Swap hot key
   const QKeySequence ks2("2");
   rv += SDK_ASSERT(reg.reg->setHotKey(qAction, ks2) == 0);
-  rv += SDK_ASSERT(qAction != NULL);
+  rv += SDK_ASSERT(qAction != nullptr);
   rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks1, actionName) == simQt::ActionRegistry::UNASSIGNED);
   rv += SDK_ASSERT(actionName.isEmpty());
   rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks2, actionName) == simQt::ActionRegistry::ASSIGNED_TO_ACTION);
@@ -398,7 +398,7 @@ int testHotKeyAssignment()
 
   // Remove hot key
   rv += SDK_ASSERT(reg.reg->removeAction("exec1") == 0);
-  qAction = NULL;
+  qAction = nullptr;
   rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks1, actionName) == simQt::ActionRegistry::UNASSIGNED);
   rv += SDK_ASSERT(actionName.isEmpty());
   // ks2 should have transitioned to unknown
@@ -414,9 +414,9 @@ int testHotKeyAssignment()
   rv += SDK_ASSERT(actionName == "exec3");
 
   // Reassign it to something that does exist
-  QAction exec2("exec2", NULL);
+  QAction exec2("exec2", nullptr);
   qAction = reg.reg->registerAction("Temp", "exec2", &exec2);
-  rv += SDK_ASSERT(qAction != NULL);
+  rv += SDK_ASSERT(qAction != nullptr);
   rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks3, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
   rv += SDK_ASSERT(actionName == "exec3");
   rv += SDK_ASSERT(reg.reg->addHotKey("exec2", ks3) == 0);
@@ -425,7 +425,7 @@ int testHotKeyAssignment()
 
   // Remove that action; it should be assigned to unknown, but to exec2 now and not exec3
   rv += SDK_ASSERT(reg.reg->removeAction("exec2") == 0);
-  qAction = NULL;
+  qAction = nullptr;
   rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks3, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
   rv += SDK_ASSERT(actionName == "exec2");
   // Fix it back to exec3
@@ -434,9 +434,9 @@ int testHotKeyAssignment()
   rv += SDK_ASSERT(actionName == "exec3");
 
   // Add exec3 and it should still be on exec3
-  QAction exec3("exec3", NULL);
+  QAction exec3("exec3", nullptr);
   qAction = reg.reg->registerAction("Temp", "exec3", &exec3);
-  rv += SDK_ASSERT(qAction != NULL);
+  rv += SDK_ASSERT(qAction != nullptr);
   rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks3, actionName) == simQt::ActionRegistry::ASSIGNED_TO_ACTION);
   rv += SDK_ASSERT(actionName == "exec3");
 
@@ -453,10 +453,10 @@ int testHotKeyAssignment()
   rv += SDK_ASSERT(reg.reg->addHotKey("exec4", ks4) == 0);
   rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks4, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
   rv += SDK_ASSERT(actionName == "exec4");
-  QAction exec5("exec5", NULL);
+  QAction exec5("exec5", nullptr);
   exec5.setShortcut(ks4);
   qAction = reg.reg->registerAction("Temp", "exec5", &exec5);
-  rv += SDK_ASSERT(qAction != NULL);
+  rv += SDK_ASSERT(qAction != nullptr);
   rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks4, actionName) == simQt::ActionRegistry::ASSIGNED_TO_ACTION);
   rv += SDK_ASSERT(actionName == "exec5");
   rv += SDK_ASSERT(reg.reg->setHotKey(qAction, ks1) == 0);

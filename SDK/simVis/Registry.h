@@ -124,14 +124,14 @@ public:
   /**
   * Gets or loads a node that represent the specified icon.
   * The result will be either a 3D model or a billboard icon depending on the
-  * Not multi-thread safe.
   * file type of the icon file found.
+  * Not multi-thread safe.
   * @param[in ] name Location of the file
   * @param[inout] pIsImage Pointer to a boolean that will be set to true if the loaded model refers
-  *     to an image, or false if using a model.  Only set for if the return value is non-NULL.
-  * @return A node, or NULL if no file was found.
+  *     to an image, or false if using a model.  Only set for if the return value is non-nullptr.
+  * @return A node, or nullptr if no file was found.
   */
-  osg::Node* getOrCreateIconModel(const std::string& name, bool* pIsImage = NULL) const;
+  osg::Node* getOrCreateIconModel(const std::string& name, bool* pIsImage = nullptr) const;
 
   /** Retrieve a pointer to the model cache. */
   ModelCache* modelCache() const;

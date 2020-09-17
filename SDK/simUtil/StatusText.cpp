@@ -105,8 +105,8 @@ public:
     {
       // Tell the text to resize if the screen size has changed
       const osg::View* view = aa.asView();
-      const osg::Camera* camera = (view) ? view->getCamera() : NULL;
-      const osg::Viewport* viewport = (camera) ? camera->getViewport() : NULL;
+      const osg::Camera* camera = (view) ? view->getCamera() : nullptr;
+      const osg::Viewport* viewport = (camera) ? camera->getViewport() : nullptr;
       if (viewport)
       {
         const int widthPx = static_cast<int>(viewport->width());
@@ -141,7 +141,7 @@ private:
 StatusText::StatusText(simVis::View* view, simCore::TextReplacerPtr textReplacer, Position pos)
   : StatusTextNode(textReplacer),
     view_(view),
-    frameEventHandler_(NULL),
+    frameEventHandler_(nullptr),
     position_(pos)
 {
   const osg::Viewport* vp = view->getCamera()->getViewport();
@@ -162,7 +162,7 @@ void StatusText::removeFromView()
     view_->removeEventHandler(frameEventHandler_);
     view_->getOrCreateHUD()->removeChild(this);
     removeChild(statusHudText_.get());
-    statusHudText_ = NULL;
+    statusHudText_ = nullptr;
   }
 }
 

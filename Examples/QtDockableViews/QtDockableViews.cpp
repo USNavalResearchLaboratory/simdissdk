@@ -126,7 +126,7 @@ MyMainWindow::~MyMainWindow()
 void MyMainWindow::paintEvent(QPaintEvent* e)
 {
   // refresh all the views -- only repaint if the last created GL window was exposed (or got deleted).
-  // This repaints on NULL because it the flag (in this app) can only be NULL if user closed an open
+  // This repaints on nullptr because the flag (in this app) can only be nullptr if user closed an open
   // window, and other windows that are still open are almost certainly still exposed.  We do check
   // for isExposed() on the last created window, under the presumption that once it is exposed, we
   // can safely draw on all windows.

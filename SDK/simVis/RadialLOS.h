@@ -178,10 +178,10 @@ public:
    * Re-samples the terrain for all sample points that fall within the specified extent.
    * @param[in ] mapNode Map interface to use for sampling
    * @param[in ] extent  Geospatial extent within which to update the samples
-   * @param patch Patch node, possibly NULL
+   * @param patch Patch node, possibly nullptr
    * @return True upon success
    */
-  bool update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& extent, osg::Node* patch = NULL);
+  bool update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& extent, osg::Node* patch = nullptr);
 
   /**
    * Gets the number of samples in each radial

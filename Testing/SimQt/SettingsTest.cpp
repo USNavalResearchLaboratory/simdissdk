@@ -246,7 +246,7 @@ int testSettingsWithoutMetaData()
   settings.clear();
   // Set a single value without meta data (as if from a .ini file or registry)
   settings.setValue("Setting1", "1");
-  simQt::SettingsModel model(NULL, settings);
+  simQt::SettingsModel model(nullptr, settings);
 
   int rv = 0;
   rv += SDK_ASSERT(model.allNames().size() == 1);
@@ -394,7 +394,7 @@ int testMemento(simQt::Settings& settings)
 
   // Save a memento
   std::unique_ptr<simQt::Settings::Memento> before(settings.createMemento());
-  rv += SDK_ASSERT(before != NULL);
+  rv += SDK_ASSERT(before != nullptr);
 
   // Change values in unexpected ways
   settings.setValue("DefaultInt", 4.5);
@@ -408,7 +408,7 @@ int testMemento(simQt::Settings& settings)
   rv += SDK_ASSERT(settings.value("AnotherInt").toInt() == 7);
 
   std::unique_ptr<simQt::Settings::Memento> after(settings.createMemento());
-  rv += SDK_ASSERT(after != NULL);
+  rv += SDK_ASSERT(after != nullptr);
 
   // Test values after restoring the old memento
   rv += SDK_ASSERT(before->restore(settings) == 0);
@@ -478,7 +478,7 @@ int SettingsTest(int argc, char* argv[])
   rv += testPersistentMetaData();
 
   QSettings qSettings;
-  simQt::SettingsPtr settings(new simQt::SettingsModel(NULL, qSettings));
+  simQt::SettingsPtr settings(new simQt::SettingsModel(nullptr, qSettings));
   rv += testSingleLevel(settings);
 
   simQt::SettingsGroupPtr group(new simQt::SettingsGroup(settings.get(), ""));

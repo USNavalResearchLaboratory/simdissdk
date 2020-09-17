@@ -29,7 +29,7 @@
 
 CategoryDataBreadcrumbsPlugin::CategoryDataBreadcrumbsPlugin(QObject *parent)
   : QObject(parent),
-    dataStore_(NULL)
+    dataStore_(nullptr)
 {
 }
 
@@ -47,7 +47,7 @@ void CategoryDataBreadcrumbsPlugin::initialize(QDesignerFormEditorInterface *)
 
 bool CategoryDataBreadcrumbsPlugin::isInitialized() const
 {
-  return dataStore_ != NULL;
+  return dataStore_ != nullptr;
 }
 
 QWidget *CategoryDataBreadcrumbsPlugin::createWidget(QWidget *parent)
@@ -55,7 +55,7 @@ QWidget *CategoryDataBreadcrumbsPlugin::createWidget(QWidget *parent)
   simQt::CategoryDataBreadcrumbs* rv = new simQt::CategoryDataBreadcrumbs(parent);
 
   // Create a filter for user to see
-  if (dataStore_ == NULL)
+  if (dataStore_ == nullptr)
     dataStore_ = new simData::MemoryDataStore;
   simData::CategoryNameManager& nameManager = dataStore_->categoryNameManager();
   simData::CategoryFilter filter(dataStore_);

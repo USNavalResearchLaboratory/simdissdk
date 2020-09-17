@@ -69,7 +69,7 @@ void Utils::applyLocalGeometryOffsets(LocalGeometryNode& node, ParserData& data,
   {
     // if this is a hosted node, it will need to set any offsets in the attitude transform's position, since it's position is ignored
     osg::PositionAttitudeTransform* trans = node.getPositionAttitudeTransform();
-    if (trans != NULL)
+    if (trans != nullptr)
       trans->setPosition(data.getLTPOffset());
     // hosted nodes don't set orientation offsets directly, they are instead applied through a Locator attached to the host
   }
@@ -97,6 +97,7 @@ bool Utils::canSerializeGeometry_(simVis::GOG::GogShape shape)
   case simVis::GOG::GOG_LATLONALTBOX:
   case simVis::GOG::GOG_CONE:
   case simVis::GOG::GOG_IMAGEOVERLAY:
+  case simVis::GOG::GOG_ORBIT:
     break;
   }
   return false;
@@ -377,6 +378,41 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
     // annotations have a single center point but don't use centerxyz keyword for relative shapes, so make sure the refPointLLA_ is set for relative annotations
     else if (shape == GOG_ANNOTATION && !refPointLLA_.isSet() && parsedShape.pointType() == ParsedShape::XYZ)
       refPointLLA_->set(context_.refPoint_->vec3d());
+
+    // handle second center point
+    if (parsedShape.hasValue(GOG_CENTERLL2))
+    {
+      const PositionStrings& p = parsedShape.positionValue(GOG_CENTERLL2);
+      // Convert altitude value from string
+      double altitude = 0.;
+
+      if (centerLLA_.isSet())
+        altitude = centerLLA_->z();
+      // units as per the SIMDIS user manual:
+      centerLLA2_->set(
+        parseAngle(p.y, 0.0),  // longitude
+        parseAngle(p.x, 0.0),  // latitude
+        altitude);
+    }
+    if (parsedShape.hasValue(GOG_CENTERXY2))
+    {
+      const PositionStrings& p = parsedShape.positionValue(GOG_CENTERXY2);
+      // Convert values from string
+      double xyz[3] = { 0. };
+      simCore::isValidNumber(p.x, xyz[0]);
+      simCore::isValidNumber(p.y, xyz[1]);
+
+      // get Z from centerXYZ_ if it's valid
+      double z = 0.;
+      if (centerXYZ_.isSet())
+        z = centerXYZ_->z();
+
+      // units as per the SIMDIS user manual:
+      centerXYZ2_->set(
+        units_.rangeUnits_.convertTo(simCore::Units::METERS, xyz[0]),
+        units_.rangeUnits_.convertTo(simCore::Units::METERS, xyz[1]),
+        z);
+    }
   }
 
   if (parsedShape.hasValue(GOG_LINEPROJECTION))

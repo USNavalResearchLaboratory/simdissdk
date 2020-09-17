@@ -57,7 +57,7 @@ public:
    * @param attachPoint Attach point for an osgEarth::MapNodeObserver
    * @param parent Parent object
    */
-  TimestampedLayerManager(simCore::Clock& clock, osg::Group* attachPoint, QObject* parent = NULL);
+  TimestampedLayerManager(simCore::Clock& clock, osg::Group* attachPoint, QObject* parent = nullptr);
 
   /** Destructor */
   virtual ~TimestampedLayerManager();
@@ -96,14 +96,14 @@ public:
 
 signals:
   /**
-   * Emitted when the current layer changes.   New layer or old layer can be NULL.  If non-NULL, newLayer
+   * Emitted when the current layer changes.   New layer or old layer can be nullptr.  If non-nullptr, newLayer
    * and oldLayer are guaranteed to be part of the map associated with this object at time of emission.  This
    * signal indicates that visibility of timed layers has changed.  Further processing is not needed for simple
    * timed showing or hiding.
    * @param newLayer New current layer
    * @param previousLayer Previous current layer
    */
-  void currentTimedLayerChanged(const osgEarth::ImageLayer* newLayer = NULL, const osgEarth::ImageLayer* previousLayer = NULL);
+  void currentTimedLayerChanged(const osgEarth::ImageLayer* newLayer = nullptr, const osgEarth::ImageLayer* previousLayer = nullptr);
 
 private:
 

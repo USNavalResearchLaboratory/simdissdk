@@ -117,8 +117,8 @@ class ReferenceYearCache : public QObject, public simData::DataStore::ScenarioLi
 {
   Q_OBJECT;
 public:
-  /** Initializes the cache from a given data store (could be NULL) */
-  ReferenceYearCache(simData::DataStore *dataStore=NULL);
+  /** Initializes the cache from a given data store (could be nullptr) */
+  ReferenceYearCache(simData::DataStore *dataStore=nullptr);
 
   /** Checks on reference year change and emits signal if needed */
   virtual void onScenarioPropertiesChange(simData::DataStore* source);

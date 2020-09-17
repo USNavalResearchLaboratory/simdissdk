@@ -83,21 +83,21 @@ struct AppData
   osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler_;
 
   AppData(simData::DataStore* ds, simData::ObjectId hostId)
-   : modeSlider_(NULL),
-    timeTicksSlider_(NULL),
-    modeLabel_(NULL),
-    sizeLabel_(NULL),
-    timeTicksLabel_(NULL),
-    rewind1_(NULL),
-    rewind2_(NULL),
-    ff1_(NULL),
-    ff2_(NULL),
-    timeSlider_(NULL),
-    tether_(NULL),
+   : modeSlider_(nullptr),
+    timeTicksSlider_(nullptr),
+    modeLabel_(nullptr),
+    sizeLabel_(nullptr),
+    timeTicksLabel_(nullptr),
+    rewind1_(nullptr),
+    rewind2_(nullptr),
+    ff1_(nullptr),
+    ff2_(nullptr),
+    timeSlider_(nullptr),
+    tether_(nullptr),
     ds_(ds),
     hostId_(hostId),
-    view_(NULL),
-    platformModel_(NULL)
+    view_(nullptr),
+    platformModel_(nullptr)
   {
     modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_OFF,    "OFF"));
     modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_POINT,  "POINT"));
@@ -156,7 +156,7 @@ struct AppData
 
   void tether()
   {
-    view_->tetherCamera(NULL);
+    view_->tetherCamera(nullptr);
     view_->tetherCamera(platformModel_.get());
     view_->setFocalOffsets(45, -45, 2e4);
   }

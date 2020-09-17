@@ -483,7 +483,7 @@ namespace
   // SIMDIS_DIR to c:/people/..., or similar; string-safe
   std::string env(const std::string& envVar)
   {
-    if (getenv(envVar.c_str()) != NULL)
+    if (getenv(envVar.c_str()) != nullptr)
       return getenv(envVar.c_str());
     return "$(" + envVar + ")";
   }

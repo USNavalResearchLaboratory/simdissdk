@@ -80,7 +80,7 @@ private:
 
 ButtonActions::ButtonActions(QWidget *parent)
 : QObject(parent),
-  clock_(NULL),
+  clock_(nullptr),
   stepDecrease_(new QAction(QIcon(":/simQt/images/Navigation Blue Left.png"), "Decrease Rate", parent)),
   stepBack_(new QAction(QIcon(":/simQt/images/Navigation Blue First.png"), "Step Back", parent)),
   playReverse_(new QAction(QIcon(":/simQt/images/Navigation Blue Previous.png"), "Play Backward", parent)),
@@ -127,7 +127,7 @@ ButtonActions::ButtonActions(QWidget *parent)
 
 ButtonActions::~ButtonActions()
 {
-  setClockManager(NULL);
+  setClockManager(nullptr);
   qDeleteAll(actions());
 }
 
@@ -209,7 +209,7 @@ void ButtonActions::setClockManager(simCore::Clock *clock)
 
 void ButtonActions::updateEnabledState_()
 {
-  bool enable = (clock_ != NULL && clock_->isUserEditable());
+  bool enable = (clock_ != nullptr && clock_->isUserEditable());
 
   // Emit a signal to indicate that the state has changed
   if (toggleLoop_->isEnabled() != enable)
@@ -235,7 +235,7 @@ void ButtonActions::updateCheckedState_()
   simQt::ScopedSignalBlocker blockRealTime(*realTime_);
 
   // play, stop, and reverse are exclusive
-  const simCore::TimeDirection d = (clock_ != NULL) ? clock_->timeDirection() : simCore::STOP;
+  const simCore::TimeDirection d = (clock_ != nullptr) ? clock_->timeDirection() : simCore::STOP;
   playReverse_->setChecked(d == simCore::REVERSE);
   play_->setChecked(d == simCore::FORWARD);
   stop_->setChecked(d == simCore::STOP);
@@ -243,7 +243,7 @@ void ButtonActions::updateCheckedState_()
     toggleLoop_->setChecked(clock_->canLoop());
 
   // free wheel mode is real time driven by a plug-in
-  const simCore::Clock::Mode m = (clock_ != NULL) ? clock_->mode() : simCore::Clock::MODE_STEP;
+  const simCore::Clock::Mode m = (clock_ != nullptr) ? clock_->mode() : simCore::Clock::MODE_STEP;
   realTime_->setChecked(m == simCore::Clock::MODE_REALTIME || m == simCore::Clock::MODE_FREEWHEEL);
 }
 
@@ -323,13 +323,13 @@ TimeButtons::TimeButtons(QWidget *parent)
 
 TimeButtons::~TimeButtons()
 {
-  bindToActions(NULL);
+  bindToActions(nullptr);
   delete ui_;
 }
 
 void TimeButtons::bindToActions(ButtonActions* actions)
 {
-  if (actions != NULL)
+  if (actions != nullptr)
   {
     ui_->button_StepDecrease->setDefaultAction(actions->stepDecreaseAction());
     ui_->button_StepBack->setDefaultAction(actions->stepBackAction());
@@ -342,14 +342,14 @@ void TimeButtons::bindToActions(ButtonActions* actions)
   }
   else
   {
-    ui_->button_StepDecrease->setDefaultAction(NULL);
-    ui_->button_StepBack->setDefaultAction(NULL);
-    ui_->button_PlayBackwards->setDefaultAction(NULL);
-    ui_->button_Stop->setDefaultAction(NULL);
-    ui_->button_Play->setDefaultAction(NULL);
-    ui_->button_Step->setDefaultAction(NULL);
-    ui_->button_StepIncrease->setDefaultAction(NULL);
-    ui_->button_Realtime->setDefaultAction(NULL);
+    ui_->button_StepDecrease->setDefaultAction(nullptr);
+    ui_->button_StepBack->setDefaultAction(nullptr);
+    ui_->button_PlayBackwards->setDefaultAction(nullptr);
+    ui_->button_Stop->setDefaultAction(nullptr);
+    ui_->button_Play->setDefaultAction(nullptr);
+    ui_->button_Step->setDefaultAction(nullptr);
+    ui_->button_StepIncrease->setDefaultAction(nullptr);
+    ui_->button_Realtime->setDefaultAction(nullptr);
   }
 }
 

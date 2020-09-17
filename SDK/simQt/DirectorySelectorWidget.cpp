@@ -33,7 +33,7 @@ namespace simQt {
 DirectorySelectorWidget::DirectorySelectorWidget(QWidget* parent)
   : QWidget(parent),
     registryKey_("Private/directory"),
-    labelWidget_(NULL),
+    labelWidget_(nullptr),
     includeLabel_(false),
     label_(tr("Directory")),
     browserTitle_(tr("Select Directory"))
@@ -84,7 +84,7 @@ void DirectorySelectorWidget::setIncludeLabel(bool value)
 {
   if (value == true)
   {
-    if (labelWidget_ == NULL)
+    if (labelWidget_ == nullptr)
     {
       labelWidget_ = new QLabel(label_);
     }
@@ -94,7 +94,7 @@ void DirectorySelectorWidget::setIncludeLabel(bool value)
   {
     ui_->horizontalLayout->removeWidget(labelWidget_);
     delete labelWidget_;
-    labelWidget_ = NULL;
+    labelWidget_ = nullptr;
   }
 
   includeLabel_ = value;

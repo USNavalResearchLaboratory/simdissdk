@@ -104,19 +104,19 @@ private: // methods
 
   /**
   * Return a chunk to which you can add a new point
-  * @return chunk that can accept a new point, or NULL if a new one needs to be created
+  * @return chunk that can accept a new point, or nullptr if a new one needs to be created
   */
   TimeTicksChunk* getCurrentChunk_();
 
   /**
   * Return the last chunk in the group,
-  * @return last chunk, or NULL if group is empty
+  * @return last chunk, or nullptr if group is empty
   */
   TimeTicksChunk* getLastChunk_();
 
   /**
   * Return the first chunk in the group
-  * @return first chunk, or NULL if group is empty
+  * @return first chunk, or nullptr if group is empty
   */
   TimeTicksChunk* getFirstChunk_();
 

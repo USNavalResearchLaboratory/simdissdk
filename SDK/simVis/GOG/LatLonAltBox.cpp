@@ -201,7 +201,7 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
     return rv;
   }
   // no "hosted" version of this GOG.
-  return NULL;
+  return nullptr;
 }
 
 } }

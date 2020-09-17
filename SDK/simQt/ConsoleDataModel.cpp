@@ -61,7 +61,7 @@ public:
    */
   virtual void addText(simNotify::NotifySeverity severity, const QString& text)
   {
-    if (dataModel_ == NULL)
+    if (dataModel_ == nullptr)
       return;
     // Directly call addEntry to avoid a look-up, for performance reasons in the common case.
     if (QThread::currentThread() == dataModel_->thread())
@@ -127,7 +127,8 @@ ConsoleDataModel::~ConsoleDataModel()
   {
     ChannelImpl* impl = dynamic_cast<ChannelImpl*>((*it).get());
     // Clear out the pointer to "this", in case it survives beyond us
-    impl->setConsoleDataModel(NULL);
+    if (impl)
+      impl->setConsoleDataModel(nullptr);
   }
 }
 
@@ -146,7 +147,7 @@ QVariant ConsoleDataModel::data(const QModelIndex& idx, int role) const
     return QVariant();
   LineEntry* line = static_cast<LineEntry*>(idx.internalPointer());
   assert(line);
-  if (line == NULL)
+  if (line == nullptr)
     return QVariant();
 
   switch (role)
@@ -331,7 +332,7 @@ void ConsoleDataModel::addPlainEntry_(simNotify::NotifySeverity severity, const 
     return;
 
   // Process the entry through filters (if filters are defined)
-  LineEntry* newEntry = NULL;
+  LineEntry* newEntry = nullptr;
   if (!entryFilters_.empty())
   {
     // Put into a struct for processing

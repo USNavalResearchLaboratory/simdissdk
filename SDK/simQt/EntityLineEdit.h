@@ -102,7 +102,7 @@ class SDKQT_EXPORT EntityLineEdit : public QWidget
 
 public:
   /** Constructor */
-  EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTreeModel = NULL, simData::ObjectType type = simData::ALL);
+  EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTreeModel = nullptr, simData::ObjectType type = simData::ALL);
   virtual ~EntityLineEdit();
 
   /** Returns the Unique ID of the currently selected Entity; returns zero if none */
@@ -110,7 +110,7 @@ public:
   /** Returns the name of the currently selected Entity; returns "" if none */
   QString selectedName() const;
   /** The model that holds all the entity information filtered by type */
-  void setModel(simQt::EntityTreeModel* model, simData::ObjectType type = simData::ALL, simCore::Clock* clock = NULL);
+  void setModel(simQt::EntityTreeModel* model, simData::ObjectType type = simData::ALL, simCore::Clock* clock = nullptr);
 
   // Options for customizing the widget
 

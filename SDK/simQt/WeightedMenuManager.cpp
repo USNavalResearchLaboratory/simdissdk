@@ -66,9 +66,9 @@ static const char* WEIGHTS_PROPERTY = "weights";
 
 WeightedMenuManager::WeightedMenuManager(bool debugMenuWeights)
   : debugMenuWeights_(debugMenuWeights),
-    menuBar_(NULL),
-    toolBar_(NULL),
-    statusBar_(NULL)
+    menuBar_(nullptr),
+    toolBar_(nullptr),
+    statusBar_(nullptr)
 {
 }
 
@@ -84,7 +84,7 @@ QWidget* WeightedMenuManager::topLevelMenu()
 
 QMenu* WeightedMenuManager::getOrCreateMenu(QMenu* underMenu, int weight, const QString& menuName)
 {
-  if (underMenu == NULL)
+  if (underMenu == nullptr)
     return findOrCreateMenu_(topLevelMenu(), weight, menuName);
   return findOrCreateMenu_(underMenu, weight, menuName);
 }
@@ -96,7 +96,7 @@ void WeightedMenuManager::insertMenuAction(QMenu* menu, int weight, const simQt:
 
 void WeightedMenuManager::insertMenuAction(QMenu* menu, int weight, QAction* action)
 {
-  if (menu == NULL)
+  if (menu == nullptr)
     insertBefore_(topLevelMenu(), weight, action);
   else
     insertBefore_(menu, weight, action);
@@ -104,8 +104,8 @@ void WeightedMenuManager::insertMenuAction(QMenu* menu, int weight, QAction* act
 
 void WeightedMenuManager::insertMenuSeparator(QMenu* menu, int weight)
 {
-  QAction* separator = NULL;
-  if (menu == NULL)
+  QAction* separator = nullptr;
+  if (menu == nullptr)
     insertBefore_(topLevelMenu(), weight, separator);
   else
     insertBefore_(menu, weight, separator);
@@ -119,7 +119,7 @@ QMenu* WeightedMenuManager::findMenu_(QWidget* parent, const QString& title) con
   {
     // Only accept menus in our search (ignore actions)
     QMenu* topMenu = qobject_cast<QMenu*>(*it);
-    if (topMenu == NULL)
+    if (topMenu == nullptr)
       continue;
 
     // Figure out the menu title (might be adjusted based on menu weights value)
@@ -134,7 +134,7 @@ QMenu* WeightedMenuManager::findMenu_(QWidget* parent, const QString& title) con
     if (withoutMnemonic_(menuTitle) == title)
       return topMenu;
   }
-  return NULL;
+  return nullptr;
 }
 
 /** Finds or creates a single menu item under a parent menu bar/menu */
@@ -167,7 +167,7 @@ void WeightedMenuManager::insertSeparator_(QWidget* menuOrToolBar, QAction* befo
 {
   // Attempt to insert into a QMenu
   QMenu* menu = qobject_cast<QMenu*>(menuOrToolBar);
-  if (menu != NULL)
+  if (menu != nullptr)
   {
     menu->insertSeparator(beforeAction);
     return;
@@ -175,7 +175,7 @@ void WeightedMenuManager::insertSeparator_(QWidget* menuOrToolBar, QAction* befo
 
   // Attempt to insert into a QToolBar
   QToolBar* toolbar = qobject_cast<QToolBar*>(menuOrToolBar);
-  if (toolbar != NULL)
+  if (toolbar != nullptr)
   {
     toolbar->insertSeparator(beforeAction);
     return;
@@ -190,14 +190,14 @@ QAction* WeightedMenuManager::actionByIndex_(const QWidget* widget, int index) c
 {
   const QList<QAction*> actions = widget->actions();
   if (index >= actions.size())
-    return NULL;
+    return nullptr;
   return actions[index];
 }
 
 // Used to add actions to menus, tool bar, sub-menus, etc.
 void WeightedMenuManager::insertBefore_(QWidget* widget, int weight, QAction* action) const
 {
-  if (widget == NULL)
+  if (widget == nullptr)
     return;
 
   // Figure out the insert-before based on the weights
@@ -208,13 +208,13 @@ void WeightedMenuManager::insertBefore_(QWidget* widget, int weight, QAction* ac
   QAction* beforeAct = actionByIndex_(widget, std::distance(weights.begin(), insertBefore));
 
   // Add the action to the menu or tool bar
-  if (action == NULL)
+  if (action == nullptr)
     insertSeparator_(widget, beforeAct);
   else
     widget->insertAction(beforeAct, action);
 
   // Add the new weight to the previous text
-  if (debugMenuWeights_ && action != NULL)
+  if (debugMenuWeights_ && action != nullptr)
     action->setText(QString("%1 %2").arg(weight).arg(action->text()));
 
   // Update the weights
@@ -227,7 +227,7 @@ void WeightedMenuManager::insertMenu_(QWidget* menuOrBar, QAction* beforeAction,
 {
   // QMenu and QMenuBar are not related (enough) and have different routines for inserting menus
   QMenu* asMenu = qobject_cast<QMenu*>(menuOrBar);
-  if (asMenu != NULL)
+  if (asMenu != nullptr)
   {
     asMenu->insertMenu(beforeAction, menu);
     return;
@@ -235,19 +235,19 @@ void WeightedMenuManager::insertMenu_(QWidget* menuOrBar, QAction* beforeAction,
 
   // Attempt with QMenuBar
   QMenuBar* asMenuBar = qobject_cast<QMenuBar*>(menuOrBar);
-  if (asMenuBar != NULL)
+  if (asMenuBar != nullptr)
   {
     asMenuBar->insertMenu(beforeAction, menu);
     return;
   }
 
   // Assertion failure implies that widget is not QMenu and not QMenuBar -- what is it?
-  assert(asMenuBar != NULL);
+  assert(asMenuBar != nullptr);
 }
 
 void WeightedMenuManager::insertBefore_(QWidget* menuOrBar, int weight, QMenu* menu) const
 {
-  if (menuOrBar == NULL)
+  if (menuOrBar == nullptr)
     return;
 
   // Figure out the insert-before based on the weights
@@ -325,26 +325,26 @@ void WeightedMenuManager::insertToolBarAction(int weight, const simQt::Action* a
 
 void WeightedMenuManager::insertToolBarAction(int weight, QAction* action)
 {
-  if (toolBar_ == NULL)
+  if (toolBar_ == nullptr)
     return;
   WeightedMenuManager::insertBefore_(toolBar_, weight, action);
 }
 
 void WeightedMenuManager::insertToolBarSeparator(int weight)
 {
-  if (toolBar_ == NULL)
+  if (toolBar_ == nullptr)
     return;
-  QAction* separator = NULL;
+  QAction* separator = nullptr;
   WeightedMenuManager::insertBefore_(toolBar_, weight, separator);
 }
 
 void WeightedMenuManager::insertWidgetBefore_(QWidget* parentWidget, int weight, QWidget* newWidget)
 {
-  if (parentWidget == NULL || newWidget == NULL)
+  if (parentWidget == nullptr || newWidget == nullptr)
     return;
   // Pull out the layout, because that's really what we're working with
   QBoxLayout* layout = qobject_cast<QBoxLayout*>(parentWidget->layout());
-  if (layout == NULL)
+  if (layout == nullptr)
     return;
 
   // Figure out the insert-before based on the weights
@@ -366,14 +366,14 @@ void WeightedMenuManager::insertWidgetBefore_(QWidget* parentWidget, int weight,
 
 void WeightedMenuManager::insertStatusBarWidget(int weight, QWidget* widget)
 {
-  if (statusBar_ == NULL)
+  if (statusBar_ == nullptr)
     return;
   insertWidgetBefore_(statusBar_, weight, widget);
 }
 
 void WeightedMenuManager::insertStatusBarAction(int weight, const simQt::Action* action)
 {
-  if (statusBar_ == NULL)
+  if (statusBar_ == nullptr)
     return;
   // Set up a new QToolButton
   QToolButton* newButton = new QToolButton(statusBar_);
@@ -388,10 +388,10 @@ void WeightedMenuManager::insertStatusBarAction(int weight, const simQt::Action*
 
 QList<int> WeightedMenuManager::widgetWeights_(QWidget* widget) const
 {
-  if (widget == NULL)
+  if (widget == nullptr)
     return QList<int>();
   const QBoxLayout* layout = qobject_cast<QBoxLayout*>(widget->layout());
-  if (layout == NULL)
+  if (layout == nullptr)
     return QList<int>();
 
   // We store the weights are stored in a named property in the QWidget

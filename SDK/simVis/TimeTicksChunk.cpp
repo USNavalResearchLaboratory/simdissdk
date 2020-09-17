@@ -45,11 +45,11 @@ TimeTicksChunk::TimeTicksChunk(unsigned int maxSize, Type type, double lineLengt
 
 TimeTicksChunk::~TimeTicksChunk()
 {
-  lineGroup_ = NULL;
-  line_ = NULL;
-  point_ = NULL;
-  largePoint_ = NULL;
-  line_ = NULL;
+  lineGroup_ = nullptr;
+  line_ = nullptr;
+  point_ = nullptr;
+  largePoint_ = nullptr;
+  line_ = nullptr;
 }
 
 bool TimeTicksChunk::addPoint(const Locator& tickLocator, double time, const osg::Vec4& color, bool large)

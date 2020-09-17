@@ -132,7 +132,7 @@ ViewManagerLogDbAdapter::~ViewManagerLogDbAdapter()
 void ViewManagerLogDbAdapter::install(simVis::ViewManager* viewManager)
 {
   // Already installed?
-  if (viewManager == NULL || std::find(viewManagers_.begin(), viewManagers_.end(), viewManager) != viewManagers_.end())
+  if (viewManager == nullptr || std::find(viewManagers_.begin(), viewManagers_.end(), viewManager) != viewManagers_.end())
     return;
 
   // Retrieve the views and install on each
@@ -153,7 +153,7 @@ void ViewManagerLogDbAdapter::uninstall(simVis::ViewManager* viewManager)
 {
   // Already installed?
   ViewManagerList::iterator vmlIter = std::find(viewManagers_.begin(), viewManagers_.end(), viewManager);
-  if (viewManager == NULL || vmlIter == viewManagers_.end())
+  if (viewManager == nullptr || vmlIter == viewManagers_.end())
     return;
 
   // Remove it from lists first to avoid callbacks

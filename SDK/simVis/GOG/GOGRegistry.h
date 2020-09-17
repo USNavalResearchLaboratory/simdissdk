@@ -77,7 +77,7 @@ public:
 
   /**
    * Fetched the map node associated with the registry
-   * @return A map node, or NULL if this is a localized object
+   * @return A map node, or nullptr if this is a localized object
    */
   osgEarth::MapNode* getMapNode() const { return mapNode_.get(); }
 

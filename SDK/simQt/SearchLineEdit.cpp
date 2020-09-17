@@ -52,8 +52,8 @@ class NoDisabledStyle : public QProxyStyle
 
 SearchLineEdit::SearchLineEdit(QWidget* parent)
   : QLineEdit(parent),
-  searchTimer_(NULL),
-  iconAction_(NULL),
+  searchTimer_(nullptr),
+  iconAction_(nullptr),
   iconEnabled_(true)
 {
   // Configure the timer
@@ -89,11 +89,11 @@ SearchLineEdit::SearchLineEdit(QWidget* parent)
 SearchLineEdit::~SearchLineEdit()
 {
   delete searchTimer_;
-  searchTimer_ = NULL;
+  searchTimer_ = nullptr;
   delete iconAction_;
-  iconAction_ = NULL;
+  iconAction_ = nullptr;
   delete proxyStyle_;
-  proxyStyle_ = NULL;
+  proxyStyle_ = nullptr;
 }
 
 const QPixmap* SearchLineEdit::searchPixmap() const
@@ -101,7 +101,7 @@ const QPixmap* SearchLineEdit::searchPixmap() const
   QLabel* label = dynamic_cast<QLabel*>(iconAction_->defaultWidget());
   // The QWidgetAction should only have QLabel
   assert(label);
-  return label->pixmap();
+  return label ? label->pixmap() : nullptr;
 }
 
 int SearchLineEdit::searchDelayInterval() const
@@ -119,7 +119,8 @@ void SearchLineEdit::setSearchPixmap(const QPixmap& pixmap)
   QLabel* label = dynamic_cast<QLabel*>(iconAction_->defaultWidget());
   // The QWidgetAction should only have QLabel
   assert(label);
-  label->setPixmap(pixmap);
+  if (label)
+    label->setPixmap(pixmap);
 }
 
 void SearchLineEdit::setSearchDelayInterval(int msec)

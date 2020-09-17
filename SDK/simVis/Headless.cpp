@@ -37,8 +37,8 @@ bool simVis::isHeadless()
 bool simVis::isHeadless()
 {
   // UNIX systems that cannot XOpenDisplay() are considered headless
-  Display* d = XOpenDisplay(NULL);
-  if (d != NULL)
+  Display* d = XOpenDisplay(nullptr);
+  if (d != nullptr)
   {
     XCloseDisplay(d);
     return false;

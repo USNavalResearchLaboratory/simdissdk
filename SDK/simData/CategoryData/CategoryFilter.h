@@ -240,7 +240,7 @@ public:
 
   /**
   * Set the regExp for the specified category name. This regular expression will be used to match against the value
-  * for this category name. Pass in NULL or a RegExp with empty string to remove the entry for the specified category
+  * for this category name. Pass in nullptr or a RegExp with empty string to remove the entry for the specified category
   * name.  Note that when a regular expression is set for a category, the regular expression supersedes
   * any category checkmarks for that category name.
   * @param[in] nameInt  int value of the category name
@@ -275,7 +275,7 @@ public:
   * @param checksString serialization of the category filter
   * @param skipEmptyCategories if true, optimize filter by skipping unchecked categories
   * @param regExpFactory Factory to use for generating regular expressions in the checks string.  If
-  *   NULL, then filters with regular expressions will not be parsed properly.
+  *   nullptr, then filters with regular expressions will not be parsed properly.
   * @return true on success, false if there is any problem
   */
   bool deserialize(const std::string &checksString, bool skipEmptyCategories, RegExpFilterFactory* regExpFactory);
@@ -309,7 +309,7 @@ public:
   void getNames(std::vector<int>& names) const;
   /** Retrieves the values associated with the name.  This may be empty if a regular expression is applied to the name. */
   void getValues(int nameInt, ValuesCheck& checks) const;
-  /** Retrieves the values regular expression for the given name int.  May be NULL if not set. */
+  /** Retrieves the values regular expression for the given name int.  May be nullptr if not set. */
   const simData::RegExpFilter* getRegExp(int nameInt) const;
   /** Retrieves the values regular expression string for the given name int.  May be empty string if not set. */
   std::string getRegExpPattern(int nameInt) const;

@@ -23,6 +23,7 @@
 #include "osg/Depth"
 #include "osg/BlendFunc"
 #include "osgUtil/CullVisitor"
+#include "osgEarth/EllipsoidIntersector"
 #include "osgEarth/StringUtils"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/VirtualProgram"
@@ -53,6 +54,7 @@ simData::ObjectId ProjectorManager::ProjectorLayer::id() const
   return id_;
 }
 
+//-------------------------------------------------------------------------
 /**
  * Cull callback for a projector layer that will update the
  * texture projection matrix. Since we need the inverse view
@@ -70,9 +72,12 @@ public:
 
   void operator()(osg::Node* node, osg::NodeVisitor* nv) const
   {
+    osg::ref_ptr<ProjectorNode> proj;
+    if (!proj_.lock(proj) || !proj.valid())
+      return;
     osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
     osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
-    osg::Matrixf projMat = cv->getCurrentCamera()->getInverseViewMatrix() * proj_->getTexGenMatrix();
+    const osg::Matrixf& projMat = cv->getCurrentCamera()->getInverseViewMatrix() * proj->getTexGenMatrix();
     ss->addUniform(new osg::Uniform("simProjTexGenMat", projMat));
     cv->pushStateSet(ss.get());
     traverse(node, nv);
@@ -80,9 +85,10 @@ public:
   }
 
 private:
-  osg::ref_ptr<ProjectorNode> proj_;
+  osg::observer_ptr<ProjectorNode> proj_;
 };
 
+//-------------------------------------------------------------------------
 /**
  * A class to listen to the map for new layers being added
  */
@@ -103,11 +109,18 @@ private:
   ProjectorManager& manager_;
 };
 
+//-------------------------------------------------------------------------
+
 ProjectorManager::ProjectorManager()
   : needReorderProjectorLayers_(false)
 {
   setCullingActive(false);
   mapListener_ = new MapListener(*this);
+
+  // using osg default WGS-84 ellipsoid
+  const osg::EllipsoidModel wgs84EllipsoidModel;
+  // Passing address of a temporary, but it's OK because it's not retained by EllipsoidIntersector
+  ellipsoidIntersector_ = std::make_shared<osgEarth::Util::EllipsoidIntersector>(&wgs84EllipsoidModel);
 }
 
 ProjectorManager::~ProjectorManager()
@@ -195,6 +208,9 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
   projStateSet->setTextureAttribute(PROJECTOR_TEXTURE_UNIT, proj->getTexture());
 
   proj->addUniforms(projStateSet);
+
+  // provide the calculator to the projector so that the projector can calc its ellipsoid point
+  proj->setCalculator(ellipsoidIntersector_);
 }
 
 void ProjectorManager::unregisterProjector(const ProjectorNode* proj)

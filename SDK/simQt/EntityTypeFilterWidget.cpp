@@ -68,7 +68,7 @@ EntityTypeFilterWidget::EntityTypeFilterWidget(QWidget* parent, unsigned int typ
 EntityTypeFilterWidget::~EntityTypeFilterWidget()
 {
   delete ui_;
-  ui_ = NULL;
+  ui_ = nullptr;
 }
 
 unsigned int EntityTypeFilterWidget::getSelections() const

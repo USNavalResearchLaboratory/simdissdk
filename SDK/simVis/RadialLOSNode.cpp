@@ -263,9 +263,9 @@ void RadialLOSNode::refreshGeometry_()
 
   unsigned int numVerts = 1u + radials.size() * samplesPerRadial;
 
-  osg::Vec3Array*        verts  = NULL;
-  osg::Vec4Array*        colors = NULL;
-  osg::DrawElementsUInt* tris   = NULL;
+  osg::Vec3Array*        verts  = nullptr;
+  osg::Vec4Array*        colors = nullptr;
+  osg::DrawElementsUInt* tris   = nullptr;
 
   if (rebuildGeometry)
   {

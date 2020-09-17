@@ -50,16 +50,16 @@ static const int INTERVAL_SHORT = 2000;
 
 ToastOnWidget::ToastOnWidget(QWidget* widget)
   : widget_(widget),
-    hideTimer_(NULL),
-    popIn_(NULL),
-    popOut_(NULL)
+    hideTimer_(nullptr),
+    popIn_(nullptr),
+    popOut_(nullptr)
 {
   // Set up the toast button
   if (widget_)
     toast_ = new ClickableLabel(widget_);
   else
   {
-    // This shouldn't happen; indicates that we were given a NULL widget.
+    // This shouldn't happen; indicates that we were given a nullptr widget.
     assert(0);
     return;
   }

@@ -50,7 +50,7 @@ public:
   WeightedMenuManager(bool debugMenuWeights);
   virtual ~WeightedMenuManager();
 
-  // Set the menu, tool, and status bars to use; may be NULL
+  // Set the menu, tool, and status bars to use; may be nullptr
   void setMenuBar(QWidget* menuBar);
   void setToolBar(QWidget* toolBar);
   void setStatusBar(QWidget* statusBar);

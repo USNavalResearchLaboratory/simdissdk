@@ -35,6 +35,7 @@
 #include "simVis/GOG/LatLonAltBox.h"
 #include "simVis/GOG/Line.h"
 #include "simVis/GOG/LineSegs.h"
+#include "simVis/GOG/Orbit.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Points.h"
 #include "simVis/GOG/Polygon.h"
@@ -87,6 +88,7 @@ GOGRegistry::GOGRegistry(osgEarth::MapNode* mapNode)
   add("points",       new SF<Points>());
   add("sphere",       new SF<Sphere>());
   add("imageoverlay", new SF<ImageOverlay>());
+  add("orbit",        new SF<Orbit>());
 }
 
 GOGRegistry::GOGRegistry(const GOGRegistry& rhs)
@@ -105,14 +107,14 @@ GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const G
   const osgEarth::Style& overrideStyle, const GOGContext& context, const GogMetaData& metaData,
   GogFollowData& followData) const
 {
-  GogNodeInterface* result = NULL;
+  GogNodeInterface* result = nullptr;
   std::string key = osgEarth::toLower(parsedShape.shape());
 
   // don't allow attached GOGs with absolute values
   if (nodeType == GOGNODE_HOSTED && parsedShape.hasValue(GOG_ABSOLUTE))
   {
     SIM_WARN << "Attempting to load attached GOG with absolute points\n";
-    return NULL;
+    return nullptr;
   }
   DeserializerTable::const_iterator i = deserializers_.find(key);
   if (i != deserializers_.end())

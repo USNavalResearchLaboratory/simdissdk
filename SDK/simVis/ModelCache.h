@@ -85,9 +85,9 @@ public:
    * @param uri Location of the model to load.  This class does not explicitly pass the string
    *  through the simVis::Registry::findModelFile() method, so be sure to call that if the
    *  URI is not going to be automatically found by OSG built-in mechanisms.
-   * @param pIsImage If non-NULL, will be set to true or false based on whether the URI represents
+   * @param pIsImage If non-nullptr, will be set to true or false based on whether the URI represents
    *  an image file that needs billboarding.
-   * @return A node, or NULL if no file was found.
+   * @return A node, or nullptr if no file was found.
    */
   osg::Node* getOrCreateIconModel(const std::string& uri, bool* pIsImage);
 

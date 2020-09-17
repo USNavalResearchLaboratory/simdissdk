@@ -42,14 +42,14 @@ public:
   /**
     * Returns an existing RFPropagationFacade object for the specified beam entity
     * @param beamId ID of a beam to retrieve RF Propagation data
-    * @return RFPropagationData object pointer, NULL if specified beamId does not have a RFPropagationFacade Object
+    * @return RFPropagationData object pointer, nullptr if specified beamId does not have a RFPropagationFacade Object
     */
   virtual RFPropagationFacade* getRFPropagation(simData::ObjectId beamId) const = 0;
 
   /**
    * Returns existing or newly created RFPropagationFacade object for the specified beam entity, new objects are owned by this manager
    * @param beamId ID of a beam to retrieve RF Propagation data
-   * @return RFPropagationData object pointer, NULL if specified beamId is not a beam entity ID
+   * @return RFPropagationData object pointer, nullptr if specified beamId is not a beam entity ID
    */
   virtual RFPropagationFacade* getOrCreateRFPropagation(simData::ObjectId beamId) = 0;
 
@@ -74,11 +74,11 @@ public:
   }
   virtual simRF::RFPropagationFacade* getRFPropagation(simData::ObjectId id) const
   {
-    return NULL;
+    return nullptr;
   }
   virtual simRF::RFPropagationFacade* getOrCreateRFPropagation(simData::ObjectId id)
   {
-    return NULL;
+    return nullptr;
   }
   virtual int loadFiles(simData::ObjectId beamId, const std::vector<std::string>& files)
   {

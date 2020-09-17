@@ -90,7 +90,7 @@ namespace simVis { namespace GOG
     const simCore::UnitsRegistry* unitsRegistry_;
 
     GOGContext()
-      : unitsRegistry_(NULL)
+      : unitsRegistry_(nullptr)
     {
     }
   };
@@ -129,7 +129,8 @@ namespace simVis { namespace GOG
     GOG_HEMISPHERE,
     GOG_LATLONALTBOX,
     GOG_CONE,
-    GOG_IMAGEOVERLAY
+    GOG_IMAGEOVERLAY,
+    GOG_ORBIT
   };
 
   /** Describes the original load format of the shape */

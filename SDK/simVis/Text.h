@@ -44,7 +44,7 @@ namespace simVis
 
     virtual osg::Object* cloneType() const { return new Text(); }
     virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new Text(*this,copyop); }
-    virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const Text*>(obj)!=NULL; }
+    virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const Text*>(obj)!=nullptr; }
     virtual const char* className() const { return "Text"; }
     virtual const char* libraryName() const { return "simVis"; }
 

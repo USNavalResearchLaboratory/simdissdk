@@ -247,7 +247,7 @@ public:
   /**
   * Find an entity by its unique ID.
   * @param id Unique entity ID
-  * @return   Entity node, or NULL if not found
+  * @return   Entity node, or nullptr if not found
   */
   EntityNode* find(const simData::ObjectId &id) const;
 
@@ -255,14 +255,14 @@ public:
   * Returns the host platform for the given entity
   * If entity is a platform it will return itself
   * @param entity Need its host platform
-  * @return the host platform for the given entity, or NULL if not found (orphan)
+  * @return the host platform for the given entity, or nullptr if not found (orphan)
   */
   const EntityNode* getHostPlatform(const EntityNode* entity) const;
 
   /**
   * Find a node and casts it to the requested type (convenience function)
   * @param id Unique entity ID
-  * @return   Entity node, cast to the requested type, or NULL if not found.
+  * @return   Entity node, cast to the requested type, or nullptr if not found.
   */
   template<typename T>
   T* find(const simData::ObjectId &id) const
@@ -276,7 +276,7 @@ public:
   * @param x        X mouse coordinate
   * @param y        Y mouse coordinate
   * @param typeMask Traversal mask of node type to find, or ~0 to find anything
-  * @return         Entity node, or NULL if nothing was hit
+  * @return         Entity node, or nullptr if nothing was hit
   */
   EntityNode* find(osg::View *view, float x, float y, int typeMask = ~0) const;
 
@@ -296,9 +296,9 @@ public:
   /**
    * Remove entities from the scenario.
    * @param[in ] dataStore Remove entities that originated from this data store.
-   *             Pass in NULL to remove all entities regardless of origin.
+   *             Pass in nullptr to remove all entities regardless of origin.
    */
-  void clearEntities(simData::DataStore* dataStore = NULL);
+  void clearEntities(simData::DataStore* dataStore = nullptr);
 
   /**
    * Remove the entity referenced by 'id' from the entity list and from

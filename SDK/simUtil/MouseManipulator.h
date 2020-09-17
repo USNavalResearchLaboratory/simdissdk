@@ -90,8 +90,8 @@ typedef std::shared_ptr<MouseManipulator> MouseManipulatorPtr;
 class SDKUTIL_EXPORT MouseManipulatorAdapter : public MouseManipulator
 {
 public:
-  /** Instantiate this adapter around the provided GUIEventHandler.  This may be NULL. */
-  explicit MouseManipulatorAdapter(osgGA::GUIEventHandler* handler=NULL);
+  /** Instantiate this adapter around the provided GUIEventHandler.  This may be nullptr. */
+  explicit MouseManipulatorAdapter(osgGA::GUIEventHandler* handler=nullptr);
   virtual ~MouseManipulatorAdapter();
 
   /** Mouse button pushed, returns non-zero on handled */
@@ -113,7 +113,7 @@ public:
   virtual void activate();
   virtual void deactivate();
 
-  /** Retrieves the underlying GUI Event Handler that, if non-NULL, defines the default behavior for adapter. */
+  /** Retrieves the underlying GUI Event Handler that, if non-nullptr, defines the default behavior for adapter. */
   osgGA::GUIEventHandler* handler() const;
   /** Changes the underlying GUI Event Handler used for default behavior in the adapter. */
   void setHandler(osgGA::GUIEventHandler* handler);

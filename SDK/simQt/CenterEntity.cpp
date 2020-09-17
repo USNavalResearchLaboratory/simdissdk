@@ -83,9 +83,9 @@ void CenterEntity::centerOnEntity(uint64_t id, bool force)
     return;
 
   simVis::EntityNode* node = getViewCenterableNode(id);
-  if ((node != NULL) && (force  || (node->isActive() && node->isVisible())))
+  if ((node != nullptr) && (force  || (node->isActive() && node->isVisible())))
   {
-    if (focusManager_->getFocusedView() != NULL)
+    if (focusManager_->getFocusedView() != nullptr)
     {
       focusManager_->getFocusedView()->tetherCamera(node);
     }
@@ -100,7 +100,7 @@ void CenterEntity::setCentroidManager(simVis::CentroidManager* centroidManager)
 simVis::EntityNode* CenterEntity::getViewCenterableNode(uint64_t id) const
 {
   if (!scenarioManager_ || !focusManager_)
-    return NULL;
+    return nullptr;
 
   auto node = focusManager_->getFocusedView()->getModelNodeForTether(scenarioManager_->find(id));
   return focusManager_->getFocusedView()->getEntityNode(node);
@@ -162,7 +162,7 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
   for (auto it = ids.begin(); it != ids.end(); ++it)
   {
     auto node = centerEntity_.getViewCenterableNode(*it);
-    if ((node == NULL) || (node->isActive() && !node->isVisible()))
+    if ((node == nullptr) || (node->isActive() && !node->isVisible()))
     {
       tree_.setUseCenterAction(false, tr("Inactive entity selected"));
       return;
@@ -179,7 +179,7 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
       }
 
       // Make sure time controls are enabled and that the scenario is in file mode
-      if ((dataStore_.getBoundClock() == NULL) || dataStore_.getBoundClock()->controlsDisabled() || dataStore_.getBoundClock()->isLiveMode())
+      if ((dataStore_.getBoundClock() == nullptr) || dataStore_.getBoundClock()->controlsDisabled() || dataStore_.getBoundClock()->isLiveMode())
       {
         tree_.setUseCenterAction(false, tr("Inactive entity selected"));
         return;
@@ -225,7 +225,7 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
 
 void BindCenterEntityToEntityTreeComposite::centerOnEntity_(uint64_t id)
 {
-  if ((newTime_ != -1.0) && (dataStore_.getBoundClock() != NULL) && !dataStore_.getBoundClock()->controlsDisabled() && !dataStore_.getBoundClock()->isLiveMode())
+  if ((newTime_ != -1.0) && (dataStore_.getBoundClock() != nullptr) && !dataStore_.getBoundClock()->controlsDisabled() && !dataStore_.getBoundClock()->isLiveMode())
     dataStore_.getBoundClock()->setTime(simCore::TimeStamp(dataStore_.referenceYear(), newTime_));
 
   // Need to force the center because the setTime has not been process so the entity may not yet be valid
@@ -237,13 +237,13 @@ double BindCenterEntityToEntityTreeComposite::getPlatformNearestTime_(uint64_t i
   // First check the visible flag
   simData::DataStore::Transaction trans;
   auto pref = dataStore_.platformPrefs(id, &trans);
-  if ((pref == NULL) || !pref->commonprefs().draw() || !pref->commonprefs().datadraw())
+  if ((pref == nullptr) || !pref->commonprefs().draw() || !pref->commonprefs().datadraw())
     return -1.0;
   trans.release(&pref);
 
   // Next check data points
   auto slice = dataStore_.platformUpdateSlice(id);
-  if ((slice == NULL) || (slice->numItems() == 0))
+  if ((slice == nullptr) || (slice->numItems() == 0))
     return -1.0;
 
   const auto time = dataStore_.updateTime();
@@ -251,10 +251,10 @@ double BindCenterEntityToEntityTreeComposite::getPlatformNearestTime_(uint64_t i
 
   // Since there is a check above for at least one point, previous or next must be set
 
-  if (iter.peekNext() == NULL)
+  if (iter.peekNext() == nullptr)
     return iter.peekPrevious()->time();
 
-  if (iter.peekPrevious() == NULL)
+  if (iter.peekPrevious() == nullptr)
     return iter.peekNext()->time();
 
   const double nextDelta = iter.peekNext()->time() - time;
@@ -268,12 +268,12 @@ double BindCenterEntityToEntityTreeComposite::getCustomRenderingNearestTime_(uin
   // First check the visible flag
   simData::DataStore::Transaction trans;
   auto pref = dataStore_.customRenderingPrefs(id, &trans);
-  if ((pref == NULL) || !pref->commonprefs().draw())
+  if ((pref == nullptr) || !pref->commonprefs().draw())
     return -1.0;
   trans.release(&pref);
 
   auto commands = dataStore_.customRenderingCommandSlice(id);
-  if ((commands == NULL) || (commands->numItems() == 0))
+  if ((commands == nullptr) || (commands->numItems() == 0))
     return -1.0;
 
   const auto time = dataStore_.updateTime();
@@ -300,7 +300,7 @@ double BindCenterEntityToEntityTreeComposite::getCustomRenderingEarlierTime_(dou
   auto iter = slice->upper_bound(searchTime);
 
   // Custom Render code enforces no repeats on data draw, so this is safe
-  while (iter.peekPrevious() != NULL)
+  while (iter.peekPrevious() != nullptr)
   {
     auto previous = iter.previous();
     if (previous->has_updateprefs() &&
@@ -324,7 +324,7 @@ double BindCenterEntityToEntityTreeComposite::getCustomRenderingLaterTime_(doubl
   auto iter = slice->upper_bound(searchTime);
 
   // Custom Render code enforces no repeats on data draw, so this is safe
-  while (iter.peekNext() != NULL)
+  while (iter.peekNext() != nullptr)
   {
     auto next = iter.next();
     if (next->has_updateprefs() &&

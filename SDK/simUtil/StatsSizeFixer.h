@@ -101,7 +101,7 @@ private:
     static const double STATS_HEIGHT = 1024;
 
     osg::Camera* camera = stats_->getCamera();
-    if (camera->getGraphicsContext() == NULL)
+    if (camera->getGraphicsContext() == nullptr)
       return;
     camera->setProjectionMatrixAsOrtho2D(0, windowWidth / sizeMultiplier_,
       STATS_HEIGHT - windowHeight * SCREEN_RATIO / sizeMultiplier_, STATS_HEIGHT);

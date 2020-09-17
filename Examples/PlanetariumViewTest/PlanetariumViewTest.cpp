@@ -319,7 +319,7 @@ int main(int argc, char **argv)
   app.platformId = addPlatform(app.dataStore, EXAMPLE_SHIP_ICON);
 
   // place some random beams.
-  ::srand(time(NULL));
+  ::srand(time(nullptr));
   for (int i=0; i<numBeams; ++i)
   {
     double az, el, roll;

@@ -31,14 +31,14 @@ EntityCategoryFilter::EntityCategoryFilter(simData::DataStore* dataStore, Widget
   : EntityFilter(),
     categoryFilter_(new simData::CategoryFilter(dataStore, true)),
     widgetType_(widgetType),
-    settings_(NULL)
+    settings_(nullptr)
 {
 }
 
 EntityCategoryFilter::~EntityCategoryFilter()
 {
   delete categoryFilter_;
-  categoryFilter_ = NULL;
+  categoryFilter_ = nullptr;
 }
 
 bool EntityCategoryFilter::acceptEntity(simData::ObjectId id) const
@@ -64,7 +64,7 @@ QWidget* EntityCategoryFilter::widget(QWidget* newWidgetParent) const
   }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 void EntityCategoryFilter::getFilterSettings(QMap<QString, QVariant>& settings) const

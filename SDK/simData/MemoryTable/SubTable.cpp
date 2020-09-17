@@ -91,7 +91,7 @@ private:
   TableStatus setCellValue_(TableColumnId columnId, T& value)
   {
     DataColumn* column = subTable_.findColumn_(columnId);
-    if (column == NULL)
+    if (column == nullptr)
       return TableStatus::Error("Column does not exist in subtable.");
     if (!insertRow_)
       return column->replace(isFreshBin_, rowIndex_, value);
@@ -149,7 +149,7 @@ private:
 
   void notifyObserver_(SubTable* newTable, const std::vector<DataColumn*>& startingColumns)
   {
-    if (splitObserver_.get() == NULL)
+    if (splitObserver_.get() == nullptr)
     {
       // Indicates we have a memory leak because no one is available
       // to take ownership of the newly created subtable.
@@ -275,7 +275,7 @@ SubTable::SubTable(TimeContainer* newTimeContainer, TableId tableId)
   tableId_(tableId)
 {
   // Assertion failure means the caller gave us a bad time container to use
-  assert(timeContainer_ != NULL && timeContainer_->size() == 0);
+  assert(timeContainer_ != nullptr && timeContainer_->size() == 0);
 }
 
 SubTable::SubTable(const TimeContainer& copyTimes, const std::vector<DataColumn*>& withColumns, double withoutTimeStamp, TableId tableId)
@@ -329,7 +329,7 @@ TableStatus SubTable::addColumn(const std::string& columnName, TableColumnId col
     return TableStatus::Error("Attempting to add column to a non-empty subtable, violates NULL-less state.");
   DataColumn* newColumn = new DataColumn(timeContainer_, columnName, tableId_, columnId, storageType, unitType);
   columns_.push_back(newColumn);
-  if (newCol != NULL) *newCol = newColumn;
+  if (newCol != nullptr) *newCol = newColumn;
 
   // Assertion failure means reuse of IDs
   assert(columnMap_.find(columnId) == columnMap_.end());
@@ -398,7 +398,7 @@ simData::DelayedFlushContainerPtr SubTable::flush(TableColumnId id, SplitObserve
   }
 
   // Complex case: Flushing one column among many
-  if (splitObserver.get() == NULL)
+  if (splitObserver.get() == nullptr)
   {
     // Split observer is required when flushing a single column.
     // Without it, no one will take ownership of the new sub table
@@ -406,7 +406,7 @@ simData::DelayedFlushContainerPtr SubTable::flush(TableColumnId id, SplitObserve
     return DelayedFlushContainerPtr(deq);
   }
 
-  DataColumn* removedCol = NULL;
+  DataColumn* removedCol = nullptr;
   for (std::vector<DataColumn*>::const_iterator i = columns_.begin(); i != columns_.end(); ++i)
   {
     if ((*i)->columnId() == id)
@@ -418,7 +418,7 @@ simData::DelayedFlushContainerPtr SubTable::flush(TableColumnId id, SplitObserve
   }
 
   // Didn't find the column in this sub table.  Nothing to do, return
-  if (removedCol == NULL)
+  if (removedCol == nullptr)
     return DelayedFlushContainerPtr(deq);
 
   // Split off the flushed column to a new subtable
@@ -437,14 +437,14 @@ DataColumn* SubTable::findColumn_(TableColumnId columnId) const
 {
   std::map<TableColumnId, DataColumn*>::const_iterator i = columnMap_.find(columnId);
   if (i == columnMap_.end())
-    return NULL;
+    return nullptr;
   return i->second;
 }
 
 TableStatus SubTable::interpolate(TableColumnId columnId, double time, double& value, const TableColumn::Interpolator* interpolator) const
 {
   TableColumn* column = findColumn_(columnId);
-  if (column == NULL)
+  if (column == nullptr)
     return TableStatus::Error("Invalid column index.");
   return column->interpolate(value, time, interpolator);
 }

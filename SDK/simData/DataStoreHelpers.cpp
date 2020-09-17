@@ -29,7 +29,7 @@ namespace simData {
 
 std::string DataStoreHelpers::nameFromId(const ObjectId& objectId, const simData::DataStore* dataStore)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
     return "";
   simData::DataStore::Transaction transaction;
   const simData::CommonPrefs* prefs = dataStore->commonPrefs(objectId, &transaction);
@@ -38,7 +38,7 @@ std::string DataStoreHelpers::nameFromId(const ObjectId& objectId, const simData
 
 std::string DataStoreHelpers::aliasFromId(const ObjectId& objectId, const simData::DataStore* dataStore)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
     return "";
   simData::DataStore::Transaction transaction;
   const simData::CommonPrefs* prefs = dataStore->commonPrefs(objectId, &transaction);
@@ -47,12 +47,12 @@ std::string DataStoreHelpers::aliasFromId(const ObjectId& objectId, const simDat
 
 std::string DataStoreHelpers::nameOrAliasFromId(const ObjectId& objectId, const simData::DataStore* dataStore, bool allowBlankAlias)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
     return "";
   simData::DataStore::Transaction transaction;
   const simData::CommonPrefs* prefs = dataStore->commonPrefs(objectId, &transaction);
 
-  if (prefs == NULL)
+  if (prefs == nullptr)
     return "";
 
   if (prefs->usealias())
@@ -125,7 +125,7 @@ std::string DataStoreHelpers::typeToString(simData::ObjectType entityType)
 
 std::string DataStoreHelpers::typeFromId(ObjectId objectId, const simData::DataStore* dataStore)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
     return "";
   return typeToString(dataStore->objectType(objectId));
 }
@@ -158,7 +158,7 @@ std::string DataStoreHelpers::fullTypeToString(simData::ObjectType entityType)
 
 std::string DataStoreHelpers::fullTypeFromId(ObjectId objectId, const simData::DataStore* dataStore)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
     return "";
   simData::DataStore::Transaction transaction;
   return fullTypeToString(dataStore->objectType(objectId));
@@ -166,7 +166,7 @@ std::string DataStoreHelpers::fullTypeFromId(ObjectId objectId, const simData::D
 
 uint64_t DataStoreHelpers::originalIdFromId(ObjectId objectId, const simData::DataStore* dataStore)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
     return 0;
   simData::ObjectType objType = dataStore->objectType(objectId);
   simData::DataStore::Transaction transaction;
@@ -224,7 +224,7 @@ uint64_t DataStoreHelpers::originalIdFromId(ObjectId objectId, const simData::Da
 
 ObjectId DataStoreHelpers::idByName(const std::string& objectName, const simData::DataStore* dataStore)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
     return 0;
   simData::DataStore::IdList ids;
   dataStore->idListByName(objectName, &ids);
@@ -235,7 +235,7 @@ ObjectId DataStoreHelpers::idByName(const std::string& objectName, const simData
 
 ObjectId DataStoreHelpers::getPlatformHostId(ObjectId objectId, const simData::DataStore* dataStore)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
     return 0;
 
   while (dataStore->objectType(objectId) != simData::PLATFORM)
@@ -251,7 +251,7 @@ ObjectId DataStoreHelpers::getPlatformHostId(ObjectId objectId, const simData::D
 
 std::string DataStoreHelpers::description(const simData::DataStore* dataStore)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
     return 0;
   simData::DataStore::Transaction transaction;
   return dataStore->scenarioProperties(&transaction)->description();
@@ -282,12 +282,12 @@ google::protobuf::Message* DataStoreHelpers::makeMessage(simData::ObjectType ent
   }
 
   assert(false);
-  return NULL;
+  return nullptr;
 }
 
 int DataStoreHelpers::addMediaFile(const std::string& fileName, simData::DataStore* dataStore)
 {
-  if (dataStore == NULL)
+  if (dataStore == nullptr)
     return 1;
 
   if (fileName.empty())
@@ -295,7 +295,7 @@ int DataStoreHelpers::addMediaFile(const std::string& fileName, simData::DataSto
 
   simData::DataStore::Transaction transaction;
   simData::ScenarioProperties* props = dataStore->mutable_scenarioProperties(&transaction);
-  if (props != NULL)
+  if (props != nullptr)
   {
     // Prevent duplicates.
     for (int ii = 0; ii < props->mediafile_size(); ++ii)
@@ -319,18 +319,18 @@ int DataStoreHelpers::addMediaFile(const std::string& fileName, simData::DataSto
 
 simData::DataTable* DataStoreHelpers::getOrCreateDataTable(ObjectId objectId, const std::string& tableName, simData::DataStore* dataStore)
 {
-  if ((dataStore->objectType(objectId) == simData::NONE) || tableName.empty() || (dataStore == NULL))
-    return NULL;
+  if ((dataStore->objectType(objectId) == simData::NONE) || tableName.empty() || (dataStore == nullptr))
+    return nullptr;
 
   simData::DataTableManager& tableManager = dataStore->dataTableManager();
   simData::DataTable* table = tableManager.findTable(objectId, tableName);
 
   // if failed to find the table, create the table.
-  if (table == NULL)
+  if (table == nullptr)
   {
     simData::TableStatus status = tableManager.addDataTable(objectId, tableName, &table);
     if (status.isError())
-      return NULL;
+      return nullptr;
   }
 
   return table;
@@ -339,7 +339,7 @@ simData::DataTable* DataStoreHelpers::getOrCreateDataTable(ObjectId objectId, co
 
 int DataStoreHelpers::getOrCreateColumn(simData::DataTable* table, const std::string& columnName, VariableType storageType, UnitType unitType, simData::DataStore* dataStore, simData::TableColumnId& id)
 {
-  if ((table == NULL) || columnName.empty() || (dataStore == NULL))
+  if ((table == nullptr) || columnName.empty() || (dataStore == nullptr))
     return 1;
 
   simData::TableColumn* column = table->column(columnName);
@@ -350,7 +350,7 @@ int DataStoreHelpers::getOrCreateColumn(simData::DataTable* table, const std::st
   }
 
   // if failed to find the column, create the column
-  simData::TableColumn* newColumn = NULL;
+  simData::TableColumn* newColumn = nullptr;
   if (table->addColumn(columnName, storageType, unitType, &newColumn).isError())
     return 1;
 
@@ -367,7 +367,7 @@ namespace {
     {
       simData::DataStore::Transaction txn;
       const simData::CommonPrefs* prefs = dataStore.commonPrefs(objectId, &txn);
-      if (prefs != NULL)
+      if (prefs != nullptr)
       {
         return prefs->datadraw();
       }
@@ -376,7 +376,7 @@ namespace {
     }
 
     const simData::PlatformUpdateSlice* slice = dataStore.platformUpdateSlice(objectId);
-    if (slice == NULL)
+    if (slice == nullptr)
       return false;
 
     // static platforms are always active
@@ -399,7 +399,7 @@ namespace {
       return false;
 
     const simData::BeamCommandSlice* slice = dataStore.beamCommandSlice(objectId);
-    if (slice == NULL)
+    if (slice == nullptr)
       return false;
 
     // Check the draw state
@@ -449,7 +449,7 @@ namespace {
       return false;
 
     const simData::GateCommandSlice* slice = dataStore.gateCommandSlice(objectId);
-    if (slice == NULL)
+    if (slice == nullptr)
       return false;
 
     // Check the draw state
@@ -477,7 +477,7 @@ namespace {
       return false;
 
     const simData::LaserCommandSlice* slice = dataStore.laserCommandSlice(objectId);
-    if (slice == NULL)
+    if (slice == nullptr)
       return false;
 
     // Check the draw state
@@ -519,7 +519,7 @@ bool isCustomRenderingActive(const simData::DataStore& dataStore, simData::Objec
     return false;
 
   const auto* slice = dataStore.customRenderingCommandSlice(objectId);
-  if (slice == NULL)
+  if (slice == nullptr)
     return false;
 
   // Check the draw state
@@ -584,7 +584,7 @@ double DataStoreHelpers::getUserVerticalDatum(const simData::DataStore& dataStor
   {
     simData::DataStore::Transaction transaction;
     auto sp = dataStore.scenarioProperties(&transaction);
-    if ((sp != NULL) && sp->has_coordinateframe())
+    if ((sp != nullptr) && sp->has_coordinateframe())
       return sp->coordinateframe().verticaldatumuservalue();
     return 0.0;
   }
@@ -592,7 +592,7 @@ double DataStoreHelpers::getUserVerticalDatum(const simData::DataStore& dataStor
   simData::ObjectId platformId = simData::DataStoreHelpers::getPlatformHostId(id, &dataStore);
   simData::DataStore::Transaction transaction;
   const simData::PlatformProperties* prop = dataStore.platformProperties(platformId, &transaction);
-  if (prop != NULL)
+  if (prop != nullptr)
     return prop->coordinateframe().verticaldatumuservalue();
   return 0.0;
 }

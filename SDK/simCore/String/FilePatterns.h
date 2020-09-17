@@ -293,19 +293,27 @@ static const std::string UDP_CAPTURE_FILE_PATTERNS =
   "Data Storage (*.dstor)\n"
   "All Files (*)";
 
-/** Dialog-oriented user-friendly list of SIMDIS 10 Settings files */
+/** Dialog-oriented user-friendly list of SIMDIS 10 Settings files, for loading */
+static const std::string SIMDIS10_SETTINGS_FILE_LOAD_PATTERNS =
+  "SIMDIS 10 Configuration Files (*.ini, *.ini.bak)\n"
+  "All Files (*)";
+/** Dialog-oriented user-friendly list of SIMDIS 10 Settings files, for saving */
 static const std::string SIMDIS10_SETTINGS_FILE_PATTERNS =
   "SIMDIS 10 Configuration Files (*.ini)\n"
   "All Files (*)";
 
-/** Dialog-oriented user-friendly list of Plot-XY Settings files */
+/** Dialog-oriented user-friendly list of Plot-XY Settings files, for loading */
+static const std::string PLOT_SETTINGS_FILE_LOAD_PATTERNS =
+  "Plot-XY Configuration Files (*.ini, *.ini.bak)\n"
+  "All Files (*)";
+/** Dialog-oriented user-friendly list of Plot-XY Settings files, for saving */
 static const std::string PLOT_SETTINGS_FILE_PATTERNS =
   "Plot-XY Configuration Files (*.ini)\n"
   "All Files (*)";
 
 /** Combination of all data file patterns */
 static const std::string ALL_DATA_FILE_PATTERNS = ALL_SIMDIS_FILE_PATTERNS +
-  std::string(",.prefs,.rul,.view,.rcs,.hdf5,") +
+  std::string(",*.prefs,*.rul,*.view,*.svml,*.rcs,*.hdf5,") +
   ALL_GOG_FILE_PATTERNS + std::string(",") +
   ALL_SIMDIS_TEXTURE_FILE_PATTERNS + std::string(",") +
   ALL_MEDIA_FILE_PATTERNS + std::string(",") +

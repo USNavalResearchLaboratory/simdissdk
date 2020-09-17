@@ -519,4 +519,78 @@ void GisNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watc
   setLockAzimuthWhilePanning(false);
 }
 
+// ==========================================================================
+
+BuilderNavigationMode::BuilderNavigationMode(bool enableOverhead, bool watchMode)
+{
+  init_(enableOverhead, watchMode);
+}
+
+BuilderNavigationMode::~BuilderNavigationMode()
+{
+}
+
+void BuilderNavigationMode::init_(bool enableOverhead, bool watchMode)
+{
+  const bool canRotate = !watchMode && !enableOverhead;
+  const bool canZoom = !watchMode;
+
+  // Left mouse
+  bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+  // Right mouse
+  bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
+
+  if (canZoom)
+  {
+    // Scroll wheel
+    NavigationMode::FixedZoomOptions wheelDurationScale;
+    wheelDurationScale.add(EarthManipulator::OPTION_SCALE_Y, 0.4);
+    wheelDurationScale.add(EarthManipulator::OPTION_DURATION, 0.2);
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, 0, wheelDurationScale);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, 0, wheelDurationScale);
+
+    // middle mouse => continuous zoom
+    ContinuousZoomOptions continuousZoomOpts;
+    bindMouse(EarthManipulator::ACTION_ZOOM, osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON, 0, continuousZoomOpts);
+  }
+
+  if (canRotate)
+  {
+    // Shift + left mouse == rotate
+    bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_SHIFT);
+    // right mouse == rotate
+    bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
+  }
+
+  // arrow keys => fixed pan
+  bindKey(EarthManipulator::ACTION_PAN_LEFT, osgGA::GUIEventAdapter::KEY_Left, 0);
+  bindKey(EarthManipulator::ACTION_PAN_RIGHT, osgGA::GUIEventAdapter::KEY_Right, 0);
+  bindKey(EarthManipulator::ACTION_PAN_UP, osgGA::GUIEventAdapter::KEY_Up, 0);
+  bindKey(EarthManipulator::ACTION_PAN_DOWN, osgGA::GUIEventAdapter::KEY_Down, 0);
+
+  if (canZoom)
+  {
+    // ctrl + up/down = zoom in/out
+    bindKey(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::KEY_Up, osgGA::GUIEventAdapter::MODKEY_CTRL);
+    bindKey(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::KEY_Down, osgGA::GUIEventAdapter::MODKEY_CTRL);
+  }
+
+  // ctrl + shift + arrow = rotate around
+  if (canRotate)
+  {
+    const int modkeyMask = osgGA::GUIEventAdapter::MODKEY_CTRL | osgGA::GUIEventAdapter::MODKEY_SHIFT;
+    RotateOptions rotateOptions;
+    bindKey(EarthManipulator::ACTION_ROTATE_LEFT, osgGA::GUIEventAdapter::KEY_Left, modkeyMask, rotateOptions);
+    bindKey(EarthManipulator::ACTION_ROTATE_RIGHT, osgGA::GUIEventAdapter::KEY_Right, modkeyMask, rotateOptions);
+    bindKey(EarthManipulator::ACTION_ROTATE_UP, osgGA::GUIEventAdapter::KEY_Up, modkeyMask, rotateOptions);
+    bindKey(EarthManipulator::ACTION_ROTATE_DOWN, osgGA::GUIEventAdapter::KEY_Down, modkeyMask, rotateOptions);
+  }
+
+  // Set min/max bounds
+  if (enableOverhead)
+    setMinMaxPitch(-90, -90);
+  else
+    setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
+}
+
 }

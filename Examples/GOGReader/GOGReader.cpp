@@ -129,7 +129,7 @@ public:
   {
     centeredGogIndex_.init(0);
     mouseDispatcher_.reset(new simUtil::MouseDispatcher);
-    mouseDispatcher_->setViewManager(NULL);
+    mouseDispatcher_->setViewManager(nullptr);
     latLonElevListener_.reset(new LatLonElevListener());
     setUpMouseManip_(viewer_.get());
     updateStatusAndLabel_();
@@ -202,9 +202,9 @@ private:
       simVis::Viewpoint eyePos = focusedView->getViewpoint();
 
       // update the eye position's focal point
-      focusedView->tetherCamera(NULL);
+      focusedView->tetherCamera(nullptr);
       eyePos.focalPoint() = osgEarth::GeoPoint(osgEarth::SpatialReference::create("wgs84"), position);
-      eyePos.setNode(NULL);
+      eyePos.setNode(nullptr);
 
       focusedView->setViewpoint(eyePos);
       updateStatusAndLabel_();
@@ -322,7 +322,7 @@ private:
 
   void setUpMouseManip_(simVis::Viewer* viewer)
   {
-    if (viewer == NULL || viewer->getSceneManager() == NULL || !mouseDispatcher_)
+    if (viewer == nullptr || viewer->getSceneManager() == nullptr || !mouseDispatcher_)
       return;
     mouseManip_.reset(new simUtil::MousePositionManipulator(viewer->getSceneManager()->getMapNode(), viewer->getSceneManager()->getOrCreateAttachPoint("Map Callbacks")));
     mouseManip_->setTerrainResolution(0.0001);
@@ -630,7 +630,7 @@ int main(int argc, char** argv)
       statusLabel,
       dataStore,
       showElevation,
-      attach ? platform.get() : NULL);
+      attach ? platform.get() : nullptr);
 
   mainView->getCamera()->addEventCallback(mouseHandler);
   viewer->run();

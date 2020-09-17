@@ -74,7 +74,7 @@ public:
   */
   void setSelectCallback(SelectCallback *callback);
 
-  /// Get the installed acceptance callback, or NULL if none is installed.
+  /// Get the installed acceptance callback, or nullptr if none is installed.
   SelectCallback* getSelectCallback() const;
 
   /**

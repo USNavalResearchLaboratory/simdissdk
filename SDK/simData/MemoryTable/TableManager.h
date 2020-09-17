@@ -89,7 +89,7 @@ public:
     virtual void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime) {}
   };
 
-  /** Sets the new-row data listener for when new table rows are added; use NULL to remove. */
+  /** Sets the new-row data listener for when new table rows are added; use nullptr to remove. */
   void setNewRowDataListener(NewRowDataListenerPtr listener);
 
   /** Internal method for Table to use to alert on new row data */

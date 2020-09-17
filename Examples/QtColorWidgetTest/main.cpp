@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 {
   QApplication app(argc, argv);
 
-  TestColorWidget* colorWidget = new TestColorWidget(NULL);
+  TestColorWidget* colorWidget = new TestColorWidget(nullptr);
   colorWidget->show();
 
   int rv = app.exec();

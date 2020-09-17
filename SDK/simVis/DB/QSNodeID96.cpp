@@ -226,7 +226,7 @@ QSNodeID96 QSNodeID96::operator&(const QSNodeID96& value) const
 //---------------------------------------------------------------------------
 void QSNodeID96::pack(uint8_t* buffer) const
 {
-  if (buffer == NULL)
+  if (buffer == nullptr)
     return;
   beWrite(buffer, &three_);
   beWrite(buffer + sizeof(three_), &two_);
@@ -236,7 +236,7 @@ void QSNodeID96::pack(uint8_t* buffer) const
 //---------------------------------------------------------------------------
 void QSNodeID96::unpack(const uint8_t* buffer)
 {
-  if (buffer == NULL)
+  if (buffer == nullptr)
     return;
   beRead(buffer, &three_);
   beRead(buffer + sizeof(three_), &two_);

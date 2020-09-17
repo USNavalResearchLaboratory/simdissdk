@@ -63,11 +63,11 @@ public:
       parent->removeChild(xform_);
   }
 
-  /** Places a box around the passed in view; if NULL hides the box*/
+  /** Places a box around the passed in view; if nullptr hides the box*/
   void attach(simVis::View* view)
   {
-    // Hide if NULL
-    if (view == NULL)
+    // Hide if nullptr
+    if (view == nullptr)
     {
       xform_->setNodeMask(0);
       return;
@@ -75,7 +75,7 @@ public:
 
     // Calculate the absolute position of the viewport
     simVis::View::Extents extents = view->getExtents();
-    manip_.toAbsoluteExtents_(*view, extents, NULL);
+    manip_.toAbsoluteExtents_(*view, extents, nullptr);
     // Move the matrix to over-top, and turn on node mask
     xform_->setMatrix(osg::Matrix::scale(extents.width_, extents.height_, 1) *
       osg::Matrix::translate(extents.x_, extents.y_, 0));
@@ -165,8 +165,8 @@ void ResizeViewManipulator::setEnabled(bool enabled)
   if (enabled == enabled_)
     return;
   enabled_ = enabled;
-  activeView_ = NULL;
-  rubberBand_->attach(NULL);
+  activeView_ = nullptr;
+  rubberBand_->attach(nullptr);
   setDragPoint_(NONE);
 }
 
@@ -182,10 +182,10 @@ int ResizeViewManipulator::push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActi
     return 0;
 
   // Always clear out active view on mouse push
-  activeView_ = NULL;
+  activeView_ = nullptr;
   osg::ref_ptr<simVis::View> view = static_cast<simVis::View*>(aa.asView());
-  // Ignore events from NULL views and the main view
-  if (view == NULL || view == mainView_.get())
+  // Ignore events from nullptr views and the main view
+  if (view == nullptr || view == mainView_.get())
     return 0;
 
   const osg::Vec2d mousePosition = osg::Vec2d(ea.getX(), ea.getY());
@@ -216,9 +216,9 @@ int ResizeViewManipulator::release(const osgGA::GUIEventAdapter& ea, osgGA::GUIA
     return 0;
 
   // Capture the click and clear out the active view
-  activeView_ = NULL;
+  activeView_ = nullptr;
   rubberBand_->setBold(false);
-  rubberBand_->attach(NULL);
+  rubberBand_->attach(nullptr);
   rubberBand_->highlightCorner(NONE);
 
   // After release, make sure the highlighting is correct.  We can just call move() here to do that
@@ -239,10 +239,10 @@ int ResizeViewManipulator::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActi
 
   // Figure out what view is under the cursor and highlight it
   osg::ref_ptr<simVis::View> underMouse = static_cast<simVis::View*>(aa.asView());
-  // Ignore events from NULL views and the main view
-  if (underMouse == NULL || underMouse == mainView_.get())
+  // Ignore events from nullptr views and the main view
+  if (underMouse == nullptr || underMouse == mainView_.get())
   {
-    rubberBand_->attach(NULL);
+    rubberBand_->attach(nullptr);
     setDragPoint_(NONE);
     return 0;
   }
@@ -360,7 +360,7 @@ ResizeViewManipulator::DragPoint ResizeViewManipulator::calculateDragPoint_(cons
 {
   // Calculate the absolute extents
   simVis::View::Extents extents = view.getExtents();
-  toAbsoluteExtents_(view, extents, NULL);
+  toAbsoluteExtents_(view, extents, nullptr);
 
   // Test the top side
   if (mouseXY.y() > extents.y_ + extents.height_ - EDGE_SIZE)
@@ -403,10 +403,10 @@ void ResizeViewManipulator::toAbsoluteExtents_(const simVis::View& view, simVis:
 
   // Pull out the host's size
   const osg::View* host = view.getHostView();
-  if (host == NULL)
+  if (host == nullptr)
     return;
   const osg::Viewport* rvp = host->getCamera()->getViewport();
-  if (rvp == NULL)
+  if (rvp == nullptr)
     return;
 
   // Calculate the absolute pixels
@@ -425,10 +425,10 @@ void ResizeViewManipulator::toRatioExtents_(const simVis::View& view, simVis::Vi
 
   // Pull out the host's size
   const osg::View* host = view.getHostView();
-  if (host == NULL)
+  if (host == nullptr)
     return;
   const osg::Viewport* rvp = host->getCamera()->getViewport();
-  if (rvp == NULL)
+  if (rvp == nullptr)
     return;
 
   extents.height_ /= rvp->height();

@@ -332,8 +332,10 @@ namespace simVis { namespace GOG
     GOGContext                           context_; ///< Context
     osgEarth::Style                      style_; ///< Style
     osgEarth::optional<osg::Vec3d>       refPointLLA_; ///< Reference point in LLA
-    osgEarth::optional<osg::Vec3d>       centerXYZ_; ///< Center point in XXZ
+    osgEarth::optional<osg::Vec3d>       centerXYZ_; ///< Center point in XYZ
+    osgEarth::optional<osg::Vec3d>       centerXYZ2_; ///< Second center point in XYZ, only valid for some shapes
     osgEarth::optional<osg::Vec3d>       centerLLA_; ///< Center point in LLA
+    osgEarth::optional<osg::Vec3d>       centerLLA2_; ///< Second center point in LLA, only valid for some shapes
     osg::ref_ptr<osgEarth::Geometry>     geom_; ///< Geometry
     bool                                 geomIsLLA_; ///< If true than in LLA; if false in XYZ
     bool                                 geomIsRelative_; ///< If true than GOG is relative; if false GOG is absolute

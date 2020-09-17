@@ -180,12 +180,12 @@ GogNodeInterface* Parser::createGOG(const std::vector<std::string>& lines, const
 
   std::istringstream input(buf.str());
 
-  GogNodeInterface* result = NULL;
+  GogNodeInterface* result = nullptr;
   OverlayNodeVector output;
   std::vector<GogFollowData> followDataVec;
   if (createGOGs(input, nodeType, output, followDataVec))
   {
-    result = output.size() > 0 ? output.front() : NULL;
+    result = output.size() > 0 ? output.front() : nullptr;
   }
   if (!followDataVec.empty())
     followData = followDataVec.front();
@@ -412,7 +412,8 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       tokens[0] == "poly"          ||
       tokens[0] == "polygon"       ||
       tokens[0] == "linesegs"      ||
-      tokens[0] == "cone"
+      tokens[0] == "cone"          ||
+      tokens[0] == "orbit"
       )
     {
       if (currentMetaData.shape != GOG_UNKNOWN)
@@ -566,6 +567,22 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
         printError_(lineNumber, "centerxy/centerxyz command requires at least 2 arguments");
       }
     }
+    else if (tokens[0] == "centerxy2")
+    {
+      if (tokens.size() >= 3)
+      {
+        if (type == SHAPE_UNKNOWN)
+          type = SHAPE_RELATIVE;
+        else if (type == SHAPE_ABSOLUTE)
+          continue;
+        currentMetaData.metadata += line + "\n";
+        current.set(GOG_CENTERXY2, PositionStrings(tokens[1], tokens[2]));
+      }
+      else
+      {
+        printError_(lineNumber, "centerxy2 command requires at least 2 arguments");
+      }
+    }
     else if (tokens[0] == "centerll" || tokens[0] == "centerlla" || tokens[0] == "centerlatlon")
     {
       if (tokens.size() >= 3)
@@ -584,6 +601,21 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       {
         printError_(lineNumber, "centerll/centerlla/centerlatlon command requires at least 2 arguments");
       }
+    }
+    else if (tokens[0] == "centerll2" || tokens[0] == "centerlatlon2")
+    {
+      if (tokens.size() >= 3)
+      {
+        if (type == SHAPE_UNKNOWN)
+          type = SHAPE_ABSOLUTE;
+        else if (type == SHAPE_RELATIVE)
+          continue;
+        currentMetaData.metadata += line + "\n";
+        // note centerll2 only supports lat and lon, altitude for shape must be derived from first center point
+        current.set(GOG_CENTERLL2, PositionStrings(tokens[1], tokens[2]));
+      }
+      else
+        printError_(lineNumber, "centerll2 command requires at least 2 arguments");
     }
     // persistent state modifiers:
     else if (tokens[0] == "linecolor")
@@ -1154,6 +1186,8 @@ GogShape Parser::getShapeFromKeyword(const std::string& keyword)
     return GOG_CONE;
   if (keyword == "imageoverlay")
     return GOG_IMAGEOVERLAY;
+  if (keyword == "orbit")
+    return GOG_ORBIT;
   return GOG_UNKNOWN;
 }
 
@@ -1191,6 +1225,8 @@ std::string Parser::getKeywordFromShape(GogShape shape)
     return "cone";
   case GOG_IMAGEOVERLAY:
     return "imageoverlay";
+  case GOG_ORBIT:
+    return "orbit";
   case GOG_UNKNOWN:
     return "";
   }
@@ -1205,7 +1241,7 @@ bool Parser::loadGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayN
 void Parser::printError_(size_t lineNumber, const std::string& errorText) const
 {
   // Assertion failure means Null Object pattern failed
-  assert(context_.errorHandler_ != NULL);
+  assert(context_.errorHandler_ != nullptr);
   if (context_.errorHandler_)
     context_.errorHandler_->printError(lineNumber, errorText);
 }

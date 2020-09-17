@@ -203,7 +203,7 @@ public:
     int rv = 0;
     simData::DataStore::Transaction transaction;
     const simData::LobGroupProperties* props = source->lobGroupProperties(id, &transaction);
-    rv += SDK_ASSERT(props != NULL);
+    rv += SDK_ASSERT(props != nullptr);
     transaction.complete(&props);
     if (rv != 0)
       throw MemDataStoreAssertException();
@@ -697,7 +697,7 @@ void testGenericData_insert()
     std::vector<simData::GenericData_Entry> entries;
     virtual void operator()(const simData::GenericData *update)
     {
-      if (update == NULL)
+      if (update == nullptr)
         return;
       for (int k = 0; k < update->entry_size(); ++k)
         entries.push_back(update->entry(k));
@@ -728,8 +728,8 @@ void testGenericData_insert()
   gdslice->visit(&sc2);
   mdsAssertEquals(sc2.entries.size(), static_cast<size_t>(0));
 
-  // Doing a visitor with NULL should not crash
-  gdslice->visit(NULL);
+  // Doing a visitor with a nullptr should not crash
+  gdslice->visit(nullptr);
 }
 
 int testGenericData_update()
@@ -948,7 +948,7 @@ int testGenericDataNoExpiration_update()
   // No new keys, but overwrite changes
   ds->update(10000000000.0);
   g2 = gdslice->current();
-  mdsAssertNotEquals(g2, (const simData::GenericData *)NULL);
+  mdsAssertNotEquals(g2, (const simData::GenericData *)nullptr);
   rv += SDK_ASSERT(g2->entry().size() == 5);
   rv += SDK_ASSERT(findOnce(g1, "key1", "value1"));
   rv += SDK_ASSERT(findOnce(g1, "key2", "value2"));
@@ -1435,20 +1435,20 @@ int testUpdateToNonCurrentTime()
   testHelper->addPlatformUpdate(2, platId);
 
   auto slice = ds->platformUpdateSlice(platId);
-  rv += SDK_ASSERT(slice->current() == NULL);
+  rv += SDK_ASSERT(slice->current() == nullptr);
 
   // Time before first point
   ds->update(0.0);
-  rv += SDK_ASSERT(slice->current() == NULL);
+  rv += SDK_ASSERT(slice->current() == nullptr);
   ds->update(2.0);
-  rv += SDK_ASSERT(slice->current() != NULL);
-  if (slice->current() != NULL)
+  rv += SDK_ASSERT(slice->current() != nullptr);
+  if (slice->current() != nullptr)
     rv += SDK_ASSERT(slice->current()->time() == 2.0);
 
   // Go back in time
   ds->update(1.0);
-  rv += SDK_ASSERT(slice->current() != NULL);
-  if (slice->current() != NULL)
+  rv += SDK_ASSERT(slice->current() != nullptr);
+  if (slice->current() != nullptr)
     rv += SDK_ASSERT(slice->current()->time() == 1.0);
 
   // add future point
@@ -1456,26 +1456,26 @@ int testUpdateToNonCurrentTime()
 
   // Continue back in time
   ds->update(1.5);
-  rv += SDK_ASSERT(slice->current() != NULL);
-  if (slice->current() != NULL)
+  rv += SDK_ASSERT(slice->current() != nullptr);
+  if (slice->current() != nullptr)
     rv += SDK_ASSERT(slice->current()->time() == 1.5);
 
   // Jump to before first point
   ds->update(0.0);
-  rv += SDK_ASSERT(slice->current() == NULL);
+  rv += SDK_ASSERT(slice->current() == nullptr);
   ds->update(1.5);
-  rv += SDK_ASSERT(slice->current() != NULL);
-  if (slice->current() != NULL)
+  rv += SDK_ASSERT(slice->current() != nullptr);
+  if (slice->current() != nullptr)
     rv += SDK_ASSERT(slice->current()->time() == 1.5);
   ds->update(1.7);
-  rv += SDK_ASSERT(slice->current() != NULL);
-  if (slice->current() != NULL)
+  rv += SDK_ASSERT(slice->current() != nullptr);
+  if (slice->current() != nullptr)
     rv += SDK_ASSERT(slice->current()->time() == 1.7);
 
   // Finally pick up the last added point
   ds->update(3.0);
-  rv += SDK_ASSERT(slice->current() != NULL);
-  if (slice->current() != NULL)
+  rv += SDK_ASSERT(slice->current() != nullptr);
+  if (slice->current() != nullptr)
     rv += SDK_ASSERT(slice->current()->time() == 3.0);
 
   // Test Commands

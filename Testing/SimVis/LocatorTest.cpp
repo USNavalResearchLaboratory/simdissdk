@@ -88,7 +88,7 @@ int testOnePositionOrientation(simVis::Locator* loc, const simCore::Vec3& pos, c
 
 int testOrientation(simVis::Locator* loc, const simCore::Vec3& pos, simCore::CoordinateSystem coordsys)
 {
-  using namespace simCore;
+  using simCore::DEG2RAD;
   int rv = 0;
 
   // Test extremes
@@ -103,13 +103,13 @@ int testOrientation(simVis::Locator* loc, const simCore::Vec3& pos, simCore::Coo
   // Test local offsets
   // We can have orientations and offsets in the same axes, but anything else will fail as we're only adding them together instead of
   // using rotation matrices.
-  rv += testOnePositionOrientation(loc, pos, Vec3(), simCore::Vec3(0.0 * DEG2RAD, 0.0 * DEG2RAD, 0.0 * DEG2RAD), 145000, coordsys);
-  rv += testOnePositionOrientation(loc, pos, Vec3(30.0 * DEG2RAD, 0.0, 0.0), simCore::Vec3(180.0 * DEG2RAD, 0.0 * DEG2RAD, 0.0 * DEG2RAD), 145000, coordsys);
-  rv += testOnePositionOrientation(loc, pos, Vec3(60.0 * DEG2RAD, 0.0, 0.0), simCore::Vec3(-180.0 * DEG2RAD, 0.0 * DEG2RAD, 0.0 * DEG2RAD), 145000, coordsys);
-  rv += testOnePositionOrientation(loc, pos, Vec3(0.0, -30.0 * DEG2RAD, 0.0), simCore::Vec3(0.0 * DEG2RAD, 90.0 * DEG2RAD, 0.0 * DEG2RAD), 145000, coordsys);
-  rv += testOnePositionOrientation(loc, pos, Vec3(0.0, 60.0 * DEG2RAD, 0.0), simCore::Vec3(0.0 * DEG2RAD, -90.0 * DEG2RAD, 0.0 * DEG2RAD), 145000, coordsys);
-  rv += testOnePositionOrientation(loc, pos, Vec3(0.0, 0.0, 30.0 * DEG2RAD), simCore::Vec3(0.0 * DEG2RAD, 0.0 * DEG2RAD, 180.0 * DEG2RAD), 145000, coordsys);
-  rv += testOnePositionOrientation(loc, pos, Vec3(0.0, 0.0, 60.0 * DEG2RAD), simCore::Vec3(0.0 * DEG2RAD, 0.0 * DEG2RAD, -180.0 * DEG2RAD), 145000, coordsys);
+  rv += testOnePositionOrientation(loc, pos, simCore::Vec3(), simCore::Vec3(0.0 * DEG2RAD, 0.0 * DEG2RAD, 0.0 * DEG2RAD), 145000, coordsys);
+  rv += testOnePositionOrientation(loc, pos, simCore::Vec3(30.0 * DEG2RAD, 0.0, 0.0), simCore::Vec3(180.0 * DEG2RAD, 0.0 * DEG2RAD, 0.0 * DEG2RAD), 145000, coordsys);
+  rv += testOnePositionOrientation(loc, pos, simCore::Vec3(60.0 * DEG2RAD, 0.0, 0.0), simCore::Vec3(-180.0 * DEG2RAD, 0.0 * DEG2RAD, 0.0 * DEG2RAD), 145000, coordsys);
+  rv += testOnePositionOrientation(loc, pos, simCore::Vec3(0.0, -30.0 * DEG2RAD, 0.0), simCore::Vec3(0.0 * DEG2RAD, 90.0 * DEG2RAD, 0.0 * DEG2RAD), 145000, coordsys);
+  rv += testOnePositionOrientation(loc, pos, simCore::Vec3(0.0, 60.0 * DEG2RAD, 0.0), simCore::Vec3(0.0 * DEG2RAD, -90.0 * DEG2RAD, 0.0 * DEG2RAD), 145000, coordsys);
+  rv += testOnePositionOrientation(loc, pos, simCore::Vec3(0.0, 0.0, 30.0 * DEG2RAD), simCore::Vec3(0.0 * DEG2RAD, 0.0 * DEG2RAD, 180.0 * DEG2RAD), 145000, coordsys);
+  rv += testOnePositionOrientation(loc, pos, simCore::Vec3(0.0, 0.0, 60.0 * DEG2RAD), simCore::Vec3(0.0 * DEG2RAD, 0.0 * DEG2RAD, -180.0 * DEG2RAD), 145000, coordsys);
 
   // Test random orientation
   rv += testOnePositionOrientation(loc, pos, simCore::Vec3(15.0 * DEG2RAD, 30.0 * DEG2RAD, 45.0 * DEG2RAD), simCore::Vec3(), 145000, coordsys);
@@ -128,7 +128,7 @@ int testOrientation(simVis::Locator* loc, const simCore::Vec3& pos, simCore::Coo
 
 int testGetLocatorPositionOrientation(simVis::Locator* loc)
 {
-  using namespace simCore;
+  using simCore::DEG2RAD;
   int rv = 0;
 
   // Test extremes
@@ -192,6 +192,44 @@ int testStaticEci(double eciReferenceTime)
   return rv;
 }
 
+// Create two locators, first with base coordinate,
+// and second that adds position and orientation offsets.
+// Test that convenience methods getLocatorPositionOrientation
+// and getLocatorPosition return same values for position
+int testPositionVsPositionOrientation()
+{
+  using simCore::DEG2RAD;
+  int rv = 0;
+
+  osg::ref_ptr<simVis::Locator> locator1 = new simVis::Locator();
+  osg::ref_ptr<simVis::Locator> locator2 = new simVis::Locator(locator1);
+
+  // Create locator with position and orientation
+  simCore::Coordinate coord(
+      simCore::COORD_SYS_LLA,
+      simCore::Vec3(22.0 * DEG2RAD, 123.0 * DEG2RAD, 200),
+      simCore::Vec3(22.0 * DEG2RAD, 30.0 * DEG2RAD, 0));
+
+  locator1->setCoordinate(coord, 0., 0.);
+
+  // add position and orientation offsets to 2nd locator
+  locator2->setLocalOffsets(simCore::Vec3(10., 20., 30.), simCore::Vec3(15.0 * DEG2RAD, 30.0 * DEG2RAD, 45.0 * DEG2RAD));
+
+  // Retrieve the output position in LLA
+  simCore::Vec3 outPosition;
+  simCore::Vec3 outOrientation;
+  simCore::Vec3 outPosition2;
+  locator2->getLocatorPositionOrientation(&outPosition, &outOrientation, simCore::COORD_SYS_LLA);
+  locator2->getLocatorPosition(&outPosition2, simCore::COORD_SYS_LLA);
+
+  // Check that position obtained from getLocatorPositionOrientation matches getLocatorPosition
+  rv += SDK_ASSERT(simCore::areAnglesEqual(outPosition.lat(), outPosition2.lat()));
+  rv += SDK_ASSERT(simCore::areAnglesEqual(outPosition.lon(), outPosition2.lon()));
+  rv += SDK_ASSERT(simCore::areEqual(outPosition.alt(), outPosition2.alt()));
+
+  return rv;
+}
+
 }
 
 int LocatorTest(int argc, char* argv[])
@@ -234,5 +272,6 @@ int LocatorTest(int argc, char* argv[])
     rv += testStaticEci(-10.);
   }
 
+  rv += testPositionVsPositionOrientation();
   return rv;
 }

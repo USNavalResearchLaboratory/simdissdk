@@ -387,7 +387,7 @@ namespace simCore
     /**
     * This method opens a file stream and parses the RCS data
     * @param[in ] fname Input file name
-    * @return valid RadarCrossSection on success, NULL otherwise.
+    * @return valid RadarCrossSection on success, nullptr otherwise.
     */
     static RadarCrossSection* loadRCSFile(const std::string& fname);
   };

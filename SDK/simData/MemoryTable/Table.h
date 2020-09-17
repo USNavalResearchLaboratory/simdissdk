@@ -40,7 +40,7 @@ class DataLimitsProvider;
  * a single entity (or the scenario, if owner ID is 0).  A single entity may have multiple tables
  * (represented by a simData::TableList), but a single data table is associated with only one owner.
  *
- * Tables might have NULL values.  For performance, the in-memory solution subdivides itself into SubTable
+ * Tables might have nullptr values.  For performance, the in-memory solution subdivides itself into SubTable
  * instances.  Each SubTable is null-less.  So this Table implementation is a collection of SubTable
  * instances.
  */

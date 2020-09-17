@@ -37,7 +37,7 @@ SNRDataProvider::SNRDataProvider(const TwoWayPowerDataProvider* twoWayPowerProvi
 
 SNRDataProvider::~SNRDataProvider()
 {
-  twoWayPowerProvider_ = NULL;
+  twoWayPowerProvider_ = nullptr;
 }
 
 double SNRDataProvider::getValueByIndex(unsigned int heightIndex, unsigned int rangeIndex) const

@@ -43,9 +43,9 @@ struct SDKVIS_EXPORT SimdisEntityState : public EntityState
   simRF::RFPropagationFacade* rfPropagation_;  ///< If the entity is a beam this MAY BE set
 
   SimdisEntityState()
-    : node_(NULL),
-    platformHostNode_(NULL),
-    rfPropagation_(NULL)
+    : node_(nullptr),
+    platformHostNode_(nullptr),
+    rfPropagation_(nullptr)
   {
   }
   virtual ~SimdisEntityState()

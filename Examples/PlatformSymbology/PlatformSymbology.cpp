@@ -160,7 +160,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
   )
   : scenario_(scenario),
     view_(view),
-    tetherNode_(NULL),
+    tetherNode_(nullptr),
     labelPos_(0),
     beamMode_(0),
     platformId_(platformId),
@@ -639,7 +639,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
         {
           // save the current tether for restoration
           tetherNode_ = view_->getCameraTether();
-          view_->tetherCamera(NULL);
+          view_->tetherCamera(nullptr);
           s_action->setText(Stringify() << "Tether OFF");
         }
         else

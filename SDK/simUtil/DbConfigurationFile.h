@@ -67,7 +67,7 @@ public:
    * of load() that is only able to load legacy SIMDIS 9 files.
    * @param filename Full path to the configuration file to load (e.g. configDefault.txt)
    * @param quiet If false, errors and warnings are not reported using SIM_NOTIFY.
-   * @return NULL on inability to load.  Else returns a newly allocated osgEarth::Map.
+   * @return nullptr on inability to load.  Else returns a newly allocated osgEarth::Map.
    *    Remember to wrap the return value in an osg::ref_ptr.
    */
   static osgEarth::Map* loadLegacyConfigFile(const std::string& filename, bool quiet=false);
@@ -86,7 +86,7 @@ public:
    * @param filename Name of the file resource to load (should end in .earth).  Expected
    *   to be fully adjusted, e.g. using DbConfigurationFile::resolveFilePath().  Will
    *   be passed as-is to osgDB::readNodeFile().
-   * @return NULL on error, else newly allocated node from osgDB::readNodeFile() with default earth options
+   * @return nullptr on error, else newly allocated node from osgDB::readNodeFile() with default earth options
    */
   static osg::Node* readEarthFile(const std::string& filename);
 
@@ -96,7 +96,7 @@ public:
    * @param istream Input stream holding the .earth file contents
    * @param relativeTo Absolute path to a location used to help resolve relative paths.  Sometimes called "referrer",
    *   or the Database Path in OSG parlance.
-   * @return NULL on error, else newly allocated node from osgDB::ReaderWriter for earth files
+   * @return nullptr on error, else newly allocated node from osgDB::ReaderWriter for earth files
    */
   static osg::Node* readEarthFile(std::istream& istream, const std::string& relativeTo);
 

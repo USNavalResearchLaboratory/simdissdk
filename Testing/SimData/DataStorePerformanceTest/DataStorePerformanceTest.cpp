@@ -258,7 +258,7 @@ public:
           if (!row.empty())
             table->addRow(row);
 
-          // Add a small epsilon to introduce NULLs
+          // Add a small epsilon to introduce nullptrs
           realTime += TIME_EPSILON;
         }
       }
@@ -268,7 +268,7 @@ public:
     };
     AddRowPerTable addRowPerTable(time, rowModulus);
     const simData::TableList* tables = helper_.dataStore()->dataTableManager().tablesForOwner(id);
-    if (tables != NULL)
+    if (tables != nullptr)
       tables->accept(addRowPerTable);
   }
 
@@ -349,11 +349,11 @@ protected:
     simData::DataTableManager& mgr = helper_.dataStore()->dataTableManager();
     for (size_t table = 0; table < numTables; ++table)
     {
-      simData::DataTable* newTable = NULL;
+      simData::DataTable* newTable = nullptr;
       mgr.addDataTable(id, "Table " + asString_(table), &newTable);
       for (size_t col = 0; col < numColPerTable; ++col)
       {
-        newTable->addColumn("Column " + asString_(col), tableVariableType_, 0, NULL);
+        newTable->addColumn("Column " + asString_(col), tableVariableType_, 0, nullptr);
       }
     }
   }

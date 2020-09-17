@@ -48,7 +48,7 @@ public:
 
   /**
   * Create a centroid using the given nodes. Returns a pointer to the
-  * created centroid. Will return NULL if the given view is invalid or
+  * created centroid. Will return nullptr if the given view is invalid or
   * if nodes is empty or filled with invalid pointers.
   * @param inNodes Vector of EntityNodes about which to center the view
   * @param view View to tether to the centroid

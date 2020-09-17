@@ -151,7 +151,7 @@ namespace DataTableViewTest
     ui_->setupUi(this);
 
     // set up entity tree view
-    entityTreeModel_ = new simQt::EntityTreeModel(NULL, ds);
+    entityTreeModel_ = new simQt::EntityTreeModel(nullptr, ds);
     entityTreeComposite_ = ui_->EntityTreeComposite;
     entityTreeComposite_->setModel(entityTreeModel_);
     connect(entityTreeComposite_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(itemsSelected(QList<uint64_t>)));
@@ -180,16 +180,16 @@ namespace DataTableViewTest
 
   MainWindow::~MainWindow()
   {
-    // need to set providers to NULL
-    ui_->DataTableComboBox->setProviders(NULL);
+    // need to set providers to nullptr
+    ui_->DataTableComboBox->setProviders(nullptr);
     delete ui_;
-    ui_ = NULL;
+    ui_ = nullptr;
     delete entityTreeModel_;
-    entityTreeModel_ = NULL;
+    entityTreeModel_ = nullptr;
     delete tableModel_;
-    tableModel_ = NULL;
+    tableModel_ = nullptr;
     delete testHelper_;
-    testHelper_ = NULL;
+    testHelper_ = nullptr;
   }
 
   void MainWindow::addTable_()
@@ -208,7 +208,7 @@ namespace DataTableViewTest
   void MainWindow::addRow_()
   {
     simData::DataTable* table = ui_->DataTableComboBox->currentSelection();
-    if (table == NULL)
+    if (table == nullptr)
       return;
     simData::TableRow row;
     // use column visitor to get all the columns
@@ -229,7 +229,7 @@ namespace DataTableViewTest
   void MainWindow::addColumn_()
   {
     simData::DataTable* table = ui_->DataTableComboBox->currentSelection();
-    if (table == NULL)
+    if (table == nullptr)
       return;
     // give the new column a unique name
     std::ostringstream os;
@@ -242,7 +242,7 @@ namespace DataTableViewTest
   void MainWindow::removeTable_()
   {
     simData::DataTable* table = ui_->DataTableComboBox->currentSelection();
-    if (table == NULL)
+    if (table == nullptr)
       return;
     testHelper_->dataStore()->dataTableManager().deleteTable(table->tableId());
   }
@@ -311,7 +311,7 @@ int main(int argc, char* argv[])
 {
   QApplication app(argc, argv);
 
-  DataTableViewTest::MainWindow* window = new DataTableViewTest::MainWindow(NULL);
+  DataTableViewTest::MainWindow* window = new DataTableViewTest::MainWindow(nullptr);
   window->show();
 
   int rv = app.exec();

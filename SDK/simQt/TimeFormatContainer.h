@@ -115,7 +115,7 @@ class SDKQT_EXPORT SecondsContainer : public TimeFormatContainer
 {
 public:
   /// constructor
-  SecondsContainer(QWidget* parent=NULL);
+  SecondsContainer(QWidget* parent=nullptr);
   virtual ~SecondsContainer();
 
   ///@return the underlying widget
@@ -161,7 +161,7 @@ class SDKQT_EXPORT MonthContainer : public TimeFormatContainer
 {
 public:
   /// constructor
-  MonthContainer(QWidget* parent=NULL);
+  MonthContainer(QWidget* parent=nullptr);
   virtual ~MonthContainer();
 
   ///@return the underlying widget
@@ -208,7 +208,7 @@ class SDKQT_EXPORT OrdinalContainer :  public TimeFormatContainer
 {
 public:
   /// constructor
-  OrdinalContainer(QWidget* parent=NULL);
+  OrdinalContainer(QWidget* parent=nullptr);
   virtual ~OrdinalContainer();
 
   ///@return the underlying widget
@@ -254,7 +254,7 @@ class SDKQT_EXPORT MinutesContainer : public TimeFormatContainer
 {
 public:
   /// constructor
-  MinutesContainer(QWidget* parent=NULL);
+  MinutesContainer(QWidget* parent=nullptr);
   virtual ~MinutesContainer();
 
   ///@return the underlying widget
@@ -300,7 +300,7 @@ class SDKQT_EXPORT HoursContainer : public TimeFormatContainer
 {
 public:
   /// constructor
-  HoursContainer(QWidget* parent=NULL);
+  HoursContainer(QWidget* parent=nullptr);
   virtual ~HoursContainer();
 
   ///@return the underlying widget

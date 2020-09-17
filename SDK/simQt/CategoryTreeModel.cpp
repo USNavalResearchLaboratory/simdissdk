@@ -260,7 +260,7 @@ private:
 /////////////////////////////////////////////////////////////////////////
 
 TreeItem::TreeItem()
-  : parent_(NULL)
+  : parent_(nullptr)
 {
 }
 
@@ -276,7 +276,7 @@ TreeItem* TreeItem::parent() const
 
 int TreeItem::rowInParent() const
 {
-  if (parent_ == NULL)
+  if (parent_ == nullptr)
   {
     // Caller is getting an invalid value
     assert(0);
@@ -303,9 +303,9 @@ int TreeItem::childCount() const
 void TreeItem::addChild(TreeItem* item)
 {
   // Assertion failure means developer is doing something weird.
-  assert(item != NULL);
+  assert(item != nullptr);
   // Assertion failure means that item is inserted more than once.
-  assert(item->parent() == NULL);
+  assert(item->parent() == nullptr);
 
   // Set the parent and save the item in our children vector.
   item->parent_ = this;
@@ -319,7 +319,7 @@ CategoryTreeModel::CategoryItem::CategoryItem(const simData::CategoryNameManager
     nameInt_(nameInt),
     unlistedValue_(false),
     contributesToFilter_(false),
-    font_(NULL),
+    font_(nullptr),
     locked_(false)
 {
 }
@@ -474,7 +474,7 @@ bool CategoryTreeModel::CategoryItem::setChildChecks_(const simData::RegExpFilte
   {
     // Test the EditRole, which is used because it omits the # count (e.g. "Friendly (1)")
     ValueItem* valueItem = static_cast<ValueItem*>(child(k));
-    const bool matches = reFilter != NULL && reFilter->match(valueItem->valueString().toStdString());
+    const bool matches = reFilter != nullptr && reFilter->match(valueItem->valueString().toStdString());
     if (matches != valueItem->isChecked())
     {
       valueItem->setChecked(matches);
@@ -489,7 +489,7 @@ int CategoryTreeModel::CategoryItem::updateTo(const simData::CategoryFilter& fil
   // Update the category if it has a RegExp
   const QString oldRegExp = regExpString_;
   const auto* regExpObject = filter.getRegExp(nameInt_);
-  regExpString_ = (regExpObject != NULL ? QString::fromStdString(filter.getRegExpPattern(nameInt_)) : "");
+  regExpString_ = (regExpObject != nullptr ? QString::fromStdString(filter.getRegExpPattern(nameInt_)) : "");
   // If the RegExp string is different, we definitely have some sort of change
   bool hasChange = (regExpString_ != oldRegExp);
 
@@ -760,9 +760,9 @@ bool CategoryTreeModel::ValueItem::setData(const QVariant& value, int role, simD
   // Internally handle check/uncheck value.  For ROLE_REGEXP and ROLE_LOCKED_STATE, rely on category parent
   if (role == Qt::CheckStateRole)
     return setCheckStateData_(value, filter, filterChanged);
-  else if (role == ROLE_REGEXP_STRING && parent() != NULL)
+  else if (role == ROLE_REGEXP_STRING && parent() != nullptr)
     return parent()->setData(value, role, filter, filterChanged);
-  else if (role == ROLE_LOCKED_STATE && parent() != NULL)
+  else if (role == ROLE_LOCKED_STATE && parent() != nullptr)
     return parent()->setData(value, role, filter, filterChanged);
   filterChanged = false;
   return false;
@@ -823,7 +823,8 @@ bool CategoryTreeModel::ValueItem::setCheckStateData_(const QVariant& value, sim
 
   // Update the parent too, which fixes the GUI for whether it contributes
   CategoryItem* parentTree = dynamic_cast<CategoryItem*>(parent());
-  parentTree->recalcContributionTo(filter);
+  if (parentTree)
+    parentTree->recalcContributionTo(filter);
 
   filterChanged = true;
   return true;
@@ -957,10 +958,10 @@ bool CategoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sour
 
 CategoryTreeModel::CategoryTreeModel(QObject* parent)
   : QAbstractItemModel(parent),
-    dataStore_(NULL),
-    filter_(new simData::CategoryFilter(NULL)),
+    dataStore_(nullptr),
+    filter_(new simData::CategoryFilter(nullptr)),
     categoryFont_(new QFont),
-    settings_(NULL)
+    settings_(nullptr)
 {
   listener_.reset(new CategoryFilterListener(*this));
 
@@ -974,9 +975,9 @@ CategoryTreeModel::~CategoryTreeModel()
   categories_.deleteAll();
   categoryIntToItem_.clear();
   delete categoryFont_;
-  categoryFont_ = NULL;
+  categoryFont_ = nullptr;
   delete filter_;
-  filter_ = NULL;
+  filter_ = nullptr;
   if (dataStore_)
     dataStore_->categoryNameManager().removeListener(listener_);
 }
@@ -991,7 +992,7 @@ QModelIndex CategoryTreeModel::index(int row, int column, const QModelIndex &par
   // Has a parent: must be a value item
   TreeItem* parentItem = static_cast<TreeItem*>(parent.internalPointer());
   // Item was not made correctly, check index()
-  assert(parentItem != NULL);
+  assert(parentItem != nullptr);
   return createIndex(row, column, parentItem->child(row));
 }
 
@@ -1003,7 +1004,7 @@ QModelIndex CategoryTreeModel::parent(const QModelIndex &child) const
   // Child could be a category (no parent) or a value (category parent)
   const TreeItem* childItem = static_cast<TreeItem*>(child.internalPointer());
   TreeItem* parentItem = childItem->parent();
-  if (parentItem == NULL) // child is a category; no parent
+  if (parentItem == nullptr) // child is a category; no parent
     return QModelIndex();
   return createIndex(categories_.indexOf(static_cast<CategoryItem*>(parentItem)), 0, parentItem);
 }
@@ -1015,7 +1016,7 @@ int CategoryTreeModel::rowCount(const QModelIndex &parent) const
     if (parent.column() != 0)
       return 0;
     TreeItem* parentItem = static_cast<TreeItem*>(parent.internalPointer());
-    return (parentItem == NULL) ? 0 : parentItem->childCount();
+    return (parentItem == nullptr) ? 0 : parentItem->childCount();
   }
   return categories_.size();
 }
@@ -1063,7 +1064,7 @@ bool CategoryTreeModel::setData(const QModelIndex& idx, const QVariant& value, i
   if (!idx.isValid() || !idx.internalPointer())
     return QAbstractItemModel::setData(idx, value, role);
 
-  // NULL filter means the tree should be empty, so we shouldn't get setData()...
+  // nullptr filter means the tree should be empty, so we shouldn't get setData()...
   TreeItem* item = static_cast<TreeItem*>(idx.internalPointer());
   assert(filter_ && item);
   bool wasEdited = false;
@@ -1119,11 +1120,11 @@ void CategoryTreeModel::setFilter(const simData::CategoryFilter& filter)
   // Avoid no-op
   simData::CategoryFilter simplified(filter);
   simplified.simplify();
-  if (filter_ != NULL && simplified == *filter_)
+  if (filter_ != nullptr && simplified == *filter_)
     return;
 
   // Do a two step assignment so that we don't automatically get auto-update
-  if (filter_ == NULL)
+  if (filter_ == nullptr)
     filter_ = new simData::CategoryFilter(filter.getDataStore());
   filter_->assign(simplified, false);
 
@@ -1165,7 +1166,7 @@ void CategoryTreeModel::setFilter(const simData::CategoryFilter& filter)
 
 const simData::CategoryFilter& CategoryTreeModel::categoryFilter() const
 {
-  // Precondition of this method is that data store was set; filter must be non-NULL
+  // Precondition of this method is that data store was set; filter must be non-nullptr
   assert(filter_);
   return *filter_;
 }
@@ -1176,10 +1177,10 @@ void CategoryTreeModel::setDataStore(simData::DataStore* dataStore)
     return;
 
   // Update the listeners on name manager as we change it
-  if (dataStore_ != NULL)
+  if (dataStore_ != nullptr)
     dataStore_->categoryNameManager().removeListener(listener_);
   dataStore_ = dataStore;
-  if (dataStore_ != NULL)
+  if (dataStore_ != nullptr)
     dataStore_->categoryNameManager().addListener(listener_);
 
   beginResetModel();
@@ -1189,9 +1190,9 @@ void CategoryTreeModel::setDataStore(simData::DataStore* dataStore)
   categoryIntToItem_.clear();
 
   // Clear out the internal filter object
-  const bool hadFilter = (filter_ != NULL && !filter_->isEmpty());
+  const bool hadFilter = (filter_ != nullptr && !filter_->isEmpty());
   delete filter_;
-  filter_ = NULL;
+  filter_ = nullptr;
   if (dataStore_)
   {
     filter_ = new simData::CategoryFilter(dataStore_);
@@ -1269,7 +1270,7 @@ void CategoryTreeModel::clearTree_()
 
 void CategoryTreeModel::addName_(int nameInt)
 {
-  assert(dataStore_ != NULL);
+  assert(dataStore_ != nullptr);
 
   // Create the tree item for the category
   const auto& nameManager = dataStore_->categoryNameManager();
@@ -1305,7 +1306,7 @@ void CategoryTreeModel::addName_(int nameInt)
 CategoryTreeModel::CategoryItem* CategoryTreeModel::findNameTree_(int nameInt) const
 {
   auto i = categoryIntToItem_.find(nameInt);
-  return (i == categoryIntToItem_.end()) ? NULL : i->second;
+  return (i == categoryIntToItem_.end()) ? nullptr : i->second;
 }
 
 void CategoryTreeModel::updateLockedState_(const QStringList& lockedCategories, CategoryItem& category)
@@ -1322,7 +1323,7 @@ void CategoryTreeModel::addValue_(int nameInt, int valueInt)
   TreeItem* nameItem = findNameTree_(nameInt);
   // Means we got a category that we don't know about; shouldn't happen.
   assert(nameItem);
-  if (nameItem == NULL)
+  if (nameItem == nullptr)
     return;
 
   // Create the value item
@@ -1964,8 +1965,8 @@ CategoryFilterWidget::CategoryFilterWidget(QWidget* parent)
   : QWidget(parent),
     activeFiltering_(false),
     showEntityCount_(false),
-    counter_(NULL),
-    setRegExpAction_(NULL),
+    counter_(nullptr),
+    setRegExpAction_(nullptr),
     countDirty_(true)
 {
   setWindowTitle("Category Data Filter");
@@ -2114,7 +2115,7 @@ void CategoryFilterWidget::setShowEntityCount(bool fl)
 
   // Clear out the old counter
   delete counter_;
-  counter_ = NULL;
+  counter_ = nullptr;
 
   // Create a new counter and configure it
   if (showEntityCount_)
@@ -2233,7 +2234,7 @@ void CategoryFilterWidget::setRegularExpression_()
 {
   // Make sure we have a sender and can pull out the index.  If not, return
   QObject* senderObject = sender();
-  if (senderObject == NULL)
+  if (senderObject == nullptr)
     return;
   QModelIndex index = senderObject->property("index").toModelIndex();
   if (index.isValid())
@@ -2281,7 +2282,7 @@ void CategoryFilterWidget::clearRegularExpression_()
 {
   // Make sure we have a sender and can pull out the index.  If not, return
   QObject* senderObject = sender();
-  if (senderObject == NULL)
+  if (senderObject == nullptr)
     return;
   QModelIndex index = senderObject->property("index").toModelIndex();
   if (!index.isValid())
@@ -2296,7 +2297,7 @@ void CategoryFilterWidget::toggleLockCategory_()
 {
   // Make sure we have a sender and can pull out the index.  If not, return
   QObject* senderObject = sender();
-  if (senderObject == NULL)
+  if (senderObject == nullptr)
     return;
   QModelIndex index = senderObject->property("index").toModelIndex();
   if (!index.isValid())

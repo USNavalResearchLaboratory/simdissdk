@@ -69,7 +69,7 @@ private:
    */
   void segmentBuffer_()
   {
-    if (channel_ == NULL)
+    if (channel_ == nullptr)
       return;
 
     // Segment out by newline, then add to the console

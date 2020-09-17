@@ -423,7 +423,7 @@ int testTextReplacer()
 
   // Test a bunch of failures on addReplaceable
   rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("", "foo")) != 0);
-  rv += SDK_ASSERT(replacer.addReplaceable(NULL) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(nullptr) != 0);
   rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%VAR", "foo")) != 0);
   rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%VAR%", "foo")) == 0);
   rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("VAR%", "foo")) != 0);
@@ -440,16 +440,16 @@ int testTextReplacer()
   rv += SDK_ASSERT(replacer.deleteReplaceable("VAR") != 0);
 
   // Test the deleteReplaceable() with pointers
-  rv += SDK_ASSERT(replacer.deleteReplaceable(NULL) != 0);
+  rv += SDK_ASSERT(replacer.deleteReplaceable(nullptr) != 0);
   auto* fooVariable = new CustomReplaceable("VAR", "foo");
   rv += SDK_ASSERT(replacer.addReplaceable(fooVariable) == 0);
-  rv += SDK_ASSERT(replacer.deleteReplaceable(NULL) != 0);
+  rv += SDK_ASSERT(replacer.deleteReplaceable(nullptr) != 0);
   rv += SDK_ASSERT(replacer.deleteReplaceable(fooVariable) == 0);
   // Should not stay in the list after last command
   rv += SDK_ASSERT(replacer.deleteReplaceable("VAR") != 0);
 
   // The memory in fooVariable is considered deleted and is now invalid
-  fooVariable = NULL;
+  fooVariable = nullptr;
   rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test %VAR% 123");
   rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("VAR", "baz")) == 0);
   rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test baz 123");

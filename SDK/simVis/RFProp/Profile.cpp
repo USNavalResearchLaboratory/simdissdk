@@ -111,7 +111,7 @@ void Profile::setDataProvider(CompositeProfileProvider* dataProvider)
   {
     data_ = dataProvider;
     // if providers change, null the texture to force it to recreate (if necessary)
-    texture_ = NULL;
+    texture_ = nullptr;
     dirty();
   }
 }
@@ -132,7 +132,7 @@ void Profile::setThresholdType(ProfileDataProvider::ThresholdType type)
   if (data_.valid())
     data_->setActiveProvider(type);
   // null the texture to force it to recreate
-  texture_ = NULL;
+  texture_ = nullptr;
   dirty();
 }
 
@@ -165,16 +165,16 @@ void Profile::init_()
   verts_ = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   values_ = new osg::FloatArray(osg::Array::BIND_PER_VERTEX);
   values_->setNormalize(false);
-  group_ = NULL;
+  group_ = nullptr;
 
   if (!profileContext_)
     return;
 
   if (profileContext_->mode != DRAWMODE_3D_TEXTURE)
-    texture_ = NULL;
+    texture_ = nullptr;
 
   // ensure that our provider is valid
-  if (data_.valid() && data_->getActiveProvider() != NULL)
+  if (data_.valid() && data_->getActiveProvider() != nullptr)
   {
     group_ = new osg::Group;
     switch (profileContext_->mode)
@@ -780,7 +780,7 @@ void Profile::init3DTexture_()
   }
 
   // Only create the texture if it doesn't already exist, otherwise you can just reuse it
-  if (texture_ == NULL)
+  if (texture_ == nullptr)
   {
     texture_ = new osg::Texture2D(createImage_());
     texture_->setResizeNonPowerOfTwoHint(false);
@@ -879,7 +879,7 @@ osg::Image* Profile::createImage_()
   {
     // dev error; can't init a profile without valid active provider
     assert(0);
-    return NULL;
+    return nullptr;
   }
   const unsigned int numRanges = data_->getNumRanges();
   const unsigned int numHeights = data_->getNumHeights();

@@ -174,7 +174,7 @@ void CategoryFilterCounter::testCategory_(int nameInt, CategoryCountResults::Val
 
 AsyncCategoryCounter::AsyncCategoryCounter(QObject* parent)
   : QObject(parent),
-    counter_(NULL),
+    counter_(nullptr),
     retestPending_(false)
 {
 }
@@ -192,7 +192,7 @@ void AsyncCategoryCounter::setFilter(const simData::CategoryFilter& filter)
 
 void AsyncCategoryCounter::asyncCountEntities()
 {
-  if (counter_ != NULL)
+  if (counter_ != nullptr)
   {
     retestPending_ = true;
     return;
@@ -205,7 +205,7 @@ void AsyncCategoryCounter::asyncCountEntities()
   QFutureWatcher<void>* watcher = new QFutureWatcher<void>();
 
   counter_ = new CategoryFilterCounter(watcher);
-  if (nextFilter_ != NULL)
+  if (nextFilter_ != nullptr)
     counter_->setFilter(*nextFilter_);
   counter_->prepare();
 
@@ -223,8 +223,8 @@ void AsyncCategoryCounter::emitResults_()
   lastResults_ = counter_->results();
   emit resultsReady(lastResults_);
 
-  // just set to NULL, the deleteLater() for watcher will do the actual delete
-  counter_ = NULL;
+  // just set to nullptr, the deleteLater() for watcher will do the actual delete
+  counter_ = nullptr;
 
   // Retest now that it's safe to do so
   if (retestPending_)

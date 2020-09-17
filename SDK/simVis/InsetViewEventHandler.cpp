@@ -274,7 +274,7 @@ void CreateInsetEventHandler::completeNewInsetAction_(int mx, int my)
   inset->setViewpoint(host_->getViewpoint(), 0.0);
   if (host_->isOverheadEnabled())
     inset->enableOverheadMode(true);
-  if (host_->getCameraTether() != NULL)
+  if (host_->getCameraTether() != nullptr)
     inset->tetherCamera(host_->getCameraTether());
 
   // Do add after a complete build

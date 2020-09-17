@@ -81,7 +81,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
     {
       SIM_ERROR << "Could not resolve filename " << configFile << "\n";
     }
-    mapNode = NULL;
+    mapNode = nullptr;
     return 1;
   }
 
@@ -89,7 +89,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
   // is this a .earth file?
   if (osgDB::getFileExtensionIncludingDot(configFile) == earthFileSuffix)
   {
-    mapNode = NULL;
+    mapNode = nullptr;
     SAFETRYBEGIN;
 
     // Load the map, wrap Node in a ref_ptr to get rid of the memory when done, after switching to Viewer::setMap method
@@ -103,7 +103,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
   }
   else // probably a SIMDIS 9 config file
   {
-    mapNode = NULL;
+    mapNode = nullptr;
     SAFETRYBEGIN;
     osg::ref_ptr<osgEarth::Map> map = simUtil::DbConfigurationFile::loadLegacyConfigFile(adjustedConfigFile, quiet);
     if (map.valid())
@@ -126,7 +126,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
   }
 
   // set the map's name
-  if (mapNode->getMap() != NULL)
+  if (mapNode->getMap() != nullptr)
     mapNode->getMap()->setMapName(osgDB::getSimpleFileName(adjustedConfigFile));
   return 0;
 }
@@ -149,7 +149,7 @@ osgEarth::Map* DbConfigurationFile::loadLegacyConfigFile(const std::string& file
     {
       SIM_ERROR << "Unable to open file (" << filename << ").\n";
     }
-    return NULL;
+    return nullptr;
   }
 
   std::string sdTerrainDirStr;
@@ -157,8 +157,8 @@ osgEarth::Map* DbConfigurationFile::loadLegacyConfigFile(const std::string& file
   if (configFilename.find("/") != std::string::npos)
     sdTerrainDirStr = configFilename.substr(0, configFilename.rfind("/") + 1);
 
-  // Configure a NULL map at first
-  osgEarth::Map* map = NULL;
+  // Configure a nullptr map at first
+  osgEarth::Map* map = nullptr;
 
   // set up names for the loaded layers
   int imageLayerCount = 1;
@@ -188,8 +188,8 @@ osgEarth::Map* DbConfigurationFile::loadLegacyConfigFile(const std::string& file
       if (!gotValidFirstLine)
       {
         // Programming error if assert fires; indicates memory leak
-        assert(map == NULL);
-        return NULL;
+        assert(map == nullptr);
+        return nullptr;
       }
       continue;
     }
@@ -504,7 +504,7 @@ osg::Node* DbConfigurationFile::readEarthFile(std::istream& istream, const std::
 {
   osg::ref_ptr<osgDB::ReaderWriter> readWrite = osgDB::Registry::instance()->getReaderWriterForExtension("earth");
   if (!readWrite.valid())
-    return NULL;
+    return nullptr;
 
   osg::ref_ptr<osgDB::Options> dbOptions = new osgDB::Options();
   dbOptions->setDatabasePath(relativeTo);
@@ -527,7 +527,7 @@ osg::Node* DbConfigurationFile::readEarthFile(const std::string& filename)
 {
   std::fstream istream(filename.c_str(), std::ios::in);
   if (!istream)
-    return NULL;
+    return nullptr;
   return DbConfigurationFile::readEarthFile(istream, filename);
 }
 

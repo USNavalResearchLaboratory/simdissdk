@@ -126,7 +126,7 @@ struct MouseAndMenuHandler : public osgGA::GUIEventHandler
     labelsOn_(true),
     border_(0)
   {
-    mouseDispatcher_->setViewManager(NULL);
+    mouseDispatcher_->setViewManager(nullptr);
     latLonElevListener_.reset(new LatLonElevListener());
     setUpMouseManip_(viewer_.get());
     updateStatusAndLabel_();
@@ -316,12 +316,12 @@ private:
   simData::ObjectId getCenteredPlatformId_(const simVis::View* view) const
   {
     osg::Node* tether = view->getCameraTether();
-    if (tether == NULL)
+    if (tether == nullptr)
       return 0;
     else
     {
       simVis::PlatformModelNode* model = dynamic_cast<simVis::PlatformModelNode*>(tether);
-      assert(model != NULL);
+      assert(model != nullptr);
 
       std::vector<osg::Group*> parents = model->getParents();
       for (auto iter = parents.begin(); iter != parents.end(); ++iter)
@@ -336,7 +336,7 @@ private:
 
   void setUpMouseManip_(simVis::Viewer* viewer)
   {
-    if (viewer == NULL || viewer->getSceneManager() == NULL || !mouseDispatcher_)
+    if (viewer == nullptr || viewer->getSceneManager() == nullptr || !mouseDispatcher_)
       return;
     mouseManip_.reset(new simUtil::MousePositionManipulator(viewer->getSceneManager()->getMapNode(), viewer->getSceneManager()->getOrCreateAttachPoint("Map Callbacks")));
     mouseManip_->setTerrainResolution(0.0001);

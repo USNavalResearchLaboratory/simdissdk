@@ -139,7 +139,7 @@ void DynamicSelectionPicker::pickThisFrame_()
   const double maximumValidRangeSquared = osg::square(maximumValidRange_);
   double closestRangePx = maximumValidRangeSquared;
   const double platformAdvantageSquared = osg::square(maximumValidRange_ * platformAdvantagePct_);
-  simVis::EntityNode* closest = NULL;
+  simVis::EntityNode* closest = nullptr;
 
   // Loop through all entities
   for (auto i = allEntities.begin(); i != allEntities.end(); ++i)
@@ -153,7 +153,7 @@ void DynamicSelectionPicker::pickThisFrame_()
       continue;
 
     // Platforms get a small advantage in picking, so that it's easier to pick platforms than other entities
-    const bool isPlatform = (dynamic_cast<simVis::PlatformNode*>(i->get()) != NULL);
+    const bool isPlatform = (dynamic_cast<simVis::PlatformNode*>(i->get()) != nullptr);
     // Do not apply the advantage if platform is not already inside the picking area
     if (isPlatform && rangeSquared < maximumValidRangeSquared)
       rangeSquared -= platformAdvantageSquared;
@@ -175,8 +175,8 @@ void DynamicSelectionPicker::pickThisFrame_()
 
 bool DynamicSelectionPicker::isPickable_(const simVis::EntityNode* entityNode) const
 {
-  // Avoid NULL and things that don't match the mask
-  if (entityNode == NULL || (entityNode->getNodeMask() & pickMask_) == 0)
+  // Avoid nullptr and things that don't match the mask
+  if (entityNode == nullptr || (entityNode->getNodeMask() & pickMask_) == 0)
     return false;
   // Only pick entities with object index tags
   if (entityNode->objectIndexTag() == 0)

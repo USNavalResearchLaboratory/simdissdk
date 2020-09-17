@@ -432,6 +432,23 @@ function(vsi_install_target TARGET COMPONENT)
     endif()
 endfunction()
 
+# vsi_write_basic_package_config_file(TARGET DEPS)
+#
+# Given a library TARGET that is being exported, generates a <TARGET>Config.cmake
+# file in the build directory for use in vsi_install_export().  This is particularly
+# useful in cases where the dependencies of the target are variable and cannot
+# be easily hardcoded into a <TARGET>Config.cmake.
+function(vsi_write_basic_package_config_file TARGET DEPS)
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
+        "include(CMakeFindDependencyMacro)\n"
+        "set(DEPS \"${DEPS}\")\n"
+        "foreach(DEP IN LISTS DEPS)\n"
+        "    find_dependency(\${DEP})\n"
+        "endforeach()\n"
+        "include(\"\${CMAKE_CURRENT_LIST_DIR}/${TARGET}Targets.cmake\")\n"
+    )
+endfunction()
+
 # vsi_install_export(TARGET VERSION COMPATIBILITY)
 #
 # Given a library TARGET that is being exported, installs a generated <TARGET>Targets.cmake

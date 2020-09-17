@@ -42,7 +42,7 @@ namespace simQt {
 FontWidget::FontWidget(QWidget* parent)
   : QWidget(parent),
     fontDir_(new QDir()),
-    ui_(NULL),
+    ui_(nullptr),
     useFriendlyFontName_(true)
 {
 

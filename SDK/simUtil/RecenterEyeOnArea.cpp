@@ -82,7 +82,7 @@ int RecenterEyeOnArea::centerOn(double lowerLat, double upperLat, double leftLon
 
   // update the eye position's focal point
   simVis::Viewpoint eyePos = view->getViewpoint();
-  eyePos.setNode(NULL);
+  eyePos.setNode(nullptr);
   eyePos.focalPoint() = osgEarth::GeoPoint(
     osgEarth::SpatialReference::create("wgs84"),
     osg::Vec3d(centerLla.lon() * simCore::RAD2DEG, centerLla.lat() * simCore::RAD2DEG, 0.0));

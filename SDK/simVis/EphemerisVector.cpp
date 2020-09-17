@@ -61,12 +61,12 @@ public:
   virtual bool run(osg::Object* object, osg::Object* data)
   {
     EphemerisVector* ephemeris = dynamic_cast<EphemerisVector*>(object);
-    if (ephemeris != NULL)
+    if (ephemeris != nullptr)
     {
       // Clock should always be set when using ephemeris vectors
       const simCore::Clock* clock = simVis::Registry::instance()->getClock();
-      assert(clock != NULL);
-      if (clock != NULL)
+      assert(clock != nullptr);
+      if (clock != nullptr)
       {
         const simCore::TimeStamp& now = clock->currentTime();
         const simCore::Seconds& delta = now - ephemeris->lastUpdateTime_;
@@ -108,7 +108,7 @@ EphemerisVector::EphemerisVector(const simVis::Color& moonColor, const simVis::C
 EphemerisVector::~EphemerisVector()
 {
   delete coordConvert_;
-  coordConvert_ = NULL;
+  coordConvert_ = nullptr;
 }
 
 void EphemerisVector::setModelNode(const PlatformModelNode* hostPlatformModel)
@@ -140,8 +140,8 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
 
   // Clock should always be set when using ephemeris vectors
   const simCore::Clock* clock = simVis::Registry::instance()->getClock();
-  assert(clock != NULL);
-  if (clock == NULL)
+  assert(clock != nullptr);
+  if (clock == nullptr)
   {
     setNodeMask(0);
     return;

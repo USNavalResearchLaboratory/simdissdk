@@ -198,7 +198,7 @@ int main(int argc, char **argv)
   viewer->getMainView()->addOverlayControl(createHelp());
 
   /// Prime it
-  SetUpdate().onValueChanged(NULL, 0.0);
+  SetUpdate().onValueChanged(nullptr, 0.0);
 
   /// add some stock OSG handlers
   viewer->installDebugHandlers();

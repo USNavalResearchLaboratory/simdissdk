@@ -48,7 +48,7 @@ simVis::DBImageLayer* LayerFactory::newDbImageLayer(const std::string& fullPath)
 #ifndef SIM_HAVE_DB_SUPPORT
   // Likely developer error unintended
   assert(0);
-  return NULL;
+  return nullptr;
 #else
   osgEarth::Config config;
   config.setReferrer(fullPath);
@@ -110,7 +110,7 @@ simVis::DBElevationLayer* LayerFactory::newDbElevationLayer(const std::string& f
 #ifndef SIM_HAVE_DB_SUPPORT
   // Likely developer error unintended
   assert(0);
-  return NULL;
+  return nullptr;
 #else
   osgEarth::Config config;
   config.setReferrer(fullPath);
@@ -190,7 +190,7 @@ osgEarth::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEarth::Featu
 
   // Error encountered
   SAFETRYEND("during LayerFactory::newFeatureLayer()");
-  return NULL;
+  return nullptr;
 }
 
 /////////////////////////////////////////////////////////////////
@@ -221,12 +221,12 @@ osgEarth::FeatureModelLayer* ShapeFileLayerFactory::load(const std::string& url)
 
   // check the feature source's status for errors, since the layer's status will be ResourceUnavailable until it is opened
   if (!layer->getFeatureSource())
-    return NULL;
+    return nullptr;
   osgEarth::Status status = layer->getFeatureSource()->getStatus();
   if (status.isError())
   {
     SIM_WARN << "ShapeFileLayerFactory::load(" << url << ") failed : " << status.message() << "\n";
-    layer = NULL;
+    layer = nullptr;
   }
   return layer.release();
 }

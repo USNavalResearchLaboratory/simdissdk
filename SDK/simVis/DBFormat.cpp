@@ -135,7 +135,7 @@ namespace
       deepLevel_ = 32;
       timeSpecified_ = false;
       timeStamp_ = simCore::INFINITE_TIME_STAMP;
-      db_ = NULL;
+      db_ = nullptr;
     }
 
     int rasterFormat_;
@@ -362,7 +362,7 @@ osgEarth::Status DBImageLayer::openImplementation()
 
   if (cx.dbUtil_.openDatabaseFile(cx.pathname_, &cx.db_, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX) != simVis_db::QS_IS_OK)
   {
-    cx.db_ = NULL;
+    cx.db_ = nullptr;
     return osgEarth::Status(
       osgEarth::Status::ResourceUnavailable,
       osgEarth::Stringify() << "Failed to open DB file at " << options().url()->full());
@@ -392,7 +392,7 @@ osgEarth::Status DBImageLayer::openImplementation()
     if (err != simVis_db::QS_IS_OK)
     {
       sqlite3_close(cx.db_);
-      cx.db_ = NULL;
+      cx.db_ = nullptr;
       return osgEarth::Status(
         osgEarth::Status::ResourceUnavailable,
         osgEarth::Stringify() << "Failed to read metadata for " << cx.pathname_);
@@ -485,7 +485,7 @@ osgEarth::GeoImage DBImageLayer::createImageImplementation(const osgEarth::TileK
   }
 
   // Query the database
-  TextureDataType* buf = NULL;
+  TextureDataType* buf = nullptr;
   uint32_t bufSize = 0;
   uint32_t currentRasterSize = 0;
 
@@ -557,7 +557,7 @@ osgEarth::GeoImage DBImageLayer::createImageImplementation(const osgEarth::TileK
     {
       // Raster size of 0 means no tile in the db
       //OE_DEBUG << "No image in the database for key " << key->str() << std::endl;
-      result = NULL;
+      result = nullptr;
     }
   }
   else
@@ -639,7 +639,7 @@ osgEarth::Status DBElevationLayer::openImplementation()
 
   if (cx.dbUtil_.openDatabaseFile(cx.pathname_, &cx.db_, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX) != simVis_db::QS_IS_OK)
   {
-    cx.db_ = NULL;
+    cx.db_ = nullptr;
     return osgEarth::Status(
       osgEarth::Status::ResourceUnavailable,
       osgEarth::Stringify() << "Failed to open DB file at " << options().url()->full());
@@ -669,7 +669,7 @@ osgEarth::Status DBElevationLayer::openImplementation()
     if (err != simVis_db::QS_IS_OK)
     {
       sqlite3_close(cx.db_);
-      cx.db_ = NULL;
+      cx.db_ = nullptr;
       return osgEarth::Status(
         osgEarth::Status::ResourceUnavailable,
         osgEarth::Stringify() << "Failed to read metadata for " << cx.pathname_);
@@ -756,7 +756,7 @@ osgEarth::GeoHeightField DBElevationLayer::createHeightFieldImplementation(const
   }
 
   // Query the database
-  TextureDataType* buf = NULL;
+  TextureDataType* buf = nullptr;
   uint32_t bufSize = 0;
   uint32_t currentRasterSize = 0;
 
@@ -838,7 +838,7 @@ osgEarth::GeoHeightField DBElevationLayer::createHeightFieldImplementation(const
     else
     {
       // Raster size of 0 means no tile in the db
-      result = NULL;
+      result = nullptr;
     }
   }
   else

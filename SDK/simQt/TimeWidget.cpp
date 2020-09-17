@@ -40,7 +40,7 @@ namespace simQt {
 TimeWidget::TimeWidget(QWidget* parent)
   : QWidget(parent),
     scenarioReferenceYear_(1970),
-    disabledLineEdit_(NULL),
+    disabledLineEdit_(nullptr),
     timeEnabled_(true),
     labelToolTipSet_(false)
 {
@@ -68,7 +68,7 @@ TimeWidget::TimeWidget(QWidget* parent)
   layout->setMargin(0);
   layout->addWidget(title_);
   layout->addWidget(currentContainer_->widget());
-  setLayout(layout);  // do not use parent since parent could be NULL
+  setLayout(layout);  // do not use parent since parent could be nullptr
 
   colorCodeAction_ = new QAction(tr("&Color Code Text"), this);
   connect(colorCodeAction_, SIGNAL(triggered()), this, SLOT(setColorCode_()));
@@ -86,7 +86,7 @@ TimeWidget::~TimeWidget()
   containers_.clear();
 
   delete colorCodeAction_;
-  colorCodeAction_ = NULL;
+  colorCodeAction_ = nullptr;
 }
 
 void TimeWidget::addContainer_(TimeFormatContainer* widget, const QString& slotText)
@@ -322,7 +322,7 @@ void TimeWidget::setTimeEnabled(bool value)
   timeEnabled_ = value;
   if (timeEnabled_)
   {
-    if (disabledLineEdit_ != NULL)
+    if (disabledLineEdit_ != nullptr)
     {
       disabledLineEdit_->setVisible(false);
       layout()->removeWidget(disabledLineEdit_);
@@ -335,7 +335,7 @@ void TimeWidget::setTimeEnabled(bool value)
     currentContainer_->widget()->setVisible(false);
     layout()->removeWidget(currentContainer_->widget());
 
-    if (disabledLineEdit_ == NULL)
+    if (disabledLineEdit_ == nullptr)
     {
       disabledLineEdit_ = new QLineEdit(tr("--------------------------------------"), this);
       disabledLineEdit_->setEnabled(false);

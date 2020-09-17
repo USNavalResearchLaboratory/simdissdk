@@ -318,7 +318,7 @@ void HudEditorGui::updatePosition(const std::string& windowName)
 
   // Get or create the window pointer
   auto i = windows_.find(windowName);
-  WindowNodePx* window = NULL;
+  WindowNodePx* window = nullptr;
   if (i == windows_.end())
   {
     // Pull out size parameters; they're required on creation
@@ -338,7 +338,7 @@ void HudEditorGui::updatePosition(const std::string& windowName)
   else
     window = i->second.get();
 
-  // Should not be possible to be NULL here
+  // Should not be possible to be nullptr here
   assert(window);
   if (!window)
     return;
@@ -376,10 +376,10 @@ void HudEditorGui::traverse(osg::NodeVisitor& nv)
   {
     // Pull out the View and deal with resize events
     osgGA::EventVisitor* ev = nv.asEventVisitor();
-    osgGA::GUIActionAdapter* aa = (ev ? ev->getActionAdapter() : NULL);
-    const osg::View* view = (aa ? aa->asView() : NULL);
-    const osg::Camera* camera = (view ? view->getCamera() : NULL);
-    const osg::Viewport* viewport = (camera ? camera->getViewport() : NULL);
+    osgGA::GUIActionAdapter* aa = (ev ? ev->getActionAdapter() : nullptr);
+    const osg::View* view = (aa ? aa->asView() : nullptr);
+    const osg::Camera* camera = (view ? view->getCamera() : nullptr);
+    const osg::Viewport* viewport = (camera ? camera->getViewport() : nullptr);
 
     // Determine if resize happened (we can't rely on resize events, they don't always include right size)
     if (viewport)

@@ -57,6 +57,7 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}Settings.h
     ${SIMQT_INC}SettingsGroup.h
     ${SIMQT_INC}StartupLayoutManager.h
+    ${SIMQT_INC}ValueMerge.h
     ${SIMQT_INC}WeightedMenuManager.h
     ${SIMQT_INC}WidgetSettings.h
 )
@@ -181,6 +182,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}Toast.cpp
     ${SIMQT_SRC}UnitsComboBox.cpp
     ${SIMQT_SRC}UnitContext.cpp
+    ${SIMQT_SRC}ValueMerge.cpp
     ${SIMQT_SRC}WeightedMenuManager.cpp
     ${SIMQT_SRC}WidgetSettings.cpp
 )

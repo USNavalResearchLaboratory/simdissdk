@@ -286,7 +286,7 @@ void PlatformSimulatorManager::simulate_(double now)
     // create a position update transaction
     simData::DataStore::Transaction platformTransaction;
 
-    simData::PlatformUpdate* platformUpdate = NULL;
+    simData::PlatformUpdate* platformUpdate = nullptr;
 
     // add the update for the platform
     if (sim->getPlatformId() != ~(static_cast<simData::ObjectId>(0)))
@@ -348,8 +348,8 @@ CircumnavigationPlatformSimulation::~CircumnavigationPlatformSimulation()
 
 void CircumnavigationPlatformSimulation::init_(simVis::View* mainView)
 {
-  // Don't crash on NULL accesses
-  if (!sceneManager_.valid() || mainView == NULL)
+  // Don't crash on nullptr accesses
+  if (!sceneManager_.valid() || mainView == nullptr)
     return;
 
   // Bind the scene manager to the data store

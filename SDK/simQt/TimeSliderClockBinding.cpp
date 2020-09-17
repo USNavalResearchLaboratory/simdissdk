@@ -90,7 +90,7 @@ TimeSliderClockBinding::TimeSliderClockBinding(QSlider* parent, simCore::Clock* 
    disabledMode_(disabledMode),
    allowVisible_(true)
 {
-  assert(parent != NULL); // must pass in slider in constructor
+  assert(parent != nullptr); // must pass in slider in constructor
   timeObserver_.reset(new TimeObserver(this));
   modeObserver_.reset(new ModeObserver(this));
   connect(slider_, SIGNAL(valueChanged(int)), this, SLOT(valueChanged_(int)));
@@ -112,7 +112,7 @@ void TimeSliderClockBinding::bindClock(simCore::Clock* clock)
     clock_->registerModeChangeCallback(modeObserver_);
   }
   // Set the initial state
-  fixEnabledState_(clock_ != NULL && clock_->isUserEditable());
+  fixEnabledState_(clock_ != nullptr && clock_->isUserEditable());
   updateSliderTime_();
 }
 
@@ -123,14 +123,14 @@ void TimeSliderClockBinding::unbindClock()
     clock_->removeTimeCallback(timeObserver_);
     clock_->removeModeChangeCallback(modeObserver_);
   }
-  clock_ = NULL;
+  clock_ = nullptr;
 }
 
 
 void TimeSliderClockBinding::valueChanged_(int sliderPos)
 {
   assert(sender() == slider_); // Only valid sender of this signal is our slider
-  if (clock_ == NULL)
+  if (clock_ == nullptr)
     return;
   const simCore::Seconds& deltaTime = clock_->endTime() - clock_->startTime();
   if (deltaTime == 0)
@@ -168,8 +168,8 @@ void TimeSliderClockBinding::updateSliderTime_()
 
 void TimeSliderClockBinding::updateSliderTime_(const simCore::TimeStamp &t)
 {
-  assert(clock_ != NULL); // Should not get this notification unless clock_ is non-NULL
-  if (clock_ == NULL || clock_->endTime() == simCore::INFINITE_TIME_STAMP)
+  assert(clock_ != nullptr); // Should not get this notification unless clock_ is non-nullptr
+  if (clock_ == nullptr || clock_->endTime() == simCore::INFINITE_TIME_STAMP)
     return;
   const simCore::Seconds& deltaTime = clock_->endTime() - clock_->startTime();
   if (deltaTime <= 0)
@@ -196,7 +196,7 @@ void TimeSliderClockBinding::setAllowVisible(bool allowVisible)
     // Visibility is allowed -- it was previously unallowed.  We can only mark the item visible
     // if the clock is user editable, and if that matters for visibility.  Let fixEnabledState_()
     // take care of it.
-    fixEnabledState_(clock_ != NULL && clock_->isUserEditable());
+    fixEnabledState_(clock_ != nullptr && clock_->isUserEditable());
   }
 }
 

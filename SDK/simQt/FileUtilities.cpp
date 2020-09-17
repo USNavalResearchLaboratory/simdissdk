@@ -52,10 +52,10 @@ int FileUtilities::createHomePath(const QString& relativeFilePath, bool roaming,
   absolutePath = QDir::homePath();
 #ifdef WIN32
   // Assertion failure means that Windows API has changed and no longer supplies this
-  assert(getenv("APPDATA") != NULL);
+  assert(getenv("APPDATA") != nullptr);
   // Pull out the APPDATA variable
   const char* appDataCstr = (roaming ? getenv("APPDATA") : getenv("LOCALAPPDATA"));
-  if (appDataCstr != NULL)
+  if (appDataCstr != nullptr)
     absolutePath = appDataCstr;
   else if (absolutePath.isEmpty()) // would only happen if QDir::homePath() is empty
     return 2;

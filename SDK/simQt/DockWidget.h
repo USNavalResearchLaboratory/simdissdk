@@ -110,12 +110,12 @@ public:
    * Create a new Dock Widget.  The title will be non-unique, so be sure to update the title
    * to avoid issues with settings if settings are used.  Variant of polymorphic constructor.
   */
-  DockWidget(QWidget* parent=NULL, Qt::WindowFlags flags=Qt::WindowFlags());
+  DockWidget(QWidget* parent=nullptr, Qt::WindowFlags flags=Qt::WindowFlags());
 
   /**
    * Create a new Dock Widget.  Variant of polymorphic constructor.
   */
-  DockWidget(const QString& title, QWidget* parent=NULL, Qt::WindowFlags flags=Qt::WindowFlags());
+  DockWidget(const QString& title, QWidget* parent=nullptr, Qt::WindowFlags flags=Qt::WindowFlags());
 
   /**
    * Create a new Dock Widget.  Variant of polymorphic constructor.
@@ -128,13 +128,13 @@ public:
    *   If not set, use setObjectName() to define the registry key for settings.
    * @param settings Where to save/restore window geometry information.  If not specified, then settings will be saved
    *   and loaded from a Private section from QSettings.  Note that some features, such as global disable of dockability,
-   *   cannot work properly unless this is specified and non-NULL.
+   *   cannot work properly unless this is specified and non-nullptr.
    * @param parent The parent widget.  Recommend this be set to the QMainWindow.  If not set, then
    *   the caller is responsible for calling QMainWindow::addDockWidget() and setFloating() as
    *   needed.  Some features like docking button will not work unless this is the QMainWindow.
    * @param flags Qt window flags
    */
-  DockWidget(const QString& title, simQt::Settings* settings, QWidget* parent=NULL, Qt::WindowFlags flags=Qt::WindowFlags());
+  DockWidget(const QString& title, simQt::Settings* settings, QWidget* parent=nullptr, Qt::WindowFlags flags=Qt::WindowFlags());
 
   /** Destructor */
   virtual ~DockWidget();
@@ -169,7 +169,7 @@ public:
    */
   QAction* isDockableAction() const;
 
-  /** Retrieves the search field, may be NULL if searching is disabled. */
+  /** Retrieves the search field, may be nullptr if searching is disabled. */
   SearchLineEdit* searchLineEdit() const;
 
   /** Adds a widget to the title bar, returning 0 on success */

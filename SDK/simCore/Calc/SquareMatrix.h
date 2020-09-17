@@ -110,7 +110,7 @@ public:
 
   /**
    * Returns a pointer to the matrix data
-   * @return A pointer to the matrix data or a NULL pointer if the matrix is invalid
+   * @return A pointer to the matrix data or a nullptr if the matrix is invalid
    */
   const double* data() const;
 

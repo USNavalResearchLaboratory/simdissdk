@@ -166,8 +166,8 @@ void PlatformAzimElevViewTool::onUninstall(const ScenarioManager& scenario)
     targets_->removeChildren(0, targets_->getNumChildren());
 
   // scenario has already removed us from the scenegraph
-  root_ = NULL;
-  targets_ = NULL;
+  root_ = nullptr;
+  targets_ = nullptr;
 }
 
 bool PlatformAzimElevViewTool::isInstalled_() const

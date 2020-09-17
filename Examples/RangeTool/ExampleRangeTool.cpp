@@ -59,7 +59,7 @@ using namespace osgEarth::Util::Controls;
 //----------------------------------------------------------------------------
 
 // global association to manipulate
-static osg::ref_ptr<simVis::RangeTool::Association> s_association = NULL;
+static osg::ref_ptr<simVis::RangeTool::Association> s_association = nullptr;
 
 // list of calculations to cycle through
 static simVis::RangeTool::CalculationVector s_lineCalcs;
@@ -76,11 +76,11 @@ static int s_lineCalcIndex = -1, s_angleCalcIndex = -1;
 static const std::string s_title = "Range Tool Example";
 
 /// keep a handle, for toggling
-static osg::ref_ptr<Control> s_helpControl = NULL;
+static osg::ref_ptr<Control> s_helpControl = nullptr;
 
 /// label displaying the name of the current calculation
-static osg::ref_ptr<LabelControl> s_lineCalcLabel = NULL;
-static osg::ref_ptr<LabelControl> s_angleCalcLabel = NULL;
+static osg::ref_ptr<LabelControl> s_lineCalcLabel = nullptr;
+static osg::ref_ptr<LabelControl> s_angleCalcLabel = nullptr;
 
 
 // callback to toggle depth testing flag

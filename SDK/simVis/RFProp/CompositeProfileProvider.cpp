@@ -43,7 +43,7 @@ int CompositeProfileProvider::getActiveProviderIndex() const
 
 const ProfileDataProvider* CompositeProfileProvider::getActiveProvider() const
 {
-  return (activeIndex_ != -1) ? providers_[activeIndex_].get() : NULL;
+  return (activeIndex_ != -1) ? providers_[activeIndex_].get() : nullptr;
 }
 
 int CompositeProfileProvider::setActiveProvider(int index)
@@ -84,7 +84,7 @@ const ProfileDataProvider* CompositeProfileProvider::getProvider(ProfileDataProv
       return providers_[i].get();
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 unsigned int CompositeProfileProvider::getNumProviders() const
@@ -130,7 +130,7 @@ double CompositeProfileProvider::getMaxRange() const
 // some providers may not have height information, so these methods use heightProviderIndex_ to find a provider that does have that info
 unsigned int CompositeProfileProvider::getHeightIndex(double heightM) const
 {
-  const ProfileDataProvider* provider = (heightProviderIndex_ != -1) ? providers_[heightProviderIndex_].get() : NULL;
+  const ProfileDataProvider* provider = (heightProviderIndex_ != -1) ? providers_[heightProviderIndex_].get() : nullptr;
   // No provider? error out
   if (!provider)
     return INVALID_HEIGHT_INDEX;

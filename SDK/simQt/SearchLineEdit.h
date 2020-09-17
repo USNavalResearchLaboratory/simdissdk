@@ -47,7 +47,7 @@ class SDKQT_EXPORT SearchLineEdit : public QLineEdit
 {
   Q_OBJECT;
 public:
-  explicit SearchLineEdit(QWidget* parent = NULL);
+  explicit SearchLineEdit(QWidget* parent = nullptr);
   virtual ~SearchLineEdit();
 
   /** Image for search.  @see QLabel::pixmap() */

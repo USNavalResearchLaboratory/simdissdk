@@ -29,7 +29,7 @@ namespace simData
 
 DataStoreProxy::DataStoreProxy(DataStore* dataStore)
   : dataStore_(dataStore),
-    interpolator_(NULL)
+    interpolator_(nullptr)
 {
   assert(dataStore_);
 }
@@ -40,7 +40,7 @@ void DataStoreProxy::reset(DataStore* newDataStore)
     return;
 
   // only capture old internals if there is somewhere new to put them
-  InternalsMemento *oldInternals = newDataStore ? dataStore_->createInternalsMemento() : NULL;
+  InternalsMemento *oldInternals = newDataStore ? dataStore_->createInternalsMemento() : nullptr;
 
   DataStore *const oldDataStore = dataStore_;
   dataStore_ = newDataStore;
@@ -72,7 +72,7 @@ void DataStoreProxy::setInterpolator(Interpolator *interpolator)
 
 Interpolator* DataStoreProxy::interpolator() const
 {
-  return isInterpolationEnabled() ? interpolator_ : NULL;
+  return isInterpolationEnabled() ? interpolator_ : nullptr;
 }
 
 void DataStoreProxy::addListener(DataStore::ListenerPtr callback)

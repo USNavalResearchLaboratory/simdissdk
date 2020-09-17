@@ -40,9 +40,9 @@ namespace ui = osgEarth::Util::Controls;
 struct App
 {
   App()
-    : timeSlider_(NULL),
-      clockLabel_(NULL),
-      activeLayer_(NULL),
+    : timeSlider_(nullptr),
+      clockLabel_(nullptr),
+      activeLayer_(nullptr),
       firstTime_(INT_MAX),
       lastTime_(0),
       now_(0)
@@ -140,7 +140,7 @@ bool loadEarthFile(const std::string& earthFile, simVis::Viewer* viewer)
 {
   osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(earthFile);
   osgEarth::MapNode* mapNode = osgEarth::MapNode::get(node.get());
-  if (mapNode == NULL)
+  if (mapNode == nullptr)
     return false;
 
   viewer->setMapNode(mapNode);
