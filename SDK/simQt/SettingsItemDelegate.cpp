@@ -23,13 +23,14 @@
 #include <cassert>
 #include <limits>
 #include <QApplication>
+#include <QColorDialog>
+#include <QComboBox>
+#include <QDoubleSpinBox>
+#include <QFileDialog>
+#include <QFontDialog>
 #include <QLineEdit>
 #include <QPainter>
 #include <QSpinBox>
-#include <QDoubleSpinBox>
-#include <QColorDialog>
-#include <QComboBox>
-#include <QFileDialog>
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
@@ -607,6 +608,65 @@ void SettingsFontSelectorDelegate::updateEditorGeometry(QWidget* editor, const Q
 }
 
 /////////////////////////////////////////////////////////////////////////
+
+SettingsQFontSelectorDelegate::SettingsQFontSelectorDelegate(QObject* parent)
+  : QStyledItemDelegate(parent)
+{
+}
+
+SettingsQFontSelectorDelegate::~SettingsQFontSelectorDelegate()
+{
+}
+
+QWidget* SettingsQFontSelectorDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+  QFontDialog* dialog = new QFontDialog(parent);
+  dialog->setModal(true);
+  connect(dialog, SIGNAL(accepted()), this, SLOT(commitAndCloseEditor_()));
+  connect(dialog, SIGNAL(rejected()), this, SLOT(cancelEditor_()));
+  return dialog;
+}
+
+void SettingsQFontSelectorDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
+{
+  QFontDialog* dialog = static_cast<QFontDialog*>(editor);
+
+  // get the current font file name from the model
+  auto data = index.model()->data(index, Qt::EditRole).value<QFont>();
+
+  // update the font widget
+  dialog->setCurrentFont(data);
+  QString fqn = index.model()->data(index, SettingsModel::FullyQualifiedNameRole).toString();
+  dialog->setWindowTitle(fqn);
+}
+
+void SettingsQFontSelectorDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
+{
+  // set the font file name in the model
+  QFontDialog* fontSelector = static_cast<QFontDialog*>(editor);
+  model->setData(index, fontSelector->currentFont(), Qt::EditRole);
+}
+
+void SettingsQFontSelectorDelegate::commitAndCloseEditor_()
+{
+  QFontDialog* editor = static_cast<QFontDialog*>(sender());
+  emit commitData(editor);
+  emit closeEditor(editor);
+}
+
+void SettingsQFontSelectorDelegate::cancelEditor_()
+{
+  QFontDialog* editor = static_cast<QFontDialog*>(sender());
+  emit closeEditor(editor);
+}
+
+void SettingsQFontSelectorDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+  QFontDialog* dialog = static_cast<QFontDialog*>(editor);
+  dialog->move(option.rect.topLeft());
+}
+
+/////////////////////////////////////////////////////////////////////////
 SettingsItemDelegate::SettingsItemDelegate(QObject* parent)
   : QStyledItemDelegate(parent)
 {
@@ -625,6 +685,8 @@ SettingsItemDelegate::SettingsItemDelegate(QObject* parent)
   connect(&enumerationDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
   connect(&fontDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
   connect(&fontDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
+  connect(&qFontDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
+  connect(&qFontDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
   connect(&hexDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
   connect(&hexDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
 }
@@ -716,6 +778,8 @@ const QStyledItemDelegate* SettingsItemDelegate::findDelegate_(const QModelIndex
       return &enumerationDelegate_;
     case simQt::Settings::FONT:
       return &fontDelegate_;
+    case simQt::Settings::QFONT:
+      return &qFontDelegate_;
     case simQt::Settings::HEX:
       return &hexDelegate_;
     default:
