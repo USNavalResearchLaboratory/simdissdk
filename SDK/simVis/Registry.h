@@ -207,7 +207,10 @@ public:
   /** The static singleton registry instance */
   static Registry* instance();
 
-  /** Destroy the singleton registry instance */
+  /**
+  * Destroy the singleton registry instance. This method is not thread safe. It should only be called at the end of program execution
+  * on the main thread after all worker threads have returned.
+  */
   static void destroy();
 
 protected:

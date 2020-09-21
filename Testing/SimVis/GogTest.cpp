@@ -23,6 +23,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "osgEarth/FeatureNode"
+#include "osgEarth/GeoPositionNode"
+#include "osgEarth/LocalGeometryNode"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
@@ -119,6 +122,61 @@ int testFillState(simVis::GOG::GogNodeInterfacePtr gog)
   return rv;
 }
 
+// return true if the specified positions are equal
+bool comparePositions(const osg::Vec3d& pos1, const osg::Vec3d& pos2)
+{
+  return simCore::areEqual(pos1.x(), pos2.x()) && simCore::areEqual(pos1.y(), pos2.y()) && simCore::areEqual(pos1.z(), pos2.z());
+}
+
+// test that the specified gog is a FeatureNode, and that it contains the specified points
+int testFeatureGeometry(osg::Node* gog, const std::vector<osg::Vec3d>& points)
+{
+  int rv = 0;
+  osgEarth::FeatureNode* gogNode = dynamic_cast<osgEarth::FeatureNode*>(gog);
+  rv += SDK_ASSERT(gogNode != nullptr);
+  if (rv)
+    return rv;
+  size_t numPoints = 0;
+
+  const osgEarth::Geometry* geom = gogNode->getFeature()->getGeometry();
+  for (osg::Vec3d geomPoint : *geom)
+  {
+    for (osg::Vec3d point : points)
+    {
+      if (comparePositions(point, geomPoint))
+        numPoints++;
+    }
+  }
+  // make sure all points were found in the Geometry
+  rv += SDK_ASSERT(numPoints == points.size());
+  return rv;
+}
+
+// test that the specified gog is a LocalGeometryNode, and that it contains the specified points
+int testLocalGeometry(osg::Node* gog, const std::vector<osg::Vec3d>& points)
+{
+  int rv = 0;
+
+  osgEarth::LocalGeometryNode* gogNode = dynamic_cast<osgEarth::LocalGeometryNode*>(gog);
+  rv += SDK_ASSERT(gogNode != nullptr);
+  if (rv)
+    return rv;
+
+  size_t numPoints = 0;
+  const osgEarth::Geometry* geom = gogNode->getGeometry();
+  for (osg::Vec3d geomPoint : *geom)
+  {
+    for (osg::Vec3d point : points)
+    {
+      if (comparePositions(point, geomPoint))
+        numPoints++;
+    }
+  }
+  // make sure all points were found in the Geometry
+  rv += SDK_ASSERT(numPoints == points.size());
+  return rv;
+}
+
 int testShapes()
 {
   int rv = 0;
@@ -126,7 +184,7 @@ int testShapes()
 
   // test points
   std::string pointGogFile = FILE_VERSION +
-    "start\n points\n lla 24.1 44.3 0.\n lla \"26.0 N\" \"55.0 E\" 8.\n pointsize 24\n 3d name point 1\n" +
+    "start\n points\n lla 24.1 44.3 0.\n lla \"26.0 N\" \"55.0 E\" 8.\n pointsize 24\n 3d name point 1\n altitudeunits m\n" +
     TEXT_ATTRIBUTES + " end\n"; // add some invalid items
 
   simVis::GOG::GogNodeInterfacePtr pointGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, pointGogFile, rv);
@@ -147,11 +205,17 @@ int testShapes()
     int fontSize;
     osg::Vec4f fontColor;
     rv += SDK_ASSERT(pointGog->getFont(font, fontSize, fontColor) != 0);
+
+    // test geometry, osgEarth positions are (lon,lat,alt)
+    std::vector<osg::Vec3d> points;
+    points.push_back(osg::Vec3d(44.3, 24.1, 0.0));
+    points.push_back(osg::Vec3d(55.0, 26.0, 8.0));
+    rv += testFeatureGeometry(pointGog->osgNode(), points);
   }
 
   // test relative point
   std::string pointRelGogFile = FILE_VERSION +
-    "start\n points\n xyz 100 200 0\n xyz -100 9 0\n pointsize 24\n 3d name point relative 1\n end\n";
+    "start\n points\n xyz 100 200 0\n xyz -100 9 0\n pointsize 24\n 3d name point relative 1\n rangeunits m\n end\n";
 
   simVis::GOG::GogNodeInterfacePtr pointRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, pointRelGogFile, rv);
   // test the the point parsed correctly
@@ -165,11 +229,18 @@ int testShapes()
     int pointSize = 0;
     rv += SDK_ASSERT(pointRelGog->getPointSize(pointSize) == 0);
     rv += SDK_ASSERT(pointSize == 24);
+
+
+    // test geometry
+    std::vector<osg::Vec3d> points;
+    points.push_back(osg::Vec3d(100.0, 200.0, 0.0));
+    points.push_back(osg::Vec3d(-100.0, 9, 0.0));
+    rv += testLocalGeometry(pointRelGog->osgNode(), points);
   }
 
   // test line
   std::string lineGogFile = FILE_VERSION +
-    "start\n line\n lla 26.13568698 55.28 5000.\n lla \"26.0 N\" \"55.0 E\" 5000.\n" + LINE_ATTRIBUTES + "3d name line 1\n" +
+    "start\n line\n lla 26.13568698 55.28 5000.\n lla \"26.0 N\" \"55.0 E\" 5000.\n" + LINE_ATTRIBUTES + "3d name line 1\n altitudeunits m\n" +
     TEXT_ATTRIBUTES + // add some invalid items
     "end\n";
   simVis::GOG::GogNodeInterfacePtr lineGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, lineGogFile, rv);
@@ -186,11 +257,17 @@ int testShapes()
     int fontSize;
     osg::Vec4f fontColor;
     rv += SDK_ASSERT(lineGog->getFont(font, fontSize, fontColor) != 0);
+
+    // test geometry, osgEarth positions are (lon,lat,alt)
+    std::vector<osg::Vec3d> points;
+    points.push_back(osg::Vec3d(55.28, 26.13568698, 5000.0));
+    points.push_back(osg::Vec3d(55.0, 26.0, 5000.0));
+    rv += testFeatureGeometry(lineGog->osgNode(), points);
   }
 
   // test relative line
   std::string lineRelGogFile = FILE_VERSION +
-    "start\n line\n xyz 500 500 0\n xyz -500 50 0\n" + LINE_ATTRIBUTES + "3d name line relative 1\n" +
+    "start\n line\n xyz 500 500 0\n xyz -500 50 0\n rangeunits m\n" + LINE_ATTRIBUTES + "3d name line relative 1\n" +
     TEXT_ATTRIBUTES + // add some invalid items
     "end\n";
   simVis::GOG::GogNodeInterfacePtr lineRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, lineRelGogFile, rv);
@@ -201,11 +278,17 @@ int testShapes()
     rv += SDK_ASSERT(lineRelGog->getDraw());
     rv += SDK_ASSERT(lineRelGog->osgNode()->getName() == "line relative 1");
     rv += testLineState(lineRelGog);
+
+    // test geometry
+    std::vector<osg::Vec3d> points;
+    points.push_back(osg::Vec3d(500.0, 500.0, 0.0));
+    points.push_back(osg::Vec3d(-500.0, 50.0, 0.0));
+    rv += testLocalGeometry(lineRelGog->osgNode(), points);
   }
 
   // test polygon
   std::string polyGogFile = FILE_VERSION +
-    "start\n poly\n lla 25.2 53.2 10.\n lla 22.3 54.1 10.\n lla 24.1 53.8 10.\n 3d name poly 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
+    "start\n poly\n lla 25.2 53.2 10.\n lla 22.3 54.1 10.\n lla 24.1 53.8 10.\n 3d name poly 1\n altitudeunits m\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr polyGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, polyGogFile, rv);
   rv += SDK_ASSERT(polyGog != nullptr);
   if (polyGog)
@@ -215,11 +298,18 @@ int testShapes()
     rv += SDK_ASSERT(polyGog->osgNode()->getName() == "poly 1");
     rv += testLineState(polyGog);
     rv += testFillState(polyGog);
+
+    // test geometry, osgEarth positions are (lon,lat,alt)
+    std::vector<osg::Vec3d> points;
+    points.push_back(osg::Vec3d(53.2, 25.2, 10.0));
+    points.push_back(osg::Vec3d(54.1, 22.3, 10.0));
+    points.push_back(osg::Vec3d(53.8, 24.1, 10.0));
+    rv += testFeatureGeometry(polyGog->osgNode(), points);
   }
 
   // test relative polygon
   std::string polyRelGogFile = FILE_VERSION +
-    "start\n poly\n xyz 100 100 0\n xyz -100 100 0\n xyz -100 -100 0\n 3d name poly relative 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
+    "start\n poly\n xyz 100 200 0\n xyz -100 100 0\n xyz -100 -200 0\n 3d name poly relative 1\n rangeunits m\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr polyRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, polyRelGogFile, rv);
   rv += SDK_ASSERT(polyRelGog != nullptr);
   if (polyRelGog)
@@ -229,11 +319,18 @@ int testShapes()
     rv += SDK_ASSERT(polyRelGog->osgNode()->getName() == "poly relative 1");
     rv += testLineState(polyRelGog);
     rv += testFillState(polyRelGog);
+
+    // test geometry
+    std::vector<osg::Vec3d> points;
+    points.push_back(osg::Vec3d(100.0, 200.0, 0.0));
+    points.push_back(osg::Vec3d(-100.0, 100.0, 0.0));
+    points.push_back(osg::Vec3d(-100.0, -200., 0.0));
+    rv += testLocalGeometry(polyRelGog->osgNode(), points);
   }
 
   // test circle
   std::string circleGogFile = FILE_VERSION +
-    "start\n circle\n centerlla 25.2 53.2 10.\n radius 500\n linewidth 6\n 3d name circle 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
+    "start\n circle\n centerlla 25.2 53.2 0.\n radius 500\n linewidth 6\n 3d name circle 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr circleGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, circleGogFile, rv);
   rv += SDK_ASSERT(circleGog != nullptr);
   if (circleGog)
@@ -243,6 +340,11 @@ int testShapes()
     rv += SDK_ASSERT(circleGog->osgNode()->getName() == "circle 1");
     rv += testLineState(circleGog);
     rv += testFillState(circleGog);
+
+    // test center point
+    osg::Vec3d ctrPoint;
+    rv += SDK_ASSERT(circleGog->getPosition(ctrPoint) == 0);
+    rv += SDK_ASSERT(comparePositions(ctrPoint, osg::Vec3d(53.2, 25.2, 0.0)));
   }
 
   // test relative circle
@@ -257,11 +359,17 @@ int testShapes()
     rv += SDK_ASSERT(circleRelGog->osgNode()->getName() == "circle relative 1");
     rv += testLineState(circleRelGog);
     rv += testFillState(circleRelGog);
+
+    // test center point
+    osgEarth::LocalGeometryNode* gogNode = dynamic_cast<osgEarth::LocalGeometryNode*>(circleRelGog->osgNode());
+    rv += SDK_ASSERT(gogNode != nullptr);
+    if (gogNode)
+      rv += SDK_ASSERT(comparePositions(gogNode->getLocalOffset(), osg::Vec3d(0.0, 0.0, 0.0)));
   }
 
   // test arc
   std::string arcGogFile = FILE_VERSION +
-    "start\n arc\n centerlla 25.2 53.2 10.\n radius 500\n anglestart 44.3\n angledeg 36.7\n 3d name arc 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
+    "start\n arc\n centerlla 25.2 53.2 0.\n radius 500\n anglestart 44.3\n angledeg 36.7\n 3d name arc 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr arcGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, arcGogFile, rv);
   rv += SDK_ASSERT(arcGog != nullptr);
   if (arcGog)
@@ -271,11 +379,16 @@ int testShapes()
     rv += SDK_ASSERT(arcGog->osgNode()->getName() == "arc 1");
     rv += testLineState(arcGog);
     rv += testFillState(arcGog);
+
+    // test center point
+    osg::Vec3d ctrPoint;
+    rv += SDK_ASSERT(arcGog->getPosition(ctrPoint) == 0);
+    rv += SDK_ASSERT(ctrPoint == osg::Vec3d(53.2, 25.2, 0.0));
   }
 
   // test relative arc
   std::string arcRelGogFile = FILE_VERSION +
-    "start\n arc\n centerxyz 500 500 5\n radius 500\n anglestart 44.3\n angledeg 36.7\n 3d name arc relative 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
+    "start\n arc\n centerxyz 500 500 0\n radius 500\n anglestart 44.3\n angledeg 36.7\n 3d name arc relative 1\n rangeunits m\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr arcRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, arcRelGogFile, rv);
   rv += SDK_ASSERT(arcRelGog != nullptr);
   if (arcRelGog)
@@ -285,11 +398,24 @@ int testShapes()
     rv += SDK_ASSERT(arcRelGog->osgNode()->getName() == "arc relative 1");
     rv += testLineState(arcRelGog);
     rv += testFillState(arcRelGog);
+
+    // test center point
+    osg::Group* groupNode = dynamic_cast<osg::Group*>(arcRelGog->osgNode());
+    // arcs have 2 nodes: outline and fill
+    rv += SDK_ASSERT(groupNode->getNumChildren() == 2);
+    if (groupNode)
+    {
+      // Arc is made up of multiple LocalGeometryNodes
+      osgEarth::LocalGeometryNode* gogNode = dynamic_cast<osgEarth::LocalGeometryNode*>(groupNode->getChild(0));
+      rv += SDK_ASSERT(gogNode != nullptr);
+      if (gogNode)
+        rv += SDK_ASSERT(comparePositions(gogNode->getLocalOffset(), osg::Vec3d(500.0, 500.0, 0.0)));
+    }
   }
 
   // test cylinder
   std::string cylGogFile = FILE_VERSION +
-    "start\n cylinder\n centerlla 25.2 53.2 10.\n radius 500\n height 340\n anglestart 44.3\n angledeg 36.7\n 3d name cyl 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
+    "start\n cylinder\n centerlla 25.2 53.2 0.\n radius 500\n height 340\n anglestart 44.3\n angledeg 36.7\n 3d name cyl 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr cylGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, cylGogFile, rv);
   rv += SDK_ASSERT(cylGog != nullptr);
   if (cylGog)
@@ -299,11 +425,16 @@ int testShapes()
     rv += SDK_ASSERT(cylGog->osgNode()->getName() == "cyl 1");
     rv += testLineState(cylGog);
     rv += testFillState(cylGog);
+
+    // test center point
+    osg::Vec3d ctrPoint;
+    rv += SDK_ASSERT(arcGog->getPosition(ctrPoint) == 0);
+    rv += SDK_ASSERT(comparePositions(ctrPoint, osg::Vec3d(53.2, 25.2, 0.0)));
   }
 
   // test relative cylinder
   std::string cylRelGogFile = FILE_VERSION +
-    "start\n cylinder\n centerxyz 500 -200 10\n radius 500\n height 340\n anglestart 44.3\n angledeg 36.7\n 3d name cyl relative 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
+    "start\n cylinder\n centerxyz 500 -200 10\n radius 500\n height 340\n anglestart 44.3\n angledeg 36.7\n 3d name cyl relative 1\n rangeunits m\n altitudeunits m\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr cylRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, cylRelGogFile, rv);
   rv += SDK_ASSERT(cylRelGog != nullptr);
   if (cylRelGog)
@@ -313,6 +444,19 @@ int testShapes()
     rv += SDK_ASSERT(cylRelGog->osgNode()->getName() == "cyl relative 1");
     rv += testLineState(cylRelGog);
     rv += testFillState(cylRelGog);
+
+    // test center point
+    osg::Group* groupNode = dynamic_cast<osg::Group*>(cylRelGog->osgNode());
+    // cylinders have 3 nodes: top, side, bottom
+    rv += SDK_ASSERT(groupNode->getNumChildren() == 3);
+    if (groupNode)
+    {
+      // cylinder is made up of multiple LocalGeometryNodes
+      osgEarth::LocalGeometryNode* gogNode = dynamic_cast<osgEarth::LocalGeometryNode*>(groupNode->getChild(0));
+      rv += SDK_ASSERT(gogNode != nullptr);
+      if (gogNode)
+        rv += SDK_ASSERT(comparePositions(gogNode->getLocalOffset(), osg::Vec3d(500.0, -200.0, 10.0)));
+    }
   }
 
   // test ellipse
@@ -346,7 +490,7 @@ int testShapes()
 
   // test sphere
   std::string sphereGogFile = FILE_VERSION +
-    "start\n sphere\n centerlla 25.2 53.2 10.\n radius 200\n 3d name sphere 1\n" + FILL_ATTRIBUTES + "end\n";
+    "start\n sphere\n centerlla 25.2 53.4 0.\n radius 200\n 3d name sphere 1\n" + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr sphereGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, sphereGogFile, rv);
   rv += SDK_ASSERT(sphereGog != nullptr);
   if (sphereGog)
@@ -355,11 +499,16 @@ int testShapes()
     rv += SDK_ASSERT(sphereGog->getDraw());
     rv += SDK_ASSERT(sphereGog->osgNode()->getName() == "sphere 1");
     rv += testFillState(sphereGog);
+
+    // test center point
+    osg::Vec3d ctrPoint;
+    rv += SDK_ASSERT(sphereGog->getPosition(ctrPoint) == 0);
+    rv += SDK_ASSERT(comparePositions(ctrPoint, osg::Vec3d(53.4, 25.2, 0.0)));
   }
 
   // test relative sphere
   std::string sphereRelGogFile = FILE_VERSION +
-    "start\n sphere\n centerxyz 0 0 0\n radius 200\n 3d name sphere relative 1\n" + FILL_ATTRIBUTES + "end\n";
+    "start\n sphere\n centerxyz 5 0 0\n radius 200\n 3d name sphere relative 1\n rangeunits m\n" + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr sphereRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, sphereRelGogFile, rv);
   rv += SDK_ASSERT(sphereRelGog != nullptr);
   if (sphereRelGog)
@@ -368,11 +517,17 @@ int testShapes()
     rv += SDK_ASSERT(sphereRelGog->getDraw());
     rv += SDK_ASSERT(sphereRelGog->osgNode()->getName() == "sphere relative 1");
     rv += testFillState(sphereRelGog);
+
+    // test center point
+    osgEarth::LocalGeometryNode* gogNode = dynamic_cast<osgEarth::LocalGeometryNode*>(sphereRelGog->osgNode());
+    rv += SDK_ASSERT(gogNode != nullptr);
+    if (gogNode)
+      rv += SDK_ASSERT(comparePositions(gogNode->getLocalOffset(), osg::Vec3d(5.0, 0.0, 0.0)));
   }
 
   // test hemisphere
   std::string hemisphereGogFile = FILE_VERSION +
-    "start\n hemisphere\n centerlla 25.2 53.2 10.\n radius 200\n 3d name hemisphere 1\n" + FILL_ATTRIBUTES + "end\n";
+    "start\n hemisphere\n centerlla 26.2 53.2 0.\n radius 200\n 3d name hemisphere 1\n" + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr hemisphereGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, hemisphereGogFile, rv);
   rv += SDK_ASSERT(hemisphereGog != nullptr);
   if (hemisphereGog)
@@ -381,11 +536,16 @@ int testShapes()
     rv += SDK_ASSERT(hemisphereGog->getDraw());
     rv += SDK_ASSERT(hemisphereGog->osgNode()->getName() == "hemisphere 1");
     rv += testFillState(hemisphereGog);
+
+    // test center point
+    osg::Vec3d ctrPoint;
+    rv += SDK_ASSERT(hemisphereGog->getPosition(ctrPoint) == 0);
+    rv += SDK_ASSERT(comparePositions(ctrPoint, osg::Vec3d(53.2, 26.2, 0.0)));
   }
 
   // test relative hemisphere
   std::string hemisphereRelGogFile = FILE_VERSION +
-    "start\n hemisphere\n centerxyz 0 0 0\n radius 200\n 3d name hemisphere relative 1\n" + FILL_ATTRIBUTES + "end\n";
+    "start\n hemisphere\n centerxyz 0 50 0\n radius 200\n 3d name hemisphere relative 1\n rangeunits m\n" + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr hemisphereRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, hemisphereRelGogFile, rv);
   rv += SDK_ASSERT(hemisphereRelGog != nullptr);
   if (hemisphereRelGog)
@@ -394,6 +554,12 @@ int testShapes()
     rv += SDK_ASSERT(hemisphereRelGog->getDraw());
     rv += SDK_ASSERT(hemisphereRelGog->osgNode()->getName() == "hemisphere relative 1");
     rv += testFillState(hemisphereRelGog);
+
+    // test center point
+    osgEarth::LocalGeometryNode* gogNode = dynamic_cast<osgEarth::LocalGeometryNode*>(hemisphereRelGog->osgNode());
+    rv += SDK_ASSERT(gogNode != nullptr);
+    if (gogNode)
+      rv += SDK_ASSERT(comparePositions(gogNode->getLocalOffset(), osg::Vec3d(0.0, 50.0, 0.0)));
   }
 
   // test ellipsoid
@@ -424,7 +590,7 @@ int testShapes()
 
   // test cone
   std::string coneGogFile = FILE_VERSION +
-    "start\n cone\n centerlla 25.2 53.2 10.\n radius 500\n height 340\n 3d name cone 1\n" + FILL_ATTRIBUTES + "end\n";
+    "start\n cone\n centerlla 25.8 53.2 0.\n radius 500\n height 340\n 3d name cone 1\n" + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr coneGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, coneGogFile, rv);
   rv += SDK_ASSERT(coneGog != nullptr);
   if (coneGog)
@@ -433,11 +599,16 @@ int testShapes()
     rv += SDK_ASSERT(coneGog->getDraw());
     rv += SDK_ASSERT(coneGog->osgNode()->getName() == "cone 1");
     rv += testFillState(coneGog);
+
+    // test center point
+    osg::Vec3d ctrPoint;
+    rv += SDK_ASSERT(coneGog->getPosition(ctrPoint) == 0);
+    rv += SDK_ASSERT(comparePositions(ctrPoint, osg::Vec3d(53.2, 25.8, 0.0)));
   }
 
   // test relative cone
   std::string coneRelGogFile = FILE_VERSION +
-    "start\n cone\n centerxyz 500 -200 10\n radius 500\n height 340\n 3d name cone relative 1\n" + FILL_ATTRIBUTES + "end\n";
+    "start\n cone\n centerxyz 500 -200 0\n radius 500\n height 340\n 3d name cone relative 1\n rangeunits m\n" + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr coneRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, coneRelGogFile, rv);
   rv += SDK_ASSERT(coneRelGog != nullptr);
   if (coneRelGog)
@@ -446,11 +617,17 @@ int testShapes()
     rv += SDK_ASSERT(coneRelGog->getDraw());
     rv += SDK_ASSERT(coneRelGog->osgNode()->getName() == "cone relative 1");
     rv += testFillState(coneRelGog);
+
+    // test center point
+    osgEarth::LocalGeometryNode* gogNode = dynamic_cast<osgEarth::LocalGeometryNode*>(coneRelGog->osgNode());
+    rv += SDK_ASSERT(gogNode != nullptr);
+    if (gogNode)
+      rv += SDK_ASSERT(comparePositions(gogNode->getLocalOffset(), osg::Vec3d(500.0, -200.0, 0.0)));
   }
 
   // test orbit
   std::string orbitGogFile = FILE_VERSION +
-    "start\n orbit\n centerlla 25.2 53.2 10.\n centerll2 26. 54.3\n radius 500\n 3d name orbit 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
+    "start\n orbit\n centerlla 25.2 53.2 0.\n centerll2 26. 54.3\n radius 500\n 3d name orbit 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr orbitGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, orbitGogFile, rv);
   rv += SDK_ASSERT(orbitGog != nullptr);
   if (orbitGog)
@@ -460,11 +637,16 @@ int testShapes()
     rv += SDK_ASSERT(orbitGog->osgNode()->getName() == "orbit 1");
     rv += testLineState(orbitGog);
     rv += testFillState(orbitGog);
+
+    // test center point, orbit uses centerlla as center
+    osg::Vec3d ctrPoint;
+    rv += SDK_ASSERT(orbitGog->getPosition(ctrPoint) == 0);
+    rv += SDK_ASSERT(comparePositions(ctrPoint, osg::Vec3d(53.2, 25.2, 0.0)));
   }
 
   // test relative orbit
   std::string orbitRelGogFile = FILE_VERSION +
-    "start\n orbit\n centerxyz 500 -200 10\n centerxy2 600 200 radius 500\n 3d name orbit relative 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
+    "start\n orbit\n centerxyz 500 -200 0\n centerxy2 600 200 radius 500\n 3d name orbit relative 1\n rangeunits m\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr orbitRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, orbitRelGogFile, rv);
   rv += SDK_ASSERT(orbitRelGog != nullptr);
   if (orbitRelGog)
@@ -474,11 +656,17 @@ int testShapes()
     rv += SDK_ASSERT(orbitRelGog->osgNode()->getName() == "orbit relative 1");
     rv += testLineState(orbitRelGog);
     rv += testFillState(orbitRelGog);
+
+    // test center point
+    osgEarth::LocalGeometryNode* gogNode = dynamic_cast<osgEarth::LocalGeometryNode*>(orbitRelGog->osgNode());
+    rv += SDK_ASSERT(gogNode != nullptr);
+    if (gogNode)
+      rv += SDK_ASSERT(comparePositions(gogNode->getLocalOffset(), osg::Vec3d(500.0, -200.0, 0.0)));
   }
 
   // test annotation
   std::string annotationGogFile = FILE_VERSION +
-    "start\n annotation label 1\n centerlla 25.2 53.2 10.\n linecolor hex 0xffff00ff\n" + TEXT_ATTRIBUTES + "end\n";
+    "start\n annotation label 1\n centerlla 25.2 53.2 0.\n linecolor hex 0xffff00ff\n" + TEXT_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr annotationGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, annotationGogFile, rv);
   rv += SDK_ASSERT(annotationGog != nullptr);
   if (annotationGog)
@@ -497,11 +685,16 @@ int testShapes()
     rv += SDK_ASSERT(font.find("georgia.ttf") != std::string::npos);
 #endif
     rv += SDK_ASSERT(fontColor == osg::Vec4f(1.0, 0, 1.0, 1.0));
+
+    // test center point
+    osg::Vec3d ctrPoint;
+    rv += SDK_ASSERT(annotationGog->getPosition(ctrPoint) == 0);
+    rv += SDK_ASSERT(comparePositions(ctrPoint, osg::Vec3d(53.2, 25.2, 0.0)));
   }
 
   // test relative annotation
   std::string annotationRelGogFile = FILE_VERSION +
-    "start\n annotation label relative 1\n centerxyz 0 0 0.\n linecolor hex 0xffff00ff\n" + TEXT_ATTRIBUTES + "end\n";
+    "start\n annotation label relative 1\n centerxyz 10 0 0.\n linecolor hex 0xffff00ff\n rangeunits m\n" + TEXT_ATTRIBUTES + "end\n";
   simVis::GOG::GogNodeInterfacePtr annotationRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, annotationRelGogFile, rv);
   rv += SDK_ASSERT(annotationRelGog != nullptr);
   if (annotationRelGog)
@@ -520,6 +713,12 @@ int testShapes()
     rv += SDK_ASSERT(font.find("georgia.ttf") != std::string::npos);
 #endif
     rv += SDK_ASSERT(fontColor == osg::Vec4f(1.0, 0, 1.0, 1.0));
+
+    // test center point
+    osgEarth::GeoPositionNode* gogNode = dynamic_cast<osgEarth::GeoPositionNode*>(annotationRelGog->osgNode());
+    rv += SDK_ASSERT(gogNode != nullptr);
+    if (gogNode)
+      rv += SDK_ASSERT(comparePositions(gogNode->getLocalOffset(), osg::Vec3d(10.0, 0.0, 0.0)));
   }
 
   // test special case of nested annotations
@@ -561,6 +760,45 @@ int testShapes()
     rv += SDK_ASSERT(llabGog->osgNode()->getName() == "llab 1");
     rv += testLineState(llabGog);
     rv += testFillState(llabGog);
+
+    // test geometry, osgEarth positions are (lon,lat,alt)
+    osg::Group* groupNode = dynamic_cast<osg::Group*>(llabGog->osgNode());
+    // LatLonAltBox has 2 nodes, front/right/top and back/left/bottom
+    rv += SDK_ASSERT(groupNode->getNumChildren() == 2);
+    if (groupNode)
+    {
+      // first child node is the back/left/bottom
+      osgEarth::FeatureNode* gogNode = dynamic_cast<osgEarth::FeatureNode*>(groupNode->getChild(0));
+      rv += SDK_ASSERT(gogNode != nullptr);
+      if (gogNode)
+      {
+        std::vector<osg::Vec3d> points;
+        points.push_back(osg::Vec3d(55.27931357, 26.13568698, 0.));
+        points.push_back(osg::Vec3d(55.27, 26.13568698, 0.));
+        points.push_back(osg::Vec3d(55.27931357, 26.13, 0.));
+        points.push_back(osg::Vec3d(55.27, 26.13, 0.));
+
+        size_t numPoints = 0;
+        osgEarth::Geometry* geom = gogNode->getFeature()->getGeometry();
+        // LatLonAltBox is created with MultiGeometry, so need geometry iterator
+        osgEarth::GeometryIterator iter(geom, false);
+        size_t altIndex = 0;
+        while (iter.hasMore())
+        {
+          osgEarth::Geometry* part = iter.next();
+          for (size_t i = 0; i < part->size(); ++i)
+          {
+            for (auto pointIter = points.begin(); pointIter != points.end(); ++pointIter)
+            {
+              if (comparePositions(*pointIter, (*part)[i]))
+                numPoints++;
+            }
+          }
+        }
+        // check that all points were in the Geometry, some duplication exists in the multiple Geometries
+        rv += SDK_ASSERT(numPoints >= points.size());
+      }
+    }
   }
 
   return rv;
