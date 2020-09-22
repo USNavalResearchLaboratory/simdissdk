@@ -22,6 +22,7 @@
  */
 
 #include "simCore/Common/SDKAssert.h"
+#include "simData/DataSlice.h"
 #include "simData/DataTable.h"
 #include "simUtil/DataStoreTestHelper.h"
 
@@ -682,6 +683,127 @@ int testRecursion()
   return rv;
 }
 
+void makeGenericDataSeries(simUtil::DataStoreTestHelper& helper)
+{
+  helper.addGenericData(0, "Key", "0", 0.0);
+  helper.addGenericData(0, "Key", "1", 1.0);
+  helper.addGenericData(0, "Key", "2", 2.0);
+  helper.addGenericData(0, "Key", "3", 3.0);
+  helper.addGenericData(0, "Key", "4", 4.0);
+}
+
+// Keep track of time value pairs
+struct TimeValuePair
+{
+  double time;
+  std::string value;
+  TimeValuePair(double inTime, const std::string& inValue)
+    : time(inTime),
+    value(inValue)
+  {}
+};
+
+// Visitor to validate generic data
+class ValidateGenericData : public simData::VisitableDataSlice<simData::GenericData>::Visitor
+{
+public:
+  ValidateGenericData(const std::vector<TimeValuePair>& pairs)
+    : pairs_(pairs),
+      index_(0),
+      errors_(0)
+  {
+  }
+
+  virtual void operator()(const simData::GenericData* update)
+  {
+    if (update->time() != pairs_[index_].time)
+      ++errors_;
+
+    for (int ii = 0; ii < update->entry_size(); ++ii)
+    {
+      auto entry = update->entry(ii);
+      if (entry.value() != pairs_[index_].value)
+        ++errors_;
+      ++index_;
+    }
+  }
+
+  int errors() const { return errors_; }
+
+private:
+  const std::vector<TimeValuePair>& pairs_;
+  size_t index_;
+  int errors_;
+};
+
+// Validate generic data against the given pairs
+int validateGenericDataSeries(simUtil::DataStoreTestHelper& helper, const std::vector<TimeValuePair>& pairs)
+{
+  auto ds = helper.dataStore();
+  auto slice = ds->genericDataSlice(0);
+  ValidateGenericData validate(pairs);
+  slice->visit(&validate);
+  return validate.errors();
+}
+
+// Test Generic data time range flush
+int testGenericDataTimeRange()
+{
+  int rv = 0;
+
+  {
+    // flush all
+    simUtil::DataStoreTestHelper helper;
+    rv += SDK_ASSERT(genericDataEntries(helper.dataStore(), 0) == 0);
+    makeGenericDataSeries(helper);
+    rv += SDK_ASSERT(validateGenericDataSeries(helper, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_GENERIC_DATA, 0.0, 10.0) == 0);
+    rv += SDK_ASSERT(validateGenericDataSeries(helper, { }) == 0);
+  }
+
+  {
+    // flush start
+    simUtil::DataStoreTestHelper helper;
+    rv += SDK_ASSERT(genericDataEntries(helper.dataStore(), 0) == 0);
+    makeGenericDataSeries(helper);
+    rv += SDK_ASSERT(validateGenericDataSeries(helper, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_GENERIC_DATA, 0.0, 2.0) == 0);
+    rv += SDK_ASSERT(validateGenericDataSeries(helper, { {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+  }
+
+  {
+    // flush from the middle
+    simUtil::DataStoreTestHelper helper;
+    rv += SDK_ASSERT(genericDataEntries(helper.dataStore(), 0) == 0);
+    makeGenericDataSeries(helper);
+    rv += SDK_ASSERT(validateGenericDataSeries(helper, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_GENERIC_DATA, 1.0, 2.0) == 0);
+    rv += SDK_ASSERT(validateGenericDataSeries(helper, { {0.0, "0"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+  }
+
+  {
+    // flush more from the middle
+    simUtil::DataStoreTestHelper helper;
+    rv += SDK_ASSERT(genericDataEntries(helper.dataStore(), 0) == 0);
+    makeGenericDataSeries(helper);
+    rv += SDK_ASSERT(validateGenericDataSeries(helper, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_GENERIC_DATA, 1.0, 4.0) == 0);
+    rv += SDK_ASSERT(validateGenericDataSeries(helper, { {0.0, "0"}, {4.0, "4"} }) == 0);
+  }
+
+  {
+    // flush the end
+    simUtil::DataStoreTestHelper helper;
+    rv += SDK_ASSERT(genericDataEntries(helper.dataStore(), 0) == 0);
+    makeGenericDataSeries(helper);
+    rv += SDK_ASSERT(validateGenericDataSeries(helper, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_GENERIC_DATA, 3.0, 5.0) == 0);
+    rv += SDK_ASSERT(validateGenericDataSeries(helper, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"} }) == 0);
+  }
+
+  return rv;
+}
+
 }
 
 int TestFlush(int argc, char* argv[])
@@ -692,6 +814,8 @@ int TestFlush(int argc, char* argv[])
   rv += testScenario();
   rv += testFields();
   rv += testRecursion();
+
+  rv += testGenericDataTimeRange();
 
   return rv;
 }

@@ -397,6 +397,9 @@ public: // methods
   /** Removes all the specified data */
   virtual int flush(ObjectId id, FlushScope scope, FlushFields fields) = 0;
 
+  /** Removes a range of data from startTime up to but not including the endTime */
+  virtual int flush(ObjectId id, FlushScope scope, FlushFields fields, double startTime, double endTime) = 0;
+
   /**
   * clear out the data store of all scenario specific data, including all entities and category data names.
   */

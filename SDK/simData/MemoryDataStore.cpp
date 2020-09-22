@@ -1211,6 +1211,62 @@ int MemoryDataStore::flush(ObjectId id, FlushScope scope, FlushFields fields)
   return 0;
 }
 
+int MemoryDataStore::flush(ObjectId id, FlushScope scope, FlushFields fields, double startTime, double endTime)
+{
+  if (id == 0)
+  {
+    if (scope == FLUSH_RECURSIVE)
+    {
+      // TODO: SIM-11841 Implement
+      for (Platforms::const_iterator iter = platforms_.begin(); iter != platforms_.end(); ++iter)
+        flushEntity_(iter->first, simData::PLATFORM, scope, fields);
+      for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
+        flushEntity_(iter->first, simData::CUSTOM_RENDERING, scope, fields);
+    }
+
+    if (fields & FLUSH_DATA_TABLES)
+    {
+      // TODO: SIM-11841 Implement
+      flushDataTables_(0);
+    }
+
+    if (fields & FLUSH_GENERIC_DATA)
+    {
+      GenericDataMap::const_iterator it = genericData_.find(0);
+      if (it != genericData_.end())
+        it->second->flush(startTime, endTime);
+    }
+  }
+  else
+  {
+    auto type = objectType(id);
+    if (type == simData::NONE)
+      return 1;
+
+    // TODO: SIM-11841 Implement
+    flushEntity_(id, type, scope, fields);
+  }
+
+  hasChanged_ = true;
+
+  // Need to handle recursion so make a local copy
+  ListenerList localCopy = listeners_;
+  justRemoved_.clear();
+  // now send out notification to listeners
+  for (ListenerList::const_iterator i = localCopy.begin(); i != localCopy.end(); ++i)
+  {
+    if (*i != nullptr)
+    {
+      (*i)->onFlush(this, id);
+      checkForRemoval_(localCopy);
+    }
+  }
+  // Send out notification to the new-updates listener
+  newUpdatesListener_->onFlush(this, id);
+
+  return 0;
+}
+
 void MemoryDataStore::applyDataLimiting_(ObjectId id)
 {
   if (!dataLimiting_)
