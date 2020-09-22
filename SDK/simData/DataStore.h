@@ -372,6 +372,31 @@ public: // methods
    */
   virtual void flush(ObjectId flushId, FlushType type = NON_RECURSIVE) = 0;
 
+
+  /// The scope of the flush
+  enum FlushScope
+  {
+    FLUSH_RECURSIVE = 0,  ///< Flush the fields for the given entity and its children
+    FLUSH_NONRECURSIVE   ///< Flush only the fields for the given entity
+  };
+
+  /// Which fields are flushed
+  enum FlushFields
+  {
+    FLUSH_UPDATES = 0x1,
+    FLUSH_COMMANDS = 0x2,
+    FLUSH_CATEGORY_DATA = 0x4,
+    FLUSH_GENERIC_DATA = 0x8,
+    FLUSH_DATA_TABLES = 0x10,
+
+    FLUSH_EXCLUDE_MINUS_ONE = 0x80000000, ///< Keep data with time tag of -1, applies only to platform updates and category data
+
+    FLUSH_ALL = 0x000FFFFF
+  };
+
+  /** Removes all the specified data */
+  virtual int flush(ObjectId id, FlushScope scope, FlushFields fields) = 0;
+
   /**
   * clear out the data store of all scenario specific data, including all entities and category data names.
   */

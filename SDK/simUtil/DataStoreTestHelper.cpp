@@ -346,6 +346,15 @@ void DataStoreTestHelper::addProjectorCommand(const simData::ProjectorCommand& c
   t.commit();
 }
 
+void DataStoreTestHelper::addCustomRenderingCommand(const simData::CustomRenderingCommand& command, uint64_t id)
+{
+  simData::DataStore::Transaction t;
+  simData::CustomRenderingCommand *c = dataStore_->addCustomRenderingCommand(id, &t);
+  SDK_ASSERT(c != nullptr);
+  c->MergeFrom(command);
+  t.commit();
+}
+
 void DataStoreTestHelper::addCategoryData(uint64_t id, const std::string& key, const std::string& value, double startTime)
 {
   simData::DataStore::Transaction transaction;
@@ -381,7 +390,7 @@ void DataStoreTestHelper::addGenericData(uint64_t id, const std::string& key, co
   transaction.complete(&genData);
 }
 
-void DataStoreTestHelper::addDataTable(uint64_t entityId, int numRows, const std::string& tableName)
+uint64_t DataStoreTestHelper::addDataTable(uint64_t entityId, int numRows, const std::string& tableName)
 {
   std::string name = tableName;
   // auto generate a unique name for the table if no name passed in
@@ -394,8 +403,9 @@ void DataStoreTestHelper::addDataTable(uint64_t entityId, int numRows, const std
   }
   simData::DataTable* newTable;
   if (dataStore_->dataTableManager().addDataTable(entityId, name, &newTable).isError())
-    return;
+    return simData::INVALID_TABLEID;
   addDataTableRows_(newTable, numRows, tableId_);
+  return newTable->tableId();
 }
 
 void DataStoreTestHelper::addDataTableRows_(simData::DataTable* table, int numRows, uint64_t id)

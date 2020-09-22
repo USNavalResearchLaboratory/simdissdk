@@ -176,6 +176,27 @@ void flushEntityData(EntityMap& map, ObjectId id, MemoryDataStore::CategoryDataM
   }
 }
 
+/**
+* Calls flush on any entries found for the specified id in the entity map, as well as the category and generic data maps
+* @param map Entity map
+* @param id The entity to flush
+* @param flushUpdates If true remove updates
+* @param flushCommands If true remove commands
+* @param keepTspiStatic If true static TSPI points are not removed.
+*/
+template <typename EntityMap>
+void flushEntityData(EntityMap& map, ObjectId id, bool flushUpdates, bool flushCommands, bool keepTspiStatic)
+{
+  typename EntityMap::const_iterator i = map.find(id);
+  if (i != map.end())
+  {
+    if (flushUpdates)
+      (*i).second->updates()->flush(keepTspiStatic);
+    if (flushCommands)
+      (*i).second->commands()->flush();
+  }
+}
+
 /** Data limit provider that pulls values out of the data store */
 class DataStoreLimits : public MemoryTable::DataLimitsProvider
 {
@@ -836,6 +857,10 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
       projectorIdListForHost(flushId, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
         flushEntity_(*iter, simData::PROJECTOR, flushType);
+      ids.clear();
+      customRenderingIdListForHost(flushId, &ids);
+      for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
+        flushEntity_(*iter, simData::CUSTOM_RENDERING, flushType);
     }
     break;
   case BEAM:
@@ -845,6 +870,10 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
       gateIdListForHost(flushId, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
         flushEntity_(*iter, simData::GATE, flushType);
+      ids.clear();
+      projectorIdListForHost(flushId, &ids);
+      for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
+        flushEntity_(*iter, simData::PROJECTOR, flushType);
     }
     break;
   case GATE:
@@ -870,6 +899,99 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
   // Only recursive flush deletes table data
   if (recursive)
     flushDataTables_(flushId);
+}
+
+void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields)
+{
+  const bool recursive = (flushScope == FLUSH_RECURSIVE);
+  const bool flushUpdates = (flushFields & FLUSH_UPDATES);
+  const bool flushCommands = (flushFields & FLUSH_COMMANDS);
+  IdList ids;
+  switch (type)
+  {
+  case PLATFORM:
+    flushEntityData(platforms_, id, flushUpdates, flushCommands, flushFields & FLUSH_EXCLUDE_MINUS_ONE);
+    if (recursive)
+    {
+      beamIdListForHost(id, &ids);
+      for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
+        flushEntity_(*iter, simData::BEAM, flushScope, flushFields);
+      ids.clear();
+      laserIdListForHost(id, &ids);
+      for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
+        flushEntity_(*iter, simData::LASER, flushScope, flushFields);
+      ids.clear();
+      lobGroupIdListForHost(id, &ids);
+      for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
+        flushEntity_(*iter, simData::LOB_GROUP, flushScope, flushFields);
+      ids.clear();
+      projectorIdListForHost(id, &ids);
+      for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
+        flushEntity_(*iter, simData::PROJECTOR, flushScope, flushFields);
+      ids.clear();
+      customRenderingIdListForHost(id, &ids);
+      for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
+        flushEntity_(*iter, simData::CUSTOM_RENDERING, flushScope, flushFields);
+    }
+    break;
+  case BEAM:
+    flushEntityData(beams_, id, flushUpdates, flushCommands, false);
+    if (recursive)
+    {
+      gateIdListForHost(id, &ids);
+      for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
+        flushEntity_(*iter, simData::GATE, flushScope, flushFields);
+      ids.clear();
+      projectorIdListForHost(id, &ids);
+      for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
+        flushEntity_(*iter, simData::PROJECTOR, flushScope, flushFields);
+    }
+    break;
+  case GATE:
+    flushEntityData(gates_, id, flushUpdates, flushCommands, false);
+    break;
+  case LASER:
+    flushEntityData(lasers_, id, flushUpdates, flushCommands, false);
+    break;
+  case LOB_GROUP:
+    flushEntityData(lobGroups_, id, flushUpdates, flushCommands, false);
+    break;
+  case PROJECTOR:
+    flushEntityData(projectors_, id, flushUpdates, flushCommands, false);
+    break;
+  case CUSTOM_RENDERING:
+    flushEntityData(customRenderings_, id, flushUpdates, flushCommands, false);
+    break;
+  case ALL:
+  case NONE:
+    break;
+  }
+
+  if (flushFields & FLUSH_CATEGORY_DATA)
+  {
+    if (flushFields & FLUSH_EXCLUDE_MINUS_ONE)
+    {
+      auto it = categoryData_.find(id);
+      if (it != categoryData_.end())
+        it->second->flush();
+    }
+    else
+    {
+      auto it = categoryData_.find(id);
+      if (it != categoryData_.end())
+        it->second->completeFlush();
+    }
+  }
+
+  if (flushFields & FLUSH_GENERIC_DATA)
+  {
+    auto it = genericData_.find(id);
+    if (it != genericData_.end())
+      it->second->flush();
+  }
+
+  if (flushFields & FLUSH_DATA_TABLES)
+    flushDataTables_(id);
 }
 
 void MemoryDataStore::flushDataTables_(ObjectId id)
@@ -1036,6 +1158,57 @@ void MemoryDataStore::flush(ObjectId flushId, FlushType flushType)
   }
   // Send out notification to the new-updates listener
   newUpdatesListener_->onFlush(this, flushId);
+}
+
+int MemoryDataStore::flush(ObjectId id, FlushScope scope, FlushFields fields)
+{
+  if (id == 0)
+  {
+    if (scope == FLUSH_RECURSIVE)
+    {
+      for (Platforms::const_iterator iter = platforms_.begin(); iter != platforms_.end(); ++iter)
+        flushEntity_(iter->first, simData::PLATFORM, scope, fields);
+      for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
+        flushEntity_(iter->first, simData::CUSTOM_RENDERING, scope, fields);
+    }
+
+    if (fields & FLUSH_DATA_TABLES)
+      flushDataTables_(0);
+
+    if (fields & FLUSH_GENERIC_DATA)
+    {
+      GenericDataMap::const_iterator it = genericData_.find(0);
+      if (it != genericData_.end())
+        it->second->flush();
+    }
+  }
+  else
+  {
+    auto type = objectType(id);
+    if (type == simData::NONE)
+      return 1;
+
+    flushEntity_(id, type, scope, fields);
+  }
+
+  hasChanged_ = true;
+
+  // Need to handle recursion so make a local copy
+  ListenerList localCopy = listeners_;
+  justRemoved_.clear();
+  // now send out notification to listeners
+  for (ListenerList::const_iterator i = localCopy.begin(); i != localCopy.end(); ++i)
+  {
+    if (*i != nullptr)
+    {
+      (*i)->onFlush(this, id);
+      checkForRemoval_(localCopy);
+    }
+  }
+  // Send out notification to the new-updates listener
+  newUpdatesListener_->onFlush(this, id);
+
+  return 0;
 }
 
 void MemoryDataStore::applyDataLimiting_(ObjectId id)

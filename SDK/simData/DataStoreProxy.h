@@ -95,6 +95,9 @@ public: // methods
    */
   virtual void flush(ObjectId flushId, FlushType type = NON_RECURSIVE) {dataStore_->flush(flushId, type);}
 
+  /** Removes all the specified data */
+  virtual int flush(ObjectId id, FlushScope scope, FlushFields fields) {return dataStore_->flush(id, scope, fields);}
+
   /**
   * clear out the data store of all scenario specific data, including all entities and category data names.
   */

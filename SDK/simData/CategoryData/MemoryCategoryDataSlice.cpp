@@ -43,21 +43,21 @@ MemoryCategoryDataSlice::TimeValues::~TimeValues()
 /* Gets the start of the deque */
 MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::begin() const
 {
-  return entries.begin();
+  return entries_.begin();
 }
 
 /* Gets the end of the deque */
 MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::end() const
 {
-  return entries.end();
+  return entries_.end();
 }
 
 /** Gets the upper bound from the deque */
 MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::upper_bound(double time) const
 {
   lastPos_ = checkPosition_(lastPos_);
-  TimeValueIterator rv = upperBound_(entries.begin(), entries.begin() + lastPos_, entries.end(), time);
-  lastPos_ = rv - entries.begin();
+  TimeValueIterator rv = upperBound_(entries_.begin(), entries_.begin() + lastPos_, entries_.end(), time);
+  lastPos_ = rv - entries_.begin();
   return rv;
 }
 
@@ -65,46 +65,46 @@ MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::
 MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::find(double time) const
 {
   lastPos_ = checkPosition_(lastPos_);
-  TimeValueIterator rv = find_(entries.begin(), entries.begin() + lastPos_, entries.end(), time);
-  lastPos_ = rv - entries.begin();
+  TimeValueIterator rv = find_(entries_.begin(), entries_.begin() + lastPos_, entries_.end(), time);
+  lastPos_ = rv - entries_.begin();
   return rv;
 }
 
 /** Removes data from the deque */
 void MemoryCategoryDataSlice::TimeValues::erase(TimeValueIterator it)
 {
-  entries.erase(it);
+  entries_.erase(it);
 }
 
 /** Retrieves size of the entries */
 size_t MemoryCategoryDataSlice::TimeValues::size() const
 {
   // Note that this is O(1) complexity, safe to call
-  return entries.size();
+  return entries_.size();
 }
 
 /** Inserts data into the deque */
 void MemoryCategoryDataSlice::TimeValues::insert(double time, int value)
 {
   // First do initial condition
-  if (entries.empty())
+  if (entries_.empty())
   {
-    entries.push_back(TimeValuePair(time, value));
+    entries_.push_back(TimeValuePair(time, value));
     return;
   }
 
   // Second so the common case of appending to the end
-  if (entries.back().time < time)
+  if (entries_.back().time < time)
   {
-    entries.push_back(TimeValuePair(time, value));
+    entries_.push_back(TimeValuePair(time, value));
     return;
   }
 
   // Not appending to the end, so need to find the location
   TimeValueIterator it = upper_bound(time);
-  if (it == entries.begin())
+  if (it == entries_.begin())
   {
-    entries.push_front(TimeValuePair(time, value));
+    entries_.push_front(TimeValuePair(time, value));
     return;
   }
 
@@ -116,7 +116,7 @@ void MemoryCategoryDataSlice::TimeValues::insert(double time, int value)
     return;
   }
 
-  entries.insert(it, TimeValuePair(time, value));
+  entries_.insert(it, TimeValuePair(time, value));
 }
 
 void MemoryCategoryDataSlice::TimeValues::limitByPoints(uint32_t limitPoints)
@@ -124,19 +124,19 @@ void MemoryCategoryDataSlice::TimeValues::limitByPoints(uint32_t limitPoints)
   // The zero case should already be handled
   assert(limitPoints);
 
-  if (entries.size() <= limitPoints)
+  if (entries_.size() <= limitPoints)
     return;
 
   bool reinsertOldTime = false;
   int oldValue = 0;
-  if (entries.front().time == DEFAULT_TIME)
+  if (entries_.front().time == DEFAULT_TIME)
   {
-    oldValue = entries.front().value;
+    oldValue = entries_.front().value;
     reinsertOldTime = true;
   }
 
   // This algorithm is different than SIMDIS 9 in that any default value is NOT counted against limitPoints
-  size_t numToRemove = entries.size() - limitPoints;
+  size_t numToRemove = entries_.size() - limitPoints;
   if (reinsertOldTime)
   {
     // Break out early if only removing the -1 time
@@ -144,11 +144,16 @@ void MemoryCategoryDataSlice::TimeValues::limitByPoints(uint32_t limitPoints)
       return;
   }
 
-  entries.erase(entries.begin(), entries.begin() + numToRemove);
+  entries_.erase(entries_.begin(), entries_.begin() + numToRemove);
 
   // Re-add the -1 time value
   if (reinsertOldTime)
-    entries.push_front(TimeValuePair(DEFAULT_TIME, oldValue));
+    entries_.push_front(TimeValuePair(DEFAULT_TIME, oldValue));
+}
+
+void MemoryCategoryDataSlice::TimeValues::completeFlush()
+{
+  entries_.clear();
 }
 
 void MemoryCategoryDataSlice::TimeValues::limitByTime(double timeLimit)
@@ -156,49 +161,49 @@ void MemoryCategoryDataSlice::TimeValues::limitByTime(double timeLimit)
   // The zero case should already be handle
   assert(timeLimit > 0.0);
 
-  if (entries.size() < 2)
+  if (entries_.size() < 2)
     return;
 
   bool reinsertOldTime = false;
   int oldValue = 0;
-  if (entries.front().time == DEFAULT_TIME)
+  if (entries_.front().time == DEFAULT_TIME)
   {
-    oldValue = entries.front().value;
+    oldValue = entries_.front().value;
     reinsertOldTime = true;
-    if (entries.size() < 3)
+    if (entries_.size() < 3)
       return;
   }
 
-  double lastTime = entries.rbegin()->time;
+  double lastTime = entries_.rbegin()->time;
   double limitPointsBeforeTime = lastTime - simCore::sdkMax(0.0, static_cast<double>(timeLimit));
-  TimeValueIterator dataIter = std::lower_bound(entries.begin(), entries.end(), TimeValuePair(limitPointsBeforeTime, 0));
-  if (dataIter == entries.end())
+  TimeValueIterator dataIter = std::lower_bound(entries_.begin(), entries_.end(), TimeValuePair(limitPointsBeforeTime, 0));
+  if (dataIter == entries_.end())
   {
     // no element was found with a timestamp >= limitPointsBeforeTime
     // all elements have timestamps < limitPointsBeforeTime
-    entries.clear();
+    entries_.clear();
   }
   else
   {
     // dataIter is the first element in dataContainer with a timestamp >= limitPointsBeforeTime
     // all elements before dataIter have timestamps < limitPointsBeforeTime
-    if (dataIter != entries.begin())
+    if (dataIter != entries_.begin())
     {
-      entries.erase(entries.begin(), dataIter);
+      entries_.erase(entries_.begin(), dataIter);
     }
   }
 
   // Re-add the -1 time value
   if (reinsertOldTime)
-    entries.push_front(TimeValuePair(DEFAULT_TIME, oldValue));
+    entries_.push_front(TimeValuePair(DEFAULT_TIME, oldValue));
 }
 
 /** Returns a validated position */
 size_t MemoryCategoryDataSlice::TimeValues::checkPosition_(size_t pos) const
 {
-  if (entries.empty())
+  if (entries_.empty())
     return 0;
-  return pos >= entries.size() ? (entries.size() - 1) : pos;
+  return pos >= entries_.size() ? (entries_.size() - 1) : pos;
 }
 
 /**
@@ -700,6 +705,13 @@ void MemoryCategoryDataSlice::limitByPrefs(const CommonPrefs &prefs)
 void MemoryCategoryDataSlice::flush()
 {
   limitByPoints_(1);
+}
+
+void MemoryCategoryDataSlice::completeFlush()
+{
+  sliceSize_ = 0;
+  for (EntityData::iterator i = data_.begin(); i != data_.end(); ++i)
+    i->second.data.completeFlush();
 }
 
 std::unique_ptr<CategoryDataSlice::IteratorImpl> MemoryCategoryDataSlice::iterator_() const

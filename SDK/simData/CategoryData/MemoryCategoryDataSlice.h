@@ -93,6 +93,9 @@ public:
   /// remove all data in the slice, retaining current category data and the static point
   void flush();
 
+  /// remove all data in the slice
+  void completeFlush();
+
   /// pass in the category name manager reference
   void setCategoryNameManager(CategoryNameManager* categoryNameManager);
 
@@ -146,6 +149,8 @@ private:
     void limitByPoints(uint32_t limitPoints);
     /// Limit category data by time
     void limitByTime(double timeLimit);
+    /// Remove all data in the slice
+    void completeFlush();
 
   private:
     // Verifies pos before using
@@ -156,7 +161,7 @@ private:
     TimeValueIterator find_(TimeValueIterator start, TimeValueIterator current, TimeValueIterator end, double time) const;
 
     const static size_t FastSearchWidth = 3; // Number of entries to check linearly before switching to a binary search
-    mutable TimeValuesEntries entries;  // The actual category data
+    mutable TimeValuesEntries entries_;  // The actual category data
     mutable size_t lastPos_;  // the last location referenced so use as the start location when searching
   };
 

@@ -88,6 +88,9 @@ public:
   /// if 0 is passed in flushes the entire scenario, except for static entities
   virtual void flush(ObjectId flushId, FlushType type = NON_RECURSIVE);
 
+  /** Removes all the specified data */
+  virtual int flush(ObjectId id, FlushScope scope, FlushFields fields);
+
   /**
   * clear out the data store of all scenario specific data, including all entities and category data names.
   */
@@ -622,6 +625,8 @@ private:
   void updateCustomRenderings_(double time);
   /// Flushes an entity's updates, commands, category and generic data
   void flushEntity_(ObjectId id, simData::ObjectType type, FlushType flushType);
+  /// Flushes an entity based on the given scope and fields
+  void flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields);
   /// Flushes an entity's data tables
   void flushDataTables_(ObjectId id);
 
