@@ -273,10 +273,10 @@ int validatePlatform(simData::DataStore* ds, simData::ObjectId id, uint64_t tabl
 {
   int rv = 0;
 
-  rv += SDK_ASSERT(ds->platformUpdateSlice(id)->numItems() == updates);
-  rv += SDK_ASSERT(ds->platformCommandSlice(id)->numItems() == commands);
+  rv += SDK_ASSERT(ds->platformUpdateSlice(id)->numItems() == static_cast<size_t>(updates));
+  rv += SDK_ASSERT(ds->platformCommandSlice(id)->numItems() == static_cast<size_t>(commands));
   rv += SDK_ASSERT(categoryDataEntries(ds, id) == categoryData);
-  rv += SDK_ASSERT(genericDataEntries(ds, id) == genericData);
+  rv += SDK_ASSERT(genericDataEntries(ds, id) == static_cast<size_t>(genericData));
   rv += SDK_ASSERT(dataTableEntries(ds, id) == dataTable);
 
   return 0;
@@ -458,7 +458,7 @@ void makeScenario(simUtil::DataStoreTestHelper& testHelper, Ids& ids)
 }
 
 // Make sure each entity type has the correct number of commands
-int validateCommands(simData::DataStore* ds, Ids& ids, int platform, int beam, int gate, int beamProjector, int laser, int lob, int platformProjector, int platformCr, int cr)
+int validateCommands(simData::DataStore* ds, Ids& ids, size_t platform, size_t beam, size_t gate, size_t beamProjector, size_t laser, size_t lob, size_t platformProjector, size_t platformCr, size_t cr)
 {
   int rv = 0;
 
