@@ -904,8 +904,8 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
 void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields)
 {
   const bool recursive = (flushScope == FLUSH_RECURSIVE);
-  const bool flushUpdates = (flushFields & FLUSH_UPDATES);
-  const bool flushCommands = (flushFields & FLUSH_COMMANDS);
+  const bool flushUpdates = ((flushFields & FLUSH_UPDATES) != 0);
+  const bool flushCommands = ((flushFields & FLUSH_COMMANDS) != 0);
   IdList ids;
   switch (type)
   {
