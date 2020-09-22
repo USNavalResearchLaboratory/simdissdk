@@ -910,7 +910,7 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
   switch (type)
   {
   case PLATFORM:
-    flushEntityData(platforms_, id, flushUpdates, flushCommands, flushFields & FLUSH_EXCLUDE_MINUS_ONE);
+    flushEntityData(platforms_, id, flushUpdates, flushCommands, (flushFields & FLUSH_EXCLUDE_MINUS_ONE) != 0);
     if (recursive)
     {
       beamIdListForHost(id, &ids);
@@ -967,9 +967,9 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
     break;
   }
 
-  if (flushFields & FLUSH_CATEGORY_DATA)
+  if ((flushFields & FLUSH_CATEGORY_DATA) != 0)
   {
-    if (flushFields & FLUSH_EXCLUDE_MINUS_ONE)
+    if ((flushFields & FLUSH_EXCLUDE_MINUS_ONE) != 0)
     {
       auto it = categoryData_.find(id);
       if (it != categoryData_.end())
@@ -983,14 +983,14 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
     }
   }
 
-  if (flushFields & FLUSH_GENERIC_DATA)
+  if ((flushFields & FLUSH_GENERIC_DATA) != 0)
   {
     auto it = genericData_.find(id);
     if (it != genericData_.end())
       it->second->flush();
   }
 
-  if (flushFields & FLUSH_DATA_TABLES)
+  if ((flushFields & FLUSH_DATA_TABLES) != 0)
     flushDataTables_(id);
 }
 
