@@ -372,7 +372,6 @@ public: // methods
    */
   virtual void flush(ObjectId flushId, FlushType type = NON_RECURSIVE) = 0;
 
-
   /// The scope of the flush
   enum FlushScope
   {
