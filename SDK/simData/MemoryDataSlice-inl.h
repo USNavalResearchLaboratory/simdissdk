@@ -135,7 +135,7 @@ template<typename T>
 int flush(std::deque<T*> &updates, double startTime, double endTime)
 {
   auto start = std::lower_bound(updates.begin(), updates.end(), startTime, UpdateComp<T>());
-  if ((start == updates.end()) || ((*start)->time() > endTime))
+  if ((start == updates.end()) || ((*start)->time() >= endTime))
     return 1;
 
   // endTime is non-inclusive

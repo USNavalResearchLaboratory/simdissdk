@@ -1128,6 +1128,116 @@ int testGenericDataTimeRange()
   return rv;
 }
 
+// Add category data to a platform
+simData::ObjectId makeCategoryDataSeries(simUtil::DataStoreTestHelper& helper)
+{
+  auto id = helper.addPlatform();
+
+  helper.addCategoryData(id, "Key", "0", 0.0);
+  helper.addCategoryData(id, "Key", "1", 1.0);
+  helper.addCategoryData(id, "Key", "2", 2.0);
+  helper.addCategoryData(id, "Key", "3", 3.0);
+  helper.addCategoryData(id, "Key", "4", 4.0);
+
+  return id;
+}
+
+// Visitor to validate category data
+class ValidateCategoryData : public simData::CategoryDataSlice::Visitor
+{
+public:
+  ValidateCategoryData(const std::vector<TimeValuePair>& pairs)
+    : pairs_(pairs),
+      index_(0),
+      errors_(0)
+  {
+  }
+
+  virtual void operator()(const simData::CategoryData* update)
+  {
+    if (update->time() != pairs_[index_].time)
+      ++errors_;
+
+    for (int ii = 0; ii < update->entry_size(); ++ii)
+    {
+      auto entry = update->entry(ii);
+      if (entry.value() != pairs_[index_].value)
+        ++errors_;
+      ++index_;
+    }
+  }
+
+  int errors() const { return errors_; }
+
+private:
+  const std::vector<TimeValuePair>& pairs_;
+  size_t index_;
+  int errors_;
+};
+
+// Validate category data against the given pairs
+int validateCategoryDataSeries(simUtil::DataStoreTestHelper& helper, simData::ObjectId id, const std::vector<TimeValuePair>& pairs)
+{
+  auto ds = helper.dataStore();
+  auto slice = ds->categoryDataSlice(id);
+  ValidateCategoryData validate(pairs);
+  slice->visit(&validate);
+  return validate.errors();
+}
+
+// Test category data time range flush
+int testCategoryDataTimeRange()
+{
+  int rv = 0;
+
+  {
+    // flush all
+    simUtil::DataStoreTestHelper helper;
+    auto id = makeCategoryDataSeries(helper);
+    rv += SDK_ASSERT(validateCategoryDataSeries(helper, id, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_CATEGORY_DATA, 0.0, 10.0) == 0);
+    rv += SDK_ASSERT(validateCategoryDataSeries(helper, id, { }) == 0);
+  }
+
+  {
+    // flush start
+    simUtil::DataStoreTestHelper helper;
+    auto id = makeCategoryDataSeries(helper);
+    rv += SDK_ASSERT(validateCategoryDataSeries(helper, id, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_CATEGORY_DATA, 0.0, 2.0) == 0);
+    rv += SDK_ASSERT(validateCategoryDataSeries(helper, id, { {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+  }
+
+  {
+    // flush from the middle
+    simUtil::DataStoreTestHelper helper;
+    auto id = makeCategoryDataSeries(helper);
+    rv += SDK_ASSERT(validateCategoryDataSeries(helper, id, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_CATEGORY_DATA, 1.0, 2.0) == 0);
+    rv += SDK_ASSERT(validateCategoryDataSeries(helper, id, { {0.0, "0"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+  }
+
+  {
+    // flush more from the middle
+    simUtil::DataStoreTestHelper helper;
+    auto id = makeCategoryDataSeries(helper);
+    rv += SDK_ASSERT(validateCategoryDataSeries(helper, id, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_CATEGORY_DATA, 1.0, 4.0) == 0);
+    rv += SDK_ASSERT(validateCategoryDataSeries(helper, id, { {0.0, "0"}, {4.0, "4"} }) == 0);
+  }
+
+  {
+    // flush the end
+    simUtil::DataStoreTestHelper helper;
+    auto id = makeCategoryDataSeries(helper);
+    rv += SDK_ASSERT(validateCategoryDataSeries(helper, id, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_CATEGORY_DATA, 3.0, 5.0) == 0);
+    rv += SDK_ASSERT(validateCategoryDataSeries(helper, id, { {0.0, "0"}, {1.0, "1"}, {2.0, "2"} }) == 0);
+  }
+
+  return rv;
+}
+
 }
 
 int TestFlush(int argc, char* argv[])
@@ -1142,6 +1252,7 @@ int TestFlush(int argc, char* argv[])
   rv += testPlatformTimeRange();
   rv += testLobTimeRange();
   rv += testGenericDataTimeRange();
+  rv += testCategoryDataTimeRange();
 
   return rv;
 }

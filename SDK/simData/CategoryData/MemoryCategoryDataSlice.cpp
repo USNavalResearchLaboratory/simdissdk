@@ -156,6 +156,18 @@ void MemoryCategoryDataSlice::TimeValues::completeFlush()
   entries_.clear();
 }
 
+void MemoryCategoryDataSlice::TimeValues::flush(double startTime, double endTime)
+{
+  auto start = std::lower_bound(entries_.begin(), entries_.end(), TimeValuePair(startTime, 0));
+  if ((start == entries_.end()) || (start->time >= endTime))
+    return;
+
+  // endTime is non-inclusive
+  auto end = std::lower_bound(start, entries_.end(), TimeValuePair(endTime, 0));
+
+  entries_.erase(start, end);
+}
+
 void MemoryCategoryDataSlice::TimeValues::limitByTime(double timeLimit)
 {
   // The zero case should already be handle
@@ -712,6 +724,16 @@ void MemoryCategoryDataSlice::completeFlush()
   sliceSize_ = 0;
   for (EntityData::iterator i = data_.begin(); i != data_.end(); ++i)
     i->second.data.completeFlush();
+}
+
+void MemoryCategoryDataSlice::flush(double startTime, double endTime)
+{
+  sliceSize_ = 0;
+  for (EntityData::iterator i = data_.begin(); i != data_.end(); ++i)
+  {
+    i->second.data.flush(startTime, endTime);
+    sliceSize_ += i->second.data.size();
+  }
 }
 
 std::unique_ptr<CategoryDataSlice::IteratorImpl> MemoryCategoryDataSlice::iterator_() const

@@ -96,6 +96,9 @@ public:
   /// remove all data in the slice
   void completeFlush();
 
+  /// remove points in the given time range; up to but not including endTime
+  void flush(double startTime, double endTime);
+
   /// pass in the category name manager reference
   void setCategoryNameManager(CategoryNameManager* categoryNameManager);
 
@@ -151,6 +154,8 @@ private:
     void limitByTime(double timeLimit);
     /// Remove all data in the slice
     void completeFlush();
+    /// Remove points in the given time range; up to but not including endTime
+    void flush(double startTime, double endTime);
 
   private:
     // Verifies pos before using

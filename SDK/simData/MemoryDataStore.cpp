@@ -1086,7 +1086,7 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
   {
     auto it = categoryData_.find(id);
     if (it != categoryData_.end())
-      it->second->completeFlush();
+      it->second->flush(startTime, endTime);
   }
 
   if ((flushFields & FLUSH_GENERIC_DATA) != 0)
@@ -1097,7 +1097,10 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
   }
 
   if ((flushFields & FLUSH_DATA_TABLES) != 0)
+  {
+    // TODO: SIM-11841 Implement
     flushDataTables_(id);
+  }
 }
 
 
