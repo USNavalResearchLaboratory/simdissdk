@@ -442,7 +442,7 @@ void DataStoreTestHelper::addDataTableRows_(simData::DataTable* table, int numRo
   {
     simData::TableRow row;
     row.setTime(i + 1.0);
-    row.setValue(column1->columnId(), 345);
+    row.setValue(column1->columnId(), i + 1);
     row.setValue(column2->columnId(), 685454);
     if (id % 2)
       row.setValue(column3->columnId(), 458685);

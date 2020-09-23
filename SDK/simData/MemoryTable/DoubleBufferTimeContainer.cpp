@@ -21,8 +21,9 @@
  *
  */
 #include <algorithm>
-#include <limits>
 #include <cassert>
+#include <limits>
+#include <set>
 #include "simCore/Calc/Math.h"
 #include "simData/MemoryTable/DataColumn.h"
 #include "simData/MemoryTable/DoubleBufferTimeContainer.h"
@@ -588,6 +589,37 @@ simData::DelayedFlushContainerPtr DoubleBufferTimeContainer::flush()
   if (timesA_.empty() && timesB_.empty())
     return DelayedFlushContainerPtr();
   return DelayedFlushContainerPtr(new FlushContainer(timesA_, timesB_));
+}
+
+void DoubleBufferTimeContainer::flush(const std::vector<DataColumn*>& columns, double startTime, double endTime)
+{
+  flush_(*times_[BIN_STALE], false, columns, startTime, endTime);
+  flush_(*times_[BIN_FRESH], true, columns, startTime, endTime);
+}
+
+void DoubleBufferTimeContainer::flush_(TimeIndexDeque& deq, bool fresh, const std::vector<DataColumn*>& columns, double startTime, double endTime)
+{
+  std::deque<double> timesToRemove;
+  std::set<size_t> indexToRemove;
+
+  for (const auto& timeIndex : deq)
+  {
+    if ((timeIndex.first < startTime) || (timeIndex.first >= endTime))
+      continue;
+
+    timesToRemove.push_back(timeIndex.first);
+    indexToRemove.insert(timeIndex.second);
+  }
+
+  for (auto time : timesToRemove)
+    erase(findTimeAtOrBeforeGivenTime(time), ERASE_FIXOFFSETS);
+
+  // go in reverse order so that indexes do not need to be adjusted after each erase
+  for (auto it = indexToRemove.rbegin(); it != indexToRemove.rend(); ++it)
+  {
+    for (auto& column : columns)
+      column->erase(fresh, *it);
+  }
 }
 
 // TODO: This was commented out.  It was supposed to be findTimeT(), but that

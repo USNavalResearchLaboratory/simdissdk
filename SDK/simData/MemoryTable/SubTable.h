@@ -142,6 +142,9 @@ public:
    */
   simData::DelayedFlushContainerPtr flush(TableColumnId id = -1, SplitObserverPtr splitObserver = SplitObserverPtr());
 
+  /** Remove rows in the given time range; up to but not including endTime */
+  void flush(double startTime, double endTime);
+
   /** Performs data limiting */
   void limitData(size_t maxPoints, double latestInvalidTime, DataTable* table, const std::vector<DataTable::TableObserverPtr>& observers);
 

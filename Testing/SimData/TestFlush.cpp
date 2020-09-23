@@ -1238,6 +1238,136 @@ int testCategoryDataTimeRange()
   return rv;
 }
 
+// Add data Table to a platform
+uint64_t makeDataTableSeries(simUtil::DataStoreTestHelper& helper)
+{
+  return helper.addDataTable(0, 7);
+}
+
+// Visitor to validate data table
+class ValidateDataTable : public simData::DataTable::RowVisitor
+{
+public:
+  ValidateDataTable(const std::vector<TimeValuePair>& pairs)
+    : pairs_(pairs),
+      index_(0),
+      errors_(0)
+  {
+  }
+
+  virtual VisitReturn visit(const simData::TableRow& row)
+  {
+    if (row.time() != pairs_[index_].time)
+      ++errors_;
+
+    int value;
+    row.value(0, value);
+    if (value != atoi(pairs_[index_].value.c_str()))
+      ++errors_;
+
+    ++index_;
+    return simData::DataTable::RowVisitor::VISIT_CONTINUE;
+  }
+
+  int errors() const { return errors_; }
+
+private:
+  const std::vector<TimeValuePair>& pairs_;
+  size_t index_;
+  int errors_;
+};
+
+// Validate data table against the given pairs
+int validateDataTableSeries(simUtil::DataStoreTestHelper& helper, uint64_t tableId, const std::vector<TimeValuePair>& pairs)
+{
+  auto ds = helper.dataStore();
+  auto table = ds->dataTableManager().getTable(tableId);
+  ValidateDataTable validate(pairs);
+  table->accept(0.0, std::numeric_limits<double>::max(), validate);
+  return validate.errors();
+}
+
+// Test data table time range flush
+int testDataTableTimeRange(simUtil::DataStoreTestHelper& helper)
+{
+  int rv = 0;
+
+  {
+    // flush all
+    auto id = makeDataTableSeries(helper);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 0.0, 10.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  {
+    // flush start
+    auto id = makeDataTableSeries(helper);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 0.0, 2.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  {
+    // flush from the middle, in data limiting mode this will only delete from the stale bin
+    auto id = makeDataTableSeries(helper);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 2.0, 3.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  {
+    // flush more from the middle, in data limiting mode this will delete from both the stale bin and the fresh bin
+    auto id = makeDataTableSeries(helper);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 4.0, 6.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  {
+    // flush more from the middle, in data limiting mode this will only delete from the fresh bin
+    auto id = makeDataTableSeries(helper);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 6.0, 7.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {7.0, "7"} }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  {
+    // flush the end
+    auto id = makeDataTableSeries(helper);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 5.0, 8.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"} }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  return rv;
+}
+
+int testDataTableTimeRange()
+{
+  int rv = 0;
+  simUtil::DataStoreTestHelper helper;
+
+  // run the test with no data limiting
+  rv += SDK_ASSERT(testDataTableTimeRange(helper) == 0);
+
+  // now run the test with data limiting
+  simData::DataStore::Transaction transaction;
+  auto prop = helper.dataStore()->mutable_scenarioProperties(&transaction);
+  prop->set_datalimitpoints(8);  // 4 values in the stale bin and 3 values in the fresh bin
+  transaction.commit();
+  helper.dataStore()->setDataLimiting(true);
+  rv += SDK_ASSERT(testDataTableTimeRange(helper) == 0);
+
+  return rv;
+}
+
 }
 
 int TestFlush(int argc, char* argv[])
@@ -1253,6 +1383,7 @@ int TestFlush(int argc, char* argv[])
   rv += testLobTimeRange();
   rv += testGenericDataTimeRange();
   rv += testCategoryDataTimeRange();
+  rv += testDataTableTimeRange();
 
   return rv;
 }

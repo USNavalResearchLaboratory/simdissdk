@@ -1097,10 +1097,7 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
   }
 
   if ((flushFields & FLUSH_DATA_TABLES) != 0)
-  {
-    // TODO: SIM-11841 Implement
-    flushDataTables_(id);
-  }
+    flushDataTables_(id, startTime, endTime);
 }
 
 
@@ -1125,6 +1122,36 @@ void MemoryDataStore::flushDataTables_(ObjectId id)
     ownerTables->accept(flushVisitor);
   }
 }
+
+void MemoryDataStore::flushDataTables_(ObjectId id, double startTime, double endTime)
+{
+  /// Defines a visitor function that flushes tables
+  class FlushVisitor : public simData::TableList::Visitor
+  {
+  public:
+    FlushVisitor(double startTime, double endTime)
+    : startTime_(startTime),
+    endTime_(endTime)
+    {
+    }
+    virtual void visit(simData::DataTable* table)
+    {
+      table->flush(startTime_, endTime_);
+    }
+  private:
+    double startTime_;
+    double endTime_;
+  };
+
+  // Visit all tables and flush them
+  const simData::TableList* ownerTables = dataTableManager().tablesForOwner(id);
+  if (ownerTables != nullptr)
+  {
+    FlushVisitor flushVisitor(startTime, endTime);
+    ownerTables->accept(flushVisitor);
+  }
+}
+
 
 void MemoryDataStore::setDefaultPrefs(const PlatformPrefs& platformPrefs, const BeamPrefs& beamPrefs, const GatePrefs& gatePrefs, const LaserPrefs& laserPrefs, const LobGroupPrefs& lobPrefs, const ProjectorPrefs& projectorPrefs)
 {
@@ -1334,10 +1361,7 @@ int MemoryDataStore::flush(ObjectId id, FlushScope scope, FlushFields fields, do
     }
 
     if (fields & FLUSH_DATA_TABLES)
-    {
-      // TODO: SIM-11841 Implement
-      flushDataTables_(0);
-    }
+      flushDataTables_(id, startTime, endTime);
 
     if (fields & FLUSH_GENERIC_DATA)
     {

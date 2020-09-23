@@ -634,6 +634,8 @@ private:
   void flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields, double startTime, double endTime);
   /// Flushes an entity's data tables
   void flushDataTables_(ObjectId id);
+  /// Flushes an entity's data tables for the given time range; up to but not including endTime
+  void flushDataTables_(ObjectId id, double startTime, double endTime);
 
   /// Initialize the default prefs objects
   virtual void setDefaultPrefs(const PlatformPrefs& platformPrefs,
