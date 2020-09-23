@@ -630,6 +630,8 @@ private:
   void flushEntity_(ObjectId id, simData::ObjectType type, FlushType flushType);
   /// Flushes an entity based on the given scope and fields
   void flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields);
+  /// Flushes an entity based on the given scope and fields
+  void flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields, double startTime, double endTime);
   /// Flushes an entity's data tables
   void flushDataTables_(ObjectId id);
 

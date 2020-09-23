@@ -683,6 +683,330 @@ int testRecursion()
   return rv;
 }
 
+// Make a series of platform updates
+simData::ObjectId makePlatformUpdateSeries(simUtil::DataStoreTestHelper& testHelper)
+{
+  auto id = testHelper.addPlatform();
+  testHelper.addPlatformUpdate(0, id);
+  testHelper.addPlatformUpdate(1, id);
+  testHelper.addPlatformUpdate(2, id);
+  testHelper.addPlatformUpdate(3, id);
+  testHelper.addPlatformUpdate(4, id);
+  return id;
+}
+
+// Visitor to validate platform updates
+class ValidatePlatformUpdate : public simData::VisitableDataSlice<simData::PlatformUpdate>::Visitor
+{
+public:
+  ValidatePlatformUpdate(const std::vector<double>& times)
+    : times_(times),
+    index_(0),
+    errors_(0)
+  {
+  }
+
+  virtual void operator()(const simData::PlatformUpdate* update)
+  {
+    if (update->time() != times_[index_])
+      ++errors_;
+    ++index_;
+  }
+
+  int errors() const { return errors_; }
+
+private:
+  const std::vector<double>& times_;
+  size_t index_;
+  int errors_;
+};
+
+// Validate the platform updates against the given times
+int validatePlatformUpdateSeries(simUtil::DataStoreTestHelper& helper, simData::ObjectId id, const std::vector<double>& times)
+{
+  int rv = 0;
+  auto ds = helper.dataStore();
+  auto slice = ds->platformUpdateSlice(id);
+  rv += SDK_ASSERT(slice->numItems() == times.size());
+  if (rv != 0)
+    return rv;
+
+  ValidatePlatformUpdate validate(times);
+  slice->visit(&validate);
+  return validate.errors();
+}
+
+// Make a series of platform updates
+simData::ObjectId makePlatformCommandSeries(simUtil::DataStoreTestHelper& testHelper)
+{
+  auto id = testHelper.addPlatform();
+  simData::PlatformCommand platformCommand;
+  platformCommand.set_time(0.0);
+  platformCommand.mutable_updateprefs()->mutable_commonprefs()->set_color(0x0);
+  testHelper.addPlatformCommand(platformCommand, id);
+  platformCommand.set_time(1.0);
+  platformCommand.mutable_updateprefs()->mutable_commonprefs()->set_color(0x1);
+  testHelper.addPlatformCommand(platformCommand, id);
+  platformCommand.set_time(2.0);
+  platformCommand.mutable_updateprefs()->mutable_commonprefs()->set_color(0x2);
+  testHelper.addPlatformCommand(platformCommand, id);
+  platformCommand.set_time(3.0);
+  platformCommand.mutable_updateprefs()->mutable_commonprefs()->set_color(0x3);
+  testHelper.addPlatformCommand(platformCommand, id);
+  platformCommand.set_time(4.0);
+  platformCommand.mutable_updateprefs()->mutable_commonprefs()->set_color(0x4);
+  testHelper.addPlatformCommand(platformCommand, id);
+
+  return id;
+}
+
+// Visitor to validate platform updates
+class ValidatePlatformCommand : public simData::VisitableDataSlice<simData::PlatformCommand>::Visitor
+{
+public:
+  ValidatePlatformCommand(const std::vector<double>& times)
+    : times_(times),
+    index_(0),
+    errors_(0)
+  {
+  }
+
+  virtual void operator()(const simData::PlatformCommand* update)
+  {
+    if (update->time() != times_[index_])
+      ++errors_;
+    ++index_;
+  }
+
+  int errors() const { return errors_; }
+
+private:
+  const std::vector<double>& times_;
+  size_t index_;
+  int errors_;
+};
+
+// Validate the platform updates against the given times
+int validatePlatformCommandSeries(simUtil::DataStoreTestHelper& helper, simData::ObjectId id, const std::vector<double>& times)
+{
+  int rv = 0;
+  auto ds = helper.dataStore();
+  auto slice = ds->platformCommandSlice(id);
+  rv += SDK_ASSERT(slice->numItems() == times.size());
+  if (rv != 0)
+    return rv;
+
+  ValidatePlatformCommand validate(times);
+  slice->visit(&validate);
+  return validate.errors();
+}
+
+int testPlatformTimeRange()
+{
+  int rv = 0;
+
+  // Test updates
+  {
+    // flush all
+    simUtil::DataStoreTestHelper helper;
+    auto id = makePlatformUpdateSeries(helper);
+    rv += SDK_ASSERT(validatePlatformUpdateSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES, 0.0, 10.0) == 0);
+    rv += SDK_ASSERT(validatePlatformUpdateSeries(helper, id, { }) == 0);
+  }
+
+  {
+    // flush start
+    simUtil::DataStoreTestHelper helper;
+    auto id = makePlatformUpdateSeries(helper);
+    rv += SDK_ASSERT(validatePlatformUpdateSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES, 0.0, 2.0) == 0);
+    rv += SDK_ASSERT(validatePlatformUpdateSeries(helper, id, { 2.0, 3.0, 4.0 }) == 0);
+  }
+
+  {
+    // flush from the middle
+    simUtil::DataStoreTestHelper helper;
+    auto id = makePlatformUpdateSeries(helper);
+    rv += SDK_ASSERT(validatePlatformUpdateSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES, 1.0, 2.0) == 0);
+    rv += SDK_ASSERT(validatePlatformUpdateSeries(helper, id, { 0.0, 2.0, 3.0, 4.0 }) == 0);
+  }
+
+  {
+    // flush more from the middle
+    simUtil::DataStoreTestHelper helper;
+    auto id = makePlatformUpdateSeries(helper);
+    rv += SDK_ASSERT(validatePlatformUpdateSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES, 1.0, 4.0) == 0);
+    rv += SDK_ASSERT(validatePlatformUpdateSeries(helper, id, { 0.0, 4.0 }) == 0);
+  }
+
+  {
+    // flush the end
+    simUtil::DataStoreTestHelper helper;
+    auto id = makePlatformUpdateSeries(helper);
+    rv += SDK_ASSERT(validatePlatformUpdateSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES, 3.0, 5.0) == 0);
+    rv += SDK_ASSERT(validatePlatformUpdateSeries(helper, id, { 0.0, 1.0, 2.0 }) == 0);
+  }
+
+  // Test commands
+  {
+    // flush all
+    simUtil::DataStoreTestHelper helper;
+    auto id = makePlatformCommandSeries(helper);
+    rv += SDK_ASSERT(validatePlatformCommandSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_COMMANDS, 0.0, 10.0) == 0);
+    rv += SDK_ASSERT(validatePlatformCommandSeries(helper, id, { }) == 0);
+  }
+
+  {
+    // flush start
+    simUtil::DataStoreTestHelper helper;
+    auto id = makePlatformCommandSeries(helper);
+    rv += SDK_ASSERT(validatePlatformCommandSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_COMMANDS, 0.0, 2.0) == 0);
+    rv += SDK_ASSERT(validatePlatformCommandSeries(helper, id, { 2.0, 3.0, 4.0 }) == 0);
+  }
+
+  {
+    // flush from the middle
+    simUtil::DataStoreTestHelper helper;
+    auto id = makePlatformCommandSeries(helper);
+    rv += SDK_ASSERT(validatePlatformCommandSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_COMMANDS, 1.0, 2.0) == 0);
+    rv += SDK_ASSERT(validatePlatformCommandSeries(helper, id, { 0.0, 2.0, 3.0, 4.0 }) == 0);
+  }
+
+  {
+    // flush more from the middle
+    simUtil::DataStoreTestHelper helper;
+    auto id = makePlatformCommandSeries(helper);
+    rv += SDK_ASSERT(validatePlatformCommandSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_COMMANDS, 1.0, 4.0) == 0);
+    rv += SDK_ASSERT(validatePlatformCommandSeries(helper, id, { 0.0, 4.0 }) == 0);
+  }
+
+  {
+    // flush the end
+    simUtil::DataStoreTestHelper helper;
+    auto id = makePlatformCommandSeries(helper);
+    rv += SDK_ASSERT(validatePlatformCommandSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_COMMANDS, 3.0, 5.0) == 0);
+    rv += SDK_ASSERT(validatePlatformCommandSeries(helper, id, { 0.0, 1.0, 2.0 }) == 0);
+  }
+
+  return rv;
+}
+
+// Make a series of LOB updates
+simData::ObjectId makeLobUpdateSeries(simUtil::DataStoreTestHelper& testHelper)
+{
+  auto platformId = testHelper.addPlatform();
+  auto id = testHelper.addLOB(platformId);
+  testHelper.addLOBUpdate(0, id);
+  testHelper.addLOBUpdate(1, id);
+  testHelper.addLOBUpdate(2, id);
+  testHelper.addLOBUpdate(3, id);
+  testHelper.addLOBUpdate(4, id);
+  return id;
+}
+
+// Visitor to validate LOB updates
+class ValidateLobUpdate : public simData::VisitableDataSlice<simData::LobGroupUpdate>::Visitor
+{
+public:
+  ValidateLobUpdate(const std::vector<double>& times)
+    : times_(times),
+    index_(0),
+    errors_(0)
+  {
+  }
+
+  virtual void operator()(const simData::LobGroupUpdate* update)
+  {
+    if (update->time() != times_[index_])
+      ++errors_;
+    ++index_;
+  }
+
+  int errors() const { return errors_; }
+
+private:
+  const std::vector<double>& times_;
+  size_t index_;
+  int errors_;
+};
+
+// Validate the LOB updates against the given times
+int validateLobUpdateSeries(simUtil::DataStoreTestHelper& helper, simData::ObjectId id, const std::vector<double>& times)
+{
+  int rv = 0;
+  auto ds = helper.dataStore();
+  auto slice = ds->lobGroupUpdateSlice(id);
+  rv += SDK_ASSERT(slice->numItems() == times.size());
+  if (rv != 0)
+    return rv;
+
+  ValidateLobUpdate validate(times);
+  slice->visit(&validate);
+  return validate.errors();
+}
+
+// Test LOB time range flush
+int testLobTimeRange()
+{
+  int rv = 0;
+
+  {
+    // flush all
+    simUtil::DataStoreTestHelper helper;
+    auto id = makeLobUpdateSeries(helper);
+    rv += SDK_ASSERT(validateLobUpdateSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES, 0.0, 10.0) == 0);
+    rv += SDK_ASSERT(validateLobUpdateSeries(helper, id, { }) == 0);
+  }
+
+  {
+    // flush start
+    simUtil::DataStoreTestHelper helper;
+    auto id = makeLobUpdateSeries(helper);
+    rv += SDK_ASSERT(validateLobUpdateSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES, 0.0, 2.0) == 0);
+    rv += SDK_ASSERT(validateLobUpdateSeries(helper, id, { 2.0, 3.0, 4.0 }) == 0);
+  }
+
+  {
+    // flush from the middle
+    simUtil::DataStoreTestHelper helper;
+    auto id = makeLobUpdateSeries(helper);
+    rv += SDK_ASSERT(validateLobUpdateSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES, 1.0, 2.0) == 0);
+    rv += SDK_ASSERT(validateLobUpdateSeries(helper, id, { 0.0, 2.0, 3.0, 4.0 }) == 0);
+  }
+
+  {
+    // flush more from the middle
+    simUtil::DataStoreTestHelper helper;
+    auto id = makeLobUpdateSeries(helper);
+    rv += SDK_ASSERT(validateLobUpdateSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES, 1.0, 4.0) == 0);
+    rv += SDK_ASSERT(validateLobUpdateSeries(helper, id, { 0.0, 4.0 }) == 0);
+  }
+
+  {
+    // flush the end
+    simUtil::DataStoreTestHelper helper;
+    auto id = makeLobUpdateSeries(helper);
+    rv += SDK_ASSERT(validateLobUpdateSeries(helper, id, { 0.0, 1.0, 2.0, 3.0, 4.0 }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES, 3.0, 5.0) == 0);
+    rv += SDK_ASSERT(validateLobUpdateSeries(helper, id, { 0.0, 1.0, 2.0 }) == 0);
+  }
+
+  return rv;
+}
+
 void makeGenericDataSeries(simUtil::DataStoreTestHelper& helper)
 {
   helper.addGenericData(0, "Key", "0", 0.0);
@@ -815,6 +1139,8 @@ int TestFlush(int argc, char* argv[])
   rv += testFields();
   rv += testRecursion();
 
+  rv += testPlatformTimeRange();
+  rv += testLobTimeRange();
   rv += testGenericDataTimeRange();
 
   return rv;
