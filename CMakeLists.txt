@@ -193,6 +193,8 @@ find_package(GLCORE)
 
 # --- osgEarth -----------------------------
 
+# VSI-distributed osgEarth requires GEOS
+include(ImportGEOS)
 # allow the user to set OSGEARTH_DIR in CMAKE GUI and auto-populate all OSGEARTH libraries:
 set(OSGEARTH_DIR "" CACHE PATH "osgEarth root directory")
 include(ImportOSGEarth)
