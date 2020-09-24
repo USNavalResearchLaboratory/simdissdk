@@ -107,9 +107,12 @@ int categoryDataEntries(simData::DataStore* ds, simData::ObjectId id)
 }
 
 /// Test category data
-int testCategoryData(simUtil::DataStoreTestHelper& helper, simData::ObjectId id)
+int testCategoryData()
 {
   int rv = 0;
+
+  simUtil::DataStoreTestHelper helper;
+  simData::ObjectId id = helper.addPlatform();
 
   // Should start off empty
   rv += SDK_ASSERT(categoryDataEntries(helper.dataStore(), id) == 0);
@@ -1377,6 +1380,7 @@ int TestFlush(int argc, char* argv[])
   rv += testEmpty();
   rv += testScenario();
   rv += testFields();
+  rv += testCategoryData();
   rv += testRecursion();
 
   rv += testPlatformTimeRange();
