@@ -599,26 +599,71 @@ void DoubleBufferTimeContainer::flush(const std::vector<DataColumn*>& columns, d
 
 void DoubleBufferTimeContainer::flush_(TimeIndexDeque& deq, bool fresh, const std::vector<DataColumn*>& columns, double startTime, double endTime)
 {
-  std::deque<double> timesToRemove;
-  std::set<size_t> indexToRemove;
+  LessThan lessThan;
+  const auto start = std::lower_bound(deq.begin(), deq.end(), startTime, lessThan);
+  const auto end = std::lower_bound(deq.begin(), deq.end(), endTime, lessThan);
 
-  for (const auto& timeIndex : deq)
+  // Nothing to do
+  if (start == end)
+    return;
+
+  const size_t itemsToDelete = std::distance(start, end);
+
+  std::vector<size_t> indexToRemove;
+  indexToRemove.reserve(itemsToDelete);
+  for (auto it = start; it != end; ++it)
+    indexToRemove.push_back(it->second);
+  std::sort(indexToRemove.begin(), indexToRemove.end());
+
+  // Group continuous ranges of indexes to greatly improve performance
+  std::set< std::pair<size_t, size_t> > indexes;
+
+  auto startIndex = indexToRemove.front();
+  auto endIndex = indexToRemove.back();
+  if (itemsToDelete == (endIndex - startIndex + 1))
   {
-    if ((timeIndex.first < startTime) || (timeIndex.first >= endTime))
-      continue;
+    // data is in time order so just need one entry
+    indexes.insert(std::make_pair(startIndex, endIndex));
+  }
+  else
+  {
+    // Find continuous ranges of indexes
+    startIndex = indexToRemove.front();
+    endIndex = startIndex;
+    for (auto it = indexToRemove.begin() + 1; it != indexToRemove.end(); ++it)
+    {
+      if ((startIndex + 1) != *it)
+      {
+        indexes.insert(std::make_pair(startIndex, endIndex));
+        startIndex = *it;
+      }
+      endIndex = *it;
+    }
 
-    timesToRemove.push_back(timeIndex.first);
-    indexToRemove.insert(timeIndex.second);
+    // The last range needs to be committed
+    indexes.insert(std::make_pair(startIndex, endIndex));
   }
 
-  for (auto time : timesToRemove)
-    erase(findTimeAtOrBeforeGivenTime(time), ERASE_FIXOFFSETS);
+  // Time is always in order so erase everything in one call
+  deq.erase(start, end);
 
-  // go in reverse order so that indexes do not need to be adjusted after each erase
-  for (auto it = indexToRemove.rbegin(); it != indexToRemove.rend(); ++it)
+  // Go in reverse order so pairs in "indexes" do not need to be adjusted on removal
+  for (auto it = indexes.rbegin(); it != indexes.rend(); ++it)
   {
+    auto indexDelta = it->second - it->first + 1;
+
+    // Adjust time index values in the deq
+    for (auto& timeIndex : deq)
+    {
+      //Dev error, algorithm above is not correct
+      assert((timeIndex.second < it->first) || (timeIndex.second > it->second));
+      if (timeIndex.second > it->second)
+        timeIndex.second -= indexDelta;
+    }
+
+    // and update the columns
     for (auto& column : columns)
-      column->erase(fresh, *it);
+      column->erase(fresh, it->first, indexDelta);
   }
 }
 

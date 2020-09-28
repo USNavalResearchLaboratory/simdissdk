@@ -1352,21 +1352,124 @@ int testDataTableTimeRange(simUtil::DataStoreTestHelper& helper)
   return rv;
 }
 
+// Make a data table the given pairs
+uint64_t makeDataTableSeries(simUtil::DataStoreTestHelper& helper,  const std::vector<TimeValuePair>& pairs)
+{
+  auto ds = helper.dataStore();
+  simData::DataTable* table;
+  ds->dataTableManager().addDataTable(0, "Test", &table);
+
+  simData::TableColumn* column = nullptr;
+  table->addColumn("Column", simData::VT_DOUBLE, 0, &column);
+
+  for (const auto& pair : pairs)
+  {
+    simData::TableRow row;
+    row.setTime(pair.time);
+    row.setValue(column->columnId(), pair.value);
+    table->addRow(row);
+  }
+
+  return table->tableId();
+}
+
+// Test data table time range flush with data that is out of time order
+int testDataTableTimeRangeOutOfOrder(simUtil::DataStoreTestHelper& helper)
+{
+  int rv = 0;
+
+  {
+    // flush all
+    auto id = makeDataTableSeries(helper, { {2.0, "2"}, {1.0, "1"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} });
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 0.0, 10.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  {
+    // flush start
+    auto id = makeDataTableSeries(helper, { {2.0, "2"}, {1.0, "1"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} });
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 0.0, 2.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  {
+    // flush some in the middle
+    auto id = makeDataTableSeries(helper, { {7.0, "7"}, {6.0, "6"}, {5.0, "5"}, {4.0, "4"}, {3.0, "3"}, {2.0, "2"}, {1.0, "1"} });
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 2.0, 4.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  {
+    // flush some in the middle
+    auto id = makeDataTableSeries(helper, { {2.0, "2"}, {1.0, "1"}, {7.0, "7"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"} });
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 2.0, 4.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  {
+    // flush some in the middle
+    auto id = makeDataTableSeries(helper, { {2.0, "2"}, {1.0, "1"}, {7.0, "7"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"} });
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 2.0, 5.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  {
+    // flush end
+    auto id = makeDataTableSeries(helper, { {2.0, "2"}, {1.0, "1"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {7.0, "7"}, {6.0, "6"} });
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"}, {7.0, "7"} }) == 0);
+    rv += SDK_ASSERT(helper.dataStore()->flush(0, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES, 7.0, 8.0) == 0);
+    rv += SDK_ASSERT(validateDataTableSeries(helper, id, { {1.0, "1"}, {2.0, "2"}, {3.0, "3"}, {4.0, "4"}, {5.0, "5"}, {6.0, "6"} }) == 0);
+    helper.dataStore()->dataTableManager().deleteTablesByOwner(0);
+  }
+
+  return rv;
+}
+
 int testDataTableTimeRange()
 {
   int rv = 0;
-  simUtil::DataStoreTestHelper helper;
 
-  // run the test with no data limiting
-  rv += SDK_ASSERT(testDataTableTimeRange(helper) == 0);
+  {
+    // Test data in time order
+    simUtil::DataStoreTestHelper helper;
 
-  // now run the test with data limiting
-  simData::DataStore::Transaction transaction;
-  auto prop = helper.dataStore()->mutable_scenarioProperties(&transaction);
-  prop->set_datalimitpoints(8);  // 4 values in the stale bin and 3 values in the fresh bin
-  transaction.commit();
-  helper.dataStore()->setDataLimiting(true);
-  rv += SDK_ASSERT(testDataTableTimeRange(helper) == 0);
+    // run the test with no data limiting
+    rv += SDK_ASSERT(testDataTableTimeRange(helper) == 0);
+
+    // now run the test with data limiting
+    simData::DataStore::Transaction transaction;
+    auto prop = helper.dataStore()->mutable_scenarioProperties(&transaction);
+    prop->set_datalimitpoints(8);  // 4 values in the stale bin and 3 values in the fresh bin
+    transaction.commit();
+    helper.dataStore()->setDataLimiting(true);
+    rv += SDK_ASSERT(testDataTableTimeRange(helper) == 0);
+  }
+
+  {
+    // Test data out of time order
+    simUtil::DataStoreTestHelper helper;
+
+    // run the test with no data limiting
+    rv += SDK_ASSERT(testDataTableTimeRangeOutOfOrder(helper) == 0);
+
+    // now run the test with data limiting
+    simData::DataStore::Transaction transaction;
+    auto prop = helper.dataStore()->mutable_scenarioProperties(&transaction);
+    prop->set_datalimitpoints(8);  // 4 values in the stale bin and 3 values in the fresh bin
+    transaction.commit();
+    helper.dataStore()->setDataLimiting(true);
+    rv += SDK_ASSERT(testDataTableTimeRangeOutOfOrder(helper) == 0);
+  }
 
   return rv;
 }

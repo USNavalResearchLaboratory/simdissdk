@@ -65,8 +65,8 @@ public:
     return dataContainer_(freshContainer)->getValue(position, value);
   }
 
-  /** Removes a single entry from the data column based on position */
-  void erase(bool freshContainer, size_t position);
+  /** Removes entries from the data column based on position */
+  void erase(bool freshContainer, size_t position, size_t number = 1);
   /** Clears out the contents of the data container */
   simData::DelayedFlushContainerPtr flush();
   /** Retrieves the number of entries in the data column */
