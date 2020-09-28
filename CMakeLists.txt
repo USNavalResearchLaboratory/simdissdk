@@ -245,3 +245,21 @@ install(FILES INSTALL.md LICENSE.txt README.md DESTINATION .)
 
 # Mark several variables as advanced
 include(SdkAdvancedVariables)
+
+# Create lists of what is built or skipped
+set(BUILDING)
+set(SKIPPING)
+foreach(LIB IN ITEMS simNotify simCore simData simVis simUtil simQt)
+    if(TARGET ${LIB})
+        list(APPEND BUILDING ${LIB})
+    else()
+        list(APPEND SKIPPING ${LIB})
+    endif()
+endforeach()
+# Make lists comma-separated
+string(REPLACE ";" ", " BUILDING "${BUILDING}")
+string(REPLACE ";" ", " SKIPPING "${SKIPPING}")
+message(STATUS "Building: ${BUILDING}")
+if(SKIPPING)
+    message(STATUS "Skipping: ${SKIPPING}")
+endif()
