@@ -9,6 +9,7 @@ set(CORE_COMMON_HEADERS
     ${CORE_COMMON_INC}Export.h
     ${CORE_COMMON_INC}FileSearch.h
     ${CORE_COMMON_INC}HighPerformanceGraphics.h
+    ${CORE_COMMON_INC}Optional.h
     ${CORE_COMMON_INC}Time.h
     ${CORE_COMMON_INC}SDKAssert.h
     ${CMAKE_CURRENT_BINARY_DIR}/include/simCore/Common/Version.h
@@ -167,7 +168,6 @@ source_group("Source Files\\Time" FILES ${CORE_TIME_SOURCES})
 set(CORE_GOG_INC GOG/)
 set(CORE_GOG_HEADERS
     ${CORE_GOG_INC}GogShape.h
-    ${CORE_GOG_INC}Optional.h
 )
 set(CORE_GOG_SRC GOG/)
 set(CORE_GOG_SOURCES

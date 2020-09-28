@@ -28,7 +28,7 @@
 #include <vector>
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Common/Common.h"
-#include "simCore/GOG/Optional.h"
+#include "simCore/Common/Optional.h"
 
 /**
 * Class hierarchy for GOG shapes, only leaf nodes can be directly instantiated

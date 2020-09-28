@@ -22,16 +22,14 @@
 #ifndef SIMCORE_OPTIONAL_H
 #define SIMCORE_OPTIONAL_H
 
-#include "simCore/Common/Common.h"
-
-namespace simCore { namespace GOG {
+namespace simCore {
 
 /**
  * Template class that represents an optional item that may or may not be set.
  * Interface methods loosely based on C++17's std::optional.
  */
 template <typename T>
-class SDKCORE_EXPORT Optional
+class Optional
 {
 public:
   /** Default initialization */
@@ -77,6 +75,6 @@ private:
   bool isSet_;
 };
 
-}}
+}
 
 #endif /* SIMCORE_OPTIONAL_H */
