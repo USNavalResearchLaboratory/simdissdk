@@ -162,6 +162,20 @@ set(CORE_TIME_SOURCES
 source_group(Headers\\Time FILES ${CORE_TIME_HEADERS})
 source_group("Source Files\\Time" FILES ${CORE_TIME_SOURCES})
 
+# ----- simCore/GOG --------------------------------------------------------
+
+set(CORE_GOG_INC GOG/)
+set(CORE_GOG_HEADERS
+    ${CORE_GOG_INC}GogShape.h
+    ${CORE_GOG_INC}Optional.h
+)
+set(CORE_GOG_SRC GOG/)
+set(CORE_GOG_SOURCES
+    ${CORE_GOG_SRC}GogShape.cpp
+)
+source_group(Headers\\GOG FILES ${CORE_GOG_HEADERS})
+source_group("Source Files\\GOG" FILES ${CORE_GOG_SOURCES})
+
 # ----- simCore.h --------------------------------------------------------
 
 set(CORE_ALL_HEADER
@@ -183,6 +197,7 @@ set(CORE_PROJECT_FILES
     ${CORE_EM_HEADERS} ${CORE_EM_SOURCES}
     ${CORE_TIME_HEADERS} ${CORE_TIME_SOURCES}
     ${CORE_STRING_HEADERS} ${CORE_STRING_SOURCES}
+    ${CORE_GOG_HEADERS} ${CORE_GOG_SOURCES}
     ${CORE_ALL_HEADER}
 )
 
@@ -242,6 +257,8 @@ if(INSTALL_HEADERS)
         DESTINATION include/simCore/String)
     install(FILES ${CORE_TIME_HEADERS}
         DESTINATION include/simCore/Time)
+    install(FILES ${CORE_GOG_HEADERS}
+        DESTINATION include/simCore/GOG)
     install(FILES ${CORE_ALL_HEADER}
         DESTINATION include)
 endif()
