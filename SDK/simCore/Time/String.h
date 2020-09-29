@@ -143,6 +143,8 @@ public:
 
   /** Converts a Seconds value to an hours string for an ostream. */
   static void toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision);
+  /** Converts a Seconds value to an hours string for an ostream, with optional leading zero. */
+  static void toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision, bool showLeadingZero);
   /** Converts an hours time string to a seconds value; returns 0 on success, non-zero on error (sets seconds to 0 on error) */
   static int fromString(const std::string& timeString, simCore::Seconds& seconds);
   /**
