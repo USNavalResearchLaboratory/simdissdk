@@ -103,8 +103,9 @@ public:
     int blue;
     int alpha;
 
-    Color() : red(255), green(0), blue(0), alpha(255) {}
     Color(int redIn, int greenIn, int blueIn, int alphaIn) : red(redIn), green(greenIn), blue(blueIn), alpha(alphaIn) {};
+    Color() : Color(255, 0, 0, 255) {}
+    bool operator==(const Color& rhs) const { return red == rhs.red && green == rhs.green && blue == rhs.blue && alpha == rhs.alpha; }
   };
 
   virtual ~GogShape();
@@ -657,9 +658,14 @@ public:
   virtual ShapeType shapeType() const;
 
   /// Get the label's position; in lla radians if absolute, xyz meters if relative
-  simCore::Vec3 getPosition() const;
+  simCore::Vec3 position() const;
   /// Set the label's position; in lla radians if absolute, xyz meters if relative
   void setPosition(const simCore::Vec3& position);
+
+  /// Get the display text of the annotation
+  std::string text() const;
+  /// Set the display text of the annotation
+  void setText(const std::string& text);
 
   /**
   * Get the font filename; if value is not set, default value is returned.
@@ -711,6 +717,7 @@ public:
 
 private:
   simCore::Vec3 position_; ///< lla radians if absolute, xyz meters if relative
+  std::string text_; ///< display text
   Optional<std::string> fontName_; ///< font filename
   Optional<int> textSize_; ///< text point size
   Optional<Color> textColor_;

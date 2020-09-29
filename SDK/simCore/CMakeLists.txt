@@ -167,11 +167,17 @@ source_group("Source Files\\Time" FILES ${CORE_TIME_SOURCES})
 
 set(CORE_GOG_INC GOG/)
 set(CORE_GOG_HEADERS
+    ${CORE_GOG_INC}GogUtils.h
     ${CORE_GOG_INC}GogShape.h
+    ${CORE_GOG_INC}ParsedShape.h
+    ${CORE_GOG_INC}Parser.h
 )
 set(CORE_GOG_SRC GOG/)
 set(CORE_GOG_SOURCES
+    ${CORE_GOG_SRC}GogUtils.cpp
     ${CORE_GOG_SRC}GogShape.cpp
+    ${CORE_GOG_SRC}ParsedShape.cpp
+    ${CORE_GOG_SRC}Parser.cpp
 )
 source_group(Headers\\GOG FILES ${CORE_GOG_HEADERS})
 source_group("Source Files\\GOG" FILES ${CORE_GOG_SOURCES})

@@ -739,7 +739,7 @@ GogShape::ShapeType Annotation::shapeType() const
   return ShapeType::ANNOTATION;
 }
 
-simCore::Vec3 Annotation::getPosition() const
+simCore::Vec3 Annotation::position() const
 {
   return position_;
 }
@@ -747,6 +747,16 @@ simCore::Vec3 Annotation::getPosition() const
 void Annotation::setPosition(const simCore::Vec3& position)
 {
   position_ = position;
+}
+
+std::string Annotation::text() const
+{
+  return text_;
+}
+
+void Annotation::setText(const std::string& text)
+{
+  text_ = text;
 }
 
 int Annotation::getFontName(std::string& fontName) const
