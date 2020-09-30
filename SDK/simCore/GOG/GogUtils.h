@@ -69,7 +69,6 @@ struct SDKCORE_EXPORT UnitsState
   void parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, simCore::Units& units);
 };
 
-
 /**
  * "State" modifiers that "spill over" across GOG objects in the GOG file.
  *

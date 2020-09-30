@@ -54,6 +54,7 @@ bool startsWith(const std::string& token, const std::string& start)
 namespace simCore { namespace GOG {
 
 Parser::Parser()
+  : units_(nullptr)
 {
   initGogColors_();
 }
@@ -1050,8 +1051,8 @@ void Parser::parsePointBasedOptional_(const ParsedShape& parsed, const std::stri
   PointBasedShape::TessellationStyle style = PointBasedShape::TessellationStyle::RHUMBLINE;
   if (parsed.hasValue(ShapeParameter::LINEPROJECTION))
   {
-    std::string tessellateStr = parsed.stringValue(ShapeParameter::TESSELLATE);
-    if (tessellateStr == "greatcircle")
+    std::string projectionStr = parsed.stringValue(ShapeParameter::LINEPROJECTION);
+    if (projectionStr == "greatcircle")
       style = PointBasedShape::TessellationStyle::GREAT_CIRCLE;
   }
   shape->setTesssellation(style);
