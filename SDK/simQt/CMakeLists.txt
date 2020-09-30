@@ -132,10 +132,6 @@ list(APPEND SIMQT_HEADERS
 
 
 source_group(Headers FILES ${SIMQT_HEADERS})
-set(SIMQT_ALL_HEADER
-    ${SIMQT_INC}../simQt.h
-)
-source_group("" FILES ${SIMQT_ALL_HEADER})
 
 # .cpp files
 set(SIMQT_SOURCES
@@ -284,7 +280,7 @@ VSI_QT_ADD_RESOURCES(Q_RESOURCES ${SIMQT_RESOURCES})
 source_group("Generated Files" FILES ${Q_HEADERS} ${Q_FORMS} ${Q_RESOURCES})
 
 set(SIMQT_PROJECT_FILES
-    ${SIMQT_HEADERS} ${SIMQT_ALL_HEADER} ${SIMQT_SOURCES} ${SIMQT_FORMS} ${SIMQT_RESOURCES}
+    ${SIMQT_HEADERS} ${SIMQT_SOURCES} ${SIMQT_FORMS} ${SIMQT_RESOURCES}
     ${Q_HEADERS} ${Q_FORMS} ${Q_RESOURCES}
 )
 
@@ -383,10 +379,5 @@ if(INSTALL_HEADERS)
     # Setup header file installation
     install(FILES ${SIMQT_HEADERS}
         DESTINATION include/simQt
-    )
-
-    # simQt.h
-    install(FILES ${SIMQT_ALL_HEADER}
-        DESTINATION include
     )
 endif()

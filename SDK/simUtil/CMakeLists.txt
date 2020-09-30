@@ -90,10 +90,6 @@ endif()
 set(UTIL_GENERATED_HEADERS)
 set(UTIL_GENERATED_SOURCES)
 
-set(UTIL_ALL_HEADER
-    ${UTIL_INC}../simUtil.h
-)
-
 # Append TritonSettings if we have the osgEarth Triton nodekit
 if(OSGEARTH_TRITON_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_TRITON)
     list(APPEND UTIL_HEADERS ${UTIL_INC}TritonSettings.h)
@@ -119,12 +115,11 @@ source_group(Shaders FILES ${UTIL_SHADER_FILES})
 
 source_group(Headers FILES ${UTIL_HEADERS})
 source_group("Source Files" FILES ${UTIL_SOURCES})
-source_group("" FILES ${UTIL_ALL_HEADER})
 
 # ----------------------------------------------------------------------
 
 set(UTIL_PROJECT_FILES
-    ${UTIL_HEADERS} ${UTIL_SOURCES} ${UTIL_ALL_HEADER} ${UTIL_SHADER_FILES}
+    ${UTIL_HEADERS} ${UTIL_SOURCES} ${UTIL_SHADER_FILES}
 )
 
 # Fix the library for static or shared
@@ -184,7 +179,4 @@ if(INSTALL_HEADERS)
     # Setup header file installation
     install(FILES ${UTIL_HEADERS}
         DESTINATION include/simUtil)
-
-    install(FILES ${UTIL_ALL_HEADER}
-        DESTINATION include)
 endif()

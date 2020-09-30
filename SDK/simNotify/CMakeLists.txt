@@ -14,16 +14,12 @@ set( NOTIFY_SOURCES
     ${NOTIFY_SRC}NotifyHandler.cpp
     ${NOTIFY_SRC}StandardNotifyHandlers.cpp
 )
-set( NOTIFY_ALL_HEADER
-    ../simNotify.h
-)
 
 source_group( Headers FILES ${NOTIFY_HEADERS} )
 source_group( "Source Files" FILES ${NOTIFY_SOURCES} )
-source_group( "" FILES ${NOTIFY_ALL_HEADER} )
 
 set( NOTIFY_PROJECT_FILES
-    ${NOTIFY_HEADERS} ${NOTIFY_SOURCES} ${NOTIFY_ALL_HEADER}
+    ${NOTIFY_HEADERS} ${NOTIFY_SOURCES}
 )
 
 # Fix the library for static or shared
@@ -61,6 +57,4 @@ endif()
 if(INSTALL_HEADERS)
     install( FILES ${NOTIFY_HEADERS}
         DESTINATION include/simNotify )
-    install( FILES ${NOTIFY_ALL_HEADER}
-        DESTINATION include )
 endif()
