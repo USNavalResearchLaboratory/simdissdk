@@ -520,6 +520,25 @@ int testTextReplacer()
   return rv;
 }
 
+int testRemoveTrailingZeros()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(simCore::removeTrailingZeros("100.000", false) == "100");
+  rv += SDK_ASSERT(simCore::removeTrailingZeros("100.000", true) == "100.");
+  rv += SDK_ASSERT(simCore::removeTrailingZeros("100.0001", false) == "100.0001");
+  rv += SDK_ASSERT(simCore::removeTrailingZeros("100.000100", false) == "100.0001");
+  rv += SDK_ASSERT(simCore::removeTrailingZeros(".000", false) == "");
+  rv += SDK_ASSERT(simCore::removeTrailingZeros(".000", true) == ".");
+  rv += SDK_ASSERT(simCore::removeTrailingZeros("100.", false) == "100");
+  rv += SDK_ASSERT(simCore::removeTrailingZeros("100.", true) == "100.");
+  rv += SDK_ASSERT(simCore::removeTrailingZeros("100", false) == "100");
+  rv += SDK_ASSERT(simCore::removeTrailingZeros("not a number", false) == "not a number");
+  rv += SDK_ASSERT(simCore::removeTrailingZeros("not a number", true) == "not a number");
+
+  return rv;
+}
+
 }
 
 int StringUtilsTest(int argc, char* argv[])
@@ -544,6 +563,8 @@ int StringUtilsTest(int argc, char* argv[])
 
   // TextReplacer testing
   rv += SDK_ASSERT(testTextReplacer() == 0);
+
+  rv += SDK_ASSERT(testRemoveTrailingZeros() == 0);
 
   std::cout << "simCore StringUtilsTest " << ((rv == 0) ? "passed" : "failed") << std::endl;
 
