@@ -108,7 +108,7 @@ int testMinimalCircularShape(const std::string& gog, const simCore::Vec3& center
   if (!shapes.empty())
   {
     T* shape = dynamic_cast<T*>(shapes.front().get());
-    rv += SDK_ASSERT(shape);
+    rv += SDK_ASSERT(shape != nullptr);
     if (shape)
     {
       const simCore::Vec3& center = shape->centerPosition();
@@ -139,7 +139,7 @@ int testMinimalPointBasedShape(const std::string& gog, const std::vector<simCore
   if (!shapes.empty())
   {
     T* shape = dynamic_cast<T*>(shapes.front().get());
-    rv += SDK_ASSERT(shape);
+    rv += SDK_ASSERT(shape != nullptr);
     if (shape)
     {
       const std::vector<simCore::Vec3>& positionsOut = shape->points();
@@ -179,7 +179,7 @@ int testMinimalShapes()
   if (!shapes.empty())
   {
     simCore::GOG::Orbit* orbit = dynamic_cast<simCore::GOG::Orbit*>(shapes.front().get());
-    rv += SDK_ASSERT(orbit);
+    rv += SDK_ASSERT(orbit != nullptr);
     if (orbit)
     {
       const simCore::Vec3& center = orbit->centerPosition();
@@ -423,7 +423,7 @@ int testAnnotation()
   if (!shapes.empty())
   {
     simCore::GOG::Annotation* anno = dynamic_cast<simCore::GOG::Annotation*>(shapes.front().get());
-    rv += SDK_ASSERT(anno);
+    rv += SDK_ASSERT(anno != nullptr);
     if (anno)
     {
       rv += SDK_ASSERT(anno->text() == "label 1");
@@ -451,7 +451,7 @@ int testAnnotation()
   if (!shapes.empty())
   {
     simCore::GOG::Annotation* anno = dynamic_cast<simCore::GOG::Annotation*>(shapes.front().get());
-    rv += SDK_ASSERT(anno);
+    rv += SDK_ASSERT(anno != nullptr);
     if (anno)
     {
       rv += SDK_ASSERT(comparePositions(anno->position(), simCore::Vec3(24.5 * simCore::DEG2RAD, 54.6 * simCore::DEG2RAD, 0.)));
@@ -493,7 +493,7 @@ int testAnnotation()
     for (simCore::GOG::GogShapePtr gogPtr : shapes)
     {
       simCore::GOG::Annotation* anno = dynamic_cast<simCore::GOG::Annotation*>(gogPtr.get());
-      rv += SDK_ASSERT(anno);
+      rv += SDK_ASSERT(anno != nullptr);
       if (anno)
       {
         rv += SDK_ASSERT(comparePositions(anno->position(), positions[textId]));
@@ -538,7 +538,7 @@ int testUnits()
   if (!shapes.empty())
   {
     simCore::GOG::Circle* circle = dynamic_cast<simCore::GOG::Circle*>(shapes.front().get());
-    rv += SDK_ASSERT(circle);
+    rv += SDK_ASSERT(circle != nullptr);
     if (circle)
     {
       const simCore::Vec3& center = circle->centerPosition();
@@ -564,7 +564,7 @@ int testUnits()
   if (!shapes.empty())
   {
     simCore::GOG::Circle* circle = dynamic_cast<simCore::GOG::Circle*>(shapes.front().get());
-    rv += SDK_ASSERT(circle);
+    rv += SDK_ASSERT(circle != nullptr);
     if (circle)
     {
       const simCore::Vec3& center = circle->centerPosition();
@@ -587,7 +587,7 @@ int testUnits()
   if (!shapes.empty())
   {
     simCore::GOG::Line* line = dynamic_cast<simCore::GOG::Line*>(shapes.front().get());
-    rv += SDK_ASSERT(line);
+    rv += SDK_ASSERT(line != nullptr);
     if (line)
     {
       const std::vector<simCore::Vec3>& positions = line->points();
@@ -610,7 +610,7 @@ int testUnits()
   if (!shapes.empty())
   {
     simCore::GOG::Line* line = dynamic_cast<simCore::GOG::Line*>(shapes.front().get());
-    rv += SDK_ASSERT(line);
+    rv += SDK_ASSERT(line != nullptr);
     if (line)
     {
       const std::vector<simCore::Vec3>& positions = line->points();
