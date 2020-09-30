@@ -84,8 +84,12 @@ private:
   int parsePointBased_(const ParsedShape& parsed, bool relative, const std::string& name, const UnitsState& units, size_t minimumNumPoints, PointBasedShape* shape) const;
   /// Parses the optional fields for a PointBasedShape, calls parseFillable_()
   void parsePointBasedOptional_(const ParsedShape& parsed, const std::string& name, PointBasedShape* shape) const;
+  /// Parse the required fields for the specified CircularShape, calls parseCircularOptional_(); returns 0 on success, non-zero otherwise
+  int parseCircular_(const ParsedShape& parsed, bool relative, const std::string& name, const UnitsState& units, CircularShape* shape) const;
   /// Parses the optional fields a CircularShape, calls parseFillable_()
   void parseCircularOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularShape* shape) const;
+  /// Parses the optional height field for a CircularHeightShape
+  void parseCircularHeightOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularHeightShape* shape) const;
 
   /// Return true if the specified token is a comment
   bool isComment_(const std::string& token) const;

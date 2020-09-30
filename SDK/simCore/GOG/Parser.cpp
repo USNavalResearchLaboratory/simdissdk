@@ -192,18 +192,18 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
 
       // process special KML icon comment keywords
       if (tokens.size () > 2 && tokens[1] == "kml_icon")
-        current.set(ShapeParameter::GOG_ICON, tokens[2]);
+        current.set(ShapeParameter::ICON, tokens[2]);
       if (tokens.size() > 1 && tokens[1] == "kml_groundoverlay")
         current.setShape(GogShape::ShapeType::IMAGEOVERLAY);
       if (tokens.size() > 1 && tokens[1] == "kml_latlonbox")
       {
         if (tokens.size() > 6)
         {
-          current.set(ShapeParameter::GOG_LLABOX_N, tokens[2]);
-          current.set(ShapeParameter::GOG_LLABOX_S, tokens[3]);
-          current.set(ShapeParameter::GOG_LLABOX_E, tokens[4]);
-          current.set(ShapeParameter::GOG_LLABOX_W, tokens[5]);
-          current.set(ShapeParameter::GOG_LLABOX_ROT, tokens[6]);
+          current.set(ShapeParameter::LLABOX_N, tokens[2]);
+          current.set(ShapeParameter::LLABOX_S, tokens[3]);
+          current.set(ShapeParameter::LLABOX_E, tokens[4]);
+          current.set(ShapeParameter::LLABOX_W, tokens[5]);
+          current.set(ShapeParameter::LLABOX_ROT, tokens[6]);
         }
       }
     }
@@ -229,7 +229,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       if (tokens[0] == "end" && !invalidShape)
       {
         if (current.pointType() == ParsedShape::LLA)
-          current.set(ShapeParameter::GOG_ABSOLUTE, "1");
+          current.set(ShapeParameter::ABSOLUTE_POINTS, "1");
         state.apply(current);
         GogShapePtr gog = getShape_(current);
         if (gog)
@@ -262,7 +262,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           // if available, recreate reference origin
           // values are needed for subsequent annotation points since meta data was cleared and a new "current" is used
           if (refLla.has_value())
-            current.set(ShapeParameter::GOG_CENTERXY, refLla.value_or(PositionStrings()));
+            current.set(ShapeParameter::CENTERXY, refLla.value_or(PositionStrings()));
         }
         if (current.shape() != GogShape::ShapeType::UNKNOWN)
         {
@@ -272,11 +272,11 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         current.setShape(GogShape::ShapeType::ANNOTATION);
         std::string textToken = simCore::StringUtils::trim(line.substr(tokens[0].length() + 1));
         // Store the un-decoded text in textToken
-        current.set(ShapeParameter::GOG_TEXT, textToken);
+        current.set(ShapeParameter::TEXT, textToken);
         // clean up text for the shape name
         textToken = simCore::StringUtils::substitute(textToken, "_", " ");
         textToken = simCore::StringUtils::substitute(textToken, "\\n", "\n");
-        current.set(ShapeParameter::GOG_3D_NAME, textToken);
+        current.set(ShapeParameter::NAME, textToken);
       }
       else
       {
@@ -318,13 +318,13 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           invalidShape = true;
         }
         current.setShape(GogShape::ShapeType::LATLONALTBOX);
-        current.set(ShapeParameter::GOG_LLABOX_N, tokens[1]);
-        current.set(ShapeParameter::GOG_LLABOX_S, tokens[2]);
-        current.set(ShapeParameter::GOG_LLABOX_W, tokens[3]);
-        current.set(ShapeParameter::GOG_LLABOX_E, tokens[4]);
-        current.set(ShapeParameter::GOG_LLABOX_MINALT, tokens[5]);
+        current.set(ShapeParameter::LLABOX_N, tokens[1]);
+        current.set(ShapeParameter::LLABOX_S, tokens[2]);
+        current.set(ShapeParameter::LLABOX_W, tokens[3]);
+        current.set(ShapeParameter::LLABOX_E, tokens[4]);
+        current.set(ShapeParameter::LLABOX_MINALT, tokens[5]);
         if (tokens.size() > 6)
-          current.set(ShapeParameter::GOG_LLABOX_MAXALT, tokens[6]);
+          current.set(ShapeParameter::LLABOX_MAXALT, tokens[6]);
       }
       else
       {
@@ -334,7 +334,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     // arguments
     else if (tokens[0] == "off")
     {
-      current.set(ShapeParameter::GOG_DRAW, "false");
+      current.set(ShapeParameter::DRAW, "false");
     }
     else if (tokens[0] == "ref" || tokens[0] == "referencepoint")
     {
@@ -345,7 +345,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           refLla = PositionStrings(tokens[1], tokens[2], tokens[3]);
         else
           refLla = PositionStrings(tokens[1], tokens[2]);
-        current.set(ShapeParameter::GOG_REF_LLA, refLla.value_or(PositionStrings()));
+        current.set(ShapeParameter::REF_LLA, refLla.value_or(PositionStrings()));
       }
       else
       {
@@ -405,9 +405,9 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       if (tokens.size() >= 3)
       {
         if (tokens.size() >= 4)
-          current.set(ShapeParameter::GOG_CENTERXY, PositionStrings(tokens[1], tokens[2], tokens[3]));
+          current.set(ShapeParameter::CENTERXY, PositionStrings(tokens[1], tokens[2], tokens[3]));
         else
-          current.set(ShapeParameter::GOG_CENTERXY, PositionStrings(tokens[1], tokens[2]));
+          current.set(ShapeParameter::CENTERXY, PositionStrings(tokens[1], tokens[2]));
       }
       else
         printError_(lineNumber, "centerxy/centerxyz command requires at least 2 arguments");
@@ -415,7 +415,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     else if (tokens[0] == "centerxy2")
     {
       if (tokens.size() >= 3)
-        current.set(ShapeParameter::GOG_CENTERXY2, PositionStrings(tokens[1], tokens[2]));
+        current.set(ShapeParameter::CENTERXY2, PositionStrings(tokens[1], tokens[2]));
       else
         printError_(lineNumber, "centerxy2 command requires at least 2 arguments");
     }
@@ -424,9 +424,9 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       if (tokens.size() >= 3)
       {
         if (tokens.size() >= 4)
-          current.set(ShapeParameter::GOG_CENTERLL, PositionStrings(tokens[1], tokens[2], tokens[3]));
+          current.set(ShapeParameter::CENTERLL, PositionStrings(tokens[1], tokens[2], tokens[3]));
         else
-          current.set(ShapeParameter::GOG_CENTERLL, PositionStrings(tokens[1], tokens[2]));
+          current.set(ShapeParameter::CENTERLL, PositionStrings(tokens[1], tokens[2]));
       }
       else
         printError_(lineNumber, "centerll/centerlla/centerlatlon command requires at least 2 arguments");
@@ -436,7 +436,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       if (tokens.size() >= 3)
       {
         // note centerll2 only supports lat and lon, altitude for shape must be derived from first center point
-        current.set(ShapeParameter::GOG_CENTERLL2, PositionStrings(tokens[1], tokens[2]));
+        current.set(ShapeParameter::CENTERLL2, PositionStrings(tokens[1], tokens[2]));
       }
       else
         printError_(lineNumber, "centerll2 command requires at least 2 arguments");
@@ -525,12 +525,12 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     }
     else if (tokens[0] == "filled")
     {
-      current.set(ShapeParameter::GOG_FILLED, "true");
+      current.set(ShapeParameter::FILLED, "true");
     }
     else if (tokens[0] == "outline")
     {
       if (tokens.size() >= 2)
-        current.set(ShapeParameter::GOG_OUTLINE, (tokens[1] == "true" ? "true" : "false"));
+        current.set(ShapeParameter::OUTLINE, (tokens[1] == "true" ? "true" : "false"));
       else
         printError_(lineNumber, "outline command requires 1 argument");
     }
@@ -559,7 +559,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         {
           std::ostringstream os;
           os << (value * 0.5);
-          current.set(ShapeParameter::GOG_RADIUS, os.str());
+          current.set(ShapeParameter::RADIUS, os.str());
         }
       }
       else
@@ -568,42 +568,42 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     else if (tokens[0] == "radius")
     {
       if (tokens.size() >= 2)
-        current.set(ShapeParameter::GOG_RADIUS, tokens[1]);
+        current.set(ShapeParameter::RADIUS, tokens[1]);
       else
         printError_(lineNumber, "radius command requires 1 argument");
     }
     else if (tokens[0] == "anglestart")
     {
       if (tokens.size() >= 2)
-        current.set(ShapeParameter::GOG_ANGLESTART, tokens[1]);
+        current.set(ShapeParameter::ANGLESTART, tokens[1]);
       else
         printError_(lineNumber, "anglestart command requires 1 argument");
     }
     else if (tokens[0] == "angleend")
     {
       if (tokens.size() >= 2)
-        current.set(ShapeParameter::GOG_ANGLEEND, tokens[1]);
+        current.set(ShapeParameter::ANGLEEND, tokens[1]);
       else
         printError_(lineNumber, "angleend command requires 1 argument");
     }
     else if (tokens[0] == "angledeg")
     {
       if (tokens.size() >= 2)
-        current.set(ShapeParameter::GOG_ANGLEDEG, tokens[1]);
+        current.set(ShapeParameter::ANGLEDEG, tokens[1]);
       else
         printError_(lineNumber, "angledeg command requires 1 argument");
    }
     else if (tokens[0] == "majoraxis")
     {
       if (tokens.size() >= 2)
-        current.set(ShapeParameter::GOG_MAJORAXIS, tokens[1]);
+        current.set(ShapeParameter::MAJORAXIS, tokens[1]);
       else
         printError_(lineNumber, "majoraxis command requires 1 argument");
     }
     else if (tokens[0] == "minoraxis")
     {
       if (tokens.size() >= 2)
-        current.set(ShapeParameter::GOG_MINORAXIS, tokens[1]);
+        current.set(ShapeParameter::MINORAXIS, tokens[1]);
       else
         printError_(lineNumber, "minoraxis command requires 1 argument");
     }
@@ -616,7 +616,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         {
           std::ostringstream os;
           os << (value * 2.0);
-          current.set(ShapeParameter::GOG_MAJORAXIS, os.str());
+          current.set(ShapeParameter::MAJORAXIS, os.str());
         }
       }
       else
@@ -631,7 +631,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         {
           std::ostringstream os;
           os << (value * 2.0);
-          current.set(ShapeParameter::GOG_MINORAXIS, os.str());
+          current.set(ShapeParameter::MINORAXIS, os.str());
         }
       }
       else
@@ -641,9 +641,9 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     {
       if (tokens.size() >= 4)
       {
-        current.set(ShapeParameter::GOG_SCALEX, tokens[1]);
-        current.set(ShapeParameter::GOG_SCALEY, tokens[2]);
-        current.set(ShapeParameter::GOG_SCALEZ, tokens[3]);
+        current.set(ShapeParameter::SCALEX, tokens[1]);
+        current.set(ShapeParameter::SCALEY, tokens[2]);
+        current.set(ShapeParameter::SCALEZ, tokens[3]);
       }
       else
         printError_(lineNumber, "scale command requires 3 arguments");
@@ -652,26 +652,26 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     {
       if (tokens.size() >= 2)
       {
-        current.set(ShapeParameter::GOG_ORIENT_HEADING, tokens[1]);
+        current.set(ShapeParameter::ORIENT_HEADING, tokens[1]);
         if (tokens.size() >= 3)
         {
-          current.set(ShapeParameter::GOG_ORIENT_PITCH, tokens[2]);
+          current.set(ShapeParameter::ORIENT_PITCH, tokens[2]);
           if (tokens.size() >= 4)
           {
-            current.set(ShapeParameter::GOG_ORIENT_ROLL, tokens[3]);
-            current.set(ShapeParameter::GOG_ORIENT, "cpr"); // c=heading(course), p=pitch, r=roll
+            current.set(ShapeParameter::ORIENT_ROLL, tokens[3]);
+            current.set(ShapeParameter::ORIENT, "cpr"); // c=heading(course), p=pitch, r=roll
           }
           else
-            current.set(ShapeParameter::GOG_ORIENT, "cp"); // c=heading(course), p=pitch, r=roll
+            current.set(ShapeParameter::ORIENT, "cp"); // c=heading(course), p=pitch, r=roll
         }
         else
-          current.set(ShapeParameter::GOG_ORIENT, "c");
+          current.set(ShapeParameter::ORIENT, "c");
       }
       else
         printError_(lineNumber, "orient command requires at least 1 argument");
     }
     else if (startsWith(line, "rotate"))
-      current.set(ShapeParameter::GOG_3D_FOLLOW, "cpr"); // c=heading(course), p=pitch, r=roll
+      current.set(ShapeParameter::FOLLOW, "cpr"); // c=heading(course), p=pitch, r=roll
     else if (
       startsWith(line, "3d name") ||
       startsWith(line, "3d offsetalt") ||
@@ -686,17 +686,17 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         const std::string restOfLine = line.substr(tag.length() + 1);
 
         if (tokens[1] == "name")
-          current.set(ShapeParameter::GOG_3D_NAME, restOfLine);
+          current.set(ShapeParameter::NAME, restOfLine);
         else if (tokens[1] == "offsetalt")
-          current.set(ShapeParameter::GOG_3D_OFFSETALT, restOfLine);
+          current.set(ShapeParameter::OFFSETALT, restOfLine);
         else if (tokens[1] == "offsetcourse")
-          current.set(ShapeParameter::GOG_3D_OFFSETCOURSE, restOfLine);
+          current.set(ShapeParameter::OFFSETCOURSE, restOfLine);
         else if (tokens[1] == "offsetpitch")
-          current.set(ShapeParameter::GOG_3D_OFFSETPITCH, restOfLine);
+          current.set(ShapeParameter::OFFSETPITCH, restOfLine);
         else if (tokens[1] == "offsetroll")
-          current.set(ShapeParameter::GOG_3D_OFFSETROLL, restOfLine);
+          current.set(ShapeParameter::OFFSETROLL, restOfLine);
         else if (tokens[1] == "follow")
-          current.set(ShapeParameter::GOG_3D_FOLLOW, restOfLine);
+          current.set(ShapeParameter::FOLLOW, restOfLine);
       }
       else
         printError_(lineNumber, "3d command requires at least 2 arguments");
@@ -706,11 +706,11 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       // stored in the style, not in meta data
       if (tokens.size() >= 2)
       {
-        current.set(ShapeParameter::GOG_EXTRUDE, tokens[1]);
+        current.set(ShapeParameter::EXTRUDE, tokens[1]);
         if (tokens.size() >= 3)
         {
           // handle optional extrude height
-          current.set(ShapeParameter::GOG_EXTRUDE_HEIGHT, tokens[2]);
+          current.set(ShapeParameter::EXTRUDE_HEIGHT, tokens[2]);
         }
       }
       else
@@ -719,27 +719,27 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     else if (tokens[0] == "height")
     {
       if (tokens.size() >= 2)
-        current.set(ShapeParameter::GOG_HEIGHT, tokens[1]);
+        current.set(ShapeParameter::HEIGHT, tokens[1]);
       else
         printError_(lineNumber, "height command requires 1 argument");
     }
     else if (tokens[0] == "tessellate")
-      current.set(ShapeParameter::GOG_TESSELLATE, tokens[1]);
+      current.set(ShapeParameter::TESSELLATE, tokens[1]);
     else if (tokens[0] == "lineprojection")
-      current.set(ShapeParameter::GOG_LINEPROJECTION, tokens[1]);
+      current.set(ShapeParameter::LINEPROJECTION, tokens[1]);
     else if (tokens[0] == "linestyle")
-      current.set(ShapeParameter::GOG_LINESTYLE, tokens[1]);
+      current.set(ShapeParameter::LINESTYLE, tokens[1]);
     else if (tokens[0] == "depthbuffer")
-      current.set(ShapeParameter::GOG_DEPTHBUFFER, tokens[1]);
+      current.set(ShapeParameter::DEPTHBUFFER, tokens[1]);
     else if (tokens[0] == "fontname")
     {
       state.fontName_ = tokens[1];
-      current.set(ShapeParameter::GOG_FONTNAME, tokens[1]);
+      current.set(ShapeParameter::FONTNAME, tokens[1]);
     }
     else if (tokens[0] == "fontsize")
     {
       state.textSize_ = tokens[1];
-      current.set(ShapeParameter::GOG_TEXTSIZE, tokens[1]);
+      current.set(ShapeParameter::TEXTSIZE, tokens[1]);
     }
     else // treat everything as a name/value pair
     {
@@ -771,166 +771,160 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     units.parse(parsed, registry);
   }
   // default to absolute if not otherwise specified
-  bool relative = !parsed.boolValue(ShapeParameter::GOG_ABSOLUTE, true);
-  std::string name = parsed.stringValue(ShapeParameter::GOG_3D_NAME);
+  bool relative = !parsed.boolValue(ShapeParameter::ABSOLUTE_POINTS, true);
+  std::string name = parsed.stringValue(ShapeParameter::NAME);
   if (name.empty())
     name = GogShape::shapeTypeToString(parsed.shape());
   switch (parsed.shape())
   {
   case GogShape::ShapeType::ANNOTATION:
+  {
+    simCore::Vec3 position;
+    bool hasPosition;
+    // verify shape has minimum required fields
+    if (relative)
     {
-      simCore::Vec3 position;
-      bool hasPosition;
-      // verify shape has minimum required fields
-      if (relative)
-      {
-        // relative annotation uses the xyz keyword for the center position, not the centerxy, so check for a position
-        const std::vector<PositionStrings>& positions = parsed.positions();
-        hasPosition = (!positions.empty() && getPosition_(positions.front(), relative, units, position) == 0);
-      }
+      // relative annotation uses the xyz keyword for the center position, not the centerxy, so check for a position
+      const std::vector<PositionStrings>& positions = parsed.positions();
+      hasPosition = (!positions.empty() && getPosition_(positions.front(), relative, units, position) == 0);
+    }
+    else
+      hasPosition = (parsed.hasValue(ShapeParameter::CENTERLL) && getPosition_(parsed.positionValue(ShapeParameter::CENTERLL), relative, units, position) == 0);
+
+    if (!hasPosition)
+    {
+      printError_(parsed.lineNumber(), "Annotation " + name + " did not have a position, cannot create shape");
+      break;
+    }
+    if (!parsed.hasValue(ShapeParameter::TEXT))
+    {
+      printError_(parsed.lineNumber(), "Annotation " + name + " missing text, cannot create shape");
+      break;
+    }
+
+    Annotation* anno = new Annotation(relative);
+    anno->setPosition(position);
+    anno->setText(parsed.stringValue(ShapeParameter::TEXT));
+    if (parsed.hasValue(ShapeParameter::FONTNAME))
+      anno->setFontName(parsed.stringValue(ShapeParameter::FONTNAME));
+    if (parsed.hasValue(ShapeParameter::TEXTSIZE))
+    {
+      int textSize = 0;
+      if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::TEXTSIZE), textSize))
+        anno->setTextSize(textSize);
       else
-        hasPosition = (parsed.hasValue(ShapeParameter::GOG_CENTERLL) && getPosition_(parsed.positionValue(ShapeParameter::GOG_CENTERLL), relative, units, position) == 0);
-
-      if (!hasPosition)
-      {
-        printError_(parsed.lineNumber(), "Annotation " + name + " did not have a position, cannot create shape");
-        break;
-      }
-      if (!parsed.hasValue(ShapeParameter::GOG_TEXT))
-      {
-        printError_(parsed.lineNumber(), "Annotation " + name + " missing text, cannot create shape");
-        break;
-      }
-
-      Annotation* anno = new Annotation(relative);
-      anno->setPosition(position);
-      anno->setText(parsed.stringValue(ShapeParameter::GOG_TEXT));
-      if (parsed.hasValue(ShapeParameter::GOG_FONTNAME))
-        anno->setFontName(parsed.stringValue(ShapeParameter::GOG_FONTNAME));
-      if (parsed.hasValue(ShapeParameter::GOG_TEXTSIZE))
-      {
-        int textSize = 0;
-        if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::GOG_TEXTSIZE), textSize))
-          anno->setTextSize(textSize);
-        else
-          printError_(parsed.lineNumber(), "Invalid fontsize: " + parsed.stringValue(ShapeParameter::GOG_TEXTSIZE) + " for " + name);
-      }
-      if (parsed.hasValue(ShapeParameter::GOG_LINECOLOR))
-      {
-        GogShape::Color color;
-        if (getColor_(parsed, ShapeParameter::GOG_LINECOLOR, name, "linecolor", color) == 0)
-          anno->setTextColor(color);
-      }
-      if (parsed.hasValue(ShapeParameter::GOG_TEXTOUTLINETHICKNESS))
-      {
-        std::string thicknessStr = parsed.stringValue(ShapeParameter::GOG_TEXTOUTLINETHICKNESS);
-        Annotation::OutlineThickness thickness = Annotation::OutlineThickness::NONE;
-        bool valid = true;
-        if (thicknessStr == "thick")
-          thickness = Annotation::OutlineThickness::THICK;
-        else if (thicknessStr == "thin")
-          thickness = Annotation::OutlineThickness::THIN;
-        else if (thicknessStr != "none")
-        {
-          valid = false;
-          printError_(parsed.lineNumber(), "Invalid textoutlinethickness: " + thicknessStr + " for " + name);
-        }
-        if (valid)
-          anno->setOutlineThickness(thickness);
-      }
-      if (parsed.hasValue(ShapeParameter::GOG_TEXTOUTLINECOLOR))
-      {
-        GogShape::Color color;
-        if (getColor_(parsed, ShapeParameter::GOG_TEXTOUTLINECOLOR, name, "textoutlinecolor", color) == 0)
-          anno->setOutlineColor(color);
-      }
-      rv.reset(anno);
+        printError_(parsed.lineNumber(), "Invalid fontsize: " + parsed.stringValue(ShapeParameter::TEXTSIZE) + " for " + name);
     }
-    break;
-  case GogShape::ShapeType::ARC:
+    if (parsed.hasValue(ShapeParameter::LINECOLOR))
     {
-      simCore::Vec3 position;
-      ShapeParameter param = (relative ? ShapeParameter::GOG_CENTERXY : ShapeParameter::GOG_CENTERLL);
-      // verify shape has minimum required fields
-      if (!parsed.hasValue(param) || getPosition_(parsed.positionValue(param), relative, units, position) != 0)
-      {
-        printError_(parsed.lineNumber(), "Arc " + name + " missing or invalid center point, cannot create shape");
-        break;
-      }
-
-      Arc* arc = new Arc(relative);
-      arc->setCenterPosition(position);
-      // TODO: parse elliptical
-      parseCircularOptional_(parsed, name, units, arc);
-      rv.reset(arc);
+      GogShape::Color color;
+      if (getColor_(parsed, ShapeParameter::LINECOLOR, name, "linecolor", color) == 0)
+        anno->setTextColor(color);
     }
+    if (parsed.hasValue(ShapeParameter::TEXTOUTLINETHICKNESS))
+    {
+      std::string thicknessStr = parsed.stringValue(ShapeParameter::TEXTOUTLINETHICKNESS);
+      Annotation::OutlineThickness thickness = Annotation::OutlineThickness::NONE;
+      bool valid = true;
+      if (thicknessStr == "thick")
+        thickness = Annotation::OutlineThickness::THICK;
+      else if (thicknessStr == "thin")
+        thickness = Annotation::OutlineThickness::THIN;
+      else if (thicknessStr != "none")
+      {
+        valid = false;
+        printError_(parsed.lineNumber(), "Invalid textoutlinethickness: " + thicknessStr + " for " + name);
+      }
+      if (valid)
+        anno->setOutlineThickness(thickness);
+    }
+    if (parsed.hasValue(ShapeParameter::TEXTOUTLINECOLOR))
+    {
+      GogShape::Color color;
+      if (getColor_(parsed, ShapeParameter::TEXTOUTLINECOLOR, name, "textoutlinecolor", color) == 0)
+        anno->setOutlineColor(color);
+    }
+    rv.reset(anno);
     break;
+  }
   case GogShape::ShapeType::CIRCLE:
-    {
-      simCore::Vec3 position;
-      ShapeParameter param = (relative ? ShapeParameter::GOG_CENTERXY : ShapeParameter::GOG_CENTERLL);
-      // verify shape has minimum required fields
-      if (!parsed.hasValue(param) || getPosition_(parsed.positionValue(param), relative, units, position) != 0)
-      {
-        printError_(parsed.lineNumber(), "Circle " + name + " missing or invalid center point, cannot create shape");
-        break;
-      }
-      Circle* circle = new Circle(relative);
-      circle->setCenterPosition(position);
-      parseCircularOptional_(parsed, name, units, circle);
-      rv.reset(circle);
-    }
+  {
+    std::unique_ptr<Circle> circle(new Circle(relative));
+    if (parseCircular_(parsed, relative, name, units, circle.get()) == 0)
+      rv.reset(circle.release());
     break;
+  }
   case GogShape::ShapeType::LINE:
-    {
-      Line* line = new Line(relative);
-      if (parsePointBased_(parsed, relative, name, units, 2, line) == 0)
-        rv.reset(line);
-      else
-      {
-        delete line;
-        break;
-      }
-      parsePointBasedOptional_(parsed, name, line);
-    }
+  {
+    std::unique_ptr<Line> line(new Line(relative));
+    if (parsePointBased_(parsed, relative, name, units, 2, line.get()) == 0)
+      rv.reset(line.release());
     break;
+  }
   case GogShape::ShapeType::LINESEGS:
-    {
-      LineSegs* line = new LineSegs(relative);
-      if (parsePointBased_(parsed, relative, name, units, 2, line) == 0)
-        rv.reset(line);
-      else
-      {
-        delete line;
-        break;
-      }
-      parsePointBasedOptional_(parsed, name, line);
-    }
+  {
+    std::unique_ptr<LineSegs> line(new LineSegs(relative));
+    if (parsePointBased_(parsed, relative, name, units, 2, line.get()) == 0)
+      rv.reset(line.release());
     break;
+  }
   case GogShape::ShapeType::POLYGON:
+  {
+    std::unique_ptr<Polygon> poly(new Polygon(relative));
+    if (parsePointBased_(parsed, relative, name, units, 3, poly.get()) == 0)
+      rv.reset(poly.release());
+  }
+  break;
+  case GogShape::ShapeType::SPHERE:
+  {
+    std::unique_ptr<Sphere> sphere(new Sphere(relative));
+    if (parseCircular_(parsed, relative, name, units, sphere.get()) == 0)
+      rv.reset(sphere.release());
+  }
+  break;
+  case GogShape::ShapeType::HEMISPHERE:
+  {
+    std::unique_ptr<Hemisphere> hemi(new Hemisphere(relative));
+    if (parseCircular_(parsed, relative, name, units, hemi.get()) == 0)
+      rv.reset(hemi.release());
+    break;
+  }
+  case GogShape::ShapeType::ORBIT:
+  {
+    std::unique_ptr<Orbit> orbit(new Orbit(relative));
+    if (parseCircular_(parsed, relative, name, units, orbit.get()) == 0)
     {
-      Polygon* poly = new Polygon(relative);
-      if (parsePointBased_(parsed, relative, name, units, 3, poly) == 0)
-        rv.reset(poly);
-      else
+      simCore::Vec3 center2;
+      ShapeParameter param = (relative ? ShapeParameter::CENTERXY2 : ShapeParameter::CENTERLL2);
+      // verify orbit has required center2 field
+      if (parsed.hasValue(param) && getPosition_(parsed.positionValue(param), relative, units, center2) == 0)
       {
-        delete poly;
-        break;
+        orbit->setCenterPosition2(center2);
+        rv.reset(orbit.release());
       }
-      parsePointBasedOptional_(parsed, name, poly);
+      else
+        printError_(parsed.lineNumber(), "orbit " + name + " missing or invalid center point 2, cannot create shape");
     }
     break;
-  // TODO: other shapes
+  }
   case GogShape::ShapeType::CONE:
+  {
+    std::unique_ptr<Cone> cone(new Cone(relative));
+    if (parseCircular_(parsed, relative, name, units, cone.get()) == 0)
+    {
+      parseCircularHeightOptional_(parsed, name, units, cone.get());
+      rv.reset(cone.release());
+    }
+    break;
+  }
+  // TODO: other shapes
+  case GogShape::ShapeType::ARC:
   case GogShape::ShapeType::CYLINDER:
   case GogShape::ShapeType::ELLIPSE:
   case GogShape::ShapeType::ELLIPSOID:
-  case GogShape::ShapeType::HEMISPHERE:
   case GogShape::ShapeType::IMAGEOVERLAY:
   case GogShape::ShapeType::LATLONALTBOX:
-  case GogShape::ShapeType::ORBIT:
   case GogShape::ShapeType::POINTS:
-  case GogShape::ShapeType::SPHERE:
   case GogShape::ShapeType::UNKNOWN:
     break;
   }
@@ -949,8 +943,8 @@ void Parser::parseOutlined_(const ParsedShape& parsed, OutlinedShape* shape) con
     assert(0); // should not be called with NULL
     return;
   }
-  if (parsed.hasValue(ShapeParameter::GOG_OUTLINE))
-    shape->setOutlined(parsed.boolValue(ShapeParameter::GOG_OUTLINE, true));
+  if (parsed.hasValue(ShapeParameter::OUTLINE))
+    shape->setOutlined(parsed.boolValue(ShapeParameter::OUTLINE, true));
 }
 
 void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, FillableShape* shape) const
@@ -961,15 +955,15 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     return;
   }
   parseOutlined_(parsed, shape);
-  if (parsed.hasValue(ShapeParameter::GOG_LINECOLOR))
+  if (parsed.hasValue(ShapeParameter::LINECOLOR))
   {
     GogShape::Color color;
-    if (getColor_(parsed, ShapeParameter::GOG_LINECOLOR, name, "linecolor", color) == 0)
+    if (getColor_(parsed, ShapeParameter::LINECOLOR, name, "linecolor", color) == 0)
       shape->setLineColor(color);
   }
-  if (parsed.hasValue(ShapeParameter::GOG_LINESTYLE))
+  if (parsed.hasValue(ShapeParameter::LINESTYLE))
   {
-    std::string styleStr = parsed.stringValue(ShapeParameter::GOG_LINESTYLE);
+    std::string styleStr = parsed.stringValue(ShapeParameter::LINESTYLE);
     bool valid = true;
     FillableShape::LineStyle style = FillableShape::LineStyle::SOLID;
     if (styleStr == "dashed")
@@ -984,21 +978,21 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     if (valid)
       shape->setLineStyle(style);
   }
-  if (parsed.hasValue(ShapeParameter::GOG_LINEWIDTH))
+  if (parsed.hasValue(ShapeParameter::LINEWIDTH))
   {
     int lineWidth = 0;
-    std::string lineWidthStr = parsed.stringValue(ShapeParameter::GOG_LINEWIDTH);
-    if (simCore::isValidNumber(lineWidthStr, lineWidth) == 0)
+    std::string lineWidthStr = parsed.stringValue(ShapeParameter::LINEWIDTH);
+    if (simCore::isValidNumber(lineWidthStr, lineWidth))
       shape->setLineWidth(lineWidth);
     else
       printError_(parsed.lineNumber(), "Invalid linewidth: " + lineWidthStr + " for " + name);
   }
-  if (parsed.hasValue(ShapeParameter::GOG_FILLED))
-    shape->setFilled(parsed.boolValue(ShapeParameter::GOG_FILLED, true));
-  if (parsed.hasValue(ShapeParameter::GOG_FILLCOLOR))
+  if (parsed.hasValue(ShapeParameter::FILLED))
+    shape->setFilled(parsed.boolValue(ShapeParameter::FILLED, true));
+  if (parsed.hasValue(ShapeParameter::FILLCOLOR))
   {
     GogShape::Color color;
-    if (getColor_(parsed, ShapeParameter::GOG_FILLCOLOR, name, "fillcolor", color) == 0)
+    if (getColor_(parsed, ShapeParameter::FILLCOLOR, name, "fillcolor", color) == 0)
       shape->setFillColor(color);
   }
 }
@@ -1050,20 +1044,32 @@ void Parser::parsePointBasedOptional_(const ParsedShape& parsed, const std::stri
     return;
   }
   parseFillable_(parsed, name, shape);
-  if (parsed.hasValue(ShapeParameter::GOG_TESSELLATE))
+  if (!parsed.hasValue(ShapeParameter::TESSELLATE))
+    return;
+  // if tessellate is set, default to RHUMBLINE unless LINEPROJECTION specifies otherwise
+  PointBasedShape::TessellationStyle style = PointBasedShape::TessellationStyle::RHUMBLINE;
+  if (parsed.hasValue(ShapeParameter::LINEPROJECTION))
   {
-    std::string tessellateStr = parsed.stringValue(ShapeParameter::GOG_TESSELLATE);
-    PointBasedShape::TessellationStyle style = PointBasedShape::TessellationStyle::NONE;
-    bool valid = true;
-    if (tessellateStr == "rhumbline")
-      style = PointBasedShape::TessellationStyle::RHUMBLINE;
-    else if (tessellateStr == "greatcircle")
+    std::string tessellateStr = parsed.stringValue(ShapeParameter::TESSELLATE);
+    if (tessellateStr == "greatcircle")
       style = PointBasedShape::TessellationStyle::GREAT_CIRCLE;
-    else
-      valid = false;
-    if (valid)
-      shape->setTesssellation(style);
   }
+  shape->setTesssellation(style);
+}
+
+int Parser::parseCircular_(const ParsedShape& parsed, bool relative, const std::string& name, const UnitsState& units, CircularShape* shape) const
+{
+  simCore::Vec3 position;
+  ShapeParameter param = (relative ? ShapeParameter::CENTERXY : ShapeParameter::CENTERLL);
+  // verify shape has minimum required fields
+  if (!parsed.hasValue(param) || getPosition_(parsed.positionValue(param), relative, units, position) != 0)
+  {
+    printError_(parsed.lineNumber(), GogShape::shapeTypeToString(shape->shapeType()) + " " + name + " missing or invalid center point, cannot create shape");
+    return 1;
+  }
+  shape->setCenterPosition(position);
+  parseCircularOptional_(parsed, name, units, shape);
+  return 0;
 }
 
 void Parser::parseCircularOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularShape* shape) const
@@ -1074,15 +1080,32 @@ void Parser::parseCircularOptional_(const ParsedShape& parsed, const std::string
     return;
   }
   parseFillable_(parsed, name, shape);
-  if (parsed.hasValue(ShapeParameter::GOG_RADIUS))
+  if (!parsed.hasValue(ShapeParameter::RADIUS))
+    return;
+  double radius = 0.;
+  std::string radiusStr = parsed.stringValue(ShapeParameter::RADIUS);
+  if (simCore::isValidNumber(radiusStr, radius))
+    shape->setRadius(units.rangeUnits_.convertTo(simCore::Units::METERS, radius));
+  else
+    printError_(parsed.lineNumber(), "Invalid radius: " + radiusStr + " for " + name);
+}
+
+void Parser::parseCircularHeightOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularHeightShape* shape) const
+{
+  if (!shape)
   {
-    double radius = 0.;
-    std::string radiusStr = parsed.stringValue(ShapeParameter::GOG_RADIUS);
-    if (simCore::isValidNumber(radiusStr, radius))
-      shape->setRadius(units.rangeUnits_.convertTo(simCore::Units::METERS, radius));
-    else
-      printError_(parsed.lineNumber(), "Invalid radius: " + radiusStr + " for " + name);
+    assert(0); // should not be called with NULL
+    return;
   }
+  if (!parsed.hasValue(ShapeParameter::HEIGHT))
+    return;
+
+  double height = 0.;
+  std::string heightStr = parsed.stringValue(ShapeParameter::HEIGHT);
+  if (simCore::isValidNumber(heightStr, height))
+    shape->setHeight(units.rangeUnits_.convertTo(simCore::Units::METERS, height));
+  else
+    printError_(parsed.lineNumber(), "Invalid height: " + heightStr + " for " + name);
 }
 
 int Parser::getColor_(const ParsedShape& parsed, ShapeParameter param, const std::string& shapeName, const std::string& fieldName, GogShape::Color& color) const

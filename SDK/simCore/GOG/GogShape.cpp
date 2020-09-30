@@ -532,14 +532,14 @@ GogShape::ShapeType Sphere::shapeType() const
   return ShapeType::SPHERE;
 }
 
-HemiSphere::HemiSphere(bool relative)
+Hemisphere::Hemisphere(bool relative)
   : CircularShape()
 {
   setCanExtrude_(false);
   setRelative_(relative);
 }
 
-GogShape::ShapeType HemiSphere::shapeType() const
+GogShape::ShapeType Hemisphere::shapeType() const
 {
   return ShapeType::HEMISPHERE;
 }

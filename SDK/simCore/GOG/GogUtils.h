@@ -54,19 +54,19 @@ struct SDKCORE_EXPORT UnitsState
   UnitsState();
 
   /**
-   * Initializes the units state from a structured representation.
+   * Initialize the units state from a structured representation.
    * @param parsedShape structured data input
    * @param unitsRegistry supplies to-string conversion for units
    */
   void parse(const ParsedShape& parsedShape, const simCore::UnitsRegistry& unitsRegistry);
 
   /**
-   * Initialized the units state from a GOG string.
-   * @param s input string to parse
+   * Initialize the units state from a GOG string.
+   * @param unitString input string to parse
    * @param unitsRegistry supplies to-string conversion for units
    * @param units parsed output
    */
-  void parse(const std::string& s, const simCore::UnitsRegistry& unitsRegistry, simCore::Units& units);
+  void parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, simCore::Units& units);
 };
 
 
@@ -98,7 +98,7 @@ struct SDKCORE_EXPORT ModifierState
 
   /**
    * Stores the modifier state in a structured object.
-   * @param conf object in which to store the state
+   * @param shape object in which to store the state
    */
   void apply(ParsedShape& shape);
 };

@@ -481,10 +481,10 @@ public:
 };
 
 /// 3D Hemisphere shape implementation
-class SDKCORE_EXPORT HemiSphere : public CircularShape
+class SDKCORE_EXPORT Hemisphere : public CircularShape
 {
 public:
-  explicit HemiSphere(bool relative);
+  explicit Hemisphere(bool relative);
 
   virtual ShapeType shapeType() const;
 };

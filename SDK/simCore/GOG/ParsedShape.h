@@ -79,92 +79,92 @@ public:
  *
  *  - start, end, comment, and version are not represented in this data structure.
  *  - Only annotation and latlonaltbox include parameters.
- *  - GOG_CENTERLL covers centerll, centerlla, centerlatlon.
- *  - GOG_CENTERXY covers centerxy, centerxyz.
- *  - GOG_REF_LLA covers ref and referencepoint.
- *  - "diameter" modifier is represented as GOG_RADIUS (times two)
- *  - "rotate" modifier is represented as GOG_3D_FOLLOW
- *  - "semimajoraxis" modifier is represented as GOG_MAJORAXIS (times two)
- *  - "semiminoraxis" modifier is represented as GOG_MINORAXIS (times two)
- *  - GOG_ABSOLUTE is a flag set "true" when the GOG has ll, lla, or latlon points, and
+ *  - CENTERLL covers centerll, centerlla, centerlatlon.
+ *  - CENTERXY covers centerxy, centerxyz.
+ *  - REF_LLA covers ref and referencepoint.
+ *  - "diameter" modifier is represented as RADIUS (times two)
+ *  - "rotate" modifier is represented as FOLLOW
+ *  - "semimajoraxis" modifier is represented as MAJORAXIS (times two)
+ *  - "semiminoraxis" modifier is represented as MINORAXIS (times two)
+ *  - ABSOLUTE is a flag set "true" when the GOG has ll, lla, or latlon points, and
  *      does not have a direct relationship to any single command.
  */
 enum class ShapeParameter
 {
   // GOG Structure Commands
-  GOG_DRAW = 0, // Maps to "off"
+  DRAW = 0, // Maps to "off"
 
   // GOG Type Commands
-  GOG_LLABOX_E = 20, // LatLonAltBox
-  GOG_LLABOX_MAXALT, // LatLonAltBox
-  GOG_LLABOX_MINALT, // LatLonAltBox
-  GOG_LLABOX_N, // LatLonAltBox
-  GOG_LLABOX_S, // LatLonAltBox
-  GOG_LLABOX_W, // LatLonAltBox
-  GOG_TEXT, // Annotation
+  LLABOX_E = 20, // LatLonAltBox
+  LLABOX_MAXALT, // LatLonAltBox
+  LLABOX_MINALT, // LatLonAltBox
+  LLABOX_N, // LatLonAltBox
+  LLABOX_S, // LatLonAltBox
+  LLABOX_W, // LatLonAltBox
+  TEXT, // Annotation
 
   // GOG Position Commands
-  GOG_CENTERLL = 40,
-  GOG_CENTERXY,
-  GOG_REF_LLA,
-  GOG_CENTERLL2,
-  GOG_CENTERXY2,
+  CENTERLL = 40,
+  CENTERXY,
+  REF_LLA,
+  CENTERLL2,
+  CENTERXY2,
 
   // GOG Unit Commands
-  GOG_ALTITUDEUNITS = 50,
-  GOG_ANGLEUNITS,
-  GOG_RANGEUNITS,
-  GOG_TIMEUNITS,
-  GOG_VERTICALDATUM,
+  ALTITUDEUNITS = 50,
+  ANGLEUNITS,
+  RANGEUNITS,
+  TIMEUNITS,
+  VERTICALDATUM,
 
   // GOG Modifier Commands
-  GOG_ALTITUDEMODE = 100,
-  GOG_ANGLEDEG, // Used by Arc, Cylinder
-  GOG_ANGLEEND, // (Deprecated) Used by Arc, Cylinder
-  GOG_ANGLESTART, // Used by Arc, Cylinder
-  GOG_DEPTHBUFFER,
+  ALTITUDEMODE = 100,
+  ANGLEDEG, // Used by Arc, Cylinder
+  ANGLEEND, // (Deprecated) Used by Arc, Cylinder
+  ANGLESTART, // Used by Arc, Cylinder
+  DEPTHBUFFER,
   // "diameter" maps to radius
-  GOG_EXTRUDE,
-  GOG_EXTRUDE_HEIGHT, // parameter for GOG_EXTRUDE
-  GOG_FILLCOLOR,
-  GOG_FILLED,
-  GOG_FONTNAME,
-  GOG_TEXTSIZE,
-  GOG_HEIGHT, // Used by Cylinder, Ellipsoid
-  GOG_INNERRADIUS, // Used by Arc; currently unsupported
-  GOG_LINECOLOR,
-  GOG_LINEPROJECTION,
-  GOG_LINESTYLE,
-  GOG_LINEWIDTH,
-  GOG_MAJORAXIS, // Used by Arc, Cylinder, Ellipse, Ellipsoid
-  GOG_MINORAXIS, // Used by Arc, Cylinder, Ellipse, Ellipsoid
-  GOG_ORIENT,
-  GOG_ORIENT_HEADING, // Parameter to GOG_ORIENT
-  GOG_ORIENT_PITCH, // Parameter to GOG_ORIENT
-  GOG_ORIENT_ROLL, // Parameter to GOG_ORIENT
-  GOG_OUTLINE,
-  GOG_POINTSIZE,
-  GOG_PRIORITY,
-  GOG_RADIUS, // Used by Arc, Circle, Cylinder, Ellipse, Ellipsoid, Hemisphere, Sphere
+  EXTRUDE,
+  EXTRUDE_HEIGHT, // parameter for EXTRUDE
+  FILLCOLOR,
+  FILLED,
+  FONTNAME,
+  TEXTSIZE,
+  HEIGHT, // Used by Cylinder, Ellipsoid
+  INNERRADIUS, // Used by Arc; currently unsupported
+  LINECOLOR,
+  LINEPROJECTION,
+  LINESTYLE,
+  LINEWIDTH,
+  MAJORAXIS, // Used by Arc, Cylinder, Ellipse, Ellipsoid
+  MINORAXIS, // Used by Arc, Cylinder, Ellipse, Ellipsoid
+  ORIENT,
+  ORIENT_HEADING, // Parameter to ORIENT
+  ORIENT_PITCH, // Parameter to ORIENT
+  ORIENT_ROLL, // Parameter to ORIENT
+  OUTLINE,
+  POINTSIZE,
+  PRIORITY,
+  RADIUS, // Used by Arc, Circle, Cylinder, Ellipse, Ellipsoid, Hemisphere, Sphere
   // "rotate" command is mapped to 3D Follow cpr
-  GOG_SCALEX,
-  GOG_SCALEY,
-  GOG_SCALEZ,
-  GOG_TESSELLATE,
-  GOG_3D_BILLBOARD,
-  GOG_3D_FOLLOW,
-  GOG_3D_NAME,
-  GOG_3D_OFFSETALT,
-  GOG_3D_OFFSETCOURSE,
-  GOG_3D_OFFSETPITCH,
-  GOG_3D_OFFSETROLL,
-  GOG_TEXTOUTLINECOLOR,
-  GOG_TEXTOUTLINETHICKNESS,
-  GOG_ICON,
-  GOG_LLABOX_ROT, // rotation used by KML ground overlay latlonbox
+  SCALEX,
+  SCALEY,
+  SCALEZ,
+  TESSELLATE,
+  BILLBOARD,
+  FOLLOW,
+  NAME,
+  OFFSETALT,
+  OFFSETCOURSE,
+  OFFSETPITCH,
+  OFFSETROLL,
+  TEXTOUTLINECOLOR,
+  TEXTOUTLINETHICKNESS,
+  ICON,
+  LLABOX_ROT, // rotation used by KML ground overlay latlonbox
 
-  // Set to non-empty when GOG is absolute
-  GOG_ABSOLUTE = 200,
+  // Set to non-empty when GOG points are absolute (lla), rather than relative (xyz)
+  ABSOLUTE_POINTS = 200,
 };
 
 /**
