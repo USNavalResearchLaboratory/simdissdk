@@ -224,16 +224,16 @@ public:
     return TableStatus::Success();
   }
 
-  /** Removes the entry at the given index */
-  virtual void erase(size_t position)
+  /** Removes the entries starting at the given index */
+  virtual void erase(size_t position, size_t number = 1)
   {
     if (position < size())
     {
       // Performance optimization (SIMSDK-260): pop_front() when able
-      if (position == 0)
+      if ((position == 0) && (number == 1))
         data_.pop_front();
       else
-        data_.erase(data_.begin() + position);
+        data_.erase(data_.begin() + position, data_.begin() + position + number);
     }
   }
   /** Total size of the data structure */
@@ -315,9 +315,9 @@ DataColumn::~DataColumn()
   delete freshData_;
 }
 
-void DataColumn::erase(bool freshContainer, size_t position)
+void DataColumn::erase(bool freshContainer, size_t position, size_t number)
 {
-  dataContainer_(freshContainer)->erase(position);
+  dataContainer_(freshContainer)->erase(position, number);
 }
 
 size_t DataColumn::size() const

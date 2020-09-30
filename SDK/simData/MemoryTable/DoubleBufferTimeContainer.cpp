@@ -21,8 +21,9 @@
  *
  */
 #include <algorithm>
-#include <limits>
 #include <cassert>
+#include <limits>
+#include <set>
 #include "simCore/Calc/Math.h"
 #include "simData/MemoryTable/DataColumn.h"
 #include "simData/MemoryTable/DoubleBufferTimeContainer.h"
@@ -588,6 +589,82 @@ simData::DelayedFlushContainerPtr DoubleBufferTimeContainer::flush()
   if (timesA_.empty() && timesB_.empty())
     return DelayedFlushContainerPtr();
   return DelayedFlushContainerPtr(new FlushContainer(timesA_, timesB_));
+}
+
+void DoubleBufferTimeContainer::flush(const std::vector<DataColumn*>& columns, double startTime, double endTime)
+{
+  flush_(*times_[BIN_STALE], false, columns, startTime, endTime);
+  flush_(*times_[BIN_FRESH], true, columns, startTime, endTime);
+}
+
+void DoubleBufferTimeContainer::flush_(TimeIndexDeque& deq, bool fresh, const std::vector<DataColumn*>& columns, double startTime, double endTime)
+{
+  LessThan lessThan;
+  const auto start = std::lower_bound(deq.begin(), deq.end(), startTime, lessThan);
+  const auto end = std::lower_bound(deq.begin(), deq.end(), endTime, lessThan);
+
+  // Nothing to do
+  if (start == end)
+    return;
+
+  const size_t itemsToDelete = std::distance(start, end);
+
+  std::vector<size_t> indexToRemove;
+  indexToRemove.reserve(itemsToDelete);
+  for (auto it = start; it != end; ++it)
+    indexToRemove.push_back(it->second);
+  std::sort(indexToRemove.begin(), indexToRemove.end());
+
+  // Group continuous ranges of indexes to greatly improve performance
+  std::set< std::pair<size_t, size_t> > indexes;
+
+  auto startIndex = indexToRemove.front();
+  auto endIndex = indexToRemove.back();
+  if (itemsToDelete == (endIndex - startIndex + 1))
+  {
+    // data is in time order so just need one entry
+    indexes.insert(std::make_pair(startIndex, endIndex));
+  }
+  else
+  {
+    // Find continuous ranges of indexes
+    startIndex = indexToRemove.front();
+    endIndex = startIndex;
+    for (auto it = indexToRemove.begin() + 1; it != indexToRemove.end(); ++it)
+    {
+      if ((startIndex + 1) != *it)
+      {
+        indexes.insert(std::make_pair(startIndex, endIndex));
+        startIndex = *it;
+      }
+      endIndex = *it;
+    }
+
+    // The last range needs to be committed
+    indexes.insert(std::make_pair(startIndex, endIndex));
+  }
+
+  // Time is always in order so erase everything in one call
+  deq.erase(start, end);
+
+  // Go in reverse order so pairs in "indexes" do not need to be adjusted on removal
+  for (auto it = indexes.rbegin(); it != indexes.rend(); ++it)
+  {
+    auto indexDelta = it->second - it->first + 1;
+
+    // Adjust time index values in the deq
+    for (auto& timeIndex : deq)
+    {
+      //Dev error, algorithm above is not correct
+      assert((timeIndex.second < it->first) || (timeIndex.second > it->second));
+      if (timeIndex.second > it->second)
+        timeIndex.second -= indexDelta;
+    }
+
+    // and update the columns
+    for (auto& column : columns)
+      column->erase(fresh, it->first, indexDelta);
+  }
 }
 
 // TODO: This was commented out.  It was supposed to be findTimeT(), but that

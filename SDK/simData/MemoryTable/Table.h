@@ -76,6 +76,8 @@ public:
   virtual TableStatus addRow(const TableRow& row);
   /** Clears data out of the given column or all columns if given -1 */
   virtual DelayedFlushContainerPtr flush(TableColumnId id = -1);
+  /** Remove rows in the given time range; up to but not including endTime */
+  virtual void flush(double startTime, double endTime);
   /** Add an observer for notification when rows or columns are added or removed */
   virtual void addObserver(TableObserverPtr callback);
   /** Remove an observer */

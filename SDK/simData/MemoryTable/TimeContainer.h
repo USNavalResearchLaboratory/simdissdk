@@ -182,6 +182,8 @@ public:
   virtual void erase(Iterator iter, EraseBehavior eraseBehavior) = 0;
   /** Removes all entries from the container. */
   virtual DelayedFlushContainerPtr flush() = 0;
+  /** Remove entries in the given time range; up to but not including endTime */
+  virtual void flush(const std::vector<DataColumn*>& columns, double startTime, double endTime) = 0;
 
   /**
    * Returns the begin and end time
