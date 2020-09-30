@@ -293,7 +293,7 @@ int testShapeFunction(const std::string& gog, const FunctionT& func)
   if (!shapes.empty())
   {
     ClassT* shape = dynamic_cast<ClassT*>(shapes.front().get());
-    rv += SDK_ASSERT(shape);
+    rv += SDK_ASSERT(shape != nullptr);
     if (shape)
       rv += func(shape);
   }
