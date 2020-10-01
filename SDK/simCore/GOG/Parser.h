@@ -90,6 +90,8 @@ private:
   void parseCircularOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularShape* shape) const;
   /// Parses the optional height field for a CircularHeightShape
   void parseCircularHeightOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularHeightShape* shape) const;
+  /// Parses the optional fields for an EllipticalShape
+  void parseEllipticalOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, EllipticalShape* shape) const;
 
   /// Return true if the specified token is a comment
   bool isComment_(const std::string& token) const;

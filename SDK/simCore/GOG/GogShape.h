@@ -38,6 +38,7 @@
 *   OutlinedShape:
 *     Point
 *     FillableShape:
+*       LatLonAltBox
 *       PointBasedShape:
 *         Line
 *         LineSegs
@@ -54,7 +55,6 @@
 *         Arc
 *         Ellipse
 *         Cylinder
-*         LatLonAltBox
 */
 
 namespace simCore { namespace GOG {
@@ -279,10 +279,10 @@ private:
 };
 
 /// Point shape implementation
-class SDKCORE_EXPORT Point : public OutlinedShape
+class SDKCORE_EXPORT Points : public OutlinedShape
 {
 public:
-  explicit Point(bool relative);
+  explicit Points(bool relative);
 
   virtual ShapeType shapeType() const;
 
@@ -571,7 +571,7 @@ public:
 };
 
 /// Cylinder shape implementation, supports elliptical cylinders and wedges
-class SDKCORE_EXPORT Cylinder : EllipticalShape
+class SDKCORE_EXPORT Cylinder : public EllipticalShape
 {
 public:
   explicit Cylinder(bool relative);
@@ -626,19 +626,25 @@ public:
 
   virtual ShapeType shapeType() const;
 
-  /// Get the shape's major axis in meters
-  double majorAxis() const;
+  /**
+  * Get the shape's major axis in meters; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getMajorAxis(double& axis) const;
   /// Set the shape's major axis in meters
   void setMajorAxis(double majorAxisMeters);
 
-  /// Get the shape's minor axis in meters
-  double minorAxis() const;
+  /**
+  * Get the shape's major axis in meters; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getMinorAxis(double& axis) const;
   /// Set the shape's minor axis in meters
   void setMinorAxis(double minorAxisMeters);
 
 private:
-  double majorAxis_; ///< meters
-  double minorAxis_; ///< meters
+  Optional<double> majorAxis_; ///< meters
+  Optional<double> minorAxis_; ///< meters
 };
 
 /// Annotation implementation, a text label that optionally includes an icon
@@ -791,7 +797,7 @@ public:
 
   // image filename
   std::string imageFile() const;
-  void setImageFIle(const std::string& imageFile);
+  void setImageFile(const std::string& imageFile);
 
 private:
   double north_; ///< north corner latitude, radians

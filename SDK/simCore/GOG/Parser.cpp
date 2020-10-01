@@ -156,7 +156,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     simCore::quoteTokenizer(tokens, line);
 
     // convert tokens to lower case (unless it's in quotes or commented)
-    for (std::string token : tokens)
+    for (std::string& token : tokens)
     {
       if (token[0] != '"' && token[0] != '#' && token[0] !=  '/')
       {
@@ -229,7 +229,8 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       // apply all cached information to metadata when end is reached, only if shape is valid
       if (tokens[0] == "end" && !invalidShape)
       {
-        if (current.pointType() == ParsedShape::LLA)
+        // set the relative state based on point type if it hasn't already been specified
+        if (!current.hasValue(ShapeParameter::ABSOLUTE_POINTS) && current.pointType() == ParsedShape::LLA)
           current.set(ShapeParameter::ABSOLUTE_POINTS, "1");
         state.apply(current);
         GogShapePtr gog = getShape_(current);
@@ -405,6 +406,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     {
       if (tokens.size() >= 3)
       {
+        current.set(ShapeParameter::ABSOLUTE_POINTS, "0");
         if (tokens.size() >= 4)
           current.set(ShapeParameter::CENTERXY, PositionStrings(tokens[1], tokens[2], tokens[3]));
         else
@@ -416,7 +418,10 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     else if (tokens[0] == "centerxy2")
     {
       if (tokens.size() >= 3)
+      {
+        current.set(ShapeParameter::ABSOLUTE_POINTS, "0");
         current.set(ShapeParameter::CENTERXY2, PositionStrings(tokens[1], tokens[2]));
+      }
       else
         printError_(lineNumber, "centerxy2 command requires at least 2 arguments");
     }
@@ -424,6 +429,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     {
       if (tokens.size() >= 3)
       {
+        current.set(ShapeParameter::ABSOLUTE_POINTS, "1");
         if (tokens.size() >= 4)
           current.set(ShapeParameter::CENTERLL, PositionStrings(tokens[1], tokens[2], tokens[3]));
         else
@@ -436,6 +442,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     {
       if (tokens.size() >= 3)
       {
+        current.set(ShapeParameter::ABSOLUTE_POINTS, "1");
         // note centerll2 only supports lat and lon, altitude for shape must be derived from first center point
         current.set(ShapeParameter::CENTERLL2, PositionStrings(tokens[1], tokens[2]));
       }
@@ -772,7 +779,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     units.parse(parsed, registry);
   }
   // default to absolute if not otherwise specified
-  bool relative = !parsed.boolValue(ShapeParameter::ABSOLUTE_POINTS, true);
+  bool relative = !parsed.boolValue(ShapeParameter::ABSOLUTE_POINTS, false);
   std::string name = parsed.stringValue(ShapeParameter::NAME);
   if (name.empty())
     name = GogShape::shapeTypeToString(parsed.shape());
@@ -845,6 +852,8 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       if (getColor_(parsed, ShapeParameter::TEXTOUTLINECOLOR, name, "textoutlinecolor", color) == 0)
         anno->setOutlineColor(color);
     }
+    if (parsed.hasValue(ShapeParameter::ICON))
+      anno->setIconFile(parsed.stringValue(ShapeParameter::ICON));
     rv.reset(anno);
     break;
   }
@@ -918,14 +927,110 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     break;
   }
-  // TODO: other shapes
-  case GogShape::ShapeType::ARC:
-  case GogShape::ShapeType::CYLINDER:
-  case GogShape::ShapeType::ELLIPSE:
   case GogShape::ShapeType::ELLIPSOID:
+  {
+    std::unique_ptr<Ellipsoid> ellipsoid(new Ellipsoid(relative));
+    if (parseCircular_(parsed, relative, name, units, ellipsoid.get()) == 0)
+    {
+      parseCircularHeightOptional_(parsed, name, units, ellipsoid.get());
+      if (parsed.hasValue(ShapeParameter::MAJORAXIS))
+      {
+        double majorAxis = 0.;
+        std::string majorAxisStr = parsed.stringValue(ShapeParameter::MAJORAXIS);
+        if (simCore::isValidNumber(majorAxisStr, majorAxis))
+          ellipsoid->setMajorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, majorAxis));
+        else
+          printError_(parsed.lineNumber(), "Invalid majoraxis: " + majorAxisStr + " for " + name);
+        double minorAxis = 0.;
+        std::string minorAxisStr = parsed.stringValue(ShapeParameter::MINORAXIS);
+        if (simCore::isValidNumber(minorAxisStr, minorAxis))
+          ellipsoid->setMinorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, minorAxis));
+        else
+          printError_(parsed.lineNumber(), "Invalid minoraxis: " + minorAxisStr + " for " + name);
+      }
+      rv.reset(ellipsoid.release());
+    }
+    break;
+  }
+  case GogShape::ShapeType::POINTS:
+  {
+    // verify shape has some points
+    const std::vector<PositionStrings>& positions = parsed.positions();
+    if (positions.empty())
+    {
+      printError_(parsed.lineNumber(), "point " + name + " has no points, cannot create shape");
+      break;
+    }
+    std::unique_ptr<Points> points(new Points(relative));
+    for (PositionStrings pos : positions)
+    {
+      simCore::Vec3 position;
+      if (getPosition_(pos, relative, units, position) == 0)
+        points->addPoint(position);
+    }
+    if (points->points().empty())
+    {
+      printError_(parsed.lineNumber(), "point " + name + " has no valid points, cannot create shape");
+      break;
+    }
+    parseOutlined_(parsed, points.get());
+    if (parsed.hasValue(ShapeParameter::POINTSIZE))
+    {
+      int pointSize = 0;
+      if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::POINTSIZE), pointSize))
+        points->setPointSize(pointSize);
+    }
+    if (parsed.hasValue(ShapeParameter::LINECOLOR))
+    {
+      GogShape::Color color;
+      if (getColor_(parsed, ShapeParameter::LINECOLOR, name, "linecolor", color) == 0)
+        points->setColor(color);
+    }
+    rv.reset(points.release());
+    break;
+  }
+  case GogShape::ShapeType::ARC:
+  {
+    std::unique_ptr<Arc> arc(new Arc(relative));
+    if (parseCircular_(parsed, relative, name, units, arc.get()) == 0)
+    {
+      parseEllipticalOptional_(parsed, name, units, arc.get());
+      rv.reset(arc.release());
+    }
+    break;
+  }
+  case GogShape::ShapeType::CYLINDER:
+  {
+    std::unique_ptr<Cylinder> cyl(new Cylinder(relative));
+    if (parseCircular_(parsed, relative, name, units, cyl.get()) == 0)
+    {
+      parseEllipticalOptional_(parsed, name, units, cyl.get());
+      if (parsed.hasValue(ShapeParameter::HEIGHT))
+      {
+        double height = 0.;
+        std::string heightStr = parsed.stringValue(ShapeParameter::HEIGHT);
+        if (simCore::isValidNumber(heightStr, height))
+          cyl->setHeight(units.rangeUnits_.convertTo(simCore::Units::METERS, height));
+        else
+          printError_(parsed.lineNumber(), "Invalid height: " + heightStr + " for " + name);
+      }
+      rv.reset(cyl.release());
+    }
+    break;
+  }
+  case GogShape::ShapeType::ELLIPSE:
+  {
+    std::unique_ptr<Ellipse> ellipse(new Ellipse(relative));
+    if (parseCircular_(parsed, relative, name, units, ellipse.get()) == 0)
+    {
+      parseEllipticalOptional_(parsed, name, units, ellipse.get());
+      rv.reset(ellipse.release());
+    }
+    break;
+  }
+  // TODO: finish the last shapes
   case GogShape::ShapeType::IMAGEOVERLAY:
   case GogShape::ShapeType::LATLONALTBOX:
-  case GogShape::ShapeType::POINTS:
   case GogShape::ShapeType::UNKNOWN:
     break;
   }
@@ -961,6 +1066,8 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     GogShape::Color color;
     if (getColor_(parsed, ShapeParameter::LINECOLOR, name, "linecolor", color) == 0)
       shape->setLineColor(color);
+    else
+      printError_(parsed.lineNumber(), "Invalid linecolor: " + parsed.stringValue(ShapeParameter::LINECOLOR) + " for " + name);
   }
   if (parsed.hasValue(ShapeParameter::LINESTYLE))
   {
@@ -995,6 +1102,8 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     GogShape::Color color;
     if (getColor_(parsed, ShapeParameter::FILLCOLOR, name, "fillcolor", color) == 0)
       shape->setFillColor(color);
+    else
+      printError_(parsed.lineNumber(), "Invalid fillcolor: " + parsed.stringValue(ShapeParameter::LINECOLOR) + " for " + name);
   }
 }
 
@@ -1107,6 +1216,73 @@ void Parser::parseCircularHeightOptional_(const ParsedShape& parsed, const std::
     shape->setHeight(units.rangeUnits_.convertTo(simCore::Units::METERS, height));
   else
     printError_(parsed.lineNumber(), "Invalid height: " + heightStr + " for " + name);
+}
+
+void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, EllipticalShape* shape) const
+{
+  if (!shape)
+  {
+    assert(0); // should not be called with NULL
+    return;
+  }
+  bool hasAngleStart = false;
+  double angleStart = 0;
+  if (parsed.hasValue(ShapeParameter::ANGLESTART))
+  {
+    std::string angleStartStr = parsed.stringValue(ShapeParameter::ANGLESTART);
+    if (simCore::isValidNumber(angleStartStr, angleStart))
+    {
+      angleStart = simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleStart));
+      shape->setAngleStart(angleStart);
+      hasAngleStart = true;
+    }
+    else
+      printError_(parsed.lineNumber(), "Invalid anglestart: " + angleStartStr + " for " + name);
+  }
+  // only bother with the angledeg and angleend if anglestart exists
+  if (hasAngleStart)
+  {
+    if (parsed.hasValue(ShapeParameter::ANGLEDEG))
+    {
+      double angleSweep = 0.;
+      std::string angleSweepStr = parsed.stringValue(ShapeParameter::ANGLEDEG);
+      if (simCore::isValidNumber(angleSweepStr, angleSweep))
+        shape->setAngleSweep(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleSweep));
+      else
+        printError_(parsed.lineNumber(), "Invalid angledeg: " + angleSweepStr + " for " + name);
+    }
+    if (parsed.hasValue(ShapeParameter::ANGLEEND))
+    {
+      double angleEnd = 0.;
+      std::string angleEndStr = parsed.stringValue(ShapeParameter::ANGLEEND);
+      if (simCore::isValidNumber(angleEndStr, angleEnd))
+      {
+        // convert to sweep, cannot cross 0 with angleend
+        angleEnd = simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleEnd));
+        shape->setAngleSweep(angleEnd - angleStart);
+      }
+      else
+        printError_(parsed.lineNumber(), "Invalid angleend: " + angleEndStr + " for " + name);
+    }
+  }
+  if (parsed.hasValue(ShapeParameter::MAJORAXIS))
+  {
+    double majorAxis = 0.;
+    std::string majorAxisStr = parsed.stringValue(ShapeParameter::MAJORAXIS);
+    if (simCore::isValidNumber(majorAxisStr, majorAxis))
+      shape->setMajorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, majorAxis));
+    else
+      printError_(parsed.lineNumber(), "Invalid majoraxis: " + majorAxisStr + " for " + name);
+  }
+  if (parsed.hasValue(ShapeParameter::MINORAXIS))
+  {
+    double minorAxis = 0.;
+    std::string minorAxisStr = parsed.stringValue(ShapeParameter::MINORAXIS);
+    if (simCore::isValidNumber(minorAxisStr, minorAxis))
+      shape->setMinorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, minorAxis));
+    else
+      printError_(parsed.lineNumber(), "Invalid minoraxis: " + minorAxisStr + " for " + name);
+  }
 }
 
 int Parser::getColor_(const ParsedShape& parsed, ShapeParameter param, const std::string& shapeName, const std::string& fieldName, GogShape::Color& color) const

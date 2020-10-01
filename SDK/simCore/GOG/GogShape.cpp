@@ -318,7 +318,7 @@ void OutlinedShape::setOutlined(bool outlined)
   outlined_ = outlined;
 }
 
-Point::Point(bool relative)
+Points::Points(bool relative)
   : OutlinedShape()
 {
   setCanExtrude_(true);
@@ -326,39 +326,39 @@ Point::Point(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Point::shapeType() const
+GogShape::ShapeType Points::shapeType() const
 {
   return ShapeType::POINTS;
 }
 
-const std::vector<simCore::Vec3>& Point::points() const
+const std::vector<simCore::Vec3>& Points::points() const
 {
   return points_;
 }
 
-void Point::addPoint(const simCore::Vec3& point)
+void Points::addPoint(const simCore::Vec3& point)
 {
   points_.push_back(point);
 }
 
-int Point::getPointSize(int& size) const
+int Points::getPointSize(int& size) const
 {
   size = pointSize_.value_or(1);
   return (pointSize_.has_value() ? 0 : 1);
 }
 
-void Point::setPointSize(int pointSizePixels)
+void Points::setPointSize(int pointSizePixels)
 {
   pointSize_ = pointSizePixels;
 }
 
-int Point::getColor(Color& color) const
+int Points::getColor(Color& color) const
 {
   color = color_.value_or(Color());
   return (color_.has_value() ? 0 : 1);
 }
 
-void Point::setColor(Color& gogColor)
+void Points::setColor(Color& gogColor)
 {
   color_ = gogColor;
 }
@@ -693,9 +693,7 @@ GogShape::ShapeType Cone::shapeType() const
 }
 
 Ellipsoid::Ellipsoid(bool relative)
-  : CircularHeightShape(),
-    majorAxis_(0.),
-    minorAxis_(0.)
+  : CircularHeightShape()
 {
   setCanExtrude_(false);
   setRelative_(relative);
@@ -706,9 +704,10 @@ GogShape::ShapeType Ellipsoid::shapeType() const
   return ShapeType::ELLIPSOID;
 }
 
-double Ellipsoid::majorAxis() const
+int Ellipsoid::getMajorAxis(double& axis) const
 {
-  return majorAxis_;
+  axis = majorAxis_.value_or(1000.);
+  return (majorAxis_.has_value() ? 0 : 1);
 }
 
 void Ellipsoid::setMajorAxis(double majorAxisMeters)
@@ -716,9 +715,10 @@ void Ellipsoid::setMajorAxis(double majorAxisMeters)
   majorAxis_ = majorAxisMeters;
 }
 
-double Ellipsoid::minorAxis() const
+int Ellipsoid::getMinorAxis(double& axis) const
 {
-  return minorAxis_;
+  axis = minorAxis_.value_or(1000.);
+  return (minorAxis_.has_value() ? 0 : 1);
 }
 
 void Ellipsoid::setMinorAxis(double minorAxisMeters)
@@ -966,7 +966,7 @@ std::string ImageOverlay::imageFile() const
   return imageFile_;
 }
 
-void ImageOverlay::setImageFIle(const std::string& imageFile)
+void ImageOverlay::setImageFile(const std::string& imageFile)
 {
   imageFile_ = imageFile;
 }
