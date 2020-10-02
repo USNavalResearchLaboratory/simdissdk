@@ -51,8 +51,31 @@ else()
 endif()
 
 # Mark variables as advanced
-if(IS_DIRECTORY "${GEOS_DIR}")
-    mark_as_advanced(FORCE GEOS_DIR)
-else()
+if(NOT IS_DIRECTORY "${GEOS_DIR}")
     mark_as_advanced(CLEAR GEOS_DIR)
+    return()
+endif()
+
+mark_as_advanced(FORCE GEOS_DIR)
+
+# On Linux, create a target, to avoid linker errors
+if(NOT WIN32)
+    # Search for library names
+    find_library(GEOS_LIBRARY_RELEASE_NAME NAMES geos PATHS ${GEOS_DIR} PATH_SUFFIXES lib lib64)
+    find_library(GEOS_C_LIBRARY_RELEASE_NAME NAMES geos_c PATHS ${GEOS_DIR} PATH_SUFFIXES lib lib64)
+    if(GEOS_LIBRARY_RELEASE_NAME)
+        add_library(GEOS SHARED IMPORTED)
+        set_target_properties(GEOS PROPERTIES
+            IMPORTED_LOCATION "${GEOS_LIBRARY_RELEASE_NAME}"
+            INTERFACE_INCLUDE_DIRECTORIES "${GEOS_DIR}/include"
+        )
+        if(GEOS_C_LIBRARY_RELEASE_NAME)
+            add_library(GEOS_C SHARED IMPORTED)
+            set_target_properties(GEOS_C PROPERTIES
+                IMPORTED_LOCATION "${GEOS_C_LIBRARY_RELEASE_NAME}"
+                INTERFACE_INCLUDE_DIRECTORIES "${GEOS_DIR}/include"
+                INTERFACE_LINK_LIBRARIES "GEOS"
+            )
+        endif()
+    endif()
 endif()
