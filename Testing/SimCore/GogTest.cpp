@@ -296,6 +296,39 @@ auto testPointsShapeMinimalFieldsFunc = [](const simCore::GOG::Points* shape, co
 
   return rv;
 };
+
+// test the latlonaltbox shape's required fields are set, and the optional fields are not
+auto testLatLonAltBoxMinimalFieldsFunc = [](const simCore::GOG::LatLonAltBox* shape, const std::vector<simCore::Vec3>& positions) -> int
+{
+  // dev error, need two points to test latlonaltbox
+  assert(positions.size() == 2);
+  int rv = testFillableOptionalFieldsNotSet(shape);
+  rv += SDK_ASSERT(simCore::areEqual(shape->north(), positions[0].lat()));
+  rv += SDK_ASSERT(simCore::areEqual(shape->south(), positions[1].lat()));
+  rv += SDK_ASSERT(simCore::areEqual(shape->east(), positions[0].lon()));
+  rv += SDK_ASSERT(simCore::areEqual(shape->west(), positions[1].lon()));
+  rv += SDK_ASSERT(shape->altitude() == positions[0].alt());
+  double height = 10.;
+  rv += SDK_ASSERT(shape->getHeight(height) != 0);
+  rv += SDK_ASSERT(height == 0.);
+  return rv;
+};
+
+// test the image overlay shape's required fields are set, and the optional fields are not
+auto testImageOverlayMinimalFieldsFunc = [](const simCore::GOG::ImageOverlay* shape, const std::vector<simCore::Vec3>& positions) -> int
+{
+  // dev error, need two points to test image overlay
+  assert(positions.size() == 2);
+  int rv = 0;
+  rv += SDK_ASSERT(simCore::areEqual(shape->north(), positions[0].lat()));
+  rv += SDK_ASSERT(simCore::areEqual(shape->south(), positions[1].lat()));
+  rv += SDK_ASSERT(simCore::areEqual(shape->east(), positions[0].lon()));
+  rv += SDK_ASSERT(simCore::areEqual(shape->west(), positions[1].lon()));
+  rv += SDK_ASSERT(shape->imageFile() == "image.png");
+  rv += SDK_ASSERT(shape->getRotation() == 0.);
+  return rv;
+};
+
 // test that the specified gog string parses to the specified object, and calls the specified function with the shape and positions
 template <typename ClassT, typename FunctionT>
 int testShapePositionsFunction(const std::string& gog, const FunctionT& func, const std::vector<simCore::Vec3>& positions)
@@ -363,6 +396,15 @@ int testMinimalShapes()
   rv += testShapePositionsFunction<simCore::GOG::Polygon>("start\n poly\n lla 25.1 58.2 0.\n lla 26.2 58.3 0.\n lla 26.2 57.9 0.\n end\n", testPointBasedShapeMinimalFieldsFunc, linePoints);
   // test points
   rv += testShapePositionsFunction<simCore::GOG::Points>("start\n points\n lla 25.1 58.2 0.\n lla 26.2 58.3 0.\n lla 26.2 57.9 0.\n end\n", testPointsShapeMinimalFieldsFunc, linePoints);
+
+  // test lla box
+  std::vector<simCore::Vec3> llabPoints;
+  llabPoints.push_back(simCore::Vec3(25.1 * simCore::DEG2RAD, 55.6 * simCore::DEG2RAD, 100.));
+  llabPoints.push_back(simCore::Vec3(25.3 * simCore::DEG2RAD, 55.4 * simCore::DEG2RAD, 100.));
+  rv += testShapePositionsFunction<simCore::GOG::LatLonAltBox>("start\n latlonaltbox 25.1 25.3  55.4 55.6 100.\naltitudeunits m\n end\n", testLatLonAltBoxMinimalFieldsFunc, llabPoints);
+
+  // test image overlay
+  rv += testShapePositionsFunction<simCore::GOG::ImageOverlay>("start\n # kml_groundoverlay\n# kml_icon image.png\n # kml_latlonbox 25.1 25.3 55.6 55.4 0.\n end\n", testImageOverlayMinimalFieldsFunc, llabPoints);
 
   // RELATIVE
 

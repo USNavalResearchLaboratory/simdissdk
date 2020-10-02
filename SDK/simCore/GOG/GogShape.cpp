@@ -831,7 +831,7 @@ LatLonAltBox::LatLonAltBox()
     south_(0.),
     east_(0.),
     west_(0.),
-    height_(0.)
+    altitude_(0.)
 {
   setCanExtrude_(false);
   setCanFollow_(false);
@@ -883,9 +883,20 @@ void LatLonAltBox::setWest(double westRad)
   west_ = westRad;
 }
 
-double LatLonAltBox::height() const
+double LatLonAltBox::altitude() const
 {
-  return height_;
+  return altitude_;
+}
+
+void LatLonAltBox::setAltitude(double altitudeMeters)
+{
+  altitude_ = altitudeMeters;
+}
+
+int LatLonAltBox::getHeight(double& height) const
+{
+  height = height_.value_or(0.);
+  return (height_.has_value() ? 0 : 1);
 }
 
 void LatLonAltBox::setHeight(double heightMeters)

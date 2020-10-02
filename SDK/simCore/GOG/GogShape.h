@@ -756,7 +756,12 @@ public:
   double west() const;
   void setWest(double westRad);
 
-  double height() const;
+  // Altitude of the bottom of the box in meters
+  double altitude() const;
+  void setAltitude(double altitudeMeters);
+
+  // Box optional height in meters
+  int getHeight(double& height) const;
   void setHeight(double heightMeters);
 
 private:
@@ -764,7 +769,8 @@ private:
   double south_; ///< south corner latitude, radians
   double east_; ///< east corner latitude, radians
   double west_; ///< west corner latitude, radians
-  double height_; ///< height of the box, meters
+  double altitude_; ///< altitude of the box bottom, meters
+  Optional<double> height_; ///< height of the box above the altitude, meters
 };
 
 /// Image overlay implementation, displays an image file within a specified bounding box

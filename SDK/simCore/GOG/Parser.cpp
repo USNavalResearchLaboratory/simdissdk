@@ -1028,9 +1028,102 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     break;
   }
-  // TODO: finish the last shapes
-  case GogShape::ShapeType::IMAGEOVERLAY:
   case GogShape::ShapeType::LATLONALTBOX:
+  {
+    if (parsed.hasValue(ShapeParameter::LLABOX_N) && parsed.hasValue(ShapeParameter::LLABOX_S)
+      && parsed.hasValue(ShapeParameter::LLABOX_E) && parsed.hasValue(ShapeParameter::LLABOX_W)
+      && parsed.hasValue(ShapeParameter::LLABOX_MINALT))
+    {
+      std::unique_ptr<LatLonAltBox> llab(new LatLonAltBox());
+      int validValues = 0;
+      double corner = 0.;
+      if (simCore::getAngleFromDegreeString(parsed.stringValue(ShapeParameter::LLABOX_N), true, corner) == 0)
+      {
+        llab->setNorth(corner);
+        validValues++;
+      }
+      if (simCore::getAngleFromDegreeString(parsed.stringValue(ShapeParameter::LLABOX_S), true, corner) == 0)
+      {
+        llab->setSouth(corner);
+        validValues++;
+      }
+      if (simCore::getAngleFromDegreeString(parsed.stringValue(ShapeParameter::LLABOX_E), true, corner) == 0)
+      {
+        llab->setEast(corner);
+        validValues++;
+      }
+      if (simCore::getAngleFromDegreeString(parsed.stringValue(ShapeParameter::LLABOX_W), true, corner) == 0)
+      {
+        llab->setWest(corner);
+        validValues++;
+      }
+      double altitude = 0.;
+      if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::LLABOX_MINALT), altitude))
+      {
+        llab->setAltitude(altitude);
+        validValues++;
+      }
+      if (validValues == 5)
+      {
+        parseFillable_(parsed, name, llab.get());
+        if (parsed.hasValue(ShapeParameter::LLABOX_MAXALT))
+        {
+          double maxAlt = 0.;
+          if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::LLABOX_MAXALT), maxAlt))
+            llab->setHeight(maxAlt - llab->altitude());
+        }
+        rv.reset(llab.release());
+      }
+      else
+        printError_(parsed.lineNumber(), "latlonaltbox " + name + " had invalid values, cannot create shape");
+    }
+    break;
+  }
+  case GogShape::ShapeType::IMAGEOVERLAY:
+  {
+    if (parsed.hasValue(ShapeParameter::LLABOX_N) && parsed.hasValue(ShapeParameter::LLABOX_S)
+      && parsed.hasValue(ShapeParameter::LLABOX_E) && parsed.hasValue(ShapeParameter::LLABOX_W)
+      && parsed.hasValue(ShapeParameter::ICON))
+    {
+      std::unique_ptr<ImageOverlay> imageOverlay(new ImageOverlay());
+      int validValues = 0;
+      double corner = 0.;
+      if (simCore::getAngleFromDegreeString(parsed.stringValue(ShapeParameter::LLABOX_N), true, corner) == 0)
+      {
+        imageOverlay->setNorth(corner);
+        validValues++;
+      }
+      if (simCore::getAngleFromDegreeString(parsed.stringValue(ShapeParameter::LLABOX_S), true, corner) == 0)
+      {
+        imageOverlay->setSouth(corner);
+        validValues++;
+      }
+      if (simCore::getAngleFromDegreeString(parsed.stringValue(ShapeParameter::LLABOX_E), true, corner) == 0)
+      {
+        imageOverlay->setEast(corner);
+        validValues++;
+      }
+      if (simCore::getAngleFromDegreeString(parsed.stringValue(ShapeParameter::LLABOX_W), true, corner) == 0)
+      {
+        imageOverlay->setWest(corner);
+        validValues++;
+      }
+      if (validValues == 4)
+      {
+        imageOverlay->setImageFile(parsed.stringValue(ShapeParameter::ICON));
+        if (parsed.hasValue(ShapeParameter::LLABOX_ROT))
+        {
+          double rotation = 0.;
+          if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::LLABOX_ROT), rotation))
+            imageOverlay->setRotation(rotation);
+        }
+        rv.reset(imageOverlay.release());
+      }
+      else
+        printError_(parsed.lineNumber(), "kml_groundoverlay " + name + " had invalid values, cannot create shape");
+    }
+    break;
+  }
   case GogShape::ShapeType::UNKNOWN:
     break;
   }
