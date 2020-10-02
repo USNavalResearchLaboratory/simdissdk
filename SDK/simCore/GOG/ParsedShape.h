@@ -124,8 +124,7 @@ enum class ShapeParameter
   ANGLESTART, // Used by Arc, Cylinder
   DEPTHBUFFER,
   // "diameter" maps to radius
-  EXTRUDE,
-  EXTRUDE_HEIGHT, // parameter for EXTRUDE
+  EXTRUDE_HEIGHT, // parameter for ALTITUDEMODE extrude
   FILLCOLOR,
   FILLED,
   FONTNAME,
@@ -139,9 +138,6 @@ enum class ShapeParameter
   MAJORAXIS, // Used by Arc, Cylinder, Ellipse, Ellipsoid
   MINORAXIS, // Used by Arc, Cylinder, Ellipse, Ellipsoid
   ORIENT,
-  ORIENT_HEADING, // Parameter to ORIENT
-  ORIENT_PITCH, // Parameter to ORIENT
-  ORIENT_ROLL, // Parameter to ORIENT
   OUTLINE,
   POINTSIZE,
   PRIORITY,
@@ -155,7 +151,7 @@ enum class ShapeParameter
   FOLLOW,
   NAME,
   OFFSETALT,
-  OFFSETCOURSE,
+  OFFSETYAW,
   OFFSETPITCH,
   OFFSETROLL,
   TEXTOUTLINECOLOR,

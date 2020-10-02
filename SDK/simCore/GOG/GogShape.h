@@ -153,6 +153,14 @@ public:
   void setAltitudeMode(AltitudeMode mode);
 
   /**
+  * Get the shape's extrusion height in meters, only applies if altitude mode is extrude; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getExtrudeHeight(double& height) const;
+  /// Set the shape's height in meters
+  void setExtrudeHeight(double heightMeters);
+
+  /**
   * Get reference position, lla in radians; if value is not set, default value is returned.
   * @return 0 if value was set, non-zero otherwise
   */
@@ -244,6 +252,7 @@ private:
   Optional<double> altitudeOffset_; ///< offset for altitude values, meters
   Optional<bool> depthBuffer_; ///< Depth buffer active state
   Optional<AltitudeMode> altitudeMode_; ///< Defines special behavior for altitude
+  Optional<double> extrudeHeight_; ///< Extrusion height if extruded, meters
   Optional<simCore::Vec3> referencePosition_; ///< Reference position, only valid for relative shapes, lla radians
   Optional<simCore::Vec3> scale_; ///< Scalar adjustments for the shape's xyz components
 

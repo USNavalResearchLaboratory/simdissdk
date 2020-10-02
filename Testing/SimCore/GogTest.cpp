@@ -32,8 +32,10 @@
 
 namespace {
 
+ // base gog shape optional fields in GOG format (set alt units to meters for testing), not testing  extrude height here
+static const std::string BASE_FIELDS = "altitudeunits m\n 3d name my favorite shape\n off\n depthbuffer true\n 3d offsetalt 120.\n ref 24.5 55.6 10.\n altitudemode relativetoground\n scale 2. 1.3 .5\n orient 45. 10. 5.\n";
 // outlined shape optional field in GOG format
-static const std::string OUTLINED_FIELD = "outline true\n";
+static const std::string OUTLINED_FIELD = BASE_FIELDS + "outline true\n";
 // fillable shape optional fields in GOG format
 static const std::string FILLABLE_FIELDS = OUTLINED_FIELD + "linewidth 4\n linecolor green\n linestyle dashed\n filled\n fillcolor yellow\n";
 // circular shape optional fields in GOG format (in meters for testing)
@@ -42,8 +44,8 @@ static const std::string CIRCULAR_FIELDS = FILLABLE_FIELDS + " radius 1000.\n ra
 static const std::string POINTBASED_FIELDS = FILLABLE_FIELDS + " tessellate true\n lineprojection greatcircle\n";
 // elliptical shape optional fields in GOG format
 static const std::string ELLIPTICAL_FIELDS = CIRCULAR_FIELDS + " anglestart 10.\n angledeg 45.\n majoraxis 100.\n minoraxis 250.\n";
-// height field in GOG format (in meters for testing)
-static const std::string HEIGHT_FIELD = "height 180.\n altitudeunits m\n";
+// height field in GOG format
+static const std::string HEIGHT_FIELD = "height 180.\n";
 // points shape optional fields in GOG format
 static const std::string POINTS_FIELDS = OUTLINED_FIELD + " pointsize 5\n linecolor magenta\n";
 
@@ -157,7 +159,9 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
   double rollOffset = 10.;
   rv += SDK_ASSERT(shape->getPitchOffset(rollOffset) != 0);
   rv += SDK_ASSERT(rollOffset == 0.);
-
+  double extrudeHeight = 10.;
+  rv += SDK_ASSERT(shape->getExtrudeHeight(extrudeHeight) != 0);
+  rv += SDK_ASSERT(extrudeHeight == 0.);
   return rv;
 }
 
@@ -449,10 +453,93 @@ int testMinimalShapes()
   return rv;
 }
 
+// some shape types can not follow, others implement follow depending on relative state
+bool canFollow(simCore::GOG::GogShape::ShapeType type, bool relative)
+{
+  switch (type)
+  {
+  case simCore::GOG::GogShape::ShapeType::ANNOTATION:
+  case simCore::GOG::GogShape::ShapeType::LATLONALTBOX:
+  case simCore::GOG::GogShape::ShapeType::IMAGEOVERLAY:
+    return false;
+  case simCore::GOG::GogShape::ShapeType::LINE:
+  case simCore::GOG::GogShape::ShapeType::LINESEGS:
+  case simCore::GOG::GogShape::ShapeType::POLYGON:
+  case simCore::GOG::GogShape::ShapeType::POINTS:
+    return relative;
+  default:
+    return true;
+  }
+}
+
+// test that all follow components are set, and that offsets are 45., 10., and 5. respectively
+auto testFollowFunc = [](const simCore::GOG::GogShape* shape) -> int
+{
+  int rv = 0;
+  bool followYaw = false;
+  rv += SDK_ASSERT(shape->getIsFollowingYaw(followYaw) == 0);
+  rv += SDK_ASSERT(followYaw);
+  bool followPitch = false;
+  rv += SDK_ASSERT(shape->getIsFollowingPitch(followPitch) == 0);
+  rv += SDK_ASSERT(followPitch);
+  bool followRoll = false;
+  rv += SDK_ASSERT(shape->getIsFollowingRoll(followRoll) == 0);
+  rv += SDK_ASSERT(followRoll);
+  double yawOffset = 0.;
+  rv += SDK_ASSERT(shape->getYawOffset(yawOffset) == 0);
+  rv += SDK_ASSERT(simCore::areEqual(yawOffset * simCore::RAD2DEG, 45.));
+  double pitchOffset = 0.;
+  rv += SDK_ASSERT(shape->getPitchOffset(pitchOffset) == 0);
+  rv += SDK_ASSERT(simCore::areEqual(pitchOffset * simCore::RAD2DEG, 10.));
+  double rollOffset = 0.;
+  rv += SDK_ASSERT(shape->getRollOffset(rollOffset) == 0);
+  rv += SDK_ASSERT(simCore::areEqual(rollOffset * simCore::RAD2DEG, 5.));
+  return rv;
+};
+
+// test the shape's optional fields match the pre-defined test fields from BASE_FIELDS
+int testBaseOptionalFields(const simCore::GOG::GogShape* shape)
+{
+  int rv = 0;
+  std::string name;
+  rv += SDK_ASSERT(shape->getName(name) == 0);
+  rv += SDK_ASSERT(name == "my favorite shape");
+  bool draw = true;
+  rv += SDK_ASSERT(shape->getIsDrawn(draw) == 0);
+  rv += SDK_ASSERT(!draw);
+  bool depthBuffer = false;
+  rv += SDK_ASSERT(shape->getIsDepthBufferActive(depthBuffer) == 0);
+  rv += SDK_ASSERT(depthBuffer);
+  double altOffset = 0.;
+  rv += SDK_ASSERT(shape->getAltitudeOffset(altOffset) == 0);
+  rv += SDK_ASSERT(altOffset == 120.);
+  simCore::GOG::GogShape::AltitudeMode mode = simCore::GOG::GogShape::AltitudeMode::NONE;
+  rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
+  rv += SDK_ASSERT(mode == simCore::GOG::GogShape::AltitudeMode::RELATIVE_TO_GROUND);
+  simCore::Vec3 scale;
+  rv += SDK_ASSERT(shape->getScale(scale) == 0);
+  rv += SDK_ASSERT(scale == simCore::Vec3(2., 1.3, 0.5));
+
+  // test reference point if relative
+  if (shape->isRelative())
+  {
+    simCore::Vec3 refLla;
+    rv += SDK_ASSERT(shape->getReferencePosition(refLla) == 0);
+    rv += SDK_ASSERT(refLla == simCore::Vec3(24.5 * simCore::DEG2RAD, 55.6 * simCore::DEG2RAD, 10.));
+  }
+
+  // only certain shapes can follow
+  if (canFollow(shape->shapeType(), shape->isRelative()))
+  {
+    rv += testFollowFunc(shape);
+  }
+  return rv;
+}
+
 // test that the shape's optional field matches the pre-defined test fields from OUTLINED_FIELD
 int testOutlinedField(const simCore::GOG::OutlinedShape* shape)
 {
-  int rv = 0;
+  int rv = testBaseOptionalFields(shape);
 
   bool outlined = false;
   rv += SDK_ASSERT(shape->getIsOutlined(outlined) == 0);
@@ -1038,6 +1125,57 @@ int testUnits()
   return rv;
 }
 
+// test that altitude mode is extrude and extrude height is 250.
+auto testExtrudeFunc = [](const simCore::GOG::GogShape* shape) -> int
+{
+  int rv = 0;
+  simCore::GOG::GogShape::AltitudeMode mode = simCore::GOG::GogShape::AltitudeMode::NONE;
+  rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
+  rv += SDK_ASSERT(mode == simCore::GOG::GogShape::AltitudeMode::EXTRUDE);
+  double extrudeHeight = 0.;
+  rv += SDK_ASSERT(shape->getExtrudeHeight(extrudeHeight) == 0);
+  rv += SDK_ASSERT(extrudeHeight == 250.);
+  return rv;
+};
+
+// test that altitude mode is clamp to ground
+auto testClampFunc = [](const simCore::GOG::GogShape* shape) -> int
+{
+  int rv = 0;
+  simCore::GOG::GogShape::AltitudeMode mode = simCore::GOG::GogShape::AltitudeMode::NONE;
+  rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
+  rv += SDK_ASSERT(mode == simCore::GOG::GogShape::AltitudeMode::CLAMP_TO_GROUND);
+  return rv;
+};
+
+// test that all the altitude mode options work
+int testAltitudeModes()
+{
+  int rv = 0;
+
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n centerlla 24.4 43.2 0.\n extrude true 250.\n altitudeunits m\n end\n", testExtrudeFunc);
+  rv += testShapeFunction<simCore::GOG::Line>("start\n line\n lla 24.4 43.2 0.\n lla 24.3 43.1 0.\n extrude true 250.\n altitudeunits m\n end\n", testExtrudeFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n centerlla 24.4 43.2 0.\n altitudemode clamptoground\n end\n", testClampFunc);
+  rv += testShapeFunction<simCore::GOG::Line>("start\n line\n lla 24.4 43.2 0.\n lla 24.3 43.1 0.\n altitudemode clamptoground\n end\n", testClampFunc);
+  // relative to ground is already tested in testShapesOptionalFields()
+  return rv;
+}
+
+
+// test the different ways to define follow values
+int testFollow()
+{
+  int rv = 0;
+  // test absolute circle
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n centerlla 24.4 43.2 0.\n 3d follow cpr\n 3d offsetcourse 45.\n 3d offsetpitch 10.\n 3d offsetroll 5.\n end\n", testFollowFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n centerlla 24.4 43.2 0.\n rotate\n 3d offsetcourse 45.\n 3d offsetpitch 10.\n 3d offsetroll 5.\n end\n", testFollowFunc);
+  // test relative line
+  rv += testShapeFunction<simCore::GOG::Line>("start\n line\n xy 12. 23.\n xy 13. 24.\n 3d follow cpr\n 3d offsetcourse 45.\n 3d offsetpitch 10.\n 3d offsetroll 5.\n end\n", testFollowFunc);
+  rv += testShapeFunction<simCore::GOG::Line>("start\n line\n xy 12. 23.\n xy 13. 24.\n rotate\n 3d offsetcourse 45.\n 3d offsetpitch 10.\n 3d offsetroll 5.\n end\n", testFollowFunc);
+  // orient is already tested in testShapesOptionalFields()
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -1051,6 +1189,8 @@ int GogTest(int argc, char* argv[])
   rv += testShapesOptionalFields();
   rv += testAnnotation();
   rv += testUnits();
+  rv += testAltitudeModes();
+  rv += testFollow();
 
   return rv;
 }

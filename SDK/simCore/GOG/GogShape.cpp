@@ -100,6 +100,17 @@ void GogShape::setAltitudeMode(AltitudeMode mode)
   altitudeMode_ = mode;
 }
 
+int GogShape::getExtrudeHeight(double& height) const
+{
+  height = extrudeHeight_.value_or(0.);
+  return (extrudeHeight_.has_value() ? 0 : 1);
+}
+
+void GogShape::setExtrudeHeight(double heightMeters)
+{
+  extrudeHeight_ = heightMeters;
+}
+
 int GogShape::getReferencePosition(simCore::Vec3& refPos) const
 {
   refPos = referencePosition_.value_or(BSTUR);

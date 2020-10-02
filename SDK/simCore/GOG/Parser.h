@@ -99,6 +99,8 @@ private:
   int getColor_(const ParsedShape& parsed, ShapeParameter param, const std::string& shapeName, const std::string& fieldName, GogShape::Color& color) const;
   // Get the positions from the specified PositionStrings, applying unit conversions if necessary; returns 0 on success, non-zero otherwise
   int getPosition_(const PositionStrings& pos, bool relative, const UnitsState& units, simCore::Vec3& position) const;
+  /// Validate that the specified string converts to a double properly, print error on failure; return 0 on success, non-zero otherwise
+  int validateDouble_(const std::string& valueStr, const std::string& paramName, const std::string& name, size_t lineNumber, double& value) const;
 
   /// Initialize the default GOG colors
   void initGogColors_();

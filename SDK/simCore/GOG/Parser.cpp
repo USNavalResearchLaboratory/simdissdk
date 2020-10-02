@@ -226,7 +226,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         continue;
       }
 
-      // apply all cached information to metadata when end is reached, only if shape is valid
+      // apply all cached information to shape when end is reached, only if shape is valid
       if (tokens[0] == "end" && !invalidShape)
       {
         // set the relative state based on point type if it hasn't already been specified
@@ -262,7 +262,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
             output.push_back(gog);
           current.reset();
           // if available, recreate reference origin
-          // values are needed for subsequent annotation points since meta data was cleared and a new "current" is used
+          // values are needed for subsequent annotation points since a new "current" is used
           if (refLla.has_value())
             current.set(ShapeParameter::CENTERXY, refLla.value_or(PositionStrings()));
         }
@@ -660,20 +660,20 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     {
       if (tokens.size() >= 2)
       {
-        current.set(ShapeParameter::ORIENT_HEADING, tokens[1]);
+        current.set(ShapeParameter::OFFSETYAW, tokens[1]);
         if (tokens.size() >= 3)
         {
-          current.set(ShapeParameter::ORIENT_PITCH, tokens[2]);
+          current.set(ShapeParameter::OFFSETPITCH, tokens[2]);
           if (tokens.size() >= 4)
           {
-            current.set(ShapeParameter::ORIENT_ROLL, tokens[3]);
-            current.set(ShapeParameter::ORIENT, "cpr"); // c=heading(course), p=pitch, r=roll
+            current.set(ShapeParameter::OFFSETROLL, tokens[3]);
+            current.set(ShapeParameter::FOLLOW, "cpr"); // c=heading(course), p=pitch, r=roll
           }
           else
-            current.set(ShapeParameter::ORIENT, "cp"); // c=heading(course), p=pitch, r=roll
+            current.set(ShapeParameter::FOLLOW, "cp"); // c=heading(course), p=pitch, r=roll
         }
         else
-          current.set(ShapeParameter::ORIENT, "c");
+          current.set(ShapeParameter::FOLLOW, "c");
       }
       else
         printError_(lineNumber, "orient command requires at least 1 argument");
@@ -697,8 +697,8 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           current.set(ShapeParameter::NAME, restOfLine);
         else if (tokens[1] == "offsetalt")
           current.set(ShapeParameter::OFFSETALT, restOfLine);
-        else if (tokens[1] == "offsetcourse")
-          current.set(ShapeParameter::OFFSETCOURSE, restOfLine);
+        else if (tokens[1] == "offsetcourse") // original terminology was mistaken, they used course when they meant heading/yaw
+          current.set(ShapeParameter::OFFSETYAW, restOfLine);
         else if (tokens[1] == "offsetpitch")
           current.set(ShapeParameter::OFFSETPITCH, restOfLine);
         else if (tokens[1] == "offsetroll")
@@ -711,10 +711,10 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     }
     else if (startsWith(line, "extrude"))
     {
-      // stored in the style, not in meta data
       if (tokens.size() >= 2)
       {
-        current.set(ShapeParameter::EXTRUDE, tokens[1]);
+        // extrusion is an altitude mode
+        current.set(ShapeParameter::ALTITUDEMODE, "extrude");
         if (tokens.size() >= 3)
         {
           // handle optional extrude height
@@ -936,17 +936,11 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       if (parsed.hasValue(ShapeParameter::MAJORAXIS))
       {
         double majorAxis = 0.;
-        std::string majorAxisStr = parsed.stringValue(ShapeParameter::MAJORAXIS);
-        if (simCore::isValidNumber(majorAxisStr, majorAxis))
+        if (validateDouble_(parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed.lineNumber(), majorAxis) == 0)
           ellipsoid->setMajorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, majorAxis));
-        else
-          printError_(parsed.lineNumber(), "Invalid majoraxis: " + majorAxisStr + " for " + name);
         double minorAxis = 0.;
-        std::string minorAxisStr = parsed.stringValue(ShapeParameter::MINORAXIS);
-        if (simCore::isValidNumber(minorAxisStr, minorAxis))
+        if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed.lineNumber(), minorAxis) == 0)
           ellipsoid->setMinorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, minorAxis));
-        else
-          printError_(parsed.lineNumber(), "Invalid minoraxis: " + minorAxisStr + " for " + name);
       }
       rv.reset(ellipsoid.release());
     }
@@ -1008,11 +1002,8 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       if (parsed.hasValue(ShapeParameter::HEIGHT))
       {
         double height = 0.;
-        std::string heightStr = parsed.stringValue(ShapeParameter::HEIGHT);
-        if (simCore::isValidNumber(heightStr, height))
-          cyl->setHeight(units.rangeUnits_.convertTo(simCore::Units::METERS, height));
-        else
-          printError_(parsed.lineNumber(), "Invalid height: " + heightStr + " for " + name);
+        if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed.lineNumber(), height) == 0)
+          cyl->setHeight(units.altitudeUnits_.convertTo(simCore::Units::METERS, height));
       }
       rv.reset(cyl.release());
     }
@@ -1130,9 +1121,122 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   if (!rv)
     return rv;
 
-  // TODO: general options
+  // fill in GogShape fields
+
+  if (parsed.hasValue(ShapeParameter::NAME))
+    rv->setName(parsed.stringValue(ShapeParameter::NAME));
+
+  if (parsed.hasValue(ShapeParameter::DRAW))
+    rv->setDrawn(parsed.boolValue(ShapeParameter::DRAW, true));
+
+  if (parsed.hasValue(ShapeParameter::DEPTHBUFFER))
+    rv->setDepthBufferActive(parsed.boolValue(ShapeParameter::DEPTHBUFFER, false));
+
+  if (parsed.hasValue(ShapeParameter::OFFSETALT))
+  {
+    double altOffset = 0.;
+    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETALT), "offsetalt", name, parsed.lineNumber(), altOffset) == 0)
+      rv->setAltitudeOffset(units.altitudeUnits_.convertTo(simCore::Units::METERS, altOffset));
+  }
+
+  if (parsed.hasValue(ShapeParameter::ALTITUDEMODE))
+  {
+    std::string altModeStr = parsed.stringValue(ShapeParameter::ALTITUDEMODE);
+    GogShape::AltitudeMode mode = GogShape::AltitudeMode::NONE;
+    if (altModeStr == "relativetoground")
+      mode = GogShape::AltitudeMode::RELATIVE_TO_GROUND;
+    else if (altModeStr == "clamptoground")
+      mode = GogShape::AltitudeMode::CLAMP_TO_GROUND;
+    else if (altModeStr == "extrude")
+      mode = GogShape::AltitudeMode::EXTRUDE;
+    rv->setAltitudeMode(mode);
+  }
+
+  if (parsed.hasValue(ShapeParameter::EXTRUDE_HEIGHT))
+  {
+    double height = 0.;
+    if (validateDouble_(parsed.stringValue(ShapeParameter::EXTRUDE_HEIGHT), "extrude height", name, parsed.lineNumber(), height) == 0)
+      rv->setExtrudeHeight(units.altitudeUnits_.convertTo(simCore::Units::METERS, height));
+  }
+
+  if (parsed.hasValue(ShapeParameter::REF_LLA))
+  {
+    PositionStrings pos = parsed.positionValue(ShapeParameter::REF_LLA);
+    double alt = 0.;
+    simCore::isValidNumber(pos.z, alt);
+    // convert altitude units
+    alt = units.altitudeUnits_.convertTo(simCore::Units::METERS, alt);
+    double lat = 0.;
+    double lon = 0.;
+    if (simCore::getAngleFromDegreeString(pos.x, true, lat) == 0 && simCore::getAngleFromDegreeString(pos.y, true, lon) == 0)
+      rv->setReferencePosition(simCore::Vec3(lat, lon, alt));
+    else
+      printError_(parsed.lineNumber(), "Invalid referencepoint: " + parsed.stringValue(ShapeParameter::REF_LLA) + " for " + name);
+
+  }
+  // if SCALEX exists, so should the others
+  if (parsed.hasValue(ShapeParameter::SCALEX))
+  {
+    // parsing error, should not have only one of the scale components set
+    assert(parsed.hasValue(ShapeParameter::SCALEY) && parsed.hasValue(ShapeParameter::SCALEZ));
+    double scaleX = 1.;
+    double scaleY = 1.;
+    double scaleZ = 1.;
+    bool validX = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEX), "scale x", name, parsed.lineNumber(), scaleX) == 0);
+    bool validY = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEY), "scale y", name, parsed.lineNumber(), scaleY) == 0);
+    bool validZ = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEZ), "scale z", name, parsed.lineNumber(), scaleZ) == 0);
+    // only need one valid value, using scale default of 1 otherwise
+    if (validX || validY || validZ)
+      rv->setScale(simCore::Vec3(scaleX, scaleY, scaleZ));
+  }
+
+  if (parsed.hasValue(ShapeParameter::FOLLOW))
+  {
+    std::string followComponents = parsed.stringValue(ShapeParameter::FOLLOW);
+    if (followComponents.find("c") != std::string::npos)
+      rv->setFollowYaw(true);
+    if (followComponents.find("p") != std::string::npos)
+      rv->setFollowPitch(true);
+    if (followComponents.find("r") != std::string::npos)
+      rv->setFollowRoll(true);
+  }
+
+  if (parsed.hasValue(ShapeParameter::OFFSETYAW))
+  {
+    double yawOffset = 0.;
+    // note that original GOG terminology was mistaken, they used course when they meant heading/yaw
+    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETYAW), "offsetcourse", name, parsed.lineNumber(), yawOffset) == 0)
+      rv->setYawOffset(simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, yawOffset)));
+  }
+
+  if (parsed.hasValue(ShapeParameter::OFFSETPITCH))
+  {
+    double pitchOffset = 0.;
+    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETPITCH), "offsetpitch", name, parsed.lineNumber(), pitchOffset) == 0)
+      rv->setPitchOffset(simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, pitchOffset)));
+  }
+
+  if (parsed.hasValue(ShapeParameter::OFFSETROLL))
+  {
+    double rollOffset = 0.;
+    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETROLL), "offsetroll", name, parsed.lineNumber(), rollOffset) == 0)
+      rv->setRollOffset(simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, rollOffset)));
+  }
+
+  for (std::string comment : parsed.comments())
+  {
+    rv->addComment(comment);
+  }
 
   return rv;
+}
+
+int Parser::validateDouble_(const std::string& valueStr, const std::string& paramName, const std::string& name, size_t lineNumber, double& value) const
+{
+  if (simCore::isValidNumber(valueStr, value))
+    return 0;
+  printError_(lineNumber, "Invalid " + paramName + ": " + valueStr + " for " + name);
+  return 1;
 }
 
 void Parser::parseOutlined_(const ParsedShape& parsed, OutlinedShape* shape) const
@@ -1286,11 +1390,8 @@ void Parser::parseCircularOptional_(const ParsedShape& parsed, const std::string
   if (!parsed.hasValue(ShapeParameter::RADIUS))
     return;
   double radius = 0.;
-  std::string radiusStr = parsed.stringValue(ShapeParameter::RADIUS);
-  if (simCore::isValidNumber(radiusStr, radius))
+  if (validateDouble_(parsed.stringValue(ShapeParameter::RADIUS), "radius", name, parsed.lineNumber(), radius) == 0)
     shape->setRadius(units.rangeUnits_.convertTo(simCore::Units::METERS, radius));
-  else
-    printError_(parsed.lineNumber(), "Invalid radius: " + radiusStr + " for " + name);
 }
 
 void Parser::parseCircularHeightOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularHeightShape* shape) const
@@ -1304,11 +1405,8 @@ void Parser::parseCircularHeightOptional_(const ParsedShape& parsed, const std::
     return;
 
   double height = 0.;
-  std::string heightStr = parsed.stringValue(ShapeParameter::HEIGHT);
-  if (simCore::isValidNumber(heightStr, height))
+  if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed.lineNumber(), height) == 0)
     shape->setHeight(units.rangeUnits_.convertTo(simCore::Units::METERS, height));
-  else
-    printError_(parsed.lineNumber(), "Invalid height: " + heightStr + " for " + name);
 }
 
 void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, EllipticalShape* shape) const
@@ -1322,15 +1420,12 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
   double angleStart = 0;
   if (parsed.hasValue(ShapeParameter::ANGLESTART))
   {
-    std::string angleStartStr = parsed.stringValue(ShapeParameter::ANGLESTART);
-    if (simCore::isValidNumber(angleStartStr, angleStart))
+    if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLESTART), "anglestart", name, parsed.lineNumber(), angleStart) == 0)
     {
       angleStart = simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleStart));
       shape->setAngleStart(angleStart);
       hasAngleStart = true;
     }
-    else
-      printError_(parsed.lineNumber(), "Invalid anglestart: " + angleStartStr + " for " + name);
   }
   // only bother with the angledeg and angleend if anglestart exists
   if (hasAngleStart)
@@ -1338,43 +1433,31 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
     if (parsed.hasValue(ShapeParameter::ANGLEDEG))
     {
       double angleSweep = 0.;
-      std::string angleSweepStr = parsed.stringValue(ShapeParameter::ANGLEDEG);
-      if (simCore::isValidNumber(angleSweepStr, angleSweep))
+      if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLEDEG), "angledeg", name, parsed.lineNumber(), angleSweep) == 0)
         shape->setAngleSweep(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleSweep));
-      else
-        printError_(parsed.lineNumber(), "Invalid angledeg: " + angleSweepStr + " for " + name);
     }
     if (parsed.hasValue(ShapeParameter::ANGLEEND))
     {
       double angleEnd = 0.;
-      std::string angleEndStr = parsed.stringValue(ShapeParameter::ANGLEEND);
-      if (simCore::isValidNumber(angleEndStr, angleEnd))
+      if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLEEND), "angleend", name, parsed.lineNumber(), angleEnd) == 0)
       {
         // convert to sweep, cannot cross 0 with angleend
         angleEnd = simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleEnd));
         shape->setAngleSweep(angleEnd - angleStart);
       }
-      else
-        printError_(parsed.lineNumber(), "Invalid angleend: " + angleEndStr + " for " + name);
     }
   }
   if (parsed.hasValue(ShapeParameter::MAJORAXIS))
   {
     double majorAxis = 0.;
-    std::string majorAxisStr = parsed.stringValue(ShapeParameter::MAJORAXIS);
-    if (simCore::isValidNumber(majorAxisStr, majorAxis))
+    if (validateDouble_( parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed.lineNumber(), majorAxis) == 0)
       shape->setMajorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, majorAxis));
-    else
-      printError_(parsed.lineNumber(), "Invalid majoraxis: " + majorAxisStr + " for " + name);
   }
   if (parsed.hasValue(ShapeParameter::MINORAXIS))
   {
     double minorAxis = 0.;
-    std::string minorAxisStr = parsed.stringValue(ShapeParameter::MINORAXIS);
-    if (simCore::isValidNumber(minorAxisStr, minorAxis))
+    if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed.lineNumber(), minorAxis) == 0)
       shape->setMinorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, minorAxis));
-    else
-      printError_(parsed.lineNumber(), "Invalid minoraxis: " + minorAxisStr + " for " + name);
   }
 }
 
