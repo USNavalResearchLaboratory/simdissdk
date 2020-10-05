@@ -224,6 +224,14 @@ public:
   /// Set roll angle offset from reference orientation in radians
   void setRollOffset(double offsetRad);
 
+  /**
+  * Get the vertical datum string; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getVerticalDatum(std::string& verticalDatum) const;
+  /// Set the vertical datum string
+  void setVerticalDatum(const std::string& verticalDatum);
+
   /// Comments associated with the shape
   const std::vector<std::string>& comments() const;
   void addComment(const std::string& commment);
@@ -263,6 +271,7 @@ private:
   Optional<double> pitchOffset_; ///< Angle offset for pitch component, radians
   Optional<double> rollOffset_; ///< Angle offset for roll component, radians
 
+  Optional<std::string> verticalDatum_; ///< String that represents vertical datum, e.g. wgs84
   std::vector<std::string> comments_; ///< Comment strings for the shape
 
   // TODO: store original units for serialization
@@ -730,6 +739,14 @@ public:
   /// Set the icon file to display
   void setIconFile(const std::string& iconFile);
 
+  /**
+  * Get the text deconfliction priority value; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getPriority(double& priority) const;
+  /// Set the text deconfliction prority value
+  void setPriority(double priority);
+
 private:
   simCore::Vec3 position_; ///< lla radians if absolute, xyz meters if relative
   std::string text_; ///< display text
@@ -739,6 +756,7 @@ private:
   Optional<Color> outlineColor_;
   Optional<OutlineThickness> outlineThickness_; ///< thickness style of text outline
   Optional<std::string> iconFile_; ///< icon filename
+  Optional<double> priority_; ///< priority of the annotation text display
 };
 
 /// A parallel 3D or 2D box
