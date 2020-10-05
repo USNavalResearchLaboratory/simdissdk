@@ -213,6 +213,17 @@ const std::vector<std::string>& GogShape::comments() const
   return comments_;
 }
 
+int GogShape::getVerticalDatum(std::string& verticalDatum) const
+{
+  verticalDatum = verticalDatum_.value_or("wgs84");
+  return (verticalDatum_.has_value() ? 0 : 1);
+}
+
+void GogShape::setVerticalDatum(const std::string& verticalDatum)
+{
+  verticalDatum_ = verticalDatum;
+}
+
 void GogShape::addComment(const std::string& comment)
 {
   comments_.push_back(comment);
@@ -834,6 +845,17 @@ int Annotation::getIconFile(std::string& iconFile) const
 void Annotation::setIconFile(const std::string& iconFile)
 {
   iconFile_ = iconFile;
+}
+
+int Annotation::getPriority(double& priority) const
+{
+  priority = priority_.value_or(100.);
+  return (priority_.has_value() ? 0 : 1);
+}
+
+void Annotation::setPriority(double priority)
+{
+  priority_ = priority;
 }
 
 LatLonAltBox::LatLonAltBox()

@@ -33,7 +33,7 @@
 namespace {
 
  // base gog shape optional fields in GOG format (set alt units to meters for testing), not testing  extrude height here
-static const std::string BASE_FIELDS = "altitudeunits m\n 3d name my favorite shape\n off\n depthbuffer true\n 3d offsetalt 120.\n ref 24.5 55.6 10.\n altitudemode relativetoground\n scale 2. 1.3 .5\n orient 45. 10. 5.\n";
+static const std::string BASE_FIELDS = "altitudeunits m\n 3d name my favorite shape\n off\n depthbuffer true\n 3d offsetalt 120.\n ref 24.5 55.6 10.\n altitudemode relativetoground\n scale 2. 1.3 .5\n orient 45. 10. 5.\n verticaldatum egm1984\n";
 // outlined shape optional field in GOG format
 static const std::string OUTLINED_FIELD = BASE_FIELDS + "outline true\n";
 // fillable shape optional fields in GOG format
@@ -162,7 +162,11 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
   double extrudeHeight = 10.;
   rv += SDK_ASSERT(shape->getExtrudeHeight(extrudeHeight) != 0);
   rv += SDK_ASSERT(extrudeHeight == 0.);
+  std::string vdatum = "?";
+  rv += SDK_ASSERT(shape->getVerticalDatum(vdatum) != 0);
+  rv += SDK_ASSERT(vdatum == "wgs84");
   return rv;
+
 }
 
 // test outlined shape's optional field is not set and returns default value
@@ -519,6 +523,9 @@ int testBaseOptionalFields(const simCore::GOG::GogShape* shape)
   simCore::Vec3 scale;
   rv += SDK_ASSERT(shape->getScale(scale) == 0);
   rv += SDK_ASSERT(scale == simCore::Vec3(2., 1.3, 0.5));
+  std::string vdatum;
+  rv += SDK_ASSERT(shape->getVerticalDatum(vdatum) == 0);
+  rv += SDK_ASSERT(vdatum == "egm1984");
 
   // test reference point if relative
   if (shape->isRelative())
@@ -888,13 +895,16 @@ int testAnnotation()
       std::string iconFile = "someFile";
       rv += SDK_ASSERT(anno->getIconFile(iconFile) != 0);
       rv += SDK_ASSERT(iconFile.empty());
+      double priority = 0.;
+      rv += SDK_ASSERT(anno->getPriority(priority) != 0);
+      rv += SDK_ASSERT(priority == 100.);
     }
   }
   shapes.clear();
 
   // test full annotation
   std::stringstream annoGog;
-  annoGog << "start\n annotation label 1\n centerll 24.5 54.6\n fontname georgia.ttf\n fontsize 24\n linecolor hex 0xa0ffa0ff\n textoutlinethickness thin\n textoutlinecolor blue\n# kml_icon icon.png\n end\n";
+  annoGog << "start\n annotation label 1\n centerll 24.5 54.6\n fontname georgia.ttf\n fontsize 24\n linecolor hex 0xa0ffa0ff\n textoutlinethickness thin\n textoutlinecolor blue\n# kml_icon icon.png\n priority 10.\n end\n";
   parser.parse(annoGog, shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
@@ -923,13 +933,16 @@ int testAnnotation()
       std::string iconFile;
       rv += SDK_ASSERT(anno->getIconFile(iconFile) == 0);
       rv += SDK_ASSERT(iconFile == "icon.png");
+      double priority = 0.;
+      rv += SDK_ASSERT(anno->getPriority(priority) == 0);
+      rv += SDK_ASSERT(priority == 10.);
     }
   }
   shapes.clear();
 
   // test nested annotations
   std::stringstream annoNestedGog;
-  annoNestedGog << "start\n annotation label 0\n centerll 24.5 54.6\n fontname georgia.ttf\n fontsize 24\n linecolor hex 0xa0ffa0ff\n textoutlinethickness thin\n textoutlinecolor blue\n"
+  annoNestedGog << "start\n annotation label 0\n centerll 24.5 54.6\n fontname georgia.ttf\n fontsize 24\n linecolor hex 0xa0ffa0ff\n textoutlinethickness thin\n textoutlinecolor blue\n priority 10.\n"
     << "annotation label 1\n centerll 24.7 54.3\n annotation label 2\n centerll 23.4 55.4\n end\n";
   parser.parse(annoNestedGog, shapes);
   rv += SDK_ASSERT(shapes.size() == 3);
@@ -968,6 +981,9 @@ int testAnnotation()
         simCore::GOG::Annotation::OutlineThickness thickness = simCore::GOG::Annotation::OutlineThickness::NONE;
         rv += SDK_ASSERT(anno->getOutlineThickness(thickness) == 0);
         rv += SDK_ASSERT(thickness == simCore::GOG::Annotation::OutlineThickness::THIN);
+        double priority = 0.;
+        rv += SDK_ASSERT(anno->getPriority(priority) == 0);
+        rv += SDK_ASSERT(priority == 10.);
       }
     }
   }

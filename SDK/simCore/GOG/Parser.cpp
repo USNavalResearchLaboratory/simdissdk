@@ -854,6 +854,12 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     if (parsed.hasValue(ShapeParameter::ICON))
       anno->setIconFile(parsed.stringValue(ShapeParameter::ICON));
+    if (parsed.hasValue(ShapeParameter::PRIORITY))
+    {
+      double priority = 0.;
+      if (validateDouble_(parsed.stringValue(ShapeParameter::PRIORITY), "priority", name, parsed.lineNumber(), priority) == 0)
+        anno->setPriority(priority);
+    }
     rv.reset(anno);
     break;
   }
@@ -1223,6 +1229,13 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       rv->setRollOffset(simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, rollOffset)));
   }
 
+  if (parsed.hasValue(ShapeParameter::VERTICALDATUM))
+  {
+    std::string vdatum = parsed.stringValue(ShapeParameter::VERTICALDATUM);
+    // verify the vertical datum is a known valid string
+    if (vdatum == "egm1984" || vdatum == "egm84" || vdatum == "egm1996" || vdatum == "egm96" || vdatum == "egm2008" || vdatum == "egm08" || vdatum == "wgs84")
+      rv->setVerticalDatum(vdatum);
+  }
   for (std::string comment : parsed.comments())
   {
     rv->addComment(comment);
