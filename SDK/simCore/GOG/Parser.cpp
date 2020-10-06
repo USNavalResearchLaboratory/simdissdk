@@ -67,7 +67,7 @@ void Parser::initGogColors_()
   // GOG hex colors are AABBGGRR
   colors_["color1"] = "0xff0000ff"; // Cyan
   colors_["color2"] = "0xff0000ff"; // Red
-  colors_["color3"] = "Oxff00ff00"; // Lime
+  colors_["color3"] = "0xff00ff00"; // Lime
   colors_["color4"] = "0xffff0000"; // Blue
   colors_["color5"] = "0xff00ffff"; // Yellow
   colors_["color6"] = "0xff00a5ff"; // Orange
@@ -1284,9 +1284,9 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     std::string styleStr = parsed.stringValue(ShapeParameter::LINESTYLE);
     bool valid = true;
     FillableShape::LineStyle style = FillableShape::LineStyle::SOLID;
-    if (styleStr == "dashed")
+    if (styleStr == "dashed" || styleStr == "dash")
       style = FillableShape::LineStyle::DASHED;
-    else if (styleStr == "dotted")
+    else if (styleStr == "dotted" || styleStr == "dot")
       style = FillableShape::LineStyle::DOTTED;
     else if (styleStr != "solid")
     {
