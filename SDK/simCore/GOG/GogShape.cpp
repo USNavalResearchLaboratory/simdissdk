@@ -816,7 +816,7 @@ void Annotation::setTextColor(const Color& color)
 
 int Annotation::getOutlineColor(Color& color) const
 {
-  color = outlineColor_.value_or(Color());
+  color = outlineColor_.value_or(Color(0, 0, 0, 255));
   return (outlineColor_.has_value() ? 0 : 1);
 }
 

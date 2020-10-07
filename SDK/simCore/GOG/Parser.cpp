@@ -264,7 +264,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           // if available, recreate reference origin
           // values are needed for subsequent annotation points since a new "current" is used
           if (refLla.has_value())
-            current.set(ShapeParameter::CENTERXY, refLla.value_or(PositionStrings()));
+            current.set(ShapeParameter::REF_LLA, refLla.value_or(PositionStrings()));
         }
         if (current.shape() != ShapeType::UNKNOWN)
         {
@@ -789,16 +789,21 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   {
     simCore::Vec3 position;
     bool hasPosition;
-    // verify shape has minimum required fields
+    // verify shape has minimum required fields, annotation supports multiple ways to define center: centerlla or lla, centerxyz or xyz
     if (relative)
     {
-      // relative annotation uses the xyz keyword for the center position, not the centerxy, so check for a position
       const std::vector<PositionStrings>& positions = parsed.positions();
       hasPosition = (!positions.empty() && getPosition_(positions.front(), relative, units, position) == 0);
+      if (!hasPosition)
+        hasPosition = (parsed.hasValue(ShapeParameter::CENTERXY) && getPosition_(parsed.positionValue(ShapeParameter::CENTERXY), relative, units, position) == 0);
     }
     else
-      hasPosition = (parsed.hasValue(ShapeParameter::CENTERLL) && getPosition_(parsed.positionValue(ShapeParameter::CENTERLL), relative, units, position) == 0);
-
+    {
+      const std::vector<PositionStrings>& positions = parsed.positions();
+      hasPosition = (!positions.empty() && getPosition_(positions.front(), relative, units, position) == 0);
+      if (!hasPosition)
+        hasPosition = (parsed.hasValue(ShapeParameter::CENTERLL) && getPosition_(parsed.positionValue(ShapeParameter::CENTERLL), relative, units, position) == 0);
+    }
     if (!hasPosition)
     {
       printError_(parsed.lineNumber(), "Annotation " + name + " did not have a position, cannot create shape");

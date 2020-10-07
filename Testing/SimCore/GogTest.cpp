@@ -857,6 +857,17 @@ int testIncompleteShapes()
   return rv;
 }
 
+// test the annotation center
+auto testAnnotationCenterFunc = [](const simCore::GOG::Annotation* shape, const std::vector<simCore::Vec3>& positions) -> int
+{
+  int rv = 0;
+  // dev error, require 1 position to test annotation
+  assert(!positions.empty());
+  if (!positions.empty())
+    rv += SDK_ASSERT(comparePositions(shape->position(), positions[0]));
+  return rv;
+};
+
 // test all the annotation fields and nested annotations special case
 int testAnnotation()
 {
@@ -888,7 +899,7 @@ int testAnnotation()
       rv += SDK_ASSERT(textColor == simCore::GOG::Color());
       simCore::GOG::Color outlineColor(0,255,255,0);
       rv += SDK_ASSERT(anno->getOutlineColor(outlineColor) != 0);
-      rv += SDK_ASSERT(outlineColor == simCore::GOG::Color());
+      rv += SDK_ASSERT(outlineColor == simCore::GOG::Color(0,0,0,255));
       simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::THICK;
       rv += SDK_ASSERT(anno->getOutlineThickness(thickness) != 0);
       rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::NONE);
@@ -988,6 +999,24 @@ int testAnnotation()
     }
   }
   shapes.clear();
+
+  // test annotation position parsing, which supports multiple options (centerlla, centerll, lla, ll, centerxyz, centerxy, xyz, xy)
+  std::vector<simCore::Vec3> annoAbsoluteCtr;
+  annoAbsoluteCtr.push_back(simCore::Vec3(24.4 * simCore::DEG2RAD, 43.2 * simCore::DEG2RAD, 250.));
+  rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n centerlla 24.4 43.2 250.\n altitudeunits m\n  end\n", testAnnotationCenterFunc, annoAbsoluteCtr);
+  rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n lla 24.4 43.2 250.\n altitudeunits m\n  end\n", testAnnotationCenterFunc, annoAbsoluteCtr);
+  annoAbsoluteCtr.clear();
+  annoAbsoluteCtr.push_back(simCore::Vec3(24.4 * simCore::DEG2RAD, 43.2 * simCore::DEG2RAD, 0.));
+  rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n centerll 24.4 43.2\n altitudeunits m\n  end\n", testAnnotationCenterFunc, annoAbsoluteCtr);
+  rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n ll 24.4 43.2\n altitudeunits m\n  end\n", testAnnotationCenterFunc, annoAbsoluteCtr);
+  std::vector<simCore::Vec3> annoRelCtr;
+  annoRelCtr.push_back(simCore::Vec3(20., 35., 10.));
+  rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n centerxyz 20. 35. 10.\n rangeunits m\n altitudeunits m\n end\n", testAnnotationCenterFunc, annoRelCtr);
+  rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n xyz 20. 35. 10.\n rangeunits m\n altitudeunits m\n end\n", testAnnotationCenterFunc, annoRelCtr);
+  annoRelCtr.clear();
+  annoRelCtr.push_back(simCore::Vec3(20., 35., 0.));
+  rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n centerxy 20. 35.\n rangeunits m\n altitudeunits m\n end\n", testAnnotationCenterFunc, annoRelCtr);
+  rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n xy 20. 35.\n rangeunits m\n altitudeunits m\n end\n", testAnnotationCenterFunc, annoRelCtr);
 
   return rv;
 }
