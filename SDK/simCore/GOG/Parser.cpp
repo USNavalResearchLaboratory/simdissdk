@@ -195,7 +195,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       if (tokens.size () > 2 && tokens[1] == "kml_icon")
         current.set(ShapeParameter::ICON, tokens[2]);
       if (tokens.size() > 1 && tokens[1] == "kml_groundoverlay")
-        current.setShape(GogShape::ShapeType::IMAGEOVERLAY);
+        current.setShape(ShapeType::IMAGEOVERLAY);
       if (tokens.size() > 1 && tokens[1] == "kml_latlonbox")
       {
         if (tokens.size() > 6)
@@ -220,7 +220,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         printError_(lineNumber, "end command encountered before start");
         continue;
       }
-      if (tokens[0] == "end" && current.shape() == GogShape::ShapeType::UNKNOWN)
+      if (tokens[0] == "end" && current.shape() == ShapeType::UNKNOWN)
       {
         printError_(lineNumber, "end command encountered before recognized GOG shape type keyword");
         continue;
@@ -254,7 +254,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       {
         // special case: annotations. you can have multiple annotations within
         // a single start/end block.
-        if (current.shape() == GogShape::ShapeType::ANNOTATION)
+        if (current.shape() == ShapeType::ANNOTATION)
         {
           state.apply(current);
           GogShapePtr gog = getShape_(current);
@@ -266,12 +266,12 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           if (refLla.has_value())
             current.set(ShapeParameter::CENTERXY, refLla.value_or(PositionStrings()));
         }
-        if (current.shape() != GogShape::ShapeType::UNKNOWN)
+        if (current.shape() != ShapeType::UNKNOWN)
         {
           SIM_WARN << "Multiple shape keywords found in single start/end block\n";
           invalidShape = true;
         }
-        current.setShape(GogShape::ShapeType::ANNOTATION);
+        current.setShape(ShapeType::ANNOTATION);
         std::string textToken = simCore::StringUtils::trim(line.substr(tokens[0].length() + 1));
         // Store the un-decoded text in textToken
         current.set(ShapeParameter::TEXT, textToken);
@@ -303,7 +303,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       tokens[0] == "orbit"
       )
     {
-      if (current.shape() != GogShape::ShapeType::UNKNOWN)
+      if (current.shape() != ShapeType::UNKNOWN)
       {
         SIM_WARN << "Multiple shape keywords found in single start/end block\n";
         invalidShape = true;
@@ -314,12 +314,12 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     {
       if (tokens.size() > 5)
       {
-        if (current.shape() != GogShape::ShapeType::UNKNOWN)
+        if (current.shape() != ShapeType::UNKNOWN)
         {
           SIM_WARN << "Multiple shape keywords found in single start/end block\n";
           invalidShape = true;
         }
-        current.setShape(GogShape::ShapeType::LATLONALTBOX);
+        current.setShape(ShapeType::LATLONALTBOX);
         current.set(ShapeParameter::LLABOX_N, tokens[1]);
         current.set(ShapeParameter::LLABOX_S, tokens[2]);
         current.set(ShapeParameter::LLABOX_W, tokens[3]);
@@ -785,7 +785,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     name = GogShape::shapeTypeToString(parsed.shape());
   switch (parsed.shape())
   {
-  case GogShape::ShapeType::ANNOTATION:
+  case ShapeType::ANNOTATION:
   {
     simCore::Vec3 position;
     bool hasPosition;
@@ -825,19 +825,19 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     if (parsed.hasValue(ShapeParameter::LINECOLOR))
     {
-      GogShape::Color color;
+      Color color;
       if (getColor_(parsed, ShapeParameter::LINECOLOR, name, "linecolor", color) == 0)
         anno->setTextColor(color);
     }
     if (parsed.hasValue(ShapeParameter::TEXTOUTLINETHICKNESS))
     {
       std::string thicknessStr = parsed.stringValue(ShapeParameter::TEXTOUTLINETHICKNESS);
-      Annotation::OutlineThickness thickness = Annotation::OutlineThickness::NONE;
+      OutlineThickness thickness = OutlineThickness::NONE;
       bool valid = true;
       if (thicknessStr == "thick")
-        thickness = Annotation::OutlineThickness::THICK;
+        thickness = OutlineThickness::THICK;
       else if (thicknessStr == "thin")
-        thickness = Annotation::OutlineThickness::THIN;
+        thickness = OutlineThickness::THIN;
       else if (thicknessStr != "none")
       {
         valid = false;
@@ -848,7 +848,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     if (parsed.hasValue(ShapeParameter::TEXTOUTLINECOLOR))
     {
-      GogShape::Color color;
+      Color color;
       if (getColor_(parsed, ShapeParameter::TEXTOUTLINECOLOR, name, "textoutlinecolor", color) == 0)
         anno->setOutlineColor(color);
     }
@@ -863,49 +863,49 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     rv.reset(anno);
     break;
   }
-  case GogShape::ShapeType::CIRCLE:
+  case ShapeType::CIRCLE:
   {
     std::unique_ptr<Circle> circle(new Circle(relative));
     if (parseCircular_(parsed, relative, name, units, circle.get()) == 0)
       rv.reset(circle.release());
     break;
   }
-  case GogShape::ShapeType::LINE:
+  case ShapeType::LINE:
   {
     std::unique_ptr<Line> line(new Line(relative));
     if (parsePointBased_(parsed, relative, name, units, 2, line.get()) == 0)
       rv.reset(line.release());
     break;
   }
-  case GogShape::ShapeType::LINESEGS:
+  case ShapeType::LINESEGS:
   {
     std::unique_ptr<LineSegs> line(new LineSegs(relative));
     if (parsePointBased_(parsed, relative, name, units, 2, line.get()) == 0)
       rv.reset(line.release());
     break;
   }
-  case GogShape::ShapeType::POLYGON:
+  case ShapeType::POLYGON:
   {
     std::unique_ptr<Polygon> poly(new Polygon(relative));
     if (parsePointBased_(parsed, relative, name, units, 3, poly.get()) == 0)
       rv.reset(poly.release());
   }
   break;
-  case GogShape::ShapeType::SPHERE:
+  case ShapeType::SPHERE:
   {
     std::unique_ptr<Sphere> sphere(new Sphere(relative));
     if (parseCircular_(parsed, relative, name, units, sphere.get()) == 0)
       rv.reset(sphere.release());
   }
   break;
-  case GogShape::ShapeType::HEMISPHERE:
+  case ShapeType::HEMISPHERE:
   {
     std::unique_ptr<Hemisphere> hemi(new Hemisphere(relative));
     if (parseCircular_(parsed, relative, name, units, hemi.get()) == 0)
       rv.reset(hemi.release());
     break;
   }
-  case GogShape::ShapeType::ORBIT:
+  case ShapeType::ORBIT:
   {
     std::unique_ptr<Orbit> orbit(new Orbit(relative));
     if (parseCircular_(parsed, relative, name, units, orbit.get()) == 0)
@@ -923,7 +923,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     break;
   }
-  case GogShape::ShapeType::CONE:
+  case ShapeType::CONE:
   {
     std::unique_ptr<Cone> cone(new Cone(relative));
     if (parseCircular_(parsed, relative, name, units, cone.get()) == 0)
@@ -933,7 +933,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     break;
   }
-  case GogShape::ShapeType::ELLIPSOID:
+  case ShapeType::ELLIPSOID:
   {
     std::unique_ptr<Ellipsoid> ellipsoid(new Ellipsoid(relative));
     if (parseCircular_(parsed, relative, name, units, ellipsoid.get()) == 0)
@@ -952,7 +952,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     break;
   }
-  case GogShape::ShapeType::POINTS:
+  case ShapeType::POINTS:
   {
     // verify shape has some points
     const std::vector<PositionStrings>& positions = parsed.positions();
@@ -982,14 +982,14 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     if (parsed.hasValue(ShapeParameter::LINECOLOR))
     {
-      GogShape::Color color;
+      Color color;
       if (getColor_(parsed, ShapeParameter::LINECOLOR, name, "linecolor", color) == 0)
         points->setColor(color);
     }
     rv.reset(points.release());
     break;
   }
-  case GogShape::ShapeType::ARC:
+  case ShapeType::ARC:
   {
     std::unique_ptr<Arc> arc(new Arc(relative));
     if (parseCircular_(parsed, relative, name, units, arc.get()) == 0)
@@ -999,7 +999,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     break;
   }
-  case GogShape::ShapeType::CYLINDER:
+  case ShapeType::CYLINDER:
   {
     std::unique_ptr<Cylinder> cyl(new Cylinder(relative));
     if (parseCircular_(parsed, relative, name, units, cyl.get()) == 0)
@@ -1015,7 +1015,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     break;
   }
-  case GogShape::ShapeType::ELLIPSE:
+  case ShapeType::ELLIPSE:
   {
     std::unique_ptr<Ellipse> ellipse(new Ellipse(relative));
     if (parseCircular_(parsed, relative, name, units, ellipse.get()) == 0)
@@ -1025,7 +1025,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     break;
   }
-  case GogShape::ShapeType::LATLONALTBOX:
+  case ShapeType::LATLONALTBOX:
   {
     if (parsed.hasValue(ShapeParameter::LLABOX_N) && parsed.hasValue(ShapeParameter::LLABOX_S)
       && parsed.hasValue(ShapeParameter::LLABOX_E) && parsed.hasValue(ShapeParameter::LLABOX_W)
@@ -1076,7 +1076,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     break;
   }
-  case GogShape::ShapeType::IMAGEOVERLAY:
+  case ShapeType::IMAGEOVERLAY:
   {
     if (parsed.hasValue(ShapeParameter::LLABOX_N) && parsed.hasValue(ShapeParameter::LLABOX_S)
       && parsed.hasValue(ShapeParameter::LLABOX_E) && parsed.hasValue(ShapeParameter::LLABOX_W)
@@ -1121,7 +1121,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     break;
   }
-  case GogShape::ShapeType::UNKNOWN:
+  case ShapeType::UNKNOWN:
     break;
   }
   if (!rv)
@@ -1148,13 +1148,13 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   if (parsed.hasValue(ShapeParameter::ALTITUDEMODE))
   {
     std::string altModeStr = parsed.stringValue(ShapeParameter::ALTITUDEMODE);
-    GogShape::AltitudeMode mode = GogShape::AltitudeMode::NONE;
+    AltitudeMode mode = AltitudeMode::NONE;
     if (altModeStr == "relativetoground")
-      mode = GogShape::AltitudeMode::RELATIVE_TO_GROUND;
+      mode = AltitudeMode::RELATIVE_TO_GROUND;
     else if (altModeStr == "clamptoground")
-      mode = GogShape::AltitudeMode::CLAMP_TO_GROUND;
+      mode = AltitudeMode::CLAMP_TO_GROUND;
     else if (altModeStr == "extrude")
-      mode = GogShape::AltitudeMode::EXTRUDE;
+      mode = AltitudeMode::EXTRUDE;
     rv->setAltitudeMode(mode);
   }
 
@@ -1273,7 +1273,7 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
   parseOutlined_(parsed, shape);
   if (parsed.hasValue(ShapeParameter::LINECOLOR))
   {
-    GogShape::Color color;
+    Color color;
     if (getColor_(parsed, ShapeParameter::LINECOLOR, name, "linecolor", color) == 0)
       shape->setLineColor(color);
     else
@@ -1283,11 +1283,11 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
   {
     std::string styleStr = parsed.stringValue(ShapeParameter::LINESTYLE);
     bool valid = true;
-    FillableShape::LineStyle style = FillableShape::LineStyle::SOLID;
+    LineStyle style = LineStyle::SOLID;
     if (styleStr == "dashed" || styleStr == "dash")
-      style = FillableShape::LineStyle::DASHED;
+      style = LineStyle::DASHED;
     else if (styleStr == "dotted" || styleStr == "dot")
-      style = FillableShape::LineStyle::DOTTED;
+      style = LineStyle::DOTTED;
     else if (styleStr != "solid")
     {
       printError_(parsed.lineNumber(), "Invalid linestyle: " + styleStr + " for " + name);
@@ -1309,7 +1309,7 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     shape->setFilled(parsed.boolValue(ShapeParameter::FILLED, true));
   if (parsed.hasValue(ShapeParameter::FILLCOLOR))
   {
-    GogShape::Color color;
+    Color color;
     if (getColor_(parsed, ShapeParameter::FILLCOLOR, name, "fillcolor", color) == 0)
       shape->setFillColor(color);
     else
@@ -1367,12 +1367,12 @@ void Parser::parsePointBasedOptional_(const ParsedShape& parsed, const std::stri
   if (!parsed.hasValue(ShapeParameter::TESSELLATE))
     return;
   // if tessellate is set, default to RHUMBLINE unless LINEPROJECTION specifies otherwise
-  PointBasedShape::TessellationStyle style = PointBasedShape::TessellationStyle::RHUMBLINE;
+  TessellationStyle style = TessellationStyle::RHUMBLINE;
   if (parsed.hasValue(ShapeParameter::LINEPROJECTION))
   {
     std::string projectionStr = parsed.stringValue(ShapeParameter::LINEPROJECTION);
     if (projectionStr == "greatcircle")
-      style = PointBasedShape::TessellationStyle::GREAT_CIRCLE;
+      style = TessellationStyle::GREAT_CIRCLE;
   }
   shape->setTesssellation(style);
 }
@@ -1474,7 +1474,7 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
   }
 }
 
-int Parser::getColor_(const ParsedShape& parsed, ShapeParameter param, const std::string& shapeName, const std::string& fieldName, GogShape::Color& color) const
+int Parser::getColor_(const ParsedShape& parsed, ShapeParameter param, const std::string& shapeName, const std::string& fieldName, Color& color) const
 {
   std::string colorStr = parsed.stringValue(param);
   uint32_t abgr;
@@ -1483,7 +1483,7 @@ int Parser::getColor_(const ParsedShape& parsed, ShapeParameter param, const std
     printError_(parsed.lineNumber(), "Invalid " + fieldName + ": " + colorStr + " for " + shapeName);
     return 1;
   }
-  color = GogShape::Color(abgr & 0xff, (abgr >> 8) & 0xff, (abgr >> 16) & 0xff, (abgr >> 24) & 0xff);
+  color = Color(abgr & 0xff, (abgr >> 8) & 0xff, (abgr >> 16) & 0xff, (abgr >> 24) & 0xff);
   return 0;
 }
 

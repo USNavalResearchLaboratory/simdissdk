@@ -193,9 +193,9 @@ public:
   size_t lineNumber() const;
 
   /** Sets the name of the shape, e.g. "line" or "annotation" */
-  void setShape(GogShape::ShapeType shape);
+  void setShape(ShapeType shape);
   /** Retrieve the type of shape, e.g. "line" or "annotation". */
-  GogShape::ShapeType shape() const;
+  ShapeType shape() const;
 
   /** Saves a configuration string, such as "linewidth" or "fillcolor" */
   void set(ShapeParameter key, const std::string& value);
@@ -228,7 +228,7 @@ public:
   const std::vector<std::string>& comments() const;
 
 private:
-  GogShape::ShapeType shape_;
+  ShapeType shape_;
   std::map<ShapeParameter, std::string> stringParams_;
   std::map<ShapeParameter, PositionStrings> positionParams_;
   std::vector<PositionStrings> points_;

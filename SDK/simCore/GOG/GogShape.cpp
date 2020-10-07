@@ -271,7 +271,7 @@ std::string GogShape::shapeTypeToString(ShapeType shapeType)
   return "";
 }
 
-GogShape::ShapeType GogShape::stringToShapeType(const std::string& shapeType)
+ShapeType GogShape::stringToShapeType(const std::string& shapeType)
 {
   if (shapeType == "annotation")
     return ShapeType::ANNOTATION;
@@ -348,7 +348,7 @@ Points::Points(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Points::shapeType() const
+ShapeType Points::shapeType() const
 {
   return ShapeType::POINTS;
 }
@@ -477,7 +477,7 @@ Line::Line(bool relative)
 {
 }
 
-GogShape::ShapeType Line::shapeType() const
+ShapeType Line::shapeType() const
 {
   return ShapeType::LINE;
 }
@@ -487,7 +487,7 @@ LineSegs::LineSegs(bool relative)
 {
 }
 
-GogShape::ShapeType LineSegs::shapeType() const
+ShapeType LineSegs::shapeType() const
 {
   return ShapeType::LINESEGS;
 }
@@ -497,7 +497,7 @@ Polygon::Polygon(bool relative)
 {
 }
 
-GogShape::ShapeType Polygon::shapeType() const
+ShapeType Polygon::shapeType() const
 {
   return ShapeType::POLYGON;
 }
@@ -537,7 +537,7 @@ Circle::Circle(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Circle::shapeType() const
+ShapeType Circle::shapeType() const
 {
   return ShapeType::CIRCLE;
 }
@@ -549,7 +549,7 @@ Sphere::Sphere(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Sphere::shapeType() const
+ShapeType Sphere::shapeType() const
 {
   return ShapeType::SPHERE;
 }
@@ -561,7 +561,7 @@ Hemisphere::Hemisphere(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Hemisphere::shapeType() const
+ShapeType Hemisphere::shapeType() const
 {
   return ShapeType::HEMISPHERE;
 }
@@ -573,7 +573,7 @@ Orbit::Orbit(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Orbit::shapeType() const
+ShapeType Orbit::shapeType() const
 {
   return ShapeType::ORBIT;
 }
@@ -646,7 +646,7 @@ Arc::Arc(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Arc::shapeType() const
+ShapeType Arc::shapeType() const
 {
   return ShapeType::ARC;
 }
@@ -658,7 +658,7 @@ Ellipse::Ellipse(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Ellipse::shapeType() const
+ShapeType Ellipse::shapeType() const
 {
   return ShapeType::ELLIPSE;
 }
@@ -671,7 +671,7 @@ Cylinder::Cylinder(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Cylinder::shapeType() const
+ShapeType Cylinder::shapeType() const
 {
   return ShapeType::CYLINDER;
 }
@@ -709,7 +709,7 @@ Cone::Cone(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Cone::shapeType() const
+ShapeType Cone::shapeType() const
 {
   return ShapeType::CONE;
 }
@@ -721,7 +721,7 @@ Ellipsoid::Ellipsoid(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Ellipsoid::shapeType() const
+ShapeType Ellipsoid::shapeType() const
 {
   return ShapeType::ELLIPSOID;
 }
@@ -756,7 +756,7 @@ Annotation::Annotation(bool relative)
   setRelative_(relative);
 }
 
-GogShape::ShapeType Annotation::shapeType() const
+ShapeType Annotation::shapeType() const
 {
   return ShapeType::ANNOTATION;
 }
@@ -871,7 +871,7 @@ LatLonAltBox::LatLonAltBox()
   setRelative_(false);
 }
 
-GogShape::ShapeType LatLonAltBox::shapeType() const
+ShapeType LatLonAltBox::shapeType() const
 {
   return ShapeType::LATLONALTBOX;
 }
@@ -950,7 +950,7 @@ ImageOverlay::ImageOverlay()
   setRelative_(false);
 }
 
-GogShape::ShapeType ImageOverlay::shapeType() const
+ShapeType ImageOverlay::shapeType() const
 {
   return ShapeType::IMAGEOVERLAY;
 }

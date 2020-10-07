@@ -104,14 +104,14 @@ int testGeneralSyntax()
   parser.parse(mixedCaseCircle, shapes);
   rv += SDK_ASSERT(!shapes.empty());
   if (!shapes.empty())
-    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::GogShape::ShapeType::CIRCLE);
+    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::CIRCLE);
   shapes.clear();
   std::stringstream mixedCaseLine;
   mixedCaseLine << "StarT\n LINE\n ll 22.2 23.2\n LL 22.5 25.2\nenD\n";
   parser.parse(mixedCaseLine, shapes);
   rv += SDK_ASSERT(!shapes.empty());
   if (!shapes.empty())
-    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::GogShape::ShapeType::LINE);
+    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::LINE);
   shapes.clear();
 
   return rv;
@@ -131,9 +131,9 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
   double altOffset = 10.;
   rv += SDK_ASSERT(shape->getAltitudeOffset(altOffset) != 0);
   rv += SDK_ASSERT(altOffset == 0.);
-  simCore::GOG::GogShape::AltitudeMode mode = simCore::GOG::GogShape::AltitudeMode::CLAMP_TO_GROUND;
+  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::CLAMP_TO_GROUND;
   rv += SDK_ASSERT(shape->getAltitudeMode(mode) != 0);
-  rv += SDK_ASSERT(mode == simCore::GOG::GogShape::AltitudeMode::NONE);
+  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::NONE);
   simCore::Vec3 refPos(25., 25., 25.);
   rv += SDK_ASSERT(shape->getReferencePosition(refPos) != 0);
   // default ref postiion is BSTUR
@@ -186,18 +186,18 @@ int testFillableOptionalFieldsNotSet(const simCore::GOG::FillableShape* shape)
   int lineWidth = 0;
   rv += SDK_ASSERT(shape->getLineWidth(lineWidth) != 0);
   rv += SDK_ASSERT(lineWidth == 1);
-  simCore::GOG::FillableShape::LineStyle style = simCore::GOG::FillableShape::LineStyle::DASHED;
+  simCore::GOG::LineStyle style = simCore::GOG::LineStyle::DASHED;
   rv += SDK_ASSERT(shape->getLineStyle(style) != 0);
-  rv += SDK_ASSERT(style == simCore::GOG::FillableShape::LineStyle::SOLID);
-  simCore::GOG::GogShape::Color color(0, 255, 255, 0);
+  rv += SDK_ASSERT(style == simCore::GOG::LineStyle::SOLID);
+  simCore::GOG::Color color(0, 255, 255, 0);
   rv += SDK_ASSERT(shape->getLineColor(color) != 0);
-  rv += SDK_ASSERT(color == simCore::GOG::GogShape::Color());
+  rv += SDK_ASSERT(color == simCore::GOG::Color());
   bool filled = true;
   rv += SDK_ASSERT(shape->getIsFilled(filled) != 0);
   rv += SDK_ASSERT(!filled);
-  simCore::GOG::GogShape::Color fillColor(0, 255, 255, 0);
+  simCore::GOG::Color fillColor(0, 255, 255, 0);
   rv += SDK_ASSERT(shape->getFillColor(fillColor) != 0);
-  rv += SDK_ASSERT(fillColor == simCore::GOG::GogShape::Color());
+  rv += SDK_ASSERT(fillColor == simCore::GOG::Color());
   return rv;
 }
 
@@ -281,9 +281,9 @@ auto testPointBasedShapeMinimalFieldsFunc = [](const simCore::GOG::PointBasedSha
   rv += SDK_ASSERT(comparePositionVectors(positions, positionsOut));
 
   // verify that tessellation has not been set
-  simCore::GOG::PointBasedShape::TessellationStyle style = simCore::GOG::PointBasedShape::TessellationStyle::NONE;
+  simCore::GOG::TessellationStyle style = simCore::GOG::TessellationStyle::NONE;
   rv += SDK_ASSERT(shape->getTessellation(style) != 0);
-  rv += SDK_ASSERT(style == simCore::GOG::PointBasedShape::TessellationStyle::NONE);
+  rv += SDK_ASSERT(style == simCore::GOG::TessellationStyle::NONE);
   return rv;
 };
 
@@ -298,9 +298,9 @@ auto testPointsShapeMinimalFieldsFunc = [](const simCore::GOG::Points* shape, co
   int pointSize = 0;
   rv += SDK_ASSERT(shape->getPointSize(pointSize) != 0);
   rv += SDK_ASSERT(pointSize == 1);
-  simCore::GOG::GogShape::Color color(0, 255, 255, 0);
+  simCore::GOG::Color color(0, 255, 255, 0);
   rv += SDK_ASSERT(shape->getColor(color) != 0);
-  rv += SDK_ASSERT(color == simCore::GOG::GogShape::Color());
+  rv += SDK_ASSERT(color == simCore::GOG::Color());
 
   return rv;
 };
@@ -458,18 +458,18 @@ int testMinimalShapes()
 }
 
 // some shape types can not follow, others implement follow depending on relative state
-bool canFollow(simCore::GOG::GogShape::ShapeType type, bool relative)
+bool canFollow(simCore::GOG::ShapeType type, bool relative)
 {
   switch (type)
   {
-  case simCore::GOG::GogShape::ShapeType::ANNOTATION:
-  case simCore::GOG::GogShape::ShapeType::LATLONALTBOX:
-  case simCore::GOG::GogShape::ShapeType::IMAGEOVERLAY:
+  case simCore::GOG::ShapeType::ANNOTATION:
+  case simCore::GOG::ShapeType::LATLONALTBOX:
+  case simCore::GOG::ShapeType::IMAGEOVERLAY:
     return false;
-  case simCore::GOG::GogShape::ShapeType::LINE:
-  case simCore::GOG::GogShape::ShapeType::LINESEGS:
-  case simCore::GOG::GogShape::ShapeType::POLYGON:
-  case simCore::GOG::GogShape::ShapeType::POINTS:
+  case simCore::GOG::ShapeType::LINE:
+  case simCore::GOG::ShapeType::LINESEGS:
+  case simCore::GOG::ShapeType::POLYGON:
+  case simCore::GOG::ShapeType::POINTS:
     return relative;
   default:
     return true;
@@ -517,9 +517,9 @@ int testBaseOptionalFields(const simCore::GOG::GogShape* shape)
   double altOffset = 0.;
   rv += SDK_ASSERT(shape->getAltitudeOffset(altOffset) == 0);
   rv += SDK_ASSERT(altOffset == 120.);
-  simCore::GOG::GogShape::AltitudeMode mode = simCore::GOG::GogShape::AltitudeMode::NONE;
+  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
   rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
-  rv += SDK_ASSERT(mode == simCore::GOG::GogShape::AltitudeMode::RELATIVE_TO_GROUND);
+  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::RELATIVE_TO_GROUND);
   simCore::Vec3 scale;
   rv += SDK_ASSERT(shape->getScale(scale) == 0);
   rv += SDK_ASSERT(scale == simCore::Vec3(2., 1.3, 0.5));
@@ -564,21 +564,21 @@ auto testFillableShapeOptionalFieldsFunc = [](const simCore::GOG::FillableShape*
   rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
   rv += SDK_ASSERT(lineWidth == 4);
 
-  simCore::GOG::FillableShape::LineStyle style = simCore::GOG::FillableShape::LineStyle::SOLID;
+  simCore::GOG::LineStyle style = simCore::GOG::LineStyle::SOLID;
   rv += SDK_ASSERT(shape->getLineStyle(style) == 0);
-  rv += SDK_ASSERT(style == simCore::GOG::FillableShape::LineStyle::DASHED);
+  rv += SDK_ASSERT(style == simCore::GOG::LineStyle::DASHED);
 
-  simCore::GOG::GogShape::Color lineColor;
+  simCore::GOG::Color lineColor;
   rv += SDK_ASSERT(shape->getLineColor(lineColor) == 0);
-  rv += SDK_ASSERT(lineColor == simCore::GOG::GogShape::Color(0, 255, 0, 255));
+  rv += SDK_ASSERT(lineColor == simCore::GOG::Color(0, 255, 0, 255));
 
   bool filled = false;
   rv += SDK_ASSERT(shape->getIsFilled(filled) == 0);
   rv += SDK_ASSERT(filled);
 
-  simCore::GOG::GogShape::Color fillColor;
+  simCore::GOG::Color fillColor;
   rv += SDK_ASSERT(shape->getFillColor(fillColor) == 0);
-  rv += SDK_ASSERT(fillColor == simCore::GOG::GogShape::Color(255, 255, 0, 255));
+  rv += SDK_ASSERT(fillColor == simCore::GOG::Color(255, 255, 0, 255));
 
   return rv;
 };
@@ -597,9 +597,9 @@ auto testCircularShapeOptionalFieldsFunc = [](const simCore::GOG::CircularShape*
 auto testPointBasedShapeOptionalFieldsFunc = [](const simCore::GOG::PointBasedShape* shape) -> int
 {
   int rv = testFillableShapeOptionalFieldsFunc(shape);
-  simCore::GOG::PointBasedShape::TessellationStyle style = simCore::GOG::PointBasedShape::TessellationStyle::NONE;
+  simCore::GOG::TessellationStyle style = simCore::GOG::TessellationStyle::NONE;
   rv += SDK_ASSERT(shape->getTessellation(style) == 0);
-  rv += SDK_ASSERT(style == simCore::GOG::PointBasedShape::TessellationStyle::GREAT_CIRCLE);
+  rv += SDK_ASSERT(style == simCore::GOG::TessellationStyle::GREAT_CIRCLE);
   return rv;
 };
 
@@ -611,9 +611,9 @@ auto testPointsOptionalFieldsFunc = [](const simCore::GOG::Points* shape) -> int
   int pointSize = 0;
   rv += SDK_ASSERT(shape->getPointSize(pointSize) == 0);
   rv += SDK_ASSERT(pointSize == 5);
-  simCore::GOG::GogShape::Color color;
+  simCore::GOG::Color color;
   rv += SDK_ASSERT(shape->getColor(color) == 0);
-  rv += SDK_ASSERT(color == simCore::GOG::GogShape::Color(192, 0, 192, 255));
+  rv += SDK_ASSERT(color == simCore::GOG::Color(192, 0, 192, 255));
 
   return rv;
 };
@@ -883,15 +883,15 @@ int testAnnotation()
       int textSize = 0;
       rv += SDK_ASSERT(anno->getTextSize(textSize) != 0);
       rv += SDK_ASSERT(textSize == 15);
-      simCore::GOG::GogShape::Color textColor(0,255,255,0);
+      simCore::GOG::Color textColor(0,255,255,0);
       rv += SDK_ASSERT(anno->getTextColor(textColor) != 0);
-      rv += SDK_ASSERT(textColor == simCore::GOG::GogShape::Color());
-      simCore::GOG::GogShape::Color outlineColor(0,255,255,0);
+      rv += SDK_ASSERT(textColor == simCore::GOG::Color());
+      simCore::GOG::Color outlineColor(0,255,255,0);
       rv += SDK_ASSERT(anno->getOutlineColor(outlineColor) != 0);
-      rv += SDK_ASSERT(outlineColor == simCore::GOG::GogShape::Color());
-      simCore::GOG::Annotation::OutlineThickness thickness = simCore::GOG::Annotation::OutlineThickness::THICK;
+      rv += SDK_ASSERT(outlineColor == simCore::GOG::Color());
+      simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::THICK;
       rv += SDK_ASSERT(anno->getOutlineThickness(thickness) != 0);
-      rv += SDK_ASSERT(thickness == simCore::GOG::Annotation::OutlineThickness::NONE);
+      rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::NONE);
       std::string iconFile = "someFile";
       rv += SDK_ASSERT(anno->getIconFile(iconFile) != 0);
       rv += SDK_ASSERT(iconFile.empty());
@@ -921,15 +921,15 @@ int testAnnotation()
       int textSize = 0;
       rv += SDK_ASSERT(anno->getTextSize(textSize) == 0);
       rv += SDK_ASSERT(textSize == 24);
-      simCore::GOG::GogShape::Color textColor;
+      simCore::GOG::Color textColor;
       rv += SDK_ASSERT(anno->getTextColor(textColor) == 0);
-      rv += SDK_ASSERT(textColor == simCore::GOG::GogShape::Color(255, 160, 255, 160));
-      simCore::GOG::GogShape::Color outlineColor;
+      rv += SDK_ASSERT(textColor == simCore::GOG::Color(255, 160, 255, 160));
+      simCore::GOG::Color outlineColor;
       rv += SDK_ASSERT(anno->getOutlineColor(outlineColor) == 0);
-      rv += SDK_ASSERT(outlineColor == simCore::GOG::GogShape::Color(0, 0, 255, 255));
-      simCore::GOG::Annotation::OutlineThickness thickness = simCore::GOG::Annotation::OutlineThickness::NONE;
+      rv += SDK_ASSERT(outlineColor == simCore::GOG::Color(0, 0, 255, 255));
+      simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::NONE;
       rv += SDK_ASSERT(anno->getOutlineThickness(thickness) == 0);
-      rv += SDK_ASSERT(thickness == simCore::GOG::Annotation::OutlineThickness::THIN);
+      rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::THIN);
       std::string iconFile;
       rv += SDK_ASSERT(anno->getIconFile(iconFile) == 0);
       rv += SDK_ASSERT(iconFile == "icon.png");
@@ -972,15 +972,15 @@ int testAnnotation()
         int textSize = 0;
         rv += SDK_ASSERT(anno->getTextSize(textSize) == 0);
         rv += SDK_ASSERT(textSize == 24);
-        simCore::GOG::GogShape::Color textColor;
+        simCore::GOG::Color textColor;
         rv += SDK_ASSERT(anno->getTextColor(textColor) == 0);
-        rv += SDK_ASSERT(textColor == simCore::GOG::GogShape::Color(255, 160, 255, 160));
-        simCore::GOG::GogShape::Color outlineColor;
+        rv += SDK_ASSERT(textColor == simCore::GOG::Color(255, 160, 255, 160));
+        simCore::GOG::Color outlineColor;
         rv += SDK_ASSERT(anno->getOutlineColor(outlineColor) == 0);
-        rv += SDK_ASSERT(outlineColor == simCore::GOG::GogShape::Color(0, 0, 255, 255));
-        simCore::GOG::Annotation::OutlineThickness thickness = simCore::GOG::Annotation::OutlineThickness::NONE;
+        rv += SDK_ASSERT(outlineColor == simCore::GOG::Color(0, 0, 255, 255));
+        simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::NONE;
         rv += SDK_ASSERT(anno->getOutlineThickness(thickness) == 0);
-        rv += SDK_ASSERT(thickness == simCore::GOG::Annotation::OutlineThickness::THIN);
+        rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::THIN);
         double priority = 0.;
         rv += SDK_ASSERT(anno->getPriority(priority) == 0);
         rv += SDK_ASSERT(priority == 10.);
@@ -1145,9 +1145,9 @@ int testUnits()
 auto testExtrudeFunc = [](const simCore::GOG::GogShape* shape) -> int
 {
   int rv = 0;
-  simCore::GOG::GogShape::AltitudeMode mode = simCore::GOG::GogShape::AltitudeMode::NONE;
+  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
   rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
-  rv += SDK_ASSERT(mode == simCore::GOG::GogShape::AltitudeMode::EXTRUDE);
+  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::EXTRUDE);
   double extrudeHeight = 0.;
   rv += SDK_ASSERT(shape->getExtrudeHeight(extrudeHeight) == 0);
   rv += SDK_ASSERT(extrudeHeight == 250.);
@@ -1158,9 +1158,9 @@ auto testExtrudeFunc = [](const simCore::GOG::GogShape* shape) -> int
 auto testClampFunc = [](const simCore::GOG::GogShape* shape) -> int
 {
   int rv = 0;
-  simCore::GOG::GogShape::AltitudeMode mode = simCore::GOG::GogShape::AltitudeMode::NONE;
+  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
   rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
-  rv += SDK_ASSERT(mode == simCore::GOG::GogShape::AltitudeMode::CLAMP_TO_GROUND);
+  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::CLAMP_TO_GROUND);
   return rv;
 };
 

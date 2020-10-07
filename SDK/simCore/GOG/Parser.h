@@ -96,7 +96,7 @@ private:
   /// Return true if the specified token is a comment
   bool isComment_(const std::string& token) const;
   /// Get the color value from the specified parameter in the parsed shape; returns 0 on success, non-zero otherwise
-  int getColor_(const ParsedShape& parsed, ShapeParameter param, const std::string& shapeName, const std::string& fieldName, GogShape::Color& color) const;
+  int getColor_(const ParsedShape& parsed, ShapeParameter param, const std::string& shapeName, const std::string& fieldName, Color& color) const;
   // Get the positions from the specified PositionStrings, applying unit conversions if necessary; returns 0 on success, non-zero otherwise
   int getPosition_(const PositionStrings& pos, bool relative, const UnitsState& units, simCore::Vec3& position) const;
   /// Validate that the specified string converts to a double properly, print error on failure; return 0 on success, non-zero otherwise

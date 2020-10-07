@@ -28,7 +28,7 @@
 namespace simCore { namespace GOG {
 
 ParsedShape::ParsedShape()
-  : shape_(GogShape::ShapeType::UNKNOWN),
+  : shape_(ShapeType::UNKNOWN),
     pointType_(UNKNOWN),
     lineNumber_(0)
 {
@@ -36,7 +36,7 @@ ParsedShape::ParsedShape()
 
 void ParsedShape::reset()
 {
-  shape_ = GogShape::ShapeType::UNKNOWN;
+  shape_ = ShapeType::UNKNOWN;
   stringParams_.clear();
   positionParams_.clear();
   points_.clear();
@@ -110,12 +110,12 @@ bool ParsedShape::hasValue(ShapeParameter key) const
     (positionParams_.find(key) != positionParams_.end());
 }
 
-void ParsedShape::setShape(GogShape::ShapeType shape)
+void ParsedShape::setShape(ShapeType shape)
 {
   shape_ = shape;
 }
 
-GogShape::ShapeType ParsedShape::shape() const
+ShapeType ParsedShape::shape() const
 {
   return shape_;
 }

@@ -59,54 +59,78 @@
 
 namespace simCore { namespace GOG {
 
+/// Defines special behavior pertaining to a shape's altitude
+enum class AltitudeMode
+{
+  NONE = 0,
+  CLAMP_TO_GROUND,
+  RELATIVE_TO_GROUND,
+  EXTRUDE
+};
+
+/// Shape being represented
+enum class ShapeType
+{
+  UNKNOWN = 0,
+  ANNOTATION,
+  POINTS,
+  LINE,
+  LINESEGS,
+  POLYGON,
+  ARC,
+  CIRCLE,
+  ELLIPSE,
+  ELLIPSOID,
+  CYLINDER,
+  SPHERE,
+  HEMISPHERE,
+  LATLONALTBOX,
+  CONE,
+  IMAGEOVERLAY,
+  ORBIT
+};
+
+// Define's a GOG color's RGBA values, 0-255
+struct Color
+{
+  int red;
+  int green;
+  int blue;
+  int alpha;
+
+  Color(int redIn, int greenIn, int blueIn, int alphaIn) : red(redIn), green(greenIn), blue(blueIn), alpha(alphaIn) {};
+  Color() : Color(255, 0, 0, 255) {}
+  bool operator==(const Color& rhs) const { return red == rhs.red && green == rhs.green && blue == rhs.blue && alpha == rhs.alpha; }
+};
+
+/// Defines how the line stipple is drawn for a FillableShape
+enum class LineStyle
+{
+  SOLID = 0,
+  DASHED,
+  DOTTED
+};
+
+/// Calculation to use when applying tessellation for PointBasedShape
+enum class TessellationStyle
+{
+  NONE = 0,
+  RHUMBLINE,
+  GREAT_CIRCLE
+};
+
+/// Thickness style of the text outline for an Annotation
+enum class OutlineThickness
+{
+  NONE = 0,
+  THIN,
+  THICK
+};
+
 /// Base class for the GOG shapes, containing common fields that apply to all shapes
 class SDKCORE_EXPORT GogShape
 {
 public:
-
-  /// Defines special behavior pertaining to a shape's altitude
-  enum class AltitudeMode
-  {
-    NONE = 0,
-    CLAMP_TO_GROUND,
-    RELATIVE_TO_GROUND,
-    EXTRUDE
-  };
-
-  /// Shape being represented
-  enum class ShapeType
-  {
-    UNKNOWN = 0,
-    ANNOTATION,
-    POINTS,
-    LINE,
-    LINESEGS,
-    POLYGON,
-    ARC,
-    CIRCLE,
-    ELLIPSE,
-    ELLIPSOID,
-    CYLINDER,
-    SPHERE,
-    HEMISPHERE,
-    LATLONALTBOX,
-    CONE,
-    IMAGEOVERLAY,
-    ORBIT
-  };
-
-  // Define's a GOG color's RGBA values, 0-255
-  struct Color
-  {
-    int red;
-    int green;
-    int blue;
-    int alpha;
-
-    Color(int redIn, int greenIn, int blueIn, int alphaIn) : red(redIn), green(greenIn), blue(blueIn), alpha(alphaIn) {};
-    Color() : Color(255, 0, 0, 255) {}
-    bool operator==(const Color& rhs) const { return red == rhs.red && green == rhs.green && blue == rhs.blue && alpha == rhs.alpha; }
-  };
 
   virtual ~GogShape();
 
@@ -335,14 +359,6 @@ public:
 class SDKCORE_EXPORT FillableShape : public OutlinedShape
 {
 public:
-  /// Defines how the line stipple is drawn
-  enum class LineStyle
-  {
-    SOLID = 0,
-    DASHED,
-    DOTTED
-  };
-
   /**
   * Get the line width in pixels; if value is not set, default value is returned.
   * @return 0 if value was set, non-zero otherwise
@@ -399,14 +415,6 @@ private:
 class SDKCORE_EXPORT PointBasedShape : public FillableShape
 {
 public:
-  /// Calculation to use when applying tessellation
-  enum class TessellationStyle
-  {
-    NONE = 0,
-    RHUMBLINE,
-    GREAT_CIRCLE
-  };
-
   /// Get the positions of points in the shape; in lla radians if absolute or xyz meters if relative
   const std::vector<simCore::Vec3>& points() const;
   /// Add a point position; in lla radians if absolute or xyz meters if relative
@@ -669,14 +677,6 @@ private:
 class SDKCORE_EXPORT Annotation : public GogShape
 {
 public:
-  /// Thickness style of the text outline
-  enum class OutlineThickness
-  {
-    NONE = 0,
-    THIN,
-    THICK
-  };
-
   explicit Annotation(bool relative);
 
   virtual ShapeType shapeType() const;
