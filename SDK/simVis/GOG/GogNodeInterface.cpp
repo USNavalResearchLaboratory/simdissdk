@@ -207,7 +207,7 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
     bool outlinedState = true;
     // always set outlined, use default if not set in shape
     outlined->getIsOutlined(outlinedState);
-    setOutlineState(outlined);
+    setOutlineState(outlinedState);
   }
 
   const simCore::GOG::FillableShape* fillable = dynamic_cast<const simCore::GOG::FillableShape*>(shape_.get());
