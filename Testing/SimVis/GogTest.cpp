@@ -31,9 +31,11 @@
 #include "simCore/Calc/Units.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Version.h"
+#include "simCore/GOG/Parser.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Tokenizer.h"
 #include "simVis/GOG/GogNodeInterface.h"
+#include "simVis/GOG/Loader.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Parser.h"
 #include "simVis/Registry.h"
@@ -91,6 +93,23 @@ simVis::GOG::GogNodeInterfacePtr parseGogFile(simVis::GOG::Parser& parser, simVi
   // don't have to delete the pointer in the gogs vector, since the shared_ptr takes ownership
   if (!gogs.empty())
     gogPtr.reset(gogs.front());
+  return gogPtr;
+}
+
+// returns the first GOG shape parsed from the specified string, using the simCore::GOG::Parser
+simVis::GOG::GogNodeInterfacePtr parseGogFileWithCore(bool attached, const std::string& gog, int& rv)
+{
+  std::stringstream input;
+  input << gog;
+  simCore::GOG::Parser parser;
+  simVis::GOG::Loader loader(parser);
+  simVis::GOG::Loader::GogNodeVector gogs;
+  loader.loadGogs(input, attached, gogs);
+
+  simVis::GOG::GogNodeInterfacePtr gogPtr;
+  // don't have to delete the pointer in the gogs vector, since the shared_ptr takes ownership
+  if (!gogs.empty())
+    gogPtr = gogs.front();
   return gogPtr;
 }
 
@@ -177,11 +196,10 @@ int testLocalGeometry(osg::Node* gog, const std::vector<osg::Vec3d>& points)
   return rv;
 }
 
-int testShapes()
+int testShapes(bool useCore)
 {
   int rv = 0;
   simVis::GOG::Parser parser;
-
   // test points
   std::string pointGogFile = FILE_VERSION +
     "start\n points\n lla 24.1 44.3 0.\n lla \"26.0 N\" \"55.0 E\" 8.\n pointsize 24\n 3d name point 1\n altitudeunits m\n" +
@@ -243,7 +261,7 @@ int testShapes()
     "start\n line\n lla 26.13568698 55.28 5000.\n lla \"26.0 N\" \"55.0 E\" 5000.\n" + LINE_ATTRIBUTES + "3d name line 1\n altitudeunits m\n" +
     TEXT_ATTRIBUTES + // add some invalid items
     "end\n";
-  simVis::GOG::GogNodeInterfacePtr lineGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, lineGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr lineGog = (useCore ? parseGogFileWithCore(false, lineGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, lineGogFile, rv));
   rv += SDK_ASSERT(lineGog != nullptr);
   if (lineGog)
   {
@@ -270,7 +288,7 @@ int testShapes()
     "start\n line\n xyz 500 500 0\n xyz -500 50 0\n rangeunits m\n" + LINE_ATTRIBUTES + "3d name line relative 1\n" +
     TEXT_ATTRIBUTES + // add some invalid items
     "end\n";
-  simVis::GOG::GogNodeInterfacePtr lineRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, lineRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr lineRelGog = (useCore ? parseGogFileWithCore(true, lineRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, lineRelGogFile, rv));
   rv += SDK_ASSERT(lineRelGog != nullptr);
   if (lineRelGog)
   {
@@ -331,7 +349,7 @@ int testShapes()
   // test circle
   std::string circleGogFile = FILE_VERSION +
     "start\n circle\n centerlla 25.2 53.2 0.\n radius 500\n linewidth 6\n 3d name circle 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr circleGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, circleGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr circleGog = (useCore ? parseGogFileWithCore(false, circleGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, circleGogFile, rv));
   rv += SDK_ASSERT(circleGog != nullptr);
   if (circleGog)
   {
@@ -667,7 +685,7 @@ int testShapes()
   // test annotation
   std::string annotationGogFile = FILE_VERSION +
     "start\n annotation label 1\n centerlla 25.2 53.2 0.\n linecolor hex 0xffff00ff\n" + TEXT_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr annotationGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, annotationGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr annotationGog = (useCore ? parseGogFileWithCore(false, annotationGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, annotationGogFile, rv));
   rv += SDK_ASSERT(annotationGog != nullptr);
   if (annotationGog)
   {
@@ -695,7 +713,7 @@ int testShapes()
   // test relative annotation
   std::string annotationRelGogFile = FILE_VERSION +
     "start\n annotation label relative 1\n centerxyz 10 0 0.\n linecolor hex 0xffff00ff\n rangeunits m\n" + TEXT_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr annotationRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, annotationRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr annotationRelGog = (useCore ? parseGogFileWithCore(true, annotationRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, annotationRelGogFile, rv));
   rv += SDK_ASSERT(annotationRelGog != nullptr);
   if (annotationRelGog)
   {
@@ -1280,7 +1298,8 @@ int GogTest(int argc, char* argv[])
   simCore::checkVersionThrow();
 
   // Run tests
-  rv += testShapes();
+  rv += testShapes(false);
+  rv += testShapes(true);
   rv += testLoadRelativeAndAbsolute();
   rv += testParseMetaData();
   rv += testAltitudeUnits();

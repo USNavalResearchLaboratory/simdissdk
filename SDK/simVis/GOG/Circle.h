@@ -45,6 +45,9 @@ public:
     const GOGContext&        context,
     const GogMetaData&       metaData,
     osgEarth::MapNode*       mapNode);
+
+  /** Create the circle from the shape object */
+  static GogNodeInterface* createCircle(const simCore::GOG::Circle& circle, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };
 
 } } // namespace simVis::GOG

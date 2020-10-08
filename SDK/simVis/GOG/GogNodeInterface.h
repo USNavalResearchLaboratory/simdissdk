@@ -28,6 +28,7 @@
 #include <osg/ref_ptr>
 #include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/Units.h"
+#include "simCore/GOG/GogShape.h"
 #include "simData/DataTypes.h"
 #include "simVis/Utils.h"
 #include "simVis/GOG/GOGNode.h"
@@ -103,6 +104,11 @@ public:
 
   /** Destructor */
   virtual ~GogNodeInterface() {}
+
+  /** Get a pointer to the shape object, may be NULL */
+  const simCore::GOG::GogShape* shapeObject() const;
+  /** Set the GogShape object, which updates the node's style */
+  void setShapeObject(simCore::GOG::GogShapePtr shape);
 
   /** Font to use if not defined in annotation block */
   void setDefaultFont(const std::string& fontName);
@@ -462,6 +468,7 @@ protected: // methods
 protected: // data
   osg::ref_ptr<osg::Node> osgNode_;  ///< reference to the basic osg::Node. Keep in ref_ptr so this instance will hold on the memory even if it's removed from the scene
   simVis::GOG::GogMetaData metaData_;  ///< meta data returned by the Parser
+  simCore::GOG::GogShapePtr shape_; ///< parsed shape object
   bool filled_; ///< cache fill state of the shape for quick reference
   bool extruded_; ///< cache extruded state of the shape for quick reference
   bool outlined_; ///< cache outlined state of the shape for quick reference

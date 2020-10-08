@@ -57,16 +57,9 @@
 #include "simVis/Utils.h"
 #include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GOGNode.h"
-#include "simVis/GOG/Arc.h"
-#include "simVis/GOG/Circle.h"
-#include "simVis/GOG/Ellipse.h"
-#include "simVis/GOG/Ellipsoid.h"
-#include "simVis/GOG/Line.h"
-#include "simVis/GOG/LineSegs.h"
+#include "simVis/GOG/LoaderUtils.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Parser.h"
-#include "simVis/GOG/Points.h"
-#include "simVis/GOG/Polygon.h"
 #include "simVis/GOG/GogNodeInterface.h"
 
 #ifndef GL_CLIP_DISTANCE0
@@ -162,6 +155,138 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
   }
 }
 
+const simCore::GOG::GogShape* GogNodeInterface::shapeObject() const
+{
+  return shape_.get();
+}
+
+void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
+{
+  shape_ = shape;
+  if (!shape_)
+    return;
+
+  // update meta data with the shape type
+  metaData_.shape = LoaderUtils::convertToVisShapeType(shape_->shapeType());
+
+  // now update style
+
+  // for performance reasons, cache all style updates, apply once when done
+  beginStyleUpdates_();
+
+  std::string name;
+  // always set the name, use default if not set
+  shape_->getName(name);
+  osgNode_->setName(name);
+
+  bool draw = true;
+  // always set draw, use default if not set
+  shape_->getIsDrawn(draw);
+  setDrawState(draw);
+
+  bool depthBuffer = false;
+  // always set depth buffer, use default if not set
+  shape_->getIsDepthBufferActive(depthBuffer);
+  setDepthBuffer(depthBuffer);
+
+  double altitudeOffset = 0.;
+  if (shape_->getAltitudeOffset(altitudeOffset) == 0)
+    setAltOffset(altitudeOffset);
+
+  simCore::GOG::AltitudeMode altMode = simCore::GOG::AltitudeMode::NONE;
+  if (shape_->getAltitudeMode(altMode) == 0)
+    setAltitudeMode(LoaderUtils::convertToVisAltitudeMode(altMode));
+
+  double extrudeHeight = 0.;
+  if (shape_->getExtrudeHeight(extrudeHeight) == 0)
+    setExtrudedHeight(extrudeHeight);
+
+  const simCore::GOG::OutlinedShape* outlined = dynamic_cast<const simCore::GOG::OutlinedShape*>(shape_.get());
+  if (outlined != nullptr)
+  {
+    bool outlinedState = true;
+    // always set outlined, use default if not set in shape
+    outlined->getIsOutlined(outlinedState);
+    setOutlineState(outlined);
+  }
+
+  const simCore::GOG::FillableShape* fillable = dynamic_cast<const simCore::GOG::FillableShape*>(shape_.get());
+  if (fillable != nullptr)
+  {
+    int lineWidth = 0;
+    if (fillable->getLineWidth(lineWidth) == 0)
+      setLineWidth(lineWidth);
+
+    simCore::GOG::Color lineColor;
+    if (fillable->getLineColor(lineColor) == 0)
+      setLineColor(LoaderUtils::convertToOsgColor(lineColor));
+
+    simCore::GOG::LineStyle style = simCore::GOG::LineStyle::SOLID;
+    if (fillable->getLineStyle(style) == 0)
+      setLineStyle(LoaderUtils::convertToVisLineStyle(style));
+
+    bool filled = false;
+    fillable->getIsFilled(filled);
+    // always set filled state, use default if not set in shape
+    setFilledState(filled);
+
+    simCore::GOG::Color fillColor;
+    if (fillable->getFillColor(fillColor) == 0)
+      setFillColor(LoaderUtils::convertToOsgColor(fillColor));
+  }
+
+  const simCore::GOG::PointBasedShape* lined = dynamic_cast<const simCore::GOG::PointBasedShape*>(shape_.get());
+  if (lined != nullptr)
+  {
+    simCore::GOG::TessellationStyle tessellation = simCore::GOG::TessellationStyle::NONE;
+    if (lined->getTessellation(tessellation) == 0)
+    {
+      // force non-zero crease angle for extruded tesselated line, we want to only draw posts at actual vertices
+      if (tessellation != simCore::GOG::TessellationStyle::NONE)
+        style_.getOrCreateSymbol<osgEarth::LineSymbol>()->creaseAngle() = 1.0f;
+      setTessellation(LoaderUtils::convertToVisTessellation(tessellation));
+    }
+  }
+
+  const simCore::GOG::Points* points = dynamic_cast<const simCore::GOG::Points*>(shape_.get());
+  if (points)
+  {
+    int pointSize = 1;
+    if (points->getPointSize(pointSize) == 0)
+      setPointSize(pointSize);
+    simCore::GOG::Color color;
+    if (points->getColor(color) == 0)
+      setLineColor(LoaderUtils::convertToOsgColor(color));
+  }
+
+  const simCore::GOG::Annotation* anno = dynamic_cast<const simCore::GOG::Annotation*>(shape_.get());
+  if (anno != nullptr)
+  {
+    // always set annotation fields, uses default values if not set in the shape
+    std::string font;
+    int textSize = 12;
+    simCore::GOG::Color textColor;
+    anno->getFontName(font);
+    anno->getTextSize(textSize);
+     anno->getTextColor(textColor);
+    setFont(font, textSize, LoaderUtils::convertToOsgColor(textColor));
+    simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::NONE;
+    simCore::GOG::Color outlineColor;
+    anno->getOutlineThickness(thickness);
+    anno->getOutlineColor(outlineColor);
+    setTextOutline(LoaderUtils::convertToOsgColor(outlineColor), LoaderUtils::convertToVisOutlineThickness(thickness));
+    double priority = 0.;
+    anno->getPriority(priority);
+    setDeclutterPriority(static_cast<int>(priority));
+  }
+
+  // apply backface culling here
+  applyBackfaceCulling();
+
+  endStyleUpdates_();
+  setStyle_(style_);
+}
+
 void GogNodeInterface::setDefaultFont(const std::string& fontName)
 {
   defaultFont_ = fontName;
@@ -227,7 +352,6 @@ void GogNodeInterface::applyToStyle(const ParsedShape& parent, const UnitsState&
   // LINE attributes
   if (isLined)
   {
-
     if (parent.hasValue(GOG_OUTLINE))
       setOutlineState(isOutlined);
     else

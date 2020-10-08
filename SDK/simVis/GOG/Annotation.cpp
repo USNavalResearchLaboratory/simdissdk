@@ -27,6 +27,7 @@
 #include "simCore/String/Utils.h"
 #include "simVis/GOG/Annotation.h"
 #include "simVis/GOG/GogNodeInterface.h"
+#include "simVis/GOG/LoaderUtils.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 #include "simVis/Utils.h"
@@ -98,6 +99,56 @@ GogNodeInterface* TextAnnotation::deserialize(
 
   rv = new LabelNodeInterface(label, metaData);
   rv->applyToStyle(parsedShape, p.units_);
+
+  return rv;
+}
+
+GogNodeInterface* TextAnnotation::createAnnotation(const simCore::GOG::Annotation& anno, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
+{
+  const std::string text = anno.text();
+
+  GogNodeInterface* rv = nullptr;
+  osgEarth::GeoPositionNode* label = nullptr;
+  osgEarth::Style style;
+
+  std::string iconFile;
+  if (anno.getIconFile(iconFile) == 0)
+  {
+    osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
+    // if icon can't load, use default icon
+    if (!image.valid())
+    {
+      SIM_WARN << "Failed to load image file " << iconFile << "\n";
+      image = osgDB::readImageFile(PLACEMARK_ICON);
+    }
+
+    // set the icon scale
+    osgEarth::IconSymbol* icon = style.getOrCreateSymbol<osgEarth::IconSymbol>();
+    icon->scale() = PLACEMARK_ICON_SCALE;
+    label = new osgEarth::PlaceNode(text, style, image.get());
+  }
+  else
+    label = new osgEarth::LabelNode(text, style);
+  label->setName("GOG Label");
+  if (!attached)
+  {
+    label->setPosition(LoaderUtils::getShapeGeoPosition(anno, anno.position(), refPoint, false));
+    label->setMapNode(mapNode);
+  }
+  else
+  {
+    osg::PositionAttitudeTransform* trans = label->getPositionAttitudeTransform();
+    if (trans != nullptr)
+      trans->setPosition(osg::Vec3d(anno.position().x(), anno.position().y(), anno.position().z()));
+  }
+  label->setDynamic(true);
+  label->setPriority(8000);
+
+  // in overhead mode, clamp the label's position to the ellipsoid.
+  simVis::OverheadMode::enableGeoTransformClamping(true, label->getGeoTransform());
+
+  GogMetaData metaData;
+  rv = new LabelNodeInterface(label, metaData);
 
   return rv;
 }

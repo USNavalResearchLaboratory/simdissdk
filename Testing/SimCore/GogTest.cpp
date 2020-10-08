@@ -902,7 +902,7 @@ int testAnnotation()
       rv += SDK_ASSERT(outlineColor == simCore::GOG::Color(0,0,0,255));
       simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::THICK;
       rv += SDK_ASSERT(anno->getOutlineThickness(thickness) != 0);
-      rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::NONE);
+      rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::THIN);
       std::string iconFile = "someFile";
       rv += SDK_ASSERT(anno->getIconFile(iconFile) != 0);
       rv += SDK_ASSERT(iconFile.empty());

@@ -827,7 +827,7 @@ void Annotation::setOutlineColor(const Color& color)
 
 int Annotation::getOutlineThickness(OutlineThickness& thickness) const
 {
-  thickness = outlineThickness_.value_or(OutlineThickness::NONE);
+  thickness = outlineThickness_.value_or(OutlineThickness::THIN);
   return (outlineThickness_.has_value() ? 0 : 1);
 }
 
