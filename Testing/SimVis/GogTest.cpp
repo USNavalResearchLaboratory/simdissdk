@@ -368,7 +368,7 @@ int testShapes(bool useCore)
   // test relative circle
   std::string circleRelGogFile = FILE_VERSION +
     "start\n circle\n centerxyz 0 0 0\n radius 500\n linewidth 6\n 3d name circle relative 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr circleRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, circleRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr circleRelGog = (useCore ? parseGogFileWithCore(true, circleRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, circleRelGogFile, rv));
   rv += SDK_ASSERT(circleRelGog != nullptr);
   if (circleRelGog)
   {
@@ -388,7 +388,7 @@ int testShapes(bool useCore)
   // test arc
   std::string arcGogFile = FILE_VERSION +
     "start\n arc\n centerlla 25.2 53.2 0.\n radius 500\n anglestart 44.3\n angledeg 36.7\n 3d name arc 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr arcGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, arcGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr arcGog = (useCore ? parseGogFileWithCore(false, arcGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, arcGogFile, rv));
   rv += SDK_ASSERT(arcGog != nullptr);
   if (arcGog)
   {
@@ -407,7 +407,7 @@ int testShapes(bool useCore)
   // test relative arc
   std::string arcRelGogFile = FILE_VERSION +
     "start\n arc\n centerxyz 500 500 0\n radius 500\n anglestart 44.3\n angledeg 36.7\n 3d name arc relative 1\n rangeunits m\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr arcRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, arcRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr arcRelGog = (useCore ? parseGogFileWithCore(true, arcRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, arcRelGogFile, rv));
   rv += SDK_ASSERT(arcRelGog != nullptr);
   if (arcRelGog)
   {
@@ -434,7 +434,7 @@ int testShapes(bool useCore)
   // test cylinder
   std::string cylGogFile = FILE_VERSION +
     "start\n cylinder\n centerlla 25.2 53.2 0.\n radius 500\n height 340\n anglestart 44.3\n angledeg 36.7\n 3d name cyl 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr cylGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, cylGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr cylGog = (useCore ? parseGogFileWithCore(false, cylGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, cylGogFile, rv));
   rv += SDK_ASSERT(cylGog != nullptr);
   if (cylGog)
   {
@@ -453,7 +453,7 @@ int testShapes(bool useCore)
   // test relative cylinder
   std::string cylRelGogFile = FILE_VERSION +
     "start\n cylinder\n centerxyz 500 -200 10\n radius 500\n height 340\n anglestart 44.3\n angledeg 36.7\n 3d name cyl relative 1\n rangeunits m\n altitudeunits m\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr cylRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, cylRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr cylRelGog = (useCore ? parseGogFileWithCore(true, cylRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, cylRelGogFile, rv));
   rv += SDK_ASSERT(cylRelGog != nullptr);
   if (cylRelGog)
   {
@@ -609,7 +609,7 @@ int testShapes(bool useCore)
   // test cone
   std::string coneGogFile = FILE_VERSION +
     "start\n cone\n centerlla 25.8 53.2 0.\n radius 500\n height 340\n 3d name cone 1\n" + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr coneGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, coneGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr coneGog = (useCore ? parseGogFileWithCore(false, coneGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, coneGogFile, rv));
   rv += SDK_ASSERT(coneGog != nullptr);
   if (coneGog)
   {
@@ -627,7 +627,7 @@ int testShapes(bool useCore)
   // test relative cone
   std::string coneRelGogFile = FILE_VERSION +
     "start\n cone\n centerxyz 500 -200 0\n radius 500\n height 340\n 3d name cone relative 1\n rangeunits m\n" + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr coneRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, coneRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr coneRelGog = (useCore ? parseGogFileWithCore(true, coneRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, coneRelGogFile, rv));
   rv += SDK_ASSERT(coneRelGog != nullptr);
   if (coneRelGog)
   {
