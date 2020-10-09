@@ -467,8 +467,11 @@ public:
 class SDKCORE_EXPORT CircularShape : public FillableShape
 {
 public:
-  /// Get the shape's center position; in lla radians if absolute, xyz meters if relative
-  simCore::Vec3 centerPosition() const;
+  /**
+  * Get the shape's center position in lla radians if absolute or xyz meters if relative; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getCenterPosition(simCore::Vec3& centerPosition) const;
   /// Set the shape's center position; in lla radians if absolute, xyz meters if relative
   void setCenterPosition(const simCore::Vec3& centerPosition);
 
@@ -484,7 +487,7 @@ protected:
   CircularShape();
 
 private:
-  simCore::Vec3 center_; ///< lla radians if absolute, xyz meters if relative
+  Optional<simCore::Vec3> center_; ///< lla radians if absolute, xyz meters if relative
   Optional<double> radius_; ///< meters
 };
 
@@ -681,15 +684,18 @@ public:
 
   virtual ShapeType shapeType() const;
 
-  /// Get the label's position; in lla radians if absolute, xyz meters if relative
-  simCore::Vec3 position() const;
-  /// Set the label's position; in lla radians if absolute, xyz meters if relative
-  void setPosition(const simCore::Vec3& position);
-
   /// Get the display text of the annotation
   std::string text() const;
   /// Set the display text of the annotation
   void setText(const std::string& text);
+
+  /**
+  * Get the shape's position; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getPosition(simCore::Vec3& position) const;
+  /// Set the label's position; in lla radians if absolute, xyz meters if relative
+  void setPosition(const simCore::Vec3& position);
 
   /**
   * Get the font filename; if value is not set, default value is returned.
@@ -748,8 +754,8 @@ public:
   void setPriority(double priority);
 
 private:
-  simCore::Vec3 position_; ///< lla radians if absolute, xyz meters if relative
   std::string text_; ///< display text
+  Optional<simCore::Vec3> position_; ///< lla radians if absolute, xyz meters if relative
   Optional<std::string> fontName_; ///< font filename
   Optional<int> textSize_; ///< text point size
   Optional<Color> textColor_;

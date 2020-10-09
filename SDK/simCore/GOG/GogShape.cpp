@@ -26,9 +26,6 @@
 
 namespace simCore { namespace GOG {
 
-// GOG default reference origin: a location off the Pacific Missile Range Facility "BARSTUR Center"
-static const simCore::Vec3 BSTUR(simCore::DEG2RAD * 22.1194392, simCore::DEG2RAD * -159.9194988, 0.0);
-
 GogShape::GogShape()
   : canExtrude_(false),
     canFollow_(false),
@@ -113,7 +110,7 @@ void GogShape::setExtrudeHeight(double heightMeters)
 
 int GogShape::getReferencePosition(simCore::Vec3& refPos) const
 {
-  refPos = referencePosition_.value_or(BSTUR);
+  refPos = referencePosition_.value_or(simCore::Vec3());
   return (referencePosition_.has_value() ? 0 : 1);
 }
 
@@ -509,9 +506,10 @@ CircularShape::CircularShape()
   setCanFollow_(true);
 }
 
-simCore::Vec3 CircularShape::centerPosition() const
+int CircularShape::getCenterPosition(simCore::Vec3& centerPosition) const
 {
-  return center_;
+  centerPosition = center_.value_or(simCore::Vec3());
+  return (center_.has_value() ? 0 : 1);
 }
 
 void CircularShape::setCenterPosition(const simCore::Vec3& centerPosition)
@@ -521,7 +519,9 @@ void CircularShape::setCenterPosition(const simCore::Vec3& centerPosition)
 
 int CircularShape::getRadius(double& radius) const
 {
-  radius = radius_.value_or(500.);
+  // TODO: update default based on range units
+  // default radius is 1000 ft
+  radius = radius_.value_or(304.8);
   return (radius_.has_value() ? 0 : 1);
 }
 
@@ -587,7 +587,9 @@ void Orbit::setCenterPosition2(const simCore::Vec3& center2)
 {
   center2_ = center2;
   // always use z from center position
-  center2_.setZ(centerPosition().z());
+  simCore::Vec3 center1;
+  getCenterPosition(center1);
+  center2_.setZ(center1.z());
 }
 
 EllipticalShape::EllipticalShape()
@@ -678,7 +680,9 @@ ShapeType Cylinder::shapeType() const
 
 int Cylinder::getHeight(double& height) const
 {
-  height = height_.value_or(500);
+  // TODO: update based on altitudeunits
+  // default height is 1000 ft
+  height = height_.value_or(304.8);
   return (height_.has_value() ? 0 : 1);
 }
 
@@ -693,7 +697,9 @@ CircularHeightShape::CircularHeightShape()
 
 int CircularHeightShape::getHeight(double& height) const
 {
-  height = height_.value_or(500.);
+  // TODO: update based on altitudeunits
+  // default height is 1000 ft
+  height = height_.value_or(304.8);
   return (height_.has_value() ? 0 : 1);
 }
 
@@ -761,9 +767,10 @@ ShapeType Annotation::shapeType() const
   return ShapeType::ANNOTATION;
 }
 
-simCore::Vec3 Annotation::position() const
+int Annotation::getPosition(simCore::Vec3& position) const
 {
-  return position_;
+  position = position_.value_or(simCore::Vec3());
+  return (position_.has_value() ? 0 : 1);
 }
 
 void Annotation::setPosition(const simCore::Vec3& position)

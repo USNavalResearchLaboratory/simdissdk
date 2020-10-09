@@ -230,9 +230,12 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
     // always set filled state, use default if not set in shape
     setFilledState(filled);
 
+    // always set a fill color
     simCore::GOG::Color fillColor;
-    if (fillable->getFillColor(fillColor) == 0)
-      setFillColor(LoaderUtils::convertToOsgColor(fillColor));
+    // if fill color is not set, then try to get line color, which will be default if not set
+    if (fillable->getFillColor(fillColor) != 0)
+      fillable->getLineColor(fillColor);
+    setFillColor(LoaderUtils::convertToOsgColor(fillColor));
   }
 
   const simCore::GOG::PointBasedShape* lined = dynamic_cast<const simCore::GOG::PointBasedShape*>(shape_.get());

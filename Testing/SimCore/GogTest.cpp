@@ -136,8 +136,7 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
   rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::NONE);
   simCore::Vec3 refPos(25., 25., 25.);
   rv += SDK_ASSERT(shape->getReferencePosition(refPos) != 0);
-  // default ref postiion is BSTUR
-  rv += SDK_ASSERT(refPos == simCore::Vec3(simCore::DEG2RAD * 22.1194392, simCore::DEG2RAD * -159.9194988, 0.0));
+  rv += SDK_ASSERT(refPos == simCore::Vec3());
   simCore::Vec3 scalar(10., 10., 10.);
   rv += SDK_ASSERT(shape->getScale(scalar) != 0);
   rv += SDK_ASSERT(scalar == simCore::Vec3(1., 1., 1.));
@@ -201,22 +200,23 @@ int testFillableOptionalFieldsNotSet(const simCore::GOG::FillableShape* shape)
   return rv;
 }
 
-// test the circular shape's required fields are set, and the optional fields are not
+// test the circular shape's position is set, and the optional fields are not
 auto testCircularShapeMinimalFieldsFunc = [](const simCore::GOG::CircularShape* shape, const std::vector<simCore::Vec3>& positions) -> int
 {
   int rv = testFillableOptionalFieldsNotSet(shape);
-  const simCore::Vec3& center = shape->centerPosition();
+  simCore::Vec3 center;
+  rv += SDK_ASSERT(shape->getCenterPosition(center) == 0);
   rv += SDK_ASSERT(comparePositions(center, positions.front()));
   double radius = 0.;
   // verify radius wasn't set
   rv += SDK_ASSERT(shape->getRadius(radius) == 1);
   // verify default value was returned
-  rv += SDK_ASSERT(radius == 500.);
+  rv += SDK_ASSERT(radius == 304.8);
 
   return rv;
 };
 
-// test the orbit shape's required fields are set, and the optional fields are not
+// test the orbit shape's position fields are set, and the optional fields are not
 auto testOrbitShapeMinimalFieldsFunc = [](const simCore::GOG::Orbit* shape, const std::vector<simCore::Vec3>& positions) -> int
 {
   // dev error, require 2 positions to test orbit
@@ -236,7 +236,7 @@ auto testCircularHeightShapeMinimalFieldsFunc = [](const simCore::GOG::CircularH
   int rv = testCircularShapeMinimalFieldsFunc(shape, positions);
   double height = 0.;
   rv += SDK_ASSERT(shape->getHeight(height) != 0);
-  rv += SDK_ASSERT(height == 500.);
+  rv += SDK_ASSERT(height == 304.8);
   return rv;
 };
 
@@ -742,41 +742,6 @@ int testIncompleteShapes()
   simCore::GOG::Parser parser;
   std::vector<simCore::GOG::GogShapePtr> shapes;
 
-  // test circle (requires center point)
-  std::stringstream circleGogIncomplete;
-  circleGogIncomplete << "start\n circle\n end\n";
-  parser.parse(circleGogIncomplete, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
-  // test sphere (requires center point)
-  std::stringstream sphereGogIncomplete;
-  sphereGogIncomplete << "start\n sphere\n end\n";
-  parser.parse(sphereGogIncomplete, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
-  // test hemisphere (requires center point)
-  std::stringstream hemiGogIncomplete;
-  hemiGogIncomplete << "start\n hemisphere\n end\n";
-  parser.parse(hemiGogIncomplete, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
-  // test orbit (requires center point)
-  std::stringstream orbitCtr2GogIncomplete;
-  orbitCtr2GogIncomplete << "start\n orbit\n centerll2 23.4 45.2\n end\n";
-  parser.parse(orbitCtr2GogIncomplete, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
-  // test orbit (requires center point 2)
-  std::stringstream orbitCtrGogIncomplete;
-  orbitCtrGogIncomplete << "start\n orbit\n centerll 23.4 45.2\n end\n";
-  parser.parse(orbitCtrGogIncomplete, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
   // test line (requires 2 points minimum)
   std::stringstream lineGogIncomplete;
   lineGogIncomplete << "start\n line\n lla 25.1 58.2 0.\n end\n";
@@ -798,13 +763,6 @@ int testIncompleteShapes()
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
-  // test annotation (requires position)
-  std::stringstream annoTextGog;
-  annoTextGog << "start\n annotation label 1\n end\n";
-  parser.parse(annoTextGog, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
   // test annotation (requires text)
   std::stringstream annoCtrGog;
   annoCtrGog << "start\n annotation\n centerlla 24.2 43.3 0.\n end\n";
@@ -812,45 +770,24 @@ int testIncompleteShapes()
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
-  // test arc (requires center point)
-  std::stringstream arcGog;
-  arcGog << "start\n arc\n end\n";
-  parser.parse(arcGog, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
-  // test ellipse (requires center point)
-  std::stringstream ellipseGog;
-  ellipseGog << "start\n ellipse\n end\n";
-  parser.parse(ellipseGog, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
-  // test cylinder (requires center point)
-  std::stringstream cylinderGog;
-  cylinderGog << "start\n cylinder\n end\n";
-  parser.parse(cylinderGog, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
-  // test ellipsoid (requires center point)
-  std::stringstream ellipsoidGog;
-  ellipsoidGog << "start\n ellipsoid\n end\n";
-  parser.parse(ellipsoidGog, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
-  // test cone (requires center point)
-  std::stringstream coneGog;
-  coneGog << "start\n cone\n end\n";
-  parser.parse(coneGog, shapes);
-  rv += SDK_ASSERT(shapes.size() == 0);
-  shapes.clear();
-
   // test points (requires 1 point minimum)
   std::stringstream pointsGog;
   pointsGog << "start\n points\n end\n";
   parser.parse(pointsGog, shapes);
+  rv += SDK_ASSERT(shapes.size() == 0);
+  shapes.clear();
+
+  // test orbit (requires 2 center points)
+  std::stringstream orbitCtr1Gog;
+  orbitCtr1Gog << "start\n orbit\n centerll 1 2\n end\n";
+  parser.parse(orbitCtr1Gog, shapes);
+  rv += SDK_ASSERT(shapes.size() == 0);
+  shapes.clear();
+
+  // test orbit (requires 2 center points)
+  std::stringstream orbitCtr2Gog;
+  orbitCtr2Gog << "start\n orbit\n centerll2 1 2\n end\n";
+  parser.parse(orbitCtr2Gog, shapes);
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
@@ -864,7 +801,11 @@ auto testAnnotationCenterFunc = [](const simCore::GOG::Annotation* shape, const 
   // dev error, require 1 position to test annotation
   assert(!positions.empty());
   if (!positions.empty())
-    rv += SDK_ASSERT(comparePositions(shape->position(), positions[0]));
+  {
+    simCore::Vec3 position;
+    rv += SDK_ASSERT(shape->getPosition(position) == 0);
+    rv += SDK_ASSERT(comparePositions(position, positions[0]));
+  }
   return rv;
 };
 
@@ -887,7 +828,9 @@ int testAnnotation()
     if (anno)
     {
       rv += SDK_ASSERT(anno->text() == "label 1");
-      rv += SDK_ASSERT(comparePositions(anno->position(), simCore::Vec3(24.5 * simCore::DEG2RAD, 54.6 * simCore::DEG2RAD, 0.)));
+      simCore::Vec3 position;
+      rv += SDK_ASSERT(anno->getPosition(position) == 0);
+      rv += SDK_ASSERT(comparePositions(position, simCore::Vec3(24.5 * simCore::DEG2RAD, 54.6 * simCore::DEG2RAD, 0.)));
       // make sure optional fields were not set
       std::string fontName;
       rv += SDK_ASSERT(anno->getFontName(fontName) != 0);
@@ -924,7 +867,9 @@ int testAnnotation()
     rv += SDK_ASSERT(anno != nullptr);
     if (anno)
     {
-      rv += SDK_ASSERT(comparePositions(anno->position(), simCore::Vec3(24.5 * simCore::DEG2RAD, 54.6 * simCore::DEG2RAD, 0.)));
+      simCore::Vec3 position;
+      rv += SDK_ASSERT(anno->getPosition(position) == 0);
+      rv += SDK_ASSERT(comparePositions(position, simCore::Vec3(24.5 * simCore::DEG2RAD, 54.6 * simCore::DEG2RAD, 0.)));
       rv += SDK_ASSERT(anno->text() == "label 1");
       std::string fontName;
       rv += SDK_ASSERT(anno->getFontName(fontName) == 0);
@@ -972,7 +917,9 @@ int testAnnotation()
       rv += SDK_ASSERT(anno != nullptr);
       if (anno)
       {
-        rv += SDK_ASSERT(comparePositions(anno->position(), positions[textId]));
+        simCore::Vec3 position;
+        rv += SDK_ASSERT(anno->getPosition(position) == 0);
+        rv += SDK_ASSERT(comparePositions(position, positions[textId]));
         std::ostringstream os;
         os << "label " << textId++;
         rv += SDK_ASSERT(anno->text() == os.str());
@@ -1038,7 +985,8 @@ int testUnits()
     rv += SDK_ASSERT(circle != nullptr);
     if (circle)
     {
-      const simCore::Vec3& center = circle->centerPosition();
+      simCore::Vec3 center;
+      rv += SDK_ASSERT(circle->getCenterPosition(center) == 0);
       simCore::Units altMeters(simCore::Units::METERS);
       simCore::Units altFeet(simCore::Units::FEET);
       // verify output in meters matches input in feet
@@ -1064,7 +1012,8 @@ int testUnits()
     rv += SDK_ASSERT(circle != nullptr);
     if (circle)
     {
-      const simCore::Vec3& center = circle->centerPosition();
+      simCore::Vec3 center;
+      rv += SDK_ASSERT(circle->getCenterPosition(center) == 0);
       // verify output in meters matches input in meters
       rv += SDK_ASSERT(comparePositions(center, simCore::Vec3(25.1 * simCore::DEG2RAD, 58.2 * simCore::DEG2RAD, 10.)));
 

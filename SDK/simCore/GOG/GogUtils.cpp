@@ -56,9 +56,10 @@ void UnitsState::parse(const std::string& unitString, const simCore::UnitsRegist
     units = simCore::Units::HOURS;
   else if (unitString == "sm")
     units = simCore::Units::MILES;
-  if (unitsRegistry.unitsByAbbreviation(unitString, units) == 0)
-    return;
-  unitsRegistry.unitsByName(unitString, units);
+  else if (unitString == "degree")
+    units = simCore::Units::DEGREES;
+  else if (unitsRegistry.unitsByAbbreviation(unitString, units) != 0)
+    unitsRegistry.unitsByName(unitString, units);
 }
 
 void ModifierState::apply(ParsedShape& shape)

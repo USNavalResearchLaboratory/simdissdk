@@ -65,7 +65,7 @@ Parser::~Parser()
 void Parser::initGogColors_()
 {
   // GOG hex colors are AABBGGRR
-  colors_["color1"] = "0xff0000ff"; // Cyan
+  colors_["color1"] = "0xffffff00"; // Cyan
   colors_["color2"] = "0xff0000ff"; // Red
   colors_["color3"] = "0xff00ff00"; // Lime
   colors_["color4"] = "0xffff0000"; // Blue
@@ -787,9 +787,16 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   {
   case ShapeType::ANNOTATION:
   {
+    // annotation requires text
+    if (!parsed.hasValue(ShapeParameter::TEXT))
+    {
+      printError_(parsed.lineNumber(), "Annotation " + name + " missing text, cannot create shape");
+      break;
+    }
+
     simCore::Vec3 position;
     bool hasPosition;
-    // verify shape has minimum required fields, annotation supports multiple ways to define center: centerlla or lla, centerxyz or xyz
+    // get position, annotation supports multiple ways to define center: centerlla or lla, centerxyz or xyz
     if (relative)
     {
       const std::vector<PositionStrings>& positions = parsed.positions();
@@ -803,16 +810,6 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       hasPosition = (!positions.empty() && getPosition_(positions.front(), relative, units, position) == 0);
       if (!hasPosition)
         hasPosition = (parsed.hasValue(ShapeParameter::CENTERLL) && getPosition_(parsed.positionValue(ShapeParameter::CENTERLL), relative, units, position) == 0);
-    }
-    if (!hasPosition)
-    {
-      printError_(parsed.lineNumber(), "Annotation " + name + " did not have a position, cannot create shape");
-      break;
-    }
-    if (!parsed.hasValue(ShapeParameter::TEXT))
-    {
-      printError_(parsed.lineNumber(), "Annotation " + name + " missing text, cannot create shape");
-      break;
     }
 
     Annotation* anno = new Annotation(relative);
@@ -871,8 +868,8 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   case ShapeType::CIRCLE:
   {
     std::unique_ptr<Circle> circle(new Circle(relative));
-    if (parseCircular_(parsed, relative, name, units, circle.get()) == 0)
-      rv.reset(circle.release());
+    parseCircularOptional_(parsed, relative, name, units, circle.get());
+    rv.reset(circle.release());
     break;
   }
   case ShapeType::LINE:
@@ -899,62 +896,64 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   case ShapeType::SPHERE:
   {
     std::unique_ptr<Sphere> sphere(new Sphere(relative));
-    if (parseCircular_(parsed, relative, name, units, sphere.get()) == 0)
-      rv.reset(sphere.release());
+    parseCircularOptional_(parsed, relative, name, units, sphere.get());
+    rv.reset(sphere.release());
   }
   break;
   case ShapeType::HEMISPHERE:
   {
     std::unique_ptr<Hemisphere> hemi(new Hemisphere(relative));
-    if (parseCircular_(parsed, relative, name, units, hemi.get()) == 0)
-      rv.reset(hemi.release());
+    parseCircularOptional_(parsed, relative, name, units, hemi.get());
+    rv.reset(hemi.release());
     break;
   }
   case ShapeType::ORBIT:
   {
     std::unique_ptr<Orbit> orbit(new Orbit(relative));
-    if (parseCircular_(parsed, relative, name, units, orbit.get()) == 0)
+    parseCircularOptional_(parsed, relative, name, units, orbit.get());
+    bool hasPoints = false;
+    simCore::Vec3 center1;
+    // orbit requires both center positions
+    if (orbit->getCenterPosition(center1) == 0)
     {
       simCore::Vec3 center2;
       ShapeParameter param = (relative ? ShapeParameter::CENTERXY2 : ShapeParameter::CENTERLL2);
       // verify orbit has required center2 field
       if (parsed.hasValue(param) && getPosition_(parsed.positionValue(param), relative, units, center2) == 0)
       {
+        hasPoints = true;
         orbit->setCenterPosition2(center2);
         rv.reset(orbit.release());
       }
-      else
-        printError_(parsed.lineNumber(), "orbit " + name + " missing or invalid center point 2, cannot create shape");
     }
+    if (!hasPoints)
+      printError_(parsed.lineNumber(), "orbit " + name + " missing or invalid center points, cannot create shape");
     break;
   }
   case ShapeType::CONE:
   {
     std::unique_ptr<Cone> cone(new Cone(relative));
-    if (parseCircular_(parsed, relative, name, units, cone.get()) == 0)
-    {
-      parseCircularHeightOptional_(parsed, name, units, cone.get());
-      rv.reset(cone.release());
-    }
+    parseCircularOptional_(parsed, relative, name, units, cone.get());
+    parseCircularHeightOptional_(parsed, name, units, cone.get());
+    rv.reset(cone.release());
     break;
   }
   case ShapeType::ELLIPSOID:
   {
     std::unique_ptr<Ellipsoid> ellipsoid(new Ellipsoid(relative));
-    if (parseCircular_(parsed, relative, name, units, ellipsoid.get()) == 0)
+    parseCircularOptional_(parsed, relative, name, units, ellipsoid.get());
+    parseCircularHeightOptional_(parsed, name, units, ellipsoid.get());
+    if (parsed.hasValue(ShapeParameter::MAJORAXIS))
     {
-      parseCircularHeightOptional_(parsed, name, units, ellipsoid.get());
-      if (parsed.hasValue(ShapeParameter::MAJORAXIS))
-      {
-        double majorAxis = 0.;
-        if (validateDouble_(parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed.lineNumber(), majorAxis) == 0)
-          ellipsoid->setMajorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, majorAxis));
-        double minorAxis = 0.;
-        if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed.lineNumber(), minorAxis) == 0)
-          ellipsoid->setMinorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, minorAxis));
-      }
-      rv.reset(ellipsoid.release());
+      double majorAxis = 0.;
+      if (validateDouble_(parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed.lineNumber(), majorAxis) == 0)
+        ellipsoid->setMajorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, majorAxis));
+      double minorAxis = 0.;
+      if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed.lineNumber(), minorAxis) == 0)
+        ellipsoid->setMinorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, minorAxis));
     }
+    rv.reset(ellipsoid.release());
+
     break;
   }
   case ShapeType::POINTS:
@@ -997,37 +996,31 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   case ShapeType::ARC:
   {
     std::unique_ptr<Arc> arc(new Arc(relative));
-    if (parseCircular_(parsed, relative, name, units, arc.get()) == 0)
-    {
-      parseEllipticalOptional_(parsed, name, units, arc.get());
-      rv.reset(arc.release());
-    }
+    parseCircularOptional_(parsed, relative, name, units, arc.get());
+    parseEllipticalOptional_(parsed, name, units, arc.get());
+    rv.reset(arc.release());
     break;
   }
   case ShapeType::CYLINDER:
   {
     std::unique_ptr<Cylinder> cyl(new Cylinder(relative));
-    if (parseCircular_(parsed, relative, name, units, cyl.get()) == 0)
+    parseCircularOptional_(parsed, relative, name, units, cyl.get());
+    parseEllipticalOptional_(parsed, name, units, cyl.get());
+    if (parsed.hasValue(ShapeParameter::HEIGHT))
     {
-      parseEllipticalOptional_(parsed, name, units, cyl.get());
-      if (parsed.hasValue(ShapeParameter::HEIGHT))
-      {
-        double height = 0.;
-        if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed.lineNumber(), height) == 0)
-          cyl->setHeight(units.altitudeUnits_.convertTo(simCore::Units::METERS, height));
-      }
-      rv.reset(cyl.release());
+      double height = 0.;
+      if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed.lineNumber(), height) == 0)
+        cyl->setHeight(units.altitudeUnits_.convertTo(simCore::Units::METERS, height));
     }
+    rv.reset(cyl.release());
     break;
   }
   case ShapeType::ELLIPSE:
   {
     std::unique_ptr<Ellipse> ellipse(new Ellipse(relative));
-    if (parseCircular_(parsed, relative, name, units, ellipse.get()) == 0)
-    {
-      parseEllipticalOptional_(parsed, name, units, ellipse.get());
-      rv.reset(ellipse.release());
-    }
+    parseCircularOptional_(parsed, relative, name, units, ellipse.get());
+    parseEllipticalOptional_(parsed, name, units, ellipse.get());
+    rv.reset(ellipse.release());
     break;
   }
   case ShapeType::LATLONALTBOX:
@@ -1382,22 +1375,7 @@ void Parser::parsePointBasedOptional_(const ParsedShape& parsed, const std::stri
   shape->setTesssellation(style);
 }
 
-int Parser::parseCircular_(const ParsedShape& parsed, bool relative, const std::string& name, const UnitsState& units, CircularShape* shape) const
-{
-  simCore::Vec3 position;
-  ShapeParameter param = (relative ? ShapeParameter::CENTERXY : ShapeParameter::CENTERLL);
-  // verify shape has minimum required fields
-  if (!parsed.hasValue(param) || getPosition_(parsed.positionValue(param), relative, units, position) != 0)
-  {
-    printError_(parsed.lineNumber(), GogShape::shapeTypeToString(shape->shapeType()) + " " + name + " missing or invalid center point, cannot create shape");
-    return 1;
-  }
-  shape->setCenterPosition(position);
-  parseCircularOptional_(parsed, name, units, shape);
-  return 0;
-}
-
-void Parser::parseCircularOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularShape* shape) const
+void Parser::parseCircularOptional_(const ParsedShape& parsed, bool relative, const std::string& name, const UnitsState& units, CircularShape* shape) const
 {
   if (!shape)
   {
@@ -1405,6 +1383,18 @@ void Parser::parseCircularOptional_(const ParsedShape& parsed, const std::string
     return;
   }
   parseFillable_(parsed, name, shape);
+
+  simCore::Vec3 position;
+  ShapeParameter param = (relative ? ShapeParameter::CENTERXY : ShapeParameter::CENTERLL);
+  bool foundPosition = false;
+  if (parsed.hasValue(param))
+  {
+    if (getPosition_(parsed.positionValue(param), relative, units, position) == 0)
+      shape->setCenterPosition(position);
+    else
+      printError_(parsed.lineNumber(), GogShape::shapeTypeToString(shape->shapeType()) + " " + name + " invalid center point");
+  }
+
   if (!parsed.hasValue(ShapeParameter::RADIUS))
     return;
   double radius = 0.;
@@ -1424,7 +1414,7 @@ void Parser::parseCircularHeightOptional_(const ParsedShape& parsed, const std::
 
   double height = 0.;
   if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed.lineNumber(), height) == 0)
-    shape->setHeight(units.rangeUnits_.convertTo(simCore::Units::METERS, height));
+    shape->setHeight(units.altitudeUnits_.convertTo(simCore::Units::METERS, height));
 }
 
 void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, EllipticalShape* shape) const
@@ -1452,7 +1442,12 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
     {
       double angleSweep = 0.;
       if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLEDEG), "angledeg", name, parsed.lineNumber(), angleSweep) == 0)
-        shape->setAngleSweep(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleSweep));
+      {
+        if (angleSweep != 0.)
+          shape->setAngleSweep(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleSweep));
+        else
+          printError_(parsed.lineNumber(), "for " + name + " angledeg cannot be 0");
+      }
     }
     if (parsed.hasValue(ShapeParameter::ANGLEEND))
     {
@@ -1461,7 +1456,10 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
       {
         // convert to sweep, cannot cross 0 with angleend
         angleEnd = simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleEnd));
-        shape->setAngleSweep(angleEnd - angleStart);
+        if (angleEnd != angleStart)
+          shape->setAngleSweep(angleEnd - angleStart);
+        else
+          printError_(parsed.lineNumber(), "for " + name + " angleend cannot be the same as anglestart");
       }
     }
   }

@@ -98,7 +98,12 @@ GogNodeInterface* Circle::createCircle(const simCore::GOG::Circle& circle, bool 
     node = new HostedLocalGeometryNode(shape, style);
   node->setName("GOG Circle Position");
 
-  LoaderUtils::setShapePositionOffsets(*node, circle, circle.centerPosition(), refPoint, attached, false);
+  // use the ref point as the center if no center defined by the shape
+  simCore::Vec3 center;
+  if (circle.getCenterPosition(center) != 0 && !attached)
+    center = refPoint;
+
+  LoaderUtils::setShapePositionOffsets(*node, circle, center, refPoint, attached, false);
   GogMetaData metaData;
   return new LocalGeometryNodeInterface(node, metaData);
 }

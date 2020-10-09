@@ -102,7 +102,9 @@ bool LoaderUtils::geometryRequiresClipping(const simCore::GOG::GogShape& shape)
   if (shape.getReferencePosition(referencePoint) == 0 && referencePoint.alt() == 0.)
   {
     const simCore::GOG::CircularShape* circular = dynamic_cast<const simCore::GOG::CircularShape*>(&shape);
-    return (circular && circular->centerPosition().z() > 0.);
+    simCore::Vec3 center;
+    circular->getCenterPosition(center);
+    return (circular && center.z() > 0.);
   }
 
   // Out of things to check. No clip.
@@ -150,12 +152,6 @@ void LoaderUtils::setShapePositionOffsets(osgEarth::LocalGeometryNode& node, con
 {
   if (attached)
   {
-    if (!shape.isRelative())
-    {
-      // parser error, attached shape must be relative
-      assert(0);
-      return;
-    }
     // if this is an attached node, it will need to set any offsets in the attitude transform's position, since it's position is ignored
     osg::PositionAttitudeTransform* trans = node.getPositionAttitudeTransform();
     if (trans != nullptr)

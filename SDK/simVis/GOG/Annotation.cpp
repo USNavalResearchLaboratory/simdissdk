@@ -130,16 +130,20 @@ GogNodeInterface* TextAnnotation::createAnnotation(const simCore::GOG::Annotatio
   else
     label = new osgEarth::LabelNode(text, style);
   label->setName("GOG Label");
+
+  simCore::Vec3 position;
+  if (anno.getPosition(position) != 0 && !attached)
+    position = refPoint;
   if (!attached)
   {
-    label->setPosition(LoaderUtils::getShapeGeoPosition(anno, anno.position(), refPoint, false));
+    label->setPosition(LoaderUtils::getShapeGeoPosition(anno, position, refPoint, false));
     label->setMapNode(mapNode);
   }
   else
   {
     osg::PositionAttitudeTransform* trans = label->getPositionAttitudeTransform();
     if (trans != nullptr)
-      trans->setPosition(osg::Vec3d(anno.position().x(), anno.position().y(), anno.position().z()));
+      trans->setPosition(osg::Vec3d(position.x(), position.y(), position.z()));
   }
   label->setDynamic(true);
   label->setPriority(8000);
