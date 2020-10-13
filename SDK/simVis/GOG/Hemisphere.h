@@ -26,7 +26,7 @@
 #include "simVis/GOG/GOGNode.h"
 
 namespace osgEarth { class MapNode; }
-namespace osgEarht { namespace GOG { class Hemisphere; } }
+namespace simCore { namespace GOG { class Hemisphere; } }
 
 namespace simVis { namespace GOG {
 
