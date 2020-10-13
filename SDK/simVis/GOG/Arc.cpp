@@ -451,6 +451,7 @@ GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, bool attached, co
   shapeNode->setName("Arc Outline Node");
   fillNode->setName("Arc Fill Node");
 
+  // use the ref point as the center if no center defined by the shape
   simCore::Vec3 center;
   if (arc.getCenterPosition(center) != 0 && !attached)
     center = refPoint;

@@ -48,7 +48,7 @@ public:
     osgEarth::MapNode*       mapNode);
 
   /** Create the line from the shape object */
-  static GogNodeInterface* createLine(const simCore::GOG::Line& circle, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
+  static GogNodeInterface* createLine(const simCore::GOG::Line& line, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };
 
 } } // namespace simVis::GOG

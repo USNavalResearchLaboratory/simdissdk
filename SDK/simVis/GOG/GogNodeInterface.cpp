@@ -218,8 +218,8 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
       setLineWidth(lineWidth);
 
     simCore::GOG::Color lineColor;
-    if (fillable->getLineColor(lineColor) == 0)
-      setLineColor(LoaderUtils::convertToOsgColor(lineColor));
+    fillable->getLineColor(lineColor);
+    setLineColor(LoaderUtils::convertToOsgColor(lineColor));
 
     simCore::GOG::LineStyle style = simCore::GOG::LineStyle::SOLID;
     if (fillable->getLineStyle(style) == 0)

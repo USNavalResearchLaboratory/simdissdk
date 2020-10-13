@@ -1055,7 +1055,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       double altitude = 0.;
       if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::LLABOX_MINALT), altitude))
       {
-        llab->setAltitude(altitude);
+        llab->setAltitude(units.altitudeUnits_.convertTo(simCore::Units::METERS, altitude));
         validValues++;
       }
       if (validValues == 5)
@@ -1065,7 +1065,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
         {
           double maxAlt = 0.;
           if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::LLABOX_MAXALT), maxAlt))
-            llab->setHeight(maxAlt - llab->altitude());
+            llab->setHeight(units.altitudeUnits_.convertTo(simCore::Units::METERS, maxAlt - llab->altitude()));
         }
         rv.reset(llab.release());
       }

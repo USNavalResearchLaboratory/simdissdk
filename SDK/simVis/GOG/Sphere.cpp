@@ -24,10 +24,10 @@
 #include "osgEarth/AnnotationUtils"
 #include "osg/CullFace"
 #include "simNotify/Notify.h"
-#include "simCore/Calc/Angle.h"
-#include "simCore/Calc/Math.h"
+#include "simCore/GOG/GogShape.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/LoaderUtils.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Sphere.h"
 #include "simVis/GOG/Utils.h"
@@ -80,6 +80,45 @@ GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
     rv->applyToStyle(parsedShape, p.units_);
   }
   return rv;
+}
+
+GogNodeInterface* Sphere::createSphere(const simCore::GOG::Sphere& sphere, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
+{
+  double radiusM;
+  sphere.getRadius(radiusM);
+
+  // cannot create a sphere with no radius
+  if (radiusM <= 0.)
+  {
+    SIM_WARN << "Cannot create sphere with no radius\n";
+    return nullptr;
+  }
+
+  osg::Vec4f color(osgEarth::Color::White);
+  osg::Node* shape = osgEarth::AnnotationUtils::createSphere(radiusM, color);
+  shape->setName("GOG Sphere");
+
+  osgEarth::LocalGeometryNode* node = nullptr;
+  if (!attached)
+  {
+    node = new osgEarth::LocalGeometryNode();
+    node->getPositionAttitudeTransform()->addChild(shape);
+    node->setMapNode(mapNode);
+  }
+  else
+  {
+    osgEarth::Style style;
+    node = new HostedLocalGeometryNode(shape, style);
+  }
+  node->setName("GOG Sphere Position");
+
+  // use the ref point as the center if no center defined by the shape
+  simCore::Vec3 center;
+  if (sphere.getCenterPosition(center) != 0 && !attached)
+    center = refPoint;
+  LoaderUtils::setShapePositionOffsets(*node, sphere, center, refPoint, attached, false);
+  GogMetaData metaData;
+  return new SphericalNodeInterface(node, metaData);
 }
 
 } }

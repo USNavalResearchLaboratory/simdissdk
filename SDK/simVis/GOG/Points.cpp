@@ -25,9 +25,11 @@
 #include "osgEarth/GeometryCompiler"
 #include "osgEarth/FeatureNode"
 #include "osgEarth/LocalGeometryNode"
+#include "simCore/GOG/GogShape.h"
 #include "simVis/GOG/Points.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/LoaderUtils.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
@@ -63,6 +65,48 @@ GogNodeInterface* Points::deserialize(const ParsedShape& parsedShape,
   }
 
   return deserializeImpl_(parsedShape, p, nodeType, context, metaData, mapNode);
+}
+
+GogNodeInterface* Points::createPoints(const simCore::GOG::Points& points, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
+{
+  osgEarth::Geometry* geom = new osgEarth::PointSet();
+  LoaderUtils::setPoints(points.points(), points.isRelative(), *geom);
+
+  osgEarth::Style style;
+  GogMetaData metaData;
+  if (!attached)
+  {
+    // Try to prevent terrain z-fighting.
+    if (LoaderUtils::geometryRequiresClipping(points))
+      Utils::configureStyleForClipping(style);
+
+    if (!points.isRelative())
+    {
+      std::string vdatum;
+      points.getVerticalDatum(vdatum);
+      osgEarth::SpatialReference* srs = LoaderUtils::getSrs(vdatum);
+      Feature* feature = new Feature(geom, srs, style);
+      feature->setName("GOG Points Feature");
+
+      FeatureNode* featureNode = new FeatureNode(feature);
+      featureNode->setMapNode(mapNode);
+      featureNode->setName("GOG Points");
+      return new FeatureNodeInterface(featureNode, metaData);
+    }
+    else
+    {
+      LocalGeometryNode* node = new LocalGeometryNode(geom, style);
+      node->setMapNode(mapNode);
+      LoaderUtils::setShapePositionOffsets(*node, points, simCore::Vec3(), refPoint, attached, true);
+      node->setName("GOG Points");
+      return new LocalGeometryNodeInterface(node, metaData);
+    }
+  }
+
+  LocalGeometryNode* node = new HostedLocalGeometryNode(geom, style);
+  // note no offset to apply for points, since each point inherently defines its own offsets when hosted
+  node->setName("GOG Points");
+  return new LocalGeometryNodeInterface(node, metaData);
 }
 
 void Points::recreateAsLineSegs_(simVis::GOG::ParserData& p, double extrudeHeight) const

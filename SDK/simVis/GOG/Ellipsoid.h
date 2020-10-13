@@ -26,9 +26,9 @@
 #include "simVis/GOG/GOGNode.h"
 
 namespace osgEarth { class MapNode; }
+namespace simCore { namespace GOG { class Ellipsoid; } }
 
-namespace simVis {
-namespace GOG {
+namespace simVis { namespace GOG {
 
 class GogNodeInterface;
 class ParsedShape;
@@ -46,6 +46,9 @@ public:
     const GOGContext&        context,
     const GogMetaData&       metaData,
     osgEarth::MapNode*       mapNode);
+
+  /** Create the ellipsoid from the shape object */
+  static GogNodeInterface* createEllipsoid(const simCore::GOG::Ellipsoid& ellipsoid, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };
 
 } } // namespace simVis::GOG

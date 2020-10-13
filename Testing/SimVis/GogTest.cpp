@@ -205,7 +205,7 @@ int testShapes(bool useCore)
     "start\n points\n lla 24.1 44.3 0.\n lla \"26.0 N\" \"55.0 E\" 8.\n pointsize 24\n 3d name point 1\n altitudeunits m\n" +
     TEXT_ATTRIBUTES + " end\n"; // add some invalid items
 
-  simVis::GOG::GogNodeInterfacePtr pointGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, pointGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr pointGog = (useCore ? parseGogFileWithCore(false, pointGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, pointGogFile, rv));
   // test the the point parsed correctly
   rv += SDK_ASSERT(pointGog != nullptr);
   if (pointGog)
@@ -235,7 +235,7 @@ int testShapes(bool useCore)
   std::string pointRelGogFile = FILE_VERSION +
     "start\n points\n xyz 100 200 0\n xyz -100 9 0\n pointsize 24\n 3d name point relative 1\n rangeunits m\n end\n";
 
-  simVis::GOG::GogNodeInterfacePtr pointRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, pointRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr pointRelGog = (useCore ? parseGogFileWithCore(true, pointRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, pointRelGogFile, rv));
   // test the the point parsed correctly
   rv += SDK_ASSERT(pointRelGog != nullptr);
   if (pointRelGog)
@@ -307,7 +307,7 @@ int testShapes(bool useCore)
   // test polygon
   std::string polyGogFile = FILE_VERSION +
     "start\n poly\n lla 25.2 53.2 10.\n lla 22.3 54.1 10.\n lla 24.1 53.8 10.\n 3d name poly 1\n altitudeunits m\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr polyGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, polyGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr polyGog = (useCore ? parseGogFileWithCore(false, polyGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, polyGogFile, rv));
   rv += SDK_ASSERT(polyGog != nullptr);
   if (polyGog)
   {
@@ -328,7 +328,7 @@ int testShapes(bool useCore)
   // test relative polygon
   std::string polyRelGogFile = FILE_VERSION +
     "start\n poly\n xyz 100 200 0\n xyz -100 100 0\n xyz -100 -200 0\n 3d name poly relative 1\n rangeunits m\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr polyRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, polyRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr polyRelGog = (useCore ? parseGogFileWithCore(true, polyRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, polyRelGogFile, rv));
   rv += SDK_ASSERT(polyRelGog != nullptr);
   if (polyRelGog)
   {
@@ -480,7 +480,7 @@ int testShapes(bool useCore)
   // test ellipse
   std::string ellipseGogFile = FILE_VERSION +
     "start\n ellipse\n centerlla 25.2 53.2 10.\n majoraxis 500\n minoraxis 200\n 3d name ellipse 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr ellipseGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, ellipseGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr ellipseGog = (useCore ? parseGogFileWithCore(false, ellipseGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, ellipseGogFile, rv));
   rv += SDK_ASSERT(ellipseGog != nullptr);
   if (ellipseGog)
   {
@@ -494,7 +494,7 @@ int testShapes(bool useCore)
   // test relative ellipse
   std::string ellipseRelGogFile = FILE_VERSION +
     "start\n ellipse\n centerxyz 0 0 0\n majoraxis 500\n minoraxis 200\n 3d name ellipse relative 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr ellipseRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, ellipseRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr ellipseRelGog = (useCore ? parseGogFileWithCore(true, ellipseRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, ellipseRelGogFile, rv));
   rv += SDK_ASSERT(ellipseRelGog != nullptr);
   if (ellipseRelGog)
   {
@@ -509,7 +509,7 @@ int testShapes(bool useCore)
   // test sphere
   std::string sphereGogFile = FILE_VERSION +
     "start\n sphere\n centerlla 25.2 53.4 0.\n radius 200\n 3d name sphere 1\n" + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr sphereGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, sphereGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr sphereGog = (useCore ? parseGogFileWithCore(false, sphereGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, sphereGogFile, rv));
   rv += SDK_ASSERT(sphereGog != nullptr);
   if (sphereGog)
   {
@@ -527,7 +527,7 @@ int testShapes(bool useCore)
   // test relative sphere
   std::string sphereRelGogFile = FILE_VERSION +
     "start\n sphere\n centerxyz 5 0 0\n radius 200\n 3d name sphere relative 1\n rangeunits m\n" + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr sphereRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, sphereRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr sphereRelGog = (useCore ? parseGogFileWithCore(true, sphereRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, sphereRelGogFile, rv));
   rv += SDK_ASSERT(sphereRelGog != nullptr);
   if (sphereRelGog)
   {
@@ -546,7 +546,7 @@ int testShapes(bool useCore)
   // test hemisphere
   std::string hemisphereGogFile = FILE_VERSION +
     "start\n hemisphere\n centerlla 26.2 53.2 0.\n radius 200\n 3d name hemisphere 1\n" + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr hemisphereGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, hemisphereGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr hemisphereGog = (useCore ? parseGogFileWithCore(false, hemisphereGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, hemisphereGogFile, rv));
   rv += SDK_ASSERT(hemisphereGog != nullptr);
   if (hemisphereGog)
   {
@@ -564,7 +564,7 @@ int testShapes(bool useCore)
   // test relative hemisphere
   std::string hemisphereRelGogFile = FILE_VERSION +
     "start\n hemisphere\n centerxyz 0 50 0\n radius 200\n 3d name hemisphere relative 1\n rangeunits m\n" + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr hemisphereRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, hemisphereRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr hemisphereRelGog = (useCore ? parseGogFileWithCore(true, hemisphereRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, hemisphereRelGogFile, rv));
   rv += SDK_ASSERT(hemisphereRelGog != nullptr);
   if (hemisphereRelGog)
   {
@@ -583,7 +583,7 @@ int testShapes(bool useCore)
   // test ellipsoid
   std::string ellipsoidGogFile = FILE_VERSION +
     "start\n ellipsoid\n centerlla 25.2 53.2 10.\n majoraxis 500\n minoraxis 200\n height 300\n 3d name ellipsoid 1\n" + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr ellipsoidGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, ellipsoidGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr ellipsoidGog = (useCore ? parseGogFileWithCore(false, ellipsoidGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, ellipsoidGogFile, rv));
   rv += SDK_ASSERT(ellipsoidGog != nullptr);
   if (ellipsoidGog)
   {
@@ -596,7 +596,7 @@ int testShapes(bool useCore)
   // test relative ellipsoid
   std::string ellipsoidRelGogFile = FILE_VERSION +
     "start\n ellipsoid\n centerxyz 0 0 10.\n majoraxis 500\n minoraxis 200\n height 300\n 3d name ellipsoid relative 1\n" + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr ellipsoidRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, ellipsoidRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr ellipsoidRelGog = (useCore ? parseGogFileWithCore(true, ellipsoidRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, ellipsoidRelGogFile, rv));
   rv += SDK_ASSERT(ellipsoidRelGog != nullptr);
   if (ellipsoidRelGog)
   {
@@ -646,7 +646,7 @@ int testShapes(bool useCore)
   // test orbit
   std::string orbitGogFile = FILE_VERSION +
     "start\n orbit\n centerlla 25.2 53.2 0.\n centerll2 26. 54.3\n radius 500\n 3d name orbit 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr orbitGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, orbitGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr orbitGog = (useCore ? parseGogFileWithCore(false, orbitGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, orbitGogFile, rv));
   rv += SDK_ASSERT(orbitGog != nullptr);
   if (orbitGog)
   {
@@ -665,7 +665,8 @@ int testShapes(bool useCore)
   // test relative orbit
   std::string orbitRelGogFile = FILE_VERSION +
     "start\n orbit\n centerxyz 500 -200 0\n centerxy2 600 200 radius 500\n 3d name orbit relative 1\n rangeunits m\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr orbitRelGog = parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, orbitRelGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr orbitRelGog = (useCore ? parseGogFileWithCore(true, orbitRelGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_HOSTED, orbitRelGogFile, rv));
+
   rv += SDK_ASSERT(orbitRelGog != nullptr);
   if (orbitRelGog)
   {
@@ -769,7 +770,7 @@ int testShapes(bool useCore)
   // test lat lon alt box
   const std::string llabGogFile = FILE_VERSION +
     "start\n latlonaltbox 26.13568698 26.130 55.27931357 55.270 0. 1000\n 3d name llab 1\n" + LINE_ATTRIBUTES + FILL_ATTRIBUTES + "end\n";
-  simVis::GOG::GogNodeInterfacePtr llabGog = parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, llabGogFile, rv);
+  simVis::GOG::GogNodeInterfacePtr llabGog = (useCore ? parseGogFileWithCore(false, llabGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, llabGogFile, rv));
   rv += SDK_ASSERT(llabGog != nullptr);
   if (llabGog)
   {

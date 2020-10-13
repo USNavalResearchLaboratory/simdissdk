@@ -132,9 +132,8 @@ GogNodeInterface* Line::createLine(const simCore::GOG::Line& line, bool attached
     {
       LocalGeometryNode* node = new LocalGeometryNode(geom, style);
       node->setMapNode(mapNode);
-      osg::Vec3d ctr = geom->getBounds().center();
       // pass in 0 xyz center offsets since the geometry's points define xyz offsets
-      LoaderUtils::setShapePositionOffsets(*node, line, simCore::Vec3(0, 0, 0), refPoint, attached, false);
+      LoaderUtils::setShapePositionOffsets(*node, line, simCore::Vec3(), refPoint, attached, false);
       rv = new LocalGeometryNodeInterface(node, metaData);
       node->setName("GOG Line");
     }
@@ -142,9 +141,8 @@ GogNodeInterface* Line::createLine(const simCore::GOG::Line& line, bool attached
   else
   {
     LocalGeometryNode* node = new HostedLocalGeometryNode(geom, style);
-    osg::Vec3d ctr = geom->getBounds().center();
     // pass in 0 xyz center offsets since the geometry's points define xyz offsets
-    LoaderUtils::setShapePositionOffsets(*node, line, simCore::Vec3(0, 0, 0), refPoint, attached, false);
+    LoaderUtils::setShapePositionOffsets(*node, line, simCore::Vec3(), refPoint, attached, false);
     rv = new LocalGeometryNodeInterface(node, metaData);
     node->setName("GOG Line");
   }
