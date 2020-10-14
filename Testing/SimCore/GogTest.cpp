@@ -968,6 +968,40 @@ int testAnnotation()
   return rv;
 }
 
+
+// test that the arc's angles are startAngle = 5 deg and sweep = 47 deg
+auto testArcAnglesFunc = [](const simCore::GOG::Arc* shape) -> int
+{
+  int rv = 0;
+  double startAngle = 0.;
+  rv += SDK_ASSERT(shape->getAngleStart(startAngle) == 0);
+  rv += SDK_ASSERT(simCore::areEqual(startAngle * simCore::RAD2DEG, 5.));
+  double sweep = 0.;
+  rv += SDK_ASSERT(shape->getAngleSweep(sweep) == 0);
+  rv += SDK_ASSERT(simCore::areEqual(sweep * simCore::RAD2DEG, 47.));
+  return rv;
+};
+
+// test that the circular height shape's height is 350 m
+auto testCircularHeightFunc = [](const simCore::GOG::CircularHeightShape* shape) -> int
+{
+  int rv = 0;
+  double height = 0.;
+  rv += SDK_ASSERT(shape->getHeight(height) == 0);
+  rv += SDK_ASSERT(height == 350);
+  return rv;
+};
+
+// test that the cylinder shape's height is 350 m
+auto testCylinderHeightFunc = [](const simCore::GOG::Cylinder* shape) -> int
+{
+  int rv = 0;
+  double height = 0.;
+  rv += SDK_ASSERT(shape->getHeight(height) == 0);
+  rv += SDK_ASSERT(height == 350);
+  return rv;
+};
+
 int testUnits()
 {
   int rv = 0;
@@ -1116,6 +1150,18 @@ int testUnits()
   }
   shapes.clear();
 
+  // test arc with degrees specified angle units, since degree is a non-standard units name
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n centerlla 25.1 58.2 12.\n anglestart 5.\n angledeg 47.\n angleunits degree\n end\n", testArcAnglesFunc);
+
+  // test height units work for circular height shape
+  rv += testShapeFunction<simCore::GOG::Cone>("start\n cone\n centerlla 25 34 0\n centerll2 23 23 0\n height 350\n altitudeunits m\n end\n", testCircularHeightFunc);
+  rv += testShapeFunction<simCore::GOG::Cone>("start\n cone\n centerlla 25 34 0\n centerll2 23 23 0\n height .35\n altitudeunits km\n end\n", testCircularHeightFunc);
+  rv += testShapeFunction<simCore::GOG::Ellipsoid>("start\n ellipsoid\n centerlla 25 34 0\n height 350\n altitudeunits m\n end\n", testCircularHeightFunc);
+  rv += testShapeFunction<simCore::GOG::Ellipsoid>("start\n ellipsoid\n centerlla 25 34 0\n height .35\n altitudeunits km\n end\n", testCircularHeightFunc);
+  // test heigh units work for cylinder
+  rv += testShapeFunction<simCore::GOG::Cylinder>("start\n cylinder\n centerlla 25 34 0\n height 350\n altitudeunits m\n end\n", testCylinderHeightFunc);
+  rv += testShapeFunction<simCore::GOG::Cylinder>("start\n cylinder\n centerlla 25 34 0\n height .35\n altitudeunits km\n end\n", testCylinderHeightFunc);
+
   return rv;
 }
 
@@ -1170,6 +1216,41 @@ int testFollow()
   return rv;
 }
 
+// test that the circular shape has no center defined
+auto testCircularNoCenterFunc = [](const simCore::GOG::CircularShape* shape) -> int
+{
+  int rv = 0;
+  simCore::Vec3 center;
+  rv += SDK_ASSERT(shape->getCenterPosition(center) != 0);
+  return rv;
+};
+
+// test that the annotation shape has no position defined
+auto testAnnotationNoPositionFunc = [](const simCore::GOG::Annotation* shape) -> int
+{
+  int rv = 0;
+  simCore::Vec3 pos;
+  rv += SDK_ASSERT(shape->getPosition(pos) != 0);
+  return rv;
+};
+
+// test shapes that are centered will still parse if no center defined
+int testCenteredDefault()
+{
+  int rv = 0;
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n end\n", testCircularNoCenterFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n end\n", testCircularNoCenterFunc);
+  rv += testShapeFunction<simCore::GOG::Cylinder>("start\n cylinder\n end\n", testCircularNoCenterFunc);
+  rv += testShapeFunction<simCore::GOG::Sphere>("start\n sphere\n end\n", testCircularNoCenterFunc);
+  rv += testShapeFunction<simCore::GOG::Hemisphere>("start\n hemisphere\n end\n", testCircularNoCenterFunc);
+  rv += testShapeFunction<simCore::GOG::Ellipsoid>("start\n ellipsoid\n end\n", testCircularNoCenterFunc);
+  rv += testShapeFunction<simCore::GOG::Cone>("start\n cone\n end\n", testCircularNoCenterFunc);
+  rv += testShapeFunction<simCore::GOG::Ellipse>("start\n ellipse\n end\n", testCircularNoCenterFunc);
+  rv += testShapeFunction<simCore::GOG::Annotation>("start\n annotation some name\n end\n", testAnnotationNoPositionFunc);
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -1185,6 +1266,7 @@ int GogTest(int argc, char* argv[])
   rv += testUnits();
   rv += testAltitudeModes();
   rv += testFollow();
+  rv += testCenteredDefault();
 
   return rv;
 }

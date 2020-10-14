@@ -132,8 +132,6 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
   std::set<std::string> unhandledKeywords;
   // not supported
   unhandledKeywords.insert("innerradius");
-  // billboard is OBE, since all annotations are always billboarded
-  unhandledKeywords.insert("3d billboard");
   // no checks on version
   unhandledKeywords.insert("version");
 
@@ -749,13 +747,16 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       state.textSize_ = tokens[1];
       current.set(ShapeParameter::TEXTSIZE, tokens[1]);
     }
+    // 3d billboard is OBE, since all annotations are always billboarded
+    else if (startsWith(line, "3d billboard"))
+      continue;
     else // treat everything as a name/value pair
     {
       if (!tokens.empty())
       {
         // filter out items that are explicitly unhandled
         if (unhandledKeywords.find(tokens[0]) == unhandledKeywords.end())
-          printError_(lineNumber, "Found unknown GOG command " + tokens[0]);
+          printError_(lineNumber, "Found unknown GOG command " + line);
       }
     }
   }
@@ -813,7 +814,8 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
 
     Annotation* anno = new Annotation(relative);
-    anno->setPosition(position);
+    if (hasPosition)
+      anno->setPosition(position);
     anno->setText(parsed.stringValue(ShapeParameter::TEXT));
     if (parsed.hasValue(ShapeParameter::FONTNAME))
       anno->setFontName(parsed.stringValue(ShapeParameter::FONTNAME));

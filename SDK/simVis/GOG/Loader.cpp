@@ -86,6 +86,15 @@ void Loader::loadGogs(std::istream& input, bool attached, GogNodeVector& output)
 GogNodeInterfacePtr Loader::buildGogNode_(simCore::GOG::GogShapePtr gog, bool attached) const
 {
   GogNodeInterfacePtr rv;
+
+  if (attached && !gog->isRelative())
+  {
+    std::string gogName;
+    gog->getName(gogName);
+    SIM_WARN << "Attempting to load attached GOG with absolute points, cannot create shape for " << gogName << "\n";
+    return nullptr;
+  }
+
   switch (gog->shapeType())
   {
   case simCore::GOG::ShapeType::UNKNOWN:

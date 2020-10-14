@@ -51,10 +51,10 @@
 *         CircularHeightShape:
 *           Cone
 *           Ellipsoid
-*       EllipticalShape:
-*         Arc
-*         Ellipse
-*         Cylinder
+*         EllipticalShape:
+*           Arc
+*           Ellipse
+*           Cylinder
 */
 
 namespace simCore { namespace GOG {
