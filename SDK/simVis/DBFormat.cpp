@@ -676,9 +676,9 @@ osgEarth::Status DBElevationLayer::openImplementation()
     }
 
     // Set up as a unified cube:
-    osgEarth::Profile* profile = new osgEarth::Contrib::UnifiedCubeProfile();
+    osg::ref_ptr<osgEarth::Profile> profile = new osgEarth::Contrib::UnifiedCubeProfile();
     // DB are expected to be wgs84, which Cube defaults to
-    setProfile(profile);
+    setProfile(profile.get());
 
     // Lat/long extents (for debugging)
     osgEarth::GeoExtent llex[6];
