@@ -210,8 +210,6 @@ auto testCircularShapeMinimalFieldsFunc = [](const simCore::GOG::CircularShape* 
   double radius = 0.;
   // verify radius wasn't set
   rv += SDK_ASSERT(shape->getRadius(radius) == 1);
-  // verify default value was returned
-  rv += SDK_ASSERT(radius == 304.8);
 
   return rv;
 };
@@ -236,7 +234,6 @@ auto testCircularHeightShapeMinimalFieldsFunc = [](const simCore::GOG::CircularH
   int rv = testCircularShapeMinimalFieldsFunc(shape, positions);
   double height = 0.;
   rv += SDK_ASSERT(shape->getHeight(height) != 0);
-  rv += SDK_ASSERT(height == 304.8);
   return rv;
 };
 
