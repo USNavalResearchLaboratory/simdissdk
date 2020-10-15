@@ -21,15 +21,27 @@
  *
  */
 #include <cassert>
+#include <sstream>
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Units.h"
 #include "simCore/GOG/GogShape.h"
 
 namespace simCore { namespace GOG {
 
+std::string Color::serialize() const
+{
+  std::ostringstream os;
+  uint32_t colorVal = (alpha << 24) + (red << 16) + (green << 8) + blue;
+  os << "0x" << std::hex << colorVal;
+  return os.str();
+}
+
+
 GogShape::GogShape()
   : canExtrude_(false),
     canFollow_(false),
-    relative_(false)
+    relative_(false),
+    serializeName_(true)
 {}
 
 GogShape::~GogShape()
@@ -307,6 +319,118 @@ ShapeType GogShape::stringToShapeType(const std::string& shapeType)
   return ShapeType::UNKNOWN;
 }
 
+void GogShape::setOriginalUnits(const UnitsState& units)
+{
+  originalUnits_ = units;
+}
+
+void GogShape::serializeToStream(std::ostream& gogOutputStream) const
+{
+  // comments should be serialized first
+  for (std::string comment : comments_)
+    gogOutputStream << comment << "\n";
+
+  // first call implementation methods
+  serializeToStream_(gogOutputStream);
+
+  if (serializeName_ && name_.has_value())
+    gogOutputStream << "3d name " << name_.value_or("") << "\n";
+
+  // serialize out draw state only if it's specifically set to 'off'
+  if (draw_.has_value() && !draw_.value_or(true))
+    gogOutputStream << "off\n";
+
+  simCore::Units altUnits(simCore::Units::METERS);
+
+  if (altitudeOffset_.has_value())
+    gogOutputStream << "3d offsetalt " << altUnits.convertTo(originalUnits_.altitudeUnits(), altitudeOffset_.value_or(0.)) << "\n";
+
+  if (depthBuffer_.has_value())
+    gogOutputStream << "depthbuffer " << (depthBuffer_.value_or(true) ? "true" : "false") << "\n";
+
+  if (altitudeMode_.has_value())
+  {
+    std::string altitudeModeStr = "altitudemode ";
+    switch (altitudeMode_.value_or(AltitudeMode::NONE))
+    {
+    case AltitudeMode::NONE:
+      gogOutputStream << altitudeModeStr << "none\n";
+      break;
+    case AltitudeMode::CLAMP_TO_GROUND:
+      gogOutputStream << altitudeModeStr << "clamptoground\n";
+      break;
+    case AltitudeMode::RELATIVE_TO_GROUND:
+      gogOutputStream << altitudeModeStr << "relativetoground\n";
+      break;
+    case AltitudeMode::EXTRUDE:
+      altitudeModeStr = "extrude";
+      if (extrudeHeight_.has_value())
+        gogOutputStream << altitudeModeStr << " " << altUnits.convertTo(originalUnits_.altitudeUnits(), extrudeHeight_.value_or(0.)) << "\n";
+      else
+        gogOutputStream << altitudeModeStr << "\n";
+      break;
+    }
+  }
+
+  if (referencePosition_.has_value())
+  {
+    simCore::Vec3 ref = referencePosition_.value_or(simCore::Vec3());
+    gogOutputStream << "ref " << ref.lat() * simCore::RAD2DEG << " " << ref.lon() * simCore::RAD2DEG << " " << altUnits.convertTo(originalUnits_.altitudeUnits(), ref.alt()) << "\n";
+  }
+
+  if (scale_.has_value())
+  {
+    simCore::Vec3 scale = scale_.value_or(simCore::Vec3());
+    gogOutputStream << "scale " << scale.x() << " " << scale.y() << " " << scale.z() << "\n";
+  }
+
+  if (verticalDatum_.has_value())
+    gogOutputStream << "verticaldatum " << verticalDatum_.value_or("") << "\n";
+
+  if (originalUnits_.hasAltitudeUnits())
+    gogOutputStream << "altitudeunits " << originalUnits_.altitudeUnits().abbreviation() << "\n";
+
+  if (originalUnits_.hasAngleUnits())
+    gogOutputStream << "angleunits " << originalUnits_.angleUnits().abbreviation() << "\n";
+
+  if (originalUnits_.hasRangeUnits())
+    gogOutputStream << "rangeunits " << originalUnits_.rangeUnits().abbreviation() << "\n";
+
+  // follow data can be presented in multiple ways (3d follow, orient,  rotate, and the 3d offsetcourse, offsetpitch, offsetroll values)
+  // serialize out using the 3d follow, which provides the most well defined values
+  std::string followComponents;
+  if (followYaw_.value_or(false))
+    followComponents += "c";
+  if (followPitch_.value_or(false))
+    followComponents += "p";
+  if (followRoll_.value_or(false))
+    followComponents += "r";
+  if (!followComponents.empty())
+    gogOutputStream << "3d follow " << followComponents << "\n";
+
+  if (yawOffset_.has_value())
+    gogOutputStream << "3d offsetcourse " << simCore::Units::RADIANS.convertTo(originalUnits_.angleUnits(), yawOffset_.value_or(0.)) << "\n";
+  if (pitchOffset_.has_value())
+    gogOutputStream << "3d offsetpitch " << simCore::Units::RADIANS.convertTo(originalUnits_.angleUnits(), pitchOffset_.value_or(0.)) << "\n";
+  if (rollOffset_.has_value())
+    gogOutputStream << "3d offsetroll " << simCore::Units::RADIANS.convertTo(originalUnits_.angleUnits(), rollOffset_.value_or(0.)) << "\n";
+}
+
+void GogShape::serializePoints_(const std::vector<simCore::Vec3>& points, std::ostream& gogOutputStream) const
+{
+  simCore::Units distanceUnits(simCore::Units::METERS);
+  for (simCore::Vec3 point : points)
+  {
+    if (isRelative())
+      gogOutputStream << "xyz " << distanceUnits.convertTo(originalUnits_.rangeUnits(), point.x()) << " "
+      << distanceUnits.convertTo(originalUnits_.rangeUnits(), point.y()) << " "
+      << distanceUnits.convertTo(originalUnits_.altitudeUnits(), point.z()) << "\n";
+    else
+      gogOutputStream << "lla " << point.lat() * simCore::RAD2DEG << " " << point.lon() * simCore::RAD2DEG << " "
+      << distanceUnits.convertTo(originalUnits_.altitudeUnits(), point.alt()) << "\n";
+  }
+}
+
 void GogShape::setCanExtrude_(bool canExtrude)
 {
   canExtrude_ = canExtrude;
@@ -322,6 +446,11 @@ void GogShape::setRelative_(bool relative)
   relative_ = relative;
 }
 
+void GogShape::setSerializeName_(bool serializeName)
+{
+  serializeName_ = serializeName;
+}
+
 OutlinedShape::OutlinedShape()
   : GogShape()
 {}
@@ -335,6 +464,12 @@ int OutlinedShape::getIsOutlined(bool& outlined) const
 void OutlinedShape::setOutlined(bool outlined)
 {
   outlined_ = outlined;
+}
+
+void OutlinedShape::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  if (outlined_.has_value())
+    gogOutputStream << "outline " << (outlined_.value_or(true) ? "true" : "false") << "\n";
 }
 
 Points::Points(bool relative)
@@ -380,6 +515,22 @@ int Points::getColor(Color& color) const
 void Points::setColor(Color& gogColor)
 {
   color_ = gogColor;
+}
+
+void Points::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  // points serialize shape type as a separate line item
+  gogOutputStream << GogShape::shapeTypeToString(shapeType()) << "\n";
+
+  serializePoints_(points_, gogOutputStream);
+
+  if (pointSize_.has_value())
+    gogOutputStream << "pointsize " << pointSize_.value_or(0) << "\n";
+
+  if (color_.has_value())
+    gogOutputStream << "linecolor hex " << color_.value_or(Color()).serialize() << "\n";
+
+  OutlinedShape::serializeToStream_(gogOutputStream);
 }
 
 FillableShape::FillableShape()
@@ -440,6 +591,19 @@ void FillableShape::setFillColor(const Color& color)
   fillColor_ = color;
 }
 
+void FillableShape::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  if (lineWidth_.has_value())
+    gogOutputStream << "linewidth " << lineWidth_.value_or(0) << "\n";
+  if (lineColor_.has_value())
+    gogOutputStream << "linecolor hex " << lineColor_.value_or(Color()).serialize() << "\n";
+  if (filled_.has_value())
+    gogOutputStream << "filled " << (filled_.value_or(false) ? "true" : "false") << "\n";
+  if (fillColor_.has_value())
+    gogOutputStream << "fillcolor hex " << fillColor_.value_or(Color()).serialize() << "\n";
+  OutlinedShape::serializeToStream_(gogOutputStream);
+}
+
 PointBasedShape::PointBasedShape(bool relative)
   : FillableShape()
 {
@@ -467,6 +631,35 @@ int PointBasedShape::getTessellation(TessellationStyle& tessellation) const
 void PointBasedShape::setTesssellation(TessellationStyle tessellation)
 {
   tessellation_ = tessellation;
+}
+
+void PointBasedShape::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  // point based shapes serialize shape type as a separate line item
+  gogOutputStream << GogShape::shapeTypeToString(shapeType()) << "\n";
+  serializePoints_(points_, gogOutputStream);
+
+  if (tessellation_.has_value())
+  {
+    std::string lineProjection;
+    bool tessellate = true;
+    switch (tessellation_.value_or(TessellationStyle::NONE))
+    {
+    case TessellationStyle::NONE:
+      tessellate = false;
+      break;
+    case TessellationStyle::GREAT_CIRCLE:
+      lineProjection = "greatcircle";
+      break;
+    case TessellationStyle::RHUMBLINE:
+      lineProjection = "rhumbline";
+      break;
+    }
+    gogOutputStream << "tessellate " << (tessellate ? "true" : "false");
+    if (!lineProjection.empty())
+      gogOutputStream << "lineprojection " << lineProjection << "\n";
+  }
+  FillableShape::serializeToStream_(gogOutputStream);
 }
 
 Line::Line(bool relative)
@@ -519,15 +712,36 @@ void CircularShape::setCenterPosition(const simCore::Vec3& centerPosition)
 
 int CircularShape::getRadius(double& radius) const
 {
-  // TODO: update default based on range units
-  // default radius is 1000 ft
-  radius = radius_.value_or(304.8);
+  // default radius is 1000 unitless
+  radius = radius_.value_or(originalUnits_.rangeUnits().convertTo(simCore::Units::METERS, 1000.));
   return (radius_.has_value() ? 0 : 1);
 }
 
 void CircularShape::setRadius(double radiusMeters)
 {
   radius_ = radiusMeters;
+}
+
+void CircularShape::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  // point based shapes serialize shape type as a separate line item
+  gogOutputStream << GogShape::shapeTypeToString(shapeType()) << "\n";
+
+  simCore::Units distanceUnits(simCore::Units::METERS);
+  if (center_.has_value())
+  {
+    simCore::Vec3 center = center_.value_or(simCore::Vec3());
+    if (isRelative())
+      gogOutputStream << "centerxyz " << distanceUnits.convertTo(originalUnits_.rangeUnits(), center.x()) << " " << distanceUnits.convertTo(originalUnits_.rangeUnits(), center.y()) << " "
+      << distanceUnits.convertTo(originalUnits_.altitudeUnits(), center.z()) << "\n";
+    else
+      gogOutputStream << "centerlla " << center.lat() * simCore::RAD2DEG << " " << center.lon() * simCore::RAD2DEG << " " << distanceUnits.convertTo(originalUnits_.altitudeUnits(), center.alt()) << "\n";
+  }
+
+  if (radius_.has_value())
+    gogOutputStream << "radius " << distanceUnits.convertTo(originalUnits_.rangeUnits(), radius_.value_or(0.)) << "\n";
+
+  FillableShape::serializeToStream_(gogOutputStream);
 }
 
 Circle::Circle(bool relative)
@@ -641,6 +855,22 @@ void EllipticalShape::setMinorAxis(double minorAxisMeters)
   minorAxis_ = minorAxisMeters;
 }
 
+void EllipticalShape::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  CircularShape::serializeToStream_(gogOutputStream);
+
+  simCore::Units angleUnits(simCore::Units::RADIANS);
+  if (angleStart_.has_value())
+    gogOutputStream << "anglestart " << angleUnits.convertTo(originalUnits_.angleUnits(), angleStart_.value_or(0.)) << "\n";
+  if (angleSweep_.has_value())
+    gogOutputStream << "angledeg " << angleUnits.convertTo(originalUnits_.angleUnits(), angleSweep_.value_or(0.)) << "\n";
+  simCore::Units distanceUnits(simCore::Units::METERS);
+  if (majorAxis_.has_value())
+    gogOutputStream << "majoraxis " << distanceUnits.convertTo(originalUnits_.rangeUnits(), majorAxis_.value_or(0.)) << "\n";
+  if (minorAxis_.has_value())
+    gogOutputStream << "minoraxis " << distanceUnits.convertTo(originalUnits_.rangeUnits(), minorAxis_.value_or(0.)) << "\n";
+}
+
 Arc::Arc(bool relative)
   : EllipticalShape()
 {
@@ -680,9 +910,8 @@ ShapeType Cylinder::shapeType() const
 
 int Cylinder::getHeight(double& height) const
 {
-  // TODO: update based on altitudeunits
-  // default height is 1000 ft
-  height = height_.value_or(304.8);
+  // default height is 1000 unitless
+  height = height_.value_or(originalUnits_.altitudeUnits().convertTo(simCore::Units::METERS, 1000.));
   return (height_.has_value() ? 0 : 1);
 }
 
@@ -691,21 +920,34 @@ void Cylinder::setHeight(double height)
   height_ = height;
 }
 
+void Cylinder::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  CircularShape::serializeToStream_(gogOutputStream);
+  if (height_.has_value())
+    gogOutputStream << "height " << simCore::Units::METERS.convertTo(originalUnits_.altitudeUnits(), height_.value_or(0.)) << "\n";
+}
+
 CircularHeightShape::CircularHeightShape()
   : CircularShape()
 {}
 
 int CircularHeightShape::getHeight(double& height) const
 {
-  // TODO: update based on altitudeunits
-  // default height is 1000 ft
-  height = height_.value_or(304.8);
+  // default height is 1000 unitless
+  height = height_.value_or(originalUnits_.altitudeUnits().convertTo(simCore::Units::METERS, 1000.));
   return (height_.has_value() ? 0 : 1);
 }
 
 void CircularHeightShape::setHeight(double heightMeters)
 {
   height_ = heightMeters;
+}
+
+void CircularHeightShape::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  CircularShape::serializeToStream_(gogOutputStream);
+  if (height_.has_value())
+    gogOutputStream << "height " << simCore::Units::METERS.convertTo(originalUnits_.altitudeUnits(), height_.value_or(0.)) << "\n";
 }
 
 Cone::Cone(bool relative)
@@ -754,12 +996,23 @@ void Ellipsoid::setMinorAxis(double minorAxisMeters)
   minorAxis_ = minorAxisMeters;
 }
 
+void Ellipsoid::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  CircularHeightShape::serializeToStream_(gogOutputStream);
+  simCore::Units distanceUnits(simCore::Units::METERS);
+  if (majorAxis_.has_value())
+    gogOutputStream << "majoraxis " << distanceUnits.convertTo(originalUnits_.rangeUnits(), majorAxis_.value_or(0.)) << "\n";
+  if (minorAxis_.has_value())
+    gogOutputStream << "minoraxis " << distanceUnits.convertTo(originalUnits_.rangeUnits(), minorAxis_.value_or(0.)) << "\n";
+}
+
 Annotation::Annotation(bool relative)
   : GogShape()
 {
   setCanExtrude_(false);
   setCanFollow_(false);
   setRelative_(relative);
+  setSerializeName_(false);
 }
 
 ShapeType Annotation::shapeType() const
@@ -865,6 +1118,46 @@ void Annotation::setPriority(double priority)
   priority_ = priority;
 }
 
+void Annotation::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  std::string name;
+  getName(name);
+  gogOutputStream << shapeTypeToString(shapeType()) << " " << name << "\n";
+
+  if (position_.has_value())
+  {
+    std::vector<simCore::Vec3> positionVec;
+    simCore::Vec3 position = position_.value_or(simCore::Vec3());
+    // annotation serializes out position as lla or xyz
+    serializePoints_(positionVec, gogOutputStream);
+  }
+
+  if (fontName_.has_value())
+    gogOutputStream << "fontname " << fontName_.value_or("") << "\n";
+  if (textSize_.has_value())
+    gogOutputStream << "fontsize " << textSize_.value_or(0) << "\n";
+  if (textColor_.has_value())
+    gogOutputStream << "linecolor " << textColor_.value_or(Color()).serialize() << "\n";
+  if (outlineColor_.has_value())
+    gogOutputStream << "textoutlinecolor " << outlineColor_.value_or(Color()).serialize() << "\n";
+  if (outlineThickness_.has_value())
+  {
+    std::string thicknessStr = "none";
+    OutlineThickness thickness = OutlineThickness::NONE;
+    switch (outlineThickness_.value_or(thickness))
+    {
+    case OutlineThickness::NONE:
+      break;
+    case OutlineThickness::THIN:
+      thicknessStr = "thin";
+      break;
+    case OutlineThickness::THICK:
+      thicknessStr = "thick";
+    }
+    gogOutputStream << "textoutlinethickness " << thicknessStr << "\n";
+  }
+}
+
 LatLonAltBox::LatLonAltBox()
   : FillableShape(),
     north_(0.),
@@ -944,6 +1237,16 @@ void LatLonAltBox::setHeight(double heightMeters)
   height_ = heightMeters;
 }
 
+void LatLonAltBox::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  gogOutputStream << GogShape::shapeTypeToString(shapeType()) << (north_ * simCore::RAD2DEG) << " " << (south_ * simCore::RAD2DEG) << " "
+    << (east_ * simCore::RAD2DEG) << " " << (west_ * simCore::RAD2DEG) << " " << simCore::Units::METERS.convertTo(originalUnits_.altitudeUnits(), altitude_);
+  if (height_.has_value())
+    gogOutputStream << " " << simCore::Units::METERS.convertTo(originalUnits_.altitudeUnits(), altitude_ + height_.value_or(0));
+  gogOutputStream << "\n";
+  FillableShape::serializeToStream_(gogOutputStream);
+}
+
 ImageOverlay::ImageOverlay()
   : GogShape(),
     north_(0.),
@@ -1020,6 +1323,13 @@ std::string ImageOverlay::imageFile() const
 void ImageOverlay::setImageFile(const std::string& imageFile)
 {
   imageFile_ = imageFile;
+}
+
+void ImageOverlay::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  gogOutputStream << "# kml_groundoverlay\n";
+  gogOutputStream << "# kml_latlonbox " << (north_ * simCore::RAD2DEG) << " " << (south_ * simCore::RAD2DEG) << " "
+    << (east_ * simCore::RAD2DEG) << " " << (west_ * simCore::RAD2DEG) << " " << rotation_ << "\n";
 }
 
 }}

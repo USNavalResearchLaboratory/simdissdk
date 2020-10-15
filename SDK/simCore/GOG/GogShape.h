@@ -23,12 +23,14 @@
 #ifndef SIMCORE_GOG_GOGSHAPE_H
 #define SIMCORE_GOG_GOGSHAPE_H
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Common/Common.h"
 #include "simCore/Common/Optional.h"
+#include "simCore/GOG/GogUtils.h"
 
 /**
 * Class hierarchy for GOG shapes, only leaf nodes can be directly instantiated
@@ -101,6 +103,7 @@ struct Color
   Color(int redIn, int greenIn, int blueIn, int alphaIn) : red(redIn), green(greenIn), blue(blueIn), alpha(alphaIn) {};
   Color() : Color(255, 0, 0, 255) {}
   bool operator==(const Color& rhs) const { return red == rhs.red && green == rhs.green && blue == rhs.blue && alpha == rhs.alpha; }
+  std::string serialize() const;
 };
 
 /// Defines how the line stipple is drawn for a FillableShape
@@ -265,6 +268,12 @@ public:
   /// Convert a string representation of shape type to its equivalent enum
   static ShapeType stringToShapeType(const std::string& shapeType);
 
+  /// Set the original units of the shape for use when serializing the shape
+  void setOriginalUnits(const UnitsState& units);
+
+  /// Serialize the shape to the specified stream
+  void serializeToStream(std::ostream& gogOutputStream) const;
+
 protected:
   GogShape();
   /// Set if shape supports extrusion
@@ -273,11 +282,20 @@ protected:
   void setCanFollow_(bool canFollow);
   /// Set if shape is relative or absolute
   void setRelative_(bool relative);
+  /// Set if the shape will serialize out its name as a separate line item using '3d name'
+  void setSerializeName_(bool serializeName);
+  /// Serialize the shapes specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const = 0;
+  /// Helper method to serialize a list of positions into lla or xyz, depending on relative state
+  void serializePoints_(const std::vector<simCore::Vec3>& points, std::ostream& gogOutputStream) const;
+
+  UnitsState originalUnits_; ///< store original units for serialization
 
 private:
   bool canExtrude_; ///< Indicates if shape supports extrusion
   bool canFollow_; ///< Indicates if shape's orientation can be locked to a reference orientation
   bool relative_; ///< Indicates if shape is relative coordinates (xyz meters) or absolute coordinates (lla radians)
+  bool serializeName_; ///< Indicates if shape will serialize out its name as a separate line item using '3d name'
 
   Optional<std::string> name_; ///< Display name
   Optional<bool> draw_; ///< Draw state
@@ -297,8 +315,6 @@ private:
 
   Optional<std::string> verticalDatum_; ///< String that represents vertical datum, e.g. wgs84
   std::vector<std::string> comments_; ///< Comment strings for the shape
-
-  // TODO: store original units for serialization
 };
 
 /// Shape that supports outlined state
@@ -315,6 +331,7 @@ public:
 
 protected:
   OutlinedShape();
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
   Optional<bool> outlined_; ///< outlined state of the shape
@@ -348,6 +365,9 @@ public:
   int getColor(Color& color) const;
   /// Set the shape's color
   void setColor(Color& gogColor);
+
+protected:
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 public:
   Optional<int> pointSize_; ///< pixels
@@ -401,6 +421,7 @@ public:
 
 protected:
   FillableShape();
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
 
@@ -430,6 +451,7 @@ public:
 
 protected:
   explicit PointBasedShape(bool relative);
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
   Optional<TessellationStyle> tessellation_; ///< defines calculation used for tessellation
@@ -485,6 +507,7 @@ public:
 
 protected:
   CircularShape();
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
   Optional<simCore::Vec3> center_; ///< lla radians if absolute, xyz meters if relative
@@ -573,6 +596,7 @@ public:
 
 protected:
   EllipticalShape();
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
   Optional<double> angleStart_; ///< radians
@@ -616,6 +640,8 @@ public:
   void setHeight(double heightMeters);
 
 private:
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   Optional<double> height_; ///< meters
 };
 
@@ -633,6 +659,7 @@ public:
 
 protected:
   CircularHeightShape();
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
   Optional<double> height_; ///< meters
@@ -672,6 +699,8 @@ public:
   void setMinorAxis(double minorAxisMeters);
 
 private:
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   Optional<double> majorAxis_; ///< meters
   Optional<double> minorAxis_; ///< meters
 };
@@ -754,6 +783,8 @@ public:
   void setPriority(double priority);
 
 private:
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   std::string text_; ///< display text
   Optional<simCore::Vec3> position_; ///< lla radians if absolute, xyz meters if relative
   Optional<std::string> fontName_; ///< font filename
@@ -798,6 +829,8 @@ public:
   void setHeight(double heightMeters);
 
 private:
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   double north_; ///< north corner latitude, radians
   double south_; ///< south corner latitude, radians
   double east_; ///< east corner latitude, radians
@@ -839,6 +872,8 @@ public:
   void setImageFile(const std::string& imageFile);
 
 private:
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   double north_; ///< north corner latitude, radians
   double south_; ///< south corner latitude, radians
   double east_; ///< east corner latitude, radians

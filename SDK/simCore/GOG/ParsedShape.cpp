@@ -42,6 +42,7 @@ void ParsedShape::reset()
   points_.clear();
   pointType_ = UNKNOWN;
   lineNumber_ = 0;
+  comments_.clear();
 }
 
 void ParsedShape::setLineNumber(size_t lineNumber)

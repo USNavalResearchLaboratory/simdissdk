@@ -134,6 +134,8 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
   unhandledKeywords.insert("innerradius");
   // no checks on version
   unhandledKeywords.insert("version");
+  // not supported
+  unhandledKeywords.insert("timeunits");
 
   // valid commands must occur within a start/end block
   bool validStartEndBlock = false;
@@ -500,13 +502,6 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         state.rangeUnits_ = tokens[1];
       else
         printError_(lineNumber, "rangeunits command requires 1 argument");
-    }
-    else if (tokens[0] == "timeunits")
-    {
-      if (tokens.size() >= 2)
-        state.timeUnits_ = tokens[1];
-      else
-        printError_(lineNumber, "timeunits command requires 1 argument");
     }
     else if (tokens[0] == "angleunits")
     {
@@ -949,10 +944,10 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     {
       double majorAxis = 0.;
       if (validateDouble_(parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed.lineNumber(), majorAxis) == 0)
-        ellipsoid->setMajorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, majorAxis));
+        ellipsoid->setMajorAxis(units.rangeUnits().convertTo(simCore::Units::METERS, majorAxis));
       double minorAxis = 0.;
       if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed.lineNumber(), minorAxis) == 0)
-        ellipsoid->setMinorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, minorAxis));
+        ellipsoid->setMinorAxis(units.rangeUnits().convertTo(simCore::Units::METERS, minorAxis));
     }
     rv.reset(ellipsoid.release());
 
@@ -1012,7 +1007,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     {
       double height = 0.;
       if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed.lineNumber(), height) == 0)
-        cyl->setHeight(units.altitudeUnits_.convertTo(simCore::Units::METERS, height));
+        cyl->setHeight(units.altitudeUnits().convertTo(simCore::Units::METERS, height));
     }
     rv.reset(cyl.release());
     break;
@@ -1057,7 +1052,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       double altitude = 0.;
       if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::LLABOX_MINALT), altitude))
       {
-        llab->setAltitude(units.altitudeUnits_.convertTo(simCore::Units::METERS, altitude));
+        llab->setAltitude(units.altitudeUnits().convertTo(simCore::Units::METERS, altitude));
         validValues++;
       }
       if (validValues == 5)
@@ -1067,7 +1062,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
         {
           double maxAlt = 0.;
           if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::LLABOX_MAXALT), maxAlt))
-            llab->setHeight(units.altitudeUnits_.convertTo(simCore::Units::METERS, maxAlt - llab->altitude()));
+            llab->setHeight(units.altitudeUnits().convertTo(simCore::Units::METERS, maxAlt - altitude));
         }
         rv.reset(llab.release());
       }
@@ -1142,7 +1137,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   {
     double altOffset = 0.;
     if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETALT), "offsetalt", name, parsed.lineNumber(), altOffset) == 0)
-      rv->setAltitudeOffset(units.altitudeUnits_.convertTo(simCore::Units::METERS, altOffset));
+      rv->setAltitudeOffset(units.altitudeUnits().convertTo(simCore::Units::METERS, altOffset));
   }
 
   if (parsed.hasValue(ShapeParameter::ALTITUDEMODE))
@@ -1162,7 +1157,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   {
     double height = 0.;
     if (validateDouble_(parsed.stringValue(ShapeParameter::EXTRUDE_HEIGHT), "extrude height", name, parsed.lineNumber(), height) == 0)
-      rv->setExtrudeHeight(units.altitudeUnits_.convertTo(simCore::Units::METERS, height));
+      rv->setExtrudeHeight(units.altitudeUnits().convertTo(simCore::Units::METERS, height));
   }
 
   if (parsed.hasValue(ShapeParameter::REF_LLA))
@@ -1171,7 +1166,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     double alt = 0.;
     simCore::isValidNumber(pos.z, alt);
     // convert altitude units
-    alt = units.altitudeUnits_.convertTo(simCore::Units::METERS, alt);
+    alt = units.altitudeUnits().convertTo(simCore::Units::METERS, alt);
     double lat = 0.;
     double lon = 0.;
     if (simCore::getAngleFromDegreeString(pos.x, true, lat) == 0 && simCore::getAngleFromDegreeString(pos.y, true, lon) == 0)
@@ -1212,21 +1207,21 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     double yawOffset = 0.;
     // note that original GOG terminology was mistaken, they used course when they meant heading/yaw
     if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETYAW), "offsetcourse", name, parsed.lineNumber(), yawOffset) == 0)
-      rv->setYawOffset(simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, yawOffset)));
+      rv->setYawOffset(simCore::angFix2PI(units.angleUnits().convertTo(simCore::Units::RADIANS, yawOffset)));
   }
 
   if (parsed.hasValue(ShapeParameter::OFFSETPITCH))
   {
     double pitchOffset = 0.;
     if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETPITCH), "offsetpitch", name, parsed.lineNumber(), pitchOffset) == 0)
-      rv->setPitchOffset(simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, pitchOffset)));
+      rv->setPitchOffset(simCore::angFix2PI(units.angleUnits().convertTo(simCore::Units::RADIANS, pitchOffset)));
   }
 
   if (parsed.hasValue(ShapeParameter::OFFSETROLL))
   {
     double rollOffset = 0.;
     if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETROLL), "offsetroll", name, parsed.lineNumber(), rollOffset) == 0)
-      rv->setRollOffset(simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, rollOffset)));
+      rv->setRollOffset(simCore::angFix2PI(units.angleUnits().convertTo(simCore::Units::RADIANS, rollOffset)));
   }
 
   if (parsed.hasValue(ShapeParameter::VERTICALDATUM))
@@ -1241,6 +1236,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     rv->addComment(comment);
   }
 
+  rv->setOriginalUnits(units);
   return rv;
 }
 
@@ -1366,15 +1362,21 @@ void Parser::parsePointBasedOptional_(const ParsedShape& parsed, const std::stri
   parseFillable_(parsed, name, shape);
   if (!parsed.hasValue(ShapeParameter::TESSELLATE))
     return;
-  // if tessellate is set, default to RHUMBLINE unless LINEPROJECTION specifies otherwise
-  TessellationStyle style = TessellationStyle::RHUMBLINE;
-  if (parsed.hasValue(ShapeParameter::LINEPROJECTION))
+  TessellationStyle style = TessellationStyle::NONE;
+  // set style to none if tessellate is set to false
+  if (!parsed.boolValue(ShapeParameter::TESSELLATE, false))
+    shape->setTesssellation(style);
+  else
   {
-    std::string projectionStr = parsed.stringValue(ShapeParameter::LINEPROJECTION);
-    if (projectionStr == "greatcircle")
-      style = TessellationStyle::GREAT_CIRCLE;
+    // if tessellate is set, default to RHUMBLINE unless LINEPROJECTION specifies otherwise
+    style = TessellationStyle::RHUMBLINE;
+    if (parsed.hasValue(ShapeParameter::LINEPROJECTION))
+    {
+      if (parsed.stringValue(ShapeParameter::LINEPROJECTION) == "greatcircle")
+        style = TessellationStyle::GREAT_CIRCLE;
+    }
+    shape->setTesssellation(style);
   }
-  shape->setTesssellation(style);
 }
 
 void Parser::parseCircularOptional_(const ParsedShape& parsed, bool relative, const std::string& name, const UnitsState& units, CircularShape* shape) const
@@ -1401,7 +1403,7 @@ void Parser::parseCircularOptional_(const ParsedShape& parsed, bool relative, co
     return;
   double radius = 0.;
   if (validateDouble_(parsed.stringValue(ShapeParameter::RADIUS), "radius", name, parsed.lineNumber(), radius) == 0)
-    shape->setRadius(units.rangeUnits_.convertTo(simCore::Units::METERS, radius));
+    shape->setRadius(units.rangeUnits().convertTo(simCore::Units::METERS, radius));
 }
 
 void Parser::parseCircularHeightOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularHeightShape* shape) const
@@ -1416,7 +1418,7 @@ void Parser::parseCircularHeightOptional_(const ParsedShape& parsed, const std::
 
   double height = 0.;
   if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed.lineNumber(), height) == 0)
-    shape->setHeight(units.altitudeUnits_.convertTo(simCore::Units::METERS, height));
+    shape->setHeight(units.altitudeUnits().convertTo(simCore::Units::METERS, height));
 }
 
 void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, EllipticalShape* shape) const
@@ -1432,7 +1434,7 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
   {
     if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLESTART), "anglestart", name, parsed.lineNumber(), angleStart) == 0)
     {
-      angleStart = simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleStart));
+      angleStart = simCore::angFix2PI(units.angleUnits().convertTo(simCore::Units::RADIANS, angleStart));
       shape->setAngleStart(angleStart);
       hasAngleStart = true;
     }
@@ -1446,7 +1448,7 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
       if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLEDEG), "angledeg", name, parsed.lineNumber(), angleSweep) == 0)
       {
         if (angleSweep != 0.)
-          shape->setAngleSweep(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleSweep));
+          shape->setAngleSweep(units.angleUnits().convertTo(simCore::Units::RADIANS, angleSweep));
         else
           printError_(parsed.lineNumber(), "for " + name + " angledeg cannot be 0");
       }
@@ -1457,7 +1459,7 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
       if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLEEND), "angleend", name, parsed.lineNumber(), angleEnd) == 0)
       {
         // convert to sweep, cannot cross 0 with angleend
-        angleEnd = simCore::angFix2PI(units.angleUnits_.convertTo(simCore::Units::RADIANS, angleEnd));
+        angleEnd = simCore::angFix2PI(units.angleUnits().convertTo(simCore::Units::RADIANS, angleEnd));
         if (angleEnd != angleStart)
           shape->setAngleSweep(angleEnd - angleStart);
         else
@@ -1469,13 +1471,13 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
   {
     double majorAxis = 0.;
     if (validateDouble_( parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed.lineNumber(), majorAxis) == 0)
-      shape->setMajorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, majorAxis));
+      shape->setMajorAxis(units.rangeUnits().convertTo(simCore::Units::METERS, majorAxis));
   }
   if (parsed.hasValue(ShapeParameter::MINORAXIS))
   {
     double minorAxis = 0.;
     if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed.lineNumber(), minorAxis) == 0)
-      shape->setMinorAxis(units.rangeUnits_.convertTo(simCore::Units::METERS, minorAxis));
+      shape->setMinorAxis(units.rangeUnits().convertTo(simCore::Units::METERS, minorAxis));
   }
 }
 
@@ -1507,9 +1509,9 @@ int Parser::getPosition_(const PositionStrings & pos, bool relative, const Units
     simCore::isValidNumber(pos.z, z);
 
     // convert units
-    x = units.rangeUnits_.convertTo(simCore::Units::METERS, x);
-    y = units.rangeUnits_.convertTo(simCore::Units::METERS, y);
-    z = units.altitudeUnits_.convertTo(simCore::Units::METERS, z);
+    x = units.rangeUnits().convertTo(simCore::Units::METERS, x);
+    y = units.rangeUnits().convertTo(simCore::Units::METERS, y);
+    z = units.altitudeUnits().convertTo(simCore::Units::METERS, z);
     position.set(x, y, z);
   }
   else
@@ -1517,7 +1519,7 @@ int Parser::getPosition_(const PositionStrings & pos, bool relative, const Units
     double altitude = 0.;
     simCore::isValidNumber(pos.z, altitude);
     // convert altitude units
-    altitude = units.altitudeUnits_.convertTo(simCore::Units::METERS, altitude);
+    altitude = units.altitudeUnits().convertTo(simCore::Units::METERS, altitude);
     double lat = 0.;
     double lon = 0.;
     if (simCore::getAngleFromDegreeString(pos.x, true, lat) == 0 && simCore::getAngleFromDegreeString(pos.y, true, lon) == 0)

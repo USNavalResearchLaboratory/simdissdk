@@ -37,7 +37,7 @@ class UnitsRegistry;
 
 namespace GOG
 {
-struct UnitsState;
+class UnitsState;
 
 /**
  * Parses GOG files (streams).

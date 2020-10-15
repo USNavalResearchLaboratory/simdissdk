@@ -25,6 +25,7 @@
 
 #include <string>
 #include "simCore/Common/Common.h"
+#include "simCore/Common/Optional.h"
 #include "simCore/Calc/Units.h"
 
 namespace simCore {
@@ -37,21 +38,36 @@ namespace GOG
 class ParsedShape;
 
 /**
- * Current state of default units. This structure communicates to parsing elements
+ * Current state of default units. This object communicates to parsing elements
  * what Units are in effect when parsing coordinate and measurement data.
- * (utility structure - no export)
  */
-struct SDKCORE_EXPORT UnitsState
+class SDKCORE_EXPORT UnitsState
 {
-  simCore::Units altitudeUnits_; ///< Altitude units
-  simCore::Units rangeUnits_; ///< Range units
-  simCore::Units timeUnits_; ///< Time units
-  simCore::Units angleUnits_; ///< Angle units
-
-  /**
-   * Construct the units state
-   */
+public:
+  /// Construct the units state
   UnitsState();
+  virtual ~UnitsState() {}
+
+  /// Get the current altitude units, returns default units if not set
+  const simCore::Units& altitudeUnits() const;
+  /// Set the current altitude units
+  void setAltitudeUnits(const simCore::Units& units);
+  /// Returns true if altitude units has been set
+  bool hasAltitudeUnits() const;
+
+  /// Get the current angle units, returns default units if not set
+  const simCore::Units& angleUnits() const;
+  /// Set the current angle units
+  void setAngleUnits(const simCore::Units& units);
+  /// Returns true if angle units has been set
+  bool hasAngleUnits() const;
+
+  /// Get the current range units, returns default units if not set
+  const simCore::Units& rangeUnits() const;
+  /// Set the current range units
+  void setRangeUnits(const simCore::Units& units);
+  /// Returns true if range units has been set
+  bool hasRangeUnits() const;
 
   /**
    * Initialize the units state from a structured representation.
@@ -66,7 +82,12 @@ struct SDKCORE_EXPORT UnitsState
    * @param unitsRegistry supplies to-string conversion for units
    * @param units parsed output
    */
-  void parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, simCore::Units& units);
+  void parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, Optional<simCore::Units>& units);
+
+private:
+  Optional<simCore::Units> altitudeUnits_; ///< Altitude units
+  Optional<simCore::Units> rangeUnits_; ///< Range units
+  Optional<simCore::Units> angleUnits_; ///< Angle units
 };
 
 /**
@@ -86,7 +107,6 @@ struct SDKCORE_EXPORT ModifierState
   std::string altitudeMode_; ///< Altitude mode
   std::string altitudeUnits_; ///< Altitude units
   std::string rangeUnits_; ///< Range units
-  std::string timeUnits_; ///< Time units
   std::string angleUnits_; ///< Angle units
   std::string verticalDatum_; ///< Vertical datum
   std::string priority_; ///< Label Priority

@@ -27,11 +27,51 @@ namespace simCore { namespace GOG {
 
 UnitsState::UnitsState()
 {
-  // defaults
-  altitudeUnits_ = simCore::Units::FEET;
-  rangeUnits_ = simCore::Units::YARDS;
-  timeUnits_ = simCore::Units::SECONDS;
-  angleUnits_ = simCore::Units::DEGREES;
+}
+
+const simCore::Units& UnitsState::altitudeUnits() const
+{
+  return altitudeUnits_.value_or(simCore::Units::FEET);
+}
+
+void UnitsState::setAltitudeUnits(const simCore::Units& units)
+{
+  altitudeUnits_ = units;
+}
+
+bool UnitsState::hasAltitudeUnits() const
+{
+  return altitudeUnits_.has_value();
+}
+
+const simCore::Units& UnitsState::angleUnits() const
+{
+  return angleUnits_.value_or(simCore::Units::DEGREES);
+}
+
+void UnitsState::setAngleUnits(const simCore::Units& units)
+{
+  angleUnits_ = units;
+}
+
+bool UnitsState::hasAngleUnits() const
+{
+  return angleUnits_.has_value();
+}
+
+const simCore::Units& UnitsState::rangeUnits() const
+{
+  return rangeUnits_.value_or(simCore::Units::YARDS);
+}
+
+void UnitsState::setRangeUnits(const simCore::Units& units)
+{
+  rangeUnits_ = units;
+}
+
+bool UnitsState::hasRangeUnits() const
+{
+  return rangeUnits_.has_value();
 }
 
 void UnitsState::parse(const ParsedShape& parsedShape, const simCore::UnitsRegistry& unitsRegistry)
@@ -42,11 +82,9 @@ void UnitsState::parse(const ParsedShape& parsedShape, const simCore::UnitsRegis
     parse(parsedShape.stringValue(ShapeParameter::ALTITUDEUNITS), unitsRegistry, altitudeUnits_);
   if (parsedShape.hasValue(ShapeParameter::RANGEUNITS))
     parse(parsedShape.stringValue(ShapeParameter::RANGEUNITS), unitsRegistry, rangeUnits_);
-  if (parsedShape.hasValue(ShapeParameter::TIMEUNITS))
-    parse(parsedShape.stringValue(ShapeParameter::TIMEUNITS), unitsRegistry, timeUnits_);
 }
 
-void UnitsState::parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, simCore::Units& units)
+void UnitsState::parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, Optional<simCore::Units>& units)
 {
   if (unitString == "secs")
     units = simCore::Units::SECONDS;
@@ -58,8 +96,13 @@ void UnitsState::parse(const std::string& unitString, const simCore::UnitsRegist
     units = simCore::Units::MILES;
   else if (unitString == "degree")
     units = simCore::Units::DEGREES;
-  else if (unitsRegistry.unitsByAbbreviation(unitString, units) != 0)
-    unitsRegistry.unitsByName(unitString, units);
+  else
+  {
+    simCore::Units unitsObject;
+    if (unitsRegistry.unitsByAbbreviation(unitString, unitsObject) != 0)
+      unitsRegistry.unitsByName(unitString, unitsObject);
+    units = unitsObject;
+  }
 }
 
 void ModifierState::apply(ParsedShape& shape)
@@ -72,7 +115,6 @@ void ModifierState::apply(ParsedShape& shape)
   if (!altitudeMode_.empty()) shape.set(ShapeParameter::ALTITUDEMODE, altitudeMode_);
   if (!altitudeUnits_.empty()) shape.set(ShapeParameter::ALTITUDEUNITS, altitudeUnits_);
   if (!rangeUnits_.empty()) shape.set(ShapeParameter::RANGEUNITS, rangeUnits_);
-  if (!timeUnits_.empty()) shape.set(ShapeParameter::TIMEUNITS, timeUnits_);
   if (!angleUnits_.empty()) shape.set(ShapeParameter::ANGLEUNITS, angleUnits_);
   if (!verticalDatum_.empty()) shape.set(ShapeParameter::VERTICALDATUM, verticalDatum_);
   if (!priority_.empty()) shape.set(ShapeParameter::PRIORITY, priority_);
