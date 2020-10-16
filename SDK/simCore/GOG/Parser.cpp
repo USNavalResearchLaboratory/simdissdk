@@ -492,21 +492,30 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     else if (tokens[0] == "altitudeunits")
     {
       if (tokens.size() >= 2)
-        state.altitudeUnits_ = tokens[1];
+      {
+        std::string restOfLine = simCore::StringUtils::trim(line.substr(tokens[0].size() + 1));
+        state.altitudeUnits_ = restOfLine;
+      }
       else
         printError_(lineNumber, "altitudeunits command requires 1 argument");
     }
     else if (tokens[0] == "rangeunits")
     {
       if (tokens.size() >= 2)
-        state.rangeUnits_ = tokens[1];
+      {
+        std::string restOfLine = simCore::StringUtils::trim(line.substr(tokens[0].size() + 1));
+        state.rangeUnits_ = restOfLine;
+      }
       else
         printError_(lineNumber, "rangeunits command requires 1 argument");
     }
     else if (tokens[0] == "angleunits")
     {
       if (tokens.size() >= 2)
-        state.angleUnits_ = tokens[1];
+      {
+        std::string restOfLine = simCore::StringUtils::trim(line.substr(tokens[0].size() + 1));
+        state.angleUnits_ = restOfLine;
+      }
       else
         printError_(lineNumber, "angleunits command requires 1 argument");
     }

@@ -999,6 +999,26 @@ auto testCylinderHeightFunc = [](const simCore::GOG::Cylinder* shape) -> int
   return rv;
 };
 
+// test that the circle's radius is 2000 m
+auto testCircularRadiusFunc = [](const simCore::GOG::CircularShape* shape) -> int
+{
+  int rv = 0;
+  double radius = 0.;
+  rv += SDK_ASSERT(shape->getRadius(radius) == 0);
+  rv += SDK_ASSERT(simCore::areEqual(radius, 2000.));
+  return rv;
+};
+
+// test that the elliptical shape's angle start is M_PI_2
+auto testEllipticalAngleStartFunc = [](const simCore::GOG::EllipticalShape* shape) -> int
+{
+  int rv = 0;
+  double angleStart = 0.;
+  rv += SDK_ASSERT(shape->getAngleStart(angleStart) == 0);
+  rv += SDK_ASSERT(simCore::areEqual(angleStart, M_PI_2));
+  return rv;
+};
+
 int testUnits()
 {
   int rv = 0;
@@ -1155,9 +1175,57 @@ int testUnits()
   rv += testShapeFunction<simCore::GOG::Cone>("start\n cone\n centerlla 25 34 0\n centerll2 23 23 0\n height .35\n altitudeunits km\n end\n", testCircularHeightFunc);
   rv += testShapeFunction<simCore::GOG::Ellipsoid>("start\n ellipsoid\n centerlla 25 34 0\n height 350\n altitudeunits m\n end\n", testCircularHeightFunc);
   rv += testShapeFunction<simCore::GOG::Ellipsoid>("start\n ellipsoid\n centerlla 25 34 0\n height .35\n altitudeunits km\n end\n", testCircularHeightFunc);
-  // test heigh units work for cylinder
+  // test height units work for cylinder
   rv += testShapeFunction<simCore::GOG::Cylinder>("start\n cylinder\n centerlla 25 34 0\n height 350\n altitudeunits m\n end\n", testCylinderHeightFunc);
   rv += testShapeFunction<simCore::GOG::Cylinder>("start\n cylinder\n centerlla 25 34 0\n height .35\n altitudeunits km\n end\n", testCylinderHeightFunc);
+
+  // test all range units (use 2000 meters radius)
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2000000\n rangeunits   mm  \n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2000000\n rangeunits millimeters\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 200000\n rangeunits cm\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 200000\n rangeunits centimeters\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 78740.16058032128\n rangeunits in\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 78740.16058032128\n rangeunits inches\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 6561.680005304462\n rangeunits ft\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 6561.680005304462\n rangeunits feet\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2187.226668434821\n rangeunits yd\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2187.226668434821\n rangeunits yards\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2000\n rangeunits m\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2000\n rangeunits meters\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1093.61333421741\n rangeunits fm\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1093.61333421741\n rangeunits fathoms\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 6.561680005304462\n rangeunits kf\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 6.561680005304462\n rangeunits kilofeet\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2.187226600000268\n rangeunits kyd\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2.187226600000268\n rangeunits kiloyards\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2\n rangeunits km\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2\n rangeunits kilometers\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1.242742384474668\n rangeunits sm\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1.242742384474668\n rangeunits mi\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1.242742384474668\n rangeunits miles\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1.079913606911447\n rangeunits nm\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1.079913606911447\n rangeunits  nautical miles \n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1.093613199999827\n rangeunits dm\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1.093613199999827\n rangeunits data miles\n end\n", testCircularRadiusFunc);
+
+  // test all angle units (use 90 degrees)
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 90\n angleunits deg\n end\n", testEllipticalAngleStartFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 90\n angleunits degree\n end\n", testEllipticalAngleStartFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 90\n angleunits degree\n end\n", testEllipticalAngleStartFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 1.57079632679489661923\n angleunits rad\n end\n", testEllipticalAngleStartFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 1.57079632679489661923\n angleunits radians\n end\n", testEllipticalAngleStartFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 2.467401100272329\n angleunits bam\n end\n", testEllipticalAngleStartFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 2.467401100272329\n angleunits binary angle measurement\n end\n", testEllipticalAngleStartFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 1599.999999999\n angleunits mil\n end\n", testEllipticalAngleStartFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 1599.999999999\n angleunits angular mil\n end\n", testEllipticalAngleStartFunc);
+
+  // test units with different case
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2\n rangeunits km\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2\n rangeunits Km\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 2\n rangeunits KM\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1.242742384474668\n rangeunits sm\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1.242742384474668\n rangeunits Sm\n end\n", testCircularRadiusFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n radius 1.242742384474668\n rangeunits SM\n end\n", testCircularRadiusFunc);
 
   return rv;
 }
@@ -1248,6 +1316,59 @@ int testCenteredDefault()
   return rv;
 }
 
+// test that the circular shape has default radius of 1000 yards
+auto testCircularRadiusDefaultFunc = [](const simCore::GOG::CircularShape* shape) -> int
+{
+  int rv = 0;
+  double radius = 0.;
+  rv += SDK_ASSERT(shape->getRadius(radius) != 0);
+  rv += SDK_ASSERT(simCore::areEqual(radius, 914.39997));
+  return rv;
+};
+
+// test that the circular height shape has default height of 1000 feet
+auto testCircularHeightDefaultHeightFunc = [](const simCore::GOG::CircularHeightShape* shape) -> int
+{
+  int rv = 0;
+  double height = 0.;
+  rv += SDK_ASSERT(shape->getHeight(height) != 0);
+  rv += SDK_ASSERT(simCore::areEqual(height, 304.79999));
+  return rv;
+};
+
+// test that the cylinder shape has default height of 1000 feet
+auto testCylinderDefaultHeightFunc = [](const simCore::GOG::Cylinder* shape) -> int
+{
+  int rv = 0;
+  double height = 0.;
+  rv += SDK_ASSERT(shape->getHeight(height) != 0);
+  rv += SDK_ASSERT(simCore::areEqual(height, 304.79999));
+  return rv;
+};
+
+// test the default height and radius values, which default to 1000, yards for radius and feet for height
+int testDefaults()
+{
+  int rv = 0;
+  // test default radius
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Cylinder>("start\n cylinder\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Ellipse>("start\n ellipse\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Cone>("start\n cone\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Sphere>("start\n sphere\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Hemisphere>("start\n hemisphere\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Ellipsoid>("start\n ellipsoid\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Orbit>("start\n orbit\n centerxyz 0 0 0\n centerxy2 10 10\n end\n", testCircularRadiusDefaultFunc);
+
+  // test default height
+  rv += testShapeFunction<simCore::GOG::Cone>("start\n cone\n end\n", testCircularHeightDefaultHeightFunc);
+  rv += testShapeFunction<simCore::GOG::Ellipsoid>("start\n ellipsoid\n end\n", testCircularHeightDefaultHeightFunc);
+  rv += testShapeFunction<simCore::GOG::Cylinder>("start\n cylinder\n end\n", testCylinderDefaultHeightFunc);
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -1264,6 +1385,7 @@ int GogTest(int argc, char* argv[])
   rv += testAltitudeModes();
   rv += testFollow();
   rv += testCenteredDefault();
+  rv += testDefaults();
 
   return rv;
 }
