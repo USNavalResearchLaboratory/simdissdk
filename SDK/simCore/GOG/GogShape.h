@@ -103,6 +103,7 @@ struct Color
   Color(int redIn, int greenIn, int blueIn, int alphaIn) : red(redIn), green(greenIn), blue(blueIn), alpha(alphaIn) {};
   Color() : Color(255, 0, 0, 255) {}
   bool operator==(const Color& rhs) const { return red == rhs.red && green == rhs.green && blue == rhs.blue && alpha == rhs.alpha; }
+  // serialize out in GOG format, 0xAABBGGRR
   std::string serialize() const;
 };
 

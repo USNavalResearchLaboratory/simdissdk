@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <iomanip>
 #include <cassert>
 #include <sstream>
 #include "simCore/Calc/Angle.h"
@@ -31,8 +32,8 @@ namespace simCore { namespace GOG {
 std::string Color::serialize() const
 {
   std::ostringstream os;
-  uint32_t colorVal = (alpha << 24) + (red << 16) + (green << 8) + blue;
-  os << "0x" << std::hex << colorVal;
+  uint32_t colorVal = (alpha << 24) + (blue << 16) + (green << 8) + red;
+  os << "0x" << std::hex << std::setfill('0') << std::setw(8) << colorVal;
   return os.str();
 }
 
@@ -153,9 +154,8 @@ int GogShape::getIsFollowingYaw(bool& follow) const
 
 void GogShape::setFollowYaw(bool follow)
 {
-  if (!canFollow_)
-    return;
-  followYaw_ = follow;
+  if (canFollow_)
+    followYaw_ = follow;
 }
 
 int GogShape::getIsFollowingPitch(bool& follow) const
@@ -166,9 +166,8 @@ int GogShape::getIsFollowingPitch(bool& follow) const
 
 void GogShape::setFollowPitch(bool follow)
 {
-  if (!canFollow_)
-    return;
-  followPitch_ = follow;
+  if (canFollow_)
+    followPitch_ = follow;
 }
 
 int GogShape::getIsFollowingRoll(bool& follow) const
@@ -179,9 +178,8 @@ int GogShape::getIsFollowingRoll(bool& follow) const
 
 void GogShape::setFollowRoll(bool follow)
 {
-  if (!canFollow_)
-    return;
-  followRoll_ = follow;
+  if (canFollow_)
+    followRoll_ = follow;
 }
 
 int GogShape::getYawOffset(double& offset) const
@@ -192,7 +190,8 @@ int GogShape::getYawOffset(double& offset) const
 
 void GogShape::setYawOffset(double offset)
 {
-  yawOffset_ = offset;
+  if (canFollow_)
+    yawOffset_ = offset;
 }
 
 int GogShape::getPitchOffset(double& offset) const
@@ -203,7 +202,8 @@ int GogShape::getPitchOffset(double& offset) const
 
 void GogShape::setPitchOffset(double offset)
 {
-  pitchOffset_ = offset;
+  if (canFollow_)
+    pitchOffset_ = offset;
 }
 
 int GogShape::getRollOffset(double& offset) const
@@ -214,7 +214,8 @@ int GogShape::getRollOffset(double& offset) const
 
 void GogShape::setRollOffset(double offset)
 {
-  rollOffset_ = offset;
+  if (canFollow_)
+    rollOffset_ = offset;
 }
 
 const std::vector<std::string>& GogShape::comments() const
@@ -531,7 +532,7 @@ void Points::serializeToStream_(std::ostream& gogOutputStream) const
     gogOutputStream << "pointsize " << pointSize_.value_or(0) << "\n";
 
   if (color_.has_value())
-    gogOutputStream << "linecolor hex " << color_.value_or(Color()).serialize() << "\n";
+    gogOutputStream << "linecolor hex " << color_->serialize() << "\n";
 
   OutlinedShape::serializeToStream_(gogOutputStream);
 }
@@ -599,7 +600,7 @@ void FillableShape::serializeToStream_(std::ostream& gogOutputStream) const
   if (lineWidth_.has_value())
     gogOutputStream << "linewidth " << lineWidth_.value_or(0) << "\n";
   if (lineColor_.has_value())
-    gogOutputStream << "linecolor hex " << lineColor_.value_or(Color()).serialize() << "\n";
+    gogOutputStream << "linecolor hex " << lineColor_->serialize() << "\n";
   if (lineStyle_.has_value())
   {
     std::string lineStyle = "solid";
@@ -619,7 +620,7 @@ void FillableShape::serializeToStream_(std::ostream& gogOutputStream) const
   if (filled_.has_value())
     gogOutputStream << "filled " << (filled_.value_or(false) ? "true" : "false") << "\n";
   if (fillColor_.has_value())
-    gogOutputStream << "fillcolor hex " << fillColor_.value_or(Color()).serialize() << "\n";
+    gogOutputStream << "fillcolor hex " << fillColor_->serialize() << "\n";
   OutlinedShape::serializeToStream_(gogOutputStream);
 }
 
@@ -1157,7 +1158,7 @@ void Annotation::serializeToStream_(std::ostream& gogOutputStream) const
   if (position_.has_value())
   {
     std::vector<simCore::Vec3> positionVec;
-    simCore::Vec3 position = position_.value_or(simCore::Vec3());
+    positionVec.push_back(*position_);
     // annotation serializes out position as lla or xyz
     serializePoints_(positionVec, gogOutputStream);
   }
@@ -1167,9 +1168,9 @@ void Annotation::serializeToStream_(std::ostream& gogOutputStream) const
   if (textSize_.has_value())
     gogOutputStream << "fontsize " << textSize_.value_or(0) << "\n";
   if (textColor_.has_value())
-    gogOutputStream << "linecolor " << textColor_.value_or(Color()).serialize() << "\n";
+    gogOutputStream << "linecolor hex " << textColor_->serialize() << "\n";
   if (outlineColor_.has_value())
-    gogOutputStream << "textoutlinecolor " << outlineColor_.value_or(Color()).serialize() << "\n";
+    gogOutputStream << "textoutlinecolor hex " << outlineColor_->serialize() << "\n";
   if (outlineThickness_.has_value())
   {
     std::string thicknessStr = "none";
@@ -1186,6 +1187,8 @@ void Annotation::serializeToStream_(std::ostream& gogOutputStream) const
     }
     gogOutputStream << "textoutlinethickness " << thicknessStr << "\n";
   }
+  if (priority_.has_value())
+    gogOutputStream << "priority " << priority_.value_or(0) << "\n";
 }
 
 LatLonAltBox::LatLonAltBox()
@@ -1269,8 +1272,8 @@ void LatLonAltBox::setHeight(double heightMeters)
 
 void LatLonAltBox::serializeToStream_(std::ostream& gogOutputStream) const
 {
-  gogOutputStream << GogShape::shapeTypeToString(shapeType()) << (north_ * simCore::RAD2DEG) << " " << (south_ * simCore::RAD2DEG) << " "
-    << (east_ * simCore::RAD2DEG) << " " << (west_ * simCore::RAD2DEG) << " " << simCore::Units::METERS.convertTo(originalUnits_.altitudeUnits(), altitude_);
+  gogOutputStream << GogShape::shapeTypeToString(shapeType()) << " " << (north_ * simCore::RAD2DEG) << " " << (south_ * simCore::RAD2DEG) << " "
+    << (west_ * simCore::RAD2DEG) << " " << (east_ * simCore::RAD2DEG) << " " << simCore::Units::METERS.convertTo(originalUnits_.altitudeUnits(), altitude_);
   if (height_.has_value())
     gogOutputStream << " " << simCore::Units::METERS.convertTo(originalUnits_.altitudeUnits(), altitude_ + height_.value_or(0));
   gogOutputStream << "\n";
@@ -1357,9 +1360,7 @@ void ImageOverlay::setImageFile(const std::string& imageFile)
 
 void ImageOverlay::serializeToStream_(std::ostream& gogOutputStream) const
 {
-  gogOutputStream << "# kml_groundoverlay\n";
-  gogOutputStream << "# kml_latlonbox " << (north_ * simCore::RAD2DEG) << " " << (south_ * simCore::RAD2DEG) << " "
-    << (east_ * simCore::RAD2DEG) << " " << (west_ * simCore::RAD2DEG) << " " << rotation_ << "\n";
+  // no-op, serialization is handled by serializing comments in GogShape base
 }
 
 }}
