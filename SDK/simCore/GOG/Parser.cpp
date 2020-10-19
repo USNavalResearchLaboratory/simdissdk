@@ -91,7 +91,7 @@ std::string Parser::parseGogColor_(const std::string& color, bool isHex) const
     auto it = colors_.find(simCore::lowerCase(color));
     if (it != colors_.end())
       return it->second;
-    return "0xffffffff";
+    return "0xff0000ff";
   }
 
   // append prefix if necessary

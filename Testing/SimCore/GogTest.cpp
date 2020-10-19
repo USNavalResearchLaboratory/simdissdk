@@ -1734,6 +1734,134 @@ int testSerialization()
 
   // no relative latlonaltbox or image overlay
 
+  // test serializing values with multiple input options
+
+  // test radius/diameter
+  std::vector<std::string> radiusItems;
+  radiusItems.push_back("start\n");
+  radiusItems.push_back("end\n");
+  radiusItems.push_back("circle\n");
+  radiusItems.push_back("radius 2500\n");
+  rv += testSerializeShape<simCore::GOG::Circle>("start\ncircle\nradius 2500\nend\n", radiusItems);
+  rv += testSerializeShape<simCore::GOG::Circle>("start\ncircle\ndiameter 5000\nend\n", radiusItems);
+
+  // test orient, rotate, 3d follow
+  {
+    std::vector<std::string> followItems = baseFollowItems;
+    followItems.push_back("start\n");
+    followItems.push_back("end\n");
+    followItems.push_back("arc\n");
+    followItems.push_back("centerxyz 0 0 0");
+    rv += testSerializeShape<simCore::GOG::Arc>("start\narc\ncenterxy 0 0\n orient 45 10 5\n end\n", followItems);
+    rv += testSerializeShape<simCore::GOG::Arc>("start\narc\ncenterxy 0 0\n rotate\n 3d offsetcourse 45\n 3d offsetpitch 10\n 3d offsetroll 5\n end\n", followItems);
+    rv += testSerializeShape<simCore::GOG::Arc>("start\narc\ncenterxy 0 0\n 3d follow cpr\n 3d offsetcourse 45\n 3d offsetpitch 10\n 3d offsetroll 5\n end\n", followItems);
+  }
+  // test specific follow components
+  std::vector<std::string> arcShapeItems;
+  arcShapeItems.push_back("start\n");
+  arcShapeItems.push_back("end\n");
+  arcShapeItems.push_back("arc\n");
+  arcShapeItems.push_back("centerlla 24.1 134.5 0");
+  {
+    std::vector<std::string> followItems = arcShapeItems;
+    followItems.push_back("3d follow c\n");
+    followItems.push_back("3d offsetcourse 45\n");
+    rv += testSerializeShape<simCore::GOG::Arc>("start\narc\ncenterll 24.1 134.5\n orient 45\n end\n", followItems);
+  }
+  {
+    std::vector<std::string> followItems = arcShapeItems;
+    followItems.push_back("3d follow cp\n");
+    followItems.push_back("3d offsetcourse 45\n");
+    followItems.push_back("3d offsetpitch 10\n");
+    rv += testSerializeShape<simCore::GOG::Arc>("start\narc\ncenterll 24.1 134.5\n orient 45 10\n end\n", followItems);
+  }
+  {
+    std::vector<std::string> followItems = arcShapeItems;
+    followItems.push_back("3d follow c\n");
+    followItems.push_back("3d offsetcourse 45\n");
+    rv += testSerializeShape<simCore::GOG::Arc>("start\narc\ncenterll 24.1 134.5\n 3d follow c\n 3d offsetcourse 45\n end\n", followItems);
+  }
+  {
+    std::vector<std::string> followItems = arcShapeItems;
+    followItems.push_back("3d follow p\n");
+    followItems.push_back("3d offsetpitch 10\n");
+    rv += testSerializeShape<simCore::GOG::Arc>("start\narc\ncenterll 24.1 134.5\n 3d follow p\n 3d offsetpitch 10\n end\n", followItems);
+  }
+  {
+    std::vector<std::string> followItems = arcShapeItems;
+    followItems.push_back("3d follow p\n");
+    followItems.push_back("3d offsetroll 5\n");
+    rv += testSerializeShape<simCore::GOG::Arc>("start\narc\ncenterll 24.1 134.5\n 3d follow p\n 3d offsetroll 5\n end\n", followItems);
+  }
+
+  // test semimajoraxis/majoraxis, semiminoraxis/minoraxis
+  {
+    std::vector<std::string> ellipseItems;
+    ellipseItems.push_back("start\n");
+    ellipseItems.push_back("end\n");
+    ellipseItems.push_back("ellipse\n");
+    ellipseItems.push_back("majoraxis 350\n");
+    ellipseItems.push_back("minoraxis 220\n");
+    rv += testSerializeShape<simCore::GOG::Ellipse>("start\n ellipse\n majoraxis 350\n minoraxis 220\n end\n", ellipseItems);
+    rv += testSerializeShape<simCore::GOG::Ellipse>("start\n ellipse\n semimajoraxis 175\n semiminoraxis 110\n end\n", ellipseItems);
+  }
+
+  return rv;
+}
+
+int testColors()
+{
+  int rv = 0;
+
+  std::vector<std::string> colorStringsInput;
+  colorStringsInput.push_back("linecolor hex 0\n"); // test 0
+  colorStringsInput.push_back("linecolor color2\n"); // test custom defined color
+  colorStringsInput.push_back("linecolor blue\n"); // test defined color
+  colorStringsInput.push_back("linecolor hex 01ff0aff\n"); // test different hex format
+  colorStringsInput.push_back("linecolor invalidColorString\n"); // test invalid color, should default to red
+
+  std::vector<std::string> colorStringsOutput;
+  colorStringsOutput.push_back("linecolor hex 0x00000000\n");
+  colorStringsOutput.push_back("linecolor hex 0x0000ac02\n");
+  colorStringsOutput.push_back("linecolor hex 0xffff0000\n");
+  colorStringsOutput.push_back("linecolor hex 0x01ff0aff\n");
+  colorStringsOutput.push_back("linecolor hex 0xff0000ff\n");
+
+  simCore::GOG::Parser parser;
+  // set a custom defined color
+  parser.addOverwriteColor("color2", "0000ac02");
+  std::vector<simCore::GOG::GogShapePtr> shapes;
+  std::stringstream gogStr;
+  for (std::string colorStr : colorStringsInput)
+    gogStr << "start\n circle\n" << colorStr << "end\n";
+  parser.parse(gogStr, shapes);
+  rv += SDK_ASSERT(shapes.size() == colorStringsInput.size());
+
+  std::vector<simCore::GOG::Color> colors;
+  colors.push_back(simCore::GOG::Color(0, 0, 0, 0));
+  colors.push_back(simCore::GOG::Color(2, 172, 0, 0));
+  colors.push_back(simCore::GOG::Color(0, 0, 255, 255));
+  colors.push_back(simCore::GOG::Color(255, 10, 255, 1));
+  colors.push_back(simCore::GOG::Color(255, 0, 0, 255));
+
+  int i = 0;
+  for (simCore::GOG::GogShapePtr shape : shapes)
+  {
+    simCore::GOG::Circle* circle = dynamic_cast<simCore::GOG::Circle*>(shape.get());
+    rv += SDK_ASSERT(circle != nullptr);
+    if (circle != nullptr)
+    {
+      simCore::GOG::Color color;
+      circle->getLineColor(color);
+      rv += SDK_ASSERT(color == colors[i]);
+      std::stringstream os;
+      circle->serializeToStream(os);
+      std::string serialized = os.str();
+      rv += SDK_ASSERT(serialized.find(colorStringsOutput[i]) != std::string::npos);
+    }
+    i++;
+  }
+
   return rv;
 }
 
@@ -1755,6 +1883,7 @@ int GogTest(int argc, char* argv[])
   rv += testCenteredDefault();
   rv += testDefaults();
   rv += testSerialization();
+  rv += testColors();
 
   return rv;
 }
