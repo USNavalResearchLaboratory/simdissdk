@@ -21,7 +21,7 @@
  *
  */
 #include <algorithm>
-#include <fstream>
+#include <iostream>
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateSystem.h"

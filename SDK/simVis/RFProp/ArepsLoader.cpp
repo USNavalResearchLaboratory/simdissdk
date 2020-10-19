@@ -22,15 +22,15 @@
  */
 #include <iostream>
 #include "osgDB/FileUtils"
-#include "simCore/LUT/LUT2.h"
+#include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Common/Version.h"
-#include "simCore/String/Tokenizer.h"
-#include "simCore/String/Format.h"
+#include "simCore/LUT/LUT2.h"
 #include "simCore/String/Constants.h"
-#include "simCore/String/Utils.h"
-#include "simNotify/Notify.h"
+#include "simCore/String/Format.h"
+#include "simCore/String/Tokenizer.h"
+#include "simCore/String/UtfUtils.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
 #include "simVis/LocatorNode.h"
@@ -69,7 +69,7 @@ double ArepsLoader::getAntennaHeight() const
 int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile, bool firstFile)
 {
   // create stream to input file
-  std::ifstream inFile(arepsFile.c_str());
+  std::ifstream inFile(simCore::streamFixUtf8(arepsFile));
   if (!inFile)
   {
     SIM_ERROR << "Could not open AREPS file: " << simCore::toNativeSeparators(arepsFile) << " for reading" << std::endl;

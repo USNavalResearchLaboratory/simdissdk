@@ -39,8 +39,9 @@
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Angle.h"
-#include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/Calc/Math.h"
+#include "simCore/String/UtfUtils.h"
 #include "simData/MemoryDataStore.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
@@ -503,7 +504,7 @@ int main(int argc, char** argv)
     // sets a default reference location for relative GOGs:
     parser.setReferenceLocation(simVis::GOG::BSTUR);
 
-    std::ifstream is(gogFile.c_str());
+    std::ifstream is(simCore::streamFixUtf8(gogFile));
     if (!is.is_open())
     {
       std::string fileName(gogFile);

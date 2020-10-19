@@ -25,15 +25,16 @@
  * Very simple utility to read and display Platform tracks from an ASI file
  */
 #include "simData/MemoryDataStore.h"
+#include "simCore/Calc/Angle.h"
+#include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Tokenizer.h"
+#include "simCore/String/UtfUtils.h"
 #include "simCore/Time/Clock.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Time/String.h"
-#include "simCore/Calc/Angle.h"
-#include "simCore/Calc/CoordinateConverter.h"
 #include "simVis/Platform.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
@@ -237,7 +238,7 @@ public:
 
   void parse(const std::string &filename)
   {
-    std::ifstream infile(filename.c_str());
+    std::ifstream infile(simCore::streamFixUtf8(filename));
 
     std::string line;
     while (simCore::getStrippedLine(infile, line))
