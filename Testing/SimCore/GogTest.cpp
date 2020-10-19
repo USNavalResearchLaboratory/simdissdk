@@ -22,6 +22,7 @@
  */
 
 #include <sstream>
+#include <vector>
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
@@ -1369,6 +1370,200 @@ int testDefaults()
   return rv;
 }
 
+// tests parsing 1 shape, then serializing it back out, verifies that all the items in serializeItems are in the shape
+template <typename ClassT>
+int testSerializeShape(const std::string& gog, const std::vector<std::string>& serializedItems)
+{
+  int rv = 0;
+  simCore::GOG::Parser parser;
+  std::vector<simCore::GOG::GogShapePtr> shapes;
+  std::stringstream gogStr;
+  gogStr << gog;
+  parser.parse(gogStr, shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+  {
+    std::stringstream os;
+    shapes.front()->serializeToStream(os);
+    std::string serialized = os.str();
+    // verify all the expected items are present in the serialized shape
+    for (std::string item : serializedItems)
+    {
+      rv += SDK_ASSERT(serialized.find(item) != std::string::npos);
+      if (serialized.find(item) == std::string::npos)
+        std::cerr << "Failed to serialize : " << item << "\n";
+    }
+    if (rv > 0)
+      std::cerr << serialized << "\n";
+
+    // now parse the serialization back in to verify it produces a valid shape of the expected type
+    shapes.clear();
+    parser.parse(os, shapes);
+    {
+      rv += SDK_ASSERT(shapes.size() == 1);
+      if (!shapes.empty())
+        rv += SDK_ASSERT(dynamic_cast<ClassT*>(shapes.front().get()) != nullptr);
+    }
+  }
+  return rv;
+}
+
+int testSerialization()
+{
+  int rv = 0;
+
+  std::vector<std::string> baseItems;
+  baseItems.push_back("altitudeunits m\n");
+  baseItems.push_back("3d name my favorite shape\n");
+  baseItems.push_back("off\n");
+  baseItems.push_back("depthbuffer true\n");
+  baseItems.push_back("3d offsetalt 120\n");
+  baseItems.push_back("altitudemode relativetoground\n");
+  baseItems.push_back("scale 2 1.3 0.5\n");
+  baseItems.push_back("verticaldatum egm1984\n");
+
+  std::vector<std::string> baseFollowItems;
+  baseFollowItems.push_back("3d follow cpr\n");
+  baseFollowItems.push_back("3d offsetcourse 45\n");
+  baseFollowItems.push_back("3d offsetpitch 10\n");
+  baseFollowItems.push_back("3d offsetroll 5\n");
+
+  std::string outlineItem ="outline true";
+
+  std::vector<std::string> fillableItems;
+  fillableItems.push_back(outlineItem);
+  fillableItems.push_back("linewidth 4\n");
+  fillableItems.push_back("linecolor hex 0xff00ff00\n");
+  fillableItems.push_back("linestyle dashed\n");
+  fillableItems.push_back("filled true");
+  fillableItems.push_back("fillcolor hex 0xffffff00");
+
+  // all circular shapes support follow
+  std::vector<std::string> circularItems;
+  circularItems.insert(circularItems.end(), baseItems.begin(), baseItems.end());
+  circularItems.insert(circularItems.end(), baseFollowItems.begin(), baseFollowItems.end());
+  circularItems.insert(circularItems.end(), fillableItems.begin(), fillableItems.end());
+  circularItems.push_back("radius 1000\n");
+
+  std::vector<std::string> ellipticalItems = circularItems;
+  ellipticalItems.push_back("anglestart 10\n");
+  ellipticalItems.push_back("angledeg 45\n");
+  ellipticalItems.push_back("majoraxis 100\n");
+  ellipticalItems.push_back("minoraxis 250\n");
+
+  // note that point based shapes will not always support follow
+  std::vector<std::string> pointBasedItems;
+  pointBasedItems.insert(pointBasedItems.end(), baseItems.begin(), baseItems.end());
+  pointBasedItems.insert(pointBasedItems.end(), fillableItems.begin(), fillableItems.end());
+  pointBasedItems.push_back("tessellate true\n");
+  pointBasedItems.push_back("lineprojection greatcircle\n");
+
+  std::vector<std::string> pointItems;
+  pointItems.push_back(outlineItem);
+  pointItems.push_back("pointsize 5\n");
+  pointItems.push_back("linecolor hex 0xffc000c0\n");
+
+  // define common center point for centered items
+  const std::string centerLla = "centerlla 24.5 158.7 12\n";
+
+  // test basic serialization for absolute shapes
+  {
+    std::vector<std::string> circleItems = circularItems;
+    circleItems.push_back("circle\n");
+    circleItems.push_back(centerLla);
+    rv += testSerializeShape<simCore::GOG::Circle>("start\n circle\n " + centerLla + CIRCULAR_FIELDS + " end\n", circleItems);
+  }
+  {
+    std::vector<std::string> arcItems = ellipticalItems;
+    arcItems.push_back("arc\n");
+    arcItems.push_back(centerLla);
+    rv += testSerializeShape<simCore::GOG::Arc>("start\n arc\n " + centerLla + ELLIPTICAL_FIELDS + " end\n", arcItems);
+  }
+  {
+    std::vector<std::string> ellipseItems = ellipticalItems;
+    ellipseItems.push_back("ellipse\n");
+    ellipseItems.push_back(centerLla);
+    rv += testSerializeShape<simCore::GOG::Ellipse>("start\n ellipse\n " + centerLla + ELLIPTICAL_FIELDS + " end\n", ellipseItems);
+  }
+  {
+    std::vector<std::string> cylinderItems = ellipticalItems;
+    cylinderItems.push_back("cylinder\n");
+    cylinderItems.push_back(centerLla);
+    cylinderItems.push_back("height 1800");
+    rv += testSerializeShape<simCore::GOG::Cylinder>("start\n cylinder\n height 1800\n" + centerLla + ELLIPTICAL_FIELDS + "end\n", cylinderItems);
+  }
+  {
+    std::vector<std::string> sphereItems = circularItems;
+    sphereItems.push_back("sphere\n");
+    sphereItems.push_back(centerLla);
+    rv += testSerializeShape<simCore::GOG::Sphere>("start\n sphere\n" + centerLla + CIRCULAR_FIELDS + "end\n", sphereItems);
+  }
+  {
+    std::vector<std::string> hemisphereItems = circularItems;
+    hemisphereItems.push_back("hemisphere\n");
+    hemisphereItems.push_back(centerLla);
+    rv += testSerializeShape<simCore::GOG::Hemisphere>("start\n hemisphere\n" + centerLla + CIRCULAR_FIELDS + "end\n", hemisphereItems);
+  }
+  {
+    std::vector<std::string> coneItems = circularItems;
+    coneItems.push_back("cone\n");
+    coneItems.push_back(centerLla);
+    coneItems.push_back("height 1800");
+    rv += testSerializeShape<simCore::GOG::Cone>("start\n cone\n height 1800\n" + centerLla + CIRCULAR_FIELDS + "end\n", coneItems);
+  }
+  {
+    std::vector<std::string> orbitItems = circularItems;
+    orbitItems.push_back("orbit\n");
+    orbitItems.push_back(centerLla);
+    orbitItems.push_back("centerll2 25.6 159.7");
+    rv += testSerializeShape<simCore::GOG::Orbit>("start\n orbit\n centerll2 25.6 159.7\n" + centerLla + CIRCULAR_FIELDS + "end\n", orbitItems);
+  }
+  {
+    std::vector<std::string> ellipsoidItems = circularItems;
+    ellipsoidItems.push_back("ellipsoid\n");
+    ellipsoidItems.push_back(centerLla);
+    ellipsoidItems.push_back("height 1800");
+    ellipsoidItems.push_back("majoraxis 2000");
+    ellipsoidItems.push_back("minoraxis 1500");
+    rv += testSerializeShape<simCore::GOG::Ellipsoid>("start\n ellipsoid\n height 1800\n majoraxis 2000\n minoraxis 1500\n" + centerLla + CIRCULAR_FIELDS + "end\n", ellipsoidItems);
+  }
+  // use for testing shapes with multiple points
+  const std::string positionsStr = "lla 24.5 158.1 10\n lla 24.6 158.2 10\n lla 24.7 158.3 10\n lla 24.8 158.4 10\n";
+  std::vector<std::string> positions;
+  positions.push_back("lla 24.5 158.1 10\n");
+  positions.push_back("lla 24.6 158.2 10\n");
+  positions.push_back("lla 24.7 158.3 10\n");
+  positions.push_back("lla 24.8 158.4 10\n");
+
+  {
+    std::vector<std::string> pointItemsAbs = pointItems;
+    pointItemsAbs.push_back("points\n");
+    pointItemsAbs.insert(pointItemsAbs.end(), positions.begin(), positions.end());
+    rv += testSerializeShape<simCore::GOG::Points>("start\n points\n" + positionsStr + POINTS_FIELDS + "end\n", pointItemsAbs);
+  }
+  {
+    std::vector<std::string> lineItems = pointBasedItems;
+    lineItems.push_back("line\n");
+    lineItems.insert(lineItems.end(), positions.begin(), positions.end());
+    rv += testSerializeShape<simCore::GOG::Line>("start\n line\n" + positionsStr + POINTBASED_FIELDS + "end\n", lineItems);
+  }
+  {
+    std::vector<std::string> lineSegItems = pointBasedItems;
+    lineSegItems.push_back("linesegs\n");
+    lineSegItems.insert(lineSegItems.end(), positions.begin(), positions.end());
+    rv += testSerializeShape<simCore::GOG::LineSegs>("start\n linesegs\n" + positionsStr + POINTBASED_FIELDS + "end\n", lineSegItems);
+  }
+  {
+    std::vector<std::string> polyItems = pointBasedItems;
+    polyItems.push_back("polygon\n");
+    polyItems.insert(polyItems.end(), positions.begin(), positions.end());
+    rv += testSerializeShape<simCore::GOG::Polygon>("start\n poly\n" + positionsStr + POINTBASED_FIELDS + "end\n", polyItems);
+  }
+  // TODO: annotation, llab, imageoverlay, relative shapes
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -1386,6 +1581,7 @@ int GogTest(int argc, char* argv[])
   rv += testFollow();
   rv += testCenteredDefault();
   rv += testDefaults();
+  rv += testSerialization();
 
   return rv;
 }

@@ -326,6 +326,7 @@ void GogShape::setOriginalUnits(const UnitsState& units)
 
 void GogShape::serializeToStream(std::ostream& gogOutputStream) const
 {
+  gogOutputStream << "start\n";
   // comments should be serialized first
   for (std::string comment : comments_)
     gogOutputStream << comment << "\n";
@@ -414,6 +415,8 @@ void GogShape::serializeToStream(std::ostream& gogOutputStream) const
     gogOutputStream << "3d offsetpitch " << simCore::Units::RADIANS.convertTo(originalUnits_.angleUnits(), pitchOffset_.value_or(0.)) << "\n";
   if (rollOffset_.has_value())
     gogOutputStream << "3d offsetroll " << simCore::Units::RADIANS.convertTo(originalUnits_.angleUnits(), rollOffset_.value_or(0.)) << "\n";
+
+  gogOutputStream << "end\n";
 }
 
 void GogShape::serializePoints_(const std::vector<simCore::Vec3>& points, std::ostream& gogOutputStream) const
@@ -597,6 +600,22 @@ void FillableShape::serializeToStream_(std::ostream& gogOutputStream) const
     gogOutputStream << "linewidth " << lineWidth_.value_or(0) << "\n";
   if (lineColor_.has_value())
     gogOutputStream << "linecolor hex " << lineColor_.value_or(Color()).serialize() << "\n";
+  if (lineStyle_.has_value())
+  {
+    std::string lineStyle = "solid";
+    switch (lineStyle_.value_or(LineStyle::SOLID))
+    {
+    case LineStyle::SOLID:
+      break;
+    case LineStyle::DASHED:
+      lineStyle = "dashed";
+      break;
+    case LineStyle::DOTTED:
+      lineStyle = "dotted";
+      break;
+    }
+    gogOutputStream << "linestyle " << lineStyle << "\n";
+  }
   if (filled_.has_value())
     gogOutputStream << "filled " << (filled_.value_or(false) ? "true" : "false") << "\n";
   if (fillColor_.has_value())
@@ -655,7 +674,7 @@ void PointBasedShape::serializeToStream_(std::ostream& gogOutputStream) const
       lineProjection = "rhumbline";
       break;
     }
-    gogOutputStream << "tessellate " << (tessellate ? "true" : "false");
+    gogOutputStream << "tessellate " << (tessellate ? "true" : "false") << "\n";
     if (!lineProjection.empty())
       gogOutputStream << "lineprojection " << lineProjection << "\n";
   }
@@ -724,7 +743,7 @@ void CircularShape::setRadius(double radiusMeters)
 
 void CircularShape::serializeToStream_(std::ostream& gogOutputStream) const
 {
-  // point based shapes serialize shape type as a separate line item
+  // circular shapes serialize shape type as a separate line item
   gogOutputStream << GogShape::shapeTypeToString(shapeType()) << "\n";
 
   simCore::Units distanceUnits(simCore::Units::METERS);
@@ -804,6 +823,17 @@ void Orbit::setCenterPosition2(const simCore::Vec3& center2)
   simCore::Vec3 center1;
   getCenterPosition(center1);
   center2_.setZ(center1.z());
+}
+
+void Orbit::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  simCore::Units distanceUnits(simCore::Units::METERS);
+  if (isRelative())
+    gogOutputStream << "centerxy2 " << distanceUnits.convertTo(originalUnits_.rangeUnits(), center2_.x()) << " " << distanceUnits.convertTo(originalUnits_.rangeUnits(), center2_.y()) << " "
+      << distanceUnits.convertTo(originalUnits_.altitudeUnits(), center2_.z()) << "\n";
+  else
+    gogOutputStream << "centerll2 " << center2_.lat() * simCore::RAD2DEG << " " << center2_.lon() * simCore::RAD2DEG << " " << distanceUnits.convertTo(originalUnits_.altitudeUnits(), center2_.alt()) << "\n";
+  CircularShape::serializeToStream_(gogOutputStream);
 }
 
 EllipticalShape::EllipticalShape()
@@ -922,7 +952,7 @@ void Cylinder::setHeight(double height)
 
 void Cylinder::serializeToStream_(std::ostream& gogOutputStream) const
 {
-  CircularShape::serializeToStream_(gogOutputStream);
+  EllipticalShape::serializeToStream_(gogOutputStream);
   if (height_.has_value())
     gogOutputStream << "height " << simCore::Units::METERS.convertTo(originalUnits_.altitudeUnits(), height_.value_or(0.)) << "\n";
 }
