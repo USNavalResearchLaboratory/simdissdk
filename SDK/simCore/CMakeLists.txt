@@ -116,6 +116,7 @@ set(CORE_STRING_HEADERS
     ${CORE_STRING_INC}TextFormatter.h
     ${CORE_STRING_INC}TextReplacer.h
     ${CORE_STRING_INC}UnitContextFormatter.h
+    ${CORE_STRING_INC}UtfUtils.h
     ${CORE_STRING_INC}Utils.h
     ${CORE_STRING_INC}ValidNumber.h
 )
