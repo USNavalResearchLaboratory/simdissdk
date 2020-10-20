@@ -365,7 +365,7 @@ void GogShape::serializeToStream(std::ostream& gogOutputStream) const
       gogOutputStream << altitudeModeStr << "relativetoground\n";
       break;
     case AltitudeMode::EXTRUDE:
-      altitudeModeStr = "extrude";
+      altitudeModeStr = "extrude true";
       if (extrudeHeight_.has_value())
         gogOutputStream << altitudeModeStr << " " << altUnits.convertTo(originalUnits_.altitudeUnits(), extrudeHeight_.value_or(0.)) << "\n";
       else

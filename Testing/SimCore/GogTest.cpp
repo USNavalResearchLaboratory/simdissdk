@@ -1806,6 +1806,32 @@ int testSerialization()
     rv += testSerializeShape<simCore::GOG::Ellipse>("start\n ellipse\n semimajoraxis 175\n semiminoraxis 110\n end\n", ellipseItems);
   }
 
+  // test altitude modes
+  std::vector<std::string> simpleCircleItems;
+  simpleCircleItems.push_back("start\n");
+  simpleCircleItems.push_back("end\n");
+  simpleCircleItems.push_back("circle\n");
+  {
+    std::vector<std::string> altModeItems = simpleCircleItems;
+    altModeItems.push_back("altitudemode clamptoground\n");
+    rv += testSerializeShape<simCore::GOG::Circle>("start\n circle\n altitudemode clamptoground\n end\n", altModeItems);
+  }
+  {
+    std::vector<std::string> altModeItems = simpleCircleItems;
+    altModeItems.push_back("altitudemode relativetoground\n");
+    rv += testSerializeShape<simCore::GOG::Circle>("start\n circle\n altitudemode relativetoground\n end\n", altModeItems);
+  }
+  {
+    std::vector<std::string> altModeItems = simpleCircleItems;
+    altModeItems.push_back("extrude true\n");
+    rv += testSerializeShape<simCore::GOG::Circle>("start\n circle\n altitudemode extrude\n end\n", altModeItems);
+  }
+  {
+    std::vector<std::string> altModeItems = simpleCircleItems;
+    altModeItems.push_back("extrude true\n");
+    rv += testSerializeShape<simCore::GOG::Circle>("start\n circle\n extrude true\n end\n", altModeItems);
+  }
+
   return rv;
 }
 
