@@ -1550,7 +1550,7 @@ int testSerialization()
     std::vector<std::string> orbitItems = circularItems;
     orbitItems.push_back("orbit\n");
     orbitItems.push_back(centerLla);
-    orbitItems.push_back("centerll2 25.6 159.7");
+    orbitItems.push_back("centerll2 25.6 159.7\n");
     rv += testSerializeShape<simCore::GOG::Orbit>("start\n orbit\n centerll2 25.6 159.7\n" + centerLla + CIRCULAR_FIELDS + "end\n", orbitItems);
   }
   {
@@ -1672,8 +1672,8 @@ int testSerialization()
     std::vector<std::string> orbitItems = circularItems;
     orbitItems.push_back("orbit\n");
     orbitItems.push_back(centerXyz);
-    orbitItems.push_back("centerxy2 2000 150 10");
-    rv += testSerializeShape<simCore::GOG::Orbit>("start\n orbit\n centerxy2 2000 150 10\n" + centerXyz + CIRCULAR_FIELDS + "end\n", orbitItems);
+    orbitItems.push_back("centerxy2 2000 150\n");
+    rv += testSerializeShape<simCore::GOG::Orbit>("start\n orbit\n centerxy2 2000 150\n" + centerXyz + CIRCULAR_FIELDS + "end\n", orbitItems);
   }
   {
     std::vector<std::string> ellipsoidItems = circularItems;

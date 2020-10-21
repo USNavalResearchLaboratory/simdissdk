@@ -331,4 +331,68 @@ simData::TextOutline LoaderUtils::convertToVisOutlineThickness(simCore::GOG::Out
   }
   return simData::TO_NONE;
 }
+
+simCore::GOG::AltitudeMode LoaderUtils::convertToCoreAltitudeMode(AltitudeMode mode)
+{
+  switch (mode)
+  {
+  case ALTITUDE_NONE:
+    break;
+  case ALTITUDE_GROUND_CLAMPED:
+    return simCore::GOG::AltitudeMode::CLAMP_TO_GROUND;
+  case ALTITUDE_GROUND_RELATIVE:
+    return simCore::GOG::AltitudeMode::RELATIVE_TO_GROUND;
+  case ALTITUDE_EXTRUDE:
+    return simCore::GOG::AltitudeMode::EXTRUDE;
+  }
+  return simCore::GOG::AltitudeMode::NONE;
+}
+
+simCore::GOG::Color LoaderUtils::convertToCoreColor(const osg::Vec4f& color)
+{
+  return simCore::GOG::Color(color.r() * 255, color.g() * 255, color.b() * 255, color.a() * 255);
+}
+
+simCore::GOG::LineStyle LoaderUtils::convertToCoreLineStyle(Utils::LineStyle style)
+{
+  switch (style)
+  {
+  case Utils::LINE_SOLID:
+    break;
+  case Utils::LINE_DASHED:
+    return simCore::GOG::LineStyle::DASHED;
+  case Utils::LINE_DOTTED:
+    return simCore::GOG::LineStyle::DOTTED;
+  }
+  return simCore::GOG::LineStyle::SOLID;
+}
+
+simCore::GOG::TessellationStyle LoaderUtils::convertToCoreTessellation(TessellationStyle style)
+{
+  switch (style)
+  {
+  case TESSELLATE_NONE:
+    break;
+  case TESSELLATE_GREAT_CIRCLE_PROJECTION:
+    return simCore::GOG::TessellationStyle::GREAT_CIRCLE;
+  case TESSELLATE_RHUMBLINE:
+    return simCore::GOG::TessellationStyle::RHUMBLINE;
+  }
+  return simCore::GOG::TessellationStyle::NONE;
+}
+
+simCore::GOG::OutlineThickness LoaderUtils::convertToCoreOutlineThickness(simData::TextOutline thickness)
+{
+  switch (thickness)
+  {
+  case simData::TO_NONE:
+    break;
+  case simData::TO_THIN:
+    return simCore::GOG::OutlineThickness::THIN;
+  case simData::TO_THICK:
+    return simCore::GOG::OutlineThickness::THICK;
+  }
+  return simCore::GOG::OutlineThickness::NONE;
+}
+
 } }

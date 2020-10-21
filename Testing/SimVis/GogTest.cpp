@@ -1289,6 +1289,253 @@ int testAltitudeUnits()
   return rv;
 }
 
+// test that all items are in the serialized string, and that the string contains no more than the number of items
+int testItemsInSerialization(const std::string& serialized, const std::vector<std::string>& items)
+{
+  int rv = 0;
+  // verify all the expected items are present in the serialized shape
+  for (std::string item : items)
+  {
+    rv += SDK_ASSERT(serialized.find(item) != std::string::npos);
+    if (serialized.find(item) == std::string::npos)
+      std::cerr << "Failed to serialize : " << item << "\n";
+  }
+
+  // now that all items from serializedItems have been found in the serialized gog, verify that they both contain the same number of items
+  std::vector<std::string> lines;
+  simCore::escapeTokenize(lines, serialized, true, "\n");
+  rv += SDK_ASSERT(lines.size() == items.size());
+
+  if (rv > 0)
+    std::cerr << serialized << "\n";
+  return rv;
+}
+
+// test the line fields for the GOG defined by the gog and shapeItems
+int testLineDynamicEdits(simVis::GOG::GogNodeInterface& gog, std::vector<std::string>& shapeItems)
+{
+  gog.setLineStyle(simVis::GOG::Utils::LINE_DOTTED);
+  gog.setLineColor(osg::Vec4f(1.0, 1.0, 0, 1.0));
+  gog.setLineWidth(5);
+  gog.setOutlineState(false);
+
+  shapeItems.push_back("linestyle dotted\n");
+  shapeItems.push_back("linecolor hex 0xff00ffff\n");
+  shapeItems.push_back("linewidth 5\n");
+  shapeItems.push_back("outline false\n");
+
+  std::ostringstream os;
+  gog.serializeToStream(os);
+  return testItemsInSerialization(os.str(), shapeItems);
+}
+
+int testFillDynamicEdits(simVis::GOG::GogNodeInterface& gog, std::vector<std::string>& shapeItems)
+{
+  gog.setFilledState(true);
+  gog.setFillColor(osg::Vec4f(0, 1.0, 1.0, 1.0));
+
+  shapeItems.push_back("filled true\n");
+  shapeItems.push_back("fillcolor hex 0xffffff00\n");
+
+  std::ostringstream os;
+  gog.serializeToStream(os);
+  return testItemsInSerialization(os.str(), shapeItems);
+}
+
+// test the general fields for the GOG defined by the gog and shapeItems
+int testGeneralDynamicEdits(simVis::GOG::GogNodeInterface& gog, std::vector<std::string>& shapeItems)
+{
+  gog.setAltitudeMode(simVis::GOG::ALTITUDE_GROUND_CLAMPED);
+  gog.setAltOffset(250);
+  gog.setDepthBuffer(true);
+  gog.setDrawState(false);
+
+  shapeItems.push_back("altitudemode clamptoground\n");
+  // note altitude units are in feet
+  shapeItems.push_back("3d offsetalt 820.21\n");
+  shapeItems.push_back("depthbuffer true\n");
+  shapeItems.push_back("off\n");
+
+  std::ostringstream os;
+  gog.serializeToStream(os);
+  return testItemsInSerialization(os.str(), shapeItems);
+}
+
+// test a basic shape that supports fill fields, and alternately supports line fields
+int testBasicGog(std::vector<std::string>& shapeItems, bool testLined)
+{
+  int rv = 0;
+  simCore::GOG::Parser parser;
+  simVis::GOG::Loader loader(parser);
+  simVis::GOG::Loader::GogNodeVector gogs;
+
+  std::stringstream gogStr;
+  gogStr << "start\n";
+  for (std::string item : shapeItems)
+    gogStr << item;
+  gogStr << "end\n";
+  shapeItems.push_back("start\n");
+  shapeItems.push_back("end\n");
+  loader.loadGogs(gogStr, false, gogs);
+  rv += SDK_ASSERT(gogs.size() == 1);
+  if (!gogs.empty())
+  {
+    simVis::GOG::GogNodeInterfacePtr gog = gogs.front();
+
+    // first check that serialization doesn't contain anything extra
+    std::stringstream blank;
+    gog->serializeToStream(blank);
+    rv += testItemsInSerialization(blank.str(), shapeItems);
+    if (testLined)
+      rv += testLineDynamicEdits(*gog.get(), shapeItems);
+    rv += testFillDynamicEdits(*gog.get(), shapeItems);
+    rv += testGeneralDynamicEdits(*gog.get(), shapeItems);
+  }
+  return rv;
+}
+
+// test that changes to the GOG are reflected in the serialized output
+int testDynamicEdits()
+{
+  int rv = 0;
+  {
+    std::vector<std::string> shapeItems;
+    shapeItems.push_back("circle\n");
+    rv += testBasicGog(shapeItems, true);
+  }
+  {
+    std::vector<std::string> shapeItems;
+    shapeItems.push_back("arc\n");
+    rv += testBasicGog(shapeItems, true);
+  }
+  {
+    std::vector<std::string> shapeItems;
+    shapeItems.push_back("ellipse\n");
+    rv += testBasicGog(shapeItems, true);
+  }
+  {
+    std::vector<std::string> shapeItems;
+    shapeItems.push_back("cylinder\n");
+    rv += testBasicGog(shapeItems, true);
+  }
+
+  std::vector<std::string> pointItems;
+  pointItems.push_back("lla 23.1 123 0\n");
+  pointItems.push_back("lla 23.2 123.1 0\n");
+  pointItems.push_back("lla 23.3 123 0\n");
+  pointItems.push_back("lla 23.4 123.4 0\n");
+
+  {
+    std::vector<std::string> shapeItems = pointItems;
+    shapeItems.push_back("line\n");
+    rv += testBasicGog(shapeItems, true);
+  }
+  {
+    std::vector<std::string> shapeItems = pointItems;
+    shapeItems.push_back("linesegs\n");
+    rv += testBasicGog(shapeItems, true);
+  }
+  {
+    std::vector<std::string> shapeItems = pointItems;
+    shapeItems.push_back("polygon\n");
+    rv += testBasicGog(shapeItems, true);
+  }
+  {
+    std::vector<std::string> shapeItems;
+    shapeItems.push_back("sphere\n");
+    rv += testBasicGog(shapeItems, false);
+  }
+  {
+    std::vector<std::string> shapeItems;
+    shapeItems.push_back("hemisphere\n");
+    rv += testBasicGog(shapeItems, false);
+  }
+  {
+    std::vector<std::string> shapeItems;
+    shapeItems.push_back("ellipsoid\n");
+    rv += testBasicGog(shapeItems, false);
+  }
+  {
+    std::vector<std::string> shapeItems;
+    shapeItems.push_back("cone\n");
+    rv += testBasicGog(shapeItems, false);
+  }
+  {
+    std::vector<std::string> shapeItems;
+    shapeItems.push_back("orbit\n");
+    shapeItems.push_back("centerlla 24.2 45.2 0\n");
+    shapeItems.push_back("centerll2 24.3 45.1\n");
+    rv += testBasicGog(shapeItems, false);
+  }
+
+  simCore::GOG::Parser parser;
+  simVis::GOG::Loader loader(parser);
+  simVis::GOG::Loader::GogNodeVector gogs;
+
+  // test annotation
+  std::vector<std::string> annoItems;
+  annoItems.push_back("start\n");
+  annoItems.push_back("end\n");
+  annoItems.push_back("annotation some text\n");
+  std::stringstream annoGog;
+  annoGog << "start\n annotation some text\n end\n";
+  loader.loadGogs(annoGog, false, gogs);
+  rv += SDK_ASSERT(gogs.size() == 1);
+  if (!gogs.empty())
+  {
+    simVis::GOG::GogNodeInterfacePtr gog = gogs.front();
+
+    // first check that serialization doesn't contain anything extra
+    std::stringstream blank;
+    gog->serializeToStream(blank);
+    rv += testItemsInSerialization(blank.str(), annoItems);
+
+    gog->setFont("georgia.ttf", 32, osg::Vec4f(.6, 1., 0., 1.));
+    annoItems.push_back("fontname georgia.ttf\n");
+    annoItems.push_back("fontsize 32\n");
+    annoItems.push_back("linecolor hex 0xff00ff99\n");
+    std::stringstream annoGog1;
+    gog->serializeToStream(annoGog1);
+    rv += testItemsInSerialization(annoGog1.str(), annoItems);
+
+    gog->setTextOutline(osg::Vec4f(1.0, 1.0, 0, 0), simData::TO_THICK);
+    annoItems.push_back("textoutlinecolor hex 0x0000ffff\n");
+    annoItems.push_back("textoutlinethickness thick\n");
+    std::stringstream annoGog2;
+    gog->serializeToStream(annoGog2);
+    rv += testItemsInSerialization(annoGog2.str(), annoItems);
+
+    rv += testGeneralDynamicEdits(*gog.get(), annoItems);
+  }
+  gogs.clear();
+
+  // test latlonaltbox
+  std::vector<std::string> llabItems;
+  llabItems.push_back("start\n");
+  llabItems.push_back("end\n");
+  llabItems.push_back("latlonaltbox 24.2 23.4 55.6 55.2 0\n");
+  std::stringstream llabGog;
+  llabGog << "start\n latlonaltbox 24.2 23.4 55.6 55.2 0\n end\n";
+  loader.loadGogs(llabGog, false, gogs);
+  rv += SDK_ASSERT(gogs.size() == 1);
+  if (!gogs.empty())
+  {
+    simVis::GOG::GogNodeInterfacePtr gog = gogs.front();
+
+    // first check that serialization doesn't contain anything extra
+    std::stringstream blank;
+    gog->serializeToStream(blank);
+    rv += testItemsInSerialization(blank.str(), llabItems);
+    rv += testLineDynamicEdits(*gog.get(), llabItems);
+    rv += testFillDynamicEdits(*gog.get(), llabItems);
+    rv += testGeneralDynamicEdits(*gog.get(), llabItems);
+  }
+  gogs.clear();
+
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -1304,6 +1551,7 @@ int GogTest(int argc, char* argv[])
   rv += testLoadRelativeAndAbsolute();
   rv += testParseMetaData();
   rv += testAltitudeUnits();
+  rv += testDynamicEdits();
 
   // Shut down protobuf lib for valgrind testing
   google::protobuf::ShutdownProtobufLibrary();

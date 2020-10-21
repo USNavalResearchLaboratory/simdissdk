@@ -86,6 +86,13 @@ public:
   static GogShape convertToVisShapeType(simCore::GOG::ShapeType type);
   static TessellationStyle convertToVisTessellation(simCore::GOG::TessellationStyle style);
   static simData::TextOutline convertToVisOutlineThickness(simCore::GOG::OutlineThickness thickness);
+
+  // convert from simVis to simCore
+  static simCore::GOG::AltitudeMode convertToCoreAltitudeMode(AltitudeMode mode);
+  static simCore::GOG::Color convertToCoreColor(const osg::Vec4f& color);
+  static simCore::GOG::LineStyle convertToCoreLineStyle(Utils::LineStyle style);
+  static simCore::GOG::TessellationStyle convertToCoreTessellation(TessellationStyle style);
+  static simCore::GOG::OutlineThickness convertToCoreOutlineThickness(simData::TextOutline thickness);
 };
 
 } } // namespace simVis::GOG
