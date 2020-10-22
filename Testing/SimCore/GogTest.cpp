@@ -1257,6 +1257,15 @@ auto testClampFunc = [](const simCore::GOG::GogShape* shape) -> int
   return rv;
 };
 
+// test that altitude mode is not set
+auto testAltModeUnsetFunc = [](const simCore::GOG::GogShape* shape) -> int
+{
+  int rv = 0;
+  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::EXTRUDE;
+  rv += SDK_ASSERT(shape->getAltitudeMode(mode) != 0);
+  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::NONE);
+  return rv;
+};
 // test that all the altitude mode options work
 int testAltitudeModes()
 {
@@ -1267,6 +1276,10 @@ int testAltitudeModes()
   rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n centerlla 24.4 43.2 0.\n altitudemode clamptoground\n end\n", testClampFunc);
   rv += testShapeFunction<simCore::GOG::Line>("start\n line\n lla 24.4 43.2 0.\n lla 24.3 43.1 0.\n altitudemode clamptoground\n end\n", testClampFunc);
   // relative to ground is already tested in testShapesOptionalFields()
+
+  // test shapes that don't support extrude ensure extrude is ignored
+  rv += testShapeFunction<simCore::GOG::Points>("start\n points\n lla 24.4 43.2 0.\n lla 24.3 43.1 0.\n extrude true\n end\n", testAltModeUnsetFunc);
+  rv += testShapeFunction<simCore::GOG::Cylinder>("start\n cylinder\n extrude true\n end\n", testAltModeUnsetFunc);
   return rv;
 }
 

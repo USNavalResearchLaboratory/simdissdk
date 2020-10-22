@@ -890,6 +890,18 @@ int GogNodeInterface::getOpacity(float& opacity) const
 
 void GogNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  // not all shapes support extrude
+  if (altMode == ALTITUDE_EXTRUDE)
+  {
+    switch (metaData_.shape)
+    {
+    case simVis::GOG::GOG_POINTS:
+    case simVis::GOG::GOG_CYLINDER:
+      return;
+    default:
+      break;
+    }
+  }
   metaData_.setExplicitly(GOG_ALTITUDE_MODE_SET);
   if (altMode_ == altMode)
     return;

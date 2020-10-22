@@ -479,7 +479,7 @@ void OutlinedShape::serializeToStream_(std::ostream& gogOutputStream) const
 Points::Points(bool relative)
   : OutlinedShape()
 {
-  setCanExtrude_(true);
+  setCanExtrude_(false);
   setCanFollow_(relative);
   setRelative_(relative);
 }
