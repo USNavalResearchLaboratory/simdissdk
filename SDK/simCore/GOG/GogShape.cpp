@@ -828,12 +828,12 @@ void Orbit::setCenterPosition2(const simCore::Vec3& center2)
 
 void Orbit::serializeToStream_(std::ostream& gogOutputStream) const
 {
+  CircularShape::serializeToStream_(gogOutputStream);
   simCore::Units distanceUnits(simCore::Units::METERS);
   if (isRelative())
     gogOutputStream << "centerxy2 " << distanceUnits.convertTo(originalUnits_.rangeUnits(), center2_.x()) << " " << distanceUnits.convertTo(originalUnits_.rangeUnits(), center2_.y())  << "\n";
   else
     gogOutputStream << "centerll2 " << center2_.lat() * simCore::RAD2DEG << " " << center2_.lon() * simCore::RAD2DEG << "\n";
-  CircularShape::serializeToStream_(gogOutputStream);
 }
 
 EllipticalShape::EllipticalShape()
