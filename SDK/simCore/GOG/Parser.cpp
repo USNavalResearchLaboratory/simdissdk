@@ -112,7 +112,7 @@ void Parser::addOverwriteColor(const std::string& key, const std::string& color)
   if (startsWith(color, prefix))
     prefix = "";
 
-  colors_[simCore::lowerCase(key)] = prefix + color;
+  colors_[simCore::lowerCase(key)] = simCore::lowerCase(prefix + color);
 }
 
 void Parser::setUnitsRegistry(const simCore::UnitsRegistry* registry)

@@ -513,6 +513,42 @@ simVis::GOG::GogShape GogNodeInterface::shape() const
   return metaData_.shape;
 }
 
+void GogNodeInterface::setFollowYaw(bool follow)
+{
+  if (shape_)
+    shape_->setFollowYaw(follow);
+}
+
+void GogNodeInterface::setFolloPitch(bool follow)
+{
+  if (shape_)
+    shape_->setFollowPitch(follow);
+}
+
+void GogNodeInterface::setFollowRoll(bool follow)
+{
+  if (shape_)
+    shape_->setFollowRoll(follow);
+}
+
+void GogNodeInterface::setYawOffset(double offsetRad)
+{
+  if (shape_)
+    shape_->setYawOffset(offsetRad);
+}
+
+void GogNodeInterface::setPitchOffset(double offsetRad)
+{
+  if (shape_)
+    shape_->setPitchOffset(offsetRad);
+}
+
+void GogNodeInterface::setRollOffset(double offsetRad)
+{
+  if (shape_)
+    shape_->setRollOffset(offsetRad);
+}
+
 size_t GogNodeInterface::lineNumber() const
 {
   return metaData_.lineNumber;

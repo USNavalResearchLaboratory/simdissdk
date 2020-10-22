@@ -27,6 +27,7 @@
 #include "osgEarth/GeoPositionNode"
 #include "osgEarth/LocalGeometryNode"
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
 #include "simCore/Common/SDKAssert.h"
@@ -1361,8 +1362,27 @@ int testGeneralDynamicEdits(simVis::GOG::GogNodeInterface& gog, std::vector<std:
   return testItemsInSerialization(os.str(), shapeItems);
 }
 
+// test the follow fields for the GOG defined by the gog and shapeItems
+int testFollowDynamicEdits(simVis::GOG::GogNodeInterface& gog, std::vector<std::string>& shapeItems)
+{
+  gog.setFollowYaw(true);
+  gog.setFollowRoll(true);
+  gog.setYawOffset(45.1 * simCore::DEG2RAD);
+  gog.setPitchOffset(0.31 * simCore::DEG2RAD);
+  gog.setRollOffset(22.3 * simCore::DEG2RAD);
+
+  shapeItems.push_back("3d follow cr\n");
+  shapeItems.push_back("3d offsetcourse 45.1\n");
+  shapeItems.push_back("3d offsetpitch 0.31\n");
+  shapeItems.push_back("3d offsetroll 22.3\n");
+
+  std::ostringstream os;
+  gog.serializeToStream(os);
+  return testItemsInSerialization(os.str(), shapeItems);
+}
+
 // test a basic shape that supports fill fields, and alternately supports line fields
-int testBasicGog(std::vector<std::string>& shapeItems, bool testLined)
+int testBasicGog(std::vector<std::string>& shapeItems, bool testLined, bool testFollow)
 {
   int rv = 0;
   simCore::GOG::Parser parser;
@@ -1390,6 +1410,8 @@ int testBasicGog(std::vector<std::string>& shapeItems, bool testLined)
       rv += testLineDynamicEdits(*gog.get(), shapeItems);
     rv += testFillDynamicEdits(*gog.get(), shapeItems);
     rv += testGeneralDynamicEdits(*gog.get(), shapeItems);
+    if (testFollow)
+      rv += testFollowDynamicEdits(*gog.get(), shapeItems);
   }
   return rv;
 }
@@ -1401,22 +1423,22 @@ int testDynamicEdits()
   {
     std::vector<std::string> shapeItems;
     shapeItems.push_back("circle\n");
-    rv += testBasicGog(shapeItems, true);
+    rv += testBasicGog(shapeItems, true, true);
   }
   {
     std::vector<std::string> shapeItems;
     shapeItems.push_back("arc\n");
-    rv += testBasicGog(shapeItems, true);
+    rv += testBasicGog(shapeItems, true, true);
   }
   {
     std::vector<std::string> shapeItems;
     shapeItems.push_back("ellipse\n");
-    rv += testBasicGog(shapeItems, true);
+    rv += testBasicGog(shapeItems, true, true);
   }
   {
     std::vector<std::string> shapeItems;
     shapeItems.push_back("cylinder\n");
-    rv += testBasicGog(shapeItems, true);
+    rv += testBasicGog(shapeItems, true, true);
   }
 
   std::vector<std::string> pointItems;
@@ -1428,44 +1450,44 @@ int testDynamicEdits()
   {
     std::vector<std::string> shapeItems = pointItems;
     shapeItems.push_back("line\n");
-    rv += testBasicGog(shapeItems, true);
+    rv += testBasicGog(shapeItems, true, false);
   }
   {
     std::vector<std::string> shapeItems = pointItems;
     shapeItems.push_back("linesegs\n");
-    rv += testBasicGog(shapeItems, true);
+    rv += testBasicGog(shapeItems, true, false);
   }
   {
     std::vector<std::string> shapeItems = pointItems;
     shapeItems.push_back("polygon\n");
-    rv += testBasicGog(shapeItems, true);
+    rv += testBasicGog(shapeItems, true, false);
   }
   {
     std::vector<std::string> shapeItems;
     shapeItems.push_back("sphere\n");
-    rv += testBasicGog(shapeItems, false);
+    rv += testBasicGog(shapeItems, false, true);
   }
   {
     std::vector<std::string> shapeItems;
     shapeItems.push_back("hemisphere\n");
-    rv += testBasicGog(shapeItems, false);
+    rv += testBasicGog(shapeItems, false, true);
   }
   {
     std::vector<std::string> shapeItems;
     shapeItems.push_back("ellipsoid\n");
-    rv += testBasicGog(shapeItems, false);
+    rv += testBasicGog(shapeItems, false, true);
   }
   {
     std::vector<std::string> shapeItems;
     shapeItems.push_back("cone\n");
-    rv += testBasicGog(shapeItems, false);
+    rv += testBasicGog(shapeItems, false, true);
   }
   {
     std::vector<std::string> shapeItems;
     shapeItems.push_back("orbit\n");
     shapeItems.push_back("centerlla 24.2 45.2 0\n");
     shapeItems.push_back("centerll2 24.3 45.1\n");
-    rv += testBasicGog(shapeItems, false);
+    rv += testBasicGog(shapeItems, false, true);
   }
 
   simCore::GOG::Parser parser;

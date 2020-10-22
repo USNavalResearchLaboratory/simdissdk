@@ -399,6 +399,21 @@ public:
    */
   simVis::GOG::GogShape shape() const;
 
+  /// Set flag indicating if shape's yaw component is locked to a reference orientation
+  void setFollowYaw(bool follow);
+  /// Set flag indicating if shape's pitch component is locked to a reference orientation
+  void setFolloPitch(bool follow);
+  /// Set flag indicating if shape's roll component is locked to a reference orientation
+  void setFollowRoll(bool follow);
+
+  /// Set the yaw angular offset from a reference orientation in radians
+  void setYawOffset(double offsetRad);
+  /// Set the pitch angular offset from a reference orientation in radians
+  void setPitchOffset(double offsetRad);
+  /// Set the roll angular offset from a reference orientation in radians
+  void setRollOffset(double offsetRad);
+
+
   /** Return the starting line number from the source GOG file*/
   size_t lineNumber() const;
 
