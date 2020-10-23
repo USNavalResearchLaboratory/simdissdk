@@ -62,8 +62,8 @@ namespace simVis { namespace GOG
   };
 
   // stipple defines
-  static const unsigned short GogDotStipple = 0xf0f0;
-  static const unsigned short GogDashStipple = 0xfff0;
+  static const unsigned short GogDotStipple = 0x0303;
+  static const unsigned short GogDashStipple = 0x3ffc;
   static const unsigned short GogSolidStipple = 0xffff;
 
   // surface tessellation size (meters) for ellipsoids, spheres, etc.
