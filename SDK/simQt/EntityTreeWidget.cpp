@@ -27,6 +27,7 @@
 #include <QTreeWidget>
 #include <QTimer>
 #include "simNotify/Notify.h"
+#include "simCore/Time/Utils.h"
 #include "simQt/ScopedSignalBlocker.h"
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/EntityTreeWidget.h"
@@ -61,7 +62,8 @@ EntityTreeWidget::EntityTreeWidget(QTreeView* view)
     settings_(SettingsPtr()),
     treeView_(false),
     pendingSendNumItems_(false),
-    emitSelectionChanged_(true)
+    processSelectionModelSignals_(true),
+    lastSelectionChangedTime_(0.0)
 {
   proxyModel_ = new simQt::EntityProxyModel(this);
   proxyModel_->setDynamicSortFilter(true);
@@ -70,6 +72,10 @@ EntityTreeWidget::EntityTreeWidget(QTreeView* view)
   view_->sortByColumn(0, Qt::AscendingOrder);
   view_->setIndentation(4);  // The default indentation for a list view
 
+  emitItemsSelectedTimer_ = new QTimer(this);
+  emitItemsSelectedTimer_->setSingleShot(true);
+  emitItemsSelectedTimer_->setInterval(0); // instant, when event loop picks up
+
   connect(proxyModel_, SIGNAL(modelReset()), this, SLOT(selectionCleared_()));
   connect(proxyModel_, SIGNAL(modelReset()), this, SLOT(sendNumFilteredItems_()));
   connect(proxyModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(delaySend_()));
@@ -77,6 +83,7 @@ EntityTreeWidget::EntityTreeWidget(QTreeView* view)
   connect(proxyModel_, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>)), this, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>))); // Echo out the signal
   connect(view_->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(selectionChanged_(const QItemSelection&, const QItemSelection&)));
   connect(view_, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(doubleClicked_(const QModelIndex&)));
+  connect(emitItemsSelectedTimer_, SIGNAL(timeout()), this, SLOT(emitItemsSelected_()));
 }
 
 EntityTreeWidget::~EntityTreeWidget()
@@ -148,7 +155,7 @@ int EntityTreeWidget::setSelected(uint64_t id)
     return 1;
 
   // Ignore the signal so that selectionList_ does not get re-calculated
-  emitSelectionChanged_ = false;
+  processSelectionModelSignals_ = false;
 
   selectionSet_.clear();
   selectionList_.clear();
@@ -169,7 +176,7 @@ int EntityTreeWidget::setSelected(uint64_t id)
   }
 
   // Stop ignoring the signal
-  emitSelectionChanged_ = true;
+  processSelectionModelSignals_ = true;
 
   // Tell listeners about the new selections (could be empty list)
   emit itemsSelected(selectionList_);
@@ -264,7 +271,7 @@ int EntityTreeWidget::setSelected(const QList<uint64_t>& list)
     return 1;
 
   // Ignore the signal so that selectionList_ does not get re-calculated
-  emitSelectionChanged_ = false;
+  processSelectionModelSignals_ = false;
 
   if (!newSet.empty())
   {
@@ -278,7 +285,7 @@ int EntityTreeWidget::setSelected(const QList<uint64_t>& list)
   }
 
   // Stop ignoring the signal
-  emitSelectionChanged_ = true;
+  processSelectionModelSignals_ = true;
 
   selectionSet_ = newSet;
   selectionList_.clear();
@@ -460,17 +467,8 @@ void EntityTreeWidget::selectionCleared_()
   }
 }
 
-void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const QItemSelection& deselected)
+void EntityTreeWidget::emitItemsSelected_()
 {
-  // Because of blocked signals, we cannot trust that this is called
-  // as often as is needed.  As a result, selected/deselected cannot be trusted as the
-  // correct delta from one call to the next call.
-
-  // It is possible this is called while selecting multiple ids at once, so
-  // return early if our flag isn't set.
-  if (!emitSelectionChanged_)
-    return;
-
   // Clear out our selection
   selectionList_.clear();
   selectionSet_.clear();
@@ -481,7 +479,7 @@ void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const Q
   {
     // Pull out the item from the index, which contains the ID
     const QModelIndex index2 = proxyModel_->mapToSource(*it);
-    const AbstractEntityTreeItem *item = static_cast<AbstractEntityTreeItem*>(index2.internalPointer());
+    const AbstractEntityTreeItem* item = static_cast<AbstractEntityTreeItem*>(index2.internalPointer());
     if (item == nullptr)
       continue;
     // Add the ID to both lists
@@ -496,6 +494,38 @@ void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const Q
 
   // Tell listeners about the new selections (could be empty list)
   emit itemsSelected(selectionList_);
+  emitItemsSelectedTimer_->stop();
+  lastSelectionChangedTime_ = simCore::getSystemTime();
+}
+
+void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const QItemSelection& deselected)
+{
+  // Because of blocked signals, we cannot trust that this is called
+  // as often as is needed.  As a result, selected/deselected cannot be trusted as the
+  // correct delta from one call to the next call.
+
+  // It is possible this is called while selecting multiple ids at once, so
+  // return early if our flag isn't set.
+  if (!processSelectionModelSignals_)
+    return;
+
+  // Timer is running and call emitItemSelected_() correctly
+  if (emitItemsSelectedTimer_->isActive())
+    return;
+  // If the current time is too soon after the last time we got here, we might be in a tight loop.  If so,
+  // then start the timer, queueing up processing.
+  double now = simCore::getSystemTime();
+  if (now < lastSelectionChangedTime_ + 0.1)  // 100 millsecond tolerance
+  {
+    // Queue up the emitItemsSelected_
+    emitItemsSelectedTimer_->start();
+  }
+  else
+  {
+    emitItemsSelected_();
+  }
+  // Save the time so successive signals get grouped up
+  lastSelectionChangedTime_ = now;
 }
 
 void EntityTreeWidget::doubleClicked_(const QModelIndex& index)
