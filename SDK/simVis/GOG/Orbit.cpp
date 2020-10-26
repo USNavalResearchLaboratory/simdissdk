@@ -182,7 +182,7 @@ GogNodeInterface* Orbit::createOrbit(const simCore::GOG::Orbit& orbit, bool atta
 
   osgEarth::LocalGeometryNode* node = nullptr;
   osgEarth::Style style;
-  if (!attached)
+  if (!orbit.isRelative())
   {
     // find azimuth and length of orbit
     double azimuth = 0.;
@@ -210,9 +210,14 @@ GogNodeInterface* Orbit::createOrbit(const simCore::GOG::Orbit& orbit, bool atta
 
     if (yLen > 0.)
       azimuth += M_PI;
-
     osgEarth::Geometry* geom = createOrbitShape(simCore::angFix2PI(azimuth), length, radius, center1.z());
-    node = new HostedLocalGeometryNode(geom, style);
+    if (attached)
+      node = new HostedLocalGeometryNode(geom, style);
+    else
+    {
+      node = new osgEarth::LocalGeometryNode(geom, style);
+      node->setMapNode(mapNode);
+    }
   }
 
   node->setName("Orbit");

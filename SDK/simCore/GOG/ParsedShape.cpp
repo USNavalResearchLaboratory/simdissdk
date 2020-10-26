@@ -134,7 +134,6 @@ int ParsedShape::append(PointType pointType, const PositionStrings& pos)
   else if (pointType_ != pointType)
   {
     // Cannot mix and match "ll" and "xy" in same GOG
-    assert(0);
     return 1;
   }
   points_.push_back(pos);
