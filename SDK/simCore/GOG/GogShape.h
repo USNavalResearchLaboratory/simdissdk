@@ -366,7 +366,7 @@ public:
   */
   int getColor(Color& color) const;
   /// Set the shape's color
-  void setColor(Color& gogColor);
+  void setColor(const Color& gogColor);
 
 protected:
   /// Serialize the shape's specific implementation attributes to the stream

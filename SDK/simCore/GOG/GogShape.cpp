@@ -516,7 +516,7 @@ int Points::getColor(Color& color) const
   return (color_.has_value() ? 0 : 1);
 }
 
-void Points::setColor(Color& gogColor)
+void Points::setColor(const Color& gogColor)
 {
   color_ = gogColor;
 }
