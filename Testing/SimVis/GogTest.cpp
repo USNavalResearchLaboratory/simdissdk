@@ -1335,7 +1335,7 @@ int testFillDynamicEdits(simVis::GOG::GogNodeInterface& gog, std::vector<std::st
   gog.setFilledState(true);
   gog.setFillColor(osg::Vec4f(0, 1.0, 1.0, 1.0));
 
-  shapeItems.push_back("filled true\n");
+  shapeItems.push_back("filled\n");
   shapeItems.push_back("fillcolor hex 0xffffff00\n");
 
   std::ostringstream os;

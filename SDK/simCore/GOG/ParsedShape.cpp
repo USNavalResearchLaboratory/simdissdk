@@ -78,12 +78,7 @@ bool ParsedShape::boolValue(ShapeParameter key, bool defaultValue) const
   auto i = stringParams_.find(key);
   if (i == stringParams_.end())
     return defaultValue;
-  const std::string& temp = simCore::lowerCase(i->second);
-  if (temp == "true" || temp == "yes" || temp == "on" || temp == "1")
-    return true;
-  if (temp == "false" || temp == "no" || temp == "off" || temp == "0")
-    return false;
-  return defaultValue;
+  return getBoolFromString(i->second);
 }
 
 double ParsedShape::doubleValue(ShapeParameter key, double defaultValue) const
@@ -158,6 +153,12 @@ void ParsedShape::addComment(const std::string& comment)
 const std::vector<std::string>& ParsedShape::comments() const
 {
   return comments_;
+}
+
+bool ParsedShape::getBoolFromString(const std::string& boolStr)
+{
+  const std::string& temp = simCore::lowerCase(boolStr);
+  return stringIsTrueToken(temp);
 }
 
 }}

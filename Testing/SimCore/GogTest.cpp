@@ -1468,7 +1468,7 @@ int testSerialization()
   fillableItems.push_back("linewidth 4\n");
   fillableItems.push_back("linecolor hex 0xff00ff00\n");
   fillableItems.push_back("linestyle dashed\n");
-  fillableItems.push_back("filled true");
+  fillableItems.push_back("filled");
   fillableItems.push_back("fillcolor hex 0xff00ffff");
 
   // serialized items that match those in CIRCULAR_FIELDS; all circular shapes support follow
@@ -1904,6 +1904,37 @@ int testColors()
   return rv;
 }
 
+
+// test that filled is true, outlined is false, and extrude is true
+auto testBooleansFunc = [](const simCore::GOG::FillableShape* shape) -> int
+{
+  int rv = 0;
+  bool filled;
+  rv += SDK_ASSERT(shape->getIsFilled(filled) == 0);
+  rv += SDK_ASSERT(filled);
+  bool outlined;
+  rv += SDK_ASSERT(shape->getIsOutlined(outlined) == 0);
+  rv += SDK_ASSERT(!outlined);
+  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
+  rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
+  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::EXTRUDE);
+  return rv;
+};
+
+// test the different boolean strings
+int testBooleanInputs()
+{
+  int rv = 0;
+  // filled will always be true, since it only requires the presence of the single keyword
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\nfilled false\n outline false\n extrude true\n end\n", testCircularRadiusDefaultFunc);
+  // outline will be false, since any string that does not explicitly indicate true is parsed as false
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n filled no\n outline unknown\n extrude true\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n filled\n outline 0\n extrude 1\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n filled\n outline off\n extrude on\n end\n", testCircularRadiusDefaultFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\n circle\n filled\n outline no\n extrude yes\n end\n", testCircularRadiusDefaultFunc);
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -1923,6 +1954,7 @@ int GogTest(int argc, char* argv[])
   rv += testDefaults();
   rv += testSerialization();
   rv += testColors();
+  rv += testBooleanInputs();
 
   return rv;
 }

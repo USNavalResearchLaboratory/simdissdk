@@ -227,6 +227,9 @@ public:
   /** Get the comments associated with this shape */
   const std::vector<std::string>& comments() const;
 
+  /** Convert the GOG format boolean string to a bool */
+  static bool getBoolFromString(const std::string& boolStr);
+
 private:
   ShapeType shape_;
   std::map<ShapeParameter, std::string> stringParams_;

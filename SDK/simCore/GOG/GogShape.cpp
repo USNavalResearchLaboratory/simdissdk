@@ -617,8 +617,8 @@ void FillableShape::serializeToStream_(std::ostream& gogOutputStream) const
     }
     gogOutputStream << "linestyle " << lineStyle << "\n";
   }
-  if (filled_.has_value())
-    gogOutputStream << "filled " << (filled_.value_or(false) ? "true" : "false") << "\n";
+  if (filled_.value_or(false))
+    gogOutputStream << "filled\n";
   if (fillColor_.has_value())
     gogOutputStream << "fillcolor hex " << fillColor_->serialize() << "\n";
   OutlinedShape::serializeToStream_(gogOutputStream);

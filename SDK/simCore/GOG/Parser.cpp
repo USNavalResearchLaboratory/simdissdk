@@ -540,7 +540,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     else if (tokens[0] == "outline")
     {
       if (tokens.size() >= 2)
-        current.set(ShapeParameter::OUTLINE, (tokens[1] == "true" ? "true" : "false"));
+        current.set(ShapeParameter::OUTLINE, tokens[1]);
       else
         printError_(lineNumber, "outline command requires 1 argument");
     }
@@ -716,7 +716,8 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       if (tokens.size() >= 2)
       {
         // extrusion is an altitude mode
-        current.set(ShapeParameter::ALTITUDEMODE, "extrude");
+        if (ParsedShape::getBoolFromString(tokens[1]))
+          current.set(ShapeParameter::ALTITUDEMODE, "extrude");
         if (tokens.size() >= 3)
         {
           // handle optional extrude height
