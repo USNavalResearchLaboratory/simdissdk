@@ -361,6 +361,9 @@ function(vsi_install_imported_shared_library TARGET COMPONENT)
 
     # Pull out the imported location
     get_target_property(LOCATION_RELEASE ${TARGET} IMPORTED_LOCATION)
+    if(NOT LOCATION_RELEASE)
+        get_target_property(LOCATION_RELEASE ${TARGET} IMPORTED_LOCATION_RELEASE)
+    endif()
     get_symlinks(${LOCATION_RELEASE} LOCATION_RELEASE)
     install(PROGRAMS ${LOCATION_RELEASE}
         DESTINATION "${DESTINATION}"
