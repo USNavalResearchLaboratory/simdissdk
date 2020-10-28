@@ -261,12 +261,14 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
   osg::ref_ptr<Geometry> shape;
 
   double majorAxis = 0.;
+  bool elliptical = false;
   if (cyl.getMajorAxis(majorAxis) == 0)
   {
     radius = Distance(0.5 * majorAxis, Units::METERS);
     double minorAxis = 0.;
     if (cyl.getMinorAxis(minorAxis) == 0)
     {
+      elliptical = true;
       Distance minorRadius = Distance(0.5 * minorAxis, Units::METERS);
       shape = gf.createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, 0u, tgeom.get(), true);
     }
@@ -305,6 +307,11 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
     }
     else
       sideNode = new HostedLocalGeometryNode(shape.get(), style);
+
+    // Set the node facing to clockwise, to solve winding issue with osgEarth for elliptical arcs
+    if (elliptical)
+      sideNode->getOrCreateStateSet()->setAttributeAndModes(new osg::FrontFace(osg::FrontFace::CLOCKWISE), osg::StateAttribute::ON);
+
     sideNode->setName("Cylinder Side");
     LoaderUtils::setShapePositionOffsets(*sideNode, cyl, center, refPoint, attached, false);
     g->addChild(sideNode);
