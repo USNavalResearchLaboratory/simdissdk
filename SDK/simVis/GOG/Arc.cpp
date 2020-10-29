@@ -382,7 +382,10 @@ GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, bool attached, co
   double sweepRad = 0.;
   arc.getAngleSweep(sweepRad);
   if (simCore::areEqual(sweepRad, 0.))
-    radius = Distance(0, Units::METERS);
+  {
+    SIM_ERROR << "Angle cannot have sweep of 0\n";
+    return nullptr;
+  }
   Angle sweep = Angle(sweepRad * simCore::RAD2DEG, Units::DEGREES);
   // Use fmod to keep the correct sign for correct sweep angle
   Angle end = start + Angle(::fmod(sweep.as(Units::RADIANS), M_TWOPI), Units::RADIANS);

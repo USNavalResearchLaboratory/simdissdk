@@ -1428,6 +1428,8 @@ int testDynamicEdits()
   {
     std::vector<std::string> shapeItems;
     shapeItems.push_back("arc\n");
+    shapeItems.push_back("anglestart 0\n");
+    shapeItems.push_back("angledeg 1\n");
     rv += testBasicGog(shapeItems, true, true);
   }
   {
@@ -1558,6 +1560,81 @@ int testDynamicEdits()
   return rv;
 }
 
+// test different ways to define arcs, to verify arcs with 0 sweep are not created
+int testArcSweep()
+{
+  int rv = 0;
+  simCore::GOG::Parser parser;
+  simVis::GOG::Loader loader(parser);
+  simVis::GOG::Loader::GogNodeVector gogs;
+
+  // test same start/end angles, should not create GOG
+  {
+    std::stringstream shape;
+    shape << "start\n arc\n anglestart 0\n anglend 0\n end\n";
+    loader.loadGogs(shape, false, gogs);
+  }
+  rv += SDK_ASSERT(gogs.empty());
+  gogs.clear();
+
+  // test same start/end angles, should not create GOG
+  {
+    std::stringstream shape;
+    shape << "start\n arc\n anglestart 0\n anglend 360\n end\n";
+    loader.loadGogs(shape, false, gogs);
+  }
+  rv += SDK_ASSERT(gogs.empty());
+  gogs.clear();
+
+  // test same start/end angles, should not create GOG
+  {
+    std::stringstream shape;
+    shape << "start\n arc\n anglestart 45\n anglend 405\n end\n";
+    loader.loadGogs(shape, false, gogs);
+  }
+  rv += SDK_ASSERT(gogs.empty());
+  gogs.clear();
+
+  // test 0 sweep, should not create GOG
+  {
+    std::stringstream shape;
+    shape << "start\n arc\n anglestart 0\n angleDeg 0\n end\n";
+    loader.loadGogs(shape, false, gogs);
+  }
+  rv += SDK_ASSERT(gogs.empty());
+  gogs.clear();
+
+  // test 360 sweep, should create GOG
+  {
+    std::stringstream shape;
+    shape << "start\n arc\n anglestart 0\n angleDeg 360\n end\n";
+    loader.loadGogs(shape, false, gogs);
+  }
+
+  rv += SDK_ASSERT(!gogs.empty());
+  gogs.clear();
+
+  // test 360 sweep, should create GOG
+  {
+    std::stringstream shape;
+    shape << "start\n arc\n anglestart 0\n angleDeg -360\n end\n";
+    loader.loadGogs(shape, false, gogs);
+  }
+  rv += SDK_ASSERT(!gogs.empty());
+  gogs.clear();
+
+  // test 360 sweep, should create GOG
+  {
+    std::stringstream shape;
+    shape << "start\n arc\n anglestart 52.5\n angleDeg -360\n end\n";
+    loader.loadGogs(shape, false, gogs);
+  }
+  rv += SDK_ASSERT(!gogs.empty());
+  gogs.clear();
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -1574,6 +1651,7 @@ int GogTest(int argc, char* argv[])
   rv += testParseMetaData();
   rv += testAltitudeUnits();
   rv += testDynamicEdits();
+  rv += testArcSweep();
 
   // Shut down protobuf lib for valgrind testing
   google::protobuf::ShutdownProtobufLibrary();
