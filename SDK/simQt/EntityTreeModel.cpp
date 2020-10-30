@@ -96,11 +96,22 @@ EntityTreeItem::~EntityTreeItem()
 
 void EntityTreeItem::appendChild(EntityTreeItem *item)
 {
+  childToRowIndex_[item] = childItems_.size();
   childItems_.append(item);
 }
 
 void EntityTreeItem::removeChild(EntityTreeItem *item)
 {
+  auto it = childToRowIndex_.find(item);
+  if (it != childToRowIndex_.end())
+  {
+    int removedIndex = it->second;
+    for (auto& index : childToRowIndex_)
+    {
+      if (index.second > removedIndex)
+        index.second--;
+    }
+  }
   childItems_.removeOne(item);
   delete item;
 }
@@ -137,7 +148,11 @@ EntityTreeItem* EntityTreeItem::parent()
 int EntityTreeItem::row() const
 {
   if (parentItem_)
-    return parentItem_->childItems_.indexOf(const_cast<EntityTreeItem*>(this));
+  {
+    auto it = parentItem_->childToRowIndex_.find(this);
+    if (it != parentItem_->childToRowIndex_.end())
+      return it->second;
+  }
 
   return 0;
 }

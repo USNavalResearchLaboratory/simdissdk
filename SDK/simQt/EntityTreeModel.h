@@ -59,6 +59,7 @@ protected:
   simData::ObjectId id_; ///< id of the entity represented
   EntityTreeItem *parentItem_;  ///< parent of the item.  Null if top item
   QList<EntityTreeItem*> childItems_;  ///< Children of item, if any.  If no children, than item is a leaf
+  std::map<const EntityTreeItem*, int> childToRowIndex_; ///< Use a map to cache the row index for better performance
 };
 
 /// model (data representation) for a tree of Entities (Platforms, Beams, Gates, etc.)
