@@ -273,6 +273,7 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     rootItem_(nullptr),
     treeView_(false),
     dataStore_(nullptr),
+    pendingRemoval_(false),
     platformIcon_(":/simQt/images/platform.png"),
     beamIcon_(":/simQt/images/beam.png"),
     customRenderingIcon_(":/simQt/images/CustomRender.png"),
@@ -280,7 +281,6 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     laserIcon_(":/simQt/images/laser.png"),
     lobIcon_(":/simQt/images/lob.png"),
     projectorIcon_(":/simQt/images/projector.png"),
-    pendingRemoval_(false),
     useEntityIcons_(true),
     customAsTopLevel_(true)
 {
