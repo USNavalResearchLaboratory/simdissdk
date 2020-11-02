@@ -23,12 +23,15 @@
 #ifndef SIMQT_ENTITYTREE_MODEL_H
 #define SIMQT_ENTITYTREE_MODEL_H
 
+#include <set>
 #include <QTreeWidgetItem>
 #include "simCore/Common/Common.h"
 #include "simData/DataStore.h"
 #include "simQt/AbstractEntityTreeModel.h"
 
 namespace simQt {
+
+class EntityTreeModel;
 
 /// represent one entity (by Unique ID) kept in a tree
 class SDKQT_EXPORT EntityTreeItem : public simQt::AbstractEntityTreeItem
@@ -47,7 +50,6 @@ public:
    *@{
    */
   void appendChild(EntityTreeItem *item);
-  void removeChild(EntityTreeItem *item);
   EntityTreeItem *child(int row);
   int childCount() const;
   EntityTreeItem *parent();
@@ -55,11 +57,23 @@ public:
   int row() const;
   ///@}
 
+  /// Mark the item for removal
+  void markForRemoval();
+  /// Return true if the item is marked for removal
+  bool isMarked() const;
+  /// Remove the children marked for removal; recursive down to the leaf node
+  void removeMarkedChildren(EntityTreeModel* model);
+
 protected:
+  void notifyParentForRemoval_(EntityTreeItem* child);
+  void markChildrenForRemoval_();
+
   simData::ObjectId id_; ///< id of the entity represented
   EntityTreeItem *parentItem_;  ///< parent of the item.  Null if top item
   QList<EntityTreeItem*> childItems_;  ///< Children of item, if any.  If no children, than item is a leaf
   std::map<const EntityTreeItem*, int> childToRowIndex_; ///< Use a map to cache the row index for better performance
+  bool markForRemoval_;  ///< This item is marked for removal
+  std::set<int> childrenMarked_;  ///< Children of this item that are marked for removal
 };
 
 /// model (data representation) for a tree of Entities (Platforms, Beams, Gates, etc.)
@@ -101,6 +115,11 @@ public:
   /// Set whether to use custom rendering objects as top-level items. Defaults to true.
   void setCustomRenderingAsTopLevelItem(bool customAsTopLevel);
 
+  /// Should only be called by EntityTreeItem.  Starts the removal of items with the model
+  void beginRemoval(EntityTreeItem* parent, int begin, int end);
+  /// Should only be called by EntityTreeItem.  Ends the removal of items with the model
+  void endRemoval();
+
 public slots:
   /** Swaps the view to the hierarchy tree */
   virtual void setToTreeView();
@@ -126,6 +145,8 @@ public slots:
 private slots:
   /** Added any delayed entities */
   void commitDelayedEntities_();
+  /** Remove any delayed entities */
+  void commitDelayedRemoval_();
 
 private:
   class TreeListener;
@@ -158,6 +179,11 @@ private:
    * data.
    */
   std::vector<simData::ObjectId> delayedAdds_;
+  /**
+   * Deleting immediately can result in poor performance.  Instead, mark entities for removal
+   * and efficiently remove everyone at the same time.
+   */
+  bool pendingRemoval_;
 
   /** Icons for entity types */
   QIcon platformIcon_;
