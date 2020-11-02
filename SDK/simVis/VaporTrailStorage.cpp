@@ -103,7 +103,7 @@ int VaporTrailStorage::addVaporTrail(simData::ObjectId platId, unsigned int id, 
     return 1;
   }
   // get the scenegraph attachment mgr for expiremode items
-  osg::ref_ptr<osg::Group> expireModeGroup = hostPlat->getExpireModeGroup();
+  osg::ref_ptr<osg::Group> expireModeGroup = hostPlat->getOrCreateExpireModeGroup();
   if (!expireModeGroup.valid())
   {
     // see PlatformNode, which creates the ExpireModeManager for each platform

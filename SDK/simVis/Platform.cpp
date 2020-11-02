@@ -181,13 +181,6 @@ PlatformNode::PlatformNode(const simData::PlatformProperties& props,
   forceUpdateFromDataStore_(false),
   queuedInvalidate_(false)
 {
-  // create a container for platform-related objects that can be rendered even when platform is no longer valid.
-  // platform manages the visibility of the group.
-  // any class that adds a child is reponsible for removing that child.
-  expireModeGroup_ = new osg::Group;
-  if (expireModeGroupAttach_.valid())
-    expireModeGroupAttach_->addChild(expireModeGroup_);
-
   model_ = new PlatformModelNode(new Locator(getLocator()));
   addChild(model_);
   model_->addCallback(new BoundsUpdater(this));
@@ -207,6 +200,9 @@ PlatformNode::PlatformNode(const simData::PlatformProperties& props,
 
 PlatformNode::~PlatformNode()
 {
+  if (!expireModeGroup_.valid())
+    return;
+
   if (track_.valid())
     expireModeGroup_->removeChild(track_);
   track_ = nullptr;
@@ -272,8 +268,8 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     updateLabel_(prefs);
   }
 
-  if (!lastPrefsValid_ ||
-    PB_FIELD_CHANGED((&lastPrefs_), (&prefs), ecidatamode))
+  if (expireModeGroup_.valid() &&
+    (!lastPrefsValid_ || PB_FIELD_CHANGED((&lastPrefs_), (&prefs), ecidatamode)))
   {
     // on change of eci data mode, track and timeticks need to be completely recreated
     if (track_.valid())
@@ -298,8 +294,9 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
 
   setRcsPrefs_(prefs);
 
-  // manage visibility of track and trail group
-  expireModeGroup_->setNodeMask(showTrackTrail_(prefs) ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
+  // manage visibility of expireModeGroup (track, timeticks and vaporTrail)
+  if (expireModeGroup_.valid())
+    expireModeGroup_->setNodeMask(showTrackTrail_(prefs) ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
 
   // remove or create track history
   if (showTrack_(prefs))
@@ -309,15 +306,23 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     {
       if (!timeTicks_.valid())
         createTimeTicks_(prefs);
+      // creating timeticks must also ensure that there is a valid group
+      assert(expireModeGroup_.valid());
     }
     else if (timeTicks_.valid())
     {
+      // can't have valid timeticks without also having its group
+      assert(expireModeGroup_.valid());
       expireModeGroup_->removeChild(timeTicks_);
       timeTicks_ = nullptr;
     }
 
     if (!track_.valid())
+    {
       createTrackHistoryNode_(prefs);
+      // creating track history must also ensure that there is a valid group
+      assert(expireModeGroup_.valid());
+    }
     else
     {
       // normal processing: update the track history data
@@ -347,7 +352,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
         timeTicks_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
     }
   }
-  else
+  else if (expireModeGroup_.valid())
   {
     expireModeGroup_->removeChild(track_);
     track_ = nullptr;
@@ -424,8 +429,21 @@ void PlatformNode::updateHostBounds()
   updateHostBounds_(lastPrefs_.scale());
 }
 
-osg::Group* PlatformNode::getExpireModeGroup() const
+osg::Group* PlatformNode::getOrCreateExpireModeGroup()
 {
+  // Container for platform-related objects that can be rendered even when platform is no longer valid.
+  // Platform manages the visibility of the group.
+  // Any class that adds a child is reponsible for removing that child.
+
+  if (!expireModeGroup_.valid())
+  {
+    // lazy creation of expireModeGroup, SIM-12258
+    expireModeGroup_ = new osg::Group;
+    expireModeGroup_->setName("PlatformNode Expire Mode Group");
+
+    if (expireModeGroupAttach_.valid())
+      expireModeGroupAttach_->addChild(expireModeGroup_);
+  }
   return expireModeGroup_.get();
 }
 
@@ -578,7 +596,8 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   }
 
   // manage visibility of track and trail group
-  expireModeGroup_->setNodeMask(showTrackTrail_(lastPrefs_) ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
+  if (expireModeGroup_.valid())
+    expireModeGroup_->setNodeMask(showTrackTrail_(lastPrefs_) ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
 
   // remove or create track history
   if (showTrack_(lastPrefs_))
@@ -594,7 +613,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
         timeTicks_->update();
     }
   }
-  else
+  else if (expireModeGroup_.valid())
   {
     if (track_.valid())
     {
@@ -677,7 +696,7 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
   if (!track_.valid())
     track_ = new TrackHistoryNode(ds_, new Locator(), platformTspiFilterManager_, getId());
 
-  expireModeGroup_->addChild(track_);
+  getOrCreateExpireModeGroup()->addChild(track_);
   track_->setPrefs(prefs, lastProps_, true);
   updateHostBounds_(prefs.scale());
   track_->update();
@@ -707,7 +726,7 @@ bool PlatformNode::createTimeTicks_(const simData::PlatformPrefs& prefs)
   // for non-ECI platform use a new empty locator
   if (!timeTicks_.valid())
     timeTicks_ = new TimeTicks(ds_, new Locator(), platformTspiFilterManager_, getId());
-  expireModeGroup_->addChild(timeTicks_);
+  getOrCreateExpireModeGroup()->addChild(timeTicks_);
   timeTicks_->setPrefs(prefs, lastProps_, true);
   timeTicks_->update();
 
