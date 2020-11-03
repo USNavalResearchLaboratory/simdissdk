@@ -35,6 +35,7 @@
 #include "simData/MemoryDataStore.h"
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/NavigationModes.h"
+#include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
 #include "simVis/Scenario.h"
@@ -138,7 +139,7 @@ struct MouseAndMenuHandler : public osgGA::GUIEventHandler
 
     if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
       handled = handleKeyPress_(ea.getKey());
-    
+
     // update the status and label every time an event occurs, which may change the status values
     updateStatusAndLabel_();
     return handled;

@@ -31,6 +31,17 @@
 namespace simVis
 {
 
+SimdisEntityState::SimdisEntityState()
+  : node_(nullptr),
+  platformHostNode_(nullptr),
+  rfPropagation_(nullptr)
+{
+}
+
+SimdisEntityState::~SimdisEntityState()
+{
+}
+
 SimdisRangeToolState::SimdisRangeToolState(SimdisEntityState* beginEntity, SimdisEntityState* endEntity)
   : RangeToolState(beginEntity, endEntity)
 {

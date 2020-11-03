@@ -29,8 +29,8 @@ namespace simRF { class RFPropagationFacade; }
 
 namespace simVis
 {
-
 class EntityNode;
+class PlatformNode;
 class ScenarioManager;
 
 /**
@@ -42,15 +42,8 @@ struct SDKVIS_EXPORT SimdisEntityState : public EntityState
   osg::ref_ptr<const simVis::PlatformNode> platformHostNode_; ///< The node of the host platform; for platforms platformHostNode_ == node_
   simRF::RFPropagationFacade* rfPropagation_;  ///< If the entity is a beam this MAY BE set
 
-  SimdisEntityState()
-    : node_(nullptr),
-    platformHostNode_(nullptr),
-    rfPropagation_(nullptr)
-  {
-  }
-  virtual ~SimdisEntityState()
-  {
-  }
+  SimdisEntityState();
+  virtual ~SimdisEntityState();
 };
 
 
