@@ -61,8 +61,12 @@ public:
   void markForRemoval();
   /// Return true if the item is marked for removal
   bool isMarked() const;
-  /// Remove the children marked for removal; recursive down to the leaf node
-  void removeMarkedChildren(EntityTreeModel* model);
+  /**
+   * Remove the children marked for removal; recursive down to the leaf node
+   * @param model The model for the items, needed to generate the appropriate Qt signals
+   * @return 0 on success; non zero on failure and the model must be rebuilt.
+   */
+  int removeMarkedChildren(EntityTreeModel* model);
 
 protected:
   void notifyParentForRemoval_(EntityTreeItem* child);

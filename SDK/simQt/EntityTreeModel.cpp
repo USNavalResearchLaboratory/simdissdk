@@ -32,6 +32,10 @@
 
 namespace simQt {
 
+// Performance can drop dramatically if there are too many regions to delete; stop after 50 regions and reset the model
+static const size_t MAX_REGIONS = 50;
+
+
 /// notify the tree model about data store changes
 class EntityTreeModel::TreeListener : public simData::DataStore::Listener
 {
@@ -191,17 +195,20 @@ void EntityTreeItem::markChildrenForRemoval_()
     child->markChildrenForRemoval_();
 }
 
-void EntityTreeItem::removeMarkedChildren(EntityTreeModel* model)
+int EntityTreeItem::removeMarkedChildren(EntityTreeModel* model)
 {
   markForRemoval_ = false;
 
   // Trim the tree from bottom up
   for (auto child : childItems_)
-    child->removeMarkedChildren(model);
+  {
+    if (child->removeMarkedChildren(model) != 0)
+      return 1;
+  }
 
   // Nothing to do or leaf node
   if (childrenMarked_.empty())
-    return;
+    return 0;
 
   // Everything was deleted so clear out and return
   if (static_cast<int>(childrenMarked_.size()) == childItems_.size())
@@ -210,7 +217,7 @@ void EntityTreeItem::removeMarkedChildren(EntityTreeModel* model)
     childItems_.clear();
     childToRowIndex_.clear();
     childrenMarked_.clear();
-    return;
+    return 0;
   }
 
   // For better performance delete continuous regions of children
@@ -227,6 +234,10 @@ void EntityTreeItem::removeMarkedChildren(EntityTreeModel* model)
     // If not continuous make a new entry
     if (*removalIt != (previousIndex + 1))
     {
+      // If too many, give up and reset the model
+      if (indexToDelta.size() > MAX_REGIONS)
+        return 1;
+
       indexToDelta[lastIndex] = delta;
       lastIndex = *removalIt;
       delta = 1;
@@ -264,6 +275,7 @@ void EntityTreeItem::removeMarkedChildren(EntityTreeModel* model)
   }
 
   childrenMarked_.clear();
+  return 0;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -869,7 +881,11 @@ bool EntityTreeModel::useEntityIcons() const
 void EntityTreeModel::commitDelayedRemoval_()
 {
   pendingRemoval_ = false;
-  rootItem_->removeMarkedChildren(this);
+  if (rootItem_->removeMarkedChildren(this) != 0)
+  {
+    // too many regions to delete, give up and reset the model
+    forceRefresh();
+  }
 }
 
 void EntityTreeModel::beginRemoval(EntityTreeItem* parent, int begin, int end)
