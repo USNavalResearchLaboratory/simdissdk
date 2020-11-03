@@ -68,6 +68,7 @@ VaporTrail::VaporTrail(const simData::DataStore& dataStore, osg::Group* expireMo
     textureCounter_(0)
 {
   vaporTrailGroup_ = new osg::Group();
+  vaporTrailGroup_->setName("VaporTrail Group");
   vaporTrailGroup_->setNodeMask(simVis::DISPLAY_MASK_NONE);
 
   osg::StateSet* groupState = vaporTrailGroup_->getOrCreateStateSet();
