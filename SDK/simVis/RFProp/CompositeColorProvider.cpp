@@ -31,8 +31,8 @@ namespace simRF
 const osg::Vec4f DEFAULT_ABOVE_COLOR = simVis::Color::Red;
 /// Below threshold color; use green for below, i.e. the area where host cannot detect
 const osg::Vec4f DEFAULT_BELOW_COLOR = simVis::Color::Green;
-/// assumes default type is POD threshold, values are percentages 0-99.9
-const float DEFAULT_THRESHOLD = 60.0f;
+/// assumes default type is Loss threshold, values are 0-300 dBsm
+const float DEFAULT_THRESHOLD = 150.0f;
 
 CompositeColorProvider::CompositeColorProvider()
  : colorMode_(COLORMODE_ABOVE_AND_BELOW),

@@ -133,7 +133,7 @@ RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* paren
   profileManager_->setColorProvider(colorProvider_.get());
 
   // set the default threshold type
-  setThresholdType(simRF::ProfileDataProvider::THRESHOLDTYPE_POD);
+  setThresholdType(simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS);
 
   // set the default visualization mode
   setDrawMode(simRF::Profile::DRAWMODE_2D_HORIZONTAL);
