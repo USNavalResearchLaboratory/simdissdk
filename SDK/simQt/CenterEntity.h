@@ -142,7 +142,9 @@ private:
   double getNearestTargetTime_(double searchTime, uint64_t id) const;
   /** Returns the closest time in update with data draw on */
   template<typename CommandSlice, typename UpdateSlice>
-  double getNearestTime_(double time, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const;
+  double getNearestDrawTime_(double time, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const;
+  /** Returns the time closest to searchTime;  returns INVALID if both earlierTime and laterTime are invalid */
+  double getNearestTime_(double searchTime, double earlierTime, double laterTime) const;
 
   /** Gets the draw state of host of id; returns 0 on success. */
   int getHostDrawState_(uint64_t id, std::map<double, bool>& hostDrawState) const;

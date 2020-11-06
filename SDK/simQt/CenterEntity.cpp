@@ -290,22 +290,7 @@ double BindCenterEntityToEntityTreeComposite::getCustomRenderingNearestTime_(dou
   if ((commands == nullptr) || (commands->numItems() == 0))
     return INVALID_TIME;
 
-  const auto earlierTime = getCustomRenderingEarlierTime_(time, commands);
-  const auto laterTime = getCustomRenderingLaterTime_(time, commands);
-
-  if ((earlierTime == INVALID_TIME) && (laterTime == INVALID_TIME))
-    return -1.0;
-
-  if (earlierTime == INVALID_TIME)
-    return laterTime;
-
-  if (laterTime == INVALID_TIME)
-    return earlierTime;
-
-  const double previousDelta = time - earlierTime;
-  const double nextDelta = laterTime - time;
-
-  return nextDelta < previousDelta ? laterTime : earlierTime;
+  return getNearestTime_(time, getCustomRenderingEarlierTime_(time, commands), getCustomRenderingLaterTime_(time, commands));
 }
 
 double BindCenterEntityToEntityTreeComposite::getCustomRenderingEarlierTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const
@@ -360,31 +345,31 @@ double BindCenterEntityToEntityTreeComposite::getBeamNearestTime_(double time, u
 {
   if (isTargetBeam_(id))
     return getNearestTargetTime_(time, id);
-  return getNearestTime_(time, id, dataStore_.beamCommandSlice(id), dataStore_.beamUpdateSlice(id));
+  return getNearestDrawTime_(time, id, dataStore_.beamCommandSlice(id), dataStore_.beamUpdateSlice(id));
 }
 
 double BindCenterEntityToEntityTreeComposite::getGateNearestTime_(double time, uint64_t id) const
 {
-  return getNearestTime_(time, id, dataStore_.gateCommandSlice(id), dataStore_.gateUpdateSlice(id));
+  return getNearestDrawTime_(time, id, dataStore_.gateCommandSlice(id), dataStore_.gateUpdateSlice(id));
 }
 
 double BindCenterEntityToEntityTreeComposite::getLaserNearestTime_(double time, uint64_t id) const
 {
-  return getNearestTime_(time, id, dataStore_.laserCommandSlice(id), dataStore_.laserUpdateSlice(id));
+  return getNearestDrawTime_(time, id, dataStore_.laserCommandSlice(id), dataStore_.laserUpdateSlice(id));
 }
 
 double BindCenterEntityToEntityTreeComposite::getLobGroupNearestTime_(double time, uint64_t id) const
 {
-  return getNearestTime_(time, id, dataStore_.lobGroupCommandSlice(id), dataStore_.lobGroupUpdateSlice(id));
+  return getNearestDrawTime_(time, id, dataStore_.lobGroupCommandSlice(id), dataStore_.lobGroupUpdateSlice(id));
 }
 
 double BindCenterEntityToEntityTreeComposite::getProjectorNearestTime_(double time, uint64_t id) const
 {
-  return getNearestTime_(time, id, dataStore_.projectorCommandSlice(id), dataStore_.projectorUpdateSlice(id));
+  return getNearestDrawTime_(time, id, dataStore_.projectorCommandSlice(id), dataStore_.projectorUpdateSlice(id));
 }
 
 template<typename CommandSlice, typename UpdateSlice>
-double BindCenterEntityToEntityTreeComposite::getNearestTime_(double searchTime, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const
+double BindCenterEntityToEntityTreeComposite::getNearestDrawTime_(double searchTime, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const
 {
   // Calculate the time range as limited by the host
   double hostBeginTime;
@@ -399,7 +384,11 @@ double BindCenterEntityToEntityTreeComposite::getNearestTime_(double searchTime,
 
   // Find the times when the entity is on/off
   std::map<double, bool> drawState;
-  if (getEntityDrawState_(commands, drawState) != 0)
+  // LOBs are different; they default to on and therefore can have no draw state
+  bool isLob = (dataStore_.objectType(id) == simData::LOB_GROUP);
+  if (isLob)
+    drawState[0.0] = true;
+  if ((getEntityDrawState_(commands, drawState) != 0) && !isLob)
     return INVALID_TIME;
 
   // Next check data points
@@ -410,7 +399,7 @@ double BindCenterEntityToEntityTreeComposite::getNearestTime_(double searchTime,
   double laterTime = INVALID_TIME;
 
   // Start at the requested time and search backwards for the first valid time
-  for (auto updateIter = updates->upper_bound(searchTime);  updateIter.peekPrevious() != nullptr; updateIter.previous())
+  for (auto updateIter = updates->upper_bound(searchTime); updateIter.peekPrevious() != nullptr; updateIter.previous())
   {
     double time = updateIter.peekPrevious()->time();
     if (isActive_(time, drawState) &&
@@ -423,7 +412,7 @@ double BindCenterEntityToEntityTreeComposite::getNearestTime_(double searchTime,
   }
 
   // Start at the requested time and search forward for the first valid time
-  for (auto updateIter = updates->upper_bound(searchTime);  updateIter.peekNext() != nullptr; updateIter.next())
+  for (auto updateIter = updates->upper_bound(searchTime); updateIter.peekNext() != nullptr; updateIter.next())
   {
     double time = updateIter.peekNext()->time();
     if (isActive_(time, drawState) &&
@@ -435,8 +424,11 @@ double BindCenterEntityToEntityTreeComposite::getNearestTime_(double searchTime,
     }
   }
 
-  // Now figure out which time is closest to the search time
+  return getNearestTime_(searchTime, earlierTime, laterTime);
+}
 
+double BindCenterEntityToEntityTreeComposite::getNearestTime_(double searchTime, double earlierTime, double laterTime) const
+{
   if ((earlierTime == INVALID_TIME) && (laterTime == INVALID_TIME))
     return INVALID_TIME;
 
@@ -510,21 +502,7 @@ double BindCenterEntityToEntityTreeComposite::getNearestTargetTime_(double searc
     }
   }
 
-  // Now figure out which time is closest to the search time
-
-  if ((earlierTime == INVALID_TIME) && (laterTime == INVALID_TIME))
-    return INVALID_TIME;
-
-  if (earlierTime == INVALID_TIME)
-    return laterTime;
-
-  if (laterTime == INVALID_TIME)
-    return earlierTime;
-
-  const double previousDelta = searchTime - earlierTime;
-  const double nextDelta = laterTime - searchTime;
-
-  return nextDelta < previousDelta ? laterTime : earlierTime;
+  return getNearestTime_(searchTime, earlierTime, laterTime);
 }
 
 bool BindCenterEntityToEntityTreeComposite::isActive_(double time, const std::map<double, bool>& drawState) const
@@ -660,10 +638,9 @@ int BindCenterEntityToEntityTreeComposite::getEntityDrawState_(const CommandSlic
   if ((commands == nullptr) || (commands->numItems() == 0))
     return 1;
 
-  auto commandIter = commands->lower_bound(-1.0);
-  while (commandIter.peekNext() != nullptr)
+  for (auto commandIter = commands->lower_bound(-1.0); commandIter.peekNext() != nullptr; commandIter.next())
   {
-    auto next = commandIter.next();
+    auto next = commandIter.peekNext();
     if (next->has_updateprefs() &&
       next->updateprefs().has_commonprefs() &&
       next->updateprefs().commonprefs().has_datadraw())
@@ -685,7 +662,7 @@ int BindCenterEntityToEntityTreeComposite::getTargetDrawState_(uint64_t id, std:
   drawState[0.0] = false;
 
   // Find the times when the beam has a target
-  for  (auto commandIter = commands->lower_bound(-1.0); commandIter.peekNext() != nullptr; commandIter.next())
+  for (auto commandIter = commands->lower_bound(-1.0); commandIter.peekNext() != nullptr; commandIter.next())
   {
     auto next = commandIter.peekNext();
     if (next->has_updateprefs() &&next->updateprefs().has_targetid())
