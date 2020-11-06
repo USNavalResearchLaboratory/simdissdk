@@ -120,14 +120,40 @@ private slots:
   void centerOnEntity_(uint64_t id);
 
 private:
-  /** Returns the closet TSPI time to the current time if the platform is active and has TSPI points.  Return -1.0 on error */
-  double getPlatformNearestTime_(uint64_t id) const;
-  /** Returns the closest draw data time to the current time if the custom rendering is active.  Return -1.0 on error */
-  double getCustomRenderingNearestTime_(uint64_t id) const;
+  /** Returns the closest TSPI time to the given time if the platform is active and has TSPI points.  Returns -1.0 on error. */
+  double getPlatformNearestTime_(double time, uint64_t id) const;
+  /** Returns the closest draw data time to the given time if the custom rendering is active.  Returns -1.0 on error. */
+  double getCustomRenderingNearestTime_(double time, uint64_t id) const;
   /** The valid time at or before the search time; returns -1.0 on error */
   double getCustomRenderingEarlierTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const;
   /** The valid time at or after the search time; returns -1.0 on error */
   double getCustomRenderingLaterTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const;
+  /** Returns the closest RAE time to the given time if the beam is active.  Returns -1.0 on error. */
+  double getBeamNearestTime_(double time, uint64_t id) const;
+  /** Returns the closest RAE time to the given time if the gate is active.  Returns -1.0 on error. */
+  double getGateNearestTime_(double time, uint64_t id) const;
+  /** Returns the closest RAE time to the given time if the laser is active.  Returns -1.0 on error. */
+  double getLaserNearestTime_(double time, uint64_t id) const;
+  /** Returns the closest RAE time to the given time if the LOB is active.  Returns -1.0 on error. */
+  double getLobGroupNearestTime_(double time, uint64_t id) const;
+  /** Returns the closest FOV time to the given time if the projector is active.  Returns -1.0 on error. */
+  double getProjectorNearestTime_(double time, uint64_t id) const;
+
+  /** Returns the closest time in update with data draw on */
+  template<typename CommandSlice, typename UpdateSlice>
+  double getNearestTime_(double time, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const;
+
+  /** Returns the time range of id as limited by its data and the life span of its host; returns 0 on success. */
+  int hostTimeRange_(uint64_t id, double& beginTime, double& endTime) const;
+  /** Returns the time range of id as limited by its data, if static returns the time span of the scenario; returns 0 on success. */
+  int platformTimeRange_(uint64_t id, double& beginTime, double& endTime) const;
+  /** Returns the time range of id as limited by its data; returns 0 on success. */
+  template<typename UpdateSlice>
+  int timeRange_(uint64_t id, double& beginTime, double& endTime, const UpdateSlice* updates) const;
+  /** Returns true if time is active for the given time. */
+  bool isActive_(double time, const std::map<double, bool>& drawState) const;
+  /** Returns true if time is between the beginTime and the endTime */
+  bool inHostedTimeRange_(double time, double beginTime, double endTime) const;
 
   CenterEntity& centerEntity_;
   EntityTreeComposite& tree_;
