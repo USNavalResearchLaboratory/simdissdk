@@ -93,7 +93,7 @@ enum class ShapeType
 };
 
 // Define's a GOG color's RGBA values, 0-255
-struct Color
+struct SDKCORE_EXPORT Color
 {
   int red;
   int green;
