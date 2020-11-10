@@ -24,6 +24,7 @@
 #include "osgEarth/ImageLayer"
 #include "osgEarth/Random"
 #include "osgEarth/VirtualProgram"
+#include "simUtil/Shaders.h"
 #include "simUtil/VelocityParticleLayer.h"
 
 // Register with the osgEarth loader so we can load velocity particle layers from .earth files
@@ -59,124 +60,6 @@ osg::Node* makeQuad(int width, int height, const osg::Vec4& color)
   return geode;
 }
 
-/** Vertex shader for the RTT camera, for the 2D image representation of the velocity */
-static const std::string particleVertRTTSource =
-"#version " GLSL_VERSION_STR R"end(
-uniform sampler2D positionSampler;
-uniform vec2 resolution;
-uniform float pointSize;
-out vec4 particle_color;
-out float rotate_angle;
-void oe_particle_vertex(inout vec4 vertexModel)
-{
-  // Using the instance ID, generate texture coords for this instance.
-  vec2 tC;
-  float r = float(gl_InstanceID) / resolution.x;
-  tC.s = fract( r ); tC.t = floor( r ) / resolution.y;
-
-  // Use the (scaled) tex coord to translate the position of the vertices.
-  vec4 posInfo = texture2D( positionSampler, tC );
-  float life = posInfo.w;
-
-  particle_color = mix(vec4(1.0, 0.0, 0.0, 0.3), vec4(0.0, 1.0, 0.0, 1.0), life);
-  rotate_angle = 0.0; // Unused
-
-  vec3 pos = posInfo.xyz;
-)end"
-"  pos.xy *= vec2(" + std::to_string(RTT_OUTPUT_IMAGE_WIDTH) + ", " + std::to_string(RTT_OUTPUT_IMAGE_HEIGHT) + ");"
-R"end(
-  vertexModel.xyz = pos;
-
-  gl_PointSize = pointSize;
-})end";
-
-/** Fragment shader for both RTT and particle shader. */
-static const std::string particleFragSource =
-"#version " GLSL_VERSION_STR R"end(
-in vec4 particle_color;
-in float rotate_angle;
-uniform sampler2D pointSprite;
-uniform bool usePointSprite;
-uniform float oe_VisibleLayer_opacityUniform;
-void oe_particle_frag(inout vec4 color)
-{
-  if (usePointSprite)
-  {
-    float rot = rotate_angle;
-    float sinTheta = sin(rot);
-    float cosTheta = cos(rot);
-    vec2 aboutOrigin = gl_PointCoord - vec2(0.5);
-    vec2 rotated = vec2(aboutOrigin.x * cosTheta - aboutOrigin.y * sinTheta,
-      aboutOrigin.y * cosTheta + aboutOrigin.x * sinTheta);
-    color = texture(pointSprite, rotated + vec2(0.5)) * particle_color;
-  }
-  else
-  {
-    color = particle_color;
-    // Draw circles
-    vec2 coord = gl_PointCoord - vec2(0.5);
-    if (length(coord) > 0.5)
-      discard;
-  }
-  color.a *= oe_VisibleLayer_opacityUniform;
-})end";
-
-/** Vertex shader source for converting the incoming value into output ECEF XYZ */
-static const std::string particleVertSource =
-"#version " GLSL_VERSION_STR R"end(
-uniform sampler2D positionSampler;
-uniform sampler2D directionSampler;
-uniform vec2 resolution;
-uniform float pointSize;
-uniform vec4 minColor;
-uniform vec4 maxColor;
-uniform float altitude;
-
-out vec4 particle_color;
-out float rotate_angle;
-
-const float PI = 3.1415926535897932384626433832795;
-const float PI_2 = 1.57079632679489661923;
-const float TWO_PI = 6.283185307179586476925286766559;
-vec3 convertLatLongHeightToXYZ(float latitude, float longitude, float height)
-{
-  float radiusEquator = 6378137.0;
-  float radiusPolar = 6356752.3142;
-  float flattening = (radiusEquator - radiusPolar) / radiusEquator;
-  float eccentricitySquared = 2 * flattening - flattening * flattening;
-  float sin_latitude = sin(latitude);
-  float cos_latitude = cos(latitude);
-  float N = radiusEquator / sqrt(1.0 - eccentricitySquared * sin_latitude*sin_latitude);
-  float X = (N + height)*cos_latitude*cos(longitude);
-  float Y = (N + height)*cos_latitude*sin(longitude);
-  float Z = (N*(1 - eccentricitySquared) + height)*sin_latitude;
-  return vec3(X,Y,Z);
-}
-
-void oe_particle_vertex(inout vec4 vertexModel)
-{
-  // Using the instance ID, generate texture coords for this instance.
-  vec2 tC;
-  float r = float(gl_InstanceID) / resolution.x;
-  tC.s = fract( r ); tC.t = floor( r ) / resolution.y;
-
-  // Use the (scaled) tex coord to translate the position of the vertices.
-  vec4 posInfo = texture2D( positionSampler, tC );
-  float life = posInfo.w;
-  float velocity = posInfo.z;
-
-  particle_color = mix(minColor, maxColor, velocity);
-  // Rotation angle comes from the direction sampler texture
-  rotate_angle = texture2D(directionSampler, tC).r;
-
-  vec3 lla = vec3(-PI + TWO_PI * posInfo.x, -PI_2 + posInfo.y * PI, altitude);
-  vec3 xyz = convertLatLongHeightToXYZ(lla.y, lla.x, lla.z);
-  vertexModel.xyz = xyz;
-
-  // Scale the point size higher if rendering points, to account for circular radius blending
-  gl_PointSize = pointSize;
-})end";
-
 osg::Geometry* createRTTInstancedGeometry(int nInstances, unsigned int particleDimension)
 {
   osg::Geometry* geom = new osg::Geometry;
@@ -191,8 +74,11 @@ osg::Geometry* createRTTInstancedGeometry(int nInstances, unsigned int particleD
   geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, 1, nInstances));
 
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(geom->getOrCreateStateSet());
-  vp->setFunction("oe_particle_vertex", particleVertRTTSource, osgEarth::ShaderComp::LOCATION_VERTEX_MODEL);
-  vp->setFunction("oe_particle_frag", particleFragSource, osgEarth::ShaderComp::LOCATION_FRAGMENT_COLORING);
+  simUtil::Shaders shaderPackage;
+  shaderPackage.load(vp, shaderPackage.velocityParticleLayerRttParticleVertex());
+  shaderPackage.load(vp, shaderPackage.velocityParticleLayerParticleFragment());
+  geom->getOrCreateStateSet()->setDefine("RTT_OUTPUT_IMAGE_WIDTH", std::to_string(RTT_OUTPUT_IMAGE_WIDTH));
+  geom->getOrCreateStateSet()->setDefine("RTT_OUTPUT_IMAGE_HEIGHT", std::to_string(RTT_OUTPUT_IMAGE_HEIGHT));
   geom->getOrCreateStateSet()->addUniform(new osg::Uniform("positionSampler", 0));
   geom->getOrCreateStateSet()->addUniform(new osg::Uniform("directionSampler", 1));
   geom->getOrCreateStateSet()->addUniform(new osg::Uniform("pointSprite", 2));
@@ -217,8 +103,9 @@ osg::Geometry* createInstancedGeometry(int nInstances, unsigned int particleDime
   geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, 1, nInstances));
 
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(geom->getOrCreateStateSet());
-  vp->setFunction("oe_particle_vertex", particleVertSource, osgEarth::ShaderComp::LOCATION_VERTEX_MODEL);
-  vp->setFunction("oe_particle_frag", particleFragSource, osgEarth::ShaderComp::LOCATION_FRAGMENT_COLORING);
+  simUtil::Shaders shaderPackage;
+  shaderPackage.load(vp, shaderPackage.velocityParticleLayerParticleVertex());
+  shaderPackage.load(vp, shaderPackage.velocityParticleLayerParticleFragment());
   geom->getOrCreateStateSet()->addUniform(new osg::Uniform("positionSampler", 0));
   geom->getOrCreateStateSet()->addUniform(new osg::Uniform("directionSampler", 1));
   geom->getOrCreateStateSet()->addUniform(new osg::Uniform("pointSprite", 2));
@@ -266,126 +153,6 @@ osg::Texture2D* createDirectionTexture(unsigned int particleDimension)
   return tex;
 }
 
-static const std::string computeVert =
-R"end(#version 330
-void main()
-{
-  gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-})end";
-
-static const std::string computePositionFrag =
-R"end(#version 330
-uniform sampler2D texturePosition;
-uniform sampler2D velocityMap;
-uniform vec2 resolution;
-uniform float dieSpeed;
-uniform float speedFactor;
-uniform float dropChance;
-uniform vec4 boundingBox;
-
-uniform float osg_DeltaFrameTime;
-
-layout(location=0) out vec4 out_particle;
-
-// Generate a pseudo-random value in the specified range:
-float oe_random(float minValue, float maxValue, vec2 co)
-{
-  float t = fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
-  return minValue + t*(maxValue-minValue);
-}
-
-void main()
-{
-  vec2 uv = gl_FragCoord.xy / resolution.xy;
-
-  vec4 positionInfo = texture2D( texturePosition, uv );
-
-  vec3 position = positionInfo.xyz;
-  float life = positionInfo.w;
-
-  if (dieSpeed > 0)
-    life -= (osg_DeltaFrameTime / dieSpeed);
-  vec2 seed = (position.xy + uv);
-  float drop = oe_random(0.0, 1.0, seed);
-  // Do not let particles outside of the box
-  if (position.x < boundingBox.x || position.x > boundingBox.z || position.y < boundingBox.y || position.y > boundingBox.w)
-    life = -1.0;
-
-  // Reset particle
-  if (life < 0.0 || dropChance > drop)
-  {
-    life = oe_random(0.3, 1.0, seed + 3.4);
-    float x = oe_random(boundingBox.x, boundingBox.z, seed + 1.3);
-    float y = oe_random(boundingBox.y, boundingBox.w, seed + 2.1);
-    float z= 0.0;
-    position = vec3(x, y, z);
-  }
-
-  vec2 posUV = position.xy;
-  float uMin = -25.0;
-  float uMax = 25.0;
-  float vMin = -25.0;
-  float vMax = 25.0;
-
-  // Here, posUV is in global coordinates, with [0,0] meaning lat/lon [-180,-90] and [1,1] meaning [180,90].
-  // If the life is greater than 0, then we know we have a point inside our bounds.  We want to reproject
-  // the values from the posUV space into the image space, which is in boundingBox coordinates.
-  // For example, using bounding box X coordinates [min=0.6, max=0.8], and an input posUV value of 0.7,
-  // we can reproject by doing (0.7 - 0.6) / (0.8 - 0.6).  This gets a uv in the space of the input image.
-  vec2 scaledVelocity = vec2(0.0, 0.0);
-  if (life >= 0.0) // Must be inside the bounds if this passes
-  {
-    vec2 scaledPosUv = vec2((posUV.x - boundingBox.x) / (boundingBox.z - boundingBox.x),
-      (posUV.y - boundingBox.y) / (boundingBox.w - boundingBox.y));
-    scaledVelocity = texture2D(velocityMap, scaledPosUv).rg;
-  }
-
-  // Scale up the velocity based on min/max values
-  vec2 velocity = mix(vec2(uMin, vMin), vec2(uMax, vMax), scaledVelocity);
-  float distortion = cos(radians(posUV.y * 180.0 - 90.0));
-  vec2 offset = vec2(velocity.x / distortion, velocity.y) * 0.0001 * speedFactor;
-  position.x += offset.x;
-
-  if (position.x >= 1.0) position.x -= 1.0;
-  else if (position.x < 0) position.x += 1.0;
-
-  position.y += offset.y;
-  if (position.y >= 1.0) position.y -= 1.0;
-  else if (position.y < 0) position.y += 1.0;
-
-  // Store the relative velocity in z, scaled from (0, 1).  The scaledVelocity is a texture value from (0,1) where
-  // 0 corresponds to uMin and 1 corresponds to uMax.  We could calculate the actual velocity from [0,1] by applying
-  // Pythagorean to the (scaledVelocity - 0.5), presuming the middle point is 0.  The actual length maxes out at
-  // position (1.0, 1.0), with adjust pos at (0.5, 0.5), thus a maximum length() of 0.707106 (sqrt(0.5^2+0.5^2)).
-  // We do not use this value because it results in a pretty boring display.  Instead of dividing by 0.707106,
-  // we instead multiply by (1/0.707106) == sqrt(2).
-  position.z = length(scaledVelocity - vec2(0.5, 0.5)) * 1.414;
-  out_particle = vec4(position, life);
-})end";
-
-static const std::string computeDirectionFrag =
-R"end(#version 330
-uniform sampler2D texturePosition;
-uniform sampler2D velocityMap;
-uniform vec2 resolution;
-uniform vec4 boundingBox;
-
-layout(location=0) out vec4 out_particle;
-
-void main()
-{
-  vec2 uv = gl_FragCoord.xy / resolution.xy;
-  vec4 positionInfo = texture2D( texturePosition, uv );
-  vec3 position = positionInfo.xyz;
-  vec2 posUV = position.xy;
-  // Rescale posUV from world/global coordinates, into image coordinates
-  vec2 scaledPosUv = vec2((posUV.x - boundingBox.x) / (boundingBox.z - boundingBox.x),
-    (posUV.y - boundingBox.y) / (boundingBox.w - boundingBox.y));
-  vec2 scaledVelocity = texture2D(velocityMap, scaledPosUv).rg;
-  float rotateAngle = atan(scaledVelocity.x - 0.5, -(scaledVelocity.y - 0.5));
-  out_particle.r = rotateAngle;
-})end";
-
 // Helper node that will run a fragment shader, taking one texture as input and writing to another texture.
 // And then it flips on each frame to use the previous input.
 class ComputeNode : public osg::Group
@@ -396,6 +163,12 @@ public:
     particleDimension_(particleDimension),
     needDirection_(false)
   {
+    const Shaders shaderPackage;
+    // Cache the source code for the shaders so that swapping doesn't require us to re-search for files
+    vertexSource_ = osgEarth::ShaderLoader::load(shaderPackage.velocityParticleLayerComputeVertex(), shaderPackage);
+    positionFragmentSource_ = osgEarth::ShaderLoader::load(shaderPackage.velocityParticleLayerComputePositionFragment(), shaderPackage);
+    directionFragmentSource_ = osgEarth::ShaderLoader::load(shaderPackage.velocityParticleLayerComputeDirectionFragment(), shaderPackage);
+
     setName("Compute Node");
     inputPosition_ = createPositionTexture(particleDimension_);
     outputPosition_ = createPositionTexture(particleDimension_);
@@ -433,7 +206,7 @@ private:
   osg::StateSet* createStateSet_(const std::string& fragShader) const
   {
     osg::Program* program = new osg::Program;
-    program->addShader(new osg::Shader(osg::Shader::VERTEX, computeVert));
+    program->addShader(new osg::Shader(osg::Shader::VERTEX, vertexSource_));
     program->addShader(new osg::Shader(osg::Shader::FRAGMENT, fragShader));
     osg::StateSet* ss = new osg::StateSet;
     ss->setAttributeAndModes(program);
@@ -488,7 +261,7 @@ private:
   {
     if (posiitonCamera_.valid())
       removeChild(posiitonCamera_.get());
-    posiitonCamera_ = createRttCamera_(computePositionFrag);
+    posiitonCamera_ = createRttCamera_(positionFragmentSource_);
     posiitonCamera_->attach(osg::Camera::BufferComponent(osg::Camera::COLOR_BUFFER0), outputPosition_.get());
     posiitonCamera_->setName("Position RTT Camera");
     addChild(posiitonCamera_.get());
@@ -501,7 +274,7 @@ private:
     }
     if (needDirection_)
     {
-      directionCamera_ = createRttCamera_(computeDirectionFrag);
+      directionCamera_ = createRttCamera_(directionFragmentSource_);
       directionCamera_->attach(osg::Camera::BufferComponent(osg::Camera::COLOR_BUFFER0), outputDirection_.get());
       directionCamera_->setName("Direction RTT Camera");
       addChild(directionCamera_.get());
@@ -519,6 +292,10 @@ private:
 
   unsigned int particleDimension_;
   bool needDirection_;
+
+  std::string vertexSource_;
+  std::string positionFragmentSource_;
+  std::string directionFragmentSource_;
 };
 
 /** Holds nodes containing the compute node for particle position, the RTT for texture content, and the geometry with texture of particles. */

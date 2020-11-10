@@ -9,6 +9,12 @@ set(SHADER_FILES
     MapScale.glsl
     TerrainToggleEffect.vert.glsl
     TerrainToggleEffect.frag.glsl
+    VelocityParticleLayer.compute.dir.frag.glsl
+    VelocityParticleLayer.compute.pos.frag.glsl
+    VelocityParticleLayer.compute.vert.glsl
+    VelocityParticleLayer.part.frag.glsl
+    VelocityParticleLayer.part.vert.glsl
+    VelocityParticleLayer.rtt.part.vert.glsl
 )
 
 set(UTIL_INC)
