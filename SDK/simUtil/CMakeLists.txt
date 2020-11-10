@@ -45,6 +45,7 @@ set(UTIL_HEADERS
     ${UTIL_INC}StatusText.h
     ${UTIL_INC}TerrainToggleEffect.h
     ${UTIL_INC}UnitTypeConverter.h
+    ${UTIL_INC}VelocityParticleLayer.h
     ${UTIL_INC}ViewpointMonitor.h
     ${UTIL_INC}ViewpointPositions.h
 )
@@ -78,6 +79,7 @@ set(UTIL_SOURCES
     ${UTIL_SRC}StatusText.cpp
     ${UTIL_SRC}TerrainToggleEffect.cpp
     ${UTIL_SRC}UnitTypeConverter.cpp
+    ${UTIL_SRC}VelocityParticleLayer.cpp
     ${UTIL_SRC}ViewpointMonitor.cpp
     ${UTIL_SRC}ViewpointPositions.cpp
 )
