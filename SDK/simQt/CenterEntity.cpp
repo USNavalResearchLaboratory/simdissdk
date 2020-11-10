@@ -477,6 +477,7 @@ double BindCenterEntityToEntityTreeComposite::getNearestTargetTime_(double searc
     double time = previous->time();
     if (isActive_(time, drawState) &&
       isActive_(time, hostDrawState) &&
+      inHostedTimeRange_(time, hostBeginTime, hostEndTime) &&
       previous->has_updateprefs() &&
       previous->updateprefs().has_targetid() &&
       (previous->updateprefs().targetid() != 0))
@@ -493,6 +494,7 @@ double BindCenterEntityToEntityTreeComposite::getNearestTargetTime_(double searc
     double time = next->time();
     if (isActive_(time, drawState) &&
       isActive_(time, hostDrawState) &&
+      inHostedTimeRange_(time, hostBeginTime, hostEndTime) &&
       next->has_updateprefs() &&
       next->updateprefs().has_targetid() &&
       (next->updateprefs().targetid() != 0))
