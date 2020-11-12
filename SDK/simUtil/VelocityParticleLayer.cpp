@@ -28,7 +28,7 @@
 #include "simUtil/VelocityParticleLayer.h"
 
 // Register with the osgEarth loader so we can load velocity particle layers from .earth files
-REGISTER_OSGEARTH_LAYER(velocityparticle, simUtil::VelocityParticleLayer);
+REGISTER_OSGEARTH_LAYER(velocityparticleimage, simUtil::VelocityParticleLayer);
 
 namespace simUtil {
 

@@ -92,7 +92,7 @@ public:
     void fromConfig(const osgEarth::Config& conf);
   };
 
-  META_Layer(osgEarth, VelocityParticleLayer, Options, ImageLayer, VelocityImage);
+  META_Layer(osgEarth, VelocityParticleLayer, Options, ImageLayer, VelocityParticleImage);
 
   /** Sets the velocity data texture from an in-memory texture object. Clears the Velocity URI. */
   void setVelocityTexture(osg::Texture2D* texture);
