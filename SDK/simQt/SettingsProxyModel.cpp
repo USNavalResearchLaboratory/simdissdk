@@ -42,12 +42,11 @@ bool SettingsSearchFilter::filterAcceptsRow(int sourceRow, const QModelIndex &so
     return true;
   // Run regexp against children and parent text
   QModelIndex index1 = sourceModel()->index(sourceRow, 1, sourceParent);
-  return testRegExp_(index0, index1, sourceParent);
+  return testRegExp_(index0, index1, sourceParent, filterRegExp());
 }
 
-bool SettingsSearchFilter::testRegExp_(const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parentIndex) const
+bool SettingsSearchFilter::testRegExp_(const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parentIndex, const QRegExp& filterText) const
 {
-  QRegExp filterText = filterRegExp();
   if (filterText.isEmpty())
     return true;
   if (sourceModel()->data(index0).toString().contains(filterText) ||
@@ -74,6 +73,37 @@ void SettingsSearchFilter::setFilterText(const QString& filterText)
 QString SettingsSearchFilter::filterText() const
 {
   return filterRegExp().pattern();
+}
+
+QModelIndexList SettingsSearchFilter::match(const QModelIndex& start, int role, const QVariant& value, int hits, Qt::MatchFlags flags) const
+{
+  // Make a copy of the filter's regex to preserve case sensitivity and any other options it may have
+  QRegExp regex = filterRegExp();
+  regex.setPattern(value.toString());
+  QModelIndexList hitsList;
+  for (int row = start.row(); row < sourceModel()->rowCount(start.parent()); ++row)
+  {
+    QModelIndex candidate = sourceModel()->index(row, 0, start.parent());
+    if (testRegExp_(candidate, sourceModel()->index(row, 1, start.parent()), start.parent(), regex))
+    {
+      hitsList.push_back(mapFromSource(candidate));
+      if (hits > 0 && hitsList.size() >= hits)
+        return hitsList;
+    }
+
+    // Check the children of the candidate index
+    for (int i = 0; i < sourceModel()->rowCount(candidate); ++i)
+    {
+      if (testRegExp_(sourceModel()->index(i, 0, candidate), sourceModel()->index(i, 1, candidate), candidate, regex))
+      {
+        hitsList.push_back(mapFromSource(sourceModel()->index(i, 0, candidate)));
+        if (hits > 0 && hitsList.size() >= hits)
+          return hitsList;
+      }
+    }
+  }
+
+  return hitsList;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -230,6 +260,16 @@ void SettingsProxyModel::setFilterText(const QString& filterText)
     noEmptyFolders_->invalidate();
     invalidateFilter();
   }
+}
+
+QModelIndexList SettingsProxyModel::match(const QModelIndex& start, int role, const QVariant& value, int hits, Qt::MatchFlags flags) const
+{
+  auto searchList = search_->match(start, role, value, hits, flags);
+  QModelIndexList rv;
+  for (auto index : searchList)
+    rv.push_back(mapFromSource(noEmptyFolders_->mapFromSource(dataLevel_->mapFromSource(index))));
+
+  return rv;
 }
 
 void SettingsProxyModel::invalidateAll_()
