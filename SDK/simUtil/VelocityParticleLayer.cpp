@@ -126,8 +126,9 @@ osg::Texture2D* createPositionTexture(unsigned int particleDimension)
 
   for (unsigned int i = 0; i < particleDimension * particleDimension; i++)
   {
-    *ptr++ = 0.f;
-    *ptr++ = 0.f;
+    // Start off the map
+    *ptr++ = -1.f;
+    *ptr++ = -1.f;
     *ptr++ = 0.f;
     // No life left, regenerate in shader immediately
     *ptr = -1.f;
@@ -259,12 +260,12 @@ private:
   /** Creates a new camera and attaches its output to the output position texture */
   void buildCamera_()
   {
-    if (posiitonCamera_.valid())
-      removeChild(posiitonCamera_.get());
-    posiitonCamera_ = createRttCamera_(positionFragmentSource_);
-    posiitonCamera_->attach(osg::Camera::BufferComponent(osg::Camera::COLOR_BUFFER0), outputPosition_.get());
-    posiitonCamera_->setName("Position RTT Camera");
-    addChild(posiitonCamera_.get());
+    if (positionCamera_.valid())
+      removeChild(positionCamera_.get());
+    positionCamera_ = createRttCamera_(positionFragmentSource_);
+    positionCamera_->attach(osg::Camera::BufferComponent(osg::Camera::COLOR_BUFFER0), outputPosition_.get());
+    positionCamera_->setName("Position RTT Camera");
+    addChild(positionCamera_.get());
 
     // Only add the direction camera if we need direction
     if (directionCamera_.valid())
@@ -285,10 +286,10 @@ private:
   osg::ref_ptr<osg::Texture2D> outputPosition_;
   osg::ref_ptr<osg::Texture2D> inputDirection_;
   osg::ref_ptr<osg::Texture2D> outputDirection_;
-  osg::ref_ptr<osg::Camera> posiitonCamera_;
+  osg::ref_ptr<osg::Camera> positionCamera_;
   osg::ref_ptr<osg::Camera> directionCamera_;
   osg::ref_ptr<osg::Node> quad_;
-  osg::ref_ptr<osg::Texture2D > velocityTexture_;
+  osg::ref_ptr<osg::Texture2D> velocityTexture_;
 
   unsigned int particleDimension_;
   bool needDirection_;
@@ -538,13 +539,13 @@ private:
     pointsNode_->getOrCreateStateSet()->setTextureAttributeAndModes(2, pointSpriteTexture_, osg::StateAttribute::ON);
   }
 
-  osg::ref_ptr< osg::Texture2D > pointSpriteTexture_;
-  osg::ref_ptr< osg::Texture2D > outputTexture_;
-  osg::ref_ptr< osg::Camera > rttCamera_;
-  osg::ref_ptr< osg::Geometry > pointsNode_;
+  osg::ref_ptr<osg::Texture2D> pointSpriteTexture_;
+  osg::ref_ptr<osg::Texture2D> outputTexture_;
+  osg::ref_ptr<osg::Camera> rttCamera_;
+  osg::ref_ptr<osg::Geometry> pointsNode_;
 
-  osg::ref_ptr< ComputeNode > computeNode_;
-  osg::ref_ptr< osg::Geometry > points_;
+  osg::ref_ptr<ComputeNode> computeNode_;
+  osg::ref_ptr<osg::Geometry> points_;
   osg::Vec4 minColor_;
   osg::Vec4 maxColor_;
   float altitude_;
@@ -590,7 +591,7 @@ void VelocityParticleLayer::Options::fromConfig(const osgEarth::Config& conf)
   _particleAltitude.setDefault(5000.f);
   _renderRttImage.setDefault(false);
   _minColor.setDefault(osgEarth::Color::Lime);
-  _minColor.setDefault(osgEarth::Color::Red);
+  _maxColor.setDefault(osgEarth::Color::Red);
 
   conf.get("particle_dimension", _particleDimension);
   conf.get("die_speed", _dieSpeed);
