@@ -61,13 +61,13 @@ public:
 
     /** Dimension of particles texture (width and height).  Squared, this is the number of particles to render. */
     OE_OPTION(unsigned int, particleDimension);
-    /** Speed at which particles die. */
+    /** Zero: Particles do not slowly die; non-zero: speed at which particles die.  Lower values reduce life faster. */
     OE_OPTION(float, dieSpeed);
     /** Factor multiplied against the particles to slow down movement. */
     OE_OPTION(float, speedFactor);
     /** Size of the particle on screen */
     OE_OPTION(float, pointSize);
-    /** Likelihood that particle will drop. */
+    /** Likelihood that particle will spontaneously drop, outside its typical life reduction from dieSpeed. */
     OE_OPTION(float, dropChance);
     /** Altitude of the particle in meters.  Particles are obscured by terrain. */
     OE_OPTION(float, particleAltitude);
