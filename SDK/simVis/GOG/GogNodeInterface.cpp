@@ -167,6 +167,7 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
 
   // update meta data with the shape type
   metaData_.shape = LoaderUtils::convertToVisShapeType(shape->shapeType());
+  metaData_.lineNumber = shape->lineNumber();
 
   // now update style
 

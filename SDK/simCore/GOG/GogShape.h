@@ -264,6 +264,11 @@ public:
   const std::vector<std::string>& comments() const;
   void addComment(const std::string& commment);
 
+  /// Return the line number associated with this shape in the original GOG file
+  int lineNumber() const;
+  /// Set the line number of the shape in the original GOG file
+  void setLineNumber(int lineNumber);
+
   /// Convert a shape type enum to a user friendly string
   static std::string shapeTypeToString(ShapeType shapeType);
   /// Convert a string representation of shape type to its equivalent enum
@@ -297,6 +302,7 @@ private:
   bool canFollow_; ///< Indicates if shape's orientation can be locked to a reference orientation
   bool relative_; ///< Indicates if shape is relative coordinates (xyz meters) or absolute coordinates (lla radians)
   bool serializeName_; ///< Indicates if shape will serialize out its name as a separate line item using '3d name'
+  int lineNumber_; ///< Location in original GOG file
 
   Optional<std::string> name_; ///< Display name
   Optional<bool> draw_; ///< Draw state

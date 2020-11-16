@@ -42,7 +42,8 @@ GogShape::GogShape()
   : canExtrude_(false),
     canFollow_(false),
     relative_(false),
-    serializeName_(true)
+    serializeName_(true),
+    lineNumber_(0)
 {}
 
 GogShape::~GogShape()
@@ -237,6 +238,16 @@ void GogShape::setVerticalDatum(const std::string& verticalDatum)
 void GogShape::addComment(const std::string& comment)
 {
   comments_.push_back(comment);
+}
+
+int GogShape::lineNumber() const
+{
+  return lineNumber_;
+}
+
+void GogShape::setLineNumber(int lineNumber)
+{
+  lineNumber_ = lineNumber;
 }
 
 std::string GogShape::shapeTypeToString(ShapeType shapeType)

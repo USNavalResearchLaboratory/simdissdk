@@ -709,7 +709,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           current.set(ShapeParameter::FOLLOW, restOfLine);
       }
       else
-        printError_(lineNumber, "3d command requires at least 2 arguments");
+        printError_(lineNumber, "3d command requires at least 2 arguments: " + line);
     }
     else if (startsWith(line, "extrude"))
     {
@@ -1245,7 +1245,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   {
     rv->addComment(comment);
   }
-
+  rv->setLineNumber(parsed.lineNumber());
   rv->setOriginalUnits(units);
   return rv;
 }
