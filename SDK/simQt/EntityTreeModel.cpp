@@ -101,42 +101,27 @@ EntityTreeItem::~EntityTreeItem()
 
 void EntityTreeItem::appendChild(EntityTreeItem *item)
 {
-  // Dev error, should not be marked for removal
-  assert(!markForRemoval_);
-
   childToRowIndex_[item] = childItems_.size();
   childItems_.append(item);
 }
 
 EntityTreeItem* EntityTreeItem::child(int row)
 {
-  // Dev error, should not be marked for removal
-  assert(!markForRemoval_);
-
   return childItems_.value(row);
 }
 
 int EntityTreeItem::childCount() const
 {
-  // Dev error, should not be marked for removal
-  assert(!markForRemoval_);
-
   return childItems_.count();
 }
 
 simData::ObjectId EntityTreeItem::id() const
 {
-  // Dev error, should not be marked for removal
-  assert(!markForRemoval_);
-
   return id_;
 }
 
 void EntityTreeItem::getChildrenIds(std::vector<uint64_t>& ids) const
 {
-  // Dev error, should not be marked for removal
-  assert(!markForRemoval_);
-
   for (auto it = childItems_.begin(); it != childItems_.end(); ++it)
   {
     ids.push_back((*it)->id());
@@ -349,12 +334,15 @@ simData::DataStore* EntityTreeModel::dataStore() const
 void EntityTreeModel::addEntity_(uint64_t entityId)
 {
   if (delayedAdds_.empty())
-    QTimer::singleShot(100, this, SLOT(commitDelayedEntities_()));
+    QTimer::singleShot(100, this, SLOT(commitDelayedAdd_()));
   delayedAdds_.push_back(entityId);
 }
 
-void EntityTreeModel::commitDelayedEntities_()
+void EntityTreeModel::commitDelayedAdd_()
 {
+  // An add will cause a refresh of the view, so process any entities waiting for removal
+  commitDelayedRemoval_();
+
   for (std::vector<simData::ObjectId>::const_iterator it = delayedAdds_.begin(); it != delayedAdds_.end(); ++it)
   {
     simData::ObjectType entityType = dataStore_->objectType(*it);
@@ -574,7 +562,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     return QVariant();
 
   EntityTreeItem *item = static_cast<EntityTreeItem*>(index.internalPointer());
-  if (item == nullptr)
+  if ((item == nullptr) || item->isMarked())
     return QVariant();
 
   switch (role)
@@ -755,7 +743,7 @@ QModelIndex EntityTreeModel::index(uint64_t id)
   EntityTreeItem* item = findItem_(id);
   if (item == nullptr)
   {
-    commitDelayedEntities_();
+    commitDelayedAdd_();
     item = findItem_(id);
     if (item == nullptr)
       return QModelIndex();
@@ -880,6 +868,10 @@ bool EntityTreeModel::useEntityIcons() const
 
 void EntityTreeModel::commitDelayedRemoval_()
 {
+  // A pending add can force the removal of entities before the one shot fires
+  if (!pendingRemoval_)
+    return;
+
   pendingRemoval_ = false;
   if (rootItem_->removeMarkedChildren(this) != 0)
   {

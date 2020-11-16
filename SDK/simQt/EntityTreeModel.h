@@ -147,8 +147,8 @@ public slots:
   void setIncludeScenario(bool showScenario);
 
 private slots:
-  /** Added any delayed entities */
-  void commitDelayedEntities_();
+  /** Add any delayed entities */
+  void commitDelayedAdd_();
   /** Remove any delayed entities */
   void commitDelayedRemoval_();
 
