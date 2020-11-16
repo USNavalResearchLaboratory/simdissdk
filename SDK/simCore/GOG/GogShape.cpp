@@ -240,12 +240,12 @@ void GogShape::addComment(const std::string& comment)
   comments_.push_back(comment);
 }
 
-int GogShape::lineNumber() const
+size_t GogShape::lineNumber() const
 {
   return lineNumber_;
 }
 
-void GogShape::setLineNumber(int lineNumber)
+void GogShape::setLineNumber(size_t lineNumber)
 {
   lineNumber_ = lineNumber;
 }
