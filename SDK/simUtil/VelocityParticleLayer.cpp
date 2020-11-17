@@ -848,8 +848,11 @@ VelocityTextureNode* VelocityParticleLayer::getNode_() const
 
 void VelocityParticleLayer::recreatePointSprite_()
 {
-  if (!_options->spriteUri().isSet())
+  if (!_options->spriteUri().isSet() || _options->spriteUri()->empty())
+  {
+    pointSprite_ = nullptr;
     return;
+  }
 
   osg::ref_ptr<osg::Image> pointSpriteImage = osgDB::readRefImageFile(_options->spriteUri()->full());
   if (pointSpriteImage.valid())

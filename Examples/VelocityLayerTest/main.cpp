@@ -163,7 +163,7 @@ Control* createMenu(osgEarth::Map* map, simUtil::VelocityParticleLayer* layer)
     new FloatLambda([=](float val) { layer->setSpeedFactor(val); })));
   grid->setControl(2, row, new LabelControl(speed, 12.f, simVis::Color::White));
 
-  // Speed Factor
+  // Point Size
   ++row;
   grid->setControl(0, row, new LabelControl("Point Size", 12.f, simVis::Color::White));
   auto* pointSize = grid->setControl(1, row, new HSliderControl(1.f, 10.f, layer->getPointSize(),
