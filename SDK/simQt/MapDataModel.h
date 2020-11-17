@@ -32,6 +32,7 @@
 #include "osgEarth/ElevationLayer"
 #include "osgEarth/FeatureModelLayer"
 #include "simCore/Common/Export.h"
+#include "simUtil/VelocityParticleLayer.h"
 
 namespace osgEarth {
   class Layer;
@@ -39,6 +40,7 @@ namespace osgEarth {
 }
 
 typedef std::vector<osg::ref_ptr<osgEarth::FeatureModelLayer> > FeatureModelLayerVector;
+typedef std::vector<osg::ref_ptr<simUtil::VelocityParticleLayer> > VelocityParticleLayerVector;
 
 namespace simQt {
 
@@ -57,24 +59,28 @@ public:
   /** Destroys the map reindexer */
   virtual ~MapReindexer();
 
-  /** Retrieves the map image layers using a consistent interface */
+  /** Retrieves the map image layers using a consistent interface.  Omits Velocity layers. */
   static void getLayers(osgEarth::Map* map, osgEarth::ImageLayerVector& imageLayers);
   /** Retrieves the map elevation layers using a consistent interface */
   static void getLayers(osgEarth::Map* map, osgEarth::ElevationLayerVector& elevationLayers);
   /** Retrieves the map model layers using a consistent interface */
   static void getLayers(osgEarth::Map* map, FeatureModelLayerVector& modelLayers);
+  /** Retrieves the map velocity (wind, ocean) layers using a consistent interface. */
+  static void getLayers(osgEarth::Map* map, VelocityParticleLayerVector& velocityLayers);
   /** Retrieves all other map layers that aren't explicitly of type ImageLayer, ElevationLayer, or ModelLayer */
   static void getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVector& otherLayers);
 
   /** Sentinel value return for invalid index (layer not found) */
   static const unsigned int INVALID_INDEX;
 
-  /** Returns the layer index relative to other layers in getLayers(ImageVector&) */
+  /** Returns the layer index relative to other layers in getLayers(ImageLayerVector&) */
   unsigned int layerTypeIndex(osgEarth::ImageLayer* layer) const;
-  /** Returns the layer index relative to other layers in getLayers(ElevationVector&) */
+  /** Returns the layer index relative to other layers in getLayers(ElevationLayerVector&) */
   unsigned int layerTypeIndex(osgEarth::ElevationLayer* layer) const;
-  /** Returns the layer index relative to other layers in getLayers(FeatureModelVector&) */
+  /** Returns the layer index relative to other layers in getLayers(FeatureModelLayerVector&) */
   unsigned int layerTypeIndex(osgEarth::FeatureModelLayer* layer) const;
+  /** Returns the layer index relative to other layers in getLayers(VelocityParticleLayerVector&) */
+  unsigned int layerTypeIndex(simUtil::VelocityParticleLayer* layer) const;
   /** Returns the layer index relative to other layers in getOtherLayers(VisibleLayerVector&) */
   unsigned int otherLayerTypeIndex(osgEarth::VisibleLayer* layer) const;
 
@@ -128,13 +134,14 @@ public:
     CHILD_IMAGE = 0,
     CHILD_ELEVATION,
     CHILD_FEATURE,
+    CHILD_VELOCITY,
     CHILD_OTHER,
     CHILD_NONE
   };
 
   /** data() returns the pointer to the layer, or nullptr */
   static const int LAYER_POINTER_ROLE = Qt::UserRole + 0;
-  /** data() returns the type of node: image, elevation, feature, or none for top level MAP selection */
+  /** data() returns the type of node: image, elevation, feature, velocity, or none for top level MAP selection */
   static const int LAYER_TYPE_ROLE = Qt::UserRole + 1;
   /** data() returns the 'global' map index for the layer type */
   static const int LAYER_MAP_INDEX_ROLE = Qt::UserRole + 2;
@@ -162,6 +169,13 @@ signals:
   void featureLayerOpacityChanged(osgEarth::FeatureModelLayer* layer);
   /** Qt signal as described by the signal name */
   void featureLayerAdded(osgEarth::FeatureModelLayer* layer);
+
+  /** Qt signal as described by the signal name */
+  void velocityLayerVisibleChanged(simUtil::VelocityParticleLayer* layer);
+  /** Qt signal as described by the signal name */
+  void velocityLayerOpacityChanged(simUtil::VelocityParticleLayer* layer);
+  /** Qt signal as described by the signal name */
+  void velocityLayerAdded(simUtil::VelocityParticleLayer* layer);
 
   /** Qt signal as described by the signal name */
   void otherLayerVisibleChanged(osgEarth::VisibleLayer* layer);
@@ -192,6 +206,8 @@ private: // methods
   void addElevationLayer_(osgEarth::ElevationLayer* layer, unsigned int index);
   /** add a feature layer */
   void addFeatureLayer_(osgEarth::FeatureModelLayer* layer, unsigned int index);
+  /** add a velocity layer */
+  void addVelocityLayer_(simUtil::VelocityParticleLayer* layer, unsigned int index);
   /** add a layer other than image, elevation, or feature */
   void addOtherLayer_(osgEarth::VisibleLayer* layer, unsigned int index);
 
@@ -204,6 +220,8 @@ private: // methods
   Item* elevationGroup_() const;
   /** return the Item for the feature group */
   Item* featureGroup_() const;
+  /** return the Item for the velocity group */
+  Item* velocityGroup_() const;
   /** return the Item for the other group */
   Item* otherGroup_() const;
 
@@ -225,6 +243,8 @@ private: // methods
   QIcon elevationIcon_;
   /** Icon for feature layer */
   QIcon featureIcon_;
+  /** Icon for velocity particle layer */
+  QIcon velocityIcon_;
   /** Icon for other layer */
   QIcon otherIcon_;
 
