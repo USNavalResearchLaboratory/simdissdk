@@ -93,7 +93,6 @@ double FunctionalProfileDataProvider::getRange_(unsigned int rangeIndex) const
     assert(false);
     rangeIndex = getNumRanges() - 1;
   }
-  assert(getMinRange() != 0.0);  // If zero, then not correctly set
   return getRangeStep() * rangeIndex + getMinRange();
 }
 }
