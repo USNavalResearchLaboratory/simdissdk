@@ -456,15 +456,17 @@ public:
 
   virtual QString name() const
   {
-    return QString::fromStdString(layer_->getName());
+    if (layer_.valid())
+      return QString::fromStdString(layer_->getName());
+    return "";
   }
 
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!isStatusOk(layer_->getStatus()))
-      return QColor(Qt::gray);
-    return QVariant();
+    if (layer_.valid() && isStatusOk(layer_->getStatus()))
+      return QVariant();
+    return QColor(Qt::gray);
   }
 
   virtual MapDataModel::MapChildren layerTypeRole() const
@@ -474,11 +476,11 @@ public:
 
   virtual QVariant layerPtr() const
   {
-    return QVariant::fromValue<void*>(layer_);
+    return QVariant::fromValue<void*>(layer_.get());
   }
 
 private:
-  osgEarth::ImageLayer *layer_;
+  osg::observer_ptr<osgEarth::ImageLayer> layer_;
 };
 
 /// An Elevation layer
@@ -494,15 +496,17 @@ public:
 
   virtual QString name() const
   {
-    return QString::fromStdString(layer_->getName());
+    if (layer_.valid())
+      return QString::fromStdString(layer_->getName());
+    return "";
   }
 
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!isStatusOk(layer_->getStatus()))
-      return QColor(Qt::gray);
-    return QVariant();
+    if (layer_.valid() && isStatusOk(layer_->getStatus()))
+      return QVariant();
+    return QColor(Qt::gray);
   }
 
   virtual MapDataModel::MapChildren layerTypeRole() const
@@ -512,11 +516,11 @@ public:
 
   virtual QVariant layerPtr() const
   {
-    return QVariant::fromValue<void*>(layer_);
+    return QVariant::fromValue<void*>(layer_.get());
   }
 
 private:
-  osgEarth::ElevationLayer *layer_;
+  osg::observer_ptr<osgEarth::ElevationLayer> layer_;
 };
 
 /// A Model layer
@@ -532,15 +536,17 @@ public:
 
   virtual QString name() const
   {
-    return QString::fromStdString(layer_->getName());
+    if (layer_.valid())
+      return QString::fromStdString(layer_->getName());
+    return "";
   }
 
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!isStatusOk(layer_->getStatus()))
-      return QColor(Qt::gray);
-    return QVariant();
+    if (layer_.valid() && isStatusOk(layer_->getStatus()))
+      return QVariant();
+    return QColor(Qt::gray);
   }
 
   virtual MapDataModel::MapChildren layerTypeRole() const
@@ -550,11 +556,11 @@ public:
 
   virtual QVariant layerPtr() const
   {
-    return QVariant::fromValue<void*>(layer_);
+    return QVariant::fromValue<void*>(layer_.get());
   }
 
 private:
-  osgEarth::FeatureModelLayer *layer_;
+  osg::observer_ptr<osgEarth::FeatureModelLayer> layer_;
 };
 
 /// Other layer
@@ -570,15 +576,17 @@ public:
 
   virtual QString name() const
   {
-    return QString::fromStdString(layer_->getName());
+    if (layer_.valid())
+      return QString::fromStdString(layer_->getName());
+    return "";
   }
 
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!isStatusOk(layer_->getStatus()))
-      return QColor(Qt::gray);
-    return QVariant();
+    if (layer_.valid() && isStatusOk(layer_->getStatus()))
+      return QVariant();
+    return QColor(Qt::gray);
   }
 
   virtual MapDataModel::MapChildren layerTypeRole() const
@@ -588,11 +596,11 @@ public:
 
   virtual QVariant layerPtr() const
   {
-    return QVariant::fromValue<void*>(layer_);
+    return QVariant::fromValue<void*>(layer_.get());
   }
 
 private:
-  osgEarth::VisibleLayer *layer_;
+  osg::observer_ptr<osgEarth::VisibleLayer> layer_;
 };
 
 //----------------------------------------------------------------------------
