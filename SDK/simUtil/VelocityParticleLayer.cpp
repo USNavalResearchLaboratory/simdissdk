@@ -24,6 +24,7 @@
 #include "osgEarth/ImageLayer"
 #include "osgEarth/Random"
 #include "osgEarth/VirtualProgram"
+#include "simNotify/Notify.h"
 #include "simUtil/Shaders.h"
 #include "simUtil/VelocityParticleLayer.h"
 
@@ -179,6 +180,14 @@ public:
     buildCamera_();
   }
 
+  /** Change the velocity texture, which alters the direction of particles live */
+  void setVelocityTexture(osg::Texture2D* velocityTexture)
+  {
+    velocityTexture_ = velocityTexture;
+    // Content will update on the next swap() when buildCamera_() gets called.
+  }
+
+  /** Output becomes input, input is now the new output.  Rebuilds cameras to reflect new state.  Call once per frame. */
   void swap()
   {
     std::swap(inputPosition_, outputPosition_);
@@ -360,6 +369,13 @@ public:
     addUpdateCallback(new SwapCallback(this));
   }
 
+  /** Changes the underlying texture for the velocity texture.  Updates in-place, particles start moving in new directions on next frame. */
+  void setVelocityTexture(osg::Texture2D* windTexture)
+  {
+    computeNode_->setVelocityTexture(windTexture);
+  }
+
+  /** Changes the point sprite. Pass in a null sprite to use point particles instead of sprites. */
   void setPointSprite(osg::Texture2D* pointSprite)
   {
     pointSpriteTexture_ = pointSprite;
@@ -632,12 +648,45 @@ VelocityParticleLayer::~VelocityParticleLayer()
 void VelocityParticleLayer::setVelocityTexture(osg::Texture2D* texture)
 {
   _options->velocityTextureUri().clear();
-  setOptionThatRequiresReopen(velocityTexture_, texture);
+  if (velocityTexture_ == texture)
+    return;
+
+  velocityTexture_ = texture;
+  VPL_SET_NODE(setVelocityTexture, velocityTexture_.get());
 }
 
 void VelocityParticleLayer::setVelocityTexture(const osgEarth::URI& uri)
 {
-  setOptionThatRequiresReopen(_options->velocityTextureUri(), uri);
+  if (_options->velocityTextureUri().isSet() && uri == *_options->velocityTextureUri())
+    return;
+  _options->velocityTextureUri() = uri;
+  if (!isOpen())
+    return;
+
+  // Attempt to replace the texture live; if the texture does not exist, we must close because we can't draw anything
+  if (readAndSetVelocityTexture_() != 0)
+  {
+    SIM_ERROR << "Setting URI " << uri.full() << " to Velocity Particle Layer failed, file not found.\n";
+    close();
+  }
+}
+
+int VelocityParticleLayer::readAndSetVelocityTexture_()
+{
+  osg::ref_ptr<osg::Image> velocityImage = osgDB::readRefImageFile(_options->velocityTextureUri()->full());
+  if (!velocityImage.valid())
+  {
+    velocityTexture_ = nullptr;
+    return 1;
+  }
+
+  // Create the texture that will be sent to the velocity layer
+  velocityTexture_ = new osg::Texture2D(velocityImage.get());
+  velocityTexture_->setResizeNonPowerOfTwoHint(false);
+  velocityTexture_->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
+  velocityTexture_->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
+  VPL_SET_NODE(setVelocityTexture, velocityTexture_.get());
+  return 0;
 }
 
 const osgEarth::URI& VelocityParticleLayer::getVelocityTexture() const
@@ -780,19 +829,10 @@ void VelocityParticleLayer::setOpacity(float value)
 
 osgEarth::Status VelocityParticleLayer::openImplementation()
 {
-  // Recreate the velocity texture if we have to
-  if (_options->velocityTextureUri().isSet())
-  {
-    osg::ref_ptr<osg::Image> velocityImage = osgDB::readRefImageFile(_options->velocityTextureUri()->full());
-    if (velocityImage.valid())
-    {
-      // Create the texture that will be sent to the velocity layer
-      velocityTexture_ = new osg::Texture2D(velocityImage.get());
-      velocityTexture_->setResizeNonPowerOfTwoHint(false);
-      velocityTexture_->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
-      velocityTexture_->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
-    }
-  }
+  // Recreate the velocity texture if we have to; treat empty string for velocity texture same as not-set
+  if (_options->velocityTextureUri().isSet() && !_options->velocityTextureUri()->empty())
+    readAndSetVelocityTexture_();
+
   // Return error if we are not configured with a velocity texture
   if (!velocityTexture_.valid())
     return osgEarth::Status(osgEarth::Status::ResourceUnavailable, "Not configured with a valid velocity texture");

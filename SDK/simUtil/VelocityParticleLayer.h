@@ -141,6 +141,9 @@ private:
   /** Recreates the point sprite from options if needed */
   void recreatePointSprite_();
 
+  /** Using _options->velocityTextureUri(), attempts to create the velocity texture, returning 0 on success.  velocityTexture_ is updated. */
+  int readAndSetVelocityTexture_();
+
   osg::ref_ptr<osg::Group> node_;
   osg::ref_ptr<osg::Texture2D> velocityTexture_;
   osg::ref_ptr<osg::Texture2D> pointSprite_;
