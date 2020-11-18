@@ -554,8 +554,8 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   // Time can completely jump over the life span of the platform.
   // The method updateSlice->hasChanged() will indicate no change, but the code should not kick out early.
   const bool timeJumpOverLifeSpan = (timeChanged && (updateSlice->numItems() != 0) &&
-    ((lastUpdateTime_ <= updateSlice->firstTime()) && (ds_.updateTime() >= updateSlice->lastTime())) ||
-    ((ds_.updateTime() <= updateSlice->firstTime()) && (lastUpdateTime_ >= updateSlice->lastTime())));
+    (((lastUpdateTime_ <= updateSlice->firstTime()) && (ds_.updateTime() >= updateSlice->lastTime())) ||
+    ((ds_.updateTime() <= updateSlice->firstTime()) && (lastUpdateTime_ >= updateSlice->lastTime()))));
 
   if (!updateSlice->hasChanged() && !timeJumpOverLifeSpan && !force && !forceUpdateFromDataStore_)
   {
