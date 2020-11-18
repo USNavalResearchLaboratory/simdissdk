@@ -493,6 +493,8 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase);
   assert(updateSlice);
 
+  firstHistoryTime_ = (updateSlice->numItems() == 0) ? std::numeric_limits<float>::max() : updateSlice->firstTime();
+
   // apply the queued invalidate first, so the state can then be further arbitrated by any new data points
   if (queuedInvalidate_)
   {
@@ -546,7 +548,16 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
     }
   }
 
-  if (!updateSlice->hasChanged() && !force && !forceUpdateFromDataStore_)
+  // check if time changed based on last data store update time, ignoring static platforms
+  const bool timeChanged = (lastUpdateTime_ != -1.0) && (ds_.updateTime() != lastUpdateTime_);
+
+  // Time can completely jump over the life span of the platform.
+  // The method updateSlice->hasChanged() will indicate no change, but the code should not kick out early.
+  const bool timeJumpOverLifeSpan = (timeChanged && (updateSlice->numItems() != 0) &&
+    ((lastUpdateTime_ <= updateSlice->firstTime()) && (ds_.updateTime() >= updateSlice->lastTime())) ||
+    ((ds_.updateTime() <= updateSlice->firstTime()) && (lastUpdateTime_ >= updateSlice->lastTime())));
+
+  if (!updateSlice->hasChanged() && !timeJumpOverLifeSpan && !force && !forceUpdateFromDataStore_)
   {
     if (timeTicks_.valid())
       timeTicks_->update();
@@ -555,8 +566,6 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
     return false;
   }
 
-  // check if time changed based on last data store update time, ignoring static platforms
-  bool timeChanged = (lastUpdateTime_ != -1.0) && (ds_.updateTime() != lastUpdateTime_);
   lastUpdateTime_ = ds_.updateTime();
 
   if (updateSlice->current())
@@ -577,7 +586,6 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
     // need to update lastUpdate_ and lastUpdateTime_ before calling updateLocator which will reference them and expect them to be up to date
     lastUpdate_ = current;
     lastUpdateTime_ = current.time();
-    firstHistoryTime_ = updateSlice->firstTime();
     updateLocator_(current);
 
     // update only if entity should be visible
