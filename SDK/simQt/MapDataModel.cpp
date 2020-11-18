@@ -26,6 +26,7 @@
 #include <QIcon>
 #include "osgEarth/Map"
 #include "simCore/Calc/Math.h"
+#include "simUtil/VelocityParticleLayer.h"
 #include "simQt/MapDataModel.h"
 
 namespace simQt {

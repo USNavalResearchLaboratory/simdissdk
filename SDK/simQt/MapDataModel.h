@@ -32,12 +32,12 @@
 #include "osgEarth/ElevationLayer"
 #include "osgEarth/FeatureModelLayer"
 #include "simCore/Common/Export.h"
-#include "simUtil/VelocityParticleLayer.h"
 
 namespace osgEarth {
   class Layer;
   class Map;
 }
+namespace simUtil { class VelocityParticleLayer; }
 
 typedef std::vector<osg::ref_ptr<osgEarth::FeatureModelLayer> > FeatureModelLayerVector;
 typedef std::vector<osg::ref_ptr<simUtil::VelocityParticleLayer> > VelocityParticleLayerVector;
