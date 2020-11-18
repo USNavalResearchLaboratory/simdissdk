@@ -200,12 +200,6 @@ Control* createMenu(osgEarth::Map* map, simUtil::VelocityParticleLayer* layer)
   grid->setControl(1, row, new CheckBoxControl(!layer->getPointSprite().empty(),
     new BoolLambda([=](bool val) { layer->setPointSprite(val ? "WindSprite.png" : ""); })));
 
-  // Show RTT Image
-  ++row;
-  grid->setControl(0, row, new LabelControl("Show RTT", 12.f, simVis::Color::White));
-  grid->setControl(1, row, new CheckBoxControl(layer->getRenderRttImage(),
-    new BoolLambda([=](bool val) { layer->setRenderRttImage(val); })));
-
   return b;
 }
 

@@ -43,9 +43,7 @@ public:
 
   /** Name of particle-based vertex shader for particles in the velocity particle layer. */
   std::string velocityParticleLayerParticleVertex() const;
-  /** Name of the RTT-based vertex shader for particles in the velocity particle layer. */
-  std::string velocityParticleLayerRttParticleVertex() const;
-  /** Name of the fragment shader for particles in the velocity particle layer (used by both RTT and particle impl) */
+  /** Name of the fragment shader for particles in the velocity particle layer. */
   std::string velocityParticleLayerParticleFragment() const;
 
   /** Name of the velocity particle layer's compute shader's vertex code. */

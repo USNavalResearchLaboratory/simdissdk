@@ -33,128 +33,6 @@ REGISTER_OSGEARTH_LAYER(velocityparticleimage, simUtil::VelocityParticleLayer);
 
 namespace simUtil {
 
-/** Image width and height for the RTT that takes velocity output and generates a texture */
-static const unsigned int RTT_OUTPUT_IMAGE_WIDTH = 4096;
-static const unsigned int RTT_OUTPUT_IMAGE_HEIGHT = 2048;
-
-osg::Node* makeQuad(int width, int height, const osg::Vec4& color)
-{
-  osg::Geometry* geometry = new osg::Geometry;
-  osg::Vec3Array* verts = new osg::Vec3Array();
-  verts->push_back(osg::Vec3(0, 0, 0));
-  verts->push_back(osg::Vec3(width, 0, 0));
-  verts->push_back(osg::Vec3(width, height, 0));
-  verts->push_back(osg::Vec3(0, height, 0));
-  geometry->setVertexArray(verts);
-  osg::Vec4Array* colors = new osg::Vec4Array();
-  colors->push_back(color);
-  geometry->setColorArray(colors);
-  geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
-  auto de = new osg::DrawElementsUByte(GL_TRIANGLES);
-  geometry->addPrimitiveSet(de);
-  de->push_back(0); de->push_back(1); de->push_back(2);
-  de->push_back(0); de->push_back(2); de->push_back(3);
-
-  osg::Geode* geode = new osg::Geode;
-  geode->addDrawable(geometry);
-  geode->setCullingActive(false);
-  return geode;
-}
-
-osg::Geometry* createRTTInstancedGeometry(int nInstances, unsigned int particleDimension)
-{
-  osg::Geometry* geom = new osg::Geometry;
-  geom->setUseDisplayList(false);
-  geom->setUseVertexBufferObjects(true);
-
-  // Points
-  osg::Vec3Array* v = new osg::Vec3Array;
-  v->resize(1);
-  geom->setVertexArray(v);
-  (*v)[0] = osg::Vec3(0.0, 0.0, 0.0);
-  geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, 1, nInstances));
-
-  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(geom->getOrCreateStateSet());
-  simUtil::Shaders shaderPackage;
-  shaderPackage.load(vp, shaderPackage.velocityParticleLayerRttParticleVertex());
-  shaderPackage.load(vp, shaderPackage.velocityParticleLayerParticleFragment());
-  geom->getOrCreateStateSet()->setDefine("RTT_OUTPUT_IMAGE_WIDTH", std::to_string(RTT_OUTPUT_IMAGE_WIDTH));
-  geom->getOrCreateStateSet()->setDefine("RTT_OUTPUT_IMAGE_HEIGHT", std::to_string(RTT_OUTPUT_IMAGE_HEIGHT));
-  geom->getOrCreateStateSet()->addUniform(new osg::Uniform("positionSampler", 0));
-  geom->getOrCreateStateSet()->addUniform(new osg::Uniform("directionSampler", 1));
-  geom->getOrCreateStateSet()->addUniform(new osg::Uniform("pointSprite", 2));
-  geom->getOrCreateStateSet()->addUniform(new osg::Uniform("pointSize", 1.0f));
-  geom->getOrCreateStateSet()->addUniform(new osg::Uniform("resolution", osg::Vec2f(particleDimension, particleDimension)));
-  geom->getOrCreateStateSet()->setMode(GL_PROGRAM_POINT_SIZE, 1);
-
-  return geom;
-}
-
-osg::Geometry* createInstancedGeometry(int nInstances, unsigned int particleDimension)
-{
-  osg::Geometry* geom = new osg::Geometry;
-  geom->setUseDisplayList(false);
-  geom->setUseVertexBufferObjects(true);
-
-  // Points
-  osg::Vec3Array* v = new osg::Vec3Array;
-  v->resize(1);
-  geom->setVertexArray(v);
-  (*v)[0] = osg::Vec3(0.0, 0.0, 0.0);
-  geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, 1, nInstances));
-
-  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(geom->getOrCreateStateSet());
-  simUtil::Shaders shaderPackage;
-  shaderPackage.load(vp, shaderPackage.velocityParticleLayerParticleVertex());
-  shaderPackage.load(vp, shaderPackage.velocityParticleLayerParticleFragment());
-  geom->getOrCreateStateSet()->addUniform(new osg::Uniform("positionSampler", 0));
-  geom->getOrCreateStateSet()->addUniform(new osg::Uniform("directionSampler", 1));
-  geom->getOrCreateStateSet()->addUniform(new osg::Uniform("pointSprite", 2));
-  geom->getOrCreateStateSet()->addUniform(new osg::Uniform("pointSize", 1.0f));
-  geom->getOrCreateStateSet()->addUniform(new osg::Uniform("resolution", osg::Vec2f(particleDimension, particleDimension)));
-  geom->getOrCreateStateSet()->setMode(GL_PROGRAM_POINT_SIZE, 1);
-  geom->setCullingActive(false);
-
-  return geom;
-}
-
-osg::Texture2D* createPositionTexture(unsigned int particleDimension)
-{
-  osg::Image* positionImage = new osg::Image;
-  positionImage->allocateImage(particleDimension, particleDimension, 1, GL_RGBA, GL_FLOAT);
-  positionImage->setInternalTextureFormat(GL_RGBA32F_ARB);
-  GLfloat* ptr = reinterpret_cast<GLfloat*>(positionImage->data());
-
-  for (unsigned int i = 0; i < particleDimension * particleDimension; i++)
-  {
-    // Start off the map
-    *ptr++ = -1.f;
-    *ptr++ = -1.f;
-    *ptr++ = 0.f;
-    // No life left, regenerate in shader immediately
-    *ptr = -1.f;
-  }
-
-  osg::Texture2D* tex = new osg::Texture2D(positionImage);
-  tex->setResizeNonPowerOfTwoHint(false);
-  tex->setInternalFormatMode(osg::Texture::USE_IMAGE_DATA_FORMAT);
-  tex->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::NEAREST);
-  tex->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::NEAREST);
-  return tex;
-}
-
-osg::Texture2D* createDirectionTexture(unsigned int particleDimension)
-{
-  osg::Texture2D* tex = new osg::Texture2D;
-  tex->setTextureWidth(particleDimension);
-  tex->setTextureHeight(particleDimension);
-  tex->setInternalFormat(GL_R16F);
-  tex->setResizeNonPowerOfTwoHint(false);
-  tex->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::NEAREST);
-  tex->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::NEAREST);
-  return tex;
-}
-
 // Helper node that will run a fragment shader, taking one texture as input and writing to another texture.
 // And then it flips on each frame to use the previous input.
 class ComputeNode : public osg::Group
@@ -172,10 +50,10 @@ public:
     directionFragmentSource_ = osgEarth::ShaderLoader::load(shaderPackage.velocityParticleLayerComputeDirectionFragment(), shaderPackage);
 
     setName("Compute Node");
-    inputPosition_ = createPositionTexture(particleDimension_);
-    outputPosition_ = createPositionTexture(particleDimension_);
-    inputDirection_ = createDirectionTexture(particleDimension_);
-    outputDirection_ = createDirectionTexture(particleDimension_);
+    inputPosition_ = createPositionTexture_(particleDimension_);
+    outputPosition_ = createPositionTexture_(particleDimension_);
+    inputDirection_ = createDirectionTexture_(particleDimension_);
+    outputDirection_ = createDirectionTexture_(particleDimension_);
 
     buildCamera_();
   }
@@ -258,12 +136,73 @@ private:
     camera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
 
     // Make a full screen quad
-    quad_ = makeQuad(particleDimension_, particleDimension_, osg::Vec4(1, 1, 1, 1));
+    quad_ = makeQuad_(particleDimension_, particleDimension_, osg::Vec4(1, 1, 1, 1));
     quad_->setCullingActive(false);
     quad_->setStateSet(createStateSet_(fragShader));
     camera->addChild(quad_);
 
     return camera;
+  }
+
+  /** Creates a new quad of the given width and height, using GL_TRIANGLES to render. */
+  osg::Node* makeQuad_(int width, int height, const osg::Vec4& color) const
+  {
+    osg::Geometry* geometry = new osg::Geometry;
+    osg::Vec3Array* verts = new osg::Vec3Array();
+    verts->push_back(osg::Vec3(0, 0, 0));
+    verts->push_back(osg::Vec3(width, 0, 0));
+    verts->push_back(osg::Vec3(width, height, 0));
+    verts->push_back(osg::Vec3(0, height, 0));
+    geometry->setVertexArray(verts);
+    osg::Vec4Array* colors = new osg::Vec4Array();
+    colors->push_back(color);
+    geometry->setColorArray(colors);
+    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    auto de = new osg::DrawElementsUByte(GL_TRIANGLES);
+    geometry->addPrimitiveSet(de);
+    de->push_back(0); de->push_back(1); de->push_back(2);
+    de->push_back(0); de->push_back(2); de->push_back(3);
+    geometry->setCullingActive(false);
+    return geometry;
+  }
+
+  /** Allocates an image and generates the texture for the position, life, and velocity values. */
+  osg::Texture2D* createPositionTexture_(unsigned int particleDimension) const
+  {
+    osg::Image* positionImage = new osg::Image;
+    positionImage->allocateImage(particleDimension, particleDimension, 1, GL_RGBA, GL_FLOAT);
+    positionImage->setInternalTextureFormat(GL_RGBA32F_ARB);
+    GLfloat* ptr = reinterpret_cast<GLfloat*>(positionImage->data());
+
+    for (unsigned int i = 0; i < particleDimension * particleDimension; i++)
+    {
+      // Start off the map
+      *ptr++ = -1.f;
+      *ptr++ = -1.f;
+      *ptr++ = 0.f;
+      // No life left, regenerates in shader immediately
+      *ptr++ = -1.f;
+    }
+
+    osg::Texture2D* tex = new osg::Texture2D(positionImage);
+    tex->setResizeNonPowerOfTwoHint(false);
+    tex->setInternalFormatMode(osg::Texture::USE_IMAGE_DATA_FORMAT);
+    tex->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::NEAREST);
+    tex->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::NEAREST);
+    return tex;
+  }
+
+  /** Creates an output texture for the direction of particles */
+  osg::Texture2D* createDirectionTexture_(unsigned int particleDimension) const
+  {
+    osg::Texture2D* tex = new osg::Texture2D;
+    tex->setTextureWidth(particleDimension);
+    tex->setTextureHeight(particleDimension);
+    tex->setInternalFormat(GL_R16F);
+    tex->setResizeNonPowerOfTwoHint(false);
+    tex->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::NEAREST);
+    tex->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::NEAREST);
+    return tex;
   }
 
   /** Creates a new camera and attaches its output to the output position texture */
@@ -332,7 +271,7 @@ public:
     osg::observer_ptr<VelocityTextureNode> velocityTextureNode_;
   };
 
-  VelocityTextureNode(osg::Texture2D* velocityTexture, bool includeRtt, unsigned int particleDimension)
+  VelocityTextureNode(osg::Texture2D* velocityTexture, unsigned int particleDimension)
     : minColor_(0.0, 1.0, 0.0, 1.0), // green
     maxColor_(1.0, 0.0, 0.0, 1.0), // red: higher velocities are more dangerous
     altitude_(9000.0f),
@@ -346,13 +285,7 @@ public:
     computeNode_->getOrCreateStateSet()->addUniform(new osg::Uniform("dropChance", 0.0f));
     computeNode_->getOrCreateStateSet()->addUniform(new osg::Uniform("boundingBox", boundingBox_));
 
-    // Create the render target
-    if (includeRtt)
-    {
-      createRttOutputTexture_();
-      createRttCamera_();
-      addChild(rttCamera_.get());
-    }
+    // Create the render target (particle node)
     createPointsNode_();
 
     addChild(computeNode_.get());
@@ -379,8 +312,6 @@ public:
   void setPointSprite(osg::Texture2D* pointSprite)
   {
     pointSpriteTexture_ = pointSprite;
-    if (points_.valid())
-      points_->getOrCreateStateSet()->setTextureAttributeAndModes(2, pointSpriteTexture_, osg::StateAttribute::ON);
     if (pointsNode_.valid())
       pointsNode_->getOrCreateStateSet()->setTextureAttributeAndModes(2, pointSpriteTexture_, osg::StateAttribute::ON);
     getOrCreateStateSet()->addUniform(new osg::Uniform("usePointSprite", pointSpriteTexture_.valid()));
@@ -433,8 +364,6 @@ public:
 
   void setPointSize(float value)
   {
-    if (points_.valid())
-      points_->getOrCreateStateSet()->getUniform("pointSize")->set(value);
     pointsNode_->getOrCreateStateSet()->getUniform("pointSize")->set(value);
   }
 
@@ -498,53 +427,13 @@ public:
     getOrCreateStateSet()->getUniform("oe_VisibleLayer_opacityUniform")->set(value);
   }
 
-  osg::Texture2D* getOutputTexture() const
-  {
-    return outputTexture_.get();
-  }
-
   void swap()
   {
     computeNode_->swap();
   }
 
 private:
-  /** Creates the output texture that gets used for the RTT approach, to show the velocity on a texture. */
-  void createRttOutputTexture_()
-  {
-    outputTexture_ = new osg::Texture2D();
-    outputTexture_->setTextureSize(RTT_OUTPUT_IMAGE_WIDTH, RTT_OUTPUT_IMAGE_HEIGHT);
-    outputTexture_->setInternalFormat(GL_RGBA8);
-    outputTexture_->setSourceFormat(GL_RGBA);
-    outputTexture_->setSourceType(GL_UNSIGNED_BYTE);
-    outputTexture_->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
-    outputTexture_->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
-  }
-
-  /** Adds the RTT Camera, which renders the output points in the form of pixels.  This is optional and not required for points drawing. */
-  void createRttCamera_()
-  {
-    rttCamera_ = new osg::Camera();
-    rttCamera_->setName("RTT Camera Output");
-    rttCamera_->setRenderOrder(osg::Camera::PRE_RENDER);
-    rttCamera_->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
-    rttCamera_->setViewport(0, 0, outputTexture_->getTextureWidth(), outputTexture_->getTextureHeight());
-    rttCamera_->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    rttCamera_->setClearColor(osg::Vec4(0, 0, 0, 0));
-    rttCamera_->attach(osg::Camera::BufferComponent(osg::Camera::COLOR_BUFFER0), outputTexture_.get());
-    rttCamera_->setCullingMode(rttCamera_->getCullingMode() & ~osg::CullSettings::SMALL_FEATURE_CULLING);
-    rttCamera_->setProjectionMatrixAsOrtho2D(0.0, RTT_OUTPUT_IMAGE_WIDTH, 0.0, RTT_OUTPUT_IMAGE_HEIGHT);
-    rttCamera_->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-
-    points_ = createRTTInstancedGeometry(particleDimension_ * particleDimension_, particleDimension_);
-    points_->setName("RTT Points Output");
-    // Attach the output of the compute node as the texture to feed the positions on the instanced geometry.
-    points_->getOrCreateStateSet()->setTextureAttributeAndModes(0, computeNode_->outputPosition(), osg::StateAttribute::ON);
-    points_->getOrCreateStateSet()->setTextureAttributeAndModes(1, computeNode_->outputDirection(), osg::StateAttribute::ON);
-    points_->getOrCreateStateSet()->setTextureAttributeAndModes(2, pointSpriteTexture_, osg::StateAttribute::ON);
-    rttCamera_->addChild(points_.get());
-  }
-
+  /** Creates the node that holds the points particles */
   void createPointsNode_()
   {
     pointsNode_ = createInstancedGeometry(particleDimension_ * particleDimension_, particleDimension_);
@@ -555,13 +444,39 @@ private:
     pointsNode_->getOrCreateStateSet()->setTextureAttributeAndModes(2, pointSpriteTexture_, osg::StateAttribute::ON);
   }
 
+  /** Creates a geometry that renders nInstances points, with the particle shader attached. */
+  osg::Geometry* createInstancedGeometry(int nInstances, unsigned int particleDimension) const
+  {
+    osg::Geometry* geom = new osg::Geometry;
+    geom->setUseDisplayList(false);
+    geom->setUseVertexBufferObjects(true);
+
+    // Points
+    osg::Vec3Array* v = new osg::Vec3Array;
+    v->resize(1);
+    geom->setVertexArray(v);
+    (*v)[0] = osg::Vec3(0.0, 0.0, 0.0);
+    geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, 1, nInstances));
+
+    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(geom->getOrCreateStateSet());
+    simUtil::Shaders shaderPackage;
+    shaderPackage.load(vp, shaderPackage.velocityParticleLayerParticleVertex());
+    shaderPackage.load(vp, shaderPackage.velocityParticleLayerParticleFragment());
+    geom->getOrCreateStateSet()->addUniform(new osg::Uniform("positionSampler", 0));
+    geom->getOrCreateStateSet()->addUniform(new osg::Uniform("directionSampler", 1));
+    geom->getOrCreateStateSet()->addUniform(new osg::Uniform("pointSprite", 2));
+    geom->getOrCreateStateSet()->addUniform(new osg::Uniform("pointSize", 1.0f));
+    geom->getOrCreateStateSet()->addUniform(new osg::Uniform("resolution", osg::Vec2f(particleDimension, particleDimension)));
+    geom->getOrCreateStateSet()->setMode(GL_PROGRAM_POINT_SIZE, 1);
+    geom->setCullingActive(false);
+
+    return geom;
+  }
+
   osg::ref_ptr<osg::Texture2D> pointSpriteTexture_;
-  osg::ref_ptr<osg::Texture2D> outputTexture_;
-  osg::ref_ptr<osg::Camera> rttCamera_;
   osg::ref_ptr<osg::Geometry> pointsNode_;
 
   osg::ref_ptr<ComputeNode> computeNode_;
-  osg::ref_ptr<osg::Geometry> points_;
   osg::Vec4 minColor_;
   osg::Vec4 maxColor_;
   float altitude_;
@@ -580,7 +495,6 @@ osgEarth::Config VelocityParticleLayer::Options::getConfig() const
   conf.set("point_size", _pointSize);
   conf.set("drop_chance", _dropChance);
   conf.set("particle_altitude", _particleAltitude);
-  conf.set("render_rtt_image", _renderRttImage);
   conf.set("min_color", _minColor);
   conf.set("max_color", _maxColor);
   conf.set("sprite_uri", _spriteUri);
@@ -605,7 +519,6 @@ void VelocityParticleLayer::Options::fromConfig(const osgEarth::Config& conf)
   _pointSize.setDefault(1.f);
   _dropChance.setDefault(0.f);
   _particleAltitude.setDefault(5000.f);
-  _renderRttImage.setDefault(false);
   _minColor.setDefault(osgEarth::Color::Lime);
   _maxColor.setDefault(osgEarth::Color::Red);
 
@@ -615,7 +528,6 @@ void VelocityParticleLayer::Options::fromConfig(const osgEarth::Config& conf)
   conf.get("point_size", _pointSize);
   conf.get("drop_chance", _dropChance);
   conf.get("particle_altitude", _particleAltitude);
-  conf.get("render_rtt_image", _renderRttImage);
   conf.get("min_color", _minColor);
   conf.get("max_color", _maxColor);
   conf.get("sprite_uri", _spriteUri);
@@ -811,16 +723,6 @@ void VelocityParticleLayer::setParticleAltitude(float value)
   VPL_SET_NODE(setParticleAltitude, value);
 }
 
-bool VelocityParticleLayer::getRenderRttImage() const
-{
-  return *_options->renderRttImage();
-}
-
-void VelocityParticleLayer::setRenderRttImage(bool value)
-{
-  setOptionThatRequiresReopen(_options->renderRttImage(), value);
-}
-
 void VelocityParticleLayer::setOpacity(float value)
 {
   ImageLayer::setOpacity(value);
@@ -837,7 +739,7 @@ osgEarth::Status VelocityParticleLayer::openImplementation()
   if (!velocityTexture_.valid())
     return osgEarth::Status(osgEarth::Status::ResourceUnavailable, "Not configured with a valid velocity texture");
 
-  VelocityTextureNode* velocityNode = new VelocityTextureNode(velocityTexture_.get(), *_options->renderRttImage(), *_options->particleDimension());
+  VelocityTextureNode* velocityNode = new VelocityTextureNode(velocityTexture_.get(), *_options->particleDimension());
   node_ = velocityNode;
 
   // Set the bounding box on the velocity node, and update data extents
@@ -866,14 +768,6 @@ osgEarth::Status VelocityParticleLayer::openImplementation()
   setUseCreateTexture();
 
   return osgEarth::Status::OK();
-}
-
-osgEarth::TextureWindow VelocityParticleLayer::createTexture(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress) const
-{
-  // Set the texture matrix corresponding to the tile key:
-  osg::Matrixf textureMatrix;
-  key.getExtent().createScaleBias(getProfile()->getExtent(), textureMatrix);
-  return osgEarth::TextureWindow(getNode_()->getOutputTexture(), textureMatrix);
 }
 
 osg::Node* VelocityParticleLayer::getNode() const

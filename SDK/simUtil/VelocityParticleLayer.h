@@ -71,8 +71,6 @@ public:
     OE_OPTION(float, dropChance);
     /** Altitude of the particle in meters.  Particles are obscured by terrain. */
     OE_OPTION(float, particleAltitude);
-    /** Renders the particles to an RTT texture that is also added to the layer. */
-    OE_OPTION(bool, renderRttImage);
     /** Bounding lat/lon values for the velocity texture.  Values are in degrees. */
     OE_OPTION(osgEarth::Bounds, boundingBox);
     /** Output color for minimum velocity in the velocity texture. */
@@ -111,8 +109,6 @@ public:
   void setDropChance(float value);
   float getParticleAltitude() const;
   void setParticleAltitude(float value);
-  bool getRenderRttImage() const;
-  void setRenderRttImage(bool value);
   osgEarth::Bounds getBoundingBox() const;
   void setBoundingBox(const osgEarth::Bounds& bounds);
   const osg::Vec4& getMinColor() const;
@@ -126,7 +122,6 @@ public:
 
   // From ImageLayer:
   virtual osgEarth::Status openImplementation() override;
-  virtual osgEarth::TextureWindow createTexture(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress) const override;
   // From VisibleLayer:
   virtual void setOpacity(float value) override;
   // From Layer:

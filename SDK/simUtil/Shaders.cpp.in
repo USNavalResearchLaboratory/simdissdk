@@ -31,7 +31,6 @@ Shaders::Shaders()
   add(terrainToggleEffectVertex(), "@TerrainToggleEffect.frag.glsl@");
   add(terrainToggleEffectFragment(), "@TerrainToggleEffect.vert.glsl@");
   add(velocityParticleLayerParticleVertex(), "@VelocityParticleLayer.part.vert.glsl@");
-  add(velocityParticleLayerRttParticleVertex(), "@VelocityParticleLayer.rtt.part.vert.glsl@");
   add(velocityParticleLayerParticleFragment(), "@VelocityParticleLayer.part.frag.glsl@");
   add(velocityParticleLayerComputeVertex(), "@VelocityParticleLayer.compute.vert.glsl@");
   add(velocityParticleLayerComputePositionFragment(), "@VelocityParticleLayer.compute.pos.frag.glsl@");
@@ -56,11 +55,6 @@ std::string Shaders::terrainToggleEffectFragment() const
 std::string Shaders::velocityParticleLayerParticleVertex() const
 {
   return "VelocityParticleLayer.part.vert.glsl";
-}
-
-std::string Shaders::velocityParticleLayerRttParticleVertex() const
-{
-  return "VelocityParticleLayer.rtt.part.vert.glsl";
 }
 
 std::string Shaders::velocityParticleLayerParticleFragment() const

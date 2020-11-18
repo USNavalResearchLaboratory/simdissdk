@@ -14,7 +14,6 @@ set(SHADER_FILES
     VelocityParticleLayer.compute.vert.glsl
     VelocityParticleLayer.part.frag.glsl
     VelocityParticleLayer.part.vert.glsl
-    VelocityParticleLayer.rtt.part.vert.glsl
 )
 
 set(UTIL_INC)
