@@ -364,7 +364,7 @@ endif()
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     # Configure the simQtConfig.cmake file; its dependencies are dynamic
     set(SIMQT_DEPENDS)
-    foreach(TGT IN ITEMS simNotify simCore simData simVis)
+    foreach(TGT IN ITEMS simNotify simCore simData simVis simUtil)
         if(TARGET ${TGT})
             set(SIMQT_DEPENDS "${SIMQT_DEPENDS}\nfind_dependency(${TGT})")
         endif()
