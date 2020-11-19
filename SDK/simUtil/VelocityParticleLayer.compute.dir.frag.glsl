@@ -1,5 +1,7 @@
 #version 330
 
+#pragma import_defines(TEXEL_TO_VELXY(t))
+
 uniform sampler2D texturePosition;
 uniform sampler2D velocityMap;
 uniform vec2 resolution;
@@ -17,7 +19,15 @@ void main()
   // Rescale posUV from world/global coordinates, into image coordinates
   vec2 scaledPosUv = vec2((posUV.x - boundingBox.x) / (boundingBox.z - boundingBox.x),
     (posUV.y - boundingBox.y) / (boundingBox.w - boundingBox.y));
-  vec2 scaledVelocity = texture2D(velocityMap, scaledPosUv).rg;
-  float rotateAngle = atan(scaledVelocity.x - 0.5, -(scaledVelocity.y - 0.5));
+  vec4 velocityTexel = texture2D(velocityMap, scaledPosUv);
+
+#ifdef TEXEL_TO_VELXY
+  vec2 velocity = TEXEL_TO_VELXY(velocityTexel);
+#else
+  // Default image format presumes X and Y encoded in R and G, from -25 to +25 m/s
+  vec2 velocity = mix(vec2(-25.0, -25.0), vec2(25.0, 25.0), velocityTexel.rg);
+#endif
+
+  float rotateAngle = atan(velocity.x, -velocity.y);
   out_particle.r = rotateAngle;
 }

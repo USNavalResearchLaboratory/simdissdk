@@ -1,5 +1,7 @@
 #version 330
 
+#pragma import_defines(TEXEL_TO_VELXY(t))
+
 uniform sampler2D texturePosition;
 uniform sampler2D velocityMap;
 uniform vec2 resolution;
@@ -42,7 +44,7 @@ void main()
     life = simutil_random(0.3, 1.0, seed + 3.4);
     float x = simutil_random(boundingBox.x, boundingBox.z, seed + 1.3);
     float y = simutil_random(boundingBox.y, boundingBox.w, seed + 2.1);
-    float z= 0.0;
+    float z = 0.0;
     position = vec3(x, y, z);
   }
 
@@ -57,16 +59,22 @@ void main()
   // the values from the posUV space into the image space, which is in boundingBox coordinates.
   // For example, using bounding box X coordinates [min=0.6, max=0.8], and an input posUV value of 0.7,
   // we can reproject by doing (0.7 - 0.6) / (0.8 - 0.6).  This gets a uv in the space of the input image.
-  vec2 scaledVelocity = vec2(0.0, 0.0);
+  vec4 velocityTexel = vec4(0.0, 0.0, 0.0, 0.0);
   if (life >= 0.0) // Must be inside the bounds if this passes
   {
     vec2 scaledPosUv = vec2((posUV.x - boundingBox.x) / (boundingBox.z - boundingBox.x),
       (posUV.y - boundingBox.y) / (boundingBox.w - boundingBox.y));
-    scaledVelocity = texture2D(velocityMap, scaledPosUv).rg;
+    velocityTexel = texture2D(velocityMap, scaledPosUv);
   }
 
+#ifdef TEXEL_TO_VELXY
+  vec2 velocity = TEXEL_TO_VELXY(velocityTexel);
+#else
+  // Default image format presumes X and Y encoded in R and G, from -25 to +25 m/s
+  vec2 velocity = mix(vec2(-25.0, -25.0), vec2(25.0, 25.0), velocityTexel.rg);
+#endif
+
   // Scale up the velocity based on min/max values
-  vec2 velocity = mix(vec2(uMin, vMin), vec2(uMax, vMax), scaledVelocity);
   float distortion = cos(radians(posUV.y * 180.0 - 90.0));
   vec2 offset = vec2(velocity.x / distortion, velocity.y) * 0.0001 * speedFactor;
   position.x += offset.x;
@@ -78,12 +86,7 @@ void main()
   if (position.y >= 1.0) position.y -= 1.0;
   else if (position.y < 0) position.y += 1.0;
 
-  // Store the relative velocity in z, scaled from (0, 1).  The scaledVelocity is a texture value from (0,1) where
-  // 0 corresponds to uMin and 1 corresponds to uMax.  We could calculate the actual velocity from [0,1] by applying
-  // Pythagorean to the (scaledVelocity - 0.5), presuming the middle point is 0.  The actual length maxes out at
-  // position (1.0, 1.0), with adjust pos at (0.5, 0.5), thus a maximum length() of 0.707106 (sqrt(0.5^2+0.5^2)).
-  // We do not use this value because it results in a pretty boring display.  Instead of dividing by 0.707106,
-  // we instead multiply by (1/0.707106) == sqrt(2).
-  position.z = length(scaledVelocity - vec2(0.5, 0.5)) * 1.414;
+  // Store the speed in z, in meters per second
+  position.z = length(velocity);
   out_particle = vec4(position, life);
 }

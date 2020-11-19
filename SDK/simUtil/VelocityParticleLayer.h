@@ -81,6 +81,8 @@ public:
     OE_OPTION(osgEarth::URI, spriteUri);
     /** URI for the velocity texture.  Velocity textures encode R=X velocity, G=Y velocity, on a scale from [0,1], mapping to velocities [-25,25]. */
     OE_OPTION(osgEarth::URI, velocityTextureUri);
+    /** GLSL code fragment to convert velocity texel "t" into a vec2 velocity, e.g.: "mix(vec2(-25.0, -25.0), vec2(25.0, 25.0), t.rg)" */
+    OE_OPTION(std::string, texelToVelocityFragment);
 
     /** Create the Config from this options structure. */
     virtual osgEarth::Config getConfig() const override;
@@ -119,6 +121,39 @@ public:
   void setVelocityTexture(const osgEarth::URI& uri);
   const osgEarth::URI& getPointSprite() const;
   void setPointSprite(const osgEarth::URI& uri);
+  std::string getTexelToVelocityFragment() const;
+
+  /**
+   * Sets the GLSL fragment that is used to convert from the velocity texel to an absolute X-east Y-north velocity vec2.
+   * The texel is extracted from the Velocity Texture and is a vec4 containing the red, green, blue, and alpha components
+   * in typical [0.0, 1.0] range.  The fragment is expected to calculate the velocity in meters per second given that texel.
+   * This is a single GLSL statement that is expected to create a vec2 value.  The default implementation is:
+   *
+   * <code>
+   * mix(vec2(-25.0, -25.0), vec2(25.0, 25.0), t.rg)
+   * </code>
+   *
+   * In the <VelocityParticleImage> the tag might look like:
+   *
+   * <code>
+   * <VelocityParticleImage>
+   *   ...
+   *   <texel_to_velocity_fragment>mix(vec2(-25.0, -25.0), vec2(25.0, 25.0), t.rg)</texel_to_velocity_fragment>
+   * </VelocityParticleImage>
+   * </code>
+   *
+   * Important: The texel is always available as the variable "t".  For details on integration, refer to
+   * VelocityParticleLayer.compute.pos.frag.glsl and VelocityParticleLayer.compute.dir.frag.glsl.
+   *
+   * The default implementation above presumes that the red pixels encode velocity X with 0 as -25 m/s, and 1.0 (full red)
+   * as +25 m/s; it presumes the same for the green pixels, encoding velocity Y. If empty or unspecified, this default mapping
+   * is used.
+   *
+   * This fragment can be adapted to read images that encode with different minimum or maximum values, and can also be
+   * adapted to convert from other encodings.  For example, one might encode their image with red as a clockwise direction
+   * and green as a speed; this fragment could perform the math to convert these values into a velocity X and Y value.
+   */
+  void setTexelToVelocityFragment(const std::string& glslFragment);
 
   // From ImageLayer:
   virtual osgEarth::Status openImplementation() override;

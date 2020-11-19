@@ -35,6 +35,11 @@ vec3 convertLatLongHeightToXYZ(float latitude, float longitude, float height)
   return vec3(X,Y,Z);
 }
 
+float speedToScale(float speedMs)
+{
+  return min(speedMs / 25.0, 1.0);
+}
+
 // Calculates the position, color, and angle for particles
 void simutil_vpl_rtt_vertex(inout vec4 vertexModel)
 {
@@ -48,7 +53,7 @@ void simutil_vpl_rtt_vertex(inout vec4 vertexModel)
   float life = posInfo.w;
   float velocity = posInfo.z;
 
-  particle_color = mix(minColor, maxColor, velocity);
+  particle_color = mix(minColor, maxColor, speedToScale(velocity));
   // Rotation angle comes from the direction sampler texture
   rotate_angle = texture2D(directionSampler, tC).r;
 

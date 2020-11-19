@@ -38,8 +38,8 @@ namespace simUtil {
 class ComputeNode : public osg::Group
 {
 public:
-  ComputeNode(osg::Texture2D* velocityTexture, unsigned int particleDimension) :
-    velocityTexture_(velocityTexture),
+  ComputeNode(osg::Texture2D* velocityTexture, unsigned int particleDimension)
+    : velocityTexture_(velocityTexture),
     particleDimension_(particleDimension),
     needDirection_(false)
   {
@@ -62,6 +62,13 @@ public:
   void setVelocityTexture(osg::Texture2D* velocityTexture)
   {
     velocityTexture_ = velocityTexture;
+    // Content will update on the next swap() when buildCamera_() gets called.
+  }
+
+  /** Change the texel-to-velocity function.  Default maps R to VX(-25,25), and G to VY (-25,25).  @see simUtil::VelocityParticleLayer::setTexelToVelocityFragment() */
+  void setTexelToVelocityFragment(const std::string& glslFragment)
+  {
+    texelToVelocityFragment_ = glslFragment;
     // Content will update on the next swap() when buildCamera_() gets called.
   }
 
@@ -96,12 +103,15 @@ private:
     osg::Program* program = new osg::Program;
     program->addShader(new osg::Shader(osg::Shader::VERTEX, vertexSource_));
     program->addShader(new osg::Shader(osg::Shader::FRAGMENT, fragShader));
+
     osg::StateSet* ss = new osg::StateSet;
     ss->setAttributeAndModes(program);
 
     ss->addUniform(new osg::Uniform("texturePosition", 0));
     ss->addUniform(new osg::Uniform("velocityMap", 1));
     ss->addUniform(new osg::Uniform("resolution", osg::Vec2f(particleDimension_, particleDimension_)));
+    if (!texelToVelocityFragment_.empty())
+      ss->setDefine("TEXEL_TO_VELXY(t)", texelToVelocityFragment_);
 
     ss->setTextureAttributeAndModes(0, inputPosition_.get(), osg::StateAttribute::ON);
     ss->setTextureAttributeAndModes(1, velocityTexture_.get(), osg::StateAttribute::ON);
@@ -245,6 +255,7 @@ private:
   std::string vertexSource_;
   std::string positionFragmentSource_;
   std::string directionFragmentSource_;
+  std::string texelToVelocityFragment_;
 };
 
 /** Holds nodes containing the compute node for particle position, the RTT for texture content, and the geometry with texture of particles. */
@@ -303,9 +314,9 @@ public:
   }
 
   /** Changes the underlying texture for the velocity texture.  Updates in-place, particles start moving in new directions on next frame. */
-  void setVelocityTexture(osg::Texture2D* windTexture)
+  void setVelocityTexture(osg::Texture2D* velocityTexture)
   {
-    computeNode_->setVelocityTexture(windTexture);
+    computeNode_->setVelocityTexture(velocityTexture);
   }
 
   /** Changes the point sprite. Pass in a null sprite to use point particles instead of sprites. */
@@ -427,6 +438,11 @@ public:
     getOrCreateStateSet()->getUniform("oe_VisibleLayer_opacityUniform")->set(value);
   }
 
+  void setTexelToVelocityFragment(const std::string& glslFragment)
+  {
+    computeNode_->setTexelToVelocityFragment(glslFragment);
+  }
+
   void swap()
   {
     computeNode_->swap();
@@ -499,6 +515,7 @@ osgEarth::Config VelocityParticleLayer::Options::getConfig() const
   conf.set("max_color", _maxColor);
   conf.set("sprite_uri", _spriteUri);
   conf.set("uri", _velocityTextureUri);
+  conf.set("texel_to_velocity_fragment", _texelToVelocityFragment);
   if (_boundingBox.isSet())
   {
     osgEarth::Config bbConf;
@@ -532,6 +549,7 @@ void VelocityParticleLayer::Options::fromConfig(const osgEarth::Config& conf)
   conf.get("max_color", _maxColor);
   conf.get("sprite_uri", _spriteUri);
   conf.get("uri", _velocityTextureUri);
+  conf.get("texel_to_velocity_fragment", _texelToVelocityFragment);
 
   if (conf.hasChild("bounding_box"))
   {
@@ -723,6 +741,17 @@ void VelocityParticleLayer::setParticleAltitude(float value)
   VPL_SET_NODE(setParticleAltitude, value);
 }
 
+std::string VelocityParticleLayer::getTexelToVelocityFragment() const
+{
+  return *_options->texelToVelocityFragment();
+}
+
+void VelocityParticleLayer::setTexelToVelocityFragment(const std::string& glslFragment)
+{
+  _options->texelToVelocityFragment() = glslFragment;
+  VPL_SET_NODE(setTexelToVelocityFragment, glslFragment);
+}
+
 void VelocityParticleLayer::setOpacity(float value)
 {
   ImageLayer::setOpacity(value);
@@ -764,6 +793,7 @@ osgEarth::Status VelocityParticleLayer::openImplementation()
   velocityNode->setParticleAltitude(*_options->particleAltitude());
   velocityNode->setMinColor(*_options->minColor());
   velocityNode->setMaxColor(*_options->maxColor());
+  velocityNode->setTexelToVelocityFragment(*_options->texelToVelocityFragment());
 
   setUseCreateTexture();
 
