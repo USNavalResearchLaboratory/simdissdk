@@ -50,7 +50,7 @@ public:
   typedef std::vector<GogNodeInterfacePtr> GogNodeVector;
 
   /// Constructor takes a parser and map node for constructing the osgEarth GOG nodes
-  Loader(simCore::GOG::Parser& parser, osgEarth::MapNode* mapNode = nullptr);
+  Loader(const simCore::GOG::Parser& parser, osgEarth::MapNode* mapNode = nullptr);
 
   /// Virtual destructor
   virtual ~Loader();
@@ -74,7 +74,7 @@ private:
   GogNodeInterfacePtr buildGogNode_(simCore::GOG::GogShapePtr gog, bool attached) const;
 
   /// Parser for converting the input stream into simCore::GOG::GogShape objects
-  simCore::GOG::Parser& parser_;
+  const simCore::GOG::Parser& parser_;
   /// Map node for use when creating osgEarth nodes
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
   /// Default reference position to use as fallback

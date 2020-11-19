@@ -500,6 +500,11 @@ ShapeType Points::shapeType() const
   return ShapeType::POINTS;
 }
 
+void Points::clearPoints()
+{
+  points_.clear();
+}
+
 const std::vector<simCore::Vec3>& Points::points() const
 {
   return points_;
@@ -651,6 +656,11 @@ const std::vector<simCore::Vec3>& PointBasedShape::points() const
 void PointBasedShape::addPoint(const simCore::Vec3& point)
 {
   points_.push_back(point);
+}
+
+void PointBasedShape::clearPoints()
+{
+  points_.clear();
 }
 
 int PointBasedShape::getTessellation(TessellationStyle& tessellation) const

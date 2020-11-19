@@ -55,7 +55,7 @@
 
 namespace simVis { namespace GOG {
 
-Loader::Loader(simCore::GOG::Parser& parser, osgEarth::MapNode* mapNode)
+Loader::Loader(const simCore::GOG::Parser& parser, osgEarth::MapNode* mapNode)
   : parser_(parser),
     mapNode_(mapNode)
 {

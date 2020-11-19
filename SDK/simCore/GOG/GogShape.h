@@ -357,6 +357,8 @@ public:
   const std::vector<simCore::Vec3>& points() const;
   /// Add a point position; in lla radians if absolute or xyz meters if relative
   void addPoint(const simCore::Vec3& point);
+  /// Clear all stored positions
+  void clearPoints();
 
   /**
   * Get point size for all points in the shape in pixels; if value is not set, default value is returned.
@@ -450,6 +452,8 @@ public:
   const std::vector<simCore::Vec3>& points() const;
   /// Add a point position; in lla radians if absolute or xyz meters if relative
   void addPoint(const simCore::Vec3& point);
+  /// Clear all stored positions
+  void clearPoints();
 
   /**
   * Get the shape's tessellation style; if value is not set, default value is returned.
