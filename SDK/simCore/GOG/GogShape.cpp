@@ -456,7 +456,7 @@ void GogShape::setCanFollow_(bool canFollow)
   canFollow_ = canFollow;
 }
 
-void GogShape::setRelative_(bool relative)
+void GogShape::setRelative(bool relative)
 {
   relative_ = relative;
 }
@@ -492,7 +492,7 @@ Points::Points(bool relative)
 {
   setCanExtrude_(false);
   setCanFollow_(relative);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 ShapeType Points::shapeType() const
@@ -645,7 +645,7 @@ PointBasedShape::PointBasedShape(bool relative)
 {
   setCanExtrude_(true);
   setCanFollow_(relative);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 const std::vector<simCore::Vec3>& PointBasedShape::points() const
@@ -789,7 +789,7 @@ Circle::Circle(bool relative)
   : CircularShape()
 {
   setCanExtrude_(true);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 ShapeType Circle::shapeType() const
@@ -801,7 +801,7 @@ Sphere::Sphere(bool relative)
   : CircularShape()
 {
   setCanExtrude_(false);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 ShapeType Sphere::shapeType() const
@@ -813,7 +813,7 @@ Hemisphere::Hemisphere(bool relative)
   : CircularShape()
 {
   setCanExtrude_(false);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 ShapeType Hemisphere::shapeType() const
@@ -825,7 +825,7 @@ Orbit::Orbit(bool relative)
   : CircularShape()
 {
   setCanExtrude_(false);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 ShapeType Orbit::shapeType() const
@@ -926,7 +926,7 @@ Arc::Arc(bool relative)
   : EllipticalShape()
 {
   setCanExtrude_(true);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 ShapeType Arc::shapeType() const
@@ -938,7 +938,7 @@ Ellipse::Ellipse(bool relative)
   : EllipticalShape()
 {
   setCanExtrude_(true);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 ShapeType Ellipse::shapeType() const
@@ -951,7 +951,7 @@ Cylinder::Cylinder(bool relative)
 {
   setCanExtrude_(false);
   setCanFollow_(true);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 ShapeType Cylinder::shapeType() const
@@ -1005,7 +1005,7 @@ Cone::Cone(bool relative)
   : CircularHeightShape()
 {
   setCanExtrude_(true);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 ShapeType Cone::shapeType() const
@@ -1017,7 +1017,7 @@ Ellipsoid::Ellipsoid(bool relative)
   : CircularHeightShape()
 {
   setCanExtrude_(false);
-  setRelative_(relative);
+  setRelative(relative);
 }
 
 ShapeType Ellipsoid::shapeType() const
@@ -1062,7 +1062,7 @@ Annotation::Annotation(bool relative)
 {
   setCanExtrude_(false);
   setCanFollow_(false);
-  setRelative_(relative);
+  setRelative(relative);
   setSerializeName_(false);
 }
 
@@ -1221,7 +1221,7 @@ LatLonAltBox::LatLonAltBox()
 {
   setCanExtrude_(false);
   setCanFollow_(false);
-  setRelative_(false);
+  setRelative(false);
 }
 
 ShapeType LatLonAltBox::shapeType() const
@@ -1310,7 +1310,7 @@ ImageOverlay::ImageOverlay()
 {
   setCanExtrude_(false);
   setCanFollow_(false);
-  setRelative_(false);
+  setRelative(false);
 }
 
 ShapeType ImageOverlay::shapeType() const
