@@ -153,7 +153,7 @@ std::string GradientShader::buildShader() const
   }
 
   // Special case, if the value is greater than the last value, return the last value.
-  buf << "return " << colorToVec4_(current->second) << ";\n " << std::endl;
+  buf << "return " << colorToVec4_(current->second) << ";\n";
   buf << "}\n";
   return buf.str();
 }
