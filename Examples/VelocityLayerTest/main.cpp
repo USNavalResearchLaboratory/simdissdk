@@ -95,28 +95,61 @@ private:
   std::function<void(Control*)> func_;
 };
 
-/** Helper function to pick between a few different colors */
-Control* createColorPicker(const std::function<void(const osg::Vec4f&)>& func, const osg::Vec4f& defaultColor)
+/** Helper function to pick between a few different gradients */
+Control* createGradientPicker(const std::function<void(const simVis::GradientShader::ColorMap&)>& func)
 {
   HBox* hbox = new HBox;
   hbox->setMargin(0);
-  auto* red = hbox->addControl(new LabelControl("Red", 12.f, simVis::Color::Red));
-  auto* lime = hbox->addControl(new LabelControl("Lime", 12.f, simVis::Color::Lime));
-  auto* blue = hbox->addControl(new LabelControl("Blue", 12.f, simVis::Color::Blue));
-  auto* cyan = hbox->addControl(new LabelControl("Cyan", 12.f, simVis::Color::Cyan));
-  auto* yellow = hbox->addControl(new LabelControl("Yellow", 12.f, simVis::Color::Yellow));
-  auto* purple = hbox->addControl(new LabelControl("Purple", 12.f, simVis::Color::Purple));
-  // Create an on-click method that each control will use
-  auto onClick = new OnClick([=](Control* c) {
-    // Make the highlighted one filled
-    for (auto ctl : { red, lime, blue, cyan, yellow, purple })
-      ctl->setBackColor(ctl == c ? simVis::Color::Black : osg::Vec4f(0.f, 0.f, 0.f, 0.f));
-    // Call the function with the given color
-    func(*c->foreColor());
-  });
-  // Add the event handler to all colors
-  for (auto ctl : { red, lime, blue, cyan, yellow, purple })
-    ctl->addEventHandler(onClick);
+
+  auto* defaultGrad = hbox->addControl(new LabelControl("Default", 12.f, simVis::Color::White));
+  defaultGrad->addEventHandler(new OnClick([=](Control* c) {
+    const simVis::GradientShader::ColorMap newColors = {
+      { 0, osgEarth::Color::Blue },
+      { 8, osgEarth::Color::Cyan },
+      { 13, osgEarth::Color::Lime },
+      { 18, osgEarth::Color::Yellow },
+      { 50, osgEarth::Color::Red },
+      { 75, osgEarth::Color::Purple },
+    };
+    func(newColors);
+  }));
+
+  auto* cyanRedGrad = hbox->addControl(new LabelControl("Cyan", 12.f, simVis::Color::White));
+  cyanRedGrad->addEventHandler(new OnClick([=](Control* c) {
+    simVis::GradientShader::ColorMap newColors = {
+      {0.0, simVis::Color::Cyan},
+      {25.0, simVis::Color::Red}
+    };
+    func(newColors);
+  }));
+
+  auto* grayGrad = hbox->addControl(new LabelControl("Grayscale", 12.f, simVis::Color::White));
+  grayGrad->addEventHandler(new OnClick([=](Control* c) {
+    simVis::GradientShader::ColorMap newColors = {
+      {0.0, simVis::Color::Black},
+      {25.0, simVis::Color::White}
+    };
+    func(newColors);
+  }));
+
+  auto* greenRedGrad = hbox->addControl(new LabelControl("Green", 12.f, simVis::Color::White));
+  greenRedGrad->addEventHandler(new OnClick([=](Control* c) {
+    simVis::GradientShader::ColorMap newColors = {
+      {0.0, simVis::Color::Lime},
+      {25.0, simVis::Color::Red}
+    };
+    func(newColors);
+  }));
+
+  auto* transparentGrad = hbox->addControl(new LabelControl("Transparent", 12.f, simVis::Color::White));
+  transparentGrad->addEventHandler(new OnClick([=](Control* c) {
+    simVis::GradientShader::ColorMap newColors = {
+      // Merge alpha from 0 to 25
+      {0.0, osg::Vec4f(0.f, 1.f, 0.f, 0.f)},
+      {25., osg::Vec4f(0.f, 1.f, 0.f, 1.f)},
+    };
+    func(newColors);
+  }));
   return hbox;
 }
 
@@ -184,15 +217,25 @@ Control* createMenu(osgEarth::Map* map, simUtil::VelocityParticleLayer* layer)
     new FloatLambda([=](float val) { layer->setParticleAltitude(val); })));
   grid->setControl(2, row, new LabelControl(altitude, 12.f, simVis::Color::White));
 
-  // Min Color
+  // Discrete: Since most gradients are not thoroughly defined and only depend on two points,
+  // this only really works well with the default gradient.
   ++row;
-  grid->setControl(0, row, new LabelControl("Min Color", 12.f, simVis::Color::White));
-  grid->setControl(1, row, createColorPicker([=](const osg::Vec4f& color) { layer->setMinColor(color); }, layer->getMinColor()));
+  grid->setControl(0, row, new LabelControl("Discrete Colors", 12.f, simVis::Color::White));
+  grid->setControl(1, row, new CheckBoxControl(layer->getGradient().isDiscrete(), new BoolLambda([=](bool val) {
+    auto newGradient = layer->getGradient();
+    newGradient.setDiscrete(val);
+    layer->setGradient(newGradient);
+  })));
 
-  // Max Color
+  // Gradient
   ++row;
-  grid->setControl(0, row, new LabelControl("Max Color", 12.f, simVis::Color::White));
-  grid->setControl(1, row, createColorPicker([=](const osg::Vec4f& color) { layer->setMaxColor(color); }, layer->getMaxColor()));
+  grid->setControl(0, row, new LabelControl("Gradient", 12.f, simVis::Color::White));
+  grid->setControl(1, row, createGradientPicker([=](const simVis::GradientShader::ColorMap& colors) {
+    simVis::GradientShader newGrad;
+    newGrad.setDiscrete(layer->getGradient().isDiscrete());
+    newGrad.setColorMap(colors);
+    layer->setGradient(newGrad);
+  }));
 
   // Use Sprites
   ++row;

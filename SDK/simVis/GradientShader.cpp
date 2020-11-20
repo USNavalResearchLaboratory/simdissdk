@@ -97,6 +97,11 @@ void GradientShader::setColorMap(const ColorMap& colors)
   colors_ = colors;
 }
 
+const GradientShader::ColorMap& GradientShader::colorMap() const
+{
+  return colors_;
+}
+
 std::string GradientShader::buildShader() const
 {
   std::stringstream buf;

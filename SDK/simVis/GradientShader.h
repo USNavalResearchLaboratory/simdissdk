@@ -75,7 +75,7 @@ public:
   /** map of threshold values to color */
   typedef std::map<float, osg::Vec4f> ColorMap;
 
-  /** Creates a new GradientColorProvider */
+  /** Creates a new GradientShader */
   GradientShader();
   /** Virtual destructor */
   virtual ~GradientShader();
@@ -94,6 +94,8 @@ public:
   void setColor(float value, const osg::Vec4f& color);
   /** Sets all the colors for the gradient. Clears out any current colors in the map and replaces with the color map specified */
   void setColorMap(const ColorMap& colors);
+  /** Retrieves currently set colors */
+  const ColorMap& colorMap() const;
   /** Clears all colors in the gradient */
   void clear();
 

@@ -8,8 +8,6 @@ uniform sampler2D positionSampler;
 uniform sampler2D directionSampler;
 uniform vec2 resolution;
 uniform float pointSize;
-uniform vec4 minColor;
-uniform vec4 maxColor;
 uniform float altitude;
 
 out vec4 particle_color;
@@ -18,6 +16,9 @@ out float rotate_angle;
 const float PI = 3.1415926535897932384626433832795;
 const float PI_2 = 1.57079632679489661923;
 const float TWO_PI = 6.283185307179586476925286766559;
+
+// Color mapping function for velocity to color.  VelocityParticleLayer supplies this programmatically from gradient option.
+vec4 su_vel2color(in float value);
 
 // Helper function to convert LLA to ECEF XYZ
 vec3 convertLatLongHeightToXYZ(float latitude, float longitude, float height)
@@ -53,7 +54,7 @@ void simutil_vpl_rtt_vertex(inout vec4 vertexModel)
   float life = posInfo.w;
   float velocity = posInfo.z;
 
-  particle_color = mix(minColor, maxColor, speedToScale(velocity));
+  particle_color = su_vel2color(velocity);
   // Rotation angle comes from the direction sampler texture
   rotate_angle = texture2D(directionSampler, tC).r;
 
