@@ -37,12 +37,12 @@ namespace simUtil {
 
 /** Default color mapping for velocity to color. */
 static const std::map<float, osg::Vec4f> DEFAULT_COLOR_MAP = {
-  { 0, osgEarth::Color::Blue },
-  { 8, osgEarth::Color::Cyan },
-  { 13, osgEarth::Color::Lime },
-  { 18, osgEarth::Color::Yellow },
-  { 50, osgEarth::Color::Red },
-  { 75, osgEarth::Color::Purple },
+  { 0.f, osgEarth::Color::Blue },
+  { 8.f, osgEarth::Color::Cyan },
+  { 13.f, osgEarth::Color::Lime },
+  { 18.f, osgEarth::Color::Yellow },
+  { 50.f, osgEarth::Color::Red },
+  { 75.f, osgEarth::Color::Purple },
 };
 
 // Helper node that will run a fragment shader, taking one texture as input and writing to another texture.
