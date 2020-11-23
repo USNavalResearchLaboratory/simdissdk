@@ -628,7 +628,7 @@ ColorGradientWidget::ColorGradientWidget(QWidget* parent)
   display_ = new GradientDisplayWidget(*model_);
   QSizePolicy policy;
   policy.setHorizontalPolicy(QSizePolicy::Expanding);
-  policy.setVerticalPolicy(QSizePolicy::Expanding);
+  policy.setVerticalPolicy(QSizePolicy::Minimum);
   policy.setHorizontalStretch(10); // Arbitrary number larger than defaults of other items
   display_->setSizePolicy(policy);
   display_->setToolTip(simQt::formatTooltip(tr("Color Gradient"), GRAD_WIDGET_TOOLTIP));
