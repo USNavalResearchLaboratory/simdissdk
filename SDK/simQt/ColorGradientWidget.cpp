@@ -59,6 +59,11 @@ static const QColor HANDLE_PICK_COLOR = Qt::white;
 
 static const QString GRAD_WIDGET_TOOLTIP = QObject::tr("Left-click and drag to move a color stop, changing its value.<p>Double-click to add or edit a stop.<p>Right-click to remove a stop.");
 
+/** Converts a percentage value [0..1] to a user display value, hard-coded to whole number percentages [0..100] */
+static const auto TO_USER_VALUE = [](float pct) -> float { return pct * 100.0f; };
+/** Converts a user value (whole number percentage [0..100]) to a percent value [0..1] */
+static const auto FROM_USER_VALUE = [](float val) -> float { return val * 0.01f; };
+
 ////////////////////////////////////////////////////
 
 /**
@@ -168,8 +173,9 @@ public:
         if (role == DECIMAL_VALUE_ROLE)
           return iter->first;
         else if (role == Qt::EditRole)
-          return iter->first * 100.f;
-        return QString::number(static_cast<int>(iter->first * 100.f), 'f', 0) + QString("%");
+          return TO_USER_VALUE(iter->first);
+        // Use rint() to round the value to avoid floating point rounding issues (e.g. 2.999987 to 2)
+        return QString::number(static_cast<int>(simCore::rint(TO_USER_VALUE(iter->first))), 'f', 0) + QString("%");
       }
       case COL_COLOR:
         return iter->second;
@@ -203,12 +209,12 @@ public:
       if (role == DECIMAL_VALUE_ROLE)
         val = value.toFloat();
       else
-        val = (value.toString().replace("%", "").toFloat() / 100.f);
+        val = FROM_USER_VALUE(value.toString().replace("%", "").toFloat());
 
       // Block invalid or duplicate values
       if (val < 0.f || val > 1.f || hasStop_(val))
         return false;
-      iter->first = value.toFloat();
+      iter->first = val;
       emit dataChanged(createIndex(index.row(), COL_VALUE), createIndex(index.row(), COL_VALUE));
       return true;
     }
@@ -328,7 +334,7 @@ public:
   }
 
 private:
-  /** Convenience method to add a stop with proper signalling */
+  /** Convenience method to add a stop with proper signaling */
   QModelIndex addStop_(float value, const QColor& color)
   {
     const int rowIdx = colorStops_.size();
@@ -520,7 +526,7 @@ public:
 
     QPoint ttPos = mapToGlobal(QPoint(evt->x(), y()));
     QToolTip::showText(ttPos,
-      tr("Value: ") + QString::number(static_cast<int>(newVal * 100.f), 'f', 0) + QString("%"),
+      tr("Value: ") + QString::number(static_cast<int>(simCore::rint(TO_USER_VALUE(newVal))), 'f', 0) + QString("%"),
       this);
   }
 
