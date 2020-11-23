@@ -29,6 +29,7 @@
 #include <QToolTip>
 #include <QTreeView>
 #include <QSortFilterProxyModel>
+#include "simCore/Calc/Interpolation.h"
 #include "simCore/Calc/Math.h"
 #include "simQt/ColorWidget.h"
 #include "simQt/ColorWidgetDelegate.h"
@@ -63,6 +64,8 @@ static const QString GRAD_WIDGET_TOOLTIP = QObject::tr("Left-click and drag to m
 static const auto TO_USER_VALUE = [](float pct) -> float { return pct * 100.0f; };
 /** Converts a user value (whole number percentage [0..100]) to a percent value [0..1] */
 static const auto FROM_USER_VALUE = [](float val) -> float { return val * 0.01f; };
+/** Default value suffix (percentage) */
+static const QString DEFAULT_VALUE_SUFFIX = QObject::tr("%");
 
 ////////////////////////////////////////////////////
 
@@ -74,8 +77,14 @@ class ColorGradientWidget::ColorGradientModel : public QAbstractTableModel
 {
 public:
   explicit ColorGradientModel(QObject* parent = nullptr)
-    : QAbstractTableModel(parent)
-  {}
+    : QAbstractTableModel(parent),
+    toUserValue_(TO_USER_VALUE),
+    fromUserValue_(FROM_USER_VALUE),
+    valueSuffix_(DEFAULT_VALUE_SUFFIX),
+    suffixInTableItems_(true),
+    suffixInTableHeader_(false)
+  {
+  }
 
   enum Column
   {
@@ -89,6 +98,61 @@ public:
     /// Indicates that the value is already in the [0,1] range and not a percent string
     DECIMAL_VALUE_ROLE = Qt::UserRole
   };
+
+  /** Changes the formatting for user values */
+  void setFormatters(const std::function<float(float)>& toUserValue, const std::function<float(float)>& fromUserValue)
+  {
+    toUserValue_ = toUserValue;
+    fromUserValue_ = fromUserValue;
+    // Emit dataChanged on the column for stops
+    if (!colorStops_.empty())
+      emit dataChanged(createIndex(0, COL_VALUE), createIndex(colorStops_.size() - 1, COL_VALUE));
+  }
+
+  /** Changes the values suffix */
+  void setValueSuffix(const QString& suffix)
+  {
+    if (valueSuffix_ == suffix)
+      return;
+    valueSuffix_ = suffix;
+
+    // Emit dataChanged on the column for stops
+    if (!colorStops_.empty() && suffixInTableItems_)
+      emit dataChanged(createIndex(0, COL_VALUE), createIndex(colorStops_.size() - 1, COL_VALUE));
+    if (suffixInTableHeader_)
+      emit headerDataChanged(Qt::Horizontal, COL_VALUE, COL_VALUE);
+  }
+
+  /** Changes whether suffix is shown for each table item */
+  void setSuffixInTableItems(bool val)
+  {
+    if (suffixInTableItems_ == val)
+      return;
+    suffixInTableItems_ = val;
+    if (!colorStops_.empty())
+      emit dataChanged(createIndex(0, COL_VALUE), createIndex(colorStops_.size() - 1, COL_VALUE));
+  }
+
+  /** Changes whether suffix is shown in table header */
+  void setSuffixInTableHeader(bool val)
+  {
+    if (suffixInTableHeader_ == val)
+      return;
+    suffixInTableHeader_ = val;
+    emit headerDataChanged(Qt::Horizontal, COL_VALUE, COL_VALUE);
+  }
+
+  /** If true, suffix is shown in the table's header */
+  bool suffixInTableHeader() const
+  {
+    return suffixInTableHeader_;
+  }
+
+  /** If true, suffix is shown for each item in the table */
+  bool suffixInTableItems() const
+  {
+    return suffixInTableItems_;
+  }
 
   // Overridden from QAbstractTableModel
   virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
@@ -126,7 +190,9 @@ public:
     switch (static_cast<Column>(section))
     {
     case COL_VALUE:
-      return (role == Qt::DisplayRole ? tr("Value") : VALUE_TOOLTIP);
+      if (role == Qt::ToolTipRole)
+        return VALUE_TOOLTIP;
+      return (suffixInTableHeader_ && !valueSuffix_.isEmpty()) ? tr("Value (%1)").arg(valueSuffix_.trimmed()) : tr("Value");
     case COL_COLOR:
       return (role == Qt::DisplayRole ? tr("Color") : COLOR_TOOLTIP);
     default:
@@ -173,9 +239,10 @@ public:
         if (role == DECIMAL_VALUE_ROLE)
           return iter->first;
         else if (role == Qt::EditRole)
-          return TO_USER_VALUE(iter->first);
+          return toUserValue_(iter->first);
         // Use rint() to round the value to avoid floating point rounding issues (e.g. 2.999987 to 2)
-        return QString::number(static_cast<int>(simCore::rint(TO_USER_VALUE(iter->first))), 'f', 0) + QString("%");
+        const QString userString = QString::number(static_cast<int>(simCore::rint(toUserValue_(iter->first))), 'f', 0);
+        return suffixInTableItems_ ? (userString + valueSuffix_) : userString;
       }
       case COL_COLOR:
         return iter->second;
@@ -209,7 +276,7 @@ public:
       if (role == DECIMAL_VALUE_ROLE)
         val = value.toFloat();
       else
-        val = FROM_USER_VALUE(value.toString().replace("%", "").toFloat());
+        val = fromUserValue_(value.toString().replace(valueSuffix_.trimmed(), "").toFloat());
 
       // Block invalid or duplicate values
       if (val < 0.f || val > 1.f || hasStop_(val))
@@ -404,6 +471,17 @@ private:
 
   /** Unordered vector pairing values with corresponding colors */
   std::vector<std::pair<float, QColor> > colorStops_;
+
+  /** Convert to and from user values */
+  std::function<float(float)> toUserValue_;
+  std::function<float(float)> fromUserValue_;
+  /** Suffix for values in the table */
+  QString valueSuffix_;
+
+  /** Show the suffix on model entries */
+  bool suffixInTableItems_;
+  /** Show the suffix in the header (Stops (%1)) */
+  bool suffixInTableHeader_;
 };
 
 ////////////////////////////////////////////////////
@@ -420,7 +498,9 @@ public:
     model_(model),
     showAlpha_(true),
     dragIndex_(QModelIndex()),
-    pickIndex_(QModelIndex())
+    pickIndex_(QModelIndex()),
+    toUserValue_(TO_USER_VALUE),
+    valueSuffix_(DEFAULT_VALUE_SUFFIX)
   {
     setMinimumHeight(HANDLE_SIZE_PX + HANDLE_THICKNESS_PX + OUTLINE_THICKNESS_PX);
     // Enable mouse tracking so we get move events with no buttons pressed
@@ -434,6 +514,16 @@ public:
   void setShowAlpha(bool showAlpha)
   {
     showAlpha_ = showAlpha;
+  }
+
+  void setToUserValue(const std::function<float(float)>& toUserValue)
+  {
+    toUserValue_ = toUserValue;
+  }
+
+  void setValueSuffix(const QString& suffix)
+  {
+    valueSuffix_ = suffix;
   }
 
   virtual void paintEvent(QPaintEvent* event) override
@@ -524,9 +614,9 @@ public:
     assert(dragIndex_.column() == ColorGradientModel::COL_VALUE); // Dev Error: model should've given value index
     model_.setData(dragIndex_, newVal, ColorGradientModel::DECIMAL_VALUE_ROLE);
 
-    QPoint ttPos = mapToGlobal(QPoint(evt->x(), y()));
+    const QPoint ttPos = mapToGlobal(QPoint(evt->x(), y()));
     QToolTip::showText(ttPos,
-      tr("Value: ") + QString::number(static_cast<int>(simCore::rint(TO_USER_VALUE(newVal))), 'f', 0) + QString("%"),
+      tr("Value: %1%2").arg(QString::number(static_cast<int>(simCore::rint(toUserValue_(newVal))), 'f', 0)).arg(valueSuffix_),
       this);
   }
 
@@ -609,6 +699,10 @@ private:
   bool showAlpha_;
   QPersistentModelIndex dragIndex_;
   QPersistentModelIndex pickIndex_;
+
+  /** Convert to user values */
+  std::function<float(float)> toUserValue_;
+  QString valueSuffix_;
 };
 
 ////////////////////////////////////////////////////
@@ -620,7 +714,10 @@ ColorGradientWidget::ColorGradientWidget(QWidget* parent)
   treeView_(nullptr),
   showTable_(true),
   showAlpha_(true),
-  showHelp_(true)
+  showHelp_(true),
+  minUserValue_(0.f),
+  maxUserValue_(100.f),
+  valueSuffix_(DEFAULT_VALUE_SUFFIX)
 {
   model_ = new ColorGradientModel(this);
   proxyModel_ = new QSortFilterProxyModel(this);
@@ -697,6 +794,31 @@ bool ColorGradientWidget::gradientIsValid() const
   return model_->rowCount() >= 2;
 }
 
+double ColorGradientWidget::minimumUserValue() const
+{
+  return minUserValue_;
+}
+
+double ColorGradientWidget::maximumUserValue() const
+{
+  return maxUserValue_;
+}
+
+QString ColorGradientWidget::valueSuffix() const
+{
+  return valueSuffix_;
+}
+
+bool ColorGradientWidget::suffixInTableHeader() const
+{
+  return model_->suffixInTableHeader();
+}
+
+bool ColorGradientWidget::suffixInTableItems() const
+{
+  return model_->suffixInTableItems();
+}
+
 void ColorGradientWidget::setShowTable(bool show)
 {
   if (show == showTable_)
@@ -729,6 +851,67 @@ void ColorGradientWidget::setShowHelp(bool show)
 
   showHelp_ = show;
   ui_->helpButton->setVisible(showHelp_);
+}
+
+void ColorGradientWidget::setMinimumUserValue(double val)
+{
+  if (val == minUserValue_)
+    return;
+  minUserValue_ = val;
+  updateMinMaxUserValues_();
+}
+
+void ColorGradientWidget::setMaximumUserValue(double val)
+{
+  if (val == maxUserValue_)
+    return;
+  maxUserValue_ = val;
+  updateMinMaxUserValues_();
+}
+
+void ColorGradientWidget::setValueSuffix(const QString& suffix)
+{
+  if (valueSuffix_ == suffix)
+    return;
+  valueSuffix_ = suffix;
+
+  // Block outgoing signals, preventing emitGradientChanged_() when labels update
+  simQt::ScopedSignalBlocker blockSignals(*this);
+
+  // Always show the value suffix in the display widget
+  display_->setValueSuffix(valueSuffix_);
+  model_->setValueSuffix(valueSuffix_);
+  // Update the ends of the gradient
+  ui_->minValueLabel->setText(QString::number(minUserValue_) + valueSuffix_);
+  ui_->maxValueLabel->setText(QString::number(maxUserValue_) + valueSuffix_);
+}
+
+void ColorGradientWidget::setSuffixInTableHeader(bool val)
+{
+  model_->setSuffixInTableHeader(val);
+}
+
+void ColorGradientWidget::setSuffixInTableItems(bool val)
+{
+  model_->setSuffixInTableItems(val);
+}
+
+void ColorGradientWidget::updateMinMaxUserValues_()
+{
+  ui_->minValueLabel->setText(QString::number(minUserValue_) + valueSuffix_);
+  ui_->maxValueLabel->setText(QString::number(maxUserValue_) + valueSuffix_);
+  auto toUser = [=](float pct) -> float {
+    return static_cast<float>(simCore::linearInterpolate(minUserValue_, maxUserValue_, 0.f, pct, 1.f));
+  };
+  auto fromUser = [=](float user) -> float {
+    return static_cast<float>(simCore::getFactor(minUserValue_, user, maxUserValue_));
+  };
+
+  display_->setToUserValue(toUser);
+
+  // Block outgoing signals, preventing emitGradientChanged_() when labels update
+  simQt::ScopedSignalBlocker blockSignals(*this);
+  model_->setFormatters(toUser, fromUser);
 }
 
 void ColorGradientWidget::emitGradientChanged_()
