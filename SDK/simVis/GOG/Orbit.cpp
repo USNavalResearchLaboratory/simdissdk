@@ -22,12 +22,15 @@
  */
 
 #include "osgEarth/LocalGeometryNode"
+#include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/GOG/GogShape.h"
 #include "simVis/GOG/ErrorHandler.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/LoaderUtils.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 #include "simVis/GOG/Orbit.h"
@@ -36,7 +39,7 @@
 namespace {
 
 // generate an orbit geometry from specified parameters, azimuth in radians, others in meters
-osgEarth::Geometry* createOrbit(double azimuthRad, double lengthM, double radiusM, double altitudeM)
+osgEarth::Geometry* createOrbitShape(double azimuthRad, double lengthM, double radiusM, double altitudeM)
 {
   osgEarth::Geometry* geom = new osgEarth::LineString();
   if (radiusM <= 0)
@@ -122,7 +125,7 @@ GogNodeInterface* Orbit::deserialize(
     double azimuth = 0.;
     double length = simCore::sodanoInverse(ctr1.y() * simCore::DEG2RAD, ctr1.x() * simCore::DEG2RAD, ctr1.z(),
       ctr2.y() * simCore::DEG2RAD, ctr2.x() * simCore::DEG2RAD, &azimuth, nullptr);
-    osgEarth::Geometry* geom = createOrbit(azimuth, length, radius, ctr1.z());
+    osgEarth::Geometry* geom = createOrbitShape(azimuth, length, radius, ctr1.z());
 
     osgEarth::Style style(p.style_);
     node = new osgEarth::LocalGeometryNode(geom, style);
@@ -151,7 +154,7 @@ GogNodeInterface* Orbit::deserialize(
     if (yLen > 0)
       azimuth += M_PI;
 
-    osgEarth::Geometry* geom = createOrbit(simCore::angFix2PI(azimuth), length, radius, ctr1.z());
+    osgEarth::Geometry* geom = createOrbitShape(simCore::angFix2PI(azimuth), length, radius, ctr1.z());
     osgEarth::Style style(p.style_);
     node = new HostedLocalGeometryNode(geom, style);
   }
@@ -167,5 +170,60 @@ GogNodeInterface* Orbit::deserialize(
 
   return rv;
  }
+
+GogNodeInterface* Orbit::createOrbit(const simCore::GOG::Orbit& orbit, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
+{
+  double radius = 0.;
+  orbit.getRadius(radius);
+
+  simCore::Vec3 center1;
+  orbit.getCenterPosition(center1);
+  simCore::Vec3 center2 = orbit.centerPosition2();
+
+  osgEarth::LocalGeometryNode* node = nullptr;
+  osgEarth::Style style;
+  if (!orbit.isRelative())
+  {
+    // find azimuth and length of orbit
+    double azimuth = 0.;
+    double length = simCore::sodanoInverse(center1.x(), center1.y(), center1.z(),
+      center2.x(), center2.y(), &azimuth, nullptr);
+    osgEarth::Geometry* geom = createOrbitShape(azimuth, length, radius, center1.z());
+
+    node = new osgEarth::LocalGeometryNode(geom, style);
+    node->setMapNode(mapNode);
+  }
+  else
+  {
+    double xLen = center1.x() - center2.x();
+    double yLen = center1.y() - center2.y();
+    
+    double length = 0.;
+    if (xLen != 0. || yLen != 0.)
+      length = sqrt((xLen * xLen) + (yLen * yLen));
+
+    double azimuth = M_PI_2;
+    if (yLen != 0.)
+      azimuth = atan(xLen / yLen);
+    else if (xLen > 0.)
+      azimuth = M_PI_2 * 3;
+
+    if (yLen > 0.)
+      azimuth += M_PI;
+    osgEarth::Geometry* geom = createOrbitShape(simCore::angFix2PI(azimuth), length, radius, center1.z());
+    if (attached)
+      node = new HostedLocalGeometryNode(geom, style);
+    else
+    {
+      node = new osgEarth::LocalGeometryNode(geom, style);
+      node->setMapNode(mapNode);
+    }
+  }
+
+  node->setName("Orbit");
+  LoaderUtils::setShapePositionOffsets(*node, orbit, center1, refPoint, attached, false);
+  GogMetaData metaData;
+  return new LocalGeometryNodeInterface(node, metaData);
+}
 
 }}

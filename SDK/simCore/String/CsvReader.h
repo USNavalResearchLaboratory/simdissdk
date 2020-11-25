@@ -40,7 +40,7 @@ namespace simCore
 class SDKCORE_EXPORT CsvReader
 {
 public:
-  explicit CsvReader(std::istream& stream);
+  explicit CsvReader(std::istream& stream, const std::string& delimiters = ",");
   virtual ~CsvReader();
 
   /**
@@ -88,6 +88,7 @@ private:
   void getTokens_(std::vector<std::string>& tokens, const std::string& line) const;
 
   std::istream& stream_;
+  std::string delimiters_;
   bool parseQuotes_;
   char commentChar_;
   size_t lineNumber_;

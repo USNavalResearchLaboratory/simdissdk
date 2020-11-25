@@ -28,7 +28,7 @@
 namespace simCore { namespace GOG {
 
 ParsedShape::ParsedShape()
-  : shape_(GogShape::ShapeType::UNKNOWN),
+  : shape_(ShapeType::UNKNOWN),
     pointType_(UNKNOWN),
     lineNumber_(0)
 {
@@ -36,12 +36,13 @@ ParsedShape::ParsedShape()
 
 void ParsedShape::reset()
 {
-  shape_ = GogShape::ShapeType::UNKNOWN;
+  shape_ = ShapeType::UNKNOWN;
   stringParams_.clear();
   positionParams_.clear();
   points_.clear();
   pointType_ = UNKNOWN;
   lineNumber_ = 0;
+  comments_.clear();
 }
 
 void ParsedShape::setLineNumber(size_t lineNumber)
@@ -77,12 +78,7 @@ bool ParsedShape::boolValue(ShapeParameter key, bool defaultValue) const
   auto i = stringParams_.find(key);
   if (i == stringParams_.end())
     return defaultValue;
-  const std::string& temp = simCore::lowerCase(i->second);
-  if (temp == "true" || temp == "yes" || temp == "on" || temp == "1")
-    return true;
-  if (temp == "false" || temp == "no" || temp == "off" || temp == "0")
-    return false;
-  return defaultValue;
+  return getBoolFromString(i->second);
 }
 
 double ParsedShape::doubleValue(ShapeParameter key, double defaultValue) const
@@ -110,12 +106,12 @@ bool ParsedShape::hasValue(ShapeParameter key) const
     (positionParams_.find(key) != positionParams_.end());
 }
 
-void ParsedShape::setShape(GogShape::ShapeType shape)
+void ParsedShape::setShape(ShapeType shape)
 {
   shape_ = shape;
 }
 
-GogShape::ShapeType ParsedShape::shape() const
+ShapeType ParsedShape::shape() const
 {
   return shape_;
 }
@@ -133,7 +129,6 @@ int ParsedShape::append(PointType pointType, const PositionStrings& pos)
   else if (pointType_ != pointType)
   {
     // Cannot mix and match "ll" and "xy" in same GOG
-    assert(0);
     return 1;
   }
   points_.push_back(pos);
@@ -158,6 +153,12 @@ void ParsedShape::addComment(const std::string& comment)
 const std::vector<std::string>& ParsedShape::comments() const
 {
   return comments_;
+}
+
+bool ParsedShape::getBoolFromString(const std::string& boolStr)
+{
+  const std::string& temp = simCore::lowerCase(boolStr);
+  return stringIsTrueToken(temp);
 }
 
 }}

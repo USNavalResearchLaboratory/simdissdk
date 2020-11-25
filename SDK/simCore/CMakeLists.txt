@@ -116,6 +116,7 @@ set(CORE_STRING_HEADERS
     ${CORE_STRING_INC}TextFormatter.h
     ${CORE_STRING_INC}TextReplacer.h
     ${CORE_STRING_INC}UnitContextFormatter.h
+    ${CORE_STRING_INC}UtfUtils.h
     ${CORE_STRING_INC}Utils.h
     ${CORE_STRING_INC}ValidNumber.h
 )
@@ -182,13 +183,6 @@ set(CORE_GOG_SOURCES
 source_group(Headers\\GOG FILES ${CORE_GOG_HEADERS})
 source_group("Source Files\\GOG" FILES ${CORE_GOG_SOURCES})
 
-# ----- simCore.h --------------------------------------------------------
-
-set(CORE_ALL_HEADER
-    ../simCore.h
-)
-source_group("" FILES ${CORE_ALL_HEADER})
-
 # ----------------------------------------------------------------------
 
 # Avoid false MSVC 2017/2019 MSB8027 warning from Unity build on Utils.cpp and Angle.cpp
@@ -204,7 +198,6 @@ set(CORE_PROJECT_FILES
     ${CORE_TIME_HEADERS} ${CORE_TIME_SOURCES}
     ${CORE_STRING_HEADERS} ${CORE_STRING_SOURCES}
     ${CORE_GOG_HEADERS} ${CORE_GOG_SOURCES}
-    ${CORE_ALL_HEADER}
 )
 
 # Create the Version.h file
@@ -265,6 +258,4 @@ if(INSTALL_HEADERS)
         DESTINATION include/simCore/Time)
     install(FILES ${CORE_GOG_HEADERS}
         DESTINATION include/simCore/GOG)
-    install(FILES ${CORE_ALL_HEADER}
-        DESTINATION include)
 endif()

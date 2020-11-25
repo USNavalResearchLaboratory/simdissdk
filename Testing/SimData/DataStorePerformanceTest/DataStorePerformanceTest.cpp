@@ -23,6 +23,7 @@
 #include <fstream>
 
 #include "simCore/Common/Version.h"
+#include "simCore/String/UtfUtils.h"
 #include "simData/MemoryDataStore.h"
 #include "simData/LinearInterpolator.h"
 #include "simData/DataTable.h"
@@ -1000,7 +1001,7 @@ int loadConfigurationFile(const std::string& fileName, TopLevelOptions& options,
     return -1;
 
   // open the config file
-  std::ifstream is(fileName.c_str());
+  std::ifstream is(simCore::streamFixUtf8(fileName));
   if (!is.is_open())
   {
     std::cerr << "Could not open configuration file: " << fileName << std::endl;

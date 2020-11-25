@@ -126,7 +126,7 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, Locator* parent
   activeColor_ = defaultColor_;
 
   localLocator_ = new simVis::Locator(parentLocator_.get());
-
+  setName("TrackHistory Group");
   setNodeMask(simVis::DISPLAY_MASK_TRACK_HISTORY);
 
   reset();

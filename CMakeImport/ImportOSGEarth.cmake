@@ -39,7 +39,10 @@ mark_as_advanced(FORCE ${LIBRARYNAME}_LIBRARY_INCLUDE_PATH ${LIBRARYNAME}_LIBRAR
 
 # Configure compile and link flags for osgEarth
 if(TARGET GDAL)
-    set(${LIBRARYNAME}_LINK_LIBRARIES GDAL)
+    list(APPEND ${LIBRARYNAME}_LINK_LIBRARIES GDAL)
+endif()
+if(TARGET GEOS_C)
+    list(APPEND ${LIBRARYNAME}_LINK_LIBRARIES GEOS_C)
 endif()
 if(EXISTS "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}/osgEarthDrivers/sky_silverlining/SilverLiningOptions")
     list(APPEND ${LIBRARYNAME}_COMPILE_DEFINITIONS HAVE_OSGEARTH_SILVERLINING)
@@ -116,7 +119,7 @@ endforeach()
 # Plug-ins are found in lib, unless on Windows
 set(OS_PLUGIN_SUBDIR "lib${LIBDIRSUFFIX}")
 if(WIN32)
-  set(OS_PLUGIN_SUBDIR "bin")
+    set(OS_PLUGIN_SUBDIR "bin")
 endif()
 set(OS_PLUGIN_SUBDIR "${OS_PLUGIN_SUBDIR}/osgPlugins-${OSG_VERSION}")
 

@@ -194,6 +194,8 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/LatLonAltBox.h
     ${VIS_INC}GOG/Line.h
     ${VIS_INC}GOG/LineSegs.h
+    ${VIS_INC}GOG/Loader.h
+    ${VIS_INC}GOG/LoaderUtils.h
     ${VIS_INC}GOG/Orbit.h
     ${VIS_INC}GOG/ParsedShape.h
     ${VIS_INC}GOG/Parser.h
@@ -339,6 +341,8 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/LatLonAltBox.cpp
     ${VIS_SRC}GOG/Line.cpp
     ${VIS_SRC}GOG/LineSegs.cpp
+    ${VIS_SRC}GOG/Loader.cpp
+    ${VIS_SRC}GOG/LoaderUtils.cpp
     ${VIS_SRC}GOG/Orbit.cpp
     ${VIS_SRC}GOG/ParsedShape.cpp
     ${VIS_SRC}GOG/Parser.cpp
@@ -346,10 +350,6 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/Polygon.cpp
     ${VIS_SRC}GOG/Sphere.cpp
     ${VIS_SRC}GOG/Utils.cpp
-)
-
-set(VIS_ALL_HEADER
-    ${VIS_INC}../simVis.h
 )
 
 if(OSGEARTH_TRITON_SUPPORT STREQUAL NODEKIT)
@@ -396,8 +396,6 @@ source_group("Source Files\\RFProp" FILES ${VIS_SOURCES_RFPROP})
 source_group(Headers\\GOG FILES ${VIS_HEADERS_GOG})
 source_group("Source Files\\GOG" FILES ${VIS_SOURCES_GOG})
 
-source_group("" FILES ${VIS_ALL_HEADER})
-
 set(VIS_HEADERS ${VIS_HEADERS_CORE} ${VIS_HEADERS_RFPROP} ${VIS_HEADERS_GOG})
 set(VIS_SOURCES ${VIS_SOURCES_CORE} ${VIS_SOURCES_RFPROP} ${VIS_SOURCES_GOG} ${VIS_SHADER_FILES})
 
@@ -419,7 +417,7 @@ set_source_files_properties(${VIS_SRC}Utils.cpp ${VIS_SRC}Headless.cpp ${VIS_SRC
     PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 
 set(VIS_PROJECT_FILES
-    ${VIS_HEADERS} ${VIS_SOURCES} ${VIS_ALL_HEADER}
+    ${VIS_HEADERS} ${VIS_SOURCES}
 )
 
 # Fix the library for static or shared
@@ -490,6 +488,4 @@ if(INSTALL_HEADERS)
         DESTINATION include/simVis/RFProp)
     install(FILES ${VIS_HEADERS_GOG}
         DESTINATION include/simVis/GOG)
-    install(FILES ${VIS_ALL_HEADER}
-        DESTINATION include)
 endif()

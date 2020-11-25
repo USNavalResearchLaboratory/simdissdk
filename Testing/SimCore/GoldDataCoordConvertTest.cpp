@@ -43,6 +43,7 @@
 // coordsys@nga.mil
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/String/UtfUtils.h"
 
 #include <vector>
 #include <string>
@@ -158,7 +159,7 @@ int loadGoldData(const std::string &fname, vector<Coordinate> &inVec,
 {
   const bool lla = cs == COORD_SYS_LLA;
 
-  ifstream inFile(fname.c_str());
+  ifstream inFile(simCore::streamFixUtf8(fname));
   std::string st;
   std::vector<std::string> tmpvec;
   double pos[3];

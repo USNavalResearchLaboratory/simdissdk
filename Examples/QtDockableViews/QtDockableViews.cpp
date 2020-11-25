@@ -26,6 +26,8 @@
  * Demonstrates using simVis::View objects in QDockWidgets with a QMainWindow
  */
 
+#include "osgEarth/Registry"
+
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
@@ -186,6 +188,11 @@ void MyMainWindow::createMainView_()
   viewWidget->setMinimumSize(2, 2);
   viewWidget->resize(100, 100);
   centralWidget()->layout()->addWidget(viewWidget);
+
+  // by default, the database pager unreferenced image objects once it downloads them
+  // the driver. In composite viewer mode we don't want that since we may be adding
+  // and removing views.  This may use more memory, but it's a requirement for multiple GCs.
+  mainview->getScene()->getDatabasePager()->setUnrefImageDataAfterApplyPolicy(true, false);
 }
 
 simVis::View* MyMainWindow::createView_(const QString& name) const
@@ -211,6 +218,11 @@ int main(int argc, char** argv)
 
   if (arguments.read("--help"))
     return usage(argv);
+
+  // Need to turn off the un-ref image data after apply, else the multiple graphics
+  // contexts will attempt to grab images that no longer exist.  This should be called
+  // if you expect multiple graphics contexts rendering the same scene.
+  osgEarth::Registry::instance()->unRefImageDataAfterApply() = false;
 
   // read the framerate
   int framerate = 20;

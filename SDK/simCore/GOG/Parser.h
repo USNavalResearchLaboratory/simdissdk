@@ -37,7 +37,7 @@ class UnitsRegistry;
 
 namespace GOG
 {
-struct UnitsState;
+class UnitsState;
 
 /**
  * Parses GOG files (streams).
@@ -85,14 +85,20 @@ private:
   /// Parses the optional fields for a PointBasedShape, calls parseFillable_()
   void parsePointBasedOptional_(const ParsedShape& parsed, const std::string& name, PointBasedShape* shape) const;
   /// Parses the optional fields a CircularShape, calls parseFillable_()
-  void parseCircularOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularShape* shape) const;
+  void parseCircularOptional_(const ParsedShape& parsed, bool relative, const std::string& name, const UnitsState& units, CircularShape* shape) const;
+  /// Parses the optional height field for a CircularHeightShape
+  void parseCircularHeightOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, CircularHeightShape* shape) const;
+  /// Parses the optional fields for an EllipticalShape
+  void parseEllipticalOptional_(const ParsedShape& parsed, const std::string& name, const UnitsState& units, EllipticalShape* shape) const;
 
   /// Return true if the specified token is a comment
   bool isComment_(const std::string& token) const;
   /// Get the color value from the specified parameter in the parsed shape; returns 0 on success, non-zero otherwise
-  int getColor_(const ParsedShape& parsed, ShapeParameter param, const std::string& shapeName, const std::string& fieldName, GogShape::Color& color) const;
+  int getColor_(const ParsedShape& parsed, ShapeParameter param, const std::string& shapeName, const std::string& fieldName, Color& color) const;
   // Get the positions from the specified PositionStrings, applying unit conversions if necessary; returns 0 on success, non-zero otherwise
   int getPosition_(const PositionStrings& pos, bool relative, const UnitsState& units, simCore::Vec3& position) const;
+  /// Validate that the specified string converts to a double properly, print error on failure; return 0 on success, non-zero otherwise
+  int validateDouble_(const std::string& valueStr, const std::string& paramName, const std::string& name, size_t lineNumber, double& value) const;
 
   /// Initialize the default GOG colors
   void initGogColors_();

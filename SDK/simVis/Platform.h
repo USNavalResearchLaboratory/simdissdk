@@ -87,10 +87,10 @@ public:
     int referenceYear = 1970);
 
   /**
-  * Access to the group that holds track history and vapor trail (to support expire mode)
+  * Gets or Creates the group that holds track history and vapor trail (to support expire mode)
   * @return expireModeGroup
   */
-  osg::Group* getExpireModeGroup() const;
+  osg::Group* getOrCreateExpireModeGroup();
 
   /**
   * Access to the node that renders the 3D model/icon

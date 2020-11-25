@@ -23,12 +23,14 @@
 #ifndef SIMCORE_GOG_GOGSHAPE_H
 #define SIMCORE_GOG_GOGSHAPE_H
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Common/Common.h"
 #include "simCore/Common/Optional.h"
+#include "simCore/GOG/GogUtils.h"
 
 /**
 * Class hierarchy for GOG shapes, only leaf nodes can be directly instantiated
@@ -38,6 +40,7 @@
 *   OutlinedShape:
 *     Point
 *     FillableShape:
+*       LatLonAltBox
 *       PointBasedShape:
 *         Line
 *         LineSegs
@@ -50,63 +53,88 @@
 *         CircularHeightShape:
 *           Cone
 *           Ellipsoid
-*       EllipticalShape:
-*         Arc
-*         Ellipse
-*         Cylinder
-*         LatLonAltBox
+*         EllipticalShape:
+*           Arc
+*           Ellipse
+*           Cylinder
 */
 
 namespace simCore { namespace GOG {
+
+/// Defines special behavior pertaining to a shape's altitude
+enum class AltitudeMode
+{
+  NONE = 0,
+  CLAMP_TO_GROUND,
+  RELATIVE_TO_GROUND,
+  EXTRUDE
+};
+
+/// Shape being represented
+enum class ShapeType
+{
+  UNKNOWN = 0,
+  ANNOTATION,
+  POINTS,
+  LINE,
+  LINESEGS,
+  POLYGON,
+  ARC,
+  CIRCLE,
+  ELLIPSE,
+  ELLIPSOID,
+  CYLINDER,
+  SPHERE,
+  HEMISPHERE,
+  LATLONALTBOX,
+  CONE,
+  IMAGEOVERLAY,
+  ORBIT
+};
+
+// Define's a GOG color's RGBA values, 0-255
+struct SDKCORE_EXPORT Color
+{
+  int red;
+  int green;
+  int blue;
+  int alpha;
+
+  Color(int redIn, int greenIn, int blueIn, int alphaIn) : red(redIn), green(greenIn), blue(blueIn), alpha(alphaIn) {};
+  Color() : Color(255, 0, 0, 255) {}
+  bool operator==(const Color& rhs) const { return red == rhs.red && green == rhs.green && blue == rhs.blue && alpha == rhs.alpha; }
+  // serialize out in GOG format, 0xAABBGGRR
+  std::string serialize() const;
+};
+
+/// Defines how the line stipple is drawn for a FillableShape
+enum class LineStyle
+{
+  SOLID = 0,
+  DASHED,
+  DOTTED
+};
+
+/// Calculation to use when applying tessellation for PointBasedShape
+enum class TessellationStyle
+{
+  NONE = 0,
+  RHUMBLINE,
+  GREAT_CIRCLE
+};
+
+/// Thickness style of the text outline for an Annotation
+enum class OutlineThickness
+{
+  NONE = 0,
+  THIN,
+  THICK
+};
 
 /// Base class for the GOG shapes, containing common fields that apply to all shapes
 class SDKCORE_EXPORT GogShape
 {
 public:
-
-  /// Defines special behavior pertaining to a shape's altitude
-  enum class AltitudeMode
-  {
-    NONE = 0,
-    CLAMP_TO_GROUND,
-    RELATIVE_TO_GROUND,
-    EXTRUDE
-  };
-
-  /// Shape being represented
-  enum class ShapeType
-  {
-    UNKNOWN = 0,
-    ANNOTATION,
-    POINTS,
-    LINE,
-    LINESEGS,
-    POLYGON,
-    ARC,
-    CIRCLE,
-    ELLIPSE,
-    ELLIPSOID,
-    CYLINDER,
-    SPHERE,
-    HEMISPHERE,
-    LATLONALTBOX,
-    CONE,
-    IMAGEOVERLAY,
-    ORBIT
-  };
-
-  // Define's a GOG color's RGBA values, 0-255
-  struct Color
-  {
-    int red;
-    int green;
-    int blue;
-    int alpha;
-
-    Color(int redIn, int greenIn, int blueIn, int alphaIn) : red(redIn), green(greenIn), blue(blueIn), alpha(alphaIn) {};
-    Color() : Color(255, 0, 0, 255) {}
-    bool operator==(const Color& rhs) const { return red == rhs.red && green == rhs.green && blue == rhs.blue && alpha == rhs.alpha; }
-  };
 
   virtual ~GogShape();
 
@@ -151,6 +179,14 @@ public:
   int getAltitudeMode(AltitudeMode& mode) const;
   /// Set mode that determines special behavior with regards to shape's altitude values
   void setAltitudeMode(AltitudeMode mode);
+
+  /**
+  * Get the shape's extrusion height in meters, only applies if altitude mode is extrude; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getExtrudeHeight(double& height) const;
+  /// Set the shape's height in meters
+  void setExtrudeHeight(double heightMeters);
 
   /**
   * Get reference position, lla in radians; if value is not set, default value is returned.
@@ -216,14 +252,33 @@ public:
   /// Set roll angle offset from reference orientation in radians
   void setRollOffset(double offsetRad);
 
+  /**
+  * Get the vertical datum string; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getVerticalDatum(std::string& verticalDatum) const;
+  /// Set the vertical datum string
+  void setVerticalDatum(const std::string& verticalDatum);
+
   /// Comments associated with the shape
   const std::vector<std::string>& comments() const;
   void addComment(const std::string& commment);
+
+  /// Return the line number associated with this shape in the original GOG file
+  size_t lineNumber() const;
+  /// Set the line number of the shape in the original GOG file
+  void setLineNumber(size_t lineNumber);
 
   /// Convert a shape type enum to a user friendly string
   static std::string shapeTypeToString(ShapeType shapeType);
   /// Convert a string representation of shape type to its equivalent enum
   static ShapeType stringToShapeType(const std::string& shapeType);
+
+  /// Set the original units of the shape for use when serializing the shape
+  void setOriginalUnits(const UnitsState& units);
+
+  /// Serialize the shape to the specified stream
+  void serializeToStream(std::ostream& gogOutputStream) const;
 
 protected:
   GogShape();
@@ -233,17 +288,28 @@ protected:
   void setCanFollow_(bool canFollow);
   /// Set if shape is relative or absolute
   void setRelative_(bool relative);
+  /// Set if the shape will serialize out its name as a separate line item using '3d name'
+  void setSerializeName_(bool serializeName);
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const = 0;
+  /// Helper method to serialize a list of positions into lla or xyz, depending on relative state
+  void serializePoints_(const std::vector<simCore::Vec3>& points, std::ostream& gogOutputStream) const;
+
+  UnitsState originalUnits_; ///< store original units for serialization
 
 private:
   bool canExtrude_; ///< Indicates if shape supports extrusion
   bool canFollow_; ///< Indicates if shape's orientation can be locked to a reference orientation
   bool relative_; ///< Indicates if shape is relative coordinates (xyz meters) or absolute coordinates (lla radians)
+  bool serializeName_; ///< Indicates if shape will serialize out its name as a separate line item using '3d name'
+  size_t lineNumber_; ///< Location in original GOG file
 
   Optional<std::string> name_; ///< Display name
   Optional<bool> draw_; ///< Draw state
   Optional<double> altitudeOffset_; ///< offset for altitude values, meters
   Optional<bool> depthBuffer_; ///< Depth buffer active state
   Optional<AltitudeMode> altitudeMode_; ///< Defines special behavior for altitude
+  Optional<double> extrudeHeight_; ///< Extrusion height if extruded, meters
   Optional<simCore::Vec3> referencePosition_; ///< Reference position, only valid for relative shapes, lla radians
   Optional<simCore::Vec3> scale_; ///< Scalar adjustments for the shape's xyz components
 
@@ -254,9 +320,8 @@ private:
   Optional<double> pitchOffset_; ///< Angle offset for pitch component, radians
   Optional<double> rollOffset_; ///< Angle offset for roll component, radians
 
+  Optional<std::string> verticalDatum_; ///< String that represents vertical datum, e.g. wgs84
   std::vector<std::string> comments_; ///< Comment strings for the shape
-
-  // TODO: store original units for serialization
 };
 
 /// Shape that supports outlined state
@@ -273,16 +338,18 @@ public:
 
 protected:
   OutlinedShape();
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
   Optional<bool> outlined_; ///< outlined state of the shape
 };
 
 /// Point shape implementation
-class SDKCORE_EXPORT Point : public OutlinedShape
+class SDKCORE_EXPORT Points : public OutlinedShape
 {
 public:
-  explicit Point(bool relative);
+  explicit Points(bool relative);
 
   virtual ShapeType shapeType() const;
 
@@ -290,6 +357,8 @@ public:
   const std::vector<simCore::Vec3>& points() const;
   /// Add a point position; in lla radians if absolute or xyz meters if relative
   void addPoint(const simCore::Vec3& point);
+  /// Clear all stored positions
+  void clearPoints();
 
   /**
   * Get point size for all points in the shape in pixels; if value is not set, default value is returned.
@@ -305,7 +374,11 @@ public:
   */
   int getColor(Color& color) const;
   /// Set the shape's color
-  void setColor(Color& gogColor);
+  void setColor(const Color& gogColor);
+
+protected:
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 public:
   Optional<int> pointSize_; ///< pixels
@@ -317,14 +390,6 @@ public:
 class SDKCORE_EXPORT FillableShape : public OutlinedShape
 {
 public:
-  /// Defines how the line stipple is drawn
-  enum class LineStyle
-  {
-    SOLID = 0,
-    DASHED,
-    DOTTED
-  };
-
   /**
   * Get the line width in pixels; if value is not set, default value is returned.
   * @return 0 if value was set, non-zero otherwise
@@ -367,6 +432,8 @@ public:
 
 protected:
   FillableShape();
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
 
@@ -381,18 +448,12 @@ private:
 class SDKCORE_EXPORT PointBasedShape : public FillableShape
 {
 public:
-  /// Calculation to use when applying tessellation
-  enum class TessellationStyle
-  {
-    NONE = 0,
-    RHUMBLINE,
-    GREAT_CIRCLE
-  };
-
   /// Get the positions of points in the shape; in lla radians if absolute or xyz meters if relative
   const std::vector<simCore::Vec3>& points() const;
   /// Add a point position; in lla radians if absolute or xyz meters if relative
   void addPoint(const simCore::Vec3& point);
+  /// Clear all stored positions
+  void clearPoints();
 
   /**
   * Get the shape's tessellation style; if value is not set, default value is returned.
@@ -404,6 +465,8 @@ public:
 
 protected:
   explicit PointBasedShape(bool relative);
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
   Optional<TessellationStyle> tessellation_; ///< defines calculation used for tessellation
@@ -441,8 +504,11 @@ public:
 class SDKCORE_EXPORT CircularShape : public FillableShape
 {
 public:
-  /// Get the shape's center position; in lla radians if absolute, xyz meters if relative
-  simCore::Vec3 centerPosition() const;
+  /**
+  * Get the shape's center position in lla radians if absolute or xyz meters if relative; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getCenterPosition(simCore::Vec3& centerPosition) const;
   /// Set the shape's center position; in lla radians if absolute, xyz meters if relative
   void setCenterPosition(const simCore::Vec3& centerPosition);
 
@@ -456,9 +522,11 @@ public:
 
 protected:
   CircularShape();
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
-  simCore::Vec3 center_; ///< lla radians if absolute, xyz meters if relative
+  Optional<simCore::Vec3> center_; ///< lla radians if absolute, xyz meters if relative
   Optional<double> radius_; ///< meters
 };
 
@@ -481,10 +549,10 @@ public:
 };
 
 /// 3D Hemisphere shape implementation
-class SDKCORE_EXPORT HemiSphere : public CircularShape
+class SDKCORE_EXPORT Hemisphere : public CircularShape
 {
 public:
-  explicit HemiSphere(bool relative);
+  explicit Hemisphere(bool relative);
 
   virtual ShapeType shapeType() const;
 };
@@ -503,6 +571,9 @@ public:
   void setCenterPosition2(const simCore::Vec3& center2);
 
 private:
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   simCore::Vec3 center2_; ///< lla radians if absolute, xyz meters if relative
 };
 
@@ -544,6 +615,8 @@ public:
 
 protected:
   EllipticalShape();
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
   Optional<double> angleStart_; ///< radians
@@ -571,7 +644,7 @@ public:
 };
 
 /// Cylinder shape implementation, supports elliptical cylinders and wedges
-class SDKCORE_EXPORT Cylinder : EllipticalShape
+class SDKCORE_EXPORT Cylinder : public EllipticalShape
 {
 public:
   explicit Cylinder(bool relative);
@@ -587,6 +660,9 @@ public:
   void setHeight(double heightMeters);
 
 private:
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   Optional<double> height_; ///< meters
 };
 
@@ -604,6 +680,8 @@ public:
 
 protected:
   CircularHeightShape();
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
   Optional<double> height_; ///< meters
@@ -626,46 +704,50 @@ public:
 
   virtual ShapeType shapeType() const;
 
-  /// Get the shape's major axis in meters
-  double majorAxis() const;
+  /**
+  * Get the shape's major axis in meters; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getMajorAxis(double& axis) const;
   /// Set the shape's major axis in meters
   void setMajorAxis(double majorAxisMeters);
 
-  /// Get the shape's minor axis in meters
-  double minorAxis() const;
+  /**
+  * Get the shape's major axis in meters; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getMinorAxis(double& axis) const;
   /// Set the shape's minor axis in meters
   void setMinorAxis(double minorAxisMeters);
 
 private:
-  double majorAxis_; ///< meters
-  double minorAxis_; ///< meters
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
+  Optional<double> majorAxis_; ///< meters
+  Optional<double> minorAxis_; ///< meters
 };
 
 /// Annotation implementation, a text label that optionally includes an icon
 class SDKCORE_EXPORT Annotation : public GogShape
 {
 public:
-  /// Thickness style of the text outline
-  enum class OutlineThickness
-  {
-    NONE = 0,
-    THIN,
-    THICK
-  };
-
   explicit Annotation(bool relative);
 
   virtual ShapeType shapeType() const;
-
-  /// Get the label's position; in lla radians if absolute, xyz meters if relative
-  simCore::Vec3 position() const;
-  /// Set the label's position; in lla radians if absolute, xyz meters if relative
-  void setPosition(const simCore::Vec3& position);
 
   /// Get the display text of the annotation
   std::string text() const;
   /// Set the display text of the annotation
   void setText(const std::string& text);
+
+  /**
+  * Get the shape's position; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getPosition(simCore::Vec3& position) const;
+  /// Set the label's position; in lla radians if absolute, xyz meters if relative
+  void setPosition(const simCore::Vec3& position);
 
   /**
   * Get the font filename; if value is not set, default value is returned.
@@ -715,15 +797,27 @@ public:
   /// Set the icon file to display
   void setIconFile(const std::string& iconFile);
 
+  /**
+  * Get the text deconfliction priority value; if value is not set, default value is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getPriority(double& priority) const;
+  /// Set the text deconfliction prority value
+  void setPriority(double priority);
+
 private:
-  simCore::Vec3 position_; ///< lla radians if absolute, xyz meters if relative
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   std::string text_; ///< display text
+  Optional<simCore::Vec3> position_; ///< lla radians if absolute, xyz meters if relative
   Optional<std::string> fontName_; ///< font filename
   Optional<int> textSize_; ///< text point size
   Optional<Color> textColor_;
   Optional<Color> outlineColor_;
   Optional<OutlineThickness> outlineThickness_; ///< thickness style of text outline
   Optional<std::string> iconFile_; ///< icon filename
+  Optional<double> priority_; ///< priority of the annotation text display
 };
 
 /// A parallel 3D or 2D box
@@ -750,15 +844,24 @@ public:
   double west() const;
   void setWest(double westRad);
 
-  double height() const;
+  // Altitude of the bottom of the box in meters
+  double altitude() const;
+  void setAltitude(double altitudeMeters);
+
+  // Box optional height in meters
+  int getHeight(double& height) const;
   void setHeight(double heightMeters);
 
 private:
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   double north_; ///< north corner latitude, radians
   double south_; ///< south corner latitude, radians
   double east_; ///< east corner latitude, radians
   double west_; ///< west corner latitude, radians
-  double height_; ///< height of the box, meters
+  double altitude_; ///< altitude of the box bottom, meters
+  Optional<double> height_; ///< height of the box above the altitude, meters
 };
 
 /// Image overlay implementation, displays an image file within a specified bounding box
@@ -791,9 +894,12 @@ public:
 
   // image filename
   std::string imageFile() const;
-  void setImageFIle(const std::string& imageFile);
+  void setImageFile(const std::string& imageFile);
 
 private:
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   double north_; ///< north corner latitude, radians
   double south_; ///< south corner latitude, radians
   double east_; ///< east corner latitude, radians

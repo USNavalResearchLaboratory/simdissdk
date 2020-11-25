@@ -28,8 +28,9 @@
 namespace simCore
 {
 
-CsvReader::CsvReader(std::istream& stream)
+CsvReader::CsvReader(std::istream& stream, const std::string& delimiters)
   : stream_(stream),
+  delimiters_(delimiters),
   parseQuotes_(true),
   commentChar_('#'),
   lineNumber_(0)
@@ -100,7 +101,7 @@ int CsvReader::readLineTrimmed(std::vector<std::string>& tokens, bool skipEmptyL
 
 void CsvReader::getTokens_(std::vector<std::string>& tokens, const std::string& line) const
 {
-  auto delimPos = line.find_first_of(",");
+  auto delimPos = line.find_first_of(delimiters_);
   if (delimPos == std::string::npos)
   {
     tokens.push_back(line);
@@ -110,11 +111,11 @@ void CsvReader::getTokens_(std::vector<std::string>& tokens, const std::string& 
   auto quotePos = line.find_first_of("'\"");
   if (!parseQuotes_ || (quotePos == std::string::npos))
   {
-    simCore::stringTokenizer(tokens, line, ",", true, false);
+    simCore::stringTokenizer(tokens, line, delimiters_, true, false);
     return;
   }
 
-  simCore::escapeTokenize(tokens, line, true, ",", false, true, false);
+  simCore::escapeTokenize(tokens, line, true, delimiters_, false, true, false);
 }
 
 }

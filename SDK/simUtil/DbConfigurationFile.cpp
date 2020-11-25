@@ -32,6 +32,7 @@
 #include "simCore/Common/Exception.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Tokenizer.h"
+#include "simCore/String/UtfUtils.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
 #include "simVis/AlphaColorFilter.h"
@@ -525,7 +526,7 @@ osg::Node* DbConfigurationFile::readEarthFile(std::istream& istream, const std::
 
 osg::Node* DbConfigurationFile::readEarthFile(const std::string& filename)
 {
-  std::fstream istream(filename.c_str(), std::ios::in);
+  std::fstream istream(simCore::streamFixUtf8(filename), std::ios::in);
   if (!istream)
     return nullptr;
   return DbConfigurationFile::readEarthFile(istream, filename);
@@ -561,7 +562,7 @@ int DbConfigurationFile::appendEarthFile(std::istream& istream, const std::strin
 
 int DbConfigurationFile::appendEarthFile(const std::string& filename, osgEarth::Map& toMap)
 {
-  std::fstream ifs(filename.c_str(), std::ios::in);
+  std::fstream ifs(simCore::streamFixUtf8(filename), std::ios::in);
   if (!ifs)
     return 1;
   return DbConfigurationFile::appendEarthFile(ifs, filename, toMap);

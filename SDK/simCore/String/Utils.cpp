@@ -171,4 +171,19 @@ std::string getEnvVar(const std::string &env)
   return StringUtils::trimRight(cenv, "\r");
 }
 
+std::string removeTrailingZeros(const std::string& str, bool leaveDecimal)
+{
+  size_t dec = str.find('.');
+  if (dec == str.npos)
+    return str;
+
+  size_t i = str.find_last_not_of("0");
+  if (i != str.npos)
+  {
+    if (i < str.size() && (leaveDecimal || str[i] != '.'))
+      ++i;
+  }
+  return str.substr(0, i);
+}
+
 } // namespace simCore

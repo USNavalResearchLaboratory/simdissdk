@@ -1,12 +1,18 @@
 <RCC>
   <qresource prefix="simQt">
+    <file>images/Building Corporation.png</file>
+    <file>images/Clean Up.png</file>
+    <file>images/Close.png</file>
     <file>images/Collapse.png</file>
     <file>images/Copy.png</file>
-    <file>images/Expand.png</file>
-    <file>images/Building Corporation.png</file>
-    <file>images/Tree View.png</file>
-    <file>images/Close.png</file>
+    <file>images/CustomRender.png</file>
+    <file>images/Data Blue Filter.png</file>
+    <file>images/Data Green Filter.png</file>
+    <file>images/Data Purple Filter.png</file>
+    <file>images/Data Red Filter.png</file>
     <file>images/Delete.png</file>
+    <file>images/Dock.png</file>
+    <file>images/Expand.png</file>
     <file>images/Filter.png</file>
     <file>images/Find.png</file>
     <file>images/Folder.png</file>
@@ -14,6 +20,7 @@
     <file>images/Help_2.png</file>
     <file>images/Image.png</file>
     <file>images/Loop.png</file>
+    <file>images/Maximize.png</file>
     <file>images/Navigation Blue First.png</file>
     <file>images/Navigation Blue Last.png</file>
     <file>images/Navigation Blue Left.png</file>
@@ -21,25 +28,19 @@
     <file>images/Navigation Blue Previous.png</file>
     <file>images/Navigation Blue Right.png</file>
     <file>images/Navigation Blue Stop.png</file>
-    <file>images/CustomRender.png</file>
-    <file>images/Symbol Clock.png</file>
+    <file>images/Restore.png</file>
+    <file>images/Save.png</file>
     <file>images/Search.png</file>
-    <file>images/platform.png</file>
+    <file>images/Symbol Clock.png</file>
+    <file>images/Tree View.png</file>
+    <file>images/Undock.png</file>
+    <file>images/WindLayer.png</file>
+    <file>images/all.png</file>
     <file>images/beam.png</file>
     <file>images/gate.png</file>
     <file>images/laser.png</file>
     <file>images/lob.png</file>
+    <file>images/platform.png</file>
     <file>images/projector.png</file>
-    <file>images/all.png</file>
-    <file>images/Dock.png</file>
-    <file>images/Maximize.png</file>
-    <file>images/Restore.png</file>
-    <file>images/Undock.png</file>
-    <file>images/Data Blue Filter.png</file>
-    <file>images/Data Green Filter.png</file>
-    <file>images/Data Purple Filter.png</file>
-    <file>images/Data Red Filter.png</file>
-    <file>images/Save.png</file>
-    <file>images/Clean Up.png</file>
   </qresource>
 </RCC>
