@@ -104,12 +104,12 @@ Control* createGradientPicker(const std::function<void(const simVis::GradientSha
   auto* defaultGrad = hbox->addControl(new LabelControl("Default", 12.f, simVis::Color::White));
   defaultGrad->addEventHandler(new OnClick([=](Control* c) {
     const simVis::GradientShader::ColorMap newColors = {
-      { 0, osgEarth::Color::Blue },
-      { 8, osgEarth::Color::Cyan },
-      { 13, osgEarth::Color::Lime },
-      { 18, osgEarth::Color::Yellow },
-      { 50, osgEarth::Color::Red },
-      { 75, osgEarth::Color::Purple },
+      { 0.f, osgEarth::Color::Blue },
+      { 8.f, osgEarth::Color::Cyan },
+      { 13.f, osgEarth::Color::Lime },
+      { 18.f, osgEarth::Color::Yellow },
+      { 50.f, osgEarth::Color::Red },
+      { 75.f, osgEarth::Color::Purple },
     };
     func(newColors);
   }));
@@ -117,8 +117,8 @@ Control* createGradientPicker(const std::function<void(const simVis::GradientSha
   auto* cyanRedGrad = hbox->addControl(new LabelControl("Cyan", 12.f, simVis::Color::White));
   cyanRedGrad->addEventHandler(new OnClick([=](Control* c) {
     simVis::GradientShader::ColorMap newColors = {
-      {0.0, simVis::Color::Cyan},
-      {25.0, simVis::Color::Red}
+      {0.f, simVis::Color::Cyan},
+      {25.f, simVis::Color::Red}
     };
     func(newColors);
   }));
@@ -126,8 +126,8 @@ Control* createGradientPicker(const std::function<void(const simVis::GradientSha
   auto* grayGrad = hbox->addControl(new LabelControl("Grayscale", 12.f, simVis::Color::White));
   grayGrad->addEventHandler(new OnClick([=](Control* c) {
     simVis::GradientShader::ColorMap newColors = {
-      {0.0, simVis::Color::Black},
-      {25.0, simVis::Color::White}
+      {0.f, simVis::Color::Black},
+      {25.f, simVis::Color::White}
     };
     func(newColors);
   }));
@@ -135,8 +135,8 @@ Control* createGradientPicker(const std::function<void(const simVis::GradientSha
   auto* greenRedGrad = hbox->addControl(new LabelControl("Green", 12.f, simVis::Color::White));
   greenRedGrad->addEventHandler(new OnClick([=](Control* c) {
     simVis::GradientShader::ColorMap newColors = {
-      {0.0, simVis::Color::Lime},
-      {25.0, simVis::Color::Red}
+      {0.f, simVis::Color::Lime},
+      {25.f, simVis::Color::Red}
     };
     func(newColors);
   }));
@@ -145,8 +145,8 @@ Control* createGradientPicker(const std::function<void(const simVis::GradientSha
   transparentGrad->addEventHandler(new OnClick([=](Control* c) {
     simVis::GradientShader::ColorMap newColors = {
       // Merge alpha from 0 to 25
-      {0.0, osg::Vec4f(0.f, 1.f, 0.f, 0.f)},
-      {25., osg::Vec4f(0.f, 1.f, 0.f, 1.f)},
+      {0.f, osg::Vec4f(0.f, 1.f, 0.f, 0.f)},
+      {25.f, osg::Vec4f(0.f, 1.f, 0.f, 1.f)},
     };
     func(newColors);
   }));
