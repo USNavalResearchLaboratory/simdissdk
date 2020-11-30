@@ -256,6 +256,9 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         // a single start/end block.
         if (current.shape() == ShapeType::ANNOTATION)
         {
+          // set the relative state based on point type if it hasn't already been specified
+          if (!current.hasValue(ShapeParameter::ABSOLUTE_POINTS) && current.pointType() == ParsedShape::LLA)
+            current.set(ShapeParameter::ABSOLUTE_POINTS, "1");
           state.apply(current);
           GogShapePtr gog = getShape_(current);
           if (gog)

@@ -924,6 +924,7 @@ int testAnnotation()
         std::ostringstream os;
         os << "label " << textId++;
         rv += SDK_ASSERT(anno->text() == os.str());
+        rv += SDK_ASSERT(!anno->isRelative());
 
         std::string fontName;
         rv += SDK_ASSERT(anno->getFontName(fontName) == 0);
