@@ -99,6 +99,10 @@ void EntityDialog::closeEvent(QCloseEvent* ev)
 
 void EntityDialog::setItemSelected(uint64_t id)
 {
+  auto ids = tree_->selectedItems();
+  if ((ids.size() == 1) && (ids.front() == id))
+    return;
+
   tree_->clearSelection();
   if (id != 0)
   {
