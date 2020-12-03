@@ -236,6 +236,11 @@ int HoursTimeFormatter::fromString(const std::string& timeString, simCore::Secon
 
 void HoursTimeFormatter::toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision)
 {
+  toStream(os, seconds, precision, false);
+}
+
+void HoursTimeFormatter::toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision, bool showLeadingZero)
+{
   const bool isNegative = (seconds < 0);
   seconds = fabs(seconds.rounded(precision));
   // Rely on static_cast<> to floor the value
@@ -243,7 +248,10 @@ void HoursTimeFormatter::toStream(std::ostream& os, simCore::Seconds seconds, un
   seconds -= hours * SECPERHOUR;
   if (isNegative)
     os << "-";
-  os << hours << ':' << std::setfill('0') << std::setw(2);
+  if (showLeadingZero)
+    os << std::setfill('0') << std::setw(2) << hours << ":" << std::setw(2);
+  else
+    os << hours << ':' << std::setfill('0') << std::setw(2);
   // Add the minutes value and seconds value
   MinutesTimeFormatter::toStream(os, seconds, precision);
 }

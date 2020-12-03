@@ -259,7 +259,6 @@ public:
 
   /**
    * Controls the type of propagation data in which threshold setting will be applied.
-   * For now, this call will update the color provider gradient colors with default values based on the type
    * @param type Type of threshold test to perform on propagation data
    * @return 0 on success, !0 on error
    */
@@ -277,13 +276,13 @@ public:
    * @param value Threshold value above or below of which data is drawn
    * @return 0 on success, !0 on error
    */
-  int setThresholdValue(int value);
+  int setThresholdValue(float value);
 
   /**
    * Returns the threshold value; the routine assumes the valid() returns true
    * @return The Threshold value
    */
-  int threshold() const;
+  float threshold() const;
 
   /**
    * Controls the above threshold color
@@ -491,10 +490,11 @@ public:
   bool isDepthBufferEnabled() const;
 
 private:
-  /// set some reasonable defaults in our default color maps
-  void initializeDefaultColors_();
-  /// update the gradient color map based on threshold type
-  void setGradientByThresholdType_(simRF::ProfileDataProvider::ThresholdType type);
+  /// initialize the color providers and set some reasonable defaults in their color maps
+  void initializeColorProviders_();
+  /// update the color provider based on threshold type
+  void setColorProviderByThresholdType_(simRF::ProfileDataProvider::ThresholdType type);
+
 
   /// The beam id for which this display is specified
   simData::ObjectId id_;
@@ -512,7 +512,7 @@ private:
   osg::observer_ptr<osg::Group> parent_;
 
   /// color provider to manager which color
-  osg::ref_ptr<simRF::CompositeColorProvider> colorProvider_;
+  osg::ref_ptr<simRF::CompositeColorProvider> currentColorProvider_;
 
   /// map of filesets loaded, keyed by the timestamp for which they were specified
   std::map<simCore::TimeStamp, std::vector<std::string> > arepsFilesetTimeMap_;
@@ -523,11 +523,11 @@ private:
   /// shared ptr to the RF RADAR Parameters
   RadarParametersPtr radarParameters_;
 
-  /// color maps by threshold type
-  std::map<simRF::ProfileDataProvider::ThresholdType, simRF::GradientColorProvider::ColorMap> colorMaps_;
+  /// color providers by threshold type
+  std::map<simRF::ProfileDataProvider::ThresholdType, osg::ref_ptr<simRF::CompositeColorProvider> > colorProviderMap_;
 
-  /// default color map
-  simRF::GradientColorProvider::ColorMap defaultColors_;
+  /// default color provider
+  osg::ref_ptr<simRF::CompositeColorProvider> defaultColorProvider_;
 };
 
 }

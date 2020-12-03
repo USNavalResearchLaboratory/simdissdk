@@ -30,10 +30,8 @@
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Time/TimeClass.h"
 #include "simData/ObjectId.h"
-#include "simVis/Platform.h"
 
 namespace simRF { class RFPropagationFacade; }
-
 
 namespace simVis
 {

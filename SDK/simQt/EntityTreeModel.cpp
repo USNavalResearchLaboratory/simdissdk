@@ -32,6 +32,10 @@
 
 namespace simQt {
 
+// Performance can drop dramatically if there are too many regions to delete; stop after 50 regions and reset the model
+static const size_t MAX_REGIONS = 50;
+
+
 /// notify the tree model about data store changes
 class EntityTreeModel::TreeListener : public simData::DataStore::Listener
 {
@@ -84,9 +88,10 @@ private:
 
 //----------------------------------------------------------------------------
 EntityTreeItem::EntityTreeItem(simData::ObjectId id, EntityTreeItem *parent)
+  : id_(id),
+    parentItem_(parent),
+    markForRemoval_(false)
 {
-  id_ = id;
-  parentItem_ = parent;
 }
 
 EntityTreeItem::~EntityTreeItem()
@@ -96,13 +101,8 @@ EntityTreeItem::~EntityTreeItem()
 
 void EntityTreeItem::appendChild(EntityTreeItem *item)
 {
+  childToRowIndex_[item] = childItems_.size();
   childItems_.append(item);
-}
-
-void EntityTreeItem::removeChild(EntityTreeItem *item)
-{
-  childItems_.removeOne(item);
-  delete item;
 }
 
 EntityTreeItem* EntityTreeItem::child(int row)
@@ -137,8 +137,129 @@ EntityTreeItem* EntityTreeItem::parent()
 int EntityTreeItem::row() const
 {
   if (parentItem_)
-    return parentItem_->childItems_.indexOf(const_cast<EntityTreeItem*>(this));
+  {
+    auto it = parentItem_->childToRowIndex_.find(this);
+    if (it != parentItem_->childToRowIndex_.end())
+      return it->second;
+  }
 
+  return 0;
+}
+
+void EntityTreeItem::markForRemoval()
+{
+  // Der error, should not delete the root node
+  assert(parentItem_ != nullptr);
+
+  markForRemoval_ = true;
+  if (parentItem_ != nullptr)
+    parentItem_->notifyParentForRemoval_(this);
+
+  // Technically marking children is not necessary because the
+  // data store should automatically delete children.  To be
+  // safe, children will still be marked for removal.
+  for (auto& child : childItems_)
+    child->markChildrenForRemoval_();
+}
+
+bool EntityTreeItem::isMarked() const
+{
+  return markForRemoval_;
+}
+
+void EntityTreeItem::notifyParentForRemoval_(EntityTreeItem* child)
+{
+  childrenMarked_.insert(child->row());
+}
+
+void EntityTreeItem::markChildrenForRemoval_()
+{
+  markForRemoval_ = true;
+
+  for (auto child : childItems_)
+    child->markChildrenForRemoval_();
+}
+
+int EntityTreeItem::removeMarkedChildren(EntityTreeModel* model)
+{
+  markForRemoval_ = false;
+
+  // Trim the tree from bottom up
+  for (auto child : childItems_)
+  {
+    if (child->removeMarkedChildren(model) != 0)
+      return 1;
+  }
+
+  // Nothing to do or leaf node
+  if (childrenMarked_.empty())
+    return 0;
+
+  // Everything was deleted so clear out and return
+  if (static_cast<int>(childrenMarked_.size()) == childItems_.size())
+  {
+    model->beginRemoval(this, 0, childItems_.size() - 1);
+    childItems_.clear();
+    childToRowIndex_.clear();
+    childrenMarked_.clear();
+    return 0;
+  }
+
+  // For better performance delete continuous regions of children
+
+  // Calculate regions
+  std::map<int, int> indexToDelta;
+  auto removalIt = childrenMarked_.begin();
+  int lastIndex = *removalIt;
+  int previousIndex = lastIndex;
+  ++removalIt;
+  int delta = 1;
+  for (; removalIt != childrenMarked_.end(); ++removalIt)
+  {
+    // If not continuous make a new entry
+    if (*removalIt != (previousIndex + 1))
+    {
+      // If too many, give up and reset the model
+      if (indexToDelta.size() > MAX_REGIONS)
+        return 1;
+
+      indexToDelta[lastIndex] = delta;
+      lastIndex = *removalIt;
+      delta = 1;
+    }
+    else
+      ++delta;
+
+    previousIndex = *removalIt;
+  }
+
+  indexToDelta[lastIndex] = delta;
+
+  // Delete regions backwards so indexes do not need to be recalculated
+  for (auto it = indexToDelta.rbegin(); it != indexToDelta.rend(); ++it)
+  {
+    // minus one on last argument because Qt is inclusive
+    model->beginRemoval(this, it->first, it->first + it->second - 1);
+
+    // remove from map
+    for (auto ii = it->first; ii < it->first + it->second; ++ii)
+      childToRowIndex_.erase(childItems_[ii]);
+
+    // remove from list
+    childItems_.erase(childItems_.begin() + it->first, childItems_.begin() + it->first + it->second);
+
+    // Apply the deltas
+    for (auto& rowIndex : childToRowIndex_)
+    {
+      // only need to modify the indexes above the removed region
+      if (rowIndex.second > it->first)
+        rowIndex.second -= it->second;
+    }
+
+    model->endRemoval();
+  }
+
+  childrenMarked_.clear();
   return 0;
 }
 
@@ -149,6 +270,7 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     rootItem_(nullptr),
     treeView_(false),
     dataStore_(nullptr),
+    pendingRemoval_(false),
     platformIcon_(":/simQt/images/platform.png"),
     beamIcon_(":/simQt/images/beam.png"),
     customRenderingIcon_(":/simQt/images/CustomRender.png"),
@@ -212,12 +334,15 @@ simData::DataStore* EntityTreeModel::dataStore() const
 void EntityTreeModel::addEntity_(uint64_t entityId)
 {
   if (delayedAdds_.empty())
-    QTimer::singleShot(100, this, SLOT(commitDelayedEntities_()));
+    QTimer::singleShot(100, this, SLOT(commitDelayedAdd_()));
   delayedAdds_.push_back(entityId);
 }
 
-void EntityTreeModel::commitDelayedEntities_()
+void EntityTreeModel::commitDelayedAdd_()
 {
+  // An add will cause a refresh of the view, so process any entities waiting for removal
+  commitDelayedRemoval_();
+
   for (std::vector<simData::ObjectId>::const_iterator it = delayedAdds_.begin(); it != delayedAdds_.end(); ++it)
   {
     simData::ObjectType entityType = dataStore_->objectType(*it);
@@ -300,6 +425,7 @@ void EntityTreeModel::forceRefresh()
     delete rootItem_;
     rootItem_ = new EntityTreeItem(0, nullptr); // has no parent
     delayedAdds_.clear();  // clear any delayed entities since building from the data store
+    pendingRemoval_ = false;
     itemsById_.clear();
 
     // Get platform objects from DataStore
@@ -395,31 +521,13 @@ void EntityTreeModel::removeEntity_(uint64_t id)
     return;
   }
 
-  // Qt requires we notify it of all the rows to be removed
-  if (found->parent() != rootItem_)
+  if (!pendingRemoval_)
   {
-    const QModelIndex parentIndex = createIndex(found->parent()->row(), 0, found->parent());
-    beginRemoveRows(parentIndex, found->row(), found->row());
-  }
-  else
-  {
-    beginRemoveRows(QModelIndex(), found->row(), found->row());
+    pendingRemoval_ = true;
+    QTimer::singleShot(0, this, SLOT(commitDelayedRemoval_()));
   }
 
-  // Get any children before deleting
-  std::vector<uint64_t> ids;
-  found->getChildrenIds(ids);
-
-  // tell the found item's parent to remove that item
-  found->parent()->removeChild(found);
-
-  // remove the item
-  itemsById_.erase(id);
-  // now remove any children
-  for (auto it = ids.begin(); it != ids.end(); ++it)
-    itemsById_.erase(*it);
-
-  endRemoveRows();
+  found->markForRemoval();
 }
 
 void EntityTreeModel::removeAllEntities_()
@@ -428,6 +536,7 @@ void EntityTreeModel::removeAllEntities_()
     return;
 
   delayedAdds_.clear();
+  pendingRemoval_ = false;
 
   // no point in reseting an empty model
   if ((rootItem_ != nullptr) && (rootItem_->childCount() == 0))
@@ -453,7 +562,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     return QVariant();
 
   EntityTreeItem *item = static_cast<EntityTreeItem*>(index.internalPointer());
-  if (item == nullptr)
+  if ((item == nullptr) || item->isMarked())
     return QVariant();
 
   switch (role)
@@ -634,7 +743,7 @@ QModelIndex EntityTreeModel::index(uint64_t id)
   EntityTreeItem* item = findItem_(id);
   if (item == nullptr)
   {
-    commitDelayedEntities_();
+    commitDelayedAdd_();
     item = findItem_(id);
     if (item == nullptr)
       return QModelIndex();
@@ -755,6 +864,38 @@ void EntityTreeModel::setUseEntityIcons(bool useIcons)
 bool EntityTreeModel::useEntityIcons() const
 {
   return useEntityIcons_;
+}
+
+void EntityTreeModel::commitDelayedRemoval_()
+{
+  // A pending add can force the removal of entities before the one shot fires
+  if (!pendingRemoval_)
+    return;
+
+  pendingRemoval_ = false;
+  if (rootItem_->removeMarkedChildren(this) != 0)
+  {
+    // too many regions to delete, give up and reset the model
+    forceRefresh();
+  }
+}
+
+void EntityTreeModel::beginRemoval(EntityTreeItem* parent, int begin, int end)
+{
+  if (parent != rootItem_)
+  {
+    const QModelIndex parentIndex = createIndex(parent->row(), 0, parent);
+    beginRemoveRows(parentIndex, begin, end);
+  }
+  else
+  {
+    beginRemoveRows(QModelIndex(), begin, end);
+  }
+}
+
+void EntityTreeModel::endRemoval()
+{
+  endRemoveRows();
 }
 
 }

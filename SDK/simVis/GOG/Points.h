@@ -26,6 +26,7 @@
 #include "simVis/GOG/GOGNode.h"
 
 namespace osgEarth { class MapNode; }
+namespace simCore { namespace GOG { class Points; } }
 
 namespace simVis { namespace GOG {
 
@@ -45,6 +46,9 @@ public:
     const GOGContext&        context,
     const GogMetaData&       metaData,
     osgEarth::MapNode*       mapNode);
+
+  /** Create the points from the shape object */
+  static GogNodeInterface* createPoints(const simCore::GOG::Points& points, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 
 private:
   /** Implements the deserialization once the parser data's points have been configured. */

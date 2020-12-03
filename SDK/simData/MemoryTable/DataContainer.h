@@ -87,8 +87,8 @@ public:
   /** Copies the contents of a given position into a row at cell position whichCell */
   virtual TableStatus copyToRowCell(TableRow& row, simData::TableColumnId whichCell, size_t position) const = 0;
 
-  /** Removes the element at the given index */
-  virtual void erase(size_t position) = 0;
+  /** Removes the elements starting at the given index */
+  virtual void erase(size_t position, size_t number = 1) = 0;
   /** Number of items inside the data container */
   virtual size_t size() const = 0;
   /** True if the number of items is 0 */

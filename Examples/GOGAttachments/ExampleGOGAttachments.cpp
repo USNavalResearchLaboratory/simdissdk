@@ -28,11 +28,12 @@
  */
 
 /// the simulator provides time/space data for our platform
-#include "simUtil/PlatformSimulator.h"
-#include "simData/MemoryDataStore.h"
+#include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
-#include "simNotify/Notify.h"
+#include "simCore/String/UtfUtils.h"
+#include "simData/MemoryDataStore.h"
+#include "simUtil/PlatformSimulator.h"
 
 /// include definitions for objects of interest
 #include "simVis/Platform.h"
@@ -520,7 +521,7 @@ int main(int argc, char **argv)
     /// Load all the GOGs from the file:
     simVis::GOG::Parser::OverlayNodeVector gogs;
     std::vector<simVis::GOG::GogFollowData> followData;
-    std::ifstream is(argv[1]);
+    std::ifstream is(simCore::streamFixUtf8(argv[1]));
     if (!is.is_open())
     {
       std::string fileName(argv[1]);

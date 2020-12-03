@@ -652,7 +652,7 @@ PlatformNode* ScenarioManager::addPlatform(const simData::PlatformProperties& pr
   PlatformNode* node = new PlatformNode(props,
     dataStore,
     *platformTspiFilterManager_,
-    root_.get(),
+    root_.get(), // for expire mode group attachment
     new Locator(scenarioEciLocator_.get()),
     dataStore.referenceYear());
   node->getModel()->addCallback(new BeamNoseFixer(this));

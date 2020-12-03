@@ -11,11 +11,7 @@ if(DEFINED INSTALL_THIRDPARTY_LIBRARIES AND NOT INSTALL_THIRDPARTY_LIBRARIES)
 endif()
 
 set(LIBRARYNAME MRSID)
-set(${LIBRARYNAME}_VERSION 9.5.1.4427)
-# MSVC 2017 uses a different MrSID
-if(BUILD_COMPILER STREQUAL "vc-14.1" OR BUILD_COMPILER STREQUAL "vc-14.2")
-    set(${LIBRARYNAME}_VERSION 9.5.4.4709)
-endif()
+set(${LIBRARYNAME}_VERSION 9.5.4.4709)
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 
 # Setup search paths
@@ -60,9 +56,15 @@ endmacro()
 # Install each library
 if(WIN32)
     mrsid_install_library(MRSID_RASTER_DIR lti_dsdk_9.5.dll)
+    if(INSTALL_MRSID_TBB OR NOT DEFINED INSTALL_MRSID_TBB)
+        mrsid_install_library(MRSID_RASTER_DIR tbb.dll)
+    endif()
     mrsid_install_library(MRSID_LIDAR_DIR lti_lidar_dsdk_1.1.dll)
 else()
     mrsid_install_library(MRSID_RASTER_DIR libltidsdk.so)
+    if(INSTALL_MRSID_TBB OR NOT DEFINED INSTALL_MRSID_TBB)
+        mrsid_install_library(MRSID_RASTER_DIR libtbb.so)
+    endif()
     mrsid_install_library(MRSID_LIDAR_DIR liblti_lidar_dsdk.so)
 endif()
 

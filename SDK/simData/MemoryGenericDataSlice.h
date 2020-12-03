@@ -54,8 +54,11 @@ public:
   MemoryGenericDataSlice();
   virtual ~MemoryGenericDataSlice();
 
-  /// remove all data in the slice, except the static point
+  /// remove all data in the slice
   void flush();
+
+  /// remove data for the given time range; up to but not including endTime
+  void flush(double startTime, double endTime);
 
   /// apply the data limits indicated by 'prefs'
   void limitByPrefs(const CommonPrefs &prefs);
@@ -106,7 +109,7 @@ private:
   /// Maintains the current state
   mutable GenericData current_;
 
-  /// Used to detect changes requiring and update to current_
+  /// Used to detect changes requiring an update to current_
   mutable double lastTime_;
 
   // All the generic data keyed by generic data key

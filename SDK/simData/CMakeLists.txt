@@ -104,10 +104,6 @@ set(DATA_GENERATED_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/simData.pb.cc
 )
 
-set(DATA_ALL_HEADER
-    ${DATA_INC}../simData.h
-)
-
 source_group(Headers FILES ${DATA_HEADERS})
 source_group("Source Files" FILES ${DATA_SOURCES})
 source_group(Headers\\MemoryTable FILES ${MEMORYTABLE_HEADERS})
@@ -121,7 +117,6 @@ source_group(Headers\\GeneratedCode
         ${DATA_GENERATED_HEADERS}
         ${DATA_GENERATED_SOURCES}
 )
-source_group("" FILES ${DATA_ALL_HEADER})
 
 
 # Generate the .pb.cc and .pb.h file from protobuf
@@ -134,7 +129,7 @@ set_target_properties(simData_protobuf_generation PROPERTIES
 # ----------------------------------------------------------------------
 
 set(DATA_PROJECT_FILES
-    ${DATA_HEADERS} ${DATA_SOURCES} ${DATA_GENERATED_HEADERS} ${DATA_ALL_HEADER}
+    ${DATA_HEADERS} ${DATA_SOURCES} ${DATA_GENERATED_HEADERS}
     ${MEMORYTABLE_HEADERS} ${MEMORYTABLE_SOURCES} ${CATEGORY_DATA_HEADERS} ${CATEGORY_DATA_SOURCES} ${MESSAGEVISITOR_HEADERS} ${MESSAGEVISITOR_SOURCES}
 )
 
@@ -212,10 +207,5 @@ if(INSTALL_HEADERS)
         FILES
             ${DATA_GENERATED_HEADERS}
         DESTINATION include/simData
-    )
-
-    # simData.h
-    install(FILES ${DATA_ALL_HEADER}
-        DESTINATION include
     )
 endif()

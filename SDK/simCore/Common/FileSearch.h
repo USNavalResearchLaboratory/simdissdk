@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <fstream>
+#include "simCore/String/UtfUtils.h"
 
 namespace simCore
 {
@@ -75,7 +76,7 @@ namespace simCore
     virtual std::string findFile(const std::string& filename, SearchFileType type)
     {
       // Attempt to load the file as-is
-      std::fstream ifs(filename.c_str(), std::ios::in);
+      std::fstream ifs(simCore::streamFixUtf8(filename), std::ios::in);
       if (ifs.good())
         return filename;
       return "";

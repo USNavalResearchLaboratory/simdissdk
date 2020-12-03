@@ -239,6 +239,13 @@ public:
   void addProjectorCommand(const simData::ProjectorCommand& command, uint64_t id);
 
   /**
+  * Adds the passed in command
+  * @param command
+  * @param id of entity
+  */
+  void addCustomRenderingCommand(const simData::CustomRenderingCommand& command, uint64_t id);
+    ;
+  /**
   * Adds the passed in Category Data
   * @param id of entity
   * @param key of category data
@@ -262,8 +269,9 @@ public:
   * @param entityId ID of the table owner
   * @param numRows Number of rows to generate
   * @param tableName Name of the table to create
+  * @return The table of ID of the newly created table
   */
-  void addDataTable(uint64_t entityId, int numRows = 2, const std::string& tableName = "");
+  uint64_t addDataTable(uint64_t entityId, int numRows = 2, const std::string& tableName = "");
 
 private:
   /** add a DataTable column with the specified number of rows.  Will set null or null-less based on id value */

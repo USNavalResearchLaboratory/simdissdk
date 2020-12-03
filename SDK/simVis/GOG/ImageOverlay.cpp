@@ -23,6 +23,8 @@
 #include "osgDB/ReadFile"
 #include "osgEarth/ImageOverlay"
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Angle.h"
+#include "simCore/GOG/GogShape.h"
 #include "simCore/String/Utils.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/ParsedShape.h"
@@ -69,6 +71,33 @@ GogNodeInterface* ImageOverlay::deserialize(
   rv = new ImageOverlayInterface(imageNode, metaData);
 
   return rv;
+}
+
+GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOverlay& imageOverlay, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
+{
+  std::string iconFile = imageOverlay.imageFile();
+
+  osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
+  // if icon can't load, return failure
+  if (!image.valid())
+  {
+    SIM_WARN << "Failed to load image file " << iconFile << "\n";
+    return nullptr;
+  }
+  double north = imageOverlay.north() * simCore::RAD2DEG;
+  double south = imageOverlay.south() * simCore::RAD2DEG;
+  double east = imageOverlay.east() * simCore::RAD2DEG;
+  double west = imageOverlay.south() * simCore::RAD2DEG;
+  double rot = imageOverlay.getRotation() * simCore::RAD2DEG;
+  osgEarth::Angular rotation(rot, osgEarth::Units::DEGREES);
+
+  osgEarth::ImageOverlay* imageNode = new osgEarth::ImageOverlay(mapNode, image.get());
+  imageNode->setBoundsAndRotation(osgEarth::Bounds(west, south, east, north), rotation);
+  imageNode->setDynamic(true);
+  imageNode->setPriority(8000);
+
+  GogMetaData metaData;
+  return new ImageOverlayInterface(imageNode, metaData);
 }
 
 } }

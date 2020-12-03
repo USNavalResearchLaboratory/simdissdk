@@ -26,6 +26,7 @@
 #include "simVis/GOG/GOGNode.h"
 
 namespace osgEarth { class MapNode; }
+namespace simCore { namespace GOG { class Polygon; } }
 
 namespace simVis { namespace GOG {
 
@@ -45,6 +46,9 @@ public:
     const GOGContext&        context,
     const GogMetaData&       metaData,
     osgEarth::MapNode*       mapNode);
+
+  /** Create the polygon from the shape object */
+  static GogNodeInterface* createPolygon(const simCore::GOG::Polygon& polygon, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };
 
 } } // namespace simVis::GOG

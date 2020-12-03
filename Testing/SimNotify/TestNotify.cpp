@@ -29,11 +29,12 @@
 #ifndef _MSC_VER
 #include <unistd.h>
 #endif
-#include "simCore/Common/Common.h"
-#include "simCore/Common/Version.h"
 #include "simNotify/Notify.h"
 #include "simNotify/NotifyHandler.h"
 #include "simNotify/StandardNotifyHandlers.h"
+#include "simCore/Common/Common.h"
+#include "simCore/Common/Version.h"
+#include "simCore/String/UtfUtils.h"
 
 using namespace std;
 
@@ -501,7 +502,7 @@ void testFileNotifyHandler()
   handler.reset();
 
   // Read the string from the file
-  ifstream fd(filename);
+  ifstream fd(simCore::streamFixUtf8(filename));
 
   if (!fd.is_open())
   {

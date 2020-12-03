@@ -28,6 +28,7 @@
 #include <osg/ref_ptr>
 #include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/Units.h"
+#include "simCore/GOG/GogShape.h"
 #include "simData/DataTypes.h"
 #include "simVis/Utils.h"
 #include "simVis/GOG/GOGNode.h"
@@ -103,6 +104,11 @@ public:
 
   /** Destructor */
   virtual ~GogNodeInterface() {}
+
+  /** Get a pointer to the shape object, may be NULL */
+  const simCore::GOG::GogShape* shapeObject() const;
+  /** Set the GogShape object, which updates the node's style */
+  void setShapeObject(simCore::GOG::GogShapePtr shape);
 
   /** Font to use if not defined in annotation block */
   void setDefaultFont(const std::string& fontName);
@@ -393,6 +399,21 @@ public:
    */
   simVis::GOG::GogShape shape() const;
 
+  /// Set flag indicating if shape's yaw component is locked to a reference orientation
+  void setFollowYaw(bool follow);
+  /// Set flag indicating if shape's pitch component is locked to a reference orientation
+  void setFolloPitch(bool follow);
+  /// Set flag indicating if shape's roll component is locked to a reference orientation
+  void setFollowRoll(bool follow);
+
+  /// Set the yaw angular offset from a reference orientation in radians
+  void setYawOffset(double offsetRad);
+  /// Set the pitch angular offset from a reference orientation in radians
+  void setPitchOffset(double offsetRad);
+  /// Set the roll angular offset from a reference orientation in radians
+  void setRollOffset(double offsetRad);
+
+
   /** Return the starting line number from the source GOG file*/
   size_t lineNumber() const;
 
@@ -462,6 +483,7 @@ protected: // methods
 protected: // data
   osg::ref_ptr<osg::Node> osgNode_;  ///< reference to the basic osg::Node. Keep in ref_ptr so this instance will hold on the memory even if it's removed from the scene
   simVis::GOG::GogMetaData metaData_;  ///< meta data returned by the Parser
+  simCore::GOG::GogShapePtr shape_; ///< parsed shape object
   bool filled_; ///< cache fill state of the shape for quick reference
   bool extruded_; ///< cache extruded state of the shape for quick reference
   bool outlined_; ///< cache outlined state of the shape for quick reference

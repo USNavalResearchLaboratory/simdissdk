@@ -88,6 +88,12 @@ public:
   /// if 0 is passed in flushes the entire scenario, except for static entities
   virtual void flush(ObjectId flushId, FlushType type = NON_RECURSIVE);
 
+  /** Removes all the specified data */
+  virtual int flush(ObjectId id, FlushScope scope, FlushFields fields);
+
+  /** Removes a range of data from startTime up to but not including the endTime */
+  virtual int flush(ObjectId id, FlushScope scope, FlushFields fields, double startTime, double endTime);
+
   /**
   * clear out the data store of all scenario specific data, including all entities and category data names.
   */
@@ -620,10 +626,12 @@ private:
   void updateLobGroups_(double time);
   ///Updates all the CustomRenderings
   void updateCustomRenderings_(double time);
-  /// Flushes an entity's updates, commands, category and generic data
-  void flushEntity_(ObjectId id, simData::ObjectType type, FlushType flushType);
+  /// Flushes an entity based on the given scope, fields and time ranges
+  void flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields, double startTime, double endTime);
   /// Flushes an entity's data tables
   void flushDataTables_(ObjectId id);
+  /// Flushes an entity's data tables for the given time range; up to but not including endTime
+  void flushDataTables_(ObjectId id, double startTime, double endTime);
 
   /// Initialize the default prefs objects
   virtual void setDefaultPrefs(const PlatformPrefs& platformPrefs,

@@ -29,6 +29,7 @@
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/String/UtfUtils.h"
 
 namespace {
 
@@ -519,7 +520,7 @@ int readNextTest(std::istream& fd, bool& doneReading)
 int calculateLibTestFile(const std::string& filename)
 {
   // Read the test data
-  std::ifstream fd(filename.c_str());
+  std::ifstream fd(simCore::streamFixUtf8(filename));
   if (!fd)
   {
     std::cout << "Error opening file " << filename << std::endl;

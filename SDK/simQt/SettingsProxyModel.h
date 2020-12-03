@@ -44,13 +44,17 @@ public:
   /** Returns the current filter text */
   QString filterText() const;
 
+  /** Implements the QAbstractItemModel method to find items matching a given value.  Flags argument is ignored */
+  virtual QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int hits = 1,
+    Qt::MatchFlags flags = Qt::MatchFlags(Qt::MatchStartsWith | Qt::MatchWrap)) const;
+
 public slots:
   /** Changes the filter text */
   void setFilterText(const QString& filterText);
 
 private:
   /** Apply the reg exp filtering, returns true if no regexp filter is set */
-  bool testRegExp_(const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parent) const;
+  bool testRegExp_(const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parent, const QRegExp& filter) const;
 };
 
 /**
@@ -102,7 +106,7 @@ public:
   /** Constructor */
   SettingsNoEmptyFoldersFilter(QAbstractItemModel* settingsModel, QWidget* parent=nullptr);
 
-  /** Implements the QSortFilterProxyModel method to apply filtering to the row  */
+  /** Implements the QSortFilterProxyModel method to apply filtering to the row */
   virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
 
 private:
@@ -125,6 +129,10 @@ public:
   SettingsProxyModel(QAbstractItemModel* settingsModel, QWidget* parent=nullptr);
   /** Destructor */
   virtual ~SettingsProxyModel();
+
+  /** Implements the QAbstractItemModel method to find items matching a given value.  Flags argument is ignored */
+  virtual QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int hits = 1,
+    Qt::MatchFlags flags = Qt::MatchFlags(Qt::MatchStartsWith | Qt::MatchWrap)) const;
 
 public slots:
   /** Set the show advanced filter, which will show settings with the ADVANCED data level settings if true */

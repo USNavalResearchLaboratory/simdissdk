@@ -132,10 +132,6 @@ list(APPEND SIMQT_HEADERS
 
 
 source_group(Headers FILES ${SIMQT_HEADERS})
-set(SIMQT_ALL_HEADER
-    ${SIMQT_INC}../simQt.h
-)
-source_group("" FILES ${SIMQT_ALL_HEADER})
 
 # .cpp files
 set(SIMQT_SOURCES
@@ -284,7 +280,7 @@ VSI_QT_ADD_RESOURCES(Q_RESOURCES ${SIMQT_RESOURCES})
 source_group("Generated Files" FILES ${Q_HEADERS} ${Q_FORMS} ${Q_RESOURCES})
 
 set(SIMQT_PROJECT_FILES
-    ${SIMQT_HEADERS} ${SIMQT_ALL_HEADER} ${SIMQT_SOURCES} ${SIMQT_FORMS} ${SIMQT_RESOURCES}
+    ${SIMQT_HEADERS} ${SIMQT_SOURCES} ${SIMQT_FORMS} ${SIMQT_RESOURCES}
     ${Q_HEADERS} ${Q_FORMS} ${Q_RESOURCES}
 )
 
@@ -354,6 +350,9 @@ endif()
 if(TARGET simVis)
     target_compile_definitions(simQt PRIVATE HAVE_SIMVIS)
     target_link_libraries(simQt PRIVATE simVis)
+    if(TARGET simUtil)
+        target_link_libraries(simQt PRIVATE simUtil)
+    endif()
 endif()
 
 if(TARGET OSGQT)
@@ -365,7 +364,7 @@ endif()
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     # Configure the simQtConfig.cmake file; its dependencies are dynamic
     set(SIMQT_DEPENDS)
-    foreach(TGT IN ITEMS simNotify simCore simData simVis)
+    foreach(TGT IN ITEMS simNotify simCore simData simVis simUtil)
         if(TARGET ${TGT})
             set(SIMQT_DEPENDS "${SIMQT_DEPENDS}\nfind_dependency(${TGT})")
         endif()
@@ -383,10 +382,5 @@ if(INSTALL_HEADERS)
     # Setup header file installation
     install(FILES ${SIMQT_HEADERS}
         DESTINATION include/simQt
-    )
-
-    # simQt.h
-    install(FILES ${SIMQT_ALL_HEADER}
-        DESTINATION include
     )
 endif()

@@ -21,16 +21,18 @@
  *
  */
 #include <cstring>
+#include <fstream>
 #include <string>
 #include "simNotify/Notify.h"
-#include "simCore/String/Format.h"
-#include "simCore/String/Tokenizer.h"
-#include "simCore/String/ValidNumber.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Interpolation.h"
-#include "simCore/LUT/InterpTable.h"
 #include "simCore/EM/Decibel.h"
 #include "simCore/EM/Constants.h"
+#include "simCore/LUT/InterpTable.h"
+#include "simCore/String/Format.h"
+#include "simCore/String/Tokenizer.h"
+#include "simCore/String/UtfUtils.h"
+#include "simCore/String/ValidNumber.h"
 #include "simCore/EM/AntennaPattern.h"
 
 namespace simCore {
@@ -952,7 +954,7 @@ int AntennaPatternTable::readPat(const std::string& inFileName)
   {
     filename_.clear();
     std::fstream inFile;
-    inFile.open(inFileName.c_str(), std::ios::in);
+    inFile.open(simCore::streamFixUtf8(inFileName), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat(inFile);
@@ -1183,7 +1185,7 @@ int AntennaPatternRelativeTable::readPat(const std::string& inFileName)
   {
     filename_.clear();
     std::fstream inFile;
-    inFile.open(inFileName.c_str(), std::ios::in);
+    inFile.open(simCore::streamFixUtf8(inFileName), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat_(inFile);
@@ -1451,7 +1453,7 @@ int AntennaPatternCRUISE::readPat(const std::string& inFileName)
   {
     filename_.clear();
     std::fstream inFile;
-    inFile.open(inFileName.c_str(), std::ios::in);
+    inFile.open(simCore::streamFixUtf8(inFileName), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat_(inFile);
@@ -1690,7 +1692,7 @@ bool readPattern(SymmetricAntennaPattern *sap, std::istream &in, const std::stri
 
 bool readPattern(SymmetricAntennaPattern *sap, const std::string &filename, const std::string &name, double frequency, double frequencythreshold)
 {
-  std::fstream in(filename.c_str(), std::ios::in);
+  std::fstream in(simCore::streamFixUtf8(filename), std::ios::in);
   return readPattern(sap, in, name, frequency, frequencythreshold);
 }
 
@@ -2033,7 +2035,7 @@ bool readPattern(SymmetricGainAntPattern *sap, std::istream &in, double frequenc
 
 bool readPattern(SymmetricGainAntPattern *sap, const std::string &filename, double frequency, double frequencythreshold)
 {
-  std::fstream in(filename.c_str(), std::ios::in);
+  std::fstream in(simCore::streamFixUtf8(filename), std::ios::in);
   return readPattern(sap, in, frequency, frequencythreshold);
 }
 
@@ -2652,7 +2654,7 @@ int AntennaPatternNSMA::readPat(const std::string& inFileName)
   {
     filename_.clear();
     std::fstream inFile;
-    inFile.open(inFileName.c_str(), std::ios::in);
+    inFile.open(simCore::streamFixUtf8(inFileName), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat_(inFile);
@@ -3039,7 +3041,7 @@ int AntennaPatternEZNEC::readPat(const std::string& inFileName)
     minGain_ = -SMALL_DB_VAL;
     maxGain_ = SMALL_DB_VAL;
     std::fstream inFile;
-    inFile.open(inFileName.c_str(), std::ios::in);
+    inFile.open(simCore::streamFixUtf8(inFileName), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat_(inFile);
@@ -3421,7 +3423,7 @@ int AntennaPatternXFDTD::readPat(const std::string& inFileName)
   {
     filename_.clear();
     std::fstream inFile;
-    inFile.open(inFileName.c_str(), std::ios::in);
+    inFile.open(simCore::streamFixUtf8(inFileName), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat_(inFile);

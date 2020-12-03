@@ -286,9 +286,8 @@ void UnitsState::parse(const std::string& s, const simCore::UnitsRegistry& units
   else if (s == "mins") units = simCore::Units::MINUTES;
   else if (s == "hrs") units = simCore::Units::HOURS;
   else if (s == "sm") units = simCore::Units::MILES;
-  if (unitsRegistry.unitsByAbbreviation(s, units) == 0)
-    return;
-  unitsRegistry.unitsByName(s, units);
+  else if (unitsRegistry.unitsByAbbreviation(s, units) != 0)
+    unitsRegistry.unitsByName(s, units);
 }
 
 //------------------------------------------------------------------------

@@ -204,10 +204,14 @@ public:
 
 public:
 
-  /**
-  * The static singleton registry instance
-  */
+  /** The static singleton registry instance */
   static Registry* instance();
+
+  /**
+  * Destroy the singleton registry instance. This method is not thread safe. It should only be called at the end of program execution
+  * on the main thread after all worker threads have returned.
+  */
+  static void destroy();
 
 protected:
   virtual ~Registry();
@@ -223,6 +227,9 @@ private:
 
   /// use the fileSearch_ to find the specified file. Returns the passed in filename if fileSearch_ is not set. This method is thread safe
   std::string findFile_(const std::string& filename, simCore::FileSearch::SearchFileType fileType) const;
+
+  /// singleton pointer
+  static Registry* instance_;
 
   FilePathList modelPaths_;
   FileExtensionList modelExtensions_;

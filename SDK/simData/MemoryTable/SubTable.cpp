@@ -433,6 +433,11 @@ simData::DelayedFlushContainerPtr SubTable::flush(TableColumnId id, SplitObserve
   return DelayedFlushContainerPtr(deq);
 }
 
+void SubTable::flush(double startTime, double endTime)
+{
+  timeContainer_->flush(columns_, startTime, endTime);
+}
+
 DataColumn* SubTable::findColumn_(TableColumnId columnId) const
 {
   std::map<TableColumnId, DataColumn*>::const_iterator i = columnMap_.find(columnId);

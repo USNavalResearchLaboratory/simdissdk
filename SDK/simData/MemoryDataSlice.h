@@ -81,6 +81,10 @@ int limitByPoints(std::deque<T*> &updates, uint32_t limitPoints);
 /// remove all points, unless keeping a static (time = -1) point; returns non-zero if flush did not occur due to static case
 template<typename T>
 int flush(std::deque<T*> &updates, bool keepStatic = true);
+
+/// remove points in the given time range; up to but not including endTime
+template<typename T>
+int flush(std::deque<T*> &updates, double startTime, double endTime);
 } // namespace MemorySliceHelper
 
 /** Iterator for DataSlice vector */
@@ -135,6 +139,9 @@ public:
 
   /// remove all data in the slice
   virtual void flush(bool keepStatic = true);
+
+  /// remove points in the given time range; up to but not including endTime
+  virtual void flush(double startTime, double endTime);
 
   /**
    * Returns an iterator pointing to the first update whose timestamp is
@@ -313,6 +320,9 @@ public:
 
   /// remove all data in the slice
   void flush();
+
+  /// remove points in the given time range; up to but not including endTime
+  void flush(double startTime, double endTime);
 
   //--- from DataSliceBase
   /**
@@ -498,6 +508,9 @@ public:
 
   /// remove all data in the slice
   virtual void flush(bool keepStatic = true);
+
+  /// remove points in the given time range; up to but not including endTime
+  virtual void flush(double startTime, double endTime);
 
   /**
   * Set the maximum number of data points times for current data slice, recalculates the current data slice if changed

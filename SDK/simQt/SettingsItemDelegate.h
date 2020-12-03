@@ -183,6 +183,31 @@ private slots:
   void commitEditor_();
 };
 
+/** Delegate helper for QFONT items, using a QFontDialog as the editor */
+class SDKQT_EXPORT SettingsQFontSelectorDelegate : public QStyledItemDelegate
+{
+  Q_OBJECT;
+public:
+  /** Constructor */
+  SettingsQFontSelectorDelegate(QObject* parent = nullptr);
+  virtual ~SettingsQFontSelectorDelegate();
+
+  /** Creates a file selector editor window */
+  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  /** Sets the file selector editor window's data */
+  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  /** Updates the data model provided with the editor's data */
+  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  /** Update the editor's geometry */
+  virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+
+private slots:
+  /** Called on acceptance of the GUI */
+  void commitAndCloseEditor_();
+  /** Called on rejection of the GUI */
+  void cancelEditor_();
+};
+
 /** Delegate helper for HEX items, using a line edit as the text editor */
 class SDKQT_EXPORT SettingsHexEditDelegate : public QStyledItemDelegate
 {
@@ -256,6 +281,8 @@ private:
   SettingsEnumerationDelegate enumerationDelegate_;
   /** Delegate for FONT values */
   SettingsFontSelectorDelegate fontDelegate_;
+  /** Delegate for QFONT values */
+  SettingsQFontSelectorDelegate qFontDelegate_;
   /** Delegate for HEX values */
   SettingsHexEditDelegate hexDelegate_;
 };

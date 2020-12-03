@@ -42,7 +42,7 @@ class SDKQT_EXPORT Settings
 public:
 
   /// Type information to drive what controls to use on a user interface
-  enum DataTypes { INTEGER, DOUBLE, BOOLEAN, STRING, FILENAME, COLOR, POINT, SIZE, ENUMERATION, STRING_LIST, DIRECTORY, FONT, HEX, VARIANT_MAP, LAYOUT, OTHER_DATATYPE };
+  enum DataTypes { INTEGER, DOUBLE, BOOLEAN, STRING, FILENAME, COLOR, POINT, SIZE, ENUMERATION, STRING_LIST, DIRECTORY, FONT, QFONT, HEX, VARIANT_MAP, LAYOUT, OTHER_DATATYPE };
   /// Level information to help filter what fields to display on the user interface
   enum DataLevel { DEFAULT, ADVANCED, PRIVATE, UNKNOWN};
 
@@ -116,6 +116,9 @@ public:
     /** Factory method for meta data representing a font - filename only (not size). */
     static MetaData makeFont(const QVariant& defaultValue,
       const QString& tooltip="", DataLevel inLevel=DEFAULT);
+    /** Factory method for meta data representing a QFont. */
+    static MetaData makeQFont(const QVariant& defaultValue,
+      const QString& tooltip = "", DataLevel inLevel = DEFAULT);
     /** Factory method for meta data representing a hex value */
     static MetaData makeHex(const QVariant& defaultValue, const QString& tooltip="",
       DataLevel inLevel=DEFAULT, const QVariant& minValue=0, const QVariant& maxValue=QVariant());
