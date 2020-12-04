@@ -1120,7 +1120,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
         {
           double rotation = 0.;
           if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::LLABOX_ROT), rotation))
-            imageOverlay->setRotation(rotation);
+            imageOverlay->setRotation(simCore::angFix2PI(rotation * simCore::DEG2RAD));
         }
         rv.reset(imageOverlay.release());
       }
