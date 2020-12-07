@@ -123,6 +123,8 @@ public:
   void beginRemoval(EntityTreeItem* parent, int begin, int end);
   /// Should only be called by EntityTreeItem.  Ends the removal of items with the model
   void endRemoval();
+  /// Should only be called by QtEntityTreeItem.  Removes the id from itemsById_
+  void clearIndex(uint64_t id);
 
 public slots:
   /** Swaps the view to the hierarchy tree */

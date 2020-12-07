@@ -80,6 +80,8 @@ signals:
 private slots:
   /** Sets the selection from EntityTreeComposite; EntityTreeComposite is in single select mode so QList will only have one entry*/
   void setSelected_(const QList<uint64_t>& ids);
+  /** Accept the changes and emit closedGui */
+  void accept_();
 
 private:
   EntityTreeModel* entityTreeModel_;

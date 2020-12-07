@@ -79,7 +79,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   tree_->addEntityFilter(new simQt::EntityCategoryFilter(entityTreeModel_->dataStore(), simQt::EntityCategoryFilter::SHOW_WIDGET));
 
   connect(tree_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(setSelected_(QList<uint64_t>)));
-  connect(tree_, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(accept())); // Have double click auto close the dialog
+  connect(tree_, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(accept_())); // Have double click auto close the dialog
 
   QVBoxLayout* layout = new QVBoxLayout(this);
   layout->setMargin(0);
@@ -153,6 +153,11 @@ void EntityDialog::setSelected_(const QList<uint64_t>& ids)
   }
 }
 
+void EntityDialog::accept_()
+{
+  accept();
+  emit closedGui();
+}
 
 //--------------------------------------------------------------------------------------------------
 
