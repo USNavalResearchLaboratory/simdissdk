@@ -945,6 +945,7 @@ void ColorGradientWidget::showOrHideTable_()
   groupLayout->setContentsMargins(0, 9, 0, 0);
 
   treeView_ = new QTreeView(tableGroup_);
+  treeView_->setObjectName("colorGradientTreeView");
   treeView_->setRootIsDecorated(false);
   treeView_->setModel(proxyModel_);
   treeView_->setItemDelegateForColumn(ColorGradientModel::COL_COLOR, new ColorWidgetDelegate(showAlpha_, this));
