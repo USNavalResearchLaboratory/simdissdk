@@ -282,13 +282,17 @@ LabelContentCallback& EntityNode::labelContentCallback() const
   return *contentCallback_;
 }
 
-void EntityNode::acceptProjector(ProjectorNode* proj)
+int EntityNode::acceptProjector(ProjectorNode* proj)
 {
-  proj->addProjectionToNode(this);
+  if (!proj)
+    return 1;
+  return proj->addProjectionToNode(this);
 }
 
-void EntityNode::removeProjector(ProjectorNode* proj)
+int EntityNode::removeProjector(ProjectorNode* proj)
 {
-  proj->removeProjectionFromNode(this);
+  if (!proj)
+    return 1;
+  return proj->removeProjectionFromNode(this);
 }
 }

@@ -1149,14 +1149,18 @@ unsigned int PlatformNode::objectIndexTag() const
   return model_->objectIndexTag();
 }
 
-void PlatformNode::acceptProjector(ProjectorNode* proj)
+int PlatformNode::acceptProjector(ProjectorNode* proj)
 {
-  proj->addProjectionToNode(model_->offsetNode());
+  if (proj)
+    return proj->addProjectionToNode(model_->offsetNode());
+  return 1;
 }
 
-void PlatformNode::removeProjector(ProjectorNode* proj)
+int PlatformNode::removeProjector(ProjectorNode* proj)
 {
-  proj->removeProjectionFromNode(model_->offsetNode());
+  if (proj)
+    return proj->removeProjectionFromNode(model_->offsetNode());
+  return 1;
 }
 
 }

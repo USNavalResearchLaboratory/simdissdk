@@ -294,11 +294,10 @@ namespace simVis
     */
     virtual double range() const = 0;
 
-    /** Accept textures from a projector. */
-    virtual void acceptProjector(ProjectorNode* projector);
-
-    /** Stop accepting textures from a projector. */
-    virtual void removeProjector(ProjectorNode* projector);
+    /** Accept textures from a projector. Can only accept one projector per entity.  Returns 0 on success. */
+    virtual int acceptProjector(ProjectorNode* projector);
+    /** Stop accepting textures from a projector. Returns 0 on success. */
+    virtual int removeProjector(ProjectorNode* projector);
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }

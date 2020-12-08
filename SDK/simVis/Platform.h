@@ -194,11 +194,11 @@ public: // EntityNode interface
   */
   virtual double range() const;
 
-  /// Accept textures from a projector.
-  void acceptProjector(ProjectorNode* projector);
+  /// Accept textures from a projector.  A platform can accept only one projector.  Returns 0 on success.
+  virtual int acceptProjector(ProjectorNode* projector) override;
 
-  /// Stop accepting textures from a projector.
-  void removeProjector(ProjectorNode* projector);
+  /// Stop accepting textures from a projector.  Returns 0 on success.
+  virtual int removeProjector(ProjectorNode* projector) override;
 
   /** Retrieve the object index tag for platforms. */
   virtual unsigned int objectIndexTag() const;
