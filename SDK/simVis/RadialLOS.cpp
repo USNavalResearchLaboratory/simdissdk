@@ -261,7 +261,6 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
           // If there is invalid data at a point treat it as 0 HAE.
           hae = 0.0;
           hamsl = 0.0;
-          ok = true;
         }
       }
 

@@ -1094,8 +1094,7 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   // Make sure the position has been set
   if (platCoord.position() == simCore::Vec3(0.0, 0.0, 0.0))
   {
-    // Reactivate the LOS, undoing the setActive(false) above
-    los->setActive(true);
+    // No need to reactivate the LOS, it is not valid
     return;
   }
 
