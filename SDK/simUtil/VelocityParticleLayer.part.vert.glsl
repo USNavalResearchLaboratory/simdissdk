@@ -10,6 +10,8 @@ uniform vec2 resolution;
 uniform float pointSize;
 uniform float altitude;
 
+uniform mat4 osg_ViewMatrix;
+
 out vec4 particle_color;
 out float rotate_angle;
 
@@ -57,6 +59,13 @@ void simutil_vpl_rtt_vertex(inout vec4 vertexModel)
   particle_color = su_vel2color(velocity);
   // Rotation angle comes from the direction sampler texture
   rotate_angle = texture2D(directionSampler, tC).r;
+
+  // Compute the heading based on the view matrix that will orient the rotation angle correctly based on the camera orientation.
+  vec3 upVector = vec3(osg_ViewMatrix[2][0], osg_ViewMatrix[2][1], osg_ViewMatrix[2][2]);
+  normalize(upVector);
+  // Compute azimuth offset from eye using arc tangent
+  float heading = atan(upVector.x, upVector.y);
+  rotate_angle -= heading;
 
   vec3 lla = vec3(-PI + TWO_PI * posInfo.x, -PI_2 + posInfo.y * PI, altitude);
   vec3 xyz = convertLatLongHeightToXYZ(lla.y, lla.x, lla.z);
