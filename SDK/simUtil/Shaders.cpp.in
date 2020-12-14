@@ -30,6 +30,11 @@ Shaders::Shaders()
   add(mapScale(), "@MapScale.glsl@");
   add(terrainToggleEffectVertex(), "@TerrainToggleEffect.frag.glsl@");
   add(terrainToggleEffectFragment(), "@TerrainToggleEffect.vert.glsl@");
+  add(velocityParticleLayerParticleVertex(), "@VelocityParticleLayer.part.vert.glsl@");
+  add(velocityParticleLayerParticleFragment(), "@VelocityParticleLayer.part.frag.glsl@");
+  add(velocityParticleLayerComputeVertex(), "@VelocityParticleLayer.compute.vert.glsl@");
+  add(velocityParticleLayerComputePositionFragment(), "@VelocityParticleLayer.compute.pos.frag.glsl@");
+  add(velocityParticleLayerComputeDirectionFragment(), "@VelocityParticleLayer.compute.dir.frag.glsl@");
 }
 
 std::string Shaders::mapScale() const
@@ -45,6 +50,31 @@ std::string Shaders::terrainToggleEffectVertex() const
 std::string Shaders::terrainToggleEffectFragment() const
 {
   return "TerrainToggleEffect.frag.glsl";
+}
+
+std::string Shaders::velocityParticleLayerParticleVertex() const
+{
+  return "VelocityParticleLayer.part.vert.glsl";
+}
+
+std::string Shaders::velocityParticleLayerParticleFragment() const
+{
+  return "VelocityParticleLayer.part.frag.glsl";
+}
+
+std::string Shaders::velocityParticleLayerComputeVertex() const
+{
+  return "VelocityParticleLayer.compute.vert.glsl";
+}
+
+std::string Shaders::velocityParticleLayerComputePositionFragment() const
+{
+  return "VelocityParticleLayer.compute.pos.frag.glsl";
+}
+
+std::string Shaders::velocityParticleLayerComputeDirectionFragment() const
+{
+  return "VelocityParticleLayer.compute.dir.frag.glsl";
 }
 
 }

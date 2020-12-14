@@ -429,6 +429,8 @@ public:
    */
   virtual DelayedFlushContainerPtr flush(TableColumnId id = -1) = 0;
 
+  /** Remove rows in the given time range; up to but not including endTime */
+  virtual void flush(double startTime, double endTime) = 0;
 
   /**
   * Defines an observer interface to notify when rows or columns are added or removed.

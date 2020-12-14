@@ -184,6 +184,12 @@ Settings::MetaData Settings::MetaData::makeFont(const QVariant& defaultValue,
   return Settings::MetaData(FONT, defaultValue, tooltip, inLevel, QVariant(), QVariant());
 }
 
+Settings::MetaData Settings::MetaData::makeQFont(const QVariant& defaultValue,
+                                       const QString& tooltip, Settings::DataLevel inLevel)
+{
+  return Settings::MetaData(QFONT, defaultValue, tooltip, inLevel, QVariant(), QVariant());
+}
+
 Settings::MetaData Settings::MetaData::makeHex(const QVariant& defaultValue,
                                                const QString& tooltip,
                                                Settings::DataLevel inLevel,

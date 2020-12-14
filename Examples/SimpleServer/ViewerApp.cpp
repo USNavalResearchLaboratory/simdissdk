@@ -24,6 +24,7 @@
 #include "osgGA/GUIEventHandler"
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/ScreenSpaceLayout"
+#include "simCore/String/UtfUtils.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Time/Utils.h"
 #include "simData/DataStoreProxy.h"
@@ -467,7 +468,7 @@ int ViewerApp::loadGog_(const std::string& filename)
   parser.setReferenceLocation(simVis::GOG::BSTUR);
 
   // Load the GOG
-  std::ifstream is(found.c_str());
+  std::ifstream is(simCore::streamFixUtf8(found));
   if (!is.is_open())
     return 1;
   if (parser.loadGOGs(is, simVis::GOG::GOGNODE_GEOGRAPHIC, gogs, followData))

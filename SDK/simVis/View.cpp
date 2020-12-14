@@ -1996,9 +1996,15 @@ void View::fixCockpitFlag_(osg::Node* node, osgEarth::Util::EarthManipulator* ma
 
 osg::Node* View::getModelNodeForTether(osg::Node* node) const
 {
+  // The purpose of this function is to find the right "proxy" node for an incoming EntityNode.
+  // However, not all incoming nodes are entity nodes, and you can tether to anything, not just
+  // EntityNode instances.  EntityNodes are the exceptional case, because the actual EntityNode
+  // might not have a MatrixTransform placing it in good ECEF position, and we need to find a
+  // child proxy node that does have correct positioning.  This function returns that proxy.  If
+  // provided a non-entity node, we presume that's a valid node and return it.
   EntityNode* entityNode = dynamic_cast<EntityNode*>(node);
   if (!entityNode)
-    return nullptr;
+    return node;
 
   switch (entityNode->type())
   {

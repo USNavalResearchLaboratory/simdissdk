@@ -526,6 +526,17 @@ simData::DelayedFlushContainerPtr Table::flush(TableColumnId id)
   return DelayedFlushContainerPtr(deq);
 }
 
+void Table::flush(double startTime, double endTime)
+{
+  endTime_ = -1;
+  for (auto subtable : subtables_)
+  {
+    subtable->flush(startTime, endTime);
+    if (!subtable->empty())
+      endTime_ = simCore::sdkMax(endTime_, subtable->end().previous().time());
+  }
+}
+
 void Table::addObserver(TableObserverPtr callback)
 {
   observers_.push_back(callback);

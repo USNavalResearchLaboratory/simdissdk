@@ -20,11 +20,13 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
 #include <cassert>
 #include <limits>
 #include <QIcon>
 #include "osgEarth/Map"
 #include "simCore/Calc/Math.h"
+#include "simUtil/VelocityParticleLayer.h"
 #include "simQt/MapDataModel.h"
 
 namespace simQt {
@@ -68,7 +70,13 @@ MapReindexer::~MapReindexer()
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ImageLayerVector& imageLayers)
 {
   if (map != nullptr)
+  {
     map->getLayers(imageLayers);
+    // Remove Velocity Particle layers
+    imageLayers.erase(std::remove_if(imageLayers.begin(), imageLayers.end(), [](const osg::ref_ptr<osgEarth::ImageLayer>& imgLayer) {
+      return dynamic_cast<const simUtil::VelocityParticleLayer*>(imgLayer.get()) != nullptr;
+    }), imageLayers.end());
+  }
 }
 
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ElevationLayerVector& elevationLayers)
@@ -81,6 +89,12 @@ void MapReindexer::getLayers(osgEarth::Map* map, FeatureModelLayerVector& modelL
 {
   if (map != nullptr)
     map->getLayers(modelLayers);
+}
+
+void MapReindexer::getLayers(osgEarth::Map* map, VelocityParticleLayerVector& velocityLayers)
+{
+  if (map != nullptr)
+    map->getLayers(velocityLayers);
 }
 
 void MapReindexer::getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVector& otherLayers)
@@ -99,6 +113,7 @@ void MapReindexer::getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVect
       continue;
     if (dynamic_cast<const osgEarth::FeatureModelLayer*>(layer) != nullptr)
       continue;
+    // No need to explicitly test for simUtil::VelocityParticleLayer; it's an ImageLayer
     otherLayers.push_back(*iter);
   }
 }
@@ -132,6 +147,17 @@ unsigned int MapReindexer::layerTypeIndex(osgEarth::FeatureModelLayer* layer) co
   if (!map_.valid())
     return INVALID_INDEX;
   FeatureModelLayerVector layers;
+  MapReindexer::getLayers(map_.get(), layers);
+  return indexOf(layers, layer);
+}
+
+unsigned int MapReindexer::layerTypeIndex(simUtil::VelocityParticleLayer* layer) const
+{
+  // Must have a valid map
+  assert(map_.valid());
+  if (!map_.valid())
+    return INVALID_INDEX;
+  VelocityParticleLayerVector layers;
   MapReindexer::getLayers(map_.get(), layers);
   return indexOf(layers, layer);
 }
@@ -379,10 +405,11 @@ private:
 MapItem::MapItem(MapDataModel::Item *parent)
 : parent_(parent)
 {
-  insertChild(new GroupItem(QObject::tr("Image"), this), 0);
-  insertChild(new GroupItem(QObject::tr("Elevation"), this), 1);
-  insertChild(new GroupItem(QObject::tr("Model"), this), 2);
-  insertChild(new GroupItem(QObject::tr("Other"), this), 3);
+  insertChild(new GroupItem(QObject::tr("Image"), this), MapDataModel::CHILD_IMAGE);
+  insertChild(new GroupItem(QObject::tr("Elevation"), this), MapDataModel::CHILD_ELEVATION);
+  insertChild(new GroupItem(QObject::tr("Model"), this), MapDataModel::CHILD_FEATURE);
+  insertChild(new GroupItem(QObject::tr("Velocity"), this), MapDataModel::CHILD_VELOCITY);
+  insertChild(new GroupItem(QObject::tr("Other"), this), MapDataModel::CHILD_OTHER);
 }
 
 //----------------------------------------------------------------------------
@@ -456,15 +483,17 @@ public:
 
   virtual QString name() const
   {
-    return QString::fromStdString(layer_->getName());
+    if (layer_.valid())
+      return QString::fromStdString(layer_->getName());
+    return "";
   }
 
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!isStatusOk(layer_->getStatus()))
-      return QColor(Qt::gray);
-    return QVariant();
+    if (layer_.valid() && isStatusOk(layer_->getStatus()))
+      return QVariant();
+    return QColor(Qt::gray);
   }
 
   virtual MapDataModel::MapChildren layerTypeRole() const
@@ -474,11 +503,11 @@ public:
 
   virtual QVariant layerPtr() const
   {
-    return QVariant::fromValue<void*>(layer_);
+    return QVariant::fromValue<void*>(layer_.get());
   }
 
 private:
-  osgEarth::ImageLayer *layer_;
+  osg::observer_ptr<osgEarth::ImageLayer> layer_;
 };
 
 /// An Elevation layer
@@ -494,15 +523,17 @@ public:
 
   virtual QString name() const
   {
-    return QString::fromStdString(layer_->getName());
+    if (layer_.valid())
+      return QString::fromStdString(layer_->getName());
+    return "";
   }
 
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!isStatusOk(layer_->getStatus()))
-      return QColor(Qt::gray);
-    return QVariant();
+    if (layer_.valid() && isStatusOk(layer_->getStatus()))
+      return QVariant();
+    return QColor(Qt::gray);
   }
 
   virtual MapDataModel::MapChildren layerTypeRole() const
@@ -512,11 +543,11 @@ public:
 
   virtual QVariant layerPtr() const
   {
-    return QVariant::fromValue<void*>(layer_);
+    return QVariant::fromValue<void*>(layer_.get());
   }
 
 private:
-  osgEarth::ElevationLayer *layer_;
+  osg::observer_ptr<osgEarth::ElevationLayer> layer_;
 };
 
 /// A Model layer
@@ -532,15 +563,17 @@ public:
 
   virtual QString name() const
   {
-    return QString::fromStdString(layer_->getName());
+    if (layer_.valid())
+      return QString::fromStdString(layer_->getName());
+    return "";
   }
 
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!isStatusOk(layer_->getStatus()))
-      return QColor(Qt::gray);
-    return QVariant();
+    if (layer_.valid() && isStatusOk(layer_->getStatus()))
+      return QVariant();
+    return QColor(Qt::gray);
   }
 
   virtual MapDataModel::MapChildren layerTypeRole() const
@@ -550,11 +583,49 @@ public:
 
   virtual QVariant layerPtr() const
   {
-    return QVariant::fromValue<void*>(layer_);
+    return QVariant::fromValue<void*>(layer_.get());
   }
 
 private:
-  osgEarth::FeatureModelLayer *layer_;
+  osg::observer_ptr<osgEarth::FeatureModelLayer> layer_;
+};
+
+/// A Velocity Particle layer
+class VelocityParticleLayerItem : public LayerItem
+{
+public:
+  /** Constructor */
+  VelocityParticleLayerItem(Item* parent, simUtil::VelocityParticleLayer* layer)
+    : LayerItem(parent),
+    layer_(layer)
+  {
+  }
+
+  virtual QString name() const
+  {
+    return QString::fromStdString(layer_->getName());
+  }
+
+  /** @copydoc  MapDataModel::Item::color */
+  virtual QVariant color() const
+  {
+    if (!layer_.valid() || !isStatusOk(layer_->getStatus()))
+      return QColor(Qt::gray);
+    return QVariant();
+  }
+
+  virtual MapDataModel::MapChildren layerTypeRole() const
+  {
+    return MapDataModel::CHILD_VELOCITY;
+  }
+
+  virtual QVariant layerPtr() const
+  {
+    return QVariant::fromValue<void*>(layer_.get());
+  }
+
+private:
+  osg::observer_ptr<simUtil::VelocityParticleLayer> layer_;
 };
 
 /// Other layer
@@ -570,15 +641,17 @@ public:
 
   virtual QString name() const
   {
-    return QString::fromStdString(layer_->getName());
+    if (layer_.valid())
+      return QString::fromStdString(layer_->getName());
+    return "";
   }
 
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!isStatusOk(layer_->getStatus()))
-      return QColor(Qt::gray);
-    return QVariant();
+    if (layer_.valid() && isStatusOk(layer_->getStatus()))
+      return QVariant();
+    return QColor(Qt::gray);
   }
 
   virtual MapDataModel::MapChildren layerTypeRole() const
@@ -588,11 +661,11 @@ public:
 
   virtual QVariant layerPtr() const
   {
-    return QVariant::fromValue<void*>(layer_);
+    return QVariant::fromValue<void*>(layer_.get());
   }
 
 private:
-  osgEarth::VisibleLayer *layer_;
+  osg::observer_ptr<osgEarth::VisibleLayer> layer_;
 };
 
 //----------------------------------------------------------------------------
@@ -611,6 +684,19 @@ public:
   /* Layer Added */
   virtual void onLayerAdded(osgEarth::Layer* layer, unsigned int index)
   {
+    // Need to test Velocity Layer first since it is-a ImageLayer
+    simUtil::VelocityParticleLayer* velocityLayer = dynamic_cast<simUtil::VelocityParticleLayer*>(layer);
+    if (velocityLayer)
+    {
+      MapReindexer reindex(dataModel_.map());
+      unsigned int newIndex = reindex.layerTypeIndex(velocityLayer);
+      // Means we got a layer that wasn't found in the vector. osgEarth or MapReindexer error.
+      assert(newIndex != MapReindexer::INVALID_INDEX);
+      if (newIndex != MapReindexer::INVALID_INDEX)
+        dataModel_.addVelocityLayer_(velocityLayer, newIndex);
+      return;
+    }
+
     osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
     if (imageLayer)
     {
@@ -622,6 +708,7 @@ public:
         dataModel_.addImageLayer_(imageLayer, newIndex);
       return;
     }
+
     osgEarth::ElevationLayer* elevationLayer = dynamic_cast<osgEarth::ElevationLayer*>(layer);
     if (elevationLayer)
     {
@@ -661,6 +748,14 @@ public:
 
   virtual void onLayerMoved(osgEarth::Layer* layer, unsigned int oldIndex, unsigned int newIndex)
   {
+    // Need to test Velocity Particle Layer first since it is-a ImageLayer
+    simUtil::VelocityParticleLayer* velocityLayer = dynamic_cast<simUtil::VelocityParticleLayer*>(layer);
+    if (velocityLayer)
+    {
+      moveLayer_(dataModel_.velocityGroup_(), layer, newIndex < oldIndex);
+      return;
+    }
+
     osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
     if (imageLayer)
     {
@@ -693,6 +788,16 @@ public:
   /** Layer Removed */
   virtual void onLayerRemoved(osgEarth::Layer* layer, unsigned int index)
   {
+    // Need to test Velocity Particle Layer first since it is-a ImageLayer
+    simUtil::VelocityParticleLayer* velocityLayer = dynamic_cast<simUtil::VelocityParticleLayer*>(layer);
+    if (velocityLayer)
+    {
+      // We use image layer callbacks because it is an image layer
+      dataModel_.imageCallbacks_.remove(velocityLayer);
+      removeLayer_(dataModel_.velocityGroup_(), velocityLayer);
+      return;
+    }
+
     osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
     if (imageLayer)
     {
@@ -797,18 +902,24 @@ public:
   {}
 
   /** Inherited from VisibleLayerCallback */
-  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer)
+  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer) override
   {
     osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
-    if (imageLayer)
+    simUtil::VelocityParticleLayer* velocityLayer = dynamic_cast<simUtil::VelocityParticleLayer*>(imageLayer);
+    if (velocityLayer)
+      emit dataModel_.velocityLayerVisibleChanged(velocityLayer);
+    else if (imageLayer)
       emit dataModel_.imageLayerVisibleChanged(imageLayer);
   }
 
   /** Inherited from VisibleLayerCallback */
-  virtual void onOpacityChanged(osgEarth::VisibleLayer *layer)
+  virtual void onOpacityChanged(osgEarth::VisibleLayer *layer) override
   {
     osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
-    if (imageLayer)
+    simUtil::VelocityParticleLayer* velocityLayer = dynamic_cast<simUtil::VelocityParticleLayer*>(imageLayer);
+    if (velocityLayer)
+      emit dataModel_.velocityLayerOpacityChanged(velocityLayer);
+    else if (imageLayer)
       emit dataModel_.imageLayerOpacityChanged(imageLayer);
   }
 
@@ -826,7 +937,7 @@ public:
   {}
 
   /** Inherited from VisibleLayerCallback */
-  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer)
+  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer) override
   {
     emit dataModel_.elevationLayerVisibleChanged(static_cast<osgEarth::ElevationLayer*>(layer));
   }
@@ -845,7 +956,7 @@ public:
   {}
 
   /** Inherited from VisibleLayerCallback */
-  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer)
+  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer) override
   {
     osgEarth::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::FeatureModelLayer*>(layer);
     if (modelLayer)
@@ -855,7 +966,7 @@ public:
   }
 
   /** Inherited from ModelLayerCallback */
-  virtual void onOpacityChanged(osgEarth::VisibleLayer *layer)
+  virtual void onOpacityChanged(osgEarth::VisibleLayer *layer) override
   {
     osgEarth::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::FeatureModelLayer*>(layer);
     if (modelLayer)
@@ -878,13 +989,13 @@ public:
   {}
 
   /** Inherited from VisibleLayerCallback */
-  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer)
+  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer) override
   {
     emit dataModel_.otherLayerVisibleChanged(layer);
   }
 
   /** Inherited from VisibleLayerCallback */
-  virtual void onOpacityChanged(osgEarth::VisibleLayer *layer)
+  virtual void onOpacityChanged(osgEarth::VisibleLayer *layer) override
   {
     emit dataModel_.otherLayerOpacityChanged(layer);
   }
@@ -899,7 +1010,8 @@ MapDataModel::MapDataModel(QObject* parent)
     rootItem_(new MapItem(nullptr)),
     imageIcon_(":/simQt/images/Globe.png"),
     elevationIcon_(":/simQt/images/Image.png"),
-    featureIcon_(":/simQt/images/Building Corporation.png")
+    featureIcon_(":/simQt/images/Building Corporation.png"),
+    velocityIcon_(":/simQt/images/WindLayer.png")
 {
   mapListener_ = new MapListener(*this);
 }
@@ -929,6 +1041,7 @@ void MapDataModel::bindTo(osgEarth::Map* map)
   removeAllItems_(imageGroup_());
   removeAllItems_(elevationGroup_());
   removeAllItems_(featureGroup_());
+  removeAllItems_(velocityGroup_());
   removeAllItems_(otherGroup_());
   map_ = map;
   fillModel_(map);
@@ -959,8 +1072,19 @@ void MapDataModel::removeAllCallbacks_(osgEarth::Map* map)
       tileLayer->removeCallback(imageCallbacks_.find(iter->get())->get());
     }
   }
+  // Need to also remove velocity layer callbacks from the image callbacks
+  VelocityParticleLayerVector velocityLayers;
+  MapReindexer::getLayers(map, velocityLayers);
+  for (VelocityParticleLayerVector::const_iterator iter = velocityLayers.begin(); iter != velocityLayers.end(); ++iter)
+  {
+    if (imageCallbacks_.contains(iter->get()))
+    {
+      osgEarth::TileLayer* tileLayer = iter->get();
+      tileLayer->removeCallback(imageCallbacks_.find(iter->get())->get());
+    }
+  }
   // Assertion failure means that we were out of sync with map; not a one-to-one with callback-to-layer
-  assert(imageCallbacks_.size() == static_cast<int>(imageLayers.size()));
+  assert(imageCallbacks_.size() == static_cast<int>(imageLayers.size() + velocityLayers.size()));
 
   imageCallbacks_.clear();
 
@@ -1046,6 +1170,18 @@ void MapDataModel::fillModel_(osgEarth::Map *map)
     (*iter)->addCallback(cb.get());
   }
 
+  VelocityParticleLayerVector velocityLayers;
+  MapReindexer::getLayers(map, velocityLayers);
+  // need to reverse iterate, because we are inserting at row 0
+  for (VelocityParticleLayerVector::const_reverse_iterator iter = velocityLayers.rbegin(); iter != velocityLayers.rend(); ++iter)
+  {
+    velocityGroup_()->insertChild(new VelocityParticleLayerItem(velocityGroup_(), iter->get()), 0);
+    // Velocity layers are image layers, so use an image layer listener
+    osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ImageLayerListener(*this);
+    imageCallbacks_[iter->get()] = cb.get();
+    static_cast<osgEarth::TileLayer*>(*iter)->addCallback(cb.get());
+  }
+
   osgEarth::VisibleLayerVector otherLayers;
   MapReindexer::getOtherLayers(map, otherLayers);
   // need to reverse iterate, because we are inserting at row 0
@@ -1071,22 +1207,27 @@ void MapDataModel::removeAllItems_(Item *group)
 
 MapDataModel::Item* MapDataModel::imageGroup_() const
 {
-  return rootItem_->childAt(0);
+  return rootItem_->childAt(CHILD_IMAGE);
 }
 
 MapDataModel::Item* MapDataModel::elevationGroup_() const
 {
-  return rootItem_->childAt(1);
+  return rootItem_->childAt(CHILD_ELEVATION);
 }
 
 MapDataModel::Item* MapDataModel::featureGroup_() const
 {
-  return rootItem_->childAt(2);
+  return rootItem_->childAt(CHILD_FEATURE);
+}
+
+MapDataModel::Item* MapDataModel::velocityGroup_() const
+{
+  return rootItem_->childAt(CHILD_VELOCITY);
 }
 
 MapDataModel::Item* MapDataModel::otherGroup_() const
 {
-  return rootItem_->childAt(3);
+  return rootItem_->childAt(CHILD_OTHER);
 }
 
 void MapDataModel::addImageLayer_(osgEarth::ImageLayer *layer, unsigned int index)
@@ -1129,6 +1270,20 @@ void MapDataModel::addFeatureLayer_(osgEarth::FeatureModelLayer *layer, unsigned
   featureCallbacks_[layer] = cb.get();
   layer->addCallback(cb.get());
   emit featureLayerAdded(layer);
+}
+
+void MapDataModel::addVelocityLayer_(simUtil::VelocityParticleLayer* layer, unsigned int index)
+{
+  const QModelIndex parentIndex = createIndex(rootItem_->rowOfChild(velocityGroup_()), 0, velocityGroup_());
+  beginInsertRows(parentIndex, index, index);
+  insertRow(index, parentIndex);
+  velocityGroup_()->insertChild(new VelocityParticleLayerItem(velocityGroup_(), layer), index);
+  endInsertRows();
+
+  osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ImageLayerListener(*this);
+  imageCallbacks_[layer] = cb.get();
+  static_cast<osgEarth::TileLayer*>(layer)->addCallback(cb.get());
+  emit velocityLayerAdded(layer);
 }
 
 void MapDataModel::addOtherLayer_(osgEarth::VisibleLayer *layer, unsigned int index)
@@ -1248,6 +1403,9 @@ QVariant MapDataModel::data(const QModelIndex &index, int role) const
       case CHILD_FEATURE:
         return featureIcon_;
 
+      case CHILD_VELOCITY:
+        return velocityIcon_;
+
       case CHILD_OTHER:
         return otherIcon_;
 
@@ -1286,45 +1444,22 @@ void MapDataModel::refreshText()
   // Assertion failure means the tree structure changed and this wasn't updated
   assert(mapItem.isValid());
 
-  const Item* imageGroup = imageGroup_();
-  // Only need to emit data changed for the image group if there are images
-  if (imageGroup != nullptr && imageGroup->rowCount() > 0)
-  {
-    const QModelIndex imageItem = index(0, 0, mapItem);
-    // Assertion failure means the tree structure changed and this wasn't updated
-    assert(imageItem.isValid());
-    emit dataChanged(index(0, 0, imageItem), index(imageGroup->rowCount() - 1, 0, imageItem));
-  }
+  // Create a lambda that emits dataChanged for each group type
+  auto emitDataChanged = [=](const Item* group, MapChildren childType) {
+    if (group && group->rowCount() > 0)
+    {
+      const QModelIndex childItem = index(childType, 0, mapItem);
+      // Assertion failure means the tree structure changed and this wasn't updated
+      assert(childItem.isValid());
+      emit dataChanged(index(0, 0, childItem), index(group->rowCount() - 1, 0, childItem));
+    }
+  };
 
-  const Item* elevationGroup = elevationGroup_();
-  // Only need to emit data changed for the elevation group if there are elevation layers
-  if (elevationGroup != nullptr && elevationGroup->rowCount() > 0)
-  {
-    const QModelIndex elevItem = index(1, 0, mapItem);
-    // Assertion failure means the tree structure changed and this wasn't updated
-    assert(elevItem.isValid());
-    emit dataChanged(index(0, 0, elevItem), index(elevationGroup->rowCount() - 1, 0, elevItem));
-  }
-
-  const Item* featureGroup = featureGroup_();
-  // Only need to emit data changed for the model group if there are model layers
-  if (featureGroup != nullptr && featureGroup->rowCount() > 0)
-  {
-    const QModelIndex featureItem = index(2, 0, mapItem);
-    // Assertion failure means the tree structure changed and this wasn't updated
-    assert(featureItem.isValid());
-    emit dataChanged(index(0, 0, featureItem), index(featureGroup->rowCount() - 1, 0, featureItem));
-  }
-
-  const Item* otherGroup = otherGroup_();
-  // Only need to emit data changed for the other group if there are other layers
-  if (otherGroup != nullptr && otherGroup->rowCount() > 0)
-  {
-    const QModelIndex otherItem = index(3, 0, mapItem);
-    // Assertion failure means the tree structure changed and this wasn't updated
-    assert(otherItem.isValid());
-    emit dataChanged(index(0, 0, otherItem), index(otherGroup->rowCount() - 1, 0, otherItem));
-  }
+  emitDataChanged(imageGroup_(), CHILD_IMAGE);
+  emitDataChanged(elevationGroup_(), CHILD_ELEVATION);
+  emitDataChanged(featureGroup_(), CHILD_FEATURE);
+  emitDataChanged(velocityGroup_(), CHILD_VELOCITY);
+  emitDataChanged(otherGroup_(), CHILD_OTHER);
 }
 
 QModelIndex MapDataModel::layerIndex(const osgEarth::Layer* layer) const
@@ -1335,7 +1470,10 @@ QModelIndex MapDataModel::layerIndex(const osgEarth::Layer* layer) const
   // Find the appropriate group item based on the item type
   GroupItem* group = nullptr;
   QModelIndex parentIndex;
-  if (dynamic_cast<const osgEarth::ImageLayer*>(layer))
+  // Order matters because VelocityParticleLayer is-a ImageLayer
+  if (dynamic_cast<const simUtil::VelocityParticleLayer*>(layer))
+    group = static_cast<GroupItem*>(velocityGroup_());
+  else if (dynamic_cast<const osgEarth::ImageLayer*>(layer))
     group = static_cast<GroupItem*>(imageGroup_());
   else if (dynamic_cast<const osgEarth::ElevationLayer*>(layer))
     group = static_cast<GroupItem*>(elevationGroup_());

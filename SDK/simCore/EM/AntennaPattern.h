@@ -23,11 +23,11 @@
 #ifndef SIMCORE_EM_ANTENNA_PATTERN_H
 #define SIMCORE_EM_ANTENNA_PATTERN_H
 
+#include <cfloat>
+#include <complex>
+#include <iostream>
 #include <map>
 #include <string>
-#include <fstream>
-#include <complex>
-#include <cfloat>
 
 #include "simCore/Common/Common.h"
 #include "simCore/LUT/InterpTable.h"

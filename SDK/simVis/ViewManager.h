@@ -64,6 +64,16 @@ class View;
  *
  *   (b) Has no HUD stack.
  *
+ * If you are using multiple osg::GraphicsContext instances with the same scene
+ * and/or ViewManager, you may need to disable the image unref after apply, or you
+ * may see texture glitches in the multiple graphics windows.  For example:
+ *
+ * <code>
+ * // Prevent image data from being deleted on CPU after it's been sent to GPU, called at app startup:
+ * osgEarth::Registry::instance()->unRefImageDataAfterApply() = false;
+ * // Prevent image data from being deleted on CPU after sent to GPU, called once on the pager:
+ * view->getScene()->getDatabasePager()->setUnrefImageDataAfterApplyPolicy(true, false);
+ * </code>
  */
 class SDKVIS_EXPORT ViewManager : public osg::Referenced
 {

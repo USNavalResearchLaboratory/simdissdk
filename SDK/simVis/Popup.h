@@ -28,7 +28,6 @@
 * mouses over a platform.
 */
 #include "simCore/Common/Common.h"
-#include "simVis/Platform.h"
 #include "simVis/Types.h"
 
 #include "osg/Geometry"

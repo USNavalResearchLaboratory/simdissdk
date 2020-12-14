@@ -131,6 +131,23 @@ int flush(std::deque<T*> &updates, bool keepStatic)
   return 0;
 }
 
+template<typename T>
+int flush(std::deque<T*> &updates, double startTime, double endTime)
+{
+  auto start = std::lower_bound(updates.begin(), updates.end(), startTime, UpdateComp<T>());
+  if ((start == updates.end()) || ((*start)->time() >= endTime))
+    return 1;
+
+  // endTime is non-inclusive
+  auto end = std::lower_bound(start, updates.end(), endTime, UpdateComp<T>());
+
+  for (auto it = start; it != end; ++it)
+    delete *it;
+
+  updates.erase(start, end);
+  return 0;
+}
+
 } // namespace MemorySliceHelper
 
 template <class T>
@@ -236,6 +253,14 @@ template<typename T>
 void MemoryDataSlice<T>::flush(bool keepStatic)
 {
   if (MemorySliceHelper::flush(updates_, keepStatic) == 0)
+    current_ = nullptr;
+  dirty_ = true;
+}
+
+template<typename T>
+void MemoryDataSlice<T>::flush(double startTime, double endTime)
+{
+  if (MemorySliceHelper::flush(updates_, startTime, endTime) == 0)
     current_ = nullptr;
   dirty_ = true;
 }
@@ -556,6 +581,13 @@ template<class CommandType, class PrefType>
 void MemoryCommandSlice<CommandType, PrefType>::flush()
 {
   MemorySliceHelper::flush(updates_);
+  earliestInsert_ = std::numeric_limits<double>::max();
+}
+
+template<class CommandType, class PrefType>
+void MemoryCommandSlice<CommandType, PrefType>::flush(double startTime, double endTime)
+{
+  MemorySliceHelper::flush(updates_, startTime, endTime);
   earliestInsert_ = std::numeric_limits<double>::max();
 }
 

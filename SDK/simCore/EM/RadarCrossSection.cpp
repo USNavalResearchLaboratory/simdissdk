@@ -34,6 +34,7 @@
 
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Format.h"
+#include "simCore/String/UtfUtils.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
 #include "simCore/Calc/Interpolation.h"
@@ -1309,7 +1310,7 @@ int RCSLUT::loadRCSFile(const std::string& fname)
 
   // find file
   std::fstream inFile;
-  inFile.open(fname.c_str(), std::ios::in);
+  inFile.open(simCore::streamFixUtf8(fname), std::ios::in);
   if (inFile.is_open())
   {
     setFilename(fname);

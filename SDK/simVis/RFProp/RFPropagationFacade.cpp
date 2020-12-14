@@ -127,13 +127,10 @@ RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* paren
   if (profileManager_.valid() && parent_.valid())
     parent_->addChild(profileManager_);
 
-  initializeDefaultColors_();
-  colorProvider_ = new CompositeColorProvider();
+  initializeColorProviders_();
 
-  profileManager_->setColorProvider(colorProvider_.get());
-
-  // set the default threshold type
-  setThresholdType(simRF::ProfileDataProvider::THRESHOLDTYPE_POD);
+  // set the threshold type, and update color provider accordingly
+  setThresholdType(simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS);
 
   // set the default visualization mode
   setDrawMode(simRF::Profile::DRAWMODE_2D_HORIZONTAL);
@@ -203,33 +200,14 @@ const PODVectorPtr RFPropagationFacade::getPODLossThreshold() const
 
 int RFPropagationFacade::setColorMap(simRF::ProfileDataProvider::ThresholdType type, const std::map<float, osg::Vec4>& colorMap)
 {
-  bool updateColorProvider = false;
-  simRF::ProfileDataProvider::ThresholdType currentType = profileManager_->getThresholdType();
-  switch (type)
+  auto foundColorProvider = colorProviderMap_.find(type);
+  if (foundColorProvider != colorProviderMap_.end())
+    foundColorProvider->second->setGradientColorMap(colorMap);
+  else
   {
-  // these types always share the same color map
-  case simRF::ProfileDataProvider::THRESHOLDTYPE_CNR:
-  case simRF::ProfileDataProvider::THRESHOLDTYPE_SNR:
-  case simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR:
-  case simRF::ProfileDataProvider::THRESHOLDTYPE_ONEWAYPOWER:
-    colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_CNR] = colorMap;
-    colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_SNR] = colorMap;
-    colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR] = colorMap;
-    colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_ONEWAYPOWER] = colorMap;
-    updateColorProvider = currentType == simRF::ProfileDataProvider::THRESHOLDTYPE_CNR || currentType == simRF::ProfileDataProvider::THRESHOLDTYPE_SNR
-      || currentType == simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR || currentType == simRF::ProfileDataProvider::THRESHOLDTYPE_ONEWAYPOWER;
-    break;
-  default:
-    updateColorProvider = currentType == type;
-    colorMaps_[type] = colorMap;
-    break;
+    // some providers may not be available.
+    defaultColorProvider_->setGradientColorMap(colorMap);
   }
-  if (colorProvider_ == nullptr)
-    return 0;
-
-  // update the color provider if the specified type is currently active
-  if (updateColorProvider)
-    colorProvider_->setGradientColorMap(colorMap);
   return 0;
 }
 
@@ -331,41 +309,38 @@ int RFPropagationFacade::history() const
 
 int RFPropagationFacade::setTransparency(int transparency)
 {
-    profileManager_->setAlpha(1.f - transparency * 0.01f);
+  profileManager_->setAlpha(1.f - transparency * 0.01f);
   return 0;
 }
 
 int RFPropagationFacade::transparency() const
 {
   // Add 0.5f to round correctly; subtract from 1.f to convert alpha to transparency
-    return static_cast<int>(0.5f + 100.f * (1.f - profileManager_->getAlpha()));
+  return static_cast<int>(0.5f + 100.f * (1.f - profileManager_->getAlpha()));
 }
 
 int RFPropagationFacade::setThresholdMode(simRF::ColorProvider::ColorMode mode)
 {
-  if (!colorProvider_)
+  if (!currentColorProvider_)
   {
     assert(false);
     return 1;
   }
-  colorProvider_->setMode(mode);
-
+  currentColorProvider_->setMode(mode);
   return 0;
 }
 
 simRF::ColorProvider::ColorMode RFPropagationFacade::thresholdMode() const
 {
-  if (colorProvider_ == nullptr)
+  if (!currentColorProvider_)
     return simRF::ColorProvider::COLORMODE_BELOW;
-  return colorProvider_->getMode();
+  return currentColorProvider_->getMode();
 }
 
 int RFPropagationFacade::setThresholdType(simRF::ProfileDataProvider::ThresholdType type)
 {
   profileManager_->setThresholdType(type);
-
-  setGradientByThresholdType_(type);
-
+  setColorProviderByThresholdType_(type);
   return 0;
 }
 
@@ -374,65 +349,65 @@ simRF::ProfileDataProvider::ThresholdType RFPropagationFacade::thresholdType() c
   return profileManager_->getThresholdType();
 }
 
-int RFPropagationFacade::setThresholdValue(int value)
+int RFPropagationFacade::setThresholdValue(float value)
 {
-  if (!colorProvider_)
+  if (!currentColorProvider_)
   {
     assert(false);
     return 1;
   }
-  colorProvider_->setThreshold(value);
+  currentColorProvider_->setThreshold(value);
   return 0;
 }
 
-int RFPropagationFacade::threshold() const
+float RFPropagationFacade::threshold() const
 {
-  if (colorProvider_ == nullptr)
-    return 0;
-  return static_cast<int>(colorProvider_->getThreshold());
+  if (!currentColorProvider_)
+    return 0.f;
+  return currentColorProvider_->getThreshold();
 }
 
 int RFPropagationFacade::setAboveColor(const osg::Vec4f& color)
 {
-  if (!colorProvider_)
+  if (!currentColorProvider_)
   {
     assert(false);
     return 1;
   }
-  colorProvider_->setAboveColor(color);
+  currentColorProvider_->setAboveColor(color);
   return 0;
 }
 
 int RFPropagationFacade::aboveColor(osg::Vec4f& color)
 {
-  if (!colorProvider_)
+  if (!currentColorProvider_)
   {
     assert(false);
     return 1;
   }
-  color = colorProvider_->getAboveColor();
+  color = currentColorProvider_->getAboveColor();
   return 0;
 }
 
 int RFPropagationFacade::setBelowColor(const osg::Vec4f& color)
 {
-  if (!colorProvider_)
+  if (!currentColorProvider_)
   {
     assert(false);
     return 1;
   }
-  colorProvider_->setBelowColor(color);
+  currentColorProvider_->setBelowColor(color);
   return 0;
 }
 
 int RFPropagationFacade::belowColor(osg::Vec4f& color)
 {
-  if (!colorProvider_)
+  if (!currentColorProvider_)
   {
     assert(false);
     return 1;
   }
-  color = colorProvider_->getBelowColor();
+  color = currentColorProvider_->getBelowColor();
   return 0;
 }
 
@@ -796,8 +771,10 @@ void RFPropagationFacade::setPosition(double latRad, double lonRad)
   profileManager_->setRefCoord(latRad, lonRad, antennaHeight());
 }
 
-void RFPropagationFacade::initializeDefaultColors_()
+void RFPropagationFacade::initializeColorProviders_()
 {
+  CompositeColorProvider* lossColorProvider = new CompositeColorProvider();
+  colorProviderMap_[simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS] = lossColorProvider;
   simRF::GradientColorProvider::ColorMap lossColors;
   lossColors[0.0f] = simVis::Color::Red;
   lossColors[110.0f] = simVis::Color::Yellow;
@@ -811,8 +788,8 @@ void RFPropagationFacade::initializeDefaultColors_()
   lossColors[150.0f] = osg::Vec4f(0.0f, 0.75f, 0.75f, 1.0f);
   lossColors[155.0f] = simVis::Color::Aqua;
   lossColors[160.0f] = simVis::Color::Purple;
-
-  colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS] = lossColors;
+  lossColorProvider->setGradientColorMap(lossColors);
+  lossColorProvider->setThreshold(150.f);
 
   simRF::GradientColorProvider::ColorMap complexColors;
   complexColors[101.0f] = simVis::Color::Red;
@@ -828,35 +805,57 @@ void RFPropagationFacade::initializeDefaultColors_()
   complexColors[-80.0f] = simVis::Color::Aqua;
   complexColors[-100.0f] = simVis::Color::Purple;
 
-  colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_SNR] = complexColors;
-  colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_CNR] = complexColors;
-  colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_ONEWAYPOWER] = complexColors;
-  colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR] = complexColors;
+  CompositeColorProvider* snrColorProvider = new CompositeColorProvider();
+  colorProviderMap_[simRF::ProfileDataProvider::THRESHOLDTYPE_SNR] = snrColorProvider;
+  snrColorProvider->setGradientColorMap(complexColors);
+  snrColorProvider->setThreshold(0.f);
+
+  CompositeColorProvider* cnrColorProvider = new CompositeColorProvider();
+  colorProviderMap_[simRF::ProfileDataProvider::THRESHOLDTYPE_CNR] = cnrColorProvider;
+  cnrColorProvider->setGradientColorMap(complexColors);
+  cnrColorProvider->setThreshold(0.f);
+
+  CompositeColorProvider* oneWayColorProvider = new CompositeColorProvider();
+  colorProviderMap_[simRF::ProfileDataProvider::THRESHOLDTYPE_ONEWAYPOWER] = oneWayColorProvider;
+  oneWayColorProvider->setGradientColorMap(complexColors);
+  oneWayColorProvider->setThreshold(0.f);
+
+  CompositeColorProvider* factorColorProvider = new CompositeColorProvider();
+  colorProviderMap_[simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR] = factorColorProvider;
+  factorColorProvider->setGradientColorMap(complexColors);
+  factorColorProvider->setThreshold(0.f);
+
 
   // build a default color map
-  defaultColors_[100.0f] = simVis::Color::White;
-  defaultColors_[90.0f] = simVis::Color::Red;
-  defaultColors_[80.0f] = simVis::Color::Yellow;
-  defaultColors_[70.0f] = simVis::Color::Fuchsia;
-  defaultColors_[60.0f] = simVis::Color::Blue;
-  defaultColors_[50.0f] = simVis::Color::Lime;
-  defaultColors_[40.0f] = SIMDIS_ORANGE;
-  defaultColors_[30.0f] = simVis::Color::Teal;
-  defaultColors_[20.0f] = simVis::Color::Green;
-  defaultColors_[10.0f] = simVis::Color::Navy;
-  defaultColors_[0.0f] = simVis::Color::Silver;
+  simRF::GradientColorProvider::ColorMap defaultColors;
+  defaultColors[100.0f] = simVis::Color::White;
+  defaultColors[90.0f] = simVis::Color::Red;
+  defaultColors[80.0f] = simVis::Color::Yellow;
+  defaultColors[70.0f] = simVis::Color::Fuchsia;
+  defaultColors[60.0f] = simVis::Color::Blue;
+  defaultColors[50.0f] = simVis::Color::Lime;
+  defaultColors[40.0f] = SIMDIS_ORANGE;
+  defaultColors[30.0f] = simVis::Color::Teal;
+  defaultColors[20.0f] = simVis::Color::Green;
+  defaultColors[10.0f] = simVis::Color::Navy;
+  defaultColors[0.0f] = simVis::Color::Silver;
+
+  defaultColorProvider_ = new CompositeColorProvider();
+  defaultColorProvider_->setGradientColorMap(defaultColors);
+  defaultColorProvider_->setThreshold(50.f);
 }
 
-void RFPropagationFacade::setGradientByThresholdType_(simRF::ProfileDataProvider::ThresholdType type)
+void RFPropagationFacade::setColorProviderByThresholdType_(simRF::ProfileDataProvider::ThresholdType type)
 {
-  if (colorProvider_ == nullptr)
-    return;
-  // apply the appropriate color map, or the default if we don't have one specified for this type
-  std::map<simRF::ProfileDataProvider::ThresholdType, simRF::GradientColorProvider::ColorMap>::const_iterator foundColor = colorMaps_.find(type);
-  if (foundColor != colorMaps_.end())
-    colorProvider_->setGradientColorMap(foundColor->second);
+  auto foundColorProvider = colorProviderMap_.find(type);
+  if (foundColorProvider != colorProviderMap_.end())
+    currentColorProvider_ = foundColorProvider->second;
   else
-    colorProvider_->setGradientColorMap(defaultColors_);
+  {
+    // some providers may not be available.
+    currentColorProvider_ = defaultColorProvider_;
+  }
+  profileManager_->setColorProvider(currentColorProvider_.get());
 }
 
 void RFPropagationFacade::enableDepthBuffer(bool enable)

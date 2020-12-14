@@ -23,13 +23,14 @@
 #ifndef SIMVIS_RFPROP_GRADIENT_COLOR_PROVIDER_H
 #define SIMVIS_RFPROP_GRADIENT_COLOR_PROVIDER_H
 
-#include <simVis/RFProp/ColorProvider.h>
 #include <map>
+#include "simVis/GradientShader.h"
+#include "simVis/RFProp/ColorProvider.h"
 
 namespace simRF
 {
 
-/** A ColorProvider that provides colors along a gradient */
+/** A ColorProvider that provides colors along a gradient.  Adapts simVis::GradientShader to the ColorProvider interface. */
 class SDKVIS_EXPORT GradientColorProvider : public ColorProvider
 {
 public:
@@ -73,22 +74,17 @@ protected:
   /// osg::Referenced-derived
   virtual ~GradientColorProvider() {}
 
-  /** Creates the color provider's fragment shader source code */
-  std::string buildShader_();
-
   /** Reloads the shader */
   void reloadShader_();
 
 protected:
-  /** Maps all values to a color */
-  ColorMap colors_;
-  /** Flags whether to use discrete colors or interpolate */
-  bool discrete_;
-
   /** Vertex shader */
   osg::ref_ptr<osg::Shader> vertShader_;
   /** Fragment shader */
   osg::ref_ptr<osg::Shader> fragShader_;
+
+  /** Manages the underlying gradient and generates GLSL code. */
+  simVis::GradientShader gradient_;
 };
 }
 

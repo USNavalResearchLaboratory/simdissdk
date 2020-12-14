@@ -305,6 +305,14 @@ SDKCORE_EXPORT std::string expandEnv(const std::string& val);
 */
 SDKCORE_EXPORT std::string getEnvVar(const std::string &env);
 
+/**
+ * Remove trailing zeros
+ * @param str String from which to remove trailing zeros
+ * @param leaveDecimal If true, the decimal will not be removed with trailing zeros
+ * @return The resulting string with trailing zeros removed
+ */
+SDKCORE_EXPORT std::string removeTrailingZeros(const std::string& str, bool leaveDecimal = false);
+
 } // namespace simCore
 
 #endif /* SIMCORE_STRING_UTILS_H */

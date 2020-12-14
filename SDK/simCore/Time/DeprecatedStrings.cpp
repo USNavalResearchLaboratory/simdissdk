@@ -98,7 +98,7 @@ std::string DDD_HHMMSS_Formatter::toString(const simCore::TimeStamp& timeStamp, 
     const int days = static_cast<int>(timeStamp.secondsSinceRefYear().getSeconds() / simCore::SECPERDAY);
     const simCore::Seconds seconds = timeStamp.secondsSinceRefYear() - simCore::Seconds(days * simCore::SECPERDAY, 0);
     ss << std::setw(3) << std::setfill('0') << (days + 1) << " ";
-    HoursTimeFormatter::toStream(ss, seconds, precision);
+    HoursTimeFormatter::toStream(ss, seconds, precision, true);
   }
   return ss.str();
 }

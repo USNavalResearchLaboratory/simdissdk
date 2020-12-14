@@ -115,6 +115,16 @@ void LobGroupMemoryDataSlice::flush(bool keepStatic)
   dirty_ = true;
 }
 
+void LobGroupMemoryDataSlice::flush(double startTime, double endTime)
+{
+  if (MemorySliceHelper::flush(updates_, startTime, endTime) == 0)
+  {
+    delete current_;
+    current_ = nullptr;
+  }
+  dirty_ = true;
+}
+
 void LobGroupMemoryDataSlice::insert(LobGroupUpdate *data)
 {
   // first, ensure that all data points have the time of the LobGroupUpdate they are associated with

@@ -29,11 +29,13 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/GOG/GogShape.h"
 #include "simVis/Constants.h"
 #include "simVis/GOG/Arc.h"
 #include "simVis/GOG/ErrorHandler.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/LoaderUtils.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
@@ -176,7 +178,7 @@ Geometry* createEllipticalDonut(const osg::Vec3d& center,
   return geom;
 }
 
-Geometry* createArc(const osg::Vec3d& center,
+Geometry* createArcShape(const osg::Vec3d& center,
                           const Distance&   radius,
                           const Angle&      start,
                           const Angle&      end,
@@ -214,12 +216,6 @@ Geometry* createEllipticalArc(const osg::Vec3d& center,
 Angle angFix2PI_(Angle angle)
 {
   return Angle(simCore::angFix2PI(angle.as(Units::RADIANS)), Units::RADIANS);
-}
-
-/** Returns the result of fmod() on angle: (-denom,+denom) */
-Angle fmod_(Angle angle, double denom=M_TWOPI)
-{
-  return Angle(::fmod(angle.as(Units::RADIANS), denom), Units::RADIANS);
 }
 
 }
@@ -269,7 +265,7 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
     }
 
     // Use fmod to keep the correct sign for correct sweep angle
-    end = start + fmod_(sweep);
+    end = start + Angle(::fmod(sweep.as(Units::RADIANS), M_TWOPI), Units::RADIANS);
   }
   else if (parsedShape.hasValue(GOG_ANGLEEND))
   {
@@ -304,14 +300,14 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
     }
     else
     {
-      outlineShape = createArc(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, hasInnerRadius, iRadius, false, outlineShape.get(), gf);
-      filledShape = createArc(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, hasInnerRadius, iRadius, true, filledShape.get(), gf);
+      outlineShape = createArcShape(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, hasInnerRadius, iRadius, false, outlineShape.get(), gf);
+      filledShape = createArcShape(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, hasInnerRadius, iRadius, true, filledShape.get(), gf);
     }
   }
   else
   {
-    outlineShape = createArc(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, hasInnerRadius, iRadius, false, outlineShape.get(), gf);
-    filledShape = createArc(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, hasInnerRadius, iRadius, true, filledShape.get(), gf);
+    outlineShape = createArcShape(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, hasInnerRadius, iRadius, false, outlineShape.get(), gf);
+    filledShape = createArcShape(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, hasInnerRadius, iRadius, true, filledShape.get(), gf);
   }
 
   osgEarth::LocalGeometryNode* shapeNode = nullptr;
@@ -367,6 +363,110 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
   }
 
   return rv;
+}
+
+GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
+{
+  // inner radius not supported by GOG
+  bool hasInnerRadius = false;
+  Distance iRadius;
+
+  double radiusM = 0.;
+  arc.getRadius(radiusM);
+  Distance radius(radiusM, Units::METERS);
+  Angle rotation(0., Units::DEGREES); // Rotation handled in setShapePositionOffsets()
+  double angleStart = 0.;
+  arc.getAngleStart(angleStart);
+  Angle start(angleStart * simCore::RAD2DEG, Units::DEGREES);
+
+  double sweepRad = 0.;
+  arc.getAngleSweep(sweepRad);
+  if (simCore::areEqual(sweepRad, 0.))
+  {
+    SIM_ERROR << "Angle cannot have sweep of 0\n";
+    return nullptr;
+  }
+  Angle sweep = Angle(sweepRad * simCore::RAD2DEG, Units::DEGREES);
+  // Use fmod to keep the correct sign for correct sweep angle
+  Angle end = start + Angle(::fmod(sweep.as(Units::RADIANS), M_TWOPI), Units::RADIANS);
+
+  // whether to include the center point in the geometry.
+  bool filled = false;
+  arc.getIsFilled(filled);
+  osgEarth::GeometryFactory gf;
+  osg::ref_ptr<osgEarth::Geometry> outlineShape = new LineString();
+  osg::ref_ptr<osgEarth::Geometry> filledShape = new osgEarth::Polygon();
+
+  double majorAxis = 0.;
+  if (arc.getMajorAxis(majorAxis) == 0)
+  {
+    radius = Distance(0.5 * majorAxis, Units::METERS);
+    double minorAxis = 0.;
+    if (arc.getMinorAxis(minorAxis) == 0)
+    {
+      Distance minorRadius = Distance(0.5 * minorAxis, Units::METERS);
+      outlineShape = createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, hasInnerRadius, iRadius, false, outlineShape.get(), gf);
+      filledShape = createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, hasInnerRadius, iRadius, true, filledShape.get(), gf);
+    }
+    else
+    {
+      outlineShape = createArcShape(osg::Vec3d(0, 0, 0), radius, start, end, hasInnerRadius, iRadius, false, outlineShape.get(), gf);
+      filledShape = createArcShape(osg::Vec3d(0, 0, 0), radius, start, end, hasInnerRadius, iRadius, true, filledShape.get(), gf);
+    }
+  }
+  else
+  {
+    outlineShape = createArcShape(osg::Vec3d(0, 0, 0), radius, start, end, hasInnerRadius, iRadius, false, outlineShape.get(), gf);
+    filledShape = createArcShape(osg::Vec3d(0, 0, 0), radius, start, end, hasInnerRadius, iRadius, true, filledShape.get(), gf);
+  }
+
+  osgEarth::LocalGeometryNode* shapeNode = nullptr;
+  osgEarth::LocalGeometryNode* fillNode = nullptr;
+  osg::Group* g = new osg::Group();
+
+  // remove the polygon symbol for the shape, since it should only exist in the fillNode
+  Style shapeStyle;
+  shapeStyle.remove<PolygonSymbol>();
+  // remove the line symbol for the fill node
+  Style fillStyle;
+  fillStyle.remove<LineSymbol>();
+
+  if (!attached)
+  {
+    // Try to prevent terrain z-fighting.
+    if (LoaderUtils::geometryRequiresClipping(arc))
+    {
+      Utils::configureStyleForClipping(shapeStyle);
+      Utils::configureStyleForClipping(fillStyle);
+    }
+
+    shapeNode = new osgEarth::LocalGeometryNode(outlineShape.get(), shapeStyle);
+    shapeNode->setMapNode(mapNode);
+
+    fillNode = new osgEarth::LocalGeometryNode(filledShape.get(), fillStyle);
+    fillNode->setMapNode(mapNode);
+  }
+  else
+  {
+    shapeNode = new HostedLocalGeometryNode(outlineShape.get(), shapeStyle);
+    fillNode = new HostedLocalGeometryNode(filledShape.get(), fillStyle);
+  }
+  shapeNode->setName("Arc Outline Node");
+  fillNode->setName("Arc Fill Node");
+
+  // use the ref point as the center if no center defined by the shape
+  simCore::Vec3 center;
+  if (arc.getCenterPosition(center) != 0 && !attached)
+    center = refPoint;
+  LoaderUtils::setShapePositionOffsets(*shapeNode, arc, center, refPoint, attached, false);
+  LoaderUtils::setShapePositionOffsets(*fillNode, arc, center, refPoint, attached, false);
+  // show the filled node only if filled
+  fillNode->setNodeMask(filled ? simVis::DISPLAY_MASK_GOG : simVis::DISPLAY_MASK_NONE);
+  g->addChild(fillNode);
+  g->addChild(shapeNode);
+
+  GogMetaData metaData;
+  return new ArcNodeInterface(g, shapeNode, fillNode, metaData);
 }
 
 } }

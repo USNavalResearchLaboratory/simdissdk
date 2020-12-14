@@ -11,6 +11,7 @@ set(TEST_FILENAMES
     MemoryDataTableTest.cpp
     TestCommands.cpp
     TestDataLimiting.cpp
+    TestFlush.cpp
     TestGenericData.cpp
     TestInterpolation.cpp
     TestListener.cpp
@@ -46,6 +47,7 @@ endif()
 add_test(NAME simData_MemoryDataTableTest COMMAND SimDataTests MemoryDataTableTest)
 add_test(NAME simData_TestCommands COMMAND SimDataTests TestCommands)
 add_test(NAME simData_TestDataLimiting COMMAND SimDataTests TestDataLimiting)
+add_test(NAME simData_TestFlush COMMAND SimDataTests TestFlush)
 add_test(NAME simData_TestGenericData COMMAND SimDataTests TestGenericData)
 add_test(NAME simData_TestInterpolation COMMAND SimDataTests TestInterpolation)
 add_test(NAME simData_TestListener COMMAND SimDataTests TestListener)

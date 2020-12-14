@@ -255,7 +255,13 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
         osgEarth::ElevationSample sample = mapNode->getMap()->getElevationPool()->getSample(mapPoint, osgEarth::Distance(1.0, osgEarth::Units::METERS), &elevationWorkingSet_);
         hae = sample.elevation().as(osgEarth::Units::METERS);
         hamsl = hae;
-        ok = (hae != NO_DATA_VALUE);
+        ok = true;
+        if (hae == NO_DATA_VALUE)
+        {
+          // If there is invalid data at a point treat it as 0 HAE.
+          hae = 0.0;
+          hamsl = 0.0;
+        }
       }
 
       if (ok)

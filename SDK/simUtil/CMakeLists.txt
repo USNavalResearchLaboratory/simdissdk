@@ -9,6 +9,11 @@ set(SHADER_FILES
     MapScale.glsl
     TerrainToggleEffect.vert.glsl
     TerrainToggleEffect.frag.glsl
+    VelocityParticleLayer.compute.dir.frag.glsl
+    VelocityParticleLayer.compute.pos.frag.glsl
+    VelocityParticleLayer.compute.vert.glsl
+    VelocityParticleLayer.part.frag.glsl
+    VelocityParticleLayer.part.vert.glsl
 )
 
 set(UTIL_INC)
@@ -45,6 +50,7 @@ set(UTIL_HEADERS
     ${UTIL_INC}StatusText.h
     ${UTIL_INC}TerrainToggleEffect.h
     ${UTIL_INC}UnitTypeConverter.h
+    ${UTIL_INC}VelocityParticleLayer.h
     ${UTIL_INC}ViewpointMonitor.h
     ${UTIL_INC}ViewpointPositions.h
 )
@@ -78,6 +84,7 @@ set(UTIL_SOURCES
     ${UTIL_SRC}StatusText.cpp
     ${UTIL_SRC}TerrainToggleEffect.cpp
     ${UTIL_SRC}UnitTypeConverter.cpp
+    ${UTIL_SRC}VelocityParticleLayer.cpp
     ${UTIL_SRC}ViewpointMonitor.cpp
     ${UTIL_SRC}ViewpointPositions.cpp
 )
@@ -89,10 +96,6 @@ endif()
 
 set(UTIL_GENERATED_HEADERS)
 set(UTIL_GENERATED_SOURCES)
-
-set(UTIL_ALL_HEADER
-    ${UTIL_INC}../simUtil.h
-)
 
 # Append TritonSettings if we have the osgEarth Triton nodekit
 if(OSGEARTH_TRITON_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_TRITON)
@@ -119,12 +122,11 @@ source_group(Shaders FILES ${UTIL_SHADER_FILES})
 
 source_group(Headers FILES ${UTIL_HEADERS})
 source_group("Source Files" FILES ${UTIL_SOURCES})
-source_group("" FILES ${UTIL_ALL_HEADER})
 
 # ----------------------------------------------------------------------
 
 set(UTIL_PROJECT_FILES
-    ${UTIL_HEADERS} ${UTIL_SOURCES} ${UTIL_ALL_HEADER} ${UTIL_SHADER_FILES}
+    ${UTIL_HEADERS} ${UTIL_SOURCES} ${UTIL_SHADER_FILES}
 )
 
 # Fix the library for static or shared
@@ -184,7 +186,4 @@ if(INSTALL_HEADERS)
     # Setup header file installation
     install(FILES ${UTIL_HEADERS}
         DESTINATION include/simUtil)
-
-    install(FILES ${UTIL_ALL_HEADER}
-        DESTINATION include)
 endif()

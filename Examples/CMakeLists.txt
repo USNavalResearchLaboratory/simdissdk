@@ -31,6 +31,7 @@ add_subdirectory(RocketBurn)
 add_subdirectory(SkyModel)
 add_subdirectory(SimpleServer)
 add_subdirectory(TimestampedLayer)
+add_subdirectory(VelocityLayerTest)
 
 if(SIM_HAVE_DB_SUPPORT)
     add_subdirectory(DBReader)

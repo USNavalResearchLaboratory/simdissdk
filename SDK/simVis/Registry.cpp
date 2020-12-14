@@ -164,6 +164,8 @@ private:
 
 //----------------------------------------------------------------------------
 
+simVis::Registry* simVis::Registry::instance_ = nullptr;
+
 simVis::Registry::Registry()
   : modelCache_(new ModelCache),
     fileSearch_(new simCore::NoSearchFileSearch()),
@@ -243,18 +245,26 @@ static OpenThreads::Mutex s_instMutex;
 
 simVis::Registry* simVis::Registry::instance()
 {
-  static Registry* s_inst = nullptr;
-  if (!s_inst)
+  if (!instance_)
   {
     OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_instMutex);
     {
-      if (!s_inst) // double-check pattern
+      if (!instance_) // double-check pattern
       {
-        s_inst = new Registry();
+        instance_ = new Registry();
       }
     }
   }
-  return s_inst;
+  return instance_;
+}
+
+void simVis::Registry::destroy()
+{
+  if (!instance_)
+    return;
+  OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_instMutex);
+  delete instance_;
+  instance_ = nullptr;
 }
 
 bool simVis::Registry::isMemoryCheck() const

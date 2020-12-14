@@ -143,6 +143,8 @@ public:
 
   /** Converts a Seconds value to an hours string for an ostream. */
   static void toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision);
+  /** Converts a Seconds value to an hours string for an ostream, with optional leading zero. */
+  static void toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision, bool showLeadingZero);
   /** Converts an hours time string to a seconds value; returns 0 on success, non-zero on error (sets seconds to 0 on error) */
   static int fromString(const std::string& timeString, simCore::Seconds& seconds);
   /**
@@ -220,6 +222,22 @@ public:
   virtual bool canConvert(const std::string& timeString) const;
   virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
 };
+
+/**
+ * Formatter for simCore::Time's TIMEFORMAT_ISO8601.
+ * Official ISO 8601 format can take many forms YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDThh:mm:ssZ, YYYY-MM-DDThh:mm:sszzzzzz
+ * Supported are: YYYY-MM-DD and YYYY-MM-DDThh:mm:ss.sssZ, with optional [.sss]
+ * April 6 at 14:35:03.01 Zulu in the year 2007 would be formatted as: "2007-04-06T14:35:03.010Z"
+ * since the format always includes year, toString's referenceYear arg is always ignored.
+ */
+class SDKCORE_EXPORT Iso8601TimeFormatter : public TimeFormatter
+{
+public:
+  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=0) const;
+  virtual bool canConvert(const std::string& timeString) const;
+  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+};
+
 
 /**
  * Composite class of several built-in time formats.  Accepts registration of foreign time formatters.

@@ -713,15 +713,30 @@ void ProjectorNode::setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidInter
   calculator_ = calculator;
 }
 
-void ProjectorNode::addProjectionToNode(osg::Node* node)
+int ProjectorNode::addProjectionToNode(osg::Node* node)
 {
-  if (!node) return;
+  if (!node)
+    return 1;
+
+  // Cycle through the nested callbacks in the node, to ensure there's not already
+  // an UpdateProjMatrix callback.  If there is, then that means there's already a
+  // projector with a "claim" to the node and adding another projector will fail,
+  // possibly introducing infinite loops if that UpdateProjMatrix == projectOnNodeCallback_.
+  bool foundProjCallback = false;
+  osg::Callback* nestedCallback = node->getCullCallback();
+  while (nestedCallback && !foundProjCallback)
+  {
+    if (dynamic_cast<UpdateProjMatrix*>(nestedCallback))
+      foundProjCallback = true;
+    else
+      nestedCallback = nestedCallback->getNestedCallback();
+  }
+  if (foundProjCallback)
+    return 1;
 
   // create the projection matrix callback on demand:
   if (!projectOnNodeCallback_.valid())
-  {
     projectOnNodeCallback_ = new UpdateProjMatrix(this);
-  }
 
   // install the texture application snippet.
   // TODO: optimize by creating this VP once and sharing across all projectors (low priority)
@@ -743,12 +758,30 @@ void ProjectorNode::addProjectionToNode(osg::Node* node)
 
   // to compute the texture generation matrix:
   node->addCullCallback(projectOnNodeCallback_.get());
+  return 0;
 }
 
-void ProjectorNode::removeProjectionFromNode(osg::Node* node)
+int ProjectorNode::removeProjectionFromNode(osg::Node* node)
 {
   if (!node)
-    return;
+    return 1;
+
+  // The node must have our projectOnNodeCallback_.  If it does not, then we are not projecting
+  // onto it, and perhaps some other projector is projecting onto it.  Unlike addProjectionToNode(),
+  // we want to find specifically our callback, not just any callback of that type.
+  bool foundProjCallback = false;
+  osg::Callback* nestedCallback = node->getCullCallback();
+  while (nestedCallback && !foundProjCallback)
+  {
+    if (nestedCallback == projectOnNodeCallback_.get())
+      foundProjCallback = true;
+    else
+      nestedCallback = nestedCallback->getNestedCallback();
+  }
+  // Break out because our callback wasn't found, which means even if it has projector state it
+  // could be another projector's state.
+  if (!foundProjCallback)
+    return 1;
 
   osg::StateSet* stateSet = node->getStateSet();
   if (stateSet)
@@ -762,15 +795,13 @@ void ProjectorNode::removeProjectionFromNode(osg::Node* node)
     }
 
     stateSet->removeDefine("SIMVIS_PROJECT_ON_PLATFORM");
-
     stateSet->removeUniform("simProjSampler");
-
     stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
-
     removeUniforms(stateSet);
   }
 
   node->removeCullCallback(projectOnNodeCallback_.get());
+  return 0;
 }
 
 }

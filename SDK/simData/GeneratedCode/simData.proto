@@ -1,3 +1,4 @@
+syntax = "proto2";
 package simData;
 
 /**
@@ -595,6 +596,9 @@ message CommonPrefs {
 
   /// Control Legend display; this may get replaced by more detailed control of legends
   optional bool includeInLegend = 13 [default = false];
+
+  /// Current accepted projector ID
+  optional uint64 acceptProjectorId = 14 [default = 0];
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////

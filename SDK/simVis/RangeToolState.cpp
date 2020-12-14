@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include "simVis/Constants.h"
 #include "simVis/RangeToolState.h"
 
 namespace simVis

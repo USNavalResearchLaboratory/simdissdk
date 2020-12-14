@@ -65,6 +65,7 @@ public:
   virtual TimeContainer::Iterator findOrAddTime(double timeValue, bool* exactMatch=nullptr);
   virtual void erase(Iterator iter, EraseBehavior eraseBehavior);
   virtual DelayedFlushContainerPtr flush();
+  virtual void flush(const std::vector<DataColumn*>& columns, double startTime, double endTime);
 
   /// @copydoc TimeContainer::limitData()
   virtual void limitData(size_t maxPoints, double latestInvalidTime, const std::vector<DataColumn*>& columns,
@@ -85,6 +86,7 @@ private:
   typedef std::pair<double, size_t> RowTimeToIndex; // pTimeIndex
   typedef std::deque<RowTimeToIndex> TimeIndexDeque;
 
+  void flush_(TimeIndexDeque& deq, bool fresh, const std::vector<DataColumn*>& columns, double startTime, double endTime);
   TimeIndexDeque::iterator lowerBound_(TimeIndexDeque& deq, double timeValue, bool* exactMatch=nullptr) const;
   TimeIndexDeque::iterator upperBound_(TimeIndexDeque& deq, double timeValue) const;
   TimeContainer::Iterator newIterator_(size_t whichBin, TimeIndexDeque::iterator staleIter, TimeIndexDeque::iterator freshIter);

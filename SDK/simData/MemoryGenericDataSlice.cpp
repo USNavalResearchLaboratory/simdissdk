@@ -60,6 +60,45 @@ public:
     lastUpdateDirty_ = true;
   }
 
+  void flush(double startTime, double endTime)
+  {
+    // Instead of attempting to delete entries and update the data structure,
+    // just save what is needed to a temporary vector, flush the data and rebuild.
+
+    // Keep track of time value pairs
+    struct TimeValuePair
+    {
+      double time;
+      std::string value;
+      TimeValuePair(double inTime, const std::string& inValue)
+        : time(inTime),
+          value(inValue)
+      {}
+    };
+
+    // Find the remaining time value pairs
+    std::vector<TimeValuePair> remainingValues;
+    for (const auto& timeIndex : times_)
+    {
+      /// Filter out the time value pairs in the time range
+      if ((timeIndex.time >= startTime) && (timeIndex.time < endTime))
+        continue;
+
+      const auto index = timeIndex.index - indexOffset_;
+      // verify that indexOffset_ is updated correctly; dev error if assert
+      assert((index >= 0) && (index < static_cast<int>(values_.size())));
+      const ValueIndex& cacheValue = values_[index];
+      remainingValues.push_back(TimeValuePair(timeIndex.time, cacheValue.value));
+    }
+
+    // clear
+    flush();
+
+    // and rebuild
+    for (const auto& pair : remainingValues)
+      insert(pair.time, pair.value, false);
+  }
+
   /// If a value is no longer referenced remove it.
   void removeOrphans_()
   {
@@ -401,6 +440,15 @@ void MemoryGenericDataSlice::flush()
   for (GenericDataMap::const_iterator it = genericData_.begin(); it != genericData_.end(); ++it)
     delete it->second;
   genericData_.clear();
+  lastTime_ = -1.0;
+}
+
+void MemoryGenericDataSlice::flush(double startTime, double endTime)
+{
+  for (GenericDataMap::const_iterator it = genericData_.begin(); it != genericData_.end(); ++it)
+    it->second->flush(startTime, endTime);
+
+  // force a recalculation of current_
   lastTime_ = -1.0;
 }
 

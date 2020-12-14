@@ -90,7 +90,7 @@ TimeTicks::TimeTicks(const simData::DataStore& ds, Locator* parentLocator, Platf
   assert(updateSliceBase_); // should be a valid update slice before time tick is created
 
   localLocator_ = new Locator(parentLocator);
-
+  setName("TrackHistory TimeTicks Group");
   setNodeMask(simVis::DISPLAY_MASK_TRACK_HISTORY);
 
   reset();
