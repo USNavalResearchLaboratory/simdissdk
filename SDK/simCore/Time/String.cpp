@@ -610,7 +610,7 @@ bool DtgTimeFormatter::canConvert(const std::string& timeString) const
 int DtgTimeFormatter::fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const
 {
   // presume failure
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
 
   std::vector<std::string> timesZoneMonth;
   // Tokenize the string into 3 components (times, time zone, month)
@@ -656,15 +656,13 @@ int DtgTimeFormatter::fromString(const std::string& timeString, simCore::TimeSta
 std::string Iso8601TimeFormatter::toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision) const
 {
   // note that referenceYear arg is always ignored
-  if (precision != 0)
-    precision = 3;
   const int realYear = timeStamp.referenceYear();
   const simCore::TimeStamp roundedStamp(realYear, timeStamp.secondsSinceRefYear(realYear).rounded(precision));
 
-  unsigned int day;
-  unsigned int hour;
-  unsigned int min;
-  unsigned int sec;
+  unsigned int day = 0;
+  unsigned int hour = 0;
+  unsigned int min = 0;
+  unsigned int sec = 0;
   roundedStamp.getTimeComponents(day, hour, min, sec);
 
   int month = 0; // Between 0-11
@@ -688,53 +686,77 @@ std::string Iso8601TimeFormatter::toString(const simCore::TimeStamp& timeStamp, 
         std::setw(2) << std::setfill('0') << monthDay;
 
   // output yyyy-mm-dd format when data allows
-  const int nanosecs = roundedStamp.secondsSinceRefYear().getFractionLong();
+  const Seconds& seconds = roundedStamp.secondsSinceRefYear();
+  const int nanosecs = seconds.getFractionLong();
   if (hour == 0 && min == 0 && sec == 0 && nanosecs == 0)
     return ss.str();
 
   ss << 'T' << std::setw(2) << std::setfill('0') << hour << ':' <<
-        std::setw(2) << std::setfill('0') << min << ':' <<
-        std::setw(2) << std::setfill('0') << sec;
-
-  /// only output the optional .sss if nonzero
-  if (nanosecs != 0)
-    ss << '.' << std::setw(3) << nanosecs / 1000000;
+        std::setw(2) << std::setfill('0') << min << ':';
+  if (precision == 0)
+    ss << std::setw(2) << std::setfill('0') << sec;
+  else
+  {
+    ss.precision(precision);
+    ss.setf(std::ios::fixed);
+    ss << std::setw(3+precision) << std::setfill('0') << (sec + seconds.getFraction());
+  }
   ss << 'Z';
   return ss.str();
 }
 
 bool Iso8601TimeFormatter::canConvert(const std::string& timeString) const
 {
-  // expecting timeString in form: YYYY-MM-DDTHH:MM:SS.sssZ, with optional [.sss]
   std::vector<std::string> daytime;
   // Tokenize the string into 2 components (YYYY-MM-DD) (HH:MM:SS.sssZ, with optional [.sss])
   simCore::stringTokenizer(daytime, timeString, "T", false, true);
 
-  // currently supporting two formats
-  const bool convertYYYYMMDD = (daytime.size() == 1 && daytime[0].size() == 10);
+  // no support yet for local time formatting
+  // canConvert from YYYY is false, would conflict with SecondsFormatter (but note that fromString does support the format)
+  const bool convertYYYY = false;
+  const bool convertYYYYMM = (daytime.size() == 1 && daytime[0].size() == 7 && daytime[0] == timeString);
+  const bool convertYYYYMMDD = (daytime.size() == 1 && daytime[0].size() == 10 && daytime[0] == timeString);
   const bool convertYYYYMMDDTHHMMSSZ = daytime.size() == 2 && daytime[0].size() == 10 &&
-    (daytime[1].size() == 9 || daytime[1].size() == 13);
-  if (!convertYYYYMMDD && !convertYYYYMMDDTHHMMSSZ)
+    (daytime[1].size() == 9);
+  const bool convertYYYYMMDDTHHMMSSsZ = daytime.size() == 2 && daytime[0].size() == 10 &&
+    (daytime[1].size() >= 11);
+  if (!convertYYYY && !convertYYYYMM && !convertYYYYMMDD && !convertYYYYMMDDTHHMMSSZ && !convertYYYYMMDDTHHMMSSsZ)
     return false;
 
   std::vector<std::string> yyyymmdd;
   // Tokenize the string into 3 components (yyyy, mm, dd)
   simCore::stringTokenizer(yyyymmdd, daytime[0], "-", false, true);
-  // Validate the token numbers and sizes:
-  if (yyyymmdd.size() != 3 || yyyymmdd[0].size() != 4 || yyyymmdd[1].size() != 2 || yyyymmdd[2].size() != 2)
-    return false;
-  // Pull out the various components
-  int month;
-  int year;
-  int monthDay;
-  const bool valid = isValidNumber(yyyymmdd[0], year) &&
-    isValidNumber(yyyymmdd[1], month) &&
-    isValidNumber(yyyymmdd[2], monthDay) &&
-    year > 0 &&
-    month >= 1 && month <= 12 &&
-    monthDay >= 1 && monthDay <= 31;
-  if (!valid)
-    return false;
+
+  int year = 0;
+  if (yyyymmdd.size() >= 1)
+  {
+    if (yyyymmdd[0].size() != 4)
+      return false;
+    if (!isValidNumber(yyyymmdd[0], year) || year < simCore::MIN_TIME_YEAR || year > simCore::MAX_TIME_YEAR)
+      return false;
+  }
+  if (convertYYYY)
+    return true;
+
+  int month = 1;
+  if (yyyymmdd.size() >= 2)
+  {
+    if (yyyymmdd[1].size() != 2)
+      return false;
+    if (!isValidNumber(yyyymmdd[1], month) || month < 1 || month > 12)
+      return false;
+  }
+  if (convertYYYYMM)
+    return true;
+
+  int monthDay = 1;
+  if (yyyymmdd.size() >= 3)
+  {
+    if (yyyymmdd[2].size() != 2)
+      return false;
+    if (!isValidNumber(yyyymmdd[2], monthDay) || monthDay < 1 || monthDay > 31)
+      return false;
+  }
   if (convertYYYYMMDD)
     return true;
 
@@ -746,6 +768,8 @@ bool Iso8601TimeFormatter::canConvert(const std::string& timeString) const
   return HoursTimeFormatter::isStrictHoursString(daytime[1]);
 }
 
+
+// will convert YYYY and YYYY-MM
 int Iso8601TimeFormatter::fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const
 {
   // returned on any failure
@@ -755,33 +779,47 @@ int Iso8601TimeFormatter::fromString(const std::string& timeString, simCore::Tim
   // Tokenize the string into 2 components (ymd, time)
   simCore::stringTokenizer(daytime, timeString, "T", false, true);
 
-  const bool convertYYYYMMDD = (daytime.size() == 1 && daytime[0].size() == 10);
+  // no support yet for local time formatting
+  const bool convertYYYY = (daytime.size() == 1 && daytime[0].size() == 4 && daytime[0] == timeString);
+  const bool convertYYYYMM = (daytime.size() == 1 && daytime[0].size() == 7 && daytime[0] == timeString);
+  const bool convertYYYYMMDD = (daytime.size() == 1 && daytime[0].size() == 10 && daytime[0] == timeString);
   const bool convertYYYYMMDDTHHMMSSZ = daytime.size() == 2 && daytime[0].size() == 10 &&
-    (daytime[1].size() == 9 || daytime[1].size() == 13);
-  if (!convertYYYYMMDD && !convertYYYYMMDDTHHMMSSZ)
+    (daytime[1].size() == 9);
+  const bool convertYYYYMMDDTHHMMSSsZ = daytime.size() == 2 && daytime[0].size() == 10 &&
+    (daytime[1].size() >= 11);
+  if (!convertYYYY && !convertYYYYMM && !convertYYYYMMDD && !convertYYYYMMDDTHHMMSSZ && !convertYYYYMMDDTHHMMSSsZ)
     return 1;
 
   std::vector<std::string> yyyymmdd;
   // Tokenize the string into 3 components (yyyy, mm, dd)
   simCore::stringTokenizer(yyyymmdd, daytime[0], "-", false, true);
-  // Validate the token numbers and sizes:
-  if (yyyymmdd.size() != 3 || yyyymmdd[0].size() != 4 || yyyymmdd[1].size() != 2 || yyyymmdd[2].size() != 2)
-    return 1;
-  // Pull out the various components
-  int month;   // 1-12
-  int year;
-  int monthDay; // 1-31
-  const bool valid = isValidNumber(yyyymmdd[0], year) &&
-    isValidNumber(yyyymmdd[1], month) &&
-    isValidNumber(yyyymmdd[2], monthDay) &&
-    year > 0 &&
-    month >= 1 && month <= 12 &&
-    monthDay >= 1 && monthDay <= 31;
-  if (!valid)
-    return 1;
 
+  int year = 0;
+  if (yyyymmdd.size() >= 1)
+  {
+    if (yyyymmdd[0].size() != 4)
+      return 1;
+    if (!isValidNumber(yyyymmdd[0], year) || year < simCore::MIN_TIME_YEAR || year > simCore::MAX_TIME_YEAR)
+      return 1;
+  }
+  int month = 1;
+  if (yyyymmdd.size() >= 2)
+  {
+    if (yyyymmdd[1].size() != 2)
+      return 1;
+    if (!isValidNumber(yyyymmdd[1], month) || month < 1 || month > 12)
+      return 1;
+  }
+  int monthDay = 1;
+  if (yyyymmdd.size() >= 3)
+  {
+    if (yyyymmdd[2].size() != 2)
+      return 1;
+    if (!isValidNumber(yyyymmdd[2], monthDay) || monthDay < 1 || monthDay > 31)
+      return 1;
+  }
   simCore::Seconds seconds;
-  if (convertYYYYMMDDTHHMMSSZ)
+  if (convertYYYYMMDDTHHMMSSZ || convertYYYYMMDDTHHMMSSsZ)
   {
     // only supporting Zulu time ("Z")
     if (daytime[1].back() != 'Z')
