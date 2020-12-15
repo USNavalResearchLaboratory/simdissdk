@@ -39,7 +39,6 @@ namespace simVis
   class EntityLabelNode;
   class LocalGridNode;
   class Locator;
-  class ScenarioManager;
 
   /// Scene graph node representing the Beam volume
   class SDKVIS_EXPORT BeamVolume : public osg::Group

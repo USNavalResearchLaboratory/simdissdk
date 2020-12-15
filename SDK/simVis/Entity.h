@@ -294,10 +294,11 @@ namespace simVis
     */
     virtual double range() const = 0;
 
-    /** Accept textures from a projector. Can only accept one projector per entity.  Returns 0 on success. */
+    /**
+     * Accept textures from a projector. Can only accept one projector per entity.
+     * Pass in NULL to stop accepting a projector. Returns 0 on success.
+     */
     virtual int acceptProjector(ProjectorNode* projector);
-    /** Stop accepting textures from a projector. Returns 0 on success. */
-    virtual int removeProjector(ProjectorNode* projector);
 
     /** Set the node getter function to use. Expected to be called by ScenarioManager after EntityNode creation. */
     void setNodeGetter(std::function<EntityNode* (simData::ObjectId)> getter);
@@ -321,8 +322,13 @@ namespace simVis
     */
     std::string getEntityName_(const simData::CommonPrefs& common, EntityNode::NameType nameType, bool allowBlankAlias) const;
 
+    /** Apply projector prefs. Currently used for acceptsProjectorId only */
+    int applyProjectorPrefs_(const simData::CommonPrefs& lastPrefs, const simData::CommonPrefs& prefs);
+
     /** Function used to get a projector node from an ID. Set by ScenarioManager after EntityNode creation using setNodeGetter(). */
     std::function<EntityNode* (simData::ObjectId)> nodeGetter_ = [](simData::ObjectId) ->EntityNode* { return nullptr; };
+    /** The currently accepted projector node, can be NULL */
+    osg::observer_ptr<simVis::ProjectorNode> acceptedProjectorNode_;
 
   private:
     /** Copy constructor, not implemented or available. */

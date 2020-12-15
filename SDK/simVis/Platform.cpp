@@ -396,6 +396,9 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     forceUpdateFromDataStore_ = true;
   }
 
+  if (lastPrefsValid_ && PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
+    applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
+
   lastPrefs_ = prefs;
   lastPrefsValid_ = true;
 }
@@ -1150,16 +1153,21 @@ unsigned int PlatformNode::objectIndexTag() const
 
 int PlatformNode::acceptProjector(ProjectorNode* proj)
 {
-  if (proj)
-    return proj->addProjectionToNode(model_->offsetNode());
-  return 1;
-}
+  // Stop accepting the previous projector node, if one exists
+  if (acceptedProjectorNode_ != nullptr)
+  {
+    acceptedProjectorNode_->removeProjectionFromNode(model_->offsetNode());
+    acceptedProjectorNode_ = nullptr;
+  }
 
-int PlatformNode::removeProjector(ProjectorNode* proj)
-{
-  if (proj)
-    return proj->removeProjectionFromNode(model_->offsetNode());
-  return 1;
+  // Passing in NULL clears the pairing, not an error
+  if (proj == nullptr)
+    return 0;
+
+  int rv = proj->addProjectionToNode(model_->offsetNode());
+  if (rv == 0)
+    acceptedProjectorNode_ = proj;
+  return 0;
 }
 
 }
