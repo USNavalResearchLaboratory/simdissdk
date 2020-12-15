@@ -299,6 +299,9 @@ namespace simVis
     /** Stop accepting textures from a projector. Returns 0 on success. */
     virtual int removeProjector(ProjectorNode* projector);
 
+    /** Set the node getter function to use. Expected to be called by ScenarioManager after EntityNode creation. */
+    void setNodeGetter(std::function<EntityNode* (simData::ObjectId)> getter);
+
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
     /** Return the class name */
@@ -317,6 +320,9 @@ namespace simVis
     * @return actual/alias entity name string
     */
     std::string getEntityName_(const simData::CommonPrefs& common, EntityNode::NameType nameType, bool allowBlankAlias) const;
+
+    /** Function used to get a projector node from an ID. Set by ScenarioManager after EntityNode creation using setNodeGetter(). */
+    std::function<EntityNode* (simData::ObjectId)> nodeGetter_ = [](simData::ObjectId) ->EntityNode* { return nullptr; };
 
   private:
     /** Copy constructor, not implemented or available. */

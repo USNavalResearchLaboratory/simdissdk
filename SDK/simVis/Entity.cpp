@@ -295,4 +295,10 @@ int EntityNode::removeProjector(ProjectorNode* proj)
     return 1;
   return proj->removeProjectionFromNode(this);
 }
+
+void EntityNode::setNodeGetter(std::function<simVis::EntityNode* (simData::ObjectId)> getter)
+{
+  nodeGetter_ = getter;
+}
+
 }
