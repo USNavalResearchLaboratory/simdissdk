@@ -241,13 +241,12 @@ void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simDa
 
 // --------------------------------------------------------------------------
 
-BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
+BeamNode::BeamNode(const simData::BeamProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
   : EntityNode(simData::BEAM),
     hasLastUpdate_(false),
     hasLastPrefs_(false),
     host_(host),
-    hostMissileOffset_(0.0),
-    scenario_(scenario)
+    hostMissileOffset_(0.0)
 {
   lastProps_ = props;
 
@@ -604,12 +603,10 @@ int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
   // update our target reference, for new target, or after a prefs change in target ids occur
   if (target_ == nullptr || !target_.valid())
   {
-    if (scenario_.valid())
-    {
-      target_ = scenario_->find(lastPrefsApplied_.targetid());
-      // we should only receive an non-nullptr update when target is valid; if assert fails check MemoryDataStore processing
-      assert(target_.valid());
-    }
+    target_ = nodeGetter_(lastPrefsApplied_.targetid());
+    // we should only receive an non-nullptr update when target is valid; if assert fails check MemoryDataStore processing
+    assert(target_.valid());
+
     if (!target_.valid())
       return 1;
   }

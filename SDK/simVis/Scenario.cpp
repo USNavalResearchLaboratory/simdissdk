@@ -688,7 +688,7 @@ BeamNode* ScenarioManager::addBeam(const simData::BeamProperties& props, simData
   Locator* locator = host ? host->getLocator() : new Locator();
 
   // put the beam into our entity db:
-  BeamNode* node = new BeamNode(this, props, locator, host, dataStore.referenceYear());
+  BeamNode* node = new BeamNode(props, locator, host, dataStore.referenceYear());
 
   entities_[node->getId()] = new EntityRecord(
     node,
