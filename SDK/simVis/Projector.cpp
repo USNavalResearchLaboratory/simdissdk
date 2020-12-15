@@ -377,6 +377,9 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
     syncAfterPrefsUpdate = true;
   }
 
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
+    applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
+
   updateLabel_(prefs);
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;

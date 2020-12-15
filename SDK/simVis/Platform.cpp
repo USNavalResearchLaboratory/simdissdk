@@ -396,7 +396,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     forceUpdateFromDataStore_ = true;
   }
 
-  if (lastPrefsValid_ && PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
+  if (!lastPrefsValid_ || PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
     applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
 
   lastPrefs_ = prefs;
@@ -1167,7 +1167,7 @@ int PlatformNode::acceptProjector(ProjectorNode* proj)
   int rv = proj->addProjectionToNode(model_->offsetNode());
   if (rv == 0)
     acceptedProjectorNode_ = proj;
-  return 0;
+  return rv;
 }
 
 }
