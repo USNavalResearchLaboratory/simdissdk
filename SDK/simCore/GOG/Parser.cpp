@@ -21,7 +21,6 @@
  *
  */
 #include <iomanip>
-#include <set>
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"
@@ -57,6 +56,13 @@ Parser::Parser()
   : units_(nullptr)
 {
   initGogColors_();
+
+  // not supported
+  unhandledKeywords_.insert("innerradius");
+  // no checks on version
+  unhandledKeywords_.insert("version");
+  // not supported
+  unhandledKeywords_.insert("timeunits");
 }
 
 Parser::~Parser()
@@ -127,15 +133,6 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
   // (e.g. if the line color is set within the scope of one annotation, that value
   // remains active for future annotations until it is set again.)
   ModifierState state;
-
-  // create a set of keywords not handled explicitly by the parser
-  std::set<std::string> unhandledKeywords;
-  // not supported
-  unhandledKeywords.insert("innerradius");
-  // no checks on version
-  unhandledKeywords.insert("version");
-  // not supported
-  unhandledKeywords.insert("timeunits");
 
   // valid commands must occur within a start/end block
   bool validStartEndBlock = false;
@@ -763,7 +760,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       if (!tokens.empty())
       {
         // filter out items that are explicitly unhandled
-        if (unhandledKeywords.find(tokens[0]) == unhandledKeywords.end())
+        if (unhandledKeywords_.find(tokens[0]) == unhandledKeywords_.end())
           printError_(lineNumber, "Found unknown GOG command " + line);
       }
     }
