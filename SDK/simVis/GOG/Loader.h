@@ -64,10 +64,19 @@ public:
   /**
   * Parses data from an input stream into a collection of GOG nodes.
   * @param input stream containing the serialized GOG
-  * @param bool attached true if GOG is attached to a platform
+  * @param attached true if GOG is attached to a platform
   * @param output resulting GOG collection
   */
   void loadGogs(std::istream& input, bool attached, GogNodeVector& output) const;
+
+  /**
+  * Parses data from a single input shape block into a GOG node.
+  * @param gogShapeBlock  string containing the serialized GOG shape, consisting of one start/end block
+  * @param shapeNumber  unique number for this shape within the parent GOG
+  * @param attached  true if GOG is attached to a platform
+  * @param output  resulting GOG collection
+  */
+  void loadShape(const std::string& gogShapeBlock, size_t shapeNumber, bool attached, GogNodeVector& output) const;
 
 private:
   /// build a GOG node object from the specified GogShape; can return NULL if failed to build the node
