@@ -90,7 +90,7 @@ public:
   /**
    * Dtor
    */
-  virtual ~RadialLOS() { }
+  virtual ~RadialLOS();
 
   /**
    * Assignment
@@ -242,7 +242,7 @@ private:
   osgEarth::Angle     fov_;
   osgEarth::Angle     azim_resolution_;
   osg::ref_ptr<const osgEarth::SpatialReference> srs_;
-  osgEarth::ElevationPool::WorkingSet elevationWorkingSet_;
+  osgEarth::ElevationPool::WorkingSet* elevationWorkingSet_;
   bool use_scene_graph_;
 
   bool getBoundingRadials_(double azim_rad, const Radial*& out_r0, const Radial*& out_r1, double& out_mix) const;

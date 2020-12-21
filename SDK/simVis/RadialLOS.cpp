@@ -72,6 +72,9 @@ RadialLOS::Sample::Sample(const Sample& rhs)
 //----------------------------------------------------------------------------
 //#define LOS_TIME_PROFILING
 
+// Increase the size of the WorkingSet to speed up computations over larger areas and repeated computations in the same area.
+#define WORKINGSET_SIZE 300
+
 RadialLOS::RadialLOS()
   : dirty_(true),
     range_max_(osgEarth::Distance(10.0, osgEarth::Units::KILOMETERS)),
@@ -81,12 +84,17 @@ RadialLOS::RadialLOS()
     azim_resolution_(osgEarth::Angle(15.0, osgEarth::Units::DEGREES)),
     use_scene_graph_(false)
 {
-  //nop
+  elevationWorkingSet_ = new osgEarth::ElevationPool::WorkingSet(WORKINGSET_SIZE);
 }
 
 RadialLOS::RadialLOS(const RadialLOS& rhs)
 {
   *this = rhs;
+}
+
+RadialLOS::~RadialLOS()
+{
+  if (elevationWorkingSet_) delete elevationWorkingSet_;
 }
 
 RadialLOS& RadialLOS::operator=(const RadialLOS& rhs)
@@ -100,6 +108,7 @@ RadialLOS& RadialLOS::operator=(const RadialLOS& rhs)
   fov_ = rhs.fov_;
   azim_resolution_ = rhs.azim_resolution_;
   use_scene_graph_ = rhs.use_scene_graph_;
+  elevationWorkingSet_ = new osgEarth::ElevationPool::WorkingSet(WORKINGSET_SIZE);
   // nocopy: srs_
   // nocopy: elevationWorkingSet_
 
@@ -158,6 +167,7 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
 #ifdef LOS_TIME_PROFILING
   osg::Timer_t startTime = osg::Timer::instance()->tick();
 #endif
+
 
   // clear out existing data
   radials_.clear();
@@ -252,7 +262,7 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
       }
       else
       {
-        osgEarth::ElevationSample sample = mapNode->getMap()->getElevationPool()->getSample(mapPoint, osgEarth::Distance(1.0, osgEarth::Units::METERS), &elevationWorkingSet_);
+        osgEarth::ElevationSample sample = mapNode->getMap()->getElevationPool()->getSample(mapPoint, osgEarth::Distance(1.0, osgEarth::Units::METERS), elevationWorkingSet_);
         hae = sample.elevation().as(osgEarth::Units::METERS);
         hamsl = hae;
         ok = true;
