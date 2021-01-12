@@ -125,6 +125,36 @@ int testVariant()
   return rv;
 }
 
+int testDiscrete()
+{
+  int rv = 0;
+
+  std::map<float, QColor> colorMap;
+  colorMap[0.2f] = Qt::red;
+  colorMap[0.8f] = Qt::green;
+  simQt::ColorGradient grad(colorMap);
+  QColor col = grad.colorAt(0.5f);
+  rv += SDK_ASSERT(col.red() == 127);
+  rv += SDK_ASSERT(col.green() == 127);
+  rv += SDK_ASSERT(col.blue() == 0);
+  rv += SDK_ASSERT(col.alpha() == 255);
+  grad.setDiscrete(true);
+  // Discrete at 0.5 is red
+  col = grad.colorAt(0.5f);
+  rv += SDK_ASSERT(col == Qt::red);
+  // Discrete at 0.0 is red
+  col = grad.colorAt(0.f);
+  rv += SDK_ASSERT(col == Qt::red);
+  // Discrete at 0.8 is green
+  col = grad.colorAt(0.8f);
+  rv += SDK_ASSERT(col == Qt::green);
+  // Discrete at 1.0 is green
+  col = grad.colorAt(1.f);
+  rv += SDK_ASSERT(col == Qt::green);
+
+  return rv;
+}
+
 }
 
 int GradientTest(int argc, char* argv[])
@@ -133,5 +163,6 @@ int GradientTest(int argc, char* argv[])
   rv += testGradient();
   rv += testFactories();
   rv += testVariant();
+  rv += testDiscrete();
   return rv;
 }

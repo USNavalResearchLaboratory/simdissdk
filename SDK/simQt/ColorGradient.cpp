@@ -106,12 +106,18 @@ ColorGradient ColorGradient::newDopplerGradient()
 
 QColor ColorGradient::colorAt(float zeroToOne) const
 {
-  return simQt::getQtColorFromOsg(function_->getColor(zeroToOne));
+  return simQt::getQtColorFromOsg(osgColorAt(zeroToOne));
 }
 
 osg::Vec4 ColorGradient::osgColorAt(float zeroToOne) const
 {
-  return function_->getColor(zeroToOne);
+  if (!discrete_)
+    return function_->getColor(zeroToOne);
+  auto map = function_->getColorMap();
+  auto iter = map.upper_bound(zeroToOne);
+  if (iter != map.begin())
+    --iter;
+  return iter->second;
 }
 
 int ColorGradient::setColor(float zeroToOne, const QColor& color)
@@ -229,6 +235,16 @@ QColor ColorGradient::interpolate(const QColor& lowColor, const QColor& highColo
   rv.setBlueF(lowColor.blueF() + (highColor.blueF() - lowColor.blueF()) * factor);
   rv.setAlphaF(lowColor.alphaF() + (highColor.alphaF() - lowColor.alphaF()) * factor);
   return rv;
+}
+
+void ColorGradient::setDiscrete(bool discrete)
+{
+  discrete_ = discrete;
+}
+
+bool ColorGradient::discrete() const
+{
+  return discrete_;
 }
 
 bool ColorGradient::operator==(const ColorGradient& rhs) const
