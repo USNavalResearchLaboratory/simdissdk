@@ -30,6 +30,7 @@
 #include "osgEarth/Color"
 #include "osgEarth/ImageLayer"
 #include "simCore/Common/Common.h"
+#include "simVis/GradientShader.h"
 
 namespace simUtil {
 
@@ -73,16 +74,15 @@ public:
     OE_OPTION(float, particleAltitude);
     /** Bounding lat/lon values for the velocity texture.  Values are in degrees. */
     OE_OPTION(osgEarth::Bounds, boundingBox);
-    /** Output color for minimum velocity in the velocity texture. */
-    OE_OPTION(osgEarth::Color, minColor);
-    /** Output color for maximum velocity in the velocity texture. */
-    OE_OPTION(osgEarth::Color, maxColor);
     /** URI for the sprite for particle points. May be blank to use dots instead. */
     OE_OPTION(osgEarth::URI, spriteUri);
     /** URI for the velocity texture.  Velocity textures encode R=X velocity, G=Y velocity, on a scale from [0,1], mapping to velocities [-25,25]. */
     OE_OPTION(osgEarth::URI, velocityTextureUri);
     /** GLSL code fragment to convert velocity texel "t" into a vec2 velocity, e.g.: "mix(vec2(-25.0, -25.0), vec2(25.0, 25.0), t.rg)" */
     OE_OPTION(std::string, texelToVelocityFragment);
+
+    /** Gradient shader defines the gradient to use when rendering. */
+    OE_OPTION(simVis::GradientShader, gradient);
 
     /** Create the Config from this options structure. */
     virtual osgEarth::Config getConfig() const override;
@@ -113,14 +113,12 @@ public:
   void setParticleAltitude(float value);
   osgEarth::Bounds getBoundingBox() const;
   void setBoundingBox(const osgEarth::Bounds& bounds);
-  const osg::Vec4& getMinColor() const;
-  void setMinColor(const osg::Vec4& minColor);
-  const osg::Vec4& getMaxColor() const;
-  void setMaxColor(const osg::Vec4& maxColor);
   const osgEarth::URI& getVelocityTexture() const;
   void setVelocityTexture(const osgEarth::URI& uri);
   const osgEarth::URI& getPointSprite() const;
   void setPointSprite(const osgEarth::URI& uri);
+  const simVis::GradientShader& getGradient() const;
+  void setGradient(const simVis::GradientShader& gradient);
   std::string getTexelToVelocityFragment() const;
 
   /**

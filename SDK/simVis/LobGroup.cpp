@@ -337,6 +337,9 @@ void LobGroupNode::setPrefs(const simData::LobGroupPrefs &prefs)
     }
   }
 
+  if (!lastPrefsValid_ || PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
+    applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
+
   lastPrefs_ = prefs;
   lastPrefsValid_ = true;
 

@@ -39,7 +39,6 @@ namespace simVis
   class EntityLabelNode;
   class LocalGridNode;
   class Locator;
-  class ScenarioManager;
 
   /// Scene graph node representing the Beam volume
   class SDKVIS_EXPORT BeamVolume : public osg::Group
@@ -81,13 +80,12 @@ namespace simVis
   public:
     /**
     * Construct a new node that displays a Beam.
-    * @param scenario ScenarioManager that is managing this beam
     * @param props Initial beam properties
     * @param locator Parent locator from which this beam's locator should inherit
     * @param host This beam's host entity
     * @param referenceYear The calculation for the Speed Rings Fixed Time preference needs the scenario reference year
     */
-    BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* locator = nullptr,
+    explicit BeamNode(const simData::BeamProperties& props, Locator* locator = nullptr,
       const simVis::EntityNode* host = nullptr, int referenceYear = 1970);
 
     /**
@@ -356,7 +354,6 @@ namespace simVis
     std::map<std::string, simData::BeamPrefs> prefsOverrides_;
     std::map<std::string, simData::BeamUpdate> updateOverrides_;
     osg::ref_ptr<EntityLabelNode> label_;
-    osg::observer_ptr<const ScenarioManager> scenario_;
     osg::ref_ptr<BeamPulse> beamPulse_;
   };
 

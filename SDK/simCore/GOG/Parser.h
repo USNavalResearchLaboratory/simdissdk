@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include "simCore/Common/Common.h"
@@ -111,6 +112,7 @@ private:
 private:
   const simCore::UnitsRegistry* units_; ///< registry for unit conversions
   std::map<std::string, std::string> colors_; ///< maps GOG color keywords to GOG hex string format (0xAABBGGRR), e.g. "white", "color1"
+  std::set<std::string> unhandledKeywords_;  ///< set of keywords not handled explicitly by the parser
 };
 
 } } // namespace simCore::GOG

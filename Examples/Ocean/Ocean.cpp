@@ -428,7 +428,11 @@ namespace
     /** Adds a reasonably initialized cloud layer */
     void addCloudLayer_(SilverLining::Atmosphere& atmosphere, SilverLining::CloudTypes cloudType)
     {
+#if OSGEARTH_VERSION_GREATER_OR_EQUAL(3,1,0)
+      SilverLining::CloudLayer cloudLayer = SilverLining::CloudLayerFactory::Create(cloudType, atmosphere);
+#else
       SilverLining::CloudLayer cloudLayer = SilverLining::CloudLayerFactory::Create(cloudType);
+#endif
       cloudLayer.SetIsInfinite(true);
       cloudLayer.SetThickness(50);
       switch (cloudType)

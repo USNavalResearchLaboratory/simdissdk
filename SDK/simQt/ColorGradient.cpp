@@ -130,7 +130,7 @@ int ColorGradient::setColor(float zeroToOne, const osg::Vec4& color)
 
 int ColorGradient::removeColor(float zeroToOne)
 {
-  if (function_->getColorMap().size() <= 2)
+  if (function_->getColorMap().size() <= 1)
     return 1;
 
   auto& colorMap = function_->getColorMap();
@@ -162,13 +162,13 @@ osg::TransferFunction1D::ColorMap ColorGradient::getColorMap() const
 int ColorGradient::colorCount() const
 {
   const int count = static_cast<int>(function_->getColorMap().size());
-  assert(count >= 2); // At least two stops are required
+  assert(count >= 1); // At least one stop is required
   return count;
 }
 
 int ColorGradient::setColors(const std::map<float, QColor>& colors)
 {
-  if (colors.size() < 2)
+  if (colors.empty())
     return 1;
 
   auto& colorMap = function_->getColorMap();
@@ -184,8 +184,8 @@ int ColorGradient::setColors(const std::map<float, QColor>& colors)
       colorMap[stop.first] = simQt::getOsgColorFromQt(stop.second);
   }
 
-  // Restore old colors if new map doesn't have at least two stops
-  if (colorMap.size() < 2)
+  // Restore old colors if new map doesn't have at least one stop
+  if (colorMap.empty())
   {
     colorMap = oldColorMap;
     return 1;
@@ -195,7 +195,7 @@ int ColorGradient::setColors(const std::map<float, QColor>& colors)
 
 int ColorGradient::setColors(const std::map<float, osg::Vec4>& colors)
 {
-  if (colors.size() < 2)
+  if (colors.empty())
     return 1;
 
   auto& colorMap = function_->getColorMap();
@@ -211,8 +211,8 @@ int ColorGradient::setColors(const std::map<float, osg::Vec4>& colors)
       colorMap[stop.first] = stop.second;
   }
 
-  // Restore old colors if new map doesn't have at least two stops
-  if (colorMap.size() < 2)
+  // Restore old colors if new map doesn't have at least one stop
+  if (colorMap.empty())
   {
     colorMap = oldColorMap;
     return 1;

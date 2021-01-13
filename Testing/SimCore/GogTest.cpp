@@ -334,7 +334,7 @@ auto testImageOverlayMinimalFieldsFunc = [](const simCore::GOG::ImageOverlay* sh
   rv += SDK_ASSERT(simCore::areEqual(shape->east(), positions[0].lon()));
   rv += SDK_ASSERT(simCore::areEqual(shape->west(), positions[1].lon()));
   rv += SDK_ASSERT(shape->imageFile() == "image.png");
-  rv += SDK_ASSERT(shape->getRotation() == 0.);
+  rv += SDK_ASSERT(shape->getRotation() == (32.0 * simCore::DEG2RAD));
   return rv;
 };
 
@@ -413,7 +413,7 @@ int testMinimalShapes()
   rv += testShapePositionsFunction<simCore::GOG::LatLonAltBox>("start\n latlonaltbox 25.1 25.3  55.4 55.6 100.\naltitudeunits m\n end\n", testLatLonAltBoxMinimalFieldsFunc, llabPoints);
 
   // test image overlay
-  rv += testShapePositionsFunction<simCore::GOG::ImageOverlay>("start\n # kml_groundoverlay\n# kml_icon image.png\n # kml_latlonbox 25.1 25.3 55.6 55.4 0.\n end\n", testImageOverlayMinimalFieldsFunc, llabPoints);
+  rv += testShapePositionsFunction<simCore::GOG::ImageOverlay>("start\n # kml_groundoverlay\n# kml_icon image.png\n # kml_latlonbox 25.1 25.3 55.6 55.4 32.\n end\n", testImageOverlayMinimalFieldsFunc, llabPoints);
 
   // RELATIVE
 
@@ -924,6 +924,7 @@ int testAnnotation()
         std::ostringstream os;
         os << "label " << textId++;
         rv += SDK_ASSERT(anno->text() == os.str());
+        rv += SDK_ASSERT(!anno->isRelative());
 
         std::string fontName;
         rv += SDK_ASSERT(anno->getFontName(fontName) == 0);

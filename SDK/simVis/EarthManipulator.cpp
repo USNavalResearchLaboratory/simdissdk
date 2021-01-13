@@ -117,7 +117,15 @@ void EarthManipulator::handleMovementAction(const ActionType& type, double dx, d
 {
   // Some actions need to turn off watch mode before being processed
   simVis::View* simVisView = dynamic_cast<simVis::View*>(view);
-  if (simVisView && simVisView->isWatchEnabled())
+  // WatchEnabled or TetherMode other than TETHER_CENTER requires extra processing to avoid leaving artifacts when breaking watch/tether
+  bool tetherHeading = false;
+  if (getSettings() && (getSettings()->getTetherMode() != osgEarth::EarthManipulator::TETHER_CENTER))
+  {
+    tetherHeading = true;
+    // Setting the tether mode doesn't fix the rotation artifact, but it does prevent this block from being triggered repeatedly
+    getSettings()->setTetherMode(osgEarth::EarthManipulator::TETHER_CENTER);
+  }
+  if (simVisView && (simVisView->isWatchEnabled() || tetherHeading))
   {
     // Disable watch mode if we're in watch mode and encounter a break-tether action
     const ActionTypeVector& atv = getSettings()->getBreakTetherActions();

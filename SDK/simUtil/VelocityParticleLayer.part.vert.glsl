@@ -8,9 +8,9 @@ uniform sampler2D positionSampler;
 uniform sampler2D directionSampler;
 uniform vec2 resolution;
 uniform float pointSize;
-uniform vec4 minColor;
-uniform vec4 maxColor;
 uniform float altitude;
+
+uniform mat4 osg_ViewMatrix;
 
 out vec4 particle_color;
 out float rotate_angle;
@@ -18,6 +18,9 @@ out float rotate_angle;
 const float PI = 3.1415926535897932384626433832795;
 const float PI_2 = 1.57079632679489661923;
 const float TWO_PI = 6.283185307179586476925286766559;
+
+// Color mapping function for velocity to color.  VelocityParticleLayer supplies this programmatically from gradient option.
+vec4 su_vel2color(in float value);
 
 // Helper function to convert LLA to ECEF XYZ
 vec3 convertLatLongHeightToXYZ(float latitude, float longitude, float height)
@@ -53,9 +56,16 @@ void simutil_vpl_rtt_vertex(inout vec4 vertexModel)
   float life = posInfo.w;
   float velocity = posInfo.z;
 
-  particle_color = mix(minColor, maxColor, speedToScale(velocity));
+  particle_color = su_vel2color(velocity);
   // Rotation angle comes from the direction sampler texture
   rotate_angle = texture2D(directionSampler, tC).r;
+
+  // Compute the heading based on the view matrix that will orient the rotation angle correctly based on the camera orientation.
+  vec3 upVector = vec3(osg_ViewMatrix[2][0], osg_ViewMatrix[2][1], osg_ViewMatrix[2][2]);
+  normalize(upVector);
+  // Compute azimuth offset from eye using arc tangent
+  float heading = atan(upVector.x, upVector.y);
+  rotate_angle -= heading;
 
   vec3 lla = vec3(-PI + TWO_PI * posInfo.x, -PI_2 + posInfo.y * PI, altitude);
   vec3 xyz = convertLatLongHeightToXYZ(lla.y, lla.x, lla.z);

@@ -161,6 +161,10 @@ void LaserNode::setPrefs(const simData::LaserPrefs& prefs)
   localGrid_->validatePrefs(prefs.commonprefs().localgrid());
 
   refresh_(nullptr, &prefs);
+
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
+    applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
+
   updateLabel_(prefs);
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;

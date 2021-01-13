@@ -25,6 +25,8 @@
 #include "osgEarth/Random"
 #include "osgEarth/VirtualProgram"
 #include "simNotify/Notify.h"
+#include "simCore/String/Utils.h"
+#include "simVis/GradientShader.h"
 #include "simUtil/Shaders.h"
 #include "simUtil/VelocityParticleLayer.h"
 
@@ -32,6 +34,16 @@
 REGISTER_OSGEARTH_LAYER(velocityparticleimage, simUtil::VelocityParticleLayer);
 
 namespace simUtil {
+
+/** Default color mapping for velocity to color. */
+static const std::map<float, osg::Vec4f> DEFAULT_COLOR_MAP = {
+  { 0.f, osgEarth::Color::Blue },
+  { 8.f, osgEarth::Color::Cyan },
+  { 13.f, osgEarth::Color::Lime },
+  { 18.f, osgEarth::Color::Yellow },
+  { 50.f, osgEarth::Color::Red },
+  { 75.f, osgEarth::Color::Purple },
+};
 
 // Helper node that will run a fragment shader, taking one texture as input and writing to another texture.
 // And then it flips on each frame to use the previous input.
@@ -85,6 +97,7 @@ public:
   {
     return outputPosition_.get();
   }
+
   /** 1D texture of the current velocity direction, with 0.0 north, clockwise to 1.0.  e.g. 0.25 is east */
   osg::Texture2D* outputDirection() const
   {
@@ -283,9 +296,7 @@ public:
   };
 
   VelocityTextureNode(osg::Texture2D* velocityTexture, unsigned int particleDimension)
-    : minColor_(0.0, 1.0, 0.0, 1.0), // green
-    maxColor_(1.0, 0.0, 0.0, 1.0), // red: higher velocities are more dangerous
-    altitude_(9000.0f),
+    : altitude_(9000.0f),
     boundingBox_(0.f, 0.f, 1.f, 1.f),
     particleDimension_(particleDimension)
   {
@@ -302,8 +313,6 @@ public:
     addChild(computeNode_.get());
     addChild(pointsNode_.get());
 
-    getOrCreateStateSet()->addUniform(new osg::Uniform("minColor", minColor_));
-    getOrCreateStateSet()->addUniform(new osg::Uniform("maxColor", maxColor_));
     getOrCreateStateSet()->addUniform(new osg::Uniform("altitude", altitude_));
     // For convenience and likeness of purpose, we reuse the osgEarth uniform name for opacity; it does not carry forward
     // because this node is not under the VisibleLayer in the node tree, so we need our own.
@@ -392,34 +401,6 @@ public:
     }
   }
 
-  const osg::Vec4& getMinColor() const
-  {
-    return minColor_;
-  }
-
-  void setMinColor(const osg::Vec4& minColor)
-  {
-    if (minColor_ != minColor)
-    {
-      minColor_ = minColor;
-      getOrCreateStateSet()->getUniform("minColor")->set(minColor_);
-    }
-  }
-
-  const osg::Vec4& getMaxColor() const
-  {
-    return maxColor_;
-  }
-
-  void setMaxColor(const osg::Vec4& maxColor)
-  {
-    if (maxColor_ != maxColor)
-    {
-      maxColor_ = maxColor;
-      getOrCreateStateSet()->getUniform("maxColor")->set(maxColor_);
-    }
-  }
-
   void setBoundingBox(const osgEarth::Bounds& bounds)
   {
     if (!bounds.valid())
@@ -438,6 +419,16 @@ public:
     getOrCreateStateSet()->getUniform("oe_VisibleLayer_opacityUniform")->set(value);
   }
 
+  void setGradient(const simVis::GradientShader gradient)
+  {
+    // Need to make a copy in order to get the function name correct
+    simVis::GradientShader localGradient(gradient);
+    localGradient.setFunctionName("su_vel2color");
+    const auto& code = localGradient.buildShader();
+    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(pointsNode_->getOrCreateStateSet());
+    vp->setShader(localGradient.functionName(), new osg::Shader(osg::Shader::VERTEX, code));
+  }
+
   void setTexelToVelocityFragment(const std::string& glslFragment)
   {
     computeNode_->setTexelToVelocityFragment(glslFragment);
@@ -452,7 +443,7 @@ private:
   /** Creates the node that holds the points particles */
   void createPointsNode_()
   {
-    pointsNode_ = createInstancedGeometry(particleDimension_ * particleDimension_, particleDimension_);
+    pointsNode_ = createInstancedGeometry_(particleDimension_ * particleDimension_, particleDimension_);
     pointsNode_->setName("Instanced Points");
     // Attach the output of the compute node as the texture to feed the positions on the instanced geometry.
     pointsNode_->getOrCreateStateSet()->setTextureAttributeAndModes(0, computeNode_->outputPosition(), osg::StateAttribute::ON);
@@ -461,7 +452,7 @@ private:
   }
 
   /** Creates a geometry that renders nInstances points, with the particle shader attached. */
-  osg::Geometry* createInstancedGeometry(int nInstances, unsigned int particleDimension) const
+  osg::Geometry* createInstancedGeometry_(int nInstances, unsigned int particleDimension) const
   {
     osg::Geometry* geom = new osg::Geometry;
     geom->setUseDisplayList(false);
@@ -478,6 +469,15 @@ private:
     simUtil::Shaders shaderPackage;
     shaderPackage.load(vp, shaderPackage.velocityParticleLayerParticleVertex());
     shaderPackage.load(vp, shaderPackage.velocityParticleLayerParticleFragment());
+
+    // Set up the initial gradient shader
+    simVis::GradientShader shader;
+    shader.setFunctionName("su_vel2color");
+    shader.setColorMap(DEFAULT_COLOR_MAP);
+    shader.setDiscrete(false);
+    auto code = shader.buildShader();
+    vp->setShader(shader.functionName(), new osg::Shader(osg::Shader::VERTEX, code));
+
     geom->getOrCreateStateSet()->addUniform(new osg::Uniform("positionSampler", 0));
     geom->getOrCreateStateSet()->addUniform(new osg::Uniform("directionSampler", 1));
     geom->getOrCreateStateSet()->addUniform(new osg::Uniform("pointSprite", 2));
@@ -493,8 +493,6 @@ private:
   osg::ref_ptr<osg::Geometry> pointsNode_;
 
   osg::ref_ptr<ComputeNode> computeNode_;
-  osg::Vec4 minColor_;
-  osg::Vec4 maxColor_;
   float altitude_;
   osg::Vec4 boundingBox_;
   unsigned int particleDimension_;
@@ -511,8 +509,6 @@ osgEarth::Config VelocityParticleLayer::Options::getConfig() const
   conf.set("point_size", _pointSize);
   conf.set("drop_chance", _dropChance);
   conf.set("particle_altitude", _particleAltitude);
-  conf.set("min_color", _minColor);
-  conf.set("max_color", _maxColor);
   conf.set("sprite_uri", _spriteUri);
   conf.set("uri", _velocityTextureUri);
   conf.set("texel_to_velocity_fragment", _texelToVelocityFragment);
@@ -523,9 +519,45 @@ osgEarth::Config VelocityParticleLayer::Options::getConfig() const
     bbConf.set("east", _boundingBox->xMax());
     bbConf.set("south", _boundingBox->yMin());
     bbConf.set("north", _boundingBox->yMax());
-    conf.add("bounding_box", bbConf);
+    conf.set("bounding_box", bbConf);
   }
+
+  // Save the gradient in a new block
+  if (_gradient.isSet())
+  {
+    osgEarth::Config colorConf;
+    colorConf.add("discrete", _gradient->isDiscrete());
+
+    // Colors are listed one per line, <stop> <r> <g> <b> <a>.  Format matches GDAL color ramp files
+    std::stringstream ss;
+    const auto& colorMap = _gradient->colorMap();
+    bool first = true;
+    for (const auto& valueColor : colorMap)
+    {
+      const auto& color = valueColor.second;
+      if (!first)
+        ss << "\n";
+      first = false;
+      ss << valueColor.first << " " << osgEarth::vec4fToHtmlColor(valueColor.second);
+    }
+    colorConf.add("colors", ss.str());
+    conf.set("gradient", colorConf);
+  }
+
   return conf;
+}
+
+/** Helper function to decode a single line in the <gradient><colors> tag.  Cannot add as private method to Options. */
+int decodeColorLine(const std::string& line, float& value, osg::Vec4f& color)
+{
+  std::stringstream ss(simCore::StringUtils::trim(line));
+  if (!(ss >> value))
+    return 1;
+  std::string colorString;
+  if (!(ss >> colorString))
+    return 1;
+  color = osgEarth::htmlColorToVec4f(colorString);
+  return 0;
 }
 
 void VelocityParticleLayer::Options::fromConfig(const osgEarth::Config& conf)
@@ -536,8 +568,10 @@ void VelocityParticleLayer::Options::fromConfig(const osgEarth::Config& conf)
   _pointSize.setDefault(1.f);
   _dropChance.setDefault(0.f);
   _particleAltitude.setDefault(5000.f);
-  _minColor.setDefault(osgEarth::Color::Lime);
-  _maxColor.setDefault(osgEarth::Color::Red);
+  simVis::GradientShader gradient;
+  gradient.setColorMap(DEFAULT_COLOR_MAP);
+  gradient.setDiscrete(false);
+  _gradient.setDefault(gradient);
 
   conf.get("particle_dimension", _particleDimension);
   conf.get("die_speed", _dieSpeed);
@@ -545,8 +579,6 @@ void VelocityParticleLayer::Options::fromConfig(const osgEarth::Config& conf)
   conf.get("point_size", _pointSize);
   conf.get("drop_chance", _dropChance);
   conf.get("particle_altitude", _particleAltitude);
-  conf.get("min_color", _minColor);
-  conf.get("max_color", _maxColor);
   conf.get("sprite_uri", _spriteUri);
   conf.get("uri", _velocityTextureUri);
   conf.get("texel_to_velocity_fragment", _texelToVelocityFragment);
@@ -563,6 +595,35 @@ void VelocityParticleLayer::Options::fromConfig(const osgEarth::Config& conf)
     bbConf.get("south", south);
     bbConf.get("north", north);
     _boundingBox->set(west, south, east, north);
+  }
+
+  if (conf.hasChild("gradient"))
+  {
+    const osgEarth::Config& gConf = conf.child("gradient");
+    bool discrete = false;
+    gConf.get("discrete", discrete);
+    std::string colorString;
+    gConf.get("colors", colorString);
+
+    // Convert the color string into a map
+    simVis::GradientShader::ColorMap colors;
+    std::stringstream colorStream(colorString);
+    while (colorStream.good())
+    {
+      std::string line;
+      if (std::getline(colorStream, line))
+      {
+        float value;
+        osg::Vec4f color;
+        if (decodeColorLine(line, value, color) == 0)
+          colors[value] = color;
+      }
+    }
+
+    simVis::GradientShader gradient;
+    gradient.setDiscrete(discrete);
+    gradient.setColorMap(colors);
+    _gradient = gradient;
   }
 }
 
@@ -638,6 +699,17 @@ void VelocityParticleLayer::setPointSprite(const osgEarth::URI& uri)
   VPL_SET_NODE(setPointSprite, pointSprite_.get());
 }
 
+const simVis::GradientShader& VelocityParticleLayer::getGradient() const
+{
+  return *_options->gradient();
+}
+
+void VelocityParticleLayer::setGradient(const simVis::GradientShader& gradient)
+{
+  _options->gradient() = gradient;
+  VPL_SET_NODE(setGradient, gradient);
+}
+
 const osgEarth::URI& VelocityParticleLayer::getPointSprite() const
 {
   return *_options->spriteUri();
@@ -708,28 +780,6 @@ void VelocityParticleLayer::setDropChance(float value)
   VPL_SET_NODE(setDropChance, value);
 }
 
-const osg::Vec4& VelocityParticleLayer::getMinColor() const
-{
-  return *_options->minColor();
-}
-
-void VelocityParticleLayer::setMinColor(const osg::Vec4& minColor)
-{
-  _options->minColor() = minColor;
-  VPL_SET_NODE(setMinColor, minColor);
-}
-
-const osg::Vec4& VelocityParticleLayer::getMaxColor() const
-{
-  return *_options->maxColor();
-}
-
-void VelocityParticleLayer::setMaxColor(const osg::Vec4& maxColor)
-{
-  _options->maxColor() = maxColor;
-  VPL_SET_NODE(setMaxColor, maxColor);
-}
-
 float VelocityParticleLayer::getParticleAltitude() const
 {
   return *_options->particleAltitude();
@@ -791,8 +841,7 @@ osgEarth::Status VelocityParticleLayer::openImplementation()
   velocityNode->setPointSize(*_options->pointSize());
   velocityNode->setDropChance(*_options->dropChance());
   velocityNode->setParticleAltitude(*_options->particleAltitude());
-  velocityNode->setMinColor(*_options->minColor());
-  velocityNode->setMaxColor(*_options->maxColor());
+  velocityNode->setGradient(*_options->gradient());
   velocityNode->setTexelToVelocityFragment(*_options->texelToVelocityFragment());
 
   setUseCreateTexture();

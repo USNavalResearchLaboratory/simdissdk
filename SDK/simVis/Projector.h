@@ -120,11 +120,11 @@ public:
   /// Set the calculator that can calculate the projector's ellipsoid intersection
   void setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator);
 
-  /** Configure a node to accept the texture projected by this projector */
-  void addProjectionToNode(osg::Node* node);
+  /** Configure a node to accept the texture projected by this projector.  A node can accept only one projector.  Returns 0 on success. */
+  int addProjectionToNode(osg::Node* node);
 
-  /** Remove the setup configured by addProjectionToNode */
-  void removeProjectionFromNode(osg::Node* node);
+  /** Remove the setup configured by addProjectionToNode.  Returns 0 on success. */
+  int removeProjectionFromNode(osg::Node* node);
 
   /**
   * Get the traversal mask for this node type

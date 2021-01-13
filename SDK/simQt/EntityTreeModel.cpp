@@ -199,9 +199,12 @@ int EntityTreeItem::removeMarkedChildren(EntityTreeModel* model)
   if (static_cast<int>(childrenMarked_.size()) == childItems_.size())
   {
     model->beginRemoval(this, 0, childItems_.size() - 1);
+    for (auto ii = 0; ii < childItems_.size(); ++ii)
+      model->clearIndex(childItems_[ii]->id());
     childItems_.clear();
     childToRowIndex_.clear();
     childrenMarked_.clear();
+    model->endRemoval();
     return 0;
   }
 
@@ -241,9 +244,12 @@ int EntityTreeItem::removeMarkedChildren(EntityTreeModel* model)
     // minus one on last argument because Qt is inclusive
     model->beginRemoval(this, it->first, it->first + it->second - 1);
 
-    // remove from map
+    // remove from the childToRowIndex_ map and from the model's index map
     for (auto ii = it->first; ii < it->first + it->second; ++ii)
+    {
       childToRowIndex_.erase(childItems_[ii]);
+      model->clearIndex(childItems_[ii]->id());
+    }
 
     // remove from list
     childItems_.erase(childItems_.begin() + it->first, childItems_.begin() + it->first + it->second);
@@ -896,6 +902,11 @@ void EntityTreeModel::beginRemoval(EntityTreeItem* parent, int begin, int end)
 void EntityTreeModel::endRemoval()
 {
   endRemoveRows();
+}
+
+void EntityTreeModel::clearIndex(uint64_t id)
+{
+  itemsById_.erase(id);
 }
 
 }

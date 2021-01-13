@@ -490,6 +490,9 @@ protected:
   /// locator that tracks earth rotation linked to sim time
   osg::ref_ptr<Locator> scenarioEciLocator_;
 
+  /// node getter given to entity nodes on creation
+  std::function<EntityNode* (simData::ObjectId)> nodeGetter_ = [this](simData::ObjectId id) ->EntityNode* { return find(id); };
+
 private:
   /// Copy constructor, not implemented or available.
   ScenarioManager(const ScenarioManager&);

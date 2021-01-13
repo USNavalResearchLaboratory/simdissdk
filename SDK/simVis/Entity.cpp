@@ -269,6 +269,22 @@ std::string EntityNode::getEntityName_(const simData::CommonPrefs& common, Entit
   return "";
 }
 
+int EntityNode::applyProjectorPrefs_(const simData::CommonPrefs& lastPrefs, const simData::CommonPrefs& prefs)
+{
+  if (!PB_FIELD_CHANGED(&lastPrefs, &prefs, acceptprojectorid))
+    return 1;
+
+  auto id = prefs.acceptprojectorid();
+  if (id == 0)
+    return acceptProjector(nullptr);
+
+  auto projectorNode = dynamic_cast<ProjectorNode*>(nodeGetter_(id));
+  if (projectorNode == nullptr)
+    return 1;
+
+  return acceptProjector(projectorNode);
+}
+
 void EntityNode::setLabelContentCallback(LabelContentCallback* cb)
 {
   if (cb == nullptr)
@@ -282,13 +298,28 @@ LabelContentCallback& EntityNode::labelContentCallback() const
   return *contentCallback_;
 }
 
-void EntityNode::acceptProjector(ProjectorNode* proj)
+int EntityNode::acceptProjector(ProjectorNode* proj)
 {
-  proj->addProjectionToNode(this);
+  // Stop accepting the previous projector node, if one exists
+  if (acceptedProjectorNode_ != nullptr)
+  {
+    acceptedProjectorNode_->removeProjectionFromNode(this);
+    acceptedProjectorNode_ = nullptr;
+  }
+
+  // Passing in NULL clears the pairing, not an error
+  if (proj == nullptr)
+    return 0;
+
+  int rv = proj->addProjectionToNode(this);
+  if (rv == 0)
+    acceptedProjectorNode_ = proj;
+  return 0;
 }
 
-void EntityNode::removeProjector(ProjectorNode* proj)
+void EntityNode::setNodeGetter(std::function<simVis::EntityNode* (simData::ObjectId)> getter)
 {
-  proj->removeProjectionFromNode(this);
+  nodeGetter_ = getter;
 }
+
 }

@@ -1,7 +1,7 @@
 # Setup PROTOBUF library
 # Setting the PROTOBUF_DIR environment variable will allow use of a custom built library
 
-set(PROTOBUF_SUBDIR 2.6.0)
+set(PROTOBUF_SUBDIR 3.14.0)
 
 # Setup search paths
 initialize_ENV(PROTOBUF_DIR)
@@ -25,12 +25,12 @@ set(BIN_DIRS
 
 find_path(PROTOBUF_LIBRARY_INCLUDE_PATH NAME google/protobuf/descriptor.h PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
 find_library(PROTOBUF_LIBRARY_DEBUG_NAME
-    NAMES protobuf-2.6_d libprotobuf-2.6_d protobuf_d libprotobuf_d
+    NAMES protobuf_d libprotobuf_d protobufd libprotobufd
     HINTS ${LIB_DIRS}
     NO_DEFAULT_PATH
 )
 find_library(PROTOBUF_LIBRARY_RELEASE_NAME
-    NAMES protobuf-2.6 libprotobuf-2.6 protobuf libprotobuf
+    NAMES protobuf libprotobuf
     PATHS ${LIB_DIRS}
     NO_DEFAULT_PATH
 )
