@@ -61,17 +61,24 @@ public:
   /** Interpolates a color between lowColor and highColor, using low and high as guideposts against val. */
   static QColor interpolate(const QColor& lowColor, const QColor& highColor, float low, float val, float high);
 
+  /** Set whether this gradient is discrete. If true, colorAt() and osgColorAt() will not interpolate colors between stops. */
+  void setDiscrete(bool discrete);
+  /** Get the discrete flag. */
+  bool discrete() const;
+
   /**
    * Retrieves the color mapping to the given value. Values range [0,1].
    * Colors outside the configured min/max values will be clamped.
-   * If no colors have been set, then black is returned.
+   * If no colors have been set, then black is returned. If discrete flag
+   * is set to true (via setDiscrete()), no interpolation is performed.
    */
   QColor colorAt(float zeroToOne) const;
 
   /**
    * Retrieves the color mapping to the given value. Values range [0,1].
    * Colors outside the configured min/max values will be clamped.
-   * If no colors have been set, then black is returned.
+   * If no colors have been set, then black is returned. If discrete flag
+   * is set to true (via setDiscrete()), no interpolation is performed.
    */
   osg::Vec4 osgColorAt(float zeroToOne) const;
 
@@ -116,6 +123,7 @@ public:
 
 private:
   osg::ref_ptr<osg::TransferFunction1D> function_;
+  bool discrete_ = false;
 };
 
 }

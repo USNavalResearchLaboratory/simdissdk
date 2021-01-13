@@ -684,7 +684,35 @@ namespace
 
     return rv;
   }
+
+  int testNegativeSeconds()
+  {
+    int rv = 0;
+
+    rv += SDK_ASSERT(simCore::TimeStamp(2020, simCore::Seconds(-1, 0)) == simCore::TimeStamp(2019, simCore::Seconds(365 * simCore::SECPERDAY - 1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2021, simCore::Seconds(-1, 0)) == simCore::TimeStamp(2020, simCore::Seconds(366 * simCore::SECPERDAY - 1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2021, simCore::Seconds(-366 * simCore::SECPERDAY - 1, 0)) == simCore::TimeStamp(2019, simCore::Seconds(365 * simCore::SECPERDAY - 1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2021, simCore::Seconds(-(366 + 365) * simCore::SECPERDAY - 1, 0)) == simCore::TimeStamp(2018, simCore::Seconds(365 * simCore::SECPERDAY - 1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2021, simCore::Seconds(-(2 * 366 + 4 * 365) * simCore::SECPERDAY - 1, 0)) == simCore::TimeStamp(2014, simCore::Seconds(365 * simCore::SECPERDAY - 1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2021, simCore::Seconds(-(13 * 366 + 37 * 365) * simCore::SECPERDAY - 1, 0)) == simCore::TimeStamp(1970, simCore::Seconds(365 * simCore::SECPERDAY - 1, 0)));
+
+    return rv;
+  }
+
+  int testPositiveSeconds()
+  {
+    int rv = 0;
+
+    rv += SDK_ASSERT(simCore::TimeStamp(2019, simCore::Seconds(1, 0)) == simCore::TimeStamp(2019, simCore::Seconds(1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2019, simCore::Seconds(365 * simCore::SECPERDAY + 1, 0)) == simCore::TimeStamp(2020, simCore::Seconds(1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2019, simCore::Seconds((365 + 366) * simCore::SECPERDAY + 1, 0)) == simCore::TimeStamp(2021, simCore::Seconds(1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2015, simCore::Seconds((2 * 366 + 4 * 365) * simCore::SECPERDAY + 1, 0)) == simCore::TimeStamp(2021, simCore::Seconds(1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(1970, simCore::Seconds((13 * 366 + 38 * 365) * simCore::SECPERDAY + 1, 0)) == simCore::TimeStamp(2021, simCore::Seconds(1, 0)));
+
+    return rv;
+  }
 }
+
 int TimeClassTest(int argc, char* argv[])
 {
   int rv = 0;
@@ -696,6 +724,8 @@ int TimeClassTest(int argc, char* argv[])
   rv += testInput();
   rv += testTimeRounding();
   rv += testTimeStamp();
+  rv += testNegativeSeconds();
+  rv += testPositiveSeconds();
   rv += testTimeStampComparison();
 
   std::cout << "TimeClassTest " << (rv == 0 ? "PASSED" : "FAILED") << std::endl;

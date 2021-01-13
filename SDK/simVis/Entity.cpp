@@ -187,6 +187,7 @@ EntityNode::EntityNode(simData::ObjectType type, Locator* locator)
 
 EntityNode::~EntityNode()
 {
+  acceptProjector(nullptr);
   setLocator(nullptr);
 }
 
@@ -301,7 +302,8 @@ LabelContentCallback& EntityNode::labelContentCallback() const
 int EntityNode::acceptProjector(ProjectorNode* proj)
 {
   // Stop accepting the previous projector node, if one exists
-  if (acceptedProjectorNode_ != nullptr)
+  osg::ref_ptr<simVis::ProjectorNode> lock;
+  if (acceptedProjectorNode_.lock(lock))
   {
     acceptedProjectorNode_->removeProjectionFromNode(this);
     acceptedProjectorNode_ = nullptr;
@@ -311,7 +313,7 @@ int EntityNode::acceptProjector(ProjectorNode* proj)
   if (proj == nullptr)
     return 0;
 
-  int rv = proj->addProjectionToNode(this);
+  int rv = proj->addProjectionToNode(this, this);
   if (rv == 0)
     acceptedProjectorNode_ = proj;
   return 0;

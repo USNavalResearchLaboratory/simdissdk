@@ -138,6 +138,9 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
 
     void operator()(osg::Node* node, osg::NodeVisitor* nv)
     {
+      if (proj_ == nullptr)
+        return;
+
       osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
       osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
       osg::Matrixf projMat = cv->getCurrentCamera()->getInverseViewMatrix() * proj_->getTexGenMatrix();
@@ -148,7 +151,7 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
     }
 
   private:
-    osg::ref_ptr<simVis::ProjectorNode> proj_;
+    osg::observer_ptr<simVis::ProjectorNode> proj_;
   };
 }
 
@@ -191,6 +194,14 @@ ProjectorNode::~ProjectorNode()
 {
   if (hostLocator_.valid())
     hostLocator_.get()->removeCallback(locatorCallback_.get());
+
+  auto localCopy = projectedNodes_;
+  for (auto node : localCopy)
+  {
+    osg::ref_ptr<osg::Node> lock;
+    if (node.first.lock(lock))
+      removeProjectionFromNode(node.first.get());
+  }
 }
 
 void ProjectorNode::init_()
@@ -716,9 +727,9 @@ void ProjectorNode::setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidInter
   calculator_ = calculator;
 }
 
-int ProjectorNode::addProjectionToNode(osg::Node* node)
+int ProjectorNode::addProjectionToNode(osg::Node* entity, osg::Node* attachmentPoint)
 {
-  if (!node)
+  if (!attachmentPoint)
     return 1;
 
   // Cycle through the nested callbacks in the node, to ensure there's not already
@@ -726,7 +737,7 @@ int ProjectorNode::addProjectionToNode(osg::Node* node)
   // projector with a "claim" to the node and adding another projector will fail,
   // possibly introducing infinite loops if that UpdateProjMatrix == projectOnNodeCallback_.
   bool foundProjCallback = false;
-  osg::Callback* nestedCallback = node->getCullCallback();
+  osg::Callback* nestedCallback = attachmentPoint->getCullCallback();
   while (nestedCallback && !foundProjCallback)
   {
     if (dynamic_cast<UpdateProjMatrix*>(nestedCallback))
@@ -737,13 +748,15 @@ int ProjectorNode::addProjectionToNode(osg::Node* node)
   if (foundProjCallback)
     return 1;
 
+  projectedNodes_[entity] = attachmentPoint;
+
   // create the projection matrix callback on demand:
   if (!projectOnNodeCallback_.valid())
     projectOnNodeCallback_ = new UpdateProjMatrix(this);
 
   // install the texture application snippet.
   // TODO: optimize by creating this VP once and sharing across all projectors (low priority)
-  osg::StateSet* stateSet = node->getOrCreateStateSet();
+  osg::StateSet* stateSet = attachmentPoint->getOrCreateStateSet();
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
   simVis::Shaders package;
   package.load(vp, package.projectorManagerVertex());
@@ -760,7 +773,7 @@ int ProjectorNode::addProjectionToNode(osg::Node* node)
   addUniforms(stateSet);
 
   // to compute the texture generation matrix:
-  node->addCullCallback(projectOnNodeCallback_.get());
+  attachmentPoint->addCullCallback(projectOnNodeCallback_.get());
   return 0;
 }
 
@@ -769,24 +782,11 @@ int ProjectorNode::removeProjectionFromNode(osg::Node* node)
   if (!node)
     return 1;
 
-  // The node must have our projectOnNodeCallback_.  If it does not, then we are not projecting
-  // onto it, and perhaps some other projector is projecting onto it.  Unlike addProjectionToNode(),
-  // we want to find specifically our callback, not just any callback of that type.
-  bool foundProjCallback = false;
-  osg::Callback* nestedCallback = node->getCullCallback();
-  while (nestedCallback && !foundProjCallback)
-  {
-    if (nestedCallback == projectOnNodeCallback_.get())
-      foundProjCallback = true;
-    else
-      nestedCallback = nestedCallback->getNestedCallback();
-  }
-  // Break out because our callback wasn't found, which means even if it has projector state it
-  // could be another projector's state.
-  if (!foundProjCallback)
+  auto attachmentPoint = projectedNodes_.find(node);
+  if (attachmentPoint == projectedNodes_.end())
     return 1;
 
-  osg::StateSet* stateSet = node->getStateSet();
+  osg::StateSet* stateSet = attachmentPoint->second->getStateSet();
   if (stateSet)
   {
     osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::get(stateSet);
@@ -803,7 +803,8 @@ int ProjectorNode::removeProjectionFromNode(osg::Node* node)
     removeUniforms(stateSet);
   }
 
-  node->removeCullCallback(projectOnNodeCallback_.get());
+  attachmentPoint->second->removeCullCallback(projectOnNodeCallback_.get());
+  projectedNodes_.erase(attachmentPoint);
   return 0;
 }
 
