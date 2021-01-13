@@ -78,8 +78,10 @@ signals:
   void closedGui();
 
 private slots:
-  /** Gets the selection from EntityTreeComposite; EntityTreeComposite is in single select mode so QList will only have one entry*/
-  void setSelected_(QList<uint64_t> ids);
+  /** Sets the selection from EntityTreeComposite; EntityTreeComposite is in single select mode so QList will only have one entry*/
+  void setSelected_(const QList<uint64_t>& ids);
+  /** Accept the changes and emit closedGui */
+  void accept_();
 
 private:
   EntityTreeModel* entityTreeModel_;
@@ -164,11 +166,11 @@ private slots:
   /** Called when the user clicks the button for showing the Entity Tree Composite dialog */
   void showEntityDialog_();
   /** Called when the user selects an options from the QCompleter popup menu */
-  void wasActived_(const QModelIndex & index);
+  void wasActivated_(const QModelIndex& index);
   /** Called with the user finished editing the name and the name can be verified */
   void editingFinished_();
   /** Called with the user edits the name */
-  void textEdited_(const QString & text);
+  void textEdited_(const QString& text);
   /** Emit reapply() if the user pressed enter on an existing valid entity */
   void checkForReapply_();
 

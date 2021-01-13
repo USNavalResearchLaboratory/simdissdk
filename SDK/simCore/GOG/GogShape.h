@@ -140,6 +140,8 @@ public:
 
   /// Return true if this is a relative shape, which means all positions are xyz referenced in meters, otherwise positions are lla in radians
   bool isRelative() const;
+  /// Set if shape is relative or absolute
+  void setRelative(bool relative);
 
   /// Defines the shape type implementation
   virtual ShapeType shapeType() const = 0;
@@ -286,8 +288,6 @@ protected:
   void setCanExtrude_(bool canExtrude);
   /// Set if shape's orientation can be locked to a reference orientation
   void setCanFollow_(bool canFollow);
-  /// Set if shape is relative or absolute
-  void setRelative_(bool relative);
   /// Set if the shape will serialize out its name as a separate line item using '3d name'
   void setSerializeName_(bool serializeName);
   /// Serialize the shape's specific implementation attributes to the stream

@@ -120,11 +120,11 @@ public:
   /// Set the calculator that can calculate the projector's ellipsoid intersection
   void setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator);
 
-  /** Configure a node to accept the texture projected by this projector */
-  void addProjectionToNode(osg::Node* node);
+  /** Configure an entity to accept the texture projected by this projector.  An entity can accept only one projector.  Returns 0 on success. */
+  int addProjectionToNode(osg::Node* entity, osg::Node* attachmentPoint);
 
-  /** Remove the setup configured by addProjectionToNode */
-  void removeProjectionFromNode(osg::Node* node);
+  /** Remove the setup configured by addProjectionToNode.  Returns 0 on success. */
+  int removeProjectionFromNode(osg::Node* node);
 
   /**
   * Get the traversal mask for this node type
@@ -270,6 +270,10 @@ private:
   osg::ref_ptr<osg::Uniform> colorOverrideUniform_;
 
   osg::ref_ptr<osg::NodeCallback> projectOnNodeCallback_;
+  // Keep track of the nodes projected onto so the projections can be removed when projector is deleted.
+  // The key is the entity the value is the attachment point
+  std::map<osg::observer_ptr<osg::Node>, osg::observer_ptr<osg::Node> > projectedNodes_;
+
   std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator_;
 };
 

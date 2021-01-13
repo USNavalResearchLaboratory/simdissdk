@@ -265,12 +265,14 @@ int testBuildString()
 
   rv += SDK_ASSERT("1" == simCore::buildString("", 1.0, 1, 0, "", false, 1., 1.));
 
-  // windows and linux have different interpretations of 0 precision in scientific notation
-#ifdef WIN32
+  // windows < vs2019 and linux have different interpretations of 0 precision in scientific notation
+#if defined(WIN32) && (_MSC_VER < 1928)
+  // windows vs2019 < 16.8, vs 2017, vs2015
   rv += SDK_ASSERT("1.000000e+00" == simCore::buildString("", 1.0, 1, 0, "", false, 0., 1.));
   rv += SDK_ASSERT(" 1.000000e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1. - std::numeric_limits<double>::epsilon(), 1));
   rv += SDK_ASSERT(" 1.000000e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1., 1. + std::numeric_limits<double>::epsilon()));
 #else
+  // windows vs2019 >= 16.8 and linux
   rv += SDK_ASSERT("1e+00" == simCore::buildString("", 1.0, 1, 0, "", false, 0., 1.));
   rv += SDK_ASSERT("        1e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1. - std::numeric_limits<double>::epsilon(), 1));
   rv += SDK_ASSERT("        1e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1., 1. + std::numeric_limits<double>::epsilon()));

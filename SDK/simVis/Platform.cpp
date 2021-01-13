@@ -396,6 +396,9 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     forceUpdateFromDataStore_ = true;
   }
 
+  if (!lastPrefsValid_ || PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
+    applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
+
   lastPrefs_ = prefs;
   lastPrefsValid_ = true;
 }
@@ -1094,8 +1097,7 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   // Make sure the position has been set
   if (platCoord.position() == simCore::Vec3(0.0, 0.0, 0.0))
   {
-    // Reactivate the LOS, undoing the setActive(false) above
-    los->setActive(true);
+    // No need to reactivate the LOS, it is not valid
     return;
   }
 
@@ -1149,14 +1151,23 @@ unsigned int PlatformNode::objectIndexTag() const
   return model_->objectIndexTag();
 }
 
-void PlatformNode::acceptProjector(ProjectorNode* proj)
+int PlatformNode::acceptProjector(ProjectorNode* proj)
 {
-  proj->addProjectionToNode(model_->offsetNode());
-}
+  // Stop accepting the previous projector node, if one exists
+  if (acceptedProjectorNode_ != nullptr)
+  {
+    acceptedProjectorNode_->removeProjectionFromNode(model_->offsetNode());
+    acceptedProjectorNode_ = nullptr;
+  }
 
-void PlatformNode::removeProjector(ProjectorNode* proj)
-{
-  proj->removeProjectionFromNode(model_->offsetNode());
+  // Passing in NULL clears the pairing, not an error
+  if (proj == nullptr)
+    return 0;
+
+  int rv = proj->addProjectionToNode(this, model_->offsetNode());
+  if (rv == 0)
+    acceptedProjectorNode_ = proj;
+  return rv;
 }
 
 }

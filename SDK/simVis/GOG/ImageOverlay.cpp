@@ -87,7 +87,7 @@ GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOver
   double north = imageOverlay.north() * simCore::RAD2DEG;
   double south = imageOverlay.south() * simCore::RAD2DEG;
   double east = imageOverlay.east() * simCore::RAD2DEG;
-  double west = imageOverlay.south() * simCore::RAD2DEG;
+  double west = imageOverlay.west() * simCore::RAD2DEG;
   double rot = imageOverlay.getRotation() * simCore::RAD2DEG;
   osgEarth::Angular rotation(rot, osgEarth::Units::DEGREES);
 
@@ -97,6 +97,8 @@ GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOver
   imageNode->setPriority(8000);
 
   GogMetaData metaData;
+  // need to specify KML load format for these shapes, which attach to the map node differently than normal GOG shapes
+  metaData.loadFormat = FORMAT_KML;
   return new ImageOverlayInterface(imageNode, metaData);
 }
 

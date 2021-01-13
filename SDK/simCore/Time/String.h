@@ -224,6 +224,72 @@ public:
 };
 
 /**
+ * Formatter for simCore::Time's TIMEFORMAT_ISO8601.
+ * Official ISO 8601 format can take many forms YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDThh:mm:ssZ, YYYY-MM-DDThh:mm:sszzzzzz
+ * YYYY-MM-DD, and YYYY-MM-DDThh:mm:ss.sssZ with optional [.sss...] are fully supported.
+ * No support for the YYYY-MM-DDThh:mm:sszzzzzz local-time format.
+ * Support for the YYYY-MM format is limited.
+ * Support for the YYYY format is limited, due to conflict with SecondsFormatter.
+ * April 6 at 14:35:03.01 Zulu in the year 2007 would be formatted as: "2007-04-06T14:35:03.010Z"
+ * Since the format always includes year, toString's referenceYear arg is always ignored.
+ */
+class SDKCORE_EXPORT Iso8601TimeFormatter : public TimeFormatter
+{
+public:
+  /**
+   * Converts the time stamp to a string.  The reference year arg is always ignored.
+   * The precision changes the number of places after the decimal
+   * place in formats that support decimal values.  Trailing 0's fill empty precision values (e.g. 0.500)
+   *
+   * The Iso8601TimeFormatter does not output to the ISO8601 YYYY or YYYY-MM formats.
+   * Where the timeStamp specifies a time with 0.0 seconds in the day, the output string will have
+   * the YYYY-MM-DD format (regardless of precision).
+   * If there is a non-zero value for the seconds in the day, the YYYY-MM-DDThh:mm:ss[.s...]Z format
+   * will be output, with specified precision governing the output.
+   *
+   * @param timeStamp Time to print to string.  Should be after the epoch referenceYear.
+   * @param referenceYear  always ignored.
+   * @param precision Precision after the decimal place for components in individual formatters that
+   *   use decimal output.  Trailing 0's will be included in all output to match the precision requested.
+   * @return Time string of the value passed in, in the formatter's text format.  If for some reason the
+   *   formatter cannot convert the value, an empty string might be returned.
+   */
+  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=0) const;
+
+  /**
+   * Returns true if the passed-in time string matches this formatter's style.  This is a check of
+   * validity for whether fromString() will be able to successfully convert the time string to a
+   * simCore::TimeStamp value.  This check should be as stringent as possible.
+   * Supports ISO8601 YYYY-MM, YYYY-MM-DD, YYYY-MM-DDThh:mm:ssZ, YYYY-MM-DDThh:mm:ss.sZ formats.
+   * Returns false for otherwise valid ISO8601 YYYY format, as that would conflict with
+   * the SecondsFormatter.
+   * Returns false for ISO8601 YYYY-MM-DDThh:mm:sszzzzzz local-time format.
+   * @param timeString Time string to check whether this formatter can convert
+   * @return True, if this converter will be able to convert the value properly.  False if the
+   *   formatter knows that the fromString() will fail for this input string.
+   */
+  virtual bool canConvert(const std::string& timeString) const;
+
+  /**
+   * Converts a time string to a time stamp.  This is the inverse of the toString() function.
+   * If the formatter is unable to convert the string,
+   * a non-zero error will be set in the return value.
+   *
+   * Note that fromString can convert from ISO8601 YYYY format, where canConvert returns false.
+   * This allows uses where values are known to be ISO8601 formatted to be processed.
+   *
+   * @param timeString Time string to convert to a simCore::TimeStamp
+   * @param timeStamp Value to fill with the interpreted time.  If there is an error in conversion,
+   *   this value is reset to simCore::TimeStamp(1970, 0).
+   * @param referenceYear Reference year epoch for time formats that require a reference year.
+   * @return 0 on successful conversion, and timeStamp will be filled with the valid time stamp.  Non-zero
+   *   on error, and timeStamp will be set to simCore::TimeStamp(1970, 0).
+   */
+  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+};
+
+
+/**
  * Composite class of several built-in time formats.  Accepts registration of foreign time formatters.
  * During conversion, foreign time formatters are given priority over built-in formatters when multiple
  * formatters are able to parse the incoming time string.

@@ -20,16 +20,16 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include <limits>
-#include "simVis/RadialLOS.h"
-#include "simVis/Utils.h"
-#include "simCore/Calc/Calculations.h"
-#include "simCore/Calc/CoordinateConverter.h"
-#include "simNotify/Notify.h"
-#include "simCore/Calc/Math.h"
 #include "osgEarth/GeoData"
 #include "osgEarth/Terrain"
-#include <cassert>
+#include "simNotify/Notify.h"
+#include "simCore/Calc/Calculations.h"
+#include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/Calc/Math.h"
+#include "simVis/RadialLOS.h"
+#include "simVis/Utils.h"
 
 #undef LC
 #define LC "[LOS] "
@@ -82,9 +82,9 @@ RadialLOS::RadialLOS()
     azim_center_(osgEarth::Angle(0.0, osgEarth::Units::DEGREES)),
     fov_(osgEarth::Angle(360.0, osgEarth::Units::DEGREES)),
     azim_resolution_(osgEarth::Angle(15.0, osgEarth::Units::DEGREES)),
+    elevationWorkingSet_(new osgEarth::ElevationPool::WorkingSet(WORKINGSET_SIZE)),
     use_scene_graph_(false)
 {
-  elevationWorkingSet_ = new osgEarth::ElevationPool::WorkingSet(WORKINGSET_SIZE);
 }
 
 RadialLOS::RadialLOS(const RadialLOS& rhs)
@@ -94,7 +94,6 @@ RadialLOS::RadialLOS(const RadialLOS& rhs)
 
 RadialLOS::~RadialLOS()
 {
-  if (elevationWorkingSet_) delete elevationWorkingSet_;
 }
 
 RadialLOS& RadialLOS::operator=(const RadialLOS& rhs)
@@ -108,9 +107,8 @@ RadialLOS& RadialLOS::operator=(const RadialLOS& rhs)
   fov_ = rhs.fov_;
   azim_resolution_ = rhs.azim_resolution_;
   use_scene_graph_ = rhs.use_scene_graph_;
-  elevationWorkingSet_ = new osgEarth::ElevationPool::WorkingSet(WORKINGSET_SIZE);
+  elevationWorkingSet_.reset(new osgEarth::ElevationPool::WorkingSet(WORKINGSET_SIZE));
   // nocopy: srs_
-  // nocopy: elevationWorkingSet_
 
   return *this;
 }
@@ -262,17 +260,15 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
       }
       else
       {
-        osgEarth::ElevationSample sample = mapNode->getMap()->getElevationPool()->getSample(mapPoint, osgEarth::Distance(1.0, osgEarth::Units::METERS), elevationWorkingSet_);
+        osgEarth::ElevationSample sample = mapNode->getMap()->getElevationPool()->getSample(mapPoint, osgEarth::Distance(1.0, osgEarth::Units::METERS), elevationWorkingSet_.get());
         hae = sample.elevation().as(osgEarth::Units::METERS);
         hamsl = hae;
         ok = true;
-        //ok = (hae != NO_DATA_VALUE);
         if (hae == NO_DATA_VALUE)
         {
           // If there is invalid data at a point treat it as 0 HAE.
           hae = 0.0;
           hamsl = 0.0;
-          ok = true;
         }
       }
 

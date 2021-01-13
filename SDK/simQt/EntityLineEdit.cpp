@@ -79,7 +79,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   tree_->addEntityFilter(new simQt::EntityCategoryFilter(entityTreeModel_->dataStore(), simQt::EntityCategoryFilter::SHOW_WIDGET));
 
   connect(tree_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(setSelected_(QList<uint64_t>)));
-  connect(tree_, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(accept())); // Have double click auto close the dialog
+  connect(tree_, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(accept_())); // Have double click auto close the dialog
 
   QVBoxLayout* layout = new QVBoxLayout(this);
   layout->setMargin(0);
@@ -99,6 +99,10 @@ void EntityDialog::closeEvent(QCloseEvent* ev)
 
 void EntityDialog::setItemSelected(uint64_t id)
 {
+  auto ids = tree_->selectedItems();
+  if ((ids.size() == 1) && (ids.front() == id))
+    return;
+
   tree_->clearSelection();
   if (id != 0)
   {
@@ -141,7 +145,7 @@ void EntityDialog::setCenterEntity(CenterEntity* centerEntity)
   tree_->setShowCenterInMenu(true);
 }
 
-void EntityDialog::setSelected_(QList<uint64_t> ids)
+void EntityDialog::setSelected_(const QList<uint64_t>& ids)
 {
   if (!ids.isEmpty())
   {
@@ -149,6 +153,11 @@ void EntityDialog::setSelected_(QList<uint64_t> ids)
   }
 }
 
+void EntityDialog::accept_()
+{
+  accept();
+  emit closedGui();
+}
 
 //--------------------------------------------------------------------------------------------------
 
@@ -214,7 +223,7 @@ EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTr
   connect(composite_->toolButton, SIGNAL(clicked()), this, SLOT(showEntityDialog_()));
   connect(composite_->lineEdit, SIGNAL(returnPressed()), this, SLOT(checkForReapply_()));
   connect(composite_->lineEdit, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
-  connect(composite_->lineEdit, SIGNAL(textEdited(const QString&)), this, SLOT(textEdited_(const QString&)));
+  connect(composite_->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEdited_(QString)));
 
   setModel(entityTreeModel, type_);
   // Double clicking on an empty text field will display the Entity Dialog
@@ -260,7 +269,7 @@ void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::ObjectType
     // If the EntityLineEdit starts off disabled than the view is always disabled (Qt bug?); if forced enabled here then the view follows the EntityLineEdit enable/disable
     view->setEnabled(true);
 
-    connect(completer, SIGNAL(activated(const QModelIndex &)), this, SLOT(wasActived_(const QModelIndex &)));
+    connect(completer, SIGNAL(activated(QModelIndex)), this, SLOT(wasActivated_(QModelIndex)));
 
     composite_->lineEdit->setCompleter(completer);
 
@@ -296,7 +305,7 @@ EntityStateFilter::State EntityLineEdit::stateFilter() const
   return state_;
 }
 
-void EntityLineEdit::wasActived_(const QModelIndex & index)
+void EntityLineEdit::wasActivated_(const QModelIndex& index)
 {
   if (entityTreeModel_ == nullptr)
     return;
@@ -460,7 +469,7 @@ void EntityLineEdit::editingFinished_()
   }
 }
 
-void EntityLineEdit::textEdited_(const QString & text)
+void EntityLineEdit::textEdited_(const QString& text)
 {
   needToVerify_ = true;
   setTextStyle_(true);

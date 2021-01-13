@@ -360,3 +360,19 @@
    ...
 }
 
+{
+  proto 3.14 leaks
+  Memcheck:Leak
+  ...
+  fun:*google*protobuf*internal*LazyString*Init*
+  fun:*google*protobuf*internal*LazyString*get*
+  ...
+}
+
+{
+  proto 3.14 leaks
+  Memcheck:Leak
+  ...
+  fun:*google*protobuf*MessageFactory*InternalRegisterGeneratedFile*
+  ...
+}

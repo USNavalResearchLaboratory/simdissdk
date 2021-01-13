@@ -83,6 +83,25 @@ void Loader::loadGogs(std::istream& input, bool attached, GogNodeVector& output)
   }
 }
 
+void Loader::loadShape(const std::string& gogShapeBlock, size_t shapeNumber, bool attached, GogNodeVector& output) const
+{
+  std::vector<simCore::GOG::GogShapePtr> gogs;
+  std::istringstream input(gogShapeBlock);
+  parser_.parse(input, gogs);
+  if (gogs.empty())
+    return;
+  // only one shape on input; can't be more than that on output.
+  assert(gogs.size() <= 1);
+
+  simCore::GOG::GogShapePtr gog = gogs.front();
+  // lineNumber as set by the parser is meaningless in the context of a string representing a single shape converted
+  // to GOG from another overlay format, and can't support sorting and selection. use specified shapeNumber instead.
+  gog->setLineNumber(shapeNumber);
+  GogNodeInterfacePtr gogNode = buildGogNode_(gog, attached);
+  if (gogNode)
+    output.push_back(gogNode);
+}
+
 GogNodeInterfacePtr Loader::buildGogNode_(simCore::GOG::GogShapePtr gog, bool attached) const
 {
   GogNodeInterfacePtr rv;

@@ -669,6 +669,8 @@ PlatformNode* ScenarioManager::addPlatform(const simData::PlatformProperties& pr
 
   node->setLabelContentCallback(labelContentManager_->createLabelContentCallback(node->getId()));
 
+  node->setNodeGetter(nodeGetter_);
+
   return node;
   SAFETRYEND("adding platform");
   return nullptr;
@@ -686,7 +688,7 @@ BeamNode* ScenarioManager::addBeam(const simData::BeamProperties& props, simData
   Locator* locator = host ? host->getLocator() : new Locator();
 
   // put the beam into our entity db:
-  BeamNode* node = new BeamNode(this, props, locator, host, dataStore.referenceYear());
+  BeamNode* node = new BeamNode(props, locator, host, dataStore.referenceYear());
 
   entities_[node->getId()] = new EntityRecord(
     node,
@@ -702,6 +704,8 @@ BeamNode* ScenarioManager::addBeam(const simData::BeamProperties& props, simData
   notifyToolsOfAdd_(node);
 
   node->setLabelContentCallback(labelContentManager_->createLabelContentCallback(node->getId()));
+
+  node->setNodeGetter(nodeGetter_);
 
   return node;
   SAFETRYEND("adding beam");
@@ -738,6 +742,8 @@ GateNode* ScenarioManager::addGate(const simData::GateProperties& props, simData
 
   node->setLabelContentCallback(labelContentManager_->createLabelContentCallback(node->getId()));
 
+  node->setNodeGetter(nodeGetter_);
+
   return node;
   SAFETRYEND("adding gate");
   return nullptr;
@@ -766,6 +772,8 @@ LaserNode* ScenarioManager::addLaser(const simData::LaserProperties& props, simD
   notifyToolsOfAdd_(node);
 
   node->setLabelContentCallback(labelContentManager_->createLabelContentCallback(node->getId()));
+
+  node->setNodeGetter(nodeGetter_);
 
   return node;
   SAFETRYEND("adding laser");
@@ -797,6 +805,8 @@ LobGroupNode* ScenarioManager::addLobGroup(const simData::LobGroupProperties& pr
 
   node->setLabelContentCallback(labelContentManager_->createLabelContentCallback(node->getId()));
 
+  node->setNodeGetter(nodeGetter_);
+
   return node;
   SAFETRYEND("adding LOB group");
   return nullptr;
@@ -823,6 +833,8 @@ CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRe
   notifyToolsOfAdd_(node);
 
   node->setLabelContentCallback(labelContentManager_->createLabelContentCallback(node->getId()));
+
+  node->setNodeGetter(nodeGetter_);
 
   return node;
   SAFETRYEND("adding custom");
@@ -853,6 +865,8 @@ ProjectorNode* ScenarioManager::addProjector(const simData::ProjectorProperties&
   notifyToolsOfAdd_(node);
 
   node->setLabelContentCallback(labelContentManager_->createLabelContentCallback(node->getId()));
+
+  node->setNodeGetter(nodeGetter_);
 
   return node;
   SAFETRYEND("adding projector");

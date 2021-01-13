@@ -243,12 +243,7 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   {
     simCore::GOG::TessellationStyle tessellation = simCore::GOG::TessellationStyle::NONE;
     if (lined->getTessellation(tessellation) == 0)
-    {
-      // force non-zero crease angle for extruded tesselated line, we want to only draw posts at actual vertices
-      if (tessellation != simCore::GOG::TessellationStyle::NONE)
-        style_.getOrCreateSymbol<osgEarth::LineSymbol>()->creaseAngle() = 1.0f;
       setTessellation(LoaderUtils::convertToVisTessellation(tessellation));
-    }
   }
 
   const simCore::GOG::Points* points = dynamic_cast<const simCore::GOG::Points*>(shape.get());
@@ -1777,6 +1772,9 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
       }
     }
     ls->tessellationSize()->set(tessellationSpacingM, osgEarth::Units::METERS); // in meters
+    // force non-zero crease angle for extruded tesselated line, we want to only draw posts at actual vertices
+    ls->creaseAngle() = 1.0f;
+
   }
   else
   {
@@ -1784,6 +1782,7 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
     ls->tessellation() = 0;
     // make sure the tessellation size is unset
     ls->tessellationSize().unset();
+    ls->creaseAngle() = 0.0f;
   }
 
   setStyle_(style_);

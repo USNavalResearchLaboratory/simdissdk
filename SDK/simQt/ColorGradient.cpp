@@ -106,12 +106,18 @@ ColorGradient ColorGradient::newDopplerGradient()
 
 QColor ColorGradient::colorAt(float zeroToOne) const
 {
-  return simQt::getQtColorFromOsg(function_->getColor(zeroToOne));
+  return simQt::getQtColorFromOsg(osgColorAt(zeroToOne));
 }
 
 osg::Vec4 ColorGradient::osgColorAt(float zeroToOne) const
 {
-  return function_->getColor(zeroToOne);
+  if (!discrete_)
+    return function_->getColor(zeroToOne);
+  auto map = function_->getColorMap();
+  auto iter = map.upper_bound(zeroToOne);
+  if (iter != map.begin())
+    --iter;
+  return iter->second;
 }
 
 int ColorGradient::setColor(float zeroToOne, const QColor& color)
@@ -130,7 +136,7 @@ int ColorGradient::setColor(float zeroToOne, const osg::Vec4& color)
 
 int ColorGradient::removeColor(float zeroToOne)
 {
-  if (function_->getColorMap().size() <= 2)
+  if (function_->getColorMap().size() <= 1)
     return 1;
 
   auto& colorMap = function_->getColorMap();
@@ -162,13 +168,13 @@ osg::TransferFunction1D::ColorMap ColorGradient::getColorMap() const
 int ColorGradient::colorCount() const
 {
   const int count = static_cast<int>(function_->getColorMap().size());
-  assert(count >= 2); // At least two stops are required
+  assert(count >= 1); // At least one stop is required
   return count;
 }
 
 int ColorGradient::setColors(const std::map<float, QColor>& colors)
 {
-  if (colors.size() < 2)
+  if (colors.empty())
     return 1;
 
   auto& colorMap = function_->getColorMap();
@@ -184,8 +190,8 @@ int ColorGradient::setColors(const std::map<float, QColor>& colors)
       colorMap[stop.first] = simQt::getOsgColorFromQt(stop.second);
   }
 
-  // Restore old colors if new map doesn't have at least two stops
-  if (colorMap.size() < 2)
+  // Restore old colors if new map doesn't have at least one stop
+  if (colorMap.empty())
   {
     colorMap = oldColorMap;
     return 1;
@@ -195,7 +201,7 @@ int ColorGradient::setColors(const std::map<float, QColor>& colors)
 
 int ColorGradient::setColors(const std::map<float, osg::Vec4>& colors)
 {
-  if (colors.size() < 2)
+  if (colors.empty())
     return 1;
 
   auto& colorMap = function_->getColorMap();
@@ -211,8 +217,8 @@ int ColorGradient::setColors(const std::map<float, osg::Vec4>& colors)
       colorMap[stop.first] = stop.second;
   }
 
-  // Restore old colors if new map doesn't have at least two stops
-  if (colorMap.size() < 2)
+  // Restore old colors if new map doesn't have at least one stop
+  if (colorMap.empty())
   {
     colorMap = oldColorMap;
     return 1;
@@ -229,6 +235,16 @@ QColor ColorGradient::interpolate(const QColor& lowColor, const QColor& highColo
   rv.setBlueF(lowColor.blueF() + (highColor.blueF() - lowColor.blueF()) * factor);
   rv.setAlphaF(lowColor.alphaF() + (highColor.alphaF() - lowColor.alphaF()) * factor);
   return rv;
+}
+
+void ColorGradient::setDiscrete(bool discrete)
+{
+  discrete_ = discrete;
+}
+
+bool ColorGradient::discrete() const
+{
+  return discrete_;
 }
 
 bool ColorGradient::operator==(const ColorGradient& rhs) const

@@ -48,6 +48,18 @@ class SDKQT_EXPORT ColorGradientWidget : public QWidget
   /** Show/hide button to spawn help dialog */
   Q_PROPERTY(bool ShowHelp READ showHelp WRITE setShowHelp)
 
+  /** Retrieves the minimum user value (typically 0.f, for percentage) */
+  Q_PROPERTY(double MinimumUserValue READ minimumUserValue WRITE setMinimumUserValue)
+  /** Retrieves the maximum user display value (typically 100.f, for percentage) */
+  Q_PROPERTY(double MaximumUserValue READ maximumUserValue WRITE setMaximumUserValue)
+
+  /** Changes the value suffix, used in tooltip and model values */
+  Q_PROPERTY(QString ValueSuffix READ valueSuffix WRITE setValueSuffix)
+  /** If true, suffix is shown in the table's header */
+  Q_PROPERTY(bool SuffixInTableHeader READ suffixInTableHeader WRITE setSuffixInTableHeader)
+  /** If true, suffix is shown for each item in the table */
+  Q_PROPERTY(bool SuffixInTableItems READ suffixInTableItems WRITE setSuffixInTableItems)
+
 public:
   /** Constructor */
   explicit ColorGradientWidget(QWidget* parent = nullptr);
@@ -69,6 +81,16 @@ public:
   bool showAlpha() const;
   /** Returns true if the button to spawn a help dialog is shown */
   bool showHelp() const;
+  /** Retrieves the minimum user value (typically 0.f, for percentage) */
+  double minimumUserValue() const;
+  /** Retrieves the maximum user display value (typically 100.f, for percentage) */
+  double maximumUserValue() const;
+  /** Value suffix for data values */
+  QString valueSuffix() const;
+  /** If true, suffix is shown in the table's header */
+  bool suffixInTableHeader() const;
+  /** If true, suffix is shown for each item in the table */
+  bool suffixInTableItems() const;
 
   /** Returns true if the gradient in the widget is currently valid */
   bool gradientIsValid() const;
@@ -80,6 +102,16 @@ public slots:
   void setShowAlpha(bool show);
   /** Sets whether the button to spawn a help dialog is shown */
   void setShowHelp(bool show);
+  /** Changes the minimum user value */
+  void setMinimumUserValue(double val);
+  /** Changes the maximum user value */
+  void setMaximumUserValue(double val);
+  /** Changes the value suffix, used in tooltip and model values */
+  void setValueSuffix(const QString& suffix);
+  /** If true, suffix is shown in the table's header */
+  void setSuffixInTableHeader(bool val);
+  /** If true, suffix is shown for each item in the table */
+  void setSuffixInTableItems(bool val);
 
 signals:
   /** Emitted whenever a change is made to the stored color gradient */
@@ -97,6 +129,8 @@ private slots:
 private:
   /** Creates or destroys the stops table based on showTable_ flag */
   void showOrHideTable_();
+  /** Updates the model and display widget with updated min/max values */
+  void updateMinMaxUserValues_();
 
   std::unique_ptr<Ui_ColorGradientWidget> ui_;
   QGroupBox* tableGroup_;
@@ -112,6 +146,10 @@ private:
   bool showTable_;
   bool showAlpha_;
   bool showHelp_;
+
+  double minUserValue_;
+  double maxUserValue_;
+  QString valueSuffix_;
 };
 }
 

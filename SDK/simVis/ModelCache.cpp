@@ -514,6 +514,8 @@ public:
     if (callbacks.size() != 1)
       return;
 
+    SIM_DEBUG << "Starting asynchronous load of icon model \"" << uri << "\"\n";
+
     // Set up an options struct for the pseudo loader
     osg::ref_ptr<ModelCacheLoaderOptions> opts = new ModelCacheLoaderOptions;
     opts->clock = cache_->clock_;
@@ -591,6 +593,7 @@ private:
     assert(requestIter != requests_.end());
     if (requestIter == requests_.end())
       return;
+    SIM_DEBUG << "Finished asynchronous load of icon model \"" << uri << "\"\n";
     // Remove the request immediately, saving the callbacks
     const auto callbacks = requestIter->second;
     requests_.erase(requestIter);
@@ -708,6 +711,8 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
   result->getUserValue(CACHE_HINT_KEY, cacheIt);
   if (cacheIt)
     saveToCache_(uri, result.get(), ModelCache::isArticulated(result.get()), isImage);
+
+  SIM_DEBUG << "Loaded icon model \"" << uri << "\"\n";
 
   return result.release();
 }

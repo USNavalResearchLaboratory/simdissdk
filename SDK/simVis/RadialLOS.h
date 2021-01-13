@@ -23,6 +23,7 @@
 #ifndef SIMVIS_RADIAL_LOS_H
 #define SIMVIS_RADIAL_LOS_H
 
+#include <memory>
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simVis/Types.h"
@@ -242,7 +243,7 @@ private:
   osgEarth::Angle     fov_;
   osgEarth::Angle     azim_resolution_;
   osg::ref_ptr<const osgEarth::SpatialReference> srs_;
-  osgEarth::ElevationPool::WorkingSet* elevationWorkingSet_;
+  std::unique_ptr<osgEarth::ElevationPool::WorkingSet> elevationWorkingSet_;
   bool use_scene_graph_;
 
   bool getBoundingRadials_(double azim_rad, const Radial*& out_r0, const Radial*& out_r1, double& out_mix) const;

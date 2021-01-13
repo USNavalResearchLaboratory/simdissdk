@@ -102,7 +102,8 @@ namespace simCore
     TIMEFORMAT_HOURS,       ///< HH:MM:SS.sssss
     TIMEFORMAT_ORDINAL,     ///< DDD YYYY HH:MM:SS.sssss
     TIMEFORMAT_MONTHDAY,    ///< MON MDY YYYY HH:MM:SS.sssss
-    TIMEFORMAT_DTG          ///< MDYHHMM:SS.SSS Z MON YEAR
+    TIMEFORMAT_DTG,         ///< MDYHHMM:SS.SSS Z MON YYYY
+    TIMEFORMAT_ISO8601      ///< YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.sssZ, with optional [.sss]
   };
 
   /// Time sources

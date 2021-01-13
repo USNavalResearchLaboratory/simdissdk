@@ -776,10 +776,9 @@ void CategoryDataBreadcrumbs::removeFilter_(const QModelIndex& index)
   }
   else
   {
-    // Change a single value, simplify, and re-emit
+    // remove the value, simplify, and re-emit
     const int value = valueVariant.toInt();
-    const bool wasChecked = index.data(ROLE_IS_CHECKED).toBool();
-    filter_->setValue(name, value, !wasChecked);
+    filter_->removeValue(name, value);
     filter_->simplify();
   }
 
