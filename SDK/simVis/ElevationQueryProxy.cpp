@@ -34,18 +34,18 @@
 
 namespace
 {
-bool getElevationFromSample(osgEarth::RefElevationSample* sample,
-                             double& out_elevation,
-                             double* out_actualResolution)
+bool getElevationFromSample(const osgEarth::ElevationSample& sample,
+                            double& out_elevation,
+                            double* out_actualResolution)
 {
-  if (sample != nullptr)
+  if (sample.hasData())
   {
-    out_elevation = sample->elevation().as(osgEarth::Units::METERS);
+    out_elevation = sample.elevation().as(osgEarth::Units::METERS);
     if (out_elevation ==  NO_DATA_VALUE)
       out_elevation = 0.0;
 
     if (out_actualResolution)
-      *out_actualResolution = sample->resolution().getValue();
+      *out_actualResolution = sample.resolution().getValue();
 
     return true;
   }
@@ -62,7 +62,7 @@ namespace simVis
 struct ElevationQueryProxy::PrivateData
 {
  /// Future object that monitors the status of the elevation query result
-  osgEarth::Threading::Future<osgEarth::RefElevationSample> elevationResult_;
+  osgEarth::Threading::Future<osgEarth::ElevationSample> elevationResult_;
 };
 
 /**
@@ -156,12 +156,12 @@ bool ElevationQueryProxy::getPendingElevation(double& out_elevation, double* out
   if (!data_->elevationResult_.isAvailable())
     return false;
 
-  osg::ref_ptr<osgEarth::RefElevationSample> sample = data_->elevationResult_.release();
-  getElevationFromSample(sample.get(), out_elevation, out_actualResolution);
+  const osgEarth::ElevationSample& sample = data_->elevationResult_.get();
+  getElevationFromSample(sample, out_elevation, out_actualResolution);
 
   // cache values
   lastElevation_ = out_elevation;
-  lastResolution_ = sample->resolution().getValue();
+  lastResolution_ = sample.resolution().getValue();
 
   return true;
 }
