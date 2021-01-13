@@ -166,6 +166,7 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
   osg::Timer_t startTime = osg::Timer::instance()->tick();
 #endif
 
+
   // clear out existing data
   radials_.clear();
 

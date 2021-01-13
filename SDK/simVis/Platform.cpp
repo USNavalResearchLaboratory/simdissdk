@@ -1164,7 +1164,7 @@ int PlatformNode::acceptProjector(ProjectorNode* proj)
   if (proj == nullptr)
     return 0;
 
-  int rv = proj->addProjectionToNode(model_->offsetNode());
+  int rv = proj->addProjectionToNode(this, model_->offsetNode());
   if (rv == 0)
     acceptedProjectorNode_ = proj;
   return rv;
