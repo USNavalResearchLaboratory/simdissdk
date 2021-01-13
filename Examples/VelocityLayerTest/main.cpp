@@ -294,7 +294,7 @@ int main(int argc, char* argv[])
   mainView->addEventHandler(stats);
 
   // Add a GUI for manipulating fields
-  Control* menu = createMenu(map, newLayer);
+  Control* menu = createMenu(map.get(), newLayer);
   mainView->addOverlayControl(menu);
 
   // run until the user quits by hitting ESC.

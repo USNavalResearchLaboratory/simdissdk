@@ -131,7 +131,7 @@ osgEarth::GeoPoint LoaderUtils::getShapeGeoPosition(const simCore::GOG::GogShape
     osg::Vec3d xyz(centerPoint.x(), centerPoint.y(), centerPoint.z());
     // if ignoring offset or center xyz has no offsets, set the ref point as the center
     if (ignoreOffset || (xyz.x() == 0 && xyz.y() == 0 && xyz.z() == 0))
-      return osgEarth::GeoPoint(srs, osg::Vec3d(refLla.lon() * simCore::RAD2DEG, refLla.lat() * simCore::RAD2DEG, refLla.alt()), osgEarth::ALTMODE_ABSOLUTE);
+      return osgEarth::GeoPoint(srs.get(), osg::Vec3d(refLla.lon() * simCore::RAD2DEG, refLla.lat() * simCore::RAD2DEG, refLla.alt()), osgEarth::ALTMODE_ABSOLUTE);
     else
     {
       // apply any xyz offset to the map position ref point
@@ -144,11 +144,11 @@ osgEarth::GeoPoint LoaderUtils::getShapeGeoPosition(const simCore::GOG::GogShape
       xyz.y() = outCoord.lat() * simCore::RAD2DEG;
       xyz.x() = outCoord.lon() * simCore::RAD2DEG;
       xyz.z() = outCoord.alt();
-      return osgEarth::GeoPoint(srs, xyz, osgEarth::ALTMODE_ABSOLUTE);
+      return osgEarth::GeoPoint(srs.get(), xyz, osgEarth::ALTMODE_ABSOLUTE);
     }
   }
   // just use the provided center point
-  return osgEarth::GeoPoint(srs, osg::Vec3d(centerPoint.lon() * simCore::RAD2DEG, centerPoint.lat() * simCore::RAD2DEG, centerPoint.alt()), osgEarth::ALTMODE_ABSOLUTE);
+  return osgEarth::GeoPoint(srs.get(), osg::Vec3d(centerPoint.lon() * simCore::RAD2DEG, centerPoint.lat() * simCore::RAD2DEG, centerPoint.alt()), osgEarth::ALTMODE_ABSOLUTE);
 }
 
 void LoaderUtils::setShapePositionOffsets(osgEarth::LocalGeometryNode& node, const simCore::GOG::GogShape& shape, const simCore::Vec3& centerPoint, const simCore::Vec3& refPoint, bool attached, bool ignoreOffset)
