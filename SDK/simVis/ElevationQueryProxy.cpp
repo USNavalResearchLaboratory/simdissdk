@@ -62,7 +62,7 @@ namespace simVis
 struct ElevationQueryProxy::PrivateData
 {
  /// Future object that monitors the status of the elevation query result
-#if OSGEARTH_SOVERSION > 100
+#if 0 && OSGEARTH_SOVERSION > 100
   osgEarth::Threading::Future<osgEarth::ElevationSample> elevationResult_;
 #else
   osgEarth::Threading::Future<osgEarth::RefElevationSample> elevationResult_;
@@ -160,7 +160,7 @@ bool ElevationQueryProxy::getPendingElevation(double& out_elevation, double* out
   if (!data_->elevationResult_.isAvailable())
     return false;
 
-#if OSGEARTH_SOVERSION > 100
+#if 0 && OSGEARTH_SOVERSION > 100
   const osgEarth::ElevationSample& sample = data_->elevationResult_.get();
 #else
   osg::ref_ptr<osgEarth::RefElevationSample> samplePtr = data_->elevationResult_.release();
