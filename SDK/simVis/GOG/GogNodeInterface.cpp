@@ -1775,6 +1775,11 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
     // force non-zero crease angle for extruded tesselated line, we want to only draw posts at actual vertices
     ls->creaseAngle() = 1.0f;
 
+#if OSGEARTH_SOVERSION > 102
+    // Set the GeometryCompilerOptions to the default value so that the default max granularity is used.
+    osgEarth::GeometryCompilerOptions options;
+    featureNode_->setGeometryCompilerOptions(options);
+#endif
   }
   else
   {
@@ -1783,6 +1788,14 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
     // make sure the tessellation size is unset
     ls->tessellationSize().unset();
     ls->creaseAngle() = 0.0f;
+
+#if OSGEARTH_SOVERSION > 102
+    // Set the max granularity to 360 to disable the usage of the MeshSubdivider in osgEarth so that geometry that spans large geospatial distances
+    // are not subdivided to attempt to conform to the earth when tesselation is disabled in simdis.
+    osgEarth::GeometryCompilerOptions options = featureNode_->getGeometryCompilerOptions();
+    options.maxGranularity() = 360.0;
+    featureNode_->setGeometryCompilerOptions(options);
+#endif
   }
 
   setStyle_(style_);
