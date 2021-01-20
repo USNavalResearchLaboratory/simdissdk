@@ -481,7 +481,7 @@ std::string SceneManager::getLayerHash_(osgEarth::TileLayer* layer) const
 osg::Node* SceneManager::getManipulatorAttachPoint() const
 {
   return
-    mapNode_.valid() ? mapNode_->getTerrainEngine() :
+    mapNode_.valid() ? mapNode_->getTerrainEngine()->getNode() :
     mapContainer_.get();
 }
 

@@ -138,7 +138,7 @@ void LayerRefreshCallback::runImpl_()
 
   double sysTime = simCore::getSystemTime();
 
-  osgEarth::TerrainEngineNode* terrainEngine = mapNode->getTerrainEngine();
+  osgEarth::TerrainEngine* terrainEngine = mapNode->getTerrainEngine();
   // Loop through all watched layers
   for (auto it = watchedLayers_.begin(); it != watchedLayers_.end(); ++it)
   {
