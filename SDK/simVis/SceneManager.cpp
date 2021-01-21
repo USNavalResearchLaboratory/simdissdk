@@ -481,7 +481,11 @@ std::string SceneManager::getLayerHash_(osgEarth::TileLayer* layer) const
 osg::Node* SceneManager::getManipulatorAttachPoint() const
 {
   return
+#if OSGEARTH_SOVERSION >= 104
+    (mapNode_.valid() && mapNode_->getTerrainEngine() && mapNode_->getTerrainEngine()->getNode()) ? mapNode_->getTerrainEngine()->getNode() :
+#else
     mapNode_.valid() ? mapNode_->getTerrainEngine() :
+#endif
     mapContainer_.get();
 }
 

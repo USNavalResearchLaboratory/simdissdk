@@ -85,7 +85,11 @@ MousePositionManipulator::MousePositionManipulator(osgEarth::MapNode* mapNode, o
     scene_(scene)
 {
   assert(mapNode != nullptr);
+#if OSGEARTH_SOVERSION >= 104
+  terrainEngineNode_ = mapNode_->getTerrainEngine()->getNode();
+#else
   terrainEngineNode_ = mapNode_->getTerrainEngine();
+#endif
   mapNodePath_.push_back(terrainEngineNode_.get());
   elevationQuery_ = new simVis::ElevationQueryProxy(mapNode_->getMap(), scene);
 
@@ -118,7 +122,11 @@ void MousePositionManipulator::setMapNode(osgEarth::MapNode* mapNode)
     return;
   }
 
+#if OSGEARTH_SOVERSION >= 104
+  terrainEngineNode_ = mapNode_->getTerrainEngine()->getNode();
+#else
   terrainEngineNode_ = mapNode_->getTerrainEngine();
+#endif
   mapNodePath_.push_back(terrainEngineNode_.get());
   // Note that the elevation query proxy will take care of itself for updating map.
   // Elevation query proxy has a MapNodeObserver and should not be deleted.
