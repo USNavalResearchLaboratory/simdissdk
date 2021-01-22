@@ -502,6 +502,25 @@ namespace simCore
   */
   SDKCORE_EXPORT void d3QtoEuler(const double q[4], Vec3 &ea);
 
+  /**
+   * Given a number and number of digits of significance, returns a number X, such that [floor|ceil](num * 10^X) / 10^X
+   * will have "precision" significant digits.  This value is useful for rounding ranges to round numbers, and is used
+   * by simCore::roundRanges() to generate bounds relevant and near to the input values.
+   * @param num Number to do the function on
+   * @param significance Number of digits of significance desired, post-formula (1200 = 2 digits, 500 = 1 digit, 0.0304 = 3 digits)
+   * @return X, so that [floor|ceil](num * 10^X) / 10^X will have the desired significance
+   */
+  SDKCORE_EXPORT int getPowerOfTenForSignificance(double num, unsigned int significance);
+
+  /**
+   * Performs a "round ranges" on the given values.  Given an input range value, generates
+   * a pair of rounded ranges that encompasses the values.  For example, providing ranges
+   * [0.5, 19.7] might round up to [0.0, 20.0].
+   * @param[inout] minValue Minimum value for the new range
+   * @param[inout] maxValue Maximum value for the new range
+   */
+  SDKCORE_EXPORT void roundRanges(double& minValue, double& maxValue);
+
 } // End of namespace simCore
 
 #endif /* SIMCORE_CALC_MATH_H */

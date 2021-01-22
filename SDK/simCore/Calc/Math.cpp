@@ -469,3 +469,60 @@ double simCore::toScientific(double value, int* exp)
     *exp = static_cast<int>(numZeros);
   return (value < 0) ? -mantissa : mantissa;
 }
+
+int simCore::getPowerOfTenForSignificance(double num, unsigned int significance)
+{
+  // If number is 0, return 0 to avoid infinite loop
+  if (num == 0.0)
+    return 0;
+
+  const double precisionMax = pow(10.0, static_cast<double>(significance));
+
+  num = fabs(num);
+  int rv = 0;
+  // If number > 1 then we'll return a negative
+  if (num > 1.0)
+  {
+    while (num > precisionMax)
+    {
+      rv--;
+      num /= 10.0;
+    }
+  }
+  else if (num < 1.0)
+  {
+    // Multiply by 10 to avoid off-by-one error
+    num *= 10.0;
+    while (num < precisionMax)
+    {
+      rv++;
+      num *= 10.0;
+    }
+  }
+  return rv;
+}
+
+void simCore::roundRanges(double& minValue, double& maxValue)
+{
+  // Round ranges algorithm taken from legacy Plot-XY:
+  // Rounds the axis numbers to smooth numbers; general idea is that
+  // ([ceil | floor](val * 10 ^ X)) / 10 ^ X == rounded number
+  const double range = fabs(maxValue - minValue);
+  if (range == 0.0)
+    return;
+
+  // Calculate the desired 10^X first
+  const double powerVal = static_cast<double>(getPowerOfTenForSignificance(range, 2));
+  const double powerTen = pow(10.0, powerVal);
+  // Do the formula: floor|ceil(num * 10^X) / 10^X to get significance of 2
+  if (minValue < maxValue)
+  {
+    minValue = (floor(minValue * powerTen)) / powerTen;
+    maxValue = (ceil(maxValue * powerTen)) / powerTen;
+  }
+  else
+  {
+    minValue = (ceil(minValue * powerTen)) / powerTen;
+    maxValue = (floor(maxValue * powerTen)) / powerTen;
+  }
+}
