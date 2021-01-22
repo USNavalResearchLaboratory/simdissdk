@@ -644,6 +644,36 @@ int testPowerOfTenSignificance()
   rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(0.1234, 0) == 0);
   rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(0.01234, 0) == 1);
 
+  // Test +1 and -1, which should return 0 for 10^0
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(1.0, 0) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(1.0, 1) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(1.0, 2) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(1.0, 3) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-1.0, 0) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-1.0, 1) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-1.0, 2) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-1.0, 3) == 0);
+
+  // Edge cases for 10 and -10
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(10.0, 0) == -1);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(10.0, 1) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(10.0, 2) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(10.0, 3) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-10.0, 0) == -1);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-10.0, 1) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-10.0, 2) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-10.0, 3) == 0);
+
+  // Edge cases for 100 and -100
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(100.0, 0) == -2);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(100.0, 1) == -1);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(100.0, 2) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(100.0, 3) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-100.0, 0) == -2);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-100.0, 1) == -1);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-100.0, 2) == 0);
+  rv += SDK_ASSERT(simCore::getPowerOfTenForSignificance(-100.0, 3) == 0);
+
   return rv;
 }
 

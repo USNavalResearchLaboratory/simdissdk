@@ -472,34 +472,21 @@ double simCore::toScientific(double value, int* exp)
 
 int simCore::getPowerOfTenForSignificance(double num, unsigned int significance)
 {
-  // If number is 0, return 0 to avoid infinite loop
+  // If number is 0, return 0 to avoid infinite case from log10(0)
   if (num == 0.0)
     return 0;
 
   const double precisionMax = pow(10.0, static_cast<double>(significance));
+  // Determine the number of digits difference from the significance to the provided value's significance
+  const double log10Diff = static_cast<double>(significance) - log10(fabs(num));
 
-  num = fabs(num);
-  int rv = 0;
-  // If number > 1 then we'll return a negative
-  if (num > 1.0)
-  {
-    while (num > precisionMax)
-    {
-      rv--;
-      num /= 10.0;
-    }
-  }
-  else if (num < 1.0)
-  {
-    // Multiply by 10 to avoid off-by-one error
-    num *= 10.0;
-    while (num < precisionMax)
-    {
-      rv++;
-      num *= 10.0;
-    }
-  }
-  return rv;
+  // Return 0 for a log10 that is positive, but under/at the significance value.  For example,
+  // if the expected range is [0.0,100.0] any incoming num in that range should return 0 for
+  // 10^0, which will have the impact of rounding to the nearest 10.
+  if (log10Diff >= 0.0 && log10Diff <= static_cast<double>(significance))
+    return 0;
+
+  return static_cast<int>(floor(log10Diff));
 }
 
 void simCore::roundRanges(double& minValue, double& maxValue)
@@ -512,7 +499,7 @@ void simCore::roundRanges(double& minValue, double& maxValue)
     return;
 
   // Calculate the desired 10^X first
-  const double powerVal = static_cast<double>(getPowerOfTenForSignificance(range, 2));
+  const double powerVal = static_cast<double>(getPowerOfTenForSignificance(range, 2u));
   const double powerTen = pow(10.0, powerVal);
   // Do the formula: floor|ceil(num * 10^X) / 10^X to get significance of 2
   if (minValue < maxValue)
