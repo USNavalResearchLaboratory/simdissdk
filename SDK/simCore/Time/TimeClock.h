@@ -25,6 +25,7 @@
 
 #include <string>
 #include "simCore/Common/Common.h"
+#include "simCore/Time/TimeClass.h"
 
 namespace simCore
 {
@@ -55,13 +56,13 @@ namespace simCore
     bool isStarted() const;
 
     /**
-    * Returns the elapsed time in seconds of the total amount of time
+    * Returns the elapsed time of the total amount of time
     * clock has been in play mode (state_ = STATE_RUNNING).  Scaling is taken into effect.
     * A real-time delta (getSystemTime() - reference_) value is added to the offset
     * to maintain the current time.  If simCore::TimeClock was never started, then 0.0 is returned.
-    * @return a double representing the scaled time since simCore::TimeClock was started
+    * @return a Seconds instance representing the scaled time since simCore::TimeClock was started
     */
-    double getTime() const;
+    Seconds getTime() const;
 
     /**
     * Returns elapsed seconds since simCore::TimeClock was started for the first time.
@@ -72,9 +73,9 @@ namespace simCore
 
     /**
     * Sets the offset time.  This value is the starting time basis for the simCore::TimeClock
-    * @param newtime a double specifying the simCore::TimeClock's start time, units are seconds.
+    * @param newtime a Seconds instance specifying the simCore::TimeClock's start time.
     */
-    void setTime(double newtime);
+    void setTime(const Seconds& newtime);
 
     /**
     * Once this method is executed, simCore::TimeClock stores the initial time of
@@ -91,9 +92,9 @@ namespace simCore
     * reference time, from which a delta time is derived.  This
     * delta time ( gettimeofday - reference_ ) is added to the start
     * value in order to maintain a real-time counter.
-    * @param newtime a double specifying the simCore::TimeClock's start time, units are seconds.
+    * @param newtime a Seconds instance specifying the simCore::TimeClock's start time.
     */
-    void start(double newtime);
+    void start(const Seconds& newtime);
 
     /** Stops the clock.  The last known time is stored in start_ */
     void stop();
@@ -125,7 +126,7 @@ namespace simCore
 
     double scale_;                  /**< clock time scale (1. == real time) */
     double reference_;              /**< time clock was last started (sec) */
-    double start_;                  /**< length of time in play mode (state_ == STATE_RUNNING) (sec) */
+    Seconds start_;                  /**< length of time in play mode (state_ == STATE_RUNNING) */
     State state_;                   /**< current clock state */
     mutable std::string lastError_; /**< Last error string; might be changed in const functions */
   };
