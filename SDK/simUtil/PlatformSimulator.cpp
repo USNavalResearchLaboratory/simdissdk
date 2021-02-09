@@ -50,7 +50,7 @@ namespace simUtil {
 //----------------------------------------------------------------------------
 PlatformSimulator::PlatformSimulator(simData::ObjectId platformId)
   : t0_(osg::Timer::instance()->time_s()),
-    wp_t_(1.1),
+    wp_t_(-1.),
     platformId_(platformId),
     beamId_(~(static_cast<simData::ObjectId>(0))),
     simulateRoll_(false),
@@ -68,17 +68,30 @@ void PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upd
 {
   double now = time;
 
+  // Track if we're done early
+  if (done_)
+    return;
+
   // our 2 waypoints.
-  Waypoint wp0 = waypoints_.back();
-  Waypoint wp1 = waypoints_.front();
+  Waypoint wp0 = waypoints_.front();
+  Waypoint wp1 = *(waypoints_.begin() + 1);
 
   // see if we need to advance to the next waypoint.
   if (wp_t_ > 1.0)
   {
-    waypoints_.push_back(wp1);
+    // if not looping and only two waypoints left, simulation is complete
+    if (!loop_ && (waypoints_.size() == 2))
+    {
+      done_ = true;
+      return;
+    }
+
+    // Keep the loop going if necessary
+    if (loop_)
+      waypoints_.push_back(wp0);
     waypoints_.pop_front();
-    wp0 = wp1;
-    wp1 = waypoints_.front();
+    wp0 = waypoints_.front();
+    wp1 = *(waypoints_.begin() + 1);
     wp_t_ = -1.0;
   }
 
@@ -282,6 +295,8 @@ void PlatformSimulatorManager::simulate_(double now)
   for (PlatformSimulators::iterator iter = simulators_.begin(); iter != simulators_.end(); ++iter)
   {
     simUtil::PlatformSimulator* sim = iter->get();
+    if (sim->doneSimulating())
+      continue;
 
     // create a position update transaction
     simData::DataStore::Transaction platformTransaction;

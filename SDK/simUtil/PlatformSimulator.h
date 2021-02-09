@@ -64,6 +64,12 @@ public:
   /// Constructs the simulator with its platform identifier
   PlatformSimulator(simData::ObjectId platformId);
 
+  /// Returns true when the simulator is done simulating. Always false if looping
+  bool doneSimulating() const { return done_; }
+
+  /// Set whether this simulator should loop through its waypoints when simulating
+  void setLoop(bool loop) { loop_ = loop; }
+
   /// Whether to simulate platform roll (default = false)
   void setSimulateRoll(bool value) { simulateRoll_ = value; }
 
@@ -111,6 +117,8 @@ private:
   simData::ObjectId platformId_;
   simData::ObjectId beamId_;
 
+  bool done_ = false; // Track if done simulating
+  bool loop_ = true; // If true, loop from end data point to beginning
   bool simulateRoll_;
   bool simulatePitch_;
 };
