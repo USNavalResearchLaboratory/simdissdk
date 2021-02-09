@@ -750,7 +750,7 @@ namespace simVis
     explicit ViewportSizeCallback(std::function<void(const osg::Vec2f&)> func);
 
     /** Checks for updated viewport size. */
-    bool virtual handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*) override;
+    virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*) override;
 
     /** Retrieves the last window size seen */
     osg::Vec2f windowSize() const;
