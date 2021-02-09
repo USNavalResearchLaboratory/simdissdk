@@ -69,7 +69,7 @@ void PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upd
   double now = time;
 
   // Track if we're done early
-  if (done_)
+  if (done_ || waypoints_.size() < 2)
     return;
 
   // our 2 waypoints.
