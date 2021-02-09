@@ -412,6 +412,75 @@ void CircumnavigationPlatformSimulation::createPlatform_()
 }
 
 //---------------------------------------------------------------------------
+MultiPlatformSimulation::MultiPlatformSimulation(simVis::SceneManager* sceneManager, simVis::View* mainView)
+  : sceneManager_(sceneManager),
+  dataStore_(new simData::MemoryDataStore)
+{
+  init_(mainView);
+}
+
+MultiPlatformSimulation::~MultiPlatformSimulation()
+{
+  delete dataStore_;
+}
+
+void MultiPlatformSimulation::simulate(double start, double end, double hertz)
+{
+  if (simMan_)
+    simMan_->simulate(start, end, hertz);
+}
+
+simData::DataStore* MultiPlatformSimulation::dataStore() const
+{
+  return dataStore_;
+}
+
+simData::ObjectId  MultiPlatformSimulation::createPlatform(const std::string& name, const std::string& icon)
+{
+  simData::ObjectId id = 0;
+  if (name.empty())
+    return id;
+
+  { // create the platform in the database (artificial scope for transaction)
+    simData::DataStore::Transaction transaction;
+    simData::PlatformProperties* newProps = dataStore_->addPlatform(&transaction);
+    id = newProps->id();
+    transaction.complete(&newProps);
+  }
+
+  { // Set platform prefs (artificial scope for transaction)
+    simData::DataStore::Transaction xaction;
+    simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(id, &xaction);
+    prefs->mutable_commonprefs()->set_name(name);
+    prefs->set_dynamicscale(true);
+    prefs->set_icon(icon);
+    prefs->set_rotateicons(simData::IR_2D_YAW);
+    xaction.complete(&prefs);
+  }
+  return id;
+}
+
+void MultiPlatformSimulation::addPlatformSim(simData::ObjectId id, simUtil::PlatformSimulator* simulator)
+{
+  // If assert fails, this ID is already in the map. Somebody is tampering with the data store and this class doesn't know about it
+  assert(plats_.find(id) == plats_.end());
+  plats_[id] = simulator;
+  simMan_->addSimulator(simulator);
+}
+
+void MultiPlatformSimulation::init_(simVis::View* mainView)
+{
+  // Don't crash on nullptr accesses
+  if (!sceneManager_.valid() || mainView == nullptr)
+    return;
+
+  // Bind the scene manager to the data store
+  sceneManager_->getScenario()->bind(dataStore_);
+  simMan_ = new simUtil::PlatformSimulatorManager(dataStore_);
+  mainView->addEventHandler(new simUtil::SimulatorEventHandler(simMan_.get(), 0, 120, true));
+}
+
+//---------------------------------------------------------------------------
 SimulatorEventHandler::SimulatorEventHandler(simUtil::PlatformSimulatorManager *simMgr, double startTime, double endTime, bool loop)
  : simMgr_(simMgr),
    startTime_(startTime),
