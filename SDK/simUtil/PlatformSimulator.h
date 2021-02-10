@@ -81,6 +81,9 @@ public:
   /// Whether to simulate platform pitch (default = false)
   void setSimulatePitch(bool value) { simulatePitch_ = value; }
 
+  /// Set an override yaw value (in radians) for the sim. If set, the given yaw value will always be used instead of calculated yaw values
+  void setOverrideYaw(double yaw) { overrideYaw_ = true; overrideYawValue_ = yaw; }
+
   /// id of the simulated platform
   simData::ObjectId getPlatformId() const { return platformId_; }
 
@@ -127,6 +130,8 @@ private:
   bool loop_ = true; // If true, loop from end data point to beginning
   bool simulateRoll_;
   bool simulatePitch_;
+  bool overrideYaw_ = false;
+  double overrideYawValue_ = 0.;
 };
 
 /**

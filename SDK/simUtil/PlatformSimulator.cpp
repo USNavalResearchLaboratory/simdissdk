@@ -161,6 +161,8 @@ void PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upd
     double by = sin(new_dlon_rad)*cos(lat1_rad);
     double bx = cos(lat_rad)*sin(lat1_rad) - sin(lat_rad)*cos(lat1_rad)*cos(new_dlon_rad);
     double bearing_rad = atan2(by, bx);
+    if (overrideYaw_)
+      bearing_rad = overrideYawValue_;
 
     // interpolate the altitude:
     double alt = wp0.alt_m_ + wp_t_ * (wp1.alt_m_ - wp0.alt_m_);
