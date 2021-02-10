@@ -64,6 +64,11 @@ public:
   /// Constructs the simulator with its platform identifier
   PlatformSimulator(simData::ObjectId platformId);
 
+  /// Set the start time of the simulator
+  void setStartTime(double start) { start_ = start; }
+  /// Get the start time of the simulator
+  double startTime() const { return start_; }
+
   /// Returns true when the simulator is done simulating. Always false if looping
   bool doneSimulating() const { return done_; }
 
@@ -117,6 +122,7 @@ private:
   simData::ObjectId platformId_;
   simData::ObjectId beamId_;
 
+  double start_ = 0.; // Start time of the simulator
   bool done_ = false; // Track if done simulating
   bool loop_ = true; // If true, loop from end data point to beginning
   bool simulateRoll_;

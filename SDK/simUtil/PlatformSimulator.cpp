@@ -295,7 +295,7 @@ void PlatformSimulatorManager::simulate_(double now)
   for (PlatformSimulators::iterator iter = simulators_.begin(); iter != simulators_.end(); ++iter)
   {
     simUtil::PlatformSimulator* sim = iter->get();
-    if (sim->doneSimulating())
+    if (sim->doneSimulating() || now < sim->startTime())
       continue;
 
     // create a position update transaction
@@ -456,22 +456,20 @@ simData::ObjectId  MultiPlatformSimulation::createPlatform(const std::string& na
   if (name.empty())
     return id;
 
-  { // create the platform in the database (artificial scope for transaction)
-    simData::DataStore::Transaction transaction;
-    simData::PlatformProperties* newProps = dataStore_->addPlatform(&transaction);
-    id = newProps->id();
-    transaction.complete(&newProps);
-  }
+  // create the platform in the database
+  simData::DataStore::Transaction transaction;
+  simData::PlatformProperties* newProps = dataStore_->addPlatform(&transaction);
+  id = newProps->id();
+  transaction.complete(&newProps);
 
-  { // Set platform prefs (artificial scope for transaction)
-    simData::DataStore::Transaction xaction;
-    simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(id, &xaction);
-    prefs->mutable_commonprefs()->set_name(name);
-    prefs->set_dynamicscale(true);
-    prefs->set_icon(icon);
-    prefs->set_rotateicons(simData::IR_2D_YAW);
-    xaction.complete(&prefs);
-  }
+  // Set platform prefs
+  simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(id, &transaction);
+  prefs->mutable_commonprefs()->set_name(name);
+  prefs->set_dynamicscale(true);
+  prefs->set_icon(icon);
+  prefs->set_rotateicons(simData::IR_2D_UP);
+  transaction.complete(&prefs);
+
   return id;
 }
 
