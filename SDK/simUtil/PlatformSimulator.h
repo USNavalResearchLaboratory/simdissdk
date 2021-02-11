@@ -96,8 +96,8 @@ public:
   /// Add 'wp' to the list of Waypoints
   void addWaypoint(const Waypoint &wp);
 
-  /// Compute position for update, based on the specified time value
-  void updatePlatform(double time, simData::PlatformUpdate* update);
+  /// Compute position for update, based on the specified time value; returns non-zero on error (e.g. out of bounds time or done)
+  int updatePlatform(double time, simData::PlatformUpdate* update);
 
   /// Compute a new Beam configuration
   void updateBeam(double time, simData::BeamUpdate* update, simData::PlatformUpdate* platform);
@@ -222,8 +222,8 @@ private:
 class SDKUTIL_EXPORT MultiPlatformSimulation : public osg::Referenced
 {
 public:
-  /** Constructor */
-  MultiPlatformSimulation(simVis::SceneManager* sceneManager, simVis::View* mainView);
+  /** Constructor.  Time values affect the clock player using SimulatorEventHandler. */
+  MultiPlatformSimulation(simVis::SceneManager* sceneManager, simVis::View* mainView, double startTime=0., double endTime=120.);
 
   /** Pointer to the class-owned data store. */
   simData::DataStore* dataStore() const;
@@ -241,7 +241,7 @@ protected:
 
 private:
   /** Initializes the simulation with the given view and binds it to the scene manager. */
-  void init_(simVis::View* mainView);
+  void init_(simVis::View* mainView, double startTime, double endTime);
 
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMan_;
   osg::observer_ptr<simVis::SceneManager> sceneManager_;

@@ -64,13 +64,13 @@ void PlatformSimulator::addWaypoint(const Waypoint &wp)
   waypoints_.push_back(wp);
 }
 
-void PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *update)
+int PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *update)
 {
   double now = time;
 
   // Track if we're done early
   if (done_ || waypoints_.size() < 2)
-    return;
+    return 1;
 
   // our 2 waypoints.
   Waypoint wp0 = waypoints_.front();
@@ -83,7 +83,7 @@ void PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upd
     if (!loop_ && (waypoints_.size() == 2))
     {
       done_ = true;
-      return;
+      return 1;
     }
 
     // Keep the loop going if necessary
@@ -223,6 +223,7 @@ void PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upd
       << "bearing = " << osg::RadiansToDegrees(bearing_rad)
       << std::endl;
   }
+  return 0;
 }
 
 void PlatformSimulator::updateBeam(double now, simData::BeamUpdate *update, simData::PlatformUpdate *platform)
@@ -311,8 +312,10 @@ void PlatformSimulatorManager::simulate_(double now)
       platformUpdate = datastore_->addPlatformUpdate(sim->getPlatformId(), &platformTransaction);
       if (platformUpdate)
       {
-        sim->updatePlatform(now, platformUpdate);
-        platformTransaction.commit();      // Commit the change but do not release platformUdpate yet
+        if (sim->updatePlatform(now, platformUpdate) != 0)
+          continue;
+        // Commit the change but do not release platformUpdate yet because it is used by beam update and gate update
+        platformTransaction.commit();
 
         // add any beam updates:
         simData::DataStore::IdList beamIds;
@@ -342,7 +345,7 @@ void PlatformSimulatorManager::simulate_(double now)
           }
         }
 
-        // Release the platformUpdate and close the transaction now that all updateGate and updateBeam calls are done
+        // Release platformUpdate now that beam and gate update code is done accessing it
         platformTransaction.release(&platformUpdate);
       }
     }
@@ -429,11 +432,11 @@ void CircumnavigationPlatformSimulation::createPlatform_()
 }
 
 //---------------------------------------------------------------------------
-MultiPlatformSimulation::MultiPlatformSimulation(simVis::SceneManager* sceneManager, simVis::View* mainView)
+MultiPlatformSimulation::MultiPlatformSimulation(simVis::SceneManager* sceneManager, simVis::View* mainView, double startTime, double endTime)
   : sceneManager_(sceneManager),
   dataStore_(new simData::MemoryDataStore)
 {
-  init_(mainView);
+  init_(mainView, startTime, endTime);
 }
 
 MultiPlatformSimulation::~MultiPlatformSimulation()
@@ -452,7 +455,7 @@ simData::DataStore* MultiPlatformSimulation::dataStore() const
   return dataStore_;
 }
 
-simData::ObjectId  MultiPlatformSimulation::createPlatform(const std::string& name, const std::string& icon)
+simData::ObjectId MultiPlatformSimulation::createPlatform(const std::string& name, const std::string& icon)
 {
   simData::ObjectId id = 0;
   if (name.empty())
@@ -483,7 +486,7 @@ void MultiPlatformSimulation::addPlatformSim(simData::ObjectId id, simUtil::Plat
   simMan_->addSimulator(simulator);
 }
 
-void MultiPlatformSimulation::init_(simVis::View* mainView)
+void MultiPlatformSimulation::init_(simVis::View* mainView, double startTime, double endTime)
 {
   // Don't crash on nullptr accesses
   if (!sceneManager_.valid() || mainView == nullptr)
@@ -492,7 +495,7 @@ void MultiPlatformSimulation::init_(simVis::View* mainView)
   // Bind the scene manager to the data store
   sceneManager_->getScenario()->bind(dataStore_);
   simMan_ = new simUtil::PlatformSimulatorManager(dataStore_);
-  mainView->addEventHandler(new simUtil::SimulatorEventHandler(simMan_.get(), 0, 120, true));
+  mainView->addEventHandler(new simUtil::SimulatorEventHandler(simMan_.get(), startTime, endTime, true));
 }
 
 //---------------------------------------------------------------------------
