@@ -218,6 +218,31 @@ enum CircleHilightShape {
   CH_SQUARE_RETICLE = 4;
 };
 
+/// Algorithm selection for Dynamic Scale
+enum DynamicScaleAlgorithm {
+
+  /**
+   * Traditional SIMDIS Dynamic Scaling algorithm.  When objects are far away, they are
+   * scaled to a relatively consistent size based on the maximum X Y or Z dimension of
+   * the model.  Therefore a large ship might appear the same size as a small biplane.
+   * This algorithm reverts to normal scaling when zoomed in closely to the entry.  The
+   * scaling is impacted by the static scale, dynamic scale scalar, and the dynamic
+   * scale offset.
+   */
+  DSA_CONSISTENT_SIZING = 0;
+
+  /**
+   * Directly map up the model's dimensions to pixels on the screen.  This means larger
+   * models will be larger on the screen, and smaller models will be smaller on the screen.
+   * Combined with image icons, this makes an image icon appear as the same dimension as
+   * the source image, which DSA_CONSISTENT_SIZING cannot not guarantee.  As a result,
+   * zooming into an entity will not change its size, even as you get close to the object.
+   * Scaling is impacted by static scale and the dynamic scale scalar only.  Dynamic scale
+   * offset does not affect the displayed icon size with this algorithm.
+   */
+  DSA_METERS_TO_PIXELS = 1;
+}
+
 /// Coordinate system definition for scenario and platforms
 message CoordinateFrame {
   /// Coordinate system flag.  SIMDIS SDK stores all data internally as ECEF; this is only descriptive for input/output
@@ -787,6 +812,7 @@ message PlatformPrefs {
   optional bool dynamicScale = 41 [default = false];
   optional double dynamicScaleOffset = 42 [default = 0.0];
   optional double dynamicScaleScalar = 43 [default = 1.0];
+  optional DynamicScaleAlgorithm dynamicScaleAlgorithm = 74 [default = DSA_CONSISTENT_SIZING];
 
   /// Toggle velocity vector
   optional bool drawVelocityVec = 44 [default = false];

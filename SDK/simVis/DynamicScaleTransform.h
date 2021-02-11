@@ -31,6 +31,7 @@
 namespace osg {
   class NodeVisitor;
   class Camera;
+  class CullStack;
 }
 namespace osgUtil { class CullVisitor; }
 
@@ -83,6 +84,11 @@ public:
   void setDynamicScalingEnabled(bool enabled);
   /** Returns whether dynamic scaling is activated */
   bool isDynamicScalingEnabled() const;
+
+  /** Changes behavior of dynamic scale.  If true, dynamic scale will scale to 1m=1px; if false, use SIMDIS DS algorithm based on maximum dimension. */
+  void setDynamicScaleToPixels(bool dynamicScalePixel);
+  /** Returns true if the to-pixels dynamic scale behavior is enabled. */
+  bool dynamicScaleToPixels() const;
 
   /** Changes the static scaling (smaller value is smaller icon); combines with dynamic */
   void setStaticScalar(double scalar);
@@ -149,9 +155,9 @@ private:
   /** Returns first child if sizingNode_ is unset */
   osg::Node* getSizingNode_();
   /** Computes the dynamic scale; requires valid sizing node and valid icon scale factor */
-  osg::Vec3f computeDynamicScale_(double range);
+  osg::Vec3f computeDynamicScale_(double range, osg::CullStack* cullStack);
   /** Recalculates the bounds if in dynamic scale mode, called by the recalculateAllDynamicScaleBounds() */
-  void recalculate_(double range);
+  void recalculate_(double range, osg::CullStack* cullStack);
 
   /// Sizing node that is used for appropriate scaling based on eye distance
   osg::observer_ptr<osg::Node> sizingNode_;
@@ -163,6 +169,8 @@ private:
   double dynamicScalar_;
   /// Offset on the size, applied after multiplier
   double scaleOffset_;
+  /// If true and dynamicEnabled_, use a new pixel-based scaling algorithm, such that 1 meter is 1 pixel prior to dynamicScalar_ and staticScalar_
+  bool dynamicScalePixel_;
 
   /// Validity flag for overrideScale_
   bool overrideScaleSet_;
@@ -172,7 +180,7 @@ private:
   /// 3D scaling applied in Transform
   osg::Vec3f cachedScale_;
 
-  /// Computed icon scaling factor, based on bounding box of sizing node
+  /// Computed icon scaling factor, based on bounding box of sizing node, used only in original SIMDIS Dynamic Scale method
   double iconScaleFactor_;
 };
 
