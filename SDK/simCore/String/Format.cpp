@@ -108,7 +108,8 @@ bool hasExtension(const std::string& inName, std::string newExt)
 std::string buildString(const std::string &prefix, double value, size_t width, size_t precision,
   const std::string &suffix, bool padZero, double sciNoteGT, double sciNoteLT)
 {
-  std::stringstream strVal;
+  thread_local std::stringstream strVal;
+  strVal.str("");
   strVal << prefix;
 
   if (std::isnan(value))
@@ -146,7 +147,7 @@ std::string buildString(const std::string &prefix, double value, size_t width, s
     if (padZero)
       strVal << std::setfill('0') << std::setw(width) << std::setprecision(realPrecision) << value;
     else
-      strVal << std::setw(width) << std::setprecision(realPrecision) << value;
+      strVal << std::setfill(' ') << std::setw(width) << std::setprecision(realPrecision) << value;
   }
 
   strVal << suffix;
