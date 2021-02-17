@@ -108,8 +108,14 @@ bool hasExtension(const std::string& inName, std::string newExt)
 std::string buildString(const std::string &prefix, double value, size_t width, size_t precision,
   const std::string &suffix, bool padZero, double sciNoteGT, double sciNoteLT)
 {
+// thread_local has bugs on gcc through gcc-8.3 at least
+#ifdef _WIN32
   thread_local std::stringstream strVal;
   strVal.str("");
+#else
+  std::stringstream strVal;
+#endif
+
   strVal << prefix;
 
   if (std::isnan(value))
