@@ -29,10 +29,7 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/MultiFrameCoordinate.h"
 
-namespace osgEarth {
-  class LineDrawable;
-  class LineGroup;
-}
+namespace osgEarth { class LineDrawable; }
 
 namespace simVis
 {
@@ -211,8 +208,7 @@ namespace simVis
     /** Coordinate converter that is used to put secondCoord_ in a valid (Geo) frame */
     simCore::CoordinateConverter* coordinateConverter_;
 
-    // access to the geode so we can properly dirty the geometries' bounds
-    osg::ref_ptr<osgEarth::LineGroup> geode_;
+    osg::ref_ptr<osg::Group> lineGroup_;
 
     /**
      * Lines longer than 100 kilometers can show significant jitter at the second point.
