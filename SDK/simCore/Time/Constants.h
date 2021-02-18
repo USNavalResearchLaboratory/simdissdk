@@ -27,15 +27,6 @@
 
 namespace simCore
 {
-  // String constants, text representations to match the flags
-  static const std::string SECONDS_STRING = "secs"; /**< Matches with TIMEFORMAT_SECONDS */
-  static const std::string MINUTES_STRING = "mins"; /**< Matches with TIMEFORMAT_MINUTES */
-  static const std::string HOURS_STRING   = "hrs";  /**< Matches with TIMEFORMAT_HOURS */
-  static const std::string JULIAN_STRING  = "jul";  /**< Matches with TIMEFORMAT_JULIAN */
-  static const std::string ORDINAL_STRING = "ord";  /**< Matches with TIMEFORMAT_ORDINAL */
-  static const std::string MONTHDAY_STRING= "mon";  /**< Matches with TIMEFORMAT_MONTHDAY */
-  static const std::string DTG_STRING     = "dtg";  /**< Matches with TIMEFORMAT_DTG */
-
   // Constants for various time representations
   static const int SECPERMIN = 60;       /**< # of seconds per minute */
   static const int SECPERHOUR = 3600;    /**< # of seconds per hour */
