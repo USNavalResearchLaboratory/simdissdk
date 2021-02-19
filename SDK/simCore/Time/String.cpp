@@ -20,9 +20,10 @@
  * disclose, or release this software.
  *
  */
-#include <sstream>
-#include <iomanip>
 #include <cassert>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/String/Tokenizer.h"
@@ -708,8 +709,16 @@ std::string Iso8601TimeFormatter::toString(const simCore::TimeStamp& timeStamp, 
 bool Iso8601TimeFormatter::canConvert(const std::string& timeString) const
 {
   std::vector<std::string> daytime;
-  // Tokenize the string into 2 components (YYYY-MM-DD) (HH:MM:SS.sssZ, with optional [.sss])
-  simCore::stringTokenizer(daytime, timeString, "T", false, true);
+  // Tokenize the string into 2 components (YYYY-MM-DD) (HH:MM:SS.sssZ, with optional [.sss]).
+  // Note, cannot use simCore::stringTokenizer() because there may be more than one valid "T".
+  const size_t firstTPos = timeString.find('T');
+  if (firstTPos == std::string::npos)
+    daytime.push_back(timeString);
+  else
+  {
+    daytime.push_back(timeString.substr(0, firstTPos));
+    daytime.push_back(timeString.substr(firstTPos + 1));
+  }
 
   // no support yet for local time formatting
   // canConvert from YYYY is false, would conflict with SecondsFormatter (but note that fromString does support the format)
@@ -760,14 +769,47 @@ bool Iso8601TimeFormatter::canConvert(const std::string& timeString) const
   if (convertYYYYMMDD)
     return true;
 
-  // only support Zulu time ("Z")
-  if (daytime[1].back() != 'Z')
+  // Convert the time zone into an hours offset; output is always in Zulu regardless of input
+  const signed char timeZone = daytime[1].back();
+  // We support A-Z.  We do not support +/- time zone values
+  if (timeZone < 'A' || timeZone > 'Z')
     return false;
-  // remove the Z from time string
+
+  // remove the time zone from time string
   daytime[1] = daytime[1].substr(0, daytime[1].length() - 1);
   return HoursTimeFormatter::isStrictHoursString(daytime[1]);
 }
 
+/** Simple class to encapsulate the calculation of time zone offsets from UTC to local. */
+class LocalTimeCalculator
+{
+public:
+  /** Calculate the current offset from UTC to local time. Calculated only once, in constructor. */
+  LocalTimeCalculator()
+    : hoursOffset_(0.)
+  {
+    const auto& systemTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+    // Note that localtime and gmtime can return the same pointer and are not thread safe; need a copy
+    std::tm* localPtr = std::localtime(&systemTime);
+    if (localPtr)
+    {
+      std::tm local = *localPtr;
+      std::tm* utcPtr = std::gmtime(&systemTime);
+      if (utcPtr)
+        hoursOffset_ = simCore::getTimeStructDifferenceInSeconds(local, *utcPtr) / 3600.;
+    }
+  }
+
+  /** Retrieve the hours offset, e.g. -5.0 for New York standard time. */
+  double hoursOffset() const
+  {
+    return hoursOffset_;
+  }
+
+private:
+  double hoursOffset_;
+};
 
 // will convert YYYY and YYYY-MM
 int Iso8601TimeFormatter::fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const
@@ -776,8 +818,16 @@ int Iso8601TimeFormatter::fromString(const std::string& timeString, simCore::Tim
   timeStamp = simCore::MIN_TIME_STAMP;
 
   std::vector<std::string> daytime;
-  // Tokenize the string into 2 components (ymd, time)
-  simCore::stringTokenizer(daytime, timeString, "T", false, true);
+  // Tokenize the string into 2 components (ymd, time).
+  // Note, cannot use simCore::stringTokenizer() because there may be more than one valid "T".
+  const size_t firstTPos = timeString.find('T');
+  if (firstTPos == std::string::npos)
+    daytime.push_back(timeString);
+  else
+  {
+    daytime.push_back(timeString.substr(0, firstTPos));
+    daytime.push_back(timeString.substr(firstTPos + 1));
+  }
 
   // no support yet for local time formatting
   const bool convertYYYY = (daytime.size() == 1 && daytime[0].size() == 4 && daytime[0] == timeString);
@@ -821,14 +871,34 @@ int Iso8601TimeFormatter::fromString(const std::string& timeString, simCore::Tim
   simCore::Seconds seconds;
   if (convertYYYYMMDDTHHMMSSZ || convertYYYYMMDDTHHMMSSsZ)
   {
-    // only supporting Zulu time ("Z")
-    if (daytime[1].back() != 'Z')
+    const char timeZone = daytime[1].back();
+    // Break out for unsupported zones (must be A-Z)
+    if (timeZone < 'A' || timeZone > 'Z')
       return 1;
-    // remove the Z from time string
+    const int timeZoneInt = timeZone - 'A';
+    // Assertion failure means some ASCII assumption is wrong
+    assert(timeZoneInt >= 0 && timeZoneInt <= 25);
+    if (timeZoneInt < 0 || timeZoneInt > 25)
+      return 1;
+
+    // Time zone offsets for each letter, from https://militarybenefits.info/military-time/
+    static const std::vector<int> ZONE_OFFSETS = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, -1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, 0 };
+    double hoursOffset = ZONE_OFFSETS[timeZoneInt];
+    // Juliet is a special case, as it is local time.  Use currently configured system local time to convert.
+    if (timeZone == 'J')
+    {
+      // Making this a static const inside this scope should prevent it from being instantiated unnecessarily
+      static const LocalTimeCalculator ltc;
+      hoursOffset = ltc.hoursOffset();
+    }
+
+    // remove the time zone from time string
     daytime[1] = daytime[1].substr(0, daytime[1].length() - 1);
 
     if (HoursTimeFormatter::fromString(daytime[1], seconds) != 0)
       return 1;
+    // Apply time zone offset to get the time into Zulu/UTC
+    seconds -= hoursOffset * 3600.;
   }
   // getYearDay expects month [0, 11]
   const int yearDay = getYearDay(month-1, monthDay, year);
