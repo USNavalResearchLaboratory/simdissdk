@@ -21,7 +21,7 @@
  *
  */
 #include <cassert>
-
+#include "osg/Depth"
 #include "osgEarth/Capabilities"
 #include "osgEarth/GLUtils"
 #include "osgEarth/Horizon"
@@ -608,10 +608,29 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
       updateAltMode_(prefs.altmode(), *updateSlice);
   }
 
+  if (force || PB_FIELD_CHANGED(&lastPlatformPrefs_, &platformPrefs, surfaceclamping))
+  {
+    osg::StateSet* stateSet = getOrCreateStateSet();
+    // SIM-12256 - prevent clamped track history from z-fighting with the ground;
+    // this solution matches that used in AnimatedLineNode::fixDepth_
+    if (platformPrefs.surfaceclamping())
+    {
+      // disable depth testing
+      stateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+      // add horizon clipping, which works fine when track history is surface clamped,but not otherwise
+      stateSet->setMode(CLIPPLANE_VISIBLE_HORIZON_GL_MODE, osg::StateAttribute::ON);
+    }
+    else
+    {
+      stateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::ON);
+      stateSet->setMode(CLIPPLANE_VISIBLE_HORIZON_GL_MODE, osg::StateAttribute::OFF);
+    }
+    resetRequested = true;
+  }
+
   if (force || PB_FIELD_CHANGED(&lastPlatformPrefs_, &platformPrefs, useclampalt) ||
       PB_FIELD_CHANGED(&lastPlatformPrefs_, &platformPrefs, clampvalaltmin) ||
-      PB_FIELD_CHANGED(&lastPlatformPrefs_, &platformPrefs, clampvalaltmax) ||
-      PB_FIELD_CHANGED(&lastPlatformPrefs_, &platformPrefs, surfaceclamping))
+      PB_FIELD_CHANGED(&lastPlatformPrefs_, &platformPrefs, clampvalaltmax))
   {
     // Did not test for the clamped angles since they are intended for stationary platforms
     resetRequested = true;
