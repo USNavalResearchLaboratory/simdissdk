@@ -931,10 +931,14 @@ void GogNodeInterface::setDepthBuffer(bool depthBuffer)
   if (depthBufferOverride_ != DEPTHBUFFER_IGNORE_OVERRIDE)
     return;
   style_.getOrCreate<osgEarth::RenderSymbol>()->depthTest() = depthBuffer;
-  if (!depthBuffer) // unset the clip pane if depth buffer turned off
+  if (!depthBuffer)
+  {
+    // use the clip plane if depth buffer off
     style_.getOrCreate<osgEarth::RenderSymbol>()->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
+  }
   else
   {
+     // unset the clip pane if depth buffer turned on
     style_.getOrCreate<osgEarth::RenderSymbol>()->clipPlane().unset();
     // Explicitly remove all clip planes settings from child nodes
     if (osgNode_.valid())
@@ -969,7 +973,7 @@ void GogNodeInterface::setDepthBufferOverrideState(DepthBufferOverride state)
   }
 
   style_.getOrCreate<osgEarth::RenderSymbol>()->depthTest() = depthBuffer;
-  if (!depthBuffer) // unset the clip pane if depth buffer turned off
+  if (!depthBuffer) // set the clip pane if depth buffer turned off
     style_.getOrCreate<osgEarth::RenderSymbol>()->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
   setStyle_(style_);
 }

@@ -367,8 +367,6 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   // labels are culled based on centroid center point
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
-  // SIM-11395 - set default ellipsoid, when osgEarth supports it
-  //  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 

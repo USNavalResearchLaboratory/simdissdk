@@ -322,6 +322,7 @@ void TrackHistoryNode::addUpdate_(const simData::PlatformUpdate& u, const simDat
 
     // add the new chunk and update its appearance
     chunkGroup_->addChild(chunk);
+    // SIM-7889: cull callback is not well suited for chunks because of the radius of the bounding circle.
     chunk->addCullCallback(new osgEarth::HorizonCullCallback());
   }
 

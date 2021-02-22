@@ -251,8 +251,6 @@ void ProjectorNode::init_()
   // labels are positioned on ellipsoid, culled based on label center point
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
-  // SIM-11395 - set default ellipsoid, when osgEarth supports it
-  //callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
   label_->addCullCallback(callback);
 }
 

@@ -175,11 +175,6 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   hcc->setName("HorizonCullCallback");
   addCullCallback(hcc);
 
-  // the following line is necessary prior to OSG 3.4, since we are unable
-  // to pass the shared Horizon down from the ScenarioManager:
-  // SIM-11395 - set default ellipsoid, when osgEarth supports it
-  //hcc->setHorizon(new Horizon(*locator->getSRS()->getEllipsoid()));
-
   // used to apply both dynamic and static scaling to the model.
   dynamicXform_ = new simVis::DynamicScaleTransform();
   dynamicXform_->setName("dynamicXform");
