@@ -779,6 +779,65 @@ int canConvertTest()
   rv += SDK_ASSERT(0 == canConvert("2014-01-01T01:00:00D", false, false, false, false, false, false, true,
     simCore::TimeStamp(2013, simCore::getYearDay(11, 31, 2013) * 86400 + 3600 * 21)));   // 0100 delta is 2100 zulu
 
+  // Test +/- time offsets
+  rv += SDK_ASSERT(0 == canConvert("2013-01-02T00:00:00-05", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(0, 2, 2013) * 86400 + 3600 * 5)));
+  rv += SDK_ASSERT(0 == canConvert("2013-01-02T00:00:00-0500", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(0, 2, 2013) * 86400 + 3600 * 5)));
+  rv += SDK_ASSERT(0 == canConvert("2013-01-02T00:00:00-05:00", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(0, 2, 2013) * 86400 + 3600 * 5)));
+  rv += SDK_ASSERT(0 == canConvert("2013-01-02T00:00:00+05", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(0, 2, 2013) * 86400 + 3600 * -5)));
+  rv += SDK_ASSERT(0 == canConvert("2013-01-02T00:00:00+0500", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(0, 2, 2013) * 86400 + 3600 * -5)));
+  rv += SDK_ASSERT(0 == canConvert("2013-01-02T00:00:00+05:00", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(0, 2, 2013) * 86400 + 3600 * -5)));
+  rv += SDK_ASSERT(0 == canConvert("2013-01-02T00:00:00+05:30", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(0, 2, 2013) * 86400 + 3600 * -5.5)));
+
+  // Test various "basic" formatted ISO 8601 formats
+  auto canConvertIso8601 = [](const std::string& str, bool expectValid, const simCore::TimeStamp& equals = simCore::MIN_TIME_STAMP) -> int {
+    int rv = 0;
+    simCore::Iso8601TimeFormatter iso8601;
+    rv += SDK_ASSERT(iso8601.canConvert(str) == expectValid);
+    simCore::TimeStamp ts;
+    rv += SDK_ASSERT((iso8601.fromString(str, ts, 1970) == 0) == expectValid);
+    if (expectValid)
+      rv += SDK_ASSERT(equals == ts);
+    return rv;
+  };
+  rv += SDK_ASSERT(0 == canConvertIso8601("2", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("201", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("2013", true, simCore::TimeStamp(2013, 0.)));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("2013Z", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("201302", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("2013020", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203", true, simCore::TimeStamp(2013, 86400. * simCore::getYearDay(1, 3, 2013))));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203T", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203Z", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203T0", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203T00", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203T01", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203T012", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203T0123", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203T01234", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203T012345", false));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203T012345Z", true, simCore::TimeStamp(2013, 86400. * simCore::getYearDay(1, 3, 2013) + 3600. + 23 * 60. + 45.)));
+  rv += SDK_ASSERT(0 == canConvertIso8601("20130203T012345z", false));
+  // Repeat selected earlier tests with basic format
+  rv += SDK_ASSERT(0 == canConvert("20130101T00:00:10.0001Z", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(0, 1, 2013) * 86400 + 0 * 3600 + 0 * 60 + 10.0001)));
+  rv += SDK_ASSERT(0 == canConvert("20130101T000010.0001Z", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(0, 1, 2013) * 86400 + 0 * 3600 + 0 * 60 + 10.0001)));
+  rv += SDK_ASSERT(0 == canConvert("20130102T000000V", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(0, 2, 2013) * 86400 + 3600 * 9)));
+  rv += SDK_ASSERT(0 == canConvert("20131231T230000W", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2014, 3600 * 9)));  // 2300 whiskey is 0900 zulu
+  rv += SDK_ASSERT(0 == canConvert("20140101T010000D", false, false, false, false, false, false, true,
+    simCore::TimeStamp(2013, simCore::getYearDay(11, 31, 2013) * 86400 + 3600 * 21)));   // 0100 delta is 2100 zulu
+
   // Bad ISO 8601
   // no support for years before 1970 or after 2200
   rv += SDK_ASSERT(0 == canConvert("1969-01-01", false, false, false, false, false, false, false));
