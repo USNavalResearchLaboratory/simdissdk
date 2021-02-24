@@ -83,14 +83,16 @@ struct SetHorizonCullCallback : public osg::NodeCallback
 
   void operator()(osg::Node* node, osg::NodeVisitor* nv)
   {
+    // Do not move this declaration inside the if() statement.  The osgEarth::ObjectStorage::set()
+    // solution stores the pointer in an osg::observer_ptr, so when horizon falls out of scope it
+    // gets set to null.  See SIM-12601 for details.
+    osg::ref_ptr<osgEarth::Horizon> horizon;
     if (_horizonProto.valid())
     {
-      osg::ref_ptr<osgEarth::Horizon> horizon = osg::clone(_horizonProto.get(), osg::CopyOp::DEEP_COPY_ALL);
+      horizon = osg::clone(_horizonProto.get(), osg::CopyOp::DEEP_COPY_ALL);
       horizon->setEye(nv->getViewPoint());
       horizon->setName("simVis.ScenarioManager.SetHorizonCullCallback");
 #if OSGEARTH_SOVERSION >= 105
-      // SIM-12601: This should be sufficient for setting the horizon, but testing is showing that
-      // horizon culling is not working even with this change.
       osgEarth::ObjectStorage::set(nv, horizon.get());
 #else
       horizon->put(*nv);
