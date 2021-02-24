@@ -25,6 +25,7 @@
 #include "osgEarth/Horizon"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
+#include "osgEarth/Utils"
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"
@@ -87,7 +88,13 @@ struct SetHorizonCullCallback : public osg::NodeCallback
       osg::ref_ptr<osgEarth::Horizon> horizon = osg::clone(_horizonProto.get(), osg::CopyOp::DEEP_COPY_ALL);
       horizon->setEye(nv->getViewPoint());
       horizon->setName("simVis.ScenarioManager.SetHorizonCullCallback");
+#if OSGEARTH_SOVERSION >= 105
+      // SIM-12601: This should be sufficient for setting the horizon, but testing is showing that
+      // horizon culling is not working even with this change.
+      osgEarth::ObjectStorage::set(nv, horizon.get());
+#else
       horizon->put(*nv);
+#endif
     }
     traverse(node, nv);
   }

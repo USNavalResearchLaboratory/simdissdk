@@ -29,7 +29,7 @@
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 
-namespace osg { class Geode; }
+namespace osg { class Group; }
 
 namespace simVis
 {
@@ -193,7 +193,7 @@ namespace simVis
     */
     void updateLocator_(const simData::LaserUpdate* newUpdate, const simData::LaserPrefs* newPrefs, bool force);
 
-    osg::Geode* createGeometry_(const simData::LaserPrefs& prefs);
+    osg::Group* createGeometry_(const simData::LaserPrefs& prefs);
 
   private: // data
     simData::LaserProperties  lastProps_;      ///< laser properties
@@ -202,7 +202,7 @@ namespace simVis
     bool                      hasLastUpdate_;  ///< is there anything in lastUpdate_
     osg::ref_ptr<LocatorNode> locatorNode_;    ///< the parent node for all laser-related graphics
     osg::ref_ptr<Locator>     laserXYZOffsetLocator_; ///< extra locator used only for non-relative lasers
-    osg::ref_ptr<osg::Geode>  node_;           ///< the node that contains the actual laser geometry
+    osg::ref_ptr<osg::Group>  node_;           ///< the node that contains the actual laser geometry
     osg::observer_ptr<const EntityNode> host_; ///< the platform that hosts this laser
     osg::ref_ptr<LocalGridNode> localGrid_;    ///< the localgrid node for this laser
     bool hasLastPrefs_;                        ///< Whether lastPrefs_ has been set by prefs we received

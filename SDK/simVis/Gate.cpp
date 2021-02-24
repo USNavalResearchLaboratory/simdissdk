@@ -236,10 +236,10 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
 
   geom_->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
 
-  osg::Geode* geodeSolid = new osgEarth::LineGroup();
-  geodeSolid->setName("Solid LineGroup");
-  geodeSolid->addChild(geom_);
-  addChild(geodeSolid);
+  osg::Group* solidLines = new osgEarth::LineGroup();
+  solidLines->setName("Solid LineGroup");
+  solidLines->addChild(geom_);
+  addChild(solidLines);
 }
 
 GateCentroid::~GateCentroid()

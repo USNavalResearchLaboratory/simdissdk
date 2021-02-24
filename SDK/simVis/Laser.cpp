@@ -395,7 +395,7 @@ void LaserNode::updateLocator_(const simData::LaserUpdate* newUpdate, const simD
   }
 }
 
-osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
+osg::Group* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
 {
   const float length = prefs.maxrange();
   const double segmentLength = simCore::sdkMin(prefs.maxrange(), MAX_SEGMENT_LENGTH);
@@ -413,9 +413,9 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
   g->setLineWidth(prefs.laserwidth());
 
   // done
-  osg::Geode* geode = new osgEarth::LineGroup();
-  geode->addChild(g);
-  return geode;
+  osg::Group* lineGroup = new osgEarth::LineGroup();
+  lineGroup->addChild(g);
+  return lineGroup;
 }
 
 void LaserNode::updateLaser_(const simData::LaserPrefs &prefs)
