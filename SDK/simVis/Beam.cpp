@@ -50,21 +50,10 @@ namespace
   bool changeRequiresRebuild(const simData::BeamPrefs* a, const simData::BeamPrefs* b)
   {
     if (a == nullptr || b == nullptr)
-    {
       return false;
-    }
-    else if (PB_FIELD_CHANGED(a, b, drawtype))
-    {
+    if (PB_FIELD_CHANGED(a, b, drawtype))
       return true;
-    }
-    else
-    {
-      return
-#ifndef BEAM_IN_PLACE_UPDATES
-        PB_FIELD_CHANGED(a, b, verticalwidth) ||
-        PB_FIELD_CHANGED(a, b, horizontalwidth) ||
-#endif
-        PB_FIELD_CHANGED(a, b, polarity) ||
+    if (PB_FIELD_CHANGED(a, b, polarity) ||
         PB_FIELD_CHANGED(a, b, colorscale) ||
         PB_FIELD_CHANGED(a, b, detail) ||
         PB_FIELD_CHANGED(a, b, gain) ||
@@ -75,8 +64,21 @@ namespace
         PB_FIELD_CHANGED(a, b, rendercone) ||
         PB_FIELD_CHANGED(a, b, coneresolution) ||
         PB_FIELD_CHANGED(a, b, capresolution) ||
-        PB_FIELD_CHANGED(a, b, beamdrawmode);
+        PB_FIELD_CHANGED(a, b, beamdrawmode))
+      return true;
+
+#ifndef BEAM_IN_PLACE_UPDATES
+    return (PB_FIELD_CHANGED(a, b, verticalwidth) ||
+      PB_FIELD_CHANGED(a, b, horizontalwidth));
+#else
+    if (b->rendercone() && PB_FIELD_CHANGED(a, b, horizontalwidth))
+    {
+      // manage automatic change to/from cone/pyramid when horizontalwidth crosses PI threshold
+      return ((a->horizontalwidth() <= M_PI && b->horizontalwidth() > M_PI) ||
+        (a->horizontalwidth() > M_PI && b->horizontalwidth() <= M_PI));
     }
+    return false;
+#endif
   }
 
   /// Some updates can require a rebuild too
@@ -148,7 +150,8 @@ osg::MatrixTransform* BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs,
   sv.blendingEnabled_ = prefs.blended();
   sv.lightingEnabled_ = prefs.shaded();
 
-  sv.shape_ = prefs.rendercone() ? simVis::SVData::SHAPE_CONE : simVis::SVData::SHAPE_PYRAMID;
+  // draw as pyramid when hbw > 180
+  sv.shape_ = (prefs.rendercone() && sv.hfov_deg_ <= 180.) ? simVis::SVData::SHAPE_CONE : simVis::SVData::SHAPE_PYRAMID;
 
   // if drawing as a pyramid, coneRes_ is not used, but wallRes_ is used
   sv.coneRes_ = prefs.coneresolution();
