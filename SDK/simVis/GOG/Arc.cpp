@@ -365,7 +365,7 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
   return rv;
 }
 
-GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
+GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string& filename, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
   // inner radius not supported by GOG
   bool hasInnerRadius = false;
@@ -383,7 +383,7 @@ GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, bool attached, co
   arc.getAngleSweep(sweepRad);
   if (simCore::areEqual(sweepRad, 0.))
   {
-    SIM_ERROR << "Angle cannot have sweep of 0\n";
+    SIM_ERROR << "GOG: Cannot create Arc with sweep of 0" << (!filename.empty() ? " in " + filename : "") << "\n";
     return nullptr;
   }
   Angle sweep = Angle(sweepRad * simCore::RAD2DEG, Units::DEGREES);

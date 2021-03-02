@@ -70,24 +70,24 @@ void Loader::setReferencePosition(const simCore::Vec3& referencePosition)
   referencePosition_ = referencePosition;
 }
 
-void Loader::loadGogs(std::istream& input, bool attached, GogNodeVector& output) const
+void Loader::loadGogs(std::istream& input, const std::string& filename, bool attached, GogNodeVector& output) const
 {
   std::vector<simCore::GOG::GogShapePtr> gogs;
-  parser_.parse(input, gogs);
+  parser_.parse(input, filename, gogs);
 
   for (simCore::GOG::GogShapePtr gog : gogs)
   {
-    GogNodeInterfacePtr gogNode = buildGogNode_(gog, attached);
+    GogNodeInterfacePtr gogNode = buildGogNode_(gog, filename, attached);
     if (gogNode)
       output.push_back(gogNode);
   }
 }
 
-void Loader::loadShape(const std::string& gogShapeBlock, size_t shapeNumber, bool attached, GogNodeVector& output) const
+void Loader::loadShape(const std::string& gogShapeBlock, const std::string& filename, size_t shapeNumber, bool attached, GogNodeVector& output) const
 {
   std::vector<simCore::GOG::GogShapePtr> gogs;
   std::istringstream input(gogShapeBlock);
-  parser_.parse(input, gogs);
+  parser_.parse(input, filename, gogs);
   if (gogs.empty())
     return;
   // only one shape on input; can't be more than that on output.
@@ -97,12 +97,12 @@ void Loader::loadShape(const std::string& gogShapeBlock, size_t shapeNumber, boo
   // lineNumber as set by the parser is meaningless in the context of a string representing a single shape converted
   // to GOG from another overlay format, and can't support sorting and selection. use specified shapeNumber instead.
   gog->setLineNumber(shapeNumber);
-  GogNodeInterfacePtr gogNode = buildGogNode_(gog, attached);
+  GogNodeInterfacePtr gogNode = buildGogNode_(gog, filename, attached);
   if (gogNode)
     output.push_back(gogNode);
 }
 
-GogNodeInterfacePtr Loader::buildGogNode_(simCore::GOG::GogShapePtr gog, bool attached) const
+GogNodeInterfacePtr Loader::buildGogNode_(simCore::GOG::GogShapePtr gog, const std::string& filename, bool attached) const
 {
   GogNodeInterfacePtr rv;
 
@@ -110,7 +110,7 @@ GogNodeInterfacePtr Loader::buildGogNode_(simCore::GOG::GogShapePtr gog, bool at
   {
     std::string gogName;
     gog->getName(gogName);
-    SIM_WARN << "Attempting to load attached GOG with absolute points, cannot create shape for " << gogName << "\n";
+    SIM_WARN << "GOG: Attempting to load attached GOG with absolute points, cannot create shape for " << gogName << (!filename.empty() ? "in " + filename : "") << "\n";
     return nullptr;
   }
 
@@ -149,7 +149,7 @@ GogNodeInterfacePtr Loader::buildGogNode_(simCore::GOG::GogShapePtr gog, bool at
   {
     const simCore::GOG::Arc* arc = dynamic_cast<const simCore::GOG::Arc*>(gog.get());
     if (arc)
-      rv.reset(Arc::createArc(*arc, attached, referencePosition_, mapNode_.get()));
+      rv.reset(Arc::createArc(*arc, filename, attached, referencePosition_, mapNode_.get()));
     else
       assert(0); // parser error, shape type doesn't match class
     break;
