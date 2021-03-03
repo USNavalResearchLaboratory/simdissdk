@@ -24,14 +24,13 @@
 #ifndef SIMVIS_VIEW_MANAGER_H
 #define SIMVIS_VIEW_MANAGER_H 1
 
-#include "simCore/Common/Common.h"
-
-#include "osg/ArgumentParser"
-#include <osg/ref_ptr>
-#include <osg/observer_ptr>
-#include "osgViewer/CompositeViewer"
-
+#include <functional>
 #include <vector>
+#include "osg/ref_ptr"
+#include "osg/observer_ptr"
+#include "osg/ArgumentParser"
+#include "osgViewer/CompositeViewer"
+#include "simCore/Common/Common.h"
 
 namespace simVis
 {
@@ -100,6 +99,28 @@ public:
     virtual ~Callback() {}
   };
 
+  /** Lambda callback; particularly useful when you register and don't need to unregister. */
+  class LambdaCallback : public Callback
+  {
+  public:
+    /**
+     * Instantiate with a lambda, e.g.:
+     * <code>
+     * new simVis::ViewManager::LambdaCallback([this](simVis::View* view, simVis::ViewManager::Callback::EventType evtType) {
+     *   std::cout << "Callback issued.\n"
+     * }));
+     * </code>
+     */
+    explicit LambdaCallback(const std::function<void(simVis::View*, Callback::EventType)>& func) : func_(func) { }
+    virtual void operator()(simVis::View* inset, const EventType& e) override { func_(inset, e); }
+
+  protected:
+    /// osg::Referenced-derived
+    virtual ~LambdaCallback() {}
+
+  private:
+    std::function<void(simVis::View*, Callback::EventType)> func_;
+  };
 
   class PostCameraEventHandler : public osg::Referenced
   {
