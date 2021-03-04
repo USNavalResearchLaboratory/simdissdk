@@ -789,8 +789,6 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   // default to absolute if not otherwise specified
   bool relative = !parsed.boolValue(ShapeParameter::ABSOLUTE_POINTS, false);
   std::string name = parsed.stringValue(ShapeParameter::NAME);
-  if (name.empty())
-    name = GogShape::shapeTypeToString(parsed.shape());
   switch (parsed.shape())
   {
   case ShapeType::ANNOTATION:
@@ -1256,7 +1254,7 @@ int Parser::validateDouble_(const std::string& valueStr, const std::string& para
 {
   if (simCore::isValidNumber(valueStr, value))
     return 0;
-  printError_(parsed.filename(), parsed.lineNumber(), "Invalid " + paramName + ": " + valueStr + " for " + name);
+  printError_(parsed.filename(), parsed.lineNumber(), "Invalid " + paramName + ": " + valueStr + (name.empty() ? "" : " for " + name));
   return 1;
 }
 
@@ -1285,7 +1283,7 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     if (getColor_(parsed, ShapeParameter::LINECOLOR, name, "linecolor", color) == 0)
       shape->setLineColor(color);
     else
-      printError_(parsed.filename(), parsed.lineNumber(), "Invalid linecolor: " + parsed.stringValue(ShapeParameter::LINECOLOR) + " for " + name);
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid linecolor: " + parsed.stringValue(ShapeParameter::LINECOLOR) + (name.empty() ? "" : " for " + name));
   }
   if (parsed.hasValue(ShapeParameter::LINESTYLE))
   {
@@ -1298,7 +1296,7 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
       style = LineStyle::DOTTED;
     else if (styleStr != "solid")
     {
-      printError_(parsed.filename(), parsed.lineNumber(), "Invalid linestyle: " + styleStr + " for " + name);
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid linestyle: " + styleStr + (name.empty() ? "" : " for " + name));
       valid = false;
     }
     if (valid)
@@ -1311,7 +1309,7 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     if (simCore::isValidNumber(lineWidthStr, lineWidth))
       shape->setLineWidth(lineWidth);
     else
-      printError_(parsed.filename(), parsed.lineNumber(), "Invalid linewidth: " + lineWidthStr + " for " + name);
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid linewidth: " + lineWidthStr + (name.empty() ? "" : " for " + name));
   }
   if (parsed.hasValue(ShapeParameter::FILLED))
     shape->setFilled(parsed.boolValue(ShapeParameter::FILLED, true));
@@ -1321,7 +1319,7 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     if (getColor_(parsed, ShapeParameter::FILLCOLOR, name, "fillcolor", color) == 0)
       shape->setFillColor(color);
     else
-      printError_(parsed.filename(), parsed.lineNumber(), "Invalid fillcolor: " + parsed.stringValue(ShapeParameter::LINECOLOR) + " for " + name);
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid fillcolor: " + parsed.stringValue(ShapeParameter::LINECOLOR) + (name.empty() ? "" : " for " + name));
   }
 }
 
@@ -1336,12 +1334,12 @@ int Parser::parsePointBased_(const ParsedShape& parsed, bool relative, const std
   const std::vector<PositionStrings>& positions = parsed.positions();
   if (positions.empty())
   {
-    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + " " + name + " has no points, cannot create shape");
+    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + (name.empty() ? "" : " " + name) + " has no points, cannot create shape");
     return 1;
   }
   else if (positions.size() < minimumNumPoints)
   {
-    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + " " + name + " has less than the required number of points, cannot create shape");
+    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + (name.empty() ? "" : " " + name) + " has less than the required number of points, cannot create shape");
     return 1;
   }
   for (PositionStrings pos : positions)
@@ -1352,12 +1350,12 @@ int Parser::parsePointBased_(const ParsedShape& parsed, bool relative, const std
   }
   if (shape->points().empty())
   {
-    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + " " + name + " has no valid points, cannot create shape");
+    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + (name.empty() ? "" : " " + name) + " has no valid points, cannot create shape");
     return 1;
   }
   else if (shape->points().size() < minimumNumPoints)
   {
-    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + " " + name + " has less than the required number of valid points, cannot create shape");
+    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + (name.empty() ? "" : " " + name) + " has less than the required number of valid points, cannot create shape");
     return 1;
   }
   parsePointBasedOptional_(parsed, name, shape);
@@ -1408,7 +1406,7 @@ void Parser::parseCircularOptional_(const ParsedShape& parsed, bool relative, co
     if (getPosition_(parsed.positionValue(param), relative, units, position) == 0)
       shape->setCenterPosition(position);
     else
-      printError_(parsed.filename(), parsed.lineNumber(), GogShape::shapeTypeToString(shape->shapeType()) + " " + name + " invalid center point");
+      printError_(parsed.filename(), parsed.lineNumber(), GogShape::shapeTypeToString(shape->shapeType()) + (name.empty() ? "" : " " + name) + " invalid center point");
   }
 
   if (!parsed.hasValue(ShapeParameter::RADIUS))
@@ -1462,7 +1460,7 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
         if (angleSweep != 0.)
           shape->setAngleSweep(units.angleUnits().convertTo(simCore::Units::RADIANS, angleSweep));
         else
-          printError_(parsed.filename(), parsed.lineNumber(), "for " + name + " angledeg cannot be 0");
+          printError_(parsed.filename(), parsed.lineNumber(), (name.empty() ? "" : "for " + name + " ") + "angledeg cannot be 0");
       }
     }
     if (parsed.hasValue(ShapeParameter::ANGLEEND))
@@ -1475,7 +1473,7 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
         if (angleEnd != angleStart)
           shape->setAngleSweep(angleEnd - angleStart);
         else
-          printError_(parsed.filename(), parsed.lineNumber(), "for " + name + " angleend cannot be the same as anglestart");
+          printError_(parsed.filename(), parsed.lineNumber(), (name.empty() ? "" : "for " + name + " ") + "angleend cannot be the same as anglestart");
       }
     }
   }
@@ -1499,7 +1497,7 @@ int Parser::getColor_(const ParsedShape& parsed, ShapeParameter param, const std
   uint32_t abgr;
   if (!simCore::isValidHexNumber(colorStr, abgr))
   {
-    printError_(parsed.filename(), parsed.lineNumber(), "Invalid " + fieldName + ": " + colorStr + " for " + shapeName);
+    printError_(parsed.filename(), parsed.lineNumber(), "Invalid " + fieldName + ": " + colorStr + (shapeName.empty() ? "" : " for " + shapeName));
     return 1;
   }
   color = Color(abgr & 0xff, (abgr >> 8) & 0xff, (abgr >> 16) & 0xff, (abgr >> 24) & 0xff);
