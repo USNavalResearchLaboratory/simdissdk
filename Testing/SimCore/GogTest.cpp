@@ -118,6 +118,33 @@ int testGeneralSyntax()
     rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::LINE);
   shapes.clear();
 
+  // test shapes with nested start still creates shape
+  std::stringstream nestedStartShape;
+  nestedStartShape << "start\ncircle\ncenterll 1 1\nstart\nend\n";
+  parser.parse(nestedStartShape, "", shapes);
+  rv += SDK_ASSERT(!shapes.empty());
+  if (!shapes.empty())
+    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::CIRCLE);
+  shapes.clear();
+
+  // test leading end statement still creates shape
+  std::stringstream leadingEndShape;
+  leadingEndShape << "end\nstart\ncircle\ncenterll 1 1\nend\n";
+  parser.parse(leadingEndShape, "", shapes);
+  rv += SDK_ASSERT(!shapes.empty());
+  if (!shapes.empty())
+    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::CIRCLE);
+  shapes.clear();
+
+  // test that unknown shape followed by actual shape still creates actual shape
+  std::stringstream unknownShape;
+  unknownShape << "start\nblahblah\ncenterll 2 2\nend\nstart\ncircle\ncenterll 1 1\nend\n";
+  parser.parse(unknownShape, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::CIRCLE);
+  shapes.clear();
+
   return rv;
 }
 
@@ -947,6 +974,38 @@ int testAnnotation()
       }
     }
   }
+  shapes.clear();
+
+  // test nested valid and invalid annotations
+  std::stringstream annoNestedInvalidGog;
+  annoNestedInvalidGog << "start\n annotation label 0\n centerll 24.5 54.6\n"
+    << "annotation\n centerll 24.7 54.3\n annotation label 1\n centerll 23.4 55.4\n end\n";
+  parser.parse(annoNestedInvalidGog, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 2);
+  if (!shapes.empty())
+  {
+    int textId = 0;
+    for (simCore::GOG::GogShapePtr gogPtr : shapes)
+    {
+      simCore::GOG::Annotation* anno = dynamic_cast<simCore::GOG::Annotation*>(gogPtr.get());
+      rv += SDK_ASSERT(anno != nullptr);
+      if (anno)
+      {
+        std::ostringstream os;
+        os << "label " << textId++;
+        rv += SDK_ASSERT(anno->text() == os.str());
+      }
+    }
+  }
+  shapes.clear();
+
+  // test invalid annotation with a valid shape, ensure valid shape is parsed
+  std::stringstream annoInvalidGog;
+  annoInvalidGog << "start\n annotation \n centerll 24.5 54.6\n end\n start\ncircle\n centerll 1 1\n end\n";
+  parser.parse(annoInvalidGog, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+    rv += SDK_ASSERT(dynamic_cast<simCore::GOG::Circle*>(shapes.front().get()) != nullptr);
   shapes.clear();
 
   // test annotation position parsing, which supports multiple options (centerlla, centerll, lla, ll, centerxyz, centerxy, xyz, xy)

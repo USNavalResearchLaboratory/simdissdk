@@ -282,10 +282,14 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         textToken = simCore::StringUtils::substitute(textToken, "_", " ");
         textToken = simCore::StringUtils::substitute(textToken, "\\n", "\n");
         current.set(ShapeParameter::NAME, textToken);
+        invalidShape = false;
       }
       else
       {
         printError_(filename, lineNumber, "annotation command requires at least 1 argument");
+        // shape is recognized, but invalid, so set the shape type correctly
+        current.setShape(ShapeType::ANNOTATION);
+        invalidShape = true;
       }
     }
     // object types
