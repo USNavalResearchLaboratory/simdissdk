@@ -184,11 +184,6 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   shape->getIsDrawn(draw);
   setDrawState(draw);
 
-  bool depthBuffer = false;
-  // always set depth buffer, use default if not set
-  shape->getIsDepthBufferActive(depthBuffer);
-  setDepthBuffer(depthBuffer);
-
   double altitudeOffset = 0.;
   if (shape->getAltitudeOffset(altitudeOffset) == 0)
     setAltOffset(altitudeOffset);
@@ -246,6 +241,12 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
     // always set tessellation to initialize fields in style, defaults to off
     setTessellation(LoaderUtils::convertToVisTessellation(tessellation));
   }
+
+  // Depth buffer must be set after tessellation if tessellation is set
+  bool depthBuffer = false;
+  // always set depth buffer, use default if not set
+  shape->getIsDepthBufferActive(depthBuffer);
+  setDepthBuffer(depthBuffer);
 
   const simCore::GOG::Points* points = dynamic_cast<const simCore::GOG::Points*>(shape.get());
   if (points)
