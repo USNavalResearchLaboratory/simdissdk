@@ -113,9 +113,12 @@ public:
 
   virtual void operator()(simVis::PlatformModelNode* model, Callback::EventType eventType)
   {
-    if (eventType == Callback::BOUNDS_CHANGED)
+    if (eventType == Callback::BOUNDS_CHANGED && model && model->getNumParents() > 0)
     {
-      const simVis::PlatformNode* platform = osgEarth::findFirstParentOfType<const simVis::PlatformNode>(model);
+      // First parent should be the simVis::PlatformNode
+      const simVis::PlatformNode* platform = dynamic_cast<const simVis::PlatformNode*>(model->getParent(0));
+      // Failure means layout changed.  We could try to use osgEarth::findFirstParentOfType() but it fails when parent has nodemask of 0
+      assert(platform);
       osg::ref_ptr<simVis::ScenarioManager> refScenario;
       if (platform && scenarioManager_.lock(refScenario))
         refScenario->notifyBeamsOfNewHostSize(*platform);
