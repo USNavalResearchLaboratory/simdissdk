@@ -1936,6 +1936,45 @@ int testBooleanInputs()
   return rv;
 }
 
+
+auto testPointSizeFunc = [](const simCore::GOG::Points* shape) -> int
+{
+  int rv = 0;
+  int pointSize = 0;
+  rv += SDK_ASSERT(shape->getPointSize(pointSize) == 0);
+  rv += SDK_ASSERT(pointSize == 3);
+  return rv;
+};
+
+auto testLineWidthFunc = [](const simCore::GOG::FillableShape* shape) -> int
+{
+  int rv = 0;
+  int lineWidth = 0;
+  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
+  rv += SDK_ASSERT(lineWidth == 3);
+  return rv;
+};
+
+auto testTextSizeFunc = [](const simCore::GOG::Annotation* shape) -> int
+{
+  int rv = 0;
+  int textSize = 0;
+  rv += SDK_ASSERT(shape->getTextSize(textSize) == 0);
+  rv += SDK_ASSERT(textSize == 3);
+  return rv;
+};
+
+int testDoublesToInts()
+{
+  int rv = 0;
+
+  rv += testShapeFunction<simCore::GOG::Points>("start\npoints\nlla 1 1 1\n pointsize 2.5\nend\n", testPointSizeFunc);
+  rv += testShapeFunction<simCore::GOG::FillableShape>("start\ncircle\ncenterlla 1 1 1\n linewidth 2.5\nend\n", testLineWidthFunc);
+  rv += testShapeFunction<simCore::GOG::Annotation>("start\nannotation test\ncenterlla 1 1 1\n fontsize 2.5\nend\n", testTextSizeFunc);
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -1956,6 +1995,7 @@ int GogTest(int argc, char* argv[])
   rv += testSerialization();
   rv += testColors();
   rv += testBooleanInputs();
+  rv += testDoublesToInts();
 
   return rv;
 }

@@ -32,6 +32,7 @@
 #include "simCore/String/ValidNumber.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Calc/Mgrs.h"
 #include "simCore/Calc/Units.h"
 #include "simCore/GOG/GogUtils.h"
@@ -826,9 +827,10 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       anno->setFontName(parsed.stringValue(ShapeParameter::FONTNAME));
     if (parsed.hasValue(ShapeParameter::TEXTSIZE))
     {
-      int textSize = 0;
+      // support double input by user and round to int
+      double textSize = 0;
       if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::TEXTSIZE), textSize))
-        anno->setTextSize(textSize);
+        anno->setTextSize(static_cast<int>(simCore::round(textSize)));
       else
         printError_(parsed.filename(), parsed.lineNumber(), "Invalid fontsize: " + parsed.stringValue(ShapeParameter::TEXTSIZE) + " for " + name);
     }
@@ -969,7 +971,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     const std::vector<PositionStrings>& positions = parsed.positions();
     if (positions.empty())
     {
-      printError_(parsed.filename(), parsed.lineNumber(), "point " + name + " has no points, cannot create shape");
+      printError_(parsed.filename(), parsed.lineNumber(), "point " + (name.empty() ? "" : name + " ") + "has no points, cannot create shape");
       break;
     }
     std::unique_ptr<Points> points(new Points(relative));
@@ -981,15 +983,19 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     if (points->points().empty())
     {
-      printError_(parsed.filename(), parsed.lineNumber(), "point " + name + " has no valid points, cannot create shape");
+      printError_(parsed.filename(), parsed.lineNumber(), "point " + (name.empty() ? "" : name + " ") + "has no valid points, cannot create shape");
       break;
     }
     parseOutlined_(parsed, points.get());
     if (parsed.hasValue(ShapeParameter::POINTSIZE))
     {
-      int pointSize = 0;
-      if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::POINTSIZE), pointSize))
-        points->setPointSize(pointSize);
+      // support double input by user and round to int
+      double pointSize = 0;
+      std::string pointSizeStr = parsed.stringValue(ShapeParameter::POINTSIZE);
+      if (simCore::isValidNumber(pointSizeStr, pointSize))
+        points->setPointSize(static_cast<int>(simCore::round(pointSize)));
+      else
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid pointsize: " + pointSizeStr + (name.empty() ? "" : " for " + name));
     }
     if (parsed.hasValue(ShapeParameter::LINECOLOR))
     {
@@ -1304,10 +1310,11 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
   }
   if (parsed.hasValue(ShapeParameter::LINEWIDTH))
   {
-    int lineWidth = 0;
+    // support double input by user and round to int
+    double lineWidth = 0;
     std::string lineWidthStr = parsed.stringValue(ShapeParameter::LINEWIDTH);
     if (simCore::isValidNumber(lineWidthStr, lineWidth))
-      shape->setLineWidth(lineWidth);
+      shape->setLineWidth(static_cast<int>(simCore::round(lineWidth)));
     else
       printError_(parsed.filename(), parsed.lineNumber(), "Invalid linewidth: " + lineWidthStr + (name.empty() ? "" : " for " + name));
   }
