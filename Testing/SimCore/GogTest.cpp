@@ -2034,6 +2034,43 @@ int testDoublesToInts()
   return rv;
 }
 
+auto testLineWidthThinFunc = [](const simCore::GOG::FillableShape* shape) -> int
+{
+  int rv = 0;
+  int lineWidth = 0;
+  rv += SDK_ASSERT(shape->getLineWidth(lineWidth)== 0);
+  rv += SDK_ASSERT(lineWidth == 1);
+  return rv;
+};
+
+auto testLineWidthMediumFunc = [](const simCore::GOG::FillableShape* shape) -> int
+{
+  int rv = 0;
+  int lineWidth = 0;
+  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
+  rv += SDK_ASSERT(lineWidth == 2);
+  return rv;
+};
+
+auto testLineWidthThickFunc = [](const simCore::GOG::FillableShape* shape) -> int
+{
+  int rv = 0;
+  int lineWidth = 0;
+  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
+  rv += SDK_ASSERT(lineWidth == 4);
+  return rv;
+};
+
+int testLineWidthStrings()
+{
+  int rv = 0;
+  rv += testShapeFunction<simCore::GOG::Circle>("start\ncircle\ncenterll 1 1\nlinewidth thin\nend\n", testLineWidthThinFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\ncircle\ncenterll 1 1\nlinewidth med\nend\n", testLineWidthMediumFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\ncircle\ncenterll 1 1\nlinewidth medium\nend\n", testLineWidthMediumFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\ncircle\ncenterll 1 1\nlinewidth thick\nend\n", testLineWidthThickFunc);
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -2055,6 +2092,7 @@ int GogTest(int argc, char* argv[])
   rv += testColors();
   rv += testBooleanInputs();
   rv += testDoublesToInts();
+  rv += testLineWidthStrings();
 
   return rv;
 }

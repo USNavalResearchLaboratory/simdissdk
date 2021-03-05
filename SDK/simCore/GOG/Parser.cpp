@@ -1320,7 +1320,17 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     if (simCore::isValidNumber(lineWidthStr, lineWidth))
       shape->setLineWidth(static_cast<int>(simCore::round(lineWidth)));
     else
-      printError_(parsed.filename(), parsed.lineNumber(), "Invalid linewidth: " + lineWidthStr + (name.empty() ? "" : " for " + name));
+    {
+      std::string lowerLineWidth = simCore::lowerCase(lineWidthStr);
+      if (lowerLineWidth == "thin")
+        shape->setLineWidth(1);
+      else if (lowerLineWidth == "med" || lowerLineWidth == "medium")
+        shape->setLineWidth(2);
+      else if (lowerLineWidth == "thick")
+        shape->setLineWidth(4);
+      else
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid linewidth: " + lineWidthStr + (name.empty() ? "" : " for " + name));
+    }
   }
   if (parsed.hasValue(ShapeParameter::FILLED))
     shape->setFilled(parsed.boolValue(ShapeParameter::FILLED, true));
