@@ -41,7 +41,7 @@ bool getElevationFromSample(const osgEarth::ElevationSample& sample,
   if (sample.hasData())
   {
     out_elevation = sample.elevation().as(osgEarth::Units::METERS);
-    if (out_elevation ==  NO_DATA_VALUE)
+    if (out_elevation == NO_DATA_VALUE)
       out_elevation = 0.0;
 
     if (out_actualResolution)
@@ -62,7 +62,11 @@ namespace simVis
 struct ElevationQueryProxy::PrivateData
 {
  /// Future object that monitors the status of the elevation query result
+#if OSGEARTH_SOVERSION > 100
   osgEarth::Threading::Future<osgEarth::ElevationSample> elevationResult_;
+#else
+  osgEarth::Threading::Future<osgEarth::RefElevationSample> elevationResult_;
+#endif
 };
 
 /**
@@ -156,7 +160,13 @@ bool ElevationQueryProxy::getPendingElevation(double& out_elevation, double* out
   if (!data_->elevationResult_.isAvailable())
     return false;
 
+#if OSGEARTH_SOVERSION > 100
   const osgEarth::ElevationSample& sample = data_->elevationResult_.get();
+#else
+  osg::ref_ptr<osgEarth::RefElevationSample> samplePtr = data_->elevationResult_.release();
+  const osgEarth::ElevationSample& sample = *samplePtr.get();
+#endif
+
   getElevationFromSample(sample, out_elevation, out_actualResolution);
 
   // cache values

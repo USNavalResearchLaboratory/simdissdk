@@ -192,6 +192,11 @@ public:
   /** Retrieves the stored line number. */
   size_t lineNumber() const;
 
+  /** Sets the filename for the GOG object. May be empty for provisional or other locally created GOGs */
+  void setFilename(const std::string& filename);
+  /** Retrieve the object's filename */
+  std::string filename() const;
+
   /** Sets the name of the shape, e.g. "line" or "annotation" */
   void setShape(ShapeType shape);
   /** Retrieve the type of shape, e.g. "line" or "annotation". */
@@ -237,6 +242,7 @@ private:
   std::vector<PositionStrings> points_;
   PointType pointType_;
   size_t lineNumber_;
+  std::string filename_;
   std::vector<std::string> comments_;
 };
 

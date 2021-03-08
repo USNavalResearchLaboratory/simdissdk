@@ -758,6 +758,7 @@ ColorGradientWidget::~ColorGradientWidget()
 
 void ColorGradientWidget::setColorGradient(const ColorGradient& gradient)
 {
+  hasChanges_ = false;
   if (gradient == getColorGradient())
     return;
 
@@ -792,6 +793,11 @@ bool ColorGradientWidget::showHelp() const
 bool ColorGradientWidget::gradientIsValid() const
 {
   return model_->rowCount() >= 2;
+}
+
+bool ColorGradientWidget::hasChanges() const
+{
+  return hasChanges_;
 }
 
 double ColorGradientWidget::minimumUserValue() const
@@ -916,6 +922,7 @@ void ColorGradientWidget::updateMinMaxUserValues_()
 
 void ColorGradientWidget::emitGradientChanged_()
 {
+  hasChanges_ = true;
   emit gradientChanged(getColorGradient());
 }
 

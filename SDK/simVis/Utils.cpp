@@ -1287,4 +1287,37 @@ osg::Matrixd PixelScaleHudTransform::computeMatrix_(osg::NodeVisitor* nv) const
   return invertedMvpw_;
 }
 
+//--------------------------------------------------------------------------
+
+ViewportSizeCallback::ViewportSizeCallback(std::function<void(const osg::Vec2f&)> func)
+  : windowSize_(0.f, 0.f),
+    func_(func)
+{
+}
+
+bool ViewportSizeCallback::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*)
+{
+  // RESIZE does not always emit correctly, especially starting in full screen mode, so use FRAME and always check size
+  if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
+  {
+    // Cannot rely on getWindowWidth(), need to check viewport
+    const osg::View* view = aa.asView();
+    if (!view || !view->getCamera() || !view->getCamera()->getViewport())
+      return false;
+    // Pull the width and height out of the viewport
+    const osg::Viewport* vp = view->getCamera()->getViewport();
+    const osg::Vec2f newSize(vp->width(), vp->height());
+    if (newSize == windowSize_)
+      return false;
+    windowSize_ = newSize;
+    func_(windowSize_);
+  }
+  return false;
+}
+
+osg::Vec2f ViewportSizeCallback::windowSize() const
+{
+  return windowSize_;
+}
+
 }

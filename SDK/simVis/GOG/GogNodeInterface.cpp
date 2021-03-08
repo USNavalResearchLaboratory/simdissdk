@@ -184,11 +184,6 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   shape->getIsDrawn(draw);
   setDrawState(draw);
 
-  bool depthBuffer = false;
-  // always set depth buffer, use default if not set
-  shape->getIsDepthBufferActive(depthBuffer);
-  setDepthBuffer(depthBuffer);
-
   double altitudeOffset = 0.;
   if (shape->getAltitudeOffset(altitudeOffset) == 0)
     setAltOffset(altitudeOffset);
@@ -242,9 +237,16 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   if (lined != nullptr)
   {
     simCore::GOG::TessellationStyle tessellation = simCore::GOG::TessellationStyle::NONE;
-    if (lined->getTessellation(tessellation) == 0)
-      setTessellation(LoaderUtils::convertToVisTessellation(tessellation));
+    lined->getTessellation(tessellation);
+    // always set tessellation to initialize fields in style, defaults to off
+    setTessellation(LoaderUtils::convertToVisTessellation(tessellation));
   }
+
+  // Depth buffer must be set after tessellation if tessellation is set
+  bool depthBuffer = false;
+  // always set depth buffer, use default if not set
+  shape->getIsDepthBufferActive(depthBuffer);
+  setDepthBuffer(depthBuffer);
 
   const simCore::GOG::Points* points = dynamic_cast<const simCore::GOG::Points*>(shape.get());
   if (points)
@@ -930,10 +932,14 @@ void GogNodeInterface::setDepthBuffer(bool depthBuffer)
   if (depthBufferOverride_ != DEPTHBUFFER_IGNORE_OVERRIDE)
     return;
   style_.getOrCreate<osgEarth::RenderSymbol>()->depthTest() = depthBuffer;
-  if (!depthBuffer) // unset the clip pane if depth buffer turned off
+  if (!depthBuffer)
+  {
+    // use the clip plane if depth buffer off
     style_.getOrCreate<osgEarth::RenderSymbol>()->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
+  }
   else
   {
+     // unset the clip pane if depth buffer turned on
     style_.getOrCreate<osgEarth::RenderSymbol>()->clipPlane().unset();
     // Explicitly remove all clip planes settings from child nodes
     if (osgNode_.valid())
@@ -968,7 +974,7 @@ void GogNodeInterface::setDepthBufferOverrideState(DepthBufferOverride state)
   }
 
   style_.getOrCreate<osgEarth::RenderSymbol>()->depthTest() = depthBuffer;
-  if (!depthBuffer) // unset the clip pane if depth buffer turned off
+  if (!depthBuffer) // set the clip pane if depth buffer turned off
     style_.getOrCreate<osgEarth::RenderSymbol>()->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
   setStyle_(style_);
 }
@@ -1775,6 +1781,11 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
     // force non-zero crease angle for extruded tesselated line, we want to only draw posts at actual vertices
     ls->creaseAngle() = 1.0f;
 
+#if OSGEARTH_SOVERSION > 102
+    // Set the GeometryCompilerOptions to the default value so that the default max granularity is used.
+    osgEarth::GeometryCompilerOptions options;
+    featureNode_->setGeometryCompilerOptions(options);
+#endif
   }
   else
   {
@@ -1783,6 +1794,14 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
     // make sure the tessellation size is unset
     ls->tessellationSize().unset();
     ls->creaseAngle() = 0.0f;
+
+#if OSGEARTH_SOVERSION > 102
+    // Set the max granularity to 360 to disable the usage of the MeshSubdivider in osgEarth so that geometry that spans large geospatial distances
+    // are not subdivided to attempt to conform to the earth when tesselation is disabled in simdis.
+    osgEarth::GeometryCompilerOptions options = featureNode_->getGeometryCompilerOptions();
+    options.maxGranularity() = 360.0;
+    featureNode_->setGeometryCompilerOptions(options);
+#endif
   }
 
   setStyle_(style_);

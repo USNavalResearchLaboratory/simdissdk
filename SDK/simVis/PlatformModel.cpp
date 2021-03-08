@@ -175,11 +175,6 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   hcc->setName("HorizonCullCallback");
   addCullCallback(hcc);
 
-  // the following line is necessary prior to OSG 3.4, since we are unable
-  // to pass the shared Horizon down from the ScenarioManager:
-  // SIM-11395 - set default ellipsoid, when osgEarth supports it
-  //hcc->setHorizon(new Horizon(*locator->getSRS()->getEllipsoid()));
-
   // used to apply both dynamic and static scaling to the model.
   dynamicXform_ = new simVis::DynamicScaleTransform();
   dynamicXform_->setName("dynamicXform");
@@ -543,7 +538,8 @@ bool PlatformModelNode::updateDynamicScale_(const simData::PlatformPrefs& prefs)
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, scale) &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, dynamicscale) &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, dynamicscalescalar) &&
-      !PB_FIELD_CHANGED(&lastPrefs_, &prefs, dynamicscaleoffset))
+      !PB_FIELD_CHANGED(&lastPrefs_, &prefs, dynamicscaleoffset) &&
+      !PB_FIELD_CHANGED(&lastPrefs_, &prefs, dynamicscalealgorithm))
     return false;
 
   const bool ds = prefs.dynamicscale();
@@ -551,11 +547,12 @@ bool PlatformModelNode::updateDynamicScale_(const simData::PlatformPrefs& prefs)
   dynamicXform_->setDynamicScalingEnabled(ds);
   // Scale applies whether dynamic scaling is enabled or static scaling is enabled
   dynamicXform_->setStaticScalar(prefs.scale());
-  // Scale scalar and scale offset only apply when dynamic scaling is on
+  // Scale scalar, scale offset, and algorithm only apply when dynamic scaling is on
   if (ds)
   {
     dynamicXform_->setDynamicScalar(prefs.dynamicscalescalar());
     dynamicXform_->setScaleOffset(prefs.dynamicscaleoffset());
+    dynamicXform_->setDynamicScaleToPixels(prefs.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
   }
 
   return true;

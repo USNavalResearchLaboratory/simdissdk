@@ -64,14 +64,14 @@ int VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
     return 1;
   }
 
-  osg::ref_ptr<osgEarth::LineGroup> geode = new osgEarth::LineGroup();
-  createVelocityVector_(prefs, geode.get());
+  osg::ref_ptr<osgEarth::LineGroup> lineGroup = new osgEarth::LineGroup();
+  createVelocityVector_(prefs, lineGroup.get());
 
   // disable lighting
-  simVis::setLighting(geode->getOrCreateStateSet(), osg::StateAttribute::OFF);
+  simVis::setLighting(lineGroup->getOrCreateStateSet(), osg::StateAttribute::OFF);
 
   setNodeMask(DISPLAY_MASK_PLATFORM);
-  this->addChild(geode.get());
+  this->addChild(lineGroup.get());
   return 0;
 }
 
@@ -156,7 +156,7 @@ void VelocityVector::update(const simData::PlatformUpdate& platformUpdate)
     rebuild_(lastPrefs_);
 }
 
-void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, osg::Geode* geode) const
+void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, osg::Group* group) const
 {
   osg::ref_ptr<osgEarth::LineDrawable> geom = new osgEarth::LineDrawable(GL_LINES);
   geom->setName("simVis::VelocityVector");
@@ -199,7 +199,7 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   geom->setLineWidth(lineWidth_);
 
   // Add the drawable to the geode
-  geode->addDrawable(geom.get());
+  group->addChild(geom.get());
 }
 
 }

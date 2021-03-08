@@ -74,7 +74,7 @@ private: // methods
   int rebuild_(const simData::PlatformPrefs& prefs);
 
   /// create the velocity vector line
-  void createVelocityVector_(const simData::PlatformPrefs& prefs, osg::Geode* geode) const;
+  void createVelocityVector_(const simData::PlatformPrefs& prefs, osg::Group* group) const;
 
   simData::PlatformPrefs               lastPrefs_;          ///< last prefs update
   bool                                 forceRebuild_;       ///< flag to force a rebuild

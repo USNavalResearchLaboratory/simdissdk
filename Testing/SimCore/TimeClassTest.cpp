@@ -682,6 +682,28 @@ namespace
     const simCore::Seconds secsm72 = maxTimeStampSecs - simCore::Seconds(0, 72);
     rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_YEAR, maxTimeStampSecs.Double()) > simCore::TimeStamp(simCore::MIN_TIME_YEAR, secsm72.Double()));
 
+
+    // SIM-12482: In the context of numbers that can be represented by TimeStamp,
+    // a double can resolve a 1 microsecond time difference.
+    double startTime = maxTimeStampSecs.Double();
+    // double can resolve 1 microsecond
+    rv += SDK_ASSERT((startTime - 1e-06) < startTime);
+    // cannot resolve 100ns
+    rv += SDK_ASSERT((startTime - 1e-07) == startTime);
+
+    // Converting any double into and out of TimeStamp does not lose any precision (that double can resolve).
+    for (int i = 1; i < 1000; ++i)
+    {
+      double newTime = startTime - 1e-06;
+      // verify that double can detect the difference
+      rv += SDK_ASSERT(newTime < startTime);
+
+      simCore::TimeStamp inTimeStamp(1970, newTime);
+      double outTime = inTimeStamp.secondsSinceRefYear(1970);
+      rv += SDK_ASSERT(newTime == outTime);
+
+      startTime = newTime;
+    }
     return rv;
   }
 

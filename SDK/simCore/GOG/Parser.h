@@ -62,17 +62,18 @@ public:
 
   /**
   * Add or overwrite a color key with a new color
-  * @param[in ] key   GOG key like color1, color2, red, black,...
-  * @param[in ] color The color to use for the given key in GOG hex string format, 0xAABBGGRR
+  * @param key GOG key like color1, color2, red, black,...
+  * @param color The color to use for the given key in GOG hex string format, 0xAABBGGRR
   */
   void addOverwriteColor(const std::string& key, const std::string& colorHex);
 
   /**
    * Parses an input GOG stream into a vector of GogShapes
-   * @param[in ] input GOG input data
-   * @param[out] output Vector that will contain a GogShape object for each shape in the input stream.
+   * @param input GOG input data
+   * @param filename identifies the source GOG file or shape group
+   * @param output Vector that will contain a GogShape object for each shape in the input stream.
    */
-  void parse(std::istream& input, std::vector<GogShapePtr>& output) const;
+  void parse(std::istream& input, const std::string& filename, std::vector<GogShapePtr>& output) const;
 
 private:
   /// Get a GogShape for the specified parsed shape, returns an empty ptr if could not convert
@@ -99,7 +100,7 @@ private:
   // Get the positions from the specified PositionStrings, applying unit conversions if necessary; returns 0 on success, non-zero otherwise
   int getPosition_(const PositionStrings& pos, bool relative, const UnitsState& units, simCore::Vec3& position) const;
   /// Validate that the specified string converts to a double properly, print error on failure; return 0 on success, non-zero otherwise
-  int validateDouble_(const std::string& valueStr, const std::string& paramName, const std::string& name, size_t lineNumber, double& value) const;
+  int validateDouble_(const std::string& valueStr, const std::string& paramName, const std::string& name, const ParsedShape& parsed, double& value) const;
 
   /// Initialize the default GOG colors
   void initGogColors_();
@@ -107,7 +108,7 @@ private:
   std::string parseGogColor_(const std::string& c, bool isHex) const;
 
   /// Prints any GOG parsing error to simNotify
-  void printError_(size_t lineNumber, const std::string& errorText) const;
+  void printError_(const std::string& filename, size_t lineNumber, const std::string& errorText) const;
 
 private:
   const simCore::UnitsRegistry* units_; ///< registry for unit conversions

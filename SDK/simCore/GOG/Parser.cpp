@@ -32,6 +32,7 @@
 #include "simCore/String/ValidNumber.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Calc/Mgrs.h"
 #include "simCore/Calc/Units.h"
 #include "simCore/GOG/GogUtils.h"
@@ -126,7 +127,7 @@ void Parser::setUnitsRegistry(const simCore::UnitsRegistry* registry)
   units_ = registry;
 }
 
-void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
+void Parser::parse(std::istream& input, const std::string& filename, std::vector<GogShapePtr>& output) const
 {
   // Set up the modifier state object with default values. The state persists
   // across the parsing of the GOG input for annotations, spanning actual objects.
@@ -178,7 +179,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     {
       std::stringstream errorText;
       errorText << "token \"" << tokens[0] << "\" detected outside of a valid start/end block";
-      printError_(lineNumber, errorText.str());
+      printError_(filename, lineNumber, errorText.str());
       // skip command
       continue;
     }
@@ -209,17 +210,17 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
     {
       if (validStartEndBlock && tokens[0] == "start")
       {
-        printError_(lineNumber, "nested start command not allowed");
+        printError_(filename, lineNumber, "nested start command not allowed");
         continue;
       }
       if (!validStartEndBlock && tokens[0] == "end")
       {
-        printError_(lineNumber, "end command encountered before start");
+        printError_(filename, lineNumber, "end command encountered before start");
         continue;
       }
       if (tokens[0] == "end" && current.shape() == ShapeType::UNKNOWN)
       {
-        printError_(lineNumber, "end command encountered before recognized GOG shape type keyword");
+        printError_(filename, lineNumber, "end command encountered before recognized GOG shape type keyword");
         continue;
       }
 
@@ -230,6 +231,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         if (!current.hasValue(ShapeParameter::ABSOLUTE_POINTS) && current.pointType() == ParsedShape::LLA)
           current.set(ShapeParameter::ABSOLUTE_POINTS, "1");
         state.apply(current);
+        current.setFilename(filename);
         GogShapePtr gog = getShape_(current);
         if (gog)
           output.push_back(gog);
@@ -257,6 +259,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           if (!current.hasValue(ShapeParameter::ABSOLUTE_POINTS) && current.pointType() == ParsedShape::LLA)
             current.set(ShapeParameter::ABSOLUTE_POINTS, "1");
           state.apply(current);
+          current.setFilename(filename);
           GogShapePtr gog = getShape_(current);
           if (gog)
             output.push_back(gog);
@@ -279,10 +282,14 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         textToken = simCore::StringUtils::substitute(textToken, "_", " ");
         textToken = simCore::StringUtils::substitute(textToken, "\\n", "\n");
         current.set(ShapeParameter::NAME, textToken);
+        invalidShape = false;
       }
       else
       {
-        printError_(lineNumber, "annotation command requires at least 1 argument");
+        printError_(filename, lineNumber, "annotation command requires at least 1 argument");
+        // shape is recognized, but invalid, so set the shape type correctly
+        current.setShape(ShapeType::ANNOTATION);
+        invalidShape = true;
       }
     }
     // object types
@@ -330,7 +337,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       }
       else
       {
-        printError_(lineNumber, "latlonaltbox command requires at least 5 arguments");
+        printError_(filename, lineNumber, "latlonaltbox command requires at least 5 arguments");
       }
     }
     // arguments
@@ -351,7 +358,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       }
       else
       {
-        printError_(lineNumber, "ref/referencepoint command requires at least 2 arguments");
+        printError_(filename, lineNumber, "ref/referencepoint command requires at least 2 arguments");
       }
     }
     // geometric data
@@ -366,7 +373,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       }
       else
       {
-        printError_(lineNumber, "xy/xyz command requires at least 2 arguments");
+        printError_(filename, lineNumber, "xy/xyz command requires at least 2 arguments");
       }
     }
     else if (tokens[0] == "ll" || tokens[0] == "lla" || tokens[0] == "latlon")
@@ -379,7 +386,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           current.append(ParsedShape::LLA, PositionStrings(tokens[1], tokens[2]));
       }
       else
-        printError_(lineNumber, "ll/lla/latlon command requires at least 2 arguments");
+        printError_(filename, lineNumber, "ll/lla/latlon command requires at least 2 arguments");
     }
     else if (tokens[0] == "mgrs")
     {
@@ -388,7 +395,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         double lat;
         double lon;
         if (simCore::Mgrs::convertMgrsToGeodetic(tokens[1], lat, lon) != 0)
-          printError_(lineNumber, "Unable to convert MGRS coordinate to lat/lon");
+          printError_(filename, lineNumber, "Unable to convert MGRS coordinate to lat/lon");
         else
         {
           const std::string& latString = simCore::buildString("", lat * simCore::RAD2DEG);
@@ -400,7 +407,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         }
       }
       else
-        printError_(lineNumber, "mgrs command requires at least 2 arguments");
+        printError_(filename, lineNumber, "mgrs command requires at least 2 arguments");
     }
     else if (tokens[0] == "centerxy" || tokens[0] == "centerxyz")
     {
@@ -413,7 +420,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           current.set(ShapeParameter::CENTERXY, PositionStrings(tokens[1], tokens[2]));
       }
       else
-        printError_(lineNumber, "centerxy/centerxyz command requires at least 2 arguments");
+        printError_(filename, lineNumber, "centerxy/centerxyz command requires at least 2 arguments");
     }
     else if (tokens[0] == "centerxy2")
     {
@@ -423,7 +430,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         current.set(ShapeParameter::CENTERXY2, PositionStrings(tokens[1], tokens[2]));
       }
       else
-        printError_(lineNumber, "centerxy2 command requires at least 2 arguments");
+        printError_(filename, lineNumber, "centerxy2 command requires at least 2 arguments");
     }
     else if (tokens[0] == "centerll" || tokens[0] == "centerlla" || tokens[0] == "centerlatlon")
     {
@@ -436,7 +443,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           current.set(ShapeParameter::CENTERLL, PositionStrings(tokens[1], tokens[2]));
       }
       else
-        printError_(lineNumber, "centerll/centerlla/centerlatlon command requires at least 2 arguments");
+        printError_(filename, lineNumber, "centerll/centerlla/centerlatlon command requires at least 2 arguments");
     }
     else if (tokens[0] == "centerll2" || tokens[0] == "centerlatlon2")
     {
@@ -447,7 +454,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         current.set(ShapeParameter::CENTERLL2, PositionStrings(tokens[1], tokens[2]));
       }
       else
-        printError_(lineNumber, "centerll2 command requires at least 2 arguments");
+        printError_(filename, lineNumber, "centerll2 command requires at least 2 arguments");
     }
     // persistent state modifiers:
     else if (tokens[0] == "linecolor")
@@ -457,7 +464,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       else if (tokens.size() == 3)
         state.lineColor_ = parseGogColor_(tokens[2], true);
       else
-        printError_(lineNumber, "linecolor command requires at least 1 argument");
+        printError_(filename, lineNumber, "linecolor command requires at least 1 argument");
     }
     else if (tokens[0] == "fillcolor")
     {
@@ -466,28 +473,28 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       else if (tokens.size() == 3)
         state.fillColor_ = parseGogColor_(tokens[2], true);
       else
-        printError_(lineNumber, "fillcolor command requires at least 1 argument");
+        printError_(filename, lineNumber, "fillcolor command requires at least 1 argument");
     }
     else if (tokens[0] == "linewidth")
     {
       if (tokens.size() >= 2)
         state.lineWidth_ = tokens[1];
       else
-        printError_(lineNumber, "linewidth command requires 1 argument");
+        printError_(filename, lineNumber, "linewidth command requires 1 argument");
      }
     else if (tokens[0] == "pointsize")
     {
       if (tokens.size() >= 2)
         state.pointSize_ = tokens[1];
       else
-        printError_(lineNumber, "pointsize command requires 1 argument");
+        printError_(filename, lineNumber, "pointsize command requires 1 argument");
     }
     else if (tokens[0] == "altitudemode")
     {
       if (tokens.size() >= 2)
         state.altitudeMode_ = tokens[1];
       else
-        printError_(lineNumber, "altitudemode command requires 1 argument");
+        printError_(filename, lineNumber, "altitudemode command requires 1 argument");
     }
     else if (tokens[0] == "altitudeunits")
     {
@@ -497,7 +504,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         state.altitudeUnits_ = restOfLine;
       }
       else
-        printError_(lineNumber, "altitudeunits command requires 1 argument");
+        printError_(filename, lineNumber, "altitudeunits command requires 1 argument");
     }
     else if (tokens[0] == "rangeunits")
     {
@@ -507,7 +514,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         state.rangeUnits_ = restOfLine;
       }
       else
-        printError_(lineNumber, "rangeunits command requires 1 argument");
+        printError_(filename, lineNumber, "rangeunits command requires 1 argument");
     }
     else if (tokens[0] == "angleunits")
     {
@@ -517,21 +524,21 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         state.angleUnits_ = restOfLine;
       }
       else
-        printError_(lineNumber, "angleunits command requires 1 argument");
+        printError_(filename, lineNumber, "angleunits command requires 1 argument");
     }
     else if (tokens[0] == "verticaldatum")
     {
       if (tokens.size() >= 2)
         state.verticalDatum_ = tokens[1];
       else
-        printError_(lineNumber, "verticaldatum command requires 1 argument");
+        printError_(filename, lineNumber, "verticaldatum command requires 1 argument");
     }
     else if (tokens[0] == "priority")
     {
       if (tokens.size() >= 2)
         state.priority_ = tokens[1];
       else
-        printError_(lineNumber, "priority command requires 1 argument");
+        printError_(filename, lineNumber, "priority command requires 1 argument");
     }
     else if (tokens[0] == "filled")
     {
@@ -542,7 +549,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       if (tokens.size() >= 2)
         current.set(ShapeParameter::OUTLINE, tokens[1]);
       else
-        printError_(lineNumber, "outline command requires 1 argument");
+        printError_(filename, lineNumber, "outline command requires 1 argument");
     }
     else if (tokens[0] == "textoutlinecolor")
     {
@@ -551,14 +558,14 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       else if (tokens.size() == 3)
         state.textOutlineColor_ = parseGogColor_(tokens[2], true);
       else
-        printError_(lineNumber, "textoutlinecolor command requires at least 1 argument");
+        printError_(filename, lineNumber, "textoutlinecolor command requires at least 1 argument");
     }
     else if (tokens[0] == "textoutlinethickness")
     {
       if (tokens.size() >= 2)
         state.textOutlineThickness_ = tokens[1];
       else
-        printError_(lineNumber, "textoutlinethickness command requires 1 argument");
+        printError_(filename, lineNumber, "textoutlinethickness command requires 1 argument");
     }
     else if (tokens[0] == "diameter")
     {
@@ -573,49 +580,49 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         }
       }
       else
-        printError_(lineNumber, "diameter command requires 1 argument");
+        printError_(filename, lineNumber, "diameter command requires 1 argument");
     }
     else if (tokens[0] == "radius")
     {
       if (tokens.size() >= 2)
         current.set(ShapeParameter::RADIUS, tokens[1]);
       else
-        printError_(lineNumber, "radius command requires 1 argument");
+        printError_(filename, lineNumber, "radius command requires 1 argument");
     }
     else if (tokens[0] == "anglestart")
     {
       if (tokens.size() >= 2)
         current.set(ShapeParameter::ANGLESTART, tokens[1]);
       else
-        printError_(lineNumber, "anglestart command requires 1 argument");
+        printError_(filename, lineNumber, "anglestart command requires 1 argument");
     }
     else if (tokens[0] == "angleend")
     {
       if (tokens.size() >= 2)
         current.set(ShapeParameter::ANGLEEND, tokens[1]);
       else
-        printError_(lineNumber, "angleend command requires 1 argument");
+        printError_(filename, lineNumber, "angleend command requires 1 argument");
     }
     else if (tokens[0] == "angledeg")
     {
       if (tokens.size() >= 2)
         current.set(ShapeParameter::ANGLEDEG, tokens[1]);
       else
-        printError_(lineNumber, "angledeg command requires 1 argument");
+        printError_(filename, lineNumber, "angledeg command requires 1 argument");
    }
     else if (tokens[0] == "majoraxis")
     {
       if (tokens.size() >= 2)
         current.set(ShapeParameter::MAJORAXIS, tokens[1]);
       else
-        printError_(lineNumber, "majoraxis command requires 1 argument");
+        printError_(filename, lineNumber, "majoraxis command requires 1 argument");
     }
     else if (tokens[0] == "minoraxis")
     {
       if (tokens.size() >= 2)
         current.set(ShapeParameter::MINORAXIS, tokens[1]);
       else
-        printError_(lineNumber, "minoraxis command requires 1 argument");
+        printError_(filename, lineNumber, "minoraxis command requires 1 argument");
     }
     else if (tokens[0] == "semimajoraxis")
     {
@@ -630,7 +637,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         }
       }
       else
-        printError_(lineNumber, "semimajoraxis command requires 1 argument");
+        printError_(filename, lineNumber, "semimajoraxis command requires 1 argument");
     }
     else if (tokens[0] == "semiminoraxis")
     {
@@ -645,7 +652,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         }
       }
       else
-        printError_(lineNumber, "semiminoraxis command requires 1 argument");
+        printError_(filename, lineNumber, "semiminoraxis command requires 1 argument");
     }
     else if (tokens[0] == "scale")
     {
@@ -656,7 +663,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         current.set(ShapeParameter::SCALEZ, tokens[3]);
       }
       else
-        printError_(lineNumber, "scale command requires 3 arguments");
+        printError_(filename, lineNumber, "scale command requires 3 arguments");
     }
     else if (tokens[0] == "orient")
     {
@@ -678,7 +685,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           current.set(ShapeParameter::FOLLOW, "c");
       }
       else
-        printError_(lineNumber, "orient command requires at least 1 argument");
+        printError_(filename, lineNumber, "orient command requires at least 1 argument");
     }
     else if (startsWith(line, "rotate"))
       current.set(ShapeParameter::FOLLOW, "cpr"); // c=heading(course), p=pitch, r=roll
@@ -709,7 +716,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
           current.set(ShapeParameter::FOLLOW, restOfLine);
       }
       else
-        printError_(lineNumber, "3d command requires at least 2 arguments: " + line);
+        printError_(filename, lineNumber, "3d command requires at least 2 arguments: " + line);
     }
     else if (startsWith(line, "extrude"))
     {
@@ -725,14 +732,14 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
         }
       }
       else
-        printError_(lineNumber, "extrude command requires at least 1 argument");
+        printError_(filename, lineNumber, "extrude command requires at least 1 argument");
     }
     else if (tokens[0] == "height")
     {
       if (tokens.size() >= 2)
         current.set(ShapeParameter::HEIGHT, tokens[1]);
       else
-        printError_(lineNumber, "height command requires 1 argument");
+        printError_(filename, lineNumber, "height command requires 1 argument");
     }
     else if (tokens[0] == "tessellate")
       current.set(ShapeParameter::TESSELLATE, tokens[1]);
@@ -761,7 +768,7 @@ void Parser::parse(std::istream& input, std::vector<GogShapePtr>& output) const
       {
         // filter out items that are explicitly unhandled
         if (unhandledKeywords_.find(tokens[0]) == unhandledKeywords_.end())
-          printError_(lineNumber, "Found unknown GOG command " + line);
+          printError_(filename, lineNumber, "Found unknown GOG command " + line);
       }
     }
   }
@@ -787,8 +794,6 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   // default to absolute if not otherwise specified
   bool relative = !parsed.boolValue(ShapeParameter::ABSOLUTE_POINTS, false);
   std::string name = parsed.stringValue(ShapeParameter::NAME);
-  if (name.empty())
-    name = GogShape::shapeTypeToString(parsed.shape());
   switch (parsed.shape())
   {
   case ShapeType::ANNOTATION:
@@ -796,7 +801,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     // annotation requires text
     if (!parsed.hasValue(ShapeParameter::TEXT))
     {
-      printError_(parsed.lineNumber(), "Annotation " + name + " missing text, cannot create shape");
+      printError_(parsed.filename(), parsed.lineNumber(), "Annotation " + name + " missing text, cannot create shape");
       break;
     }
 
@@ -826,11 +831,12 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       anno->setFontName(parsed.stringValue(ShapeParameter::FONTNAME));
     if (parsed.hasValue(ShapeParameter::TEXTSIZE))
     {
-      int textSize = 0;
+      // support double input by user and round to int
+      double textSize = 0;
       if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::TEXTSIZE), textSize))
-        anno->setTextSize(textSize);
+        anno->setTextSize(static_cast<int>(simCore::round(textSize)));
       else
-        printError_(parsed.lineNumber(), "Invalid fontsize: " + parsed.stringValue(ShapeParameter::TEXTSIZE) + " for " + name);
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid fontsize: " + parsed.stringValue(ShapeParameter::TEXTSIZE) + " for " + name);
     }
     if (parsed.hasValue(ShapeParameter::LINECOLOR))
     {
@@ -850,7 +856,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       else if (thicknessStr != "none")
       {
         valid = false;
-        printError_(parsed.lineNumber(), "Invalid textoutlinethickness: " + thicknessStr + " for " + name);
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid textoutlinethickness: " + thicknessStr + " for " + name);
       }
       if (valid)
         anno->setOutlineThickness(thickness);
@@ -866,7 +872,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     if (parsed.hasValue(ShapeParameter::PRIORITY))
     {
       double priority = 0.;
-      if (validateDouble_(parsed.stringValue(ShapeParameter::PRIORITY), "priority", name, parsed.lineNumber(), priority) == 0)
+      if (validateDouble_(parsed.stringValue(ShapeParameter::PRIORITY), "priority", name, parsed, priority) == 0)
         anno->setPriority(priority);
     }
     rv.reset(anno);
@@ -934,7 +940,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       }
     }
     if (!hasPoints)
-      printError_(parsed.lineNumber(), "orbit " + name + " missing or invalid center points, cannot create shape");
+      printError_(parsed.filename(), parsed.lineNumber(), "orbit " + name + " missing or invalid center points, cannot create shape");
     break;
   }
   case ShapeType::CONE:
@@ -953,10 +959,10 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     if (parsed.hasValue(ShapeParameter::MAJORAXIS))
     {
       double majorAxis = 0.;
-      if (validateDouble_(parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed.lineNumber(), majorAxis) == 0)
+      if (validateDouble_(parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed, majorAxis) == 0)
         ellipsoid->setMajorAxis(units.rangeUnits().convertTo(simCore::Units::METERS, majorAxis));
       double minorAxis = 0.;
-      if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed.lineNumber(), minorAxis) == 0)
+      if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed, minorAxis) == 0)
         ellipsoid->setMinorAxis(units.rangeUnits().convertTo(simCore::Units::METERS, minorAxis));
     }
     rv.reset(ellipsoid.release());
@@ -969,7 +975,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     const std::vector<PositionStrings>& positions = parsed.positions();
     if (positions.empty())
     {
-      printError_(parsed.lineNumber(), "point " + name + " has no points, cannot create shape");
+      printError_(parsed.filename(), parsed.lineNumber(), "point " + (name.empty() ? "" : name + " ") + "has no points, cannot create shape");
       break;
     }
     std::unique_ptr<Points> points(new Points(relative));
@@ -981,15 +987,19 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
     if (points->points().empty())
     {
-      printError_(parsed.lineNumber(), "point " + name + " has no valid points, cannot create shape");
+      printError_(parsed.filename(), parsed.lineNumber(), "point " + (name.empty() ? "" : name + " ") + "has no valid points, cannot create shape");
       break;
     }
     parseOutlined_(parsed, points.get());
     if (parsed.hasValue(ShapeParameter::POINTSIZE))
     {
-      int pointSize = 0;
-      if (simCore::isValidNumber(parsed.stringValue(ShapeParameter::POINTSIZE), pointSize))
-        points->setPointSize(pointSize);
+      // support double input by user and round to int
+      double pointSize = 0;
+      std::string pointSizeStr = parsed.stringValue(ShapeParameter::POINTSIZE);
+      if (simCore::isValidNumber(pointSizeStr, pointSize))
+        points->setPointSize(static_cast<int>(simCore::round(pointSize)));
+      else
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid pointsize: " + pointSizeStr + (name.empty() ? "" : " for " + name));
     }
     if (parsed.hasValue(ShapeParameter::LINECOLOR))
     {
@@ -1016,7 +1026,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     if (parsed.hasValue(ShapeParameter::HEIGHT))
     {
       double height = 0.;
-      if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed.lineNumber(), height) == 0)
+      if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed, height) == 0)
         cyl->setHeight(units.altitudeUnits().convertTo(simCore::Units::METERS, height));
     }
     rv.reset(cyl.release());
@@ -1077,7 +1087,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
         rv.reset(llab.release());
       }
       else
-        printError_(parsed.lineNumber(), "latlonaltbox " + name + " had invalid values, cannot create shape");
+        printError_(parsed.filename(), parsed.lineNumber(), "latlonaltbox " + name + " had invalid values, cannot create shape");
     }
     break;
   }
@@ -1122,7 +1132,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
         rv.reset(imageOverlay.release());
       }
       else
-        printError_(parsed.lineNumber(), "kml_groundoverlay " + name + " had invalid values, cannot create shape");
+        printError_(parsed.filename(), parsed.lineNumber(), "kml_groundoverlay " + name + " had invalid values, cannot create shape");
     }
     break;
   }
@@ -1146,7 +1156,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   if (parsed.hasValue(ShapeParameter::OFFSETALT))
   {
     double altOffset = 0.;
-    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETALT), "offsetalt", name, parsed.lineNumber(), altOffset) == 0)
+    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETALT), "offsetalt", name, parsed, altOffset) == 0)
       rv->setAltitudeOffset(units.altitudeUnits().convertTo(simCore::Units::METERS, altOffset));
   }
 
@@ -1166,7 +1176,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   if (parsed.hasValue(ShapeParameter::EXTRUDE_HEIGHT))
   {
     double height = 0.;
-    if (validateDouble_(parsed.stringValue(ShapeParameter::EXTRUDE_HEIGHT), "extrude height", name, parsed.lineNumber(), height) == 0)
+    if (validateDouble_(parsed.stringValue(ShapeParameter::EXTRUDE_HEIGHT), "extrude height", name, parsed, height) == 0)
       rv->setExtrudeHeight(units.altitudeUnits().convertTo(simCore::Units::METERS, height));
   }
 
@@ -1182,7 +1192,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     if (simCore::getAngleFromDegreeString(pos.x, true, lat) == 0 && simCore::getAngleFromDegreeString(pos.y, true, lon) == 0)
       rv->setReferencePosition(simCore::Vec3(lat, lon, alt));
     else
-      printError_(parsed.lineNumber(), "Invalid referencepoint: " + parsed.stringValue(ShapeParameter::REF_LLA) + " for " + name);
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid referencepoint: " + parsed.stringValue(ShapeParameter::REF_LLA) + " for " + name);
 
   }
   // if SCALEX exists, so should the others
@@ -1193,9 +1203,9 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     double scaleX = 1.;
     double scaleY = 1.;
     double scaleZ = 1.;
-    bool validX = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEX), "scale x", name, parsed.lineNumber(), scaleX) == 0);
-    bool validY = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEY), "scale y", name, parsed.lineNumber(), scaleY) == 0);
-    bool validZ = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEZ), "scale z", name, parsed.lineNumber(), scaleZ) == 0);
+    bool validX = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEX), "scale x", name, parsed, scaleX) == 0);
+    bool validY = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEY), "scale y", name, parsed, scaleY) == 0);
+    bool validZ = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEZ), "scale z", name, parsed, scaleZ) == 0);
     // only need one valid value, using scale default of 1 otherwise
     if (validX || validY || validZ)
       rv->setScale(simCore::Vec3(scaleX, scaleY, scaleZ));
@@ -1216,21 +1226,21 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   {
     double yawOffset = 0.;
     // note that original GOG terminology was mistaken, they used course when they meant heading/yaw
-    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETYAW), "offsetcourse", name, parsed.lineNumber(), yawOffset) == 0)
+    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETYAW), "offsetcourse", name, parsed, yawOffset) == 0)
       rv->setYawOffset(simCore::angFix2PI(units.angleUnits().convertTo(simCore::Units::RADIANS, yawOffset)));
   }
 
   if (parsed.hasValue(ShapeParameter::OFFSETPITCH))
   {
     double pitchOffset = 0.;
-    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETPITCH), "offsetpitch", name, parsed.lineNumber(), pitchOffset) == 0)
+    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETPITCH), "offsetpitch", name, parsed, pitchOffset) == 0)
       rv->setPitchOffset(simCore::angFix2PI(units.angleUnits().convertTo(simCore::Units::RADIANS, pitchOffset)));
   }
 
   if (parsed.hasValue(ShapeParameter::OFFSETROLL))
   {
     double rollOffset = 0.;
-    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETROLL), "offsetroll", name, parsed.lineNumber(), rollOffset) == 0)
+    if (validateDouble_(parsed.stringValue(ShapeParameter::OFFSETROLL), "offsetroll", name, parsed, rollOffset) == 0)
       rv->setRollOffset(simCore::angFix2PI(units.angleUnits().convertTo(simCore::Units::RADIANS, rollOffset)));
   }
 
@@ -1250,11 +1260,11 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   return rv;
 }
 
-int Parser::validateDouble_(const std::string& valueStr, const std::string& paramName, const std::string& name, size_t lineNumber, double& value) const
+int Parser::validateDouble_(const std::string& valueStr, const std::string& paramName, const std::string& name, const ParsedShape& parsed, double& value) const
 {
   if (simCore::isValidNumber(valueStr, value))
     return 0;
-  printError_(lineNumber, "Invalid " + paramName + ": " + valueStr + " for " + name);
+  printError_(parsed.filename(), parsed.lineNumber(), "Invalid " + paramName + ": " + valueStr + (name.empty() ? "" : " for " + name));
   return 1;
 }
 
@@ -1283,7 +1293,7 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     if (getColor_(parsed, ShapeParameter::LINECOLOR, name, "linecolor", color) == 0)
       shape->setLineColor(color);
     else
-      printError_(parsed.lineNumber(), "Invalid linecolor: " + parsed.stringValue(ShapeParameter::LINECOLOR) + " for " + name);
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid linecolor: " + parsed.stringValue(ShapeParameter::LINECOLOR) + (name.empty() ? "" : " for " + name));
   }
   if (parsed.hasValue(ShapeParameter::LINESTYLE))
   {
@@ -1296,7 +1306,7 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
       style = LineStyle::DOTTED;
     else if (styleStr != "solid")
     {
-      printError_(parsed.lineNumber(), "Invalid linestyle: " + styleStr + " for " + name);
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid linestyle: " + styleStr + (name.empty() ? "" : " for " + name));
       valid = false;
     }
     if (valid)
@@ -1304,12 +1314,23 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
   }
   if (parsed.hasValue(ShapeParameter::LINEWIDTH))
   {
-    int lineWidth = 0;
+    // support double input by user and round to int
+    double lineWidth = 0;
     std::string lineWidthStr = parsed.stringValue(ShapeParameter::LINEWIDTH);
     if (simCore::isValidNumber(lineWidthStr, lineWidth))
-      shape->setLineWidth(lineWidth);
+      shape->setLineWidth(static_cast<int>(simCore::round(lineWidth)));
     else
-      printError_(parsed.lineNumber(), "Invalid linewidth: " + lineWidthStr + " for " + name);
+    {
+      std::string lowerLineWidth = simCore::lowerCase(lineWidthStr);
+      if (lowerLineWidth == "thin")
+        shape->setLineWidth(1);
+      else if (lowerLineWidth == "med" || lowerLineWidth == "medium")
+        shape->setLineWidth(2);
+      else if (lowerLineWidth == "thick")
+        shape->setLineWidth(4);
+      else
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid linewidth: " + lineWidthStr + (name.empty() ? "" : " for " + name));
+    }
   }
   if (parsed.hasValue(ShapeParameter::FILLED))
     shape->setFilled(parsed.boolValue(ShapeParameter::FILLED, true));
@@ -1319,7 +1340,7 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
     if (getColor_(parsed, ShapeParameter::FILLCOLOR, name, "fillcolor", color) == 0)
       shape->setFillColor(color);
     else
-      printError_(parsed.lineNumber(), "Invalid fillcolor: " + parsed.stringValue(ShapeParameter::LINECOLOR) + " for " + name);
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid fillcolor: " + parsed.stringValue(ShapeParameter::LINECOLOR) + (name.empty() ? "" : " for " + name));
   }
 }
 
@@ -1334,12 +1355,12 @@ int Parser::parsePointBased_(const ParsedShape& parsed, bool relative, const std
   const std::vector<PositionStrings>& positions = parsed.positions();
   if (positions.empty())
   {
-    printError_(parsed.lineNumber(), shapeTypeName + " " + name + " has no points, cannot create shape");
+    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + (name.empty() ? "" : " " + name) + " has no points, cannot create shape");
     return 1;
   }
   else if (positions.size() < minimumNumPoints)
   {
-    printError_(parsed.lineNumber(), shapeTypeName + " " + name + " has less than the required number of points, cannot create shape");
+    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + (name.empty() ? "" : " " + name) + " has less than the required number of points, cannot create shape");
     return 1;
   }
   for (PositionStrings pos : positions)
@@ -1350,12 +1371,12 @@ int Parser::parsePointBased_(const ParsedShape& parsed, bool relative, const std
   }
   if (shape->points().empty())
   {
-    printError_(parsed.lineNumber(), shapeTypeName + " " + name + " has no valid points, cannot create shape");
+    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + (name.empty() ? "" : " " + name) + " has no valid points, cannot create shape");
     return 1;
   }
   else if (shape->points().size() < minimumNumPoints)
   {
-    printError_(parsed.lineNumber(), shapeTypeName + " " + name + " has less than the required number of valid points, cannot create shape");
+    printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + (name.empty() ? "" : " " + name) + " has less than the required number of valid points, cannot create shape");
     return 1;
   }
   parsePointBasedOptional_(parsed, name, shape);
@@ -1406,13 +1427,13 @@ void Parser::parseCircularOptional_(const ParsedShape& parsed, bool relative, co
     if (getPosition_(parsed.positionValue(param), relative, units, position) == 0)
       shape->setCenterPosition(position);
     else
-      printError_(parsed.lineNumber(), GogShape::shapeTypeToString(shape->shapeType()) + " " + name + " invalid center point");
+      printError_(parsed.filename(), parsed.lineNumber(), GogShape::shapeTypeToString(shape->shapeType()) + (name.empty() ? "" : " " + name) + " invalid center point");
   }
 
   if (!parsed.hasValue(ShapeParameter::RADIUS))
     return;
   double radius = 0.;
-  if (validateDouble_(parsed.stringValue(ShapeParameter::RADIUS), "radius", name, parsed.lineNumber(), radius) == 0)
+  if (validateDouble_(parsed.stringValue(ShapeParameter::RADIUS), "radius", name, parsed, radius) == 0)
     shape->setRadius(units.rangeUnits().convertTo(simCore::Units::METERS, radius));
 }
 
@@ -1427,7 +1448,7 @@ void Parser::parseCircularHeightOptional_(const ParsedShape& parsed, const std::
     return;
 
   double height = 0.;
-  if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed.lineNumber(), height) == 0)
+  if (validateDouble_(parsed.stringValue(ShapeParameter::HEIGHT), "height", name, parsed, height) == 0)
     shape->setHeight(units.altitudeUnits().convertTo(simCore::Units::METERS, height));
 }
 
@@ -1442,7 +1463,7 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
   double angleStart = 0;
   if (parsed.hasValue(ShapeParameter::ANGLESTART))
   {
-    if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLESTART), "anglestart", name, parsed.lineNumber(), angleStart) == 0)
+    if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLESTART), "anglestart", name, parsed, angleStart) == 0)
     {
       angleStart = simCore::angFix2PI(units.angleUnits().convertTo(simCore::Units::RADIANS, angleStart));
       shape->setAngleStart(angleStart);
@@ -1455,38 +1476,38 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
     if (parsed.hasValue(ShapeParameter::ANGLEDEG))
     {
       double angleSweep = 0.;
-      if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLEDEG), "angledeg", name, parsed.lineNumber(), angleSweep) == 0)
+      if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLEDEG), "angledeg", name, parsed, angleSweep) == 0)
       {
         if (angleSweep != 0.)
           shape->setAngleSweep(units.angleUnits().convertTo(simCore::Units::RADIANS, angleSweep));
         else
-          printError_(parsed.lineNumber(), "for " + name + " angledeg cannot be 0");
+          printError_(parsed.filename(), parsed.lineNumber(), (name.empty() ? "" : "for " + name + " ") + "angledeg cannot be 0");
       }
     }
     if (parsed.hasValue(ShapeParameter::ANGLEEND))
     {
       double angleEnd = 0.;
-      if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLEEND), "angleend", name, parsed.lineNumber(), angleEnd) == 0)
+      if (validateDouble_(parsed.stringValue(ShapeParameter::ANGLEEND), "angleend", name, parsed, angleEnd) == 0)
       {
         // convert to sweep, cannot cross 0 with angleend
         angleEnd = simCore::angFix2PI(units.angleUnits().convertTo(simCore::Units::RADIANS, angleEnd));
         if (angleEnd != angleStart)
           shape->setAngleSweep(angleEnd - angleStart);
         else
-          printError_(parsed.lineNumber(), "for " + name + " angleend cannot be the same as anglestart");
+          printError_(parsed.filename(), parsed.lineNumber(), (name.empty() ? "" : "for " + name + " ") + "angleend cannot be the same as anglestart");
       }
     }
   }
   if (parsed.hasValue(ShapeParameter::MAJORAXIS))
   {
     double majorAxis = 0.;
-    if (validateDouble_( parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed.lineNumber(), majorAxis) == 0)
+    if (validateDouble_( parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed, majorAxis) == 0)
       shape->setMajorAxis(units.rangeUnits().convertTo(simCore::Units::METERS, majorAxis));
   }
   if (parsed.hasValue(ShapeParameter::MINORAXIS))
   {
     double minorAxis = 0.;
-    if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed.lineNumber(), minorAxis) == 0)
+    if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed, minorAxis) == 0)
       shape->setMinorAxis(units.rangeUnits().convertTo(simCore::Units::METERS, minorAxis));
   }
 }
@@ -1497,7 +1518,7 @@ int Parser::getColor_(const ParsedShape& parsed, ShapeParameter param, const std
   uint32_t abgr;
   if (!simCore::isValidHexNumber(colorStr, abgr))
   {
-    printError_(parsed.lineNumber(), "Invalid " + fieldName + ": " + colorStr + " for " + shapeName);
+    printError_(parsed.filename(), parsed.lineNumber(), "Invalid " + fieldName + ": " + colorStr + (shapeName.empty() ? "" : " for " + shapeName));
     return 1;
   }
   color = Color(abgr & 0xff, (abgr >> 8) & 0xff, (abgr >> 16) & 0xff, (abgr >> 24) & 0xff);
@@ -1540,9 +1561,9 @@ int Parser::getPosition_(const PositionStrings & pos, bool relative, const Units
   return 0;
 }
 
-void Parser::printError_(size_t lineNumber, const std::string& errorText) const
+void Parser::printError_(const std::string& filename, size_t lineNumber, const std::string& errorText) const
 {
-  SIM_ERROR << "GOG error: " << errorText << ", line: " << lineNumber << std::endl;
+  SIM_ERROR << "GOG: " << errorText << ", " << (!filename.empty() ? filename + " " : "") <<  "line: " << lineNumber << std::endl;
 }
 
 

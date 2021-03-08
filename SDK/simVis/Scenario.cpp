@@ -25,6 +25,7 @@
 #include "osgEarth/Horizon"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
+#include "osgEarth/Utils"
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"
@@ -82,14 +83,20 @@ struct SetHorizonCullCallback : public osg::NodeCallback
 
   void operator()(osg::Node* node, osg::NodeVisitor* nv)
   {
+    // Do not move this declaration inside the if() statement.  The osgEarth::ObjectStorage::set()
+    // solution stores the pointer in an osg::observer_ptr, so when horizon falls out of scope it
+    // gets set to null.  See SIM-12601 for details.
+    osg::ref_ptr<osgEarth::Horizon> horizon;
     if (_horizonProto.valid())
     {
-      osg::ref_ptr<osgEarth::Horizon> horizon = osg::clone(_horizonProto.get(), osg::CopyOp::DEEP_COPY_ALL);
+      horizon = osg::clone(_horizonProto.get(), osg::CopyOp::DEEP_COPY_ALL);
       horizon->setEye(nv->getViewPoint());
       horizon->setName("simVis.ScenarioManager.SetHorizonCullCallback");
-      // SIM-11395: deep copy copies the scale (derived from the em) correctly,
-      //  but does not copy ellipsoid model itself; for our purposes, it is probably ok.
+#if OSGEARTH_SOVERSION >= 105
+      osgEarth::ObjectStorage::set(nv, horizon.get());
+#else
       horizon->put(*nv);
+#endif
     }
     traverse(node, nv);
   }
@@ -106,9 +113,12 @@ public:
 
   virtual void operator()(simVis::PlatformModelNode* model, Callback::EventType eventType)
   {
-    if (eventType == Callback::BOUNDS_CHANGED)
+    if (eventType == Callback::BOUNDS_CHANGED && model && model->getNumParents() > 0)
     {
-      const simVis::PlatformNode* platform = osgEarth::findFirstParentOfType<const simVis::PlatformNode>(model);
+      // First parent should be the simVis::PlatformNode
+      const simVis::PlatformNode* platform = dynamic_cast<const simVis::PlatformNode*>(model->getParent(0));
+      // Failure means layout changed.  We could try to use osgEarth::findFirstParentOfType() but it fails when parent has nodemask of 0
+      assert(platform);
       osg::ref_ptr<simVis::ScenarioManager> refScenario;
       if (platform && scenarioManager_.lock(refScenario))
         refScenario->notifyBeamsOfNewHostSize(*platform);
@@ -432,6 +442,7 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   em.setRadiusPolar(em.getRadiusPolar() - 11000.0);
   SetHorizonCullCallback* setHorizon = new SetHorizonCullCallback(new osgEarth::Horizon(em));
   root_->addCullCallback(setHorizon);
+  // SIM-7889 - this horizon also gets picked up by GOG annotations (which are not children of root_, but are children of root_'s parent)
 
   // Clamping requires a Group for MapNode changes
   surfaceClamping_ = new SurfaceClamping();

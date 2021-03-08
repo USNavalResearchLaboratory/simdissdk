@@ -337,7 +337,11 @@ void MapScale::recalculatePixelDistance_()
     return;
   }
   osg::NodePath mapNodePath;
+#if OSGEARTH_SOVERSION >= 104
+  mapNodePath.push_back(sm->getMapNode()->getTerrainEngine()->getNode());
+#else
   mapNodePath.push_back(sm->getMapNode()->getTerrainEngine());
+#endif
 
   const osg::Viewport* viewport = view->getCamera()->getViewport();
   if (!viewport)

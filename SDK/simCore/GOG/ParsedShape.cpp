@@ -42,6 +42,7 @@ void ParsedShape::reset()
   points_.clear();
   pointType_ = UNKNOWN;
   lineNumber_ = 0;
+  filename_.clear();
   comments_.clear();
 }
 
@@ -53,6 +54,16 @@ void ParsedShape::setLineNumber(size_t lineNumber)
 size_t ParsedShape::lineNumber() const
 {
   return lineNumber_;
+}
+
+void ParsedShape::setFilename(const std::string& filename)
+{
+  filename_ = filename;
+}
+
+std::string ParsedShape::filename() const
+{
+  return filename_;
 }
 
 void ParsedShape::set(ShapeParameter key, const std::string& value)

@@ -53,7 +53,10 @@ RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
   drapeable_ = new osgEarth::DrapeableNode();
   getPositionAttitudeTransform()->addChild(drapeable_);
   drapeable_->addChild(geode_);
+#if OSGEARTH_SOVERSION < 106
+  // Drapeable loses setMapNode() in osgEarth SOVERSION 106
   drapeable_->setMapNode(mapNode);
+#endif
 
   setMapNode(mapNode);
 }
@@ -73,7 +76,10 @@ void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
     mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 
   GeoPositionNode::setMapNode(mapNode);
+#if OSGEARTH_SOVERSION < 106
+  // Drapeable loses setMapNode() in osgEarth SOVERSION 106
   drapeable_->setMapNode(mapNode);
+#endif
 
   // re-apply the position
   setCoordinate(coord_);

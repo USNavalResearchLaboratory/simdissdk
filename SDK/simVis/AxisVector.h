@@ -86,14 +86,14 @@ private:
   void init_();
 
   /// create the axis vector lines
-  void createAxisVectors_(osg::Geode* geode) const;
+  void createAxisVectors_() const;
 
   /// width of axis vector lines
   float lineWidth_;
   /// most recent value for axis size
   osg::Vec3f axisLengths_;
   /// holds the 3 axis vectors
-  osg::ref_ptr<osgEarth::LineGroup> geode_;
+  osg::ref_ptr<osgEarth::LineGroup> lineGroup_;
 };
 
 } // namespace simVis

@@ -84,38 +84,65 @@ int testGeneralSyntax()
   // test file with missing end fails to create shape
   std::stringstream missingEnd;
   missingEnd << "start\n circle\n";
-  parser.parse(missingEnd, shapes);
+  parser.parse(missingEnd, "", shapes);
   rv += SDK_ASSERT(shapes.empty());
   shapes.clear();
 
   // test file with missing start fails to create shape
   std::stringstream missingStart;
   missingStart << "circle\n end\n";
-  parser.parse(missingStart, shapes);
+  parser.parse(missingStart, "", shapes);
   rv += SDK_ASSERT(shapes.empty());
   shapes.clear();
 
   // test file with multiple keywords between start/end fails to create shape
   std::stringstream uncertainShape;
   uncertainShape << "start\n circle\n line\n centerlla 25.1 58.2 0.\n end\n";
-  parser.parse(uncertainShape, shapes);
+  parser.parse(uncertainShape, "", shapes);
   rv += SDK_ASSERT(shapes.empty());
   shapes.clear();
 
   // test mixed case creates shapes
   std::stringstream mixedCaseCircle;
   mixedCaseCircle << "start\n CirCle\n centerLL 25.1 58.2\n END\n ";
-  parser.parse(mixedCaseCircle, shapes);
+  parser.parse(mixedCaseCircle, "", shapes);
   rv += SDK_ASSERT(!shapes.empty());
   if (!shapes.empty())
     rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::CIRCLE);
   shapes.clear();
   std::stringstream mixedCaseLine;
   mixedCaseLine << "StarT\n LINE\n ll 22.2 23.2\n LL 22.5 25.2\nenD\n";
-  parser.parse(mixedCaseLine, shapes);
+  parser.parse(mixedCaseLine, "", shapes);
   rv += SDK_ASSERT(!shapes.empty());
   if (!shapes.empty())
     rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::LINE);
+  shapes.clear();
+
+  // test shapes with nested start still creates shape
+  std::stringstream nestedStartShape;
+  nestedStartShape << "start\ncircle\ncenterll 1 1\nstart\nend\n";
+  parser.parse(nestedStartShape, "", shapes);
+  rv += SDK_ASSERT(!shapes.empty());
+  if (!shapes.empty())
+    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::CIRCLE);
+  shapes.clear();
+
+  // test leading end statement still creates shape
+  std::stringstream leadingEndShape;
+  leadingEndShape << "end\nstart\ncircle\ncenterll 1 1\nend\n";
+  parser.parse(leadingEndShape, "", shapes);
+  rv += SDK_ASSERT(!shapes.empty());
+  if (!shapes.empty())
+    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::CIRCLE);
+  shapes.clear();
+
+  // test that unknown shape followed by actual shape still creates actual shape
+  std::stringstream unknownShape;
+  unknownShape << "start\nblahblah\ncenterll 2 2\nend\nstart\ncircle\ncenterll 1 1\nend\n";
+  parser.parse(unknownShape, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::CIRCLE);
   shapes.clear();
 
   return rv;
@@ -348,7 +375,7 @@ int testShapePositionsFunction(const std::string& gog, const FunctionT& func, co
 
   std::stringstream gogStr;
   gogStr << gog;
-  parser.parse(gogStr, shapes);
+  parser.parse(gogStr, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -681,7 +708,7 @@ int testShapeFunction(const std::string& gog, const FunctionT& func)
 
   std::stringstream gogStr;
   gogStr << gog;
-  parser.parse(gogStr, shapes);
+  parser.parse(gogStr, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -746,49 +773,49 @@ int testIncompleteShapes()
   // test line (requires 2 points minimum)
   std::stringstream lineGogIncomplete;
   lineGogIncomplete << "start\n line\n lla 25.1 58.2 0.\n end\n";
-  parser.parse(lineGogIncomplete, shapes);
+  parser.parse(lineGogIncomplete, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
   // test line segs (requires 2 points minimum)
   std::stringstream lineSegsGogIncomplete;
   lineSegsGogIncomplete << "start\n linesegs\n lla 25.1 58.2 0.\n end\n";
-  parser.parse(lineSegsGogIncomplete, shapes);
+  parser.parse(lineSegsGogIncomplete, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
   // test polygon (requires 3 points minimum)
   std::stringstream polyGogIncomplete;
   polyGogIncomplete << "start\n poly\n lla 25.1 58.2 0.\n lla 25.1 58.3 0.\n end\n";
-  parser.parse(polyGogIncomplete, shapes);
+  parser.parse(polyGogIncomplete, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
   // test annotation (requires text)
   std::stringstream annoCtrGog;
   annoCtrGog << "start\n annotation\n centerlla 24.2 43.3 0.\n end\n";
-  parser.parse(annoCtrGog, shapes);
+  parser.parse(annoCtrGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
   // test points (requires 1 point minimum)
   std::stringstream pointsGog;
   pointsGog << "start\n points\n end\n";
-  parser.parse(pointsGog, shapes);
+  parser.parse(pointsGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
   // test orbit (requires 2 center points)
   std::stringstream orbitCtr1Gog;
   orbitCtr1Gog << "start\n orbit\n centerll 1 2\n end\n";
-  parser.parse(orbitCtr1Gog, shapes);
+  parser.parse(orbitCtr1Gog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
   // test orbit (requires 2 center points)
   std::stringstream orbitCtr2Gog;
   orbitCtr2Gog << "start\n orbit\n centerll2 1 2\n end\n";
-  parser.parse(orbitCtr2Gog, shapes);
+  parser.parse(orbitCtr2Gog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
@@ -820,7 +847,7 @@ int testAnnotation()
   // test annotation with only required fields set
   std::stringstream annoMinimalGog;
   annoMinimalGog << "start\n annotation label 1\n centerll 24.5 54.6\n end\n";
-  parser.parse(annoMinimalGog, shapes);
+  parser.parse(annoMinimalGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -860,7 +887,7 @@ int testAnnotation()
   // test full annotation
   std::stringstream annoGog;
   annoGog << "start\n annotation label 1\n centerll 24.5 54.6\n fontname georgia.ttf\n fontsize 24\n linecolor hex 0xa0ffa0ff\n textoutlinethickness thin\n textoutlinecolor blue\n# kml_icon icon.png\n priority 10.\n end\n";
-  parser.parse(annoGog, shapes);
+  parser.parse(annoGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -901,7 +928,7 @@ int testAnnotation()
   std::stringstream annoNestedGog;
   annoNestedGog << "start\n annotation label 0\n centerll 24.5 54.6\n fontname georgia.ttf\n fontsize 24\n linecolor hex 0xa0ffa0ff\n textoutlinethickness thin\n textoutlinecolor blue\n priority 10.\n"
     << "annotation label 1\n centerll 24.7 54.3\n annotation label 2\n centerll 23.4 55.4\n end\n";
-  parser.parse(annoNestedGog, shapes);
+  parser.parse(annoNestedGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 3);
   if (!shapes.empty())
   {
@@ -947,6 +974,38 @@ int testAnnotation()
       }
     }
   }
+  shapes.clear();
+
+  // test nested valid and invalid annotations
+  std::stringstream annoNestedInvalidGog;
+  annoNestedInvalidGog << "start\n annotation label 0\n centerll 24.5 54.6\n"
+    << "annotation\n centerll 24.7 54.3\n annotation label 1\n centerll 23.4 55.4\n end\n";
+  parser.parse(annoNestedInvalidGog, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 2);
+  if (!shapes.empty())
+  {
+    int textId = 0;
+    for (simCore::GOG::GogShapePtr gogPtr : shapes)
+    {
+      simCore::GOG::Annotation* anno = dynamic_cast<simCore::GOG::Annotation*>(gogPtr.get());
+      rv += SDK_ASSERT(anno != nullptr);
+      if (anno)
+      {
+        std::ostringstream os;
+        os << "label " << textId++;
+        rv += SDK_ASSERT(anno->text() == os.str());
+      }
+    }
+  }
+  shapes.clear();
+
+  // test invalid annotation with a valid shape, ensure valid shape is parsed
+  std::stringstream annoInvalidGog;
+  annoInvalidGog << "start\n annotation \n centerll 24.5 54.6\n end\n start\ncircle\n centerll 1 1\n end\n";
+  parser.parse(annoInvalidGog, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+    rv += SDK_ASSERT(dynamic_cast<simCore::GOG::Circle*>(shapes.front().get()) != nullptr);
   shapes.clear();
 
   // test annotation position parsing, which supports multiple options (centerlla, centerll, lla, ll, centerxyz, centerxy, xyz, xy)
@@ -1033,7 +1092,7 @@ int testUnits()
   // test circle range units default to yards and altitude units default to feet
   std::stringstream circleGog;
   circleGog << "start\n circle\n centerlla 25.1 58.2 12.\n radius 100\n end\n";
-  parser.parse(circleGog, shapes);
+  parser.parse(circleGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -1060,7 +1119,7 @@ int testUnits()
   // test circle with defined range and altitude units
   std::stringstream circleDefinedGog;
   circleDefinedGog << "start\n circle\n centerlla 25.1 58.2 10.\n radius 10\n rangeunits km\n altitudeunits m\n end\n";
-  parser.parse(circleDefinedGog, shapes);
+  parser.parse(circleDefinedGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -1084,7 +1143,7 @@ int testUnits()
   // test line altitude units default to feet
   std::stringstream lineGog;
   lineGog << "start\n line\n lla 25.1 58.2 20.\n lla 26.2 58.3 12.\n end\n";
-  parser.parse(lineGog, shapes);
+  parser.parse(lineGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -1107,7 +1166,7 @@ int testUnits()
   // test line with defined altitude units
   std::stringstream lineDefinedGog;
   lineDefinedGog << "start\n line\n lla 25.1 58.2 1.4\n lla 26.2 58.3 2.\n altitudeunits kf\n end\n";
-  parser.parse(lineDefinedGog, shapes);
+  parser.parse(lineDefinedGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -1130,7 +1189,7 @@ int testUnits()
   // test arc angle units default to degrees
   std::stringstream arcGog;
   arcGog << "start\n arc\n centerlla 25.1 58.2 12.\n anglestart 5.\n angledeg 100.\n end\n";
-  parser.parse(arcGog, shapes);
+  parser.parse(arcGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -1153,7 +1212,7 @@ int testUnits()
   // test arc with defined angle units
   std::stringstream arcDefinedGog;
   arcDefinedGog << "start\n arc\n centerlla 25.1 58.2 12.\n anglestart 0.1253\n angledeg 1.5\n angleunits rad\n end\n";
-  parser.parse(arcDefinedGog, shapes);
+  parser.parse(arcDefinedGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -1396,7 +1455,7 @@ int testSerializeShape(const std::string& gog, const std::vector<std::string>& s
   std::vector<simCore::GOG::GogShapePtr> shapes;
   std::stringstream gogStr;
   gogStr << gog;
-  parser.parse(gogStr, shapes);
+  parser.parse(gogStr, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
@@ -1421,7 +1480,7 @@ int testSerializeShape(const std::string& gog, const std::vector<std::string>& s
 
     // now parse the serialization back in to verify it produces a valid shape of the expected type
     shapes.clear();
-    parser.parse(os, shapes);
+    parser.parse(os, "", shapes);
     {
       rv += SDK_ASSERT(shapes.size() == 1);
       if (!shapes.empty())
@@ -1874,7 +1933,7 @@ int testColors()
   std::stringstream gogStr;
   for (std::string colorStr : colorStringsInput)
     gogStr << "start\n circle\n" << colorStr << "end\n";
-  parser.parse(gogStr, shapes);
+  parser.parse(gogStr, "", shapes);
   rv += SDK_ASSERT(shapes.size() == colorStringsInput.size());
 
   std::vector<simCore::GOG::Color> colors;
@@ -1936,6 +1995,82 @@ int testBooleanInputs()
   return rv;
 }
 
+
+auto testPointSizeFunc = [](const simCore::GOG::Points* shape) -> int
+{
+  int rv = 0;
+  int pointSize = 0;
+  rv += SDK_ASSERT(shape->getPointSize(pointSize) == 0);
+  rv += SDK_ASSERT(pointSize == 3);
+  return rv;
+};
+
+auto testLineWidthFunc = [](const simCore::GOG::FillableShape* shape) -> int
+{
+  int rv = 0;
+  int lineWidth = 0;
+  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
+  rv += SDK_ASSERT(lineWidth == 3);
+  return rv;
+};
+
+auto testTextSizeFunc = [](const simCore::GOG::Annotation* shape) -> int
+{
+  int rv = 0;
+  int textSize = 0;
+  rv += SDK_ASSERT(shape->getTextSize(textSize) == 0);
+  rv += SDK_ASSERT(textSize == 3);
+  return rv;
+};
+
+int testDoublesToInts()
+{
+  int rv = 0;
+
+  rv += testShapeFunction<simCore::GOG::Points>("start\npoints\nlla 1 1 1\n pointsize 2.5\nend\n", testPointSizeFunc);
+  rv += testShapeFunction<simCore::GOG::FillableShape>("start\ncircle\ncenterlla 1 1 1\n linewidth 2.5\nend\n", testLineWidthFunc);
+  rv += testShapeFunction<simCore::GOG::Annotation>("start\nannotation test\ncenterlla 1 1 1\n fontsize 2.5\nend\n", testTextSizeFunc);
+
+  return rv;
+}
+
+auto testLineWidthThinFunc = [](const simCore::GOG::FillableShape* shape) -> int
+{
+  int rv = 0;
+  int lineWidth = 0;
+  rv += SDK_ASSERT(shape->getLineWidth(lineWidth)== 0);
+  rv += SDK_ASSERT(lineWidth == 1);
+  return rv;
+};
+
+auto testLineWidthMediumFunc = [](const simCore::GOG::FillableShape* shape) -> int
+{
+  int rv = 0;
+  int lineWidth = 0;
+  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
+  rv += SDK_ASSERT(lineWidth == 2);
+  return rv;
+};
+
+auto testLineWidthThickFunc = [](const simCore::GOG::FillableShape* shape) -> int
+{
+  int rv = 0;
+  int lineWidth = 0;
+  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
+  rv += SDK_ASSERT(lineWidth == 4);
+  return rv;
+};
+
+int testLineWidthStrings()
+{
+  int rv = 0;
+  rv += testShapeFunction<simCore::GOG::Circle>("start\ncircle\ncenterll 1 1\nlinewidth thin\nend\n", testLineWidthThinFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\ncircle\ncenterll 1 1\nlinewidth med\nend\n", testLineWidthMediumFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\ncircle\ncenterll 1 1\nlinewidth medium\nend\n", testLineWidthMediumFunc);
+  rv += testShapeFunction<simCore::GOG::Circle>("start\ncircle\ncenterll 1 1\nlinewidth thick\nend\n", testLineWidthThickFunc);
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -1956,6 +2091,8 @@ int GogTest(int argc, char* argv[])
   rv += testSerialization();
   rv += testColors();
   rv += testBooleanInputs();
+  rv += testDoublesToInts();
+  rv += testLineWidthStrings();
 
   return rv;
 }

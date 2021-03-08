@@ -84,7 +84,7 @@ public:
     {
       // getTrans().length() returns the distance from center to the eye
       if (!matrices_.empty())
-        dst->recalculate_(matrices_.back()->getTrans().length());
+        dst->recalculate_(matrices_.back()->getTrans().length(), nullptr);
       return;
     }
 
@@ -117,6 +117,7 @@ DynamicScaleTransform::DynamicScaleTransform()
     staticScalar_(1.0),
     dynamicScalar_(1.0),
     scaleOffset_(0.0),
+    dynamicScalePixel_(false),
     overrideScaleSet_(false),
     overrideScale_(NO_SCALE),
     cachedScale_(NO_SCALE),
@@ -132,6 +133,7 @@ DynamicScaleTransform::DynamicScaleTransform(const DynamicScaleTransform& rhs, c
     staticScalar_(rhs.staticScalar_),
     dynamicScalar_(rhs.dynamicScalar_),
     scaleOffset_(rhs.scaleOffset_),
+    dynamicScalePixel_(rhs.dynamicScalePixel_),
     overrideScaleSet_(rhs.overrideScaleSet_),
     overrideScale_(rhs.overrideScale_),
     cachedScale_(rhs.cachedScale_),
@@ -168,6 +170,16 @@ void DynamicScaleTransform::setDynamicScalingEnabled(bool enabled)
 bool DynamicScaleTransform::isDynamicScalingEnabled() const
 {
   return dynamicEnabled_;
+}
+
+void DynamicScaleTransform::setDynamicScaleToPixels(bool dynamicScalePixel)
+{
+  dynamicScalePixel_ = dynamicScalePixel;
+}
+
+bool DynamicScaleTransform::dynamicScaleToPixels() const
+{
+  return dynamicScalePixel_;
 }
 
 osg::Node* DynamicScaleTransform::getSizingNode_()
@@ -362,7 +374,7 @@ void DynamicScaleTransform::accept(osg::NodeVisitor& nv)
   {
     const double range = (orthoRange == 0.0 ? rangeToEye : orthoRange);
     // Compute the dynamic scale based on the distance from the eye
-    newScale = computeDynamicScale_(range);
+    newScale = computeDynamicScale_(range, dynamic_cast<osg::CullStack*>(&nv));
   }
 
   // Dirty the bounding sphere and return the size
@@ -378,12 +390,13 @@ void DynamicScaleTransform::accept(osg::NodeVisitor& nv)
     cullVisitor->setLODScale(oldLodScale);
 }
 
-void DynamicScaleTransform::recalculate_(double range)
+void DynamicScaleTransform::recalculate_(double range, osg::CullStack* cullStack)
 {
   // noop; don't adjust bounds
   if (hasOverrideScale() || !isDynamicScalingEnabled() || range <= 0.0)
     return;
-  const osg::Vec3f newScale = computeDynamicScale_(range);
+
+  const osg::Vec3f newScale = computeDynamicScale_(range, cullStack);
   // Dirty the bounding sphere
   if (cachedScale_ != newScale && newScale.x() > 0.0 && newScale.y() > 0.0 && newScale.z() > 0.0)
   {
@@ -392,8 +405,21 @@ void DynamicScaleTransform::recalculate_(double range)
   }
 }
 
-osg::Vec3f DynamicScaleTransform::computeDynamicScale_(double range)
+osg::Vec3f DynamicScaleTransform::computeDynamicScale_(double range, osg::CullStack* cullStack)
 {
+  // Pixel model dynamic scale algorithm (relatively new)
+  if (dynamicScalePixel_ && cullStack)
+  {
+    // Note the use of 0.48f is about half a pixel, matches constant from osg/AutoTransform.cpp
+    const float pixelSize = cullStack->pixelSize(osg::Vec3f(), 0.48f);
+    const double safeDs = (dynamicScalar_ == 0. ? 1. : dynamicScalar_);
+    const double scale = staticScalar_ * (pixelSize == 0.f ? 0. : (1.0 / pixelSize)) / safeDs;
+    // Do not bother with dynamic scale offset; it only really makes sense in the context of the dynamic
+    // scale algorithm, which helps to prevent viewport items from being too big based on eye range.
+    return osg::Vec3f(scale, scale, scale);
+  }
+
+  // Traditional dynamic scale algorithm
   osg::ref_ptr<const osg::Node> sizeNode = getSizingNode_();
   if (sizeNode.valid() && iconScaleFactor_ != INVALID_SCALE_FACTOR)
   {
