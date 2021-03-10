@@ -105,7 +105,7 @@ simVis::GOG::GogNodeInterfacePtr parseGogFileWithCore(bool attached, const std::
   simCore::GOG::Parser parser;
   simVis::GOG::Loader loader(parser);
   simVis::GOG::Loader::GogNodeVector gogs;
-  loader.loadGogs(input, attached, gogs);
+  loader.loadGogs(input, "", attached, gogs);
 
   simVis::GOG::GogNodeInterfacePtr gogPtr;
   // don't have to delete the pointer in the gogs vector, since the shared_ptr takes ownership
@@ -1396,7 +1396,7 @@ int testBasicGog(std::vector<std::string>& shapeItems, bool testLined, bool test
   gogStr << "end\n";
   shapeItems.push_back("start\n");
   shapeItems.push_back("end\n");
-  loader.loadGogs(gogStr, false, gogs);
+  loader.loadGogs(gogStr, "", false, gogs);
   rv += SDK_ASSERT(gogs.size() == 1);
   if (!gogs.empty())
   {
@@ -1503,7 +1503,7 @@ int testDynamicEdits()
   annoItems.push_back("annotation some text\n");
   std::stringstream annoGog;
   annoGog << "start\n annotation some text\n end\n";
-  loader.loadGogs(annoGog, false, gogs);
+  loader.loadGogs(annoGog, "", false, gogs);
   rv += SDK_ASSERT(gogs.size() == 1);
   if (!gogs.empty())
   {
@@ -1540,7 +1540,7 @@ int testDynamicEdits()
   llabItems.push_back("latlonaltbox 24.2 23.4 55.6 55.2 0\n");
   std::stringstream llabGog;
   llabGog << "start\n latlonaltbox 24.2 23.4 55.6 55.2 0\n end\n";
-  loader.loadGogs(llabGog, false, gogs);
+  loader.loadGogs(llabGog, "", false, gogs);
   rv += SDK_ASSERT(gogs.size() == 1);
   if (!gogs.empty())
   {
@@ -1572,7 +1572,7 @@ int testArcSweep()
   {
     std::stringstream shape;
     shape << "start\n arc\n anglestart 0\n anglend 0\n end\n";
-    loader.loadGogs(shape, false, gogs);
+    loader.loadGogs(shape, "", false, gogs);
   }
   rv += SDK_ASSERT(gogs.empty());
   gogs.clear();
@@ -1581,7 +1581,7 @@ int testArcSweep()
   {
     std::stringstream shape;
     shape << "start\n arc\n anglestart 0\n anglend 360\n end\n";
-    loader.loadGogs(shape, false, gogs);
+    loader.loadGogs(shape, "", false, gogs);
   }
   rv += SDK_ASSERT(gogs.empty());
   gogs.clear();
@@ -1590,7 +1590,7 @@ int testArcSweep()
   {
     std::stringstream shape;
     shape << "start\n arc\n anglestart 45\n anglend 405\n end\n";
-    loader.loadGogs(shape, false, gogs);
+    loader.loadGogs(shape, "", false, gogs);
   }
   rv += SDK_ASSERT(gogs.empty());
   gogs.clear();
@@ -1599,7 +1599,7 @@ int testArcSweep()
   {
     std::stringstream shape;
     shape << "start\n arc\n anglestart 0\n angleDeg 0\n end\n";
-    loader.loadGogs(shape, false, gogs);
+    loader.loadGogs(shape, "", false, gogs);
   }
   rv += SDK_ASSERT(gogs.empty());
   gogs.clear();
@@ -1608,7 +1608,7 @@ int testArcSweep()
   {
     std::stringstream shape;
     shape << "start\n arc\n anglestart 0\n angleDeg 360\n end\n";
-    loader.loadGogs(shape, false, gogs);
+    loader.loadGogs(shape, "", false, gogs);
   }
 
   rv += SDK_ASSERT(!gogs.empty());
@@ -1618,7 +1618,7 @@ int testArcSweep()
   {
     std::stringstream shape;
     shape << "start\n arc\n anglestart 0\n angleDeg -360\n end\n";
-    loader.loadGogs(shape, false, gogs);
+    loader.loadGogs(shape, "", false, gogs);
   }
   rv += SDK_ASSERT(!gogs.empty());
   gogs.clear();
@@ -1627,7 +1627,7 @@ int testArcSweep()
   {
     std::stringstream shape;
     shape << "start\n arc\n anglestart 52.5\n angleDeg -360\n end\n";
-    loader.loadGogs(shape, false, gogs);
+    loader.loadGogs(shape, "", false, gogs);
   }
   rv += SDK_ASSERT(!gogs.empty());
   gogs.clear();

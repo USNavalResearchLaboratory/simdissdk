@@ -682,9 +682,59 @@ namespace
     const simCore::Seconds secsm72 = maxTimeStampSecs - simCore::Seconds(0, 72);
     rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_YEAR, maxTimeStampSecs.Double()) > simCore::TimeStamp(simCore::MIN_TIME_YEAR, secsm72.Double()));
 
+
+    // SIM-12482: In the context of numbers that can be represented by TimeStamp,
+    // a double can resolve a 1 microsecond time difference.
+    double startTime = maxTimeStampSecs.Double();
+    // double can resolve 1 microsecond
+    rv += SDK_ASSERT((startTime - 1e-06) < startTime);
+    // cannot resolve 100ns
+    rv += SDK_ASSERT((startTime - 1e-07) == startTime);
+
+    // Converting any double into and out of TimeStamp does not lose any precision (that double can resolve).
+    for (int i = 1; i < 1000; ++i)
+    {
+      double newTime = startTime - 1e-06;
+      // verify that double can detect the difference
+      rv += SDK_ASSERT(newTime < startTime);
+
+      simCore::TimeStamp inTimeStamp(1970, newTime);
+      double outTime = inTimeStamp.secondsSinceRefYear(1970);
+      rv += SDK_ASSERT(newTime == outTime);
+
+      startTime = newTime;
+    }
+    return rv;
+  }
+
+  int testNegativeSeconds()
+  {
+    int rv = 0;
+
+    rv += SDK_ASSERT(simCore::TimeStamp(2020, simCore::Seconds(-1, 0)) == simCore::TimeStamp(2019, simCore::Seconds(365 * simCore::SECPERDAY - 1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2021, simCore::Seconds(-1, 0)) == simCore::TimeStamp(2020, simCore::Seconds(366 * simCore::SECPERDAY - 1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2021, simCore::Seconds(-366 * simCore::SECPERDAY - 1, 0)) == simCore::TimeStamp(2019, simCore::Seconds(365 * simCore::SECPERDAY - 1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2021, simCore::Seconds(-(366 + 365) * simCore::SECPERDAY - 1, 0)) == simCore::TimeStamp(2018, simCore::Seconds(365 * simCore::SECPERDAY - 1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2021, simCore::Seconds(-(2 * 366 + 4 * 365) * simCore::SECPERDAY - 1, 0)) == simCore::TimeStamp(2014, simCore::Seconds(365 * simCore::SECPERDAY - 1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2021, simCore::Seconds(-(13 * 366 + 37 * 365) * simCore::SECPERDAY - 1, 0)) == simCore::TimeStamp(1970, simCore::Seconds(365 * simCore::SECPERDAY - 1, 0)));
+
+    return rv;
+  }
+
+  int testPositiveSeconds()
+  {
+    int rv = 0;
+
+    rv += SDK_ASSERT(simCore::TimeStamp(2019, simCore::Seconds(1, 0)) == simCore::TimeStamp(2019, simCore::Seconds(1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2019, simCore::Seconds(365 * simCore::SECPERDAY + 1, 0)) == simCore::TimeStamp(2020, simCore::Seconds(1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2019, simCore::Seconds((365 + 366) * simCore::SECPERDAY + 1, 0)) == simCore::TimeStamp(2021, simCore::Seconds(1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(2015, simCore::Seconds((2 * 366 + 4 * 365) * simCore::SECPERDAY + 1, 0)) == simCore::TimeStamp(2021, simCore::Seconds(1, 0)));
+    rv += SDK_ASSERT(simCore::TimeStamp(1970, simCore::Seconds((13 * 366 + 38 * 365) * simCore::SECPERDAY + 1, 0)) == simCore::TimeStamp(2021, simCore::Seconds(1, 0)));
+
     return rv;
   }
 }
+
 int TimeClassTest(int argc, char* argv[])
 {
   int rv = 0;
@@ -696,6 +746,8 @@ int TimeClassTest(int argc, char* argv[])
   rv += testInput();
   rv += testTimeRounding();
   rv += testTimeStamp();
+  rv += testNegativeSeconds();
+  rv += testPositiveSeconds();
   rv += testTimeStampComparison();
 
   std::cout << "TimeClassTest " << (rv == 0 ? "PASSED" : "FAILED") << std::endl;

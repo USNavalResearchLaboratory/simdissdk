@@ -299,7 +299,7 @@ osg::Node* RCSRenderer::render2D_()
     crosshair->setDataVariance(osg::Object::DYNAMIC);
     crosshair->setUseVertexBufferObjects(true);
     crosshair->setLineWidth(3);
-    lineGroup->addDrawable(crosshair);
+    lineGroup->addChild(crosshair);
 
     double elev = simCore::DEG2RAD * elev_;
     int end = 2 + static_cast<int>(osg::absolute(max_)/10.0);
@@ -324,7 +324,7 @@ osg::Node* RCSRenderer::render2D_()
       polarRing->setDataVariance(osg::Object::DYNAMIC);
       polarRing->setUseVertexBufferObjects(true);
       polarRing->setLineWidth(3);
-      lineGroup->addDrawable(polarRing);
+      lineGroup->addChild(polarRing);
 
       for (int i = 0; i < 36; i ++)
       {
@@ -346,7 +346,7 @@ osg::Node* RCSRenderer::render2D_()
     rcs->setDataVariance(osg::Object::DYNAMIC);
     rcs->setUseVertexBufferObjects(true);
     rcs->setLineWidth(3);
-    lineGroup->addDrawable(rcs);
+    lineGroup->addChild(rcs);
 
     for (int i = 0; i < 360; i++)
     {

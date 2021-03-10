@@ -29,7 +29,7 @@
 #include "simData/DataTypes.h"
 #include "simVis/LocatorNode.h"
 
-namespace osg { class Geode; }
+namespace osg { class Group; }
 namespace osgText { class Text; }
 
 namespace simVis
@@ -90,13 +90,13 @@ namespace simVis
     void configureLocator_(const simData::LocalGridPrefs& prefs);
 
     /// create Cartesian grid display
-    void createCartesian_(const simData::LocalGridPrefs& prefs, osg::Group* geomGroup, osg::Geode* labelGroup) const;
+    void createCartesian_(const simData::LocalGridPrefs& prefs, osg::Group* geomGroup, osg::Group* labelGroup) const;
 
     /// create polar ring or range ring display
-    void createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Group* geomGroup, osg::Geode* labelGroup, bool includePolarRadials) const;
+    void createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Group* geomGroup, osg::Group* labelGroup, bool includePolarRadials) const;
 
     /// create speed ring or speed line display
-    void createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Group* geomGroup, osg::Geode* labelGroup, bool drawSpeedLine) const;
+    void createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Group* geomGroup, osg::Group* labelGroup, bool drawSpeedLine) const;
 
     /// update the speed ring/line display for current data
     void updateSpeedRings_(const simData::LocalGridPrefs& prefs, double sizeM, double timeRadiusSeconds);
@@ -111,8 +111,8 @@ namespace simVis
     int processSpeedParams_(const simData::LocalGridPrefs& prefs, double& sizeM, double& timeRadiusSeconds);
 
   private: // data
-    osg::ref_ptr<osg::Geode> graphicsGroup_;
-    osg::ref_ptr<osg::Geode> labelGroup_;
+    osg::ref_ptr<osg::Group> graphicsGroup_;
+    osg::ref_ptr<osg::Group> labelGroup_;
 
     simData::LocalGridPrefs lastPrefs_;
     bool                    forceRebuild_;

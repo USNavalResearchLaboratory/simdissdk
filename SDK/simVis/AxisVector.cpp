@@ -62,9 +62,9 @@ AxisVector::~AxisVector()
 
 void AxisVector::init_()
 {
-  geode_ = new osgEarth::LineGroup();
-  createAxisVectors_(geode_.get());
-  addChild(geode_.get());
+  lineGroup_ = new osgEarth::LineGroup();
+  createAxisVectors_();
+  addChild(lineGroup_.get());
 }
 
 void AxisVector::setAxisLengths(osg::Vec3f axisLengths, bool force)
@@ -89,9 +89,9 @@ osg::Vec3f AxisVector::axisLengths() const
 void AxisVector::setLineWidth(float lineWidth)
 {
   lineWidth_ = lineWidth;
-  geode_->getLineDrawable(0)->setLineWidth(lineWidth);
-  geode_->getLineDrawable(1)->setLineWidth(lineWidth);
-  geode_->getLineDrawable(2)->setLineWidth(lineWidth);
+  lineGroup_->getLineDrawable(0)->setLineWidth(lineWidth);
+  lineGroup_->getLineDrawable(1)->setLineWidth(lineWidth);
+  lineGroup_->getLineDrawable(2)->setLineWidth(lineWidth);
 }
 
 float AxisVector::lineWidth() const
@@ -105,24 +105,24 @@ void AxisVector::setColors(const simVis::Color& x, const simVis::Color& y, const
   if (x == xColor() && y == yColor() && z == zColor())
     return;
 
-  geode_->getLineDrawable(0)->setColor(x);
-  geode_->getLineDrawable(1)->setColor(y);
-  geode_->getLineDrawable(2)->setColor(z);
+  lineGroup_->getLineDrawable(0)->setColor(x);
+  lineGroup_->getLineDrawable(1)->setColor(y);
+  lineGroup_->getLineDrawable(2)->setColor(z);
 }
 
 simVis::Color AxisVector::xColor() const
 {
-  return geode_->getLineDrawable(0)->getColor();
+  return lineGroup_->getLineDrawable(0)->getColor();
 }
 
 simVis::Color AxisVector::yColor() const
 {
-  return geode_->getLineDrawable(1)->getColor();
+  return lineGroup_->getLineDrawable(1)->getColor();
 }
 
 simVis::Color AxisVector::zColor() const
 {
-  return geode_->getLineDrawable(2)->getColor();
+  return lineGroup_->getLineDrawable(2)->getColor();
 }
 
 void AxisVector::setPositionOrientation(const osg::Vec3f& pos, const osg::Vec3f& vec)
@@ -138,7 +138,7 @@ void AxisVector::setPositionOrientation(const osg::Vec3f& pos, const osg::Vec3f&
   setMatrix(rot);
 }
 
-void AxisVector::createAxisVectors_(osg::Geode* geode) const
+void AxisVector::createAxisVectors_() const
 {
   // draw x axis vector
   osgEarth::LineDrawable* line = new osgEarth::LineDrawable(GL_LINE_STRIP);
@@ -147,7 +147,7 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
   VectorScaling::generatePoints(*line, osg::Vec3(), osg::X_AXIS);
   line->setColor(simVis::Color::Yellow);
   line->setLineWidth(lineWidth_);
-  geode_->addChild(line);
+  lineGroup_->addChild(line);
 
   // draw y axis vector
   line = new osgEarth::LineDrawable(GL_LINE_STRIP);
@@ -156,7 +156,7 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
   VectorScaling::generatePoints(*line, osg::Vec3(), osg::Y_AXIS);
   line->setColor(simVis::Color::Fuchsia);
   line->setLineWidth(lineWidth_);
-  geode_->addChild(line);
+  lineGroup_->addChild(line);
 
   // draw z axis vector
   line = new osgEarth::LineDrawable(GL_LINE_STRIP);
@@ -165,7 +165,7 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
   VectorScaling::generatePoints(*line, osg::Vec3(), osg::Z_AXIS);
   line->setColor(simVis::Color::Aqua);
   line->setLineWidth(lineWidth_);
-  geode_->addChild(line);
+  lineGroup_->addChild(line);
 }
 
 }

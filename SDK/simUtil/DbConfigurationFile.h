@@ -28,8 +28,8 @@
 #include "osg/ref_ptr"
 #include "simCore/Common/Common.h"
 
-namespace osgEarth
-{
+namespace osg { class Node; }
+namespace osgEarth {
   class Map;
   class MapNode;
 }

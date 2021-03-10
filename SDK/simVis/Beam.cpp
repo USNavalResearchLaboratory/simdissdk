@@ -50,21 +50,10 @@ namespace
   bool changeRequiresRebuild(const simData::BeamPrefs* a, const simData::BeamPrefs* b)
   {
     if (a == nullptr || b == nullptr)
-    {
       return false;
-    }
-    else if (PB_FIELD_CHANGED(a, b, drawtype))
-    {
+    if (PB_FIELD_CHANGED(a, b, drawtype))
       return true;
-    }
-    else
-    {
-      return
-#ifndef BEAM_IN_PLACE_UPDATES
-        PB_FIELD_CHANGED(a, b, verticalwidth) ||
-        PB_FIELD_CHANGED(a, b, horizontalwidth) ||
-#endif
-        PB_FIELD_CHANGED(a, b, polarity) ||
+    if (PB_FIELD_CHANGED(a, b, polarity) ||
         PB_FIELD_CHANGED(a, b, colorscale) ||
         PB_FIELD_CHANGED(a, b, detail) ||
         PB_FIELD_CHANGED(a, b, gain) ||
@@ -75,8 +64,21 @@ namespace
         PB_FIELD_CHANGED(a, b, rendercone) ||
         PB_FIELD_CHANGED(a, b, coneresolution) ||
         PB_FIELD_CHANGED(a, b, capresolution) ||
-        PB_FIELD_CHANGED(a, b, beamdrawmode);
+        PB_FIELD_CHANGED(a, b, beamdrawmode))
+      return true;
+
+#ifndef BEAM_IN_PLACE_UPDATES
+    return (PB_FIELD_CHANGED(a, b, verticalwidth) ||
+      PB_FIELD_CHANGED(a, b, horizontalwidth));
+#else
+    if (b->rendercone() && PB_FIELD_CHANGED(a, b, horizontalwidth))
+    {
+      // manage automatic change to/from cone/pyramid when horizontalwidth crosses PI threshold
+      return ((a->horizontalwidth() <= M_PI && b->horizontalwidth() > M_PI) ||
+        (a->horizontalwidth() > M_PI && b->horizontalwidth() <= M_PI));
     }
+    return false;
+#endif
   }
 
   /// Some updates can require a rebuild too
@@ -148,7 +150,8 @@ osg::MatrixTransform* BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs,
   sv.blendingEnabled_ = prefs.blended();
   sv.lightingEnabled_ = prefs.shaded();
 
-  sv.shape_ = prefs.rendercone() ? simVis::SVData::SHAPE_CONE : simVis::SVData::SHAPE_PYRAMID;
+  // draw as pyramid when hbw > 180
+  sv.shape_ = (prefs.rendercone() && sv.hfov_deg_ <= 180.) ? simVis::SVData::SHAPE_CONE : simVis::SVData::SHAPE_PYRAMID;
 
   // if drawing as a pyramid, coneRes_ is not used, but wallRes_ is used
   sv.coneRes_ = prefs.coneresolution();
@@ -241,13 +244,12 @@ void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simDa
 
 // --------------------------------------------------------------------------
 
-BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
+BeamNode::BeamNode(const simData::BeamProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
   : EntityNode(simData::BEAM),
     hasLastUpdate_(false),
     hasLastPrefs_(false),
     host_(host),
-    hostMissileOffset_(0.0),
-    scenario_(scenario)
+    hostMissileOffset_(0.0)
 {
   lastProps_ = props;
 
@@ -295,8 +297,6 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   // labels are culled based on entity center point
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
-  // SIM-11395 - set default ellipsoid, when osgEarth supports it
-  //callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 
@@ -377,6 +377,9 @@ void BeamNode::setPrefs(const simData::BeamPrefs& prefs)
   {
     target_ = nullptr;
   }
+
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefsFromDS_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
+    applyProjectorPrefs_(lastPrefsFromDS_.commonprefs(), prefs.commonprefs());
 
   applyPrefs_(prefs);
   updateLabel_(prefs);
@@ -604,12 +607,10 @@ int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
   // update our target reference, for new target, or after a prefs change in target ids occur
   if (target_ == nullptr || !target_.valid())
   {
-    if (scenario_.valid())
-    {
-      target_ = scenario_->find(lastPrefsApplied_.targetid());
-      // we should only receive an non-nullptr update when target is valid; if assert fails check MemoryDataStore processing
-      assert(target_.valid());
-    }
+    target_ = nodeGetter_(lastPrefsApplied_.targetid());
+    // we should only receive an non-nullptr update when target is valid; if assert fails check MemoryDataStore processing
+    assert(target_.valid());
+
     if (!target_.valid())
       return 1;
   }

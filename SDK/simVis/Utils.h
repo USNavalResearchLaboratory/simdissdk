@@ -23,6 +23,8 @@
 #ifndef SIMVIS_UTILS_H
 #define SIMVIS_UTILS_H
 
+#include <functional>
+
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/Vec3.h"
@@ -728,6 +730,34 @@ namespace simVis
   private:
     /** Model-View Projection Window matrix, inverted for performance.  Mutable for caching. */
     mutable osg::Matrixd invertedMvpw_;
+  };
+
+  /**
+   * Generic GUIEventHandler callback that calls a function (lambda) that you define.  When the screen dimensions
+   * change, as detected by the FRAME event on which the callback is attached, your function is called if the
+   * dimensions are different from what is currently saved.  This is intended to be used as an easy way to get
+   * screen dimensions without having to define multiple helper classes.  To use this, you can write code like:
+   *
+   * <code>
+   * node->addEventCallback(new ViewportSizeCallback([](const osg::Vec2f& dims) {
+   *    std::cout << "New dimensions: " << dims.x() << "x" << dims.y() << "\n";
+   *   }));
+   * </code>
+   */
+  class SDKVIS_EXPORT ViewportSizeCallback : public osgGA::GUIEventHandler
+  {
+  public:
+    explicit ViewportSizeCallback(std::function<void(const osg::Vec2f&)> func);
+
+    /** Checks for updated viewport size. */
+    virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*) override;
+
+    /** Retrieves the last window size seen */
+    osg::Vec2f windowSize() const;
+
+  private:
+    osg::Vec2f windowSize_;
+    std::function<void(const osg::Vec2f&)> func_;
   };
 
 } // namespace simVis

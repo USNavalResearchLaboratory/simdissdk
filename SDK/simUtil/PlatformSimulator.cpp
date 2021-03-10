@@ -50,7 +50,7 @@ namespace simUtil {
 //----------------------------------------------------------------------------
 PlatformSimulator::PlatformSimulator(simData::ObjectId platformId)
   : t0_(osg::Timer::instance()->time_s()),
-    wp_t_(1.1),
+    wp_t_(-1.),
     platformId_(platformId),
     beamId_(~(static_cast<simData::ObjectId>(0))),
     simulateRoll_(false),
@@ -64,21 +64,34 @@ void PlatformSimulator::addWaypoint(const Waypoint &wp)
   waypoints_.push_back(wp);
 }
 
-void PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *update)
+int PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *update)
 {
   double now = time;
 
+  // Track if we're done early
+  if (done_ || waypoints_.size() < 2)
+    return 1;
+
   // our 2 waypoints.
-  Waypoint wp0 = waypoints_.back();
-  Waypoint wp1 = waypoints_.front();
+  Waypoint wp0 = waypoints_.front();
+  Waypoint wp1 = *(waypoints_.begin() + 1);
 
   // see if we need to advance to the next waypoint.
   if (wp_t_ > 1.0)
   {
-    waypoints_.push_back(wp1);
+    // if not looping and only two waypoints left, simulation is complete
+    if (!loop_ && (waypoints_.size() == 2))
+    {
+      done_ = true;
+      return 1;
+    }
+
+    // Keep the loop going if necessary
+    if (loop_)
+      waypoints_.push_back(wp0);
     waypoints_.pop_front();
-    wp0 = wp1;
-    wp1 = waypoints_.front();
+    wp0 = waypoints_.front();
+    wp1 = *(waypoints_.begin() + 1);
     wp_t_ = -1.0;
   }
 
@@ -148,6 +161,8 @@ void PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upd
     double by = sin(new_dlon_rad)*cos(lat1_rad);
     double bx = cos(lat_rad)*sin(lat1_rad) - sin(lat_rad)*cos(lat1_rad)*cos(new_dlon_rad);
     double bearing_rad = atan2(by, bx);
+    if (overrideYaw_)
+      bearing_rad = overrideYawValue_;
 
     // interpolate the altitude:
     double alt = wp0.alt_m_ + wp_t_ * (wp1.alt_m_ - wp0.alt_m_);
@@ -208,6 +223,7 @@ void PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upd
       << "bearing = " << osg::RadiansToDegrees(bearing_rad)
       << std::endl;
   }
+  return 0;
 }
 
 void PlatformSimulator::updateBeam(double now, simData::BeamUpdate *update, simData::PlatformUpdate *platform)
@@ -282,6 +298,8 @@ void PlatformSimulatorManager::simulate_(double now)
   for (PlatformSimulators::iterator iter = simulators_.begin(); iter != simulators_.end(); ++iter)
   {
     simUtil::PlatformSimulator* sim = iter->get();
+    if (sim->doneSimulating() || now < sim->startTime())
+      continue;
 
     // create a position update transaction
     simData::DataStore::Transaction platformTransaction;
@@ -294,8 +312,10 @@ void PlatformSimulatorManager::simulate_(double now)
       platformUpdate = datastore_->addPlatformUpdate(sim->getPlatformId(), &platformTransaction);
       if (platformUpdate)
       {
-        sim->updatePlatform(now, platformUpdate);
-        platformTransaction.commit();      // Commit the change but do not release platformUdpate yet
+        if (sim->updatePlatform(now, platformUpdate) != 0)
+          continue;
+        // Commit the change but do not release platformUpdate yet because it is used by beam update and gate update
+        platformTransaction.commit();
 
         // add any beam updates:
         simData::DataStore::IdList beamIds;
@@ -325,7 +345,7 @@ void PlatformSimulatorManager::simulate_(double now)
           }
         }
 
-        // Release the platformUpdate and close the transaction now that all updateGate and updateBeam calls are done
+        // Release platformUpdate now that beam and gate update code is done accessing it
         platformTransaction.release(&platformUpdate);
       }
     }
@@ -409,6 +429,73 @@ void CircumnavigationPlatformSimulation::createPlatform_()
   sim->addWaypoint(simUtil::Waypoint(0, 90, 15000, 30.0));
   sim->addWaypoint(simUtil::Waypoint(0, 180, 15000, 30.0));
   simMan_->addSimulator(sim.get());
+}
+
+//---------------------------------------------------------------------------
+MultiPlatformSimulation::MultiPlatformSimulation(simVis::SceneManager* sceneManager, simVis::View* mainView, double startTime, double endTime)
+  : sceneManager_(sceneManager),
+  dataStore_(new simData::MemoryDataStore)
+{
+  init_(mainView, startTime, endTime);
+}
+
+MultiPlatformSimulation::~MultiPlatformSimulation()
+{
+  delete dataStore_;
+}
+
+void MultiPlatformSimulation::simulate(double start, double end, double hertz)
+{
+  if (simMan_)
+    simMan_->simulate(start, end, hertz);
+}
+
+simData::DataStore* MultiPlatformSimulation::dataStore() const
+{
+  return dataStore_;
+}
+
+simData::ObjectId MultiPlatformSimulation::createPlatform(const std::string& name, const std::string& icon)
+{
+  simData::ObjectId id = 0;
+  if (name.empty())
+    return id;
+
+  // create the platform in the database
+  simData::DataStore::Transaction transaction;
+  simData::PlatformProperties* newProps = dataStore_->addPlatform(&transaction);
+  id = newProps->id();
+  transaction.complete(&newProps);
+
+  // Set platform prefs
+  simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(id, &transaction);
+  prefs->mutable_commonprefs()->set_name(name);
+  prefs->set_dynamicscale(true);
+  prefs->set_icon(icon);
+  prefs->set_rotateicons(simData::IR_2D_UP);
+  transaction.complete(&prefs);
+
+  return id;
+}
+
+void MultiPlatformSimulation::addPlatformSim(simData::ObjectId id, simUtil::PlatformSimulator* simulator)
+{
+  // If assert fails, this ID is already in the map. Somebody is tampering with the data store and this class doesn't know about it
+  assert(plats_.find(id) == plats_.end());
+  plats_[id] = simulator;
+  simMan_->addSimulator(simulator);
+}
+
+void MultiPlatformSimulation::init_(simVis::View* mainView, double startTime, double endTime)
+{
+  // Don't crash on nullptr accesses
+  if (!sceneManager_.valid() || mainView == nullptr)
+    return;
+
+  // Bind the scene manager to the data store
+  sceneManager_->getScenario()->bind(dataStore_);
+  simMan_ = new simUtil::PlatformSimulatorManager(dataStore_);
+  mainView->addEventHandler(new simUtil::SimulatorEventHandler(simMan_.get(), startTime, endTime, true));
 }
 
 //---------------------------------------------------------------------------

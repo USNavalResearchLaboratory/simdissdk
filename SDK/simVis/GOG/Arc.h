@@ -48,7 +48,7 @@ public:
     osgEarth::MapNode*       mapNode);
 
   /** Create the arc from the shape object */
-  static GogNodeInterface* createArc(const simCore::GOG::Arc& arc, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
+  static GogNodeInterface* createArc(const simCore::GOG::Arc& arc, const std::string& filename, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };
 
 } } // namespace simVis::GOG

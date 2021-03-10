@@ -233,12 +233,12 @@ void AnimatedLineNode::initializeGeometry_()
   // build the initial geometry from scratch.
   this->removeChildren(0, this->getNumChildren());
 
-  // Geode to hold the geometry.
-  geode_ = new osgEarth::LineGroup();
+  // Group to hold both matrices.
+  lineGroup_ = new osg::Group();
   firstHalf_.matrix = new osg::MatrixTransform;
   secondHalf_.matrix = new osg::MatrixTransform;
-  geode_->addChild(firstHalf_.matrix);
-  geode_->addChild(secondHalf_.matrix);
+  lineGroup_->addChild(firstHalf_.matrix);
+  lineGroup_->addChild(secondHalf_.matrix);
 
   // First geometry:
   {
@@ -287,16 +287,16 @@ void AnimatedLineNode::initializeGeometry_()
   }
 
   // top-level state set sets up lighting, etc.
-  osg::StateSet* stateSet = geode_->getOrCreateStateSet();
+  osg::StateSet* stateSet = lineGroup_->getOrCreateStateSet();
   stateSet->setMode(GL_BLEND, 1);
 
   fixDepth_(false);
-  this->addChild(geode_.get());
+  this->addChild(lineGroup_.get());
 }
 
 void AnimatedLineNode::fixDepth_(bool isCloseToSurface)
 {
-  osg::StateSet* stateSet = geode_->getOrCreateStateSet();
+  osg::StateSet* stateSet = lineGroup_->getOrCreateStateSet();
 
   // Turn off depth buffer only if requested, or if not-requested and near surface (Z-fighting)
   if (depthBufferTest_ && !isCloseToSurface)

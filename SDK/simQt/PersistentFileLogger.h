@@ -28,9 +28,10 @@
 #include <QDateTime>
 #include "simCore/Common/Export.h"
 
+class QByteArray;
+class QDir;
 class QFile;
 class QTextStream;
-class QDir;
 
 namespace simQt {
 
@@ -68,6 +69,13 @@ public:
   PersistentFileLogger(const QString& prefix, QObject* parent=nullptr);
   virtual ~PersistentFileLogger();
 
+  /** Sets the subdirectory under the filePath.  Default is "logs".  Only valid before open(). */
+  void setSubdirectory(const QString& subdir);
+  /** Sets the filename extension.  Default is ".log".  Only valid before open(). */
+  void setExtension(const QString& extension);
+  /** Sets the logging to binary format (omits the QIODevice::Text flag).  Use if logging binary data.  Only valid before open(). */
+  void setBinary(bool binary);
+
   /** Returns true if the file is open */
   bool isOpen() const;
   /** Returns the filename for the log.  if !isOpen(), then this string is empty. */
@@ -88,9 +96,14 @@ public slots:
   int open();
   /**
    * Appends text to the log file.  Raw output, no trimming.  Returns 0 on success.  Will
-   * NOT open the file if it not already open.
+   * NOT open the file if it is not already open.
    */
   int addText(const QString& text);
+  /**
+   * Appends data (possibly binary) to the file.  Returns 0 on success.  Will not trim or otherwise
+   * modify the data, raw output.  Will NOT open the file if it is not already open.
+   */
+  int write(const QByteArray& bytes);
 
 private:
   /** Returns the QString-based path for the logs file output.  Has side effect of mkpath()'ing the logs directory if needed. */
@@ -118,6 +131,13 @@ private:
   QString filename_;
   /** Path used for the logs.  Set only after first attempted open. */
   QString filePath_;
+
+  /** Subdirectory, only can be set prior to open() */
+  QString subdirectory_;
+  /** Extension, including the dot.  Only can be set prior to open() */
+  QString extension_;
+  /** Open files in binary mode. */
+  bool binary_;
 };
 
 }

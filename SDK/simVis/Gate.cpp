@@ -236,10 +236,10 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
 
   geom_->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
 
-  osg::Geode* geodeSolid = new osgEarth::LineGroup();
-  geodeSolid->setName("Solid LineGroup");
-  geodeSolid->addChild(geom_);
-  addChild(geodeSolid);
+  osg::Group* solidLines = new osgEarth::LineGroup();
+  solidLines->setName("Solid LineGroup");
+  solidLines->addChild(geom_);
+  addChild(solidLines);
 }
 
 GateCentroid::~GateCentroid()
@@ -367,8 +367,6 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   // labels are culled based on centroid center point
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
-  // SIM-11395 - set default ellipsoid, when osgEarth supports it
-  //  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 
@@ -447,6 +445,9 @@ void GateNode::setPrefs(const simData::GatePrefs& prefs)
 {
   // validate localgrid prefs changes that might provide user notifications
   localGrid_->validatePrefs(prefs.commonprefs().localgrid());
+
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefsFromDS_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
+    applyProjectorPrefs_(lastPrefsFromDS_.commonprefs(), prefs.commonprefs());
 
   applyPrefs_(prefs);
   updateLabel_(prefs);

@@ -95,6 +95,9 @@ public:
   /** Returns true if the gradient in the widget is currently valid */
   bool gradientIsValid() const;
 
+  /** Returns true if the gradient has changed since last call to setColorGradient() */
+  bool hasChanges() const;
+
 public slots:
   /** Sets whether to display the color stops table */
   void setShowTable(bool show);
@@ -150,6 +153,9 @@ private:
   double minUserValue_;
   double maxUserValue_;
   QString valueSuffix_;
+
+  /** Tracks whether the gradient has changed since last call to setColorGradient() */
+  bool hasChanges_ = false;
 };
 }
 
