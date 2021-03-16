@@ -9,6 +9,6 @@ endif()
 # CMake 3.1 is required for CMAKE_CXX_STANDARD
 cmake_minimum_required(VERSION 3.1)
 
-# Use C++14, but permit decay to older versions (i.e. 14 is not a hard requirement)
-set(CMAKE_CXX_STANDARD 14)
+# Use C++17, but permit decay to older versions (i.e. 17 is not a hard requirement)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
