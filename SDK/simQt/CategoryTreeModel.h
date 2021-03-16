@@ -201,11 +201,6 @@ private:
   QString settingsKey_;
 };
 
-// Typedef to CategoryTreeModel2 for backwards compatibility
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-typedef CategoryTreeModel CategoryTreeModel2;
-#endif
-
 /**
  * Item delegate that provides custom styling for a QTreeView with a CategoryTreeModel.  This
  * delegate is required in order to get "Unlisted Value" editing working properly with
@@ -363,11 +358,6 @@ private:
   /** If true then the category counts need to be redone */
   bool countDirty_;
 };
-
-// Typedef to CategoryFilterWidget2 for backwards compatibility
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-typedef CategoryFilterWidget CategoryFilterWidget2;
-#endif
 
 }
 

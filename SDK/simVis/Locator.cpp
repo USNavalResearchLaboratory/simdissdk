@@ -107,28 +107,6 @@ void Locator::setComponentsToInherit(unsigned int value, bool notify)
     notifyListeners_();
 }
 
-void Locator::setCoordinate(const simCore::Coordinate& coord, bool notify)
-{
-  if (coord.coordinateSystem() != simCore::COORD_SYS_ECEF)
-  {
-    simCore::CoordinateConverter conv;
-    conv.convert(coord, ecefCoord_, simCore::COORD_SYS_ECEF);
-  }
-  else
-  {
-    ecefCoord_ = coord;
-  }
-  if (coord.elapsedEciTime() != 0)
-    timestamp_ = coord.elapsedEciTime() + getEciRefTime();
-
-  isEmpty_ = false;
-
-  ecefCoordIsSet_ = true;
-
-  if (notify)
-    notifyListeners_();
-}
-
 void Locator::setCoordinate(const simCore::Coordinate& coord, double timestamp, double eciRefTime, bool notify)
 {
   timestamp_ = timestamp;
@@ -291,11 +269,6 @@ double Locator::getElapsedEciTime() const
     }
   }
   return getTime();
-}
-
-bool Locator::inherits_(unsigned int mask) const
-{
-  return (componentsToInherit_ & mask) != COMP_NONE;
 }
 
 bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::CoordinateSystem& coordsys) const

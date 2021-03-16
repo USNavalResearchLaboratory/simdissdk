@@ -278,20 +278,6 @@ static const unsigned int MAX_PRECISION = 6;
     return new NumberText(this, 0, maxValue, precision, true, 1.0/scale, true);
   }
 
-  NumberText* SegmentedTexts::updateFactionOfSeconds_(int precision)
-  {
-    if (precision < 1)
-      precision = 1;
-    else if (precision > static_cast<int>(MAX_PRECISION))
-      precision = static_cast<int>(MAX_PRECISION);
-
-    delete segments_.back();
-    segments_.pop_back();
-    NumberText* fraction = createFactionOfSeconds_(precision_);
-    addPart(fraction);
-    return fraction;
-  }
-
   int SegmentedTexts::fractionToField_(const simCore::Seconds& secondsRounded) const
   {
     // precision limit of 9 is due to simCore::Seconds implementation, and is independent of SegmentedText MAX_PRECISION

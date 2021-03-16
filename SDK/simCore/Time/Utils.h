@@ -266,15 +266,6 @@ namespace simCore
   SDKCORE_EXPORT std::string getTimeComponents(double time, unsigned int *day, unsigned int *hour, unsigned int *min, unsigned int *sec, unsigned int *tenthSec, bool ordinal);
 
   /**
-   * Normalize year and seconds values so that the seconds value is less than one year.
-   * @param[in,out] refYear An integer containing the year (>1900) referenced to the Gregorian calendar.
-   * @param[in,out] secondsSinceRefYear A double in seconds referenced to the beginning of the given Gregorian year (or "calendrical year").
-   * @throw TimeException
-   * @pre refYear and secondsSinceRefYear valid params
-   * @deprecated
-   */
-  SDK_DEPRECATE(SDKCORE_EXPORT void normalizeTime(int &refYear, double &secondsSinceRefYear), "Method will be removed in a future SDK release");
-  /**
    * Algorithm to get a new time step based on a step up or step down from a given step value
    * Calculates the proper step to use when stepping up or down from a time step
    * value in an application that uses SIMDIS time formats

@@ -168,7 +168,6 @@ set(VIS_HEADERS_RFPROP
     ${VIS_INC}RFProp/ProfileContext.h
     ${VIS_INC}RFProp/ProfileDataProvider.h
     ${VIS_INC}RFProp/ProfileManager.h
-    ${VIS_INC}RFProp/RadarParameters.h
     ${VIS_INC}RFProp/RFPropagationFacade.h
     ${VIS_INC}RFProp/RFPropagationManager.h
     ${VIS_INC}RFProp/SNRDataProvider.h

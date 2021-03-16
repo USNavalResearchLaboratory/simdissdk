@@ -293,19 +293,6 @@ void EntityTreeComposite::setMargins(int left, int top, int right, int bottom)
   composite_->verticalLayout->layout()->setContentsMargins(left, top, right, bottom);
 }
 
-void EntityTreeComposite::addExternalAction(QAction* action)
-{
-  if ((action == nullptr) || action->isSeparator())
-    return;
-
-  externalActions_.push_back(action);
-}
-
-void EntityTreeComposite::removeExternalActions()
-{
-  externalActions_.clear();
-}
-
 void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 {
   QMenu* menu = new QMenu(composite_->treeView);
@@ -315,16 +302,6 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
     menu->addAction(centerAction_);
 
   menu->addSeparator();
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  if (!externalActions_.empty())
-  {
-    for (auto it = externalActions_.begin(); it != externalActions_.end(); ++it)
-      menu->addAction(*it);
-
-    menu->addSeparator();
-  }
-#endif
 
   if (showTreeOptionsInMenu_)
   {

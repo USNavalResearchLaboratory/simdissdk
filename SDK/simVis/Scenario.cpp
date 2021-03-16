@@ -478,11 +478,6 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   scenarioEciLocator_ = new Locator();
 }
 
-ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* projMan)
-  : ScenarioManager(projMan)
-{
-}
-
 ScenarioManager::~ScenarioManager()
 {
   // Do not delete surfaceClamping_ or surfaceLimiting_

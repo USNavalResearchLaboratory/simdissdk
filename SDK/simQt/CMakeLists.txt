@@ -98,9 +98,6 @@ if(TARGET simVis)
         ${SIMQT_INC}TimestampedLayerManager.h
         ${SIMQT_INC}ViewManagerDataModel.h
     )
-    if(ENABLE_DEPRECATED_SIMDISSDK_API)
-        list(APPEND SIMQT_HEADERS_TO_MOC ${SIMQT_INC}IncrementalCompileSettings.h)
-    endif()
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}FillItemModelWithNodeVisitor.h
     )
@@ -216,9 +213,6 @@ if(TARGET simVis)
         ${SIMQT_SRC}TimestampedLayerManager.cpp
         ${SIMQT_SRC}ViewManagerDataModel.cpp
     )
-    if(ENABLE_DEPRECATED_SIMDISSDK_API)
-        list(APPEND SIMQT_SOURCES ${SIMQT_SRC}IncrementalCompileSettings.cpp)
-    endif()
 
     # Parts of simQt depend on both simVis and osgQt
     if (TARGET OSGQT)
