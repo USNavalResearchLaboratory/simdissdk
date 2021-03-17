@@ -324,6 +324,8 @@ void ClockImpl::setMode(Clock::Mode newMode, const simCore::TimeStamp& liveStart
     setStartTime(liveStartTime);
     setEndTime(liveStartTime);
     setTime(liveStartTime);
+    // SIM-12714 - force scale to 1 when entering MODE_FREEWHEEL
+    realScale_ = 1.0;
     playForward();
   }
   else if (newMode == Clock::MODE_SIMULATION)
