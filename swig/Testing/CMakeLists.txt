@@ -8,14 +8,14 @@ cmake_minimum_required(VERSION 3.12)
 
 if(WIN32)
     # Windows has been picky about which versions can be mixed
-    find_package(Python3 3.8 COMPONENTS Interpreter QUIET)
+    find_package(Python3 3.9 COMPONENTS Interpreter QUIET)
 else()
     # Linux is more forgiving
     find_package(Python3 3.6 COMPONENTS Interpreter QUIET)
 endif()
 
-# Return if there's no interpreter
-if(NOT Python3_Interpreter_FOUND)
+# Return if there's no interpreter; both set on success, but only Python3_FOUND is false on failure
+if(NOT Python3_FOUND OR NOT Python3_Interpreter_FOUND)
     return()
 endif()
 
