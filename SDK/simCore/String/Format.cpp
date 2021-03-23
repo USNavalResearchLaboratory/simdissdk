@@ -92,9 +92,14 @@ std::string getExtension(const std::string &inName, bool toLower)
     return "";
 
   // convert to lower-case for insensitive comparison
-  std::string outString = toLower ? lowerCase(inName) : inName;
-  size_t found = outString.find_last_of(".");
-  return (found != std::string::npos) ? outString.substr(found) : "";
+  const std::string& outString = toLower ? lowerCase(inName) : inName;
+
+  // SIM-12740: '.' only delimits an extension when found after all path specifiers
+  const size_t lastSlash = outString.find_last_of("/\\");
+  const size_t found = outString.find_last_of(".");
+  if (found != std::string::npos && (lastSlash == std::string::npos || lastSlash < found))
+    return outString.substr(found);
+  return "";
 }
 
 /// Verifies the incoming string has the specified extension

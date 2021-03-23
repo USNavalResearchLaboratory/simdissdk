@@ -190,6 +190,11 @@ int testGetExtension()
   rv += SDK_ASSERT(simCore::getExtension("test.ab,cd!ef") == ".ab,cd!ef");
   rv += SDK_ASSERT(simCore::getExtension("test.AbCdEfGhI") == ".abcdefghi");
   rv += SDK_ASSERT(simCore::getExtension("test.AbCdEfGhI", false) == ".AbCdEfGhI");
+
+  rv += SDK_ASSERT(simCore::getExtension("./../test.AbCdEfGhI", false) == ".AbCdEfGhI");
+  rv += SDK_ASSERT(simCore::getExtension("./../test", false) == "");
+  rv += SDK_ASSERT(simCore::getExtension("./..\\test.AbCdEfGhI", false) == ".AbCdEfGhI");
+  rv += SDK_ASSERT(simCore::getExtension("./..\\test", false) == "");
   return rv;
 }
 
