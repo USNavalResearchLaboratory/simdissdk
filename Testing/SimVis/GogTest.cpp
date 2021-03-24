@@ -25,6 +25,7 @@
 #include <vector>
 #include "osgEarth/FeatureNode"
 #include "osgEarth/GeoPositionNode"
+#include "osgEarth/LabelNode"
 #include "osgEarth/LocalGeometryNode"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
@@ -767,6 +768,22 @@ int testShapes(bool useCore)
     rv += SDK_ASSERT(fontColor == osg::Vec4f(1.0, 0, 1.0, 1.0));
   }
   clearItems(gogs, followData, input);
+
+  // test annotation text special characters
+  std::string annotationTextGogFile = FILE_VERSION +
+    "start\n annotation label_1\\nnext line\n centerlla 25.2 53.2 0.\nend\n";
+  simVis::GOG::GogNodeInterfacePtr annotationTextGog = (useCore ? parseGogFileWithCore(false, annotationTextGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, annotationTextGogFile, rv));
+  rv += SDK_ASSERT(annotationTextGog != nullptr);
+  if (annotationTextGog)
+  {
+    rv += SDK_ASSERT(annotationTextGog->shape() == simVis::GOG::GOG_ANNOTATION);
+    rv += SDK_ASSERT(annotationTextGog->getDraw());
+
+    osgEarth::LabelNode* label = dynamic_cast<osgEarth::LabelNode*>(annotationTextGog->osgNode());
+    rv += SDK_ASSERT(label);
+    if (label)
+      rv += SDK_ASSERT(label->getText() == "label 1\nnext line");
+  }
 
   // test lat lon alt box
   const std::string llabGogFile = FILE_VERSION +

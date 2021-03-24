@@ -1026,6 +1026,19 @@ int testAnnotation()
   rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n centerxy 20. 35.\n rangeunits m\n altitudeunits m\n end\n", testAnnotationCenterFunc, annoRelCtr);
   rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n xy 20. 35.\n rangeunits m\n altitudeunits m\n end\n", testAnnotationCenterFunc, annoRelCtr);
 
+  // test annotation text special characters
+  std::stringstream annoTextGog;
+  annoTextGog << "start\n annotation label_1\\nnext line\n centerll 24.5 54.6\n end\n";
+  parser.parse(annoTextGog, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+  {
+    simCore::GOG::Annotation* anno = dynamic_cast<simCore::GOG::Annotation*>(shapes.front().get());
+    rv += SDK_ASSERT(anno != nullptr);
+    if (anno)
+      rv += SDK_ASSERT(anno->text() == "label 1\nnext line");
+  }
+
   return rv;
 }
 
