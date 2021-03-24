@@ -4,7 +4,7 @@ import os, sys, math, timeit
 if 'SIMDIS_DIR' in os.environ:
 	# For _module shared object:
 	if os.name == "nt":
-		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-nt/python3.8')
+		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-nt/python3.9')
 		try:
 			# Python 3.8 does not want to respect PATH for loading dependent DLLs.  It introduces
 			# a new method to attempt to fix the problem.  Try/except ignores errors in older Python.
@@ -14,7 +14,7 @@ if 'SIMDIS_DIR' in os.environ:
 			pass
 		pass
 	else:
-		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-linux/python3.8/lib-dynload')
+		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-linux/python3.9/lib-dynload')
 	# For module wrapper:
 	sys.path.append(os.environ['SIMDIS_DIR'] + '/bin/pythonScripts')
 
