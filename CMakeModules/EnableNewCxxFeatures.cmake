@@ -4,6 +4,9 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     if(NOT ENABLE_CXX11_ABI)
         add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
     endif()
+elseif(MSVC)
+    # Fix __cplusplus on MSVC 2015+ (https://devblogs.microsoft.com/cppblog/msvc-now-correctly-reports-__cplusplus/)
+    add_definitions(-Zc:__cplusplus)
 endif()
 
 # CMake 3.1 is required for CMAKE_CXX_STANDARD
