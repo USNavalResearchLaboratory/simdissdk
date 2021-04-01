@@ -309,7 +309,8 @@ private:
 
 PlatformIconFactory::PlatformIconFactory()
   : icons_(new IconContainer),
-  nextOrder_(0)
+  nextOrder_(0),
+  enabled_(true)
 {
   removeNotifier_.reset(new RemoveNotifier(*this));
 }
@@ -390,6 +391,10 @@ osg::Node* PlatformIconFactory::getOrCreate(const simData::PlatformPrefs& prefs)
 
 bool PlatformIconFactory::canApply_(const simData::PlatformPrefs& prefs) const
 {
+  // Cannot apply if not enabled
+  if (!enabled_)
+    return false;
+
   // Box mode, rendering a box instead of an icon, is unsupported
   if (prefs.drawbox())
     return false;
@@ -413,7 +418,6 @@ bool PlatformIconFactory::canApply_(const simData::PlatformPrefs& prefs) const
   return true;
 }
 
-/** Returns true if the icon needs to be reevaluated after new prefs apply. */
 bool PlatformIconFactory::hasRelevantChanges(const simData::PlatformPrefs& oldPrefs, const simData::PlatformPrefs& newPrefs) const
 {
   return
@@ -440,6 +444,16 @@ bool PlatformIconFactory::hasRelevantChanges(const simData::PlatformPrefs& oldPr
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, nodepthicons) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, usecullface) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, cullface);
+}
+
+void PlatformIconFactory::setEnabled(bool enabled)
+{
+  enabled_ = enabled;
+}
+
+bool PlatformIconFactory::isEnabled() const
+{
+  return enabled_;
 }
 
 }

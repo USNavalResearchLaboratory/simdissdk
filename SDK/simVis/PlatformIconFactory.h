@@ -60,6 +60,11 @@ public:
   /** Returns a single global instance, singleton pattern. */
   static PlatformIconFactory* instance();
 
+  /** Sets an enabled flag.  If disabled, getOrCreate() always return nullptr. Enabled by default. */
+  void setEnabled(bool enabled);
+  /** Returns the enabled flag. */
+  bool isEnabled() const;
+
   /** Factory method for creating an node based on prefs.  May return null if prefs can't be implemented using this path. */
   osg::Node* getOrCreate(const simData::PlatformPrefs& prefs);
 
@@ -84,6 +89,8 @@ private:
   std::unique_ptr<IconContainer> icons_;
   /// Increasing ID value; split icons into nested render bins based on this order
   uint64_t nextOrder_;
+  /// Indicates whether getOrCreate() always returns nullptr
+  bool enabled_;
 };
 
 }
