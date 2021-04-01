@@ -189,6 +189,9 @@ private:
   osg::ref_ptr<osg::Group>           alphaVolumeGroup_;
   unsigned int                       objectIndexTag_;
 
+  /** Billboarding for the simple icon group */
+  osg::ref_ptr<simVis::BillboardAutoTransform> simpleIconBillboard_;
+
   /** Contains list of platform callbacks */
   std::vector<osg::ref_ptr<Callback> > callbacks_;
   /** Fires off callbacks with the given event type */

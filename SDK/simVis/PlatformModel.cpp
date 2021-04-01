@@ -34,7 +34,6 @@
 #include "osgEarth/Horizon"
 #include "osgEarth/ObjectIndex"
 #include "osgEarth/AnnotationUtils"
-
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/String/Format.h"
@@ -49,6 +48,7 @@
 #include "simVis/RCS.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
+#include "simVis/PlatformIconFactory.h"
 #include "simVis/PlatformModel.h"
 
 #undef LC
@@ -58,8 +58,6 @@ namespace simVis {
 
 /** OSG Mask for traversal (like the select type in SIMDIS 9) */
 const unsigned int PlatformModelNode::TRAVERSAL_MASK = simVis::DISPLAY_MASK_PLATFORM_MODEL;
-/** Conversion factor to convert a brightness pref value (0-100) to an ambient light value (from S9) */
-static const float BRIGHTNESS_TO_AMBIENT = 0.022f;
 /** Default brightness ambient value; 36 brightness is the default value */
 static const osg::Vec4f DEFAULT_AMBIENT(
   36.f * BRIGHTNESS_TO_AMBIENT,
@@ -96,9 +94,10 @@ private:
 
 /* OSG Scene Graph Layout of This Class
  *
- *       /= labelRoot => label_              /= rcs_         /= alphaVolumeGroup_ => model_
+ *       /= label_                           /= rcs_                                 /= alphaVolumeGroup_ => model_
  * this => dynamicXform_ => imageIconXform_ <=> imageAlignmentXform_ => offsetXform_ => model_
  *                                           \= other scaled children
+ *       \= simpleIconBillboard_
  *
  * model_ is the representative for the 3D model or 2D image, and may be set to nullptr at times.
  * It is set from the call to simVis::Registry::instance()->getOrCreateIconModel().
@@ -134,6 +133,10 @@ private:
  * alphaVolumeGroup_ is only on when the alphavolume() preference is on.  It does a second pass on
  * the platform model, this time drawing the backfaces.  This is useful for things like drawing the
  * interior of an alpha sphere used in error ellipses.
+ *
+ * simpleIconBillboard_ is an optimization path to help with rendering image-only platforms very quickly
+ * by reducing state set changes.  It only is available for 2D icons.  It is mutually exclusive to
+ * dynamicXform_.  Only one or the other is active.
  */
 
 PlatformModelNode::PlatformModelNode(Locator* locator)
@@ -141,7 +144,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   isImageModel_(false),
   autoRotate_(false),
   lastPrefsValid_(false),
-  brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT)),
+  brightnessUniform_(new osg::Uniform(LIGHT0_AMBIENT_COLOR.c_str(), DEFAULT_AMBIENT)),
   objectIndexTag_(0)
 {
   // EntityLabelNode for platformModel is a special case - a locatorNode with no locator; it gets its location from parent, the platformmodelnode (which is a locatorNode).
@@ -166,6 +169,11 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   imageIconXform_->setAutoRotateMode(BillboardAutoTransform::NO_ROTATION);
   imageIconXform_->setName("imageIconXform");
   imageIconXform_->dirty();
+  simpleIconBillboard_ = new BillboardAutoTransform();
+  simpleIconBillboard_->setAutoScaleToScreen(false);
+  simpleIconBillboard_->setAutoRotateMode(BillboardAutoTransform::NO_ROTATION);
+  simpleIconBillboard_->setName("simpleIconBillboard");
+  simpleIconBillboard_->dirty();
 
   // Horizon culler for the platform (and its label). The culler is attached to this node,
   // but uses the imageIconXform for the actual testing.
@@ -201,6 +209,9 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   osg::ref_ptr<osg::CullFace> face = new osg::CullFace(osg::CullFace::FRONT);
   alphaVolumeGroup_->getOrCreateStateSet()->setAttributeAndModes(face.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
+  addChild(simpleIconBillboard_.get());
+  simpleIconBillboard_->setNodeMask(0u);
+
   // Set an initial model.  Without this, visitors expecting a node may fail early.
   setModel(simVis::Registry::instance()->modelCache()->boxNode(), false);
 }
@@ -231,6 +242,7 @@ bool PlatformModelNode::addScaledChild(osg::Node* node)
   // for the model do not accidentally swap the location/orientation of attachments
   if (imageIconXform_ == nullptr)
     return false;
+  simpleIconBillboard_->addChild(node);
   return imageIconXform_->addChild(node);
 }
 
@@ -238,6 +250,7 @@ bool PlatformModelNode::removeScaledChild(osg::Node* node)
 {
   if (imageIconXform_ == nullptr)
     return false;
+  simpleIconBillboard_->removeChild(node);
   return imageIconXform_->removeChild(node);
 }
 
@@ -253,6 +266,7 @@ void PlatformModelNode::syncWithLocator()
     simCore::Coordinate c;
     getLocator()->getCoordinate(&c, simCore::COORD_SYS_LLA);
     imageIconXform_->setScreenSpaceRotation(c.yaw());
+    simpleIconBillboard_->setScreenSpaceRotation(c.yaw());
   }
 }
 
@@ -365,6 +379,9 @@ void PlatformModelNode::setRotateToScreen(bool value)
     imageIconXform_->setRotation(osg::Quat());
   }
   imageIconXform_->dirty();
+  simpleIconBillboard_->setAutoRotateMode(imageIconXform_->getAutoRotateMode());
+  simpleIconBillboard_->setRotation(imageIconXform_->getRotation());
+  simpleIconBillboard_->dirty();
 }
 
 bool PlatformModelNode::updateImageAlignment_(const simData::PlatformPrefs& prefs, bool force)
@@ -464,7 +481,10 @@ void PlatformModelNode::updateBounds_()
 
   // remove rcs to avoid inclusion in the bounds calculation
   if (rcs_.valid())
+  {
     imageIconXform_->removeChild(rcs_.get());
+    simpleIconBillboard_->removeChild(rcs_.get());
+  }
 
   // remove all children except the model, since only the model should be included in the bounds calculation
   const unsigned int numChildren = offsetXform_->getNumChildren();
@@ -494,6 +514,7 @@ void PlatformModelNode::updateBounds_()
   if (rcs_.valid())
   {
     imageIconXform_->addChild(rcs_.get());
+    simpleIconBillboard_->addChild(rcs_.get());
     // Adjust the RCS scale at this point too
     rcs_->setScale(model_->getBound().radius() * 2.0);
   }
@@ -608,6 +629,7 @@ void PlatformModelNode::updateImageIconRotation_(const simData::PlatformPrefs& p
   setRotateToScreen(
     prefs.rotateicons() == simData::IR_2D_UP);
   imageIconXform_->setRotateInScreenSpace(prefs.rotateicons() == simData::IR_2D_YAW);
+  simpleIconBillboard_->setRotateInScreenSpace(prefs.rotateicons() == simData::IR_2D_YAW);
 
   if (prefs.rotateicons() == simData::IR_3D_YPR)
   {
@@ -637,6 +659,7 @@ void PlatformModelNode::updateRCS_(const simData::PlatformPrefs& prefs)
     // create it
     rcs_ = new RCSNode();
     imageIconXform_->addChild(rcs_.get());
+    simpleIconBillboard_->addChild(rcs_.get());
 
     // scale the RCS to make it visible:
     if (model_.valid())
@@ -647,6 +670,7 @@ void PlatformModelNode::updateRCS_(const simData::PlatformPrefs& prefs)
   {
     // remove it
     imageIconXform_->removeChild(rcs_.get());
+    simpleIconBillboard_->removeChild(rcs_.get());
     rcs_ = nullptr;
   }
 
@@ -794,9 +818,9 @@ void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs, boo
   // Turn lighting on if lighting is enabled, but force it off if lighting is off.  This
   // prevents models from turning lighting on when we don't want it on.  Models can then
   // feasibly override this with the PROTECTED|ON state.
-  simVis::setLighting(offsetXform_->getOrCreateStateSet(), (!isImageModel_ && prefs.lighted())
-    ? osg::StateAttribute::ON
-    : (osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE));
+simVis::setLighting(offsetXform_->getOrCreateStateSet(), (!isImageModel_ && prefs.lighted())
+  ? osg::StateAttribute::ON
+  : (osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE));
 }
 
 void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs)
@@ -805,8 +829,8 @@ void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs
     return;
 
   if (lastPrefsValid_ &&
-      !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
-      !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor))
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor))
     return;
 
   // using an override color?
@@ -890,6 +914,28 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
 
   if (needsBoundsUpdate)
     updateBounds_();
+
+  // Attempt to use the simplified/optimized 2D icon path
+  PlatformIconFactory* iconFactory = PlatformIconFactory::instance();
+  if (!lastPrefsValid_ || iconFactory->hasRelevantChanges(lastPrefs_, prefs))
+  {
+    osg::ref_ptr<osg::Node> newIcon = iconFactory->getOrCreate(prefs);
+
+    // Only need to make changes if the icon is different from the old one
+    osg::ref_ptr<osg::Node> oldOptimizeIcon = (simpleIconBillboard_.valid() && simpleIconBillboard_->getNumChildren())
+      ? simpleIconBillboard_->getChild(0) : nullptr;
+    if (newIcon.get() != oldOptimizeIcon.get())
+    {
+      if (oldOptimizeIcon.valid())
+        simpleIconBillboard_->removeChild(oldOptimizeIcon.get());
+      if (newIcon.valid())
+        simpleIconBillboard_->addChild(newIcon.get());
+
+      // Either use the dynamic transform, or use the optimized billboard transform; don't use both
+      dynamicXform_->setNodeMask(newIcon.valid() ? 0u : getMask());
+      simpleIconBillboard_->setNodeMask(newIcon.valid() ? getMask() : 0u);
+    }
+  }
 
   lastPrefs_ = prefs;
   lastPrefsValid_ = true;
