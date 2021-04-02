@@ -71,9 +71,6 @@ public:
     platPositionOffset_ = osg::Vec3d(posOffset.x(), posOffset.y(), posOffset.z());
     const auto& oriOffset = prefs.orientationoffset();
     orientationOffset_ = osg::Vec3d(oriOffset.yaw(), oriOffset.pitch(), oriOffset.yaw());
-    scale_ = prefs.scale();
-    dynamicScale_ = prefs.dynamicscale();
-    dynamicScaleScalar_ = dynamicScale_ ? prefs.dynamicscalescalar() : 1.0;
     icon_ = simVis::Registry::instance()->findModelFile(prefs.icon());
     const bool useOverride = prefs.commonprefs().has_useoverridecolor() && prefs.commonprefs().useoverridecolor() &&
       ((prefs.commonprefs().overridecolor() & 0xFF) != 0);
@@ -107,7 +104,6 @@ public:
     // std::tie<> provides a convenient variadic-oriented operator< we can use
     auto asTuple = [](const MergeSettings& rhs) {
       return std::tie(rhs.platPositionOffset_, rhs.orientationOffset_,
-        rhs.scale_, rhs.dynamicScale_, rhs.dynamicScaleScalar_,
         rhs.icon_, rhs.overrideColor_, rhs.noDepthIcons_,
         rhs.useCullFace_, rhs.cullFace_, rhs.brightness_);
     };
@@ -117,16 +113,12 @@ public:
 private:
   osg::Vec3d platPositionOffset_;
   osg::Vec3d orientationOffset_;
-  double scale_ = 1.0;
-  bool dynamicScale_ = false;
-  double dynamicScaleScalar_ = 1.0;
   std::string icon_;
   osg::Vec4f overrideColor_;
   bool noDepthIcons_ = true;
   bool useCullFace_ = false;
   osg::CullFace::Mode cullFace_ = osg::CullFace::FRONT_AND_BACK;
   int brightness_ = 36;
-
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -150,14 +142,12 @@ private:
  * together, then the second set of 300 icons second, all together.  This reduces state
  * changes and simplifies the draw portion of the OSG pipeline.
  */
-class SimpleBinnedIconNode : public BillboardAutoTransform
+class SimpleBinnedIconNode : public osg::MatrixTransform
 {
 public:
   explicit SimpleBinnedIconNode(const MergeSettings& mergeSettings)
-    : xform_(new osg::MatrixTransform),
-    mergeSettings_(mergeSettings)
+    : mergeSettings_(mergeSettings)
   {
-    addChild(xform_.get());
   }
 
   virtual ~SimpleBinnedIconNode()
@@ -170,9 +160,9 @@ public:
    */
   void setNode(osg::Node* iconNode, uint64_t order)
   {
-    if (xform_->getNumChildren())
-      xform_->removeChildren(0, xform_->getNumChildren());
-    xform_->addChild(iconNode);
+    if (getNumChildren())
+      removeChildren(0, getNumChildren());
+    addChild(iconNode);
 
     // Determine a nested render bin for the icon.  The render bin needs to be globally unique to
     // other global SDK bins, and should have a wide enough range to have a low chance of conflict
@@ -193,11 +183,7 @@ public:
    */
   void updatePrefs(const simData::PlatformPrefs& prefs)
   {
-    // Apply the dynamic scale.  The rotation is handled externally in PlatformModel
-    setAutoScaleToScreen(prefs.dynamicscale());
-    setAutoRotateMode(osg::AutoTransform::NO_ROTATION);
-
-    // Apply platform position offset, orientation offset, and scale
+    // Apply platform position offset, orientation offset
     osg::Matrix m;
     if (prefs.has_platpositionoffset())
     {
@@ -214,10 +200,7 @@ public:
         m.preMultRotate(qrot);
       }
     }
-    // Note that the dynamic scale scalar is a divisor and not a multiplier
-    const double realScale = prefs.scale() / (prefs.dynamicscale() ? prefs.dynamicscalescalar() : 1.0);
-    m.preMultScale(osg::Vec3d(realScale, realScale, 1.0));
-    xform_->setMatrix(m);
+    setMatrix(m);
 
     osg::StateSet* stateSet = getOrCreateStateSet();
 
@@ -273,7 +256,6 @@ public:
   }
 
 private:
-  osg::ref_ptr<osg::MatrixTransform> xform_;
   osg::ref_ptr<OverrideColor> overrideColor_;
   MergeSettings mergeSettings_;
 };
@@ -411,19 +393,16 @@ bool PlatformIconFactory::canApply_(const simData::PlatformPrefs& prefs) const
   if (prefs.drawbodyaxis() || prefs.drawinertialaxis() || prefs.drawsunvec() || prefs.drawmoonvec())
     return false;
 
-  // We only support the meters-to-pixels (new) dynamic scale algorithm
-  if (prefs.dynamicscale() && prefs.dynamicscalealgorithm() != simData::DSA_METERS_TO_PIXELS)
-    return false;
-
   return true;
 }
 
 bool PlatformIconFactory::hasRelevantChanges(const simData::PlatformPrefs& oldPrefs, const simData::PlatformPrefs& newPrefs) const
 {
+  // TODO SIM-12780: Alpha Volume has no impact on 2D icons
+  // TODO SIM-12780: Icon alignment does not work
   return
     // Fields that invalidate the index and fields that alter whether return of canApply()
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, icon) ||
-    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, scale) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, platpositionoffset) ||
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, orientationoffset, pitch) ||
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, orientationoffset, yaw) ||
@@ -431,9 +410,6 @@ bool PlatformIconFactory::hasRelevantChanges(const simData::PlatformPrefs& oldPr
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, drawbox) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, alphavolume) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, drawcirclehilight) ||
-    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, dynamicscale) ||
-    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, dynamicscalealgorithm) ||
-    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, dynamicscalescalar) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, drawbodyaxis) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, drawinertialaxis) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, drawsunvec) ||

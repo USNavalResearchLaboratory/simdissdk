@@ -189,8 +189,8 @@ private:
   osg::ref_ptr<osg::Group>           alphaVolumeGroup_;
   unsigned int                       objectIndexTag_;
 
-  /** Billboarding for the simple icon group */
-  osg::ref_ptr<simVis::BillboardAutoTransform> simpleIconBillboard_;
+  /** Potentially null pointer to the fast-path icon render node. */
+  osg::ref_ptr<osg::Node> fastPathIcon_;
 
   /** Contains list of platform callbacks */
   std::vector<osg::ref_ptr<Callback> > callbacks_;
