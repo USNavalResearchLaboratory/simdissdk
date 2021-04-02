@@ -356,7 +356,9 @@ void ViewManager::handleResize(int newwidth, int newheight)
   unsigned int numViews = getNumViews();
   for (unsigned int i = 0; i < numViews; ++i)
   {
-    getView(i)->processResize(newwidth, newheight);
+    simVis::View* view = getView(i);
+    if (view)
+      view->processResize(newwidth, newheight);
   }
 }
 
