@@ -22,10 +22,12 @@
  */
 #include <cassert>
 #include <mutex>
+#include "osg/ComputeBoundsVisitor"
 #include "osg/CullFace"
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Registry"
+#include "simCore/String/Format.h"
 #include "simData/DataTypes.h"
 #include "simVis/BillboardAutoTransform.h"
 #include "simVis/Constants.h"
@@ -72,6 +74,7 @@ public:
     const auto& oriOffset = prefs.orientationoffset();
     orientationOffset_ = osg::Vec3d(oriOffset.yaw(), oriOffset.pitch(), oriOffset.yaw());
     icon_ = simVis::Registry::instance()->findModelFile(prefs.icon());
+    iconAlignment_ = prefs.iconalignment();
     const bool useOverride = prefs.commonprefs().has_useoverridecolor() && prefs.commonprefs().useoverridecolor() &&
       ((prefs.commonprefs().overridecolor() & 0xFF) != 0);
     overrideColor_ = useOverride ? simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA) : osg::Vec4f(1.f, 1.f, 1.f, 1.f);
@@ -104,7 +107,7 @@ public:
     // std::tie<> provides a convenient variadic-oriented operator< we can use
     auto asTuple = [](const MergeSettings& rhs) {
       return std::tie(rhs.platPositionOffset_, rhs.orientationOffset_,
-        rhs.icon_, rhs.overrideColor_, rhs.noDepthIcons_,
+        rhs.icon_, rhs.iconAlignment_, rhs.overrideColor_, rhs.noDepthIcons_,
         rhs.useCullFace_, rhs.cullFace_, rhs.brightness_);
     };
     return asTuple(*this) < asTuple(rhs);
@@ -114,6 +117,7 @@ private:
   osg::Vec3d platPositionOffset_;
   osg::Vec3d orientationOffset_;
   std::string icon_;
+  simData::TextAlignment iconAlignment_;
   osg::Vec4f overrideColor_;
   bool noDepthIcons_ = true;
   bool useCullFace_ = false;
@@ -183,6 +187,11 @@ public:
    */
   void updatePrefs(const simData::PlatformPrefs& prefs)
   {
+    // Assertion failure means setNode() was not called first.  Assertable because this class is
+    // defined entirely inside this .cpp file and we can control execution order.  We need this
+    // node to determine the image size.  Failure here means setNode() wasn't called.
+    assert(getNumChildren() == 1);
+
     // Apply platform position offset, orientation offset
     osg::Matrix m;
     if (prefs.has_platpositionoffset())
@@ -191,6 +200,20 @@ public:
       // x/y order change and sign change needed to match the behavior of SIMDIS 9
       m.makeTranslate(osg::Vec3(-pos.y(), pos.x(), pos.z()));
     }
+
+    // Do a translation for icon alignment, which is really just a special case of platform offset
+    if (getNumChildren() == 1)
+    {
+      osg::ComputeBoundsVisitor cb;
+      getChild(0)->accept(cb);
+      const osg::BoundingBox& bounds = cb.getBoundingBox();
+      const osg::Vec2f iconDims(bounds.xMax() - bounds.xMin(), bounds.yMax() - bounds.yMin());
+      osg::Vec2f xyOffset;
+      simVis::iconAlignmentToOffsets(prefs.iconalignment(), iconDims, xyOffset);
+      m.preMultTranslate(osg::Vec3f(xyOffset, 0.f));
+    }
+
+    // Offset the orientation
     if (prefs.has_orientationoffset())
     {
       const simData::BodyOrientation& ori = prefs.orientationoffset();
@@ -363,7 +386,14 @@ osg::Node* PlatformIconFactory::getOrCreate(const simData::PlatformPrefs& prefs)
   osg::ref_ptr<SimpleBinnedIconNode> newIcon(new SimpleBinnedIconNode(mergeSettings));
   newIcon->addObserver(removeNotifier_.get());
   newIcon->setName("Binned Transform");
-  newIcon->setNode(osg::clone(modelNode.get(), osg::CopyOp::DEEP_COPY_ALL), ++nextOrder_);
+
+  // Avoid cloning tmd and lst files, which are known to edit textures on the fly.  Cloning them
+  // will result in textures not getting updated.
+  const std::string& extension = simCore::getExtension(prefs.icon());
+  if (extension == ".tmd" || extension == ".lst")
+    newIcon->setNode(modelNode, ++nextOrder_);
+  else
+    newIcon->setNode(osg::clone(modelNode.get(), osg::CopyOp::DEEP_COPY_ALL), ++nextOrder_);
   newIcon->updatePrefs(prefs);
 
   // Save the icon with its unique mergeSettings
@@ -381,9 +411,7 @@ bool PlatformIconFactory::canApply_(const simData::PlatformPrefs& prefs) const
   if (prefs.drawbox())
     return false;
 
-  // Alpha volume is not supported
-  if (prefs.has_alphavolume() && prefs.alphavolume())
-    return false;
+  // Alpha volume is not supported, but has no application to image icons
 
   // No circle highlight, nothing in the scaled inertial transform is supported
   if (prefs.drawcirclehilight())
@@ -398,17 +426,15 @@ bool PlatformIconFactory::canApply_(const simData::PlatformPrefs& prefs) const
 
 bool PlatformIconFactory::hasRelevantChanges(const simData::PlatformPrefs& oldPrefs, const simData::PlatformPrefs& newPrefs) const
 {
-  // TODO SIM-12780: Alpha Volume has no impact on 2D icons
-  // TODO SIM-12780: Icon alignment does not work
   return
     // Fields that invalidate the index and fields that alter whether return of canApply()
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, icon) ||
+    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, iconalignment) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, platpositionoffset) ||
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, orientationoffset, pitch) ||
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, orientationoffset, yaw) ||
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, orientationoffset, roll) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, drawbox) ||
-    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, alphavolume) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, drawcirclehilight) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, drawbodyaxis) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, drawinertialaxis) ||

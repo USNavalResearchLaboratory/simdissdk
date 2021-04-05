@@ -379,50 +379,11 @@ bool PlatformModelNode::updateImageAlignment_(const simData::PlatformPrefs& pref
     !PB_FIELD_CHANGED(&lastPrefs_, &prefs, iconalignment))
     return false;
 
-  float xOffset = 0.f;
-  float yOffset = 0.f;
-
+  osg::Vec2f xyOffset;
   if (isImageModel_)
-  {
-    const float width = imageOriginalSize_.x();
-    const float height = imageOriginalSize_.y();
-
-    switch (prefs.iconalignment())
-    {
-    case simData::ALIGN_LEFT_TOP:
-      xOffset = width / 2.f;
-      yOffset = -height / 2.f;
-      break;
-    case simData::ALIGN_LEFT_CENTER:
-      xOffset = width / 2.f;
-      break;
-    case simData::ALIGN_LEFT_BOTTOM:
-      xOffset = width / 2.f;
-      yOffset = height / 2.f;
-      break;
-    case simData::ALIGN_CENTER_TOP:
-      yOffset = -height / 2.f;
-      break;
-    case simData::ALIGN_CENTER_CENTER:
-      break;
-    case simData::ALIGN_CENTER_BOTTOM:
-      yOffset = height / 2.f;
-      break;
-    case simData::ALIGN_RIGHT_TOP:
-      xOffset = -width / 2.f;
-      yOffset = -height / 2.f;
-      break;
-    case simData::ALIGN_RIGHT_CENTER:
-      xOffset = -width / 2.f;
-      break;
-    case simData::ALIGN_RIGHT_BOTTOM:
-      xOffset = -width / 2.f;
-      yOffset = height / 2.f;
-      break;
-    }
-  }
+    simVis::iconAlignmentToOffsets(prefs.iconalignment(), imageOriginalSize_, xyOffset);
   osg::Matrix alignmentMatrix;
-  alignmentMatrix.makeTranslate(osg::Vec3(xOffset, yOffset, 0.f));
+  alignmentMatrix.makeTranslate(osg::Vec3(xyOffset, 0.f));
   imageAlignmentXform_->setMatrix(alignmentMatrix);
   return true;
 }
