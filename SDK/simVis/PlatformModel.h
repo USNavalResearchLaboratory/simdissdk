@@ -180,7 +180,6 @@ private:
   osg::ref_ptr<simVis::DynamicScaleTransform> dynamicXform_;
   osg::ref_ptr<simVis::BillboardAutoTransform> imageIconXform_;
   osg::ref_ptr<osg::MatrixTransform> offsetXform_;
-  osg::ref_ptr<osg::MatrixTransform> imageAlignmentXform_;
   osg::Vec2f                         imageOriginalSize_;
   bool                               autoRotate_;
   bool                               lastPrefsValid_;
@@ -202,16 +201,14 @@ private:
 
   /// May changes the model based on prefs and returns true if the model was changed
   bool updateModel_(const simData::PlatformPrefs& prefs);
-  /// Updates the orientation offset  based on prefs; returns true if changed
-  bool updateOffsets_(const simData::PlatformPrefs& prefs);
+  /// Updates the orientation offset  based on prefs or if force is set true; returns true if changed
+  bool updateOffsets_(const simData::PlatformPrefs& prefs, bool force);
   /// Updates the scale based on pref; returns true if changed
   bool updateScale_(const simData::PlatformPrefs& prefs);
   /// Updates the XYZ scale based on pref; returns true when scale changes
   bool updateScaleXyz_(const simData::PlatformPrefs& prefs);
   /// Updates the dynamic scale based on pref; returns true when dynamic scale changes
   bool updateDynamicScale_(const simData::PlatformPrefs& prefs);
-  /// Updates the 2D image alignment offsets; returns true if the alignment offset changed
-  bool updateImageAlignment_(const simData::PlatformPrefs& prefs, bool force);
   /// Updates the icon rotation based on pref or if force is set to true when the model has changed
   void updateImageIconRotation_(const simData::PlatformPrefs& prefs, bool force);
   /// Updates the depth buffer when the nodepthicons has changed or if force is set to true when the model has changed
