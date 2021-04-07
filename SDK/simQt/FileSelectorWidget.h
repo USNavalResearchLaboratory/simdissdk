@@ -188,8 +188,10 @@ public slots:
   void setValid(bool valid);
 
 signals:
-  /** Emitted when the filename changes */
-  void filenameChanged(const QString& filename);
+  /** Emitted when the filename is set.  Applies to both programmatically set and user edits. */
+  void filenameChanged(const QString& filename="");
+  /** Emitted when the filename is set.  Only emitted when user changes value. */
+  void fileSelected(const QString& filename="");
 
 private slots:
   /** Connects to the ... button */
@@ -199,6 +201,9 @@ private slots:
   void textEdited_();
 
 private:
+  /** Changes the filename, optionally emitting the fileSelected() signal if needed */
+  void setFilename_(const QString& filename, bool canEmitFileSelected);
+
   Ui_FileSelectorWidget* ui_;
   /** location for saving state information */
   QString registryKey_;
@@ -222,6 +227,9 @@ private:
   bool iconBeforeText_;
   /** The valid state of the control as dictated by a caller */
   bool isValid_;
+
+  /** Cached value of the filename */
+  QString filename_;
 
   /** Re-implement eventFilter() */
   virtual bool eventFilter(QObject* obj, QEvent* evt);
