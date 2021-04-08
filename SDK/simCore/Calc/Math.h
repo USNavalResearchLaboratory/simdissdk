@@ -86,6 +86,38 @@ namespace simCore
   }
 
   /**
+  * Return a value that is clamped between the inclusive range [a,b].  operator< must be defined for T.
+  * Order of parameters a and b do not matter; this method works for a < b and b < a.
+  * @param[in ] value Value to clamp
+  * @param[in ] a First side of the inclusive range inside which to clamp
+  * @param[in ] b Second side of the inclusive range inside which to clamp
+  * @return value clamped between range [a,b]
+  */
+  template<typename T>
+  T clamp(T value, T a, T b)
+  {
+    return a < b ?
+      ((value < a) ? a : (b < value) ? b : value) :
+      ((value < b) ? b : (a < value) ? a : value);
+  }
+
+  /**
+  * Return true if value is an inclusive range [a,b].  operator< must be defined for T.
+  * Order of parameters a and b do not matter; this method works for a < b and b < a.
+  * @param[in ] value Value to test
+  * @param[in ] a First side of the inclusive range inside which to test for inclusion
+  * @param[in ] b Second side of the inclusive range inside which to test for inclusion
+  * @return True if value is inside the range [a,b].
+  */
+  template<typename T>
+  bool isBetween(T value, T a, T b)
+  {
+    return a < b ?
+      (!(value < a) && !(b < value)) :
+      (!(value < b) && !(a < value));
+  }
+
+  /**
   * Computes the nearest integer or even of the incoming value
   * @param[in ] x
   * @return nearest integer, ties (.5) are rounded to the nearest even integer
