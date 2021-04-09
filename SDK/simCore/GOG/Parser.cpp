@@ -91,22 +91,12 @@ void Parser::initGogColors_()
   colors_["magenta"] = "0xffc000c0"; // Magenta
 }
 
-std::string Parser::parseGogColor_(const std::string& color, bool isHex) const
+std::string Parser::parseGogColor_(const std::string& color) const
 {
-  if (!isHex)
-  {
-    auto it = colors_.find(simCore::lowerCase(color));
-    if (it != colors_.end())
-      return it->second;
-    return "0xff0000ff";
-  }
-
-  // append prefix if necessary
-  std::string prefix = "0x";
-  if (startsWith(color, prefix))
-    prefix = "";
-
-  return prefix + color;
+  auto it = colors_.find(simCore::lowerCase(color));
+  if (it != colors_.end())
+    return it->second;
+  return "0xff0000ff";
 }
 
 void Parser::addOverwriteColor(const std::string& key, const std::string& color)
@@ -271,16 +261,15 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         }
         if (current.shape() != ShapeType::UNKNOWN)
         {
-          SIM_WARN << "Multiple shape keywords found in single start/end block\n";
+          SIM_WARN << "Multiple shape keywords found in single start/end block, " << filename << " line: " << lineNumber << "\n";
           invalidShape = true;
         }
         current.setShape(ShapeType::ANNOTATION);
         std::string textToken = simCore::StringUtils::trim(line.substr(tokens[0].length() + 1));
-        // Store the un-decoded text in textToken
-        current.set(ShapeParameter::TEXT, textToken);
-        // clean up text for the shape name
+        // clean up text
         textToken = simCore::StringUtils::substitute(textToken, "_", " ");
         textToken = simCore::StringUtils::substitute(textToken, "\\n", "\n");
+        current.set(ShapeParameter::TEXT, textToken);
         current.set(ShapeParameter::NAME, textToken);
         invalidShape = false;
       }
@@ -312,7 +301,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
     {
       if (current.shape() != ShapeType::UNKNOWN)
       {
-        SIM_WARN << "Multiple shape keywords found in single start/end block\n";
+        SIM_WARN << "Multiple shape keywords found in single start/end block, " << filename << " line: " << lineNumber << "\n";
         invalidShape = true;
       }
       current.setShape(GogShape::stringToShapeType(tokens[0]));
@@ -323,7 +312,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       {
         if (current.shape() != ShapeType::UNKNOWN)
         {
-          SIM_WARN << "Multiple shape keywords found in single start/end block\n";
+          SIM_WARN << "Multiple shape keywords found in single start/end block, " << filename << " line: " << lineNumber << "\n";
           invalidShape = true;
         }
         current.setShape(ShapeType::LATLONALTBOX);
@@ -460,18 +449,18 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
     else if (tokens[0] == "linecolor")
     {
       if (tokens.size() == 2)
-        state.lineColor_ = parseGogColor_(tokens[1], false);
+        state.lineColor_ = parseGogColor_(tokens[1]);
       else if (tokens.size() == 3)
-        state.lineColor_ = parseGogColor_(tokens[2], true);
+        state.lineColor_ = tokens[2];
       else
         printError_(filename, lineNumber, "linecolor command requires at least 1 argument");
     }
     else if (tokens[0] == "fillcolor")
     {
       if (tokens.size() == 2)
-        state.fillColor_ = parseGogColor_(tokens[1], false);
+        state.fillColor_ = parseGogColor_(tokens[1]);
       else if (tokens.size() == 3)
-        state.fillColor_ = parseGogColor_(tokens[2], true);
+        state.fillColor_ = tokens[2];
       else
         printError_(filename, lineNumber, "fillcolor command requires at least 1 argument");
     }
@@ -554,9 +543,9 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
     else if (tokens[0] == "textoutlinecolor")
     {
       if (tokens.size() == 2)
-        state.textOutlineColor_ = parseGogColor_(tokens[1], false);
+        state.textOutlineColor_ = parseGogColor_(tokens[1]);
       else if (tokens.size() == 3)
-        state.textOutlineColor_ = parseGogColor_(tokens[2], true);
+        state.textOutlineColor_ = tokens[2];
       else
         printError_(filename, lineNumber, "textoutlinecolor command requires at least 1 argument");
     }
@@ -1516,11 +1505,17 @@ int Parser::getColor_(const ParsedShape& parsed, ShapeParameter param, const std
 {
   std::string colorStr = parsed.stringValue(param);
   uint32_t abgr;
+  // try hex formatted string
   if (!simCore::isValidHexNumber(colorStr, abgr))
   {
-    printError_(parsed.filename(), parsed.lineNumber(), "Invalid " + fieldName + ": " + colorStr + (shapeName.empty() ? "" : " for " + shapeName));
-    return 1;
+    // try simple unsigned int string
+    if (!simCore::isValidNumber(colorStr, abgr))
+    {
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid " + fieldName + ": " + colorStr + (shapeName.empty() ? "" : " for " + shapeName));
+      return 1;
+    }
   }
+  // color value AABBGGRR
   color = Color(abgr & 0xff, (abgr >> 8) & 0xff, (abgr >> 16) & 0xff, (abgr >> 24) & 0xff);
   return 0;
 }

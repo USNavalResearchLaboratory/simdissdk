@@ -13,13 +13,12 @@ Supported Systems/Compilers
 ===========================
 Operating systems officially supported by the SIMDIS SDK:
 
-* Windows 7/8/10
+* Windows 10
 * Red Hat Enterprise Linux 6/7
 
 Compilers officially supported by the SIMDIS SDK:
 
 * Windows compilers:
-  - Microsoft Visual C++ 2015 (VC-14.0)
   - Microsoft Visual C++ 2017 (VC-14.1)
   - Microsoft Visual C++ 2019 (VC-14.2)
 * Linux compilers:
@@ -42,7 +41,7 @@ Third Party Dependencies
 The SIMDIS SDK depends on the following third party libraries:
 
 - [OpenSceneGraph 3.6+](http://www.openscenegraph.org)
-- [osgEarth 3.0+](http://www.osgearth.org)
+- [osgEarth 3.1+](http://www.osgearth.org)
 - [protobuf 2.6+](http://code.google.com/p/protobuf)
 - [Python 3.6+](https://www.python.org/)
 - [Qt 5.5+](http://qt-project.org)

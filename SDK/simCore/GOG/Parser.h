@@ -104,8 +104,8 @@ private:
 
   /// Initialize the default GOG colors
   void initGogColors_();
-  /// Converts an GOG color string into GOG hex string format (0xAABBGGRR)
-  std::string parseGogColor_(const std::string& c, bool isHex) const;
+  /// Converts a known GOG color string into a hex formatted color string (0xAABBGGRR)
+  std::string parseGogColor_(const std::string& c) const;
 
   /// Prints any GOG parsing error to simNotify
   void printError_(const std::string& filename, size_t lineNumber, const std::string& errorText) const;

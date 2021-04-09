@@ -189,7 +189,7 @@ FileSelectorWidget::FileOption FileSelectorWidget::fileOptions() const
 
 QString FileSelectorWidget::filename() const
 {
-  return ui_->fileText->text();
+  return filename_;
 }
 
 void FileSelectorWidget::loadButton_()
@@ -206,14 +206,24 @@ void FileSelectorWidget::loadButton_()
     file = simQt::FileDialog::loadFile(this, browserTitle_, registryKey_, filterOptions2QString_(filterOption_));
   }
   if (!file.isEmpty())
-    setFilename(file);
+    setFilename_(file, true);
 }
 
 void FileSelectorWidget::setFilename(const QString& filename)
 {
-  QString osFilename = QDir::toNativeSeparators(filename);
-  ui_->fileText->setText(osFilename);
-  emit filenameChanged(osFilename);
+  setFilename_(filename, false);
+}
+
+void FileSelectorWidget::setFilename_(const QString& filename, bool canEmitFileSelected)
+{
+  const QString& osFilename = QDir::toNativeSeparators(filename);
+  if (osFilename == filename_)
+    return;
+  filename_ = osFilename;
+  ui_->fileText->setText(filename_);
+  emit filenameChanged(filename_);
+  if (canEmitFileSelected)
+    emit fileSelected(filename_);
 }
 
 bool FileSelectorWidget::isValid() const
@@ -262,7 +272,7 @@ FileSelectorWidget::FilterOptions FileSelectorWidget::filterOption() const
 void FileSelectorWidget::editingFinished_()
 {
   ui_->fileText->setStyleSheet("QLineEdit {background: palette(base); color: black;}");
-  setFilename(ui_->fileText->text());
+  setFilename_(ui_->fileText->text(), true);
 }
 
 // only used in DEBUG mode

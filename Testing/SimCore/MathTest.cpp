@@ -728,6 +728,94 @@ int testRoundRanges()
   return rv;
 }
 
+int testBetween()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(simCore::isBetween(5, 0, 10));
+  rv += SDK_ASSERT(simCore::isBetween(5, 10, 0));
+  rv += SDK_ASSERT(simCore::isBetween(5, -10, 10));
+  rv += SDK_ASSERT(simCore::isBetween(5, 10, -10));
+  rv += SDK_ASSERT(simCore::isBetween(5, 0, std::numeric_limits<int>::max()));
+  rv += SDK_ASSERT(simCore::isBetween(5, std::numeric_limits<int>::max(), 0));
+  rv += SDK_ASSERT(simCore::isBetween(5, 5, 5));
+
+  rv += SDK_ASSERT(!simCore::isBetween(-5, 0, 10));
+  rv += SDK_ASSERT(!simCore::isBetween(-5, 10, 0));
+  rv += SDK_ASSERT(!simCore::isBetween(15, 0, 10));
+  rv += SDK_ASSERT(!simCore::isBetween(15, 10, 0));
+  rv += SDK_ASSERT(!simCore::isBetween(-15, -10, 10));
+  rv += SDK_ASSERT(!simCore::isBetween(-15, 10, -10));
+  rv += SDK_ASSERT(!simCore::isBetween(25, -10, 10));
+  rv += SDK_ASSERT(!simCore::isBetween(25, 10, -10));
+  rv += SDK_ASSERT(!simCore::isBetween(-5, 0, std::numeric_limits<int>::max()));
+  rv += SDK_ASSERT(!simCore::isBetween(-5, std::numeric_limits<int>::max(), 0));
+  rv += SDK_ASSERT(!simCore::isBetween(6, 5, 5));
+
+  rv += SDK_ASSERT(simCore::isBetween(5., 0., 10.));
+  rv += SDK_ASSERT(simCore::isBetween(5., 10., 0.));
+  rv += SDK_ASSERT(simCore::isBetween(5., -10., 10.));
+  rv += SDK_ASSERT(simCore::isBetween(5., 10., -10.));
+  rv += SDK_ASSERT(simCore::isBetween(5., 0., std::numeric_limits<double>::max()));
+  rv += SDK_ASSERT(simCore::isBetween(5., std::numeric_limits<double>::max(), 0.));
+  rv += SDK_ASSERT(simCore::isBetween(5., 5., 5.));
+
+  rv += SDK_ASSERT(!simCore::isBetween(-5., 0., 10.));
+  rv += SDK_ASSERT(!simCore::isBetween(-5., 10., 0.));
+  rv += SDK_ASSERT(!simCore::isBetween(15., -10., 10.));
+  rv += SDK_ASSERT(!simCore::isBetween(15., 10., -10.));
+  rv += SDK_ASSERT(!simCore::isBetween(-5., 0., std::numeric_limits<double>::max()));
+  rv += SDK_ASSERT(!simCore::isBetween(-5., std::numeric_limits<double>::max(), 0.));
+  rv += SDK_ASSERT(!simCore::isBetween(6., 5., 5.));
+
+  return rv;
+}
+
+int testClamp()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(5 == simCore::clamp(5, 0, 10));
+  rv += SDK_ASSERT(5 == simCore::clamp(5, 10, 0));
+  rv += SDK_ASSERT(5 == simCore::clamp(5, -10, 10));
+  rv += SDK_ASSERT(5 == simCore::clamp(5, 10, -10));
+  rv += SDK_ASSERT(5 == simCore::clamp(5, 0, std::numeric_limits<int>::max()));
+  rv += SDK_ASSERT(5 == simCore::clamp(5, std::numeric_limits<int>::max(), 0));
+  rv += SDK_ASSERT(5 == simCore::clamp(5, 5, 5));
+
+  rv += SDK_ASSERT(0 == simCore::clamp(-5, 0, 10));
+  rv += SDK_ASSERT(0 == simCore::clamp(-5, 10, 0));
+  rv += SDK_ASSERT(10 == simCore::clamp(15, 0, 10));
+  rv += SDK_ASSERT(10 == simCore::clamp(15, 10, 0));
+  rv += SDK_ASSERT(-10 == simCore::clamp(-15, -10, 10));
+  rv += SDK_ASSERT(-10 == simCore::clamp(-15, 10, -10));
+  rv += SDK_ASSERT(10 == simCore::clamp(25, -10, 10));
+  rv += SDK_ASSERT(10 == simCore::clamp(25, 10, -10));
+  rv += SDK_ASSERT(0 == simCore::clamp(-5, 0, std::numeric_limits<int>::max()));
+  rv += SDK_ASSERT(0 == simCore::clamp(-5, std::numeric_limits<int>::max(), 0));
+  rv += SDK_ASSERT(6 == simCore::clamp(5, 6, 6));
+  rv += SDK_ASSERT(6 == simCore::clamp(7, 6, 6));
+
+  rv += SDK_ASSERT(5. == simCore::clamp(5., 0., 10.));
+  rv += SDK_ASSERT(5. == simCore::clamp(5., 10., 0.));
+  rv += SDK_ASSERT(5. == simCore::clamp(5., -10., 10.));
+  rv += SDK_ASSERT(5. == simCore::clamp(5., 10., -10.));
+  rv += SDK_ASSERT(5. == simCore::clamp(5., 0., std::numeric_limits<double>::max()));
+  rv += SDK_ASSERT(5. == simCore::clamp(5., std::numeric_limits<double>::max(), 0.));
+  rv += SDK_ASSERT(5. == simCore::clamp(5., 5., 5.));
+
+  rv += SDK_ASSERT(0. == simCore::clamp(-5., 0., 10.));
+  rv += SDK_ASSERT(0. == simCore::clamp(-5., 10., 0.));
+  rv += SDK_ASSERT(10. == simCore::clamp(15., -10., 10.));
+  rv += SDK_ASSERT(10. == simCore::clamp(15., 10., -10.));
+  rv += SDK_ASSERT(0. == simCore::clamp(-5., 0., std::numeric_limits<double>::max()));
+  rv += SDK_ASSERT(0. == simCore::clamp(-5., std::numeric_limits<double>::max(), 0.));
+  rv += SDK_ASSERT(6. == simCore::clamp(5., 6., 6.));
+  rv += SDK_ASSERT(6. == simCore::clamp(7., 6., 6.));
+
+  return rv;
+}
+
 }
 
 int MathTest(int argc, char* argv[])
@@ -749,6 +837,8 @@ int MathTest(int argc, char* argv[])
   rv += testGuessStepSize();
   rv += testPowerOfTenSignificance();
   rv += testRoundRanges();
+  rv += testBetween();
+  rv += testClamp();
 
   return rv;
 }

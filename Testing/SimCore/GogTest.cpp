@@ -1026,6 +1026,19 @@ int testAnnotation()
   rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n centerxy 20. 35.\n rangeunits m\n altitudeunits m\n end\n", testAnnotationCenterFunc, annoRelCtr);
   rv += testShapePositionsFunction<simCore::GOG::Annotation>("start\n annotation label 1\n xy 20. 35.\n rangeunits m\n altitudeunits m\n end\n", testAnnotationCenterFunc, annoRelCtr);
 
+  // test annotation text special characters
+  std::stringstream annoTextGog;
+  annoTextGog << "start\n annotation label_1\\nnext line\n centerll 24.5 54.6\n end\n";
+  parser.parse(annoTextGog, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+  {
+    simCore::GOG::Annotation* anno = dynamic_cast<simCore::GOG::Annotation*>(shapes.front().get());
+    rv += SDK_ASSERT(anno != nullptr);
+    if (anno)
+      rv += SDK_ASSERT(anno->text() == "label 1\nnext line");
+  }
+
   return rv;
 }
 
@@ -1918,6 +1931,9 @@ int testColors()
   colorStringsInput.push_back("linecolor blue\n"); // test defined color
   colorStringsInput.push_back("linecolor hex 01ff0aff\n"); // test different hex format
   colorStringsInput.push_back("linecolor invalidColorString\n"); // test invalid color, should default to red
+  colorStringsInput.push_back("linecolor blahblah 0x00ff00ff\n"); // test that for 3 tokens, 2nd is ignored and 3rd is the color value
+  colorStringsInput.push_back("linecolor whatever 148f320c\n"); // test that for 3 tokens, 2nd is ignored and 3rd is the color value for hex without leading '0x'
+  colorStringsInput.push_back("linecolor white 2576980479\n"); // test unsigned int instead of hex format (note more than 8 digits, can't be hex)
 
   std::vector<std::string> colorStringsOutput;
   colorStringsOutput.push_back("linecolor hex 0x00000000\n");
@@ -1925,6 +1941,9 @@ int testColors()
   colorStringsOutput.push_back("linecolor hex 0xffff0000\n");
   colorStringsOutput.push_back("linecolor hex 0x01ff0aff\n");
   colorStringsOutput.push_back("linecolor hex 0xff0000ff\n");
+  colorStringsOutput.push_back("linecolor hex 0x00ff00ff\n");
+  colorStringsOutput.push_back("linecolor hex 0x148f320c\n");
+  colorStringsOutput.push_back("linecolor hex 0x999999ff\n");
 
   simCore::GOG::Parser parser;
   // set a custom defined color
@@ -1942,6 +1961,9 @@ int testColors()
   colors.push_back(simCore::GOG::Color(0, 0, 255, 255));
   colors.push_back(simCore::GOG::Color(255, 10, 255, 1));
   colors.push_back(simCore::GOG::Color(255, 0, 0, 255));
+  colors.push_back(simCore::GOG::Color(255, 0, 255, 0));
+  colors.push_back(simCore::GOG::Color(12, 50, 143, 20));
+  colors.push_back(simCore::GOG::Color(255, 153, 153, 153));
 
   int i = 0;
   for (simCore::GOG::GogShapePtr shape : shapes)

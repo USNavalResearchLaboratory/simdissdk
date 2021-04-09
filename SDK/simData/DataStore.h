@@ -165,9 +165,6 @@ public:
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) = 0;
 
-    /// current time has been changed
-    SDK_DEPRECATE(virtual void onTimeChange(DataStore *source) {}, "Method has been replaced with onChange()");
-
     /// data store has changed, this includes both time change and/or data change; called a max of once per frame
     virtual void onChange(DataStore *source) = 0;
 

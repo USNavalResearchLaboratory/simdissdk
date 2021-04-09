@@ -42,7 +42,7 @@ if(NOT Qt5Widgets_FOUND)
 endif()
 
 # SDK-146: Update EXPECTED_QT_VERSION based off the actual version string from Qt that was specified
-set(EXPECTED_QT_VERSION "${Qt5Widgets_VERSION_STRING}")
+set(EXPECTED_QT5_VERSION "${Qt5Widgets_VERSION_STRING}")
 mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
@@ -121,7 +121,7 @@ macro(INSTALL_QT5_LIB LIBNAME)
             CONFIGURATIONS Release
             COMPONENT ThirdPartyLibs
         )
-        INSTALL(FILES ${QT5_LIBRARY_DIR}/libQt5${LIBNAME}.so.${EXPECTED_QT5_VERSION}
+        INSTALL(FILES ${QT5_LIBRARY_DIR}/libQt5${LIBNAME}.so.${Qt5Widgets_VERSION_STRING}
             DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
             CONFIGURATIONS Release
             COMPONENT ThirdPartyLibs

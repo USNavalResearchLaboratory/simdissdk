@@ -515,6 +515,11 @@ int realtimeTest()
   clock.idle();
   rv += SDK_ASSERT(clock.currentTime() < simCore::TimeStamp(1970, 1500.0));
 
+  // SIM-12714 - test that scale resets to 1 when entering MODE_FREEWHEEL
+  rv += SDK_ASSERT(clock.timeScale() != 1.0);
+  clock.setMode(simCore::Clock::MODE_FREEWHEEL, simCore::TimeStamp(1970, 15.0));
+  rv += SDK_ASSERT(clock.timeScale() == 1.0);
+
   return rv;
 }
 

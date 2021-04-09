@@ -82,11 +82,12 @@ texture files within a single, easy to distribute file.
 
 Support
 =======
-Limited free support is available on the [SIMDIS Help Desk].  Create a new topic
-under the project SDK for assistance.  You can search through previously answered
-tickets to find solutions to common problems.  An account on the SIMDIS website
-is required to access the Help Desk.  Use of the [SIMDIS Help Desk] is the fastest
-and most reliable way to get free support for the SIMDIS SDK.
+Limited free support is available on either the [SIMDIS Help Desk CAC Required] or
+[SIMDIS Help Desk Public].  Create a new topic under the project SDK for assistance.
+You can search through previously answered tickets to find solutions to common
+problems.  An account on the either website is required to access the Help Desk.
+Use of the either help desk is the fastest and most reliable way to get free support
+for the SIMDIS SDK.
 
 We also accept pull requests.  If there are modifications you wish to share with
 the community, please consider submitting a pull request.  All pull requests should
@@ -103,6 +104,7 @@ applications in the SIMDIS toolkit.
   [OpenSceneGraph]: <https://github.com/OpenSceneGraph/OpenSceneGraph>
   [osgEarth]: <https://github.com/gwaldron/osgearth>
   [SIMDIS]: <https://simdis.nrl.navy.mil>
-  [SIMDIS Help Desk]: <https://simdis.nrl.navy.mil/jira>
+  [SIMDIS Help Desk CAC Required]: <https://www.trmc.osd.mil/helpdesk/projects/SIMDIS>
+  [SIMDIS Help Desk Public]: <https://www.tena-sda.org/helpdesk/projects/SIMDIS>
   [Pelican Mapping]: <http://www.pelicanmapping.com>
 

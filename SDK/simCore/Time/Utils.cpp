@@ -527,51 +527,6 @@ std::string simCore::getTimeComponents(double time, unsigned int *day, unsigned 
 
 //------------------------------------------------------------------------
 
-void simCore::normalizeTime(int &refYear, double &secondsSinceRefYear)
-{
-  assert(refYear > 1900);
-  if (refYear >= MIN_TIME_YEAR && refYear <= MAX_TIME_YEAR)
-  {
-    const simCore::TimeStamp timeStamp(refYear, secondsSinceRefYear);
-    refYear = timeStamp.referenceYear();
-    secondsSinceRefYear = timeStamp.secondsSinceRefYear().Double();
-    return;
-  }
-
-  if (secondsSinceRefYear < 0)
-  {
-    // Do a sanity check
-    if (secondsSinceRefYear < -100.0 * 365.0 * simCore::SECPERDAY)
-      throw simCore::TimeException(simCore::SECONDS_SINCE_EPOCHTIME_NOT_VALID, "simCore::normalizeTime, The seconds since epoch time is < -100 years.");
-    while (secondsSinceRefYear < 0)
-    {
-      refYear--;
-      secondsSinceRefYear += static_cast<double>(simCore::daysPerYear(refYear - 1900)) * simCore::SECPERDAY;
-    }
-  }
-
-  // check if time is greater than # of seconds in given refYear
-  if (secondsSinceRefYear > (static_cast<double>(simCore::daysPerYear(refYear - 1900)) * simCore::SECPERDAY))
-  {
-    struct tm epochTime;
-    // set beginning of year (Jan 1 00:00:00 refYear)
-    epochTime.tm_sec = 0;
-    epochTime.tm_min = 0;
-    epochTime.tm_hour = 0;
-    epochTime.tm_mday = 1;
-    epochTime.tm_mon = 0;
-    epochTime.tm_year = refYear - 1900;
-    epochTime.tm_yday = 0;
-    epochTime.tm_wday = simCore::getWeekDay(epochTime.tm_year, epochTime.tm_yday);
-    epochTime.tm_isdst = 0;
-    const struct tm& timeval = simCore::getTimeStruct(secondsSinceRefYear, refYear - 1900);
-    refYear = timeval.tm_year + 1900;
-    epochTime.tm_year = timeval.tm_year;
-    epochTime.tm_wday = simCore::getWeekDay(epochTime.tm_year, epochTime.tm_yday);
-    secondsSinceRefYear = simCore::getTimeStructDifferenceInSeconds(epochTime, timeval);
-  }
-}
-
 double simCore::getNextTimeStep(bool faster, double lastStep)
 {
   if (lastStep < 0.0)

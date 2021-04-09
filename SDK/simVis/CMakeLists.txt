@@ -99,6 +99,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}Platform.h
     ${VIS_INC}PlatformAzimElevViewTool.h
     ${VIS_INC}PlatformFilter.h
+    ${VIS_INC}PlatformIconFactory.h
     ${VIS_INC}PlatformInertialTransform.h
     ${VIS_INC}PlatformModel.h
     ${VIS_INC}PolygonStipple.h
@@ -168,7 +169,6 @@ set(VIS_HEADERS_RFPROP
     ${VIS_INC}RFProp/ProfileContext.h
     ${VIS_INC}RFProp/ProfileDataProvider.h
     ${VIS_INC}RFProp/ProfileManager.h
-    ${VIS_INC}RFProp/RadarParameters.h
     ${VIS_INC}RFProp/RFPropagationFacade.h
     ${VIS_INC}RFProp/RFPropagationManager.h
     ${VIS_INC}RFProp/SNRDataProvider.h
@@ -262,6 +262,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Platform.cpp
     ${VIS_SRC}PlatformAzimElevViewTool.cpp
     ${VIS_SRC}PlatformFilter.cpp
+    ${VIS_SRC}PlatformIconFactory.cpp
     ${VIS_SRC}PlatformInertialTransform.cpp
     ${VIS_SRC}PlatformModel.cpp
     ${VIS_SRC}PolygonStipple.cpp

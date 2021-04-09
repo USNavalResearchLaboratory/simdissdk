@@ -58,20 +58,6 @@ class ProjectorNode;
 class ScenarioTool;
 
 //----------------------------------------------------------------------------
-/// Interface for an object that can create a new Locator
-class LocatorFactory
-{
-public:
-  virtual ~LocatorFactory() {}
-
-  /// create a new locator
-  virtual SDK_DEPRECATE(Locator* createLocator() const, "LocatorFactory is deprecated.") = 0;
-
-  /// create a new platform locator
-  virtual SDK_DEPRECATE(Locator* createEciLocator() const, "LocatorFactory is deprecated.") = 0;
-};
-
-//----------------------------------------------------------------------------
 
 /**
 * Manages all scenario objects (platforms, beams, gates, etc) and their
@@ -368,12 +354,6 @@ public: // package protected
 
   /** Creates a new ScenarioManager with the given projector manager */
   explicit ScenarioManager(ProjectorManager* projMan);
-
-  /**
-   * Creates a new ScenarioManager with the given locator factory and projector manager
-   * @deprecated
-   */
-  SDK_DEPRECATE(ScenarioManager(LocatorFactory* factory, ProjectorManager* projMan), "Method will be removed in a future SDK release");
 
   /**
   * Check for scenario entity updates and applies them to the corresponding
