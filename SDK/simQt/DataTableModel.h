@@ -23,9 +23,12 @@
 #ifndef SIMQT_DATATABLE_MODEL_H
 #define SIMQT_DATATABLE_MODEL_H
 
+#include <memory>
 #include <QList>
 #include <QAbstractItemModel>
 #include "simData/DataTable.h"
+
+namespace simUtil { class UnitTypeConverter; }
 
 namespace simQt {
 
@@ -82,6 +85,9 @@ namespace simQt {
     /** Returns the current data table; can be nullptr */
     simData::DataTable* dataTable() const;
 
+    /** Set the UnitTypeConverter to show units in the column header */
+    void setUnitTypeConverter(std::shared_ptr<simUtil::UnitTypeConverter> converter);
+
   public slots:
     /** Set the number of digits after the decimal for floats and doubles */
     void setGenericPrecision(unsigned int digitsAfterDecimal);
@@ -97,6 +103,7 @@ namespace simQt {
     QList<const simData::TableColumn*> columns_; ///< index in list corresponds to model column index
     QList<double> rows_; ///< index in list corresponds to model row index
     unsigned int genericPrecision_;  ///< number of digits after the decimal for floats and doubles
+    std::shared_ptr<simUtil::UnitTypeConverter> unitTypeConverter_;
   };
 
 }
