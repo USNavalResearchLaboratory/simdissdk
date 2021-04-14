@@ -432,7 +432,10 @@ void PlatformModelNode::updateBounds_()
   osg::ComputeBoundsVisitor cb;
   cb.setTraversalMask(cb.getTraversalMask() |~ simVis::DISPLAY_MASK_LABEL);
   // compute bounds based on the offsetXform_, which is the parent of the model.
-  offsetXform_->accept(cb);
+  if (fastPathIcon_)
+    fastPathIcon_->accept(cb);
+  else
+    offsetXform_->accept(cb);
   unscaledBounds_ = cb.getBoundingBox();
 
   // Now get the scaled bounds
