@@ -50,6 +50,8 @@ macro(mrsid_install_library PATH NAME)
             DESTINATION "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}"
             COMPONENT ${${LIBRARYNAME}_INSTALL_COMPONENT}
         )
+    else()
+        message(WARNING "Unable to find: ${MRSID_RELEASE_LIB}")
     endif()
 endmacro()
 
@@ -57,7 +59,7 @@ endmacro()
 if(WIN32)
     mrsid_install_library(MRSID_RASTER_DIR lti_dsdk_9.5.dll)
     if(INSTALL_MRSID_TBB OR NOT DEFINED INSTALL_MRSID_TBB)
-        mrsid_install_library(MRSID_RASTER_DIR tbb/tbb.dll)
+        mrsid_install_library(MRSID_RASTER_DIR tbb.dll)
     endif()
     mrsid_install_library(MRSID_LIDAR_DIR lti_lidar_dsdk_1.1.dll)
 else()
