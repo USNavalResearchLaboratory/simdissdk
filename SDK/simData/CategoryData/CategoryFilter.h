@@ -251,10 +251,11 @@ public:
   /**
   * Check if the category data of the specified entity matches the current category filter. This is a convenience method
   * that queries the DataStore to get the current category data values of the specified entity, which can be expensive
+  * @param[in] dataStore  Queried for the ID's current category values
   * @param[in] entityId  entity to which filter should be tested
   * @return true if this entity's category data passes the filter, false otherwise
   */
-  bool match(uint64_t entityId) const;
+  bool match(const simData::DataStore& dataStore, uint64_t entityId) const;
 
   /**
   * Check if the category data values passed in match the current category filter.

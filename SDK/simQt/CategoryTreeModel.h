@@ -302,6 +302,12 @@ public slots:
   /** Shows a GUI for editing the regular expression of a given index */
   void showRegExpEditGui_(const QModelIndex& index);
 
+  /**
+   * Marks the entity count as dirty; call this when adding or removing entities, or category data changes.
+   * If associated with a data store, this is automatically called properly. Only matters if entity count on.
+   */
+  void setEntityCountDirty();
+
 signals:
   /** The internal filter has changed, possibly from user editing or programmatically. */
   void filterChanged(const simData::CategoryFilter& filter);

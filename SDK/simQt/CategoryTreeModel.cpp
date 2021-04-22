@@ -1936,15 +1936,15 @@ public:
 
   virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
-    parent_.countDirty_ = true;
+    parent_.setEntityCountDirty();
   }
   virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
-    parent_.countDirty_ = true;
+    parent_.setEntityCountDirty();
   }
   virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
   {
-    parent_.countDirty_ = true;
+    parent_.setEntityCountDirty();
   }
 
   // Fulfill the interface
@@ -2130,6 +2130,11 @@ void CategoryFilterWidget::setShowEntityCount(bool fl)
   {
     treeModel_->processCategoryCounts(simQt::CategoryCountResults());
   }
+}
+
+void CategoryFilterWidget::setEntityCountDirty()
+{
+  countDirty_ = true;
 }
 
 void CategoryFilterWidget::expandAfterFilterEdited_(const QString& filterText)

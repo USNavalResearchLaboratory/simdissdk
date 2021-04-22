@@ -29,7 +29,8 @@ namespace simQt {
 
 EntityCategoryFilter::EntityCategoryFilter(simData::DataStore* dataStore, WidgetType widgetType)
   : EntityFilter(),
-    categoryFilter_(new simData::CategoryFilter(dataStore, true)),
+    dataStore_(dataStore),
+    categoryFilter_(new simData::CategoryFilter(dataStore_, true)),
     widgetType_(widgetType),
     settings_(nullptr)
 {
@@ -43,7 +44,7 @@ EntityCategoryFilter::~EntityCategoryFilter()
 
 bool EntityCategoryFilter::acceptEntity(simData::ObjectId id) const
 {
-  return categoryFilter_->match(id);
+  return !dataStore_ || categoryFilter_->match(*dataStore_, id);
 }
 
 QWidget* EntityCategoryFilter::widget(QWidget* newWidgetParent) const
