@@ -21,6 +21,7 @@
  *
  */
 #include <algorithm>
+#include <cassert>
 #include "simCore/String/Format.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 
