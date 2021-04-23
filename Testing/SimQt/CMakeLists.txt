@@ -35,8 +35,6 @@ create_test_sourcelist(SimQtTestFiles SimQtTests.cpp
     ${SimQtTestsSourceList}
 )
 
-VSI_INCLUDE_QT_USE_FILE()
-
 add_executable(SimQtTests ${SimQtTestFiles})
 target_link_libraries(SimQtTests PRIVATE simQt simCore)
 target_include_directories(SimQtTests PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

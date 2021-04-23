@@ -121,10 +121,6 @@ macro(VSI_QT_ADD_RESOURCES DEST)
     SOURCE_GROUP("Qt\\Generated Files" FILES ${${DEST}})
 endmacro()
 
-macro(VSI_INCLUDE_QT_USE_FILE)
-    # Noop; only for Qt4 support
-endmacro()
-
 macro(VSI_QT_USE_MODULES TARGET LINK_TYPE)
     set(_CM_LINK_TYPE)
     if("${LINK_TYPE}" STREQUAL "LINK_PUBLIC")

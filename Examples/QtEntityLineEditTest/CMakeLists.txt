@@ -16,8 +16,6 @@ VSI_QT_WRAP_UI(Q_EVT_FORMS
     MainWindow.ui
 )
 
-VSI_INCLUDE_QT_USE_FILE()
-
 add_executable(example_qtentitylineedittest ${APP_SOURCES} ${Q_EVT_MOC} ${Q_EVT_FORMS})
 target_link_libraries(example_qtentitylineedittest PRIVATE simQt simData simVis)
 target_include_directories(example_qtentitylineedittest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

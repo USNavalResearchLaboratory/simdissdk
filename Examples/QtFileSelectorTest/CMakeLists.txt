@@ -19,8 +19,6 @@ VSI_QT_WRAP_CPP(Q_FILESELECTOR_HEADERS_MOC
 )
 
 
-VSI_INCLUDE_QT_USE_FILE()
-
 add_executable(example_qtfileselectortest ${GUI_SOURCES} ${Q_FILESELECTOR_HEADERS_MOC} ${Q_FILESELECTOR_FORMS_HEADERS})
 target_link_libraries(example_qtfileselectortest PRIVATE simQt simCore)
 target_include_directories(example_qtfileselectortest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
