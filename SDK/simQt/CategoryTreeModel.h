@@ -299,8 +299,6 @@ public slots:
   void setFilter(const simData::CategoryFilter& filter);
   /** Updates the (#) count next to category values with the given category value counts. */
   void processCategoryCounts(const simQt::CategoryCountResults& results);
-  /** Shows a GUI for editing the regular expression of a given index */
-  void showRegExpEditGui_(const QModelIndex& index);
 
   /**
    * Marks the entity count as dirty; call this when adding or removing entities, or category data changes.
@@ -315,6 +313,9 @@ signals:
   void filterEdited(const simData::CategoryFilter& filter);
 
 private slots:
+  /** Shows a GUI for editing the regular expression of a given index */
+  void showRegExpEditGui_(const QModelIndex& index);
+
   /** Expand the given index from the proxy if filtering */
   void expandDueToProxy_(const QModelIndex& parentIndex, int to, int from);
   /** Conditionally expand tree after filter edited. */
