@@ -1578,7 +1578,8 @@ struct CategoryTreeItemDelegate::ChildRects
 };
 
 CategoryTreeItemDelegate::CategoryTreeItemDelegate(QObject* parent)
-  : QStyledItemDelegate(parent)
+  : QStyledItemDelegate(parent),
+  clickedElement_(SE_NONE)
 {
 }
 
