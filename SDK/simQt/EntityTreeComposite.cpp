@@ -415,6 +415,16 @@ void EntityTreeComposite::setShowTreeOptionsInMenu(bool show)
   showTreeOptionsInMenu_ = show;
 }
 
+void EntityTreeComposite::setCountEntityType(simData::ObjectType type)
+{
+  entityTreeWidget_->setCountEntityType(type);
+}
+
+simData::ObjectType EntityTreeComposite::countEntityTypes() const
+{
+  return entityTreeWidget_->countEntityTypes();
+}
+
 /** Clears all selections */
 void EntityTreeComposite::clearSelection()
 {

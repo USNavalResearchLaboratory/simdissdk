@@ -38,10 +38,14 @@ class SDKQT_EXPORT EntityTreeItem : public simQt::AbstractEntityTreeItem
 {
 public:
   /// constructor
-  EntityTreeItem(simData::ObjectId id, EntityTreeItem *parent=nullptr);
+  EntityTreeItem(simData::ObjectId id, simData::ObjectType type, EntityTreeItem *parent=nullptr);
   virtual ~EntityTreeItem();
 
+  /// Returns the Unique ID for the item
   virtual uint64_t id() const;
+
+  /// Returns the type for the item
+  simData::ObjectType type() const;
 
   /// Return all the IDs of the children and their children
   void getChildrenIds(std::vector<uint64_t>& ids) const;
@@ -73,6 +77,7 @@ protected:
   void markChildrenForRemoval_();
 
   simData::ObjectId id_; ///< id of the entity represented
+  simData::ObjectType type_; ///< type of the entity
   EntityTreeItem *parentItem_;  ///< parent of the item.  Null if top item
   QList<EntityTreeItem*> childItems_;  ///< Children of item, if any.  If no children, than item is a leaf
   std::map<const EntityTreeItem*, int> childToRowIndex_; ///< Use a map to cache the row index for better performance
@@ -112,6 +117,9 @@ public:
 
   /** Returns whether we use an entity icon or type abbreviation for the entity type column */
   virtual bool useEntityIcons() const;
+
+  /** Returns the number of entities that match the given type(s) */
+  virtual int countEntityTypes(simData::ObjectType type) const;
 
   /// Return the dataStore
   simData::DataStore* dataStore() const;
@@ -172,6 +180,8 @@ private:
   void addEntity_(uint64_t entityId);
   /// The entity specified by the id has either an new name or its category data changed
   void emitEntityDataChanged_(uint64_t entityId);
+  /// Recursively counts the entities that match the given type(s)
+  int countEntityTypes_(EntityTreeItem* parent, simData::ObjectType type) const;
 
   EntityTreeItem *rootItem_;  ///< Top of the entity tree
   std::map<simData::ObjectId, EntityTreeItem*> itemsById_; ///< same information as rootItem, but keyed off of Object ID
