@@ -293,6 +293,8 @@ public:
   bool showEntityCount() const;
   /** Changes whether entity count is shown next to category values. */
   void setShowEntityCount(bool show);
+  /** Sets a filter on the entity counter, on the entity's object type. Only useful if showEntityCount() is on. */
+  void setEntityCountObjectTypes(simData::ObjectType counterObjectTypes);
 
 public slots:
   /** Changes the model state to match the values in the filter. */
@@ -354,6 +356,8 @@ private:
   bool showEntityCount_;
   /** Counter object that provides values for entity counting. */
   AsyncCategoryCounter* counter_;
+  /** Records what entity types are used by the Async Category Counter */
+  simData::ObjectType counterObjectTypes_;
   /** Action used for setting regular expressions */
   QAction* setRegExpAction_;
   /** Action used for clearing regular expressions */

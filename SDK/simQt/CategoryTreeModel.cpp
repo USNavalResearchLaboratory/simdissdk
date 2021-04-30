@@ -1967,6 +1967,7 @@ CategoryFilterWidget::CategoryFilterWidget(QWidget* parent)
     activeFiltering_(false),
     showEntityCount_(false),
     counter_(nullptr),
+    counterObjectTypes_(simData::ALL),
     setRegExpAction_(nullptr),
     countDirty_(true)
 {
@@ -2126,11 +2127,21 @@ void CategoryFilterWidget::setShowEntityCount(bool fl)
     connect(treeModel_, SIGNAL(filterChanged(simData::CategoryFilter)), counter_, SLOT(setFilter(simData::CategoryFilter)));
     connect(treeModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), counter_, SLOT(asyncCountEntities()));
     counter_->setFilter(categoryFilter());
+    counter_->setObjectTypes(counterObjectTypes_);
   }
   else
   {
     treeModel_->processCategoryCounts(simQt::CategoryCountResults());
   }
+}
+
+void CategoryFilterWidget::setEntityCountObjectTypes(simData::ObjectType counterObjectTypes)
+{
+  if (counterObjectTypes_ == counterObjectTypes)
+    return;
+  counterObjectTypes_ = counterObjectTypes;
+  if (counter_)
+    counter_->setObjectTypes(counterObjectTypes_);
 }
 
 void CategoryFilterWidget::setEntityCountDirty()
