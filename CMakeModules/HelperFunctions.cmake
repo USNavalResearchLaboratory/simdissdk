@@ -282,7 +282,7 @@ endfunction()
 # field is set.
 function(vsi_install_executable TARGET COMPONENT)
     set(DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR})
-    if(ARGV2)
+    if(${ARGC} GREATER 2)
         set(DESTINATION ${ARGV2})
     endif()
 
@@ -306,7 +306,7 @@ endfunction()
 # install using that value for the install(TARGETS EXPORT) signature.
 function(vsi_install_shared_library TARGET COMPONENT)
     set(DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR})
-    if(ARGV2)
+    if(${ARGC} GREATER 2)
         set(DESTINATION ${ARGV2})
     endif()
 
@@ -337,7 +337,7 @@ endfunction()
 # DESTINATION field is set.  Sets RPATH as needed on the target.
 function(vsi_install_plugin TARGET COMPONENT)
     set(DESTINATION ${INSTALLSETTINGS_PLUGIN_DIR})
-    if(ARGV2)
+    if(${ARGC} GREATER 2)
         set(DESTINATION ${ARGV2})
     endif()
     vsi_install_shared_library(${TARGET} ${COMPONENT} ${DESTINATION})
@@ -351,7 +351,7 @@ endfunction()
 # IMPORTED_LOCATION property of TARGET.
 function(vsi_install_imported_shared_library TARGET COMPONENT)
     set(DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR})
-    if(ARGV2)
+    if(${ARGC} GREATER 2)
         set(DESTINATION ${ARGV2})
     endif()
 
@@ -386,7 +386,7 @@ endfunction()
 # install(TARGETS EXPORT) signature.
 function(vsi_install_static_library TARGET COMPONENT)
     set(DESTINATION ${INSTALLSETTINGS_LIBRARY_DIR})
-    if(ARGV2)
+    if(${ARGC} GREATER 2)
         set(DESTINATION ${ARGV2})
     endif()
 
