@@ -21,6 +21,7 @@
  *
  */
 #include "simData/CategoryData/CategoryFilter.h"
+#include "simQt/CategoryFilterWidget.h"
 #include "simQt/CategoryTreeModel.h"
 #include "simQt/RegExpImpl.h"
 #include "simQt/EntityCategoryFilter.h"
