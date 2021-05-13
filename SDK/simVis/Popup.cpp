@@ -34,7 +34,6 @@
 #include "osgUtil/LineSegmentIntersector"
 #include "osgViewer/View"
 #include "osgEarth/Controls"
-#include "osgEarth/LineDrawable"
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/String/Constants.h"

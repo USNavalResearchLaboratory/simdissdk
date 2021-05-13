@@ -34,11 +34,10 @@
 #include "osg/MatrixTransform"
 #include "osgText/Text"
 #include "osgGA/GUIEventHandler"
+#include "osgEarth/LineDrawable"
 #include "osgEarth/Revisioning"
 #include "osgEarth/Symbol"
 #include "osgEarth/Controls"
-
-namespace osgEarth { class LineDrawable; }
 
 namespace simVis
 {
