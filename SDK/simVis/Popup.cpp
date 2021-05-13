@@ -26,6 +26,7 @@
 #include "osg/Geode"
 #include "osg/NodeCallback"
 #include "osg/NodeVisitor"
+#include "osg/PolygonMode"
 #include "osgDB/Registry"
 #include "osgDB/ReaderWriter"
 #include "osgText/Text"
@@ -33,6 +34,7 @@
 #include "osgUtil/LineSegmentIntersector"
 #include "osgViewer/View"
 #include "osgEarth/Controls"
+#include "osgEarth/LineDrawable"
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/String/Constants.h"
@@ -59,15 +61,405 @@ namespace simVis
 {
 
 static const int DEFAULT_BORDER_WIDTH = 2;
-static const simVis::Color DEFAULT_BORDER_COLOR(1, 1, 0, 1);
-static const simVis::Color DEFAULT_BACK_COLOR(0, 0, 0, 0.5);
-static const simVis::Color DEFAULT_TITLE_COLOR(.9, .9, 0, 1);
-static const simVis::Color DEFAULT_CONTENT_COLOR(.9, .9, .9, 1);
+static const simVis::Color DEFAULT_BORDER_COLOR(1, 1, 0, 1); // yellow
+static const simVis::Color DEFAULT_BACK_COLOR(0, 0, 0, 0.5); // semi-transparent black
+static const simVis::Color DEFAULT_TITLE_COLOR(.9, .9, 0, 1); // yellow
+static const simVis::Color DEFAULT_CONTENT_COLOR(.9, .9, .9, 1); // white
 static const int DEFAULT_TITLE_SIZE = 13;
 static const int DEFAULT_CONTENT_SIZE = 11;
 static const int DEFAULT_PADDING = 10;
 static const int DEFAULT_SPACING = 4;
+static const std::string DEFAULT_FONT = "arial.ttf";
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+EntityPopup2::EntityPopup2()
+  : osg::MatrixTransform()
+{
+  setDataVariance(osg::Object::DYNAMIC);
+  initGraphics_();
+
+  titleLabel_ = new osgText::Text;
+  titleLabel_->setDataVariance(osg::Object::DYNAMIC);
+  titleLabel_->setName("EntityPopup Title");
+  titleLabel_->setColor(DEFAULT_TITLE_COLOR);
+  titleLabel_->setFont(DEFAULT_FONT);
+  titleLabel_->setCharacterSize(simVis::osgFontSize(DEFAULT_TITLE_SIZE));
+  titleLabel_->setAlignment(osgText::TextBase::LEFT_BOTTOM_BASE_LINE);
+  addChild(titleLabel_);
+
+  contentLabel_ = new osgText::Text;
+  contentLabel_->setDataVariance(osg::Object::DYNAMIC);
+  contentLabel_->setName("EntityPopup Content");
+  contentLabel_->setColor(DEFAULT_CONTENT_COLOR);
+  contentLabel_->setFont(DEFAULT_FONT);
+  contentLabel_->setCharacterSize(simVis::osgFontSize(DEFAULT_CONTENT_SIZE));
+  contentLabel_->setAlignment(osgText::TextBase::LEFT_BOTTOM_BASE_LINE);
+  addChild(contentLabel_);
+
+  // Set stateset values for the background box: Fill front-face, blend
+  osg::StateSet* stateSet = getOrCreateStateSet();
+  stateSet->setAttributeAndModes(new osg::PolygonMode(osg::PolygonMode::FRONT, osg::PolygonMode::FILL));
+  stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
+}
+
+void EntityPopup2::setPosition(float xPx, float yPx)
+{
+  osg::Matrix mat = getMatrix();
+  mat.setTrans(osg::Vec3d(xPx, yPx, 0.0));
+  setMatrix(mat);
+}
+
+void EntityPopup2::setTitle(const std::string& content)
+{
+  titleLabel_->setText(content, osgText::String::ENCODING_UTF8);
+  updateLabelPositions_();
+}
+
+void EntityPopup2::setContent(const std::string& content)
+{
+  contentLabel_->setText(content, osgText::String::ENCODING_UTF8);
+  updateLabelPositions_();
+}
+
+EntityPopup2::~EntityPopup2()
+{
+}
+
+void EntityPopup2::initGraphics_()
+{
+  // Set up vertices
+  verts_ = new osg::Vec3Array();
+  verts_->setDataVariance(osg::Object::DYNAMIC);
+  verts_->push_back(osg::Vec3());
+  verts_->push_back(osg::Vec3());
+  verts_->push_back(osg::Vec3());
+  verts_->push_back(osg::Vec3());
+  verts_->dirty();
+
+  // Create background geometry
+  background_ = new osg::Geometry;
+  background_->setName("EntityPopup Background");
+  background_->setDataVariance(osg::Object::DYNAMIC);
+  background_->setVertexArray(verts_.get());
+  background_->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, verts_->size()));
+  osg::Vec4Array* backgroundColor = new osg::Vec4Array(osg::Array::BIND_OVERALL);
+  backgroundColor->push_back(DEFAULT_BACK_COLOR);
+  background_->setColorArray(backgroundColor);
+
+  // Create outline geometry
+  outline_ = new osgEarth::LineDrawable(GL_LINE_LOOP);
+  outline_->setDataVariance(osg::Object::DYNAMIC);
+  outline_->setLineWidth(DEFAULT_BORDER_WIDTH);
+  outline_->setColor(DEFAULT_BORDER_COLOR);
+
+  addChild(background_.get());
+  addChild(outline_.get());
+}
+
+void EntityPopup2::updateLabelPositions_()
+{
+  const osg::BoundingBox& titleBb = titleLabel_->getBoundingBox();
+  const osg::BoundingBox& contentBb = contentLabel_->getBoundingBox();
+
+  const float titleHeight = titleBb.yMax() - titleBb.yMin();
+  const float titleYPos = -DEFAULT_PADDING - titleHeight;
+  titleLabel_->setPosition(osg::Vec3(DEFAULT_PADDING, titleYPos, 0));
+
+  const float contentHeight = contentBb.yMax() - contentBb.yMin();
+  const float contentYPos = titleYPos - DEFAULT_PADDING - contentHeight;
+  contentLabel_->setPosition(osg::Vec3(DEFAULT_PADDING, contentYPos, 0));
+
+  float width = simCore::sdkMax(titleBb.xMax() - titleBb.xMin(), contentBb.xMax() - contentBb.xMin());
+  width += DEFAULT_PADDING * 2;
+
+  // Three pads, on top, bottom, and in between title and content
+  float height = titleHeight + contentHeight + (DEFAULT_PADDING * 3);
+
+  // TODO: keep box from going off screen
+
+  // Fix background verts
+  (*verts_)[0].set(width, -height, 0); // bot right
+  (*verts_)[1].set(width, 0, 0); // top right
+  (*verts_)[2].set(0, -height, 0); // bot left
+  (*verts_)[3].set(0, 0, 0); // top left
+  verts_->dirty();
+  background_->dirtyBound();
+
+  outline_->clear();
+  outline_->pushVertex((*verts_)[0]);
+  outline_->pushVertex((*verts_)[1]);
+  outline_->pushVertex((*verts_)[3]);
+  outline_->pushVertex((*verts_)[2]);
+  outline_->dirty();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+PopupHandler2::PopupHandler2(SceneManager* scene, View* view)
+  : scenario_(scene ? scene->getScenario() : nullptr),
+  view_(view),
+  installed_(false)
+{
+  init_();
+}
+
+PopupHandler2::PopupHandler2(Picker* picker, View* view)
+  : picker_(picker),
+  view_(view),
+  installed_(false)
+{
+  init_();
+}
+
+void PopupHandler2::init_()
+{
+  lastMX_ = 0.0f;
+  lastMY_ = 0.0f;
+  mouseDirty_ = false;
+  enabled_ = true;
+  showInCorner_ = false;
+  limitVisibility_ = true;
+  borderWidth_ = DEFAULT_BORDER_WIDTH;
+  borderColor_ = DEFAULT_BORDER_COLOR;
+  backColor_ = DEFAULT_BACK_COLOR;
+  titleColor_ = DEFAULT_TITLE_COLOR;
+  contentColor_ = DEFAULT_CONTENT_COLOR;
+  titleFontSize_ = DEFAULT_TITLE_SIZE;
+  contentFontSize_ = DEFAULT_CONTENT_SIZE;
+  padding_ = DEFAULT_PADDING;
+  childSpacing_ = DEFAULT_SPACING;
+  duration_ = 5;
+  popup2_ = new simVis::EntityPopup2;
+}
+
+PopupHandler2::~PopupHandler2()
+{
+}
+
+void PopupHandler2::enable(bool v)
+{
+  enabled_ = v;
+}
+
+void PopupHandler2::clear()
+{
+  if (currentEntity_.valid())
+  {
+    currentEntity_ = nullptr;
+    if (installed_ && (view_.valid()))
+    {
+      view_->getOrCreateHUD()->removeChild(popup2_.get());
+      installed_ = false;
+    }
+    entityLocatorRev_.reset();
+  }
+}
+
+bool PopupHandler2::isEnabled() const
+{
+  return enabled_;
+}
+
+void PopupHandler2::setContentCallback(PopupContentCallback* cb)
+{
+  contentCallback_ = cb;
+}
+
+void PopupHandler2::setLimitVisibility(bool limit)
+{
+  limitVisibility_ = limit;
+}
+
+void PopupHandler2::setShowInCorner(bool showInCorner)
+{
+  showInCorner_ = showInCorner;
+}
+
+void PopupHandler2::setBorderWidth(int borderWidth)
+{
+  borderWidth_ = borderWidth;
+  applySettings_();
+}
+
+void PopupHandler2::setBorderColor(const simVis::Color& color)
+{
+  borderColor_ = color;
+  applySettings_();
+}
+
+void PopupHandler2::setBackColor(const simVis::Color& color)
+{
+  backColor_ = color;
+  applySettings_();
+}
+
+void PopupHandler2::setTitleColor(const simVis::Color& color)
+{
+  titleColor_ = color;
+  applySettings_();
+}
+
+void PopupHandler2::setContentColor(const simVis::Color& color)
+{
+  contentColor_ = color;
+  applySettings_();
+}
+
+void PopupHandler2::setTitleFontSize(int size)
+{
+  titleFontSize_ = size;
+  applySettings_();
+}
+
+void PopupHandler2::setContentFontSize(int size)
+{
+  contentFontSize_ = size;
+  applySettings_();
+}
+
+void PopupHandler2::setPadding(int width)
+{
+  padding_ = width;
+  applySettings_();
+}
+
+void PopupHandler2::setChildSpacing(int width)
+{
+  childSpacing_ = width;
+  applySettings_();
+}
+
+void PopupHandler2::setDuration(int duration)
+{
+  duration_ = duration;
+}
+
+bool PopupHandler2::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (!enabled_)
+    return false;
+
+  // This only fires for the view associated with addEventHandler()
+  if (ea.getEventType() == ea.MOVE)
+  {
+    lastMX_ = ea.getX();
+    lastMY_ = ea.getY();
+    mouseDirty_ = true;
+    aa.requestRedraw();
+  }
+
+  if (ea.getEventType() == ea.FRAME)
+  {
+    // If you're using this with insets, you may need to artificially trigger
+    // handle() calls on MOVE events in other insets to get the mouse to time out.
+
+    // In the case of not limiting visibility, and if we're using the RTT picker code
+    // (which has better performance), AND if we're showing in the corner (don't need
+    // mouse coords), then always dirty the mouse.  This helps SDK examples.
+    if (!limitVisibility_ && showInCorner_ && picker_.valid())
+      mouseDirty_ = true;
+
+    osg::observer_ptr<View> currentView = static_cast<View*>(aa.asView());
+    updatePopupFromView(currentView.get());
+  }
+
+  return false;
+}
+
+void PopupHandler2::updatePopupFromView(simVis::View* currentView)
+{
+  if (limitVisibility_ && installed_ && !mouseDirty_)
+  {
+    double curTime = simCore::getSystemTime();
+    if (curTime - showStartTime_ > static_cast<double>(duration_))
+    {
+      clear();
+      return;
+    }
+  }
+
+  // only create a pop up if the user moves the mouse (not if something wanders
+  // into the path of the mouse pointer).
+  if (!installed_ && !mouseDirty_)
+    return;
+
+  mouseDirty_ = false;
+
+  // get the interface to this particular view if view is not valid
+  if (!view_.valid())
+    view_ = currentView;
+
+  // get a safe handler on the observer
+  osg::ref_ptr<EntityNode> entity;
+  osg::ref_ptr<Picker> picker;
+  if (picker_.lock(picker))
+    entity = picker_->pickedEntity();
+  else
+  {
+    osg::ref_ptr<ScenarioManager> scenarioSafe;
+    // intersect the scenario graph, looking for PlatformModelNodes, need to also traverse PlatformNode to get to PlatformModelNode
+    if (scenario_.lock(scenarioSafe))
+      entity = scenarioSafe->find<PlatformNode>(currentView, lastMX_, lastMY_, PlatformNode::getMask() | PlatformModelNode::getMask());
+  }
+
+  if (!entity)
+  {
+    clear();
+    return;
+  }
+
+  if (!currentEntity_.valid())
+  {
+    // if there is no current entity, assign one.
+    currentEntity_ = entity;
+    entityLocatorRev_.reset();
+  }
+
+  else if (currentEntity_.valid() && entity != currentEntity_.get())
+  {
+    currentEntity_ = entity;
+    entityLocatorRev_.reset();
+  }
+
+  if (currentEntity_.valid())
+  {
+    if (!installed_)
+    {
+      view_->getOrCreateHUD()->addChild(popup2_.get());
+      applySettings_();
+      showStartTime_ = simCore::getSystemTime();
+      installed_ = true;
+    }
+
+    popup2_->setTitle(currentEntity_->getEntityName(EntityNode::DISPLAY_NAME, true));
+
+    Locator* locator = currentEntity_->getLocator();
+    if (!locator->inSyncWith(entityLocatorRev_))
+    {
+      auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
+      // Prefer the content callback over the entity's method
+      if (contentCallback_.valid() && platform != nullptr)
+        popup2_->setContent(contentCallback_->createString(platform));
+      else
+        popup2_->setContent(currentEntity_->popupText());
+
+      locator->sync(entityLocatorRev_);
+    }
+
+    popup2_->setPosition(lastMX_, lastMY_);
+
+    return;
+  }
+}
+
+void PopupHandler2::applySettings_()
+{
+  // TODO: apply configured settings to the EntityPopup2
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 EntityPopup::EntityPopup()
 {

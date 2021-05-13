@@ -70,6 +70,12 @@ public:
   /// Retrieve the non-NULL pointer to the popup handler
   simVis::PopupHandler* popupHandler() const;
 
+  /// Retrieve the non-NULL pointer to the popup handler
+  simVis::PopupHandler2* popupHandler2() const;
+
+  /// Set whether to use PopupHandler2 instead TODO: remove when PopupHandler2 replaces PopupHandler
+  void setUsePopupHandler2();
+
 public: // MouseManipulator interface
   // internal - override
   virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
@@ -82,9 +88,11 @@ private:
   void updatePopupHandler_();
 
   osg::ref_ptr<simVis::PopupHandler>    popupHandler_;   ///< manages the popup graphic
+  osg::ref_ptr<simVis::PopupHandler2>   popupHandler2_;   ///< manages the popup graphic
   osg::observer_ptr<simVis::View>       lastMouseView_;  ///< last view from the mouse move event
   osg::observer_ptr<simVis::View>       drawView_;       ///< view to use for registering our frame timer
   osg::ref_ptr<osgGA::GUIEventHandler>  frameTimer_;     ///< updates on FRAME events
+  bool usePopupHandler2_;
 };
 
 } // namespace simUtil
