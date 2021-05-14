@@ -73,53 +73,44 @@ static const std::string DEFAULT_FONT = "arial.ttf";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Responsible for tying in to get window sizes out for positioning */
-class EntityPopup2::WindowResizeHandler : public osgGA::GUIEventHandler
+EntityPopup2::WindowResizeHandler::WindowResizeHandler(EntityPopup2* parent)
+  : windowSize_(0.0, 0.0),
+  parent_(parent)
 {
-public:
-  explicit WindowResizeHandler(EntityPopup2* parent)
-    : windowSize_(0.0, 0.0),
-    parent_(parent)
+}
+
+/** Checks for resize events */
+bool EntityPopup2::WindowResizeHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*)
+{
+  // RESIZE does not always emit correctly, especially starting in full screen mode, so use FRAME and always check size
+  if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
   {
+    // Cannot rely on getWindowWidth(), need to check viewport
+    const osg::View* view = aa.asView();
+    if (!view || !view->getCamera() || !view->getCamera()->getViewport())
+      return false;
+    // Pull the width and height out of the viewport
+    const osg::Viewport* vp = view->getCamera()->getViewport();
+    const osg::Vec2f newSize(vp->width(), vp->height());
+    if (newSize == windowSize_)
+      return false;
+    windowSize_ = newSize;
+
+    // Get a hard lock on the parent
+    osg::ref_ptr<EntityPopup2> parent;
+    if (!parent_.lock(parent))
+      return false;
+    // TODO: update parent location if showing in corner
+    // Or is that even needed? Not sure a user could resize the viewport while showing the hover popup
   }
+  return false;
+}
 
-  /** Checks for resize events */
-  bool virtual handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*) override
-  {
-    // RESIZE does not always emit correctly, especially starting in full screen mode, so use FRAME and always check size
-    if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
-    {
-      // Cannot rely on getWindowWidth(), need to check viewport
-      const osg::View* view = aa.asView();
-      if (!view || !view->getCamera() || !view->getCamera()->getViewport())
-        return false;
-      // Pull the width and height out of the viewport
-      const osg::Viewport* vp = view->getCamera()->getViewport();
-      const osg::Vec2f newSize(vp->width(), vp->height());
-      if (newSize == windowSize_)
-        return false;
-      windowSize_ = newSize;
-
-      // Get a hard lock on the parent
-      osg::ref_ptr<EntityPopup2> parent;
-      if (!parent_.lock(parent))
-        return false;
-      // TODO: update parent location if showing in corner
-      // Or is that even needed? Not sure a user could resize the viewport while showing the hover popup
-    }
-    return false;
-  }
-
-  /** Retrieves the last window size seen */
-  osg::Vec2f windowSize() const
-  {
-    return windowSize_;
-  }
-
-private:
-  osg::Vec2f windowSize_;
-  osg::observer_ptr<EntityPopup2> parent_;
-};
+/** Retrieves the last window size seen */
+osg::Vec2f EntityPopup2::WindowResizeHandler::windowSize() const
+{
+  return windowSize_;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 

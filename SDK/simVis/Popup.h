@@ -105,7 +105,21 @@ namespace simVis
     virtual ~EntityPopup2();
 
   private:
-    class WindowResizeHandler;
+    /** Responsible for getting window sizes for positioning */
+    class WindowResizeHandler : public osgGA::GUIEventHandler
+    {
+    public:
+      explicit WindowResizeHandler(EntityPopup2* parent);
+
+      /** Checks for resize events */
+      bool virtual handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*) override;
+      /** Retrieves the last window size seen */
+      osg::Vec2f windowSize() const;
+
+    private:
+      osg::Vec2f windowSize_;
+      osg::observer_ptr<EntityPopup2> parent_;
+    };
 
     /** Initialize the background and outline graphics */
     void initGraphics_();
