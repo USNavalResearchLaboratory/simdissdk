@@ -72,10 +72,29 @@ namespace simVis
   public:
     EntityPopup2();
 
+    /// Set the position (in pixels) of the popup
     void setPosition(float xPx, float yPx);
 
+    /// Set the title text
     void setTitle(const std::string& content);
+    /// Set the content text
     void setContent(const std::string& content);
+
+    /// Retrieve a pointer to the title label
+    osgText::Text* titleLabel() const;
+    /// Retrieve a pointer to the content label
+    osgText::Text* contentLabel() const;
+
+    /// Sets the width of the popup border; set to 0 to turn off
+    void setBorderWidth(float borderWidth);
+    /// Sets the border color for the popup
+    void setBorderColor(const simVis::Color& color);
+    /// Sets the background color for the popup
+    void setBackgroundColor(const simVis::Color& color);
+    /// Sets the width between text and border
+    void setPadding(int paddingPx);
+    /// Sets the width between title and content
+    void setChildSpacing(int spacingPx);
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
@@ -86,15 +105,24 @@ namespace simVis
     virtual ~EntityPopup2();
 
   private:
-    void initGraphics_();
+    class WindowResizeHandler;
 
+    /** Initialize the background and outline graphics */
+    void initGraphics_();
+    /** Update the label positions within the popup */
     void updateLabelPositions_();
 
+    osg::ref_ptr<WindowResizeHandler> resizeHandler_;
     osg::ref_ptr<osg::Vec3Array> verts_;
     osg::ref_ptr<osg::Geometry> background_;
     osg::ref_ptr<osgEarth::LineDrawable> outline_;
     osg::ref_ptr<osgText::Text> titleLabel_;
     osg::ref_ptr<osgText::Text> contentLabel_;
+
+    int paddingPx_; ///< Padding (in pixels) between the edge of the popup and the labels
+    int spacingPx_; ///< Vertical spacing (in pixels) between title and content labels
+    float widthPx_; ///< Width (in pixels) of the popup based on current content
+    float heightPx_; ///< Height (in pixels) of the popup based on current content
   };
 
   /**

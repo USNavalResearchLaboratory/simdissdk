@@ -73,8 +73,62 @@ static const std::string DEFAULT_FONT = "arial.ttf";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Responsible for tying in to get window sizes out for positioning */
+class EntityPopup2::WindowResizeHandler : public osgGA::GUIEventHandler
+{
+public:
+  explicit WindowResizeHandler(EntityPopup2* parent)
+    : windowSize_(0.0, 0.0),
+    parent_(parent)
+  {
+  }
+
+  /** Checks for resize events */
+  bool virtual handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*) override
+  {
+    // RESIZE does not always emit correctly, especially starting in full screen mode, so use FRAME and always check size
+    if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
+    {
+      // Cannot rely on getWindowWidth(), need to check viewport
+      const osg::View* view = aa.asView();
+      if (!view || !view->getCamera() || !view->getCamera()->getViewport())
+        return false;
+      // Pull the width and height out of the viewport
+      const osg::Viewport* vp = view->getCamera()->getViewport();
+      const osg::Vec2f newSize(vp->width(), vp->height());
+      if (newSize == windowSize_)
+        return false;
+      windowSize_ = newSize;
+
+      // Get a hard lock on the parent
+      osg::ref_ptr<EntityPopup2> parent;
+      if (!parent_.lock(parent))
+        return false;
+      // TODO: update parent location if showing in corner
+      // Or is that even needed? Not sure a user could resize the viewport while showing the hover popup
+    }
+    return false;
+  }
+
+  /** Retrieves the last window size seen */
+  osg::Vec2f windowSize() const
+  {
+    return windowSize_;
+  }
+
+private:
+  osg::Vec2f windowSize_;
+  osg::observer_ptr<EntityPopup2> parent_;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
 EntityPopup2::EntityPopup2()
-  : osg::MatrixTransform()
+  : osg::MatrixTransform(),
+  paddingPx_(DEFAULT_PADDING),
+  spacingPx_(DEFAULT_SPACING),
+  widthPx_(0.f),
+  heightPx_(0.f)
 {
   setDataVariance(osg::Object::DYNAMIC);
   initGraphics_();
@@ -101,12 +155,28 @@ EntityPopup2::EntityPopup2()
   osg::StateSet* stateSet = getOrCreateStateSet();
   stateSet->setAttributeAndModes(new osg::PolygonMode(osg::PolygonMode::FRONT, osg::PolygonMode::FILL));
   stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
+
+  resizeHandler_ = new WindowResizeHandler(this);
+  addEventCallback(resizeHandler_.get());
 }
 
 void EntityPopup2::setPosition(float xPx, float yPx)
 {
+  // Keep box from going off screen
+  const auto& windowSize = resizeHandler_->windowSize();
+
+  const float buffer = 20.f;
+  // Farthest right the popup can go
+  const float maxX = windowSize.x() - buffer - widthPx_;
+  // Farthest up the popup can go
+  const float maxY = windowSize.y() - buffer;
+  // Limit the X position to keep the entirety of the popup on screen horizontally
+  const float x = simCore::sdkMin(simCore::sdkMax(xPx, buffer), maxX);
+  // Limit the Y position to keep the entirety of the popup on screen vertically
+  const float y = simCore::sdkMin(simCore::sdkMax(yPx, buffer + heightPx_), maxY);
+
   osg::Matrix mat = getMatrix();
-  mat.setTrans(osg::Vec3d(xPx, yPx, 0.0));
+  mat.setTrans(osg::Vec3d(x, y, 0.0));
   setMatrix(mat);
 }
 
@@ -119,6 +189,49 @@ void EntityPopup2::setTitle(const std::string& content)
 void EntityPopup2::setContent(const std::string& content)
 {
   contentLabel_->setText(content, osgText::String::ENCODING_UTF8);
+  updateLabelPositions_();
+}
+
+osgText::Text* EntityPopup2::titleLabel() const
+{
+  return titleLabel_.get();
+}
+
+osgText::Text* EntityPopup2::contentLabel() const
+{
+  return contentLabel_.get();
+}
+
+void EntityPopup2::setBorderWidth(float borderWidth)
+{
+  outline_->setLineWidth(borderWidth);
+}
+
+void EntityPopup2::setBorderColor(const simVis::Color& color)
+{
+  outline_->setColor(color);
+}
+
+void EntityPopup2::setBackgroundColor(const simVis::Color& color)
+{
+  osg::Vec4Array* backgroundColor = new osg::Vec4Array(osg::Array::BIND_OVERALL);
+  backgroundColor->push_back(color);
+  background_->setColorArray(backgroundColor);
+}
+
+void EntityPopup2::setPadding(int width)
+{
+  if (paddingPx_ == width)
+    return;
+  paddingPx_ = width;
+  updateLabelPositions_();
+}
+
+void EntityPopup2::setChildSpacing(int width)
+{
+  if (spacingPx_ == width)
+    return;
+  spacingPx_ = width;
   updateLabelPositions_();
 }
 
@@ -163,25 +276,23 @@ void EntityPopup2::updateLabelPositions_()
   const osg::BoundingBox& contentBb = contentLabel_->getBoundingBox();
 
   const float titleHeight = titleBb.yMax() - titleBb.yMin();
-  const float titleYPos = -DEFAULT_PADDING - titleHeight;
-  titleLabel_->setPosition(osg::Vec3(DEFAULT_PADDING, titleYPos, 0));
+  const float titleYPos = -paddingPx_ - titleHeight;
+  titleLabel_->setPosition(osg::Vec3(paddingPx_, titleYPos, 0));
 
   const float contentHeight = contentBb.yMax() - contentBb.yMin();
-  const float contentYPos = titleYPos - DEFAULT_PADDING - contentHeight;
-  contentLabel_->setPosition(osg::Vec3(DEFAULT_PADDING, contentYPos, 0));
+  const float contentYPos = titleYPos - spacingPx_ - contentHeight;
+  contentLabel_->setPosition(osg::Vec3(paddingPx_, contentYPos, 0));
 
-  float width = simCore::sdkMax(titleBb.xMax() - titleBb.xMin(), contentBb.xMax() - contentBb.xMin());
-  width += DEFAULT_PADDING * 2;
+  widthPx_ = simCore::sdkMax(titleBb.xMax() - titleBb.xMin(), contentBb.xMax() - contentBb.xMin());
+  widthPx_ += paddingPx_ * 2;
 
-  // Three pads, on top, bottom, and in between title and content
-  float height = titleHeight + contentHeight + (DEFAULT_PADDING * 3);
-
-  // TODO: keep box from going off screen
+  // Two pads (top and bottom) and spacing between title and content
+  heightPx_ = titleHeight + contentHeight + (paddingPx_ * 2) + spacingPx_;
 
   // Fix background verts
-  (*verts_)[0].set(width, -height, 0); // bot right
-  (*verts_)[1].set(width, 0, 0); // top right
-  (*verts_)[2].set(0, -height, 0); // bot left
+  (*verts_)[0].set(widthPx_, -heightPx_, 0); // bot right
+  (*verts_)[1].set(widthPx_, 0, 0); // top right
+  (*verts_)[2].set(0, -heightPx_, 0); // bot left
   (*verts_)[3].set(0, 0, 0); // top left
   verts_->dirty();
   background_->dirtyBound();
@@ -278,54 +389,72 @@ void PopupHandler2::setShowInCorner(bool showInCorner)
 
 void PopupHandler2::setBorderWidth(int borderWidth)
 {
+  if (borderWidth_ == borderWidth)
+    return;
   borderWidth_ = borderWidth;
   applySettings_();
 }
 
 void PopupHandler2::setBorderColor(const simVis::Color& color)
 {
+  if (borderColor_ == color)
+    return;
   borderColor_ = color;
   applySettings_();
 }
 
 void PopupHandler2::setBackColor(const simVis::Color& color)
 {
+  if (backColor_ == color)
+    return;
   backColor_ = color;
   applySettings_();
 }
 
 void PopupHandler2::setTitleColor(const simVis::Color& color)
 {
+  if (titleColor_ == color)
+    return;
   titleColor_ = color;
   applySettings_();
 }
 
 void PopupHandler2::setContentColor(const simVis::Color& color)
 {
+  if (contentColor_ == color)
+    return;
   contentColor_ = color;
   applySettings_();
 }
 
 void PopupHandler2::setTitleFontSize(int size)
 {
+  if (titleFontSize_ == size)
+    return;
   titleFontSize_ = size;
   applySettings_();
 }
 
 void PopupHandler2::setContentFontSize(int size)
 {
+  if (contentFontSize_ == size)
+    return;
   contentFontSize_ = size;
   applySettings_();
 }
 
 void PopupHandler2::setPadding(int width)
 {
+  if (padding_ == width)
+    return;
   padding_ = width;
   applySettings_();
 }
 
 void PopupHandler2::setChildSpacing(int width)
 {
+  if (childSpacing_ == width)
+    return;
   childSpacing_ = width;
   applySettings_();
 }
@@ -455,7 +584,17 @@ void PopupHandler2::updatePopupFromView(simVis::View* currentView)
 
 void PopupHandler2::applySettings_()
 {
-  // TODO: apply configured settings to the EntityPopup2
+  if (!popup2_.valid() || !popup2_->titleLabel() || !popup2_->contentLabel())
+    return;
+  popup2_->setBorderWidth(borderWidth_);
+  popup2_->setBorderColor(borderColor_);
+  popup2_->setBackgroundColor(backColor_);
+  popup2_->titleLabel()->setColor(titleColor_);
+  popup2_->titleLabel()->setCharacterSize(simVis::osgFontSize(titleFontSize_));
+  popup2_->contentLabel()->setColor(contentColor_);
+  popup2_->contentLabel()->setCharacterSize(simVis::osgFontSize(contentFontSize_));
+  popup2_->setPadding(padding_);
+  popup2_->setChildSpacing(childSpacing_);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
