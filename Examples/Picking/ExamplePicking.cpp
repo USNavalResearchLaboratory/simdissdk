@@ -667,25 +667,14 @@ int main(int argc, char** argv)
   // When a new item is picked, update the label
   app.picker->addCallback(new UpdateLabelPickCallback(app.pickLabel.get()));
 
-#define ENTITY_POPUP2_TESTING
-#ifndef ENTITY_POPUP2_TESTING
   // Add a popup handler to demonstrate its use of the picker
-  simVis::PopupHandler* popupHandler = new simVis::PopupHandler(app.picker.get(), superHud.get());
+  osg::ref_ptr<simVis::PopupHandler> popupHandler = new simVis::PopupHandler(app.picker.get(), superHud.get());
   popupHandler->setShowInCorner(true);
   popupHandler->setBackColor(simVis::Color(0.f, 0.f, 0.f, 0.8f));
   popupHandler->setBorderColor(simVis::Color::Green);
   popupHandler->setTitleColor(simVis::Color::Lime);
   popupHandler->setLimitVisibility(false);
-  superHud->addEventHandler(popupHandler);
-#else
-  // Create a mouse dispatcher for the PlatformPopupManipulator
-  simUtil::MouseDispatcher mouseDispatcher;
-  mouseDispatcher.setViewManager(viewMan.get());
-
-  std::shared_ptr<simUtil::PlatformPopupManipulator> manip = std::make_shared<simUtil::PlatformPopupManipulator>(*app.picker.get(), *superHud.get());
-  manip->setUsePopupHandler2();
-  mouseDispatcher.addManipulator(10, manip);
-#endif
+  superHud->addEventHandler(popupHandler.get());
 
   // Run until the user quits by hitting ESC.
   return viewMan->run();

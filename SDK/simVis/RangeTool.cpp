@@ -30,7 +30,6 @@
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/StateSetCache"
 #include "osgEarth/LabelNode"
-#include "osgEarth/Controls"
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"

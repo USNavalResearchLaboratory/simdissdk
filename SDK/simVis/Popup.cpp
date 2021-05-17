@@ -33,12 +33,9 @@
 #include "osgUtil/IntersectionVisitor"
 #include "osgUtil/LineSegmentIntersector"
 #include "osgViewer/View"
-#include "osgEarth/Controls"
-
 #include "simCore/Calc/Angle.h"
 #include "simCore/String/Constants.h"
 #include "simCore/Time/Utils.h"
-
 #include "simVis/CustomRendering.h"
 #include "simVis/Locator.h"
 #include "simVis/Picker.h"
@@ -74,13 +71,13 @@ static const float BUFFER_PX = 20.f; // Minimum buffer between edge of screen an
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-EntityPopup2::WindowResizeHandler::WindowResizeHandler(EntityPopup2* parent)
+EntityPopup::WindowResizeHandler::WindowResizeHandler(EntityPopup* parent)
   : windowSize_(0.0, 0.0),
   parent_(parent)
 {
 }
 
-bool EntityPopup2::WindowResizeHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*)
+bool EntityPopup::WindowResizeHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*)
 {
   // RESIZE does not always emit correctly, especially starting in full screen mode, so use FRAME and always check size
   if (ea.getEventType() != osgGA::GUIEventAdapter::FRAME)
@@ -98,7 +95,7 @@ bool EntityPopup2::WindowResizeHandler::handle(const osgGA::GUIEventAdapter& ea,
   windowSize_ = newSize;
 
   // Get a hard lock on the parent
-  osg::ref_ptr<EntityPopup2> parent;
+  osg::ref_ptr<EntityPopup> parent;
   // Update parent location if showing in corner
   if (parent_.lock(parent) && parent_->showInCorner_)
     parent_->positionInCorner_();
@@ -106,14 +103,14 @@ bool EntityPopup2::WindowResizeHandler::handle(const osgGA::GUIEventAdapter& ea,
   return false;
 }
 
-osg::Vec2f EntityPopup2::WindowResizeHandler::windowSize() const
+osg::Vec2f EntityPopup::WindowResizeHandler::windowSize() const
 {
   return windowSize_;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-EntityPopup2::EntityPopup2()
+EntityPopup::EntityPopup()
   : osg::MatrixTransform(),
   paddingPx_(DEFAULT_PADDING),
   spacingPx_(DEFAULT_SPACING),
@@ -151,11 +148,11 @@ EntityPopup2::EntityPopup2()
   addEventCallback(resizeHandler_.get());
 }
 
-EntityPopup2::~EntityPopup2()
+EntityPopup::~EntityPopup()
 {
 }
 
-void EntityPopup2::setPosition(float xPx, float yPx)
+void EntityPopup::setPosition(float xPx, float yPx)
 {
   if (showInCorner_)
     return;
@@ -177,46 +174,46 @@ void EntityPopup2::setPosition(float xPx, float yPx)
   setMatrix(mat);
 }
 
-void EntityPopup2::setTitle(const std::string& content)
+void EntityPopup::setTitle(const std::string& content)
 {
   titleLabel_->setText(content, osgText::String::ENCODING_UTF8);
   updateLabelPositions_();
 }
 
-void EntityPopup2::setContent(const std::string& content)
+void EntityPopup::setContent(const std::string& content)
 {
   contentLabel_->setText(content, osgText::String::ENCODING_UTF8);
   updateLabelPositions_();
 }
 
-osgText::Text* EntityPopup2::titleLabel() const
+osgText::Text* EntityPopup::titleLabel() const
 {
   return titleLabel_.get();
 }
 
-osgText::Text* EntityPopup2::contentLabel() const
+osgText::Text* EntityPopup::contentLabel() const
 {
   return contentLabel_.get();
 }
 
-void EntityPopup2::setBorderWidth(float borderWidth)
+void EntityPopup::setBorderWidth(float borderWidth)
 {
   outline_->setLineWidth(borderWidth);
 }
 
-void EntityPopup2::setBorderColor(const simVis::Color& color)
+void EntityPopup::setBorderColor(const simVis::Color& color)
 {
   outline_->setColor(color);
 }
 
-void EntityPopup2::setBackgroundColor(const simVis::Color& color)
+void EntityPopup::setBackgroundColor(const simVis::Color& color)
 {
   osg::Vec4Array* backgroundColor = new osg::Vec4Array(osg::Array::BIND_OVERALL);
   backgroundColor->push_back(color);
   background_->setColorArray(backgroundColor);
 }
 
-void EntityPopup2::setPadding(int width)
+void EntityPopup::setPadding(int width)
 {
   if (paddingPx_ == width)
     return;
@@ -224,7 +221,7 @@ void EntityPopup2::setPadding(int width)
   updateLabelPositions_();
 }
 
-void EntityPopup2::setChildSpacing(int width)
+void EntityPopup::setChildSpacing(int width)
 {
   if (spacingPx_ == width)
     return;
@@ -232,7 +229,7 @@ void EntityPopup2::setChildSpacing(int width)
   updateLabelPositions_();
 }
 
-void EntityPopup2::setShowInCorner(bool showInCorner)
+void EntityPopup::setShowInCorner(bool showInCorner)
 {
   if (showInCorner_ == showInCorner)
     return;
@@ -241,7 +238,7 @@ void EntityPopup2::setShowInCorner(bool showInCorner)
   positionInCorner_();
 }
 
-void EntityPopup2::initGraphics_()
+void EntityPopup::initGraphics_()
 {
   // Set up vertices
   verts_ = new osg::Vec3Array();
@@ -272,7 +269,7 @@ void EntityPopup2::initGraphics_()
   addChild(outline_.get());
 }
 
-void EntityPopup2::updateLabelPositions_()
+void EntityPopup::updateLabelPositions_()
 {
   const osg::BoundingBox& titleBb = titleLabel_->getBoundingBox();
   const osg::BoundingBox& contentBb = contentLabel_->getBoundingBox();
@@ -311,7 +308,7 @@ void EntityPopup2::updateLabelPositions_()
     positionInCorner_();
 }
 
-void EntityPopup2::positionInCorner_()
+void EntityPopup::positionInCorner_()
 {
   const float xPos = resizeHandler_->windowSize().x() - BUFFER_PX - widthPx_;
   const float yPos = BUFFER_PX + heightPx_;
@@ -322,7 +319,7 @@ void EntityPopup2::positionInCorner_()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-PopupHandler2::PopupHandler2(SceneManager* scene, View* view)
+PopupHandler::PopupHandler(SceneManager* scene, View* view)
   : scenario_(scene ? scene->getScenario() : nullptr),
   view_(view),
   installed_(false)
@@ -330,7 +327,7 @@ PopupHandler2::PopupHandler2(SceneManager* scene, View* view)
   init_();
 }
 
-PopupHandler2::PopupHandler2(Picker* picker, View* view)
+PopupHandler::PopupHandler(Picker* picker, View* view)
   : picker_(picker),
   view_(view),
   installed_(false)
@@ -338,7 +335,7 @@ PopupHandler2::PopupHandler2(Picker* picker, View* view)
   init_();
 }
 
-void PopupHandler2::init_()
+void PopupHandler::init_()
 {
   lastMX_ = 0.0f;
   lastMY_ = 0.0f;
@@ -356,54 +353,54 @@ void PopupHandler2::init_()
   padding_ = DEFAULT_PADDING;
   childSpacing_ = DEFAULT_SPACING;
   duration_ = 5;
-  popup2_ = new simVis::EntityPopup2;
+  popup_ = new simVis::EntityPopup;
 }
 
-PopupHandler2::~PopupHandler2()
+PopupHandler::~PopupHandler()
 {
 }
 
-void PopupHandler2::enable(bool v)
+void PopupHandler::enable(bool v)
 {
   enabled_ = v;
 }
 
-void PopupHandler2::clear()
+void PopupHandler::clear()
 {
   if (currentEntity_.valid())
   {
     currentEntity_ = nullptr;
     if (installed_ && (view_.valid()))
     {
-      view_->getOrCreateHUD()->removeChild(popup2_.get());
+      view_->getOrCreateHUD()->removeChild(popup_.get());
       installed_ = false;
     }
     entityLocatorRev_.reset();
   }
 }
 
-bool PopupHandler2::isEnabled() const
+bool PopupHandler::isEnabled() const
 {
   return enabled_;
 }
 
-void PopupHandler2::setContentCallback(PopupContentCallback* cb)
+void PopupHandler::setContentCallback(PopupContentCallback* cb)
 {
   contentCallback_ = cb;
 }
 
-void PopupHandler2::setLimitVisibility(bool limit)
+void PopupHandler::setLimitVisibility(bool limit)
 {
   limitVisibility_ = limit;
 }
 
-void PopupHandler2::setShowInCorner(bool showInCorner)
+void PopupHandler::setShowInCorner(bool showInCorner)
 {
   showInCorner_ = showInCorner;
-  popup2_->setShowInCorner(showInCorner_);
+  popup_->setShowInCorner(showInCorner_);
 }
 
-void PopupHandler2::setBorderWidth(int borderWidth)
+void PopupHandler::setBorderWidth(int borderWidth)
 {
   if (borderWidth_ == borderWidth)
     return;
@@ -411,7 +408,7 @@ void PopupHandler2::setBorderWidth(int borderWidth)
   applySettings_();
 }
 
-void PopupHandler2::setBorderColor(const simVis::Color& color)
+void PopupHandler::setBorderColor(const simVis::Color& color)
 {
   if (borderColor_ == color)
     return;
@@ -419,7 +416,7 @@ void PopupHandler2::setBorderColor(const simVis::Color& color)
   applySettings_();
 }
 
-void PopupHandler2::setBackColor(const simVis::Color& color)
+void PopupHandler::setBackColor(const simVis::Color& color)
 {
   if (backColor_ == color)
     return;
@@ -427,7 +424,7 @@ void PopupHandler2::setBackColor(const simVis::Color& color)
   applySettings_();
 }
 
-void PopupHandler2::setTitleColor(const simVis::Color& color)
+void PopupHandler::setTitleColor(const simVis::Color& color)
 {
   if (titleColor_ == color)
     return;
@@ -435,7 +432,7 @@ void PopupHandler2::setTitleColor(const simVis::Color& color)
   applySettings_();
 }
 
-void PopupHandler2::setContentColor(const simVis::Color& color)
+void PopupHandler::setContentColor(const simVis::Color& color)
 {
   if (contentColor_ == color)
     return;
@@ -443,7 +440,7 @@ void PopupHandler2::setContentColor(const simVis::Color& color)
   applySettings_();
 }
 
-void PopupHandler2::setTitleFontSize(int size)
+void PopupHandler::setTitleFontSize(int size)
 {
   if (titleFontSize_ == size)
     return;
@@ -451,7 +448,7 @@ void PopupHandler2::setTitleFontSize(int size)
   applySettings_();
 }
 
-void PopupHandler2::setContentFontSize(int size)
+void PopupHandler::setContentFontSize(int size)
 {
   if (contentFontSize_ == size)
     return;
@@ -459,7 +456,7 @@ void PopupHandler2::setContentFontSize(int size)
   applySettings_();
 }
 
-void PopupHandler2::setPadding(int width)
+void PopupHandler::setPadding(int width)
 {
   if (padding_ == width)
     return;
@@ -467,7 +464,7 @@ void PopupHandler2::setPadding(int width)
   applySettings_();
 }
 
-void PopupHandler2::setChildSpacing(int width)
+void PopupHandler::setChildSpacing(int width)
 {
   if (childSpacing_ == width)
     return;
@@ -475,12 +472,12 @@ void PopupHandler2::setChildSpacing(int width)
   applySettings_();
 }
 
-void PopupHandler2::setDuration(int duration)
+void PopupHandler::setDuration(int duration)
 {
   duration_ = duration;
 }
 
-bool PopupHandler2::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+bool PopupHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
   if (!enabled_)
     return false;
@@ -512,7 +509,7 @@ bool PopupHandler2::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAda
   return false;
 }
 
-void PopupHandler2::updatePopupFromView(simVis::View* currentView)
+void PopupHandler::updatePopupFromView(simVis::View* currentView)
 {
   if (limitVisibility_ && installed_ && !mouseDirty_)
   {
@@ -572,13 +569,13 @@ void PopupHandler2::updatePopupFromView(simVis::View* currentView)
 
   if (!installed_)
   {
-    view_->getOrCreateHUD()->addChild(popup2_.get());
+    view_->getOrCreateHUD()->addChild(popup_.get());
     applySettings_();
     showStartTime_ = simCore::getSystemTime();
     installed_ = true;
   }
 
-  popup2_->setTitle(currentEntity_->getEntityName(EntityNode::DISPLAY_NAME, true));
+  popup_->setTitle(currentEntity_->getEntityName(EntityNode::DISPLAY_NAME, true));
 
   Locator* locator = currentEntity_->getLocator();
   if (!locator->inSyncWith(entityLocatorRev_))
@@ -586,411 +583,28 @@ void PopupHandler2::updatePopupFromView(simVis::View* currentView)
     auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
     // Prefer the content callback over the entity's method
     if (contentCallback_.valid() && platform != nullptr)
-      popup2_->setContent(contentCallback_->createString(platform));
+      popup_->setContent(contentCallback_->createString(platform));
     else
-      popup2_->setContent(currentEntity_->popupText());
+      popup_->setContent(currentEntity_->popupText());
 
     locator->sync(entityLocatorRev_);
   }
 
   if (!showInCorner_)
-    popup2_->setPosition(lastMX_, lastMY_);
-}
-
-void PopupHandler2::applySettings_()
-{
-  if (!popup2_.valid() || !popup2_->titleLabel() || !popup2_->contentLabel())
-    return;
-  popup2_->setBorderWidth(borderWidth_);
-  popup2_->setBorderColor(borderColor_);
-  popup2_->setBackgroundColor(backColor_);
-  popup2_->titleLabel()->setColor(titleColor_);
-  popup2_->titleLabel()->setCharacterSize(simVis::osgFontSize(titleFontSize_));
-  popup2_->contentLabel()->setColor(contentColor_);
-  popup2_->contentLabel()->setCharacterSize(simVis::osgFontSize(contentFontSize_));
-  popup2_->setPadding(padding_);
-  popup2_->setChildSpacing(childSpacing_);
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
-EntityPopup::EntityPopup()
-{
-  setName("Entity Popup");
-
-  titleLabel_ = new osgEarth::Util::Controls::LabelControl();
-  titleLabel_->setName("EntityPopup Title");
-  titleLabel_->setForeColor(DEFAULT_TITLE_COLOR);
-  osgText::Font* defaultFont = simVis::Registry::instance()->getOrCreateFont("arial.ttf");
-  titleLabel_->setFont(defaultFont);
-  titleLabel_->setFontSize(simVis::osgFontSize(DEFAULT_TITLE_SIZE));
-  titleLabel_->setEncoding(osgText::String::ENCODING_UTF8);
-  this->addControl(titleLabel_);
-
-  contentLabel_ = new osgEarth::Util::Controls::LabelControl();
-  contentLabel_->setName("EntityPopup Content");
-  contentLabel_->setForeColor(DEFAULT_CONTENT_COLOR);
-  contentLabel_->setFont(defaultFont);
-  contentLabel_->setFontSize(simVis::osgFontSize(DEFAULT_CONTENT_SIZE));
-  contentLabel_->setEncoding(osgText::String::ENCODING_UTF8);
-  this->addControl(contentLabel_);
-
-  // add yellow border
-  this->setBorderColor(DEFAULT_BORDER_COLOR);
-  this->setBorderWidth(DEFAULT_BORDER_WIDTH);
-
-  this->setBackColor(DEFAULT_BACK_COLOR);
-  this->setPadding(DEFAULT_PADDING);
-  this->setChildSpacing(DEFAULT_SPACING);
-  this->setAbsorbEvents(false);
-
-  this->getOrCreateStateSet()->setRenderBinDetails(20, "RenderBin");
-}
-
-void EntityPopup::setTitle(const std::string& value)
-{
-  titleLabel_->setText(value);
-}
-
-void EntityPopup::setContent(const std::string& value)
-{
-  contentLabel_->setText(value);
-}
-
-osgEarth::Util::Controls::LabelControl* EntityPopup::titleLabel() const
-{
-  return titleLabel_;
-}
-
-osgEarth::Util::Controls::LabelControl* EntityPopup::contentLabel() const
-{
-  return contentLabel_;
-}
-
-// --------------------------------------------------------------------------
-
-/** Finds the first non-nullptr instance of type T in the node path provided */
-template<typename T>
-T* findNodeInPath(const osg::NodePath& path)
-{
-  for (osg::NodePath::const_reverse_iterator i = path.rbegin(); i != path.rend(); ++i)
-  {
-    if (dynamic_cast<T*>(*i))
-      return static_cast<T*>(*i);
-  }
-  return nullptr;
-}
-
-// --------------------------------------------------------------------------
-
-PopupHandler::PopupHandler(SceneManager* scene, View* view)
-  : scenario_(scene ? scene->getScenario() : nullptr),
-    view_(view)
-{
-  init_();
-}
-
-PopupHandler::PopupHandler(Picker* picker, View* view)
-  : picker_(picker),
-    view_(view)
-{
-  init_();
-}
-
-void PopupHandler::init_()
-{
-  lastMX_ = 0.0f;
-  lastMY_ = 0.0f;
-  mouseDirty_ = false;
-  enabled_ = true;
-  showInCorner_ = false;
-  limitVisibility_ = true;
-  borderWidth_ = DEFAULT_BORDER_WIDTH;
-  borderColor_ = DEFAULT_BORDER_COLOR;
-  backColor_ = DEFAULT_BACK_COLOR;
-  titleColor_ = DEFAULT_TITLE_COLOR;
-  contentColor_ = DEFAULT_CONTENT_COLOR;
-  titleFontSize_ = DEFAULT_TITLE_SIZE;
-  contentFontSize_ = DEFAULT_CONTENT_SIZE;
-  padding_ = DEFAULT_PADDING;
-  childSpacing_ = DEFAULT_SPACING;
-  duration_ = 5;
-}
-
-PopupHandler::~PopupHandler()
-{
-}
-
-void PopupHandler::enable(bool v)
-{
-  enabled_ = v;
-}
-
-void PopupHandler::clear()
-{
-  if (currentEntity_.valid())
-  {
-    currentEntity_ = nullptr;
-    if (popup_.valid() && (view_.valid()))
-    {
-      view_->removeOverlayControl(popup_.get());
-    }
-    popup_ = nullptr;
-    entityLocatorRev_.reset();
-  }
-}
-
-bool PopupHandler::isEnabled() const
-{
-  return enabled_;
-}
-
-void PopupHandler::setContentCallback(PopupContentCallback* cb)
-{
-  contentCallback_ = cb;
-}
-
-void PopupHandler::setLimitVisibility(bool limit)
-{
-  limitVisibility_ = limit;
-}
-
-void PopupHandler::setShowInCorner(bool showInCorner)
-{
-  showInCorner_ = showInCorner;
-}
-
-void PopupHandler::setBorderWidth(int borderWidth)
-{
-  borderWidth_ = borderWidth;
-  applySettings_();
-}
-
-void PopupHandler::setBorderColor(const simVis::Color& color)
-{
-  borderColor_ = color;
-  applySettings_();
-}
-
-void PopupHandler::setBackColor(const simVis::Color& color)
-{
-  backColor_ = color;
-  applySettings_();
-}
-
-void PopupHandler::setTitleColor(const simVis::Color& color)
-{
-  titleColor_ = color;
-  applySettings_();
-}
-
-void PopupHandler::setContentColor(const simVis::Color& color)
-{
-  contentColor_ = color;
-  applySettings_();
-}
-
-void PopupHandler::setTitleFontSize(int size)
-{
-  titleFontSize_ = size;
-  applySettings_();
-}
-
-void PopupHandler::setContentFontSize(int size)
-{
-  contentFontSize_ = size;
-  applySettings_();
-}
-
-void PopupHandler::setPadding(int width)
-{
-  padding_ = width;
-  applySettings_();
-}
-
-void PopupHandler::setChildSpacing(int width)
-{
-  childSpacing_ = width;
-  applySettings_();
-}
-
-void PopupHandler::setDuration(int duration)
-{
-  duration_ = duration;
-}
-
-bool PopupHandler::handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
-{
-  if (!enabled_)
-    return false;
-
-  // This only fires for the view associated with addEventHandler()
-  if (ea.getEventType() == ea.MOVE)
-  {
-    lastMX_ = ea.getX();
-    lastMY_ = ea.getY();
-    mouseDirty_ = true;
-    aa.requestRedraw();
-  }
-
-  if (ea.getEventType() == ea.FRAME)
-  {
-    // If you're using this with insets, you may need to artificially trigger
-    // handle() calls on MOVE events in other insets to get the mouse to time out.
-
-    // In the case of not limiting visibility, and if we're using the RTT picker code
-    // (which has better performance), AND if we're showing in the corner (don't need
-    // mouse coords), then always dirty the mouse.  This helps SDK examples.
-    if (!limitVisibility_ && showInCorner_ && picker_.valid())
-      mouseDirty_ = true;
-
-    osg::observer_ptr<View> currentView = static_cast<View*>(aa.asView());
-    updatePopupFromView(currentView.get());
-  }
-
-  return false;
-}
-
-void PopupHandler::updatePopupFromView(simVis::View* currentView)
-{
-  if (limitVisibility_ && popup_.valid() && !mouseDirty_)
-  {
-    double curTime = simCore::getSystemTime();
-    if (curTime - showStartTime_ > static_cast<double>(duration_))
-    {
-      clear();
-      return;
-    }
-  }
-
-  // only create a pop up if the user moves the mouse (not if something wanders
-  // into the path of the mouse pointer).
-  if (!popup_.valid() && !mouseDirty_)
-    return;
-
-  mouseDirty_ = false;
-
-  // get the interface to this particular view if view is not valid
-  if (!view_.valid())
-    view_ = currentView;
-
-  // get a safe handler on the observer
-  osg::ref_ptr<EntityNode> entity;
-  osg::ref_ptr<Picker> picker;
-  if (picker_.lock(picker))
-    entity = picker_->pickedEntity();
-  else
-  {
-    osg::ref_ptr<ScenarioManager> scenarioSafe;
-    // intersect the scenario graph, looking for PlatformModelNodes, need to also traverse PlatformNode to get to PlatformModelNode
-    if (scenario_.lock(scenarioSafe))
-      entity = scenarioSafe->find<PlatformNode>(currentView, lastMX_, lastMY_, PlatformNode::getMask() | PlatformModelNode::getMask());
-  }
-
-  if (!entity)
-  {
-    clear();
-    return;
-  }
-
-  if (!currentEntity_.valid())
-  {
-    // if there is no current entity, assign one.
-    currentEntity_ = entity;
-    entityLocatorRev_.reset();
-  }
-
-  else if (currentEntity_.valid() && entity != currentEntity_.get())
-  {
-    // if there is an active entity, but the new entity is different,
-    // remove the old pop up.
-    if (popup_.valid())
-    {
-      view_->removeOverlayControl(popup_.get());
-    }
-    popup_ = nullptr;
-    currentEntity_ = entity;
-    entityLocatorRev_.reset();
-  }
-
-  if (currentEntity_.valid())
-  {
-    // if we have an active entity, reposition the pop up, creating it if it does
-    // not already exist.
-    if (!popup_.valid())
-    {
-      popup_ = new EntityPopup();
-      applySettings_();
-      popup_->setTitle(currentEntity_->getEntityName(EntityNode::DISPLAY_NAME, true));
-      view_->addOverlayControl(popup_.get());
-      showStartTime_ = simCore::getSystemTime();
-    }
-
-    Locator* locator = currentEntity_->getLocator();
-    if (!locator->inSyncWith(entityLocatorRev_))
-    {
-      auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
-      // Prefer the content callback over the entity's method
-      if (contentCallback_.valid() && platform != nullptr)
-      {
-        popup_->setContent(contentCallback_->createString(platform));
-      }
-      else
-      {
-        popup_->setContent(currentEntity_->popupText());
-      }
-
-      locator->sync(entityLocatorRev_);
-    }
-
-    // if using main view, then show popup on lower right, otherwise use mouse position
-    if (showInCorner_)
-    {
-      popup_->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_RIGHT);
-      popup_->setVertAlign(osgEarth::Util::Controls::Control::ALIGN_BOTTOM);
-      popup_->setX(0.0f);
-      popup_->setY(0.0f);
-      popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_BOTTOM, 10.0f);
-      popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_RIGHT, 10.0f);
-    }
-    else
-    {
-      // Calculate size of popup
-      osg::Vec2f popupSize;
-      osgEarth::Util::Controls::ControlContext cx;
-      popup_->calcSize(cx, popupSize);
-      const osg::Viewport* viewport = view_->getCamera()->getViewport();
-      // Constants measured in pixels with the origin at the top left
-      const float buffer = 20.f;
-      // Farthest right the popup can go
-      const float maxX = viewport->width() - buffer - popupSize[0];
-      // Farthest down the popup can go
-      const float maxY = viewport->height() - buffer - popupSize[1];
-      // Left edge of the popup if it is not too close to the left side of the screen
-      const float x = (lastMX_ > buffer) ? lastMX_ : buffer;
-      // Bottom of the popup if it is not too close to the bottom of the screen
-      const float y = (viewport->height() - lastMY_ > buffer) ? viewport->height() - lastMY_ : buffer;
-      popup_->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_LEFT);
-      popup_->setVertAlign(osgEarth::Util::Controls::Control::ALIGN_TOP);
-      popup_->setX((x < maxX) ? x : maxX);
-      popup_->setY((y < maxY) ? y : maxY);
-      popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_BOTTOM, 0.0f);
-      popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_RIGHT, 0.0f);
-    }
-  }
+    popup_->setPosition(lastMX_, lastMY_);
 }
 
 void PopupHandler::applySettings_()
 {
-  if (!popup_.valid())
+  if (!popup_.valid() || !popup_->titleLabel() || !popup_->contentLabel())
     return;
   popup_->setBorderWidth(borderWidth_);
   popup_->setBorderColor(borderColor_);
-  popup_->setBackColor(backColor_);
-  popup_->titleLabel()->setForeColor(titleColor_);
-  popup_->titleLabel()->setFontSize(simVis::osgFontSize(titleFontSize_));
-  popup_->contentLabel()->setForeColor(contentColor_);
-  popup_->contentLabel()->setFontSize(simVis::osgFontSize(contentFontSize_));
+  popup_->setBackgroundColor(backColor_);
+  popup_->titleLabel()->setColor(titleColor_);
+  popup_->titleLabel()->setCharacterSize(simVis::osgFontSize(titleFontSize_));
+  popup_->contentLabel()->setColor(contentColor_);
+  popup_->contentLabel()->setCharacterSize(simVis::osgFontSize(contentFontSize_));
   popup_->setPadding(padding_);
   popup_->setChildSpacing(childSpacing_);
 }
