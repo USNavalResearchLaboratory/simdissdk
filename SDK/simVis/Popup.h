@@ -72,7 +72,7 @@ namespace simVis
   public:
     EntityPopup2();
 
-    /// Set the position (in pixels) of the popup
+    /// Set the position (in pixels) of the popup. No-op if showing the popup in the corner
     void setPosition(float xPx, float yPx);
 
     /// Set the title text
@@ -95,6 +95,9 @@ namespace simVis
     void setPadding(int paddingPx);
     /// Sets the width between title and content
     void setChildSpacing(int spacingPx);
+
+    /// Sets to show popup in the lower right corner of the view
+    void setShowInCorner(bool showInCorner);
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
@@ -125,6 +128,8 @@ namespace simVis
     void initGraphics_();
     /** Update the label positions within the popup */
     void updateLabelPositions_();
+    /** Position the popup in the bottom right corner */
+    void positionInCorner_();
 
     osg::ref_ptr<WindowResizeHandler> resizeHandler_;
     osg::ref_ptr<osg::Vec3Array> verts_;
@@ -137,6 +142,7 @@ namespace simVis
     int spacingPx_; ///< Vertical spacing (in pixels) between title and content labels
     float widthPx_; ///< Width (in pixels) of the popup based on current content
     float heightPx_; ///< Height (in pixels) of the popup based on current content
+    bool showInCorner_; ///< If true, popup is displayed in the bottom right corner
   };
 
   /**

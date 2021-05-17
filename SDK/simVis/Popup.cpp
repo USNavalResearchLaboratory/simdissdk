@@ -69,6 +69,7 @@ static const int DEFAULT_CONTENT_SIZE = 11;
 static const int DEFAULT_PADDING = 10;
 static const int DEFAULT_SPACING = 4;
 static const std::string DEFAULT_FONT = "arial.ttf";
+static const float BUFFER_PX = 20.f; // Minimum buffer between edge of screen and popup
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -79,34 +80,32 @@ EntityPopup2::WindowResizeHandler::WindowResizeHandler(EntityPopup2* parent)
 {
 }
 
-/** Checks for resize events */
 bool EntityPopup2::WindowResizeHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*)
 {
   // RESIZE does not always emit correctly, especially starting in full screen mode, so use FRAME and always check size
-  if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
-  {
-    // Cannot rely on getWindowWidth(), need to check viewport
-    const osg::View* view = aa.asView();
-    if (!view || !view->getCamera() || !view->getCamera()->getViewport())
-      return false;
-    // Pull the width and height out of the viewport
-    const osg::Viewport* vp = view->getCamera()->getViewport();
-    const osg::Vec2f newSize(vp->width(), vp->height());
-    if (newSize == windowSize_)
-      return false;
-    windowSize_ = newSize;
+  if (ea.getEventType() != osgGA::GUIEventAdapter::FRAME)
+    return false;
 
-    // Get a hard lock on the parent
-    osg::ref_ptr<EntityPopup2> parent;
-    if (!parent_.lock(parent))
-      return false;
-    // TODO: update parent location if showing in corner
-    // Or is that even needed? Not sure a user could resize the viewport while showing the hover popup
-  }
+  // Cannot rely on getWindowWidth(), need to check viewport
+  const osg::View* view = aa.asView();
+  if (!view || !view->getCamera() || !view->getCamera()->getViewport())
+    return false;
+  // Pull the width and height out of the viewport
+  const osg::Viewport* vp = view->getCamera()->getViewport();
+  const osg::Vec2f newSize(vp->width(), vp->height());
+  if (newSize == windowSize_)
+    return false;
+  windowSize_ = newSize;
+
+  // Get a hard lock on the parent
+  osg::ref_ptr<EntityPopup2> parent;
+  // Update parent location if showing in corner
+  if (parent_.lock(parent) && parent_->showInCorner_)
+    parent_->positionInCorner_();
+
   return false;
 }
 
-/** Retrieves the last window size seen */
 osg::Vec2f EntityPopup2::WindowResizeHandler::windowSize() const
 {
   return windowSize_;
@@ -119,7 +118,8 @@ EntityPopup2::EntityPopup2()
   paddingPx_(DEFAULT_PADDING),
   spacingPx_(DEFAULT_SPACING),
   widthPx_(0.f),
-  heightPx_(0.f)
+  heightPx_(0.f),
+  showInCorner_(false)
 {
   setDataVariance(osg::Object::DYNAMIC);
   initGraphics_();
@@ -151,20 +151,26 @@ EntityPopup2::EntityPopup2()
   addEventCallback(resizeHandler_.get());
 }
 
+EntityPopup2::~EntityPopup2()
+{
+}
+
 void EntityPopup2::setPosition(float xPx, float yPx)
 {
+  if (showInCorner_)
+    return;
+
   // Keep box from going off screen
   const auto& windowSize = resizeHandler_->windowSize();
 
-  const float buffer = 20.f;
   // Farthest right the popup can go
-  const float maxX = windowSize.x() - buffer - widthPx_;
+  const float maxX = windowSize.x() - BUFFER_PX - widthPx_;
   // Farthest up the popup can go
-  const float maxY = windowSize.y() - buffer;
+  const float maxY = windowSize.y() - BUFFER_PX;
   // Limit the X position to keep the entirety of the popup on screen horizontally
-  const float x = simCore::sdkMin(simCore::sdkMax(xPx, buffer), maxX);
+  const float x = simCore::sdkMin(simCore::sdkMax(xPx, BUFFER_PX), maxX);
   // Limit the Y position to keep the entirety of the popup on screen vertically
-  const float y = simCore::sdkMin(simCore::sdkMax(yPx, buffer + heightPx_), maxY);
+  const float y = simCore::sdkMin(simCore::sdkMax(yPx, BUFFER_PX + heightPx_), maxY);
 
   osg::Matrix mat = getMatrix();
   mat.setTrans(osg::Vec3d(x, y, 0.0));
@@ -226,8 +232,13 @@ void EntityPopup2::setChildSpacing(int width)
   updateLabelPositions_();
 }
 
-EntityPopup2::~EntityPopup2()
+void EntityPopup2::setShowInCorner(bool showInCorner)
 {
+  if (showInCorner_ == showInCorner)
+    return;
+  showInCorner_ = showInCorner;
+  // Note: turning off showInCorner_ will require mouse movement to correctly position
+  positionInCorner_();
 }
 
 void EntityPopup2::initGraphics_()
@@ -294,6 +305,19 @@ void EntityPopup2::updateLabelPositions_()
   outline_->pushVertex((*verts_)[3]);
   outline_->pushVertex((*verts_)[2]);
   outline_->dirty();
+
+  // Fix the position in the corner to account for the newly changed sizes
+  if (showInCorner_)
+    positionInCorner_();
+}
+
+void EntityPopup2::positionInCorner_()
+{
+  const float xPos = resizeHandler_->windowSize().x() - BUFFER_PX - widthPx_;
+  const float yPos = BUFFER_PX + heightPx_;
+  osg::Matrix mat = getMatrix();
+  mat.setTrans(osg::Vec3d(xPos, yPos, 0.0));
+  setMatrix(mat);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -376,6 +400,7 @@ void PopupHandler2::setLimitVisibility(bool limit)
 void PopupHandler2::setShowInCorner(bool showInCorner)
 {
   showInCorner_ = showInCorner;
+  popup2_->setShowInCorner(showInCorner_);
 }
 
 void PopupHandler2::setBorderWidth(int borderWidth)
@@ -542,35 +567,34 @@ void PopupHandler2::updatePopupFromView(simVis::View* currentView)
     entityLocatorRev_.reset();
   }
 
-  if (currentEntity_.valid())
-  {
-    if (!installed_)
-    {
-      view_->getOrCreateHUD()->addChild(popup2_.get());
-      applySettings_();
-      showStartTime_ = simCore::getSystemTime();
-      installed_ = true;
-    }
-
-    popup2_->setTitle(currentEntity_->getEntityName(EntityNode::DISPLAY_NAME, true));
-
-    Locator* locator = currentEntity_->getLocator();
-    if (!locator->inSyncWith(entityLocatorRev_))
-    {
-      auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
-      // Prefer the content callback over the entity's method
-      if (contentCallback_.valid() && platform != nullptr)
-        popup2_->setContent(contentCallback_->createString(platform));
-      else
-        popup2_->setContent(currentEntity_->popupText());
-
-      locator->sync(entityLocatorRev_);
-    }
-
-    popup2_->setPosition(lastMX_, lastMY_);
-
+  if (!currentEntity_.valid())
     return;
+
+  if (!installed_)
+  {
+    view_->getOrCreateHUD()->addChild(popup2_.get());
+    applySettings_();
+    showStartTime_ = simCore::getSystemTime();
+    installed_ = true;
   }
+
+  popup2_->setTitle(currentEntity_->getEntityName(EntityNode::DISPLAY_NAME, true));
+
+  Locator* locator = currentEntity_->getLocator();
+  if (!locator->inSyncWith(entityLocatorRev_))
+  {
+    auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
+    // Prefer the content callback over the entity's method
+    if (contentCallback_.valid() && platform != nullptr)
+      popup2_->setContent(contentCallback_->createString(platform));
+    else
+      popup2_->setContent(currentEntity_->popupText());
+
+    locator->sync(entityLocatorRev_);
+  }
+
+  if (!showInCorner_)
+    popup2_->setPosition(lastMX_, lastMY_);
 }
 
 void PopupHandler2::applySettings_()
