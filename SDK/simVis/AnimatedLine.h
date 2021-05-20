@@ -28,6 +28,7 @@
 #include "osgEarth/Revisioning"
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/MultiFrameCoordinate.h"
+#include "simData/DataTypes.h"
 
 namespace osgEarth { class LineDrawable; }
 
@@ -167,6 +168,18 @@ namespace simVis
      */
     float getLineWidth() const;
 
+    /**
+     * Sets the line bending mode
+     * @param[in ] bending Bending mode
+     */
+    void setLineBending(simData::AnimatedLineBend bending);
+
+    /**
+     * Gets the line bending mode
+     * @return Bending mode
+     */
+    simData::AnimatedLineBend getLineBending() const;
+
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
 
@@ -189,6 +202,7 @@ namespace simVis
     osgEarth::Util::SimpleMutable<osg::Vec4> colorOverride_;
     bool useOverrideColor_;
     float lineWidth_;
+    simData::AnimatedLineBend bending_;
 
     osg::ref_ptr<const Locator> firstLocator_;
     osgEarth::Util::Revision firstLocatorRevision_;
