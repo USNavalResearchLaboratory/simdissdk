@@ -22,6 +22,7 @@
  */
 #include <cassert>
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <algorithm>
 #include <time.h>
@@ -801,16 +802,19 @@ NumericalSearchType calculateGeodesicDRCR(const Vec3 &fromLla, const double &yaw
 
     time_t currtime;
     time(&currtime);
-    // notify when error occurred using current local time
-    SIM_ERROR << "calculateGeodesicDRCR linear search failed to converge to an answer @ " << ctime(&currtime) << std::endl;
+    // notify when error occurred using current local time; note that ctime(&currtime) appends its own newline
+    SIM_ERROR << "calculateGeodesicDRCR linear search failed to converge to an answer @ " << ctime(&currtime);
     // note that 15 decimal places may be necessary to reproduce a failing case
+    SIM_DEBUG << "  fromLla " << std::setprecision(15) << fromLla.lat() << "," << fromLla.lon() << "," << fromLla.alt() << std::endl;
+    SIM_DEBUG << "  yaw " << yaw << std::endl;
+    SIM_DEBUG << "  toLla " << toLla.lat() << "," << toLla.lon() << "," << toLla.alt() << std::endl;
   }
   else if (type == SEARCH_MAX_ITER)
   {
     time_t currtime;
     time(&currtime);
     // notify when error occurred using current local time
-    SIM_ERROR << "calculateGeodesicDRCR linear search did not converge to an answer within allowed number of iterations @ " << ctime(&currtime) << std::endl;
+    SIM_ERROR << "calculateGeodesicDRCR linear search did not converge to an answer within allowed number of iterations @ " << ctime(&currtime);
   }
   return type;
 }
