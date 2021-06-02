@@ -39,11 +39,7 @@ Console::Console(simQt::ConsoleDataModel& dataModel, QWidget* parent)
 
   // These commands must come after the setModel()
   ui_->consoleView->header()->setStretchLastSection(false);
-#if(QT_VERSION >= QT_VERSION_CHECK(5,0,0))
   ui_->consoleView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-#else
-  ui_->consoleView->header()->setResizeMode(QHeaderView::ResizeToContents);
-#endif
 
   // Sync the GUI settings to the state of the data model
   ui_->colorTextCheck->setChecked(dataModel.colorizeText());

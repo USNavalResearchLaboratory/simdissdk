@@ -77,11 +77,7 @@ void SplashScreen::addToWindowsTaskbar_()
 
 #ifdef WIN32
   // Pull out the HWND for the splash window
-#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
-  HWND windowId = winId();
-#else
   HWND windowId = reinterpret_cast<HWND>(winId());
-#endif
 
   // Turn on the taskbar icon for Windows
   int exStyle = GetWindowLong(windowId, GWL_EXSTYLE);

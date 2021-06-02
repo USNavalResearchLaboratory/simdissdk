@@ -66,7 +66,6 @@ QSize MonospaceItemDelegate::sizeHint(const QStyleOptionViewItem& option, const 
   if (value.isValid())
     return value.toSize();
 
-#if(QT_VERSION >= QT_VERSION_CHECK(5,0,0))
   // Create a non-const style option
   QStyleOptionViewItem opt = option;
   initStyleOption(&opt, index);
@@ -80,24 +79,6 @@ QSize MonospaceItemDelegate::sizeHint(const QStyleOptionViewItem& option, const 
   // Pull out the style information and ask it to give us a size
   QStyle* style = (opt.widget ? opt.widget->style() : QApplication::style());
   return style->sizeFromContents(QStyle::CT_ItemViewItem, &opt, QSize(), opt.widget);
-#else
-  // Create a Qt4 non-const style option
-  QStyleOptionViewItemV4 opt = option;
-  initStyleOption(&opt, index);
-  // Initialize the style with the font we use
-  if (option.font.pointSize() > 0)
-  {
-    monospaceFont_->setPointSize(option.font.pointSize());
-  }
-  opt.font = *monospaceFont_;
-
-  // Pull out the widget, containing extra info for calculating size
-  const QStyleOptionViewItemV3* v3 = qstyleoption_cast<const QStyleOptionViewItemV3*>(&option);
-  const QWidget* widget = v3 ? v3->widget : nullptr;
-  // Get the appropriate style and ask it to give us a size
-  QStyle* style = widget ? widget->style() : QApplication::style();
-  return style->sizeFromContents(QStyle::CT_ItemViewItem, &opt, QSize(), widget);
-#endif
 }
 
 }
