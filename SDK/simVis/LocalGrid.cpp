@@ -869,6 +869,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
     if (isMajorRing && prefs.gridlabeldraw())
     {
       RingLabel* label = new RingLabel(prefs, i, true);
+      label->setDataVariance(osg::Object::DYNAMIC); // Need Dynamic so text display updates
       labelGroup->addChild(label);
 
       if (!drawSpeedLine)
