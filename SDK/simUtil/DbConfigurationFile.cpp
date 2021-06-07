@@ -384,14 +384,14 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
           imageLayer->setName(layerName);
           map->addLayer(imageLayer);
         }
-        if (altitudeSet)
+        else if (altitudeSet)
         {
           simVis::DBElevationLayer* newLayer = new simVis::DBElevationLayer();
           newLayer->setURL(fullDbFileName);
 
           // add a no data value to elevation layers, default is 0
           float noDataValue = 0.0f;
-          std::string noDataValueStr = DbConfigurationFile::findTokenValue_(tokens, noDataValue_keyword);
+          const std::string& noDataValueStr = DbConfigurationFile::findTokenValue_(tokens, noDataValue_keyword);
           if (!noDataValueStr.empty())
           {
             std::istringstream iStr(noDataValueStr);
@@ -399,6 +399,7 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
           }
           newLayer->setNoDataValue(noDataValue);
           newLayer->setName(layerName);
+          map->addLayer(newLayer);
         }
       }
     }

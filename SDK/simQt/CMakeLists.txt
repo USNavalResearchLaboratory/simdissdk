@@ -67,6 +67,7 @@ if(TARGET simData)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CategoryDataBreadcrumbs.h
         ${SIMQT_INC}CategoryFilterCounter.h
+        ${SIMQT_INC}CategoryFilterWidget.h
         ${SIMQT_INC}CategoryTreeModel.h
         ${SIMQT_INC}DataTableComboBox.h
         ${SIMQT_INC}DataTableModel.h
@@ -185,6 +186,7 @@ if(TARGET simData)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CategoryDataBreadcrumbs.cpp
         ${SIMQT_SRC}CategoryFilterCounter.cpp
+        ${SIMQT_SRC}CategoryFilterWidget.cpp
         ${SIMQT_SRC}CategoryTreeModel.cpp
         ${SIMQT_SRC}DataTableComboBox.cpp
         ${SIMQT_SRC}DataTableModel.cpp
@@ -266,7 +268,6 @@ set(SIMQT_RESOURCES
 source_group(Qt FILES ${SIMQT_FORMS} ${SIMQT_RESOURCES})
 
 # Wrap files into generated versions
-VSI_INCLUDE_QT_USE_FILE()
 VSI_QT_WRAP_CPP(Q_HEADERS ${SIMQT_HEADERS_TO_MOC})
 VSI_QT_WRAP_UI(Q_FORMS ${SIMQT_FORMS})
 VSI_QT_ADD_RESOURCES(Q_RESOURCES ${SIMQT_RESOURCES})

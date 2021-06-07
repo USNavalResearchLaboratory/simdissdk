@@ -84,44 +84,44 @@ int categoryFilterRegExpTest()
 
   // test Cat1 values 0072, 1234, 3400-3476, 6100-6110
   catFilter.setCategoryRegExp(catNameMgr.nameToInt("Cat1"), regExpFactory.createRegExpFilter("^0072|1234|34[0-6][0-9]|347[0-6]|610[0-9]|6110$"));
-  rv += SDK_ASSERT(catFilter.match(platId1)); // Cat1 of 3412 is within the 3400-3476 range
-  rv += SDK_ASSERT(!catFilter.match(platId2)); // Cat1 of 3000 is outside of all ranges, no match
-  rv += SDK_ASSERT(catFilter.match(platId3)); // Cat1 of 3476 is at the limit of the 3400-3476 range
-  rv += SDK_ASSERT(!catFilter.match(platId4)); // Cat1 of 3477 is outside the range of 3400-3476
-  rv += SDK_ASSERT(catFilter.match(platId5)); // Cat1 of 1234 matches an item in the list
+  rv += SDK_ASSERT(catFilter.match(*ds, platId1)); // Cat1 of 3412 is within the 3400-3476 range
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId2)); // Cat1 of 3000 is outside of all ranges, no match
+  rv += SDK_ASSERT(catFilter.match(*ds, platId3)); // Cat1 of 3476 is at the limit of the 3400-3476 range
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId4)); // Cat1 of 3477 is outside the range of 3400-3476
+  rv += SDK_ASSERT(catFilter.match(*ds, platId5)); // Cat1 of 1234 matches an item in the list
 
   // test Cat2 values 032, 100-110, 450-455, adding a second regexp
   catFilter.setCategoryRegExp(catNameMgr.nameToInt("Cat2"), regExpFactory.createRegExpFilter("^032|10[0-9]|110|45[0-5]$"));
-  rv += SDK_ASSERT(!catFilter.match(platId1)); // Cat2 of 099 fails, so failure, even though Cat1 still matches
-  rv += SDK_ASSERT(!catFilter.match(platId2)); // Cat2 of 100 matchs, but still fails, since Cat1 still fails
-  rv += SDK_ASSERT(catFilter.match(platId3)); // both Cat1 and Cat2 now match, so pass
-  rv += SDK_ASSERT(!catFilter.match(platId4)); // Cat2 of 032 matches, but still fails since Cat1 still fails
-  rv += SDK_ASSERT(catFilter.match(platId5)); // Cat2 of 455 matches, limit of range 450-455, passes since Cat1 also matches
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId1)); // Cat2 of 099 fails, so failure, even though Cat1 still matches
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId2)); // Cat2 of 100 matchs, but still fails, since Cat1 still fails
+  rv += SDK_ASSERT(catFilter.match(*ds, platId3)); // both Cat1 and Cat2 now match, so pass
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId4)); // Cat2 of 032 matches, but still fails since Cat1 still fails
+  rv += SDK_ASSERT(catFilter.match(*ds, platId5)); // Cat2 of 455 matches, limit of range 450-455, passes since Cat1 also matches
 
   // test Cat3 values "more*", adding a third regexp
   catFilter.setCategoryRegExp(catNameMgr.nameToInt("Cat3"), regExpFactory.createRegExpFilter("more*"));
   // note that only platId5 should now pass, since it is the only one that matches all 3 regexp filters
-  rv += SDK_ASSERT(!catFilter.match(platId1));
-  rv += SDK_ASSERT(!catFilter.match(platId2));
-  rv += SDK_ASSERT(!catFilter.match(platId3));
-  rv += SDK_ASSERT(!catFilter.match(platId4));
-  rv += SDK_ASSERT(catFilter.match(platId5));
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId1));
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId2));
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId3));
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId4));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId5));
 
   // update the Cat2 on platId5 to now fail, testing response to category data change
   addCategoryData(platId5, ds, "Cat2", "456", 1.0); // now outside of range 450-455
   ds->update(1.0);
-  rv += SDK_ASSERT(!catFilter.match(platId5)); // now fails, since Cat2 should now fail, though Cat1 still matches
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId5)); // now fails, since Cat2 should now fail, though Cat1 still matches
 
   // unset the regexp filters; some rely on pattern.empty()
   catFilter.setCategoryRegExp(catNameMgr.nameToInt("Cat1"), regExpFactory.createRegExpFilter(""));
   catFilter.setCategoryRegExp(catNameMgr.nameToInt("Cat2"), regExpFactory.createRegExpFilter(""));
   catFilter.setCategoryRegExp(catNameMgr.nameToInt("Cat3"), simData::RegExpFilterPtr());
   // all should match now, since the filter is empty
-  rv += SDK_ASSERT(catFilter.match(platId1));
-  rv += SDK_ASSERT(catFilter.match(platId2));
-  rv += SDK_ASSERT(catFilter.match(platId3));
-  rv += SDK_ASSERT(catFilter.match(platId4));
-  rv += SDK_ASSERT(catFilter.match(platId5));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId1));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId2));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId3));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId4));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId5));
 
   // now test out some serializing and deserializing
 
@@ -130,11 +130,11 @@ int categoryFilterRegExpTest()
   catFilter.deserialize(cat1String, regExpFactory);
   rv += SDK_ASSERT(catFilter.serialize() == cat1String);
   // behavior should be the same as above
-  rv += SDK_ASSERT(catFilter.match(platId1));
-  rv += SDK_ASSERT(!catFilter.match(platId2));
-  rv += SDK_ASSERT(catFilter.match(platId3));
-  rv += SDK_ASSERT(!catFilter.match(platId4));
-  rv += SDK_ASSERT(catFilter.match(platId5));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId1));
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId2));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId3));
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId4));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId5));
 
   // now deserialize the Cat1 and Cat2 regexps
   std::string cat2String = cat1String + "`Cat2(1)^^032|1[0-1][0-9]|45[0-5]$";
@@ -142,11 +142,11 @@ int categoryFilterRegExpTest()
   rv += SDK_ASSERT(catFilter.serialize() == cat2String);
 
   // behavior should be the same as above
-  rv += SDK_ASSERT(!catFilter.match(platId1));
-  rv += SDK_ASSERT(!catFilter.match(platId2));
-  rv += SDK_ASSERT(catFilter.match(platId3));
-  rv += SDK_ASSERT(!catFilter.match(platId4));
-  rv += SDK_ASSERT(!catFilter.match(platId5));
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId1));
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId2));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId3));
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId4));
+  rv += SDK_ASSERT(!catFilter.match(*ds, platId5));
 
   // clear out the regexp
   catFilter.setCategoryRegExp(catNameMgr.nameToInt("Cat1"), simData::RegExpFilterPtr());
@@ -164,12 +164,12 @@ int categoryFilterRegExpTest()
 
   // test '.*', all should pass
   catFilter.setCategoryRegExp(catNameMgr.nameToInt("Cat1"), regExpFactory.createRegExpFilter(".*"));
-  rv += SDK_ASSERT(catFilter.match(platId1));
-  rv += SDK_ASSERT(catFilter.match(platId2));
-  rv += SDK_ASSERT(catFilter.match(platId3));
-  rv += SDK_ASSERT(catFilter.match(platId4));
-  rv += SDK_ASSERT(catFilter.match(platId5));
-  rv += SDK_ASSERT(catFilter.match(platId6)); // has no values, so it should pass
+  rv += SDK_ASSERT(catFilter.match(*ds, platId1));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId2));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId3));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId4));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId5));
+  rv += SDK_ASSERT(catFilter.match(*ds, platId6)); // has no values, so it should pass
 
   return rv;
 }

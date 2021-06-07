@@ -188,6 +188,11 @@ public slots:
   /** If true show the tree options in the right click menu */
   void setShowTreeOptionsInMenu(bool show);
 
+  /** Set the type(s) to use when counting entity types for the numFilteredItemsChanged signal*/
+  void setCountEntityType(simData::ObjectType type);
+  /** Returns the entity count type(s) */
+  simData::ObjectType countEntityTypes() const;
+
 signals:
   /** Gives an unsorted list of currently selected entities */
   void itemsSelected(QList<uint64_t> ids);

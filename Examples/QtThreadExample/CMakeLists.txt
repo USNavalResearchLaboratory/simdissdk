@@ -26,9 +26,6 @@ VSI_QT_WRAP_CPP(MY_WIDGETS_MOC
 # Convert the .ui file (GUI design from Qt Designer) into a .h file
 vsi_qt_wrap_ui(MY_UI QThreadExample.ui)
 
-# Initialize Qt variables
-VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
-
 add_executable(example_qtthreadexample ${PROJECT_FILES} ${MY_WIDGETS_MOC} ${MY_UI})
 target_link_libraries(example_qtthreadexample PRIVATE simCore simData simVis
     simUtil simQt)

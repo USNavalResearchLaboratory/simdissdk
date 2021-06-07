@@ -322,7 +322,8 @@ void LobGroupNode::setPrefs(const simData::LobGroupPrefs &prefs)
   if (!lastPrefsValid_ ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, userangeoverride) ||
       (lastPrefs_.userangeoverride() && PB_FIELD_CHANGED(&lastPrefs_, &prefs, rangeoverridevalue)) ||
-      PB_FIELD_CHANGED(&lastPrefs_, &prefs, lobuseclampalt))
+      PB_FIELD_CHANGED(&lastPrefs_, &prefs, lobuseclampalt) ||
+      PB_FIELD_CHANGED(&lastPrefs_, &prefs, bending))
   {
     // rebuild all lines
     lineCache_->clearCache(this);
@@ -384,6 +385,7 @@ void LobGroupNode::setLineValueFromPrefs_(AnimatedLineNode& line, const simData:
   line.setLineWidth(prefs.lobwidth());
   line.setColor1(simVis::ColorUtils::RgbaToVec4(prefs.color1()));
   line.setColor2(simVis::ColorUtils::RgbaToVec4(prefs.color2()));
+  line.setLineBending(prefs.bending());
 
   if (prefs.commonprefs().useoverridecolor())
     line.setColorOverride(simVis::ColorUtils::RgbaToVec4(prefs.commonprefs().overridecolor()));

@@ -78,7 +78,3 @@ QList<QDesignerCustomWidgetInterface*> simQtDesignerPlugins::customWidgets() con
 {
   return widgetFactories_;
 }
-
-#if(QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-Q_EXPORT_PLUGIN2(mydesignerplugin, simQtDesignerPlugins)
-#endif

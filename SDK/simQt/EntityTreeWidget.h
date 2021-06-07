@@ -99,6 +99,11 @@ public:
   /** Get the settings for all the filters */
   void getFilterSettings(QMap<QString, QVariant>& settings) const;
 
+  /** Set the type(s) to use when counting entity types for the numFilteredItemsChanged signal*/
+  void setCountEntityType(simData::ObjectType type);
+  /** Returns the entity count type(s) */
+  simData::ObjectType countEntityTypes() const;
+
 public slots:
   /** Swaps the view to the hierarchy tree */
   void setToTreeView();
@@ -155,7 +160,7 @@ private:
   bool treeView_; ///< true if the tree view should show as a tree, false shows as a list
   bool pendingSendNumItems_; ///< true if waiting to emit a sendNumFilteredItems_ signal
   bool processSelectionModelSignals_; ///< determines if the widget should emit a selection changed signal. Defaults to true
-
+  simData::ObjectType countEntityTypes_;
   double lastSelectionChangedTime_; ///< Throttles calls to emitItemsSelected_
   QTimer* emitItemsSelectedTimer_; ///< Throttles calls to emitItemsSelected_
 

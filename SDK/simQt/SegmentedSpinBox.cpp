@@ -445,10 +445,6 @@ QSize SegmentedSpinBox::sizeHint() const
    */
   QSize rv = QSpinBox::sizeHint();
 
-#if(QT_VERSION < QT_VERSION_CHECK(5,0,0))
-  rv.setWidth(rv.width() * 27 / 18);  // Change 18 characters to 27 characters as detailed in the comments above
-#endif
-
   return rv;
 }
 

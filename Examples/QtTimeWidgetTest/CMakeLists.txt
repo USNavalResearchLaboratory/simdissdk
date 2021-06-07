@@ -17,8 +17,6 @@ VSI_QT_WRAP_CPP(Q_TIMEWIDGET_MOC
     MainWindow.h
 )
 
-VSI_INCLUDE_QT_USE_FILE()
-
 add_executable(example_qttimewidgettest ${APP_SOURCES} ${Q_TIMEWIDGET_MOC} ${Q_TIMEWIDGET_FORMS})
 target_link_libraries(example_qttimewidgettest PRIVATE simQt simCore)
 target_include_directories(example_qttimewidgettest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

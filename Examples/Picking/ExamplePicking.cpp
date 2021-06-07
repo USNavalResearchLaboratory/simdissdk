@@ -52,6 +52,8 @@
 #include "simVis/GOG/Parser.h"
 #include "simUtil/DynamicSelectionPicker.h"
 #include "simUtil/ExampleResources.h"
+#include "simUtil/MouseDispatcher.h"
+#include "simUtil/PlatformPopupManipulator.h"
 #include "CustomRender.h"
 
 namespace ui = osgEarth::Util::Controls;
@@ -497,7 +499,6 @@ void addGog(osg::Group* parentNode, osgEarth::MapNode* mapNode)
   }
 }
 
-
 int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
@@ -667,13 +668,13 @@ int main(int argc, char** argv)
   app.picker->addCallback(new UpdateLabelPickCallback(app.pickLabel.get()));
 
   // Add a popup handler to demonstrate its use of the picker
-  simVis::PopupHandler* popupHandler = new simVis::PopupHandler(app.picker.get(), superHud.get());
+  osg::ref_ptr<simVis::PopupHandler> popupHandler = new simVis::PopupHandler(app.picker.get(), superHud.get());
   popupHandler->setShowInCorner(true);
   popupHandler->setBackColor(simVis::Color(0.f, 0.f, 0.f, 0.8f));
   popupHandler->setBorderColor(simVis::Color::Green);
   popupHandler->setTitleColor(simVis::Color::Lime);
   popupHandler->setLimitVisibility(false);
-  superHud->addEventHandler(popupHandler);
+  superHud->addEventHandler(popupHandler.get());
 
   // Run until the user quits by hitting ESC.
   return viewMan->run();

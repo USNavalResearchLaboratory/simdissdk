@@ -62,6 +62,8 @@ public:
 
   /** Sets the category filter to use */
   void setFilter(const simData::CategoryFilter& filter);
+  /** Sets the entity filter, restricting the counts. Useful for only listing PLATFORMS, for example, in a platform-only list. */
+  void setObjectTypes(simData::ObjectType objectTypes);
 
   /** Retrieves the most recent results set */
   const CategoryCountResults& results() const;
@@ -116,6 +118,8 @@ private:
   std::unique_ptr<simData::CategoryFilter> filter_;
   /** Is set true when filter changes, until prepare() is called. */
   bool dirtyFlag_;
+  /** Filter entity results by object type */
+  simData::ObjectType objectTypes_;
 };
 
 /**
@@ -135,6 +139,9 @@ public:
 
   /** Retrieves the last fully executed results. */
   const simQt::CategoryCountResults& lastResults() const;
+
+  /** Sets the entity filter, restricting the counts. Useful for only listing PLATFORMS, for example, in a platform-only list. */
+  void setObjectTypes(simData::ObjectType objectTypes);
 
 public slots:
   /**
@@ -166,6 +173,7 @@ private:
   CategoryFilterCounter* counter_;
   std::unique_ptr<simData::CategoryFilter> nextFilter_;
   bool retestPending_;
+  simData::ObjectType objectTypes_;
 };
 
 }

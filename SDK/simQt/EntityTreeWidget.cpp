@@ -63,6 +63,7 @@ EntityTreeWidget::EntityTreeWidget(QTreeView* view)
     treeView_(false),
     pendingSendNumItems_(false),
     processSelectionModelSignals_(true),
+    countEntityTypes_(simData::ALL),
     lastSelectionChangedTime_(0.0)
 {
   proxyModel_ = new simQt::EntityProxyModel(this);
@@ -339,6 +340,20 @@ void EntityTreeWidget::getFilterSettings(QMap<QString, QVariant>& settings) cons
   proxyModel_->getFilterSettings(settings);
 }
 
+void EntityTreeWidget::setCountEntityType(simData::ObjectType type)
+{
+  if (countEntityTypes_ == type)
+    return;
+
+  countEntityTypes_ = type;
+  sendNumFilteredItems_();
+}
+
+simData::ObjectType EntityTreeWidget::countEntityTypes() const
+{
+  return countEntityTypes_;
+}
+
 void EntityTreeWidget::setFilterSettings(const QMap<QString, QVariant>& settings)
 {
   const QList<uint64_t>& entities = selectedItems();
@@ -555,7 +570,7 @@ void EntityTreeWidget::emitSend_()
 void EntityTreeWidget::sendNumFilteredItems_()
 {
   if ((proxyModel_ != nullptr) && (model_ != nullptr))
-    emit numFilteredItemsChanged(proxyModel_->rowCount(), model_->rowCount());
+    emit numFilteredItemsChanged(proxyModel_->rowCount(), model_->countEntityTypes(countEntityTypes_));
 }
 
 }

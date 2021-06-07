@@ -118,6 +118,8 @@ private slots:
   void setCategoryFilterFromGui_(const simData::CategoryFilter& categoryFilter);
 
 private:
+  /// Data store that we have been configured with
+  simData::DataStore* dataStore_;
   /// holds the current category filter
   simData::CategoryFilter* categoryFilter_;
   /// type of widget to create on call to widget(), if any

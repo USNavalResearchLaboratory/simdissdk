@@ -135,8 +135,8 @@ public:
   /// tweak the verts to update the vertical angle
   static void updateVertAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle);
 
-  /// Retrieves the 2nd opaque geode (e.g., outline or wireframe), or nullptr if there is none
-  static osg::Geode* opaqueGeode(osg::MatrixTransform* xform);
+  /// Retrieves the 2nd/opaque group (e.g., outline or wireframe), or nullptr if there is none
+  static osg::Group* opaqueGroup(osg::MatrixTransform* xform);
   /// Retrieves the primary 'solid' geometry, or nullptr if there is no such geometry
   static osg::Geometry* solidGeometry(osg::MatrixTransform* xform);
 

@@ -10,7 +10,6 @@ set(PROJECT_FILES
     Console.cpp
 )
 
-VSI_INCLUDE_QT_USE_FILE()
 VSI_QT_WRAP_CPP(MY_WIDGETS_MOC
     Console.h
 )

@@ -243,6 +243,17 @@ enum DynamicScaleAlgorithm {
   DSA_METERS_TO_PIXELS = 1;
 }
 
+/// Animated Line bending preference
+enum AnimatedLineBend {
+
+  /** Automatic line bending. Lines are straight unless they would intersect the earth, in which case they bend. */
+  ALB_AUTO = 0;
+  /** Lines are always straight. */
+  ALB_STRAIGHT = 1;
+  /** Lines always bend. */
+  ALB_BEND = 2;
+}
+
 /// Coordinate system definition for scenario and platforms
 message CoordinateFrame {
   /// Coordinate system flag.  SIMDIS SDK stores all data internally as ECEF; this is only descriptive for input/output
@@ -1412,6 +1423,9 @@ message LobGroupPrefs {
   optional bool useRangeOverride = 11 [default = false];
   /// Value to use for range (m) when overriding
   optional double rangeOverrideValue = 12 [default = 1000.0];
+
+  /// Line bending preference
+  optional AnimatedLineBend bending = 13 [default = ALB_AUTO];
 };
 
 /// update data point for line of bearing (LOB) group

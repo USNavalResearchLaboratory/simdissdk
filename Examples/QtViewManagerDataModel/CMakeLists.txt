@@ -10,9 +10,6 @@ set(PROJECT_FILES
     MainWindow.h
 )
 
-# Initialize Qt variables
-VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
-
 add_executable(example_qtviewmanagerdatamodel ${PROJECT_FILES} ${PROJECT_MOC_FILES})
 target_link_libraries(example_qtviewmanagerdatamodel PRIVATE simVis simUtil simQt)
 set_target_properties(example_qtviewmanagerdatamodel PROPERTIES
