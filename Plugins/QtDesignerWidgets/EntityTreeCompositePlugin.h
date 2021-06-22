@@ -74,6 +74,7 @@ public:
   virtual QModelIndex parent(const QModelIndex &index) const { return QModelIndex(); }
   virtual int rowCount(const QModelIndex &parent) const { return 0; }
   virtual bool useEntityIcons() const { return useEntityIcons_; }
+  virtual int countEntityTypes(simData::ObjectType type) const { return 0; }
   virtual QAbstractItemView::SelectionMode selectionMode() const { return selectionMode_; }
   virtual bool useCenterAction() const { return useCenterAction_; }
   virtual bool expandsOnDoubleClick() const { return expandsOnDoubleClick_; }

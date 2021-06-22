@@ -24,6 +24,7 @@
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/MemoryDataStore.h"
+#include "simQt/CategoryFilterWidget.h"
 #include "simQt/CategoryTreeModel.h"
 #include "CategoryFilterWidgetPlugin.h"
 

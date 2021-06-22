@@ -266,11 +266,10 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         }
         current.setShape(ShapeType::ANNOTATION);
         std::string textToken = simCore::StringUtils::trim(line.substr(tokens[0].length() + 1));
-        // Store the un-decoded text in textToken
-        current.set(ShapeParameter::TEXT, textToken);
-        // clean up text for the shape name
+        // clean up text
         textToken = simCore::StringUtils::substitute(textToken, "_", " ");
         textToken = simCore::StringUtils::substitute(textToken, "\\n", "\n");
+        current.set(ShapeParameter::TEXT, textToken);
         current.set(ShapeParameter::NAME, textToken);
         invalidShape = false;
       }

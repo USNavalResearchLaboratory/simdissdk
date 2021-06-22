@@ -13,8 +13,6 @@ VSI_QT_WRAP_CPP(Q_TIMEBUTTONS_MOC
     MainWindow.h
 )
 
-VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
-
 add_executable(example_qttimebuttons ${APP_SOURCES} ${Q_TIMEBUTTONS_MOC} ${Q_TIMEBUTTONS_FORMS})
 target_link_libraries(example_qttimebuttons PRIVATE simQt simCore
     simVis simUtil)

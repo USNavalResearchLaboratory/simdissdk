@@ -436,10 +436,17 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   addChild(root_.get());
 
   // Install a callback that will convey the Horizon info
+#if OSGEARTH_SOVERSION >= 110
+  osgEarth::Ellipsoid em;
+  // 11km is rough depth of Mariana Trench; decrease radius to help horizon culling work underwater
+  em.setSemiMajorAxis(em.getRadiusEquator() - 11000.0);
+  em.setSemiMinorAxis(em.getRadiusPolar() - 11000.0);
+#else
   osg::EllipsoidModel em;
   // 11km is rough depth of Mariana Trench; decrease radius to help horizon culling work underwater
   em.setRadiusEquator(em.getRadiusEquator() - 11000.0);
   em.setRadiusPolar(em.getRadiusPolar() - 11000.0);
+#endif
   SetHorizonCullCallback* setHorizon = new SetHorizonCullCallback(new osgEarth::Horizon(em));
   root_->addCullCallback(setHorizon);
   // SIM-7889 - this horizon also gets picked up by GOG annotations (which are not children of root_, but are children of root_'s parent)
@@ -476,11 +483,6 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   TrackHistoryNode::installShaderProgram(stateSet);
 
   scenarioEciLocator_ = new Locator();
-}
-
-ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* projMan)
-  : ScenarioManager(projMan)
-{
 }
 
 ScenarioManager::~ScenarioManager()

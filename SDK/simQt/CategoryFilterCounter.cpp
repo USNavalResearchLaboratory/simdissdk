@@ -31,7 +31,8 @@ namespace simQt {
 
 CategoryFilterCounter::CategoryFilterCounter(QObject* parent)
   : QObject(parent),
-    dirtyFlag_(false)
+    dirtyFlag_(false),
+    objectTypes_(simData::ALL)
 {
 }
 
@@ -92,13 +93,21 @@ void CategoryFilterCounter::setFilter(const simData::CategoryFilter& filter)
   dirtyFlag_ = true;
 }
 
+void CategoryFilterCounter::setObjectTypes(simData::ObjectType objectTypes)
+{
+  if (objectTypes_ == objectTypes)
+    return;
+  objectTypes_ = objectTypes;
+  dirtyFlag_ = true;
+}
+
 void CategoryFilterCounter::idList_(std::vector<simData::ObjectId>& ids) const
 {
   ids.clear();
   const simData::DataStore* ds = filter_->getDataStore();
   if (!ds)
     return;
-  ds->idList(&ids);
+  ds->idList(&ids, objectTypes_);
 }
 
 void CategoryFilterCounter::testAllCategories()
@@ -175,7 +184,8 @@ void CategoryFilterCounter::testCategory_(int nameInt, CategoryCountResults::Val
 AsyncCategoryCounter::AsyncCategoryCounter(QObject* parent)
   : QObject(parent),
     counter_(nullptr),
-    retestPending_(false)
+    retestPending_(false),
+    objectTypes_(simData::ALL)
 {
 }
 
@@ -186,6 +196,15 @@ AsyncCategoryCounter::~AsyncCategoryCounter()
 void AsyncCategoryCounter::setFilter(const simData::CategoryFilter& filter)
 {
   nextFilter_.reset(new simData::CategoryFilter(filter));
+  retestPending_ = true;
+  asyncCountEntities();
+}
+
+void AsyncCategoryCounter::setObjectTypes(simData::ObjectType objectTypes)
+{
+  if (objectTypes_ == objectTypes)
+    return;
+  objectTypes_ = objectTypes;
   retestPending_ = true;
   asyncCountEntities();
 }
@@ -207,6 +226,7 @@ void AsyncCategoryCounter::asyncCountEntities()
   counter_ = new CategoryFilterCounter(watcher);
   if (nextFilter_ != nullptr)
     counter_->setFilter(*nextFilter_);
+  counter_->setObjectTypes(objectTypes_);
   counter_->prepare();
 
   // Be sure to set up a connect() before setFuture() to avoid race.

@@ -23,13 +23,16 @@
 #ifndef SIMDATA_CATEGORY_DATA_H
 #define SIMDATA_CATEGORY_DATA_H
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 #include "simCore/Common/Common.h"
-#include "simData/DataTypes.h"
 
 namespace simData {
+
+// Forward declare; implemented in simData/DataTypes.h
+class CategoryData;
 
 /** interface to category data
  *

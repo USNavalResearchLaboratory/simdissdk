@@ -125,6 +125,7 @@ color2_(simVis::Color::Yellow),
 colorOverride_(osg::Vec4()),    // transparent
 useOverrideColor_(false),
 lineWidth_(lineWidth),
+bending_(simData::ALB_AUTO),
 coordinateConverter_(new simCore::CoordinateConverter),
 timeLastShift_(0.0),
 depthBufferTest_(depthBufferTest)
@@ -219,6 +220,16 @@ void AnimatedLineNode::setLineWidth(float width)
 float AnimatedLineNode::getLineWidth() const
 {
   return lineWidth_;
+}
+
+void AnimatedLineNode::setLineBending(simData::AnimatedLineBend bending)
+{
+  bending_ = bending;
+}
+
+simData::AnimatedLineBend AnimatedLineNode::getLineBending() const
+{
+  return bending_;
 }
 
 void AnimatedLineNode::setShiftsPerSecond(double value)
@@ -541,13 +552,23 @@ void AnimatedLineNode::drawLine_(const simCore::MultiFrameCoordinate& coord1, co
   if (!coord1.isValid() || !coord2.isValid())
     return;
 
-  // Do horizon checking to determine if the coordinates will hit the earth
-  // with a slant line.  If so, then draw a bending line, else draw a straight line.
-  const bool drawSlant = !doesLineIntersectEarth_(coord1, coord2);
-  if (drawSlant)
+  switch (bending_)
+  {
+  case simData::ALB_AUTO:
+    // Do horizon checking to determine if the coordinates will hit the earth
+    // with a slant line.  If so, then draw a bending line, else draw a straight line.
+    if (!doesLineIntersectEarth_(coord1, coord2))
+      drawSlantLine_(coord1, coord2);
+    else
+      drawBendingLine_(coord1, coord2);
+    break;
+  case simData::ALB_STRAIGHT:
     drawSlantLine_(coord1, coord2);
-  else
+    break;
+  case simData::ALB_BEND:
     drawBendingLine_(coord1, coord2);
+    break;
+  }
 
   // Prevent terrain interference with lines ~1m from the surface
   fixDepth_(simCore::areEqual(coord1.llaCoordinate().alt(), 0.0, 1.0) &&

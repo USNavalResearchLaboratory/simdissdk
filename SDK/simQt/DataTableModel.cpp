@@ -22,6 +22,8 @@
  */
 #include <limits>
 #include "simCore/Calc/Math.h"
+#include "simCore/Calc/Units.h"
+#include "simUtil/UnitTypeConverter.h"
 #include "DataTableModel.h"
 
 namespace simQt {
@@ -171,18 +173,33 @@ QVariant DataTableModel::data(const QModelIndex &index, int role) const
 
 QVariant DataTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-  if (section >= 0 && orientation == Qt::Horizontal && role == Qt::DisplayRole)
+  if ((section < 0) || (section >= columns_.size()))
+    return QVariant();
+
+  if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
   {
     // column 0 is special case, time column
     if (section == 0)
       return "Time";
 
-    if (columns_.size() <= section)
-      return EMPTY_CELL;
-
     const simData::TableColumn* col = columns_[section];
-    return QVariant(col->name().c_str());
+
+    if (unitTypeConverter_ != nullptr)
+    {
+      std::string name;
+      auto units = unitTypeConverter_->toCoreFromData(col->unitType());
+      if (units.isValid())
+        name = units.name();
+      if (name.empty())
+        name = "Unknown";
+      return QString::fromStdString(col->name() + "\n(" + name + ")");
+    }
+
+    return QString::fromStdString(col->name());
   }
+
+  if (role == Qt::TextAlignmentRole)
+    return Qt::AlignHCenter;
 
   // Isn't the bar across the top -- fall back to whatever QAIM does
   return QAbstractItemModel::headerData(section, orientation, role);
@@ -267,6 +284,11 @@ void DataTableModel::setDataTable(simData::DataTable* dataTable)
 simData::DataTable* DataTableModel::dataTable() const
 {
   return dataTable_;
+}
+
+void DataTableModel::setUnitTypeConverter(std::shared_ptr<simUtil::UnitTypeConverter> converter)
+{
+  unitTypeConverter_ = converter;
 }
 
 void DataTableModel::setGenericPrecision(unsigned int digitsAfterDecimal)

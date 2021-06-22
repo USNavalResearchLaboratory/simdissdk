@@ -18,9 +18,6 @@ VSI_QT_WRAP_CPP(Q_COLOR_HEADERS_MOC
     TestColorWidget.h
 )
 
-
-VSI_INCLUDE_QT_USE_FILE()
-
 add_executable(example_qtcolorwidgettest ${GUI_SOURCES} ${Q_COLOR_HEADERS_MOC} ${Q_COLOR_FORMS_HEADERS})
 target_link_libraries(example_qtcolorwidgettest PRIVATE simQt)
 target_include_directories(example_qtcolorwidgettest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

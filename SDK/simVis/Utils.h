@@ -248,6 +248,9 @@ namespace simVis
    */
   SDKVIS_EXPORT osgEarth::Units convertUnitsToOsgEarth(const simData::SpeedUnits& input);
 
+  /** Given an icon alignment and image size, gives offsets from center. */
+  SDKVIS_EXPORT void iconAlignmentToOffsets(simData::TextAlignment align, const osg::Vec2f& iconDims, osg::Vec2f& outOffsets);
+
   /// Returns the thickness associated with the TextOutline setting in pixels.
   SDKVIS_EXPORT float outlineThickness(simData::TextOutline outline);
 

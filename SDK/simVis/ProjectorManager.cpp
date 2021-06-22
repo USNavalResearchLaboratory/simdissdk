@@ -118,9 +118,14 @@ ProjectorManager::ProjectorManager()
   mapListener_ = new MapListener(*this);
 
   // using osg default WGS-84 ellipsoid
+#if OSGEARTH_SOVERSION >= 110
+  const osgEarth::Ellipsoid wgs84EllipsoidModel;
+  ellipsoidIntersector_ = std::make_shared<osgEarth::Util::EllipsoidIntersector>(wgs84EllipsoidModel);
+#else
   const osg::EllipsoidModel wgs84EllipsoidModel;
   // Passing address of a temporary, but it's OK because it's not retained by EllipsoidIntersector
   ellipsoidIntersector_ = std::make_shared<osgEarth::Util::EllipsoidIntersector>(&wgs84EllipsoidModel);
+#endif
 }
 
 ProjectorManager::~ProjectorManager()

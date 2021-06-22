@@ -62,6 +62,11 @@ namespace simVis
   */
   static const float SUBDIVIDE_BY_GROUND_THRESHOLD = 10.f; // meters altitude
 
+  /** Conversion factor to convert a brightness pref value (0-100) to an ambient light value (from S9) */
+  static const float BRIGHTNESS_TO_AMBIENT = 0.022f;
+  /** Ambient light source 0 uniform name. */
+  static const std::string LIGHT0_AMBIENT_COLOR = "osg_LightSource[0].ambient";
+
   /** When doing file searches with osgDB, differentiate the search for Windows vs Linux */
 #ifdef WIN32
   static const osgDB::CaseSensitivity DEFAULT_CASE_SENSITIVITY = osgDB::CASE_INSENSITIVE;

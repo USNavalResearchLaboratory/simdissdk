@@ -31,9 +31,7 @@ class simQtDesignerPlugins : public QObject, public QDesignerCustomWidgetCollect
 {
   Q_OBJECT
   Q_INTERFACES(QDesignerCustomWidgetCollectionInterface)
-#if(QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
   Q_PLUGIN_METADATA(IID "mil.navy.nrl.simdis.SIMDIS_SDK.simQtDesignerPlugins")
-#endif
 
 public:
   explicit simQtDesignerPlugins(QObject* parent = nullptr);

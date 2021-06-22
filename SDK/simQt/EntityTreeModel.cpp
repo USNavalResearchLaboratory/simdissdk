@@ -87,8 +87,9 @@ private:
 };
 
 //----------------------------------------------------------------------------
-EntityTreeItem::EntityTreeItem(simData::ObjectId id, EntityTreeItem *parent)
+EntityTreeItem::EntityTreeItem(simData::ObjectId id, simData::ObjectType type, EntityTreeItem *parent)
   : id_(id),
+    type_(type),
     parentItem_(parent),
     markForRemoval_(false)
 {
@@ -118,6 +119,11 @@ int EntityTreeItem::childCount() const
 simData::ObjectId EntityTreeItem::id() const
 {
   return id_;
+}
+
+simData::ObjectType EntityTreeItem::type() const
+{
+  return type_;
 }
 
 void EntityTreeItem::getChildrenIds(std::vector<uint64_t>& ids) const
@@ -429,7 +435,7 @@ void EntityTreeModel::forceRefresh()
 
     // clean up tree widget
     delete rootItem_;
-    rootItem_ = new EntityTreeItem(0, nullptr); // has no parent
+    rootItem_ = new EntityTreeItem(0, simData::NONE, nullptr); // has no parent
     delayedAdds_.clear();  // clear any delayed entities since building from the data store
     pendingRemoval_ = false;
     itemsById_.clear();
@@ -498,7 +504,7 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
   if ((parentItem != rootItem_) && treeView_)
   {
     beginInsertRows(createIndex(parentItem->row(), 0, parentItem), parentItem->childCount(), parentItem->childCount());
-    EntityTreeItem* newItem = new EntityTreeItem(id, parentItem);
+    EntityTreeItem* newItem = new EntityTreeItem(id, type, parentItem);
     itemsById_[id] = newItem;
     parentItem->appendChild(newItem);
     endInsertRows();
@@ -506,7 +512,7 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
   else
   {
     beginInsertRows(QModelIndex(), rootItem_->childCount(), rootItem_->childCount());
-    EntityTreeItem* newItem = new EntityTreeItem(id, rootItem_);
+    EntityTreeItem* newItem = new EntityTreeItem(id, type, rootItem_);
     itemsById_[id] = newItem;
     rootItem_->appendChild(newItem);
     endInsertRows();
@@ -551,7 +557,7 @@ void EntityTreeModel::removeAllEntities_()
   beginResetModel();
 
   delete rootItem_;
-  rootItem_ = new EntityTreeItem(0, nullptr);
+  rootItem_ = new EntityTreeItem(0, simData::NONE, nullptr);
   itemsById_.clear();
 
   endResetModel();
@@ -811,9 +817,9 @@ void EntityTreeModel::buildTree_(simData::ObjectType type, const simData::DataSt
   {
     EntityTreeItem* newItem;
     if (parent && treeView_)
-      newItem = new EntityTreeItem(*iter, parent);
+      newItem = new EntityTreeItem(*iter, type, parent);
     else
-      newItem = new EntityTreeItem(*iter, rootItem_);
+      newItem = new EntityTreeItem(*iter, type, rootItem_);
 
     if (type == simData::PLATFORM)
     {
@@ -870,6 +876,24 @@ void EntityTreeModel::setUseEntityIcons(bool useIcons)
 bool EntityTreeModel::useEntityIcons() const
 {
   return useEntityIcons_;
+}
+
+int EntityTreeModel::countEntityTypes(simData::ObjectType type) const
+{
+  return countEntityTypes_(rootItem_, type);
+}
+
+int EntityTreeModel::countEntityTypes_(EntityTreeItem* parent, simData::ObjectType type) const
+{
+  int count = 0;
+
+  if ((parent->type() & type) != 0)
+    ++count;
+
+  for (auto ii = 0; ii < parent->childCount(); ++ii)
+    count += countEntityTypes_(parent->child(ii), type);
+
+  return count;
 }
 
 void EntityTreeModel::commitDelayedRemoval_()

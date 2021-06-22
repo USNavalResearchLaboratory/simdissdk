@@ -1059,9 +1059,9 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
   }
 }
 
-// A SphericalVolume is a MatrixTransform that parents up to two geodes.
-// The first geode contains the primary geometry; that geometry will always exist, but in some cases will have no primitives.
-// That second geode in the MatrixTransform (if it exists) contains the opaque elements of the sv:
+// A SphericalVolume is a MatrixTransform that parents up to two geode/groups.
+// The first contains the primary geometry; that geometry will always exist, but in some cases will have no primitives.
+// That second in the MatrixTransform (if it exists) contains the opaque elements of the sv:
 // For the pyramid sv, it contains the outline.
 // For the cone sv, it contains a wireframe (polygon) geometry.
 
@@ -1133,10 +1133,10 @@ void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
       }
       wireframeGeom->setColorArray(wireframeColor);
 
-      // add this to a 2nd geode in the xform: the 2nd geode in the xform is for opaque features
-      osg::Geode* geodeWire = new osg::Geode();
-      geodeWire->addDrawable(wireframeGeom);
-      xform->addChild(geodeWire);
+      // add this to a 2nd group in the xform: the 2nd group in the xform is for opaque features
+      osg::Group* groupWire = new osg::Group();
+      groupWire->addChild(wireframeGeom);
+      xform->addChild(groupWire);
 
       osg::StateSet* stateset = wireframeGeom->getOrCreateStateSet();
       osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
@@ -1225,23 +1225,23 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
     }
   }
 
-  // if we have an 2nd (optional) geode, it is opaque; update its color, but remove transparency
-  osg::Geode* opaqueGeode = SVFactory::opaqueGeode(xform);
-  if (opaqueGeode == nullptr)
+  // if we have an 2nd (optional) group, it is opaque; update its color, but remove transparency
+  osg::Group* opaqueGroup = SVFactory::opaqueGroup(xform);
+  if (opaqueGroup == nullptr)
     return;
 
-  // the opaque geode may be an svPyramidOutline; svPyramidOutline sets the opacity itself
-  svPyramidOutline* pyramidOutline = dynamic_cast<svPyramidOutline*>(opaqueGeode);
+  // the opaque group may be an svPyramidOutline; svPyramidOutline sets the opacity itself
+  svPyramidOutline* pyramidOutline = dynamic_cast<svPyramidOutline*>(opaqueGroup);
   if (pyramidOutline)
   {
     pyramidOutline->setColor(color);
     return;
   }
 
-  // if the opaque geode is not a svPyramidOutline, it may contain a wireframe geometry
-  if (opaqueGeode->getNumDrawables() == 1)
+  // if the opaque group is not a svPyramidOutline, it may contain a wireframe geometry
+  if (opaqueGroup->getNumChildren() == 1)
   {
-    geom = opaqueGeode->getDrawable(0)->asGeometry();
+    geom = opaqueGroup->getChild(0)->asGeometry();
     if (geom == nullptr)
     {
       // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1651,11 +1651,11 @@ osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
 }
 
 // if the sv has a 2nd geode that adds outline or wireframe, it will be the MatrixTransform 2nd child
-osg::Geode* SVFactory::opaqueGeode(osg::MatrixTransform* xform)
+osg::Group* SVFactory::opaqueGroup(osg::MatrixTransform* xform)
 {
   if (xform == nullptr || xform->getNumChildren() < 2)
     return nullptr;
-  return xform->getChild(1)->asGeode();
+  return xform->getChild(1)->asGroup();
 }
 
 // dirty bounds for all geometries in the xform
@@ -1669,19 +1669,19 @@ void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
   if (geom && !geom->empty())
     geom->dirtyBound();
 
-  // handle the 2nd geode
-  osg::Geode* opaqueGeode = SVFactory::opaqueGeode(xform);
-  if (opaqueGeode && opaqueGeode->getNumDrawables() > 0)
+  // handle the 2nd/opaque group
+  osg::Group* opaqueGroup = SVFactory::opaqueGroup(xform);
+  if (opaqueGroup && opaqueGroup->getNumChildren() > 0)
   {
-    // the opaque geode may be an svPyramidOutline; svPyramidOutline must be regenerated using the updated vertices
-    svPyramidOutline* pyramidOutline = dynamic_cast<svPyramidOutline*>(opaqueGeode);
+    // the opaque group may be an svPyramidOutline; svPyramidOutline must be regenerated using the updated vertices
+    svPyramidOutline* pyramidOutline = dynamic_cast<svPyramidOutline*>(opaqueGroup);
     if (pyramidOutline)
     {
       pyramidOutline->regenerate();
       return;
     }
 
-    geom = opaqueGeode->getDrawable(0)->asGeometry();
+    geom = opaqueGroup->getChild(0)->asGeometry();
     if (geom && !geom->empty())
       geom->dirtyBound();
   }

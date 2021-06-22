@@ -114,13 +114,13 @@ BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdat
       (prefs.blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
   }
 
-  // if there is a 2nd wireframe geode, it should be renderbin'd to BIN_OPAQUE_BEAM
-  osg::Geode* wireframeGeode = simVis::SVFactory::opaqueGeode(beamSV_.get());
-  if (wireframeGeode != nullptr)
+  // if there is a wireframe/2nd group, it should be renderbin'd to BIN_OPAQUE_BEAM
+  osg::Group* wireframeGroup = simVis::SVFactory::opaqueGroup(beamSV_.get());
+  if (wireframeGroup != nullptr)
   {
     // SphericalVolume code only adds the opaque geode when it is adding a geometry or lineGroup
-    assert(wireframeGeode->getNumDrawables() > 0);
-    wireframeGeode->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_BEAM, BIN_GLOBAL_SIMSDK);
+    assert(wireframeGroup->getNumChildren() > 0);
+    wireframeGroup->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_BEAM, BIN_GLOBAL_SIMSDK);
   }
 }
 

@@ -73,12 +73,12 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
       (isOpaque ? BIN_GLOBAL_SIMSDK : BIN_TWO_PASS_ALPHA));
   }
 
-  osg::Geode* outlineGeode = simVis::SVFactory::opaqueGeode(gateSV_.get());
-  if (outlineGeode != nullptr)
+  osg::Group* outlineGroup = simVis::SVFactory::opaqueGroup(gateSV_.get());
+  if (outlineGroup != nullptr)
   {
-    // SphericalVolume code only adds the opaque geode when it is adding a geometry or lineGroup
-    assert(outlineGeode->getNumDrawables() > 0);
-    outlineGeode->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+    // SphericalVolume code only adds the opaque group when it is adding a geometry or lineGroup
+    assert(outlineGroup->getNumChildren() > 0);
+    outlineGroup->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
   }
 }
 

@@ -28,7 +28,7 @@
 // MSVC 2015+ required for wide string versions
 #if (defined(_MSC_VER) && _MSC_VER >= 1900)
 
-#include <codecvt>
+#include <windows.h>
 
 namespace simCore {
 
@@ -42,9 +42,19 @@ namespace simCore {
  */
 inline std::wstring streamFixUtf8(const std::string& utf8)
 {
-  // Based on solution from https://stackoverflow.com/questions/4358870
-  std::wstring_convert<std::codecvt_utf8<wchar_t> > conv;
-  return conv.from_bytes(utf8);
+  // Based on solution from https://stackoverflow.com/questions/14184709
+  std::wstring wide;
+  if (utf8.empty())
+    return wide;
+  const int len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), static_cast<int>(utf8.size()), nullptr, 0);
+  // Error out with empty string
+  if (len <= 0)
+    return wide;
+
+  wide.resize(static_cast<size_t>(len));
+  // No need to error check, because of earlier call retrieving length
+  MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), static_cast<int>(utf8.size()), &wide[0], len);
+  return wide;
 }
 
 }

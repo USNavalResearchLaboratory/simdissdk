@@ -133,14 +133,6 @@ public:
   void endUpdate();
 
   /**
-  * @deprecated Interface changed to support ECI coordinates. Use other interface for setCoordinate instead.
-  * Sets the world position, orientation, and velocity vector all at once.
-  * @param[in ] coord  World coordinates (must be ECEF, LLA, or ECI)
-  * @param[in ] notify Whether to immediately notify listeners
-  */
-  SDK_DEPRECATE(void setCoordinate(const simCore::Coordinate& coord, bool notify = true), "Method will be removed in a future SDK release.");
-
-  /**
   * Sets the world position, orientation, and velocity vector all at once. To support
   * conversion to/from an ECI coordinate, the ECI reference time must either be provided or
   * have already been set; otherwise a reference time of 0 will be used. The ECI reference
@@ -394,8 +386,6 @@ private:
   * Notifies all children and callbacks of a change to this locator
   */
   void notifyListeners_();
-
-  SDK_DEPRECATE(bool inherits_(unsigned int mask) const, "Method will be removed in future SDK release.");
 
   /**
   * Returns an ENU local tangent plane at the specified position

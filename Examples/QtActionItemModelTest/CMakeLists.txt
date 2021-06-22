@@ -13,8 +13,6 @@ VSI_QT_WRAP_CPP(Q_AIM_MOC
     ActionItemModelTest.h
 )
 
-VSI_INCLUDE_QT_USE_FILE()
-
 add_executable(example_qtactionitemmodeltest ${APP_SOURCES} ${Q_AIM_MOC})
 target_link_libraries(example_qtactionitemmodeltest PRIVATE simQt)
 target_include_directories(example_qtactionitemmodeltest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

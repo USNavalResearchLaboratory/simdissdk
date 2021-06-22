@@ -13,9 +13,6 @@ VSI_QT_WRAP_CPP(MY_WIDGETS_MOC
     MyMainWindow.h
 )
 
-# Initialize Qt variables
-VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
-
 add_executable(example_qtdockableviews ${PROJECT_FILES} ${MY_WIDGETS_MOC})
 target_link_libraries(example_qtdockableviews PRIVATE simVis simUtil simQt)
 target_include_directories(example_qtdockableviews PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

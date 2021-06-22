@@ -385,12 +385,10 @@ void CategoryFilter::setCategoryRegExp(int nameInt, const simData::RegExpFilterP
     removeName(nameInt);
 }
 
-bool CategoryFilter::match(uint64_t entityId) const
+bool CategoryFilter::match(const simData::DataStore& dataStore, uint64_t entityId) const
 {
-  if (dataStore_ == nullptr)
-    return true;
   CurrentCategoryValues curCategoryData;
-  CategoryFilter::getCurrentCategoryValues(*dataStore_, entityId, curCategoryData);
+  CategoryFilter::getCurrentCategoryValues(dataStore, entityId, curCategoryData);
   return matchData(curCategoryData);
 }
 

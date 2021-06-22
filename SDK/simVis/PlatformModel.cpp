@@ -34,7 +34,6 @@
 #include "osgEarth/Horizon"
 #include "osgEarth/ObjectIndex"
 #include "osgEarth/AnnotationUtils"
-
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/String/Format.h"
@@ -49,6 +48,7 @@
 #include "simVis/RCS.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
+#include "simVis/PlatformIconFactory.h"
 #include "simVis/PlatformModel.h"
 
 #undef LC
@@ -58,8 +58,6 @@ namespace simVis {
 
 /** OSG Mask for traversal (like the select type in SIMDIS 9) */
 const unsigned int PlatformModelNode::TRAVERSAL_MASK = simVis::DISPLAY_MASK_PLATFORM_MODEL;
-/** Conversion factor to convert a brightness pref value (0-100) to an ambient light value (from S9) */
-static const float BRIGHTNESS_TO_AMBIENT = 0.022f;
 /** Default brightness ambient value; 36 brightness is the default value */
 static const osg::Vec4f DEFAULT_AMBIENT(
   36.f * BRIGHTNESS_TO_AMBIENT,
@@ -96,23 +94,22 @@ private:
 
 /* OSG Scene Graph Layout of This Class
  *
- *       /= labelRoot => label_              /= rcs_         /= alphaVolumeGroup_ => model_
- * this => dynamicXform_ => imageIconXform_ <=> imageAlignmentXform_ => offsetXform_ => model_
+ *       /= label_                           /= rcs_         /= alphaVolumeGroup_ => model_
+ * this => dynamicXform_ => imageIconXform_ <=> offsetXform_ => model_
  *                                           \= other scaled children
+ *                                           \= fastPathIcon_
  *
  * model_ is the representative for the 3D model or 2D image, and may be set to nullptr at times.
  * It is set from the call to simVis::Registry::instance()->getOrCreateIconModel().
  *
  * The offsetXform_ handles transforms provided by the end user to orient and translate the model
  * correctly in the scene.  For example, a 90 degree yaw orientation can be used to fix models
- * that point the wrong way.  The offsets only apply to the model and not any
- * of its attachments.
- *
- * The imageAlignmentXform_ handles implementing a standard alignment option to 2D image icons, referenced from
- * the position. It simply applies offsets to represent right/center/left and top/center/bottom alignments
- * to the model. The alignment offsets apply on top of other offset and rotation adjustments, so if the rotation of
- * the image icon is set to follow yaw, the image icon will apply alignment with respect to yaw.
- * The offsets only apply to the model and not any of its attachments.
+ * that point the wrong way.  The offsets only apply to the model and not any of its attachments.
+ * This matrix also implements a standard alignment option to 2D image icons, reference from the
+ * position. It simply applies offsets to represent right/center/left and top/center/bottom
+ * alignments to the model. The alignment offsets apply on top of other offset and rotation
+ * adjustments, so if the rotation of the image icon is set to follow yaw, the image icon will apply
+ * alignment with respect to yaw. The offsets only apply to the model and not any of its attachments.
  *
  * The rcs_ is the radar cross section, which might be a 2D or 3D segment.  It is colored on
  * its own based on RCS data file settings.  It's important that override color not apply
@@ -134,6 +131,10 @@ private:
  * alphaVolumeGroup_ is only on when the alphavolume() preference is on.  It does a second pass on
  * the platform model, this time drawing the backfaces.  This is useful for things like drawing the
  * interior of an alpha sphere used in error ellipses.
+ *
+ * fastPathIcon_ is an optimization path to help with rendering image-only platforms very quickly
+ * by reducing state set changes.  It only is available for 2D icons.  It is mutually exclusive to
+ * imageAlignmentXform_.  Only one or the other is active.
  */
 
 PlatformModelNode::PlatformModelNode(Locator* locator)
@@ -141,7 +142,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   isImageModel_(false),
   autoRotate_(false),
   lastPrefsValid_(false),
-  brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT)),
+  brightnessUniform_(new osg::Uniform(LIGHT0_AMBIENT_COLOR.c_str(), DEFAULT_AMBIENT)),
   objectIndexTag_(0)
 {
   // EntityLabelNode for platformModel is a special case - a locatorNode with no locator; it gets its location from parent, the platformmodelnode (which is a locatorNode).
@@ -156,9 +157,6 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
 
   // Apply the override color shader to the container
   overrideColor_ = new simVis::OverrideColor(offsetXform_->getOrCreateStateSet());
-
-  imageAlignmentXform_ = new osg::MatrixTransform();
-  imageAlignmentXform_->setName("imageAlignmentXform");
 
   // Set up the transform responsible for rotating the 2-D image icons
   imageIconXform_ = new BillboardAutoTransform();
@@ -183,8 +181,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   addChild(label_);
   addChild(dynamicXform_);
   dynamicXform_->addChild(imageIconXform_);
-  imageIconXform_->addChild(imageAlignmentXform_);
-  imageAlignmentXform_->addChild(offsetXform_);
+  imageIconXform_->addChild(offsetXform_);
 
   // Set up the brightness factor for the entity, attaching close to the model
   offsetXform_->getOrCreateStateSet()->addUniform(brightnessUniform_, osg::StateAttribute::ON);
@@ -345,8 +342,7 @@ void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
   warnOnInvalidOffsets_(lastPrefs_, true);
   updateImageIconRotation_(lastPrefs_, true);
   updateLighting_(lastPrefs_, true);
-  updateOffsets_(lastPrefs_);
-  updateImageAlignment_(lastPrefs_, true);
+  updateOffsets_(lastPrefs_, true);
   updateBounds_();
   updateDofTransform_(lastPrefs_, true);
 }
@@ -367,67 +363,11 @@ void PlatformModelNode::setRotateToScreen(bool value)
   imageIconXform_->dirty();
 }
 
-bool PlatformModelNode::updateImageAlignment_(const simData::PlatformPrefs& prefs, bool force)
+bool PlatformModelNode::updateOffsets_(const simData::PlatformPrefs& prefs, bool force)
 {
-  if (!imageAlignmentXform_.valid())
-    return false;
-
   if (!force && lastPrefsValid_ &&
-    !PB_FIELD_CHANGED(&lastPrefs_, &prefs, iconalignment))
-    return false;
-
-  float xOffset = 0.f;
-  float yOffset = 0.f;
-
-  if (isImageModel_)
-  {
-    const float width = imageOriginalSize_.x();
-    const float height = imageOriginalSize_.y();
-
-    switch (prefs.iconalignment())
-    {
-    case simData::ALIGN_LEFT_TOP:
-      xOffset = width / 2.f;
-      yOffset = -height / 2.f;
-      break;
-    case simData::ALIGN_LEFT_CENTER:
-      xOffset = width / 2.f;
-      break;
-    case simData::ALIGN_LEFT_BOTTOM:
-      xOffset = width / 2.f;
-      yOffset = height / 2.f;
-      break;
-    case simData::ALIGN_CENTER_TOP:
-      yOffset = -height / 2.f;
-      break;
-    case simData::ALIGN_CENTER_CENTER:
-      break;
-    case simData::ALIGN_CENTER_BOTTOM:
-      yOffset = height / 2.f;
-      break;
-    case simData::ALIGN_RIGHT_TOP:
-      xOffset = -width / 2.f;
-      yOffset = -height / 2.f;
-      break;
-    case simData::ALIGN_RIGHT_CENTER:
-      xOffset = -width / 2.f;
-      break;
-    case simData::ALIGN_RIGHT_BOTTOM:
-      xOffset = -width / 2.f;
-      yOffset = height / 2.f;
-      break;
-    }
-  }
-  osg::Matrix alignmentMatrix;
-  alignmentMatrix.makeTranslate(osg::Vec3(xOffset, yOffset, 0.f));
-  imageAlignmentXform_->setMatrix(alignmentMatrix);
-  return true;
-}
-
-bool PlatformModelNode::updateOffsets_(const simData::PlatformPrefs& prefs)
-{
-  if (lastPrefsValid_ &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, platpositionoffset) &&
+      !PB_FIELD_CHANGED(&lastPrefs_, &prefs, iconalignment) &&
       !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, orientationoffset, pitch) &&
       !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, orientationoffset, yaw) &&
       !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, orientationoffset, roll))
@@ -440,6 +380,15 @@ bool PlatformModelNode::updateOffsets_(const simData::PlatformPrefs& prefs)
     // x/y order change and sign change needed to match the behavior of SIMDIS 9
     offsetMatrix.makeTranslate(osg::Vec3(-pos.y(), pos.x(), pos.z()));
   }
+
+  // Adjust image icons by the correction for the hot spot (icon alignment)
+  if (isImageModel_)
+  {
+    osg::Vec2f xyOffset;
+    simVis::iconAlignmentToOffsets(prefs.iconalignment(), imageOriginalSize_, xyOffset);
+    offsetMatrix.preMultTranslate(osg::Vec3f(xyOffset, 0.f));
+  }
+
   if (prefs.has_orientationoffset())
   {
     const simData::BodyOrientation& ori = prefs.orientationoffset();
@@ -449,6 +398,7 @@ bool PlatformModelNode::updateOffsets_(const simData::PlatformPrefs& prefs)
       offsetMatrix.preMultRotate(qrot);
     }
   }
+
   offsetXform_->setMatrix(offsetMatrix);
 
   // Changing icon orientation can change the reported 'actual' bounds for model; return non-zero
@@ -481,8 +431,11 @@ void PlatformModelNode::updateBounds_()
   // Compute bounds, but exclude the label:
   osg::ComputeBoundsVisitor cb;
   cb.setTraversalMask(cb.getTraversalMask() |~ simVis::DISPLAY_MASK_LABEL);
-  // compute bounds based on the imageAlignmentXform_, which is the parent of the offsetXform_. Note it has no children other than the offsetXform_.
-  imageAlignmentXform_->accept(cb);
+  // compute bounds based on the offsetXform_, which is the parent of the model.
+  if (fastPathIcon_)
+    fastPathIcon_->accept(cb);
+  else
+    offsetXform_->accept(cb);
   unscaledBounds_ = cb.getBoundingBox();
 
   // Now get the scaled bounds
@@ -794,9 +747,9 @@ void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs, boo
   // Turn lighting on if lighting is enabled, but force it off if lighting is off.  This
   // prevents models from turning lighting on when we don't want it on.  Models can then
   // feasibly override this with the PROTECTED|ON state.
-  simVis::setLighting(offsetXform_->getOrCreateStateSet(), (!isImageModel_ && prefs.lighted())
-    ? osg::StateAttribute::ON
-    : (osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE));
+simVis::setLighting(offsetXform_->getOrCreateStateSet(), (!isImageModel_ && prefs.lighted())
+  ? osg::StateAttribute::ON
+  : (osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE));
 }
 
 void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs)
@@ -805,8 +758,8 @@ void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs
     return;
 
   if (lastPrefsValid_ &&
-      !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
-      !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor))
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor))
     return;
 
   // using an override color?
@@ -871,8 +824,7 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   bool needsBoundsUpdate = updateScale_(prefs);
   updateImageIconRotation_(prefs, false);
   updateRCS_(prefs);
-  needsBoundsUpdate = updateOffsets_(prefs) || needsBoundsUpdate;
-  needsBoundsUpdate = updateImageAlignment_(prefs, false) || needsBoundsUpdate;
+  needsBoundsUpdate = updateOffsets_(prefs, false) || needsBoundsUpdate;
   updateStippling_(prefs);
   updateCulling_(prefs);
   updatePolygonMode_(prefs);
@@ -890,6 +842,31 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
 
   if (needsBoundsUpdate)
     updateBounds_();
+
+  // Attempt to use the simplified/optimized 2D icon path
+  PlatformIconFactory* iconFactory = PlatformIconFactory::instance();
+  if (!lastPrefsValid_ || iconFactory->hasRelevantChanges(lastPrefs_, prefs))
+  {
+    osg::ref_ptr<osg::Node> newIcon = iconFactory->getOrCreate(prefs);
+
+    // Only need to make changes if the icon is different from the old one
+    if (newIcon.get() != fastPathIcon_.get())
+    {
+      // Remove old fast path icon (if applicable)
+      if (fastPathIcon_.valid())
+        imageIconXform_->removeChild(fastPathIcon_.get());
+      // Assign and add the new fast path icon (if needed)
+      fastPathIcon_ = newIcon;
+      if (fastPathIcon_.valid())
+      {
+        fastPathIcon_->setNodeMask(getMask());
+        imageIconXform_->addChild(fastPathIcon_.get());
+      }
+
+      // Either use the fast-path icon, or use the more featured, slower path in offsetXform_; don't use both
+      offsetXform_->setNodeMask(fastPathIcon_.valid() ? 0u : getMask());
+    }
+  }
 
   lastPrefs_ = prefs;
   lastPrefsValid_ = true;

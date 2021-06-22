@@ -25,7 +25,7 @@
 
 #include <QTreeWidgetItem>
 #include "simCore/Common/Common.h"
-
+#include "simData/ObjectId.h"
 
 namespace simQt {
 
@@ -67,6 +67,9 @@ namespace simQt {
 
     /** Returns whether we use an entity icon or type abbreviation for the entity type column */
     virtual bool useEntityIcons() const = 0;
+
+    /** Returns the number of entities that match the given type(s) */
+    virtual int countEntityTypes(simData::ObjectType type) const = 0;
 
   public slots:
     /** Swaps the view to the hierarchy tree */

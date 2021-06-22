@@ -107,7 +107,7 @@ simVis::PopupHandler* PlatformPopupManipulator::popupHandler() const
 int PlatformPopupManipulator::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
   // Pass the move event to the popupHandler_, who reinterprets as needed to update its mouse position
-  int rv = popupHandler_->handle(ea, aa) ? 1 : 0;
+  const int rv = popupHandler_->handle(ea, aa) ? 1 : 0;
   // Now update the last mouse view if it has changed
   osg::observer_ptr<simVis::View> currentView = static_cast<simVis::View*>(aa.asView());
   if (lastMouseView_ != currentView)

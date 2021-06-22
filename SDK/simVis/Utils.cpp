@@ -417,6 +417,47 @@ osgEarth::Units convertUnitsToOsgEarth(const simData::SpeedUnits& input)
         osgEarth::Units(); // invalid
 }
 
+void iconAlignmentToOffsets(simData::TextAlignment align, const osg::Vec2f& iconDims, osg::Vec2f& outOffsets)
+{
+  outOffsets.set(0.f, 0.f);
+  const float width = iconDims.x();
+  const float height = iconDims.y();
+
+  switch (align)
+  {
+  case simData::ALIGN_LEFT_TOP:
+    outOffsets.x() = width / 2.f;
+    outOffsets.y() = -height / 2.f;
+    break;
+  case simData::ALIGN_LEFT_CENTER:
+    outOffsets.x() = width / 2.f;
+    break;
+  case simData::ALIGN_LEFT_BOTTOM:
+    outOffsets.x() = width / 2.f;
+    outOffsets.y() = height / 2.f;
+    break;
+  case simData::ALIGN_CENTER_TOP:
+    outOffsets.y() = -height / 2.f;
+    break;
+  case simData::ALIGN_CENTER_CENTER:
+    break;
+  case simData::ALIGN_CENTER_BOTTOM:
+    outOffsets.y() = height / 2.f;
+    break;
+  case simData::ALIGN_RIGHT_TOP:
+    outOffsets.x() = -width / 2.f;
+    outOffsets.y() = -height / 2.f;
+    break;
+  case simData::ALIGN_RIGHT_CENTER:
+    outOffsets.x() = -width / 2.f;
+    break;
+  case simData::ALIGN_RIGHT_BOTTOM:
+    outOffsets.x() = -width / 2.f;
+    outOffsets.y() = height / 2.f;
+    break;
+  }
+}
+
 float outlineThickness(simData::TextOutline outline)
 {
   switch (outline)

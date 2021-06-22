@@ -776,8 +776,9 @@ void CategoryDataBreadcrumbs::removeFilter_(const QModelIndex& index)
   }
   else
   {
-    // remove the value, simplify, and re-emit
+    // Removal requires a simplified filter to behave well, so simplify, remove the value, simplify again, and re-emit
     const int value = valueVariant.toInt();
+    filter_->simplify();
     filter_->removeValue(name, value);
     filter_->simplify();
   }

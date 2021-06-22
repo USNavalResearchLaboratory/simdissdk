@@ -50,6 +50,8 @@ macro(mrsid_install_library PATH NAME)
             DESTINATION "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}"
             COMPONENT ${${LIBRARYNAME}_INSTALL_COMPONENT}
         )
+    else()
+        message(WARNING "Unable to find: ${MRSID_RELEASE_LIB}")
     endif()
 endmacro()
 
