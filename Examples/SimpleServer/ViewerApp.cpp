@@ -82,6 +82,7 @@ static const std::string HELP_TEXT =
 
 //////////////////////////////////////////////////////////////////
 
+#ifndef HAVE_IMGUI
 /** Handles various shortcuts from OSG and activates features in the Viewer App */
 class Shortcuts : public osgGA::GUIEventHandler
 {
@@ -145,6 +146,7 @@ public:
 private:
   ViewerApp& app_;
 };
+#endif
 
 //////////////////////////////////////////////////////////////////
 
@@ -348,16 +350,18 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   // Update the clock on an event callback
   sceneManager_->addUpdateCallback(new simExamples::IdleClockCallback(*clock_, *dataStore_));
 
-  // TODO: Use osgEarth::Controls overlay if ImGui isn't found
+#ifndef HAVE_IMGUI
   // Tie in our keyboard shortcuts
-  //sceneManager_->addEventCallback(new Shortcuts(*this));
+  sceneManager_->addEventCallback(new Shortcuts(*this));
+#endif
 
   // Create the data engine, which generates its own data and puts it into the data store
   engine_ = new DataEngine(*dataStore_, *sceneManager_->getScenario());
 
-  // TODO: Use osgEarth::Controls overlay if ImGui isn't found
+#ifndef HAVE_IMGUI
   // Create Help overlay
-  //mainView->addOverlayControl(createHelp_());
+  mainView->addOverlayControl(createHelp_());
+#endif
 
   // Configure the variable replacement for status text
   timeVariable_ = new simUtil::TimeVariable(*clock_);
