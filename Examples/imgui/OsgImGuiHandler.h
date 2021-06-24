@@ -23,6 +23,7 @@
 #ifndef GUI_OSGIMGUIHANDLER_H
 #define GUI_OSGIMGUIHANDLER_H
 
+#include <memory>
 #include <osgViewer/ViewerEventHandlers>
 
 namespace osg { class Camera; }
