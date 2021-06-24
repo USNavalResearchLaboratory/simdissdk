@@ -2,6 +2,8 @@
 
 project(SIMDIS_SDK_Examples)
 
+add_subdirectory(imgui)
+
 add_subdirectory(AnimatedLine)
 add_subdirectory(AntennaPattern)
 add_subdirectory(ArticulatedModel)

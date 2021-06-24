@@ -24,6 +24,8 @@
 #include "osgGA/GUIEventHandler"
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/ScreenSpaceLayout"
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
 #include "simCore/String/UtfUtils.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Time/Utils.h"
@@ -144,6 +146,93 @@ private:
 
 //////////////////////////////////////////////////////////////////
 
+struct TestPanel : public GUI::BaseGui
+{
+  TestPanel(ViewerApp& app)
+    : GUI::BaseGui("Simple Server SDK Example"),
+    app_(app)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+
+    auto& io = ImGui::GetIO();
+    const auto& fonts = io.Fonts->Fonts;
+    ImGui::PushFont(fonts.back());
+    bool popFont = true;
+
+    ImGui::Text("c : Cycle centered platform");
+    ImGui::Text("C : Toggle overhead clamping");
+    ImGui::Text("d : Toggle dynamic scale");
+    ImGui::Text("D : Toggle label declutter on/off");
+    ImGui::Text("l : Toggle Logarithmic Depth Buffer");
+    ImGui::Text("n : Toggle labels");
+    ImGui::Text("o : Cycle time format");
+    ImGui::Text("O : Toggle overhead mode");
+    ImGui::Text("p : Play/pause");
+    ImGui::Text("s : Cycle OSG statistics");
+    ImGui::Text("t : Toggle declutter technique");
+    ImGui::Text("T : Cycle callout line style");
+    ImGui::Text("w : Toggle compass");
+    ImGui::Text("z : Toggle cockpit mode (if centered)");
+
+    if (popFont)
+      ImGui::PopFont();
+
+    if (io.InputQueueCharacters.size() > 0)
+    {
+      switch (io.InputQueueCharacters.front())
+      {
+      case 'c': // lowercase
+        app_.centerNext();
+        break;
+      case 'd':
+        app_.toggleDynamicScale();
+        break;
+      case 'n':
+        app_.toggleLabels();
+        break;
+      case 'w':
+        app_.toggleCompass();
+        break;
+      case 'l':
+        app_.toggleLogDb();
+        break;
+      case 'o': // lowercase
+        app_.cycleTimeFormat();
+        break;
+      case 'z':
+        app_.toggleCockpit();
+        break;
+      case 'p':
+        app_.playPause();
+        break;
+      case 'D':
+        app_.toggleTextDeclutter();
+        break;
+      case 't':
+        app_.toggleDeclutterTechnique();
+        break;
+      case 'T':
+        app_.cycleCalloutLineStyle();
+        break;
+      }
+    }
+
+    ImGui::End();
+  }
+
+private:
+  ViewerApp& app_;
+  ImFont* font_ = nullptr;
+};
+
+//////////////////////////////////////////////////////////////////
+
 ViewerApp::ViewerApp(osg::ArgumentParser& args)
   : clock_(nullptr),
     textReplacer_(new simCore::TextReplacer),
@@ -255,14 +344,16 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   // Update the clock on an event callback
   sceneManager_->addUpdateCallback(new simExamples::IdleClockCallback(*clock_, *dataStore_));
 
+  // TODO: Use osgEarth::Controls overlay if ImGui isn't found
   // Tie in our keyboard shortcuts
-  sceneManager_->addEventCallback(new Shortcuts(*this));
+  //sceneManager_->addEventCallback(new Shortcuts(*this));
 
   // Create the data engine, which generates its own data and puts it into the data store
   engine_ = new DataEngine(*dataStore_, *sceneManager_->getScenario());
 
+  // TODO: Use osgEarth::Controls overlay if ImGui isn't found
   // Create Help overlay
-  mainView->addOverlayControl(createHelp_());
+  //mainView->addOverlayControl(createHelp_());
 
   // Configure the variable replacement for status text
   timeVariable_ = new simUtil::TimeVariable(*clock_);
@@ -296,6 +387,13 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   // Load missile GOGs
   loadGog_(EXAMPLE_GOG_MISSILE_LL);
   loadGog_(EXAMPLE_GOG_MISSILE_LLA);
+
+  // potential gotcha, need to be chained with pre-existing realize operation
+  viewManager_->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation);
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  mainView->getEventHandlers().push_front(gui);
+
+  gui->add(new TestPanel(*this));
 }
 
 int ViewerApp::run()
