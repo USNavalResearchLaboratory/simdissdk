@@ -24,8 +24,10 @@
 #include "osgGA/GUIEventHandler"
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/ScreenSpaceLayout"
+#ifdef HAVE_IMGUI
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
+#endif
 #include "simCore/String/UtfUtils.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Time/Utils.h"
@@ -146,6 +148,7 @@ private:
 
 //////////////////////////////////////////////////////////////////
 
+#ifdef HAVE_IMGUI
 struct TestPanel : public GUI::BaseGui
 {
   TestPanel(ViewerApp& app)
@@ -230,6 +233,7 @@ private:
   ViewerApp& app_;
   ImFont* font_ = nullptr;
 };
+#endif
 
 //////////////////////////////////////////////////////////////////
 
@@ -388,12 +392,14 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   loadGog_(EXAMPLE_GOG_MISSILE_LL);
   loadGog_(EXAMPLE_GOG_MISSILE_LLA);
 
+#ifdef HAVE_IMGUI
   // potential gotcha, need to be chained with pre-existing realize operation
   viewManager_->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation);
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   mainView->getEventHandlers().push_front(gui);
 
   gui->add(new TestPanel(*this));
+#endif
 }
 
 int ViewerApp::run()

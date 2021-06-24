@@ -24,6 +24,7 @@ set_target_properties(example_simpleserver PROPERTIES
 )
 if (TARGET ImGuiLib)
     target_link_libraries(example_simpleserver PRIVATE ImGuiLib)
+    target_compile_definitions(example_simpleserver PRIVATE HAVE_IMGUI)
 endif()
 
 vsi_install_target(example_simpleserver SDK_Examples)
