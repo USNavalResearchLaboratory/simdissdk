@@ -290,7 +290,24 @@ double BindCenterEntityToEntityTreeComposite::getCustomRenderingNearestTime_(dou
   if ((commands == nullptr) || (commands->numItems() == 0))
     return INVALID_TIME;
 
-  return getNearestTime_(time, getCustomRenderingEarlierTime_(time, commands), getCustomRenderingLaterTime_(time, commands));
+  double crEarlierTime = getCustomRenderingEarlierTime_(time, commands);
+  double crLaterTime = getCustomRenderingLaterTime_(time, commands);
+
+  // The custom rendering is limited by its host, if any
+  auto property = dataStore_.customRenderingProperties(id, &trans);
+  simData::ObjectId hostId = 0;
+  if (property != nullptr)
+    hostId = property->hostid();
+  trans.release(&pref);
+
+  if (hostId != 0)
+  {
+    // adjust crEarlierTime and crLaterTime as necessary
+    if (getHostTimeRange_(hostId, crEarlierTime, crLaterTime) != 0)
+      return INVALID_TIME;
+  }
+
+  return getNearestTime_(time, crEarlierTime, crLaterTime);
 }
 
 double BindCenterEntityToEntityTreeComposite::getCustomRenderingEarlierTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const
