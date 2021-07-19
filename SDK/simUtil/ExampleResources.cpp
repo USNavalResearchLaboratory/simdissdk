@@ -327,6 +327,17 @@ void simExamples::configureSearchPaths()
   simVisRegistry->setModelSearchPaths(modelPathList);
   osgDB::setDataFilePathList(pathList);
 
+  // Set the environment variable for proj4 if it's not set already
+  const std::string PROJ_LIB = simCore::getEnvVar("PROJ_LIB");
+  if (PROJ_LIB.empty() || !osgDB::fileExists(PROJ_LIB + "/proj/proj.db"))
+  {
+    // First try to use the SIMDIS_DIR, then fall back to SIMDIS_SDK_DATA_PATH
+    if (!SIMDIS_DIR.empty() && osgDB::fileExists(SIMDIS_DIR + "/data/proj/proj.db"))
+      simCore::setEnvVar("PROJ_LIB", SIMDIS_DIR + "/data/proj", true);
+    else if (!basePath.empty() && osgDB::fileExists(basePath + "/proj/proj.db"))
+      simCore::setEnvVar("PROJ_LIB", basePath + "/proj", true);
+  }
+
   // Fix the GL3 version
   simVis::applyMesaGlVersionOverride();
 }
