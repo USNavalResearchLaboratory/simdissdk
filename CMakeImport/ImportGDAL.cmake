@@ -38,6 +38,9 @@ endif()
 set(${LIBRARYNAME}_COMPILE_DEFINITIONS CPL_DISABLE_DLL)
 if(UNIX)
     list(APPEND ${LIBRARYNAME}_LINK_LIBRARIES dl)
+    if(TARGET GEOS_C)
+        list(APPEND ${LIBRARYNAME}_LINK_LIBRARIES GEOS_C)
+    endif()
 else()
     list(APPEND ${LIBRARYNAME}_LINK_LIBRARIES VSI::SOCKET)
 endif()
@@ -94,6 +97,7 @@ endif()
 
 # SIMDIS GDAL data
 set(DATA_DIRS
+    ${${LIBRARYNAME}_ROOT}/data/gdal
     ${${LIBRARYNAME}_ROOT}/data
     ${${LIBRARYNAME}_ROOT}/share/gdal
 )
