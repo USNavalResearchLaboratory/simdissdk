@@ -53,23 +53,142 @@
 #include "osgEarth/LatLongFormatter"
 #include "osgEarth/MGRSFormatter"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+#include "osgEarth/Controls"
+#endif
+
 using namespace osgEarth;
 using namespace osgEarth::Util;
 using namespace osgEarth::Util::Controls;
 
 /** Test program for update angle computations. */
 
-/// keep a handle, for toggling
-static osg::ref_ptr<Control> s_helpControl;
-
 static simData::DataStore* s_dataStore;
 
 static simData::ObjectId s_id;
 
-static HSliderControl* yaw, * pitch, * roll, * lat, * lon;
-
 static double s_time = 0.0;
 
+#ifdef HAVE_IMGUI
+
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+// Forces a width of 150 on the sliders. Otherwise, the sliders claim no horizontal space and are unusable.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(150); func("##" label, __VA_ARGS__)
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  ControlPanel(simData::MemoryDataStore& ds, simData::ObjectId id)
+    : GUI::BaseGui("Angle Test Example"),
+    ds_(ds),
+    id_(id),
+    yawDeg_(0.f),
+    pitchDeg_(0.f),
+    rollDeg_(0.f),
+    latDeg_(0.f),
+    lonDeg_(0.f),
+    time_(0.f)
+  {
+    update_();
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    bool needUpdate = false;
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      // Yaw
+      float yaw = yawDeg_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Yaw", &yawDeg_, -180.f, 180.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (yaw != yawDeg_)
+        needUpdate = true;
+
+      // Pitch
+      float pitch = pitchDeg_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Pitch", &pitchDeg_, -90.f, 90.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (pitch != pitchDeg_)
+        needUpdate = true;
+
+      // Roll
+      float roll = rollDeg_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Roll", &rollDeg_, -90.f, 90.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (roll != rollDeg_)
+        needUpdate = true;
+
+      // Latitude
+      float lat = latDeg_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Lat", &latDeg_, -89.f, 89.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (lat != latDeg_)
+        needUpdate = true;
+
+      // Longitude
+      float lon = lonDeg_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Lon", &lonDeg_, -180.f, 180.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (lon != lonDeg_)
+        needUpdate = true;
+
+      ImGui::EndTable();
+    }
+
+    if (needUpdate)
+      update_();
+
+    ImGui::End();
+  }
+
+private:
+  /** Send a platform update using the current values */
+  void update_()
+  {
+    time_ += 1.0;
+
+    simCore::Coordinate lla(
+      simCore::COORD_SYS_LLA,
+      simCore::Vec3(simCore::DEG2RAD * latDeg_, simCore::DEG2RAD * lonDeg_, 10000.0),
+      simCore::Vec3(simCore::DEG2RAD * yawDeg_, simCore::DEG2RAD * pitchDeg_, simCore::DEG2RAD * rollDeg_));
+    simCore::Coordinate ecef;
+    simCore::CoordinateConverter::convertGeodeticToEcef(lla, ecef);
+
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = ds_.addPlatformUpdate(id_, &t);
+    if (u)
+    {
+      u->set_time(time_);
+      u->set_x(ecef.x());
+      u->set_y(ecef.y());
+      u->set_z(ecef.z());
+      u->set_psi(ecef.psi());
+      u->set_theta(ecef.theta());
+      u->set_phi(ecef.phi());
+      t.complete(&u);
+    }
+
+    ds_.update(time_);
+  }
+
+  simData::MemoryDataStore& ds_;
+  simData::ObjectId id_;
+  float yawDeg_;
+  float rollDeg_;
+  float pitchDeg_;
+  float latDeg_;
+  float lonDeg_;
+  float time_;
+};
+
+#else
+/// keep a handle, for toggling
+static osg::ref_ptr<Control> s_helpControl;
+static HSliderControl* yaw, * pitch, * roll, * lat, * lon;
 
 struct SetUpdate : public ControlEventHandler
 {
@@ -136,6 +255,8 @@ static Control* createHelp()
   return g.release();
 }
 
+#endif
+
 //----------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
@@ -194,11 +315,18 @@ int main(int argc, char **argv)
   /// set the camera to look at the platform
   viewer->getMainView()->setFocalOffsets(0, -45, 4e5);
 
+#ifdef HAVE_IMGUI
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation);
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(dataStore, s_id));
+#else
   /// show the instructions overlay
   viewer->getMainView()->addOverlayControl(createHelp());
 
   /// Prime it
   SetUpdate().onValueChanged(nullptr, 0.0);
+#endif
 
   /// add some stock OSG handlers
   viewer->installDebugHandlers();
