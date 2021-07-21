@@ -100,7 +100,7 @@ public:
       simData::DataStore::Transaction xaction;
       const simData::BeamPrefs* prefs = ds_.beamPrefs(beamId_, &xaction);
 
-      // Algorith combo box
+      // Algorithm combo box
       ImGui::TableNextColumn(); ImGui::Text("Algorithm"); ImGui::TableNextColumn();
       static const char* ALGORITHMS[] = { "PEDESTAL", "GAUSS", "CSCSQ", "SINXX", "OMNI" };
       static int currentAlgIdx = 0;
@@ -145,7 +145,7 @@ public:
       if (currentPolIdx != static_cast<int>(polarity_))
       {
         needUpdate = true;
-        polarity_ = static_cast<simData::Polarity>(currentAlgIdx);
+        polarity_ = static_cast<simData::Polarity>(currentPolIdx);
       }
 
       // Sensitivity
