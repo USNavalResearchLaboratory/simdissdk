@@ -419,7 +419,7 @@ private:
     virtual void release() {}
   };
 
-  /// Perform transactions that modify preferences and properties
+  /// Perform transactions that modify preferences
   /// Notification of changes are sent to observers on transaction release
   template<typename T>
   class MutableSettingsTransactionImpl : public TransactionImpl
@@ -450,6 +450,38 @@ private:
     std::string newName_;                         ///< New entity name
     T *currentSettings_;                          ///< Pointer to current settings object stored by DataStore; Will not be modified until the transaction is committed
     T *modifiedSettings_;                         ///< The mutable settings object provided to the transaction initiator for modification
+    MemoryDataStore *store_;
+    ListenerList *observers_;
+  };
+
+  /// Perform transactions that modify properties
+  /// Notification of changes are sent to observers on transaction release
+  template<typename T>
+  class MutablePropertyTransactionImpl : public TransactionImpl
+  {
+  public:
+    MutablePropertyTransactionImpl(ObjectId id, T *properties, MemoryDataStore *store, ListenerList *observers);
+
+    /// Retrieve the settings object to be modified during the transaction
+    T *properties() { return modifiedProperties_; }
+
+    /// Check for changes to property object and copy them
+    /// to the internal data structure
+    virtual void commit();
+
+    /// No resources to be released here (resource locks/DB handles/etc)
+    virtual void release();
+
+    /// If the transaction was not committed, will deallocate the properties
+    /// object which has not been transferred
+    virtual ~MutablePropertyTransactionImpl();
+
+  private:
+    ObjectId id_;                                 ///< Id of entry associated with the transaction (to be provided to observers on entry change notification)
+    bool committed_;                              ///< The changes have been committed to the data structure
+    bool notified_;                               ///< Observers have been notified of the entry's modification
+    T *currentProperties_;                        ///< Pointer to current properties object stored by DataStore; Will not be modified until the transaction is committed
+    T *modifiedProperties_;                       ///< The mutable properties object provided to the transaction initiator for modification
     MemoryDataStore *store_;
     ListenerList *observers_;
   };

@@ -79,6 +79,7 @@ public:
   // Fulfill the interface
   virtual void onPostRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) {}
   virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) {}
+  virtual void onPropertiesChange(simData::DataStore *source, simData::ObjectId id) {}
   virtual void onChange(simData::DataStore *source) {}
   virtual void onFlush(simData::DataStore* source, simData::ObjectId id) {}
 

@@ -165,6 +165,9 @@ public:
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) = 0;
 
+    /// properties for the given entity have been changed
+    virtual void onPropertiesChange(DataStore *source, ObjectId id) = 0;
+
     /// data store has changed, this includes both time change and/or data change; called a max of once per frame
     virtual void onChange(DataStore *source) = 0;
 
@@ -199,6 +202,9 @@ public:
 
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) {}
+
+    /// properties for the given entity have been changed
+    virtual void onPropertiesChange(DataStore *source, ObjectId id) {}
 
     /// data store has changed
     virtual void onChange(DataStore *source) {}

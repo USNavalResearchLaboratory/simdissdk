@@ -1703,8 +1703,16 @@ const PlatformProperties* MemoryDataStore::platformProperties(ObjectId id, Trans
 /// mutable version
 PlatformProperties* MemoryDataStore::mutable_platformProperties(ObjectId id, Transaction *transaction)
 {
-  PlatformEntry *entry = getEntry<PlatformEntry, Platforms, NullTransactionImpl>(id, &platforms_, transaction);
-  return entry ? entry->mutable_properties() : nullptr;
+  if (!transaction)
+    return nullptr;
+
+  auto *entry = getEntry<PlatformEntry, Platforms>(id, &platforms_);
+  if (!entry)
+    return nullptr;
+
+  auto *impl = new MutablePropertyTransactionImpl<PlatformProperties>(id, entry->mutable_properties(), this, &listeners_);
+  *transaction = Transaction(impl);
+  return impl->properties();
 }
 
 ///@return const properties of beam with 'id'
@@ -1717,8 +1725,16 @@ const BeamProperties *MemoryDataStore::beamProperties(ObjectId id, Transaction *
 /// mutable version
 BeamProperties *MemoryDataStore::mutable_beamProperties(ObjectId id, Transaction *transaction)
 {
-  BeamEntry *entry = getEntry<BeamEntry, Beams, NullTransactionImpl>(id, &beams_, transaction);
-  return entry ? entry->mutable_properties() : nullptr;
+  if (!transaction)
+    return nullptr;
+
+  auto *entry = getEntry<BeamEntry, Beams>(id, &beams_);
+  if (!entry)
+    return nullptr;
+
+  auto *impl = new MutablePropertyTransactionImpl<BeamProperties>(id, entry->mutable_properties(), this, &listeners_);
+  *transaction = Transaction(impl);
+  return impl->properties();
 }
 
 ///@return const properties of gate with 'id'
@@ -1731,8 +1747,16 @@ const GateProperties *MemoryDataStore::gateProperties(ObjectId id, Transaction *
 /// mutable version
 GateProperties *MemoryDataStore::mutable_gateProperties(ObjectId id, Transaction *transaction)
 {
-  GateEntry *entry = getEntry<GateEntry, Gates, NullTransactionImpl>(id, &gates_, transaction);
-  return entry ? entry->mutable_properties() : nullptr;
+  if (!transaction)
+    return nullptr;
+
+  auto *entry = getEntry<GateEntry, Gates>(id, &gates_);
+  if (!entry)
+    return nullptr;
+
+  auto *impl = new MutablePropertyTransactionImpl<GateProperties>(id, entry->mutable_properties(), this, &listeners_);
+  *transaction = Transaction(impl);
+  return impl->properties();
 }
 
 ///@return const properties of laser with 'id'
@@ -1745,8 +1769,16 @@ const LaserProperties* MemoryDataStore::laserProperties(ObjectId id, Transaction
 /// mutable version
 LaserProperties* MemoryDataStore::mutable_laserProperties(ObjectId id, Transaction *transaction)
 {
-  LaserEntry *entry = getEntry<LaserEntry, Lasers, NullTransactionImpl>(id, &lasers_, transaction);
-  return entry ? entry->mutable_properties() : nullptr;
+  if (!transaction)
+    return nullptr;
+
+  auto *entry = getEntry<LaserEntry, Lasers>(id, &lasers_);
+  if (!entry)
+    return nullptr;
+
+  auto *impl = new MutablePropertyTransactionImpl<LaserProperties>(id, entry->mutable_properties(), this, &listeners_);
+  *transaction = Transaction(impl);
+  return impl->properties();
 }
 
 ///@return const properties of projector with 'id'
@@ -1759,8 +1791,16 @@ const ProjectorProperties* MemoryDataStore::projectorProperties(ObjectId id, Tra
 /// mutable version
 ProjectorProperties* MemoryDataStore::mutable_projectorProperties(ObjectId id, Transaction *transaction)
 {
-  ProjectorEntry *entry = getEntry<ProjectorEntry, Projectors, NullTransactionImpl>(id, &projectors_, transaction);
-  return entry ? entry->mutable_properties() : nullptr;
+  if (!transaction)
+    return nullptr;
+
+  auto *entry = getEntry<ProjectorEntry, Projectors>(id, &projectors_);
+  if (!entry)
+    return nullptr;
+
+  auto *impl = new MutablePropertyTransactionImpl<ProjectorProperties>(id, entry->mutable_properties(), this, &listeners_);
+  *transaction = Transaction(impl);
+  return impl->properties();
 }
 
 ///@return const properties of lobGroup with 'id'
@@ -1773,8 +1813,16 @@ const LobGroupProperties* MemoryDataStore::lobGroupProperties(ObjectId id, Trans
 /// mutable version
 LobGroupProperties* MemoryDataStore::mutable_lobGroupProperties(ObjectId id, Transaction *transaction)
 {
-  LobGroupEntry *entry = getEntry<LobGroupEntry, LobGroups, NullTransactionImpl>(id, &lobGroups_, transaction);
-  return entry ? entry->mutable_properties() : nullptr;
+  if (!transaction)
+    return nullptr;
+
+  auto *entry = getEntry<LobGroupEntry, LobGroups>(id, &lobGroups_);
+  if (!entry)
+    return nullptr;
+
+  auto *impl = new MutablePropertyTransactionImpl<LobGroupProperties>(id, entry->mutable_properties(), this, &listeners_);
+  *transaction = Transaction(impl);
+  return impl->properties();
 }
 
 const CustomRenderingProperties* MemoryDataStore::customRenderingProperties(ObjectId id, Transaction *transaction) const
@@ -1785,8 +1833,16 @@ const CustomRenderingProperties* MemoryDataStore::customRenderingProperties(Obje
 
 CustomRenderingProperties* MemoryDataStore::mutable_customRenderingProperties(ObjectId id, Transaction *transaction)
 {
-  CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings, NullTransactionImpl>(id, &customRenderings_, transaction);
-  return entry ? entry->mutable_properties() : nullptr;
+  if (!transaction)
+    return nullptr;
+
+  auto *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
+  if (!entry)
+    return nullptr;
+
+  auto *impl = new MutablePropertyTransactionImpl<CustomRenderingProperties>(id, entry->mutable_properties(), this, &listeners_);
+  *transaction = Transaction(impl);
+  return impl->properties();
 }
 
 const PlatformPrefs* MemoryDataStore::platformPrefs(ObjectId id, Transaction *transaction) const
@@ -2631,6 +2687,67 @@ MemoryDataStore::MutableSettingsTransactionImpl<T>::~MutableSettingsTransactionI
   release();
   delete modifiedSettings_;
   modifiedSettings_ = nullptr;
+}
+
+//----------------------------------------------------------------------------
+template<typename T>
+MemoryDataStore::MutablePropertyTransactionImpl<T>::MutablePropertyTransactionImpl(ObjectId id, T *properties, MemoryDataStore *store, ListenerList *observers)
+  : id_(id),
+  committed_(false),
+  notified_(false),
+  currentProperties_(properties),
+  store_(store),
+  observers_(observers)
+{
+  // create a copy of currentProperties_ for the user to experiment with
+  modifiedProperties_ = currentProperties_->New();
+  modifiedProperties_->CopyFrom(*currentProperties_);
+}
+
+template<typename T>
+void MemoryDataStore::MutablePropertyTransactionImpl<T>::commit()
+{
+  // performance: skip if there are no changes
+  if (modifiedProperties_->SerializeAsString() != currentProperties_->SerializeAsString())
+  {
+    committed_ = true; // transaction is valid
+
+    // copy the settings modified by the user into the entity settings
+    currentProperties_->CopyFrom(*modifiedProperties_);
+    store_->hasChanged_ = true;
+  }
+}
+
+// Notification occurs on release
+template<typename T>
+void MemoryDataStore::MutablePropertyTransactionImpl<T>::release()
+{
+  // Raise the notification if changes were committed (one time only)
+  if (committed_ && !notified_)
+  {
+    notified_ = true;
+
+    // Need to handle recursion so make a local copy
+    ListenerList localCopy = *observers_;
+    store_->justRemoved_.clear();
+    // Raise notifications for settings changes after internal data structures are updated
+    for (ListenerList::const_iterator i = localCopy.begin(); i != localCopy.end(); ++i)
+    {
+      if (*i != nullptr)
+      {
+        (*i)->onPropertiesChange(store_, id_);
+        store_->checkForRemoval_(localCopy);
+      }
+    }
+  }
+}
+
+template<typename T>
+MemoryDataStore::MutablePropertyTransactionImpl<T>::~MutablePropertyTransactionImpl()
+{
+  release();
+  delete modifiedProperties_;
+  modifiedProperties_ = nullptr;
 }
 
 MemoryDataStore::ScenarioSettingsTransactionImpl::ScenarioSettingsTransactionImpl(ScenarioProperties *settings, MemoryDataStore *store, ScenarioListenerList *observers)

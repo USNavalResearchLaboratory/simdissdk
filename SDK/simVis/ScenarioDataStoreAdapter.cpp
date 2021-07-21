@@ -92,6 +92,11 @@ public:
     }
   }
 
+  /// properties for the given entity have been changed
+  virtual void onPropertiesChange(simData::DataStore *source, simData::ObjectId id)
+  {
+  }
+
   /// current time has been changed
   virtual void onChange(simData::DataStore *source)
   {
