@@ -448,8 +448,7 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   em.setRadiusPolar(em.getRadiusPolar() - 11000.0);
 #endif
   SetHorizonCullCallback* setHorizon = new SetHorizonCullCallback(new osgEarth::Horizon(em));
-  root_->addCullCallback(setHorizon);
-  // SIM-7889 - this horizon also gets picked up by GOG annotations (which are not children of root_, but are children of root_'s parent)
+  addCullCallback(setHorizon);
 
   // Clamping requires a Group for MapNode changes
   surfaceClamping_ = new SurfaceClamping();
