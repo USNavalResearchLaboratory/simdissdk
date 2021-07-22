@@ -13,31 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
- *
- * The U.S. Government retains all rights to use, duplicate, distribute,
- * disclose, or release this software.
- *
- */
-
-#ifndef SIMCORE_CALC_MGRS_H
-#define SIMCORE_CALC_MGRS_H
-
-#include <string>
-#include "simCore/Common/Export.h"
-
-namespace simCore {
-
-/**
- * @brief Methods for conversion from MGRS/UTM/UPS to geodetic coordinates.
- *
- * Note: Several functions have been repurposed from software provided by the
- *       White Sands Missile Range (WSMR), GEOTRANS library and GeographicLib.
- *       Source code for GEOTRANS can be found here: http://earth-info.nga.mil/GandG/geotrans/
- *       GEOTRANS license can be found here: http://earth-info.nga.mil/GandG/geotrans/docs/MSP_GeoTrans_Terms_of_Use.pdf
- *       Source code for GeographicLib can be found here: https://sourceforge.net/projects/geographiclib/
- *       GeographicLib license can be found here: https://geographiclib.sourceforge.io/html/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  */
 class SDKCORE_EXPORT Mgrs
 {
