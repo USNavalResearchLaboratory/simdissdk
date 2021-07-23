@@ -57,11 +57,24 @@ public:
 
   class RealizeOperation : public GUI::GlewInitOperation
   {
+  public:
+    /** Constructor. If passed a valid operation for parentOp, its operator() will be called first */
+    explicit RealizeOperation(osg::Operation* parentOp = nullptr)
+      : GUI::GlewInitOperation(),
+      parentOp_(parentOp)
+    {
+    }
+
+  private:
     void operator()(osg::Object* object) override
     {
+      if (parentOp_.valid())
+        parentOp_->operator()(object);
       GlewInitOperation::operator()(object);
       OsgImGuiHandler::init();
     }
+
+    osg::ref_ptr<osg::Operation> parentOp_;
   };
 
 protected:

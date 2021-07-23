@@ -52,6 +52,11 @@
 /// paths to models
 #include "simUtil/ExampleResources.h"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#endif
+
 using namespace osgEarth;
 using namespace osgEarth::Util;
 using namespace osgEarth::Util::Controls;
@@ -169,7 +174,7 @@ public:
   }
 
   void setup(osg::Node* node)
-  {   
+  {
     if (!gun_.valid())
     {
       FindNodeByName gunFinder("gun");
@@ -240,6 +245,63 @@ private:
 
 //----------------------------------------------------------------------------
 
+#ifdef HAVE_IMGUI
+
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  explicit ControlPanel(simVis::EntityNode* node)
+    : GUI::BaseGui("Articulated Model Example"),
+    node_(node)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    if (tank_.needsSetup())
+    {
+      osg::ref_ptr<osg::Node> node;
+      if (node_.lock(node))
+        tank_.setup(node.get());
+      return;
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      // Turret yaw
+      float yaw = tank_.turretYaw();
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Turret", &yaw, tank_.turretMinimumYaw(), tank_.turretMaximumYaw(), "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (yaw != tank_.turretYaw())
+        tank_.setTurretYaw(yaw);
+
+      // Gun pitch
+      float pitch = tank_.gunPitch();
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Gun", &pitch, tank_.gunMinimumPitch(), tank_.gunMaximumPitch(), "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (pitch != tank_.gunPitch())
+        tank_.setGunPitch(pitch);
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  TankNode tank_;
+  osg::observer_ptr<osg::Node> node_;
+};
+
+#else
+
 /** Application object that syncs the UI with the Tank data after async model load */
 struct App : public osg::Node
 {
@@ -273,7 +335,7 @@ struct App : public osg::Node
     turretSlider_->setMin(tank_.turretMinimumYaw());
     turretSlider_->setMax(tank_.turretMaximumYaw());
     turretSlider_->setValue(tank_.turretYaw());
-    
+
     gunSlider_->setMin(tank_.gunMinimumPitch());
     gunSlider_->setMax(tank_.gunMaximumPitch());
     gunSlider_->setValue(tank_.gunPitch());
@@ -336,6 +398,8 @@ private:
   osg::ref_ptr<LabelControl> label_;
 };
 
+#endif
+
 //----------------------------------------------------------------------------
 
 int main(int argc, char **argv)
@@ -346,6 +410,7 @@ int main(int argc, char **argv)
 
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
+
   viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
@@ -372,6 +437,13 @@ int main(int argc, char **argv)
   viewer->getMainView()->tetherCamera(node1.get());
   viewer->getMainView()->setFocalOffsets(135, -8, 30);
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(node2.get()));
+#else
   // Set up the tank to manipulate the articulations
   App* app = new App(node2.get());
   viewer->getMainView()->getSceneData()->asGroup()->addChild(app);
@@ -398,6 +470,7 @@ int main(int argc, char **argv)
 
   // Add grid to the main view
   viewer->getMainView()->addOverlayControl(grid.get());
+#endif
 
   // add some stock OSG handlers and go
   viewer->installDebugHandlers();
