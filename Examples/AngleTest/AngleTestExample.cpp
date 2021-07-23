@@ -316,7 +316,8 @@ int main(int argc, char **argv)
   viewer->getMainView()->setFocalOffsets(0, -45, 4e5);
 
 #ifdef HAVE_IMGUI
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation);
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(dataStore, s_id));

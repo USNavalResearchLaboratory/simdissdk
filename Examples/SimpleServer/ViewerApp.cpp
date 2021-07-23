@@ -397,8 +397,8 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   loadGog_(EXAMPLE_GOG_MISSILE_LLA);
 
 #ifdef HAVE_IMGUI
-  // potential gotcha, need to be chained with pre-existing realize operation
-  viewManager_->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation);
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewManager_->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewManager_->getViewer()->getRealizeOperation()));
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   mainView->getEventHandlers().push_front(gui);
 

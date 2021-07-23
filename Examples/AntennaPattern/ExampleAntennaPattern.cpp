@@ -572,8 +572,8 @@ int main(int argc, char **argv)
     scene->getSkyNode()->setDateTime(osgEarth::DateTime(2012, 0, 0, 11.0));
 
 #ifdef HAVE_IMGUI
-  // potential gotcha, need to be chained with pre-existing realize operation
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation);
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
 

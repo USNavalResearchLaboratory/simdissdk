@@ -438,8 +438,8 @@ int main(int argc, char* argv[])
   mainView->addEventHandler(stats);
 
 #ifdef HAVE_IMGUI
-  // potential gotcha, need to be chained with pre-existing realize operation
-  viewMan->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation);
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewMan->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewMan->getViewer()->getRealizeOperation()));
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   mainView->getEventHandlers().push_front(gui);
 
