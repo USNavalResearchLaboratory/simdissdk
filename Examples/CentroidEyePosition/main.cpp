@@ -51,7 +51,7 @@
 #include "OsgImGuiHandler.h"
 #else
 using namespace osgEarth::Util::Controls;
-#endif;
+#endif
 
 static const simCore::Coordinate DEFAULT_POS_LLA(simCore::COORD_SYS_LLA,
   simCore::Vec3(simCore::DEG2RAD*(0), simCore::DEG2RAD*(0), 0),
