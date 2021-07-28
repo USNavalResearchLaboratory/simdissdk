@@ -930,6 +930,7 @@ void VectorScaling::generatePoints(osgEarth::LineDrawable& line, const osg::Vec3
     line.setVertex(k, start + delta * pct);
   }
   line.setVertex(numPointsPerLine - 1, end);
+  line.dirty();
 }
 
 

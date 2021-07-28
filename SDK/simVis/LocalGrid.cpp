@@ -248,7 +248,6 @@ public:
     }
     assert(vertexArray->getNumElements() == NUM_POINTS_PER_LINE_STRIP);
     VectorScaling::generatePoints(*(vertexArray.get()), start, end);
-    vertexArray->dirty();
   }
 };
 /// Geometry for SpeedLine grid types.

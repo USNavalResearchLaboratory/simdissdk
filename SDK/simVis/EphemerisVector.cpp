@@ -200,7 +200,6 @@ void EphemerisVector::rebuildLine_(osgEarth::LineDrawable* geom, const osg::Vec3
   relToPlatform *= lineLength;
 
   VectorScaling::generatePoints(*geom, osg::Vec3(), relToPlatform);
-  geom->dirty();
 }
 
 void EphemerisVector::setPrefs(const simData::PlatformPrefs& prefs)
