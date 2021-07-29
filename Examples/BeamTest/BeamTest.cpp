@@ -98,7 +98,11 @@ public:
     if (ImGui::BeginTable("Table", 2))
     {
       simData::DataStore::Transaction xaction;
-      const simData::BeamPrefs* prefs = ds_.beamPrefs(beamId_, &xaction);
+      const simData::BeamProperties* props = ds_.beamProperties(beamId_, &xaction);
+      std::string type = (props->type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION ? "ABSOLUTE" : "BODY RELATIVE");
+      xaction.complete(&props);
+
+      ImGui::TableNextColumn(); ImGui::Text("Type"); ImGui::TableNextColumn(); ImGui::Text(type.c_str());
 
       // Draw mode combo box
       ImGui::TableNextColumn(); ImGui::Text("Draw Mode"); ImGui::TableNextColumn();
