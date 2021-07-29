@@ -35,28 +35,75 @@
 #include "simVis/Viewer.h"
 #include "simUtil/ExampleResources.h"
 
-#include "osgEarth/Controls"
 #include "osgEarth/Geometry"
 #include "osgEarth/Feature"
 #include "osgEarth/FeatureNode"
 
-//----------------------------------------------------------------------------
-
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+#include "osgEarth/Controls"
 namespace ui = osgEarth::Util::Controls;
+#endif
+
+//----------------------------------------------------------------------------
 
 namespace
 {
   // Application data for the demo.
   struct AppData
   {
-    std::vector<simCore::GeoFence> fences_;
-    osg::ref_ptr<ui::LabelControl>              feedbackLabel_;
-    osg::ref_ptr<osgEarth::MapNode>             mapnode_;
+    std::vector<simCore::GeoFence> fences;
+    std::string feedbackText;
+#ifndef HAVE_IMGUI
+    osg::ref_ptr<ui::LabelControl> feedbackLabel;
+#endif
+    osg::ref_ptr<osgEarth::MapNode> mapnode;
+
+    void setFeedbackText(const std::string& text)
+    {
+#ifdef HAVE_IMGUI
+      feedbackText = text;
+#else
+      feedbackLabel_->setText(feedbackText);
+#endif
+    }
   };
 }
 
 //----------------------------------------------------------------------------
 
+#ifdef HAVE_IMGUI
+
+struct ControlPanel : public GUI::BaseGui
+{
+  explicit ControlPanel(AppData& app)
+    : GUI::BaseGui("GeoFencing Test Example"),
+    app_(app)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+
+    ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), "The yellow areas are geofences.");
+    ImGui::TextColored(ImVec4(1.f, 0.f, 0.f, 1.f), "The red areas are invalid (concave) geofences.");
+    ImGui::Text("Click to see whether you are inside one!");
+    if (!app_.feedbackText.empty())
+      ImGui::Text(app_.feedbackText.c_str());
+
+    ImGui::End();
+  }
+
+private:
+  AppData& app_;
+};
+
+#else
 namespace
 {
   ui::Control* createUI(AppData* app)
@@ -71,12 +118,12 @@ namespace
     vbox->addControl(new ui::LabelControl("The yellow areas are geofences.", simVis::Color::Yellow));
     vbox->addControl(new ui::LabelControl("The red areas are invalid (concave) geofences.", simVis::Color::Red));
     vbox->addControl(new ui::LabelControl("Click to see whether you are inside one!"));
-    app->feedbackLabel_ = vbox->addControl(new ui::LabelControl());
+    app->feedbackLabel = vbox->addControl(new ui::LabelControl());
 
     return vbox;
   }
 }
-
+#endif
 //----------------------------------------------------------------------------
 
 namespace
@@ -138,7 +185,7 @@ namespace
       p.push_back(simCore::Vec3(45, -122, 0) * simCore::DEG2RAD);
       p.push_back(simCore::Vec3(34, -121, 0) * simCore::DEG2RAD);
       simCore::GeoFence fence(p, simCore::COORD_SYS_LLA);
-      app.fences_.push_back(fence);
+      app.fences.push_back(fence);
       scene->getScenario()->addChild(buildFenceAnnotation(p, fence.valid(), scene->getMapNode()));
     }
 
@@ -151,7 +198,7 @@ namespace
       p.push_back(simCore::Vec3(75, -140, 0) * simCore::DEG2RAD);
       p.push_back(simCore::Vec3(60,    0, 0) * simCore::DEG2RAD);
       simCore::GeoFence fence(p, simCore::COORD_SYS_LLA);
-      app.fences_.push_back(fence);
+      app.fences.push_back(fence);
       scene->getScenario()->addChild(buildFenceAnnotation(p, fence.valid(), scene->getMapNode()));
     }
 
@@ -164,7 +211,7 @@ namespace
       p.push_back(simCore::Vec3(-50,    0, 0) * simCore::DEG2RAD);
       p.push_back(simCore::Vec3(-50, -120, 0) * simCore::DEG2RAD);
       simCore::GeoFence fence(p, simCore::COORD_SYS_LLA);
-      app.fences_.push_back(fence);
+      app.fences.push_back(fence);
       scene->getScenario()->addChild(buildFenceAnnotation(p, fence.valid(), scene->getMapNode()));
     }
 
@@ -177,7 +224,7 @@ namespace
       p.push_back(simCore::Vec3(20, -140, 0) * simCore::DEG2RAD);
       p.push_back(simCore::Vec3(20,  140, 0) * simCore::DEG2RAD);
       simCore::GeoFence fence(p, simCore::COORD_SYS_LLA);
-      app.fences_.push_back(fence);
+      app.fences.push_back(fence);
       scene->getScenario()->addChild(buildFenceAnnotation(p, fence.valid(), scene->getMapNode()));
     }
 
@@ -191,7 +238,7 @@ namespace
       p.push_back(simCore::Vec3(30,   0,  0) * simCore::DEG2RAD);
       p.push_back(simCore::Vec3(0,   0,  0) * simCore::DEG2RAD);
       simCore::GeoFence fence(p, simCore::COORD_SYS_LLA);
-      app.fences_.push_back(fence);
+      app.fences.push_back(fence);
       scene->getScenario()->addChild(buildFenceAnnotation(p, fence.valid(), scene->getMapNode()));
     }
   }
@@ -206,27 +253,27 @@ namespace
       if (ea.getEventType() == ea.PUSH)
       {
         osg::Vec3d world;
-        if (app_->mapnode_->getTerrain()->getWorldCoordsUnderMouse(aa.asView(), ea.getX(), ea.getY(), world))
+        if (app_->mapnode->getTerrain()->getWorldCoordsUnderMouse(aa.asView(), ea.getX(), ea.getY(), world))
         {
           simCore::Vec3 ecef(world.x(), world.y(), world.z());
 
-          for (unsigned i = 0; i < app_->fences_.size(); ++i)
+          for (unsigned i = 0; i < app_->fences.size(); ++i)
           {
             // This is how to test an ECEF simCore::Vec3 point against a GeoFence.
             // You could also pass in a simCore::Coordinate.
-            const simCore::GeoFence& fence = app_->fences_[i];
+            const simCore::GeoFence& fence = app_->fences[i];
 
             if (fence.valid() && fence.contains(ecef))
             {
-              app_->feedbackLabel_->setText("Inside a fence!");
+              app_->setFeedbackText("Inside a fence!");
               return true;
             }
           }
-          app_->feedbackLabel_->setText("No.");
+          app_->setFeedbackText("No.");
         }
         else
         {
-          app_->feedbackLabel_->setText("You clicked off the terrain.");
+          app_->setFeedbackText("You clicked off the terrain.");
         }
       }
       return false;
@@ -252,13 +299,21 @@ int main(int argc, char **argv)
 
   // Application data:
   AppData app;
-  app.mapnode_ = viewer->getSceneManager()->getMapNode();
+  app.mapnode = viewer->getSceneManager()->getMapNode();
 
   // Generate some fences.
   buildFences(app, viewer->getSceneManager());
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(app));
+#else
   // Install the UI:
   viewer->getMainView()->addOverlayControl(createUI(&app));
+#endif
 
   // Install the click handler:
   viewer->addEventHandler(new Tester(&app));
