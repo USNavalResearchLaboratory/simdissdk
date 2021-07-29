@@ -69,9 +69,14 @@
 #include "osgEarth/Style"
 #include "osgEarth/Sky"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+using namespace osgEarth::Util::Controls;
+#endif
 using namespace osgEarth;
 using namespace osgEarth::Util;
-using namespace osgEarth::Util::Controls;
 
 //----------------------------------------------------------------------------
 
@@ -85,12 +90,13 @@ static const std::string s_help =
 " g : cycle through the various GOG types";
 
 /// keep a handle, for toggling
-static osg::ref_ptr<Control>      s_helpControl;
-static osg::ref_ptr<LabelControl> s_nowViewing;
 static osg::NodeList s_attachments;
 typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 static std::vector<GogNodeInterfacePtr> s_overlayNodes;
 
+#ifndef HAVE_IMGUI
+static osg::ref_ptr<Control>      s_helpControl;
+static osg::ref_ptr<LabelControl> s_nowViewing;
 static Control* createHelp()
 {
   // vbox is allocated here but memory owned by caller
@@ -104,6 +110,7 @@ static Control* createHelp()
   s_helpControl = vbox;
   return vbox;
 }
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -117,6 +124,53 @@ static void makeStar(Geometry* geom, bool close)
     geom->push_back(osg::Vec3d(cos(double(i)*a)*r, sin(double(i)*a)*r, 0.));
   }
 }
+
+#ifdef HAVE_IMGUI
+
+struct ControlPanel : public GUI::BaseGui
+{
+  ControlPanel()
+    : GUI::BaseGui("GOG Attachments Example"),
+    swChild_(static_cast<unsigned int>(~0))
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+
+    auto& io = ImGui::GetIO();
+    ImGui::Text("g : cycle through the various GOG types");
+
+    if (io.InputQueueCharacters.size() > 0)
+    {
+      switch (io.InputQueueCharacters.front())
+      {
+      case 'g':
+        if (swChild_ != static_cast<unsigned>(~0))
+          s_attachments[swChild_]->setNodeMask(0);
+        if (++swChild_ == s_attachments.size())
+          swChild_ = 0;
+        s_attachments[swChild_]->setNodeMask(~0);
+        nowViewing_ = ("Now viewing: " + s_attachments[swChild_]->getName());
+        break;
+      }
+    }
+
+    if (!nowViewing_.empty())
+      ImGui::Text(nowViewing_.c_str());
+
+    ImGui::End();
+  }
+
+private:
+  unsigned int swChild_;
+  std::string nowViewing_;
+};
+
+#else
 
 //----------------------------------------------------------------------------
 /// event handler for keyboard commands to alter symbology at runtime
@@ -151,6 +205,7 @@ protected: // data
   unsigned     swChild_;
 };
 
+#endif
 //----------------------------------------------------------------------------
 
 /// create a platform and add it to 'dataStore'
@@ -550,12 +605,22 @@ int main(int argc, char **argv)
       platform->attach(i->get());
     }
 
+#ifndef HAVE_IMGUI
     /// handle key press events
     viewer->addEventHandler(new MenuHandler());
+#endif
   }
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel());
+#else
   /// show the instructions overlay
   viewer->getMainView()->addOverlayControl(createHelp());
+#endif
 
   /// add some stock OSG handlers
   viewer->installDebugHandlers();
