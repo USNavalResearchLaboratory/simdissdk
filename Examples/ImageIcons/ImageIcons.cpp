@@ -52,7 +52,12 @@
 // paths to models
 #include "simUtil/ExampleResources.h"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 using namespace osgEarth::Util::Controls;
+#endif
 
 
 //----------------------------------------------------------------------------
@@ -64,6 +69,122 @@ static simData::IconRotation s_iconRotation = simData::IR_2D_YAW;
 /// first line, describe the program
 static const std::string s_title = "Image Icons Example";
 
+#ifdef HAVE_IMGUI
+
+struct ControlPanel : public GUI::BaseGui
+{
+  ControlPanel(simData::DataStore& dataStore, simData::ObjectId platId)
+    : GUI::BaseGui(s_title),
+    dataStore_(dataStore),
+    platId_(platId)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+
+    ImGui::Text("1 : cycle through rotation types");
+    ImGui::Text("2 : toggle highlight");
+    ImGui::Text("3 : cycle through highlight styles");
+
+    auto& io = ImGui::GetIO();
+    auto mouse = io.MousePos;
+
+    if (io.InputQueueCharacters.size() > 0)
+    {
+      switch (io.InputQueueCharacters.front())
+      {
+      case '1': // cycle rotate mode
+      {
+        // Cycle the value
+        switch (s_iconRotation)
+        {
+        case simData::IR_2D_UP:
+          s_iconRotation = simData::IR_2D_YAW;
+          break;
+        case simData::IR_2D_YAW:
+          s_iconRotation = simData::IR_3D_YPR;
+          break;
+        case simData::IR_3D_YPR:
+          s_iconRotation = simData::IR_3D_NORTH;
+          break;
+        case simData::IR_3D_NORTH:
+          s_iconRotation = simData::IR_3D_YAW;
+          break;
+        case simData::IR_3D_YAW:
+          s_iconRotation = simData::IR_2D_UP;
+          break;
+        }
+
+        // Apply the setting
+        simData::DataStore::Transaction txn;
+        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
+        if (prefs)
+        {
+          prefs->set_rotateicons(s_iconRotation);
+          txn.complete(&prefs);
+        }
+
+        break;
+      }
+      case '2': // toggle circle highlight
+      {
+        simData::DataStore::Transaction txn;
+        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
+        if (!prefs)
+          break;
+        prefs->set_drawcirclehilight(!prefs->drawcirclehilight());
+        txn.complete(&prefs);
+        break;
+      }
+
+      case '3': // cycle circle highlight shape
+      {
+        simData::DataStore::Transaction txn;
+        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
+        if (!prefs)
+          break;
+        switch (prefs->circlehilightshape())
+        {
+        case simData::CH_PULSING_CIRCLE:
+          prefs->set_circlehilightshape(simData::CH_CIRCLE);
+          break;
+        case simData::CH_CIRCLE:
+          prefs->set_circlehilightshape(simData::CH_DIAMOND);
+          break;
+        case simData::CH_DIAMOND:
+          prefs->set_circlehilightshape(simData::CH_SQUARE);
+          break;
+        case simData::CH_SQUARE:
+          prefs->set_circlehilightshape(simData::CH_SQUARE_RETICLE);
+          break;
+        default:
+          prefs->set_circlehilightshape(simData::CH_PULSING_CIRCLE);
+          break;
+        }
+        txn.complete(&prefs);
+        break;
+      }
+      }
+    }
+
+    std::stringstream ss;
+    ss << "Currently viewing: " << IconRotation_Name(s_iconRotation);
+    ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), ss.str().c_str());
+
+    ImGui::End();
+  }
+
+
+private:
+  simData::DataStore& dataStore_;
+  simData::ObjectId platId_;
+};
+
+#else
 /// keep a handle, for toggling
 static osg::ref_ptr<Control> s_helpControl = nullptr;
 
@@ -206,6 +327,8 @@ protected: // data
   simData::ObjectId platId_;
 };
 
+#endif
+
 //----------------------------------------------------------------------------
 
 simData::ObjectId createPlatform(simData::DataStore& dataStore)
@@ -292,14 +415,22 @@ int main(int argc, char **argv)
   // set the camera to look at the platform
   viewer->getMainView()->setFocalOffsets(0, -45, 5e5);
 
-  // handle key press events
-  viewer->addEventHandler(new MenuHandler(dataStore, obj1));
 
   // hovering the mouse over the platform should trigger a popup
   viewer->addEventHandler(new simVis::PopupHandler(scene.get()));
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(dataStore, obj1));
+#else
+  // handle key press events
+  viewer->addEventHandler(new MenuHandler(dataStore, obj1));
   // show the instructions overlay
   viewer->getMainView()->addOverlayControl(createHelp());
+#endif
 
   // add some stock OSG handlers
   viewer->installDebugHandlers();

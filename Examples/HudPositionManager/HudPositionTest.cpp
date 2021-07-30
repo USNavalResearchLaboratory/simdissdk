@@ -84,8 +84,8 @@ static std::string s_help =
 
 struct ControlPanel : public GUI::BaseGui
 {
-  explicit ControlPanel(simUtil::HudPositionEditor& hudEditor, simData::DataStore& dataStore)
-    : GUI::BaseGui("Simple Server SDK Example"),
+  ControlPanel(simUtil::HudPositionEditor& hudEditor, simData::DataStore& dataStore)
+    : GUI::BaseGui("HUD Position Manager Example"),
     hudEditor_(hudEditor),
     dataStore_(dataStore)
   {
