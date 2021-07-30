@@ -66,7 +66,7 @@ namespace
 #ifdef HAVE_IMGUI
       feedbackText = text;
 #else
-      feedbackLabel_->setText(feedbackText);
+      feedbackLabel->setText(feedbackText);
 #endif
     }
   };
