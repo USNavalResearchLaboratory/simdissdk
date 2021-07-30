@@ -45,7 +45,12 @@
 // Uncomment this define to add various GridTransform test grids
 // #define GRID_TESTING
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 namespace ui = osgEarth::Util::Controls;
+#endif
 
 static const std::string KEY_MAP_SCALE = "MapScale";
 static const std::string KEY_STATUS_TEXT = "StatusText";
@@ -74,6 +79,151 @@ static std::string s_help =
   "w : Toggle Wind Vane on Compass\n"
   "z : Cycle wind angle and speed values\n"
   ;
+
+#ifdef HAVE_IMGUI
+
+struct ControlPanel : public GUI::BaseGui
+{
+  explicit ControlPanel(simUtil::HudPositionEditor& hudEditor, simData::DataStore& dataStore)
+    : GUI::BaseGui("Simple Server SDK Example"),
+    hudEditor_(hudEditor),
+    dataStore_(dataStore)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+
+    ImGui::Text("1 : Move 'Demo Text' to the mouse position");
+    ImGui::Text("2 : Move 'Map Scale' to the mouse position");
+    ImGui::Text("3 : Move 'Status Text' to mouse position");
+    ImGui::Text("4 : Move 'Top Classification' to mouse position");
+    ImGui::Text("5 : Move 'Bottom Classification' to mouse position");
+    ImGui::Text("6 : Move 'Compass' to mouse position");
+    ImGui::Text("7 : Move 'Legend' to mouse position");
+    ImGui::Text("c : Cycle classification string and color");
+    ImGui::Text("e : Toggle HUD Editor mode");
+    ImGui::Text("r : Reset all to default positions");
+    ImGui::Text("w : Toggle Wind Vane on Compass");
+    ImGui::Text("z : Cycle wind angle and speed values");
+
+    auto& io = ImGui::GetIO();
+    auto mouse = io.MousePos;
+
+    if (io.InputQueueCharacters.size() > 0)
+    {
+      switch (io.InputQueueCharacters.front())
+      {
+      case '1':
+        moveWindowToMouse_(KEY_DEMO_TEXT);
+        break;
+      case '2':
+        moveWindowToMouse_(KEY_MAP_SCALE);
+        break;
+      case '3':
+        moveWindowToMouse_(KEY_STATUS_TEXT);
+        break;
+      case '4':
+        moveWindowToMouse_(KEY_CLASSIFICATION_TOP);
+        break;
+      case '5':
+        moveWindowToMouse_(KEY_CLASSIFICATION_BOTTOM);
+        break;
+      case '6':
+        moveWindowToMouse_(KEY_COMPASS);
+        break;
+      case '7':
+        moveWindowToMouse_(KEY_LEGEND);
+        break;
+      case 'c':
+      {
+        // Cycle through a few different classification strings
+        classificationCycle_ = ((classificationCycle_ + 1) % 3);
+        simData::DataStore::Transaction txn;
+        simData::ScenarioProperties* props = dataStore_.mutable_scenarioProperties(&txn);
+        switch (classificationCycle_)
+        {
+        case 0:
+          props->mutable_classification()->set_label("UNCLASSIFIED");
+          props->mutable_classification()->set_fontcolor(0x00ff0080);
+          break;
+        case 1:
+          props->mutable_classification()->set_label("U N C L A S S I F I E D");
+          props->mutable_classification()->set_fontcolor(0xffffff80);
+          break;
+        case 2:
+          props->mutable_classification()->set_label("YOUR STRING HERE");
+          props->mutable_classification()->set_fontcolor(0xffff0080);
+          break;
+        }
+        txn.complete(&props);
+        break;
+      }
+      case 'e':
+        hudEditor_.setVisible(!hudEditor_.isVisible());
+        break;
+      case 'r':
+        hudEditor_.resetAllPositions();
+        break;
+      case 'w':
+        if (compass_.valid())
+          compass_->setWindVaneVisible(!compass_->isWindVaneVisible());
+        break;
+      case 'z':
+      {
+        // Cycle through a few different wind settings
+        windCycle_ = ((windCycle_ + 1) % 3);
+        simData::DataStore::Transaction txn;
+        simData::ScenarioProperties* props = dataStore_.mutable_scenarioProperties(&txn);
+        switch (windCycle_)
+        {
+        case 0:
+          props->set_windangle(35.0 * simCore::DEG2RAD);
+          props->set_windspeed(11.0);
+          break;
+        case 1:
+          props->set_windangle(282.0 * simCore::DEG2RAD);
+          props->set_windspeed(6.0);
+          break;
+        case 2:
+          props->set_windangle(179.625 * simCore::DEG2RAD);
+          props->set_windspeed(36.15698);
+          break;
+        }
+        txn.complete(&props);
+        break;
+      }
+      }
+    }
+
+    ImGui::End();
+  }
+
+  void setCompass(simVis::CompassNode* compass)
+  {
+    compass_ = compass;
+  }
+
+private:
+  void moveWindowToMouse_(const std::string& windowName)
+  {
+    auto io = ImGui::GetIO();
+    ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
+    const osg::Vec2d pos(io.MousePos.x / viewSize.x, (viewSize.y - io.MousePos.y) / viewSize.y);
+    hudEditor_.setPosition(windowName, pos);
+  }
+
+  simUtil::HudPositionEditor& hudEditor_;
+  osg::observer_ptr<simVis::CompassNode> compass_;
+  simData::DataStore& dataStore_;
+  int classificationCycle_;
+  int windCycle_;
+};
+
+#else
 
 static ui::Control* createHelp()
 {
@@ -229,6 +379,8 @@ private:
   int windCycle_;
 };
 
+#endif
+
 /** Helper method that creates a colored square from (0,0) to (width,width) */
 osg::Geometry* newSquare(const osg::Vec4f& color, float width=1.f)
 {
@@ -356,8 +508,10 @@ int main(int argc, char** argv)
   // Create a "Super HUD" on top of all other views and insets
   simVis::View* superHUD = new simVis::View();
   superHUD->setUpViewAsHUD(mainView);
+#ifndef HAVE_IMGUI
   // Add a help control
   superHUD->addOverlayControl(createHelp());
+#endif
   mainView->getViewManager()->addView(superHUD);
 
   // For osgEarth::LineDrawable to work on SuperHUD, need an InstallCameraUniform
@@ -377,9 +531,18 @@ int main(int argc, char** argv)
     txn.complete(&props);
   }
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  mainView->getEventHandlers().push_front(gui);
+  ControlPanel* controlPanel = new ControlPanel(hudEditor, dataStore);
+  gui->add(controlPanel);
+#else
   // Install a handler to respond to the demo keys in this sample.
   MenuHandler* menuHandler = new MenuHandler(hudEditor, dataStore);
   mainView->getCamera()->addEventCallback(menuHandler);
+#endif
 
   // Configure text replacement variables that will be used for status text
   simCore::TextReplacerPtr textReplacer(new simCore::TextReplacer());
@@ -440,7 +603,11 @@ int main(int argc, char** argv)
     // Add Compass
     osg::ref_ptr<simVis::CompassNode> compass = new simVis::CompassNode("compass.png");
     compass->setActiveView(mainView);
+#ifdef HAVE_IMGUI
+    controlPanel->setCompass(compass.get());
+#else
     menuHandler->setCompass(compass.get());
+#endif
     std::shared_ptr<simVis::UpdateWindVaneListener> dsUpdate(new simVis::UpdateWindVaneListener(compass.get()));
     dataStore.addScenarioListener(dsUpdate);
 
