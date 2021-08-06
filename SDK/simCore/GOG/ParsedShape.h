@@ -158,6 +158,8 @@ enum class ShapeParameter
   TEXTOUTLINETHICKNESS,
   ICON,
   LLABOX_ROT, // rotation used by KML ground overlay latlonbox
+  TIME_START,
+  TIME_END,
 
   // Set to non-empty when GOG points are absolute (lla), rather than relative (xyz)
   ABSOLUTE_POINTS = 200,

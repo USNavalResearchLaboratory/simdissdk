@@ -31,6 +31,7 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Common/Optional.h"
 #include "simCore/GOG/GogUtils.h"
+#include "simCore/Time/TimeClass.h"
 
 /**
 * Class hierarchy for GOG shapes, only leaf nodes can be directly instantiated
@@ -262,6 +263,22 @@ public:
   /// Set the vertical datum string
   void setVerticalDatum(const std::string& verticalDatum);
 
+  /**
+  * Get the start time; if value is not set, infinite time stamp is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getStartTime(simCore::TimeStamp& startTime) const;
+  /// Set the start time
+  void setStartTime(const simCore::TimeStamp& startTime);
+
+  /**
+  * Get the end time; if value is not set, infinite time stamp is returned.
+  * @return 0 if value was set, non-zero otherwise
+  */
+  int getEndTime(simCore::TimeStamp& startTime) const;
+  /// Set the end time
+  void setEndTime(const simCore::TimeStamp& startTime);
+
   /// Comments associated with the shape
   const std::vector<std::string>& comments() const;
   void addComment(const std::string& commment);
@@ -319,6 +336,9 @@ private:
   Optional<double> yawOffset_; ///< Angle offset for yaw component, radians
   Optional<double> pitchOffset_; ///< Angle offset for pitch component, radians
   Optional<double> rollOffset_; ///< Angle offset for roll component, radians
+
+  Optional<simCore::TimeStamp> startTime_; ///< Time to start displaying shape
+  Optional<simCore::TimeStamp> endTime_; ///< Time to stop displaying shape
 
   Optional<std::string> verticalDatum_; ///< String that represents vertical datum, e.g. wgs84
   std::vector<std::string> comments_; ///< Comment strings for the shape

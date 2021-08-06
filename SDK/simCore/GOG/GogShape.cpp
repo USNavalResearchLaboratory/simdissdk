@@ -25,6 +25,7 @@
 #include <sstream>
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Units.h"
+#include "simCore/Time/String.h"
 #include "simCore/GOG/GogShape.h"
 
 namespace simCore { namespace GOG {
@@ -235,6 +236,28 @@ void GogShape::setVerticalDatum(const std::string& verticalDatum)
   verticalDatum_ = verticalDatum;
 }
 
+int GogShape::getStartTime(simCore::TimeStamp& startTime) const
+{
+  startTime = startTime_.value_or(INFINITE_TIME_STAMP);
+  return (startTime_.has_value() ? 0 : 1);
+}
+
+void GogShape::setStartTime(const simCore::TimeStamp& startTime)
+{
+  startTime_ = startTime;
+}
+
+int GogShape::getEndTime(simCore::TimeStamp& endTime) const
+{
+  endTime = endTime_.value_or(INFINITE_TIME_STAMP);
+  return (endTime_.has_value() ? 0 : 1);
+}
+
+void GogShape::setEndTime(const simCore::TimeStamp& endTime)
+{
+  endTime_ = endTime;
+}
+
 void GogShape::addComment(const std::string& comment)
 {
   comments_.push_back(comment);
@@ -427,6 +450,18 @@ void GogShape::serializeToStream(std::ostream& gogOutputStream) const
     gogOutputStream << "3d offsetpitch " << simCore::Units::RADIANS.convertTo(originalUnits_.angleUnits(), pitchOffset_.value_or(0.)) << "\n";
   if (rollOffset_.has_value())
     gogOutputStream << "3d offsetroll " << simCore::Units::RADIANS.convertTo(originalUnits_.angleUnits(), rollOffset_.value_or(0.)) << "\n";
+
+  simCore::TimeFormatterRegistry reg;
+  if (startTime_.has_value())
+  {
+    simCore::TimeStamp start = startTime_.value_or(INFINITE_TIME_STAMP);
+    gogOutputStream << "starttime \"" << reg.toString(simCore::TimeFormat::TIMEFORMAT_ORDINAL, start, start.referenceYear()) << "\"\n";
+  }
+  if (endTime_.has_value())
+  {
+    simCore::TimeStamp end = endTime_.value_or(INFINITE_TIME_STAMP);
+    gogOutputStream << "endtime \"" << reg.toString(simCore::TimeFormat::TIMEFORMAT_ORDINAL, end, end.referenceYear()) << "\"\n";
+  }
 
   gogOutputStream << "end\n";
 }

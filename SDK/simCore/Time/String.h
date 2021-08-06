@@ -302,8 +302,10 @@ public:
    * By default, the normal formatters are used.  Setting wrappedFormatters true will
    * use the wrapped minutes and hours formatters, keeping them under 60 minutes and
    * 24 hours respectively.  This can be useful for clock displays.
+   * @param wrappedFormatters If true, Hours and Minutes formatters will use the wrapped version
+   * @param addDefaults If true, add all built-in time formats during construction
    */
-  explicit TimeFormatterRegistry(bool wrappedFormatters=false);
+  explicit TimeFormatterRegistry(bool wrappedFormatters=false, bool addDefaults=true);
   /** Destroys the registry */
   virtual ~TimeFormatterRegistry();
 

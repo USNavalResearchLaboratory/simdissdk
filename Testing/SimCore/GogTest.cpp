@@ -35,7 +35,7 @@
 namespace {
 
 // base gog shape optional fields in GOG format (set alt units to meters for testing), not testing  extrude height here
-static const std::string BASE_FIELDS = "altitudeunits m\n 3d name my favorite shape\n off\n depthbuffer true\n 3d offsetalt 120.\n ref 24.5 55.6 10.\n altitudemode relativetoground\n scale 2. 1.3 .5\n orient 45. 10. 5.\n verticaldatum egm1984\n";
+static const std::string BASE_FIELDS = "altitudeunits m\n 3d name my favorite shape\n off\n depthbuffer true\n 3d offsetalt 120.\n ref 24.5 55.6 10.\n altitudemode relativetoground\n scale 2. 1.3 .5\n orient 45. 10. 5.\n verticaldatum egm1984\nstarttime \"001 1970 00:00:00.00000\"\nendtime \"001 1970 01:00:00.00000\"\n";
 // outlined shape optional field in GOG format
 static const std::string OUTLINED_FIELD = BASE_FIELDS + "outline true\n";
 // fillable shape optional fields in GOG format
@@ -195,6 +195,11 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
   std::string vdatum = "?";
   rv += SDK_ASSERT(shape->getVerticalDatum(vdatum) != 0);
   rv += SDK_ASSERT(vdatum == "wgs84");
+  simCore::TimeStamp stamp;
+  rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
+  rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+  rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
+  rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
   return rv;
 
 }
@@ -468,7 +473,7 @@ int testMinimalShapes()
   orbitXyzCtrs.push_back(simCore::Vec3(24.4, 43.2, 0.));
   orbitXyzCtrs.push_back(simCore::Vec3(24.1, 43.5, 0.));
   rv += testShapePositionsFunction<simCore::GOG::Orbit>("start\n orbit\n centerxyz 24.4 43.2 0.0\n centerxy2 24.1 43.5\n rangeunits m\n altitudeunits m\n end\n", testOrbitShapeMinimalFieldsFunc, orbitXyzCtrs);
- 
+
   // test line
   std::vector<simCore::Vec3> lineXyzPoints;
   lineXyzPoints.push_back(simCore::Vec3(10., 10., 10.));
@@ -554,6 +559,11 @@ int testBaseOptionalFields(const simCore::GOG::GogShape* shape)
   std::string vdatum;
   rv += SDK_ASSERT(shape->getVerticalDatum(vdatum) == 0);
   rv += SDK_ASSERT(vdatum == "egm1984");
+  simCore::TimeStamp stamp;
+  rv += SDK_ASSERT(shape->getStartTime(stamp) == 0);
+  rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 0));
+  rv += SDK_ASSERT(shape->getEndTime(stamp) == 0);
+  rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 3600));
 
   // test reference point if relative
   if (shape->isRelative())
@@ -1518,6 +1528,8 @@ int testSerialization()
   baseItemsNoName.push_back("altitudemode relativetoground\n");
   baseItemsNoName.push_back("scale 2 1.3 0.5\n");
   baseItemsNoName.push_back("verticaldatum egm1984\n");
+  baseItemsNoName.push_back("starttime \"001 1970 00:00:00.00000\"");
+  baseItemsNoName.push_back("endtime \"001 1970 01:00:00.00000\"");
   baseItemsNoName.push_back("start\n");
   baseItemsNoName.push_back("end\n");
 
@@ -2093,6 +2105,106 @@ int testLineWidthStrings()
   return rv;
 }
 
+int testTimeStrings()
+{
+  int rv = 0;
+  simCore::GOG::Parser parser;
+  std::vector<simCore::GOG::GogShapePtr> shapes;
+  simCore::TimeStamp stamp;
+
+  // Test neither start nor end
+  std::stringstream noTime;
+  noTime << "start\nannotation test\ncenterll 30 30\nend\n";
+  parser.parse(noTime, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+  {
+    auto shape = shapes.front();
+    rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
+    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+    rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
+    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+  }
+  shapes.clear();
+
+  // Test start time without end time
+  std::stringstream startOnly;
+  startOnly << "start\nannotation test\ncenterll 30 30\nstarttime \"001 1970 00:00:00.00000\"\nend\n";
+  parser.parse(startOnly, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+  {
+    auto shape = shapes.front();
+    rv += SDK_ASSERT(shape->getStartTime(stamp) == 0);
+    rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 0));
+    rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
+    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+  }
+  shapes.clear();
+
+  // Test end time without start time
+  std::stringstream endOnly;
+  endOnly << "start\nannotation test\ncenterll 30 30\nendtime \"001 1970 00:00:00.00000\"\nend\n";
+  parser.parse(endOnly, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+  {
+    auto shape = shapes.front();
+    rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
+    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+    rv += SDK_ASSERT(shape->getEndTime(stamp) == 0);
+    rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 0));
+  }
+  shapes.clear();
+
+  // Test both start and end time
+  std::stringstream startAndEnd;
+  startAndEnd << "start\nannotation test\ncenterll 30 30\nstarttime \"001 1970 00:00:00.00000\"\nendtime \"001 1970 01:00:00.00000\"\nend\n";
+  parser.parse(startAndEnd, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+  {
+    auto shape = shapes.front();
+    rv += SDK_ASSERT(shape->getStartTime(stamp) == 0);
+    rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 0));
+    rv += SDK_ASSERT(shape->getEndTime(stamp) == 0);
+    rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 3600));
+  }
+  shapes.clear();
+
+  // Test start time later than end time
+  std::stringstream reversed;
+  reversed << "start\nannotation test\ncenterll 30 30\nstarttime \"001 1970 01:00:00.00000\"\nendtime \"001 1970 00:00:00.00000\"\nend\n";
+  parser.parse(reversed, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+  {
+    auto shape = shapes.front();
+    rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
+    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+    rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
+    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+  }
+  shapes.clear();
+
+  // Test that a time format lacking a year is not accepted
+  std::stringstream unreferenced;
+  unreferenced << "start\nannotation test\ncenterll 30 30\nstarttime \"00:00:00\"\nendtime \"01:00:00\"\nend\n";
+  parser.parse(unreferenced, "", shapes);
+  rv += SDK_ASSERT(shapes.size() == 1);
+  if (!shapes.empty())
+  {
+    auto shape = shapes.front();
+    rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
+    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+    rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
+    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+  }
+  shapes.clear();
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -2115,6 +2227,7 @@ int GogTest(int argc, char* argv[])
   rv += testBooleanInputs();
   rv += testDoublesToInts();
   rv += testLineWidthStrings();
+  rv += testTimeStrings();
 
   return rv;
 }

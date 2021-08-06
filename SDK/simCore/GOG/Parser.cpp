@@ -30,6 +30,7 @@
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
+#include "simCore/Time/String.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
@@ -748,6 +749,16 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       state.textSize_ = tokens[1];
       current.set(ShapeParameter::TEXTSIZE, tokens[1]);
     }
+    else if (tokens[0] == "starttime")
+    {
+      if (tokens.size() >= 2)
+        current.set(ShapeParameter::TIME_START, tokens[1]);
+    }
+    else if (tokens[0] == "endtime")
+    {
+      if (tokens.size() >= 2)
+        current.set(ShapeParameter::TIME_END, tokens[1]);
+    }
     // 3d billboard is OBE, since all annotations are always billboarded
     else if (startsWith(line, "3d billboard"))
       continue;
@@ -1188,7 +1199,8 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   if (parsed.hasValue(ShapeParameter::SCALEX))
   {
     // parsing error, should not have only one of the scale components set
-    assert(parsed.hasValue(ShapeParameter::SCALEY) && parsed.hasValue(ShapeParameter::SCALEZ));
+    if (parsed.hasValue(ShapeParameter::SCALEY) && parsed.hasValue(ShapeParameter::SCALEZ))
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid scale: scalex, scaley, and scalez must be used together to take effect");
     double scaleX = 1.;
     double scaleY = 1.;
     double scaleZ = 1.;
@@ -1240,6 +1252,56 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     if (vdatum == "egm1984" || vdatum == "egm84" || vdatum == "egm1996" || vdatum == "egm96" || vdatum == "egm2008" || vdatum == "egm08" || vdatum == "wgs84")
       rv->setVerticalDatum(vdatum);
   }
+
+  bool hasStart = parsed.hasValue(ShapeParameter::TIME_START);
+  bool hasEnd = parsed.hasValue(ShapeParameter::TIME_END);
+  if (hasStart || hasEnd)
+  {
+    simCore::TimeFormatterRegistry formatter(false, false);
+    formatter.registerCustomFormatter(std::shared_ptr<TimeFormatter>(new simCore::Iso8601TimeFormatter));
+    formatter.registerCustomFormatter(std::shared_ptr<TimeFormatter>(new simCore::DtgTimeFormatter));
+    formatter.registerCustomFormatter(std::shared_ptr<TimeFormatter>(new simCore::MonthDayTimeFormatter));
+    formatter.registerCustomFormatter(std::shared_ptr<TimeFormatter>(new simCore::OrdinalTimeFormatter));
+
+    bool validStart = false;
+    simCore::TimeStamp startTime;
+    if (hasStart)
+    {
+      validStart = (formatter.fromString(parsed.stringValue(ShapeParameter::TIME_START), startTime, 1970) == 0);
+      if (validStart)
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid start time: \"" + parsed.stringValue(ShapeParameter::TIME_START) + "\"");
+    }
+
+    bool validEnd = false;
+    simCore::TimeStamp endTime;
+    if (hasEnd)
+    {
+      validEnd = (formatter.fromString(parsed.stringValue(ShapeParameter::TIME_END), endTime, 1970) == 0);
+      if (validEnd)
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid end time: \"" + parsed.stringValue(ShapeParameter::TIME_END) + "\"");
+    }
+
+    if (validStart || validEnd)
+    {
+      // If both start and end are defined, check that start is before end.  If only one is defined, set it without any further checks
+      if (validStart && validEnd)
+      {
+        if (startTime < endTime)
+        {
+          rv->setStartTime(startTime);
+          rv->setEndTime(endTime);
+        }
+        else
+          printError_(parsed.filename(), parsed.lineNumber(), "Invalid start and end times: start time must be before end time");
+      }
+
+      else if (validStart)
+        rv->setStartTime(startTime);
+      else if (validEnd)
+        rv->setEndTime(endTime);
+    }
+  }
+
   for (std::string comment : parsed.comments())
   {
     rv->addComment(comment);
