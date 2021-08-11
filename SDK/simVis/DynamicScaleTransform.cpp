@@ -147,7 +147,14 @@ DynamicScaleTransform::~DynamicScaleTransform()
 
 bool DynamicScaleTransform::computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const
 {
-  matrix.preMultScale(cachedScale_);
+  // SIM-13244 / SIMDIS-3633: Do not apply the scaling to the model if node visitor is null.
+  // One of the few cases where this is null is during a compute-bounds case. And in that case we
+  // don't know the viewport, so we shouldn't be doing anything with dynamic scaling. If we were
+  // to apply the dynamic scaling, the value could be stale (from another viewport). And if the
+  // model doesn't include (0,0,0) in its bounding sphere, then the model could incorrectly "grow"
+  // farther from the origin and end up being reported (incorrectly) as outside view frustum.
+  if (nv)
+    matrix.preMultScale(cachedScale_);
   return true;
 }
 
