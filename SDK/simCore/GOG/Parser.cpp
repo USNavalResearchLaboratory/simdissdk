@@ -59,8 +59,6 @@ Parser::Parser()
 {
   initGogColors_();
 
-  // not supported
-  unhandledKeywords_.insert("innerradius");
   // no checks on version
   unhandledKeywords_.insert("version");
   // not supported
@@ -579,6 +577,13 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       else
         printError_(filename, lineNumber, "radius command requires 1 argument");
     }
+    else if (tokens[0] == "innerradius")
+    {
+      if (tokens.size() >= 2)
+        current.set(ShapeParameter::INNERRADIUS, tokens[1]);
+      else
+        printError_(filename, lineNumber, "innerradius command requires 1 argument");
+    }
     else if (tokens[0] == "anglestart")
     {
       if (tokens.size() >= 2)
@@ -1015,6 +1020,17 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     std::unique_ptr<Arc> arc(new Arc(relative));
     parseCircularOptional_(parsed, relative, name, units, arc.get());
     parseEllipticalOptional_(parsed, name, units, arc.get());
+    if (parsed.hasValue(ShapeParameter::INNERRADIUS))
+    {
+      double innerRadius = 0.;
+      if (validateDouble_(parsed.stringValue(ShapeParameter::INNERRADIUS), "innerradius", name, parsed, innerRadius) == 0)
+      {
+        if (innerRadius > 0.)
+          arc->setInnerRadius(units.rangeUnits().convertTo(simCore::Units::METERS, innerRadius));
+        else
+          printError_(parsed.filename(), parsed.lineNumber(), "innerradius must be greater than 0" + (name.empty() ? "" : " for " + name));
+      }
+    }
     rv.reset(arc.release());
     break;
   }

@@ -130,7 +130,7 @@ enum class ShapeParameter
   FONTNAME,
   TEXTSIZE,
   HEIGHT, // Used by Cylinder, Ellipsoid
-  INNERRADIUS, // Used by Arc; currently unsupported
+  INNERRADIUS, // Used by Arc
   LINECOLOR,
   LINEPROJECTION,
   LINESTYLE,

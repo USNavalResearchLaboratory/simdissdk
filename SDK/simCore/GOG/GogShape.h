@@ -652,6 +652,18 @@ public:
   explicit Arc(bool relative);
 
   virtual ShapeType shapeType() const;
+
+  /**
+ * Get the shape's inner radius in meters; if value is not set, default value is returned.
+ * @return 0 if value was set, non-zero otherwise
+ */
+  int getInnerRadius(double& innerRadius) const;
+  /// Set the shape's inner radius in meters
+  void setInnerRadius(double innerRadius);
+
+private:
+  Optional<double> innerRadius_; ///< meters
+
 };
 
 /// Ellipse shape implementation

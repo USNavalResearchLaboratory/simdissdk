@@ -367,10 +367,6 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
 
 GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string& filename, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  // inner radius not supported by GOG
-  bool hasInnerRadius = false;
-  Distance iRadius;
-
   double radiusM = 0.;
   arc.getRadius(radiusM);
   Distance radius(radiusM, Units::METERS);
@@ -389,6 +385,10 @@ GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string
   Angle sweep = Angle(sweepRad * simCore::RAD2DEG, Units::DEGREES);
   // Use fmod to keep the correct sign for correct sweep angle
   Angle end = start + Angle(::fmod(sweep.as(Units::RADIANS), M_TWOPI), Units::RADIANS);
+
+  double iRadiusM = 0.;
+  bool hasInnerRadius = (arc.getInnerRadius(iRadiusM) == 0);
+  Distance iRadius(iRadiusM, Units::METERS);
 
   // whether to include the center point in the geometry.
   bool filled = false;

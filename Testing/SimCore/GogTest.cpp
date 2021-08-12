@@ -46,6 +46,8 @@ static const std::string CIRCULAR_FIELDS = FILLABLE_FIELDS + " radius 1000.\n ra
 static const std::string POINTBASED_FIELDS = FILLABLE_FIELDS + " tessellate true\n lineprojection greatcircle\n";
 // elliptical shape optional fields in GOG format
 static const std::string ELLIPTICAL_FIELDS = CIRCULAR_FIELDS + " anglestart 10.\n angledeg 45.\n majoraxis 100.\n minoraxis 250.\n";
+// arc shape optional fields in GOG format
+static const std::string ARC_FIELDS = ELLIPTICAL_FIELDS + " innerradius 50\n";
 // height field in GOG format
 static const std::string HEIGHT_FIELD = "height 180.\n";
 // points shape optional fields in GOG format
@@ -675,6 +677,16 @@ auto testEllipticalShapeOptionalFieldsFunc = [](const simCore::GOG::EllipticalSh
   return rv;
 };
 
+// test the arc shape's optional fields match the pre-defined test fields from ARC_FIELDS
+auto testArcShapeOptionalFieldsFunc = [](const simCore::GOG::Arc* shape) -> int
+{
+  int rv = testEllipticalShapeOptionalFieldsFunc(shape);
+  double innerRadius = 0.;
+  rv += SDK_ASSERT(shape->getInnerRadius(innerRadius) == 0);
+  rv += SDK_ASSERT(simCore::areEqual(innerRadius, 50.));
+  return rv;
+};
+
 // test the cylinder shape's optional height field matches the pre-defined test field from HEIGHT_FIELD
 auto testCircularHeightShapeOptionalFieldsFunc = [](const simCore::GOG::CircularHeightShape* shape) -> int
 {
@@ -755,7 +767,7 @@ int testShapesOptionalFields()
   rv += testShapeFunction<simCore::GOG::Points>("start\n points\n lla 25.1 58.2 0.\n lla 26.2 58.3 0.\n" + POINTS_FIELDS + " end\n", testPointsOptionalFieldsFunc);
 
   // test arc
-  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n centerlla 24.4 43.2 0.0\n" + ELLIPTICAL_FIELDS + "end\n", testEllipticalShapeOptionalFieldsFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n centerlla 24.4 43.2 0.0\n" + ARC_FIELDS + "end\n", testArcShapeOptionalFieldsFunc);
   // test ellipse
   rv += testShapeFunction<simCore::GOG::Ellipse>("start\n ellipse\n centerlla 24.4 43.2 0.0\n" + ELLIPTICAL_FIELDS + "end\n", testEllipticalShapeOptionalFieldsFunc);
   // test cylinder

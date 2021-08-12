@@ -969,6 +969,17 @@ ShapeType Arc::shapeType() const
   return ShapeType::ARC;
 }
 
+int Arc::getInnerRadius(double& innerRadiusMeters) const
+{
+  innerRadiusMeters = innerRadius_.value_or(originalUnits_.rangeUnits().convertTo(simCore::Units::METERS, 0.));
+  return (innerRadius_.has_value() ? 0 : 1);
+}
+
+void Arc::setInnerRadius(double innerRadiusMeters)
+{
+  innerRadius_ = innerRadiusMeters;
+}
+
 Ellipse::Ellipse(bool relative)
   : EllipticalShape()
 {
