@@ -662,6 +662,9 @@ public:
   void setInnerRadius(double innerRadius);
 
 private:
+  /// Serialize the shape's specific implementation attributes to the stream
+  virtual void serializeToStream_(std::ostream& gogOutputStream) const;
+
   Optional<double> innerRadius_; ///< meters
 
 };

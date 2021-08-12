@@ -1622,7 +1622,8 @@ int testSerialization()
     std::vector<std::string> arcItems = ellipticalItems;
     arcItems.push_back("arc\n");
     arcItems.push_back(centerLla);
-    rv += testSerializeShape<simCore::GOG::Arc>("start\n arc\n " + centerLla + ELLIPTICAL_FIELDS + " end\n", arcItems);
+    arcItems.push_back("innerradius 50\n");
+    rv += testSerializeShape<simCore::GOG::Arc>("start\n arc\n " + centerLla + ARC_FIELDS + " end\n", arcItems);
   }
   {
     std::vector<std::string> ellipseItems = ellipticalItems;

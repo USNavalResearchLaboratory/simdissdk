@@ -980,6 +980,14 @@ void Arc::setInnerRadius(double innerRadiusMeters)
   innerRadius_ = innerRadiusMeters;
 }
 
+void Arc::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  EllipticalShape::serializeToStream_(gogOutputStream);
+  simCore::Units distanceUnits(simCore::Units::METERS);
+  if (innerRadius_.has_value())
+    gogOutputStream << "innerradius " << distanceUnits.convertTo(originalUnits_.rangeUnits(), innerRadius_.value_or(0.)) << "\n";
+}
+
 Ellipse::Ellipse(bool relative)
   : EllipticalShape()
 {
