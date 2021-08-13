@@ -37,7 +37,7 @@ GlowHighlight::GlowHighlight(osg::Node* onNode)
     supported_(false),
     shaderCreated_(false)
 {
-  supported_ = osgEarth::Registry::capabilities().supportsGLSL(110u);
+  supported_ = osgEarth::Registry::capabilities().supportsGLSL(140u);
   if (supported_ && node_.valid())
   {
     // Save the stateset and define the callback

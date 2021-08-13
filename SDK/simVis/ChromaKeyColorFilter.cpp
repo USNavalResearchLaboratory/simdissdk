@@ -30,7 +30,7 @@ namespace
 
   static const char* s_ChromaShaderSource =
 
-    "#version 110\n"
+    "#version 140\n"
 
     "uniform vec3  __COLOR_UNIFORM_NAME__;\n"
     "uniform float __DISTANCE_UNIFORM_NAME__;\n"

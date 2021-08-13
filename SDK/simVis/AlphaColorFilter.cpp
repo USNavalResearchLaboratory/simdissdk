@@ -48,7 +48,7 @@ namespace simVis
 
 bool AlphaColorFilter::isSupported()
 {
-  return osgEarth::Registry::capabilities().supportsGLSL(110u);
+  return osgEarth::Registry::capabilities().supportsGLSL(140u);
 }
 
 AlphaColorFilter::AlphaColorFilter()
