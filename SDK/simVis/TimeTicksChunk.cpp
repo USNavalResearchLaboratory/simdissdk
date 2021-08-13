@@ -163,6 +163,7 @@ void TimeTicksChunk::append_(const osg::Matrixd& matrix, const osg::Vec4f& color
     }
     point_->setVertex(i, local);
     point_->setColor(i, color);
+    point_->dirty();
   }
   else if (type_ == LINE_TICKS)
   {
@@ -178,6 +179,7 @@ void TimeTicksChunk::append_(const osg::Matrixd& matrix, const osg::Vec4f& color
 
     for (unsigned int c = 0; c < 2; ++c)
       line_->setColor(2 * i + c, color);
+    line_->dirty();
   }
 }
 
