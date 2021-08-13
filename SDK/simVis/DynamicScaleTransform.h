@@ -153,9 +153,9 @@ private:
   class RecalculateScaleVisitor;
 
   /** Returns first child if sizingNode_ is unset */
-  osg::Node* getSizingNode_();
+  osg::Node* getSizingNode_() const;
   /** Computes the dynamic scale; requires valid sizing node and valid icon scale factor */
-  osg::Vec3f computeDynamicScale_(double range, osg::CullStack* cullStack);
+  osg::Vec3f computeDynamicScale_(double range, osg::CullStack* cullStack) const;
   /** Recalculates the bounds if in dynamic scale mode, called by the recalculateAllDynamicScaleBounds() */
   void recalculate_(double range, osg::CullStack* cullStack);
 

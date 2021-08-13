@@ -153,8 +153,21 @@ bool DynamicScaleTransform::computeLocalToWorldMatrix(osg::Matrix& matrix, osg::
   // to apply the dynamic scaling, the value could be stale (from another viewport). And if the
   // model doesn't include (0,0,0) in its bounding sphere, then the model could incorrectly "grow"
   // farther from the origin and end up being reported (incorrectly) as outside view frustum.
-  if (nv)
+  // However, this only really matters even for the culling case, if there is no geometry at the
+  // origin. To avoid the inverse of the problem (model not big enough to be inside cull volume),
+  // we only apply this fix for models that have no geometry at the origin.
+
+  // Apply the scale if the node visitor is valid, or if we know nothing about bounds
+  if (nv || _children.empty())
     matrix.preMultScale(cachedScale_);
+  else
+  {
+    // If the bounding sphere is valid and contains (0,0,0) then also apply the cached scale,
+    // to avoid edge-of-frustum-but-really-inside edge case.
+    const osg::BoundingSphere& bounds = _children[0]->getBound();
+    if (bounds.valid() && bounds.contains(osg::Vec3f(0.f, 0.f, 0.f)))
+      matrix.preMultScale(cachedScale_);
+  }
   return true;
 }
 
@@ -189,12 +202,12 @@ bool DynamicScaleTransform::dynamicScaleToPixels() const
   return dynamicScalePixel_;
 }
 
-osg::Node* DynamicScaleTransform::getSizingNode_()
+osg::Node* DynamicScaleTransform::getSizingNode_() const
 {
   if (sizingNode_.valid())
     return sizingNode_.get();
-  if (getNumChildren() > 0)
-    return getChild(0);
+  if (!_children.empty())
+    return _children[0].get();
   return nullptr;
 }
 
@@ -412,7 +425,7 @@ void DynamicScaleTransform::recalculate_(double range, osg::CullStack* cullStack
   }
 }
 
-osg::Vec3f DynamicScaleTransform::computeDynamicScale_(double range, osg::CullStack* cullStack)
+osg::Vec3f DynamicScaleTransform::computeDynamicScale_(double range, osg::CullStack* cullStack) const
 {
   // Pixel model dynamic scale algorithm (relatively new)
   if (dynamicScalePixel_ && cullStack)
