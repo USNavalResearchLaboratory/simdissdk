@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -913,6 +913,7 @@ void VectorScaling::generatePoints(osg::Vec3Array& vertices, const osg::Vec3& st
     vertices[k] = (start + delta * pct);
   }
   vertices[numPointsPerLine - 1] = end;
+  vertices.dirty();
 }
 
 void VectorScaling::generatePoints(osgEarth::LineDrawable& line, const osg::Vec3& start, const osg::Vec3& end)
@@ -930,6 +931,7 @@ void VectorScaling::generatePoints(osgEarth::LineDrawable& line, const osg::Vec3
     line.setVertex(k, start + delta * pct);
   }
   line.setVertex(numPointsPerLine - 1, end);
+  line.dirty();
 }
 
 

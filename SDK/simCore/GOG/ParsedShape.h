@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -130,7 +130,7 @@ enum class ShapeParameter
   FONTNAME,
   TEXTSIZE,
   HEIGHT, // Used by Cylinder, Ellipsoid
-  INNERRADIUS, // Used by Arc; currently unsupported
+  INNERRADIUS, // Used by Arc
   LINECOLOR,
   LINEPROJECTION,
   LINESTYLE,
@@ -158,6 +158,8 @@ enum class ShapeParameter
   TEXTOUTLINETHICKNESS,
   ICON,
   LLABOX_ROT, // rotation used by KML ground overlay latlonbox
+  TIME_START,
+  TIME_END,
 
   // Set to non-empty when GOG points are absolute (lla), rather than relative (xyz)
   ABSOLUTE_POINTS = 200,

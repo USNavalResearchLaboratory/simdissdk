@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -311,6 +311,7 @@ void TrackHistoryNode::addUpdate_(const simData::PlatformUpdate& u, const simDat
       {
         const double last_t = prevUpdate->time();
         chunk->addPoint(*(newChunkLocator.get()), last_t, historyColorAtTime_(last_t), hostBounds_);
+        totalPoints_++;
       }
     }
     else
@@ -373,7 +374,10 @@ void TrackHistoryNode::removePointsOlderThan_(double oldestDrawTime)
   {
     TrackChunkNode* oldest = static_cast<TrackChunkNode*>(chunkGroup_->getChild(0));
     unsigned int numRemoved = oldest->removePointsBefore(oldestDrawTime);
+    // if assert fails, check that all adds and removes are counted
+    assert(totalPoints_ >= numRemoved);
     totalPoints_ -= numRemoved;
+
     if (oldest->size() == 0)
     {
       chunkGroup_->removeChild(0, 1);
@@ -381,9 +385,15 @@ void TrackHistoryNode::removePointsOlderThan_(double oldestDrawTime)
       {
         // Last point was duplicated to prevent discontinuity, remove it
         static_cast<TrackChunkNode*>(chunkGroup_->getChild(0))->removeOldestPoint();
+        // if assert fails, check that all adds and removes are counted
+        assert(totalPoints_ >= 1);
+        totalPoints_--;
       }
       else
+      {
+        // if assert fails, check that all adds and removes are counted
         assert(totalPoints_ == 0);
+      }
     }
     else
       break;

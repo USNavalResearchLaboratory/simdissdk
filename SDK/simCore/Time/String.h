@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -302,8 +302,10 @@ public:
    * By default, the normal formatters are used.  Setting wrappedFormatters true will
    * use the wrapped minutes and hours formatters, keeping them under 60 minutes and
    * 24 hours respectively.  This can be useful for clock displays.
+   * @param wrappedFormatters If true, Hours and Minutes formatters will use the wrapped version
+   * @param addDefaults If true, add all built-in time formats during construction
    */
-  explicit TimeFormatterRegistry(bool wrappedFormatters=false);
+  explicit TimeFormatterRegistry(bool wrappedFormatters=false, bool addDefaults=true);
   /** Destroys the registry */
   virtual ~TimeFormatterRegistry();
 

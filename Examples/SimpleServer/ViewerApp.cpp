@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -397,8 +397,8 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   loadGog_(EXAMPLE_GOG_MISSILE_LLA);
 
 #ifdef HAVE_IMGUI
-  // potential gotcha, need to be chained with pre-existing realize operation
-  viewManager_->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation);
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewManager_->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewManager_->getViewer()->getRealizeOperation()));
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   mainView->getEventHandlers().push_front(gui);
 

@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -163,6 +163,7 @@ void TimeTicksChunk::append_(const osg::Matrixd& matrix, const osg::Vec4f& color
     }
     point_->setVertex(i, local);
     point_->setColor(i, color);
+    point_->dirty();
   }
   else if (type_ == LINE_TICKS)
   {
@@ -178,6 +179,7 @@ void TimeTicksChunk::append_(const osg::Matrixd& matrix, const osg::Vec4f& color
 
     for (unsigned int c = 0; c < 2; ++c)
       line_->setColor(2 * i + c, color);
+    line_->dirty();
   }
 }
 

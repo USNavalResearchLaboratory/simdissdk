@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -448,8 +448,7 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   em.setRadiusPolar(em.getRadiusPolar() - 11000.0);
 #endif
   SetHorizonCullCallback* setHorizon = new SetHorizonCullCallback(new osgEarth::Horizon(em));
-  root_->addCullCallback(setHorizon);
-  // SIM-7889 - this horizon also gets picked up by GOG annotations (which are not children of root_, but are children of root_'s parent)
+  addCullCallback(setHorizon);
 
   // Clamping requires a Group for MapNode changes
   surfaceClamping_ = new SurfaceClamping();

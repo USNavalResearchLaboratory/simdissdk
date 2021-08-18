@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -48,7 +48,7 @@ namespace simVis
 
 bool AlphaColorFilter::isSupported()
 {
-  return osgEarth::Registry::capabilities().supportsGLSL(110u);
+  return osgEarth::Registry::capabilities().supportsGLSL(140u);
 }
 
 AlphaColorFilter::AlphaColorFilter()

@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -281,11 +281,13 @@ void TrackChunkNode::appendPointLine_(unsigned int i, const osg::Vec3f& local, c
   {
     centerPoints_->setVertex(i, local);
     centerPoints_->setColor(i, color);
+    centerPoints_->dirty();
     return;
   }
   // all other modes draw the line
   centerLine_->setVertex(i, local);
   centerLine_->setColor(i, color);
+  centerLine_->dirty();
 }
 
 void TrackChunkNode::appendBridge_(unsigned int i, const osg::Vec3f& local, const osg::Vec3d& world, const osg::Vec4& color)
@@ -297,6 +299,7 @@ void TrackChunkNode::appendBridge_(unsigned int i, const osg::Vec3f& local, cons
   drop_->setVertex(2*i+1, Math::ecefEarthPoint(convertToSim(world), world2local_));
   drop_->setColor(2*i, color);
   drop_->setColor(2*i+1, color);
+  drop_->dirty();
 }
 
 void TrackChunkNode::appendRibbon_(unsigned int i, const osg::Matrixd& localMatrix, const osg::Vec4& color, const osg::Vec2& hostBounds)
@@ -322,6 +325,7 @@ void TrackChunkNode::appendRibbon_(unsigned int i, const osg::Matrixd& localMatr
 
   for (unsigned int c = 0; c < 6; ++c)
     ribbon_->setColor(6*i+c, color);
+  ribbon_->dirty();
 }
 
 /// update the offset and count on each primitive set to draw the proper data.

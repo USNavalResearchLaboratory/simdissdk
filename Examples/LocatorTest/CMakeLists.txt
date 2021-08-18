@@ -14,4 +14,10 @@ set_target_properties(example_locatortest PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Locator Test"
 )
+
+if (TARGET ImGuiLib)
+    target_link_libraries(example_locatortest PRIVATE ImGuiLib)
+    target_compile_definitions(example_locatortest PRIVATE HAVE_IMGUI)
+endif()
+
 vsi_install_target(example_locatortest SDK_Examples)

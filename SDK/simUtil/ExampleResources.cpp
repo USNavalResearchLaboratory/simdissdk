@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -326,6 +326,17 @@ void simExamples::configureSearchPaths()
   // Set the model and data path lists
   simVisRegistry->setModelSearchPaths(modelPathList);
   osgDB::setDataFilePathList(pathList);
+
+  // Set the environment variable for proj4 if it's not set already
+  const std::string PROJ_LIB = simCore::getEnvVar("PROJ_LIB");
+  if (PROJ_LIB.empty() || !osgDB::fileExists(PROJ_LIB + "/proj/proj.db"))
+  {
+    // First try to use the SIMDIS_DIR, then fall back to SIMDIS_SDK_DATA_PATH
+    if (!SIMDIS_DIR.empty() && osgDB::fileExists(SIMDIS_DIR + "/data/proj/proj.db"))
+      simCore::setEnvVar("PROJ_LIB", SIMDIS_DIR + "/data/proj", true);
+    else if (!basePath.empty() && osgDB::fileExists(basePath + "/proj/proj.db"))
+      simCore::setEnvVar("PROJ_LIB", basePath + "/proj", true);
+  }
 
   // Fix the GL3 version
   simVis::applyMesaGlVersionOverride();

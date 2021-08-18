@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -25,7 +25,12 @@
  * MapScale shows how to associate a map scale with a view and an inset.
  */
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 #include "osgEarth/Controls"
+#endif
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Units.h"
@@ -48,6 +53,119 @@ static std::string s_title = "Map Scale Example";
 static std::string s_help =
   "o : toggle overhead mode \n";
 
+#ifdef HAVE_IMGUI
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  explicit ControlPanel(simUtil::MapScale* scale)
+    : GUI::BaseGui("Map Scale Example"),
+    scale_(scale),
+    metricUnits_(new simUtil::MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::KILOMETERS, 10000.0)),
+    imperialUnits_(new simUtil::MapScaleTwoUnitsProvider(simCore::Units::YARDS, simCore::Units::MILES, 16093.4)),
+    nauticalUnits_(new simUtil::MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::NAUTICAL_MILES, 18520.0))
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    ImGui::Text("o: Toggle overhead mode");
+
+    auto setScaleColor = [=](const osgEarth::Color& color1, const osgEarth::Color& color2, const osgEarth::Color& unitsColor, const osgEarth::Color& valuesColor, const osgEarth::Color& bgColor)
+    {
+      scale_->setBarColor1(color1);
+      scale_->setBarColor2(color2);
+      scale_->setUnitsColor(unitsColor);
+      scale_->setValuesColor(valuesColor);
+      scale_->setBackgroundColor(bgColor);
+    };
+
+    auto setScaleHeight = [=](float scalar)
+    {
+      scale_->setBarHeight(8.f + 20.f * (scalar - 1));
+      scale_->setUnitsCharacterSize(simVis::osgFontSize(12.f * scalar));
+      scale_->setValuesCharacterSize(simVis::osgFontSize(13.f * scalar));
+      scale_->setPadding(10.f * scalar, 10.f * scalar, 5.f * scalar, 5.f * scalar);
+    };
+
+    auto setScaleWidth = [=](float scalar)
+    {
+      scale_->setBarHeight(8.f + 20.f * (scalar - 1));
+      scale_->setUnitsCharacterSize(simVis::osgFontSize(12.f * scalar));
+      scale_->setValuesCharacterSize(simVis::osgFontSize(13.f * scalar));
+      scale_->setPadding(10.f * scalar, 10.f * scalar, 5.f * scalar, 5.f * scalar);
+    };
+
+    static const float ALPHA_VALUE = 0.7f;
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      // Color row
+      ImGui::TableNextColumn(); ImGui::Text("Color:"); ImGui::TableNextColumn();
+      if (ImGui::Button("Mono")) setScaleColor(
+        osgEarth::Color::Black,
+        osgEarth::Color::White,
+        osgEarth::Color::White,
+        osgEarth::Color::White,
+        osg::Vec4f(1.f, 1.f, 1.f, 0.f)
+        ); ImGui::SameLine();
+      if (ImGui::Button("Alpha")) setScaleColor(
+        osg::Vec4f(0.f, 0.f, 0.f, ALPHA_VALUE),
+        osg::Vec4f(1.f, 1.f, 1.f, ALPHA_VALUE),
+        osg::Vec4f(1.f, 1.f, 1.f, ALPHA_VALUE),
+        osg::Vec4f(1.f, 1.f, 1.f, ALPHA_VALUE),
+        osg::Vec4f(1.f, 1.f, 1.f, 0.f)
+        ); ImGui::SameLine();
+      if (ImGui::Button("Dim")) setScaleColor(
+        osgEarth::Color::Gray,
+        osgEarth::Color::Silver,
+        osgEarth::Color::Silver,
+        osgEarth::Color::Silver,
+        osg::Vec4f(1.f, 1.f, 1.f, 0.25f)
+      ); ImGui::SameLine();
+      if (ImGui::Button("Colorful")) setScaleColor(
+        osgEarth::Color::Green,
+        osgEarth::Color::Purple,
+        osgEarth::Color::Yellow,
+        osgEarth::Color::Orange,
+        osg::Vec4f(0.25f, 0.25f, 1.f, 0.25f)
+      );
+
+      // Height row
+      ImGui::TableNextColumn(); ImGui::Text("Height:"); ImGui::TableNextColumn();
+      if (ImGui::Button("80%")) setScaleHeight(.8f); ImGui::SameLine();
+      if (ImGui::Button("100%")) setScaleHeight(1.f); ImGui::SameLine();
+      if (ImGui::Button("125%")) setScaleHeight(1.25f);
+
+      // Width row
+      ImGui::TableNextColumn(); ImGui::Text("Width:"); ImGui::TableNextColumn();
+      if (ImGui::Button("350px")) scale_->setWidth(350.f); ImGui::SameLine();
+      if (ImGui::Button("500px")) scale_->setWidth(500.f); ImGui::SameLine();
+      if (ImGui::Button("650px")) scale_->setWidth(650.f);
+
+      // Units row
+      ImGui::TableNextColumn(); ImGui::Text("Units:"); ImGui::TableNextColumn();
+      if (ImGui::Button("Metric")) scale_->setUnitsProvider(metricUnits_); ImGui::SameLine();
+      if (ImGui::Button("Imperial")) scale_->setUnitsProvider(imperialUnits_); ImGui::SameLine();
+      if (ImGui::Button("Nautical")) scale_->setUnitsProvider(nauticalUnits_);
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  osg::ref_ptr<simUtil::MapScale> scale_;
+  osg::ref_ptr<simUtil::MapScaleTwoUnitsProvider> metricUnits_;
+  osg::ref_ptr<simUtil::MapScaleTwoUnitsProvider> imperialUnits_;
+  osg::ref_ptr<simUtil::MapScaleTwoUnitsProvider> nauticalUnits_;
+};
+
+#else
 /** Responds to click on mono color button */
 struct MonoColorHandler : public ui::ControlEventHandler
 {
@@ -212,6 +330,8 @@ static ui::Control* createHelp(simUtil::MapScale* mapScale)
 
   return vbox;
 }
+
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -424,8 +544,17 @@ int main(int argc, char** argv)
   // Whenever the focus manager gets a focus event, change the scale to point to it
   mapScale->bindToFocusManager(mainView->getFocusManager());
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  mainView->getEventHandlers().push_front(gui);
+
+  gui->add(new ControlPanel(mapScale));
+#else
   // Create a HUD for managing everything
   mainView->addOverlayControl(createHelp(mapScale));
+#endif
 
   // Add a mouse handler that lets us move the scale around the screen
   TranslateMapScaleHandler* translateScaleByMouse = new TranslateMapScaleHandler(mapScale, xform);

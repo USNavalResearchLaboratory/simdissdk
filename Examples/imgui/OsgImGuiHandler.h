@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -57,11 +57,24 @@ public:
 
   class RealizeOperation : public GUI::GlewInitOperation
   {
+  public:
+    /** Constructor. If passed a valid operation for parentOp, its operator() will be called first */
+    explicit RealizeOperation(osg::Operation* parentOp = nullptr)
+      : GUI::GlewInitOperation(),
+      parentOp_(parentOp)
+    {
+    }
+
+  private:
     void operator()(osg::Object* object) override
     {
+      if (parentOp_.valid())
+        parentOp_->operator()(object);
       GlewInitOperation::operator()(object);
       OsgImGuiHandler::init();
     }
+
+    osg::ref_ptr<osg::Operation> parentOp_;
   };
 
 protected:

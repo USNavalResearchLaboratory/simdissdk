@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -40,7 +40,12 @@
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 namespace ui = osgEarth::Util::Controls;
+#endif
 
 namespace
 {
@@ -53,6 +58,180 @@ namespace
 static float SIM_START = 0.f;
 static float SIM_END = 60.f;
 static float SIM_HZ = 5.f;
+
+#ifdef HAVE_IMGUI
+
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  ControlPanel(simData::MemoryDataStore& ds, simData::ObjectId platId, simUtil::SimulatorEventHandler* simHandler, simVis::View* view, osg::Node* platformModel)
+    : GUI::BaseGui("ECI Track History Example"),
+    ds_(ds),
+    platId_(platId),
+    simHandler_(simHandler),
+    view_(view),
+    platformModel_(platformModel)
+  {
+    update_();
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    bool needUpdate = false;
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      // Track Mode combo box
+      ImGui::TableNextColumn(); ImGui::Text("Track Mode"); ImGui::TableNextColumn();
+      static const char* TRACKMODES[] = { "OFF", "POINT", "LINE", "RIBBON", "BRIDGE" };
+      static int currentModeIdx = static_cast<int>(trackMode_);
+      if (ImGui::BeginCombo("##modes", TRACKMODES[currentModeIdx], 0))
+      {
+        for (int i = 0; i < IM_ARRAYSIZE(TRACKMODES); i++)
+        {
+          const bool isSelected = (currentModeIdx == i);
+          if (ImGui::Selectable(TRACKMODES[i], isSelected))
+            currentModeIdx = i;
+
+          // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      if (currentModeIdx != static_cast<int>(trackMode_))
+      {
+        needUpdate = true;
+        trackMode_ = static_cast<simData::TrackPrefs_Mode>(currentModeIdx);
+      }
+
+      // Alt mode
+      bool altMode = altMode_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Alt Mode", &altMode_);
+      if (altMode != altMode_)
+        needUpdate = true;
+
+      // Draw Style combo box
+      ImGui::TableNextColumn(); ImGui::Text("Draw Style"); ImGui::TableNextColumn();
+      static const char* DRAWSTYLES[] = { "OFF", "POINT", "LINE" };
+      static int currentStyleIdx = static_cast<int>(drawStyle_);
+      if (ImGui::BeginCombo("##style", DRAWSTYLES[currentStyleIdx], 0))
+      {
+        for (int i = 0; i < IM_ARRAYSIZE(DRAWSTYLES); i++)
+        {
+          const bool isSelected = (currentStyleIdx == i);
+          if (ImGui::Selectable(DRAWSTYLES[i], isSelected))
+            currentStyleIdx = i;
+
+          // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      if (currentStyleIdx != static_cast<int>(drawStyle_))
+      {
+        needUpdate = true;
+        drawStyle_ = static_cast<simData::TimeTickPrefs_DrawStyle>(currentStyleIdx);
+      }
+
+      ImGui::TableNextColumn(); ImGui::Text("Transport"); ImGui::TableNextColumn();
+      if (ImGui::Button("<<")) { rewind_(15.f); } ImGui::SameLine();
+      if (ImGui::Button("<")) { rewind_(5.f); } ImGui::SameLine();
+      if (ImGui::Button(">")) { ff_(5.f); } ImGui::SameLine();
+      if (ImGui::Button(">>")) { ff_(15.f); }
+
+      // Reverse mode
+      bool reverseMode = reverseMode_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Reverse Mode", &reverseMode_);
+      if (reverseMode != reverseMode_)
+      {
+        if (reverseMode_)
+          ds_.getBoundClock()->playReverse();
+        else
+          ds_.getBoundClock()->playForward();
+      }
+
+      // Time
+      float time = time_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Time", &time_, SIM_START, SIM_END, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (time != time_)
+        simHandler_->setTime(time_);
+
+      ImGui::TableNextColumn(); ImGui::TableNextColumn();
+      if (ImGui::Button("Reset Tether"))
+      {
+        view_->tetherCamera(nullptr);
+        view_->tetherCamera(platformModel_.get());
+        view_->setFocalOffsets(45, -45, 2e4);
+      }
+
+      if (needUpdate)
+        update_();
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  /** Update the track prefs with the current values */
+  void update_()
+  {
+    simData::DataStore::Transaction xaction;
+    simData::PlatformPrefs* platformPrefs = ds_.mutable_platformPrefs(platId_, &xaction);
+    simData::TrackPrefs* trackPrefs = platformPrefs->mutable_trackprefs();
+    simData::TimeTickPrefs* timeTickPrefs = trackPrefs->mutable_timeticks();
+
+    trackPrefs->set_trackdrawmode(trackMode_);
+    trackPrefs->set_linewidth(2.0);
+    trackPrefs->set_altmode(altMode_);
+    timeTickPrefs->set_drawstyle(drawStyle_);
+    timeTickPrefs->set_interval(2.);
+    timeTickPrefs->set_linelength(1000.);
+
+    xaction.complete(&platformPrefs);
+  }
+
+  /** Rewind the time by the specified amount of seconds */
+  void rewind_(double seconds)
+  {
+    if (ds_.getBoundClock()->timeDirection() == simCore::REVERSE)
+      seconds = -seconds;
+    simHandler_->setTime(simHandler_->getTime() - seconds);
+  }
+
+  /** Fast forward the time by the specified amount of seconds */
+  void ff_(double seconds)
+  {
+    if (ds_.getBoundClock()->timeDirection() == simCore::REVERSE)
+      seconds = -seconds;
+    simHandler_->setTime(simHandler_->getTime() + seconds);
+  }
+
+  simData::MemoryDataStore& ds_;
+  simData::ObjectId platId_;
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler_;
+  osg::ref_ptr<simVis::View> view_;
+  osg::ref_ptr<osg::Node> platformModel_;
+  simData::TrackPrefs_Mode trackMode_ = simData::TrackPrefs_Mode_POINT;
+  simData::TimeTickPrefs_DrawStyle drawStyle_ = simData::TimeTickPrefs_DrawStyle_POINT;
+  float time_ = SIM_START;
+  bool altMode_ = false;
+  bool reverseMode_ = false;
+};
+
+#else
 
 struct AppData
 {
@@ -245,6 +424,8 @@ ui::Control* createUI(AppData& app)
   return top;
 }
 
+#endif
+
 //----------------------------------------------------------------------------
 
 /// Add a platform to use for the test.
@@ -320,23 +501,31 @@ int main(int argc, char **argv)
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
   simMgr->addSimulator(sim.get());
   simMgr->simulate(SIM_START, SIM_END, SIM_HZ);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(simMgr.get(), SIM_START, SIM_END);
+  viewer->addEventHandler(simHandler.get());
+  osg::ref_ptr<osg::Node> platformModel = scene->getScenario()->find<simVis::PlatformNode>(platformId);
+  // Tether camera to platform
+  viewer->getMainView()->tetherCamera(platformModel.get());
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(dataStore, platformId, simHandler.get(), viewer->getMainView(), platformModel.get()));
+#else
   // Attach the simulation updater to OSG timer events
   AppData app(&dataStore, platformId);
-  app.simHandler_ = new simUtil::SimulatorEventHandler(simMgr.get(), SIM_START, SIM_END);
-  viewer->addEventHandler(app.simHandler_.get());
-
-  // Tether camera to platform
+  app.simHandler_ = simHandler;
   app.view_          = viewer->getMainView();
-  app.platformModel_ = scene->getScenario()->find<simVis::PlatformNode>(platformId);
-  app.view_->tetherCamera(app.platformModel_.get());
-
-  // set the camera to look at the platform
-  viewer->getMainView()->setFocalOffsets(45, -45, 2e6);
-
+  app.platformModel_ = platformModel;
   // show the instructions overlay
   viewer->getMainView()->addOverlayControl(createUI(app));
   app.apply();
+#endif
+
+  // set the camera to look at the platform
+  viewer->getMainView()->setFocalOffsets(45, -45, 2e6);
 
   // add some stock OSG handlers
   viewer->installDebugHandlers();

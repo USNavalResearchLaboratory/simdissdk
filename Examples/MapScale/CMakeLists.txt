@@ -14,4 +14,10 @@ set_target_properties(example_mapscale PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Map Scale"
 )
+
+if (TARGET ImGuiLib)
+    target_link_libraries(example_mapscale PRIVATE ImGuiLib)
+    target_compile_definitions(example_mapscale PRIVATE HAVE_IMGUI)
+endif()
+
 vsi_install_target(example_mapscale SDK_Examples)

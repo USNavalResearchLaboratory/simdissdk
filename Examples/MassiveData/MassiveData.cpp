@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -30,8 +30,6 @@
 #include "osgGA/StateSetManipulator"
 #include "osgViewer/Viewer"
 #include "osgViewer/ViewerEventHandlers"
-
-#include "osgEarth/Controls"
 
 #include "simNotify/Notify.h"
 #include "simCore/String/ValidNumber.h"
@@ -57,8 +55,13 @@
 #include "simUtil/PlatformSimulator.h"
 #include "simUtil/ExampleResources.h"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+#include "osgEarth/Controls"
 namespace ui = osgEarth::Util::Controls;
-
+#endif
 //----------------------------------------------------------------------------
 
 struct App
@@ -76,7 +79,66 @@ namespace
   {
     return static_cast<double>(::rand()) / static_cast<double>(RAND_MAX);
   }
+}
 
+#ifdef HAVE_IMGUI
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(150); func("##" label, __VA_ARGS__)
+
+struct ControlPanel : public GUI::BaseGui
+{
+  ControlPanel(App& app, float duration)
+    : BaseGui("Massive Data Example"),
+    app_(app),
+    duration_(duration)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    // This GUI positions bottom left instead of top left, need the size of the window
+    ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
+    ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    bool needUpdate = false;
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      float lodScale = lodScale_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "LOD Scale", &lodScale_, 1.f, 60.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+      if (lodScale != lodScale_)
+        app_.scenario_->setLODScaleFactor(lodScale_);
+
+      float time = time_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Time", &time_, 0.f, duration_, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+      if (time != time_)
+        app_.simHandler_->setTime(time_);
+
+      bool overhead = overhead_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Overhead", &overhead_);
+      if (overhead != overhead_)
+        app_.view_->enableOverheadMode(!app_.view_->isOverheadEnabled());
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  App& app_;
+  float duration_ = 0.f;
+  float lodScale_ = 1.f;
+  float time_ = 0.f;
+  bool overhead_ = false;
+};
+#else
+namespace
+{
   struct SetLODScale : public ui::ControlEventHandler
   {
     explicit SetLODScale(App& app) : app_(app) {}
@@ -135,6 +197,8 @@ ui::Control* createUI(App& app, float duration)
 
   return grid;
 }
+
+#endif
 
 int usage(int argc, char** argv)
 {
@@ -311,8 +375,16 @@ int main(int argc, char** argv)
   // popup handler:
   viewer->addEventHandler(new simVis::PopupHandler(scene.get()));
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(app, duration));
+#else
   // instructions:
   viewer->getMainView()->addOverlayControl(createUI(app, duration));
+#endif
 
   // add some stock OSG handlers
   viewer->installDebugHandlers();

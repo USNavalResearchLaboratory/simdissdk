@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -27,7 +27,6 @@
  * various settings and testing the local grid code.
  */
 #include <sstream>
-#include "osgEarth/Controls"
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
@@ -43,7 +42,13 @@
 
 #define LC "[LocalGrid demo] "
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+#include "osgEarth/Controls"
 namespace ui = osgEarth::Util::Controls;
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -113,6 +118,96 @@ simData::ObjectId createPlatform(simData::DataStore& ds)
   ds.update(0.0);
   return id;
 }
+
+#ifdef HAVE_IMGUI
+
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(150); func("##" label, __VA_ARGS__)
+
+struct ControlPanel : public GUI::BaseGui
+{
+  ControlPanel(simData::DataStore& ds, simData::ObjectId id)
+    : BaseGui(s_title),
+    ds_(ds),
+    id_(id)
+  {
+    update_();
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    bool needUpdate = false;
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      bool drawGrid = drawGrid_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Draw Grid", &drawGrid_);
+      if (drawGrid != drawGrid_)
+        needUpdate = true;
+
+      // Type combo box
+      ImGui::TableNextColumn(); ImGui::Text("Type"); ImGui::TableNextColumn();
+      static const char* TYPES[] = { "Cartesian", "Polar", "Range Rings", "Speed Rings", "Speed Line" };
+      static int currentTypeIdx = static_cast<int>(type_) - 1;
+      if (ImGui::BeginCombo("##type", TYPES[currentTypeIdx], 0))
+      {
+        for (int i = 0; i < IM_ARRAYSIZE(TYPES); i++)
+        {
+          const bool isSelected = (currentTypeIdx == i);
+          if (ImGui::Selectable(TYPES[i], isSelected))
+            currentTypeIdx = i;
+
+          // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      if (currentTypeIdx + 1 != static_cast<int>(type_))
+      {
+        needUpdate = true;
+        type_ = static_cast<simData::LocalGridPrefs_Type>(currentTypeIdx + 1);
+      }
+
+      int prec = prec_;
+      IMGUI_ADD_ROW(ImGui::SliderInt, "Text Precision", &prec_, 0, 10, "%d", ImGuiSliderFlags_AlwaysClamp);
+      if (prec != prec_)
+        needUpdate = true;
+
+      if (needUpdate)
+        update_();
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  void update_()
+  {
+    simData::DataStore::Transaction txn;
+    simData::PlatformPrefs* prefs = ds_.mutable_platformPrefs(id_, &txn);
+    prefs->mutable_commonprefs()->mutable_localgrid()->set_drawgrid(drawGrid_);
+    prefs->mutable_commonprefs()->mutable_localgrid()->set_gridtype(type_);
+    prefs->mutable_commonprefs()->mutable_localgrid()->set_gridlabelprecision(prec_);
+    txn.complete(&prefs);
+  }
+
+  simData::DataStore& ds_;
+  simData::ObjectId id_;
+  bool drawGrid_ = true;
+  simData::LocalGridPrefs::Type type_ = simData::LocalGridPrefs::POLAR;
+  int prec_ = 1;
+};
+
+#else
 
 /** Base class that provides a useful mergeIn() method */
 class ApplyPrefs : public ui::ControlEventHandler
@@ -257,6 +352,8 @@ ui::Control* createHelp(simData::DataStore& ds, simData::ObjectId id)
   return vbox;
 }
 
+#endif
+
 }
 
 int main(int argc, char** argv)
@@ -290,9 +387,17 @@ int main(int argc, char** argv)
   // Create the entity
   simData::ObjectId platformId = createPlatform(dataStore);
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(dataStore, platformId));
+#else
   // Create a HUD
   ui::ControlCanvas* canvas = ui::ControlCanvas::get(viewer->getMainView());
   canvas->addControl(createHelp(dataStore, platformId));
+#endif
 
   return viewer->run();
 }

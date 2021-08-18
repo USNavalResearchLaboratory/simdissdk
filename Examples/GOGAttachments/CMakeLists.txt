@@ -14,4 +14,10 @@ set_target_properties(example_gogattachments PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "GOG Attachments"
 )
+
+if (TARGET ImGuiLib)
+    target_link_libraries(example_gogattachments PRIVATE ImGuiLib)
+    target_compile_definitions(example_gogattachments PRIVATE HAVE_IMGUI)
+endif()
+
 vsi_install_target(example_gogattachments SDK_Examples)

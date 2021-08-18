@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -275,6 +275,7 @@ namespace
         assert(vertexArraySize > 0);
         bottomOutline_->setVertex(numPointsX_, (*vertexArray_)[0]);
       }
+      bottomOutline_->dirty();
     }
     // top outline
     {
@@ -300,6 +301,7 @@ namespace
         assert(vertexArraySize > 0);
         topOutline_->setVertex(numPointsX_, (*vertexArray_)[0]);
       }
+      topOutline_->dirty();
     }
 
     // left outlines
@@ -320,6 +322,9 @@ namespace
           nearLeftOutline_->setVertex(z, (*vertexArray_)[nearFaceOffset_ + xOffset + z]);
         }
       }
+      farLeftOutline_->dirty();
+      if (hasNearFace)
+        nearLeftOutline_->dirty();
     }
     // right outlines
     {
@@ -339,6 +344,9 @@ namespace
           nearRightOutline_->setVertex(z, (*vertexArray_)[nearFaceOffset_ + xOffset + z]);
         }
       }
+      farRightOutline_->dirty();
+      if (hasNearFace)
+        nearRightOutline_->dirty();
     }
   }
 
