@@ -913,7 +913,6 @@ void VectorScaling::generatePoints(osg::Vec3Array& vertices, const osg::Vec3& st
     vertices[k] = (start + delta * pct);
   }
   vertices[numPointsPerLine - 1] = end;
-  vertices.dirty();
 }
 
 void VectorScaling::generatePoints(osgEarth::LineDrawable& line, const osg::Vec3& start, const osg::Vec3& end)
@@ -931,7 +930,6 @@ void VectorScaling::generatePoints(osgEarth::LineDrawable& line, const osg::Vec3
     line.setVertex(k, start + delta * pct);
   }
   line.setVertex(numPointsPerLine - 1, end);
-  line.dirty();
 }
 
 

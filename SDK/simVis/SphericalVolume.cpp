@@ -275,7 +275,6 @@ namespace
         assert(vertexArraySize > 0);
         bottomOutline_->setVertex(numPointsX_, (*vertexArray_)[0]);
       }
-      bottomOutline_->dirty();
     }
     // top outline
     {
@@ -301,7 +300,6 @@ namespace
         assert(vertexArraySize > 0);
         topOutline_->setVertex(numPointsX_, (*vertexArray_)[0]);
       }
-      topOutline_->dirty();
     }
 
     // left outlines
@@ -322,9 +320,6 @@ namespace
           nearLeftOutline_->setVertex(z, (*vertexArray_)[nearFaceOffset_ + xOffset + z]);
         }
       }
-      farLeftOutline_->dirty();
-      if (hasNearFace)
-        nearLeftOutline_->dirty();
     }
     // right outlines
     {
@@ -344,9 +339,6 @@ namespace
           nearRightOutline_->setVertex(z, (*vertexArray_)[nearFaceOffset_ + xOffset + z]);
         }
       }
-      farRightOutline_->dirty();
-      if (hasNearFace)
-        nearRightOutline_->dirty();
     }
   }
 
