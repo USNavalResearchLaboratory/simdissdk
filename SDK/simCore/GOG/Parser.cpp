@@ -1284,7 +1284,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     if (hasStart)
     {
       validStart = (formatter.fromString(parsed.stringValue(ShapeParameter::TIME_START), startTime, 1970) == 0);
-      if (validStart)
+      if (!validStart)
         printError_(parsed.filename(), parsed.lineNumber(), "Invalid start time: \"" + parsed.stringValue(ShapeParameter::TIME_START) + "\"");
     }
 
@@ -1293,7 +1293,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     if (hasEnd)
     {
       validEnd = (formatter.fromString(parsed.stringValue(ShapeParameter::TIME_END), endTime, 1970) == 0);
-      if (validEnd)
+      if (!validEnd)
         printError_(parsed.filename(), parsed.lineNumber(), "Invalid end time: \"" + parsed.stringValue(ShapeParameter::TIME_END) + "\"");
     }
 
