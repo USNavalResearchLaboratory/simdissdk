@@ -90,7 +90,9 @@ OsgImGuiHandler::OsgImGuiHandler()
   : time_(0.0f),
   mousePressed_{false},
   mouseWheel_(0.0f),
-  initialized_(false)
+  initialized_(false),
+  firstFrame_(true),
+  firstDraw_(true)
 {
 }
 
@@ -147,7 +149,17 @@ static int ConvertFromOSGKey(int key)
   }
 }
 
-void OsgImGuiHandler::init()
+ImFont* OsgImGuiHandler::getDefaultFont() const
+{
+  return defaultFont_;
+}
+
+ImFont* OsgImGuiHandler::getLargeFont() const
+{
+  return largeFont_;
+}
+
+void OsgImGuiHandler::init_()
 {
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
@@ -176,6 +188,16 @@ void OsgImGuiHandler::init()
   ImGui_ImplOpenGL3_Init();
 
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+  std::string font = simVis::Registry::instance()->findFontFile("droidsdans.ttf");
+  // Attempt fallback to arial if droidsans isn't available
+  if (font.empty())
+    font = simVis::Registry::instance()->findFontFile("arial.ttf");
+  if (!font.empty())
+  {
+    defaultFont_ = io.Fonts->AddFontFromFileTTF(font.c_str(), 14.f);
+    largeFont_ = io.Fonts->AddFontFromFileTTF(font.c_str(), 24.f);
+  }
 }
 
 void OsgImGuiHandler::setCameraCallbacks_(osg::Camera* camera)
@@ -187,6 +209,12 @@ void OsgImGuiHandler::setCameraCallbacks_(osg::Camera* camera)
 
 void OsgImGuiHandler::newFrame_(osg::RenderInfo& renderInfo)
 {
+  if (firstFrame_)
+  {
+    init_();
+    firstFrame_ = false;
+  }
+
   ImGui_ImplOpenGL3_NewFrame();
 
   ImGuiIO& io = ImGui::GetIO();
@@ -260,6 +288,7 @@ bool OsgImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
     {
       setCameraCallbacks_(view->getCamera());
       initialized_ = true;
+      return false;
     }
   }
 
@@ -345,7 +374,19 @@ bool OsgImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
 void OsgImGuiHandler::draw_(osg::RenderInfo& ri)
 {
   for (auto& gui : guis_)
+  {
+    // Installing fonts on first draw ensures all ImGui Context and environment requirements are completed
+    if (firstDraw_)
+    {
+      if (defaultFont_)
+        gui->setDefaultFont(defaultFont_);
+      if (largeFont_)
+        gui->setLargeFont(largeFont_);
+    }
     gui->draw(ri);
+  }
+
+  firstDraw_ = false;
 }
 
 }

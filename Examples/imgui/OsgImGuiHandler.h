@@ -28,6 +28,7 @@
 
 namespace osg { class Camera; }
 
+struct ImFont;
 struct ImGuiSettingsHandler;
 
 namespace GUI {
@@ -53,8 +54,6 @@ public:
   /** Add a GUI to the manager */
   void add(BaseGui* gui);
 
-  static void init();
-
   class RealizeOperation : public GUI::GlewInitOperation
   {
   public:
@@ -71,13 +70,19 @@ public:
       if (parentOp_.valid())
         parentOp_->operator()(object);
       GlewInitOperation::operator()(object);
-      OsgImGuiHandler::init();
     }
 
     osg::ref_ptr<osg::Operation> parentOp_;
   };
 
+  /** Get a pointer to the default font, may be NULL */
+  ImFont* getDefaultFont() const;
+  /** Get a pointer to the large font, may be NULL */
+  ImFont* getLargeFont() const;
+
 protected:
+  /// Initialize the ImGui environment
+  void init_();
   // Put your ImGui code inside this function
   void draw_(osg::RenderInfo& renderInfo);
 
@@ -94,7 +99,12 @@ private:
   bool mouseDoubleClicked_[3];
   float mouseWheel_;
   bool initialized_;
+  bool firstFrame_;
+  bool firstDraw_;
   std::vector<std::unique_ptr<BaseGui> > guis_;
+
+  ImFont* defaultFont_;
+  ImFont* largeFont_;
 };
 
 }
