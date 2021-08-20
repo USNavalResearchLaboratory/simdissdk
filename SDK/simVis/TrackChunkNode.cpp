@@ -281,13 +281,11 @@ void TrackChunkNode::appendPointLine_(unsigned int i, const osg::Vec3f& local, c
   {
     centerPoints_->setVertex(i, local);
     centerPoints_->setColor(i, color);
-    centerPoints_->dirty();
     return;
   }
   // all other modes draw the line
   centerLine_->setVertex(i, local);
   centerLine_->setColor(i, color);
-  centerLine_->dirty();
 }
 
 void TrackChunkNode::appendBridge_(unsigned int i, const osg::Vec3f& local, const osg::Vec3d& world, const osg::Vec4& color)
@@ -299,7 +297,6 @@ void TrackChunkNode::appendBridge_(unsigned int i, const osg::Vec3f& local, cons
   drop_->setVertex(2*i+1, Math::ecefEarthPoint(convertToSim(world), world2local_));
   drop_->setColor(2*i, color);
   drop_->setColor(2*i+1, color);
-  drop_->dirty();
 }
 
 void TrackChunkNode::appendRibbon_(unsigned int i, const osg::Matrixd& localMatrix, const osg::Vec4& color, const osg::Vec2& hostBounds)
@@ -325,7 +322,6 @@ void TrackChunkNode::appendRibbon_(unsigned int i, const osg::Matrixd& localMatr
 
   for (unsigned int c = 0; c < 6; ++c)
     ribbon_->setColor(6*i+c, color);
-  ribbon_->dirty();
 }
 
 /// update the offset and count on each primitive set to draw the proper data.
