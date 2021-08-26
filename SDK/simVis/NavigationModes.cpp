@@ -593,4 +593,41 @@ void BuilderNavigationMode::init_(bool enableOverhead, bool watchMode)
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
 }
 
+// ==========================================================================
+
+NgtsNavigationMode::NgtsNavigationMode(simVis::View* view, bool enableOverhead, bool watchMode)
+  : RotatePanNavigationMode(view, enableOverhead, watchMode)
+{
+  if (enableOverhead)
+    initOverhead_();
+  else
+    initPerspective_();
+}
+
+NgtsNavigationMode::~NgtsNavigationMode()
+{
+}
+
+void NgtsNavigationMode::initOverhead_()
+{
+  // Just like normal SIMDIS behavior, except:
+  //   Left: Earth Drag
+  //   Shift+Left: Continuous Pan
+  //   Right: Continuous Zoom
+  bindMouse(EarthManipulator::ACTION_ZOOM, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON, 0, ContinuousZoomOptions());
+  bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+  bindMouse(EarthManipulator::ACTION_PAN, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_SHIFT, PanOptions());
+}
+
+void NgtsNavigationMode::initPerspective_()
+{
+  // Just like normal SIMDIS behavior, except:
+  //   Left: Earth Drag
+  //   Shift+Left: Continuous Rotate
+  //   Right: Continuous Rotate
+  bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+  bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_SHIFT, RotateOptions());
+  bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON, 0, RotateOptions());
+}
+
 }
