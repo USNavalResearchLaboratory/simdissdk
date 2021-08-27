@@ -445,6 +445,9 @@ public:
     traverse(node, nv);
   }
 
+protected:
+  ~SetRefYearCullCallback() {}
+
 private:
   simCore::TimeStamp currTime_;
 };
@@ -524,8 +527,6 @@ ScenarioManager::~ScenarioManager()
   // Do not delete surfaceClamping_ or surfaceLimiting_
   delete platformTspiFilterManager_;
   platformTspiFilterManager_ = nullptr;
-  delete refYearCallback_;
-  refYearCallback_ = nullptr;
   delete lobSurfaceClamping_;
   lobSurfaceClamping_ = nullptr;
   delete losCreator_;
