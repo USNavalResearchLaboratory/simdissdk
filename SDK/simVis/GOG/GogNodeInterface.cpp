@@ -49,6 +49,7 @@
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
+#include "simCore/Time/String.h"
 #include "simVis/Constants.h"
 #include "simVis/OverrideColor.h"
 #include "simVis/OverheadMode.h"
@@ -121,6 +122,44 @@ namespace {
 
 namespace simVis { namespace GOG {
 
+class TimeBoundsCallback : public osg::NodeCallback
+{
+public:
+  explicit TimeBoundsCallback(GogNodeInterface* parent)
+    : Callback(),
+      parent_(parent)
+  {
+  }
+
+  void operator()(osg::Node* node, osg::NodeVisitor* nv) override
+  {
+    int refYear;
+    double seconds;
+    // Defined in simVis/Scenario.cpp
+    bool hasTime = nv->getUserValue("simVis.ScenarioManager.RefYear", refYear);
+    hasTime = hasTime && nv->getUserValue("simVis.ScenarioManager.Seconds", seconds);
+
+    // Only attempt time culling if we have a valid time to compare to
+    if (hasTime && refYear >= 1970)
+    {
+      simCore::TimeStamp currTime(refYear, seconds);
+      simCore::TimeStamp start;
+      bool validStart = (parent_->shapeObject()->getStartTime(start) == 0);
+      simCore::TimeStamp end;
+      bool validEnd = (parent_->shapeObject()->getEndTime(end) == 0);
+      if ((validStart && currTime < start) || (validEnd && currTime > end))
+      {
+        // Returning without traversing here will cause the GOG node not to be drawn
+        return;
+      }
+    }
+    traverse(node, nv);
+  }
+
+private:
+  GogNodeInterface* parent_;
+};
+
 GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMetaData& metaData)
   : osgNode_(osgNode),
     metaData_(metaData),
@@ -140,7 +179,8 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     defaultTextSize_(15),
     defaultTextColor_(simVis::Color::Red),
     rangeUnits_(simCore::Units::YARDS),
-    opacity_(1.f)
+    opacity_(1.f),
+    timeCallback_(new TimeBoundsCallback(this))
 {
   if (osgNode_.valid())
   {
@@ -152,7 +192,15 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
 
     // flatten in overhead mode by default - subclass might change this
     simVis::OverheadMode::enableGeometryFlattening(true, osgNode_.get());
+
+    osgNode_->addCullCallback(timeCallback_);
   }
+}
+
+GogNodeInterface::~GogNodeInterface()
+{
+  if (osgNode_.valid())
+    osgNode_->removeCullCallback(timeCallback_);
 }
 
 const simCore::GOG::GogShape* GogNodeInterface::shapeObject() const

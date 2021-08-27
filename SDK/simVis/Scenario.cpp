@@ -21,6 +21,7 @@
  *
  */
 #include <algorithm>
+#include "osg/ValueObject"
 #include "osgEarth/GeoData"
 #include "osgEarth/Horizon"
 #include "osgEarth/NodeUtils"
@@ -30,6 +31,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Time/String.h"
 #include "simData/DataStore.h"
 
 #include "simVis/AlphaTest.h"
@@ -419,6 +421,36 @@ private:
 
 // -----------------------------------------------------------------------
 
+/**
+ * Cull callback that supplies a reference year in the NodeVisitor
+ * for time based culling. (requires OSG 3.4+)
+ */
+class ScenarioManager::SetRefYearCullCallback : public osg::NodeCallback
+{
+public:
+  SetRefYearCullCallback()
+  {
+  }
+
+  void setCurrTime(simCore::TimeStamp currTime)
+  {
+    currTime_ = currTime;
+  }
+
+  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv) override
+  {
+    // simCore::Timestamp can't be stored directly.  Separate it into constituent elements and recombine where needed
+    nv->setUserValue("simVis.ScenarioManager.RefYear", currTime_.referenceYear());
+    nv->setUserValue("simVis.ScenarioManager.Seconds", currTime_.secondsSinceRefYear().Double());
+    traverse(node, nv);
+  }
+
+private:
+  simCore::TimeStamp currTime_;
+};
+
+// -----------------------------------------------------------------------
+
 ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   : platformTspiFilterManager_(new PlatformTspiFilterManager()),
   surfaceClamping_(nullptr),
@@ -449,6 +481,9 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
 #endif
   SetHorizonCullCallback* setHorizon = new SetHorizonCullCallback(new osgEarth::Horizon(em));
   addCullCallback(setHorizon);
+
+  refYearCallback_ = new SetRefYearCullCallback();
+  addCullCallback(refYearCallback_);
 
   // Clamping requires a Group for MapNode changes
   surfaceClamping_ = new SurfaceClamping();
@@ -489,6 +524,8 @@ ScenarioManager::~ScenarioManager()
   // Do not delete surfaceClamping_ or surfaceLimiting_
   delete platformTspiFilterManager_;
   platformTspiFilterManager_ = nullptr;
+  delete refYearCallback_;
+  refYearCallback_ = nullptr;
   delete lobSurfaceClamping_;
   lobSurfaceClamping_ = nullptr;
   delete losCreator_;
@@ -1258,6 +1295,19 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
     }
     SAFETRYEND("updating scenario tools");
   }
+
+  if (ds->getBoundClock())
+  {
+    simCore::Clock* clock = ds->getBoundClock();
+    // Set the reference year for time based culling.  If the clock doesn't have valid bounds and isn't in live mode,
+    // set an invalid reference year to indicate no such culling should be done
+    if (clock->startTime() == simCore::MIN_TIME_STAMP && clock->endTime() == simCore::INFINITE_TIME_STAMP && clock->isLiveMode())
+      refYearCallback_->setCurrTime(simCore::INFINITE_TIME_STAMP);
+    else
+      refYearCallback_->setCurrTime(clock->currentTime());
+  }
+  else
+    refYearCallback_->setCurrTime(simCore::INFINITE_TIME_STAMP);
 
   if (needsRedraw)
   {

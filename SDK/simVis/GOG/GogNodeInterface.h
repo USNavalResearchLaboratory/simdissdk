@@ -103,7 +103,7 @@ public:
   GogNodeInterface(osg::Node* OverlayNode, const simVis::GOG::GogMetaData& metaData);
 
   /** Destructor */
-  virtual ~GogNodeInterface() {}
+  virtual ~GogNodeInterface();
 
   /** Get a pointer to the shape object, may be NULL */
   const simCore::GOG::GogShape* shapeObject() const;
@@ -537,6 +537,9 @@ private:
 
   /** listeners for updates */
   std::vector<GogNodeListenerPtr> listeners_;
+
+  /** Cull callback that hides GOGs with timestamps as needed */
+  osg::ref_ptr<osg::NodeCallback> timeCallback_;
 };
 
 /// Shared ptr wrapper for the GogNodeInterface object

@@ -387,6 +387,7 @@ protected:
   class AboveSurfaceClamping;
   class EntityRecord;
   class ScenarioLosCreator;
+  class SetRefYearCullCallback;
   class SimpleEntityGraph;
   class SurfaceClamping;
 
@@ -404,6 +405,8 @@ protected:
   osg::ref_ptr<SimpleEntityGraph> entityGraph_;
   /** Holds a map of all named attachment points added through getOrCreateAttachPoint(). */
   std::map<std::string, osg::observer_ptr<osg::Group> > customAttachPoints_;
+  /** Adds the reference year to cull callback for time based culling */
+  osg::ref_ptr<SetRefYearCullCallback> refYearCallback_;
 
   /** Observer to the current map */
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
