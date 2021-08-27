@@ -198,6 +198,8 @@ public:
   int getReferencePosition(simCore::Vec3& refPos) const;
   /// Set reference position for relative shapes
   void setReferencePosition(const simCore::Vec3& refPos);
+  /// Clear out the current reference position
+  void clearReferencePosition();
 
   /**
   * Get the scalar adjustment values for shape's the xyz components; if value is not set, default value is returned.
