@@ -440,16 +440,6 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
     resetRequested = true;
   }
 
-  // check for override color
-  if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, usetrackoverridecolor) || PB_FIELD_CHANGED(&lastPrefs, &prefs, trackoverridecolor))
-  {
-    resetRequested = true;
-    if (prefs.usetrackoverridecolor())
-      color_ = simVis::Color(prefs.trackoverridecolor(), simVis::Color::RGBA);
-    else
-      color_ = simVis::Color(timeTicks.color(), simVis::Color::RGBA);
-  }
-
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, flatmode))
   {
     updateFlatMode_(prefs.flatmode());
@@ -474,8 +464,8 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
       resetRequested = true;
   }
 
-  // use tick color if not overridden by track color
-  if ((force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, color)) && !prefs.usetrackoverridecolor())
+  // update the tick color
+  if (force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, color))
   {
     color_ = simVis::Color(timeTicks.color(), simVis::Color::RGBA);
     resetRequested = true;
