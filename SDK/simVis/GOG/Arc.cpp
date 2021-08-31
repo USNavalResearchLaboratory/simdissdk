@@ -56,8 +56,8 @@ Geometry* createDonut(const osg::Vec3d& center,
 
   double rM = radius.as(Units::METERS);
   double irM = innerRadius.as(Units::METERS);
-  // can't draw a donut if inner or outer radius is 0
-  if (rM <= 0. || irM <= 0)
+  // can't draw a donut if outer radius is <= 0 or inner radius is < 0
+  if (rM <= 0. || irM < 0.)
     return geom;
 
   // automatically calculate number of segments
@@ -65,9 +65,13 @@ Geometry* createDonut(const osg::Vec3d& center,
   double circumference = 2 * osg::PI * rM;
   unsigned int numSegments = static_cast<unsigned int>(ceil(circumference / segLen));
 
-  double innerSegLen = irM / 8.0;
-  double innerCircumference = 2 * osg::PI * irM;
-  unsigned int numInnerSegments = static_cast<unsigned int>(ceil(innerCircumference / innerSegLen));
+  unsigned int numInnerSegments = 1;
+  if (irM > 0.)
+  {
+    double innerSegLen = irM / 8.0;
+    double innerCircumference = 2 * osg::PI * irM;
+    numInnerSegments = static_cast<unsigned int>(ceil(innerCircumference / innerSegLen));
+  }
 
   double startRad = std::min(start.as(Units::RADIANS), end.as(Units::RADIANS));
   double endRad   = std::max(start.as(Units::RADIANS), end.as(Units::RADIANS));

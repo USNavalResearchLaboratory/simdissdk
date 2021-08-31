@@ -1025,10 +1025,10 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       double innerRadius = 0.;
       if (validateDouble_(parsed.stringValue(ShapeParameter::INNERRADIUS), "innerradius", name, parsed, innerRadius) == 0)
       {
-        if (innerRadius > 0.)
+        if (innerRadius >= 0.)
           arc->setInnerRadius(units.rangeUnits().convertTo(simCore::Units::METERS, innerRadius));
         else
-          printError_(parsed.filename(), parsed.lineNumber(), "innerradius must be greater than 0" + (name.empty() ? "" : " for " + name));
+          printError_(parsed.filename(), parsed.lineNumber(), "innerradius must be non-negative " + (name.empty() ? "" : " for " + name));
       }
     }
     rv.reset(arc.release());
