@@ -65,8 +65,13 @@ public:
   /** Returns the enabled flag. */
   bool isEnabled() const;
 
-  /** Factory method for creating an node based on prefs.  May return null if prefs can't be implemented using this path. */
-  osg::Node* getOrCreate(const simData::PlatformPrefs& prefs);
+  /**
+   * Factory method for creating an node based on prefs.  May return null if prefs can't be implemented using this path.
+   * Will set isImage to true only if the return value is non-null and the prefs specify an image URI. If the prefs are
+   * such that this class can't be used to optimize the icon, then this return is null. Loading icons in this manner is
+   * done in the main thread; the returned node is the actual icon, and not a proxy node (unlike ModelCache::asyncLoad()).
+   */
+  osg::Node* getOrCreate(const simData::PlatformPrefs& prefs, bool& isImage);
 
   /** Returns true if the icon needs to be reevaluated after new prefs apply. */
   bool hasRelevantChanges(const simData::PlatformPrefs& oldPrefs, const simData::PlatformPrefs& newPrefs) const;

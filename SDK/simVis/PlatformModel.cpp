@@ -847,7 +847,11 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   PlatformIconFactory* iconFactory = PlatformIconFactory::instance();
   if (!lastPrefsValid_ || iconFactory->hasRelevantChanges(lastPrefs_, prefs))
   {
-    osg::ref_ptr<osg::Node> newIcon = iconFactory->getOrCreate(prefs);
+    bool isImage = false;
+    // This is potentially a synchronous load of a 2D icon, which means we don't have to worry
+    // about thread interactions. If it succeeds and we need to change the icon, then the change
+    // is instantaneous. We'll have to update sizing cache values afterwards with setModel().
+    osg::ref_ptr<osg::Node> newIcon = iconFactory->getOrCreate(prefs, isImage);
 
     // Only need to make changes if the icon is different from the old one
     if (newIcon.get() != fastPathIcon_.get())
@@ -861,6 +865,8 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
       {
         fastPathIcon_->setNodeMask(getMask());
         imageIconXform_->addChild(fastPathIcon_.get());
+        // Need to call setModel() in order to trigger recompute on size, orientation, etc.
+        setModel(newIcon.get(), isImage);
       }
 
       // Either use the fast-path icon, or use the more featured, slower path in offsetXform_; don't use both

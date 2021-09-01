@@ -296,7 +296,7 @@ struct PlatformIconFactory::IconContainer
 class PlatformIconFactory::RemoveNotifier : public osg::Observer
 {
 public:
-  RemoveNotifier(PlatformIconFactory& factory)
+  explicit RemoveNotifier(PlatformIconFactory& factory)
     : factory_(factory)
   {
   }
@@ -357,9 +357,10 @@ void PlatformIconFactory::notifyRemove_(osg::Node* old)
     iconMap.erase(iter);
 }
 
-osg::Node* PlatformIconFactory::getOrCreate(const simData::PlatformPrefs& prefs)
+osg::Node* PlatformIconFactory::getOrCreate(const simData::PlatformPrefs& prefs, bool& isImage)
 {
   // If we can't apply based on a settings in the prefs, then exit early
+  isImage = false;
   if (!canApply_(prefs))
     return nullptr;
 
@@ -375,9 +376,9 @@ osg::Node* PlatformIconFactory::getOrCreate(const simData::PlatformPrefs& prefs)
       return iter->second.get();
   }
 
-  // Attempt to load the model node from registry
-  bool isImage = false;
-  // We can only optimize image icons in this way
+  // Attempt to load the model node from registry; we can only optimize image icons in this way.
+  // This call is not threaded, and does not go to the paging node in order to load the icon.
+  // It loads in the main thread, and the returned model node is the actual node, not a proxy.
   osg::ref_ptr<osg::Node> modelNode = simVis::Registry::instance()->getOrCreateIconModel(mergeSettings.icon(), &isImage);
   if (!isImage || !modelNode)
     return nullptr;
