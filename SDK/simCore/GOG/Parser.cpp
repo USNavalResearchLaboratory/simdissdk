@@ -1025,10 +1025,10 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       double innerRadius = 0.;
       if (validateDouble_(parsed.stringValue(ShapeParameter::INNERRADIUS), "innerradius", name, parsed, innerRadius) == 0)
       {
-        if (innerRadius > 0.)
+        if (innerRadius >= 0.)
           arc->setInnerRadius(units.rangeUnits().convertTo(simCore::Units::METERS, innerRadius));
         else
-          printError_(parsed.filename(), parsed.lineNumber(), "innerradius must be greater than 0" + (name.empty() ? "" : " for " + name));
+          printError_(parsed.filename(), parsed.lineNumber(), "innerradius must be non-negative " + (name.empty() ? "" : " for " + name));
       }
     }
     rv.reset(arc.release());
@@ -1284,7 +1284,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     if (hasStart)
     {
       validStart = (formatter.fromString(parsed.stringValue(ShapeParameter::TIME_START), startTime, 1970) == 0);
-      if (validStart)
+      if (!validStart)
         printError_(parsed.filename(), parsed.lineNumber(), "Invalid start time: \"" + parsed.stringValue(ShapeParameter::TIME_START) + "\"");
     }
 
@@ -1293,7 +1293,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     if (hasEnd)
     {
       validEnd = (formatter.fromString(parsed.stringValue(ShapeParameter::TIME_END), endTime, 1970) == 0);
-      if (validEnd)
+      if (!validEnd)
         printError_(parsed.filename(), parsed.lineNumber(), "Invalid end time: \"" + parsed.stringValue(ShapeParameter::TIME_END) + "\"");
     }
 

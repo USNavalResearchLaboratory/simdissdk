@@ -184,6 +184,7 @@ private: // data
   simData::PlatformProperties lastPlatformProps_;
   unsigned int        chunkSize_;
   osg::Vec4f          color_;
+  osg::Vec4f          textColor_;
   unsigned int        totalPoints_;
 
   /// keep track of the single point state which may initiate a reset

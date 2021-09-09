@@ -76,8 +76,8 @@ public:
   /**
    * Gets or loads a node that represents the specified icon.  The result will either be a 3D
    * model or a billboard icon.  The icon is loaded synchronously.  The URI is passed directly
-   * to osgDB::readRefNodeFile(), so use simVis::Registry::findModelFile() is recommended
-   * before calling this method.
+   * to osgDB::readRefNodeFile(), so using simVis::Registry::findModelFile() is recommended
+   * before calling this method to avoid an osgDB file search.
    *
    * This call is synchronous and can impact the frame rate for models that take a long time to
    * load or optimize.  For asynchronous loading, see asyncLoad().

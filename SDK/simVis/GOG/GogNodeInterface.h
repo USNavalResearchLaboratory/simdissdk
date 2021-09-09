@@ -103,7 +103,7 @@ public:
   GogNodeInterface(osg::Node* OverlayNode, const simVis::GOG::GogMetaData& metaData);
 
   /** Destructor */
-  virtual ~GogNodeInterface() {}
+  virtual ~GogNodeInterface();
 
   /** Get a pointer to the shape object, may be NULL */
   const simCore::GOG::GogShape* shapeObject() const;
@@ -402,7 +402,7 @@ public:
   /// Set flag indicating if shape's yaw component is locked to a reference orientation
   void setFollowYaw(bool follow);
   /// Set flag indicating if shape's pitch component is locked to a reference orientation
-  void setFolloPitch(bool follow);
+  void setFollowPitch(bool follow);
   /// Set flag indicating if shape's roll component is locked to a reference orientation
   void setFollowRoll(bool follow);
 
@@ -412,7 +412,6 @@ public:
   void setPitchOffset(double offsetRad);
   /// Set the roll angular offset from a reference orientation in radians
   void setRollOffset(double offsetRad);
-
 
   /** Return the starting line number from the source GOG file*/
   size_t lineNumber() const;
@@ -480,6 +479,9 @@ protected: // methods
   /** Helper method for initializing hasMapNode_ and altitude_ from the specified GeoPosition node. */
   void initializeFromGeoPositionNode_(const osgEarth::GeoPositionNode& node);
 
+  /** Apply current orientation offsets to the node's local rotation, if applicable */
+  virtual void applyOrientationOffsets_() = 0;
+
 protected: // data
   osg::ref_ptr<osg::Node> osgNode_;  ///< reference to the basic osg::Node. Keep in ref_ptr so this instance will hold on the memory even if it's removed from the scene
   simVis::GOG::GogMetaData metaData_;  ///< meta data returned by the Parser
@@ -537,6 +539,9 @@ private:
 
   /** listeners for updates */
   std::vector<GogNodeListenerPtr> listeners_;
+
+  /** Cull callback that hides GOGs with timestamps as needed */
+  osg::ref_ptr<osg::NodeCallback> timeCallback_;
 };
 
 /// Shared ptr wrapper for the GogNodeInterface object
@@ -557,6 +562,7 @@ protected:
   virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
+  virtual void applyOrientationOffsets_();
 
 private:
   osg::observer_ptr<osgEarth::AnnotationNode> annotationNode_;
@@ -584,6 +590,7 @@ protected:
   virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
+  virtual void applyOrientationOffsets_();
 
   osg::observer_ptr<osgEarth::FeatureNode> featureNode_;
   /// cache the original altitude values, to apply altitude offset dynamically
@@ -610,6 +617,7 @@ protected:
   virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
+  virtual void applyOrientationOffsets_();
 
   /** LocalGeometryNode that this interface represents */
   osg::observer_ptr<osgEarth::LocalGeometryNode> localNode_;
@@ -632,6 +640,7 @@ public:
   virtual void setFont(const std::string& fontName, int fontSize, const osg::Vec4f& color);
   virtual void setTextOutline(const osg::Vec4f& outlineColor, simData::TextOutline outlineThickness);
   virtual void setDeclutterPriority(int priority);
+  virtual void applyOrientationOffsets_();
 
 protected:
   virtual void adjustAltitude_();
@@ -661,6 +670,7 @@ public:
   virtual ~CylinderNodeInterface();
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = nullptr) const;
   virtual void setAltitudeMode(AltitudeMode altMode);
+  virtual void applyOrientationOffsets_();
 
 protected:
   virtual void adjustAltitude_();
@@ -694,6 +704,7 @@ protected:
   virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
+  virtual void applyOrientationOffsets_();
 
 private:
   osg::observer_ptr<osgEarth::LocalGeometryNode> shapeNode_; ///< draws the arc
@@ -756,6 +767,7 @@ protected:
   virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
+  virtual void applyOrientationOffsets_();
 
 private:
   osg::observer_ptr<osgEarth::ImageOverlay> imageNode_;

@@ -49,6 +49,7 @@
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
+#include "simCore/Time/String.h"
 #include "simVis/Constants.h"
 #include "simVis/OverrideColor.h"
 #include "simVis/OverheadMode.h"
@@ -117,9 +118,65 @@ namespace {
     position = osg::Vec3d(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, llaCoord.alt());
     return 0;
   }
+
+  /// Apply the orientation offsets from the specified shape to the local rotation of the specified node
+  void applyOrientationOffsetsToNode_(const simCore::GOG::GogShape& shape, osgEarth::LocalGeometryNode* node)
+  {
+    if (node == nullptr)
+      return;
+
+    double yawOffset = 0.;
+    shape.getYawOffset(yawOffset);
+    osg::Quat yaw(yawOffset, -osg::Vec3(0, 0, 1));
+    double pitchOffset = 0.;
+    shape.getPitchOffset(pitchOffset);
+    osg::Quat pitch(pitchOffset, osg::Vec3(1, 0, 0));
+    double rollOffset = 0.;
+      shape.getRollOffset(rollOffset);
+    osg::Quat roll(rollOffset, osg::Vec3(0, 1, 0));
+    node->setLocalRotation(roll * pitch * yaw);
+  }
 }
 
 namespace simVis { namespace GOG {
+
+class TimeBoundsCallback : public osg::NodeCallback
+{
+public:
+  explicit TimeBoundsCallback(GogNodeInterface* parent)
+    : Callback(),
+      parent_(parent)
+  {
+  }
+
+  void operator()(osg::Node* node, osg::NodeVisitor* nv) override
+  {
+    int refYear;
+    double seconds;
+    // Defined in simVis/Scenario.cpp
+    bool hasTime = nv->getUserValue("simVis.ScenarioManager.RefYear", refYear);
+    hasTime = hasTime && nv->getUserValue("simVis.ScenarioManager.Seconds", seconds);
+
+    // Only attempt time culling if we have a valid time to compare to
+    if (hasTime && refYear >= 1970 && parent_ && parent_->shapeObject())
+    {
+      simCore::TimeStamp currTime(refYear, seconds);
+      simCore::TimeStamp start;
+      bool validStart = (parent_->shapeObject()->getStartTime(start) == 0);
+      simCore::TimeStamp end;
+      bool validEnd = (parent_->shapeObject()->getEndTime(end) == 0);
+      if ((validStart && currTime < start) || (validEnd && currTime > end))
+      {
+        // Returning without traversing here will cause the GOG node not to be drawn
+        return;
+      }
+    }
+    traverse(node, nv);
+  }
+
+private:
+  GogNodeInterface* parent_;
+};
 
 GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMetaData& metaData)
   : osgNode_(osgNode),
@@ -140,7 +197,8 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     defaultTextSize_(15),
     defaultTextColor_(simVis::Color::Red),
     rangeUnits_(simCore::Units::YARDS),
-    opacity_(1.f)
+    opacity_(1.f),
+    timeCallback_(new TimeBoundsCallback(this))
 {
   if (osgNode_.valid())
   {
@@ -152,7 +210,15 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
 
     // flatten in overhead mode by default - subclass might change this
     simVis::OverheadMode::enableGeometryFlattening(true, osgNode_.get());
+
+    osgNode_->addCullCallback(timeCallback_);
   }
+}
+
+GogNodeInterface::~GogNodeInterface()
+{
+  if (osgNode_.valid())
+    osgNode_->removeCullCallback(timeCallback_);
 }
 
 const simCore::GOG::GogShape* GogNodeInterface::shapeObject() const
@@ -286,6 +352,20 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   endStyleUpdates_();
   setStyle_(style_);
   shape_ = shape;
+
+  // set orientation offsets, only for relative shapes, after shape is defined
+  if (shape->isRelative())
+  {
+    double yawOffset = 0.;
+    if (shape->getYawOffset(yawOffset) == 0)
+      setYawOffset(yawOffset);
+    double pitchOffset = 0.;
+    if (shape->getPitchOffset(pitchOffset) == 0)
+      setPitchOffset(pitchOffset);
+    double rollOffset = 0.;
+    if (shape->getRollOffset(rollOffset) == 0)
+      setRollOffset(rollOffset);
+  }
 }
 
 void GogNodeInterface::setDefaultFont(const std::string& fontName)
@@ -517,7 +597,7 @@ void GogNodeInterface::setFollowYaw(bool follow)
     shape_->setFollowYaw(follow);
 }
 
-void GogNodeInterface::setFolloPitch(bool follow)
+void GogNodeInterface::setFollowPitch(bool follow)
 {
   if (shape_)
     shape_->setFollowPitch(follow);
@@ -531,20 +611,29 @@ void GogNodeInterface::setFollowRoll(bool follow)
 
 void GogNodeInterface::setYawOffset(double offsetRad)
 {
-  if (shape_)
-    shape_->setYawOffset(offsetRad);
+  if (!shape_)
+    return;
+  shape_->setYawOffset(offsetRad);
+  if (shape_->isRelative())
+    applyOrientationOffsets_();
 }
 
 void GogNodeInterface::setPitchOffset(double offsetRad)
 {
-  if (shape_)
-    shape_->setPitchOffset(offsetRad);
+  if (!shape_)
+    return;
+  shape_->setPitchOffset(offsetRad);
+  if (shape_->isRelative())
+    applyOrientationOffsets_();
 }
 
 void GogNodeInterface::setRollOffset(double offsetRad)
 {
-  if (shape_)
-    shape_->setRollOffset(offsetRad);
+  if (!shape_)
+    return;
+  shape_->setRollOffset(offsetRad);
+  if (shape_->isRelative())
+    applyOrientationOffsets_();
 }
 
 size_t GogNodeInterface::lineNumber() const
@@ -1578,6 +1667,11 @@ void AnnotationNodeInterface::setStyle_(const osgEarth::Style& style)
     annotationNode_->setStyle(style);
 }
 
+void AnnotationNodeInterface::applyOrientationOffsets_()
+{
+  // no-op
+}
+
 ///////////////////////////////////////////////////////////////////
 
 FeatureNodeInterface::FeatureNodeInterface(osgEarth::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData)
@@ -1910,6 +2004,11 @@ void FeatureNodeInterface::init_()
   initializeLineColor_();
 }
 
+void FeatureNodeInterface::applyOrientationOffsets_()
+{
+  // no-op, this class does not implement relative shapes
+}
+
 ///////////////////////////////////////////////////////////////////
 
 LocalGeometryNodeInterface::LocalGeometryNodeInterface(osgEarth::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData)
@@ -1978,6 +2077,13 @@ void LocalGeometryNodeInterface::setStyle_(const osgEarth::Style& style)
     return;
   if (localNode_.valid())
     localNode_->setStyle(style_);
+}
+
+void LocalGeometryNodeInterface::applyOrientationOffsets_()
+{
+  if (!shapeObject() || !shapeObject()->isRelative())
+    return;
+  applyOrientationOffsetsToNode_(*shapeObject(), localNode_.get());
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -2146,6 +2252,11 @@ void LabelNodeInterface::setStyle_(const osgEarth::Style& style)
     labelNode_->setStyle(style_);
 }
 
+void LabelNodeInterface::applyOrientationOffsets_()
+{
+  // no-op, labels don't respect orientation offsets
+}
+
 //////////////////////////////////////////////
 
 CylinderNodeInterface::CylinderNodeInterface(osg::Group* groupNode, osgEarth::LocalGeometryNode* sideNode, osgEarth::LocalGeometryNode* topCapNode, osgEarth::LocalGeometryNode* bottomCapNode, const simVis::GOG::GogMetaData& metaData)
@@ -2243,6 +2354,15 @@ void CylinderNodeInterface::setStyle_(const osgEarth::Style& style)
   bottomCapNode_->setStyle(style_);
 }
 
+void CylinderNodeInterface::applyOrientationOffsets_()
+{
+  if (!shapeObject() || !shapeObject()->isRelative())
+    return;
+  applyOrientationOffsetsToNode_(*shapeObject(), topCapNode_.get());
+  applyOrientationOffsetsToNode_(*shapeObject(), bottomCapNode_.get());
+  applyOrientationOffsetsToNode_(*shapeObject(), sideNode_.get());
+}
+
 //////////////////////////////////////////////
 
 ArcNodeInterface::ArcNodeInterface(osg::Group* groupNode, osgEarth::LocalGeometryNode* shapeNode, osgEarth::LocalGeometryNode* fillNode, const simVis::GOG::GogMetaData& metaData)
@@ -2333,6 +2453,14 @@ void ArcNodeInterface::setStyle_(const osgEarth::Style& style)
   osgEarth::Style fillStyle = style_;
   fillStyle.remove<osgEarth::LineSymbol>();
   fillNode_->setStyle(fillStyle);
+}
+
+void ArcNodeInterface::applyOrientationOffsets_()
+{
+  if (!shapeObject() || !shapeObject()->isRelative())
+    return;
+  applyOrientationOffsetsToNode_(*shapeObject(), shapeNode_.get());
+  applyOrientationOffsetsToNode_(*shapeObject(), fillNode_.get());
 }
 
 SphericalNodeInterface::SphericalNodeInterface(osgEarth::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData)
@@ -2563,6 +2691,11 @@ void ImageOverlayInterface::serializeGeometry_(bool relativeShape, std::ostream&
 void ImageOverlayInterface::setStyle_(const osgEarth::Style& style)
 {
   // no-op, can't update style
+}
+
+void ImageOverlayInterface::applyOrientationOffsets_()
+{
+  // no-op, this class does not implement relative shapes
 }
 
 LatLonAltBoxInterface::LatLonAltBoxInterface(osg::Group* node, osgEarth::FeatureNode* topNode, osgEarth::FeatureNode* bottomNode, const simVis::GOG::GogMetaData& metaData)

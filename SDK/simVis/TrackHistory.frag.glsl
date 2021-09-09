@@ -12,6 +12,9 @@ void simvis_track_fragment(inout vec4 color)
   if (simvis_track_enable)
   {
     color.rgb = simvis_track_overridecolor.rgb;
-    color.a *= simvis_track_overridecolor.a;
+    if (color.a > 0.01)
+      color.a = simvis_track_overridecolor.a;
+    else
+      color.a *= simvis_track_overridecolor.a;
   }
 }

@@ -2218,6 +2218,39 @@ int testTimeStrings()
   return rv;
 }
 
+int testReferencePositionField()
+{
+  int rv = 0;
+
+  simCore::GOG::Line line(false);
+  simCore::Vec3 refPoint(1, 2, 3);
+  line.setReferencePosition(refPoint);
+  simCore::Vec3 setRefPoint;
+  // ref position should not be set when shape is absolute
+  rv += SDK_ASSERT(line.getReferencePosition(setRefPoint) != 0);
+  rv += SDK_ASSERT(setRefPoint != refPoint);
+  line.setRelative(true);
+  line.setReferencePosition(refPoint);
+  // ref position should now be set successfully since shape is relative
+  rv += SDK_ASSERT(line.getReferencePosition(setRefPoint) == 0);
+  rv += SDK_ASSERT(setRefPoint == refPoint);
+  line.clearReferencePosition();
+  // clearing ref position should work, even when relative
+  rv += SDK_ASSERT(line.getReferencePosition(setRefPoint) != 0);
+  rv += SDK_ASSERT(setRefPoint != refPoint);
+
+  line.setReferencePosition(refPoint);
+  // verify ref position set successfully again
+  rv += SDK_ASSERT(line.getReferencePosition(setRefPoint) == 0);
+  rv += SDK_ASSERT(setRefPoint == refPoint);
+  line.setRelative(false);
+  // ref position should be cleared when shape was set to absolute
+  rv += SDK_ASSERT(line.getReferencePosition(setRefPoint) != 0);
+  rv += SDK_ASSERT(setRefPoint != refPoint);
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -2241,6 +2274,7 @@ int GogTest(int argc, char* argv[])
   rv += testDoublesToInts();
   rv += testLineWidthStrings();
   rv += testTimeStrings();
+  rv += testReferencePositionField();
 
   return rv;
 }

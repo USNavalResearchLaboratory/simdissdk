@@ -411,6 +411,7 @@ private:
     // Apply rendering hints to the new node, appropriate for 2D images
     if (result.valid())
     {
+      result->setName(filename);
       osg::StateSet* stateSet = result->getOrCreateStateSet();
       // As per SIMSDK-157, blending needs to be on to avoid jaggies
       stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
@@ -428,6 +429,8 @@ private:
     // Need to apply a sequence time fix for osg::Sequence to deal with decreasing simulation times
     if (result.valid())
     {
+      result->setName(filename);
+
       osg::ref_ptr<SequenceTimeUpdater> seqUpdater;
       if (options && options->sequenceTimeUpdater.lock(seqUpdater))
       {

@@ -153,7 +153,7 @@ private:
 #ifdef HAVE_IMGUI
 struct TestPanel : public GUI::BaseGui
 {
-  TestPanel(ViewerApp& app)
+  explicit TestPanel(ViewerApp& app)
     : GUI::BaseGui("Simple Server SDK Example"),
     app_(app)
   {
@@ -164,11 +164,6 @@ struct TestPanel : public GUI::BaseGui
     ImGui::SetNextWindowPos(ImVec2(15, 15));
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
-
-    auto& io = ImGui::GetIO();
-    const auto& fonts = io.Fonts->Fonts;
-    ImGui::PushFont(fonts.back());
-    bool popFont = true;
 
     ImGui::Text("c : Cycle centered platform");
     ImGui::Text("C : Toggle overhead clamping");
@@ -185,9 +180,7 @@ struct TestPanel : public GUI::BaseGui
     ImGui::Text("w : Toggle compass");
     ImGui::Text("z : Toggle cockpit mode (if centered)");
 
-    if (popFont)
-      ImGui::PopFont();
-
+    auto& io = ImGui::GetIO();
     if (io.InputQueueCharacters.size() > 0)
     {
       switch (io.InputQueueCharacters.front())

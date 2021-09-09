@@ -50,6 +50,8 @@ namespace simVis {
  * be encapsulated in a BillboardAutoTransform (managed externally) for correct icon orientations.
  *
  * A singleton is provided for convenience, since most access will want to access the same factory.
+ *
+ * This factory can only create and return 2-D images.
  */
 class SDKVIS_EXPORT PlatformIconFactory
 {
@@ -65,7 +67,12 @@ public:
   /** Returns the enabled flag. */
   bool isEnabled() const;
 
-  /** Factory method for creating an node based on prefs.  May return null if prefs can't be implemented using this path. */
+  /**
+   * Factory method for creating an node based on prefs.  May return null if prefs can't be implemented using
+   * this path. If the prefs are such that this class can't be used to optimize the icon, then this return is
+   * null. Loading icons in this manner is done in the main thread; the returned node is the actual icon, and
+   * not a proxy node (unlike ModelCache::asyncLoad()). This method can only return 2D images.
+   */
   osg::Node* getOrCreate(const simData::PlatformPrefs& prefs);
 
   /** Returns true if the icon needs to be reevaluated after new prefs apply. */

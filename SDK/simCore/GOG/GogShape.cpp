@@ -132,9 +132,13 @@ int GogShape::getReferencePosition(simCore::Vec3& refPos) const
 void GogShape::setReferencePosition(const simCore::Vec3& refPos)
 {
   // reference position is only valid for relative shapes
-  if (!relative_)
-    return;
-  referencePosition_ = refPos;
+  if (relative_)
+    referencePosition_ = refPos;
+}
+
+void GogShape::clearReferencePosition()
+{
+  referencePosition_.reset();
 }
 
 int GogShape::getScale(simCore::Vec3& scale) const
@@ -494,6 +498,9 @@ void GogShape::setCanFollow_(bool canFollow)
 void GogShape::setRelative(bool relative)
 {
   relative_ = relative;
+  // clear out reference position if no longer a relative shape
+  if (!relative && referencePosition_.has_value())
+    referencePosition_.reset();
 }
 
 void GogShape::setSerializeName_(bool serializeName)
