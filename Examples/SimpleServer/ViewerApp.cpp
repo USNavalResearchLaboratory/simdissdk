@@ -28,6 +28,7 @@
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
 #endif
+#include "simCore/GOG/Parser.h"
 #include "simCore/String/UtfUtils.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Time/Utils.h"
@@ -46,7 +47,7 @@
 #include "simVis/ViewManagerLogDbAdapter.h"
 #include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GogNodeInterface.h"
-#include "simVis/GOG/Parser.h"
+#include "simVis/GOG/Loader.h"
 #include "simUtil/DefaultDataStoreValues.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/HudManager.h"
@@ -562,22 +563,20 @@ int ViewerApp::loadGog_(const std::string& filename)
   if (found.empty())
     return 1;
 
-  simVis::GOG::Parser::OverlayNodeVector gogs;
-  std::vector<simVis::GOG::GogFollowData> followData;
-  simVis::GOG::Parser parser(sceneManager_->getMapNode());
-  // sets a default reference location for relative GOGs
-  parser.setReferenceLocation(simVis::GOG::BSTUR);
-
   // Load the GOG
   std::ifstream is(simCore::streamFixUtf8(found));
   if (!is.is_open())
     return 1;
-  if (parser.loadGOGs(is, simVis::GOG::GOGNODE_GEOGRAPHIC, gogs, followData))
-  {
-    for (simVis::GOG::Parser::OverlayNodeVector::const_iterator i = gogs.begin(); i != gogs.end(); ++i)
-      sceneManager_->getScenario()->addChild((*i)->osgNode());
-    return 0;
-  }
+
+  simCore::GOG::Parser parser;
+  simVis::GOG::Loader loader(parser, sceneManager_->getMapNode());
+  loader.setReferencePosition(simVis::GOG::BSTUR.position());
+
+  simVis::GOG::Loader::GogNodeVector gogs;
+  loader.loadGogs(is, filename, false, gogs);
+  for (auto gog : gogs)
+    sceneManager_->getScenario()->addChild(gog->osgNode());
+
   return 1;
 }
 
