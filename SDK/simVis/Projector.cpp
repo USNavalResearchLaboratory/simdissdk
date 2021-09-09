@@ -20,7 +20,7 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Geode"
+#include "osg/Geometry"
 #include "osg/ImageStream"
 #include "osg/MatrixTransform"
 #include "osg/Notify"
@@ -55,14 +55,12 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
   // (NOTE: some of this code is borrowed from OSG's osgthirdpersonview example)
   void makeFrustum(const osg::Matrixd& proj, const osg::Matrixd& mv, osg::MatrixTransform* mt)
   {
-    osg::ref_ptr<osg::Geode> geode;
     osg::ref_ptr<osg::Geometry> geom;
     osg::ref_ptr<osg::Vec3Array> v;
 
     if (mt->getNumChildren() > 0)
     {
-      geode = dynamic_cast<osg::Geode*>(mt->getChild(0));
-      geom = geode->getDrawable(0)->asGeometry();
+      geom = dynamic_cast<osg::Geometry*>(mt->getChild(0));
       v = dynamic_cast<osg::Vec3Array*>(geom->getVertexArray());
     }
     else
@@ -84,11 +82,9 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
       geom->addPrimitiveSet(new osg::DrawElementsUByte(osg::PrimitiveSet::LINE_LOOP, 4, idxLoops0));
       geom->addPrimitiveSet(new osg::DrawElementsUByte(osg::PrimitiveSet::LINE_LOOP, 4, idxLoops1));
 
-      geode = new osg::Geode();
-      geode->addDrawable(geom.get());
-      simVis::setLighting(geode->getOrCreateStateSet(), osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
+      simVis::setLighting(geom->getOrCreateStateSet(), osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
 
-      mt->addChild(geode.get());
+      mt->addChild(geom.get());
     }
 
     // Get near and far from the Projection matrix.
