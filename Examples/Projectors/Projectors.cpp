@@ -79,6 +79,8 @@ static const std::string s_viewPlatformTwo =
 " 2 : reset view on platform 2 (Varying FOV)";
 static const std::string s_viewPlatformThree =
 " 3 : reset view on platform 3 (Platform projection target)";
+static const std::string s_viewPlatformFour =
+" 4 : reset view on platform 4 (Stationary)";
 
 /// keep a handle, for toggling
 static osg::ref_ptr<Control> s_helpControl;
@@ -95,6 +97,7 @@ static Control* createHelp()
   vbox->addControl(new LabelControl(s_viewPlatformOne, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_viewPlatformTwo, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_viewPlatformThree, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_viewPlatformFour, 14, simVis::Color::Silver));
   s_helpControl = vbox;
   return vbox;
 }
@@ -105,6 +108,8 @@ simData::ObjectId projectorId_0;
 simData::ObjectId platformId_1;
 simData::ObjectId projectorId_1;
 simData::ObjectId platformId_2;
+simData::ObjectId projectorId_3;
+simData::ObjectId platformId_3;
 
 //----------------------------------------------------------------------------
 /// event handler for keyboard commands to alter symbology at runtime
@@ -221,6 +226,9 @@ struct MenuHandler : public osgGA::GUIEventHandler
         break;
       case '3':
         handled = tetherView(platformId_2);
+        break;
+      case '4':
+        handled = tetherView(platformId_3);
         break;
       case 'i':
         toggleInterpolate();
@@ -415,37 +423,48 @@ int main(int argc, char **argv)
     vehicle_2->acceptProjector(projector_0.get());
   }
 
+  /// platform that shines on Hawaii
+  platformId_3 = addPlatform(dataStore);
+  osg::ref_ptr<simVis::EntityNode> vehicle_3 = scenario->find(platformId_3);
+  projectorId_3 = addProjector(scenario.get(), vehicle_3->getId(), dataStore, imageURL, false);
+
   /// connect them and add some additional settings
   configurePrefs(platformId_0, 2.0, scenario.get());
   configurePrefs(platformId_1, 1.0, scenario.get());
   configurePrefs(platformId_2, 12.0, scenario.get());
+  configurePrefs(platformId_3, 1.0, scenario.get());
 
   /// simulator will compute time-based updates for the platforms
   osg::ref_ptr<simUtil::PlatformSimulator> sim_0 = new simUtil::PlatformSimulator(platformId_0);
   osg::ref_ptr<simUtil::PlatformSimulator> sim_1 = new simUtil::PlatformSimulator(platformId_1);
   osg::ref_ptr<simUtil::PlatformSimulator> sim_2 = new simUtil::PlatformSimulator(platformId_2);
+  osg::ref_ptr<simUtil::PlatformSimulator> sim_3 = new simUtil::PlatformSimulator(platformId_3);
 
   /// create some waypoints (lat, lon, alt, duration)
-  sim_0->addWaypoint(simUtil::Waypoint(0.0, 0.0, 265000, 40.0));
-  sim_0->addWaypoint(simUtil::Waypoint(60.0, 0.0, 265000, 40.0));
+  sim_0->addWaypoint(simUtil::Waypoint(0.0, -159.0, 265000, 40.0));
+  sim_0->addWaypoint(simUtil::Waypoint(60.0, -159.0, 265000, 40.0));
   sim_0->setSimulateRoll(false);
   sim_0->setSimulatePitch(true);
 
-  sim_1->addWaypoint(simUtil::Waypoint(0.0, -90.0, 120000, 20.0));
-  sim_1->addWaypoint(simUtil::Waypoint(0.0,  60.0, 120000, 20.0));
-  sim_1->addWaypoint(simUtil::Waypoint(0.0, 180.0, 120000, 20.0));
+  sim_1->addWaypoint(simUtil::Waypoint(20.0, -90.0, 120000, 20.0));
+  sim_1->addWaypoint(simUtil::Waypoint(20.0,  60.0, 120000, 20.0));
+  sim_1->addWaypoint(simUtil::Waypoint(20.0, 180.0, 120000, 20.0));
   sim_1->setSimulateRoll(false);
   sim_1->setSimulatePitch(false);
 
   /// flies just ahead of platform 1 so it can get projected upon
-  sim_2->addWaypoint(simUtil::Waypoint(1.0, 0.0, 225000, 40.0));
-  sim_2->addWaypoint(simUtil::Waypoint(61.0, 0.0, 225000, 40.0));
+  sim_2->addWaypoint(simUtil::Waypoint(1.0, -159.0, 225000, 40.0));
+  sim_2->addWaypoint(simUtil::Waypoint(61.0, -159.0, 225000, 40.0));
+
+  /// just sits there pointing at Hawaii
+  sim_3->addWaypoint(simUtil::Waypoint(20.0, -159.0, 1000000, -89.9, 0.0, 1.0));
 
   /// Install frame update handler that will update track positions over time.
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
   simMgr->addSimulator(sim_0.get());
   simMgr->addSimulator(sim_1.get());
   simMgr->addSimulator(sim_2.get());
+  simMgr->addSimulator(sim_3.get());
   simMgr->simulate(0.0, 120.0, 60.0);
 
   /// Attach the simulation updater to OSG timer events

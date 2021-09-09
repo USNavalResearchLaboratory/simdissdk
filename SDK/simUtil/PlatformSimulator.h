@@ -24,6 +24,7 @@
 #define SIMUTIL_PLATFORM_SIMULATOR_H
 
 #include "simCore/Common/Common.h"
+#include "simCore/Common/Optional.h"
 #include "simCore/Calc/Math.h"
 #include "simData/ObjectId.h"
 #include "simData/DataTypes.h"
@@ -49,11 +50,21 @@ public:
     : lat_deg_(lat_deg), lon_deg_(lon_deg), alt_m_(alt_m), duration_s_(duration_s)
   {
   }
+  /// Construct a waypoint with position, attitude and duration
+  Waypoint(double lat_deg, double lon_deg, double alt_m, double pitch_deg, double roll_deg, float duration_s)
+    : lat_deg_(lat_deg), lon_deg_(lon_deg), alt_m_(alt_m), duration_s_(duration_s)
+  {
+    pitch_deg_ = pitch_deg;
+    roll_deg_ = roll_deg;
+  }
 
   double lat_deg_;    ///< Latitude, in degrees
   double lon_deg_;    ///< Longitude, in degrees
   double alt_m_;      ///< Altitude, in degrees
   double duration_s_; ///< How long to take to get there
+
+  simCore::Optional<double> pitch_deg_; ///< Pitch in degrees
+  simCore::Optional<double> roll_deg_; ///< Roll in degrees
 };
 typedef std::deque<Waypoint> Waypoints; ///< a queue of Waypoints
 
