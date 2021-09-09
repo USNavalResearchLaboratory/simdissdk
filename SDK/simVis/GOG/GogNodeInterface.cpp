@@ -158,7 +158,7 @@ public:
     hasTime = hasTime && nv->getUserValue("simVis.ScenarioManager.Seconds", seconds);
 
     // Only attempt time culling if we have a valid time to compare to
-    if (hasTime && refYear >= 1970)
+    if (hasTime && refYear >= 1970 && parent_ && parent_->shapeObject())
     {
       simCore::TimeStamp currTime(refYear, seconds);
       simCore::TimeStamp start;
