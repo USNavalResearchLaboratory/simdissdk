@@ -201,8 +201,14 @@ private:
 
   /// May changes the model based on prefs and returns true if the model was changed
   bool updateModel_(const simData::PlatformPrefs& prefs);
-  /// Called by updateModel_() to try to update the fast-path icon; returns true if model was changed
-  bool updateFastPathModel_(const simData::PlatformPrefs& prefs);
+  enum ModelUpdate
+  {
+    NO_UPDATE,  ///< No further update required, model is correctly set
+    FORCE_UPDATE, ///< Continue processing to force an update of the model
+    CHECK_FOR_UPDATE,  ///< Check preferences to see if the model should be updated
+  };
+  /// Called by updateModel_() to try to update the fast-path icon; returns if the model was updated or if more processing is needed
+  ModelUpdate updateFastPathModel_(const simData::PlatformPrefs& prefs);
   /// Updates the orientation offset  based on prefs or if force is set true; returns true if changed
   bool updateOffsets_(const simData::PlatformPrefs& prefs, bool force);
   /// Updates the scale based on pref; returns true if changed

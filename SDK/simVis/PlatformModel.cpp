@@ -253,11 +253,13 @@ void PlatformModelNode::syncWithLocator()
 bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
 {
   // Early return for fast path icon
-  if (updateFastPathModel_(prefs))
+  ModelUpdate modelUpdate = updateFastPathModel_(prefs);
+  if (modelUpdate == NO_UPDATE)
     return true;
 
   // Slower (normal) speed path for icons -- only look at the icon() preference
-  if (lastPrefsValid_ &&
+  if ((modelUpdate == CHECK_FOR_UPDATE) &&
+      lastPrefsValid_ &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, icon))
     return false;
 
@@ -286,12 +288,12 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
   return true;
 }
 
-bool PlatformModelNode::updateFastPathModel_(const simData::PlatformPrefs& prefs)
+PlatformModelNode::ModelUpdate PlatformModelNode::updateFastPathModel_(const simData::PlatformPrefs& prefs)
 {
   PlatformIconFactory* iconFactory = PlatformIconFactory::instance();
   // Attempt to use the simplified/optimized 2D icon path
   if (lastPrefsValid_ && !iconFactory->hasRelevantChanges(lastPrefs_, prefs))
-    return false;
+    return NO_UPDATE;
 
   // This is potentially a synchronous load of a 2D icon, which means we don't have to worry
   // about thread interactions. If it succeeds and we need to change the icon, then the change
@@ -301,7 +303,7 @@ bool PlatformModelNode::updateFastPathModel_(const simData::PlatformPrefs& prefs
 
   // Only need to make changes if the icon is different from the old one
   if (newIcon.get() == fastPathIcon_.get())
-    return false;
+    return fastPathIcon_.valid() ? NO_UPDATE : FORCE_UPDATE;
 
   // Remove old fast path icon (if applicable)
   if (fastPathIcon_.valid())
@@ -310,37 +312,46 @@ bool PlatformModelNode::updateFastPathModel_(const simData::PlatformPrefs& prefs
   fastPathIcon_ = newIcon;
   const bool fastPathValid = fastPathIcon_.valid();
 
-  // Need to attach the new icon and fix various internal state
-  if (fastPathValid)
+  // If the fast path icon is not valid, then we need to force a load of the slow/normal path icon in caller
+  if (!fastPathValid)
   {
-    fastPathIcon_->setNodeMask(getMask());
-    imageIconXform_->addChild(fastPathIcon_.get());
-
-    // Do not set model_, so that a state set is not created on it. The icon
-    // factory takes care of all model_-based prefs.
-    model_ = nullptr;
-
-    // The factory can only return 2D images
-    isImageModel_ = true;
-
-    // Save the image original size
-    osg::ComputeBoundsVisitor cb;
-    fastPathIcon_->accept(cb);
-    const osg::BoundingBox& bounds = cb.getBoundingBox();
-    imageOriginalSize_.x() = bounds.xMax() - bounds.xMin();
-    imageOriginalSize_.y() = bounds.yMax() - bounds.yMin();
-
-    // Fix the sizing node for the dynamic transform to avoid initial very-large icons.
-    dynamicXform_->setSizingNode(fastPathIcon_.get());
-
-    // Kill off any pending async model loads
-    if (lastSetModelCallback_.valid())
-      lastSetModelCallback_->ignoreResult();
+    offsetXform_->setNodeMask(getMask());
+    return FORCE_UPDATE;
   }
+
+  fastPathIcon_->setNodeMask(getMask());
+  imageIconXform_->addChild(fastPathIcon_.get());
+
+  // Do not set model_, so that a state set is not created on it. The icon
+  // factory takes care of all model_-based prefs.
+  if (model_.valid())
+  {
+    offsetXform_->removeChild(model_);
+    alphaVolumeGroup_->removeChild(model_);
+    model_ = nullptr;
+    dynamicXform_->setSizingNode(nullptr);
+  }
+
+  // The factory can only return 2D images
+  isImageModel_ = true;
+
+  // Save the image original size
+  osg::ComputeBoundsVisitor cb;
+  fastPathIcon_->accept(cb);
+  const osg::BoundingBox& bounds = cb.getBoundingBox();
+  imageOriginalSize_.x() = bounds.xMax() - bounds.xMin();
+  imageOriginalSize_.y() = bounds.yMax() - bounds.yMin();
+
+  // Fix the sizing node for the dynamic transform to avoid initial very-large icons.
+  dynamicXform_->setSizingNode(fastPathIcon_.get());
+
+  // Kill off any pending async model loads
+  if (lastSetModelCallback_.valid())
+    lastSetModelCallback_->ignoreResult();
 
   // Either use the fast-path icon, or use the more featured, slower path in offsetXform_; don't use both
   offsetXform_->setNodeMask(fastPathValid ? 0u : getMask());
-  return fastPathValid;
+  return fastPathValid ? NO_UPDATE : CHECK_FOR_UPDATE;
 }
 
 void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
