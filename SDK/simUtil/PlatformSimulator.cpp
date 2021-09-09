@@ -69,12 +69,12 @@ int PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upda
   double now = time;
 
   // Track if we're done early
-  if (done_ || waypoints_.size() < 2)
+  if (done_ || waypoints_.size() < 1)
     return 1;
 
   // our 2 waypoints.
   Waypoint wp0 = waypoints_.front();
-  Waypoint wp1 = *(waypoints_.begin() + 1);
+  Waypoint wp1 = waypoints_.size() > 1 ? *(waypoints_.begin() + 1) : wp0;
 
   // see if we need to advance to the next waypoint.
   if (wp_t_ > 1.0)
@@ -91,7 +91,7 @@ int PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upda
       waypoints_.push_back(wp0);
     waypoints_.pop_front();
     wp0 = waypoints_.front();
-    wp1 = *(waypoints_.begin() + 1);
+    wp1 = waypoints_.size() > 1 ? *(waypoints_.begin() + 1) : wp0;
     wp_t_ = -1.0;
   }
 
@@ -168,13 +168,21 @@ int PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upda
     double alt = wp0.alt_m_ + wp_t_ * (wp1.alt_m_ - wp0.alt_m_);
 
     // uncomment the following to simulate roll:
-    double roll_rad = 0.0;
+    double roll_rad;
     if (simulateRoll_)
       roll_rad = simCore::DEG2RAD*(20.0 * sin(now*0.35));
+    else if (wp0.roll_deg_.has_value() && wp1.roll_deg_.has_value())
+      roll_rad = simCore::DEG2RAD*(*wp0.roll_deg_ + wp_t_ * (*wp1.roll_deg_ - *wp0.roll_deg_));
+    else
+      roll_rad = 0.0;
 
-    double pitch_rad = 0.0;
+    double pitch_rad;
     if (simulatePitch_)
       pitch_rad = simCore::DEG2RAD*(45.0 * sin(now*0.35));
+    else if (wp0.pitch_deg_.has_value() && wp1.pitch_deg_.has_value())
+      pitch_rad = simCore::DEG2RAD*(*wp0.pitch_deg_ + wp_t_ * (*wp1.pitch_deg_ - *wp0.pitch_deg_));
+    else
+      pitch_rad = 0.0;
 
     // calculate a velocity vector (LTP):
     simCore::Vec3 new_lla(lat_rad, lon_rad, alt);
