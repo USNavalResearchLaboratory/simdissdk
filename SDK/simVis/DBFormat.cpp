@@ -568,6 +568,18 @@ osgEarth::GeoImage DBImageLayer::createImageImplementation(const osgEarth::TileK
 
   delete[] buf;
 
+  if (result.valid())
+  {
+    // Convert to RGBA8 if needed. osgEarth revision 84cdbe3e disables the auto-conversion to
+    // RGBA8, so we need to make sure the returned image is the right type and pixel format.
+    if (result->getDataType() != GL_UNSIGNED_BYTE || result->getPixelFormat() != GL_RGBA)
+    {
+      osg::ref_ptr<osg::Image> newImage = osgEarth::ImageUtils::convertToRGBA8(result.get());
+      if (newImage.valid())
+        result = newImage;
+    }
+  }
+
   return osgEarth::GeoImage(result.release(), key.getExtent());
 }
 
