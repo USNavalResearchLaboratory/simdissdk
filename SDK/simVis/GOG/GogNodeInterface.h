@@ -106,7 +106,7 @@ public:
   virtual ~GogNodeInterface();
 
   /** Get a pointer to the shape object, may be NULL */
-  const simCore::GOG::GogShape* shapeObject() const;
+  simCore::GOG::GogShape* shapeObject() const;
   /** Set the GogShape object, which updates the node's style */
   void setShapeObject(simCore::GOG::GogShapePtr shape);
 

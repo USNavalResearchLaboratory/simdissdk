@@ -221,7 +221,7 @@ GogNodeInterface::~GogNodeInterface()
     osgNode_->removeCullCallback(timeCallback_);
 }
 
-const simCore::GOG::GogShape* GogNodeInterface::shapeObject() const
+simCore::GOG::GogShape* GogNodeInterface::shapeObject() const
 {
   return shape_.get();
 }
