@@ -173,6 +173,8 @@ namespace simVis { namespace GOG
   * the orientation components to follow, simVis::Locator::COMP_HEADING, simVis::Locator::COMP_PITCH,
   * simVis::Locator::COMP_ROLL. The offset values are in the orientationOffsets vector. Constructor initializes
   * locatorFlags to simVis::Locator::COMP_NONE.
+  *
+  * @deprecated This is only used in the now-deprecated simVis::GOG::Parser
   */
   struct SDKVIS_EXPORT GogFollowData
   {

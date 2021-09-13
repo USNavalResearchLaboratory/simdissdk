@@ -36,6 +36,8 @@ class ParsedShape;
  * Place to register GOG object parser functions. The GOG::Parser
  * will call the parsing function registered for a particular
  * keyword when it encounters it in the GOG source file.
+ *
+ * @deprecated This is only used in the now-deprecated simVis::GOG::Parser
  */
 class SDKVIS_EXPORT GOGRegistry
 {
@@ -44,7 +46,8 @@ public:
    * Constructs a new GOG registry
    * @param[in ] mapNode map node for georeferencing
    */
-  GOGRegistry(osgEarth::MapNode* mapNode);
+  SDK_DEPRECATE(explicit GOGRegistry(osgEarth::MapNode* mapNode),
+    "Use simVis::GOG::Loader with simCore::GOG::Parser instead.");
 
   /**
    * Copy constructor

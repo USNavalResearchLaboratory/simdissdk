@@ -27,7 +27,10 @@
 
 namespace simVis { namespace GOG {
 
-/** Implement your own ErrorHandler for custom error message reporting or output.  @see simVis::Parser::setErrorHandler(). */
+/**
+ * Implement your own ErrorHandler for custom error message reporting or output.  @see simVis::Parser::setErrorHandler().
+ * @deprecated This is only used in the now-deprecated simVis::GOG::Parser
+ */
 class ErrorHandler
 {
 public:

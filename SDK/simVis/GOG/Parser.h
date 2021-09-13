@@ -63,6 +63,9 @@ namespace simVis { namespace GOG
    *
    * The Parser should be instantiated on demand, so as not to outlive its
    * reference to the osgEarth::MapNode it contains.
+   *
+   * @deprecated This class has been deprecated in favor of simCore::GOG::Parser
+   *   combined with simVis::GOG::Loader. It will be removed in a future release.
    */
   class SDKVIS_EXPORT Parser
   {
@@ -78,13 +81,13 @@ namespace simVis { namespace GOG
      *  that if the map node changes, the Parser will not pick up on the change and could cause problems
      *  in parsed items.  So it is recommended that the GOG parser be instantiated on demand.
      */
-    Parser(osgEarth::MapNode* mapNode = nullptr);
+    SDK_DEPRECATE(explicit Parser(osgEarth::MapNode* mapNode = nullptr), "Use simVis::GOG::Loader with simCore::GOG::Parser instead.");
 
     /**
      * Constructs a GOG parser.
      * @param registry Custom GOG object registry to use
      */
-    Parser(const GOGRegistry& registry);
+    SDK_DEPRECATE(explicit Parser(const GOGRegistry& registry), "Use simVis::GOG::Loader with simCore::GOG::Parser instead.");
 
     /// Virtual destructor
     virtual ~Parser() {}

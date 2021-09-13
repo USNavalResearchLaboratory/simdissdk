@@ -10,6 +10,13 @@ create_test_sourcelist(SimVisTestFiles SimVisTests.cpp
     LocatorTest.cpp
 )
 
+# GogTest uses deprecated simVis::GOG::Parser
+if(MSVC)
+    set_source_files_properties(GogTest.cpp PROPERTIES COMPILE_FLAGS -wd4996)
+else()
+    set_source_files_properties(GogTest.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
+endif()
+
 add_executable(SimVisTests ${SimVisTestFiles})
 target_link_libraries(SimVisTests PRIVATE simCore simVis)
 set_target_properties(SimVisTests PROPERTIES

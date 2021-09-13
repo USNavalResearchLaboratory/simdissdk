@@ -34,6 +34,7 @@ namespace simVis { namespace GOG {
  * Represents an entry that can contain an xy, xyz, ll, or lla point.
  * The provided context (e.g. "centerxy" vs "centerll") is expected to
  * be sufficient to differentiate between XY or LL point content.
+ * @deprecated This is only used in the now-deprecated simVis::GOG::Parser
  */
 struct /* HEADER-ONLY */ PositionStrings
 {
@@ -88,6 +89,8 @@ public:
  *  - "semiminoraxis" modifier is represented as GOG_MINORAXIS (times two)
  *  - GOG_ABSOLUTE is a flag set "true" when the GOG has ll, lla, or latlon points, and
  *      does not have a direct relationship to any single command.
+ *
+ * @deprecated This is only used in the now-deprecated simVis::GOG::Parser
  */
 enum ShapeParameter
 {
@@ -175,6 +178,8 @@ enum ShapeParameter
  * parameter names (e.g. "centerll" and "centerlla" GOG commands both store
  * in "centerll" key).  This is the output of the stream parser, using
  * simVis::GOG::Parser::parse().
+ *
+ * @deprecated This is only used in the now-deprecated simVis::GOG::Parser
  */
 class SDKVIS_EXPORT ParsedShape
 {
