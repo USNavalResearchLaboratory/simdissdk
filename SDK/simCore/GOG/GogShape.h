@@ -272,6 +272,8 @@ public:
   int getStartTime(simCore::TimeStamp& startTime) const;
   /// Set the start time
   void setStartTime(const simCore::TimeStamp& startTime);
+  /// Clears the start time, setting it to an invalid state.
+  void clearStartTime();
 
   /**
   * Get the end time; if value is not set, infinite time stamp is returned.
@@ -280,6 +282,8 @@ public:
   int getEndTime(simCore::TimeStamp& startTime) const;
   /// Set the end time
   void setEndTime(const simCore::TimeStamp& startTime);
+  /// Clears the end time, setting it to an invalid state.
+  void clearEndTime();
 
   /// Comments associated with the shape
   const std::vector<std::string>& comments() const;

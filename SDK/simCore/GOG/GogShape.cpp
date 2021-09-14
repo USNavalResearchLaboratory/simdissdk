@@ -251,6 +251,11 @@ void GogShape::setStartTime(const simCore::TimeStamp& startTime)
   startTime_ = startTime;
 }
 
+void GogShape::clearStartTime()
+{
+  startTime_.reset();
+}
+
 int GogShape::getEndTime(simCore::TimeStamp& endTime) const
 {
   endTime = endTime_.value_or(INFINITE_TIME_STAMP);
@@ -260,6 +265,11 @@ int GogShape::getEndTime(simCore::TimeStamp& endTime) const
 void GogShape::setEndTime(const simCore::TimeStamp& endTime)
 {
   endTime_ = endTime;
+}
+
+void GogShape::clearEndTime()
+{
+  endTime_.reset();
 }
 
 void GogShape::addComment(const std::string& comment)
