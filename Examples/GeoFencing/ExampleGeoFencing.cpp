@@ -55,8 +55,9 @@ namespace
   struct AppData
   {
     std::vector<simCore::GeoFence> fences;
+#ifdef HAVE_IMGUI
     std::string feedbackText;
-#ifndef HAVE_IMGUI
+#else
     osg::ref_ptr<ui::LabelControl> feedbackLabel;
 #endif
     osg::ref_ptr<osgEarth::MapNode> mapnode;
@@ -66,7 +67,7 @@ namespace
 #ifdef HAVE_IMGUI
       feedbackText = text;
 #else
-      feedbackLabel->setText(feedbackText);
+      feedbackLabel->setText(text);
 #endif
     }
   };
