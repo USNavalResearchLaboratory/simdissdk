@@ -65,7 +65,10 @@ namespace simVis { namespace GOG
    * reference to the osgEarth::MapNode it contains.
    *
    * @deprecated This class has been deprecated in favor of simCore::GOG::Parser
-   *   combined with simVis::GOG::Loader. It will be removed in a future release.
+   *   combined with simVis::GOG::Loader. The GOG parsing capability has been extracted
+   *   and moved to simCore::GOG::Parser, which creates in-memory representations of
+   *   GOG shapes. The simVis::GOG::Loader then creates 3-D representations of those
+   *   shapes. This simVis::GOG::Parser class will be removed in a future release.
    */
   class SDKVIS_EXPORT Parser
   {

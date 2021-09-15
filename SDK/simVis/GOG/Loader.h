@@ -41,7 +41,8 @@ namespace simVis { namespace GOG
 * and generate a list of GogNodeInterface objects as output.
 *
 * The Loader should be instantiated on demand, so as not to outlive its
-* reference to the osgEarth::MapNode it contains.
+* reference to the osgEarth::MapNode it contains. This class replaces the
+* deprecated simVis::GOG::Parser set of classes.
 */
 class SDKVIS_EXPORT Loader
 {

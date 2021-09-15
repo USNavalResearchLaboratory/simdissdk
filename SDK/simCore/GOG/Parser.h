@@ -46,6 +46,13 @@ class UnitsState;
  * The GOG Parser will read a GOG file or stream, and encode it into a vector
  * of GogShape objects.  This is an in-memory representation of the GOG shape
  * data for the input stream.
+ *
+ * This class is responsible for parsing an input GOG stream, then generating an
+ * output vector of simCore::GOG::GogShape smart pointers. GogShape is an
+ * in-memory representation of a GOG, including things like the name, color,
+ * follow data, begin and end times, and data points. This class is expected to
+ * be combined with a simVis::GOG::Loader for creating 3D scene representations
+ * of GOGs.
  */
 class SDKCORE_EXPORT Parser
 {
