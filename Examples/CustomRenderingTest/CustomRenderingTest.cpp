@@ -347,6 +347,10 @@ int main(int argc, char **argv)
   // set up the registry so the SDK can find platform models
   simExamples::configureSearchPaths();
 
+  // data source which will provide positions for the platform
+  // based on the simulation time.
+  simData::MemoryDataStore dataStore;
+
   // creates a world map.
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
 
@@ -358,10 +362,6 @@ int main(int argc, char **argv)
 
   // add sky node
   simExamples::addDefaultSkyNode(viewer.get());
-
-  // data source which will provide positions for the platform
-  // based on the simulation time.
-  simData::MemoryDataStore dataStore;
 
   scene->getScenario()->bind(&dataStore);
 
