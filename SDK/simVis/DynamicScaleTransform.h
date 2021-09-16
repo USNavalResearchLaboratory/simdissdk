@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -153,9 +153,9 @@ private:
   class RecalculateScaleVisitor;
 
   /** Returns first child if sizingNode_ is unset */
-  osg::Node* getSizingNode_();
+  osg::Node* getSizingNode_() const;
   /** Computes the dynamic scale; requires valid sizing node and valid icon scale factor */
-  osg::Vec3f computeDynamicScale_(double range, osg::CullStack* cullStack);
+  osg::Vec3f computeDynamicScale_(double range, osg::CullStack* cullStack) const;
   /** Recalculates the bounds if in dynamic scale mode, called by the recalculateAllDynamicScaleBounds() */
   void recalculate_(double range, osg::CullStack* cullStack);
 

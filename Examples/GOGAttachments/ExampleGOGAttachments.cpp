@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -31,6 +31,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
+#include "simCore/GOG/Parser.h"
 #include "simCore/String/UtfUtils.h"
 #include "simData/MemoryDataStore.h"
 #include "simUtil/PlatformSimulator.h"
@@ -54,11 +55,11 @@
 #include "simVis/GOG/Hemisphere.h"
 #include "simVis/GOG/Line.h"
 #include "simVis/GOG/LineSegs.h"
+#include "simVis/GOG/Loader.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Points.h"
 #include "simVis/GOG/Polygon.h"
 #include "simVis/GOG/Sphere.h"
-#include "simVis/GOG/Parser.h"
 
 /// paths to models
 #include "simUtil/ExampleResources.h"
@@ -69,9 +70,14 @@
 #include "osgEarth/Style"
 #include "osgEarth/Sky"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+using namespace osgEarth::Util::Controls;
+#endif
 using namespace osgEarth;
 using namespace osgEarth::Util;
-using namespace osgEarth::Util::Controls;
 
 //----------------------------------------------------------------------------
 
@@ -85,12 +91,13 @@ static const std::string s_help =
 " g : cycle through the various GOG types";
 
 /// keep a handle, for toggling
-static osg::ref_ptr<Control>      s_helpControl;
-static osg::ref_ptr<LabelControl> s_nowViewing;
 static osg::NodeList s_attachments;
 typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 static std::vector<GogNodeInterfacePtr> s_overlayNodes;
 
+#ifndef HAVE_IMGUI
+static osg::ref_ptr<Control>      s_helpControl;
+static osg::ref_ptr<LabelControl> s_nowViewing;
 static Control* createHelp()
 {
   // vbox is allocated here but memory owned by caller
@@ -104,6 +111,7 @@ static Control* createHelp()
   s_helpControl = vbox;
   return vbox;
 }
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -117,6 +125,53 @@ static void makeStar(Geometry* geom, bool close)
     geom->push_back(osg::Vec3d(cos(double(i)*a)*r, sin(double(i)*a)*r, 0.));
   }
 }
+
+#ifdef HAVE_IMGUI
+
+struct ControlPanel : public GUI::BaseGui
+{
+  ControlPanel()
+    : GUI::BaseGui("GOG Attachments Example"),
+    swChild_(static_cast<unsigned int>(~0))
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+
+    auto& io = ImGui::GetIO();
+    ImGui::Text("g : cycle through the various GOG types");
+
+    if (io.InputQueueCharacters.size() > 0)
+    {
+      switch (io.InputQueueCharacters.front())
+      {
+      case 'g':
+        if (swChild_ != static_cast<unsigned>(~0))
+          s_attachments[swChild_]->setNodeMask(0);
+        if (++swChild_ == s_attachments.size())
+          swChild_ = 0;
+        s_attachments[swChild_]->setNodeMask(~0);
+        nowViewing_ = ("Now viewing: " + s_attachments[swChild_]->getName());
+        break;
+      }
+    }
+
+    if (!nowViewing_.empty())
+      ImGui::Text(nowViewing_.c_str());
+
+    ImGui::End();
+  }
+
+private:
+  unsigned int swChild_;
+  std::string nowViewing_;
+};
+
+#else
 
 //----------------------------------------------------------------------------
 /// event handler for keyboard commands to alter symbology at runtime
@@ -151,6 +206,7 @@ protected: // data
   unsigned     swChild_;
 };
 
+#endif
 //----------------------------------------------------------------------------
 
 /// create a platform and add it to 'dataStore'
@@ -226,25 +282,25 @@ simVis::PlatformNode* setupSimulation(
 
 void setupGOGAttachments(simVis::PlatformNode* platform)
 {
-  Style defaultStyle;
-  defaultStyle.getOrCreate<LineSymbol>()->stroke()->color() = Color::Yellow;
-  simVis::GOG::GogFollowData followData;
-
+  simCore::GOG::Parser parser;
+  simVis::GOG::Loader loader(parser);
 
   // Arc:
   {
-    std::vector<std::string> def;
-    def.push_back("start");
-    def.push_back("arc");
-    def.push_back("radius     1500");
-    def.push_back("anglestart 45");
-    def.push_back("angledeg   270");
-    def.push_back("end");
+    std::string def = R"(
+      start
+      arc
+      radius 1500
+      anglestart 45
+      angledeg 270
+      linecolor yellow 0xff00ffff
+      end
+      )";
 
-    simVis::GOG::Parser parser;
-    parser.setStyle(defaultStyle);
-    GogNodeInterfacePtr gog(parser.createGOG(def, simVis::GOG::GOGNODE_HOSTED, followData));
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadShape(def, "", 0, true, gogs);
 
+    auto gog = gogs.front();
     gog->osgNode()->setName("Arc");
 
     s_attachments.push_back(gog->osgNode());
@@ -253,21 +309,20 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
 
   // Circle:
   {
-    std::vector<std::string> def;
-    def.push_back("start");
-    def.push_back("circle");
-    def.push_back("radius 1500");
-    def.push_back("filled");
-    def.push_back("end");
+    std::string def = R"(
+      start
+      circle
+      radius 1500
+      filled
+      fillcolor cyan 0x7fffff00
+      linecolor yellow 0xff00ffff
+      end
+      )";
 
-    // override the style just for fun
-    Style style(defaultStyle);
-    style.getOrCreate<PolygonSymbol>()->fill()->color() = Color(Color::Cyan, 0.5f);
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadShape(def, "", 1, true, gogs);
 
-    simVis::GOG::Parser parser;
-    parser.setStyle(style);
-    GogNodeInterfacePtr gog(parser.createGOG(def, simVis::GOG::GOGNODE_HOSTED, followData));
-
+    auto gog = gogs.front();
     gog->osgNode()->setName("Circle");
 
     s_attachments.push_back(gog->osgNode());
@@ -277,25 +332,22 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
 
   // Cylinder:
   {
-    // style it to be translucent-red with white lines:
-    Style style(defaultStyle);
-    style.getOrCreate<PolygonSymbol>()->fill()->color() = Color(Color::Red, 0.5);
-    style.getOrCreate<LineSymbol>()->stroke()->color() = Color(Color::White, 0.4);
+    std::string def = R"(
+      start
+      cylinder
+      rangeunits km
+      radius 1
+      height 200
+      anglestart 45
+      angleend 315
+      linecolor red 0x7f0000ff
+      end
+      )";
 
-    std::vector<std::string> def;
-    def.push_back("start");
-    def.push_back("cylinder");
-    def.push_back("rangeunits km");
-    def.push_back("radius 1");
-    def.push_back("height 200");
-    def.push_back("anglestart 45");
-    def.push_back("angleend 315");
-    def.push_back("end");
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadShape(def, "", 2, true, gogs);
 
-    simVis::GOG::Parser parser;
-    parser.setStyle(style);
-    GogNodeInterfacePtr gog(parser.createGOG(def, simVis::GOG::GOGNODE_HOSTED, followData));
-
+    auto gog = gogs.front();
     gog->osgNode()->setName("Cylinder");
 
     s_attachments.push_back(gog->osgNode());
@@ -304,21 +356,21 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
 
   // Ellipse:
   {
-    Style style(defaultStyle);
-    style.getOrCreate<PolygonSymbol>()->fill()->color() = Color(Color::Orange, 0.5);
+    std::string def = R"(
+      start
+      ellipse
+      rangeunits km
+      majoraxis 1
+      minoraxis 0.5
+      fillcolor orange 0x7f00a5ff
+      linecolor yellow 0xff00ffff
+      end
+      )";
 
-    std::vector<std::string> def;
-    def.push_back("start");
-    def.push_back("ellipse");
-    def.push_back("rangeunits km");
-    def.push_back("majoraxis 1");
-    def.push_back("minoraxis 0.5");
-    def.push_back("end");
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadShape(def, "", 3, true, gogs);
 
-    simVis::GOG::Parser parser;
-    parser.setStyle(style);
-    GogNodeInterfacePtr gog(parser.createGOG(def, simVis::GOG::GOGNODE_HOSTED, followData));
-
+    auto gog = gogs.front();
     gog->osgNode()->setName("Ellipse");
 
     s_attachments.push_back(gog->osgNode());
@@ -327,20 +379,19 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
 
   // Hemisphere:
   {
-    Style style(defaultStyle);
-    style.getOrCreate<PolygonSymbol>()->fill()->color() = Color(Color::Purple, 0.5);
+    std::string def = R"(
+      start
+      hemisphere
+      rangeunits nm
+      radius 1
+      linecolor purple 0x7ff020a0
+      end
+      )";
 
-    std::vector<std::string> def;
-    def.push_back("start");
-    def.push_back("hemisphere");
-    def.push_back("rangeunits nm");
-    def.push_back("radius 1");
-    def.push_back("end");
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadShape(def, "", 4, true, gogs);
 
-    simVis::GOG::Parser parser;
-    parser.setStyle(style);
-    GogNodeInterfacePtr gog(parser.createGOG(def, simVis::GOG::GOGNODE_HOSTED, followData));
-
+    auto gog = gogs.front();
     gog->osgNode()->setName("Hemisphere");
 
     s_attachments.push_back(gog->osgNode());
@@ -348,26 +399,26 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
   }
 
   // LatLonAltBox:
-  {
-    // NOP. You cannot attach a latlonalt box to an entity.
-    // It only exists in geographic coordinates.
-  }
+  // NOP. You cannot attach a latlonalt box to an entity.
+  // It only exists in geographic coordinates.
 
   // Line:
   {
-    std::vector<std::string> def;
-    def.push_back("start");
-    def.push_back("line");
-    def.push_back("xy -1000 -1000");
-    def.push_back("xy -1000  1000");
-    def.push_back("xy  1000  1000");
-    def.push_back("xy  1000 -1000");
-    def.push_back("end");
+    std::string def = R"(
+      start
+      line
+      xy -1000 -1000
+      xy -1000 1000
+      xy 1000 1000
+      xy 1000 -1000
+      linecolor yellow 0xff00ffff
+      end
+      )";
 
-    simVis::GOG::Parser parser;
-    parser.setStyle(defaultStyle);
-    GogNodeInterfacePtr gog(parser.createGOG(def, simVis::GOG::GOGNODE_HOSTED, followData));
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadShape(def, "", 5, true, gogs);
 
+    auto gog = gogs.front();
     gog->osgNode()->setName("Line");
 
     s_attachments.push_back(gog->osgNode());
@@ -376,26 +427,24 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
 
   // LineSegs:
   {
-    // set up a slipple pattern (for a dashed line)
-    Style style(defaultStyle);
-    style.get<LineSymbol>()->stroke()->stipple() = 0xF0F0;
+    std::string def = R"(
+      start
+      linesegs
+      xyz 0 250 0
+      xyz 0 1500 0
+      xyz 250 0 0
+      xyz 1500 0 0
+      xyz 0 0 250
+      xyz 0 0 1500
+      linestyle dash
+      linecolor yellow 0xff00ffff
+      end
+      )";
 
-    // make a list of coordinate pairs. Each pair produces a segment.
-    std::vector<std::string> def;
-    def.push_back("start");
-    def.push_back("linesegs");
-    def.push_back("xyz    0  250    0");
-    def.push_back("xyz    0 1500    0");
-    def.push_back("xyz  250    0    0");
-    def.push_back("xyz 1500    0    0");
-    def.push_back("xyz    0    0  250");
-    def.push_back("xyz    0    0 1500");
-    def.push_back("end");
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadShape(def, "", 6, true, gogs);
 
-    simVis::GOG::Parser parser;
-    parser.setStyle(style);
-    GogNodeInterfacePtr gog(parser.createGOG(def, simVis::GOG::GOGNODE_HOSTED, followData));
-
+    auto gog = gogs.front();
     gog->osgNode()->setName("LineSegs");
 
     s_attachments.push_back(gog->osgNode());
@@ -404,25 +453,24 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
 
   // Points:
   {
-    Style style(defaultStyle);
-    style.getOrCreate<PointSymbol>()->size() = 7.5f;
-    style.getOrCreate<PointSymbol>()->fill()->color() = Color::Lime;
+    std::string def = R"(
+      start
+      points
+      xy -1000 -200
+      xy -800 -200
+      xy -600 -200
+      xy -400 -200
+      xy -200 -200
+      xy 0 -200
+      pointsize 7.5
+      linecolor lime 0xff00ffbf
+      end
+      )";
 
-    std::vector<std::string> def;
-    def.push_back("start");
-    def.push_back("points");
-    def.push_back("xy -1000 -200");
-    def.push_back("xy  -800 -200");
-    def.push_back("xy  -600 -200");
-    def.push_back("xy  -400 -200");
-    def.push_back("xy  -200 -200");
-    def.push_back("xy     0 -200");
-    def.push_back("end");
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadShape(def, "", 7, true, gogs);
 
-    simVis::GOG::Parser parser;
-    parser.setStyle(style);
-    GogNodeInterfacePtr gog(parser.createGOG(def, simVis::GOG::GOGNODE_HOSTED, followData));
-
+    auto gog = gogs.front();
     gog->osgNode()->setName("Points");
 
     s_attachments.push_back(gog->osgNode());
@@ -431,41 +479,42 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
 
   // Polygon:
   {
-    std::vector<std::string> def;
-    def.push_back("start");
-    def.push_back("poly");
-    def.push_back("xy -1000 -1000");
-    def.push_back("xy -1000  1000");
-    def.push_back("xy  1000  1000");
-    def.push_back("xy  1000 -1000");
-    def.push_back("linecolor orange 0x7f007fff");
-    def.push_back("filled");
-    def.push_back("end");
+    std::string def = R"(
+      start
+      poly
+      xy -1000 -1000
+      xy -1000 1000
+      xy 1000 1000
+      xy 1000 -1000
+      linecolor orange 0x7f007fff
+      filled
+      end
+      )";
 
-    simVis::GOG::Parser parser;
-    GogNodeInterfacePtr gog(parser.createGOG(def, simVis::GOG::GOGNODE_HOSTED, followData));
-    gog->osgNode()->setName("Polygon");
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadShape(def, "", 8, true, gogs);
 
+    auto gog = gogs.front();
     s_attachments.push_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
   }
 
   // Sphere:
   {
-    Style style(defaultStyle);
-    style.getOrCreate<PolygonSymbol>()->fill()->color() = Color(Color::Red, 0.5);
+    std::string def = R"(
+      start
+      sphere
+      rangeunits nm
+      radius 1
+      linecolor yellow 0xff00ffff
+      linecolor red 0x7f0000ff
+      end
+      )";
 
-    std::vector<std::string> def;
-    def.push_back("start");
-    def.push_back("sphere");
-    def.push_back("rangeunits nm");
-    def.push_back("radius 1");
-    def.push_back("end");
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadShape(def, "", 9, true, gogs);
 
-    simVis::GOG::Parser parser;
-    parser.setStyle(style);
-    GogNodeInterfacePtr gog(parser.createGOG(def, simVis::GOG::GOGNODE_HOSTED, followData));
-
+    auto gog = gogs.front();
     gog->osgNode()->setName("Sphere");
 
     s_attachments.push_back(gog->osgNode());
@@ -512,50 +561,31 @@ int main(int argc, char **argv)
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
   osg::ref_ptr<simVis::PlatformNode> platform = setupSimulation(*simMgr, platformId, dataStore, viewer.get());
 
-  /// If there's a gog file on the cmd line, use that; otherwise build some examples.
-  if (argc > 1)
-  {
-    /// Create a parser to load the GOG file:
-    simVis::GOG::Parser parser(scene->getMapNode());
+  /// make some example GOGs.
+  setupGOGAttachments(platform.get());
 
-    /// Load all the GOGs from the file:
-    simVis::GOG::Parser::OverlayNodeVector gogs;
-    std::vector<simVis::GOG::GogFollowData> followData;
-    std::ifstream is(simCore::streamFixUtf8(argv[1]));
-    if (!is.is_open())
-    {
-      std::string fileName(argv[1]);
-      SIM_ERROR << "Could Not Open GOG file " << fileName << "\n";
-      return 1;
-    }
-    if (parser.loadGOGs(is,  simVis::GOG::GOGNODE_HOSTED, gogs, followData))
-    {
-      for (simVis::GOG::Parser::OverlayNodeVector::iterator i = gogs.begin(); i != gogs.end(); ++i)
-      {
-        //TODO: handle locator component selection
-        platform->attach((*i)->osgNode());
-      }
-    }
+  /// attach the GOGs to the platform. You can set a custom LocatorComponents enum
+  /// to designate how the GOGs should track the platform.
+  for (osg::NodeList::iterator i = s_attachments.begin(); i != s_attachments.end(); ++i)
+  {
+    platform->attach(i->get());
   }
 
-  else
-  {
-    /// make some example GOGs.
-    setupGOGAttachments(platform.get());
-
-    /// attach the GOGs to the platform. You can set a custom LocatorComponents enum
-    /// to designate how the GOGs should track the platform.
-    for (osg::NodeList::iterator i = s_attachments.begin(); i != s_attachments.end(); ++i)
-    {
-      platform->attach(i->get());
-    }
-
+#ifndef HAVE_IMGUI
     /// handle key press events
     viewer->addEventHandler(new MenuHandler());
-  }
+#endif
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel());
+#else
   /// show the instructions overlay
   viewer->getMainView()->addOverlayControl(createHelp());
+#endif
 
   /// add some stock OSG handlers
   viewer->installDebugHandlers();

@@ -355,6 +355,13 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/Utils.cpp
 )
 
+# simVis::GOG::Parser, deprecated code, depends on other deprecated code
+if(MSVC)
+    set_source_files_properties(${VIS_SRC}GOG/Parser.cpp PROPERTIES COMPILE_FLAGS -wd4996)
+else()
+    set_source_files_properties(${VIS_SRC}GOG/Parser.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
+endif()
+
 if(OSGEARTH_TRITON_SUPPORT STREQUAL NODEKIT)
     set(HAVE_TRITON_NODEKIT 1)
 endif()

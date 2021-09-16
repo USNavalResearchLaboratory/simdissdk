@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -25,6 +25,7 @@
 #include <sstream>
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Units.h"
+#include "simCore/Time/String.h"
 #include "simCore/GOG/GogShape.h"
 
 namespace simCore { namespace GOG {
@@ -131,9 +132,13 @@ int GogShape::getReferencePosition(simCore::Vec3& refPos) const
 void GogShape::setReferencePosition(const simCore::Vec3& refPos)
 {
   // reference position is only valid for relative shapes
-  if (!relative_)
-    return;
-  referencePosition_ = refPos;
+  if (relative_)
+    referencePosition_ = refPos;
+}
+
+void GogShape::clearReferencePosition()
+{
+  referencePosition_.reset();
 }
 
 int GogShape::getScale(simCore::Vec3& scale) const
@@ -233,6 +238,38 @@ int GogShape::getVerticalDatum(std::string& verticalDatum) const
 void GogShape::setVerticalDatum(const std::string& verticalDatum)
 {
   verticalDatum_ = verticalDatum;
+}
+
+int GogShape::getStartTime(simCore::TimeStamp& startTime) const
+{
+  startTime = startTime_.value_or(INFINITE_TIME_STAMP);
+  return (startTime_.has_value() ? 0 : 1);
+}
+
+void GogShape::setStartTime(const simCore::TimeStamp& startTime)
+{
+  startTime_ = startTime;
+}
+
+void GogShape::clearStartTime()
+{
+  startTime_.reset();
+}
+
+int GogShape::getEndTime(simCore::TimeStamp& endTime) const
+{
+  endTime = endTime_.value_or(INFINITE_TIME_STAMP);
+  return (endTime_.has_value() ? 0 : 1);
+}
+
+void GogShape::setEndTime(const simCore::TimeStamp& endTime)
+{
+  endTime_ = endTime;
+}
+
+void GogShape::clearEndTime()
+{
+  endTime_.reset();
 }
 
 void GogShape::addComment(const std::string& comment)
@@ -428,6 +465,18 @@ void GogShape::serializeToStream(std::ostream& gogOutputStream) const
   if (rollOffset_.has_value())
     gogOutputStream << "3d offsetroll " << simCore::Units::RADIANS.convertTo(originalUnits_.angleUnits(), rollOffset_.value_or(0.)) << "\n";
 
+  simCore::TimeFormatterRegistry reg;
+  if (startTime_.has_value())
+  {
+    simCore::TimeStamp start = startTime_.value_or(INFINITE_TIME_STAMP);
+    gogOutputStream << "starttime \"" << reg.toString(simCore::TimeFormat::TIMEFORMAT_ORDINAL, start, start.referenceYear()) << "\"\n";
+  }
+  if (endTime_.has_value())
+  {
+    simCore::TimeStamp end = endTime_.value_or(INFINITE_TIME_STAMP);
+    gogOutputStream << "endtime \"" << reg.toString(simCore::TimeFormat::TIMEFORMAT_ORDINAL, end, end.referenceYear()) << "\"\n";
+  }
+
   gogOutputStream << "end\n";
 }
 
@@ -459,6 +508,9 @@ void GogShape::setCanFollow_(bool canFollow)
 void GogShape::setRelative(bool relative)
 {
   relative_ = relative;
+  // clear out reference position if no longer a relative shape
+  if (!relative && referencePosition_.has_value())
+    referencePosition_.reset();
 }
 
 void GogShape::setSerializeName_(bool serializeName)
@@ -932,6 +984,25 @@ Arc::Arc(bool relative)
 ShapeType Arc::shapeType() const
 {
   return ShapeType::ARC;
+}
+
+int Arc::getInnerRadius(double& innerRadiusMeters) const
+{
+  innerRadiusMeters = innerRadius_.value_or(originalUnits_.rangeUnits().convertTo(simCore::Units::METERS, 0.));
+  return (innerRadius_.has_value() ? 0 : 1);
+}
+
+void Arc::setInnerRadius(double innerRadiusMeters)
+{
+  innerRadius_ = innerRadiusMeters;
+}
+
+void Arc::serializeToStream_(std::ostream& gogOutputStream) const
+{
+  EllipticalShape::serializeToStream_(gogOutputStream);
+  simCore::Units distanceUnits(simCore::Units::METERS);
+  if (innerRadius_.has_value())
+    gogOutputStream << "innerradius " << distanceUnits.convertTo(originalUnits_.rangeUnits(), innerRadius_.value_or(0.)) << "\n";
 }
 
 Ellipse::Ellipse(bool relative)

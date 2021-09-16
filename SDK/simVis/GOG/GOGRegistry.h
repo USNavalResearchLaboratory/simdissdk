@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -36,6 +36,8 @@ class ParsedShape;
  * Place to register GOG object parser functions. The GOG::Parser
  * will call the parsing function registered for a particular
  * keyword when it encounters it in the GOG source file.
+ *
+ * @deprecated This is only used in the now-deprecated simVis::GOG::Parser
  */
 class SDKVIS_EXPORT GOGRegistry
 {
@@ -44,7 +46,8 @@ public:
    * Constructs a new GOG registry
    * @param[in ] mapNode map node for georeferencing
    */
-  GOGRegistry(osgEarth::MapNode* mapNode);
+  SDK_DEPRECATE(explicit GOGRegistry(osgEarth::MapNode* mapNode),
+    "Use simVis::GOG::Loader with simCore::GOG::Parser instead.");
 
   /**
    * Copy constructor

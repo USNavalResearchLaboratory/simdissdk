@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -46,6 +46,13 @@ class UnitsState;
  * The GOG Parser will read a GOG file or stream, and encode it into a vector
  * of GogShape objects.  This is an in-memory representation of the GOG shape
  * data for the input stream.
+ *
+ * This class is responsible for parsing an input GOG stream, then generating an
+ * output vector of simCore::GOG::GogShape smart pointers. GogShape is an
+ * in-memory representation of a GOG, including things like the name, color,
+ * follow data, begin and end times, and data points. This class is expected to
+ * be combined with a simVis::GOG::Loader for creating 3D scene representations
+ * of GOGs.
  */
 class SDKCORE_EXPORT Parser
 {

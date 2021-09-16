@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -46,7 +46,12 @@
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 using namespace osgEarth::Util::Controls;
+#endif
 
 static const simCore::Coordinate DEFAULT_POS_LLA(simCore::COORD_SYS_LLA,
   simCore::Vec3(simCore::DEG2RAD*(0), simCore::DEG2RAD*(0), 0),
@@ -60,7 +65,9 @@ struct App
 {
   osg::ref_ptr<simVis::Viewer> viewer;
   osg::ref_ptr<simVis::View> mainView;
+#ifndef HAVE_IMGUI
   osg::ref_ptr<Control> helpBox;
+#endif
   osg::ref_ptr<simVis::AveragePositionNode> centroidNode;
   osg::ref_ptr<osg::MatrixTransform> sphereXform;
   simData::DataStore* dataStore;
@@ -88,12 +95,108 @@ private:
   const App& app_;
 };
 
+#ifdef HAVE_IMGUI
+struct ControlPanel : public GUI::BaseGui
+{
+  ControlPanel(App& app)
+    : GUI::BaseGui("Centroid Eye Position Example"),
+    app_(app)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    // This GUI positions bottom left instead of top left, need the size of the window
+    ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
+    ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+
+    auto& io = ImGui::GetIO();
+
+    ImGui::TextColored(ImVec4(0.f, 1.f, 0.f, 1.f), "Green labels are tracked, while");
+    ImGui::Text("white labels are not tracked");
+    ImGui::Text("c : Center camera on centroid");
+    ImGui::Text("o : Toggle overhead mode");
+    ImGui::Text("--------------------------------");
+    ImGui::Text("1: Toggle tracking of Platform 1");
+    ImGui::Text("2: Toggle tracking of Platform 2");
+    ImGui::Text("3: Toggle tracking of Platform 3");
+    ImGui::Text("4: Toggle tracking of Platform 4");
+    ImGui::Text("5: Toggle tracking of Platform 5");
+    ImGui::Text("6: Toggle tracking of Platform 6");
+
+    if (io.InputQueueCharacters.size() > 0)
+    {
+      switch (io.InputQueueCharacters.front())
+      {
+      case 'c': // Center on centroid node
+      {
+        auto vp = app_.mainView->getViewpoint();
+        vp.setNode(app_.centroidNode.get());
+        app_.mainView->setViewpoint(vp);
+        break;
+      }
+
+      case 'o': // Toggle overhead mode
+        app_.mainView->enableOverheadMode(!app_.mainView->isOverheadEnabled());
+        break;
+      case '1':
+        toggleTrackNode_(1);
+        break;
+      case '2':
+        toggleTrackNode_(2);
+        break;
+      case '3':
+        toggleTrackNode_(3);
+        break;
+      case '4':
+        toggleTrackNode_(4);
+        break;
+      case '5':
+        toggleTrackNode_(5);
+        break;
+      case '6':
+        toggleTrackNode_(6);
+        break;
+      }
+    }
+
+    ImGui::End();
+  }
+
+private:
+  /** Toggle the tracking of the node specified by the given ID */
+  void toggleTrackNode_(simData::ObjectId id)
+  {
+    uint32_t color;
+    osg::observer_ptr<simVis::EntityNode> objNode = app_.viewer->getSceneManager()->getScenario()->find(id);
+    if (app_.centroidNode->isTrackingNode(objNode.get()))
+    {
+      app_.centroidNode->removeTrackedNode(objNode.get());
+      color = 0xFFFFFFFF;
+    }
+    else
+    {
+      app_.centroidNode->addTrackedNode(objNode.get());
+      color = GREEN.asABGR();
+    }
+    simData::DataStore::Transaction txn;
+    simData::PlatformPrefs* prefs = app_.dataStore->mutable_platformPrefs(id, &txn);
+    prefs->mutable_commonprefs()->mutable_labelprefs()->set_color(color);
+    txn.complete(&prefs);
+  }
+
+  App& app_;
+};
+
+#else
+
 /** Event handler to process user key presses */
 struct MenuHandler : public osgGA::GUIEventHandler
 {
   explicit MenuHandler(App& app)
-    : app_(app),
-    tracking4_(false)
+    : app_(app)
   {
   }
 
@@ -167,7 +270,6 @@ private: // data
   }
 
   App& app_;
-  bool tracking4_;
 };
 
 //----------------------------------------------------------------------------
@@ -196,7 +298,7 @@ Control* createControls(App& app)
   app.helpBox = vbox;
   return vbox;
 }
-
+#endif
 void initializeDrawables(App& app)
 {
   // Create a sphere that will represent the bounding sphere
@@ -403,11 +505,18 @@ int main(int argc, char **argv)
   app.mainView->setViewpoint(vp);
   app.mainView->setFocalOffsets(270, -20, 650);
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  app.mainView->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(app));
+#else
   // Handle key press events
   viewer->addEventHandler(new MenuHandler(app));
-
   // Show the controls overlay
   app.mainView->addOverlayControl(createControls(app));
+#endif
 
   // Add some stock OSG handlers
   viewer->installDebugHandlers();

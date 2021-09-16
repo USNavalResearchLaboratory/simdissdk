@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -69,6 +69,7 @@ TimeTicks::TimeTicks(const simData::DataStore& ds, Locator* parentLocator, Platf
   supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL(3.3f)),
   chunkSize_(64),  // keep this lowish or your app won't scale.
   color_(osg::Vec4f(1.f, 1.f, 1.f, 0.5f)),
+  textColor_(osg::Vec4f(1.f, 1.f, 1.f, 0.5f)),
   totalPoints_(0),
   singlePoint_(false),
   hasLastDrawTime_(false),
@@ -308,7 +309,7 @@ void TimeTicks::addUpdate_(double tickTime)
     text->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_LABEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
     osg::Depth* noDepthTest = new osg::Depth(osg::Depth::ALWAYS, 0, 1, false);
     text->getOrCreateStateSet()->setAttributeAndModes(noDepthTest, 1);
-    text->setColor(color_);
+    text->setColor(textColor_);
     locNode->addChild(text);
     labelGroup_->addChild(locNode);
     labels_[toDrawTime_(tickTime)] = locNode;
@@ -440,16 +441,6 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
     resetRequested = true;
   }
 
-  // check for override color
-  if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, usetrackoverridecolor) || PB_FIELD_CHANGED(&lastPrefs, &prefs, trackoverridecolor))
-  {
-    resetRequested = true;
-    if (prefs.usetrackoverridecolor())
-      color_ = simVis::Color(prefs.trackoverridecolor(), simVis::Color::RGBA);
-    else
-      color_ = simVis::Color(timeTicks.color(), simVis::Color::RGBA);
-  }
-
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, flatmode))
   {
     updateFlatMode_(prefs.flatmode());
@@ -474,10 +465,17 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
       resetRequested = true;
   }
 
-  // use tick color if not overridden by track color
-  if ((force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, color)) && !prefs.usetrackoverridecolor())
+  // update the tick color and label color
+  if (force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, color) || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, labelcolor))
   {
     color_ = simVis::Color(timeTicks.color(), simVis::Color::RGBA);
+
+    // If label color is set (non-zero) use it. If not, fall back to the line color for labels
+    if (timeTicks.labelcolor() != 0)
+      textColor_ = simVis::Color(timeTicks.labelcolor(), simVis::Color::RGBA);
+    else
+      textColor_ = color_;
+
     resetRequested = true;
   }
 

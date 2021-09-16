@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -46,9 +46,15 @@
 /// paths to models
 #include "simUtil/ExampleResources.h"
 
-#include <osgEarth/Controls>
 #include <osgEarth/StringUtils>
+
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+#include <osgEarth/Controls>
 namespace ui = osgEarth::Util::Controls;
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -61,6 +67,226 @@ namespace
 }
 
 //----------------------------------------------------------------------------
+
+#ifdef HAVE_IMGUI
+
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  ControlPanel(simData::MemoryDataStore& ds, simData::ObjectId beamId, simVis::View* view)
+    : GUI::BaseGui("Beam Example"),
+    ds_(ds),
+    beamId_(beamId),
+    view_(view)
+  {
+    update_();
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    bool needUpdate = false;
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      simData::DataStore::Transaction xaction;
+      const simData::BeamProperties* props = ds_.beamProperties(beamId_, &xaction);
+      std::string type = (props->type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION ? "ABSOLUTE" : "BODY RELATIVE");
+      xaction.complete(&props);
+
+      ImGui::TableNextColumn(); ImGui::Text("Type"); ImGui::TableNextColumn(); ImGui::Text(type.c_str());
+
+      // Draw mode combo box
+      ImGui::TableNextColumn(); ImGui::Text("Draw Mode"); ImGui::TableNextColumn();
+      static const char* DRAWMODE[] = { "WIRE", "SOLID", "WIRE ON SOLID" };
+      static int currentModeIdx = 0;
+      if (ImGui::BeginCombo("##drawMode", DRAWMODE[currentModeIdx], 0))
+      {
+        for (int i = 0; i < IM_ARRAYSIZE(DRAWMODE); i++)
+        {
+          const bool isSelected = (currentModeIdx == i);
+          if (ImGui::Selectable(DRAWMODE[i], isSelected))
+            currentModeIdx = i;
+
+          // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      if (currentModeIdx != static_cast<int>(drawMode_))
+      {
+        needUpdate = true;
+        drawMode_ = static_cast<simData::BeamPrefs_DrawMode>(currentModeIdx);
+      }
+
+      // Range
+      float range = range_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Range", &range_, 0.f, 2500.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (range != range_)
+        needUpdate = true;
+
+      // Horizontal width
+      float horzSize = horzSize_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Horiz. Size", &horzSize_, 1.f, 400.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (horzSize != horzSize_)
+        needUpdate = true;
+
+      // Vertical size
+      float vertSize = vertSize_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Vert. Size", &vertSize_, 1.f, 200.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (vertSize != vertSize_)
+        needUpdate = true;
+
+      // Azimuth
+      float azimuth = azimuth_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Azimuth", &azimuth_, -180.f, 180.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (azimuth != azimuth_)
+        needUpdate = true;
+
+      // Elevation
+      float elevation = elevation_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Elevation", &elevation_, -90.f, 90.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (elevation != elevation_)
+        needUpdate = true;
+
+      // Color
+      ImGui::TableNextColumn(); ImGui::Text("Color"); ImGui::TableNextColumn();
+      float oldColor[4] = { color_[0], color_[1], color_[2], color_[3] };
+      ImGuiColorEditFlags flags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_NoOptions;
+      ImGui::ColorEdit4("##color", &color_[0], flags);
+      if (color_ != oldColor)
+        needUpdate = true;
+
+      // Cap Resolution
+      float capRes = capRes_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Cap Res.", &capRes_, 1.f, 20.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (capRes != capRes_)
+        needUpdate = true;
+
+      // Cone Resolution
+      float coneRes = coneRes_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Cone Res.", &coneRes_, 4.f, 40.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (coneRes != coneRes_)
+        needUpdate = true;
+
+      // Use Offset
+      bool useOffset = useOffset_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Use Offset", &useOffset_);
+      if (useOffset != useOffset_)
+        needUpdate = true;
+
+      // Shaded
+      bool shaded = shaded_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Shaded", &shaded_);
+      if (shaded != shaded_)
+        needUpdate = true;
+
+      // Blended
+      bool blended = blended_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Blended", &blended_);
+      if (blended != blended_)
+        needUpdate = true;
+
+      // Render Cone
+      bool renderCone = renderCone_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Render Cone", &renderCone_);
+      if (renderCone != renderCone_)
+        needUpdate = true;
+
+      // Animate
+      bool animate = animate_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Animate", &animate_);
+      if (animate != animate_)
+        needUpdate = true;
+
+      // Global Toggle
+      bool globalToggle = globalToggle_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Global Beam Toggle", &globalToggle_);
+      if (globalToggle != globalToggle_)
+        needUpdate = true;
+
+      if (needUpdate)
+        update_();
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  /** Update the beam's prefs with the current values */
+  void update_()
+  {
+    time_ += 1.f;
+
+    simData::DataStore::Transaction xaction;
+    simData::BeamPrefs* prefs = ds_.mutable_beamPrefs(beamId_, &xaction);
+    prefs->mutable_commonprefs()->set_draw(true);
+    prefs->mutable_commonprefs()->set_color(simVis::Color(color_[0], color_[1], color_[2], color_[3]).as(simVis::Color::RGBA));
+    prefs->set_beamdrawmode(drawMode_);
+    prefs->set_horizontalwidth(simCore::DEG2RAD * horzSize_);
+    prefs->set_verticalwidth(simCore::DEG2RAD * vertSize_);
+    prefs->set_useoffseticon(useOffset_);
+    prefs->set_shaded(shaded_);
+    prefs->set_blended(blended_);
+    prefs->set_rendercone(renderCone_);
+    prefs->set_capresolution(capRes_);
+    prefs->set_coneresolution(coneRes_);
+    prefs->set_animate(animate_);
+    prefs->set_pulserate(0.1);
+    prefs->set_pulsestipple(0xfff0);
+    xaction.complete(&prefs);
+
+    // apply update
+    {
+      simData::BeamUpdate* update = ds_.addBeamUpdate(beamId_, &xaction);
+      update->set_time(time_);
+
+      update->set_range(range_);
+      update->set_azimuth(azimuth_ * simCore::DEG2RAD);
+      update->set_elevation(elevation_ * simCore::DEG2RAD);
+
+      xaction.complete(&update);
+    }
+
+    ds_.update(time_);
+
+    unsigned displayMask = view_->getDisplayMask();
+    view_->setDisplayMask(globalToggle_ ? (displayMask | simVis::DISPLAY_MASK_BEAM) : (displayMask & ~simVis::DISPLAY_MASK_BEAM));
+  }
+
+  simData::MemoryDataStore& ds_;
+  simData::ObjectId beamId_;
+  osg::ref_ptr<simVis::View> view_;
+  simData::BeamPrefs_DrawMode drawMode_ = simData::BeamPrefs_DrawMode_WIRE;
+  float time_ = 0.f;
+  float range_ = 250.f;
+  float horzSize_ = 45.f;
+  float vertSize_ = 45.f;
+  float azimuth_ = 0.f;
+  float elevation_ = 0.f;
+  float capRes_ = 15.f;
+  float coneRes_ = 30.f;
+  bool useOffset_ = false;
+  bool shaded_ = false;
+  bool blended_ = true;
+  bool renderCone_ = true;
+  bool animate_ = false;
+  bool globalToggle_ = true;
+  float color_[4] = { 1.f, 1.f, 1.f, .5f };
+};
+
+#else
 
 struct AppData
 {
@@ -329,6 +555,8 @@ ui::Control* createUI(AppData& app)
   return top;
 }
 
+#endif
+
 //----------------------------------------------------------------------------
 
 /// Add a platform to use for the test.
@@ -459,24 +687,36 @@ int main(int argc, char** argv)
   simData::MemoryDataStore dataStore;
   scene->getScenario()->bind(&dataStore);
 
+  /// add in the platform and beam
+  simData::ObjectId hostId = addPlatform(dataStore, argc, argv);
+  simData::ObjectId beamId = addBeam(dataStore, hostId, argc, argv);
+
+#ifndef HAVE_IMGUI
   /// Set up the application data
   AppData app;
   app.ds_     = &dataStore;
   app.view_   = viewer->getMainView();
+  app.hostId_ = hostId;
+  app.beamId_ = beamId;
+#endif
 
-  /// add in the platform and beam
-  app.hostId_ = addPlatform(dataStore, argc, argv);
-  app.beamId_ = addBeam(dataStore, app.hostId_, argc, argv);
-
-  osg::observer_ptr<osg::Node> platformModel = scene->getScenario()->find<simVis::PlatformNode>(app.hostId_);
-  app.view_->tetherCamera(platformModel.get());
+  osg::observer_ptr<osg::Node> platformModel = scene->getScenario()->find<simVis::PlatformNode>(hostId);
+  viewer->getMainView()->tetherCamera(platformModel.get());
 
   /// set the camera to look at the platform
   viewer->getMainView()->setFocalOffsets(-45, -45, 500.0);
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(dataStore, beamId, viewer->getMainView()));
+#else
   /// show the instructions overlay
   viewer->getMainView()->addOverlayControl(createUI(app));
   app.apply();
+#endif
 
   /// add some stock OSG handlers
   viewer->installDebugHandlers();

@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -41,6 +41,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/GOG/Parser.h"
 #include "simCore/String/UtfUtils.h"
 #include "simData/MemoryDataStore.h"
 #include "simVis/Platform.h"
@@ -51,7 +52,7 @@
 #include "simVis/Viewer.h"
 #include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GogNodeInterface.h"
-#include "simVis/GOG/Parser.h"
+#include "simVis/GOG/Loader.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/MouseDispatcher.h"
 #include "simUtil/MousePositionManipulator.h"
@@ -497,12 +498,11 @@ int main(int argc, char** argv)
   // add the gog file vector layers.
   for (const std::string& gogFile : gogFiles)
   {
-    simVis::GOG::Parser::OverlayNodeVector gogs;
-    std::vector<simVis::GOG::GogFollowData> followData;
-    simVis::GOG::Parser parser(scene->getMapNode());
 
+    simCore::GOG::Parser parser;
+    simVis::GOG::Loader loader(parser, scene->getMapNode());
     // sets a default reference location for relative GOGs:
-    parser.setReferenceLocation(simVis::GOG::BSTUR);
+    loader.setReferencePosition(simVis::GOG::BSTUR.position());
 
     std::ifstream is(simCore::streamFixUtf8(gogFile));
     if (!is.is_open())
@@ -512,10 +512,13 @@ int main(int argc, char** argv)
       return 1;
     }
 
-    if (parser.loadGOGs(is, attach ? simVis::GOG::GOGNODE_HOSTED : simVis::GOG::GOGNODE_GEOGRAPHIC, gogs, followData))
+    simVis::GOG::Loader::GogNodeVector gogs;
+    loader.loadGogs(is, gogFile, attach, gogs);
+
+    if (!gogs.empty())
     {
       int followIndex = 0;
-      for (simVis::GOG::Parser::OverlayNodeVector::iterator i = gogs.begin(); i != gogs.end(); ++i)
+      for (auto i = gogs.begin(); i != gogs.end(); ++i)
       {
         GogNodeInterfacePtr gogInterface(*i);
         osg::Node* gog = (*i)->osgNode();
@@ -523,8 +526,22 @@ int main(int argc, char** argv)
         // attached GOGs get added to a locator based on the host platform
         if (attach)
         {
-          simVis::Locator* locator = new simVis::Locator(platform->getLocator(), followData[followIndex].locatorFlags);
-          locator->setLocalOffsets(simCore::Vec3(0, 0, 0), followData[followIndex].orientationOffsets);
+          // TODO: SIM-13358- incorporate this logic into simVis PlatformNode
+          bool followYaw = false;
+          bool followPitch = false;
+          bool followRoll = false;
+          const simCore::GOG::GogShape* shape = (*i)->shapeObject();
+          if (shape)
+          {
+            shape->getIsFollowingYaw(followYaw);
+            shape->getIsFollowingPitch(followPitch);
+            shape->getIsFollowingRoll(followRoll);
+          }
+          simVis::Locator* locator = new simVis::Locator(platform->getLocator(),
+            simVis::Locator::COMP_POSITION
+            | (followYaw ? simVis::Locator::COMP_HEADING : 0)
+            | (followPitch ? simVis::Locator::COMP_PITCH : 0)
+            | (followRoll ? simVis::Locator::COMP_ROLL : 0));
           simVis::LocatorNode* locatorNode = new simVis::LocatorNode(locator, gog);
           group->addChild(locatorNode);
         }

@@ -14,4 +14,10 @@ set_target_properties(example_localgrid PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Local Grid"
 )
+
+if (TARGET ImGuiLib)
+    target_link_libraries(example_localgrid PRIVATE ImGuiLib)
+    target_compile_definitions(example_localgrid PRIVATE HAVE_IMGUI)
+endif()
+
 vsi_install_target(example_localgrid SDK_Examples)

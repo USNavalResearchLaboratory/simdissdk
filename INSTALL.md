@@ -40,8 +40,9 @@ Third Party Dependencies
 ========================
 The SIMDIS SDK depends on the following third party libraries:
 
+- [GLEW 2.1+](http://glew.sourceforge.net/)
 - [OpenSceneGraph 3.6+](http://www.openscenegraph.org)
-- [osgEarth 3.1+](http://www.osgearth.org)
+- [osgEarth 3.2+](http://www.osgearth.org)
 - [protobuf 2.6+](http://code.google.com/p/protobuf)
 - [Python 3.6+](https://www.python.org/)
 - [Qt 5.5+](http://qt-project.org)

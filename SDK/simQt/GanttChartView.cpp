@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -355,9 +355,17 @@ void GanttChartView::paintEvent(QPaintEvent* event)
   // If spacingPixels <= 1, the reference lines are drawn on every pixel of the viewport.  This defeats the purpose.
   if (drawReferenceLines_ && spacingPixels > 1)
   {
-    for (double x = 0; x < range_ * (scale_ * zoom_); x += spacingPixels)
+    const double scaledRange = range_ * (scale_ * zoom_);
+    const size_t numLoops = 1 + static_cast<size_t>(scaledRange / spacingPixels);
+    // SIM-13261: Don't loop too many times and hang the application
+    if (numLoops < 500)
     {
-      painter.drawLine(x, 0, x, viewport()->height() - 1);
+      for (size_t lineNumber = 0; lineNumber < numLoops; ++lineNumber)
+      {
+        const double x = spacingPixels * lineNumber;
+        if (x < scaledRange)
+          painter.drawLine(x, 0, x, viewport()->height() - 1);
+      }
     }
   }
 
@@ -386,7 +394,8 @@ void GanttChartView::paintEvent(QPaintEvent* event)
       layer = parent;
 
     // Each item in the row
-    for (int itemInLayer = 0; itemInLayer < model()->rowCount(parentIndex); itemInLayer++)
+    const int rowCount = model()->rowCount(parentIndex);
+    for (int itemInLayer = 0; itemInLayer < rowCount; itemInLayer++)
     {
       if (!collapseLevels_)
       {

@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -50,9 +50,6 @@
 #include "simVis/Utils.h"
 #include "simVis/PlatformIconFactory.h"
 #include "simVis/PlatformModel.h"
-
-#undef LC
-#define LC "[PlatformModel] "
 
 namespace simVis {
 
@@ -255,7 +252,14 @@ void PlatformModelNode::syncWithLocator()
 
 bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
 {
-  if (lastPrefsValid_ &&
+  // Early return for fast path icon
+  ModelUpdate modelUpdate = updateFastPathModel_(prefs);
+  if (modelUpdate == NO_UPDATE)
+    return true;
+
+  // Slower (normal) speed path for icons -- only look at the icon() preference
+  if ((modelUpdate == CHECK_FOR_UPDATE) &&
+      lastPrefsValid_ &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, icon))
     return false;
 
@@ -282,6 +286,72 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
     }
   }
   return true;
+}
+
+PlatformModelNode::ModelUpdate PlatformModelNode::updateFastPathModel_(const simData::PlatformPrefs& prefs)
+{
+  PlatformIconFactory* iconFactory = PlatformIconFactory::instance();
+  // Attempt to use the simplified/optimized 2D icon path
+  if (lastPrefsValid_ && !iconFactory->hasRelevantChanges(lastPrefs_, prefs))
+    return NO_UPDATE;
+
+  // This is potentially a synchronous load of a 2D icon, which means we don't have to worry
+  // about thread interactions. If it succeeds and we need to change the icon, then the change
+  // is instantaneous. We'll have to update model sizes and other internal fields manually,
+  // because we cannot call setModel() in this use case. setModel() overrides the fast-path.
+  osg::ref_ptr<osg::Node> newIcon = iconFactory->getOrCreate(prefs);
+
+  // Only need to make changes if the icon is different from the old one
+  if (newIcon.get() == fastPathIcon_.get())
+    return fastPathIcon_.valid() ? NO_UPDATE : FORCE_UPDATE;
+
+  // Remove old fast path icon (if applicable)
+  if (fastPathIcon_.valid())
+    imageIconXform_->removeChild(fastPathIcon_.get());
+  // Assign and add the new fast path icon
+  fastPathIcon_ = newIcon;
+  const bool fastPathValid = fastPathIcon_.valid();
+
+  // If the fast path icon is not valid, then we need to force a load of the slow/normal path icon in caller
+  if (!fastPathValid)
+  {
+    offsetXform_->setNodeMask(getMask());
+    return FORCE_UPDATE;
+  }
+
+  fastPathIcon_->setNodeMask(getMask());
+  imageIconXform_->addChild(fastPathIcon_.get());
+
+  // Do not set model_, so that a state set is not created on it. The icon
+  // factory takes care of all model_-based prefs.
+  if (model_.valid())
+  {
+    offsetXform_->removeChild(model_);
+    alphaVolumeGroup_->removeChild(model_);
+    model_ = nullptr;
+    dynamicXform_->setSizingNode(nullptr);
+  }
+
+  // The factory can only return 2D images
+  isImageModel_ = true;
+
+  // Save the image original size
+  osg::ComputeBoundsVisitor cb;
+  fastPathIcon_->accept(cb);
+  const osg::BoundingBox& bounds = cb.getBoundingBox();
+  imageOriginalSize_.x() = bounds.xMax() - bounds.xMin();
+  imageOriginalSize_.y() = bounds.yMax() - bounds.yMin();
+
+  // Fix the sizing node for the dynamic transform to avoid initial very-large icons.
+  dynamicXform_->setSizingNode(fastPathIcon_.get());
+
+  // Kill off any pending async model loads
+  if (lastSetModelCallback_.valid())
+    lastSetModelCallback_->ignoreResult();
+
+  // Either use the fast-path icon, or use the more featured, slower path in offsetXform_; don't use both
+  offsetXform_->setNodeMask(fastPathValid ? 0u : getMask());
+  return fastPathValid ? NO_UPDATE : CHECK_FOR_UPDATE;
 }
 
 void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
@@ -747,9 +817,9 @@ void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs, boo
   // Turn lighting on if lighting is enabled, but force it off if lighting is off.  This
   // prevents models from turning lighting on when we don't want it on.  Models can then
   // feasibly override this with the PROTECTED|ON state.
-simVis::setLighting(offsetXform_->getOrCreateStateSet(), (!isImageModel_ && prefs.lighted())
-  ? osg::StateAttribute::ON
-  : (osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE));
+  simVis::setLighting(offsetXform_->getOrCreateStateSet(), (!isImageModel_ && prefs.lighted())
+    ? osg::StateAttribute::ON
+    : (osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE));
 }
 
 void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs)
@@ -842,31 +912,6 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
 
   if (needsBoundsUpdate)
     updateBounds_();
-
-  // Attempt to use the simplified/optimized 2D icon path
-  PlatformIconFactory* iconFactory = PlatformIconFactory::instance();
-  if (!lastPrefsValid_ || iconFactory->hasRelevantChanges(lastPrefs_, prefs))
-  {
-    osg::ref_ptr<osg::Node> newIcon = iconFactory->getOrCreate(prefs);
-
-    // Only need to make changes if the icon is different from the old one
-    if (newIcon.get() != fastPathIcon_.get())
-    {
-      // Remove old fast path icon (if applicable)
-      if (fastPathIcon_.valid())
-        imageIconXform_->removeChild(fastPathIcon_.get());
-      // Assign and add the new fast path icon (if needed)
-      fastPathIcon_ = newIcon;
-      if (fastPathIcon_.valid())
-      {
-        fastPathIcon_->setNodeMask(getMask());
-        imageIconXform_->addChild(fastPathIcon_.get());
-      }
-
-      // Either use the fast-path icon, or use the more featured, slower path in offsetXform_; don't use both
-      offsetXform_->setNodeMask(fastPathIcon_.valid() ? 0u : getMask());
-    }
-  }
 
   lastPrefs_ = prefs;
   lastPrefsValid_ = true;

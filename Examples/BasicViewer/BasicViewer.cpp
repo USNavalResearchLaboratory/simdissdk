@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -36,7 +36,13 @@
 #include "simVis/NavigationModes.h"
 #include "simUtil/ExampleResources.h"
 #include "osgDB/ReadFile"
+
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 #include "osgEarth/Controls"
+#endif
 
 #define LC "[BasicViewer demo] "
 
@@ -88,6 +94,115 @@ struct ViewReportCallback : public simVis::ViewManager::Callback
 };
 
 //----------------------------------------------------------------------------
+
+#ifdef HAVE_IMGUI
+struct ControlPanel : public GUI::BaseGui
+{
+  ControlPanel(simVis::Viewer* viewer, simVis::InsetViewEventHandler* insetViewHandler, simVis::CreateInsetEventHandler* createHandler)
+    : GUI::BaseGui("Viewer Example"),
+    viewer_(viewer),
+    insetViewHandler_(insetViewHandler),
+    createHandler_(createHandler)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+
+    auto& io = ImGui::GetIO();
+
+    ImGui::Text("i : toggles the mode for creating a new inset");
+    ImGui::Text("v : toggle visibility of all insets");
+    ImGui::Text("r : remove all insets");
+    ImGui::Text("1 : activate 'Perspective' navigation mode");
+    ImGui::Text("2 : activate 'Overhead' navigation mode");
+    ImGui::Text("3 : active 'GIS' navigation mode");
+    ImGui::Text("h : toggle between click-to-focus and hover-to-focus");
+    ImGui::Text("l : toggle sky lighting");
+    ImGui::Text("tab : cycle focus (in click-to-focus mode only)");
+
+    if (io.InputQueueCharacters.size() > 0)
+    {
+      switch (io.InputQueueCharacters.front())
+      {
+      case 'i':
+        createHandler_->setEnabled(!createHandler_->isEnabled());
+        break;
+      case 'v':
+      {
+        simVis::View* main = viewer_->getMainView();
+        for (unsigned i = 0; i < main->getNumInsets(); ++i)
+        {
+          simVis::View* inset = main->getInset(i);
+          inset->setVisible(!inset->isVisible());
+        }
+        break;
+      }
+      case 'r':
+      {
+        simVis::View::Insets insets;
+        viewer_->getMainView()->getInsets(insets);
+        for (unsigned int i = 0; i < insets.size(); ++i)
+          viewer_->getMainView()->removeInset(insets[i].get());
+
+        SIM_NOTICE << LC << "Removed all insets." << std::endl;
+        break;
+      }
+      case '1':
+        viewer_->getMainView()->enableOverheadMode(false);
+        viewer_->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
+        break;
+      case '2':
+        viewer_->getMainView()->enableOverheadMode(true);
+        viewer_->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
+        break;
+      case '3':
+        viewer_->setNavigationMode(simVis::NAVMODE_GIS);
+        break;
+      case 'h':
+      {
+        int mask = insetViewHandler_->getFocusActions();
+        bool hover = (mask & simVis::InsetViewEventHandler::ACTION_HOVER) != 0;
+        if (hover)
+        {
+          mask = simVis::InsetViewEventHandler::ACTION_CLICK_SCROLL | simVis::InsetViewEventHandler::ACTION_TAB;
+          SIM_NOTICE << LC << "Switched to click-to-focus mode." << std::endl;
+        }
+        else
+        {
+          mask = simVis::InsetViewEventHandler::ACTION_HOVER;
+          SIM_NOTICE << LC << "Switched to hover-to-focus mode." << std::endl;
+        }
+        insetViewHandler_->setFocusActions(mask);
+        break;
+      }
+      case 'l':
+      {
+        osgEarth::SkyNode* sky = viewer_->getSceneManager()->getSkyNode();
+        if (sky)
+        {
+          osg::StateAttribute::OverrideValue ov = sky->getLighting();
+          ov = (ov & osg::StateAttribute::ON) ? osg::StateAttribute::OFF : osg::StateAttribute::ON;
+          sky->setLighting(ov);
+        }
+        break;
+      }
+      }
+    }
+
+    ImGui::End();
+  }
+
+private:
+  osg::ref_ptr<simVis::Viewer> viewer_;
+  osg::observer_ptr<simVis::InsetViewEventHandler> insetViewHandler_;
+  osg::observer_ptr<simVis::CreateInsetEventHandler> createHandler_;
+};
+
+#else
 
 // An event handler to assist in testing the Inset functionality.
 struct MenuHandler : public osgGA::GUIEventHandler
@@ -204,6 +319,8 @@ private:
   osg::observer_ptr<simVis::CreateInsetEventHandler> createHandler_;
 };
 
+#endif
+
 int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
@@ -228,8 +345,10 @@ int main(int argc, char** argv)
   osg::ref_ptr<simVis::CreateInsetEventHandler> createInsetsHandler = new simVis::CreateInsetEventHandler(mainView);
   mainView->addEventHandler(createInsetsHandler);
 
+#ifndef HAVE_IMGUI
   // Install a handler to respond to the demo keys in this sample.
   mainView->getCamera()->addEventCallback(new MenuHandler(viewer.get(), insetFocusHandler.get(), createInsetsHandler.get()));
+#endif
 
   // set an initial viewpoint
   mainView->lookAt(45, 0, 0, 0, -89, 12e6);
@@ -254,7 +373,18 @@ int main(int argc, char** argv)
   simVis::View* hud = new simVis::View();
   hud->setUpViewAsHUD(mainView);
   mainView->getViewManager()->addView(hud);
+
+#ifndef HAVE_IMGUI
   hud->addOverlayControl(createHelp());
+
+#else
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  mainView->getEventHandlers().push_front(gui);
+
+  gui->add(new ControlPanel(viewer.get(), insetFocusHandler.get(), createInsetsHandler.get()));
+#endif
 
   // for status and debugging
   viewer->installDebugHandlers();

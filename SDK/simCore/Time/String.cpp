@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -982,32 +982,35 @@ int Iso8601TimeFormatter::fromString(const std::string& timeString, simCore::Tim
 
 ///////////////////////////////////////////////////////////////////////
 
-TimeFormatterRegistry::TimeFormatterRegistry(bool wrappedFormatters)
+TimeFormatterRegistry::TimeFormatterRegistry(bool wrappedFormatters, bool addDefaults)
   : nullFormatter_(new NullTimeFormatter),
     lastUsedFormatter_(nullFormatter_)
 {
-  knownFormatters_[TIMEFORMAT_SECONDS] = TimeFormatterPtr(new SecondsTimeFormatter);
-  if (wrappedFormatters)
+  if (addDefaults)
   {
-    knownFormatters_[TIMEFORMAT_MINUTES] = TimeFormatterPtr(new MinutesWrappedTimeFormatter);
-    knownFormatters_[TIMEFORMAT_HOURS] = TimeFormatterPtr(new HoursWrappedTimeFormatter);
-  }
-  else
-  {
-    knownFormatters_[TIMEFORMAT_MINUTES] = TimeFormatterPtr(new MinutesTimeFormatter);
-    knownFormatters_[TIMEFORMAT_HOURS] = TimeFormatterPtr(new HoursTimeFormatter);
-  }
-  knownFormatters_[TIMEFORMAT_ORDINAL] = TimeFormatterPtr(new OrdinalTimeFormatter);
-  knownFormatters_[TIMEFORMAT_MONTHDAY] = TimeFormatterPtr(new MonthDayTimeFormatter);
-  knownFormatters_[TIMEFORMAT_DTG] = TimeFormatterPtr(new DtgTimeFormatter);
-  knownFormatters_[TIMEFORMAT_ISO8601] = TimeFormatterPtr(new Iso8601TimeFormatter);
+    knownFormatters_[TIMEFORMAT_SECONDS] = TimeFormatterPtr(new SecondsTimeFormatter);
+    if (wrappedFormatters)
+    {
+      knownFormatters_[TIMEFORMAT_MINUTES] = TimeFormatterPtr(new MinutesWrappedTimeFormatter);
+      knownFormatters_[TIMEFORMAT_HOURS] = TimeFormatterPtr(new HoursWrappedTimeFormatter);
+    }
+    else
+    {
+      knownFormatters_[TIMEFORMAT_MINUTES] = TimeFormatterPtr(new MinutesTimeFormatter);
+      knownFormatters_[TIMEFORMAT_HOURS] = TimeFormatterPtr(new HoursTimeFormatter);
+    }
+    knownFormatters_[TIMEFORMAT_ORDINAL] = TimeFormatterPtr(new OrdinalTimeFormatter);
+    knownFormatters_[TIMEFORMAT_MONTHDAY] = TimeFormatterPtr(new MonthDayTimeFormatter);
+    knownFormatters_[TIMEFORMAT_DTG] = TimeFormatterPtr(new DtgTimeFormatter);
+    knownFormatters_[TIMEFORMAT_ISO8601] = TimeFormatterPtr(new Iso8601TimeFormatter);
 
-  registerCustomFormatter(TimeFormatterPtr(new Deprecated::DDD_HHMMSS_Formatter));
-  registerCustomFormatter(TimeFormatterPtr(new Deprecated::DDD_HHMMSS_YYYY_Formatter));
-  registerCustomFormatter(TimeFormatterPtr(new Deprecated::MD_MON_YYYY_HHMMSS_Formatter));
-  registerCustomFormatter(TimeFormatterPtr(new Deprecated::MON_MD_HHMMSS_YYYY_Formatter));
-  registerCustomFormatter(TimeFormatterPtr(new Deprecated::WKD_MON_MD_HHMMSS_Formatter));
-  registerCustomFormatter(TimeFormatterPtr(new Deprecated::WKD_MON_MD_HHMMSS_YYYY_Formatter));
+    registerCustomFormatter(TimeFormatterPtr(new Deprecated::DDD_HHMMSS_Formatter));
+    registerCustomFormatter(TimeFormatterPtr(new Deprecated::DDD_HHMMSS_YYYY_Formatter));
+    registerCustomFormatter(TimeFormatterPtr(new Deprecated::MD_MON_YYYY_HHMMSS_Formatter));
+    registerCustomFormatter(TimeFormatterPtr(new Deprecated::MON_MD_HHMMSS_YYYY_Formatter));
+    registerCustomFormatter(TimeFormatterPtr(new Deprecated::WKD_MON_MD_HHMMSS_Formatter));
+    registerCustomFormatter(TimeFormatterPtr(new Deprecated::WKD_MON_MD_HHMMSS_YYYY_Formatter));
+  }
 }
 
 TimeFormatterRegistry::~TimeFormatterRegistry()

@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -387,6 +387,7 @@ protected:
   class AboveSurfaceClamping;
   class EntityRecord;
   class ScenarioLosCreator;
+  class SetRefYearCullCallback;
   class SimpleEntityGraph;
   class SurfaceClamping;
 
@@ -404,6 +405,8 @@ protected:
   osg::ref_ptr<SimpleEntityGraph> entityGraph_;
   /** Holds a map of all named attachment points added through getOrCreateAttachPoint(). */
   std::map<std::string, osg::observer_ptr<osg::Group> > customAttachPoints_;
+  /** Adds the reference year to cull callback for time based culling */
+  osg::ref_ptr<SetRefYearCullCallback> refYearCallback_;
 
   /** Observer to the current map */
   osg::observer_ptr<osgEarth::MapNode> mapNode_;

@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -296,7 +296,7 @@ struct PlatformIconFactory::IconContainer
 class PlatformIconFactory::RemoveNotifier : public osg::Observer
 {
 public:
-  RemoveNotifier(PlatformIconFactory& factory)
+  explicit RemoveNotifier(PlatformIconFactory& factory)
     : factory_(factory)
   {
   }
@@ -375,9 +375,10 @@ osg::Node* PlatformIconFactory::getOrCreate(const simData::PlatformPrefs& prefs)
       return iter->second.get();
   }
 
-  // Attempt to load the model node from registry
+  // Attempt to load the model node from registry; we can only optimize image icons in this way.
+  // This call is not threaded, and does not go to the paging node in order to load the icon.
+  // It loads in the main thread, and the returned model node is the actual node, not a proxy.
   bool isImage = false;
-  // We can only optimize image icons in this way
   osg::ref_ptr<osg::Node> modelNode = simVis::Registry::instance()->getOrCreateIconModel(mergeSettings.icon(), &isImage);
   if (!isImage || !modelNode)
     return nullptr;

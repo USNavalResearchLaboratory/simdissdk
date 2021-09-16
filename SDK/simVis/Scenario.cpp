@@ -13,14 +13,15 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
 #include <algorithm>
+#include "osg/ValueObject"
 #include "osgEarth/GeoData"
 #include "osgEarth/Horizon"
 #include "osgEarth/NodeUtils"
@@ -30,6 +31,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Time/String.h"
 #include "simData/DataStore.h"
 
 #include "simVis/AlphaTest.h"
@@ -419,6 +421,39 @@ private:
 
 // -----------------------------------------------------------------------
 
+/**
+ * Cull callback that supplies a reference year in the NodeVisitor
+ * for time based culling. (requires OSG 3.4+)
+ */
+class ScenarioManager::SetRefYearCullCallback : public osg::NodeCallback
+{
+public:
+  SetRefYearCullCallback()
+  {
+  }
+
+  void setCurrTime(simCore::TimeStamp currTime)
+  {
+    currTime_ = currTime;
+  }
+
+  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv) override
+  {
+    // simCore::Timestamp can't be stored directly.  Separate it into constituent elements and recombine where needed
+    nv->setUserValue("simVis.ScenarioManager.RefYear", currTime_.referenceYear());
+    nv->setUserValue("simVis.ScenarioManager.Seconds", currTime_.secondsSinceRefYear().Double());
+    traverse(node, nv);
+  }
+
+protected:
+  ~SetRefYearCullCallback() {}
+
+private:
+  simCore::TimeStamp currTime_;
+};
+
+// -----------------------------------------------------------------------
+
 ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   : platformTspiFilterManager_(new PlatformTspiFilterManager()),
   surfaceClamping_(nullptr),
@@ -448,8 +483,10 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   em.setRadiusPolar(em.getRadiusPolar() - 11000.0);
 #endif
   SetHorizonCullCallback* setHorizon = new SetHorizonCullCallback(new osgEarth::Horizon(em));
-  root_->addCullCallback(setHorizon);
-  // SIM-7889 - this horizon also gets picked up by GOG annotations (which are not children of root_, but are children of root_'s parent)
+  addCullCallback(setHorizon);
+
+  refYearCallback_ = new SetRefYearCullCallback();
+  addCullCallback(refYearCallback_);
 
   // Clamping requires a Group for MapNode changes
   surfaceClamping_ = new SurfaceClamping();
@@ -1259,6 +1296,19 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
     }
     SAFETRYEND("updating scenario tools");
   }
+
+  if (ds->getBoundClock())
+  {
+    simCore::Clock* clock = ds->getBoundClock();
+    // Set the reference year for time based culling.  If the clock doesn't have valid bounds and isn't in live mode,
+    // set an invalid reference year to indicate no such culling should be done
+    if (clock->startTime() == simCore::MIN_TIME_STAMP && clock->endTime() == simCore::INFINITE_TIME_STAMP && clock->isLiveMode())
+      refYearCallback_->setCurrTime(simCore::INFINITE_TIME_STAMP);
+    else
+      refYearCallback_->setCurrTime(clock->currentTime());
+  }
+  else
+    refYearCallback_->setCurrTime(simCore::INFINITE_TIME_STAMP);
 
   if (needsRedraw)
   {

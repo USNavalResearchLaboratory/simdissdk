@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -41,7 +41,8 @@ namespace simVis { namespace GOG
 * and generate a list of GogNodeInterface objects as output.
 *
 * The Loader should be instantiated on demand, so as not to outlive its
-* reference to the osgEarth::MapNode it contains.
+* reference to the osgEarth::MapNode it contains. This class replaces the
+* deprecated simVis::GOG::Parser set of classes.
 */
 class SDKVIS_EXPORT Loader
 {

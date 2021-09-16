@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -567,6 +567,18 @@ osgEarth::GeoImage DBImageLayer::createImageImplementation(const osgEarth::TileK
   }
 
   delete[] buf;
+
+  if (result.valid())
+  {
+    // Convert to RGBA8 if needed. osgEarth revision 84cdbe3e disables the auto-conversion to
+    // RGBA8, so we need to make sure the returned image is the right type and pixel format.
+    if (result->getDataType() != GL_UNSIGNED_BYTE || result->getPixelFormat() != GL_RGBA)
+    {
+      osg::ref_ptr<osg::Image> newImage = osgEarth::ImageUtils::convertToRGBA8(result.get());
+      if (newImage.valid())
+        result = newImage;
+    }
+  }
 
   return osgEarth::GeoImage(result.release(), key.getExtent());
 }

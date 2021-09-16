@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -48,7 +48,8 @@ enum NavMode
   NAVMODE_ZOOM,
   NAVMODE_CENTERVIEW,
   NAVMODE_GIS,
-  NAVMODE_BUILDER
+  NAVMODE_BUILDER,
+  NAVMODE_NGTS
 };
 
 /// A camera viewpoint configuration

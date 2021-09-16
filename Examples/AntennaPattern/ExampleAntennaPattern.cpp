@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -56,6 +56,11 @@
 #include "simUtil/ExampleResources.h"
 #include "osgEarth/Sky"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#endif
+
 using namespace osgEarth;
 using namespace osgEarth::Util;
 using namespace osgEarth::Util::Controls;
@@ -64,7 +69,228 @@ using namespace osgEarth::Util::Controls;
 
 static const std::string s_title = "Antenna Pattern Example";
 
+#ifdef HAVE_IMGUI
 
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  explicit ControlPanel(simData::MemoryDataStore& ds, simData::ObjectId beamId)
+    : GUI::BaseGui("Antenna Pattern Example"),
+    ds_(ds),
+    beamId_(beamId)
+  {
+    update_();
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    bool needUpdate = false;
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      simData::DataStore::Transaction xaction;
+      const simData::BeamPrefs* prefs = ds_.beamPrefs(beamId_, &xaction);
+
+      // Algorithm combo box
+      ImGui::TableNextColumn(); ImGui::Text("Algorithm"); ImGui::TableNextColumn();
+      static const char* ALGORITHMS[] = { "PEDESTAL", "GAUSS", "CSCSQ", "SINXX", "OMNI" };
+      static int currentAlgIdx = 0;
+      if (ImGui::BeginCombo("##alg", ALGORITHMS[currentAlgIdx], 0))
+      {
+        for (int i = 0; i < IM_ARRAYSIZE(ALGORITHMS); i++)
+        {
+          const bool isSelected = (currentAlgIdx == i);
+          if (ImGui::Selectable(ALGORITHMS[i], isSelected))
+            currentAlgIdx = i;
+
+          // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      if (currentAlgIdx + 1 != static_cast<int>(alg_))
+      {
+        needUpdate = true;
+        alg_ = static_cast<simData::BeamPrefs_AntennaPattern_Algorithm>(currentAlgIdx + 1);
+      }
+
+      // Polarity combo box
+      ImGui::TableNextColumn(); ImGui::Text("Polarity"); ImGui::TableNextColumn();
+      static const char* POLARITY[] = { "UNKNOWN", "HORIZONTAL", "VERTICAL", "CIRCULAR", "HORZVERT", "VERTHORZ", "LEFTCIRC", "RIGHTCIRC", "LINEAR" };
+      static int currentPolIdx = 0;
+      if (ImGui::BeginCombo("##pol", POLARITY[currentPolIdx], 0))
+      {
+        for (int i = 0; i < IM_ARRAYSIZE(POLARITY); i++)
+        {
+          const bool isSelected = (currentPolIdx == i);
+          if (ImGui::Selectable(POLARITY[i], isSelected))
+            currentPolIdx = i;
+
+          // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      if (currentPolIdx != static_cast<int>(polarity_))
+      {
+        needUpdate = true;
+        polarity_ = static_cast<simData::Polarity>(currentPolIdx);
+      }
+
+      // Sensitivity
+      float sensitivity = sensitivity_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Sensitivity", &sensitivity_, -100.f, 0.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (sensitivity != sensitivity_)
+        needUpdate = true;
+
+      // Frequency
+      float frequency = frequency_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Frequency", &frequency_, 0.f, 10000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (frequency != frequency_)
+        needUpdate = true;
+
+      // Gain
+      float gain = gain_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Gain", &gain_, 0.f, 100.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (gain != gain_)
+        needUpdate = true;
+
+      // Power
+      float power = power_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Power", &power_, 0.f, 20000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (power != power_)
+        needUpdate = true;
+
+      // Beam Width
+      float beamWidth = beamWidth_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Beam Width", &beamWidth_, 1.f, 45.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (beamWidth != beamWidth_)
+        needUpdate = true;
+
+      // Beam Height
+      float beamHeight = beamHeight_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Beam Height", &beamHeight_, 1.f, 45.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (beamHeight != beamHeight_)
+        needUpdate = true;
+
+      // Scale
+      float scale = scale_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Scale", &beamHeight_, 1.f, 1000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (scale != scale_)
+        needUpdate = true;
+
+      // Field of View
+      float fov = fov_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Field of View", &fov_, 1.f, 360.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (fov != fov_)
+        needUpdate = true;
+
+      // Detail Angle
+      float detailAngle = detailAngle_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Detail Angle", &detailAngle_, 1.f, 15.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (detailAngle != detailAngle_)
+        needUpdate = true;
+
+      // Weighting
+      bool weighting = weighting_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Weighting", &weighting_);
+      if (weighting != weighting_)
+        needUpdate = true;
+
+      // Color Scale
+      bool colorScale = colorScale_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Color Scale", &colorScale_);
+      if (colorScale != colorScale_)
+        needUpdate = true;
+
+      // Blending
+      bool blending = blending_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Blending", &blending_);
+      if (blending != blending_)
+        needUpdate = true;
+
+      // Lighting
+      bool lighting = lighting_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Lighting", &lighting_);
+      if (lighting != lighting_)
+        needUpdate = true;
+
+      if (needUpdate)
+        update_();
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  /** Update the beam's prefs with the current values */
+  void update_()
+  {
+    std::vector<std::pair<simData::BeamPrefs_AntennaPattern_Algorithm, std::string> > algs;
+    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_PEDESTAL, "PEDESTAL"));
+    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_GAUSS, "GAUSS"));
+    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_CSCSQ, "CSCSQ"));
+    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_SINXX, "SINXX"));
+    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_OMNI, "OMNI"));
+
+    simData::DataStore::Transaction xaction;
+    simData::BeamPrefs* prefs = ds_.mutable_beamPrefs(beamId_, &xaction);
+    prefs->set_drawtype(simData::BeamPrefs_DrawType_ANTENNA_PATTERN);
+    prefs->mutable_antennapattern()->set_type(simData::BeamPrefs_AntennaPattern_Type_ALGORITHM);
+    prefs->mutable_antennapattern()->set_algorithm(alg_);
+    prefs->mutable_antennapattern()->set_filename(algs[static_cast<int>(alg_) - 1].second);
+    prefs->set_polarity(polarity_);
+    prefs->set_sensitivity(sensitivity_);
+    prefs->set_fieldofview(simCore::DEG2RAD * fov_);
+    prefs->set_horizontalwidth(simCore::DEG2RAD * beamWidth_);
+    prefs->set_verticalwidth(simCore::DEG2RAD * beamHeight_);
+    prefs->set_gain(gain_);
+    prefs->set_detail(detailAngle_);
+    prefs->set_power(power_);
+    prefs->set_frequency(frequency_);
+    prefs->set_weighting(weighting_);
+    prefs->set_colorscale(colorScale_);
+    prefs->set_beamscale(scale_);
+    prefs->set_blended(blending_);
+    prefs->set_shaded(lighting_);
+    prefs->mutable_commonprefs()->set_draw(true);
+    prefs->mutable_commonprefs()->set_datadraw(true);
+    xaction.complete(&prefs);
+  }
+
+  simData::MemoryDataStore& ds_;
+  simData::ObjectId beamId_;
+  simData::BeamPrefs_AntennaPattern_Algorithm alg_ = simData::BeamPrefs_AntennaPattern_Algorithm_PEDESTAL;
+  simData::Polarity polarity_ = simData::POL_UNKNOWN;
+  float sensitivity_ = -50.f;
+  float frequency_ = 7000.f;
+  float gain_ = 20.f;
+  float power_ = 2000.f;
+  float beamWidth_ = 3.f;
+  float beamHeight_ = 3.f;
+  float scale_ = 1.f;
+  float fov_ = 85.f;
+  float detailAngle_ = 5.f;
+  bool weighting_ = true;
+  bool colorScale_ = true;
+  bool blending_ = true;
+  bool lighting_ = false;
+};
+
+#else
 struct AppData
 {
   AppData()
@@ -305,6 +531,8 @@ void addPlatformAndBeam(AppData* app,
   applyAntennaPrefs(app);
 }
 
+#endif
+
 //----------------------------------------------------------------------------
 
 void simulate(simData::ObjectId id, simData::DataStore& ds, simVis::Viewer* viewer)
@@ -343,6 +571,53 @@ int main(int argc, char **argv)
   if (scene->getSkyNode())
     scene->getSkyNode()->setDateTime(osgEarth::DateTime(2012, 0, 0, 11.0));
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+
+  simData::MemoryDataStore ds;
+  simData::ObjectId platformId;
+  simData::ObjectId beamId;
+  scene->getScenario()->bind(&ds);
+
+  // create the platform:
+  {
+    simData::DataStore::Transaction xaction;
+    simData::PlatformProperties* newProps = ds.addPlatform(&xaction);
+    platformId = newProps->id();
+    xaction.complete(&newProps);
+  }
+
+  // now configure its preferences:
+  {
+    simData::DataStore::Transaction xaction;
+    simData::PlatformPrefs* prefs =ds.mutable_platformPrefs(platformId, &xaction);
+    prefs->set_icon(EXAMPLE_AIRPLANE_ICON);
+    prefs->set_dynamicscale(true);
+    prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
+    xaction.complete(&prefs);
+  }
+
+  // create the beam:
+  {
+    simData::DataStore::Transaction xaction;
+    simData::BeamProperties* props = ds.addBeam(&xaction);
+    props->set_hostid(platformId);
+    props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+    beamId = props->id();
+    xaction.complete(&props);
+  }
+
+  // make the sim
+  simulate(platformId, ds, viewer.get());
+  // zoom the camera
+  viewer->getMainView()->tetherCamera(scene->getScenario()->find(platformId));
+  viewer->getMainView()->setFocalOffsets(0, -45, 250000.);
+
+  gui->add(new ControlPanel(ds, beamId));
+#else
   AppData app;
 
   // install the GUI
@@ -354,10 +629,10 @@ int main(int argc, char **argv)
 
   // make the sim
   simulate(app.platformId, app.ds, viewer.get());
-
   // zoom the camera
   viewer->getMainView()->tetherCamera(scene->getScenario()->find(app.platformId));
   viewer->getMainView()->setFocalOffsets(0, -45, 250000.);
+#endif
 
   // add some stock OSG handlers and go
   viewer->installDebugHandlers();

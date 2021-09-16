@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -1444,6 +1444,8 @@ void View::setNavigationMode(const NavMode& mode)
     manip->applySettings(new GisNavigationMode(this, overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_BUILDER)
     manip->applySettings(new BuilderNavigationMode(overheadEnabled_, watchEnabled_));
+  else if (mode == NAVMODE_NGTS)
+    manip->applySettings(new NgtsNavigationMode(this, overheadEnabled_, watchEnabled_));
 
   // Restore the retained settings
   manip->getSettings()->setArcViewpointTransitions(arcTransitions);

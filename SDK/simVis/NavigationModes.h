@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -386,6 +386,39 @@ class View;
   private:
     /** Initializes the bindings given the parameters. */
     void init_(bool enableOverhead, bool watchMode);
+  };
+
+  /**
+  * NgtsNavigationMode provides a similar navigation mode to Next Generation Threat System (NGTS.
+  * Pass an instance of NgtsNavigationMode to EarthManipulator::applySettings in order to enable
+  * this navigation mode.<p>
+  * The mappings are nearly identical to RotatePanNavigationMode with following notable exceptions:
+  * <ul>
+  * <li>Left mouse button: pan in overhead and perspective mode</li>
+  * <li>Right mouse button: zoom in overhead, rotate in perspective</li>
+  * </ul>
+  */
+  class SDKVIS_EXPORT NgtsNavigationMode : public RotatePanNavigationMode
+  {
+  public:
+    /**
+    * Initialize the NGTS navigation mode.
+    * @param enableOverhead true to create the navigation mode with
+    * overhead enabled, false to create with perspective mode
+    * @param watchMode if true, no rotate actions will be applied, as
+    * rotation is disabled in watchMode
+    */
+    NgtsNavigationMode(simVis::View* view, bool enableOverhead, bool watchMode);
+
+  protected:
+    /// osg::Referenced-derived
+    virtual ~NgtsNavigationMode();
+
+  private:
+    /// Initialize the mouse for overhead mode usage (not in watch mode)
+    void initOverhead_();
+    /// Initialize the mouse for perspective mode usage (not in watch mode)
+    void initPerspective_();
   };
 
 }

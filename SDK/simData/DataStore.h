@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -165,6 +165,9 @@ public:
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) = 0;
 
+    /// properties for the given entity have been changed
+    virtual void onPropertiesChange(DataStore *source, ObjectId id) = 0;
+
     /// data store has changed, this includes both time change and/or data change; called a max of once per frame
     virtual void onChange(DataStore *source) = 0;
 
@@ -199,6 +202,9 @@ public:
 
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) {}
+
+    /// properties for the given entity have been changed
+    virtual void onPropertiesChange(DataStore *source, ObjectId id) {}
 
     /// data store has changed
     virtual void onChange(DataStore *source) {}

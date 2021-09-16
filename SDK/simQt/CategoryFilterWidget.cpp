@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -609,6 +609,7 @@ public:
   virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId) {}
   virtual void onScenarioDelete(simData::DataStore* source) {}
   virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) {}
+  virtual void onPropertiesChange(simData::DataStore *source, simData::ObjectId id) {}
   virtual void onChange(simData::DataStore *source) {}
   virtual void onFlush(simData::DataStore* source, simData::ObjectId id) {}
 

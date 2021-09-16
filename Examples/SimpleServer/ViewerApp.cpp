@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -24,6 +24,11 @@
 #include "osgGA/GUIEventHandler"
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/ScreenSpaceLayout"
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#endif
+#include "simCore/GOG/Parser.h"
 #include "simCore/String/UtfUtils.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Time/Utils.h"
@@ -42,7 +47,7 @@
 #include "simVis/ViewManagerLogDbAdapter.h"
 #include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GogNodeInterface.h"
-#include "simVis/GOG/Parser.h"
+#include "simVis/GOG/Loader.h"
 #include "simUtil/DefaultDataStoreValues.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/HudManager.h"
@@ -78,6 +83,7 @@ static const std::string HELP_TEXT =
 
 //////////////////////////////////////////////////////////////////
 
+#ifndef HAVE_IMGUI
 /** Handles various shortcuts from OSG and activates features in the Viewer App */
 class Shortcuts : public osgGA::GUIEventHandler
 {
@@ -141,6 +147,89 @@ public:
 private:
   ViewerApp& app_;
 };
+#endif
+
+//////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_IMGUI
+struct TestPanel : public GUI::BaseGui
+{
+  explicit TestPanel(ViewerApp& app)
+    : GUI::BaseGui("Simple Server SDK Example"),
+    app_(app)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+
+    ImGui::Text("c : Cycle centered platform");
+    ImGui::Text("C : Toggle overhead clamping");
+    ImGui::Text("d : Toggle dynamic scale");
+    ImGui::Text("D : Toggle label declutter on/off");
+    ImGui::Text("l : Toggle Logarithmic Depth Buffer");
+    ImGui::Text("n : Toggle labels");
+    ImGui::Text("o : Cycle time format");
+    ImGui::Text("O : Toggle overhead mode");
+    ImGui::Text("p : Play/pause");
+    ImGui::Text("s : Cycle OSG statistics");
+    ImGui::Text("t : Toggle declutter technique");
+    ImGui::Text("T : Cycle callout line style");
+    ImGui::Text("w : Toggle compass");
+    ImGui::Text("z : Toggle cockpit mode (if centered)");
+
+    auto& io = ImGui::GetIO();
+    if (io.InputQueueCharacters.size() > 0)
+    {
+      switch (io.InputQueueCharacters.front())
+      {
+      case 'c': // lowercase
+        app_.centerNext();
+        break;
+      case 'd':
+        app_.toggleDynamicScale();
+        break;
+      case 'n':
+        app_.toggleLabels();
+        break;
+      case 'w':
+        app_.toggleCompass();
+        break;
+      case 'l':
+        app_.toggleLogDb();
+        break;
+      case 'o': // lowercase
+        app_.cycleTimeFormat();
+        break;
+      case 'z':
+        app_.toggleCockpit();
+        break;
+      case 'p':
+        app_.playPause();
+        break;
+      case 'D':
+        app_.toggleTextDeclutter();
+        break;
+      case 't':
+        app_.toggleDeclutterTechnique();
+        break;
+      case 'T':
+        app_.cycleCalloutLineStyle();
+        break;
+      }
+    }
+
+    ImGui::End();
+  }
+
+private:
+  ViewerApp& app_;
+  ImFont* font_ = nullptr;
+};
+#endif
 
 //////////////////////////////////////////////////////////////////
 
@@ -255,14 +344,18 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   // Update the clock on an event callback
   sceneManager_->addUpdateCallback(new simExamples::IdleClockCallback(*clock_, *dataStore_));
 
+#ifndef HAVE_IMGUI
   // Tie in our keyboard shortcuts
   sceneManager_->addEventCallback(new Shortcuts(*this));
+#endif
 
   // Create the data engine, which generates its own data and puts it into the data store
   engine_ = new DataEngine(*dataStore_, *sceneManager_->getScenario());
 
+#ifndef HAVE_IMGUI
   // Create Help overlay
   mainView->addOverlayControl(createHelp_());
+#endif
 
   // Configure the variable replacement for status text
   timeVariable_ = new simUtil::TimeVariable(*clock_);
@@ -296,6 +389,15 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   // Load missile GOGs
   loadGog_(EXAMPLE_GOG_MISSILE_LL);
   loadGog_(EXAMPLE_GOG_MISSILE_LLA);
+
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewManager_->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewManager_->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  mainView->getEventHandlers().push_front(gui);
+
+  gui->add(new TestPanel(*this));
+#endif
 }
 
 int ViewerApp::run()
@@ -461,22 +563,20 @@ int ViewerApp::loadGog_(const std::string& filename)
   if (found.empty())
     return 1;
 
-  simVis::GOG::Parser::OverlayNodeVector gogs;
-  std::vector<simVis::GOG::GogFollowData> followData;
-  simVis::GOG::Parser parser(sceneManager_->getMapNode());
-  // sets a default reference location for relative GOGs
-  parser.setReferenceLocation(simVis::GOG::BSTUR);
-
   // Load the GOG
   std::ifstream is(simCore::streamFixUtf8(found));
   if (!is.is_open())
     return 1;
-  if (parser.loadGOGs(is, simVis::GOG::GOGNODE_GEOGRAPHIC, gogs, followData))
-  {
-    for (simVis::GOG::Parser::OverlayNodeVector::const_iterator i = gogs.begin(); i != gogs.end(); ++i)
-      sceneManager_->getScenario()->addChild((*i)->osgNode());
-    return 0;
-  }
+
+  simCore::GOG::Parser parser;
+  simVis::GOG::Loader loader(parser, sceneManager_->getMapNode());
+  loader.setReferencePosition(simVis::GOG::BSTUR.position());
+
+  simVis::GOG::Loader::GogNodeVector gogs;
+  loader.loadGogs(is, filename, false, gogs);
+  for (auto gog : gogs)
+    sceneManager_->getScenario()->addChild(gog->osgNode());
+
   return 1;
 }
 

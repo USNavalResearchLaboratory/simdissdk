@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -187,7 +187,7 @@ private:
 
   /// The hypotenuse function avoiding underflow and overflow.
   static double hypot_(double x, double y);
- 
+
   /// Computes tan chi in terms of tan phi.
   static double taupf_(double tau);
 

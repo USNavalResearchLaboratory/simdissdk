@@ -15,8 +15,8 @@
  *
  * For more information please send email to simdis@enews.nrl.navy.mil
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * U.S. Naval Research Laboratory.
  *
@@ -30,9 +30,11 @@
 #include "osg/GL"
 #include "osg/GLExtensions"
 #include "osg/Version"
-#include "osgEarth/Registry"
+#include "gdal_priv.h"
 #include "osgEarth/Capabilities"
+#include "osgEarth/Registry"
 #include "osgEarth/StringUtils"
+#include "osgEarth/Version"
 #include "simCore/String/Utils.h"
 #include "simUtil/Capabilities.h"
 
@@ -179,6 +181,11 @@ void Capabilities::init_(osg::GraphicsContext& gc)
   }
 
   const std::string vendorString = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+  caps_.push_back(std::make_pair("osgEarth Version", osgEarthGetVersion()));
+  caps_.push_back(std::make_pair("OSG Version", osgGetVersion()));
+#ifdef GDAL_RELEASE_NAME
+  caps_.push_back(std::make_pair("GDAL Version", GDAL_RELEASE_NAME));
+#endif
   caps_.push_back(std::make_pair("Vendor", vendorString));
   caps_.push_back(std::make_pair("Renderer", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
   const std::string glVersionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
@@ -202,84 +209,6 @@ void Capabilities::init_(osg::GraphicsContext& gc)
   }
 
   checkVendorOpenGlSupport_(vendorString, glVersionString);
-
-#if OSG_MIN_VERSION_REQUIRED(3,6,0)
-  // OSG 3.6 auto-detects for us
-  GLint maxTextureUnits = ext->glMaxTextureUnits;
-  GLint maxTextureCoords = ext->glMaxTextureCoords;
-#else
-  // Follow th OSG 3.6 style of detection for texture units and coords
-  GLint maxTextureUnits = 1;
-  GLint maxTextureCoords = 1;
-  if (glVersion_ >= 2.0f || osg::isGLExtensionSupported(contextId, "GL_ARB_vertex_shader"))
-  {
-    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
-#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
-    // GL_MAX_TEXTURE_COORDS goes away in newer OpenGL
-    glGetIntegerv(GL_MAX_TEXTURE_COORDS, &maxTextureCoords);
-#else
-    maxTextureCoords = maxTextureUnits;
-#endif
-  }
-  else if (glVersion_ >= 1.3f || osg::isGLExtensionSupported(contextId, "GL_ARB_multitexture") || osg::isGLExtensionSupported(contextId, "GL_EXT_multitexture"))
-  {
-    // Fall back to multitexturing units for oldest OpenGL
-    glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTextureUnits);
-    maxTextureCoords = maxTextureUnits;
-  }
-#endif
-  caps_.push_back(std::make_pair("Max GPU texture units", toString_(maxTextureUnits)));
-  caps_.push_back(std::make_pair("Max GPU texture coordinate sets", toString_(maxTextureCoords)));
-
-  // Need to query for maximum vertex attributes
-  GLint maxAttribs = 0;
-  glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxAttribs);
-  caps_.push_back(std::make_pair("Max GPU attributes", toString_(maxAttribs)));
-
-  // Continue pulling values out of ext
-  caps_.push_back(std::make_pair("Max texture size", toString_(ext->maxTextureSize)));
-  caps_.push_back(std::make_pair("GLSL", toString_(ext->isGlslSupported)));
-  if (ext->isGlslSupported)
-  {
-    caps_.push_back(std::make_pair("GLSL Version", toString_(ext->glslLanguageVersion)));
-    if (ext->glslLanguageVersion < 3.3f)
-      recordUsabilityConcern_(UNUSABLE, "GLSL version reported is under 3.30");
-  }
-  else
-    recordUsabilityConcern_(UNUSABLE, "GLSL is not supported.");
-  caps_.push_back(std::make_pair("Texture arrays", toString_(ext->isTexture2DArraySupported)));
-  caps_.push_back(std::make_pair("Multitexturing", toString_(ext->isMultiTexSupported)));
-  caps_.push_back(std::make_pair("Stencil wrap", toString_(ext->isStencilWrapSupported)));
-  caps_.push_back(std::make_pair("2-sided stencils", toString_(ext->isStencilTwoSidedSupported)));
-  caps_.push_back(std::make_pair("Depth-packed stencil", toString_(ext->isPackedDepthStencilSupported)));
-  caps_.push_back(std::make_pair("Occlusion query", toString_(ext->isOcclusionQuerySupported)));
-
-  // Need to query for uniform block size
-  GLint maxUniformBlockSize = 0;
-  glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxUniformBlockSize);
-  caps_.push_back(std::make_pair("Max uniform block size", toString_(maxUniformBlockSize)));
-
-  // Keep pulling values out of ext
-  caps_.push_back(std::make_pair("Uniform buffer objects", toString_(ext->isUniformBufferObjectSupported)));
-  caps_.push_back(std::make_pair("NPOT textures", toString_(ext->isNonPowerOfTwoTextureMipMappedSupported)));
-
-  // Reconstruct the supported compressions string
-  std::string compressionSupported;
-  if (ext->isTextureCompressionARBSupported)
-    compressionSupported += "ARB ";
-  if (ext->isTextureCompressionS3TCSupported)
-    compressionSupported += "S3 ";
-  if (ext->isTextureCompressionPVRTCSupported)
-    compressionSupported += "PVR ";
-  if (ext->isTextureCompressionETCSupported)
-    compressionSupported += "ETC1 ";
-  if (ext->isTextureCompressionRGTCSupported)
-    compressionSupported += "RG ";
-  if (compressionSupported.empty())
-    compressionSupported = "no";
-  else // Remove trailing space
-    compressionSupported = compressionSupported.substr(0, compressionSupported.length() - 1);
-  caps_.push_back(std::make_pair("Texture compression", compressionSupported));
 }
 
 void Capabilities::recordUsabilityConcern_(Capabilities::Usability severity, const std::string& concern)

@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -56,8 +56,8 @@ Geometry* createDonut(const osg::Vec3d& center,
 
   double rM = radius.as(Units::METERS);
   double irM = innerRadius.as(Units::METERS);
-  // can't draw a donut if inner or outer radius is 0
-  if (rM <= 0. || irM <= 0)
+  // can't draw a donut if outer radius is <= 0 or inner radius is < 0
+  if (rM <= 0. || irM < 0.)
     return geom;
 
   // automatically calculate number of segments
@@ -65,9 +65,13 @@ Geometry* createDonut(const osg::Vec3d& center,
   double circumference = 2 * osg::PI * rM;
   unsigned int numSegments = static_cast<unsigned int>(ceil(circumference / segLen));
 
-  double innerSegLen = irM / 8.0;
-  double innerCircumference = 2 * osg::PI * irM;
-  unsigned int numInnerSegments = static_cast<unsigned int>(ceil(innerCircumference / innerSegLen));
+  unsigned int numInnerSegments = 1;
+  if (irM > 0.)
+  {
+    double innerSegLen = irM / 8.0;
+    double innerCircumference = 2 * osg::PI * irM;
+    numInnerSegments = static_cast<unsigned int>(ceil(innerCircumference / innerSegLen));
+  }
 
   double startRad = std::min(start.as(Units::RADIANS), end.as(Units::RADIANS));
   double endRad   = std::max(start.as(Units::RADIANS), end.as(Units::RADIANS));
@@ -367,10 +371,6 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
 
 GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string& filename, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  // inner radius not supported by GOG
-  bool hasInnerRadius = false;
-  Distance iRadius;
-
   double radiusM = 0.;
   arc.getRadius(radiusM);
   Distance radius(radiusM, Units::METERS);
@@ -389,6 +389,10 @@ GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string
   Angle sweep = Angle(sweepRad * simCore::RAD2DEG, Units::DEGREES);
   // Use fmod to keep the correct sign for correct sweep angle
   Angle end = start + Angle(::fmod(sweep.as(Units::RADIANS), M_TWOPI), Units::RADIANS);
+
+  double iRadiusM = 0.;
+  bool hasInnerRadius = (arc.getInnerRadius(iRadiusM) == 0);
+  Distance iRadius(iRadiusM, Units::METERS);
 
   // whether to include the center point in the geometry.
   bool filled = false;

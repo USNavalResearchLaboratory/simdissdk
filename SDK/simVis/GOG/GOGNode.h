@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -173,6 +173,8 @@ namespace simVis { namespace GOG
   * the orientation components to follow, simVis::Locator::COMP_HEADING, simVis::Locator::COMP_PITCH,
   * simVis::Locator::COMP_ROLL. The offset values are in the orientationOffsets vector. Constructor initializes
   * locatorFlags to simVis::Locator::COMP_NONE.
+  *
+  * @deprecated This is only used in the now-deprecated simVis::GOG::Parser
   */
   struct SDKVIS_EXPORT GogFollowData
   {

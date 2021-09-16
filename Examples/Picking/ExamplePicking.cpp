@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -35,6 +35,7 @@
 #include "simCore/Common/Version.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/GOG/Parser.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simData/LinearInterpolator.h"
 #include "simData/MemoryDataStore.h"
@@ -49,7 +50,7 @@
 #include "simVis/ViewManager.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
 #include "simVis/GOG/GogNodeInterface.h"
-#include "simVis/GOG/Parser.h"
+#include "simVis/GOG/Loader.h"
 #include "simUtil/DynamicSelectionPicker.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/MouseDispatcher.h"
@@ -471,18 +472,14 @@ void addGog(osg::Group* parentNode, osgEarth::MapNode* mapNode)
   ss << "end\n";
 
   // Configure the parser
-  simVis::GOG::Parser parser(mapNode);
-  parser.setReferenceLocation(osgEarth::GeoPoint(osgEarth::SpatialReference::get("wgs84"), LON, LAT, 0.0, osgEarth::ALTMODE_ABSOLUTE));
+  simCore::GOG::Parser parser;
+  simVis::GOG::Loader loader(parser, mapNode);
+  loader.setReferencePosition(simCore::Vec3(LON, LAT, 0.0));
   ss.seekg(0);
 
   // Load the GOG into the parser
-  simVis::GOG::Parser::OverlayNodeVector gogs;
-  std::vector<simVis::GOG::GogFollowData> followData;
-  if (!parser.loadGOGs(ss, simVis::GOG::GOGNODE_GEOGRAPHIC, gogs, followData))
-  {
-    SIM_WARN << "Unable to load GOG data.\n";
-    return;
-  }
+  simVis::GOG::Loader::GogNodeVector gogs;
+  loader.loadGogs(ss, "Picking", false, gogs);
 
   // Add the GOG nodes generated in the parser
   int index = 0;

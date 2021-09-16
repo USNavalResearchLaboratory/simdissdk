@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -159,25 +159,12 @@ void LoaderUtils::setShapePositionOffsets(osgEarth::LocalGeometryNode& node, con
     osg::PositionAttitudeTransform* trans = node.getPositionAttitudeTransform();
     if (trans != nullptr)
       trans->setPosition(osg::Vec3d(centerPoint.x(), centerPoint.y(), centerPoint.z()));
-    // hosted nodes don't set orientation offsets directly, they are instead applied through a Locator attached to the host
     return;
   }
 
-  // if this is an absolute node, set position and local rotation directly on the node; note that un-attached relative GOGs are treated as absolute here
-
+  // if this is an absolute node, set position directly on the node; note that un-attached relative GOGs are treated as absolute here
   osgEarth::GeoPoint center = getShapeGeoPosition(shape, centerPoint, refPoint, ignoreOffset);
   node.setPosition(center);
-
-  double yawOffset = 0.;
-  shape.getYawOffset(yawOffset);
-  osg::Quat yaw(yawOffset, -osg::Vec3(0, 0, 1));
-  double pitchOffset = 0.;
-  shape.getPitchOffset(pitchOffset);
-  osg::Quat pitch(pitchOffset, osg::Vec3(1, 0, 0));
-  double rollOffset = 0.;
-  shape.getRollOffset(rollOffset);
-  osg::Quat roll(rollOffset, osg::Vec3(0, 1, 0));
-  node.setLocalRotation(roll * pitch * yaw);
 }
 
 void LoaderUtils::setScale(const simCore::GOG::GogShape& shape, osg::Node* node)

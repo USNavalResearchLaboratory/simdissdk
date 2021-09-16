@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -29,7 +29,7 @@ namespace
   static OpenThreads::Atomic s_uniformNameGen;
 
   static const char* s_localShaderSource =
-    "#version 110\n"
+    "#version 140\n"
     "uniform vec2 __UNIFORM_NAME__;\n"
 
     "void __ENTRY_POINT__(inout vec4 color)\n"

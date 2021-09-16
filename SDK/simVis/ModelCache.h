@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -76,8 +76,8 @@ public:
   /**
    * Gets or loads a node that represents the specified icon.  The result will either be a 3D
    * model or a billboard icon.  The icon is loaded synchronously.  The URI is passed directly
-   * to osgDB::readRefNodeFile(), so use simVis::Registry::findModelFile() is recommended
-   * before calling this method.
+   * to osgDB::readRefNodeFile(), so using simVis::Registry::findModelFile() is recommended
+   * before calling this method to avoid an osgDB file search.
    *
    * This call is synchronous and can impact the frame rate for models that take a long time to
    * load or optimize.  For asynchronous loading, see asyncLoad().

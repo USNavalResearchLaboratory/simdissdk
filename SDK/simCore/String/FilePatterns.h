@@ -13,8 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code can be found at:
- * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -30,10 +30,10 @@ namespace simCore
 {
 
 /** All SIMDIS file patterns, separated by commas */
-static const std::string ALL_SIMDIS_FILE_PATTERNS = "*.fct,*.asi,*.spy,*.discn,*.csv,*.tle,*.kp,*.gpx,*.otg,*.wam,*.pet,*.zip";
+static const std::string ALL_SIMDIS_FILE_PATTERNS = "*.fct,*.asi,*.spy,*.discn,*.csv,*.tle,*.kp,*.gpx,*.wam,*.pet,*.zip";
 /** Dialog-oriented user-friendly list of SIMDIS file patterns */
 static const std::string SIMDIS_FILE_PATTERNS =
-  "All Supported SIMDIS Formats (*.fct,*.asi,*.spy,*.discn,*.csv,*.tle,*.kp,*.gpx,*.otg,*.wam,*.pet,*.zip)\n"
+  "All Supported SIMDIS Formats (*.fct,*.asi,*.spy,*.discn,*.csv,*.tle,*.kp,*.gpx,*.wam,*.pet,*.zip)\n"
   "SIMDIS Binary (*.fct)\n"
   "SIMDIS ASCII (*.asi)\n"
   "SIMDIS Script (*.spy)\n"
@@ -42,23 +42,21 @@ static const std::string SIMDIS_FILE_PATTERNS =
   "NORAD Two-Line Element (*.tle)\n"
   "Kepler Propagation (*.kp)\n"
   "GPS Exchange Format (*.gpx)\n"
-  "OTG Format (*.otg)\n"
   "WAM Format (*.wam)\n"
   "PET Format (*.pet)\n"
   "ZIP Archive of supported formats (*.zip)\n"
   "All Files (*)";
 
 /** SIMDIS ASCII file patterns, separated by commas */
-static const std::string ALL_SIMDIS_ASCII_FILE_PATTERNS = "*.asi,*.discn,*.csv,*.tle,*.gpx,*.otg,*.wam,*.pet,*.zip";
+static const std::string ALL_SIMDIS_ASCII_FILE_PATTERNS = "*.asi,*.discn,*.csv,*.tle,*.gpx,*.wam,*.pet,*.zip";
 /** Dialog-oriented user-friendly list of SIMDIS ASCII file patterns */
 static const std::string SIMDIS_ASCII_FILE_PATTERNS =
-  "All Supported ASCII Formats (*.asi,*.discn,*.csv,*.tle,*.gpx,*.otg,*.wam,*.pet,*.zip)\n"
+  "All Supported ASCII Formats (*.asi,*.discn,*.csv,*.tle,*.gpx,*.wam,*.pet,*.zip)\n"
   "SIMDIS ASCII (*.asi)\n"
   "SIMDIS Data Initialization Scenario (*.discn)\n"
   "SCORE & PMRF Comma Separated Value (*.csv)\n"
   "NORAD Two-Line Element (*.tle)\n"
   "GPS Exchange Format (*.gpx)\n"
-  "OTG Format (*.otg)\n"
   "WAM Format (*.wam)\n"
   "PET Format (*.pet)\n"
   "ZIP Archive of supported formats (*.zip)\n"

@@ -199,6 +199,8 @@ include(ImportGEOS)
 set(OSGEARTH_DIR "" CACHE PATH "osgEarth root directory")
 include(ImportOSGEarth)
 
+# --- GLEW -----------------------------
+include(ImportGLEW)
 
 # --- Protocol Buffers -----------------------------
 set(PROTOBUF_DIR "" CACHE PATH "Protocol Buffers root directory")
