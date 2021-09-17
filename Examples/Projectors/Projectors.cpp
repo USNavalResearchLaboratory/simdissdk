@@ -58,7 +58,12 @@
 
 #define LC "[Projectors] "
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 using namespace osgEarth::Util::Controls;
+#endif
 
 //----------------------------------------------------------------------------
 /// create an overlay with some helpful information
@@ -67,8 +72,6 @@ using namespace osgEarth::Util::Controls;
 static const std::string s_title = "Projectors Example";
 
 /// later lines, document the keyboard controls
-static const std::string s_help =
-" ? : toggle help";
 static const std::string s_rotate =
 " t : rotate through textures";
 static const std::string s_interpolate =
@@ -82,6 +85,40 @@ static const std::string s_viewPlatformThree =
 static const std::string s_viewPlatformFour =
 " 4 : reset view on platform 4 (Stationary)";
 
+/// global variables for camera tethering between platforms
+simData::ObjectId platformId_0 = 0;
+simData::ObjectId projectorId_0 = 0;
+simData::ObjectId platformId_1 = 0;
+simData::ObjectId projectorId_1 = 0;
+simData::ObjectId platformId_2 = 0;
+simData::ObjectId projectorId_3 = 0;
+simData::ObjectId platformId_3 = 0;
+
+#ifdef HAVE_IMGUI
+
+struct ControlPanel : public GUI::BaseGui
+{
+  ControlPanel()
+    : GUI::BaseGui(s_title)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Text(s_rotate.c_str());
+    ImGui::Text(s_interpolate.c_str());
+    ImGui::Text(s_viewPlatformOne.c_str());
+    ImGui::Text(s_viewPlatformTwo.c_str());
+    ImGui::Text(s_viewPlatformThree.c_str());
+    ImGui::Text(s_viewPlatformFour.c_str());
+    ImGui::End();
+  }
+};
+
+#else
 /// keep a handle, for toggling
 static osg::ref_ptr<Control> s_helpControl;
 
@@ -91,7 +128,6 @@ static Control* createHelp()
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.4);
   vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
-  vbox->addControl(new LabelControl(s_help, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_rotate, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_interpolate, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_viewPlatformOne, 14, simVis::Color::Silver));
@@ -102,14 +138,7 @@ static Control* createHelp()
   return vbox;
 }
 
-/// global variables for camera tethering between platforms
-simData::ObjectId platformId_0;
-simData::ObjectId projectorId_0;
-simData::ObjectId platformId_1;
-simData::ObjectId projectorId_1;
-simData::ObjectId platformId_2;
-simData::ObjectId projectorId_3;
-simData::ObjectId platformId_3;
+#endif
 
 //----------------------------------------------------------------------------
 /// event handler for keyboard commands to alter symbology at runtime
@@ -186,12 +215,6 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
     switch (ea.getKey())
     {
-      case '?' : // toggle help
-      {
-        s_helpControl->setVisible(!s_helpControl->visible());
-        handled = true;
-        break;
-      }
       case 't' : // cycle through textures
       {
         std::string inputFilename;
@@ -484,8 +507,16 @@ int main(int argc, char **argv)
   /// hovering the mouse over the platform should trigger a popup
   viewer->addEventHandler(new simVis::PopupHandler(scene.get()));
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel());
+#else
   /// show the instructions overlay
   viewer->getMainView()->addOverlayControl(createHelp());
+#endif
 
   /// add some stock OSG handlers
   viewer->installDebugHandlers();
