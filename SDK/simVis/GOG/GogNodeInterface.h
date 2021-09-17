@@ -550,11 +550,12 @@ typedef std::shared_ptr<GogNodeInterface> GogNodeInterfacePtr;
 /**
  * Implementation of GogNodeInterface for AnnotationNodes, which are a base class of all GOG node types.
  * Used when less generic GogNodeInterface can't be found for a given osg node
+ * @deprecated This class has been deprecated.  Use one of the other GogNodeInterface implementations instead.
  */
 class SDKVIS_EXPORT AnnotationNodeInterface : public GogNodeInterface
 {
 public:
-  AnnotationNodeInterface(osgEarth::AnnotationNode* annotationNode, const simVis::GOG::GogMetaData& metaData);
+  SDK_DEPRECATE(AnnotationNodeInterface(osgEarth::AnnotationNode* annotationNode, const simVis::GOG::GogMetaData& metaData), "Use one of the other GogNodeInterface implementations instead.");
   virtual ~AnnotationNodeInterface();
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = nullptr) const;
 
