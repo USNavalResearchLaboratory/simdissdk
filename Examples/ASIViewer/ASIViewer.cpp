@@ -430,7 +430,7 @@ private:
     {
       uint64_t id;
       std::string timeString;
-      double lat, lon, alt, yaw, pitch, roll, vx, vy, vz;
+      double lat = 0.0, lon = 0.0, alt = 0.0, yaw = 0.0, pitch = 0.0, roll = 0.0, vx = 0.0, vy = 0.0, vz = 0.0;
       buf >> id >> timeString >> lat >> lon >> alt >> yaw >> pitch >> roll >> vx >> vy >> vz;
 
       const double t = timeFromString(timeString, refYear_);
