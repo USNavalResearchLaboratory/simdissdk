@@ -44,8 +44,13 @@
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 #include "osgEarth/Controls"
 namespace ui = osgEarth::Util::Controls;
+#endif
 
 #define LC "[Planetarium Test] "
 
@@ -57,10 +62,11 @@ struct AppData
 
   simData::MemoryDataStore dataStore;
   osg::ref_ptr<simVis::Viewer> viewer;
-  osg::ref_ptr<simVis::SceneManager>    scene;
+  osg::ref_ptr<simVis::SceneManager> scene;
   osg::ref_ptr<simVis::ScenarioManager> scenario;
-  simData::ObjectId        platformId;
+  simData::ObjectId platformId;
 
+#ifndef HAVE_IMGUI
   osg::ref_ptr<ui::CheckBoxControl>     toggleCheck;
   osg::ref_ptr<ui::CheckBoxControl>     vectorCheck;
   osg::ref_ptr<ui::HSliderControl>      rangeSlider;
@@ -68,6 +74,7 @@ struct AppData
   osg::ref_ptr<ui::HSliderControl>      colorSlider;
   osg::ref_ptr<ui::LabelControl>        colorLabel;
   osg::ref_ptr<ui::CheckBoxControl>     ldbCheck;
+#endif
 
   std::vector< std::pair<simVis::Color, std::string> > colors;
   int colorIndex;
@@ -83,6 +90,81 @@ struct AppData
   }
 };
 
+#ifdef HAVE_IMGUI
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  explicit ControlPanel(AppData& app)
+    : GUI::BaseGui("Planetarium View Example"),
+    app_(app)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      // On/off
+      bool on = on_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "On/Off", &on_);
+      if (on != on_)
+      {
+        if (on_)
+          app_.scenario->addTool(app_.planetarium.get());
+        else
+          app_.scenario->removeTool(app_.planetarium.get());
+      }
+
+      // Target Vecs
+      bool targetVecs = targetVecs_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Target Vecs", &targetVecs_);
+      if (targetVecs != targetVecs_)
+        app_.planetarium->setDisplayTargetVectors(targetVecs_);
+
+      // Range
+      float range = range_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Range", &range_, 40000.f, 120000.f, "%.0f", ImGuiSliderFlags_AlwaysClamp);
+      if (range != range_)
+        app_.planetarium->setRange(range_);
+
+      // Color
+      ImGui::TableNextColumn(); ImGui::Text("Color"); ImGui::TableNextColumn();
+      float oldColor[4] = { color_[0], color_[1], color_[2], color_[3] };
+      ImGuiColorEditFlags flags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_NoOptions;
+      ImGui::ColorEdit4("##color", &color_[0], flags);
+      if (color_ != oldColor)
+        app_.planetarium->setColor(osg::Vec4f(color_[0], color_[1], color_[2], color_[3]));
+
+      // LDB
+      bool ldb = ldb_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "LDB", &ldb_);
+      if (ldb != ldb_)
+        app_.viewer->setLogarithmicDepthBufferEnabled(!app_.viewer->isLogarithmicDepthBufferEnabled());
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  AppData& app_;
+  bool on_ = false;
+  bool targetVecs_ = true;
+  float range_ = 90000.f;
+  float color_[4] = { 1.f, 1.f, 1.f, .5f };
+  bool ldb_ = true;
+};
+#else
 struct Toggle : public ui::ControlEventHandler
 {
   explicit Toggle(AppData& app) : a(app) {}
@@ -176,6 +258,7 @@ ui::Control* createUI(AppData& app)
 
   return top;
 }
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -354,7 +437,15 @@ int main(int argc, char **argv)
 
   // set up the controls
   osg::observer_ptr<simVis::View> view = viewer->getMainView();
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(app));
+#else
   view->addOverlayControl(createUI(app));
+#endif
   view->setLighting(false);
 
   // zoom the camera
