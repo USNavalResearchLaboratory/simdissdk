@@ -38,13 +38,18 @@
 #include "simVis/Utils.h"
 #include "simUtil/ExampleResources.h"
 
-#include "osgEarth/Controls"
 #include "osgEarth/Draggers"
 #include "osgEarth/Geometry"
 #include "osgEarth/Feature"
 #include "osgEarth/FeatureNode"
 #include "osgEarth/LocalGeometryNode"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+#include "osgEarth/Controls"
+#endif
 //----------------------------------------------------------------------------
 
 // first line, describe the program
@@ -70,19 +75,21 @@ namespace
   struct AppData
   {
     AppData()
-     : altitude(nullptr),
-       azim_center(nullptr),
-       fov(nullptr),
-       azim_res(nullptr),
-       range_max(nullptr),
-       range_res(nullptr),
-       p2p_result(nullptr),
-       los(nullptr),
+     : los(nullptr),
        mapNode(nullptr),
        p2pFeature(nullptr)
     {
     }
 
+#ifdef HAVE_IMGUI
+    float alt = INIT_ALT;
+    float azimCenter = INIT_AZIM;
+    float fov = INIT_FOV;
+    float azimRes = INIT_AZIM_RES;
+    float rangeMax = INIT_RANGE_MAX;
+    float rangeRes = INIT_RANGE_RES;
+    std::string p2pResult;
+#else
     osg::ref_ptr<HSliderControl> altitude;
     osg::ref_ptr<HSliderControl> azim_center;
     osg::ref_ptr<HSliderControl> fov;
@@ -90,6 +97,7 @@ namespace
     osg::ref_ptr<HSliderControl> range_max;
     osg::ref_ptr<HSliderControl> range_res;
     osg::ref_ptr<LabelControl>   p2p_result;
+#endif
 
     osg::ref_ptr<simVis::RadialLOSNode> los;
     osg::ref_ptr<osgEarth::MapNode>     mapNode;
@@ -100,14 +108,31 @@ namespace
     {
       simVis::RadialLOS data = los->getDataModel();
 
+#ifdef HAVE_IMGUI
+      data.setCentralAzimuth(osgEarth::Angle(azimCenter, osgEarth::Units::DEGREES));
+      data.setFieldOfView(osgEarth::Angle(fov, osgEarth::Units::DEGREES));
+      data.setAzimuthalResolution(osgEarth::Angle(azimRes, osgEarth::Units::DEGREES));
+      data.setMaxRange(osgEarth::Distance(rangeMax, osgEarth::Units::KILOMETERS));
+      data.setRangeResolution(osgEarth::Distance(rangeRes, osgEarth::Units::KILOMETERS));
+#else
       data.setCentralAzimuth(osgEarth::Angle(azim_center->getValue(), osgEarth::Units::DEGREES));
       data.setFieldOfView(osgEarth::Angle(fov->getValue(), osgEarth::Units::DEGREES));
       data.setAzimuthalResolution(osgEarth::Angle(azim_res->getValue(), osgEarth::Units::DEGREES));
       data.setMaxRange(osgEarth::Distance(range_max->getValue(), osgEarth::Units::KILOMETERS));
       data.setRangeResolution(osgEarth::Distance(range_res->getValue(), osgEarth::Units::KILOMETERS));
+#endif
 
       los->setDataModel(data);
 
+#ifdef HAVE_IMGUI
+      if (alt != los->getCoordinate().alt())
+      {
+        los->setCoordinate(simCore::Coordinate(
+          simCore::COORD_SYS_LLA,
+          simCore::Vec3(RLOS_LAT * simCore::DEG2RAD, RLOS_LON * simCore::DEG2RAD, alt)));
+      }
+      p2pResult.clear();
+#else
       if (altitude->getValue() != los->getCoordinate().alt())
       {
         los->setCoordinate(simCore::Coordinate(
@@ -118,6 +143,7 @@ namespace
       p2p_result->setText("");
       if (p2pFeature)
         p2pFeature->setNodeMask(0);
+#endif
     }
 
     // Runs a p2p LOS test from the origin to the given geopoint.
@@ -136,12 +162,20 @@ namespace
 
           if (visible)
           {
+#ifdef HAVE_IMGUI
+            p2pResult = "visible";
+#else
             p2p_result->setText("visible");
+#endif
             line->stroke()->color() = simVis::Color::Lime;
           }
           else
           {
+#ifdef HAVE_IMGUI
+            p2pResult = "obstructed";
+#else
             p2p_result->setText("obstructed");
+#endif
             line->stroke()->color() = simVis::Color::Red;
           }
 
@@ -149,8 +183,12 @@ namespace
         }
         else
         {
+#ifdef HAVE_IMGUI
+          p2pResult.clear();
+#else
           p2pFeature->setNodeMask(0);
           p2p_result->setText("error");
+#endif
         }
       }
     }
@@ -161,6 +199,83 @@ namespace
 
 namespace
 {
+
+#ifdef HAVE_IMGUI
+  // ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  ControlPanel(AppData& app)
+    : GUI::BaseGui(s_title),
+    app_(app)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    bool needUpdate = false;
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      float alt = app_.alt;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Altitude MSL", &app_.alt, 0.f, 1000.f, "%.3f m", ImGuiSliderFlags_AlwaysClamp);
+      if (alt != app_.alt)
+        needUpdate = true;
+
+      float azimCenter = app_.azimCenter;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Central Azimuth", &app_.azimCenter, -180.f, 180.f, "%.3f deg", ImGuiSliderFlags_AlwaysClamp);
+      if (azimCenter != app_.azimCenter)
+        needUpdate = true;
+
+      float fov = app_.fov;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Field of View", &app_.fov, 10.f, 360.f, "%.3f km", ImGuiSliderFlags_AlwaysClamp);
+      if (fov != app_.fov)
+        needUpdate = true;
+
+      float azimRes = app_.azimRes;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Azimuth Resolution", &app_.azimRes, 1.f, 40.f, "%.3f deg", ImGuiSliderFlags_AlwaysClamp);
+      if (azimRes != app_.azimRes)
+        needUpdate = true;
+
+      float rangeMax = app_.rangeMax;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Max Range", &app_.rangeMax, 1.f, 50.f, "%.3f km", ImGuiSliderFlags_AlwaysClamp);
+      if (rangeMax != app_.rangeMax)
+        needUpdate = true;
+
+      float rangeRes = app_.rangeRes;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Range Resolution", &app_.rangeRes, .5f, 5.f, "%.3f km", ImGuiSliderFlags_AlwaysClamp);
+      if (rangeRes != app_.rangeRes)
+        needUpdate = true;
+
+      ImGui::EndTable();
+
+      ImGui::Text("Drag the sphere to test point-to-point LOS.");
+      if (!app_.p2pResult.empty())
+      {
+        std::stringstream ss;
+        ss << "P2P Result: " << app_.p2pResult;
+        ImGui::Text(ss.str().c_str());
+      }
+
+      if (needUpdate)
+        app_.apply();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  AppData& app_;
+};
+#else
   using namespace osgEarth::Util::Controls;
 
   struct ApplyUI : public ControlEventHandler
@@ -230,6 +345,7 @@ namespace
 
     return vbox;
   }
+#endif
 
   /**
    * Adapter to fire off a point-to-point LOS test
@@ -323,8 +439,10 @@ int main(int argc, char **argv)
   // Application data:
   AppData app;
 
+#ifndef HAVE_IMGUI
   // Install the UI:
   viewer->getMainView()->addOverlayControl(createUI(&app));
+#endif
 
   // Initialize the LOS:
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
@@ -347,6 +465,14 @@ int main(int argc, char **argv)
   // set the initial eye point
   viewer->getMainView()->setViewpoint(
     osgEarth::Viewpoint("Start", RLOS_LON, RLOS_LAT, RLOS_ALT, 0.0, -45.0, INIT_RANGE_MAX*2000.0));
+
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(app));
+#endif
 
   // add some stock OSG handlers and go
   viewer->installDebugHandlers();
