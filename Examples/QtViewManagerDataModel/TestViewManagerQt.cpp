@@ -37,8 +37,6 @@
 #include "simQt/ViewManagerDataModel.h"
 #include "simQt/ViewWidget.h"
 
-#include "osgEarth/Controls"
-
 #include <QApplication>
 #include <QDialog>
 #include <QPushButton>
@@ -54,9 +52,6 @@
 #include <cstdlib>
 
 #include "MainWindow.h"
-
-namespace ui = osgEarth::Util::Controls;
-
 
 int usage(char** argv)
 {
