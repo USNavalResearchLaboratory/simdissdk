@@ -22,6 +22,8 @@
  */
 #include <cassert>
 #include <ctype.h>
+#include <QApplication>
+#include <QClipboard>
 #include <QLabel>
 #include <QLayout>
 #include <QLineEdit>
@@ -74,9 +76,13 @@ TimeWidget::TimeWidget(QWidget* parent)
   connect(colorCodeAction_, SIGNAL(triggered()), this, SLOT(setColorCode_()));
   colorCodeAction_->setCheckable(true);
 
+  copyAction_ = new QAction(tr("Copy Text"), this);
+  connect(copyAction_, SIGNAL(triggered()), this, SLOT(copyToClipboard_()));
+
   // The right mouse click menu to change color coding
   rightMouseClickMenu_ = new QMenu(this);
   rightMouseClickMenu_->addAction(colorCodeAction_);
+  rightMouseClickMenu_->addAction(copyAction_);
 }
 
 TimeWidget::~TimeWidget()
@@ -87,6 +93,9 @@ TimeWidget::~TimeWidget()
 
   delete colorCodeAction_;
   colorCodeAction_ = nullptr;
+
+  delete copyAction_;
+  copyAction_ = nullptr;
 }
 
 void TimeWidget::addContainer_(TimeFormatContainer* widget, const QString& slotText)
@@ -292,6 +301,11 @@ void TimeWidget::setMonth_()
 void TimeWidget::setColorCode_()
 {
   setColorCodeText(!currentContainer_->colorCode());
+}
+
+void TimeWidget::copyToClipboard_()
+{
+  QApplication::clipboard()->setText(currentContainer_->timeText());
 }
 
 int TimeWidget::scenarioReferenceYear() const
