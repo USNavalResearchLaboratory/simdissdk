@@ -373,6 +373,9 @@ private:
       image = osgDB::readRefImageFile(filename);
     if (image.valid())
     {
+      // Fix #76; a future osg::clone() fails to reproduce the image properly in some cases without this.
+      image->setDataVariance(osg::Object::DYNAMIC);
+
       // create the geometry representing the icon:
       osg::Geometry* geom = AnnotationUtils::createImageGeometry(
         image.get(),
