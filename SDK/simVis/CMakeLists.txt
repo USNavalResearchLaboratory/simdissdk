@@ -165,6 +165,7 @@ set(VIS_HEADERS_RFPROP
     ${VIS_INC}RFProp/LUT1ProfileDataProvider.h
     ${VIS_INC}RFProp/OneWayPowerDataProvider.h
     ${VIS_INC}RFProp/PODProfileDataProvider.h
+    ${VIS_INC}RFProp/PPFDataProvider.h
     ${VIS_INC}RFProp/Profile.h
     ${VIS_INC}RFProp/ProfileContext.h
     ${VIS_INC}RFProp/ProfileDataProvider.h
@@ -318,6 +319,7 @@ set(VIS_SOURCES_RFPROP
     ${VIS_SRC}RFProp/LUT1ProfileDataProvider.cpp
     ${VIS_SRC}RFProp/OneWayPowerDataProvider.cpp
     ${VIS_SRC}RFProp/PODProfileDataProvider.cpp
+    ${VIS_SRC}RFProp/PPFDataProvider.cpp
     ${VIS_SRC}RFProp/Profile.cpp
     ${VIS_SRC}RFProp/ProfileContext.cpp
     ${VIS_SRC}RFProp/ProfileManager.cpp
