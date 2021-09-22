@@ -47,7 +47,13 @@
 
 using namespace osgEarth;
 using namespace osgEarth::Util;
+
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 using namespace osgEarth::Util::Controls;
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -59,43 +65,143 @@ struct AppData
   simData::MemoryDataStore   ds;
   simData::ObjectId          platformId;
 
+#ifdef HAVE_IMGUI
+  bool draw2D = true;
+  bool draw3D = true;
+  simData::Polarity polarity = simData::POL_UNKNOWN;
+  float freq = 7000.f;
+  float elev = 45.f;
+  float detail = 5.;
+#else
   osg::ref_ptr<CheckBoxControl>  draw2D;
   osg::ref_ptr<CheckBoxControl>  draw3D;
   osg::ref_ptr<HSliderControl>   polarity;
   osg::ref_ptr<HSliderControl>   frequency;
   osg::ref_ptr<HSliderControl>   elevation;
   osg::ref_ptr<HSliderControl>   detail;
-
   osg::ref_ptr<LabelControl>     polarityLabel;
+#endif
+
+  void applyPrefs()
+  {
+    simData::DataStore::Transaction xaction;
+    simData::PlatformPrefs* prefs = ds.mutable_platformPrefs(platformId, &xaction);
+    {
+#ifdef HAVE_IMGUI
+      prefs->set_drawrcs(draw2D);
+      prefs->set_draw3drcs(draw3D);
+      prefs->set_rcsdetail(detail);
+      prefs->set_rcselevation(elev);
+      prefs->set_rcsfrequency(freq);
+      prefs->set_rcspolarity(polarity);
+#else
+      unsigned polarityIndex = (unsigned)floor(polarity->getValue());
+      prefs->set_drawrcs(draw2D->getValue());
+      prefs->set_draw3drcs(draw3D->getValue());
+      prefs->set_rcsdetail(detail->getValue());
+      prefs->set_rcselevation(elevation->getValue());
+      prefs->set_rcsfrequency(frequency->getValue());
+      prefs->set_rcspolarity((simData::Polarity)polarityIndex);
+      polarityLabel->setText(simCore::polarityString((simCore::PolarityType)polarityIndex));
+#endif
+    }
+    xaction.complete(&prefs);
+  }
 };
 
+#ifdef HAVE_IMGUI
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
 
-void applyPrefs(AppData* app)
+class ControlPanel : public GUI::BaseGui
 {
-  unsigned polarityIndex = (unsigned)floor(app->polarity->getValue());
-
-  simData::DataStore::Transaction xaction;
-  simData::PlatformPrefs* prefs = app->ds.mutable_platformPrefs(app->platformId, &xaction);
+public:
+  explicit ControlPanel(AppData& app)
+    : GUI::BaseGui(s_title),
+    app_(app)
   {
-    prefs->set_drawrcs(app->draw2D->getValue());
-    prefs->set_draw3drcs(app->draw3D->getValue());
-    prefs->set_rcsdetail(app->detail->getValue());
-    prefs->set_rcselevation(app->elevation->getValue());
-    prefs->set_rcsfrequency(app->frequency->getValue());
-    prefs->set_rcspolarity((simData::Polarity)polarityIndex);
   }
-  xaction.complete(&prefs);
 
-  app->polarityLabel->setText(simCore::polarityString((simCore::PolarityType)polarityIndex));
-}
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
 
+    bool needUpdate = false;
 
+    if (ImGui::BeginTable("Table", 2))
+    {
+      bool draw2D = app_.draw2D;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Draw 2D", &app_.draw2D);
+      if (draw2D != app_.draw2D)
+        needUpdate = true;
+
+      bool draw3D = app_.draw3D;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Draw 3D", &app_.draw3D);
+      if (draw3D != app_.draw3D)
+        needUpdate = true;
+
+      // Polarity combo box
+      ImGui::TableNextColumn(); ImGui::Text("Polarity"); ImGui::TableNextColumn();
+      static const char* POLARITY[] = { "UNKNOWN", "HORIZONTAL", "VERTICAL", "CIRCULAR", "HORZVERT", "VERTHORZ", "LEFTCIRC", "RIGHTCIRC", "LINEAR" };
+      static int currentPolIdx = 0;
+      if (ImGui::BeginCombo("##pol", POLARITY[currentPolIdx], 0))
+      {
+        for (int i = 0; i < IM_ARRAYSIZE(POLARITY); i++)
+        {
+          const bool isSelected = (currentPolIdx == i);
+          if (ImGui::Selectable(POLARITY[i], isSelected))
+            currentPolIdx = i;
+
+          // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      if (currentPolIdx != static_cast<int>(app_.polarity))
+      {
+        needUpdate = true;
+        app_.polarity = static_cast<simData::Polarity>(currentPolIdx);
+      }
+
+      float freq = app_.freq;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Frequency", &app_.freq, 0.f, 10000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (freq != app_.freq)
+        needUpdate = true;
+
+      float elev = app_.elev;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Elevation", &app_.elev, 0.f, 90.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (elev != app_.elev)
+        needUpdate = true;
+
+      float detail = app_.detail;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Detail Angle", &app_.detail, 1.f, 15.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (detail != app_.detail)
+        needUpdate = true;
+
+      if (needUpdate)
+        app_.applyPrefs();
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  AppData& app_;
+};
+#else
 struct ApplyUI : public ControlEventHandler
 {
   explicit ApplyUI(AppData* app) : app_(app) { }
   AppData* app_;
-  void onValueChanged(Control* c, bool value) { applyPrefs(app_); }
-  void onValueChanged(Control* c, float value) { applyPrefs(app_); }
+  void onValueChanged(Control* c, bool value) { app_->applyPrefs(); }
+  void onValueChanged(Control* c, float value) { app_->applyPrefs(); }
   void onValueChanged(Control* c, double value) { onValueChanged(c, (float)value); }
 };
 
@@ -149,6 +255,7 @@ Control* createUI(AppData* app)
 
   return vbox;
 }
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -175,7 +282,7 @@ void addPlatform(AppData* app)
   }
 
   // apply the initial configuration:
-  applyPrefs(app);
+  app->applyPrefs();
 }
 
 //----------------------------------------------------------------------------
@@ -213,8 +320,16 @@ int main(int argc, char **argv)
 
   AppData app;
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(app));
+#else
   // install the GUI
   viewer->getMainView()->addOverlayControl(createUI(&app));
+#endif
 
   // Create the platform:
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
