@@ -43,7 +43,8 @@
 
 namespace
 {
-const osg::Vec4f SIMDIS_ORANGE(1.0f, 0.5f, 0.0f, 1.0f);
+const simVis::Color SIMDIS_ORANGE(1.0f, 0.5f, 0.0f, 1.0f); // darker than dark orange
+const simVis::Color SIMDIS_CYAN(0.0f, 0.75f, 0.75f, 1.0f); // medium-dark cyan
 
 void setDefaultPODVector(simRF::PODVectorPtr podLossThresholds)
 {
@@ -116,9 +117,8 @@ namespace simRF
 const int DEFAULT_TRANSPARENCY = 60;  // percentage, 0-100. 100 is fully transparent, 0 is opaque
 const int DEFAULT_HISTORY = 30; // degrees
 
-RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* parent, std::shared_ptr<simCore::DatumConvert> datumConvert)
-  : id_(id),
-  antennaHeightMeters_(0.0),
+RFPropagationFacade::RFPropagationFacade(osg::Group* parent, std::shared_ptr<simCore::DatumConvert> datumConvert)
+  : antennaHeightMeters_(0.0),
   rfParamsSet_(false),
   profileManager_(new simRF::ProfileManager(datumConvert)),
   parent_(parent)
@@ -785,7 +785,7 @@ void RFPropagationFacade::initializeColorProviders_()
   lossColors[135.0f] = simVis::Color::Teal;
   lossColors[140.0f] = simVis::Color::Green;
   lossColors[145.0f] = simVis::Color::Navy;
-  lossColors[150.0f] = osg::Vec4f(0.0f, 0.75f, 0.75f, 1.0f);
+  lossColors[150.0f] = SIMDIS_CYAN;
   lossColors[155.0f] = simVis::Color::Aqua;
   lossColors[160.0f] = simVis::Color::Purple;
   lossColorProvider->setGradientColorMap(lossColors);
