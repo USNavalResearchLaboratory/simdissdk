@@ -831,7 +831,7 @@ message PlatformPrefs {
   optional bool dynamicScale = 41 [default = false];
   optional double dynamicScaleOffset = 42 [default = 0.0];
   optional double dynamicScaleScalar = 43 [default = 1.0];
-  optional DynamicScaleAlgorithm dynamicScaleAlgorithm = 74 [default = DSA_METERS_TO_PIXELS];
+  optional DynamicScaleAlgorithm dynamicScaleAlgorithm = 74 [default = DSA_CONSISTENT_SIZING];
 
   /// Toggle velocity vector
   optional bool drawVelocityVec = 44 [default = false];
