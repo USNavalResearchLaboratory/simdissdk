@@ -343,6 +343,7 @@ PlatformModelNode::ModelUpdate PlatformModelNode::updateFastPathModel_(const sim
   imageOriginalSize_.y() = bounds.yMax() - bounds.yMin();
 
   // Fix the sizing node for the dynamic transform to avoid initial very-large icons.
+  dynamicXform_->setDynamicScaleToPixels(isImageModel_ && prefs.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
   dynamicXform_->setSizingNode(fastPathIcon_.get());
 
   // Kill off any pending async model loads
@@ -392,6 +393,8 @@ void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
     // re-add to the parent groups
     offsetXform_->addChild(model_.get());
     alphaVolumeGroup_->addChild(model_.get());
+    if (lastPrefsValid_)
+      dynamicXform_->setDynamicScaleToPixels(isImageModel_ && lastPrefs_.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
     dynamicXform_->setSizingNode(model_.get());
   }
 
@@ -575,7 +578,7 @@ bool PlatformModelNode::updateDynamicScale_(const simData::PlatformPrefs& prefs)
   {
     dynamicXform_->setDynamicScalar(prefs.dynamicscalescalar());
     dynamicXform_->setScaleOffset(prefs.dynamicscaleoffset());
-    dynamicXform_->setDynamicScaleToPixels(prefs.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
+    dynamicXform_->setDynamicScaleToPixels(isImageModel_ && prefs.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
   }
 
   return true;
