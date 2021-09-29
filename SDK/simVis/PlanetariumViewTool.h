@@ -38,6 +38,7 @@ namespace osgEarth { class LineDrawable; }
 
 namespace simVis
 {
+class BeamNode;
 class LocatorNode;
 class PlatformNode;
 class ScenarioManager;
