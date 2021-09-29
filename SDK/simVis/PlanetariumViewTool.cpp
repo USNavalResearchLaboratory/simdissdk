@@ -65,6 +65,7 @@ namespace
 //-------------------------------------------------------------------
 namespace simVis
 {
+
 PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   host_(host),
   range_(1000.0),
@@ -152,9 +153,13 @@ void PlanetariumViewTool::setDisplayTargetVectors(bool value)
 
 void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
 {
+  root_ = new osg::Group;
+
   // create a node to track the position of the host:
-  root_ = new LocatorNode(new Locator(host_->getLocator(), Locator::COMP_POSITION));
-  root_->setName("Planetarium Tool Root Node");
+  locatorRoot_ = new LocatorNode(new Locator(host_->getLocator(), Locator::COMP_POSITION));
+  locatorRoot_->setName("Planetarium Tool Root Node");
+
+  root_->addChild(locatorRoot_.get());
 
   // build the dome
   updateDome_();
@@ -163,14 +168,14 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
   targets_ = new TargetDelegation();
   targets_->setGeoFence(fence_.get());
   targets_->addUpdateGeometryCallback(new UpdateGeometryAdapter(this));
-  root_->addChild(targets_.get());
+  locatorRoot_->addChild(targets_.get());
 
   // state for the delegation group:
   simVis::setLighting(targets_->getOrCreateStateSet(), 0);
 
   // sets horizon geofence to host position, which does not work correctly
   simCore::Vec3 ecef;
-  root_->getPosition(&ecef);
+  locatorRoot_->getPosition(&ecef);
   fence_->setLocation(osg::Vec3d(ecef.x(), ecef.y(), ecef.z()));
 
   // initial pull of active target platforms
@@ -199,9 +204,10 @@ void PlanetariumViewTool::onUninstall(const ScenarioManager& scenario)
     targets_->removeChildren(0, targets_->getNumChildren());
 
   // scenario has already removed us from the scenegraph
-  root_ = nullptr;
+  locatorRoot_ = nullptr;
   targets_ = nullptr;
   dome_ = nullptr;
+  root_ = nullptr;
 }
 
 void PlanetariumViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNode* entity)
@@ -227,11 +233,19 @@ void PlanetariumViewTool::onEntityRemove(const ScenarioManager& scenario, Entity
 void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
 {
   // update the fence
-  fence_->setLocation(osg::Vec3d(0, 0, 0) * root_->getMatrix());
+  fence_->setLocation(osg::Vec3d(0, 0, 0) * locatorRoot_->getMatrix());
 
-  // check any entity updates for positional changes
   for (EntityVector::const_iterator i = updates.begin(); i != updates.end(); ++i)
   {
+    // Update beam node history
+    BeamNode* beam = dynamic_cast<BeamNode*>(i->get());
+    if (beam)
+    {
+      updateBeamHistory_(beam);
+      continue;
+    }
+
+    // check any entity updates for positional changes
     PlatformNode* platform = dynamic_cast<PlatformNode*>(i->get());
     if (!platform || platform == host_.get())
       continue;
@@ -255,7 +269,7 @@ void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
   }
 
   // transform the target position into planetarium-local space:
-  osg::Vec3d local = ecef * root_->getInverseMatrix();
+  osg::Vec3d local = ecef * locatorRoot_->getInverseMatrix();
   double     local_len = local.length();
   osg::Vec3d local_n   = local / local_len;
 
@@ -279,10 +293,10 @@ void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
 
 void PlanetariumViewTool::updateDome_()
 {
-  if (root_.valid())
+  if (locatorRoot_.valid())
   {
     if (dome_.valid())
-      root_->removeChild(dome_.get());
+      locatorRoot_->removeChild(dome_.get());
 
     // build a sphere
     osg::Geometry* drawable = osgEarth::AnnotationUtils::createEllipsoidGeometry(range_, range_, range_, domeColor_);
@@ -290,7 +304,7 @@ void PlanetariumViewTool::updateDome_()
     stateSet->setMode(GL_BLEND, 1);
     stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
     stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
-    root_->addChild(drawable);
+    locatorRoot_->addChild(drawable);
     dome_ = drawable;
   }
 }
@@ -389,5 +403,79 @@ osg::Node* PlanetariumViewTool::buildVectorGeometry_()
   geom->setDataVariance(osg::Object::DYNAMIC);
   return geom;
 }
+
+void PlanetariumViewTool::updateBeamHistory_(simVis::BeamNode* beam)
+{
+  const simData::BeamUpdate* lastUpdate = beam->getLastUpdateFromDS();
+  if (!lastUpdate)
+    return;
+
+  simData::BeamUpdate update(*lastUpdate);
+  update.set_range(range_);
+
+  simData::BeamPrefs prefs(beam->getPrefs());
+  prefs.set_blended(true);
+  prefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
+
+  osg::ref_ptr<BeamVolume> volume = new BeamVolume(prefs, update);
+
+  Locator* beamLocator = beam->getLocator();
+
+  // Get the origin locator, which is the parent
+  Locator* parentLocator = beamLocator->getParentLocator();
+
+  simCore::Vec3 pos, ori;
+  beamLocator->getLocalOffsets(pos, ori);
+
+  Locator* newBeamLocator = nullptr;
+
+  ResolvedPositionLocator* positionLocator = dynamic_cast<ResolvedPositionLocator*>(beamLocator);
+  if (positionLocator)
+    newBeamLocator = new ResolvedPositionLocator(parentLocator, Locator::COMP_ALL);
+  else
+    newBeamLocator = new ResolvedPositionOrientationLocator(parentLocator, Locator::COMP_ALL);
+
+  newBeamLocator->setLocalOffsets(pos, ori, update.time(), false);
+
+  LocatorNode* locatorNode = new LocatorNode(newBeamLocator);
+  locatorNode->addChild(volume.get());
+
+  osg::observer_ptr<osg::Group> beamHistory;
+  auto historyItr = beamHistory_.find(beam->getId());
+  if (historyItr == beamHistory_.end())
+  {
+    beamHistory = new osg::Group();
+    root_->addChild(beamHistory.get());
+    beamHistory_[beam->getId()] = beamHistory;
+  }
+  else
+    beamHistory = historyItr->second;
+
+  // max number of history points
+  const unsigned int maxChildren = 20;
+
+  if (beamHistory->getNumChildren() == maxChildren)
+    beamHistory->removeChild(0u);
+
+  beamHistory->addChild(locatorNode);
+
+  float totalAlpha = 1.0f / (float)beamHistory->getNumChildren();
+
+  // Update the beam history nodes so they fade out TODO: do this in a shader instead
+  for (unsigned int i = 0; i < beamHistory->getNumChildren(); i++)
+  {
+    float alpha = (1.0 + static_cast<float>(i)) / static_cast<float>(beamHistory->getNumChildren());
+    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(beamHistory->getChild(i)->asGroup()->getChild(0));
+    if (bv)
+    {
+      simData::BeamPrefs newPrefs(prefs);
+      Color color = Color(prefs.commonprefs().color());
+      color.a() = alpha;
+      newPrefs.mutable_commonprefs()->set_color(color.asABGR());
+      bv->performInPlacePrefChanges(&prefs, &newPrefs);
+    }
+  }
+}
+
 }
 

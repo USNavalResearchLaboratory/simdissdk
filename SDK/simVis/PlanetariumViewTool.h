@@ -134,7 +134,9 @@ private:
   EntityFamily                   family_;
 
   osg::observer_ptr<PlatformNode> host_;
-  osg::observer_ptr<LocatorNode>  root_;
+  osg::observer_ptr<LocatorNode>  locatorRoot_;
+  osg::observer_ptr<osg::Group> root_;
+
   /// planetarium radius, in meters
   double                          range_;
   osg::Vec4f                      domeColor_;
@@ -155,8 +157,12 @@ private:
   void scaleTargetGeometry_(double range) const;
   osg::Node* buildVectorGeometry_();
 
+  /** Update beam history for the given beam */
+  void updateBeamHistory_(simVis::BeamNode* beam);
+
   osg::ref_ptr<osg::Geometry> dome_;
   osg::ref_ptr<osg::Node> targetGeom_;
+  std::map<simData::ObjectId, osg::observer_ptr<osg::Group> > beamHistory_;
 };
 
 } // namespace simVis
