@@ -150,6 +150,12 @@ public:
       if (ldb != ldb_)
         app_.viewer->setLogarithmicDepthBufferEnabled(!app_.viewer->isLogarithmicDepthBufferEnabled());
 
+      // Beam History
+      bool beamHistory = beamHistory_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Beam History", &beamHistory_);
+      if (beamHistory != beamHistory_)
+        app_.planetarium->setDisplayBeamHistory(beamHistory_);
+
       ImGui::EndTable();
     }
 
@@ -163,6 +169,7 @@ private:
   float range_ = 90000.f;
   float color_[4] = { 1.f, 1.f, 1.f, .5f };
   bool ldb_ = true;
+  bool beamHistory_ = false;
 };
 #else
 struct Toggle : public ui::ControlEventHandler

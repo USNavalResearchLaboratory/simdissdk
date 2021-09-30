@@ -105,7 +105,7 @@ void PlanetariumViewTool::setRange(double range)
       targets_->removeAll();
 
     // clear all beam history
-    for (auto hist : beamHistory_)
+    for (const auto& hist : beamHistory_)
       root_->removeChild(hist.second.get());
     beamHistory_.clear();
 
@@ -162,7 +162,7 @@ void PlanetariumViewTool::setDisplayBeamHistory(bool display)
   displayBeamHistory_ = display;
   if (!displayBeamHistory_)
   {
-    for (auto hist : beamHistory_)
+    for (const auto& hist : beamHistory_)
       root_->removeChild(hist.second.get());
     beamHistory_.clear();
   }
