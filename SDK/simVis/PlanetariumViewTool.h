@@ -99,6 +99,11 @@ public:
   /** Retrieve a reference to the gate prefs template for gate display */
   const simData::GatePrefs& getGatePrefs() const { return gatePrefs_; }
 
+  /** Set whether beam history is displayed on the planetarium */
+  void setDisplayBeamHistory(bool display);
+  /** Get whether beam history is displayed on the planetarium */
+  bool getDisplayBeamHistory() const;
+
 
 public: // ScenarioTool
 
@@ -144,6 +149,7 @@ private:
   simData::BeamPrefs              beamPrefs_;
   simData::GatePrefs              gatePrefs_;
   bool                            displayTargetVectors_;
+  bool                            displayBeamHistory_;
 
   osg::observer_ptr<const ScenarioManager> scenario_;
 

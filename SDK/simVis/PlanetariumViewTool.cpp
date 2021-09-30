@@ -70,7 +70,8 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   host_(host),
   range_(1000.0),
   domeColor_(0.8f, 1.0f, 0.8f, 0.5f), // RGBA
-  displayTargetVectors_(true)
+  displayTargetVectors_(true),
+  displayBeamHistory_(false)
 {
   family_.reset();
 
@@ -102,6 +103,11 @@ void PlanetariumViewTool::setRange(double range)
     // clear all target delegates
     if (targets_.valid())
       targets_->removeAll();
+
+    // clear all beam history
+    for (auto hist : beamHistory_)
+      root_->removeChild(hist.second.get());
+    beamHistory_.clear();
 
     updateDome_();
 
@@ -149,6 +155,22 @@ void PlanetariumViewTool::setGatePrefs(const simData::GatePrefs& prefs)
 void PlanetariumViewTool::setDisplayTargetVectors(bool value)
 {
   displayTargetVectors_ = value;
+}
+
+void PlanetariumViewTool::setDisplayBeamHistory(bool display)
+{
+  displayBeamHistory_ = display;
+  if (!displayBeamHistory_)
+  {
+    for (auto hist : beamHistory_)
+      root_->removeChild(hist.second.get());
+    beamHistory_.clear();
+  }
+}
+
+bool PlanetariumViewTool::getDisplayBeamHistory() const
+{
+  return displayBeamHistory_;
 }
 
 void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
@@ -241,7 +263,8 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
     BeamNode* beam = dynamic_cast<BeamNode*>(i->get());
     if (beam)
     {
-      updateBeamHistory_(beam);
+      if (displayBeamHistory_)
+        updateBeamHistory_(beam);
       continue;
     }
 
@@ -453,7 +476,6 @@ void PlanetariumViewTool::updateBeamHistory_(simVis::BeamNode* beam)
 
   // max number of history points
   const unsigned int maxChildren = 20;
-
   if (beamHistory->getNumChildren() == maxChildren)
     beamHistory->removeChild(0u);
 
