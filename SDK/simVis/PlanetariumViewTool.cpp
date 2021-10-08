@@ -71,7 +71,8 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   range_(1000.0),
   domeColor_(0.8f, 1.0f, 0.8f, 0.5f), // RGBA
   displayTargetVectors_(true),
-  displayBeamHistory_(false)
+  displayBeamHistory_(false),
+  displayGateHistory_(false)
 {
   family_.reset();
 
@@ -108,6 +109,11 @@ void PlanetariumViewTool::setRange(double range)
     for (const auto& hist : beamHistory_)
       root_->removeChild(hist.second.get());
     beamHistory_.clear();
+
+    // clear all gate history
+    for (const auto& hist : gateHistory_)
+      root_->removeChild(hist.second.get());
+    gateHistory_.clear();
 
     updateDome_();
 
@@ -171,6 +177,22 @@ void PlanetariumViewTool::setDisplayBeamHistory(bool display)
 bool PlanetariumViewTool::getDisplayBeamHistory() const
 {
   return displayBeamHistory_;
+}
+
+void PlanetariumViewTool::setDisplayGateHistory(bool display)
+{
+  displayGateHistory_ = display;
+  if (!displayGateHistory_)
+  {
+    for (const auto& hist : gateHistory_)
+      root_->removeChild(hist.second.get());
+    gateHistory_.clear();
+  }
+}
+
+bool PlanetariumViewTool::getDisplayGateHistory() const
+{
+  return displayGateHistory_;
 }
 
 void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
@@ -265,6 +287,14 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
     {
       if (displayBeamHistory_)
         updateBeamHistory_(beam);
+      continue;
+    }
+
+    GateNode* gate = dynamic_cast<GateNode*>(i->get());
+    if (gate)
+    {
+      if (displayGateHistory_)
+        updateGateHistory_(gate, scenario);
       continue;
     }
 
@@ -495,6 +525,78 @@ void PlanetariumViewTool::updateBeamHistory_(simVis::BeamNode* beam)
       color.a() = alpha;
       newPrefs.mutable_commonprefs()->set_color(color.asABGR());
       bv->performInPlacePrefChanges(&prefs, &newPrefs);
+    }
+  }
+}
+
+void PlanetariumViewTool::updateGateHistory_(simVis::GateNode* gate, const ScenarioManager& scenario)
+{
+  const simData::GateUpdate* lastUpdate = gate->getLastUpdateFromDS();
+  if (!lastUpdate)
+    return;
+
+  simData::GateUpdate update(*lastUpdate);
+  update.set_minrange(range_);
+  update.set_maxrange(range_);
+
+  simData::GatePrefs prefs(gate->getPrefs());
+  prefs.set_drawcentroid(false);
+
+  simData::ObjectId hostId;
+  gate->getHostId(hostId);
+
+  simVis::Locator* gateVolumeLocator = gate->getVolumeLocator();
+
+  // Get the origin locator, which is the parent
+  Locator* parentLocator = gateVolumeLocator->getParentLocator();
+
+  simCore::Vec3 pos, ori;
+  gateVolumeLocator->getLocalOffsets(pos, ori);
+
+  Locator* newGateVolumeLocator = nullptr;
+
+  ResolvedPositionLocator* positionLocator = dynamic_cast<ResolvedPositionLocator*>(gateVolumeLocator);
+  if (positionLocator)
+    newGateVolumeLocator = new ResolvedPositionLocator(parentLocator, Locator::COMP_ALL);
+  else
+    newGateVolumeLocator = new ResolvedPositionOrientationLocator(parentLocator, Locator::COMP_ALL);
+
+  newGateVolumeLocator->setLocalOffsets(pos, ori, update.time(), false);
+
+  osg::ref_ptr<GateVolume> newGateVolume = new GateVolume(newGateVolumeLocator, &prefs, &update);
+
+  osg::observer_ptr<osg::Group> gateHistory;
+  auto historyItr = gateHistory_.find(gate->getId());
+  if (historyItr == gateHistory_.end())
+  {
+    gateHistory = new osg::Group();
+    root_->addChild(gateHistory.get());
+    gateHistory_[gate->getId()] = gateHistory;
+  }
+  else
+    gateHistory = historyItr->second;
+
+  // max number of history points
+  const unsigned int maxChildren = 20;
+  if (gateHistory->getNumChildren() == maxChildren)
+    gateHistory->removeChild(0u);
+
+  gateHistory->addChild(newGateVolume.get());
+
+  Color color = Color(prefs.commonprefs().color());
+  float origAlpha = color.a();
+  // Update the gate history nodes so they fade out TODO: do this in a shader instead
+  for (unsigned int i = 0; i < gateHistory->getNumChildren(); i++)
+  {
+    float alpha = (1.0 + static_cast<float>(i)) / static_cast<float>(gateHistory->getNumChildren());
+    alpha *= origAlpha;
+    osg::ref_ptr<GateVolume> gv = dynamic_cast<GateVolume*>(gateHistory->getChild(i));
+    if (gv)
+    {
+      simData::GatePrefs newPrefs(prefs);
+      color.a() = alpha;
+      newPrefs.mutable_commonprefs()->set_color(color.asABGR());
+      gv->performInPlacePrefChanges(&prefs, &newPrefs);
     }
   }
 }

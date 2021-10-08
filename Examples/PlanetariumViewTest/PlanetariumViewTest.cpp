@@ -156,6 +156,12 @@ public:
       if (beamHistory != beamHistory_)
         app_.planetarium->setDisplayBeamHistory(beamHistory_);
 
+      // Gate History
+      bool gateHistory = gateHistory_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Gate History", &gateHistory_);
+      if (gateHistory != gateHistory_)
+        app_.planetarium->setDisplayGateHistory(gateHistory_);
+
       ImGui::EndTable();
     }
 
@@ -170,6 +176,7 @@ private:
   float color_[4] = { 1.f, 1.f, 1.f, .5f };
   bool ldb_ = true;
   bool beamHistory_ = false;
+  bool gateHistory_ = false;
 };
 #else
 struct Toggle : public ui::ControlEventHandler
@@ -383,7 +390,7 @@ void simulate(simData::ObjectId hostId, std::vector<simData::ObjectId>& targetId
 
 int main(int argc, char **argv)
 {
-  int numBeams   = 10;
+  int numBeams = 10;
   int numTargets = 100;
 
   // Set up the scene:

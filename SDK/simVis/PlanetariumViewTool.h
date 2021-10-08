@@ -39,6 +39,7 @@ namespace osgEarth { class LineDrawable; }
 namespace simVis
 {
 class BeamNode;
+class GateNode;
 class LocatorNode;
 class PlatformNode;
 class ScenarioManager;
@@ -104,6 +105,10 @@ public:
   /** Get whether beam history is displayed on the planetarium */
   bool getDisplayBeamHistory() const;
 
+  /** Set whether gate history is displayed on the planetarium */
+  void setDisplayGateHistory(bool display);
+  /** Get whether gate history is displayed on the planetarium */
+  bool getDisplayGateHistory() const;
 
 public: // ScenarioTool
 
@@ -150,6 +155,7 @@ private:
   simData::GatePrefs              gatePrefs_;
   bool                            displayTargetVectors_;
   bool                            displayBeamHistory_;
+  bool                            displayGateHistory_;
 
   osg::observer_ptr<const ScenarioManager> scenario_;
 
@@ -166,10 +172,13 @@ private:
 
   /** Update beam history for the given beam */
   void updateBeamHistory_(simVis::BeamNode* beam);
+  /** Update gate history for the given beam */
+  void updateGateHistory_(simVis::GateNode* gate, const ScenarioManager& scenario);
 
   osg::ref_ptr<osg::Geometry> dome_;
   osg::ref_ptr<osg::Node> targetGeom_;
   std::map<simData::ObjectId, osg::observer_ptr<osg::Group> > beamHistory_;
+  std::map<simData::ObjectId, osg::observer_ptr<osg::Group> > gateHistory_;
 };
 
 } // namespace simVis
