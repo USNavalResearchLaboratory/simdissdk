@@ -190,6 +190,8 @@ private:
 
   /** Potentially null pointer to the fast-path icon render node. */
   osg::ref_ptr<osg::Node> fastPathIcon_;
+  /** If the model is externally provided, then turn off fast path */
+  bool allowFastPath_;
 
   /** Contains list of platform callbacks */
   std::vector<osg::ref_ptr<Callback> > callbacks_;
@@ -239,6 +241,8 @@ private:
   void updateAlphaVolume_(const simData::PlatformPrefs& prefs);
   /// Updates the DOF Transform animation based on prefs
   void updateDofTransform_(const simData::PlatformPrefs& prefs, bool force) const;
+  /// Internal version of set setModel();
+  void setModel_(osg::Node* node, bool isImage);
 };
 
 } // namespace simVis
