@@ -129,7 +129,7 @@ private:
     ss->setTextureAttributeAndModes(0, inputPosition_.get(), osg::StateAttribute::ON);
     ss->setTextureAttributeAndModes(1, velocityTexture_.get(), osg::StateAttribute::ON);
     // Significant banding occurs with GL_BLEND on
-    ss->setMode(GL_BLEND, osg::StateAttribute::OFF);
+    ss->setMode(GL_BLEND, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
 
     return ss;
   }
