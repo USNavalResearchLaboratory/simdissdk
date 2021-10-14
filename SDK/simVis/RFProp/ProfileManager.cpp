@@ -152,10 +152,10 @@ void ProfileManager::setDisplay(bool onOff)
     return;
   displayOn_ = onOff;
 
-  for (const auto& iter : *currentProfileMap_)
+  for (const auto& bearingProfilePair : *currentProfileMap_)
   {
     // send THRESHOLDTYPE_NONE to turn profiles off
-    iter.second->setThresholdType(displayOn_ ? profileContext_->type : ProfileDataProvider::THRESHOLDTYPE_NONE);
+    bearingProfilePair.second->setThresholdType(displayOn_ ? profileContext_->type : ProfileDataProvider::THRESHOLDTYPE_NONE);
   }
 
   updateVisibility_();
@@ -234,9 +234,9 @@ void ProfileManager::setThresholdType(ProfileDataProvider::ThresholdType type)
   if (profileContext_->type != type)
   {
     profileContext_->type = type;
-    for (const auto& iter : *currentProfileMap_)
+    for (const auto& bearingProfilePair : *currentProfileMap_)
     {
-      iter.second->setThresholdType(profileContext_->type);
+      bearingProfilePair.second->setThresholdType(profileContext_->type);
     }
   }
 }
@@ -370,27 +370,28 @@ void ProfileManager::updateVisibility_()
   if (!displayOn_)
     return;
   // only changes in beam bearing or history require recalc of minbearing & maxBearing -> optimization possible here
-  const double minBearing = currentProfileMap_->getSlotBearing(bearing_ - history_ / 2.0);
-  double maxBearing = currentProfileMap_->getSlotBearing(bearing_ + history_ / 2.0);
-  // addTwoPi indicates the condition that the display wraps 360 -> 0 and the max is shifted to > 360
-  bool addTwoPi = false;
-  if (minBearing >= maxBearing || history_ >= (M_TWOPI - FLT_EPSILON))
-  {
-    addTwoPi = true;
-    maxBearing += M_TWOPI;
-  }
+  const double minBearing = currentProfileMap_->getSlotBearing(bearing_ - (history_ / 2.0));
+  double maxBearing = currentProfileMap_->getSlotBearing(bearing_ + (history_ / 2.0));
 
-  for (const auto& iter : *currentProfileMap_)
+  // displayWrapsZero indicates conditions where the display wraps 360 -> 0;
+  // e.g., minBearing is a large angle less than 360, maxBearing is a small number > 0;
+  // or a complete 360 deg display where minBearing = maxBearing
+  const bool displayWrapsZero = (minBearing > maxBearing) ||
+    (minBearing == maxBearing && history_ >= (M_TWOPI - FLT_EPSILON));
+  if (displayWrapsZero)
+    maxBearing += M_TWOPI;
+
+  for (const auto& bearingProfilePair : *currentProfileMap_)
   {
-    const double profileBearing = iter.first;
+    const double profileBearing = bearingProfilePair.first;
     bool visible = (profileBearing >= minBearing && profileBearing <= maxBearing);
-    if (addTwoPi && !visible)
+    if (displayWrapsZero && !visible)
     {
       // test if profile is in the piece that wraps around after TwoPI
       const double profileBearingAddTwoPi = profileBearing + M_TWOPI;
       visible = (profileBearingAddTwoPi >= minBearing) && (profileBearingAddTwoPi <= maxBearing);
     }
-    iter.second->setNodeMask(visible ? simVis::DISPLAY_MASK_BEAM : simVis::DISPLAY_MASK_NONE);
+    bearingProfilePair.second->setNodeMask(visible ? simVis::DISPLAY_MASK_BEAM : simVis::DISPLAY_MASK_NONE);
   }
 }
 
@@ -421,8 +422,8 @@ void ProfileManager::setColorProvider(ColorProvider* colorProvider)
 
 void ProfileManager::dirty_()
 {
-  for (const auto& iter : *currentProfileMap_)
-    iter.second->dirty();
+  for (const auto& bearingProfilePair : *currentProfileMap_)
+    bearingProfilePair.second->dirty();
 }
 
 }
