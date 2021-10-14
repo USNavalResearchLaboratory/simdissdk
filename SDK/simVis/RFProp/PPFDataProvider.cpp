@@ -50,7 +50,7 @@ double PPFDataProvider::getPPF_(double lossdB, double height, double range) cons
 {
   const double slantRangeM = sqrt(simCore::square(range) + simCore::square(height));
   const double ppf_dB = simCore::lossToPpf(slantRangeM, radarParameters_->freqMHz, lossdB);
-  return ((ppf_dB != simCore::SMALL_DB_VAL) ? ppf_dB : simRF::AREPS_INIT_VALUE);
+  return ((ppf_dB != simCore::SMALL_DB_VAL) ? ppf_dB : simRF::INVALID_VALUE);
 }
 
 }

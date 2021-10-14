@@ -274,8 +274,8 @@ void Profile::init2DHoriz_()
     const double value = data_->getValueByIndex(heightIndex, i);
     if (!validDataStarted)
     {
-      // values <= AREPS_GROUND_VALUE are sentinel values, not actual values. some profiles can have long stretch of no-data, especially at low range.
-      if (value <= AREPS_GROUND_VALUE)
+      // values <= GROUND_VALUE are sentinel values, not actual values. some profiles can have long stretch of no-data, especially at low range.
+      if (value <= GROUND_VALUE)
       {
         // ignore no-data values until valid data is received
         continue;
@@ -333,7 +333,7 @@ void Profile::tesselate2DVert_(unsigned int numRanges, unsigned int numHeights, 
         const double valueBottom = values->at(indexBottom);
         const double valueTop = values->at(indexTop);
         // some profiles can have large patch of no-data at beginning
-        if (valueBottom <= AREPS_GROUND_VALUE && valueTop <= AREPS_GROUND_VALUE)
+        if (valueBottom <= GROUND_VALUE && valueTop <= GROUND_VALUE)
         {
           // ignore no-data values until valid data is received
           continue;
@@ -856,8 +856,8 @@ void Profile::init3DPoints_()
     for (unsigned int h = minHeightIndex; h <= maxHeightIndex; h++)
     {
       const double value = data_->getValueByIndex(h, r);
-      // values <= AREPS_GROUND_VALUE are sentinel values, not actual values.
-      if (value <= AREPS_GROUND_VALUE)
+      // values <= GROUND_VALUE are sentinel values, not actual values.
+      if (value <= GROUND_VALUE)
         continue;
 
       const double height = adjustHeight_(0, range, minHeight + heightStep * h);
@@ -1128,7 +1128,7 @@ int Profile::buildVoxel_(VoxelProcessor& vProcessor, unsigned int rangeIndex, os
   //v6, v7
   const double value67 = data_->getValueByIndex(farVoxelHeight.indexTop, voxelRange.indexFar);
 
-  if (value01 <= AREPS_GROUND_VALUE && value23 <= AREPS_GROUND_VALUE && value45 <= AREPS_GROUND_VALUE && value67 <= AREPS_GROUND_VALUE)
+  if (value01 <= GROUND_VALUE && value23 <= GROUND_VALUE && value45 <= GROUND_VALUE && value67 <= GROUND_VALUE)
   {
     // voxel has no data
     vProcessor.clearIndexCache();

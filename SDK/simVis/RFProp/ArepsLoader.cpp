@@ -320,7 +320,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
               delete cnr;
               return 1;
             }
-            short cnr_cB = static_cast<short>(simCore::rint(cnr_dB * AREPS_SCALE_FACTOR));
+            short cnr_cB = static_cast<short>(simCore::rint(cnr_dB * SCALE_FACTOR));
             (*cnr)(rngCnt) = cnr_cB;
             rngCnt++;
           }
@@ -328,7 +328,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
 
         // data must be populated in the provider prior to assigning to profile, provider takes ownership of the cnr LUT
         profile.addProvider(
-          new simRF::LUT1ProfileDataProvider(cnr, ProfileDataProvider::THRESHOLDTYPE_CNR, 1.0/AREPS_SCALE_FACTOR));
+          new simRF::LUT1ProfileDataProvider(cnr, ProfileDataProvider::THRESHOLDTYPE_CNR, 1.0/SCALE_FACTOR));
       }
       else if (st == "[Apm Loss Data]" || st == "[Apm Factor Data]")
       {
@@ -383,8 +383,8 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
               }
 
               // fix incorrect initialization value
-              if (lossVal == AREPS_ERRONEOUS_INIT_VALUE)
-                lossVal = AREPS_INIT_VALUE;
+              if (lossVal == ERRONEOUS_INIT_VALUE)
+                lossVal = INIT_VALUE;
               (*loss)(i, k) = lossVal;
               k++;
             }
@@ -394,7 +394,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
 
         // loss/ppf data provided must be populated prior to assigning to profile, provider takes ownership of the LUT
         profile.addProvider(
-          new simRF::LUTProfileDataProvider(loss, type, 1.0/AREPS_SCALE_FACTOR));
+          new simRF::LUTProfileDataProvider(loss, type, 1.0/SCALE_FACTOR));
       }
     }
   } // end of while (simCore::getStrippedLine ...

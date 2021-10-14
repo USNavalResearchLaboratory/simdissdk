@@ -898,7 +898,7 @@ int main(int argc, char** argv)
           }
 
           // We scale the value by 10 so it fits well in a short for memory efficiency
-          const short scaledFsl = static_cast<short>(reducedFsl * simRF::AREPS_SCALE_FACTOR);
+          const short scaledFsl = static_cast<short>(reducedFsl * simRF::SCALE_FACTOR);
 
           // store loss as cB (centibels) for each height slot
           (*loss)(h, r) = scaledFsl;
@@ -907,7 +907,7 @@ int main(int argc, char** argv)
 
       // loss data provided must be populated prior to assigning to profile
       osg::ref_ptr<simRF::CompositeProfileProvider> cProvider = new simRF::CompositeProfileProvider();
-      cProvider->addProvider(new simRF::LUTProfileDataProvider(loss, simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS, 1.0 / simRF::AREPS_SCALE_FACTOR));
+      cProvider->addProvider(new simRF::LUTProfileDataProvider(loss, simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS, 1.0 / simRF::SCALE_FACTOR));
       osg::ref_ptr<simRF::Profile> profile = new simRF::Profile(cProvider.get());
       profile->setHalfBeamWidth(beamWidth / 2.0);
       profile->setBearing(bearingStep * i);
