@@ -2,10 +2,8 @@
 # BUILD_SYSTEM_OS {win|linux}
 # BUILD_SYSTEM_ARCH {x86|amd64}
 # BUILD_COMPILER {vc-10.0|vc-12.0|vc-14.0|vc-14.1|vc-14.2|gcc-4.4}
-# DEPRECATED_BUILD_COMPILER {vc-10.0|vc-12.0|vc-14.0|vc-14.1|vc-14.2|gcc-4.4}
 # BUILD_COMPILER_NAME {vc|${CMAKE_C_COMPILER}}
 # BUILD_COMPILER_VERSION (Compiler name with max and min version numbers)
-# DEPRECATED_BUILD_COMPILER_VERSION (Compiler name with max, min, and patch version numbers)
 # BUILD_COMPILER_MAJOR_VERSION
 # BUILD_COMPILER_MINOR_VERSION
 # BUILD_SYSTEM_CANONICAL_NAME {${BUILD_PLATFORM}_${BUILD_COMPILER}}
@@ -78,17 +76,14 @@ if(MSVC)
     math(EXPR BUILD_COMPILER_VERSION_MINOR "( ${MSVC_VERSION} % 100 ) / 10")
     # Put them together to form something like 9.0, 10.0, 7.1, etc.
     set(BUILD_COMPILER_VERSION "${BUILD_COMPILER_VERSION_MAJOR}.${BUILD_COMPILER_VERSION_MINOR}")
-    set(DEPRECATED_BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
 elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel" OR "${CMAKE_CXX_COMPILER}" MATCHES "clang\\+\\+$")
     # Intel compiler will use latest gcc build version for third party libraries
     set(BUILD_COMPILER_NAME gcc)
     set(BUILD_COMPILER_VERSION "8.3")
-    set(DEPRECATED_BUILD_COMPILER_VERSION "8.3")
 else()
     # Get compiler name and version (gcc and gcc-compatible compilers)
     exec_program(${CMAKE_C_COMPILER} ARGS --version OUTPUT_VARIABLE BUILD_COMPILER_VERSION)
     set(BUILD_COMPILER_NAME gcc)
-    string(REGEX REPLACE ".*([0-9]\\.[0-9]\\.[0-9]).*" "\\1" DEPRECATED_BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
     string(REGEX REPLACE ".*([0-9]\\.[0-9])\\.[0-9].*" "\\1" BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
 endif()
 
@@ -108,10 +103,8 @@ if(NOT WIN32)
         endif()
         unset(_REDHAT_RELEASE)
     endif()
-    set(DEPRECATED_BUILD_COMPILER_VERSION "${BUILD_COMPILER_VERSION}")
 endif()
 
 set(BUILD_COMPILER "${BUILD_COMPILER_NAME}-${BUILD_COMPILER_VERSION}")
-set(DEPRECATED_BUILD_COMPILER "${BUILD_COMPILER}")
 set(BUILD_SYSTEM_CANONICAL_NAME "${BUILD_PLATFORM}_${BUILD_COMPILER}")
 set(BUILD_SYSTEM_LIB_SUFFIX "${BUILD_PLATFORM}_${BUILD_COMPILER}")
