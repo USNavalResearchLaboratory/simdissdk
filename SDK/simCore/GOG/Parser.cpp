@@ -149,7 +149,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       {
         token = simCore::lowerCase(token);
         // stop further lower case conversion on text based values
-        if (token == "annotation" || token == "comment" || token == "name")
+        if (token == "annotation" || token == "comment" || token == "name" || token == "starttime" || token == "endtime")
           break;
       }
     }
