@@ -763,19 +763,23 @@ struct Iso8601Components
   /** Given an ISO 8601 time format string, parses string into component values and returns 0 on correct string format. */
   int parse(const std::string& fullString)
   {
+    const std::string& cleanString = simCore::StringUtils::trim(simCore::removeQuotes(fullString));
+    if (cleanString.empty())
+      return false;
+
     // Reset all values to default
     *this = Iso8601Components();
 
     std::vector<std::string> daytime;
     // Tokenize the string into 2 components (ymd, time).
     // Note, cannot use simCore::stringTokenizer() because there may be more than one valid "T".
-    const size_t firstTPos = fullString.find('T');
+    const size_t firstTPos = cleanString.find('T');
     if (firstTPos == std::string::npos)
-      daytime.push_back(fullString);
+      daytime.push_back(cleanString);
     else
     {
-      daytime.push_back(fullString.substr(0, firstTPos));
-      daytime.push_back(fullString.substr(firstTPos + 1));
+      daytime.push_back(cleanString.substr(0, firstTPos));
+      daytime.push_back(cleanString.substr(firstTPos + 1));
     }
 
     // Check for YYYY format.  Note, we do not support negative years
@@ -789,7 +793,7 @@ struct Iso8601Components
 
     // Check for YYYY-MM format.  Note that YYYYMM is not accepted as a format in ISO 8601,
     // and month based values with times are not accepted either.
-    if (dateString.size() == 7 && dateString == fullString && dateString[4] == '-' &&
+    if (dateString.size() == 7 && dateString == cleanString && dateString[4] == '-' &&
       isValidNumber(dateString.substr(0, 4), year) && isValidNumber(dateString.substr(5), month))
     {
       // Cannot have a time, if given just a year and a month
