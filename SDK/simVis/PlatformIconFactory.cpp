@@ -76,7 +76,7 @@ public:
     icon_ = simVis::Registry::instance()->findModelFile(prefs.icon());
     iconAlignment_ = prefs.iconalignment();
     const bool useOverride = prefs.commonprefs().has_useoverridecolor() && prefs.commonprefs().useoverridecolor() &&
-      ((prefs.commonprefs().overridecolor() & 0xFF) != 0);
+      (prefs.commonprefs().overridecolor() != 0xffffffff);
     overrideColor_ = useOverride ? simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA) : osg::Vec4f(1.f, 1.f, 1.f, 1.f);
     noDepthIcons_ = prefs.nodepthicons();
     useCullFace_ = prefs.usecullface();
