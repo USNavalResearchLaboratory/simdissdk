@@ -156,12 +156,6 @@ public:
       if (beamHistory != beamHistory_)
         app_.planetarium->setDisplayBeamHistory(beamHistory_);
 
-      // Gate History
-      bool gateHistory = gateHistory_;
-      IMGUI_ADD_ROW(ImGui::Checkbox, "Gate History", &gateHistory_);
-      if (gateHistory != gateHistory_)
-        app_.planetarium->setDisplayGateHistory(gateHistory_);
-
       ImGui::EndTable();
     }
 
