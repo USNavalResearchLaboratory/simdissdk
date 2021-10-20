@@ -156,6 +156,12 @@ public:
       if (beamHistory != beamHistory_)
         app_.planetarium->setDisplayBeamHistory(beamHistory_);
 
+      // Display Gates
+      bool displayGates = displayGates_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Display Gates", &displayGates_);
+      if (displayGates != displayGates_)
+        app_.planetarium->setDisplayGates(displayGates_);
+
       ImGui::EndTable();
     }
 
@@ -170,7 +176,7 @@ private:
   float color_[4] = { 1.f, 1.f, 1.f, .5f };
   bool ldb_ = true;
   bool beamHistory_ = false;
-  bool gateHistory_ = false;
+  bool displayGates_ = false;
 };
 #else
 struct Toggle : public ui::ControlEventHandler

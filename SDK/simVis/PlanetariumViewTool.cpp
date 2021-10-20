@@ -72,7 +72,7 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   domeColor_(0.8f, 1.0f, 0.8f, 0.5f), // RGBA
   displayTargetVectors_(true),
   displayBeamHistory_(false),
-  displayGateHistory_(false)
+  displayGates_(false)
 {
   family_.reset();
 
@@ -172,6 +172,17 @@ void PlanetariumViewTool::setDisplayBeamHistory(bool display)
 bool PlanetariumViewTool::getDisplayBeamHistory() const
 {
   return displayBeamHistory_;
+}
+
+void PlanetariumViewTool::setDisplayGates(bool display)
+{
+  displayGates_ = display;
+  applyOverrides_(true);
+}
+
+bool PlanetariumViewTool::getDisplayGates() const
+{
+  return displayGates_;
 }
 
 void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
@@ -383,7 +394,7 @@ void PlanetariumViewTool::applyOverrides_(EntityNode* entity, bool enable)
   GateNode* gate = dynamic_cast<GateNode*>(entity);
   if (gate)
   {
-    if (enable)
+    if (enable && displayGates_)
     {
       simData::GateUpdate update;
       // overriding minrange and maxrange to same value to draw only the far face of the gate
@@ -402,7 +413,6 @@ void PlanetariumViewTool::applyOverrides_(EntityNode* entity, bool enable)
       gate->removePrefsOverride(OVERRIDE_TAG);
       gate->removeUpdateOverride(OVERRIDE_TAG);
     }
-    return;
   }
 }
 

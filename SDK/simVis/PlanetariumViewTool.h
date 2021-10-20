@@ -104,6 +104,11 @@ public:
   /** Get whether beam history is displayed on the planetarium */
   bool getDisplayBeamHistory() const;
 
+  /** Set whether to display gates on the planetarium */
+  void setDisplayGates(bool display);
+  /** Get whether gates are displayed */
+  bool getDisplayGates() const;
+
 public: // ScenarioTool
 
   /** @see ScenarioTool::onInstall() */
@@ -149,7 +154,7 @@ private:
   simData::GatePrefs              gatePrefs_;
   bool                            displayTargetVectors_;
   bool                            displayBeamHistory_;
-  bool                            displayGateHistory_;
+  bool                            displayGates_;
 
   osg::observer_ptr<const ScenarioManager> scenario_;
 
