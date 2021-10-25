@@ -275,7 +275,7 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
     BeamNode* beam = dynamic_cast<BeamNode*>(i->get());
     if (beam)
     {
-      if (displayBeamHistory_)
+      if (family_.isMember(beam->getId()) && displayBeamHistory_)
         updateBeamHistory_(beam);
       continue;
     }

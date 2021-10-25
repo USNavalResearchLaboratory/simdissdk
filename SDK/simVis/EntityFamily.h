@@ -79,6 +79,13 @@ public:
    */
   EntityObserverSet& members() { return entities_; }
 
+  /**
+   * Returns true if ID is part of the family.
+   * @param[in ] id  ID to check
+   * @return True if ID is in the family, false otherwise
+   */
+  bool isMember(simData::ObjectId id) const;
+
 private:
   osg::observer_ptr<EntityNode>  host_;
   EntityObserverSet              entities_;
