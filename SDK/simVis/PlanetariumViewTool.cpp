@@ -66,6 +66,79 @@ namespace
 namespace simVis
 {
 
+PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam)
+  : osg::Group(),
+  beam_(beam)
+{}
+
+PlanetariumViewTool::BeamHistory::~BeamHistory()
+{
+}
+
+void PlanetariumViewTool::BeamHistory::updateBeamHistory(double range)
+{
+  if (!beam_.valid())
+    return;
+
+  const simData::BeamUpdate* lastUpdate = beam_->getLastUpdateFromDS();
+  if (!lastUpdate)
+    return;
+
+  simData::BeamUpdate update(*lastUpdate);
+  update.set_range(range);
+
+  simData::BeamPrefs prefs(beam_->getPrefs());
+  prefs.set_blended(true);
+  prefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
+
+  osg::ref_ptr<BeamVolume> volume = new BeamVolume(prefs, update);
+
+  Locator* beamLocator = beam_->getLocator();
+
+  // Get the origin locator, which is the parent
+  Locator* parentLocator = beamLocator->getParentLocator();
+
+  simCore::Vec3 pos, ori;
+  beamLocator->getLocalOffsets(pos, ori);
+
+  Locator* newBeamLocator = nullptr;
+
+  ResolvedPositionLocator* positionLocator = dynamic_cast<ResolvedPositionLocator*>(beamLocator);
+  if (positionLocator)
+    newBeamLocator = new ResolvedPositionLocator(parentLocator, Locator::COMP_ALL);
+  else
+    newBeamLocator = new ResolvedPositionOrientationLocator(parentLocator, Locator::COMP_ALL);
+
+  newBeamLocator->setLocalOffsets(pos, ori, update.time(), false);
+
+  LocatorNode* locatorNode = new LocatorNode(newBeamLocator);
+  locatorNode->addChild(volume.get());
+
+  // max number of history points
+  const unsigned int maxChildren = 20;
+  if (getNumChildren() == maxChildren)
+    removeChild(0u);
+
+  addChild(locatorNode);
+
+  // Update the beam history nodes so they fade out TODO: do this in a shader instead
+  for (unsigned int i = 0; i < getNumChildren(); i++)
+  {
+    float alpha = (1.0 + static_cast<float>(i)) / static_cast<float>(getNumChildren());
+    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(getChild(i)->asGroup()->getChild(0));
+    if (bv)
+    {
+      simData::BeamPrefs newPrefs(prefs);
+      Color color = Color(prefs.commonprefs().color());
+      color.a() = alpha;
+      newPrefs.mutable_commonprefs()->set_color(color.asABGR());
+      bv->performInPlacePrefChanges(&prefs, &newPrefs);
+    }
+  }
+}
+
+//-------------------------------------------------------------------
+
 PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   host_(host),
   range_(1000.0),
@@ -106,9 +179,8 @@ void PlanetariumViewTool::setRange(double range)
       targets_->removeAll();
 
     // clear all beam history
-    for (const auto& hist : beamHistory_)
+    for (const auto& hist : history_)
       root_->removeChild(hist.second.get());
-    beamHistory_.clear();
 
     updateDome_();
 
@@ -163,9 +235,9 @@ void PlanetariumViewTool::setDisplayBeamHistory(bool display)
   displayBeamHistory_ = display;
   if (!displayBeamHistory_)
   {
-    for (const auto& hist : beamHistory_)
+    for (const auto& hist : history_)
       root_->removeChild(hist.second.get());
-    beamHistory_.clear();
+    // Don't clear the history, can be recalled later
   }
 }
 
@@ -249,6 +321,14 @@ void PlanetariumViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNod
   if (family_.invite(entity))
   {
     applyOverrides_(entity, true);
+
+    osg::ref_ptr<simVis::BeamNode> beam = dynamic_cast<simVis::BeamNode*>(entity);
+    if (beam.get())
+    {
+      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam);
+      history_[beam->getId()] = history;
+      root_->addChild(history.get());
+    }
   }
 }
 
@@ -257,6 +337,13 @@ void PlanetariumViewTool::onEntityRemove(const ScenarioManager& scenario, Entity
   if (family_.dismiss(entity))
   {
     applyOverrides_(entity, false);
+    osg::ref_ptr<simVis::BeamNode> beam = dynamic_cast<simVis::BeamNode*>(entity);
+    if (beam.get() && history_.find(beam->getId()) != history_.end())
+    {
+      auto history = history_.find(beam->getId())->second;
+      root_->removeChild(history);
+      history_.erase(beam->getId());
+    }
   }
   else if (dynamic_cast<PlatformNode*>(entity))
   {
@@ -275,8 +362,22 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
     BeamNode* beam = dynamic_cast<BeamNode*>(i->get());
     if (beam)
     {
+
       if (family_.isMember(beam->getId()) && displayBeamHistory_)
-        updateBeamHistory_(beam);
+      {
+        auto historyIter = history_.find(beam->getId());
+        osg::ref_ptr<BeamHistory> history;
+        if (historyIter == history_.end())
+        {
+          history = new BeamHistory(beam);
+          history_[beam->getId()] = history;
+          root_->addChild(history.get());
+        }
+        else
+          history = historyIter->second;
+
+        history->updateBeamHistory(range_);
+      }
       continue;
     }
 
@@ -436,78 +537,6 @@ osg::Node* PlanetariumViewTool::buildVectorGeometry_()
   geom->setColor(simVis::Color::White);
   geom->setDataVariance(osg::Object::DYNAMIC);
   return geom;
-}
-
-void PlanetariumViewTool::updateBeamHistory_(simVis::BeamNode* beam)
-{
-  const simData::BeamUpdate* lastUpdate = beam->getLastUpdateFromDS();
-  if (!lastUpdate)
-    return;
-
-  simData::BeamUpdate update(*lastUpdate);
-  update.set_range(range_);
-
-  simData::BeamPrefs prefs(beam->getPrefs());
-  prefs.set_blended(true);
-  prefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
-
-  osg::ref_ptr<BeamVolume> volume = new BeamVolume(prefs, update);
-
-  Locator* beamLocator = beam->getLocator();
-
-  // Get the origin locator, which is the parent
-  Locator* parentLocator = beamLocator->getParentLocator();
-
-  simCore::Vec3 pos, ori;
-  beamLocator->getLocalOffsets(pos, ori);
-
-  Locator* newBeamLocator = nullptr;
-
-  ResolvedPositionLocator* positionLocator = dynamic_cast<ResolvedPositionLocator*>(beamLocator);
-  if (positionLocator)
-    newBeamLocator = new ResolvedPositionLocator(parentLocator, Locator::COMP_ALL);
-  else
-    newBeamLocator = new ResolvedPositionOrientationLocator(parentLocator, Locator::COMP_ALL);
-
-  newBeamLocator->setLocalOffsets(pos, ori, update.time(), false);
-
-  LocatorNode* locatorNode = new LocatorNode(newBeamLocator);
-  locatorNode->addChild(volume.get());
-
-  osg::observer_ptr<osg::Group> beamHistory;
-  auto historyItr = beamHistory_.find(beam->getId());
-  if (historyItr == beamHistory_.end())
-  {
-    beamHistory = new osg::Group();
-    root_->addChild(beamHistory.get());
-    beamHistory_[beam->getId()] = beamHistory;
-  }
-  else
-    beamHistory = historyItr->second;
-
-  // max number of history points
-  const unsigned int maxChildren = 20;
-  if (beamHistory->getNumChildren() == maxChildren)
-    beamHistory->removeChild(0u);
-
-  beamHistory->addChild(locatorNode);
-
-  float totalAlpha = 1.0f / (float)beamHistory->getNumChildren();
-
-  // Update the beam history nodes so they fade out TODO: do this in a shader instead
-  for (unsigned int i = 0; i < beamHistory->getNumChildren(); i++)
-  {
-    float alpha = (1.0 + static_cast<float>(i)) / static_cast<float>(beamHistory->getNumChildren());
-    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(beamHistory->getChild(i)->asGroup()->getChild(0));
-    if (bv)
-    {
-      simData::BeamPrefs newPrefs(prefs);
-      Color color = Color(prefs.commonprefs().color());
-      color.a() = alpha;
-      newPrefs.mutable_commonprefs()->set_color(color.asABGR());
-      bv->performInPlacePrefChanges(&prefs, &newPrefs);
-    }
-  }
 }
 
 }

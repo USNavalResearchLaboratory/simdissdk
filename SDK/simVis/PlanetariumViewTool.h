@@ -141,6 +141,23 @@ protected:
   virtual ~PlanetariumViewTool() { }
 
 private:
+  /** Group that stores and manages a beam's history points on a planetarium */
+  class BeamHistory : public osg::Group
+  {
+  public:
+    explicit BeamHistory(simVis::BeamNode* beam);
+
+    /** Update the beam history using the specified range */
+    void updateBeamHistory(double range);
+
+  protected:
+    /** Protect osg::Referenced-derived destructor */
+    virtual ~BeamHistory();
+
+  private:
+    osg::observer_ptr<simVis::BeamNode> beam_;
+  };
+
   EntityFamily                   family_;
 
   osg::observer_ptr<PlatformNode> host_;
@@ -169,12 +186,9 @@ private:
   void scaleTargetGeometry_(double range) const;
   osg::Node* buildVectorGeometry_();
 
-  /** Update beam history for the given beam */
-  void updateBeamHistory_(simVis::BeamNode* beam);
-
   osg::ref_ptr<osg::Geometry> dome_;
   osg::ref_ptr<osg::Node> targetGeom_;
-  std::map<simData::ObjectId, osg::observer_ptr<osg::Group> > beamHistory_;
+  std::map<simData::ObjectId, osg::ref_ptr<BeamHistory> > history_;
 };
 
 } // namespace simVis
