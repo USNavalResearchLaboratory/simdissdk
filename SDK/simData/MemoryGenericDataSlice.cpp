@@ -253,6 +253,9 @@ public:
 
     // Finally add to the times_ list
     times_.insert(start, TimeIndex(time, valueIndex));
+
+    // lazy update requires this
+    lastUpdateDirty_ = true;
   }
 
   /// Updates to the given time, putting results in genericData
