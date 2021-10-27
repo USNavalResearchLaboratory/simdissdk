@@ -75,7 +75,7 @@ PlanetariumViewTool::BeamHistory::~BeamHistory()
 {
 }
 
-void PlanetariumViewTool::BeamHistory::updateBeamHistory(double range)
+void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double range)
 {
   if (!beam_.valid())
     return;
@@ -84,53 +84,81 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double range)
   if (!lastUpdate)
     return;
 
-  simData::BeamUpdate update(*lastUpdate);
-  update.set_range(range);
-
   simData::BeamPrefs prefs(beam_->getPrefs());
-  prefs.set_blended(true);
-  prefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
-
-  osg::ref_ptr<BeamVolume> volume = new BeamVolume(prefs, update);
-
-  Locator* beamLocator = beam_->getLocator();
-
-  // Get the origin locator, which is the parent
-  Locator* parentLocator = beamLocator->getParentLocator();
-
-  simCore::Vec3 pos, ori;
-  beamLocator->getLocalOffsets(pos, ori);
-
-  Locator* newBeamLocator = nullptr;
-
-  ResolvedPositionLocator* positionLocator = dynamic_cast<ResolvedPositionLocator*>(beamLocator);
-  if (positionLocator)
-    newBeamLocator = new ResolvedPositionLocator(parentLocator, Locator::COMP_ALL);
-  else
-    newBeamLocator = new ResolvedPositionOrientationLocator(parentLocator, Locator::COMP_ALL);
-
-  newBeamLocator->setLocalOffsets(pos, ori, update.time(), false);
-
-  LocatorNode* locatorNode = new LocatorNode(newBeamLocator);
-  locatorNode->addChild(volume.get());
-
-  // max number of history points
-  const unsigned int maxChildren = 20;
-  if (getNumChildren() == maxChildren)
-    removeChild(0u);
-
-  addChild(locatorNode);
-
-  // Update the beam history nodes so they fade out TODO: do this in a shader instead
-  for (unsigned int i = 0; i < getNumChildren(); i++)
+  // Add a locator node for the most recent update if not already done
+  if (historyNodes_.find(lastUpdate->time()) == historyNodes_.end())
   {
-    float alpha = (1.0 + static_cast<float>(i)) / static_cast<float>(getNumChildren());
-    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(getChild(i)->asGroup()->getChild(0));
+    simData::BeamUpdate update(*lastUpdate);
+    update.set_range(range);
+
+    prefs.set_blended(true);
+    prefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
+
+    osg::ref_ptr<BeamVolume> volume = new BeamVolume(prefs, update);
+
+    Locator* beamLocator = beam_->getLocator();
+
+    // Get the origin locator, which is the parent
+    Locator* parentLocator = beamLocator->getParentLocator();
+
+    simCore::Vec3 pos, ori;
+    beamLocator->getLocalOffsets(pos, ori);
+
+    Locator* newBeamLocator = nullptr;
+
+    ResolvedPositionLocator* positionLocator = dynamic_cast<ResolvedPositionLocator*>(beamLocator);
+    if (positionLocator)
+      newBeamLocator = new ResolvedPositionLocator(parentLocator, Locator::COMP_ALL);
+    else
+      newBeamLocator = new ResolvedPositionOrientationLocator(parentLocator, Locator::COMP_ALL);
+
+    newBeamLocator->setLocalOffsets(pos, ori, update.time(), false);
+
+    LocatorNode* locatorNode = new LocatorNode(newBeamLocator);
+    locatorNode->addChild(volume.get());
+
+    historyNodes_[update.time()] = locatorNode;
+  }
+
+  static const double historyInSeconds = 10.; // TODO: Make user configurable
+  // Update which history nodes are displayed based on the current time
+  removeChildren(0, getNumChildren());
+
+  // If all points wouldn't be displayed due to being out of the time window,
+  // show the newest one with the full color. TODO: need to improve this bit,
+  // as what we want to show will depend on the beam type (and may possibly
+  // be independent of the draw and data draw states
+  if (!historyNodes_.empty() && historyNodes_.rbegin()->first < (time - historyInSeconds))
+  {
+    const auto& iter = historyNodes_.rbegin();
+    addChild(iter->second);
+    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter->second->asGroup()->getChild(0));
     if (bv)
     {
+      // TODO: preserve color at each history point rather than overwriting with current color SIM-13559
       simData::BeamPrefs newPrefs(prefs);
       Color color = Color(prefs.commonprefs().color());
-      color.a() = alpha;
+      newPrefs.mutable_commonprefs()->set_color(color.asABGR());
+      bv->performInPlacePrefChanges(&prefs, &newPrefs);
+    }
+    return;
+  }
+
+  for (const auto& iter : historyNodes_)
+  {
+    if (iter.first > time)
+      continue; // In the future
+    else if (iter.first < (time - historyInSeconds))
+      continue; // Too old
+
+    addChild(iter.second);
+    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->asGroup()->getChild(0));
+    if (bv)
+    {
+      // TODO: preserve color at each history point rather than overwriting with current color SIM-13559
+      simData::BeamPrefs newPrefs(prefs);
+      Color color = Color(prefs.commonprefs().color());
+      color.a() = 1. - ((time - iter.first) / historyInSeconds);
       newPrefs.mutable_commonprefs()->set_color(color.asABGR());
       bv->performInPlacePrefChanges(&prefs, &newPrefs);
     }
@@ -373,10 +401,6 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
           history_[beam->getId()] = history;
           root_->addChild(history.get());
         }
-        else
-          history = historyIter->second;
-
-        history->updateBeamHistory(range_);
       }
       continue;
     }
@@ -390,6 +414,11 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
     else
       targets_->remove(platform);
   }
+
+  for (const auto& iter : history_)
+    iter.second->updateBeamHistory(timeStamp.secondsSinceRefYear(), range_);
+
+  setDirty(); // Force an update each time scenario manager updates
 }
 
 void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,

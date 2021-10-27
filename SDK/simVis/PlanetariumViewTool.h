@@ -147,8 +147,8 @@ private:
   public:
     explicit BeamHistory(simVis::BeamNode* beam);
 
-    /** Update the beam history using the specified range */
-    void updateBeamHistory(double range);
+    /** Update the beam history using the specified time and planetarium range */
+    void updateBeamHistory(double time, double range);
 
   protected:
     /** Protect osg::Referenced-derived destructor */
@@ -156,6 +156,7 @@ private:
 
   private:
     osg::observer_ptr<simVis::BeamNode> beam_;
+    std::map<double, osg::ref_ptr<simVis::LocatorNode> > historyNodes_; /// History locator nodes, keyed by time in seconds since ref year
   };
 
   EntityFamily                   family_;
