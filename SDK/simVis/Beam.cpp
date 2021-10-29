@@ -22,6 +22,7 @@
  */
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
+#include "osgEarth/ObjectIndex"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Math.h"
@@ -249,7 +250,8 @@ BeamNode::BeamNode(const simData::BeamProperties& props, Locator* hostLocator, c
     hasLastUpdate_(false),
     hasLastPrefs_(false),
     host_(host),
-    hostMissileOffset_(0.0)
+    hostMissileOffset_(0.0),
+    objectIndexTag_(0)
 {
   lastProps_ = props;
 
@@ -300,13 +302,19 @@ BeamNode::BeamNode(const simData::BeamProperties& props, Locator* hostLocator, c
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 
+  // Add a tag for picking
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(this, this);
+
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
   // SIM-10724: Labels need to not be flattened to be displayed in overhead mode
   simVis::OverheadMode::enableGeometryFlattening(false, label_.get());
 }
 
-BeamNode::~BeamNode() {}
+BeamNode::~BeamNode()
+{
+  osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
+}
 
 void BeamNode::updateLabel_(const simData::BeamPrefs& prefs)
 {
@@ -900,8 +908,7 @@ double BeamNode::getClosestPoint(const simCore::Vec3& toLla, simCore::Vec3& clos
 
 unsigned int BeamNode::objectIndexTag() const
 {
-  // Not supported for beams
-  return 0;
+  return objectIndexTag_;
 }
 
 }
