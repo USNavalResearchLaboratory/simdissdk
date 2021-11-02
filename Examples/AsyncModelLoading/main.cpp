@@ -45,12 +45,63 @@
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 using namespace osgEarth::Util::Controls;
-
-//----------------------------------------------------------------------------
+#endif
 
 /// Icon to use to trigger box mode
 static const std::string NOT_FOUND_ICON = "does/not/exist.flt";
+
+//----------------------------------------------------------------------------
+
+/** Add timing to the callback that async loading uses. */
+class RoundTripAsyncTimer : public simVis::ReplaceChildReadyCallback
+{
+public:
+
+#ifdef HAVE_IMGUI
+  RoundTripAsyncTimer(std::string& str, osg::Group* parent)
+    : ReplaceChildReadyCallback(parent),
+    str_(str)
+  {
+    str_ = "N/A";
+  }
+#else
+  RoundTripAsyncTimer(LabelControl* label, osg::Group* parent)
+    : ReplaceChildReadyCallback(parent),
+    label_(label)
+  {
+    label_->setText("N/A");
+  }
+#endif
+
+  virtual void loadFinished(const osg::ref_ptr<osg::Node>& model, bool isImage, const std::string& filename)
+  {
+    // Call inherited method
+    ReplaceChildReadyCallback::loadFinished(model, isImage, filename);
+
+    std::stringstream ss;
+    ss << timer_.elapsedTime_m() << " ms";
+#ifdef HAVE_IMGUI
+    str_ = ss.str();
+#else
+    label_->setText(ss.str());
+#endif
+  }
+
+private:
+#ifdef HAVE_IMGUI
+  std::string& str_;
+#else
+  osg::ref_ptr<LabelControl> label_;
+#endif
+  osg::ElapsedTime timer_;
+};
+
+//----------------------------------------------------------------------------
 
 struct App
 {
@@ -63,6 +114,12 @@ struct App
   /// Node for synchronously loading models
   osg::ref_ptr<osg::MatrixTransform> syncNode;
 
+#ifdef HAVE_IMGUI
+  std::string entityTimerStr = "N/A";
+  std::string asyncTimerStr = "N/A";
+  std::string asyncRoundTripStr = "N/A";
+  std::string syncTimerStr = "N/A";
+#else
   /// Various timing labels
   osg::ref_ptr<LabelControl> timingEntity;
   osg::ref_ptr<LabelControl> timingAsync;
@@ -75,39 +132,163 @@ struct App
   std::vector<osg::ref_ptr<LabelControl> > entityLabels;
   std::vector<osg::ref_ptr<LabelControl> > asyncLabels;
   std::vector<osg::ref_ptr<LabelControl> > syncLabels;
-
+#endif
 
   simData::DataStore* dataStore;
   simData::ObjectId platId;
-};
 
-//----------------------------------------------------------------------------
-/** Add timing to the callback that async loading uses. */
-class RoundTripAsyncTimer : public simVis::ReplaceChildReadyCallback
-{
-public:
-  RoundTripAsyncTimer(LabelControl* label, osg::Group* parent)
-    : ReplaceChildReadyCallback(parent),
-    label_(label)
+#ifdef HAVE_IMGUI
+  void setEntityIcon(const std::string& filename)
   {
-    label_->setText("N/A");
+    // Change the icon name in the prefs
+    osg::ElapsedTime timer;
+    simData::DataStore::Transaction txn;
+    auto* prefs = dataStore->mutable_platformPrefs(platId, &txn);
+    prefs->set_icon(filename);
+    txn.complete(&prefs);
+
+    // Report the elapsed time for transaction completion
+    std::stringstream ss;
+    ss << timer.elapsedTime_m() << " ms";
+    entityTimerStr = ss.str();
   }
 
-  virtual void loadFinished(const osg::ref_ptr<osg::Node>& model, bool isImage, const std::string& filename)
+  void setAsyncIcon(const std::string& filename)
   {
-    // Call inherited method
-    ReplaceChildReadyCallback::loadFinished(model, isImage, filename);
+    osg::ElapsedTime timer;
+    simVis::Registry* reg = simVis::Registry::instance();
+    simVis::ModelCache* cache = reg->modelCache();
+    cache->asyncLoad(reg->findModelFile(filename), new RoundTripAsyncTimer(asyncRoundTripStr, asyncNode.get()));
 
+    // Report the elapsed time for loading completion
     std::stringstream ss;
-    ss << timer_.elapsedTime_m() << " ms";
-    label_->setText(ss.str());
+    ss << timer.elapsedTime_m() << " ms";
+    asyncTimerStr = ss.str();
+  }
+
+  void setSyncIcon(const std::string& filename)
+  {
+    osg::ElapsedTime timer;
+
+    simVis::Registry* reg = simVis::Registry::instance();
+    osg::ref_ptr<osg::Node> newModel = reg->getOrCreateIconModel(filename);
+    // If the new model is not valid, then show a box.  Note that the registry does not do
+    // this for us automatically, although it does for the asynchronous load.  This difference
+    // is due to backwards compatibility concerns combined with circumstances in the ProxyNode
+    // implementation that encourage use of a placeholder on failure.
+    if (!newModel.valid())
+    {
+      osg::Geode* geode = new osg::Geode();
+      geode->addDrawable(new osg::ShapeDrawable(new osg::Box()));
+      newModel = geode;
+    }
+
+    syncNode->removeChildren(0, syncNode->getNumChildren());
+    syncNode->addChild(newModel.get());
+
+    // Report the elapsed time for loading completion
+    std::stringstream ss;
+    ss << timer.elapsedTime_m() << " ms";
+    syncTimerStr = ss.str();
+  }
+#endif
+};
+
+#ifdef HAVE_IMGUI
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  explicit ControlPanel(App& app)
+    : GUI::BaseGui("Asynchronous Loading Node Example"),
+    app_(app)
+  {
+  }
+
+  enum CurrentIcon
+  {
+    IMAGE = 0,
+    MISSILE,
+    TANK,
+    NOTFOUND
+  };
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    // This GUI positions bottom left instead of top left, need the size of the window
+    ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
+    ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    ImGui::Text("c: Center Next");
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      ImGui::TableNextColumn(); ImGui::Text("Platform:"); ImGui::TableNextColumn();
+      addButtons_(currentEntity_, "##entity", [=](const std::string& filename) { app_.setEntityIcon(filename); });
+
+      ImGui::TableNextColumn(); ImGui::Text("Asynchronous:"); ImGui::TableNextColumn();
+      addButtons_(currentAsync_, "##async", [=](const std::string& filename) { app_.setAsyncIcon(filename); });
+
+      ImGui::TableNextColumn(); ImGui::Text("Synchronous:"); ImGui::TableNextColumn();
+      addButtons_(currentSync_, "##sync", [=](const std::string& filename) { app_.setSyncIcon(filename); });
+
+      ImGui::TableNextColumn();
+      if (ImGui::Button("Clear Cache"))
+        simVis::Registry::instance()->clearModelCache();
+      ImGui::TableNextColumn(); ImGui::TableNextColumn();
+
+      pushLargeFont_();
+      ImGui::Text("Timing"); ImGui::TableNextColumn(); ImGui::TableNextColumn();
+      popLargeFont_();
+
+      ImGui::Text("Platform:"); ImGui::TableNextColumn(); ImGui::Text(app_.entityTimerStr.c_str()); ImGui::TableNextColumn();
+      ImGui::Text("Asynchronous:"); ImGui::TableNextColumn(); ImGui::Text(app_.asyncTimerStr.c_str()); ImGui::TableNextColumn();
+      ImGui::Text("Async Round-Trip:"); ImGui::TableNextColumn(); ImGui::Text(app_.asyncRoundTripStr.c_str()); ImGui::TableNextColumn();
+      ImGui::Text("Synchronous:"); ImGui::TableNextColumn(); ImGui::Text(app_.syncTimerStr.c_str()); ImGui::TableNextColumn();
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
   }
 
 private:
-  osg::ref_ptr<LabelControl> label_;
-  osg::ElapsedTime timer_;
+  /** Adds a row of buttons for changing the icon on a platform or node */
+  void addButtons_(CurrentIcon& current, const std::string& suffix, std::function<void(const std::string&)> setter)
+  {
+    static const ImVec4 ACTIVE_BUTTON_COLOR(0.f, 1.f, 0.f, 0.6f);
+    static const std::vector<std::string> ICONS = { EXAMPLE_IMAGE_ICON, EXAMPLE_MISSILE_ICON, EXAMPLE_TANK_ICON, NOT_FOUND_ICON };
+    static const std::vector<std::string> BUTTON_NAMES = { "Image", "Missile", "Tank", "Not-Found" };
+
+    for (int i = 0; i < ICONS.size(); ++i)
+    {
+      bool pop = false;
+      if (current == static_cast<CurrentIcon>(i))
+      {
+        ImGui::PushStyleColor(ImGuiCol_Button, ACTIVE_BUTTON_COLOR);
+        pop = true;
+      }
+      std::string str = BUTTON_NAMES[i] + suffix;
+      if (ImGui::Button(str.c_str()))
+      {
+        setter(ICONS[i]);
+        current = static_cast<CurrentIcon>(i);
+      }
+      if (pop)
+        ImGui::PopStyleColor();
+      ImGui::SameLine();
+    }
+  }
+
+  App& app_;
+  CurrentIcon currentEntity_ = MISSILE;
+  CurrentIcon currentAsync_ = MISSILE;
+  CurrentIcon currentSync_ = MISSILE;
 };
 
+#else
 //----------------------------------------------------------------------------
 /** Changes the icon name of a platform entity */
 struct EntitySetter : public ControlEventHandler
@@ -303,6 +484,7 @@ Control* createHelp(App& app)
   app.helpBox = vbox;
   return vbox;
 }
+#endif
 
 //----------------------------------------------------------------------------
 struct MenuHandler : public osgGA::GUIEventHandler
@@ -319,10 +501,11 @@ struct MenuHandler : public osgGA::GUIEventHandler
     {
       switch (ea.getKey())
       {
+#ifndef HAVE_IMGUI
       case '?': // toggle help
         app_.helpBox->setVisible(!app_.helpBox->visible());
         return true;
-
+#endif
       case 'c':
         tetherNext_();
         return true;
@@ -464,8 +647,16 @@ int main(int argc, char **argv)
   // handle key press events
   viewer->addEventHandler(new MenuHandler(app));
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(app));
+#else
   // show the instructions overlay
   app.mainView->addOverlayControl(createHelp(app));
+#endif
 
   // add some stock OSG handlers
   viewer->installDebugHandlers();
