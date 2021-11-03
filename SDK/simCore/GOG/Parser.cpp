@@ -1285,7 +1285,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     {
       validStart = (formatter.fromString(parsed.stringValue(ShapeParameter::TIME_START), startTime, 1970) == 0);
       if (!validStart)
-        printError_(parsed.filename(), parsed.lineNumber(), "Invalid start time: \"" + parsed.stringValue(ShapeParameter::TIME_START) + "\"");
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid start time" + (name.empty() ? "" : " for " + name) + ": \"" + parsed.stringValue(ShapeParameter::TIME_START) + "\"");
     }
 
     bool validEnd = false;
@@ -1294,7 +1294,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     {
       validEnd = (formatter.fromString(parsed.stringValue(ShapeParameter::TIME_END), endTime, 1970) == 0);
       if (!validEnd)
-        printError_(parsed.filename(), parsed.lineNumber(), "Invalid end time: \"" + parsed.stringValue(ShapeParameter::TIME_END) + "\"");
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid end time" + (name.empty() ? "" : " for " + name) + ": \"" + parsed.stringValue(ShapeParameter::TIME_END) + "\"");
     }
 
     if (validStart || validEnd)
@@ -1308,7 +1308,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
           rv->setEndTime(endTime);
         }
         else
-          printError_(parsed.filename(), parsed.lineNumber(), "Invalid start and end times: start time must be before end time");
+          printError_(parsed.filename(), parsed.lineNumber(), "Invalid start and end times" + (name.empty() ? "" : " for " + name) + ": start time must be before end time");
       }
 
       else if (validStart)
