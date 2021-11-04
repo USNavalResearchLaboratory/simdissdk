@@ -101,22 +101,25 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
     // Get the origin locator, which is the parent
     Locator* parentLocator = beamLocator->getParentLocator();
 
-    simCore::Vec3 pos, ori;
-    beamLocator->getLocalOffsets(pos, ori);
+    // inherit only the dynamic position of the host platform
+    Locator* beamHostLocator = new Locator(parentLocator, Locator::COMP_POSITION);
 
-    Locator* newBeamLocator = nullptr;
+    const simData::BeamProperties& props = beam_->getProperties();
+    // for body beams, get host orientation and apply it as a (static) local offset
+    if (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE)
+    {
+      simCore::Vec3 pos, hostOri;
+      parentLocator->getLocatorPositionOrientation(&pos, &hostOri);
+      beamHostLocator->setLocalOffsets(simCore::Vec3(), hostOri, update.time(), false);
+    }
 
-    ResolvedPositionLocator* positionLocator = dynamic_cast<ResolvedPositionLocator*>(beamLocator);
-    if (positionLocator)
-      newBeamLocator = new ResolvedPositionLocator(parentLocator, Locator::COMP_ALL);
-    else
-      newBeamLocator = new ResolvedPositionOrientationLocator(parentLocator, Locator::COMP_ALL);
+    // add beam pos and ori offsets to a new locator
+    simCore::Vec3 beamPos, beamOri;
+    beamLocator->getLocalOffsets(beamPos, beamOri);
+    Locator* beamOrientationLocator = new Locator(beamHostLocator);
+    beamOrientationLocator->setLocalOffsets(beamPos, beamOri);
 
-    newBeamLocator->setLocalOffsets(pos, ori, update.time(), false);
-
-    LocatorNode* locatorNode = new LocatorNode(newBeamLocator);
-    locatorNode->addChild(volume.get());
-
+    LocatorNode* locatorNode = new LocatorNode(beamOrientationLocator, volume.get());
     historyNodes_[update.time()] = locatorNode;
   }
 
