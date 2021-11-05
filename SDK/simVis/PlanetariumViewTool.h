@@ -155,8 +155,15 @@ private:
     virtual ~BeamHistory();
 
   private:
+    /** Represents a history point node and its original color */
+    struct HistoryPoint
+    {
+      osg::ref_ptr<simVis::LocatorNode> node; ///< Node representing the beam history point
+      simVis::Color color; ///< Used to preserve color when history point was created. Alpha is subject to change based on current time
+    };
+
     osg::observer_ptr<simVis::BeamNode> beam_;
-    std::map<double, osg::ref_ptr<simVis::LocatorNode> > historyNodes_; /// History locator nodes, keyed by time in seconds since ref year
+    std::map<double, std::unique_ptr<HistoryPoint> > historyPoints_; /// History points, keyed by time in seconds since ref year
   };
 
   EntityFamily                   family_;

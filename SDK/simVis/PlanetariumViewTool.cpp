@@ -88,7 +88,7 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
   // host orientation change the beam position.
   const bool isBodyBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE);
   // body beams could be optimized to only add new history node based on some tolerance around host ori.
-  const bool addNewHistoryNode = isBodyBeam || (historyNodes_.find(lastUpdate->time()) == historyNodes_.end());
+  const bool addNewHistoryNode = isBodyBeam || (historyPoints_.find(lastUpdate->time()) == historyPoints_.end());
 
   simData::BeamPrefs prefs(beam_->getPrefs());
   // Add a locator node for the most recent update if not already done
@@ -126,48 +126,35 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
     beamOrientationLocator->setLocalOffsets(beamPos, beamOri);
 
     LocatorNode* locatorNode = new LocatorNode(beamOrientationLocator, volume.get());
-    historyNodes_[(isBodyBeam ? time : update.time())] = locatorNode;
+
+    std::unique_ptr<HistoryPoint> newPoint(new HistoryPoint);
+    newPoint->node = locatorNode;
+    newPoint->color = Color(prefs.commonprefs().color(), osgEarth::Color::RGBA);
+
+    historyPoints_[(isBodyBeam ? time : update.time())] = std::move(newPoint);
   }
 
   static const double historyInSeconds = 10.; // TODO: Make user configurable
   // Update which history nodes are displayed based on the current time
   removeChildren(0, getNumChildren());
 
-  // If all points wouldn't be displayed due to being out of the time window,
-  // show the newest one with the full color. TODO: need to improve this bit,
-  // as what we want to show will depend on the beam type (and may possibly
-  // be independent of the draw and data draw states
-  if (!historyNodes_.empty() && historyNodes_.rbegin()->first < (time - historyInSeconds))
-  {
-    const auto& iter = historyNodes_.rbegin();
-    addChild(iter->second);
-    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter->second->asGroup()->getChild(0));
-    if (bv)
-    {
-      // TODO: preserve color at each history point rather than overwriting with current color SIM-13559
-      simData::BeamPrefs newPrefs(prefs);
-      Color color = Color(prefs.commonprefs().color());
-      newPrefs.mutable_commonprefs()->set_color(color.asABGR());
-      bv->performInPlacePrefChanges(&prefs, &newPrefs);
-    }
-    return;
-  }
-
-  for (const auto& iter : historyNodes_)
+  float origAlpha = Color(prefs.commonprefs().color()).a();
+  for (const auto& iter : historyPoints_)
   {
     if (iter.first > time)
       continue; // In the future
     else if (iter.first < (time - historyInSeconds))
       continue; // Too old
 
-    addChild(iter.second);
-    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->asGroup()->getChild(0));
+    addChild(iter.second->node);
+    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->node->asGroup()->getChild(0));
     if (bv)
     {
-      // TODO: preserve color at each history point rather than overwriting with current color SIM-13559
+      // Use color from history point to ensure color history is preserved
       simData::BeamPrefs newPrefs(prefs);
-      Color color = Color(prefs.commonprefs().color());
-      color.a() = 1. - ((time - iter.first) / historyInSeconds);
+      Color color = iter.second->color;
+      // Fade the alpha based on the point's age and based on the current color's alpha
+      color.a() = (1. - ((time - iter.first) / historyInSeconds)) * origAlpha;
       newPrefs.mutable_commonprefs()->set_color(color.asABGR());
       bv->performInPlacePrefChanges(&prefs, &newPrefs);
     }
