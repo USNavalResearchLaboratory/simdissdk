@@ -28,6 +28,7 @@
 #include "simVis/Types.h"
 
 namespace simVis {
+  class LaserNode;
   class LobGroupNode;
   class CustomRenderingNode;
 }
@@ -102,6 +103,9 @@ private:
   int calculateLobSquaredRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LobGroupNode& lobNode, double& rangeSquared) const;
   /** Special case calculation for CustomRenderings, called by calculateSquaredRange_() automatically, returning 0 on success */
   int calculateCustomRenderRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::CustomRenderingNode& customNode, double& rangeSquared) const;
+  /** Special case calculation for Lasers, called by calculateSquaredRange_() automatically, returning 0 on success */
+  int calculateLaserRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LaserNode& laserNode, double& rangeSquared) const;
+
   /** Convenience method to find the squared range from the cursor to the closest point within ecefVec, returning 0 on success */
   int calculateScreenRangePoints_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const;
   /** Convenience method to find the squared range from the cursor to the line segments formed by treating ecefVec as successive end points, returning 0 on success */

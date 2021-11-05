@@ -22,6 +22,7 @@
  */
 #include "simCore/Calc/Math.h"
 #include "simVis/CustomRendering.h"
+#include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
@@ -225,6 +226,11 @@ int DynamicSelectionPicker::calculateSquaredRange_(simUtil::ScreenCoordinateCalc
   if (customNode)
     return calculateCustomRenderRange_(calc, *customNode, rangeSquared);
 
+  // Fall back to the Laser case if it's requesting a Laser, since it picks a line segment
+  const simVis::LaserNode* laserNode = dynamic_cast<const simVis::LaserNode*>(&entityNode);
+  if (laserNode)
+    return calculateLaserRange_(calc, *laserNode, rangeSquared);
+
   const simUtil::ScreenCoordinate& pos = calc.calculate(entityNode);
   // Ignore objects that are off screen or behind the camera
   if (pos.isBehindCamera() || pos.isOffScreen() || pos.isOverHorizon())
@@ -254,6 +260,16 @@ int DynamicSelectionPicker::calculateCustomRenderRange_(simUtil::ScreenCoordinat
     return calculateScreenRangeSegments_(calc, ecefVec, rangeSquared);
   // otherwise just check distance from the picking points
   return calculateScreenRangePoints_(calc, ecefVec, rangeSquared);
+}
+
+int DynamicSelectionPicker::calculateLaserRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LaserNode& laserNode, double& rangeSquared) const
+{
+  // Pull out the vector of all endpoints on the LOB that are visible
+  std::vector<osg::Vec3d> ecefVec;
+  laserNode.getVisibleEndPoints(ecefVec);
+
+  // Check the distance from the whole line segment, not just the end points
+  return calculateScreenRangeSegments_(calc, ecefVec, rangeSquared);
 }
 
 int DynamicSelectionPicker::calculateScreenRangePoints_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const
