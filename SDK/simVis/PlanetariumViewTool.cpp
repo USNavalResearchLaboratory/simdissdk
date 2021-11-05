@@ -83,10 +83,16 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
   const simData::BeamUpdate* lastUpdate = beam_->getLastUpdateFromDS();
   if (!lastUpdate)
     return;
+  const simData::BeamProperties& props = beam_->getProperties();
+  // body beams require new history nodes even with no new beam update, since changes in
+  // host orientation change the beam position.
+  const bool isBodyBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE);
+  // body beams could be optimized to only add new history node based on some tolerance around host ori.
+  const bool addNewHistoryNode = isBodyBeam || (historyNodes_.find(lastUpdate->time()) == historyNodes_.end());
 
   simData::BeamPrefs prefs(beam_->getPrefs());
   // Add a locator node for the most recent update if not already done
-  if (historyNodes_.find(lastUpdate->time()) == historyNodes_.end())
+  if (addNewHistoryNode)
   {
     simData::BeamUpdate update(*lastUpdate);
     update.set_range(range);
@@ -104,23 +110,23 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
     // inherit only the dynamic position of the host platform
     Locator* beamHostLocator = new Locator(parentLocator, Locator::COMP_POSITION);
 
-    const simData::BeamProperties& props = beam_->getProperties();
     // for body beams, get host orientation and apply it as a (static) local offset
-    if (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE)
+    if (isBodyBeam)
     {
-      simCore::Vec3 pos, hostOri;
-      parentLocator->getLocatorPositionOrientation(&pos, &hostOri);
-      beamHostLocator->setLocalOffsets(simCore::Vec3(), hostOri, update.time(), false);
+      simCore::Coordinate out_coord;
+      parentLocator->getCoordinate(&out_coord, simCore::COORD_SYS_LLA);
+      beamHostLocator->setLocalOffsets(simCore::Vec3(), out_coord.orientation(), update.time(), false);
     }
 
     // add beam pos and ori offsets to a new locator
-    simCore::Vec3 beamPos, beamOri;
+    simCore::Vec3 beamPos;
+    simCore::Vec3 beamOri;
     beamLocator->getLocalOffsets(beamPos, beamOri);
     Locator* beamOrientationLocator = new Locator(beamHostLocator);
     beamOrientationLocator->setLocalOffsets(beamPos, beamOri);
 
     LocatorNode* locatorNode = new LocatorNode(beamOrientationLocator, volume.get());
-    historyNodes_[update.time()] = locatorNode;
+    historyNodes_[(isBodyBeam ? time : update.time())] = locatorNode;
   }
 
   static const double historyInSeconds = 10.; // TODO: Make user configurable

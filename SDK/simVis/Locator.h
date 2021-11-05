@@ -157,7 +157,7 @@ public:
    * Sets the local offset position and orientation of this locator, relative to a
    * world position in a parent locator.
    * @param[in ] pos Local offset coords, meters.
-   * @param[in ] ori Local offset angles, radians.
+   * @param[in ] ori Local Euler offset angles, radians.
    * @param[in ] timestamp Updates the locator with this timestamp
    * @param[in ] notify Whether to immediately notify listeners
    */
@@ -175,8 +175,8 @@ public:
 
   /**
    * Gets the local offset coordinate (offset from parent locator)
-   * @param[out] out_pos Will contain the local offset position in XYZ after this call
-   * @param[out] out_ori will contain the local YPR orientation after this call
+   * @param[out] out_pos Will contain the local offset position in XYZ after this call, in meters
+   * @param[out] out_ori will contain the local Euler YPR orientation after this call, in radians
    * @return True upon success.
    */
   bool getLocalOffsets(simCore::Vec3& out_pos, simCore::Vec3& out_ori) const;
