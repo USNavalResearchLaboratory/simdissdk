@@ -25,6 +25,7 @@
 
 #include "simCore/Common/Export.h"
 #include "simVis/Picker.h"
+#include "simVis/Types.h"
 
 namespace simVis {
   class LobGroupNode;
@@ -82,6 +83,17 @@ protected:
 private:
   /** Performs the actual intersection pick. */
   void pickThisFrame_();
+
+  enum class PickBehavior {
+    /// Retrieve all entities at the "closest" range
+    Closest,
+    /// Retrieve all entities within the range
+    AllInRange
+  };
+
+  /** Picks into a vector. */
+  void pickToVector_(simVis::EntityVector& nodes, PickBehavior behavior, double& mouseRangeSquaredPx) const;
+
   /** Returns true if the entity type is pickable. */
   bool isPickable_(const simVis::EntityNode* entityNode) const;
   /** Calculates the squared range from the mouse for the given entity, returning 0 on success */
@@ -114,7 +126,7 @@ private:
   /** Pointer to the scenario manager */
   osg::observer_ptr<simVis::ScenarioManager> scenario_;
 
-  /** Maximum valid range */
+  /** Maximum valid range in pixels. */
   double maximumValidRange_;
   /** Picking mask */
   osg::Node::NodeMask pickMask_;

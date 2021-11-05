@@ -127,9 +127,39 @@ void DynamicSelectionPicker::setPlatformAdvantagePct(double platformAdvantage)
 
 void DynamicSelectionPicker::pickThisFrame_()
 {
+  simVis::EntityVector nodes;
+  double mouseRangeSquaredPx = 0.;
+  pickToVector_(nodes, PickBehavior::Closest, mouseRangeSquaredPx);
+
+  simVis::EntityNode* picked = nullptr;
+  if (nodes.size() == 1)
+    picked = nodes.front().get();
+  else if (!nodes.empty())
+  {
+    // Need to deconflict to pick best selection. We know:
+    // * 0th item is going to be earliest created entity.
+    // * Platforms must be created before attachments.
+    // * Attachments to platforms (beams, lasers, LOBs, etc.) are most likely to be the colocated entity.
+    // * It's also possible, though more rare, to have custom rendering as 0th item
+    // Using this, we apply a preference to 0th item (most likely a platform) since they're most likely
+    // to be the desired entity. However, fall back to later items (likely attachments) the farther the
+    // mouse is from the center.
+    const double mouseRangePx = sqrt(mouseRangeSquaredPx);
+    const double platformAdvantagePx = platformAdvantagePct_ * maximumValidRange_;
+    picked = (mouseRangePx < platformAdvantagePx) ? nodes[0].get() : nodes[1].get();
+  }
+
+  // Set the picked entity
+  const unsigned int objectIndexTag = picked ? picked->objectIndexTag() : 0;
+  setPicked_(objectIndexTag, picked);
+}
+
+void DynamicSelectionPicker::pickToVector_(simVis::EntityVector& nodes, PickBehavior behavior, double& mouseRangeSquaredPx) const
+{
   // Create a calculator for screen coordinates
   simUtil::ScreenCoordinateCalculator calc;
   calc.updateMatrix(*lastMouseView_);
+  nodes.clear();
 
   // Request all entities from the scenario
   simVis::EntityVector allEntities;
@@ -137,40 +167,37 @@ void DynamicSelectionPicker::pickThisFrame_()
 
   // We square the range to avoid sqrt() in a tight loop
   const double maximumValidRangeSquared = osg::square(maximumValidRange_);
-  double closestRangePx = maximumValidRangeSquared;
-  const double platformAdvantageSquared = osg::square(maximumValidRange_ * platformAdvantagePct_);
-  simVis::EntityNode* closest = nullptr;
+  mouseRangeSquaredPx = maximumValidRangeSquared;
 
   // Loop through all entities
-  for (auto i = allEntities.begin(); i != allEntities.end(); ++i)
+  for (const auto entityRefPtr : allEntities)
   {
-    if (!isPickable_(i->get()))
+    auto* entityPtr = entityRefPtr.get();
+    if (!isPickable_(entityPtr))
       continue;
 
     // Ask the calculator for the range from the mouse position
     double rangeSquared;
-    if (calculateSquaredRange_(calc, *i->get(), rangeSquared) != 0)
+    if (calculateSquaredRange_(calc, *entityRefPtr, rangeSquared) != 0)
       continue;
 
-    // Platforms get a small advantage in picking, so that it's easier to pick platforms than other entities
-    const bool isPlatform = (dynamic_cast<simVis::PlatformNode*>(i->get()) != nullptr);
-    // Do not apply the advantage if platform is not already inside the picking area
-    if (isPlatform && rangeSquared < maximumValidRangeSquared)
-      rangeSquared -= platformAdvantageSquared;
-
-    // Choose the closest object
-    if (rangeSquared < closestRangePx)
+    if (behavior == PickBehavior::AllInRange)
     {
-      closestRangePx = rangeSquared;
-      closest = i->get();
+      if (rangeSquared <= mouseRangeSquaredPx)
+        nodes.emplace_back(entityPtr);
+    }
+    else
+    {
+      // PickBehavior::Closest: Choose the closest object
+      if (rangeSquared < mouseRangeSquaredPx)
+      {
+        mouseRangeSquaredPx = rangeSquared;
+        nodes = { entityPtr };
+      }
+      else if (rangeSquared == mouseRangeSquaredPx)
+        nodes.emplace_back(entityPtr);
     }
   }
-
-  // Pick the platform
-  if (closest)
-    setPicked_(closest->objectIndexTag(), closest);
-  else
-    setPicked_(0, closest);
 }
 
 bool DynamicSelectionPicker::isPickable_(const simVis::EntityNode* entityNode) const
