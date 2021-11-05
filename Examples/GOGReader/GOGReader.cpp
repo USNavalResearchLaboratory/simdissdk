@@ -57,11 +57,16 @@
 #include "simUtil/MouseDispatcher.h"
 #include "simUtil/MousePositionManipulator.h"
 
-namespace ui = osgEarth::Util::Controls;
 
 using namespace osgEarth;
 using namespace osgEarth::Util;
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 using namespace osgEarth::Util::Controls;
+namespace ui = osgEarth::Util::Controls;
+#endif
 
 typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 static std::vector<GogNodeInterfacePtr> s_overlayNodes;
@@ -111,12 +116,30 @@ private:
 class MouseAndMenuHandler : public osgGA::GUIEventHandler
 {
 public:
-  MouseAndMenuHandler(simVis::Viewer* viewer,
-    ui::LabelControl* status,
-    simData::DataStore& dataStore,
-    bool showElevation,
-    simVis::PlatformNode* platform
-    )
+#ifdef HAVE_IMGUI
+  MouseAndMenuHandler(simVis::Viewer* viewer, simData::DataStore& dataStore,
+    bool showElevation, simVis::PlatformNode* platform)
+    : viewer_(viewer),
+    dataStore_(dataStore),
+    showElevation_(showElevation),
+    removeAllRequested_(false),
+    insertViewPortMode_(false),
+    dynamicScaleOn_(true),
+    labelsOn_(true),
+    border_(0),
+    platform_(platform),
+    altMode_(simVis::GOG::ALTITUDE_NONE)
+  {
+    centeredGogIndex_.init(0);
+    mouseDispatcher_.reset(new simUtil::MouseDispatcher);
+    mouseDispatcher_->setViewManager(nullptr);
+    latLonElevListener_.reset(new LatLonElevListener());
+    setUpMouseManip_(viewer_.get());
+    updateStatusAndLabel_();
+  }
+#else
+  MouseAndMenuHandler(simVis::Viewer* viewer, ui::LabelControl* status, simData::DataStore& dataStore,
+    bool showElevation, simVis::PlatformNode* platform)
     : viewer_(viewer),
     statusLabel_(status),
     dataStore_(dataStore),
@@ -136,6 +159,7 @@ public:
     setUpMouseManip_(viewer_.get());
     updateStatusAndLabel_();
   }
+#endif
 
   virtual ~MouseAndMenuHandler()
   {
@@ -168,6 +192,11 @@ public:
       updateStatusAndLabel_();
 
     return handled;
+  }
+
+  std::string statusText() const
+  {
+    return statusText_;
   }
 
 private:
@@ -275,51 +304,53 @@ private:
 
   void updateStatusAndLabel_()
   {
-    std::string text;
+    statusText_ = std::string();
 
     // get centered GOG name
-    text += "Centered: ";
+    statusText_ += "Centered: ";
     if (centeredGogIndex_.isSet() && centeredGogIndex_ < s_overlayNodes.size())
-      text += s_overlayNodes[centeredGogIndex_.get()]->osgNode()->getName() + "\n";
+      statusText_ += s_overlayNodes[centeredGogIndex_.get()]->osgNode()->getName() + "\n";
     else
-      text += "None\n";
+      statusText_ += "None\n";
 
-    text += "Altitude Mode: ";
+    statusText_ += "Altitude Mode: ";
     switch (altMode_)
     {
     case simVis::GOG::ALTITUDE_NONE:
-      text += "NONE\n";
+      statusText_ += "NONE\n";
       break;
     case simVis::GOG::ALTITUDE_GROUND_RELATIVE:
-      text += "GROUND RELATIVE\n";
+      statusText_ += "GROUND RELATIVE\n";
       break;
     case simVis::GOG::ALTITUDE_GROUND_CLAMPED:
-      text += "GROUND CLAMPED\n";
+      statusText_ += "GROUND CLAMPED\n";
       break;
     case simVis::GOG::ALTITUDE_EXTRUDE:
-      text += "EXTRUDE\n";
+      statusText_ += "EXTRUDE\n";
       break;
     }
 
     // indicate dynamic scale state
-    text += "\nDynamic Scale: ";
-    text += dynamicScaleOn_ ? "ON" : "OFF";
-    text += "\n";
+    statusText_ += "\nDynamic Scale: ";
+    statusText_ += dynamicScaleOn_ ? "ON" : "OFF";
+    statusText_ += "\n";
 
     const simVis::View* focusedView = viewer_->getMainView()->getFocusManager()->getFocusedView();
 
     // get camera distance
     std::ostringstream os;
     os << std::fixed << std::setprecision(2) << "Camera Distance: " << focusedView->getViewpoint().range().value().getValue() << " m";
-    text += os.str() + " \n";
+    statusText_ += os.str() + " \n";
 
     std::ostringstream mouseOs;
     mouseOs << "Mouse lat:" << latLonElevListener_->lat() << ", lon:" << latLonElevListener_->lon();
     if (showElevation_)
       mouseOs << ", elev:" << latLonElevListener_->elev();
-    text += mouseOs.str() + "\n";
+    statusText_ += mouseOs.str() + "\n";
 
-    statusLabel_->setText(text);
+#ifndef HAVE_IMGUI
+    statusLabel_->setText(statusText_);
+#endif
   }
 
   void setUpMouseManip_(simVis::Viewer* viewer)
@@ -334,7 +365,9 @@ private:
   }
 
   osg::ref_ptr<simVis::Viewer> viewer_;
+#ifndef HAVE_IMGUI
   osg::observer_ptr<ui::LabelControl> statusLabel_;
+#endif
   std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher_;
   std::shared_ptr<LatLonElevListener> latLonElevListener_;
   std::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
@@ -349,6 +382,7 @@ private:
   osgEarth::optional<size_t> centeredGogIndex_;
   osg::ref_ptr<simVis::PlatformNode> platform_;
   simVis::GOG::AltitudeMode altMode_;
+  std::string statusText_;
 };
 
 
@@ -414,6 +448,43 @@ simData::ObjectId addPlatform(simData::DataStore &dataStore, const std::string& 
   return platformId;
 }
 
+#ifdef HAVE_IMGUI
+struct ControlPanel : public GUI::BaseGui
+{
+  explicit ControlPanel(MouseAndMenuHandler& handler)
+    : GUI::BaseGui("GOG Example"),
+    handler_(handler)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    ImGui::Text(s_help.c_str());
+    ImGui::Text(handler_.statusText().c_str());
+
+    float opacity = opacity_;
+    ImGui::Text("Opacity: "); ImGui::SameLine();
+    ImGui::SliderFloat("##Opacity", &opacity_, 0.f, 100.f, "%.f", ImGuiSliderFlags_AlwaysClamp);
+    if (opacity != opacity_)
+    {
+      float zeroToOne = opacity * 0.01f;
+      // Set the override color on all nodes based on the provided opacity
+      for (const auto& overlay : s_overlayNodes)
+        overlay->setOpacity(zeroToOne);
+    }
+
+    ImGui::End();
+  }
+
+private:
+  MouseAndMenuHandler& handler_;
+  float opacity_ = 100.f;
+};
+#else
 /** Process changes on the opacity slider. */
 class OpacitySliderCallback : public ui::ControlEventHandler
 {
@@ -438,6 +509,7 @@ public:
 private:
   osg::observer_ptr<ui::LabelControl> label_;
 };
+#endif
 
 int main(int argc, char** argv)
 {
@@ -617,6 +689,7 @@ int main(int argc, char** argv)
 
   simVis::View* mainView = viewer->getMainView();
 
+#ifndef HAVE_IMGUI
   // add help and status labels
   ui::VBox* vbox = new ui::VBox();
   vbox->setPadding(10);
@@ -640,15 +713,26 @@ int main(int argc, char** argv)
   vbox->addControl(hbox);
 
   mainView->addOverlayControl(vbox);
+#endif
 
   // Install a handler to respond to the demo keys in this sample.
   osg::ref_ptr<MouseAndMenuHandler> mouseHandler =
     new MouseAndMenuHandler(
       viewer.get(),
+#ifndef HAVE_IMGUI
       statusLabel,
+#endif
       dataStore,
       showElevation,
       attach ? platform.get() : nullptr);
+
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  mainView->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(*mouseHandler.get()));
+#endif
 
   mainView->getCamera()->addEventCallback(mouseHandler);
   viewer->run();
