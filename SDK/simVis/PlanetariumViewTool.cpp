@@ -66,9 +66,10 @@ namespace
 namespace simVis
 {
 
-PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam)
+PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, double historyLength)
   : osg::Group(),
-  beam_(beam)
+  beam_(beam),
+  historyLength_(historyLength)
 {}
 
 PlanetariumViewTool::BeamHistory::~BeamHistory()
@@ -134,7 +135,6 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
     historyPoints_[(isBodyBeam ? time : update.time())] = std::move(newPoint);
   }
 
-  static const double historyInSeconds = 10.; // TODO: Make user configurable
   // Update which history nodes are displayed based on the current time
   removeChildren(0, getNumChildren());
 
@@ -143,7 +143,7 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
   {
     if (iter.first > time)
       continue; // In the future
-    else if (iter.first < (time - historyInSeconds))
+    else if (iter.first < (time - historyLength_))
       continue; // Too old
 
     addChild(iter.second->node);
@@ -154,11 +154,16 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
       simData::BeamPrefs newPrefs(prefs);
       Color color = iter.second->color;
       // Fade the alpha based on the point's age and based on the current color's alpha
-      color.a() = (1. - ((time - iter.first) / historyInSeconds)) * origAlpha;
+      color.a() = (1. - ((time - iter.first) / historyLength_)) * origAlpha;
       newPrefs.mutable_commonprefs()->set_color(color.asABGR());
       bv->performInPlacePrefChanges(&prefs, &newPrefs);
     }
   }
+}
+
+void PlanetariumViewTool::BeamHistory::setHistoryLength(double historyLength)
+{
+  historyLength_ = historyLength;
 }
 
 //-------------------------------------------------------------------
@@ -169,7 +174,8 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   domeColor_(0.8f, 1.0f, 0.8f, 0.5f), // RGBA
   displayTargetVectors_(true),
   displayBeamHistory_(false),
-  displayGates_(false)
+  displayGates_(false),
+  historyLength_(10.)
 {
   family_.reset();
 
@@ -270,6 +276,18 @@ bool PlanetariumViewTool::getDisplayBeamHistory() const
   return displayBeamHistory_;
 }
 
+void PlanetariumViewTool::setBeamHistoryLength(double history)
+{
+  historyLength_ = history;
+  for (const auto& hist : history_)
+    hist.second->setHistoryLength(historyLength_);
+}
+
+double PlanetariumViewTool::getBeamHistoryLength() const
+{
+  return historyLength_;
+}
+
 void PlanetariumViewTool::setDisplayGates(bool display)
 {
   displayGates_ = display;
@@ -349,7 +367,7 @@ void PlanetariumViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNod
     osg::ref_ptr<simVis::BeamNode> beam = dynamic_cast<simVis::BeamNode*>(entity);
     if (beam.get())
     {
-      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam);
+      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, historyLength_);
       history_[beam->getId()] = history;
       root_->addChild(history.get());
     }
@@ -393,7 +411,7 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
         osg::ref_ptr<BeamHistory> history;
         if (historyIter == history_.end())
         {
-          history = new BeamHistory(beam);
+          history = new BeamHistory(beam, historyLength_);
           history_[beam->getId()] = history;
           root_->addChild(history.get());
         }

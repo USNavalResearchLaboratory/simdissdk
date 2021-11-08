@@ -104,6 +104,11 @@ public:
   /** Get whether beam history is displayed on the planetarium */
   bool getDisplayBeamHistory() const;
 
+  /** Set beam history length in seconds */
+  void setBeamHistoryLength(double history);
+  /** Get beam history length in seconds */
+  double getBeamHistoryLength() const;
+
   /** Set whether to display gates on the planetarium */
   void setDisplayGates(bool display);
   /** Get whether gates are displayed */
@@ -145,10 +150,12 @@ private:
   class BeamHistory : public osg::Group
   {
   public:
-    explicit BeamHistory(simVis::BeamNode* beam);
+    BeamHistory(simVis::BeamNode* beam, double historyLength);
 
     /** Update the beam history using the specified time and planetarium range */
     void updateBeamHistory(double time, double range);
+    /** Set history length in seconds */
+    void setHistoryLength(double historyLength);
 
   protected:
     /** Protect osg::Referenced-derived destructor */
@@ -164,6 +171,8 @@ private:
 
     osg::observer_ptr<simVis::BeamNode> beam_;
     std::map<double, std::unique_ptr<HistoryPoint> > historyPoints_; /// History points, keyed by time in seconds since ref year
+    /** History length to show in seconds */
+    double historyLength_;
   };
 
   EntityFamily                   family_;
@@ -180,6 +189,7 @@ private:
   bool                            displayTargetVectors_;
   bool                            displayBeamHistory_;
   bool                            displayGates_;
+  double                          historyLength_; // seconds
 
   osg::observer_ptr<const ScenarioManager> scenario_;
 
