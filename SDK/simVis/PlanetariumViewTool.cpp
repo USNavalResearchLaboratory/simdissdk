@@ -87,14 +87,14 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
   const simData::BeamProperties& props = beam_->getProperties();
   // body beams require new history nodes even with no new beam update, since changes in
   // host orientation change the beam position.
-  const bool isBodyBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE);
   // body beams could be optimized to only add new history node based on some tolerance around host ori.
-  const bool addNewHistoryNode = isBodyBeam || (historyPoints_.find(lastUpdate->time()) == historyPoints_.end());
-
+  const bool isBodyBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE);
+  const bool hasNewUpdate = (historyPoints_.find(lastUpdate->time()) == historyPoints_.end());
   simData::BeamPrefs prefs(beam_->getPrefs());
   // Add a locator node for the most recent update if not already done
-  if (addNewHistoryNode)
+  if (isBodyBeam || hasNewUpdate)
   {
+    const double updateTime = (hasNewUpdate ? lastUpdate->time() : time);
     simData::BeamUpdate update(*lastUpdate);
     update.set_range(range);
 
@@ -116,7 +116,7 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
     {
       simCore::Coordinate out_coord;
       parentLocator->getCoordinate(&out_coord, simCore::COORD_SYS_LLA);
-      beamHostLocator->setLocalOffsets(simCore::Vec3(), out_coord.orientation(), update.time(), false);
+      beamHostLocator->setLocalOffsets(simCore::Vec3(), out_coord.orientation(), updateTime, false);
     }
 
     // add beam pos and ori offsets to a new locator
@@ -132,7 +132,7 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
     newPoint->node = locatorNode;
     newPoint->color = Color(prefs.commonprefs().color(), osgEarth::Color::RGBA);
 
-    historyPoints_[(isBodyBeam ? time : update.time())] = std::move(newPoint);
+    historyPoints_[updateTime] = std::move(newPoint);
   }
 
   // Update which history nodes are displayed based on the current time
@@ -337,11 +337,12 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
   // initial pull of active target platforms
   EntityVector entities;
   scenario.getAllEntities(entities);
-  onUpdate(scenario, simCore::MIN_TIME_STAMP, entities);
 
   // collect the entity list from the scenario
   family_.reset();
   family_.add(scenario, host_->getId());
+
+  onUpdate(scenario, simCore::MIN_TIME_STAMP, entities);
 
   // install all overrides
   applyOverrides_(true);
@@ -414,14 +415,17 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
     BeamNode* beam = dynamic_cast<BeamNode*>(i->get());
     if (beam)
     {
+      if (!family_.isMember(beam->getId()))
+        continue;
 
-      if (family_.isMember(beam->getId()) && displayBeamHistory_)
+      // revisit current beams: enable ones that now qualify, disable ones that don't have range, etc.
+      applyOverrides_(beam, true);
+
+      if (displayBeamHistory_)
       {
-        auto historyIter = history_.find(beam->getId());
-        osg::ref_ptr<BeamHistory> history;
-        if (historyIter == history_.end())
+        if (history_.find(beam->getId()) == history_.end())
         {
-          history = new BeamHistory(beam, historyLength_);
+          osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, historyLength_);
           history_[beam->getId()] = history;
           root_->addChild(history.get());
         }
@@ -442,7 +446,8 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
   for (const auto& iter : history_)
     iter.second->updateBeamHistory(lastUpdateTime_, range_);
 
-  setDirty(); // Force an update each time scenario manager updates
+  // Force a call to this method next time scenario manager updates, even if there are no EntityVector updates
+  setDirty();
 }
 
 void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
@@ -500,12 +505,10 @@ void PlanetariumViewTool::updateDome_()
 
 void PlanetariumViewTool::applyOverrides_(bool enable)
 {
-  for (EntityFamily::EntityObserverSet::iterator i = family_.members().begin();
-      i != family_.members().end();
-      ++i)
+  for (auto entityObsPtr : family_.members())
   {
-    if (i->valid())
-      applyOverrides_(i->get(), enable);
+    if (entityObsPtr.valid())
+      applyOverrides_(entityObsPtr.get(), enable);
   }
 }
 

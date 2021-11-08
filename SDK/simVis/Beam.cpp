@@ -862,7 +862,11 @@ void BeamNode::setUpdateOverride(const std::string& id, const simData::BeamUpdat
   updateOverrides_[id] = update;
   // only apply override when we have a valid update from datastore
   if (hasLastUpdate_)
-    applyUpdateOverrides_(true);
+  {
+    // force = false ->allow beam logic to determine whether an in-place update can be used,
+    // instead of forcing a complete rebuild of the beam.
+    applyUpdateOverrides_(false);
+  }
 }
 
 void BeamNode::removeUpdateOverride(const std::string& id)
