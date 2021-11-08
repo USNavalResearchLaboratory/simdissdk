@@ -77,6 +77,24 @@ public:
    */
   void setPlatformAdvantagePct(double platformAdvantage);
 
+  enum class PickBehavior {
+    /// Retrieve all entities at the "closest" range
+    Closest,
+    /// Retrieve all entities within the range
+    AllInRange
+  };
+
+  /**
+   * Pick using an arbitrary mouse coordinate. The inset under the mouse is used. While this class is
+   * configured for tying into a simVis::Picker interface that automatically updates each frame, this
+   * function provides a mechanism to pick entities on demand. As such, this function will not change
+   * the globally picked variable using simVis::Picker::setPicked().
+   * @param nodes Output of nodes picked.
+   * @param mouseXy Mouse coordinates in OSG coordinate system (e.g. GUIActionAdapter::getX() and getY())
+   * @param behavior Defines behavior for picking nodes.
+   */
+  void pickToVector(simVis::EntityVector& nodes, const osg::Vec2d& mouseXy, PickBehavior behavior);
+
 protected:
   /** Derived from osg::Referenced, protect destructor */
   virtual ~DynamicSelectionPicker();
@@ -84,13 +102,6 @@ protected:
 private:
   /** Performs the actual intersection pick. */
   void pickThisFrame_();
-
-  enum class PickBehavior {
-    /// Retrieve all entities at the "closest" range
-    Closest,
-    /// Retrieve all entities within the range
-    AllInRange
-  };
 
   /** Picks into a vector. */
   void pickToVector_(simVis::EntityVector& nodes, PickBehavior behavior, double& mouseRangeSquaredPx) const;

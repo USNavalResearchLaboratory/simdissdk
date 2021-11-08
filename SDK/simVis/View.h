@@ -753,8 +753,6 @@ private: // data
   osg::ref_ptr<osg::NodeVisitor> updateCameraNodeVisitor_;
 };
 
-class FocusManager;
-
 /// Monitor the adding and removing of inset
 class InsetAddDelete : public simVis::ViewManager::Callback
 {

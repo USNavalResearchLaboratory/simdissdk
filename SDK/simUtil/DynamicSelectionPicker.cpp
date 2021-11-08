@@ -126,6 +126,20 @@ void DynamicSelectionPicker::setPlatformAdvantagePct(double platformAdvantage)
   platformAdvantagePct_ = osg::clampBetween(platformAdvantage, 0.0, 1.0);
 }
 
+void DynamicSelectionPicker::pickToVector(simVis::EntityVector& nodes, const osg::Vec2d& mouseXy, PickBehavior behavior)
+{
+  nodes.clear();
+  mouseXy_ = mouseXy;
+
+  // Figure out the view under the mouse
+  lastMouseView_ = viewManager_->getViewByMouseXy(mouseXy);
+  if (!lastMouseView_.valid())
+    return;
+
+  double mouseRangeSquaredPx = 0.;
+  pickToVector_(nodes, behavior, mouseRangeSquaredPx);
+}
+
 void DynamicSelectionPicker::pickThisFrame_()
 {
   simVis::EntityVector nodes;
