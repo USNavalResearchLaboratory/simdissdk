@@ -175,7 +175,8 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   displayTargetVectors_(true),
   displayBeamHistory_(false),
   displayGates_(false),
-  historyLength_(10.)
+  historyLength_(10.),
+  lastUpdateTime_(-1.)
 {
   family_.reset();
 
@@ -278,9 +279,16 @@ bool PlanetariumViewTool::getDisplayBeamHistory() const
 
 void PlanetariumViewTool::setBeamHistoryLength(double history)
 {
+  if (historyLength_ == history)
+    return;
+
   historyLength_ = history;
   for (const auto& hist : history_)
+  {
     hist.second->setHistoryLength(historyLength_);
+    // Trigger an update to the last update time to fix the history to the new length
+    hist.second->updateBeamHistory(lastUpdateTime_, range_);
+  }
 }
 
 double PlanetariumViewTool::getBeamHistoryLength() const
@@ -398,6 +406,8 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
   // update the fence
   fence_->setLocation(osg::Vec3d(0, 0, 0) * locatorRoot_->getMatrix());
 
+  lastUpdateTime_ = timeStamp.secondsSinceRefYear();
+
   for (EntityVector::const_iterator i = updates.begin(); i != updates.end(); ++i)
   {
     // Update beam node history
@@ -430,7 +440,7 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
   }
 
   for (const auto& iter : history_)
-    iter.second->updateBeamHistory(timeStamp.secondsSinceRefYear(), range_);
+    iter.second->updateBeamHistory(lastUpdateTime_, range_);
 
   setDirty(); // Force an update each time scenario manager updates
 }

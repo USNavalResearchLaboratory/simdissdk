@@ -190,6 +190,7 @@ private:
   bool                            displayBeamHistory_;
   bool                            displayGates_;
   double                          historyLength_; // seconds
+  double                          lastUpdateTime_;
 
   osg::observer_ptr<const ScenarioManager> scenario_;
 
