@@ -277,6 +277,29 @@ void PlanetariumViewTool::setDisplayBeamHistory(bool display)
       root_->removeChild(hist.second.get());
     // Don't clear the history, can be recalled later
   }
+  else
+  {
+    // add all body beams that are in the family to beam history
+    // body beams can have history changes without beam update due to host motion.
+    for (auto entityObsPtr : family_.members())
+    {
+      if (!entityObsPtr.valid())
+        continue;
+      simVis::BeamNode* beam = dynamic_cast<BeamNode*>(entityObsPtr.get());
+      if (!beam)
+        continue;
+      const simData::BeamProperties& props = beam->getProperties();
+      const bool isBodyBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE);
+      if (!isBodyBeam)
+        continue;
+      if (history_.find(beam->getId()) == history_.end())
+      {
+        osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, historyLength_);
+        history_[beam->getId()] = history;
+        root_->addChild(history.get());
+      }
+    }
+  }
 }
 
 bool PlanetariumViewTool::getDisplayBeamHistory() const
