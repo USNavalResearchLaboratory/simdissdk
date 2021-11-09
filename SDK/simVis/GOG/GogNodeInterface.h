@@ -421,6 +421,9 @@ public:
   /** Remove the specified listener */
   void removeGogNodeListener(GogNodeListenerPtr listener);
 
+  /** Retrieve the object index tag for picking GOGs. */
+  unsigned int objectIndexTag() const;
+
 protected: // methods
 
   /**
@@ -542,6 +545,8 @@ private:
 
   /** Cull callback that hides GOGs with timestamps as needed */
   osg::ref_ptr<osg::NodeCallback> timeCallback_;
+
+  unsigned int objectIndexTag_; ///< object index for picking
 };
 
 /// Shared ptr wrapper for the GogNodeInterface object

@@ -36,8 +36,10 @@
 #include "osgEarth/LabelNode"
 #include "osgEarth/LineSymbol"
 #include "osgEarth/LocalGeometryNode"
+#include "osgEarth/ObjectIndex"
 #include "osgEarth/PlaceNode"
 #include "osgEarth/PolygonSymbol"
+#include "osgEarth/Registry"
 #include "osgEarth/RenderSymbol"
 #include "osgEarth/Style"
 #include "osgEarth/TextSymbol"
@@ -198,7 +200,8 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     defaultTextColor_(simVis::Color::Red),
     rangeUnits_(simCore::Units::YARDS),
     opacity_(1.f),
-    timeCallback_(new TimeBoundsCallback(this))
+    timeCallback_(new TimeBoundsCallback(this)),
+    objectIndexTag_(0)
 {
   if (osgNode_.valid())
   {
@@ -212,6 +215,9 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     simVis::OverheadMode::enableGeometryFlattening(true, osgNode_.get());
 
     osgNode_->addCullCallback(timeCallback_);
+
+    // Add a tag for picking
+    objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(osgNode_.get(), osgNode_.get());
   }
 }
 
@@ -1384,6 +1390,11 @@ void GogNodeInterface::removeGogNodeListener(GogNodeListenerPtr listener)
   std::vector<GogNodeListenerPtr>::iterator i = std::find(listeners_.begin(), listeners_.end(), listener);
   if (i != listeners_.end())
     listeners_.erase(i);
+}
+
+unsigned int GogNodeInterface::objectIndexTag() const
+{
+  return objectIndexTag_;
 }
 
 void GogNodeInterface::fireDrawChanged_() const
