@@ -831,12 +831,12 @@ public:
   void setOutlineThickness(OutlineThickness thickness);
 
   /**
-  * Get the icon file to display; if value is not set, default value is returned.
+  * Get the image file to display; if value is not set, default value is returned.
   * @return 0 if value was set, non-zero otherwise
   */
-  int getIconFile(std::string& iconFile) const;
-  /// Set the icon file to display
-  void setIconFile(const std::string& iconFile);
+  int getImageFile(std::string& imageFile) const;
+  /// Set the image file to display
+  void setImageFile(const std::string& imageFile);
 
   /**
   * Get the text deconfliction priority value; if value is not set, default value is returned.
@@ -857,7 +857,7 @@ private:
   Optional<Color> textColor_;
   Optional<Color> outlineColor_;
   Optional<OutlineThickness> outlineThickness_; ///< thickness style of text outline
-  Optional<std::string> iconFile_; ///< icon filename
+  Optional<std::string> imageFile_; ///< image filename
   Optional<double> priority_; ///< priority of the annotation text display
 };
 

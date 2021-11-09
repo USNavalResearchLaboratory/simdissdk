@@ -897,7 +897,7 @@ int testAnnotation()
       rv += SDK_ASSERT(anno->getOutlineThickness(thickness) != 0);
       rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::THIN);
       std::string iconFile = "someFile";
-      rv += SDK_ASSERT(anno->getIconFile(iconFile) != 0);
+      rv += SDK_ASSERT(anno->getImageFile(iconFile) != 0);
       rv += SDK_ASSERT(iconFile.empty());
       double priority = 0.;
       rv += SDK_ASSERT(anno->getPriority(priority) != 0);
@@ -937,7 +937,7 @@ int testAnnotation()
       rv += SDK_ASSERT(anno->getOutlineThickness(thickness) == 0);
       rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::THIN);
       std::string iconFile;
-      rv += SDK_ASSERT(anno->getIconFile(iconFile) == 0);
+      rv += SDK_ASSERT(anno->getImageFile(iconFile) == 0);
       rv += SDK_ASSERT(iconFile == "icon.png");
       double priority = 0.;
       rv += SDK_ASSERT(anno->getPriority(priority) == 0);

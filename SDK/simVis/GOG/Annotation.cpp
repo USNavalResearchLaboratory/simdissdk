@@ -56,9 +56,9 @@ GogNodeInterface* TextAnnotation::deserialize(
   p.parseGeometry<Geometry>(parsedShape);
   GogNodeInterface* rv = nullptr;
   osgEarth::GeoPositionNode* label = nullptr;
-  if (parsedShape.hasValue(GOG_ICON))
+  if (parsedShape.hasValue(GOG_IMAGEFILE))
   {
-    std::string iconFile = parsedShape.stringValue(GOG_ICON);
+    std::string iconFile = parsedShape.stringValue(GOG_IMAGEFILE);
     osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
     // if icon can't load, use default icon
     if (!image.valid())
@@ -111,14 +111,14 @@ GogNodeInterface* TextAnnotation::createAnnotation(const simCore::GOG::Annotatio
   osgEarth::GeoPositionNode* label = nullptr;
   osgEarth::Style style;
 
-  std::string iconFile;
-  if (anno.getIconFile(iconFile) == 0)
+  std::string imageFile = "";
+  if (anno.getImageFile(imageFile) == 0)
   {
-    osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
+    osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(imageFile, "\""));
     // if icon can't load, use default icon
     if (!image.valid())
     {
-      SIM_WARN << "Failed to load image file " << iconFile << "\n";
+      SIM_WARN << "Failed to load image file " << imageFile << "\n";
       image = osgDB::readImageFile(PLACEMARK_ICON);
     }
 

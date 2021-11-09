@@ -1218,15 +1218,15 @@ void Annotation::setOutlineThickness(OutlineThickness thickness)
   outlineThickness_ = thickness;
 }
 
-int Annotation::getIconFile(std::string& iconFile) const
+int Annotation::getImageFile(std::string& imageFile) const
 {
-  iconFile = iconFile_.value_or("");
-  return (iconFile_.has_value() ? 0 : 1);
+  imageFile = imageFile_.value_or("");
+  return (imageFile_.has_value() ? 0 : 1);
 }
 
-void Annotation::setIconFile(const std::string& iconFile)
+void Annotation::setImageFile(const std::string& imageFile)
 {
-  iconFile_ = iconFile;
+  imageFile_ = imageFile;
 }
 
 int Annotation::getPriority(double& priority) const
@@ -1280,6 +1280,8 @@ void Annotation::serializeToStream_(std::ostream& gogOutputStream) const
   }
   if (priority_.has_value())
     gogOutputStream << "priority " << priority_.value_or(0) << "\n";
+  if (imageFile_.has_value())
+    gogOutputStream << "imagefile " << imageFile_.value_or("") << "\n";
 }
 
 LatLonAltBox::LatLonAltBox()
@@ -1451,7 +1453,10 @@ void ImageOverlay::setImageFile(const std::string& imageFile)
 
 void ImageOverlay::serializeToStream_(std::ostream& gogOutputStream) const
 {
-  // no-op, serialization is handled by serializing comments in GogShape base
+  // Write out the imageoverlay type command
+  gogOutputStream << GogShape::shapeTypeToString(shapeType()) << " " << (north_ * simCore::RAD2DEG) << " " << (south_ * simCore::RAD2DEG) << " "
+    << (west_ * simCore::RAD2DEG) << " " << (east_ * simCore::RAD2DEG) << " " << (rotation_ * simCore::RAD2DEG) << "\n";
+  gogOutputStream << "imagefile " << imageFile_ << "\n";
 }
 
 }}

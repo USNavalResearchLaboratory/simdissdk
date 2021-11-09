@@ -45,10 +45,10 @@ GogNodeInterface* ImageOverlay::deserialize(
 {
   GogNodeInterface* rv = nullptr;
 
-  if (!parsedShape.hasValue(GOG_ICON))
+  if (!parsedShape.hasValue(GOG_IMAGEFILE))
     return rv;
 
-  std::string iconFile = parsedShape.stringValue(GOG_ICON);
+  std::string iconFile = parsedShape.stringValue(GOG_IMAGEFILE);
   osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
   // if icon can't load, return failure
   if (!image.valid())
@@ -97,8 +97,6 @@ GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOver
   imageNode->setPriority(8000);
 
   GogMetaData metaData;
-  // need to specify KML load format for these shapes, which attach to the map node differently than normal GOG shapes
-  metaData.loadFormat = FORMAT_KML;
   return new ImageOverlayInterface(imageNode, metaData);
 }
 
