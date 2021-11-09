@@ -53,7 +53,7 @@ static const std::string HEIGHT_FIELD = "height 180.\n";
 // points shape optional fields in GOG format
 static const std::string POINTS_FIELDS = OUTLINED_FIELD + " pointsize 5\n linecolor magenta\n";
 // annotation optional fields in GOG format
-static const std::string ANNOTATION_FIELDS = "fontname georgia.ttf\n fontsize 24\n linecolor hex 0x0affa0ff\n textoutlinethickness thin\n textoutlinecolor blue\n# kml_icon icon.png\n priority 10.\n";
+static const std::string ANNOTATION_FIELDS = "fontname georgia.ttf\n fontsize 24\n linecolor hex 0x0affa0ff\n textoutlinethickness thin\n textoutlinecolor blue\n imagefile icon.png\n priority 10.\n";
 
 // return true if the specified positions are equal
 bool comparePositions(const simCore::Vec3& pos1, const simCore::Vec3& pos2)
@@ -444,10 +444,10 @@ int testMinimalShapes()
   std::vector<simCore::Vec3> llabPoints;
   llabPoints.push_back(simCore::Vec3(25.1 * simCore::DEG2RAD, 55.6 * simCore::DEG2RAD, 100.));
   llabPoints.push_back(simCore::Vec3(25.3 * simCore::DEG2RAD, 55.4 * simCore::DEG2RAD, 100.));
-  rv += testShapePositionsFunction<simCore::GOG::LatLonAltBox>("start\n latlonaltbox 25.1 25.3  55.4 55.6 100.\naltitudeunits m\n end\n", testLatLonAltBoxMinimalFieldsFunc, llabPoints);
+  rv += testShapePositionsFunction<simCore::GOG::LatLonAltBox>("start\n latlonaltbox 25.1 25.3 55.4 55.6 100.\naltitudeunits m\n end\n", testLatLonAltBoxMinimalFieldsFunc, llabPoints);
 
   // test image overlay
-  rv += testShapePositionsFunction<simCore::GOG::ImageOverlay>("start\n # kml_groundoverlay\n# kml_icon image.png\n # kml_latlonbox 25.1 25.3 55.6 55.4 32.\n end\n", testImageOverlayMinimalFieldsFunc, llabPoints);
+  rv += testShapePositionsFunction<simCore::GOG::ImageOverlay>("start\n imageoverlay 25.1 25.3 55.4 55.6 32.\n imagefile image.png\n end\n", testImageOverlayMinimalFieldsFunc, llabPoints);
 
   // RELATIVE
 
@@ -908,7 +908,7 @@ int testAnnotation()
 
   // test full annotation
   std::stringstream annoGog;
-  annoGog << "start\n annotation label 1\n centerll 24.5 54.6\n fontname georgia.ttf\n fontsize 24\n linecolor hex 0xa0ffa0ff\n textoutlinethickness thin\n textoutlinecolor blue\n# kml_icon icon.png\n priority 10.\n end\n";
+  annoGog << "start\n annotation label 1\n centerll 24.5 54.6\n fontname georgia.ttf\n fontsize 24\n linecolor hex 0xa0ffa0ff\n textoutlinethickness thin\n textoutlinecolor blue\n imagefile icon.png\n priority 10.\n end\n";
   parser.parse(annoGog, "", shapes);
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
@@ -1604,7 +1604,7 @@ int testSerialization()
   annotationItems.push_back("linecolor hex 0x0affa0ff\n");
   annotationItems.push_back("textoutlinethickness thin\n");
   annotationItems.push_back("textoutlinecolor hex 0xffff0000\n");
-  annotationItems.push_back("# kml_icon icon.png\n");
+  annotationItems.push_back("imagefile icon.png\n");
   annotationItems.push_back("priority 10\n");
 
 
@@ -1720,10 +1720,9 @@ int testSerialization()
   }
   {
     std::vector<std::string> imageOverlayItems = baseItems;
-    imageOverlayItems.push_back("# kml_groundoverlay\n");
-    imageOverlayItems.push_back("# kml_icon image.png\n");
-    imageOverlayItems.push_back("# kml_latlonbox 25.1 25.3 55.6 55.4 0.\n");
-    rv += testSerializeShape<simCore::GOG::ImageOverlay>("start\n # kml_groundoverlay\n# kml_icon image.png\n # kml_latlonbox 25.1 25.3 55.6 55.4 0.\n" + BASE_FIELDS + "end\n", imageOverlayItems);
+    imageOverlayItems.push_back("imageoverlay 25.1 25.3 55.4 55.6 0\n");
+    imageOverlayItems.push_back("imagefile image.png\n");
+    rv += testSerializeShape<simCore::GOG::ImageOverlay>("start\n imageoverlay 25.1 25.3 55.4 55.6 0\n imagefile image.png\n" + BASE_FIELDS + "end\n", imageOverlayItems);
   }
 
   // relative shapes
