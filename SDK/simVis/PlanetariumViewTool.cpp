@@ -147,6 +147,13 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
       continue; // Too old
 
     addChild(iter.second->node);
+    if (!prefs.commonprefs().draw())
+    {
+      iter.second->node->setNodeMask(simVis::DISPLAY_MASK_NONE);
+      continue;
+    }
+
+    iter.second->node->setNodeMask(simVis::DISPLAY_MASK_BEAM);
     osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->node->asGroup()->getChild(0));
     if (bv)
     {
