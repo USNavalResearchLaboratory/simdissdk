@@ -66,6 +66,25 @@ namespace
 //-------------------------------------------------------------------
 namespace simVis
 {
+// the planetarium moves with host position only.
+// all beams and gates must use locators to dynamically track their host position,
+// in order for them to move with their host (and with the planetarium.)
+//
+// body-beams (whether in the planetarium or not) use locators that dynamically track both
+// host position and orientation, since body beams are relative to platform orientation.
+// at every instant, the body-beam display reflects the current position of the beam (whether on the planetarium or not),
+// which includes the current position and orientation of the host.
+//
+// in the current implementation of the planetarium,
+// beam history in the planetarium is intended to fix that spot on the planetarium
+// that the beam painted at a specific time; that spot does not move relative to the host,
+// regardless of host orientation changes.
+//
+// body-beam history points still must be modelled relative to host orientation at their history-point-time.
+// but this can't be done with a locator that dynamically tracks platform orientation,
+// since beam history points would move with current host motion across the planetarium, instead of being fixed.
+// so, body-beam history points store the static orientation of the host at their history-point-time.
+//
 
 PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::DataStore& ds, double historyLength)
   : osg::Group(),
@@ -120,33 +139,32 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
 
     osg::ref_ptr<BeamVolume> volume = new BeamVolume(prefs, update);
 
-    Locator* beamLocator = beam_->getLocator();
+    Locator* beamOrientationLocator = beam_->getLocator();
 
-    // Get the origin locator, which is the parent
-    Locator* parentLocator = beamLocator->getParentLocator();
+    // inherit only the dynamic resolved position of the beam origin
+    Locator* bhpOriginLocator = new Locator(beamOrientationLocator, Locator::COMP_POSITION);
 
-    // inherit only the dynamic position of the host platform
-    Locator* beamHostLocator = new Locator(parentLocator, Locator::COMP_POSITION);
-
-    // for body beams, get host orientation and apply it as a (static) local offset
     if (isBodyBeam)
     {
+      // extract the beam host orientation
       simCore::Coordinate out_coord;
-      parentLocator->getCoordinate(&out_coord, simCore::COORD_SYS_LLA);
-      beamHostLocator->setLocalOffsets(simCore::Vec3(), out_coord.orientation(), updateTime, false);
+      beamOrientationLocator->getCoordinate(&out_coord, simCore::COORD_SYS_LLA);
+      // apply host orientation as a (static) local offset
+      bhpOriginLocator->setLocalOffsets(simCore::Vec3(), out_coord.orientation(), updateTime, false);
     }
+    Locator* bhpOrientationLocator = new Locator(bhpOriginLocator, Locator::COMP_ALL);
 
-    // add beam pos and ori offsets to a new locator
-    simCore::Vec3 beamPos;
+    // get current beam ori offsets
+    simCore::Vec3 ignoredPos;
     simCore::Vec3 beamOri;
-    beamLocator->getLocalOffsets(beamPos, beamOri);
-    Locator* beamOrientationLocator = new Locator(beamHostLocator);
-    beamOrientationLocator->setLocalOffsets(beamPos, beamOri);
+    beamOrientationLocator->getLocalOffsets(ignoredPos, beamOri);
+    // add beam ori to the orientation locator
+    bhpOrientationLocator->setLocalOffsets(simCore::Vec3(), beamOri, updateTime, false);
 
-    LocatorNode* locatorNode = new LocatorNode(beamOrientationLocator, volume.get());
+    LocatorNode* bhpLocatorNode = new LocatorNode(bhpOrientationLocator, volume.get());
 
     std::unique_ptr<HistoryPoint> newPoint(new HistoryPoint);
-    newPoint->node = locatorNode;
+    newPoint->node = bhpLocatorNode;
     newPoint->color = Color(prefs.commonprefs().color(), osgEarth::Color::RGBA);
 
     historyPoints_[updateTime] = std::move(newPoint);
