@@ -393,8 +393,22 @@ private:
   * using simCore methods avoids dependency on SRS, and uses a more accurate ecef->lla conversion
   * @param ecefPos specified position
   * @param local2world ENU matrix at specified position
+  * @return 0 on success, non-0 on failure
   */
-  void computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const;
+  int computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const;
+
+  /**
+  * Checks whether any of this locator's parent locators have been dereferenced
+  * @return  false if any parent locator was set but was dereferenced afterwards; true if all parents are referenced
+  */
+  bool isValidlyParented_() const;
+
+  /**
+  * Checks whether this locator has data
+  * defn: a locator hasNoData_() when it isEmpty_ and each parent isEmpty_
+  * @return  true if this and all parents are empty; false otherwise
+  */
+  bool hasNoData_() const;
 
   osg::observer_ptr<Locator> parentLoc_;
   unsigned int componentsToInherit_; // Locator::Components mask
