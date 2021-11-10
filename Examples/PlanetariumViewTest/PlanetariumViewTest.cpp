@@ -446,7 +446,7 @@ int main(int argc, char **argv)
 
   // the planetarium view:
   osg::observer_ptr<simVis::PlatformNode> platform = app.scenario->find<simVis::PlatformNode>(app.platformId);
-  app.planetarium = new simVis::PlanetariumViewTool(platform.get());
+  app.planetarium = new simVis::PlanetariumViewTool(platform.get(), app.dataStore);
   app.planetarium->setRange(75000);
 
   // set up the controls
