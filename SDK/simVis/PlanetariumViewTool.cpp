@@ -25,9 +25,10 @@
 #include "osg/CullFace"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/AnnotationUtils"
+#include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Time/TimeClass.h"
-#include "simNotify/Notify.h"
+#include "simData/MemoryDataStore.h"
 #include "simVis/Beam.h"
 #include "simVis/Gate.h"
 #include "simVis/Locator.h"
@@ -66,9 +67,10 @@ namespace
 namespace simVis
 {
 
-PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, double historyLength)
+PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::DataStore& ds, double historyLength)
   : osg::Group(),
   beam_(beam),
+  ds_(ds),
   historyLength_(historyLength)
 {}
 
@@ -84,7 +86,22 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
   const simData::BeamUpdate* lastUpdate = beam_->getLastUpdateFromDS();
   if (!lastUpdate)
     return;
+
   const simData::BeamProperties& props = beam_->getProperties();
+  // linear beams should only have points added on concrete data points, regardless of interpolation.
+  // BeamNode::getLastUpdateFromDS() interpolates if the interpolation flag is on, so ask the data
+  // store directly for the most recent update
+  const bool isLinearBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+  if (isLinearBeam)
+  {
+    auto* slice = ds_.beamUpdateSlice(props.id());
+    auto iter = slice->upper_bound(time);
+    if (!iter.hasPrevious())
+      return;
+
+    lastUpdate = iter.peekPrevious();
+  }
+
   // body beams require new history nodes even with no new beam update, since changes in
   // host orientation change the beam position.
   // body beams could be optimized to only add new history node based on some tolerance around host ori.
@@ -175,8 +192,9 @@ void PlanetariumViewTool::BeamHistory::setHistoryLength(double historyLength)
 
 //-------------------------------------------------------------------
 
-PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
-  host_(host),
+PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host, simData::DataStore& ds)
+  : host_(host),
+  ds_(ds),
   range_(1000.0),
   domeColor_(0.8f, 1.0f, 0.8f, 0.5f), // RGBA
   displayTargetVectors_(true),
@@ -294,7 +312,7 @@ void PlanetariumViewTool::setDisplayBeamHistory(bool display)
         continue;
       if (history_.find(beam->getId()) == history_.end())
       {
-        osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, historyLength_);
+        osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
         history_[beam->getId()] = history;
         root_->addChild(history.get());
       }
@@ -406,7 +424,7 @@ void PlanetariumViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNod
     osg::ref_ptr<simVis::BeamNode> beam = dynamic_cast<simVis::BeamNode*>(entity);
     if (beam.get())
     {
-      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, historyLength_);
+      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
       history_[beam->getId()] = history;
       root_->addChild(history.get());
     }
@@ -455,7 +473,7 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
       {
         if (history_.find(beam->getId()) == history_.end())
         {
-          osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, historyLength_);
+          osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
           history_[beam->getId()] = history;
           root_->addChild(history.get());
         }

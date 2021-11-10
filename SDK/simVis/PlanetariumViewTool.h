@@ -36,6 +36,7 @@ namespace osg {
 }
 namespace osgEarth { class LineDrawable; }
 
+namespace simData { class DataStore; }
 namespace simVis
 {
 class BeamNode;
@@ -54,8 +55,9 @@ public:
   /**
    * Constructs a new dome/sensor viewing tool.
    * @param[in ] host View will center on this host.
+   * @param[in ] ds Reference to data store for usage by some beam history nodes
    */
-  explicit PlanetariumViewTool(PlatformNode* host);
+  PlanetariumViewTool(PlatformNode* host, simData::DataStore& ds);
 
   /**
    * Range of the sensor intersection dome from the host
@@ -150,7 +152,7 @@ private:
   class BeamHistory : public osg::Group
   {
   public:
-    BeamHistory(simVis::BeamNode* beam, double historyLength);
+    BeamHistory(simVis::BeamNode* beam, simData::DataStore& ds, double historyLength);
 
     /** Update the beam history using the specified time and planetarium range */
     void updateBeamHistory(double time, double range);
@@ -170,6 +172,7 @@ private:
     };
 
     osg::observer_ptr<simVis::BeamNode> beam_;
+    simData::DataStore& ds_;
     std::map<double, std::unique_ptr<HistoryPoint> > historyPoints_; /// History points, keyed by time in seconds since ref year
     /** History length to show in seconds */
     double historyLength_;
@@ -178,6 +181,7 @@ private:
   EntityFamily                   family_;
 
   osg::observer_ptr<PlatformNode> host_;
+  simData::DataStore& ds_;
   osg::observer_ptr<LocatorNode>  locatorRoot_;
   osg::observer_ptr<osg::Group> root_;
 
