@@ -90,11 +90,17 @@ PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::D
   : osg::Group(),
   beam_(beam),
   ds_(ds),
+  displayHistory_(false),
   historyLength_(historyLength)
 {}
 
 PlanetariumViewTool::BeamHistory::~BeamHistory()
 {
+}
+
+void PlanetariumViewTool::BeamHistory::setDisplayHistory(bool display)
+{
+  displayHistory_ = display;
 }
 
 void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double range)
@@ -169,6 +175,9 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
 
     historyPoints_[updateTime] = std::move(newPoint);
   }
+
+  if (!displayHistory_)
+    return;
 
   // Update which history nodes are displayed based on the current time
   removeChildren(0, getNumChildren());
@@ -306,36 +315,22 @@ void PlanetariumViewTool::setDisplayTargetVectors(bool value)
 
 void PlanetariumViewTool::setDisplayBeamHistory(bool display)
 {
+  if (displayBeamHistory_ == display)
+    return;
+
   displayBeamHistory_ = display;
-  if (!displayBeamHistory_)
+  for (const auto& hist : history_)
   {
-    for (const auto& hist : history_)
-      root_->removeChild(hist.second.get());
-    // Don't clear the history, can be recalled later
-  }
-  else
-  {
-    // add all body beams that are in the family to beam history
-    // body beams can have history changes without beam update due to host motion.
-    for (auto entityObsPtr : family_.members())
+    hist.second->setDisplayHistory(displayBeamHistory_);
+    if (displayBeamHistory_)
     {
-      if (!entityObsPtr.valid())
-        continue;
-      simVis::BeamNode* beam = dynamic_cast<BeamNode*>(entityObsPtr.get());
-      if (!beam)
-        continue;
-      const simData::BeamProperties& props = beam->getProperties();
-      const bool isBodyBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE);
-      if (!isBodyBeam)
-        continue;
-      if (history_.find(beam->getId()) == history_.end())
-      {
-        osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
-        history_[beam->getId()] = history;
-        root_->addChild(history.get());
-      }
+      root_->addChild(hist.second.get());
+      hist.second->updateBeamHistory(lastUpdateTime_, range_);
     }
+    else
+      root_->removeChild(hist.second.get());
   }
+  // Don't clear the history, can be recalled later
 }
 
 bool PlanetariumViewTool::getDisplayBeamHistory() const
@@ -407,6 +402,27 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
   // collect the entity list from the scenario
   family_.reset();
   family_.add(scenario, host_->getId());
+
+  // add all body and target beams that are in the family to beam history
+  // body and target beams can have history changes without beam update due to host or target motion.
+  for (auto entityObsPtr : family_.members())
+  {
+    if (!entityObsPtr.valid())
+      continue;
+    simVis::BeamNode* beam = dynamic_cast<BeamNode*>(entityObsPtr.get());
+    if (!beam)
+      continue;
+    const simData::BeamProperties& props = beam->getProperties();
+    const bool isBodyOrTarget = (props.has_type() && (props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE || props.type() == simData::BeamProperties_BeamType_TARGET));
+    if (!isBodyOrTarget)
+      continue;
+    if (history_.find(beam->getId()) == history_.end())
+    {
+      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
+      history_[beam->getId()] = history;
+      root_->addChild(history.get());
+    }
+  }
 
   onUpdate(scenario, simCore::MIN_TIME_STAMP, entities);
 
@@ -487,14 +503,12 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
       // revisit current beams: enable ones that now qualify, disable ones that don't have range, etc.
       applyOverrides_(beam, true);
 
-      if (displayBeamHistory_)
+      if (history_.find(beam->getId()) == history_.end())
       {
-        if (history_.find(beam->getId()) == history_.end())
-        {
-          osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
-          history_[beam->getId()] = history;
+        osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
+        history_[beam->getId()] = history;
+        if (displayBeamHistory_)
           root_->addChild(history.get());
-        }
       }
       continue;
     }

@@ -154,6 +154,8 @@ private:
   public:
     BeamHistory(simVis::BeamNode* beam, simData::DataStore& ds, double historyLength);
 
+    /** Set whether history is displayed  */
+    void setDisplayHistory(bool display);
     /** Update the beam history using the specified time and planetarium range */
     void updateBeamHistory(double time, double range);
     /** Set history length in seconds */
@@ -174,6 +176,8 @@ private:
     osg::observer_ptr<simVis::BeamNode> beam_;
     simData::DataStore& ds_;
     std::map<double, std::unique_ptr<HistoryPoint> > historyPoints_; /// History points, keyed by time in seconds since ref year
+    /** Whether to show history */
+    bool displayHistory_;
     /** History length to show in seconds */
     double historyLength_;
   };
