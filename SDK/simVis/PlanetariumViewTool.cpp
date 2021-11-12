@@ -182,6 +182,9 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
   // Update which history nodes are displayed based on the current time
   removeChildren(0, getNumChildren());
 
+  if (prefs.commonprefs().has_datalimitpoints())
+    dataLimit_(prefs.commonprefs().datalimitpoints());
+
   float origAlpha = Color(prefs.commonprefs().color()).a();
   for (const auto& iter : historyPoints_)
   {
@@ -215,6 +218,18 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
 void PlanetariumViewTool::BeamHistory::setHistoryLength(double historyLength)
 {
   historyLength_ = historyLength;
+}
+
+void PlanetariumViewTool::BeamHistory::dataLimit_(unsigned int limit)
+{
+  // limit of 0 means no limiting, do nothing
+  if (limit == 0 || historyPoints_.size() <= limit)
+    return;
+
+  const size_t amount = historyPoints_.size() - limit;
+  auto limitAtIter = historyPoints_.begin();
+  std::advance(limitAtIter, amount);
+  historyPoints_.erase(historyPoints_.begin(), limitAtIter);
 }
 
 //-------------------------------------------------------------------

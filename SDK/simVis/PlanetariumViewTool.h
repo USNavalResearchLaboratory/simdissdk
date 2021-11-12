@@ -173,6 +173,9 @@ private:
       simVis::Color color; ///< Used to preserve color when history point was created. Alpha is subject to change based on current time
     };
 
+    /** Remove oldest points (by time) such that the max number of history points does not exceed the given limit */
+    void dataLimit_(unsigned int limit);
+
     osg::observer_ptr<simVis::BeamNode> beam_;
     simData::DataStore& ds_;
     std::map<double, std::unique_ptr<HistoryPoint> > historyPoints_; /// History points, keyed by time in seconds since ref year
