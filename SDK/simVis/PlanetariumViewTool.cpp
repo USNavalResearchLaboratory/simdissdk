@@ -182,8 +182,13 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
   // Update which history nodes are displayed based on the current time
   removeChildren(0, getNumChildren());
 
+  // Perform data limiting as needed. Note that any points that are limited cannot
+  // be retrieved unless the scenario repeats that time, because there is no backfill
+  // in beam history points.
   if (prefs.commonprefs().has_datalimitpoints())
-    dataLimit_(prefs.commonprefs().datalimitpoints());
+    limitByPoints_(prefs.commonprefs().datalimitpoints());
+  if (prefs.commonprefs().datalimittime())
+    limitByTime_(prefs.commonprefs().datalimittime());
 
   float origAlpha = Color(prefs.commonprefs().color()).a();
   for (const auto& iter : historyPoints_)
@@ -220,16 +225,34 @@ void PlanetariumViewTool::BeamHistory::setHistoryLength(double historyLength)
   historyLength_ = historyLength;
 }
 
-void PlanetariumViewTool::BeamHistory::dataLimit_(unsigned int limit)
+void PlanetariumViewTool::BeamHistory::limitByPoints_(unsigned int pointsLimit)
 {
   // limit of 0 means no limiting, do nothing
-  if (limit == 0 || historyPoints_.size() <= limit)
+  if (pointsLimit == 0 || historyPoints_.size() <= pointsLimit)
     return;
 
-  const size_t amount = historyPoints_.size() - limit;
+  const size_t amount = historyPoints_.size() - pointsLimit;
   auto limitAtIter = historyPoints_.begin();
   std::advance(limitAtIter, amount);
   historyPoints_.erase(historyPoints_.begin(), limitAtIter);
+}
+
+void PlanetariumViewTool::BeamHistory::limitByTime_(double timeLimit)
+{
+  // limit of <= 0 means no limiting, do nothing
+  if (timeLimit <= 0.)
+    return;
+
+  const double cutoff = historyPoints_.rbegin()->first - timeLimit;
+  for (auto cutoffIter = historyPoints_.begin(); cutoffIter != historyPoints_.end(); ++cutoffIter)
+  {
+    if (cutoffIter->first >= cutoff)
+    {
+      if (cutoffIter != historyPoints_.begin())
+        historyPoints_.erase(historyPoints_.begin(), cutoffIter);
+      return;
+    }
+  }
 }
 
 //-------------------------------------------------------------------

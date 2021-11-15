@@ -174,7 +174,9 @@ private:
     };
 
     /** Remove oldest points (by time) such that the max number of history points does not exceed the given limit */
-    void dataLimit_(unsigned int limit);
+    void limitByPoints_(unsigned int pointsLimit);
+    /** Remove points such that all remaining points are within a time window defined by newestTime - timeLimit */
+    void limitByTime_(double timeLimit);
 
     osg::observer_ptr<simVis::BeamNode> beam_;
     simData::DataStore& ds_;
