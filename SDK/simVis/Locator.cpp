@@ -463,8 +463,8 @@ bool Locator::getRotation_(osg::Matrixd& rotationMatrix) const
 
 bool Locator::getPosition_(osg::Vec3d& pos, unsigned int comps) const
 {
-  // caller must guarantee this
-  assert(!isEmpty());
+  if (isEmpty())
+    return false;
 
   comps &= componentsToInherit_;
   if ((comps & COMP_POSITION) == COMP_NONE)

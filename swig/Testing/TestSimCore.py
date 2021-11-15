@@ -70,8 +70,8 @@ assert(simCore.angFixDegrees(360, angleExtents) == 0)
 # CoordinateSystem.h
 assert(simCore.WGS_84 is not None)
 assert(simCore.GEOMETRIC_HORIZON is not None)
-assert(simCore.WGS_E == 0.0818191908426)
-assert(simCore.WGS_ESQ == simCore.WGS_E * simCore.WGS_E)
+assert(simCore.WGS_E == 0.081819190842622)
+assert(simCore.WGS_ESQ == 0.00669437999014)
 assert(simCore.EARTH_ROTATION_RATE == 7292115.1467e-11)
 coordSystem = simCore.COORD_SYS_NED
 assert(coordSystem is not None)
