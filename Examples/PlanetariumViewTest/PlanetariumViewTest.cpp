@@ -81,11 +81,11 @@ struct AppData
 
   AppData()
   {
-    colors.push_back(std::make_pair(simVis::Color(0xffffff3f), "White"));
-    colors.push_back(std::make_pair(simVis::Color(0x00ff003f), "Green"));
-    colors.push_back(std::make_pair(simVis::Color(0xff7f003f), "Orange"));
-    colors.push_back(std::make_pair(simVis::Color(0xffffff00), "Invisible"));
-    colors.push_back(std::make_pair(simVis::Color(0xffff003f), "Yellow"));
+    colors.push_back(std::make_pair(simVis::Color(0xffffff3fu), "White"));
+    colors.push_back(std::make_pair(simVis::Color(0x00ff003fu), "Green"));
+    colors.push_back(std::make_pair(simVis::Color(0xff7f003fu), "Orange"));
+    colors.push_back(std::make_pair(simVis::Color(0xffffff00u), "Invisible"));
+    colors.push_back(std::make_pair(simVis::Color(0xffff003fu), "Yellow"));
     colorIndex = colors.size()-1;
   }
 };
