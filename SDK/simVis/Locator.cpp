@@ -484,8 +484,8 @@ bool Locator::getPosition_(osg::Vec3d& pos, unsigned int comps) const
 
 bool Locator::getOrientation_(osg::Matrixd& ori, unsigned int comps) const
 {
-  // caller must guarantee this
-  assert(!isEmpty());
+  if (isEmpty())
+    return false;
 
   if ((comps & COMP_ORIENTATION) == COMP_NONE)
     return false;
