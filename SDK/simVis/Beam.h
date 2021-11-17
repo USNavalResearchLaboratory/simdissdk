@@ -158,6 +158,9 @@ namespace simVis
     */
     double getClosestPoint(const simCore::Vec3& toLla, simCore::Vec3& closestLLa) const;
 
+    /** Retrieves the currently visible end points, used for picking */
+    void getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const;
+
     /**
     * Returns the antenna gain
     * @param[in] az The azimuth, in radians

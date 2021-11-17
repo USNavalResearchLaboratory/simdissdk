@@ -28,9 +28,10 @@
 #include "simVis/Types.h"
 
 namespace simVis {
+  class BeamNode;
+  class CustomRenderingNode;
   class LaserNode;
   class LobGroupNode;
-  class CustomRenderingNode;
 }
 
 namespace simUtil
@@ -116,6 +117,8 @@ private:
   int calculateCustomRenderRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::CustomRenderingNode& customNode, double& rangeSquared) const;
   /** Special case calculation for Lasers, called by calculateSquaredRange_() automatically, returning 0 on success */
   int calculateLaserRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LaserNode& laserNode, double& rangeSquared) const;
+  /** Special case calculation for Beams, called by calculateSquaredRange_() automatically, returning 0 on success */
+  int calculateBeamRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::BeamNode& beamNode, double& rangeSquared) const;
 
   /** Convenience method to find the squared range from the cursor to the closest point within ecefVec, returning 0 on success */
   int calculateScreenRangePoints_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const;

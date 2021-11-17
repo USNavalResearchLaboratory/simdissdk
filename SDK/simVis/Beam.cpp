@@ -910,6 +910,32 @@ double BeamNode::getClosestPoint(const simCore::Vec3& toLla, simCore::Vec3& clos
   return distanceToBeam;
 }
 
+void BeamNode::getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const
+{
+  ecefVec.clear();
+  if (!isActive() || !hasLastPrefs_)
+    return;
+
+  // Get start position
+  simCore::Vec3 startPosition;
+  simCore::Vec3 ori;
+  if (0 != getPositionOrientation(&startPosition, &ori, simCore::COORD_SYS_LLA))
+    return;
+  simCore::Vec3 endPosition;
+  simCore::calculateGeodeticEndPoint(startPosition, ori.yaw(), ori.pitch(), lastUpdateFromDS_.range(), endPosition);
+
+  // Pull the origin again from locator in ECEF format; this is more efficient than converting
+  simCore::Vec3 startEcef;
+  if (0 != getPosition(&startEcef, simCore::COORD_SYS_ECEF))
+    return;
+  ecefVec.push_back({ startEcef.x(), startEcef.y(), startEcef.z() });
+
+  // Convert end point into ECEF
+  simCore::Vec3 endEcef;
+  simCore::CoordinateConverter::convertGeodeticPosToEcef(endPosition, endEcef);
+  ecefVec.push_back({ endEcef.x(), endEcef.y(), endEcef.z() });
+}
+
 unsigned int BeamNode::objectIndexTag() const
 {
   return objectIndexTag_;
