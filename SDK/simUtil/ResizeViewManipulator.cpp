@@ -79,6 +79,11 @@ public:
     // Move the matrix to over-top, and turn on node mask
     xform_->setMatrix(osg::Matrix::scale(extents.width_, extents.height_, 1) *
       osg::Matrix::translate(extents.x_, extents.y_, 0));
+
+    // Avoid osgEarth #1863 by calling finish() here, only if coming out of invisible
+    if (xform_->getNodeMask() == 0)
+      line_->finish();
+
     xform_->setNodeMask(~0);
   }
 
@@ -102,6 +107,10 @@ public:
         line_->setColor(k, (highlight ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR));
       }
     }
+
+    // Avoid osgEarth #1863 by calling finish() here, but only when visible
+    if (xform_->getNodeMask() != 0)
+      line_->finish();
   }
 
   /** Set the box to bold */
