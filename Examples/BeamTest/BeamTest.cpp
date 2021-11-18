@@ -376,11 +376,11 @@ struct AppData
     modes_.push_back(std::make_pair(simData::BeamPrefs_DrawMode_WIRE,  "WIRE"));
     modes_.push_back(std::make_pair(simData::BeamPrefs_DrawMode_WIRE_ON_SOLID, "WIRE ON SOLID"));
 
-    colors_.push_back(std::make_pair(simVis::Color(0xffffff7f), "White"));
-    colors_.push_back(std::make_pair(simVis::Color(0x00ff007f), "Green"));
-    colors_.push_back(std::make_pair(simVis::Color(0xff00007f), "Red"));
-    colors_.push_back(std::make_pair(simVis::Color(0xff7f007f), "Orange"));
-    colors_.push_back(std::make_pair(simVis::Color(0xffff007f), "Yellow"));
+    colors_.push_back(std::make_pair(simVis::Color(0xffffff7fu), "White"));
+    colors_.push_back(std::make_pair(simVis::Color(0x00ff007fu), "Green"));
+    colors_.push_back(std::make_pair(simVis::Color(0xff00007fu), "Red"));
+    colors_.push_back(std::make_pair(simVis::Color(0xff7f007fu), "Orange"));
+    colors_.push_back(std::make_pair(simVis::Color(0xffff007fu), "Yellow"));
   }
 
   void apply()
