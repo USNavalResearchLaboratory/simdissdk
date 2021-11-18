@@ -262,7 +262,7 @@ private:
     static const std::vector<std::string> ICONS = { EXAMPLE_IMAGE_ICON, EXAMPLE_MISSILE_ICON, EXAMPLE_TANK_ICON, NOT_FOUND_ICON };
     static const std::vector<std::string> BUTTON_NAMES = { "Image", "Missile", "Tank", "Not-Found" };
 
-    for (int i = 0; i < ICONS.size(); ++i)
+    for (size_t i = 0; i < ICONS.size(); ++i)
     {
       bool pop = false;
       if (current == static_cast<CurrentIcon>(i))
