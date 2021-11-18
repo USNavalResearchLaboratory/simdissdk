@@ -1329,13 +1329,16 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       // If both start and end are defined, check that start is before end.  If only one is defined, set it without any further checks
       if (validStart && validEnd)
       {
-        if (startTime < endTime)
+        if (startTime <= endTime)
         {
           rv->setStartTime(startTime);
           rv->setEndTime(endTime);
         }
         else
+        {
+          // disable times on this gog; will always display
           printError_(parsed.filename(), parsed.lineNumber(), "Invalid start and end times" + (name.empty() ? "" : " for " + name) + ": start time must be before end time");
+        }
       }
 
       else if (validStart)
