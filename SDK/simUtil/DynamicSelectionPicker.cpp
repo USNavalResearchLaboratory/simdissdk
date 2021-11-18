@@ -284,7 +284,7 @@ int DynamicSelectionPicker::calculateCustomRenderRange_(simUtil::ScreenCoordinat
 
 int DynamicSelectionPicker::calculateLaserRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LaserNode& laserNode, double& rangeSquared) const
 {
-  // Pull out the vector of all endpoints on the LOB that are visible
+  // Pull out the vector of all endpoints on the Laser that are visible
   std::vector<osg::Vec3d> ecefVec;
   laserNode.getVisibleEndPoints(ecefVec);
 
@@ -294,7 +294,7 @@ int DynamicSelectionPicker::calculateLaserRange_(simUtil::ScreenCoordinateCalcul
 
 int DynamicSelectionPicker::calculateBeamRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::BeamNode& beamNode, double& rangeSquared) const
 {
-  // Pull out the vector of all endpoints on the LOB that are visible
+  // Pull out the vector of all endpoints on the Beam that are visible
   std::vector<osg::Vec3d> ecefVec;
   beamNode.getVisibleEndPoints(ecefVec);
 
