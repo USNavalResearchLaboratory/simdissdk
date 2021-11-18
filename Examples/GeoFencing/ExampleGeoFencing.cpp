@@ -49,29 +49,26 @@ namespace ui = osgEarth::Util::Controls;
 
 //----------------------------------------------------------------------------
 
-namespace
+// Application data for the demo.
+struct AppData
 {
-  // Application data for the demo.
-  struct AppData
-  {
-    std::vector<simCore::GeoFence> fences;
+  std::vector<simCore::GeoFence> fences;
 #ifdef HAVE_IMGUI
-    std::string feedbackText;
+  std::string feedbackText;
 #else
-    osg::ref_ptr<ui::LabelControl> feedbackLabel;
+  osg::ref_ptr<ui::LabelControl> feedbackLabel;
 #endif
-    osg::ref_ptr<osgEarth::MapNode> mapnode;
+  osg::ref_ptr<osgEarth::MapNode> mapnode;
 
-    void setFeedbackText(const std::string& text)
-    {
+  void setFeedbackText(const std::string& text)
+  {
 #ifdef HAVE_IMGUI
-      feedbackText = text;
+    feedbackText = text;
 #else
-      feedbackLabel->setText(text);
+    feedbackLabel->setText(text);
 #endif
-    }
-  };
-}
+  }
+};
 
 //----------------------------------------------------------------------------
 

@@ -136,21 +136,33 @@ public:
 
       // Height row
       ImGui::TableNextColumn(); ImGui::Text("Height:"); ImGui::TableNextColumn();
-      if (ImGui::Button("80%")) setScaleHeight(.8f); ImGui::SameLine();
-      if (ImGui::Button("100%")) setScaleHeight(1.f); ImGui::SameLine();
+      if (ImGui::Button("80%")) setScaleHeight(.8f);
+      ImGui::SameLine();
+      if (ImGui::Button("100%")) setScaleHeight(1.f);
+      ImGui::SameLine();
       if (ImGui::Button("125%")) setScaleHeight(1.25f);
 
       // Width row
       ImGui::TableNextColumn(); ImGui::Text("Width:"); ImGui::TableNextColumn();
-      if (ImGui::Button("350px")) scale_->setWidth(350.f); ImGui::SameLine();
-      if (ImGui::Button("500px")) scale_->setWidth(500.f); ImGui::SameLine();
-      if (ImGui::Button("650px")) scale_->setWidth(650.f);
+      if (ImGui::Button("350px"))
+        scale_->setWidth(350.f);
+      ImGui::SameLine();
+      if (ImGui::Button("500px"))
+        scale_->setWidth(500.f);
+      ImGui::SameLine();
+      if (ImGui::Button("650px"))
+        scale_->setWidth(650.f);
 
       // Units row
       ImGui::TableNextColumn(); ImGui::Text("Units:"); ImGui::TableNextColumn();
-      if (ImGui::Button("Metric")) scale_->setUnitsProvider(metricUnits_); ImGui::SameLine();
-      if (ImGui::Button("Imperial")) scale_->setUnitsProvider(imperialUnits_); ImGui::SameLine();
-      if (ImGui::Button("Nautical")) scale_->setUnitsProvider(nauticalUnits_);
+      if (ImGui::Button("Metric"))
+        scale_->setUnitsProvider(metricUnits_);
+      ImGui::SameLine();
+      if (ImGui::Button("Imperial"))
+        scale_->setUnitsProvider(imperialUnits_);
+      ImGui::SameLine();
+      if (ImGui::Button("Nautical"))
+        scale_->setUnitsProvider(nauticalUnits_);
 
       ImGui::EndTable();
     }
