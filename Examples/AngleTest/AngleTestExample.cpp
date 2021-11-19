@@ -178,8 +178,8 @@ private:
   simData::MemoryDataStore& ds_;
   simData::ObjectId id_;
   float yawDeg_;
-  float rollDeg_;
   float pitchDeg_;
+  float rollDeg_;
   float latDeg_;
   float lonDeg_;
   float time_;
