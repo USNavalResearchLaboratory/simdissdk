@@ -66,6 +66,9 @@ public:
   /** Texture image unit used by projectors */
   static const int getTextureImageUnit();
 
+  /// Texture image unit for shadow map raster
+  static const int getShadowMapImageUnit();
+
 public: // MapNodeObserver
 
   /** Gets the map node */

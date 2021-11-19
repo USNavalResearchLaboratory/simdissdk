@@ -41,6 +41,8 @@ namespace simVis
 {
 /// Projector texture unit for shader and projector state sets
 static const int PROJECTOR_TEXTURE_UNIT = 5;
+/// Projector shadowmap unit for shader
+static const int PROJECTOR_SHADOWMAP_UNIT = 6;
 
 ProjectorManager::ProjectorLayer::ProjectorLayer(simData::ObjectId id)
   : osgEarth::Layer(),
@@ -77,8 +79,11 @@ public:
       return;
     osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
     osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
-    const osg::Matrixf& projMat = cv->getCurrentCamera()->getInverseViewMatrix() * proj->getTexGenMatrix();
-    ss->addUniform(new osg::Uniform("simProjTexGenMat", projMat));
+    const osg::Matrixd view_to_world = cv->getCurrentCamera()->getInverseViewMatrix();
+    const osg::Matrixf texgen = view_to_world * proj->getTexGenMatrix();
+    ss->addUniform(new osg::Uniform("simProjTexGenMat", texgen));
+    const osg::Matrixf shadow = view_to_world * proj->getShadowMapMatrix();
+    ss->addUniform(new osg::Uniform("simProjShadowMapMat", shadow));
     cv->pushStateSet(ss.get());
     traverse(node, nv);
     cv->popStateSet();
@@ -137,6 +142,11 @@ ProjectorManager::~ProjectorManager()
 const int ProjectorManager::getTextureImageUnit()
 {
     return PROJECTOR_TEXTURE_UNIT;
+}
+
+const int ProjectorManager::getShadowMapImageUnit()
+{
+  return PROJECTOR_SHADOWMAP_UNIT;
 }
 
 void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
@@ -212,10 +222,22 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
   // Set texture from projector into state set
   projStateSet->setTextureAttribute(PROJECTOR_TEXTURE_UNIT, proj->getTexture());
 
+  if (proj->getShadowMap())
+  {
+    projStateSet->setDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
+    // tells the shader where to bind the shadow map sampler
+    projStateSet->addUniform(new osg::Uniform("simProjShadowMap", ProjectorManager::getShadowMapImageUnit()));
+    // Bind the shadow map texture to the shader
+    projStateSet->setTextureAttribute(ProjectorManager::getShadowMapImageUnit(), proj->getShadowMap());
+  }
+
   proj->addUniforms(projStateSet);
 
   // provide the calculator to the projector so that the projector can calc its ellipsoid point
   proj->setCalculator(ellipsoidIntersector_);
+
+  // attach the projector to the active map node
+  proj->setMapNode(getMapNode());
 }
 
 void ProjectorManager::unregisterProjector(const ProjectorNode* proj)
