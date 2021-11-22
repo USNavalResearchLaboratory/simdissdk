@@ -86,6 +86,8 @@ static const std::string s_viewPlatformFour =
 " 4 : reset view on platform 4 (Stationary)";
 static const std::string s_viewPlatformFive =
 " 5 : reset view on platform 5 (Shadowmap Test)";
+static const std::string s_togglePlatformFiveShadowMap =
+" % :    toggle the shadow map on platform 5";
 
 /// global variables for camera tethering between platforms
 simData::ObjectId platformId_0 = 0;
@@ -139,6 +141,7 @@ static Control* createHelp()
   vbox->addControl(new LabelControl(s_viewPlatformThree, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_viewPlatformFour, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_viewPlatformFive, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_togglePlatformFiveShadowMap, 14, simVis::Color::Silver));
   s_helpControl = vbox;
   return vbox;
 }
@@ -180,6 +183,15 @@ struct MenuHandler : public osgGA::GUIEventHandler
       prefs->set_interpolateprojectorfov(!prefs->interpolateprojectorfov());
       txn.complete(&prefs);
     }
+  }
+
+  bool toggleShadowMap()
+  {
+    simVis::ProjectorNode* proj = view_.getSceneManager()->getScenario()->find<simVis::ProjectorNode>(projectorId_4);
+    if (!proj)
+      return false;
+
+    proj->setUseShadowMap(!proj->getUseShadowMap());
   }
 
   /// tether view to selected platform ID and corresponding projector and reset texture to initial image
@@ -263,6 +275,10 @@ struct MenuHandler : public osgGA::GUIEventHandler
         break;
       case 'i':
         toggleInterpolate();
+        handled = true;
+        break;
+      case'%':
+        toggleShadowMap();
         handled = true;
         break;
     }

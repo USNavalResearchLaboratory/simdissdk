@@ -1,7 +1,6 @@
 #version $GLSL_VERSION_STR
 
-#pragma vp_entryPoint sim_proj_frag
-#pragma vp_location fragment_coloring
+#pragma vp_function sim_proj_frag, fragment
 
 #pragma import_defines(SIMVIS_USE_REX)
 #pragma import_defines(SIMVIS_PROJECT_ON_PLATFORM)
@@ -52,7 +51,7 @@ void sim_proj_frag(inout vec4 color)
 
 #else
 
-//#define PROJ_DEBUG
+#define PROJ_DEBUG
 
 // for a projector texturing the terrain:
 void sim_proj_frag(inout vec4 color)
@@ -86,7 +85,7 @@ void sim_proj_frag(inout vec4 color)
 #ifdef SIMVIS_PROJECT_USE_SHADOWMAP
 
   // sample the depth texture as a mask
-  float shadow_bias = 0.0; // 0.00005;
+  const float shadow_bias = 0.00005;
   vec3 shadow_coord = simProjShadowMapCoord.xyz / simProjShadowMapCoord.w;
   float d = textureProj(simProjShadowMap, simProjShadowMapCoord).r; // depth from shadow map
   float z = simProjShadowMapCoord.z / simProjShadowMapCoord.w; // depth of reprojected vertex
@@ -106,30 +105,33 @@ void sim_proj_frag(inout vec4 color)
       fail_color = vec4(1, 1, 0, 1);
   }
 
-  // don't draw on geometry that is at a very steep angle
+  // don't draw on geometry whose plane is very close to the projection vector
+  // since it causes nasty artifacts
   vis = abs(vert_dot_normal);
   if (vis < 0.1 && fail_mix < 1.0) {
     fail_mix = 1.0;
     fail_color = vec4(1, 0, 1, 1);
   }
 
+#ifdef PROJ_DEBUG
+  pass_color = vec4(0, 1, 0, 1);
+#else
+
   // sample the projector texture:
   vec4 textureColor = texture(simProjSampler, local);
   pass_color = vec4(textureColor.r, textureColor.g, textureColor.b, textureColor.a * projectorAlpha);
   if (projectorUseColorOverride)
   {
-    pass_color.rgb = textureColor.rgb * projectorColorOverride.rgb;
-    pass_color.a = textureColor.a * projectorAlpha;
+      pass_color.rgb = textureColor.rgb * projectorColorOverride.rgb;
+      pass_color.a = textureColor.a * projectorAlpha;
   }
   else
   {
-    pass_color.rgb = mix(color.rgb, textureColor.rgb, textureColor.a * projectorAlpha);
+      pass_color.rgb = mix(color.rgb, textureColor.rgb, textureColor.a * projectorAlpha);
   }
 
-#ifdef PROJ_DEBUG
-  pass_color = vec4(0, 1, 0, 1);
-#else
   fail_color = vec4(0);
+
 #endif
   color = mix(pass_color, fail_color, fail_mix);
 }

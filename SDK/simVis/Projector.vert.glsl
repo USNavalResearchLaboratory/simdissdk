@@ -1,28 +1,42 @@
 #version $GLSL_VERSION_STR
 
-#pragma vp_entryPoint sim_proj_vert
-#pragma vp_location vertex_view
+#pragma vp_function sim_proj_vert, vertex_view
 
+#pragma import_defines(SIMVIS_PROJECT_USE_SHADOWMAP)
+
+uniform mat4 osg_ViewMatrix;
 uniform mat4 osg_ViewMatrixInverse;
+
 uniform mat4 simProjTexGenMat;
-uniform mat4 simProjShadowMapMat;
 uniform vec3 simProjDir;
 uniform vec3 simProjPos;
-uniform mat4 osg_ViewMatrix;
+
 out vec4 simProjTexCoord;
-out vec4 simProjShadowMapCoord;
 out vec3 simProjToVert_VIEW;
 out vec3 simProjLookVector_VIEW;
 
+#ifdef SIMVIS_PROJECT_USE_SHADOWMAP
+uniform mat4 simProjShadowMapMat;
+out vec4 simProjShadowMapCoord;
+#endif
+
 void sim_proj_vert(inout vec4 vertex_VIEW)
 {
-  simProjTexCoord = simProjTexGenMat * vertex_VIEW; // vertex into projected texture space
+  // vertex projected into texture space
+  simProjTexCoord = simProjTexGenMat * vertex_VIEW; 
 
-  simProjShadowMapCoord = simProjShadowMapMat * vertex_VIEW;  // vertex into shadow map texture space
-
-  vec4 vertex_WORLD = osg_ViewMatrixInverse * vertex_VIEW; // vertex in world coords
-  vec3 simProjToVert_WORLD = vertex_WORLD.xyz - simProjPos; // vector from projector to vertex (world space)
   mat3 vm3 = mat3(osg_ViewMatrix);
-  simProjToVert_VIEW = vm3 * simProjToVert_WORLD;   // ..into view space: mat3 cast for 3x3 vector transform
-  simProjLookVector_VIEW = vm3 * simProjDir;        // ..into view space: mat3 cast for 3x3 vector transform
+
+  // vector from projector to vertex (in view space)
+  vec4 vertex_WORLD = osg_ViewMatrixInverse * vertex_VIEW; 
+  vec3 simProjToVert_WORLD = vertex_WORLD.xyz - simProjPos; 
+  simProjToVert_VIEW = vm3 * simProjToVert_WORLD;
+
+  // projector look-vector in view space
+  simProjLookVector_VIEW = vm3 * simProjDir;
+
+#ifdef SIMVIS_PROJECT_USE_SHADOWMAP
+  // vertex projected into shadow map space
+  simProjShadowMapCoord = simProjShadowMapMat * vertex_VIEW;
+#endif
 }

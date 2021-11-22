@@ -102,6 +102,13 @@ public:
   /// Return texture
   osg::Texture2D* getTexture() const;
 
+  /// Set whether to use a shadow map to prevent bleed-thru
+  /// of projected textures on the terrain
+  void setUseShadowMap(bool value);
+  bool getUseShadowMap() const {
+    return useshadowmap_;
+  }
+
   /// Return shadow map
   osg::Texture2D* getShadowMap() const {
     return shadowmap_.get();
@@ -123,9 +130,10 @@ public:
   const simData::ProjectorUpdate* getLastUpdateFromDS() const;
 
   /// Add projector uniforms to the given StateSet
-  void addUniforms(osg::StateSet* stateSet) const;
+  void applyToStateSet(osg::StateSet* stateSet) const;
+
   /// Remove projector uniforms from the given StateSet
-  void removeUniforms(osg::StateSet* stateSet) const;
+  void removeFromStateSet(osg::StateSet* stateSet) const;
 
   /// Set the calculator that can calculate the projector's ellipsoid intersection
   void setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator);
@@ -272,6 +280,7 @@ private:
   osg::Matrixd shadowMapMatrix_;
   osg::ref_ptr<osg::Texture2D> shadowmap_;
   osg::ref_ptr<osg::Camera> shadowcam_;
+  bool useshadowmap_;
   osg::ref_ptr<osg::Uniform> shadowToPrimaryMatrix_;
   osg::Matrixd viewMat_;
 
@@ -295,6 +304,13 @@ private:
   std::map<osg::observer_ptr<osg::Node>, osg::observer_ptr<osg::Node> > projectedNodes_;
 
   std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator_;
+
+  /// returns true if the user changes a preference that requires
+  /// the projector manager to update the rendering state
+  mutable bool stateDirty_;
+  bool isStateDirty() const { return stateDirty_; }
+  void resetStateDirty() { stateDirty_ = false; }
+  friend class ProjectorManager;
 };
 
 } //namespace simVis

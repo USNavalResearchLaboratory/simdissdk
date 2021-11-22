@@ -188,7 +188,8 @@ ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::
   hostLocator_(hostLocator),
   hasLastUpdate_(false),
   hasLastPrefs_(false),
-  projectorTextureImpl_(new ProjectorTextureImpl())
+  projectorTextureImpl_(new ProjectorTextureImpl()),
+  useshadowmap_(false)
 {
   init_();
 }
@@ -303,7 +304,11 @@ void ProjectorNode::init_()
   shadowToPrimaryMatrix_ = ss->getOrCreateUniform(
     "oe_shadowToPrimaryMatrix", osg::Uniform::FLOAT_MAT4);
 
-  addChild(shadowcam_);
+  // install the shadowmap camera if we are using one
+  if (useshadowmap_)
+  {
+    addChild(shadowcam_);
+  }
 }
 
 void ProjectorNode::updateLabel_(const simData::ProjectorPrefs& prefs)
@@ -335,7 +340,7 @@ const simData::ProjectorUpdate* ProjectorNode::getLastUpdateFromDS() const
   return hasLastUpdate_ ? &lastUpdate_ : nullptr;
 }
 
-void ProjectorNode::addUniforms(osg::StateSet* stateSet) const
+void ProjectorNode::applyToStateSet(osg::StateSet* stateSet) const
 {
   stateSet->addUniform(projectorActive_.get());
   stateSet->addUniform(projectorAlpha_.get());
@@ -343,9 +348,16 @@ void ProjectorNode::addUniforms(osg::StateSet* stateSet) const
   stateSet->addUniform(texProjPosUniform_.get());
   stateSet->addUniform(useColorOverrideUniform_.get());
   stateSet->addUniform(colorOverrideUniform_.get());
+
+  if (useshadowmap_)
+    stateSet->setDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
+  else
+    stateSet->removeDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
+
+  stateDirty_ = false;
 }
 
-void ProjectorNode::removeUniforms(osg::StateSet* stateSet) const
+void ProjectorNode::removeFromStateSet(osg::StateSet* stateSet) const
 {
   stateSet->removeUniform(projectorActive_.get());
   stateSet->removeUniform(projectorAlpha_.get());
@@ -353,6 +365,8 @@ void ProjectorNode::removeUniforms(osg::StateSet* stateSet) const
   stateSet->removeUniform(texProjPosUniform_.get());
   stateSet->removeUniform(useColorOverrideUniform_.get());
   stateSet->removeUniform(colorOverrideUniform_.get());
+
+  stateSet->removeDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
 }
 
 std::string ProjectorNode::popupText() const
@@ -560,6 +574,25 @@ double ProjectorNode::getVFOV() const
 
   // Set default if projector is active, but FOV has not been updated
   return DEFAULT_PROJECTOR_FOV_IN_DEG;
+}
+
+void ProjectorNode::setUseShadowMap(bool value)
+{
+  if (value != useshadowmap_)
+  {
+    useshadowmap_ = value;
+
+    if (useshadowmap_)
+    {
+      addChild(shadowcam_);
+    }
+    else if (shadowcam_.valid())
+    {
+      removeChild(shadowcam_);
+    }
+
+    stateDirty_ = true;
+  }
 }
 
 void ProjectorNode::getMatrices_(osg::Matrixd& projection, osg::Matrixd& locatorMat, osg::Matrixd& modelView) const
@@ -867,7 +900,7 @@ int ProjectorNode::addProjectionToNode(osg::Node* entity, osg::Node* attachmentP
   // Set texture from projector into state set
   stateSet->setTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
 
-  addUniforms(stateSet);
+  applyToStateSet(stateSet);
 
   // to compute the texture generation matrix:
   attachmentPoint->addCullCallback(projectOnNodeCallback_.get());
@@ -897,7 +930,8 @@ int ProjectorNode::removeProjectionFromNode(osg::Node* node)
     stateSet->removeDefine("SIMVIS_PROJECT_ON_PLATFORM");
     stateSet->removeUniform("simProjSampler");
     stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
-    removeUniforms(stateSet);
+
+    removeFromStateSet(stateSet);
   }
 
   attachmentPoint->second->removeCullCallback(projectOnNodeCallback_.get());
