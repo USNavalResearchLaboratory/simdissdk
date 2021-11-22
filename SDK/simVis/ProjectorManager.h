@@ -66,6 +66,9 @@ public:
   /** Texture image unit used by projectors */
   static const int getTextureImageUnit();
 
+  /// Texture image unit for shadow map raster
+  static const int getShadowMapImageUnit();
+
 public: // MapNodeObserver
 
   /** Gets the map node */
@@ -117,8 +120,8 @@ private:
   };
 
   /// Vector of projectorLayers that have been added to the mapNode
-  typedef std::vector<osg::ref_ptr<ProjectorLayer> > ProjectorLayerVector;
-  ProjectorLayerVector projectorLayers_;
+  using ProjectorLayerTable = std::unordered_map<simData::ObjectId, osg::ref_ptr<ProjectorLayer>>;
+  ProjectorLayerTable projectorLayers_;
 
   /// A listener to detect new image layers and force projectors to be visible over them
   class MapListener;

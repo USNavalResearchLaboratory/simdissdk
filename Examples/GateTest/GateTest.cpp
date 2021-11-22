@@ -404,11 +404,11 @@ struct AppData
     fillPatterns_.push_back(std::make_pair(simData::GatePrefs_FillPattern_WIRE,     "WIRE"));
     fillPatterns_.push_back(std::make_pair(simData::GatePrefs_FillPattern_CENTROID, "CENTROID"));
 
-    colors_.push_back(std::make_pair(simVis::Color(0xffffff7f), "White"));
-    colors_.push_back(std::make_pair(simVis::Color(0x00ff007f), "Green"));
-    colors_.push_back(std::make_pair(simVis::Color(0xff00007f), "Red"));
-    colors_.push_back(std::make_pair(simVis::Color(0xff7f007f), "Orange"));
-    colors_.push_back(std::make_pair(simVis::Color(0xffff007f), "Yellow"));
+    colors_.push_back(std::make_pair(simVis::Color(0xffffff7fu), "White"));
+    colors_.push_back(std::make_pair(simVis::Color(0x00ff007fu), "Green"));
+    colors_.push_back(std::make_pair(simVis::Color(0xff00007fu), "Red"));
+    colors_.push_back(std::make_pair(simVis::Color(0xff7f007fu), "Orange"));
+    colors_.push_back(std::make_pair(simVis::Color(0xffff007fu), "Yellow"));
   }
 
   void apply()
