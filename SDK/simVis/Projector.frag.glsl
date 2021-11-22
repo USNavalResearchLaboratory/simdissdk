@@ -51,7 +51,7 @@ void sim_proj_frag(inout vec4 color)
 
 #else
 
-#define PROJ_DEBUG
+// #define PROJ_DEBUG
 
 // for a projector texturing the terrain:
 void sim_proj_frag(inout vec4 color)
