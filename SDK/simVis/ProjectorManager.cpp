@@ -145,7 +145,7 @@ ProjectorManager::~ProjectorManager()
 
 const int ProjectorManager::getTextureImageUnit()
 {
-    return PROJECTOR_TEXTURE_UNIT;
+  return PROJECTOR_TEXTURE_UNIT;
 }
 
 const int ProjectorManager::getShadowMapImageUnit()
@@ -290,13 +290,13 @@ void ProjectorManager::traverse(osg::NodeVisitor& nv)
 
     for (auto& projector : projectors_)
     {
-      if (projector->isStateDirty())
+      if (projector->isStateDirty_())
       {
         auto iter = projectorLayers_.find(projector->getId());
         if (iter != projectorLayers_.end())
         {
           projector->applyToStateSet(iter->second->getOrCreateStateSet());
-          projector->resetStateDirty();
+          projector->resetStateDirty_();
         }
       }
     }

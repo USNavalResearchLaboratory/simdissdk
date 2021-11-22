@@ -188,8 +188,10 @@ ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::
   hostLocator_(hostLocator),
   hasLastUpdate_(false),
   hasLastPrefs_(false),
+  useShadowMap_(false),
   projectorTextureImpl_(new ProjectorTextureImpl()),
-  useshadowmap_(false)
+  graphics_(nullptr),
+  stateDirty_(false)
 {
   init_();
 }
@@ -262,30 +264,30 @@ void ProjectorNode::init_()
   // textures from bleeding through to secondary surfaces.
   const unsigned w = 256, h = 256;
 
-  shadowmap_ = new osg::Texture2D();
-  shadowmap_->setTextureSize(w, h);
-  shadowmap_->setInternalFormat(GL_DEPTH_COMPONENT);
-  shadowmap_->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
-  shadowmap_->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-  shadowmap_->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-  shadowmap_->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-  shadowmap_->setBorderColor(osg::Vec4(1, 1, 1, 1));
+  shadowMap_ = new osg::Texture2D();
+  shadowMap_->setTextureSize(w, h);
+  shadowMap_->setInternalFormat(GL_DEPTH_COMPONENT);
+  shadowMap_->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+  shadowMap_->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+  shadowMap_->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+  shadowMap_->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+  shadowMap_->setBorderColor(osg::Vec4(1, 1, 1, 1));
 
-  shadowcam_ = new osg::Camera();
-  shadowcam_->setReferenceFrame(osg::Camera::ABSOLUTE_RF_INHERIT_VIEWPOINT);
-  shadowcam_->setClearDepth(1.0);
-  shadowcam_->setClearMask(GL_DEPTH_BUFFER_BIT);
-  shadowcam_->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
-  shadowcam_->setViewport(0, 0, shadowmap_->getTextureWidth(), shadowmap_->getTextureHeight());
-  shadowcam_->setRenderOrder(osg::Camera::PRE_RENDER);
-  shadowcam_->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
-  shadowcam_->setImplicitBufferAttachmentMask(0, 0);
-  shadowcam_->attach(osg::Camera::DEPTH_BUFFER, shadowmap_.get());
-  
+  shadowCam_ = new osg::Camera();
+  shadowCam_->setReferenceFrame(osg::Camera::ABSOLUTE_RF_INHERIT_VIEWPOINT);
+  shadowCam_->setClearDepth(1.0);
+  shadowCam_->setClearMask(GL_DEPTH_BUFFER_BIT);
+  shadowCam_->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
+  shadowCam_->setViewport(0, 0, shadowMap_->getTextureWidth(), shadowMap_->getTextureHeight());
+  shadowCam_->setRenderOrder(osg::Camera::PRE_RENDER);
+  shadowCam_->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+  shadowCam_->setImplicitBufferAttachmentMask(0, 0);
+  shadowCam_->attach(osg::Camera::DEPTH_BUFFER, shadowMap_.get());
+
   // optimize depth rendering by disabling texturing and lighting
-  osgEarth::CameraUtils::setIsDepthCamera(shadowcam_.get());
+  osgEarth::CameraUtils::setIsDepthCamera(shadowCam_.get());
 
-  osg::StateSet* ss = shadowcam_->getOrCreateStateSet();
+  osg::StateSet* ss = shadowCam_->getOrCreateStateSet();
 
   // ignore any uber shaders (like the LDB or Sky)
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(ss);
@@ -305,9 +307,9 @@ void ProjectorNode::init_()
     "oe_shadowToPrimaryMatrix", osg::Uniform::FLOAT_MAT4);
 
   // install the shadowmap camera if we are using one
-  if (useshadowmap_)
+  if (useShadowMap_)
   {
-    addChild(shadowcam_);
+    addChild(shadowCam_);
   }
 }
 
@@ -349,7 +351,7 @@ void ProjectorNode::applyToStateSet(osg::StateSet* stateSet) const
   stateSet->addUniform(useColorOverrideUniform_.get());
   stateSet->addUniform(colorOverrideUniform_.get());
 
-  if (useshadowmap_)
+  if (useShadowMap_)
     stateSet->setDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
   else
     stateSet->removeDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
@@ -401,6 +403,11 @@ std::string ProjectorNode::legendText() const
   if (hasLastUpdate_ && hasLastPrefs_)
     return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
   return "";
+}
+
+const simData::ProjectorProperties& ProjectorNode::getProperties() const
+{
+  return lastProps_;
 }
 
 void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
@@ -462,6 +469,11 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
   // Apply the sync after prefs are updated, so that overridden FOV can be retrieved correctly
   if (hasLastUpdate_ && syncAfterPrefsUpdate)
     syncWithLocator();
+}
+
+const simData::ProjectorPrefs& ProjectorNode::getPrefs() const
+{
+  return lastPrefs_;
 }
 
 void ProjectorNode::updateOverrideColor_(const simData::ProjectorPrefs& prefs)
@@ -553,6 +565,16 @@ void ProjectorNode::setImage(osg::Image* image)
   simVis::fixTextureForGlCoreProfile(texture_.get());
 }
 
+const osg::Matrixd& ProjectorNode::getTexGenMatrix() const
+{
+  return texGenMatrix_;
+}
+
+const osg::Matrixd& ProjectorNode::getShadowMapMatrix() const
+{
+  return shadowMapMatrix_;
+}
+
 osg::Texture2D* ProjectorNode::getTexture() const
 {
   return texture_.get();
@@ -578,22 +600,32 @@ double ProjectorNode::getVFOV() const
 
 void ProjectorNode::setUseShadowMap(bool value)
 {
-  if (value != useshadowmap_)
+  if (value == useShadowMap_)
+    return;
+  useShadowMap_ = value;
+
+  if (useShadowMap_)
   {
-    useshadowmap_ = value;
-
-    if (useshadowmap_)
-    {
-      addChild(shadowcam_);
-    }
-    else if (shadowcam_.valid())
-    {
-      removeChild(shadowcam_);
-    }
-
-    stateDirty_ = true;
+    addChild(shadowCam_);
   }
+  else if (shadowCam_.valid())
+  {
+    removeChild(shadowCam_);
+  }
+
+  stateDirty_ = true;
 }
+
+bool ProjectorNode::getUseShadowMap() const
+{
+  return useShadowMap_;
+}
+
+osg::Texture2D* ProjectorNode::getShadowMap() const
+{
+  return shadowMap_.get();
+}
+
 
 void ProjectorNode::getMatrices_(osg::Matrixd& projection, osg::Matrixd& locatorMat, osg::Matrixd& modelView) const
 {
@@ -647,7 +679,7 @@ void ProjectorNode::syncWithLocator()
     projectionMat *
     osg::Matrix::translate(1.0, flip, 1.0) *      // bias
     osg::Matrix::scale(0.5, 0.5 * flip, 0.5);     // scale
-  
+
   // same as the texgen matrix but without the flipping.
   shadowMapMatrix_ =
     viewMat_ *
@@ -691,10 +723,10 @@ void ProjectorNode::syncWithLocator()
   }
 
   // update the shadow camera
-  if (shadowcam_.valid())
+  if (shadowCam_.valid())
   {
-    shadowcam_->setViewMatrix(viewMat_);
-    shadowcam_->setProjectionMatrix(projectionMat);
+    shadowCam_->setViewMatrix(viewMat_);
+    shadowCam_->setProjectionMatrix(projectionMat);
   }
 
   // update the frustum geometry
@@ -837,14 +869,19 @@ void ProjectorNode::traverse(osg::NodeVisitor& nv)
 
 void ProjectorNode::setMapNode(osgEarth::MapNode* mapNode)
 {
-  if (shadowcam_.valid())
+  if (shadowCam_.valid())
   {
-    shadowcam_->removeChildren(0, shadowcam_->getNumChildren());
+    shadowCam_->removeChildren(0, shadowCam_->getNumChildren());
     if (mapNode)
     {
-      shadowcam_->addChild(mapNode->getTerrainEngine()->getNode());
+      shadowCam_->addChild(mapNode->getTerrainEngine()->getNode());
     }
   }
+}
+
+osgEarth::MapNode* ProjectorNode::getMapNode()
+{
+  return nullptr;
 }
 
 unsigned int ProjectorNode::objectIndexTag() const
@@ -937,6 +974,16 @@ int ProjectorNode::removeProjectionFromNode(osg::Node* node)
   attachmentPoint->second->removeCullCallback(projectOnNodeCallback_.get());
   projectedNodes_.erase(attachmentPoint);
   return 0;
+}
+
+bool ProjectorNode::isStateDirty_() const
+{
+  return stateDirty_;
+}
+
+void ProjectorNode::resetStateDirty_()
+{
+  stateDirty_ = false;
 }
 
 }

@@ -87,7 +87,11 @@ static const std::string s_viewPlatformFour =
 static const std::string s_viewPlatformFive =
 " 5 : reset view on platform 5 (Shadowmap Test)";
 static const std::string s_togglePlatformFiveShadowMap =
+#ifdef HAVE_IMGUI
+" %% :    toggle the shadow map on platform 5";
+#else
 " % :    toggle the shadow map on platform 5";
+#endif
 
 /// global variables for camera tethering between platforms
 simData::ObjectId platformId_0 = 0;
@@ -120,6 +124,8 @@ struct ControlPanel : public GUI::BaseGui
     ImGui::Text(s_viewPlatformTwo.c_str());
     ImGui::Text(s_viewPlatformThree.c_str());
     ImGui::Text(s_viewPlatformFour.c_str());
+    ImGui::Text(s_viewPlatformFive.c_str());
+    ImGui::Text(s_togglePlatformFiveShadowMap.c_str());
     ImGui::End();
   }
 };
@@ -185,11 +191,11 @@ struct MenuHandler : public osgGA::GUIEventHandler
     }
   }
 
-  bool toggleShadowMap()
+  void toggleShadowMap()
   {
     simVis::ProjectorNode* proj = view_.getSceneManager()->getScenario()->find<simVis::ProjectorNode>(projectorId_4);
     if (!proj)
-      return false;
+      return;
 
     proj->setUseShadowMap(!proj->getUseShadowMap());
   }

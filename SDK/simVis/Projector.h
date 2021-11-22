@@ -88,13 +88,13 @@ public:
   * Gets the last known properties of this object
   * @return Object properties
   */
-  const simData::ProjectorProperties& getProperties() const { return lastProps_; }
+  const simData::ProjectorProperties& getProperties() const;
 
   /// set preferences
   void setPrefs(const simData::ProjectorPrefs& prefs);
 
   /// get preferences
-  const simData::ProjectorPrefs& getPrefs() const { return lastPrefs_; }
+  const simData::ProjectorPrefs& getPrefs() const;
 
   /// get field of view in degrees
   double getVFOV() const;
@@ -105,23 +105,19 @@ public:
   /// Set whether to use a shadow map to prevent bleed-thru
   /// of projected textures on the terrain
   void setUseShadowMap(bool value);
-  bool getUseShadowMap() const {
-    return useshadowmap_;
-  }
+  bool getUseShadowMap() const;
 
   /// Return shadow map
-  osg::Texture2D* getShadowMap() const {
-    return shadowmap_.get();
-  }
+  osg::Texture2D* getShadowMap() const;
 
   /// Load image into texture
   void setImage(osg::Image *image);
 
   /// Gets the texture generation matrix
-  const osg::Matrixd& getTexGenMatrix() const { return texGenMatrix_; }
+  const osg::Matrixd& getTexGenMatrix() const;
 
   /// Gets the shadow map generation matrix
-  const osg::Matrixd& getShadowMapMatrix() const { return shadowMapMatrix_; }
+  const osg::Matrixd& getShadowMapMatrix() const;
 
   /**
    * Gets a pointer to the last data store update, or nullptr if
@@ -161,7 +157,7 @@ public:
 
   /// Override from MapNodeObserver
   void setMapNode(osgEarth::MapNode*) override;
-  osgEarth::MapNode* getMapNode() override { return nullptr; }
+  osgEarth::MapNode* getMapNode() override;
 
 public: // EntityNode interface
   /**
@@ -278,9 +274,9 @@ private:
   osg::Matrixd texGenMatrix_;
   osg::ref_ptr<osg::Texture2D> texture_;
   osg::Matrixd shadowMapMatrix_;
-  osg::ref_ptr<osg::Texture2D> shadowmap_;
-  osg::ref_ptr<osg::Camera> shadowcam_;
-  bool useshadowmap_;
+  osg::ref_ptr<osg::Texture2D> shadowMap_;
+  osg::ref_ptr<osg::Camera> shadowCam_;
+  bool useShadowMap_;
   osg::ref_ptr<osg::Uniform> shadowToPrimaryMatrix_;
   osg::Matrixd viewMat_;
 
@@ -308,8 +304,9 @@ private:
   /// returns true if the user changes a preference that requires
   /// the projector manager to update the rendering state
   mutable bool stateDirty_;
-  bool isStateDirty() const { return stateDirty_; }
-  void resetStateDirty() { stateDirty_ = false; }
+  bool isStateDirty_() const;
+  void resetStateDirty_();
+
   friend class ProjectorManager;
 };
 

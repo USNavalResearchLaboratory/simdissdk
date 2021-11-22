@@ -120,7 +120,7 @@ private:
   };
 
   /// Vector of projectorLayers that have been added to the mapNode
-  using ProjectorLayerTable = std::unordered_map<simData::ObjectId, osg::ref_ptr<ProjectorLayer>>;
+  typedef std::unordered_map<simData::ObjectId, osg::ref_ptr<ProjectorLayer> > ProjectorLayerTable;
   ProjectorLayerTable projectorLayers_;
 
   /// A listener to detect new image layers and force projectors to be visible over them
