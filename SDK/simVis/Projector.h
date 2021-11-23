@@ -102,11 +102,6 @@ public:
   /// Return texture
   osg::Texture2D* getTexture() const;
 
-  /// Set whether to use a shadow map to prevent bleed-thru
-  /// of projected textures on the terrain
-  void setUseShadowMap(bool value);
-  bool getUseShadowMap() const;
-
   /// Return shadow map
   osg::Texture2D* getShadowMap() const;
 
@@ -276,7 +271,6 @@ private:
   osg::Matrixd shadowMapMatrix_;
   osg::ref_ptr<osg::Texture2D> shadowMap_;
   osg::ref_ptr<osg::Camera> shadowCam_;
-  bool useShadowMap_;
   osg::ref_ptr<osg::Uniform> shadowToPrimaryMatrix_;
   osg::Matrixd viewMat_;
 

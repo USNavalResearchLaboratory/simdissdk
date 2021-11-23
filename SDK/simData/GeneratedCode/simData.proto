@@ -1364,6 +1364,9 @@ message ProjectorPrefs {
   optional bool overrideFov = 6 [default = false];
   /// Field of view for projector in radians, if overrideFov is true (default is ~10 degrees)
   optional double overrideFovAngle = 7 [default = 0.174533];
+
+  // Determine if the projector should use shadow mapping
+  optional bool shadowMapping = 8 [default = false];
 };
 
 /// common update to projector data

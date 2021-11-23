@@ -193,11 +193,13 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
   void toggleShadowMap()
   {
-    simVis::ProjectorNode* proj = view_.getSceneManager()->getScenario()->find<simVis::ProjectorNode>(projectorId_4);
-    if (!proj)
-      return;
-
-    proj->setUseShadowMap(!proj->getUseShadowMap());
+    simData::DataStore::Transaction txn;
+    simData::ProjectorPrefs* prefs = dataStore_.mutable_projectorPrefs(projectorId_4, &txn);
+    if (prefs)
+    {
+      prefs->set_shadowmapping(!prefs->shadowmapping());
+      txn.complete(&prefs);
+    }
   }
 
   /// tether view to selected platform ID and corresponding projector and reset texture to initial image

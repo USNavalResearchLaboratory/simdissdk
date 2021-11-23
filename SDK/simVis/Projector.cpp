@@ -188,7 +188,6 @@ ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::
   hostLocator_(hostLocator),
   hasLastUpdate_(false),
   hasLastPrefs_(false),
-  useShadowMap_(false),
   projectorTextureImpl_(new ProjectorTextureImpl()),
   graphics_(nullptr),
   stateDirty_(false)
@@ -305,12 +304,6 @@ void ProjectorNode::init_()
   // install a shadow-to-primary xform matrix (per frame) so verts match up when morphing
   shadowToPrimaryMatrix_ = ss->getOrCreateUniform(
     "oe_shadowToPrimaryMatrix", osg::Uniform::FLOAT_MAT4);
-
-  // install the shadowmap camera if we are using one
-  if (useShadowMap_)
-  {
-    addChild(shadowCam_);
-  }
 }
 
 void ProjectorNode::updateLabel_(const simData::ProjectorPrefs& prefs)
@@ -351,7 +344,7 @@ void ProjectorNode::applyToStateSet(osg::StateSet* stateSet) const
   stateSet->addUniform(useColorOverrideUniform_.get());
   stateSet->addUniform(colorOverrideUniform_.get());
 
-  if (useShadowMap_)
+  if (hasLastUpdate_ && lastPrefs_.shadowmapping())
     stateSet->setDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
   else
     stateSet->removeDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
@@ -461,6 +454,20 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
 
   if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
     applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
+
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, shadowmapping))
+  {
+      if (prefs.shadowmapping())
+      {
+        addChild(shadowCam_);
+      }
+      else if (shadowCam_.valid())
+      {
+        removeChild(shadowCam_);
+      }
+
+      stateDirty_ = true;
+  }
 
   updateLabel_(prefs);
   lastPrefs_ = prefs;
@@ -596,29 +603,6 @@ double ProjectorNode::getVFOV() const
 
   // Set default if projector is active, but FOV has not been updated
   return DEFAULT_PROJECTOR_FOV_IN_DEG;
-}
-
-void ProjectorNode::setUseShadowMap(bool value)
-{
-  if (value == useShadowMap_)
-    return;
-  useShadowMap_ = value;
-
-  if (useShadowMap_)
-  {
-    addChild(shadowCam_);
-  }
-  else if (shadowCam_.valid())
-  {
-    removeChild(shadowCam_);
-  }
-
-  stateDirty_ = true;
-}
-
-bool ProjectorNode::getUseShadowMap() const
-{
-  return useShadowMap_;
 }
 
 osg::Texture2D* ProjectorNode::getShadowMap() const
