@@ -80,9 +80,11 @@ public:
     xform_->setMatrix(osg::Matrix::scale(extents.width_, extents.height_, 1) *
       osg::Matrix::translate(extents.x_, extents.y_, 0));
 
-    // Avoid osgEarth #1863 by calling finish() here, only if coming out of invisible
+#if OSGEARTH_SOVERSION < 121
+    // Avoid osgEarth #1863 by calling finish() here, only if coming out of invisible. Fixed a little before 121 update.
     if (xform_->getNodeMask() == 0)
       line_->finish();
+#endif
 
     xform_->setNodeMask(~0);
   }
@@ -108,9 +110,11 @@ public:
       }
     }
 
-    // Avoid osgEarth #1863 by calling finish() here, but only when visible
+#if OSGEARTH_SOVERSION < 121
+    // Avoid osgEarth #1863 by calling finish() here, but only when visible. Fixed a little before 121 update.
     if (xform_->getNodeMask() != 0)
       line_->finish();
+#endif
   }
 
   /** Set the box to bold */
