@@ -408,7 +408,11 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
   // set our radar parameters for all subsequent files
   if (firstFile && beamHandler_)
   {
-    beamHandler_->setRadarParams(radarParameters);
+    if (0 != beamHandler_->setRadarParams(radarParameters))
+    {
+      SIM_ERROR << "File: " << arepsFile << " could not set radar parameters" << std::endl;
+      return 1;
+    }
   }
 
   // string caches for missing data/calcs notifications

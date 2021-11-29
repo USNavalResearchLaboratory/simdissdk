@@ -496,9 +496,6 @@ private:
   /// antenna height used to create rf propagation data
   float antennaHeightMeters_;
 
-  /// indicates whether RF Parameters have been set
-  bool rfParamsSet_;
-
   /// profile manager manages all the profiles that hold the rf prop data
   osg::ref_ptr<simRF::ProfileManager> profileManager_;
 
