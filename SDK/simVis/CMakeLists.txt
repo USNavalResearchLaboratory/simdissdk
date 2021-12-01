@@ -159,6 +159,7 @@ set(VIS_HEADERS_RFPROP
     ${VIS_INC}RFProp/ColorProvider.h
     ${VIS_INC}RFProp/CompositeColorProvider.h
     ${VIS_INC}RFProp/CompositeProfileProvider.h
+    ${VIS_INC}RFProp/FallbackDataHelper.h
     ${VIS_INC}RFProp/FunctionalProfileDataProvider.h
     ${VIS_INC}RFProp/GradientColorProvider.h
     ${VIS_INC}RFProp/LUTProfileDataProvider.h

@@ -33,6 +33,7 @@
 #include "simVis/RFProp/ArepsLoader.h"
 #include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/CompositeProfileProvider.h"
+#include "simVis/RFProp/FallbackDataHelper.h"
 #include "simVis/RFProp/OneWayPowerDataProvider.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
 #include "simVis/RFProp/ProfileManager.h"
@@ -479,33 +480,48 @@ double RFPropagationFacade::getPOD(double azimRad, double gndRngMeters, double h
   return 0.0;
 }
 
+void RFPropagationFacade::setLossDataHelper(std::unique_ptr<FallbackDataHelper> helper)
+{
+  lossDataHelper_ = std::move(helper);
+}
+
 double RFPropagationFacade::getLoss(double azimRad, double gndRngMeters, double hgtMeters) const
 {
   const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
   if (!cProvider)
   {
-    SIM_WARN << bearingWarningMsg("loss") << std::endl;
+    SIM_WARN << bearingWarningMsg("Loss") << std::endl;
     return simCore::SMALL_DB_VAL;
   }
 
   // we want a Loss data provider
   const simRF::ProfileDataProvider* provider =
     (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS));
+  double lossVal = simCore::SMALL_DB_VAL;
   if (!provider)
   {
-    SIM_WARN << dataWarningMsg("loss") << std::endl;
+    if (lossDataHelper_ && lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters, lossVal) == 0)
+      return lossVal;
+
+    SIM_WARN << dataWarningMsg("Loss") << std::endl;
   }
   else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
   {
+    if (lossDataHelper_ && lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters, lossVal) == 0)
+      return lossVal;
+
     SIM_WARN << rangeWarningMsg("Loss") << std::endl;
   }
   else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
   {
+    if (lossDataHelper_ && lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters, lossVal) == 0)
+      return lossVal;
+
     SIM_WARN << heightWarningMsg("Loss") << std::endl;
   }
   else
   {
-    double lossVal = provider->interpolateValue(hgtMeters, gndRngMeters);
+    lossVal = provider->interpolateValue(hgtMeters, gndRngMeters);
     return (lossVal > simCore::SMALL_DB_VAL ? lossVal : simCore::SMALL_DB_VAL);
   }
   return simCore::SMALL_DB_VAL;

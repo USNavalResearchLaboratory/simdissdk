@@ -42,6 +42,7 @@ namespace simCore
 
 namespace simRF
 {
+class FallbackDataHelper;
 class Profile;
 
 /** Facade to the simRF module, managing RF data for a single beam. */
@@ -330,6 +331,9 @@ public:
    */
   double getPOD(double azimRad, double gndRngMeters, double hgtMeters) const;
 
+  /** Sets the helper to use for Loss calculations. Takes ownership of the helper. */
+  void setLossDataHelper(std::unique_ptr<FallbackDataHelper> helper);
+
   /**
    * Return the propagation loss for a given beam with RF Prop parameters
    * @param azimRad Azimuth angle referenced to True North in radians
@@ -498,6 +502,9 @@ private:
 
   /// profile manager manages all the profiles that hold the rf prop data
   osg::ref_ptr<simRF::ProfileManager> profileManager_;
+
+  /// DataHelper to fall back on for Loss calculations
+  std::unique_ptr<simRF::FallbackDataHelper> lossDataHelper_;
 
   /// parent node in the scene graph of our profileManager
   osg::observer_ptr<osg::Group> parent_;
