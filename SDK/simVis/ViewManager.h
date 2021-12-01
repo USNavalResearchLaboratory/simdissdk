@@ -163,6 +163,9 @@ public:
   /** Retrieves the first view matching the name provided. */
   simVis::View* getViewByName(const std::string& name) const;
 
+  /** Retrieves the topmost interactive view (not hidden, allowing event focus) at the mouse XY */
+  simVis::View* getViewByMouseXy(const osg::Vec2d& mouseXy) const;
+
   /** Retrieves the index of the view provided, or -1 if not found. */
   int getIndexOf(simVis::View* view) const;
 

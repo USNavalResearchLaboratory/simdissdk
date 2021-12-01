@@ -29,7 +29,6 @@
 #include <vector>
 #include "osg/ref_ptr"
 #include "simCore/Common/Export.h"
-#include "simData/ObjectId.h"
 #include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/ProfileManager.h"
@@ -51,11 +50,10 @@ class SDKVIS_EXPORT RFPropagationFacade
 public:
   /**
    * Construct an RF Propagation beam handler for the specified beam
-   * @param beamId Beam to configure
    * @param parent node to which the visual display's locator is attached; if nullptr, no display will be created
    * @param datumConvert converter for MSL heights
    */
-  RFPropagationFacade(simData::ObjectId beamId, osg::Group* parent, std::shared_ptr<simCore::DatumConvert> datumConvert);
+  RFPropagationFacade(osg::Group* parent, std::shared_ptr<simCore::DatumConvert> datumConvert);
   virtual ~RFPropagationFacade();
 
   /**
@@ -495,15 +493,8 @@ private:
   /// update the color provider based on threshold type
   void setColorProviderByThresholdType_(simRF::ProfileDataProvider::ThresholdType type);
 
-
-  /// The beam id for which this display is specified
-  simData::ObjectId id_;
-
   /// antenna height used to create rf propagation data
   float antennaHeightMeters_;
-
-  /// indicates whether RF Parameters have been set
-  bool rfParamsSet_;
 
   /// profile manager manages all the profiles that hold the rf prop data
   osg::ref_ptr<simRF::ProfileManager> profileManager_;

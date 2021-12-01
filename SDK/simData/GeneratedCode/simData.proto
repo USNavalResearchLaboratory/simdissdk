@@ -831,7 +831,7 @@ message PlatformPrefs {
   optional bool dynamicScale = 41 [default = false];
   optional double dynamicScaleOffset = 42 [default = 0.0];
   optional double dynamicScaleScalar = 43 [default = 1.0];
-  optional DynamicScaleAlgorithm dynamicScaleAlgorithm = 74 [default = DSA_CONSISTENT_SIZING];
+  optional DynamicScaleAlgorithm dynamicScaleAlgorithm = 74 [default = DSA_METERS_TO_PIXELS];
 
   /// Toggle velocity vector
   optional bool drawVelocityVec = 44 [default = false];
@@ -1364,6 +1364,9 @@ message ProjectorPrefs {
   optional bool overrideFov = 6 [default = false];
   /// Field of view for projector in radians, if overrideFov is true (default is ~10 degrees)
   optional double overrideFovAngle = 7 [default = 0.174533];
+
+  // Determine if the projector should use shadow mapping
+  optional bool shadowMapping = 8 [default = false];
 };
 
 /// common update to projector data

@@ -101,7 +101,7 @@ double LUTProfileDataProvider::getValueByIndex(unsigned int heightIndex, unsigne
 {
   // Apply scalar to convert internal storage back to dB
   const double val = (*lut_)(heightIndex, rangeIndex);
-  return ((val > AREPS_GROUND_VALUE) ? scalar_ * val : val);
+  return ((val > GROUND_VALUE) ? scalar_ * val : val);
 }
 
 double LUTProfileDataProvider::interpolateValue(double height, double range) const

@@ -129,7 +129,7 @@ private:
     ss->setTextureAttributeAndModes(0, inputPosition_.get(), osg::StateAttribute::ON);
     ss->setTextureAttributeAndModes(1, velocityTexture_.get(), osg::StateAttribute::ON);
     // Significant banding occurs with GL_BLEND on
-    ss->setMode(GL_BLEND, osg::StateAttribute::OFF);
+    ss->setMode(GL_BLEND, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
 
     return ss;
   }
@@ -314,9 +314,6 @@ public:
     addChild(pointsNode_.get());
 
     getOrCreateStateSet()->addUniform(new osg::Uniform("altitude", altitude_));
-    // For convenience and likeness of purpose, we reuse the osgEarth uniform name for opacity; it does not carry forward
-    // because this node is not under the VisibleLayer in the node tree, so we need our own.
-    getOrCreateStateSet()->addUniform(new osg::Uniform("oe_VisibleLayer_opacityUniform", 1.f));
 
     setCullingActive(false);
     addUpdateCallback(new SwapCallback(this));
@@ -411,12 +408,6 @@ public:
     // Convert from LLA to percentage of earth
     const osg::Vec4 vec(0.5 + bounds.xMin() / 360., 0.5 + bounds.yMin() / 180., 0.5 + bounds.xMax() / 360., 0.5 + bounds.yMax() / 180.);
     computeNode_->getOrCreateStateSet()->addUniform(new osg::Uniform("boundingBox", vec));
-  }
-
-  void setOpacity(float value)
-  {
-    // Note that for convenience and likeness of purpose, we reuse the osgEarth opacity uniform name
-    getOrCreateStateSet()->getUniform("oe_VisibleLayer_opacityUniform")->set(value);
   }
 
   void setGradient(const simVis::GradientShader gradient)
@@ -800,12 +791,6 @@ void VelocityParticleLayer::setTexelToVelocityFragment(const std::string& glslFr
 {
   _options->texelToVelocityFragment() = glslFragment;
   VPL_SET_NODE(setTexelToVelocityFragment, glslFragment);
-}
-
-void VelocityParticleLayer::setOpacity(float value)
-{
-  ImageLayer::setOpacity(value);
-  VPL_SET_NODE(setOpacity, value);
 }
 
 osgEarth::Status VelocityParticleLayer::openImplementation()

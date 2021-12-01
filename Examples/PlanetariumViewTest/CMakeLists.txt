@@ -14,4 +14,10 @@ set_target_properties(example_planetariumviewtest PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Planetarium View Test"
 )
+
+if (TARGET ImGuiLib)
+    target_link_libraries(example_planetariumviewtest PRIVATE ImGuiLib)
+    target_compile_definitions(example_planetariumviewtest PRIVATE HAVE_IMGUI)
+endif()
+
 vsi_install_target(example_planetariumviewtest SDK_Examples)

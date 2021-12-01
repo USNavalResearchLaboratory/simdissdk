@@ -31,5 +31,5 @@ void simutil_vpl_frag(inout vec4 color)
     if (length(coord) > 0.5)
       discard;
   }
-  color.a *= oe_VisibleLayer_opacityUniform;
+  // Alpha is applied by a shader in VisibleLayer
 }

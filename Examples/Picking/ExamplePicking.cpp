@@ -43,6 +43,7 @@
 #include "simVis/osgEarthVersion.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Picker.h"
+#include "simVis/PlatformIconFactory.h"
 #include "simVis/Popup.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
@@ -515,6 +516,10 @@ int main(int argc, char** argv)
     pickType = PickRtt;
   else if (arguments.read("--intersect"))
     pickType = PickIntersect;
+
+  // RTT does not support Platform Icon Factory optimizations
+  if (pickType == PickRtt)
+    simVis::PlatformIconFactory::instance()->setEnabled(false);
 
   // First we need a map.
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();

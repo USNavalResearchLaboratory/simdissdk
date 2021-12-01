@@ -106,8 +106,7 @@ int LocatorNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSys
   const osg::Vec3d& locatorNodeEcef = getMatrix().getTrans();
   if (coordsys == simCore::COORD_SYS_LLA)
   {
-    simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z()), *out_position);
-    return 0;
+    return simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z()), *out_position);
   }
 
   out_position->set(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z());

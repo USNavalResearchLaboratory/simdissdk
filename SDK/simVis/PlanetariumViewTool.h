@@ -36,8 +36,10 @@ namespace osg {
 }
 namespace osgEarth { class LineDrawable; }
 
+namespace simData { class DataStore; }
 namespace simVis
 {
+class BeamNode;
 class LocatorNode;
 class PlatformNode;
 class ScenarioManager;
@@ -53,8 +55,9 @@ public:
   /**
    * Constructs a new dome/sensor viewing tool.
    * @param[in ] host View will center on this host.
+   * @param[in ] ds Reference to data store for usage by some beam history nodes
    */
-  explicit PlanetariumViewTool(PlatformNode* host);
+  PlanetariumViewTool(PlatformNode* host, simData::DataStore& ds);
 
   /**
    * Range of the sensor intersection dome from the host
@@ -98,6 +101,20 @@ public:
   /** Retrieve a reference to the gate prefs template for gate display */
   const simData::GatePrefs& getGatePrefs() const { return gatePrefs_; }
 
+  /** Set whether beam history is displayed on the planetarium */
+  void setDisplayBeamHistory(bool display);
+  /** Get whether beam history is displayed on the planetarium */
+  bool getDisplayBeamHistory() const;
+
+  /** Set beam history length in seconds */
+  void setBeamHistoryLength(double history);
+  /** Get beam history length in seconds */
+  double getBeamHistoryLength() const;
+
+  /** Set whether to display gates on the planetarium */
+  void setDisplayGates(bool display);
+  /** Get whether gates are displayed */
+  bool getDisplayGates() const;
 
 public: // ScenarioTool
 
@@ -131,16 +148,62 @@ protected:
   virtual ~PlanetariumViewTool() { }
 
 private:
+  /** Group that stores and manages a beam's history points on a planetarium */
+  class BeamHistory : public osg::Group
+  {
+  public:
+    BeamHistory(simVis::BeamNode* beam, simData::DataStore& ds, double historyLength);
+
+    /** Set whether history is displayed  */
+    void setDisplayHistory(bool display);
+    /** Update the beam history using the specified time and planetarium range */
+    void updateBeamHistory(double time, double range);
+    /** Set history length in seconds */
+    void setHistoryLength(double historyLength);
+
+  protected:
+    /** Protect osg::Referenced-derived destructor */
+    virtual ~BeamHistory();
+
+  private:
+    /** Represents a history point node and its original color */
+    struct HistoryPoint
+    {
+      osg::ref_ptr<simVis::LocatorNode> node; ///< Node representing the beam history point
+      simVis::Color color; ///< Used to preserve color when history point was created. Alpha is subject to change based on current time
+    };
+
+    /** Remove oldest points (by time) such that the max number of history points does not exceed the given limit */
+    void limitByPoints_(unsigned int pointsLimit);
+    /** Remove points such that all remaining points are within a time window defined by newestTime - timeLimit */
+    void limitByTime_(double timeLimit);
+
+    osg::observer_ptr<simVis::BeamNode> beam_;
+    simData::DataStore& ds_;
+    std::map<double, std::unique_ptr<HistoryPoint> > historyPoints_; /// History points, keyed by time in seconds since ref year
+    /** Whether to show history */
+    bool displayHistory_;
+    /** History length to show in seconds */
+    double historyLength_;
+  };
+
   EntityFamily                   family_;
 
   osg::observer_ptr<PlatformNode> host_;
-  osg::observer_ptr<LocatorNode>  root_;
+  simData::DataStore& ds_;
+  osg::observer_ptr<LocatorNode>  locatorRoot_;
+  osg::observer_ptr<osg::Group> root_;
+
   /// planetarium radius, in meters
   double                          range_;
   osg::Vec4f                      domeColor_;
   simData::BeamPrefs              beamPrefs_;
   simData::GatePrefs              gatePrefs_;
   bool                            displayTargetVectors_;
+  bool                            displayBeamHistory_;
+  bool                            displayGates_;
+  double                          historyLength_; // seconds
+  double                          lastUpdateTime_;
 
   osg::observer_ptr<const ScenarioManager> scenario_;
 
@@ -157,6 +220,7 @@ private:
 
   osg::ref_ptr<osg::Geometry> dome_;
   osg::ref_ptr<osg::Node> targetGeom_;
+  std::map<simData::ObjectId, osg::ref_ptr<BeamHistory> > history_;
 };
 
 } // namespace simVis

@@ -27,6 +27,8 @@
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 
+#include "osgEarth/MapNodeObserver"
+
 namespace osg { class Texture2D; }
 namespace osgEarth { namespace Util { class EllipsoidIntersector; } }
 namespace simVis
@@ -72,7 +74,7 @@ private:
 };
 
 /** EntityNode that represents a projector */
-class SDKVIS_EXPORT ProjectorNode : public EntityNode
+class SDKVIS_EXPORT ProjectorNode : public EntityNode, public osgEarth::MapNodeObserver
 {
 public:
   /**
@@ -86,13 +88,13 @@ public:
   * Gets the last known properties of this object
   * @return Object properties
   */
-  const simData::ProjectorProperties& getProperties() const { return lastProps_; }
+  const simData::ProjectorProperties& getProperties() const;
 
   /// set preferences
   void setPrefs(const simData::ProjectorPrefs& prefs);
 
   /// get preferences
-  const simData::ProjectorPrefs& getPrefs() const { return lastPrefs_; }
+  const simData::ProjectorPrefs& getPrefs() const;
 
   /// get field of view in degrees
   double getVFOV() const;
@@ -100,11 +102,17 @@ public:
   /// Return texture
   osg::Texture2D* getTexture() const;
 
+  /// Return shadow map
+  osg::Texture2D* getShadowMap() const;
+
   /// Load image into texture
   void setImage(osg::Image *image);
 
   /// Gets the texture generation matrix
-  const osg::Matrixd& getTexGenMatrix() const { return texGenMatrix_; }
+  const osg::Matrixd& getTexGenMatrix() const;
+
+  /// Gets the shadow map generation matrix
+  const osg::Matrixd& getShadowMapMatrix() const;
 
   /**
    * Gets a pointer to the last data store update, or nullptr if
@@ -113,9 +121,10 @@ public:
   const simData::ProjectorUpdate* getLastUpdateFromDS() const;
 
   /// Add projector uniforms to the given StateSet
-  void addUniforms(osg::StateSet* stateSet) const;
+  void applyToStateSet(osg::StateSet* stateSet) const;
+
   /// Remove projector uniforms from the given StateSet
-  void removeUniforms(osg::StateSet* stateSet) const;
+  void removeFromStateSet(osg::StateSet* stateSet) const;
 
   /// Set the calculator that can calculate the projector's ellipsoid intersection
   void setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator);
@@ -140,6 +149,10 @@ public:
 
   /** Traverse the node during visitor pattern */
   virtual void traverse(osg::NodeVisitor& nv) override;
+
+  /// Override from MapNodeObserver
+  void setMapNode(osgEarth::MapNode*) override;
+  osgEarth::MapNode* getMapNode() override;
 
 public: // EntityNode interface
   /**
@@ -225,7 +238,7 @@ private:
   void getMatrices_(
     osg::Matrixd& out_projection,
     osg::Matrixd& out_locator,
-    osg::Matrixd& out_modelView) const;
+    osg::Matrixd& out_view) const;
 
   void init_();
 
@@ -255,6 +268,12 @@ private:
 
   osg::Matrixd texGenMatrix_;
   osg::ref_ptr<osg::Texture2D> texture_;
+  osg::Matrixd shadowMapMatrix_;
+  osg::ref_ptr<osg::Texture2D> shadowMap_;
+  osg::ref_ptr<osg::Camera> shadowCam_;
+  osg::ref_ptr<osg::Uniform> shadowToPrimaryMatrix_;
+  osg::Matrixd viewMat_;
+
   // Projector video interface for transferring video image.
   osg::ref_ptr<ProjectorTextureImpl> projectorTextureImpl_;
   // Playlist node that holds the video images that will be read into
@@ -275,6 +294,14 @@ private:
   std::map<osg::observer_ptr<osg::Node>, osg::observer_ptr<osg::Node> > projectedNodes_;
 
   std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator_;
+
+  /// returns true if the user changes a preference that requires
+  /// the projector manager to update the rendering state
+  mutable bool stateDirty_;
+  bool isStateDirty_() const;
+  void resetStateDirty_();
+
+  friend class ProjectorManager;
 };
 
 } //namespace simVis

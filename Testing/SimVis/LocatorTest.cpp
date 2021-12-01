@@ -230,6 +230,45 @@ int testPositionVsPositionOrientation()
   return rv;
 }
 
+int testParent()
+{
+  int rv = 0;
+  osg::ref_ptr<simVis::Locator> locator1 = new simVis::Locator();
+  osg::ref_ptr<simVis::Locator> locator2 = new simVis::Locator(locator1);
+  osg::ref_ptr<simVis::Locator> locator3 = new simVis::Locator(locator2);
+  rv += SDK_ASSERT(locator1->isEmpty());
+  rv += SDK_ASSERT(locator2->isEmpty());
+  rv += SDK_ASSERT(locator3->isEmpty());
+
+  locator1->setCoordinate(simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3()), 1.);
+  rv += SDK_ASSERT(!locator1->isEmpty());
+  rv += SDK_ASSERT(!locator2->isEmpty());
+  rv += SDK_ASSERT(!locator3->isEmpty());
+
+  // if a parent locator is dereferenced, locator can no longer calculate
+  locator1 = nullptr;
+  rv += SDK_ASSERT(locator2->isEmpty());
+  rv += SDK_ASSERT(locator3->isEmpty());
+
+  simCore::Coordinate out_coord;
+  rv += SDK_ASSERT(false == locator3->getCoordinate(&out_coord));
+  locator2->setLocalOffsets(simCore::Vec3(1, 1, 1), simCore::Vec3(), 1.);
+  rv += SDK_ASSERT(false == locator3->getCoordinate(&out_coord));
+  locator3->setLocalOffsets(simCore::Vec3(1, 1, 1), simCore::Vec3(), 1.);
+  rv += SDK_ASSERT(false == locator3->getCoordinate(&out_coord));
+  osg::Matrixd mat;
+  rv += SDK_ASSERT(false == locator2->getLocatorMatrix(mat));
+  rv += SDK_ASSERT(false == locator3->getLocatorMatrix(mat));
+
+  // forcing parent to null explicitly allows locator to calculate
+  locator2->setParentLocator(nullptr);
+  rv += SDK_ASSERT(!locator2->isEmpty());
+  rv += SDK_ASSERT(!locator3->isEmpty());
+  rv += SDK_ASSERT(true == locator2->getLocatorMatrix(mat));
+  rv += SDK_ASSERT(true == locator3->getLocatorMatrix(mat));
+  return rv;
+}
+
 }
 
 int LocatorTest(int argc, char* argv[])
@@ -273,5 +312,8 @@ int LocatorTest(int argc, char* argv[])
   }
 
   rv += testPositionVsPositionOrientation();
+
+  rv += testParent();
+
   return rv;
 }

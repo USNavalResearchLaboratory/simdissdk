@@ -98,6 +98,13 @@ protected:
   */
   double getRange_(unsigned int rangeIndex) const;
 
+  /**
+  * Gets the height value corresponding to a height index
+  * @param heightIndex The index of the desired height
+  * @return height in meters
+  */
+  double getHeight_(unsigned int heightIndex) const;
+
 private:
   osg::ref_ptr<const ProfileDataProvider> templateProvider_;
 };

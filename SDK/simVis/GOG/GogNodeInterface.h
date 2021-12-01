@@ -421,6 +421,9 @@ public:
   /** Remove the specified listener */
   void removeGogNodeListener(GogNodeListenerPtr listener);
 
+  /** Retrieve the object index tag for picking GOGs. */
+  unsigned int objectIndexTag() const;
+
 protected: // methods
 
   /**
@@ -542,6 +545,8 @@ private:
 
   /** Cull callback that hides GOGs with timestamps as needed */
   osg::ref_ptr<osg::NodeCallback> timeCallback_;
+
+  unsigned int objectIndexTag_; ///< object index for picking
 };
 
 /// Shared ptr wrapper for the GogNodeInterface object
@@ -550,11 +555,12 @@ typedef std::shared_ptr<GogNodeInterface> GogNodeInterfacePtr;
 /**
  * Implementation of GogNodeInterface for AnnotationNodes, which are a base class of all GOG node types.
  * Used when less generic GogNodeInterface can't be found for a given osg node
+ * @deprecated This class has been deprecated.  Use one of the other GogNodeInterface implementations instead.
  */
 class SDKVIS_EXPORT AnnotationNodeInterface : public GogNodeInterface
 {
 public:
-  AnnotationNodeInterface(osgEarth::AnnotationNode* annotationNode, const simVis::GOG::GogMetaData& metaData);
+  SDK_DEPRECATE(AnnotationNodeInterface(osgEarth::AnnotationNode* annotationNode, const simVis::GOG::GogMetaData& metaData), "Use one of the other GogNodeInterface implementations instead.");
   virtual ~AnnotationNodeInterface();
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = nullptr) const;
 

@@ -81,6 +81,11 @@ bool EntityFamily::dismiss(EntityNode* entity)
   return related;
 }
 
+bool EntityFamily::isMember(simData::ObjectId id) const
+{
+  return (entityIds_.find(id) != entityIds_.end());
+}
+
 
 // Finds all the entities in the scenario "related" to the host,
 // searching recursively.

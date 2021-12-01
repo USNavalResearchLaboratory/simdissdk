@@ -47,10 +47,15 @@
 
 #include "osg/ImageStream"
 #include "osgDB/ReadFile"
-#include "osgEarth/Controls"
 #include "osgEarth/StringUtils"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+#include "osgEarth/Controls"
 namespace ui = osgEarth::Util::Controls;
+#endif
 
 //----------------------------------------------------------------------------
 namespace
@@ -148,10 +153,12 @@ double timeFromString(std::string t, int referenceYear)
 //----------------------------------------------------------------------------
 struct AppData
 {
+#ifndef HAVE_IMGUI
   osg::ref_ptr<ui::HSliderControl> timeSlider_;
   osg::ref_ptr<ui::CheckBoxControl> playCheck_;
   osg::ref_ptr<ui::CheckBoxControl> overheadMode_;
   osg::ref_ptr<ui::LabelControl> timeReadout_;
+#endif
   simData::DataStore *ds_;
   simVis::View* view_;
   double startTime_;
@@ -161,10 +168,10 @@ struct AppData
   std::vector<uint64_t> platformIDs_;
   int tetherIndex_;
   osgEarth::DateTime refDateTime_;
+  std::string nowTimeStr_;
 
   explicit AppData(simData::DataStore *ds, simVis::View* view)
-  : timeSlider_(nullptr),
-    ds_(ds),
+  : ds_(ds),
     view_(view),
     startTime_(0.0),
     endTime_(0.0),
@@ -176,14 +183,19 @@ struct AppData
 
   void apply()
   {
+#ifndef HAVE_IMGUI
     lastTime_ = timeSlider_->getValue();
+#endif
     ds_->update(lastTime_);
+    updateTimeReadout_();
   }
 
   void applyToggles()
   {
+#ifndef HAVE_IMGUI
     playing_ = playCheck_->getValue();
     view_->enableOverheadMode(overheadMode_->getValue());
+#endif
   }
 
   void tetherNext()
@@ -216,11 +228,22 @@ struct AppData
       const double t = lastTime_ + dt;
       ds_->update(t);
       lastTime_ = t;
-      timeSlider_->setValue(lastTime_, false);
+      updateTimeReadout_();
 
-      osgEarth::DateTime now = refDateTime_ + (t/3600.0);
-      timeReadout_->setText(now.asRFC1123());
+#ifndef HAVE_IMGUI
+      timeSlider_->setValue(lastTime_, false);
+#endif
     }
+  }
+
+  void updateTimeReadout_()
+  {
+    osgEarth::DateTime now = refDateTime_ + (lastTime_ / 3600.0);
+    nowTimeStr_ = now.asRFC1123();
+
+#ifndef HAVE_IMGUI
+    timeReadout_->setText(nowTimeStr_);
+#endif
   }
 };
 
@@ -453,7 +476,10 @@ private:
       update->setVelocity(ecef.velocity());
 
       if (t != -1 && t < app_.startTime_)
+      {
         app_.startTime_ = t;
+        app_.lastTime_ = t;
+      }
       if (t > app_.endTime_)
         app_.endTime_ = t;
 
@@ -848,6 +874,71 @@ private:
 };
 
 //----------------------------------------------------------------------------
+
+#ifdef HAVE_IMGUI
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  explicit ControlPanel(AppData& app)
+    : GUI::BaseGui("ASI Simple Viewer"),
+    app_(app)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    bool needUpdate = false;
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      float time = static_cast<float>(app_.lastTime_);
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Time", &time, static_cast<float>(app_.startTime_), static_cast<float>(app_.endTime_), "", ImGuiSliderFlags_AlwaysClamp);
+      if (time != app_.lastTime_)
+      {
+        app_.lastTime_ = time;
+        needUpdate = true;
+      }
+
+      ImGui::TableNextColumn();
+      ImGui::TableNextColumn();
+      ImGui::Text(app_.nowTimeStr_.c_str());
+
+      bool playing = app_.playing_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Playing", &app_.playing_);
+      if (playing != app_.playing_)
+        needUpdate = true;
+
+      bool overhead = app_.view_->isOverheadEnabled();
+      bool newOverhead = overhead;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Overhead", &newOverhead);
+      if (overhead != newOverhead)
+        app_.view_->enableOverheadMode(newOverhead);
+
+      ImGui::EndTable();
+    }
+
+    if (ImGui::Button("Tether Next"))
+      app_.tetherNext();
+
+    if (needUpdate)
+      app_.apply();
+
+    ImGui::End();
+  }
+
+private:
+  AppData& app_;
+};
+#else
 struct ApplyUI : public ui::ControlEventHandler
 {
   explicit ApplyUI(AppData* app): app_(app) {}
@@ -899,6 +990,7 @@ ui::Control* createUI(AppData& app)
 
   return top;
 }
+#endif
 
 //----------------------------------------------------------------------------
 void readASI(osg::ArgumentParser& args, AppData& app)
@@ -946,7 +1038,15 @@ int main(int argc, char **argv)
   viewer->getSceneManager()->getScenario()->bind(&dataStore);
 
   /// show the instructions overlay
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(app));
+#else
   viewer->getMainView()->addOverlayControl(createUI(app));
+#endif
   app.apply();
 
   /// add some stock OSG handlers

@@ -164,6 +164,12 @@ namespace simVis
     */
     void removeUpdateOverride(const std::string& id);
 
+    /**
+    * Get a pointer to the gate volume locator
+    * @return Pointer to the gate volume locator
+    */
+    Locator* getVolumeLocator() const;
+
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
     /** Return the class name */

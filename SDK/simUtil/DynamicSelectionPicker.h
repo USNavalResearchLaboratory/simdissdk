@@ -25,10 +25,13 @@
 
 #include "simCore/Common/Export.h"
 #include "simVis/Picker.h"
+#include "simVis/Types.h"
 
 namespace simVis {
-  class LobGroupNode;
+  class BeamNode;
   class CustomRenderingNode;
+  class LaserNode;
+  class LobGroupNode;
 }
 
 namespace simUtil
@@ -75,6 +78,24 @@ public:
    */
   void setPlatformAdvantagePct(double platformAdvantage);
 
+  enum class PickBehavior {
+    /// Retrieve all entities at the "closest" range
+    Closest,
+    /// Retrieve all entities within the range
+    AllInRange
+  };
+
+  /**
+   * Pick using an arbitrary mouse coordinate. The inset under the mouse is used. While this class is
+   * configured for tying into a simVis::Picker interface that automatically updates each frame, this
+   * function provides a mechanism to pick entities on demand. As such, this function will not change
+   * the globally picked variable using simVis::Picker::setPicked().
+   * @param nodes Output of nodes picked.
+   * @param mouseXy Mouse coordinates in OSG coordinate system (e.g. GUIActionAdapter::getX() and getY())
+   * @param behavior Defines behavior for picking nodes.
+   */
+  void pickToVector(simVis::EntityVector& nodes, const osg::Vec2d& mouseXy, PickBehavior behavior);
+
 protected:
   /** Derived from osg::Referenced, protect destructor */
   virtual ~DynamicSelectionPicker();
@@ -82,6 +103,10 @@ protected:
 private:
   /** Performs the actual intersection pick. */
   void pickThisFrame_();
+
+  /** Picks into a vector. */
+  void pickToVector_(simVis::EntityVector& nodes, PickBehavior behavior, double& mouseRangeSquaredPx) const;
+
   /** Returns true if the entity type is pickable. */
   bool isPickable_(const simVis::EntityNode* entityNode) const;
   /** Calculates the squared range from the mouse for the given entity, returning 0 on success */
@@ -90,6 +115,11 @@ private:
   int calculateLobSquaredRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LobGroupNode& lobNode, double& rangeSquared) const;
   /** Special case calculation for CustomRenderings, called by calculateSquaredRange_() automatically, returning 0 on success */
   int calculateCustomRenderRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::CustomRenderingNode& customNode, double& rangeSquared) const;
+  /** Special case calculation for Lasers, called by calculateSquaredRange_() automatically, returning 0 on success */
+  int calculateLaserRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LaserNode& laserNode, double& rangeSquared) const;
+  /** Special case calculation for Beams, called by calculateSquaredRange_() automatically, returning 0 on success */
+  int calculateBeamRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::BeamNode& beamNode, double& rangeSquared) const;
+
   /** Convenience method to find the squared range from the cursor to the closest point within ecefVec, returning 0 on success */
   int calculateScreenRangePoints_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const;
   /** Convenience method to find the squared range from the cursor to the line segments formed by treating ecefVec as successive end points, returning 0 on success */
@@ -114,7 +144,7 @@ private:
   /** Pointer to the scenario manager */
   osg::observer_ptr<simVis::ScenarioManager> scenario_;
 
-  /** Maximum valid range */
+  /** Maximum valid range in pixels. */
   double maximumValidRange_;
   /** Picking mask */
   osg::Node::NodeMask pickMask_;

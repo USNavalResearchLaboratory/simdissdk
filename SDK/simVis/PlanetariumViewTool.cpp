@@ -25,9 +25,10 @@
 #include "osg/CullFace"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/AnnotationUtils"
+#include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Time/TimeClass.h"
-#include "simNotify/Notify.h"
+#include "simData/MemoryDataStore.h"
 #include "simVis/Beam.h"
 #include "simVis/Gate.h"
 #include "simVis/Locator.h"
@@ -65,11 +66,207 @@ namespace
 //-------------------------------------------------------------------
 namespace simVis
 {
-PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
-  host_(host),
+// the planetarium moves with host position only.
+// all beams and gates must use locators to dynamically track their host position,
+// in order for them to move with their host (and with the planetarium.)
+//
+// body-beams (whether in the planetarium or not) use locators that dynamically track both
+// host position and orientation, since body beams are relative to platform orientation.
+// at every instant, the body-beam display reflects the current position of the beam (whether on the planetarium or not),
+// which includes the current position and orientation of the host.
+//
+// in the current implementation of the planetarium,
+// beam history in the planetarium is intended to fix that spot on the planetarium
+// that the beam painted at a specific time; that spot does not move relative to the host,
+// regardless of host orientation changes.
+//
+// body-beam history points still must be modelled relative to host orientation at their history-point-time.
+// but this can't be done with a locator that dynamically tracks platform orientation,
+// since beam history points would move with current host motion across the planetarium, instead of being fixed.
+// so, body-beam history points store the static orientation of the host at their history-point-time.
+//
+
+PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::DataStore& ds, double historyLength)
+  : osg::Group(),
+  beam_(beam),
+  ds_(ds),
+  displayHistory_(false),
+  historyLength_(historyLength)
+{}
+
+PlanetariumViewTool::BeamHistory::~BeamHistory()
+{
+}
+
+void PlanetariumViewTool::BeamHistory::setDisplayHistory(bool display)
+{
+  displayHistory_ = display;
+}
+
+void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double range)
+{
+  if (!beam_.valid())
+    return;
+
+  const simData::BeamUpdate* lastUpdate = beam_->getLastUpdateFromDS();
+  if (!lastUpdate)
+    return;
+
+  const simData::BeamProperties& props = beam_->getProperties();
+  // linear beams should only have points added on concrete data points, regardless of interpolation.
+  // BeamNode::getLastUpdateFromDS() interpolates if the interpolation flag is on, so ask the data
+  // store directly for the most recent update
+  const bool isLinearBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+  if (isLinearBeam)
+  {
+    auto* slice = ds_.beamUpdateSlice(props.id());
+    auto iter = slice->upper_bound(time);
+    if (!iter.hasPrevious())
+      return;
+
+    lastUpdate = iter.peekPrevious();
+  }
+
+  // body beams require new history nodes even with no new beam update, since changes in
+  // host orientation change the beam position.
+  // body beams could be optimized to only add new history node based on some tolerance around host ori.
+  const bool isBodyBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE);
+  const bool hasNewUpdate = (historyPoints_.find(lastUpdate->time()) == historyPoints_.end());
+  simData::BeamPrefs prefs(beam_->getPrefs());
+  // Add a locator node for the most recent update if not already done
+  if (isBodyBeam || hasNewUpdate)
+  {
+    const double updateTime = (hasNewUpdate ? lastUpdate->time() : time);
+    simData::BeamUpdate update(*lastUpdate);
+    update.set_range(range);
+
+    prefs.set_blended(true);
+    prefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
+
+    osg::ref_ptr<BeamVolume> volume = new BeamVolume(prefs, update);
+
+    Locator* beamOrientationLocator = beam_->getLocator();
+
+    // inherit only the dynamic resolved position of the beam origin
+    Locator* bhpOriginLocator = new Locator(beamOrientationLocator, Locator::COMP_POSITION);
+
+    if (isBodyBeam)
+    {
+      // extract the beam host orientation
+      simCore::Coordinate out_coord;
+      beamOrientationLocator->getCoordinate(&out_coord, simCore::COORD_SYS_LLA);
+      // apply host orientation as a (static) local offset
+      bhpOriginLocator->setLocalOffsets(simCore::Vec3(), out_coord.orientation(), updateTime, false);
+    }
+    Locator* bhpOrientationLocator = new Locator(bhpOriginLocator, Locator::COMP_ALL);
+
+    // get current beam ori offsets
+    simCore::Vec3 ignoredPos;
+    simCore::Vec3 beamOri;
+    beamOrientationLocator->getLocalOffsets(ignoredPos, beamOri);
+    // add beam ori to the orientation locator
+    bhpOrientationLocator->setLocalOffsets(simCore::Vec3(), beamOri, updateTime, false);
+
+    LocatorNode* bhpLocatorNode = new LocatorNode(bhpOrientationLocator, volume.get());
+
+    std::unique_ptr<HistoryPoint> newPoint(new HistoryPoint);
+    newPoint->node = bhpLocatorNode;
+    newPoint->color = Color(prefs.commonprefs().color(), osgEarth::Color::RGBA);
+
+    historyPoints_[updateTime] = std::move(newPoint);
+  }
+
+  if (!displayHistory_)
+    return;
+
+  // Update which history nodes are displayed based on the current time
+  removeChildren(0, getNumChildren());
+
+  // Perform data limiting as needed. Note that any points that are limited cannot
+  // be retrieved unless the scenario repeats that time, because there is no backfill
+  // in beam history points.
+  if (prefs.commonprefs().has_datalimitpoints())
+    limitByPoints_(prefs.commonprefs().datalimitpoints());
+  if (prefs.commonprefs().datalimittime())
+    limitByTime_(prefs.commonprefs().datalimittime());
+
+  float origAlpha = Color(prefs.commonprefs().color()).a();
+  for (const auto& iter : historyPoints_)
+  {
+    if (iter.first > time)
+      continue; // In the future
+    else if (iter.first < (time - historyLength_))
+      continue; // Too old
+
+    addChild(iter.second->node);
+    if (!prefs.commonprefs().draw())
+    {
+      iter.second->node->setNodeMask(simVis::DISPLAY_MASK_NONE);
+      continue;
+    }
+
+    iter.second->node->setNodeMask(simVis::DISPLAY_MASK_BEAM);
+    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->node->asGroup()->getChild(0));
+    if (bv)
+    {
+      // Use color from history point to ensure color history is preserved
+      simData::BeamPrefs newPrefs(prefs);
+      Color color = iter.second->color;
+      // Fade the alpha based on the point's age and based on the current color's alpha
+      color.a() = (1. - ((time - iter.first) / historyLength_)) * origAlpha;
+      newPrefs.mutable_commonprefs()->set_color(color.asABGR());
+      bv->performInPlacePrefChanges(&prefs, &newPrefs);
+    }
+  }
+}
+
+void PlanetariumViewTool::BeamHistory::setHistoryLength(double historyLength)
+{
+  historyLength_ = historyLength;
+}
+
+void PlanetariumViewTool::BeamHistory::limitByPoints_(unsigned int pointsLimit)
+{
+  // limit of 0 means no limiting, do nothing
+  if (pointsLimit == 0 || historyPoints_.size() <= pointsLimit)
+    return;
+
+  const size_t amount = historyPoints_.size() - pointsLimit;
+  auto limitAtIter = historyPoints_.begin();
+  std::advance(limitAtIter, amount);
+  historyPoints_.erase(historyPoints_.begin(), limitAtIter);
+}
+
+void PlanetariumViewTool::BeamHistory::limitByTime_(double timeLimit)
+{
+  // limit of <= 0 means no limiting, do nothing
+  if (timeLimit <= 0.)
+    return;
+
+  const double cutoff = historyPoints_.rbegin()->first - timeLimit;
+  for (auto cutoffIter = historyPoints_.begin(); cutoffIter != historyPoints_.end(); ++cutoffIter)
+  {
+    if (cutoffIter->first >= cutoff)
+    {
+      if (cutoffIter != historyPoints_.begin())
+        historyPoints_.erase(historyPoints_.begin(), cutoffIter);
+      return;
+    }
+  }
+}
+
+//-------------------------------------------------------------------
+
+PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host, simData::DataStore& ds)
+  : host_(host),
+  ds_(ds),
   range_(1000.0),
   domeColor_(0.8f, 1.0f, 0.8f, 0.5f), // RGBA
-  displayTargetVectors_(true)
+  displayTargetVectors_(true),
+  displayBeamHistory_(false),
+  displayGates_(false),
+  historyLength_(10.),
+  lastUpdateTime_(-1.)
 {
   family_.reset();
 
@@ -101,6 +298,10 @@ void PlanetariumViewTool::setRange(double range)
     // clear all target delegates
     if (targets_.valid())
       targets_->removeAll();
+
+    // clear all beam history
+    for (const auto& hist : history_)
+      root_->removeChild(hist.second.get());
 
     updateDome_();
 
@@ -150,11 +351,70 @@ void PlanetariumViewTool::setDisplayTargetVectors(bool value)
   displayTargetVectors_ = value;
 }
 
+void PlanetariumViewTool::setDisplayBeamHistory(bool display)
+{
+  if (displayBeamHistory_ == display)
+    return;
+
+  displayBeamHistory_ = display;
+  for (const auto& hist : history_)
+  {
+    hist.second->setDisplayHistory(displayBeamHistory_);
+    if (displayBeamHistory_)
+    {
+      root_->addChild(hist.second.get());
+      hist.second->updateBeamHistory(lastUpdateTime_, range_);
+    }
+    else
+      root_->removeChild(hist.second.get());
+  }
+  // Don't clear the history, can be recalled later
+}
+
+bool PlanetariumViewTool::getDisplayBeamHistory() const
+{
+  return displayBeamHistory_;
+}
+
+void PlanetariumViewTool::setBeamHistoryLength(double history)
+{
+  if (historyLength_ == history)
+    return;
+
+  historyLength_ = history;
+  for (const auto& hist : history_)
+  {
+    hist.second->setHistoryLength(historyLength_);
+    // Trigger an update to the last update time to fix the history to the new length
+    hist.second->updateBeamHistory(lastUpdateTime_, range_);
+  }
+}
+
+double PlanetariumViewTool::getBeamHistoryLength() const
+{
+  return historyLength_;
+}
+
+void PlanetariumViewTool::setDisplayGates(bool display)
+{
+  displayGates_ = display;
+  applyOverrides_(true);
+}
+
+bool PlanetariumViewTool::getDisplayGates() const
+{
+  return displayGates_;
+}
+
 void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
 {
+  root_ = new osg::Group;
+
   // create a node to track the position of the host:
-  root_ = new LocatorNode(new Locator(host_->getLocator(), Locator::COMP_POSITION));
-  root_->setName("Planetarium Tool Root Node");
+  locatorRoot_ = new LocatorNode(new Locator(host_->getLocator(), Locator::COMP_POSITION));
+  locatorRoot_->setName("Planetarium Tool Root Node");
+
+  root_->addChild(locatorRoot_.get());
 
   // build the dome
   updateDome_();
@@ -163,24 +423,46 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
   targets_ = new TargetDelegation();
   targets_->setGeoFence(fence_.get());
   targets_->addUpdateGeometryCallback(new UpdateGeometryAdapter(this));
-  root_->addChild(targets_.get());
+  locatorRoot_->addChild(targets_.get());
 
   // state for the delegation group:
   simVis::setLighting(targets_->getOrCreateStateSet(), 0);
 
   // sets horizon geofence to host position, which does not work correctly
   simCore::Vec3 ecef;
-  root_->getPosition(&ecef);
+  locatorRoot_->getPosition(&ecef);
   fence_->setLocation(osg::Vec3d(ecef.x(), ecef.y(), ecef.z()));
 
   // initial pull of active target platforms
   EntityVector entities;
   scenario.getAllEntities(entities);
-  onUpdate(scenario, simCore::MIN_TIME_STAMP, entities);
 
   // collect the entity list from the scenario
   family_.reset();
   family_.add(scenario, host_->getId());
+
+  // add all body and target beams that are in the family to beam history
+  // body and target beams can have history changes without beam update due to host or target motion.
+  for (auto entityObsPtr : family_.members())
+  {
+    if (!entityObsPtr.valid())
+      continue;
+    simVis::BeamNode* beam = dynamic_cast<BeamNode*>(entityObsPtr.get());
+    if (!beam)
+      continue;
+    const simData::BeamProperties& props = beam->getProperties();
+    const bool isBodyOrTarget = (props.has_type() && (props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE || props.type() == simData::BeamProperties_BeamType_TARGET));
+    if (!isBodyOrTarget)
+      continue;
+    if (history_.find(beam->getId()) == history_.end())
+    {
+      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
+      history_[beam->getId()] = history;
+      root_->addChild(history.get());
+    }
+  }
+
+  onUpdate(scenario, simCore::MIN_TIME_STAMP, entities);
 
   // install all overrides
   applyOverrides_(true);
@@ -199,9 +481,10 @@ void PlanetariumViewTool::onUninstall(const ScenarioManager& scenario)
     targets_->removeChildren(0, targets_->getNumChildren());
 
   // scenario has already removed us from the scenegraph
-  root_ = nullptr;
+  locatorRoot_ = nullptr;
   targets_ = nullptr;
   dome_ = nullptr;
+  root_ = nullptr;
 }
 
 void PlanetariumViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNode* entity)
@@ -209,6 +492,14 @@ void PlanetariumViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNod
   if (family_.invite(entity))
   {
     applyOverrides_(entity, true);
+
+    osg::ref_ptr<simVis::BeamNode> beam = dynamic_cast<simVis::BeamNode*>(entity);
+    if (beam.get())
+    {
+      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
+      history_[beam->getId()] = history;
+      root_->addChild(history.get());
+    }
   }
 }
 
@@ -217,6 +508,13 @@ void PlanetariumViewTool::onEntityRemove(const ScenarioManager& scenario, Entity
   if (family_.dismiss(entity))
   {
     applyOverrides_(entity, false);
+    osg::ref_ptr<simVis::BeamNode> beam = dynamic_cast<simVis::BeamNode*>(entity);
+    if (beam.get() && history_.find(beam->getId()) != history_.end())
+    {
+      auto history = history_.find(beam->getId())->second;
+      root_->removeChild(history);
+      history_.erase(beam->getId());
+    }
   }
   else if (dynamic_cast<PlatformNode*>(entity))
   {
@@ -227,11 +525,33 @@ void PlanetariumViewTool::onEntityRemove(const ScenarioManager& scenario, Entity
 void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
 {
   // update the fence
-  fence_->setLocation(osg::Vec3d(0, 0, 0) * root_->getMatrix());
+  fence_->setLocation(osg::Vec3d(0, 0, 0) * locatorRoot_->getMatrix());
 
-  // check any entity updates for positional changes
+  lastUpdateTime_ = timeStamp.secondsSinceRefYear();
+
   for (EntityVector::const_iterator i = updates.begin(); i != updates.end(); ++i)
   {
+    // Update beam node history
+    BeamNode* beam = dynamic_cast<BeamNode*>(i->get());
+    if (beam)
+    {
+      if (!family_.isMember(beam->getId()))
+        continue;
+
+      // revisit current beams: enable ones that now qualify, disable ones that don't have range, etc.
+      applyOverrides_(beam, true);
+
+      if (history_.find(beam->getId()) == history_.end())
+      {
+        osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
+        history_[beam->getId()] = history;
+        if (displayBeamHistory_)
+          root_->addChild(history.get());
+      }
+      continue;
+    }
+
+    // check any entity updates for positional changes
     PlatformNode* platform = dynamic_cast<PlatformNode*>(i->get());
     if (!platform || platform == host_.get())
       continue;
@@ -240,6 +560,12 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
     else
       targets_->remove(platform);
   }
+
+  for (const auto& iter : history_)
+    iter.second->updateBeamHistory(lastUpdateTime_, range_);
+
+  // Force a call to this method next time scenario manager updates, even if there are no EntityVector updates
+  setDirty();
 }
 
 void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
@@ -255,7 +581,7 @@ void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
   }
 
   // transform the target position into planetarium-local space:
-  osg::Vec3d local = ecef * root_->getInverseMatrix();
+  osg::Vec3d local = ecef * locatorRoot_->getInverseMatrix();
   double     local_len = local.length();
   osg::Vec3d local_n   = local / local_len;
 
@@ -279,10 +605,10 @@ void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
 
 void PlanetariumViewTool::updateDome_()
 {
-  if (root_.valid())
+  if (locatorRoot_.valid())
   {
     if (dome_.valid())
-      root_->removeChild(dome_.get());
+      locatorRoot_->removeChild(dome_.get());
 
     // build a sphere
     osg::Geometry* drawable = osgEarth::AnnotationUtils::createEllipsoidGeometry(range_, range_, range_, domeColor_);
@@ -290,19 +616,17 @@ void PlanetariumViewTool::updateDome_()
     stateSet->setMode(GL_BLEND, 1);
     stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
     stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
-    root_->addChild(drawable);
+    locatorRoot_->addChild(drawable);
     dome_ = drawable;
   }
 }
 
 void PlanetariumViewTool::applyOverrides_(bool enable)
 {
-  for (EntityFamily::EntityObserverSet::iterator i = family_.members().begin();
-      i != family_.members().end();
-      ++i)
+  for (auto entityObsPtr : family_.members())
   {
-    if (i->valid())
-      applyOverrides_(i->get(), enable);
+    if (entityObsPtr.valid())
+      applyOverrides_(entityObsPtr.get(), enable);
   }
 }
 
@@ -345,7 +669,7 @@ void PlanetariumViewTool::applyOverrides_(EntityNode* entity, bool enable)
   GateNode* gate = dynamic_cast<GateNode*>(entity);
   if (gate)
   {
-    if (enable)
+    if (enable && displayGates_)
     {
       simData::GateUpdate update;
       // overriding minrange and maxrange to same value to draw only the far face of the gate
@@ -364,7 +688,6 @@ void PlanetariumViewTool::applyOverrides_(EntityNode* entity, bool enable)
       gate->removePrefsOverride(OVERRIDE_TAG);
       gate->removeUpdateOverride(OVERRIDE_TAG);
     }
-    return;
   }
 }
 
@@ -389,5 +712,6 @@ osg::Node* PlanetariumViewTool::buildVectorGeometry_()
   geom->setDataVariance(osg::Object::DYNAMIC);
   return geom;
 }
+
 }
 

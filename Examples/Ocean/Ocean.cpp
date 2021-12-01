@@ -62,6 +62,11 @@
 #include "osgEarth/TMS"
 #include "osgEarth/Version"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#endif
+
 #ifdef HAVE_TRITON_NODEKIT
 #include "osgEarthTriton/TritonLayer"
 #include "simUtil/TritonSettings.h"
@@ -120,6 +125,11 @@ public:
     enabled_ = enable;
   }
 
+  bool enabled() const
+  {
+    return enabled_;
+  }
+
   virtual ~PlatformBuoyancyCallback()
   {
     // removeIntersections is not currently exposed in the Triton Layer API
@@ -174,6 +184,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
 {
   osg::ref_ptr<simVis::Viewer> viewer_;
   osg::ref_ptr<simVis::SceneManager> scene_;
+#ifndef HAVE_IMGUI
   osgEarth::Util::Controls::Control* menuControl_;
 
   MenuHandler(simVis::Viewer* viewer, simVis::SceneManager* scene, osgEarth::Util::Controls::Control* menuControl)
@@ -181,6 +192,12 @@ struct MenuHandler : public osgGA::GUIEventHandler
       scene_(scene),
       menuControl_(menuControl)
   { }
+#else
+  MenuHandler(simVis::Viewer* viewer, simVis::SceneManager* scene)
+    : viewer_(viewer),
+    scene_(scene)
+  { }
+#endif
 
   bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
   {
@@ -207,11 +224,12 @@ struct MenuHandler : public osgGA::GUIEventHandler
       case '1':
         viewer_->getMainView()->tetherCamera(nullptr);
         break;
+#ifndef HAVE_IMGUI
       case 'h':
         if (menuControl_)
           menuControl_->setVisible(!menuControl_->visible());
         break;
-
+#endif
       case 'a':
           viewer_->setLogarithmicDepthBufferEnabled(
               !viewer_->isLogarithmicDepthBufferEnabled());
@@ -266,18 +284,19 @@ static simData::ObjectId createShip(simData::DataStore& dataStore)
   return result;
 }
 
-namespace
-{
-  using namespace osgEarth::Util::Controls;
-
-  static char s_menu[] =
-    "0 : reset view (to ship)\n"
-    "1 : untether camera\n"
-    "h : toggle this menu\n";
+static char s_menu[] =
+"0 : reset view (to ship)\n"
+"1 : untether camera\n"
+"h : toggle this menu\n";
 
 #ifdef HAVE_TRITON_NODEKIT
-  static osg::ref_ptr<simUtil::TritonSettingsAdapter> s_TritonSettings(new simUtil::TritonSettingsAdapter);
+static osg::ref_ptr<simUtil::TritonSettingsAdapter> s_TritonSettings(new simUtil::TritonSettingsAdapter);
 #endif /* HAVE_TRITON_NODEKIT */
+
+namespace
+{
+#ifndef HAVE_IMGUI
+  using namespace osgEarth::Util::Controls;
 
   /** Applies an opacity value from a slider */
   class ApplyOpacity : public ControlEventHandler
@@ -384,7 +403,8 @@ namespace
   private:
     osg::ref_ptr<PlatformBuoyancyCallback> _cb;
   };
-#endif
+#endif /* HAVE_TRITON_NODEKIT */
+#endif /* HAVE_IMGUI */
 
 #ifdef HAVE_SILVERLINING_NODEKIT
   osg::ref_ptr<simUtil::SilverLiningSettingsAdapter> s_SlSettings = new simUtil::SilverLiningSettingsAdapter;
@@ -503,6 +523,296 @@ namespace
   };
 #endif
 
+#ifdef HAVE_IMGUI
+  // ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+  // the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+  // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(250); func("##" label, __VA_ARGS__)
+
+  class ControlPanel : public GUI::BaseGui
+  {
+  public:
+    ControlPanel(osgEarth::SimpleOceanLayer* simpleOceanLayer, osgEarth::VisibleLayer* tritonLayer,
+      PlatformBuoyancyCallback* buoyancyCallback, SkyNode* skyNode, simVis::View* view,
+      bool useTriton, bool useSilverLining)
+      : GUI::BaseGui("Ocean Demo"),
+      simpleOceanLayer_(simpleOceanLayer),
+      tritonLayer_(tritonLayer),
+      buoyancyCallback_(buoyancyCallback),
+      skyNode_(skyNode),
+      view_(view),
+      useTriton_(useTriton),
+      useSilverLining_(useSilverLining)
+    {
+    }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    ImGui::Text("0: reset view (to ship)");
+    ImGui::Text("1: untether camera");
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      // Opacity
+      float opacity = opacity_;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Opacity", &opacity_, 0.f, 100.f, "%.0f", ImGuiSliderFlags_AlwaysClamp);
+      if (opacity != opacity_)
+      {
+        if (simpleOceanLayer_.get())
+          simpleOceanLayer_->setOpacity(opacity * 0.01f);
+        else if (tritonLayer_.get())
+          tritonLayer_->setOpacity(opacity * 0.01f);
+      }
+
+      // Lighting
+      bool lighting = lighting_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Lighting", &lighting_);
+      if (lighting != lighting_)
+      {
+        if (skyNode_.get())
+          skyNode_->setLighting(osg::StateAttribute::OVERRIDE | (lighting_ ? osg::StateAttribute::ON : osg::StateAttribute::OFF));
+      }
+
+      // Overhead mode
+      bool overhead = view_->isOverheadEnabled();
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Overhead Mode", &overhead);
+      if (view_->isOverheadEnabled() != overhead)
+        view_->enableOverheadMode(overhead);
+
+      if (useTriton_)
+      {
+        ImGui::TableNextColumn();
+        pushLargeFont_();
+        ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), "Triton"); // Yellow
+        popLargeFont_();
+        ImGui::TableNextColumn();
+
+        // Choppiness
+        float choppiness = static_cast<float>(s_TritonSettings->choppiness()->value());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Choppiness", &choppiness, 0.f, 3.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (choppiness != static_cast<float>(s_TritonSettings->choppiness()->value()))
+          s_TritonSettings->choppiness()->set(choppiness);
+
+        // Note: simUtil::TritonSettingsAdapter's quality setter is a no-op, so don't provide the user a control for it
+
+        // Wind direction
+        float direction = static_cast<float>(s_TritonSettings->seaState()->windDirection());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Wind Direction", &direction, -180.f, 180.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (direction != static_cast<float>(s_TritonSettings->seaState()->windDirection()))
+          s_TritonSettings->seaState()->setWindDirection(direction);
+
+        // Sea state
+        float seaState = static_cast<float>(s_TritonSettings->seaState()->seaState());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Sea State", &seaState, 0.f, 12.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (seaState != static_cast<float>(s_TritonSettings->seaState()->seaState()))
+          s_TritonSettings->seaState()->setSeaState(seaState);
+
+        // Sun Intensity
+        float sunIntensity = static_cast<float>(s_TritonSettings->sunIntensity()->value());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Sun Intensity", &sunIntensity, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (sunIntensity != static_cast<float>(s_TritonSettings->sunIntensity()->value()))
+          s_TritonSettings->sunIntensity()->set(sunIntensity);
+
+        // Spray
+        bool spray = s_TritonSettings->enableSpray()->value();
+        IMGUI_ADD_ROW(ImGui::Checkbox, "Spray", &spray);
+        if (s_TritonSettings->enableSpray()->value() != spray)
+          s_TritonSettings->enableSpray()->set(spray);
+
+        // Wireframe
+        bool wireframe = s_TritonSettings->enableWireframe()->value();
+        IMGUI_ADD_ROW(ImGui::Checkbox, "Wireframe", &wireframe);
+        if (s_TritonSettings->enableWireframe()->value() != wireframe)
+          s_TritonSettings->enableWireframe()->set(wireframe);
+
+        // God rays
+        bool godRays = s_TritonSettings->enableGodRays()->value();
+        IMGUI_ADD_ROW(ImGui::Checkbox, "God Rays", &godRays);
+        if (s_TritonSettings->enableGodRays()->value() != godRays)
+          s_TritonSettings->enableGodRays()->set(godRays);
+
+        // God rays fade
+        float godRaysFade = static_cast<float>(s_TritonSettings->godRaysFade()->value());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "God Rays Fade", &godRaysFade, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (godRaysFade != static_cast<float>(s_TritonSettings->godRaysFade()->value()))
+          s_TritonSettings->godRaysFade()->set(godRaysFade);
+
+        // Platform Buoyancy
+        bool platformBouyancy = buoyancyCallback_->enabled();
+        IMGUI_ADD_ROW(ImGui::Checkbox, "Platform Buoyancy", &platformBouyancy);
+        if (buoyancyCallback_->enabled() != platformBouyancy)
+          buoyancyCallback_->setEnabled(platformBouyancy);
+      }
+
+      if (useSilverLining_)
+      {
+        ImGui::TableNextColumn();
+        pushLargeFont_();
+        ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), "SilverLining"); // Yellow
+        popLargeFont_();
+        ImGui::TableNextColumn();
+
+        // Visibility
+        float visibility = static_cast<float>(s_SlSettings->visibility()->value());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Visibility", &visibility, 100.f, 100000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (visibility != static_cast<float>(s_SlSettings->visibility()->value()))
+          s_SlSettings->visibility()->set(visibility);
+
+        // Turbidity
+        float turbidity = static_cast<float>(s_SlSettings->turbidity()->value());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Turbidity", &turbidity, 1.8f, 8.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (turbidity != static_cast<float>(s_SlSettings->turbidity()->value()))
+          s_SlSettings->turbidity()->set(turbidity);
+
+        // Light Pollution
+        float lightPollution = static_cast<float>(s_SlSettings->lightPollution()->value());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Light Pollution", &lightPollution, 0.f, 0.01f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (lightPollution != static_cast<float>(s_SlSettings->lightPollution()->value()))
+          s_SlSettings->lightPollution()->set(lightPollution);
+
+        // Rain
+        float rainRate = static_cast<float>(s_SlSettings->rainRate()->value());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Rain", &rainRate, 0.f, 30.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (rainRate != static_cast<float>(s_SlSettings->rainRate()->value()))
+          s_SlSettings->rainRate()->set(rainRate);
+
+        // Snow
+        float snowRate = static_cast<float>(s_SlSettings->snowRate()->rate());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Snow", &snowRate, 0.f, 30.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (snowRate != static_cast<float>(s_SlSettings->snowRate()->rate()))
+          s_SlSettings->snowRate()->setRate(snowRate);
+
+        // Wet Snow
+        bool wetSnow = s_SlSettings->snowRate()->isWet();
+        IMGUI_ADD_ROW(ImGui::Checkbox, "Wet Snow", &wetSnow);
+        if (s_SlSettings->snowRate()->isWet() != wetSnow)
+          s_SlSettings->snowRate()->setWet(wetSnow);
+
+        // Sleet
+        float sleetRate = static_cast<float>(s_SlSettings->sleetRate()->value());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Sleet", &sleetRate, 0.f, 30.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (sleetRate != static_cast<float>(s_SlSettings->sleetRate()->value()))
+          s_SlSettings->sleetRate()->set(sleetRate);
+
+        // Lens Flare
+        bool lensFlare = s_SlSettings->lensFlare()->value();
+        IMGUI_ADD_ROW(ImGui::Checkbox, "Lens Flare", &lensFlare);
+        if (s_SlSettings->lensFlare()->value() != lensFlare)
+          s_SlSettings->lensFlare()->set(lensFlare);
+
+        // Gamma
+        float gamma = static_cast<float>(s_SlSettings->gamma()->value());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Gamma", &gamma, 0.f, 6.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (gamma != static_cast<float>(s_SlSettings->gamma()->value()))
+          s_SlSettings->gamma()->set(gamma);
+
+        // Wind Speed
+        float windSpeed = static_cast<float>(s_SlSettings->wind()->speed());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Wind Speed", &windSpeed, 0.f, 75.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (windSpeed != static_cast<float>(s_SlSettings->wind()->speed()))
+          s_SlSettings->wind()->setSpeed(windSpeed);
+
+        // Wind Direction
+        float windDirection = static_cast<float>(s_SlSettings->wind()->direction());
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Wind Direction", &windDirection, -180.f, 180.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (windDirection != static_cast<float>(s_SlSettings->wind()->direction()))
+          s_SlSettings->wind()->setDirection(windDirection);
+
+        // Infrared
+        bool infrared = s_SlSettings->infrared()->value();
+        IMGUI_ADD_ROW(ImGui::Checkbox, "Infrared", &infrared);
+        if (s_SlSettings->infrared()->value() != infrared)
+          s_SlSettings->infrared()->set(infrared);
+
+        // Hosek-Wilkie
+        osgEarth::SilverLining::Atmosphere::SkyModel skyModel = static_cast<osgEarth::SilverLining::Atmosphere::SkyModel>(s_SlSettings->skyModel()->value());
+        bool hosekWilkie = (skyModel == osgEarth::SilverLining::Atmosphere::HOSEK_WILKIE);
+        bool newValue = hosekWilkie;
+        IMGUI_ADD_ROW(ImGui::Checkbox, "Hosek-Wilkie", &newValue);
+        if (hosekWilkie != newValue)
+          s_SlSettings->skyModel()->set(newValue ? osgEarth::SilverLining::Atmosphere::HOSEK_WILKIE : osgEarth::SilverLining::Atmosphere::PREETHAM);
+
+        ImGui::TableNextColumn();
+        ImGui::Text("Add Clouds");
+        ImGui::TableNextColumn();
+
+        // Cloud type combo box
+        static const char* CLOUDTYPES[] = { "Cirrocumulus", "Cirrus Fibratus", "Stratus", "Cumulus Mediocris", "Cumulus Congestus",
+        "Cumulus Congestus HiRes", "Cumulonimbus Cappilatus", "Stratocumulus", "Towering Cumulus", "Sandstorm" };
+        static int currentCloudTypeIdx = 0;
+        if (ImGui::BeginCombo("##cloudtype", CLOUDTYPES[currentCloudTypeIdx], 0))
+        {
+          for (int i = 0; i < IM_ARRAYSIZE(CLOUDTYPES); i++)
+          {
+            const bool isSelected = (currentCloudTypeIdx == i);
+            if (ImGui::Selectable(CLOUDTYPES[i], isSelected))
+              currentCloudTypeIdx = i;
+
+            // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+            if (isSelected)
+              ImGui::SetItemDefaultFocus();
+          }
+          ImGui::EndCombo();
+        }
+
+        ImGui::SameLine();
+        // Add clouds button
+        if (ImGui::Button("Add"))
+          s_CloudManager->addCloudType(static_cast<SilverLining::CloudTypes>(currentCloudTypeIdx));
+        ImGui::SameLine();
+        if (ImGui::Button("Clear"))
+          s_CloudManager->clearClouds();
+
+        ImGui::TableNextColumn();
+        ImGui::Text("Presets");
+        ImGui::TableNextColumn();
+        // Presets combo box
+        static const char* PRESETS[] = { "Fair", "Partly Cloudy", "Mostly Cloudy", "Overcast" };
+        static int currentPresetIdx = 0;
+        if (ImGui::BeginCombo("##presets", PRESETS[currentPresetIdx], 0))
+        {
+          for (int i = 0; i < IM_ARRAYSIZE(PRESETS); i++)
+          {
+            const bool isSelected = (currentPresetIdx == i);
+            if (ImGui::Selectable(PRESETS[i], isSelected))
+              currentPresetIdx = i;
+
+            // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+            if (isSelected)
+              ImGui::SetItemDefaultFocus();
+          }
+          ImGui::EndCombo();
+        }
+
+        ImGui::SameLine();
+        // Apply preset button
+        if (ImGui::Button("Apply"))
+          s_SlSettings->conditionPreset()->set(static_cast<osgEarth::SilverLining::AtmosphericConditions::ConditionPresets>(currentPresetIdx));
+      }
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+  private:
+    osg::observer_ptr<osgEarth::SimpleOceanLayer> simpleOceanLayer_;
+    osg::observer_ptr<osgEarth::VisibleLayer> tritonLayer_;
+    PlatformBuoyancyCallback* buoyancyCallback_;
+    osg::observer_ptr<SkyNode> skyNode_;
+    osg::observer_ptr<simVis::View> view_;
+    bool useTriton_ = false;
+    bool useSilverLining_ = false;
+    float opacity_ = 80.f;
+    bool lighting_ = true;
+};
+
+#else
   Control* createMenu(osgEarth::SimpleOceanLayer* simpleOceanLayer, osgEarth::VisibleLayer* tritonLayer,
                       PlatformBuoyancyCallback* buoyancyCallback, SkyNode* skyNode, simVis::View* view,
                       bool isTriton, bool isSilverLining)
@@ -749,6 +1059,7 @@ namespace
 
     return b;
   }
+#endif /* HAVE_IMGUI */
 
   /** Factory for a sky node */
   SkyNode* makeSky(simVis::SceneManager* scene, bool useSilverLining, const std::string& slUser = "", const std::string& slLicense = "", const std::string& resourcePath = "")
@@ -915,6 +1226,7 @@ int main(int argc, char** argv)
   if (useTriton)
   {
     osgEarth::Triton::TritonLayer* triton = makeTriton(tritonuser, tritonlicense, tritonpath);
+    triton->setUserCallback(s_TritonSettings.get());
     viewer->getSceneManager()->getMap()->addLayer(triton);
     tritonLayer = triton;
     buoyancyCallback = new PlatformBuoyancyCallback(triton);
@@ -941,6 +1253,7 @@ int main(int argc, char** argv)
   viewer->getMainView()->tetherCamera(shipNode.get());
   viewer->getMainView()->setFocalOffsets(80.0, -10.0, 2000.0);
 
+#ifndef HAVE_IMGUI
   // install an on-screen menu
   Control* menu = createMenu(
       simpleOceanLayer.get(),
@@ -950,11 +1263,18 @@ int main(int argc, char** argv)
       viewer->getMainView(),
       useTriton,
       useSilverLining);
-
   viewer->getMainView()->addOverlayControl(menu);
-
   // install the handler for the demo keys in the notify() above
   viewer->addEventHandler(new MenuHandler(viewer.get(), scene.get(), menu));
+#else
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(simpleOceanLayer.get(), tritonLayer.get(), buoyancyCallback.get(),
+    sky.get(), viewer->getMainView(), useTriton, useSilverLining));
+  viewer->addEventHandler(new MenuHandler(viewer.get(), scene.get()));
+#endif
 
   viewer->installDebugHandlers();
   viewer->run();

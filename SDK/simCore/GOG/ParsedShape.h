@@ -156,7 +156,7 @@ enum class ShapeParameter
   OFFSETROLL,
   TEXTOUTLINECOLOR,
   TEXTOUTLINETHICKNESS,
-  ICON,
+  IMAGE,
   LLABOX_ROT, // rotation used by KML ground overlay latlonbox
   TIME_START,
   TIME_END,

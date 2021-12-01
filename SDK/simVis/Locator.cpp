@@ -48,7 +48,7 @@ Locator::Locator()
 
 Locator::Locator(Locator* parentLoc, unsigned int inheritMask)
   : rotOrder_(HPR),
-  isEmpty_(false),
+  isEmpty_(true),
   ecefCoordIsSet_(false),
   hasRotation_(false),
   offsetsAreSet_(false),
@@ -60,10 +60,19 @@ Locator::Locator(Locator* parentLoc, unsigned int inheritMask)
   ecefCoord_.setCoordinateSystem(simCore::COORD_SYS_ECEF);
 }
 
+bool Locator::isValidlyParented_() const
+{
+  return (parentLoc_ == nullptr || (parentLoc_.valid() && parentLoc_->isValidlyParented_()));
+}
+
+bool Locator::hasNoData_() const
+{
+  return (isEmpty_ && (!parentLoc_.valid() || parentLoc_->hasNoData_()));
+}
+
 bool Locator::isEmpty() const
 {
-  // locator is empty when it and all parents are empty
-  return (isEmpty_ && (!parentLoc_.valid() || parentLoc_->isEmpty()));
+  return (!isValidlyParented_() || hasNoData_());
 }
 
 bool Locator::isEci() const
@@ -175,16 +184,19 @@ bool Locator::getCoordinate(simCore::Coordinate* out_coord, const simCore::Coord
   if (!ecefCoordIsSet_ && parentLoc_.valid() && componentsToInherit_ != 0)
   {
     simCore::Coordinate parent;
-    if (parentLoc_->getCoordinate(&parent))
+    if (!parentLoc_->getCoordinate(&parent))
     {
-      if ((componentsToInherit_ & COMP_POSITION) != COMP_NONE)
-      {
-        temp.setPosition(parent.position());
-      }
-      if ((componentsToInherit_ & COMP_ORIENTATION) != COMP_NONE)
-      {
-        temp.setOrientation(parent.orientation());
-      }
+      // all failure cases are handled by  if (!out_coord || isEmpty())  block above
+      assert(0);
+      return false;
+    }
+    if ((componentsToInherit_ & COMP_POSITION) != COMP_NONE)
+    {
+      temp.setPosition(parent.position());
+    }
+    if ((componentsToInherit_ & COMP_ORIENTATION) != COMP_NONE)
+    {
+      temp.setOrientation(parent.orientation());
     }
   }
   temp.setElapsedEciTime(getElapsedEciTime());
@@ -204,7 +216,7 @@ bool Locator::getCoordinate(simCore::Coordinate* out_coord, const simCore::Coord
 
 bool Locator::getLocalOffsets(simCore::Vec3& pos, simCore::Vec3& ori) const
 {
-  if (!offsetsAreSet_ || isEmpty())
+  if (!offsetsAreSet_)
   {
     pos.set(0, 0, 0);
     ori.set(0, 0, 0);
@@ -288,8 +300,7 @@ bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::Coo
   }
   if (coordsys == simCore::COORD_SYS_LLA)
   {
-    simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), *out_position);
-    return true;
+    return (simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), *out_position) == 0);
   }
   if (coordsys == simCore::COORD_SYS_ECI)
   {
@@ -388,6 +399,9 @@ void Locator::applyLocalOffsets_(osg::Matrixd& output, unsigned int comps) const
 
 bool Locator::getLocatorMatrix(osg::Matrixd& output, unsigned int comps) const
 {
+  if (isEmpty())
+    return false;
+
   osg::Vec3d pos;
   const bool posFound = getPosition_(pos, comps);
 
@@ -407,7 +421,8 @@ bool Locator::getLocatorMatrix(osg::Matrixd& output, unsigned int comps) const
   }
   else if (posFound)
   {
-    computeLocalToWorldTransformFromXYZ_(pos, output);
+    if (computeLocalToWorldTransformFromXYZ_(pos, output))
+      return false;
   }
   applyOffsets_(output, comps);
   return true;
@@ -469,7 +484,10 @@ bool Locator::getPosition_(osg::Vec3d& pos, unsigned int comps) const
 
 bool Locator::getOrientation_(osg::Matrixd& ori, unsigned int comps) const
 {
-  if ((comps & COMP_ORIENTATION) == COMP_NONE || isEmpty())
+  if (isEmpty())
+    return false;
+
+  if ((comps & COMP_ORIENTATION) == COMP_NONE)
     return false;
 
   if (!ecefCoordIsSet_)
@@ -511,12 +529,13 @@ bool Locator::getOrientation_(osg::Matrixd& ori, unsigned int comps) const
   return false;
 }
 
-void Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const
+int Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const
 {
   local2world.makeTranslate(ecefPos);
 
   simCore::Vec3 llaPos;
-  simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), llaPos);
+  if (simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), llaPos))
+    return 1;
 
   double rotationMatrixENU_[3][3];
   simCore::CoordinateConverter::setLocalToEarthMatrix(llaPos.lat(), llaPos.lon(), simCore::LOCAL_LEVEL_FRAME_ENU, rotationMatrixENU_);
@@ -533,6 +552,7 @@ void Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, os
   local2world(2,0) = rotationMatrixENU_[2][0];
   local2world(2,1) = rotationMatrixENU_[2][1];
   local2world(2,2) = rotationMatrixENU_[2][2];
+  return 0;
 }
 
 void Locator::addCallback(LocatorCallback* callback)

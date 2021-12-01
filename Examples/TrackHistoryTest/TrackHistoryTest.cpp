@@ -44,16 +44,14 @@
 #include "simUtil/ExampleResources.h"
 
 #include <osgEarth/StringUtils>
+
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
 #include <osgEarth/Controls>
 namespace ui = osgEarth::Util::Controls;
-
-namespace
-{
-  std::string SAYBOOL(bool x)
-  {
-    return x ? "ON" : "OFF";
-  }
-}
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -65,6 +63,22 @@ namespace
 
 struct AppData
 {
+#ifdef HAVE_IMGUI
+  simData::TrackPrefs_Mode trackMode = simData::TrackPrefs_Mode_POINT;
+  int size = 2;
+  bool flat = false;
+  bool alt = false;
+  bool genTrackColor = true;
+  bool usePlatformColor = false;
+  bool useMultiColor = true;
+  float color[4] = { 1.f, 1.f, 1.f, 1.f };
+  bool useOverrideColor = false;
+  float overrideColor[4] = { 1.f, 1.f, 1.f, 1.f };
+  int maxPoints = 100;
+  bool reverse = false;
+  float time = SIM_START;
+  bool globalTrackDisplay = true;
+#else
   osg::ref_ptr<ui::HSliderControl>  modeSlider_;
   osg::ref_ptr<ui::HSliderControl>  sizeSlider_;
   osg::ref_ptr<ui::HSliderControl>  colorSlider_;
@@ -92,7 +106,7 @@ struct AppData
   osg::ref_ptr<ui::CheckBoxControl> altModeCheck_;
   osg::ref_ptr<ui::CheckBoxControl> globalToggle_;
   osg::ref_ptr<ui::CheckBoxControl> reverseModeCheck_;
-
+#endif
   std::vector< std::pair<simData::TrackPrefs_Mode, std::string> > modes_;
   std::vector< std::pair<simVis::Color, std::string> >            colors_;
   simData::DataStore*  ds_;
@@ -103,26 +117,7 @@ struct AppData
   osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler_;
 
   AppData(simData::DataStore* ds, simData::ObjectId hostId)
-   : modeSlider_(nullptr),
-     sizeSlider_(nullptr),
-     colorSlider_(nullptr),
-     overrideColorSlider_(nullptr),
-     maxLengthSlider_(nullptr),
-     multiColorCheck_(nullptr),
-     platformColorCheck_(nullptr),
-     generateColorCommandsCheck_(nullptr),
-     modeLabel_(nullptr),
-     sizeLabel_(nullptr),
-     colorLabel_(nullptr),
-     overrideColorLabel_(nullptr),
-     maxLengthLabel_(nullptr),
-     rewind1_(nullptr),
-     rewind2_(nullptr),
-     ff1_(nullptr),
-     ff2_(nullptr),
-     timeSlider_(nullptr),
-     tether_(nullptr),
-     ds_(ds),
+   : ds_(ds),
      hostId_(hostId),
      view_(nullptr),
      platformModel_(nullptr)
@@ -142,6 +137,50 @@ struct AppData
 
   void apply()
   {
+#ifdef HAVE_IMGUI
+    // add to the data table for track history
+    if (genTrackColor)
+      generateColorCommand_(0);
+    else
+      removeColorCommands_();
+
+    simData::DataStore::Transaction xaction;
+    simData::PlatformPrefs* platformPrefs = ds_->mutable_platformPrefs(hostId_, &xaction);
+    simData::TrackPrefs* trackPrefs = platformPrefs->mutable_trackprefs();
+
+    trackPrefs->set_trackdrawmode(trackMode);
+    trackPrefs->set_linewidth(size);
+
+    trackPrefs->set_flatmode(flat);
+    trackPrefs->set_altmode(alt);
+    trackPrefs->set_trackcolor(simVis::Color(color[0], color[1], color[2], color[3]).as(simVis::Color::RGBA));
+
+    trackPrefs->set_trackoverridecolor(simVis::Color(overrideColor[0], overrideColor[1], overrideColor[2], overrideColor[3]).as(simVis::Color::RGBA));
+    trackPrefs->set_usetrackoverridecolor(useOverrideColor);
+
+    trackPrefs->set_multitrackcolor(useMultiColor);
+    trackPrefs->set_useplatformcolor(usePlatformColor);
+
+    // -1 value signifies no limiting
+    if (maxPoints >= -1 && maxPoints <= 512)
+      trackPrefs->set_tracklength(maxPoints);
+    else
+      trackPrefs->clear_tracklength();
+
+    xaction.complete(&platformPrefs);
+
+    // time direction:
+    if (reverse)
+      ds_->getBoundClock()->playReverse();
+    else
+      ds_->getBoundClock()->playForward();
+
+    // global mask toggle.
+    unsigned displayMask = view_->getDisplayMask();
+    view_->setDisplayMask(globalTrackDisplay ?
+      (displayMask | simVis::DISPLAY_MASK_TRACK_HISTORY) :
+      (displayMask & ~simVis::DISPLAY_MASK_TRACK_HISTORY));
+#else
     int modeIndex  = simCore::sdkMax(0, (int)floor(modeSlider_->getValue()));
     int size       = simCore::sdkMax(1, (int)floor(sizeSlider_->getValue()));
     int maxlength  = simCore::sdkMax(-1, (int)floor(maxLengthSlider_->getValue()));
@@ -200,6 +239,7 @@ struct AppData
     view_->setDisplayMask(globalToggle_->getValue() ?
       (displayMask |  simVis::DISPLAY_MASK_TRACK_HISTORY) :
       (displayMask & ~simVis::DISPLAY_MASK_TRACK_HISTORY));
+#endif
   }
 
   void rewind(double seconds)
@@ -269,7 +309,12 @@ private:
     {
       simData::TableRow newRow;
       newRow.setTime(simHandler_->getTime());
+#ifdef HAVE_IMGUI
+      simVis::Color c(color[0], color[1], color[2], color[3]);
+      newRow.setValue(colId, c.as(simVis::Color::RGBA));
+#else
       newRow.setValue(colId, colors_[colorIndex].first.as(simVis::Color::RGBA));
+#endif
       table->addRow(newRow);
     }
   }
@@ -285,6 +330,146 @@ private:
 
 //----------------------------------------------------------------------------
 
+#ifdef HAVE_IMGUI
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  explicit ControlPanel(AppData& app)
+    : GUI::BaseGui("Track History Example"),
+    app_(app)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    bool needUpdate = false;
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      // Draw mode combo box
+      ImGui::TableNextColumn(); ImGui::Text("Draw Mode"); ImGui::TableNextColumn();
+      static const char* TRACKMODES[] = { "OFF", "POINT", "LINE", "RIBBON", "BRIDGE" };
+      static int currentModeIdx = app_.trackMode;
+      if (ImGui::BeginCombo("##trackmode", TRACKMODES[currentModeIdx], 0))
+      {
+        for (int i = 0; i < IM_ARRAYSIZE(TRACKMODES); i++)
+        {
+          const bool isSelected = (currentModeIdx == i);
+          if (ImGui::Selectable(TRACKMODES[i], isSelected))
+            currentModeIdx = i;
+
+          // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      if (currentModeIdx != app_.trackMode)
+      {
+        needUpdate = true;
+        app_.trackMode = static_cast<simData::TrackPrefs_Mode>(currentModeIdx);
+      }
+
+      int size = app_.size;
+      IMGUI_ADD_ROW(ImGui::SliderInt, "Size", &app_.size, 1, 10, "%d", ImGuiSliderFlags_AlwaysClamp);
+      if (size != app_.size)
+        needUpdate = true;
+
+      bool flat = app_.flat;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Flat Mode", &app_.flat);
+      if (flat != app_.flat)
+        needUpdate = true;
+
+      bool alt = app_.alt;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Alt Mode", &app_.alt);
+      if (alt != app_.alt)
+        needUpdate = true;
+
+      bool genTrackColor = app_.genTrackColor;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Generate TrackColor Commands", &app_.genTrackColor);
+      if (genTrackColor != app_.genTrackColor)
+        needUpdate = true;
+
+      bool usePlatformColor = app_.usePlatformColor;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Use Platform Color", &app_.usePlatformColor);
+      if (usePlatformColor != app_.usePlatformColor)
+        needUpdate = true;
+
+      bool useMultiColor = app_.useMultiColor;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Use Multi-color", &app_.useMultiColor);
+      if (useMultiColor != app_.useMultiColor)
+        needUpdate = true;
+
+      ImGui::TableNextColumn(); ImGui::Text("Color"); ImGui::TableNextColumn();
+      float oldColor[4] = { app_.color[0], app_.color[1], app_.color[2], app_.color[3] };
+      ImGuiColorEditFlags flags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_NoOptions;
+      ImGui::ColorEdit4("##color", &app_.color[0], flags);
+      if (app_.color != oldColor)
+        needUpdate = true;
+
+      bool useOverrideColor = app_.useOverrideColor;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Use Override Color", &app_.useOverrideColor);
+      if (useOverrideColor != app_.useOverrideColor)
+        needUpdate = true;
+
+      ImGui::TableNextColumn(); ImGui::Text("Override Color"); ImGui::TableNextColumn();
+      float oldOverrideColor[4] = { app_.overrideColor[0], app_.overrideColor[1], app_.overrideColor[2], app_.overrideColor[3] };
+      ImGui::ColorEdit4("##overrideColor", &app_.overrideColor[0], flags);
+      if (app_.color != oldOverrideColor)
+        needUpdate = true;
+
+      int maxPoints = app_.maxPoints;
+      IMGUI_ADD_ROW(ImGui::SliderInt, "Max Points", &app_.maxPoints, -1, 512, "%d", ImGuiSliderFlags_AlwaysClamp);
+      if (maxPoints != app_.maxPoints)
+        needUpdate = true;
+
+      ImGui::TableNextColumn(); ImGui::Text("Transport"); ImGui::TableNextColumn();
+      if (ImGui::Button("<<")) { app_.rewind(15.f); } ImGui::SameLine();
+      if (ImGui::Button("<")) { app_.rewind(5.f); } ImGui::SameLine();
+      if (ImGui::Button(">")) { app_.ff(5.f); } ImGui::SameLine();
+      if (ImGui::Button(">>")) { app_.ff(15.f); }
+
+      bool reverse = app_.reverse;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Reverse Mode", &app_.reverse);
+      if (reverse != app_.reverse)
+        needUpdate = true;
+
+      float time = app_.time;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Time", &app_.time, SIM_START, SIM_END, "", ImGuiSliderFlags_AlwaysClamp);
+      if (time != app_.time)
+        app_.simHandler_->setTime(time);
+
+      bool globalTrackDisplay = app_.globalTrackDisplay;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Global Track Display", &app_.globalTrackDisplay);
+      if (globalTrackDisplay != app_.globalTrackDisplay)
+        needUpdate = true;
+
+      ImGui::EndTable();
+    }
+
+    if (ImGui::Button("Reset Tether"))
+      app_.tether();
+
+    if (needUpdate)
+      app_.apply();
+
+    ImGui::End();
+  }
+
+private:
+
+  AppData& app_;
+};
+#else
 struct ApplyUI : public ui::ControlEventHandler
 {
   explicit ApplyUI(AppData* app): app_(app) {}
@@ -408,6 +593,7 @@ ui::Control* createUI(AppData& app)
 
   return top;
 }
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -494,7 +680,15 @@ int main(int argc, char **argv)
   viewer->getMainView()->setFocalOffsets(45, -45, 2e6);
 
   /// show the instructions overlay
+#ifdef HAVE_IMGUI
+    // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(app));
+#else
   viewer->getMainView()->addOverlayControl(createUI(app));
+#endif
   app.apply();
 
   /// add some stock OSG handlers

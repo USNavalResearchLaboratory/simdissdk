@@ -67,6 +67,8 @@ public:
 
   /// Get current time
   virtual simCore::TimeStamp timeStamp() const = 0;
+  /// Get current time as text
+  virtual QString timeText() const = 0;
   /// Set current time
   virtual void setTimeStamp(const simCore::TimeStamp& value) = 0;
   /// Set begin/end time range
@@ -124,6 +126,8 @@ public:
   virtual bool hasFocus() const;
   ///@return current time
   virtual simCore::TimeStamp timeStamp() const;
+  ///@return current time as text
+  virtual QString timeText() const;
   /// set current time
   virtual void setTimeStamp(const simCore::TimeStamp& value);
   /// set begin/end time range
@@ -170,6 +174,8 @@ public:
   virtual bool hasFocus() const;
   ///@return current time
   virtual simCore::TimeStamp timeStamp() const;
+  ///@return current time as text
+  virtual QString timeText() const;
   /// set current time
   virtual void setTimeStamp(const simCore::TimeStamp& value);
   /// set begin/end time range
@@ -217,6 +223,8 @@ public:
   virtual bool hasFocus() const;
   ///@return current time
   virtual simCore::TimeStamp timeStamp() const;
+  ///@return current time as text
+  virtual QString timeText() const;
   /// set current time
   virtual void setTimeStamp(const simCore::TimeStamp& value);
   /// set begin/end time range
@@ -263,6 +271,8 @@ public:
   virtual bool hasFocus() const;
   ///@return current time
   virtual simCore::TimeStamp timeStamp() const;
+  ///@return current time as text
+  virtual QString timeText() const;
   /// set current time
   virtual void setTimeStamp(const simCore::TimeStamp& value);
   /// set begin/end time range
@@ -309,6 +319,8 @@ public:
   virtual bool hasFocus() const;
   ///@return current time
   virtual simCore::TimeStamp timeStamp() const;
+  ///@return current time as text
+  virtual QString timeText() const;
   /// set current time
   virtual void setTimeStamp(const simCore::TimeStamp& value);
   /// set begin/end time range

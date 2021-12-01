@@ -24,6 +24,7 @@
 #include <cstring>
 #include <iterator>
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Math.h"
 #include "simVis/Gl3Utils.h"
 #include "simVis/Registry.h"
 #include "simVis/ViewManager.h"
@@ -244,7 +245,6 @@ void ViewManager::removeView(simVis::View* view)
   }
 }
 
-
 void ViewManager::getViews(std::vector<simVis::View*>& views) const
 {
   std::vector<osgViewer::View*> temp;
@@ -259,18 +259,15 @@ void ViewManager::getViews(std::vector<simVis::View*>& views) const
   }
 }
 
-
 unsigned int ViewManager::getNumViews() const
 {
   return viewer_->getNumViews();
 }
 
-
 simVis::View* ViewManager::getView(unsigned int index) const
 {
   return index < getNumViews() ? dynamic_cast<simVis::View*>(viewer_->getView(index)) : nullptr;
 }
-
 
 simVis::View* ViewManager::getViewByName(const std::string& name) const
 {
@@ -284,6 +281,31 @@ simVis::View* ViewManager::getViewByName(const std::string& name) const
   return nullptr;
 }
 
+simVis::View* ViewManager::getViewByMouseXy(const osg::Vec2d& mouseXy) const
+{
+  std::vector<simVis::View*> allViews;
+  getViews(allViews);
+
+  simVis::View* rv = nullptr;
+  for (auto* view : allViews)
+  {
+    // Ignore invalid views, and views set up to ignore event focus
+    if (!view || !view->getCamera())
+      continue;
+    auto* camera = view->getCamera();
+    if (!camera->getViewport() || !camera->getAllowEventFocus() || (camera->getNodeMask() == 0))
+      continue;
+
+    // Save the last view, which is front-most
+    auto* vp = camera->getViewport();
+    if (simCore::isBetween(mouseXy.x(), vp->x(), vp->x() + vp->width()) &&
+      simCore::isBetween(mouseXy.y(), vp->y(), vp->y() + vp->height()))
+    {
+      rv = view;
+    }
+  }
+  return rv;
+}
 
 int ViewManager::getIndexOf(simVis::View* view) const
 {
@@ -294,7 +316,6 @@ int ViewManager::getIndexOf(simVis::View* view) const
     return -1;
   return iter - temp.begin();
 }
-
 
 void ViewManager::addCallback(Callback* value)
 {

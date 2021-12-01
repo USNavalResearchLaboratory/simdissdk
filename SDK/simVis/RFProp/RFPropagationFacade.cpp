@@ -43,7 +43,8 @@
 
 namespace
 {
-const osg::Vec4f SIMDIS_ORANGE(1.0f, 0.5f, 0.0f, 1.0f);
+const simVis::Color SIMDIS_ORANGE(1.0f, 0.5f, 0.0f, 1.0f); // darker than dark orange
+const simVis::Color SIMDIS_CYAN(0.0f, 0.75f, 0.75f, 1.0f); // medium-dark cyan
 
 void setDefaultPODVector(simRF::PODVectorPtr podLossThresholds)
 {
@@ -116,10 +117,8 @@ namespace simRF
 const int DEFAULT_TRANSPARENCY = 60;  // percentage, 0-100. 100 is fully transparent, 0 is opaque
 const int DEFAULT_HISTORY = 30; // degrees
 
-RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* parent, std::shared_ptr<simCore::DatumConvert> datumConvert)
-  : id_(id),
-  antennaHeightMeters_(0.0),
-  rfParamsSet_(false),
+RFPropagationFacade::RFPropagationFacade(osg::Group* parent, std::shared_ptr<simCore::DatumConvert> datumConvert)
+  : antennaHeightMeters_(0.0),
   profileManager_(new simRF::ProfileManager(datumConvert)),
   parent_(parent)
 {
@@ -138,7 +137,7 @@ RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* paren
   podLossThresholds_ = PODVectorPtr(new std::vector<float>);
   setDefaultPODVector(podLossThresholds_);
 
-  radarParameters_ = RadarParametersPtr(new simCore::RadarParameters());
+  // do not create radarParameters_ until actually set
 
   // set default transparency
   setTransparency(DEFAULT_TRANSPARENCY);
@@ -161,15 +160,39 @@ int RFPropagationFacade::setModelType()
   return 1;
 }
 
+namespace
+{
+// can't use struct equality comparison: some params are calculated and not expected to be provided
+bool areEqual(const simCore::RadarParameters& first, const simCore::RadarParameters& second)
+{
+  return (simCore::areEqual(first.freqMHz, second.freqMHz)
+    && simCore::areEqual(first.antennaGaindBi, second.antennaGaindBi)
+    && simCore::areEqual(first.noiseFiguredB, second.noiseFiguredB)
+    && simCore::areEqual(first.pulseWidth_uSec, second.pulseWidth_uSec)
+    && simCore::areEqual(first.systemLossdB, second.systemLossdB)
+    && simCore::areEqual(first.xmtPowerKW, second.xmtPowerKW)
+    && simCore::areEqual(first.hbwD, second.hbwD));
+}
+}
+
 int RFPropagationFacade::setRadarParams(const simCore::RadarParameters& radarParams)
 {
-  // copy the struct
-  *radarParameters_ = radarParams;
-  // noise power in db = 10 log (kT/pw); for T, use standard ambient temperature: 17°C/290K
-  radarParameters_->noisePowerdB = simCore::linear2dB(4e-15 / radarParams.pulseWidth_uSec) + radarParams.noiseFiguredB;
-  radarParameters_->xmtPowerW = radarParams.xmtPowerKW * 1e03;
-  rfParamsSet_ = true;
-  return 0;
+  if (!radarParameters_)
+  {
+    // use copy constructor
+    radarParameters_ = std::make_shared<simCore::RadarParameters>(radarParams);
+    // noise power in db = 10 log (kT/pw); for T, use standard ambient temperature: 17°C/290K
+    radarParameters_->noisePowerdB = simCore::linear2dB(4e-15 / radarParams.pulseWidth_uSec) + radarParams.noiseFiguredB;
+    radarParameters_->xmtPowerW = radarParams.xmtPowerKW * 1e03;
+    return 0;
+  }
+  if (areEqual(*radarParameters_.get(), radarParams))
+    return 0;
+
+  // TODO: if params don't match: reset facade and create new facade with new timestamp?
+  // adapt implementation to allow multiple facades per entity?
+  // for now, return error.
+  return 1;
 }
 
 const RadarParametersPtr RFPropagationFacade::radarParams() const
@@ -214,6 +237,11 @@ int RFPropagationFacade::setColorMap(simRF::ProfileDataProvider::ThresholdType t
 int RFPropagationFacade::setSlotData(simRF::Profile* profile)
 {
   if (profile == nullptr)
+    return 1;
+  const simCore::RadarParameters* rp = radarParameters_.get();
+  if (rp == nullptr)
+    return 1;
+  if (!simCore::areEqual(profile->getHalfBeamWidth(), (rp->hbwD / 2. * simCore::DEG2RAD)))
     return 1;
   profileManager_->addProfile(profile);
   return 0;
@@ -644,47 +672,67 @@ double RFPropagationFacade::getReceivedPower(double azimRad, double slantRngMete
 
 bool RFPropagationFacade::valid() const
 {
-  // TODO: SPR-167: in SIMDIS 9, valid == (rfParametersSet && podVectorSet && colorMapSet);
-  return rfParamsSet_;
+  // in SIMDIS 9, valid == (rfParametersSet && podVectorSet && colorMapSet);
+  return (radarParameters_.get() != nullptr);
 }
 
 int RFPropagationFacade::loadArepsFiles(const simCore::TimeStamp& time, const std::vector<std::string>& filenames)
 {
   const double timeAsDouble = time.secondsSinceRefYear().Double();
+
+  // prepare the profileManager_ for addition of profiles
   profileManager_->addProfileMap(timeAsDouble);
   profileManager_->update(timeAsDouble);
   profileManager_->setSphericalEarth(true);
-  // TODO: we have to update the profileManager_ time to load data at specified time; should we restore previous time after load is completed?
 
-  simRF::ArepsLoader arepsLoader(this);
+  // TODO: implementation of multiple timestamps of rfprop data per facade is notional.
+  //    - needs conops to be fleshed out.
+  //    - will need attention to ensure the implementation is consistent.
+  //    - will have to update the profileManager_ time to load data at specified time; should we restore previous time after load is completed?
 
   // TODO: SDK-53
   // it may be desirable to check that height min/max/num, range min/max/num, beam width, and antenna height values for the first file match values obtained from all subsequent files
   // loading 180 files is very slow, and there are no dependencies between files, so loading could be parallelized.
 
-  // Process AREPS files
-  for (size_t ii = 0; ii < filenames.size(); ii++)
+  simRF::ArepsLoader arepsLoader(this);
+  std::vector<std::string> filenamesAdded;
+  bool loadingFirstFile = true;
+  for (const auto& filename : filenames)
   {
     osg::ref_ptr<simRF::Profile> profile = new simRF::Profile(new simRF::CompositeProfileProvider());
-    if (0 != arepsLoader.loadFile(filenames[ii], *profile, ii == 0))
+    if (0 != arepsLoader.loadFile(filename, *profile, loadingFirstFile))
     {
-      // failed to load a file
-      profileManager_->removeProfileMap(timeAsDouble);
-      return 1;
+      // arepsLoader provides the messaging on failure
+      continue;
     }
+    // adding slot can fail if hbw does not match expected value
+    if (0 != setSlotData(profile.get()))
+    {
+      SIM_ERROR << "Could not add slot for AREPS file: " << filename << std::endl;
+      continue;
+    }
+    // successfully loaded the file
+    loadingFirstFile = false;
+    filenamesAdded.push_back(filename);
     if (arepsFilesetTimeMap_.empty())
     {
       setAntennaHeight(arepsLoader.getAntennaHeight());
     }
-    setSlotData(profile.get());
+  }
+
+  if (filenamesAdded.empty())
+  {
+    profileManager_->removeProfileMap(timeAsDouble);
+    return 1;
   }
 
   // store filenames to support getInputFiles()
   auto it = arepsFilesetTimeMap_.find(time);
   if (it == arepsFilesetTimeMap_.end())
-    arepsFilesetTimeMap_[time] = filenames;
+    arepsFilesetTimeMap_[time] = filenamesAdded;
   else
-    it->second.insert(it->second.end(), filenames.begin(), filenames.end());
+    it->second.insert(it->second.end(), filenamesAdded.begin(), filenamesAdded.end());
+
   setDisplay(true);
   return 0;
 }
@@ -785,7 +833,7 @@ void RFPropagationFacade::initializeColorProviders_()
   lossColors[135.0f] = simVis::Color::Teal;
   lossColors[140.0f] = simVis::Color::Green;
   lossColors[145.0f] = simVis::Color::Navy;
-  lossColors[150.0f] = osg::Vec4f(0.0f, 0.75f, 0.75f, 1.0f);
+  lossColors[150.0f] = SIMDIS_CYAN;
   lossColors[155.0f] = simVis::Color::Aqua;
   lossColors[160.0f] = simVis::Color::Purple;
   lossColorProvider->setGradientColorMap(lossColors);

@@ -155,8 +155,6 @@ public:
 
   // From ImageLayer:
   virtual osgEarth::Status openImplementation() override;
-  // From VisibleLayer:
-  virtual void setOpacity(float value) override;
   // From Layer:
   virtual osg::Node* getNode() const override;
 

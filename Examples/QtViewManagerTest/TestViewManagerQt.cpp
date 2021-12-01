@@ -36,8 +36,6 @@
 #include "simVis/View.h"
 #include "simVis/SceneManager.h"
 
-#include "osgEarth/Controls"
-
 #include <QApplication>
 #include <QDialog>
 #include <QMainWindow>
@@ -50,9 +48,6 @@
 #endif
 
 #include <cstdlib> // rand()
-
-namespace ui = osgEarth::Util::Controls;
-
 
 int usage(char** argv)
 {

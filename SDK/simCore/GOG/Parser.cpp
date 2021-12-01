@@ -149,7 +149,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       {
         token = simCore::lowerCase(token);
         // stop further lower case conversion on text based values
-        if (token == "annotation" || token == "comment" || token == "name")
+        if (token == "annotation" || token == "comment" || token == "name" || token == "starttime" || token == "endtime")
           break;
       }
     }
@@ -178,9 +178,9 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       // NOTE: this will only store comments within a start/end block
       current.addComment(line);
 
-      // process special KML icon comment keywords
+      // process deprecated KML icon comment keywords
       if (tokens.size () > 2 && tokens[1] == "kml_icon")
-        current.set(ShapeParameter::ICON, tokens[2]);
+        current.set(ShapeParameter::IMAGE, tokens[2]);
       if (tokens.size() > 1 && tokens[1] == "kml_groundoverlay")
         current.setShape(ShapeType::IMAGEOVERLAY);
       if (tokens.size() > 1 && tokens[1] == "kml_latlonbox")
@@ -326,6 +326,28 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       else
       {
         printError_(filename, lineNumber, "latlonaltbox command requires at least 5 arguments");
+      }
+    }
+    else if (tokens[0] == "imageoverlay")
+    {
+      if (tokens.size() > 4)
+      {
+        if (current.shape() != ShapeType::UNKNOWN)
+        {
+          SIM_WARN << "Multiple shape keywords found in single start/end block, " << filename << " line: " << lineNumber << "\n";
+          invalidShape = true;
+        }
+        current.setShape(ShapeType::IMAGEOVERLAY);
+        current.set(ShapeParameter::LLABOX_N, tokens[1]);
+        current.set(ShapeParameter::LLABOX_S, tokens[2]);
+        current.set(ShapeParameter::LLABOX_W, tokens[3]);
+        current.set(ShapeParameter::LLABOX_E, tokens[4]);
+        if (tokens.size() > 5)
+          current.set(ShapeParameter::LLABOX_ROT, tokens[5]);
+      }
+      else
+      {
+        printError_(filename, lineNumber, "imageoverlay command requires at least 4 arguments");
       }
     }
     // arguments
@@ -767,6 +789,11 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
     // 3d billboard is OBE, since all annotations are always billboarded
     else if (startsWith(line, "3d billboard"))
       continue;
+    else if (tokens[0] == "imagefile")
+    {
+      if (tokens.size() >= 2)
+        current.set(ShapeParameter::IMAGE, tokens[1]);
+    }
     else // treat everything as a name/value pair
     {
       if (!tokens.empty())
@@ -872,8 +899,8 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       if (getColor_(parsed, ShapeParameter::TEXTOUTLINECOLOR, name, "textoutlinecolor", color) == 0)
         anno->setOutlineColor(color);
     }
-    if (parsed.hasValue(ShapeParameter::ICON))
-      anno->setIconFile(parsed.stringValue(ShapeParameter::ICON));
+    if (parsed.hasValue(ShapeParameter::IMAGE))
+      anno->setImageFile(parsed.stringValue(ShapeParameter::IMAGE));
     if (parsed.hasValue(ShapeParameter::PRIORITY))
     {
       double priority = 0.;
@@ -1111,7 +1138,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   {
     if (parsed.hasValue(ShapeParameter::LLABOX_N) && parsed.hasValue(ShapeParameter::LLABOX_S)
       && parsed.hasValue(ShapeParameter::LLABOX_E) && parsed.hasValue(ShapeParameter::LLABOX_W)
-      && parsed.hasValue(ShapeParameter::ICON))
+      && parsed.hasValue(ShapeParameter::IMAGE))
     {
       std::unique_ptr<ImageOverlay> imageOverlay(new ImageOverlay());
       int validValues = 0;
@@ -1138,7 +1165,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       }
       if (validValues == 4)
       {
-        imageOverlay->setImageFile(parsed.stringValue(ShapeParameter::ICON));
+        imageOverlay->setImageFile(parsed.stringValue(ShapeParameter::IMAGE));
         if (parsed.hasValue(ShapeParameter::LLABOX_ROT))
         {
           double rotation = 0.;
@@ -1148,7 +1175,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
         rv.reset(imageOverlay.release());
       }
       else
-        printError_(parsed.filename(), parsed.lineNumber(), "kml_groundoverlay " + name + " had invalid values, cannot create shape");
+        printError_(parsed.filename(), parsed.lineNumber(), "imageoverlay " + name + " had invalid values, cannot create shape");
     }
     break;
   }
@@ -1285,7 +1312,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     {
       validStart = (formatter.fromString(parsed.stringValue(ShapeParameter::TIME_START), startTime, 1970) == 0);
       if (!validStart)
-        printError_(parsed.filename(), parsed.lineNumber(), "Invalid start time: \"" + parsed.stringValue(ShapeParameter::TIME_START) + "\"");
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid start time" + (name.empty() ? "" : " for " + name) + ": \"" + parsed.stringValue(ShapeParameter::TIME_START) + "\"");
     }
 
     bool validEnd = false;
@@ -1294,7 +1321,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     {
       validEnd = (formatter.fromString(parsed.stringValue(ShapeParameter::TIME_END), endTime, 1970) == 0);
       if (!validEnd)
-        printError_(parsed.filename(), parsed.lineNumber(), "Invalid end time: \"" + parsed.stringValue(ShapeParameter::TIME_END) + "\"");
+        printError_(parsed.filename(), parsed.lineNumber(), "Invalid end time" + (name.empty() ? "" : " for " + name) + ": \"" + parsed.stringValue(ShapeParameter::TIME_END) + "\"");
     }
 
     if (validStart || validEnd)
@@ -1302,13 +1329,16 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       // If both start and end are defined, check that start is before end.  If only one is defined, set it without any further checks
       if (validStart && validEnd)
       {
-        if (startTime < endTime)
+        if (startTime <= endTime)
         {
           rv->setStartTime(startTime);
           rv->setEndTime(endTime);
         }
         else
-          printError_(parsed.filename(), parsed.lineNumber(), "Invalid start and end times: start time must be before end time");
+        {
+          // disable times on this gog; will always display
+          printError_(parsed.filename(), parsed.lineNumber(), "Invalid start and end times" + (name.empty() ? "" : " for " + name) + ": start time must be before end time");
+        }
       }
 
       else if (validStart)

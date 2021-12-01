@@ -95,4 +95,14 @@ double FunctionalProfileDataProvider::getRange_(unsigned int rangeIndex) const
   }
   return getRangeStep() * rangeIndex + getMinRange();
 }
+
+double FunctionalProfileDataProvider::getHeight_(unsigned int heightIndex) const
+{
+  if (heightIndex >= getNumHeights())
+  {
+    assert(false);
+    heightIndex = getNumHeights() - 1;
+  }
+  return getHeightStep() * heightIndex + getMinHeight();
+}
 }

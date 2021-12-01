@@ -125,6 +125,11 @@ void ColorWidget::setDialogEnable(bool value)
   showDialog_ = value;
 }
 
+QLabel* ColorWidget::colorLabel() const
+{
+  return ui_->colorLabel;
+}
+
 void ColorWidget::updateLabelVisibility_()
 {
   // The layout spacing is updated based on if includeText_ is set and if the label is

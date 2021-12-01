@@ -318,42 +318,51 @@ class MemoryCategoryDataSlice::MemoryCategoryDataPair : public CategoryDataPair
 public:
   /**
    * Public constructor for MemoryCategoryDataSlice
+   * @param[in] timeValue Time of the category data point
    * @param[in] catInt key for the category name
    * @param[in] valInt key for the category value
    * @param[in] categoryNameManager Used to dereference category and value
    */
-  MemoryCategoryDataPair(int catInt, int valInt, CategoryNameManager& categoryNameManager)
-    : catInt_(catInt),
+  MemoryCategoryDataPair(double timeValue, int catInt, int valInt, CategoryNameManager& categoryNameManager)
+    : time_(timeValue),
+    catInt_(catInt),
     valInt_(valInt),
     categoryNameManager_(categoryNameManager)
   {
   }
 
+  ///@return Time of validity for the category data pair
+  virtual double time() const override
+  {
+    return time_;
+  }
+
   ///@return the category name as a string
-  virtual std::string name() const
+  virtual std::string name() const override
   {
     return categoryNameManager_.nameIntToString(catInt_);
   }
 
   ///@return the string value for the current category
-  virtual std::string value() const
+  virtual std::string value() const override
   {
     return categoryNameManager_.valueIntToString(valInt_);
   }
 
   ///@return the integer key for the category name
-  virtual int nameInt() const
+  virtual int nameInt() const override
   {
     return catInt_;
   }
 
   ///@return the integer key for the value for the current category
-  virtual int valueInt() const
+  virtual int valueInt() const override
   {
     return valInt_;
   }
 
 private:
+  double time_;
   int catInt_;
   int valInt_;
   CategoryNameManager& categoryNameManager_;
@@ -488,6 +497,7 @@ private: // methods
   {
     int catInt = CategoryNameManager::NO_CATEGORY_NAME;
     int valInt = CategoryNameManager::NO_CATEGORY_VALUE;
+    double timeValue = -1.0;
     if (iter != parent_.data_.end())
     {
       catInt = iter->first;
@@ -497,10 +507,11 @@ private: // methods
       {
         --i;
         valInt = i->value;
+        timeValue = i->time;
       }
     }
 
-    return std::shared_ptr<CategoryDataPair>(new MemoryCategoryDataPair(catInt, valInt, *parent_.categoryNameManager_));
+    return std::shared_ptr<CategoryDataPair>(new MemoryCategoryDataPair(timeValue, catInt, valInt, *parent_.categoryNameManager_));
   }
 
 private: // methods

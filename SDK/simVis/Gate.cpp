@@ -928,6 +928,11 @@ void GateNode::removeUpdateOverride(const std::string& id)
   }
 }
 
+Locator* GateNode::getVolumeLocator() const
+{
+  return gateVolumeLocator_.get();
+}
+
 unsigned int GateNode::objectIndexTag() const
 {
   return objectIndexTag_;

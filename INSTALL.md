@@ -14,7 +14,7 @@ Supported Systems/Compilers
 Operating systems officially supported by the SIMDIS SDK:
 
 * Windows 10
-* Red Hat Enterprise Linux 6/7
+* Red Hat Enterprise Linux 7
 
 Compilers officially supported by the SIMDIS SDK:
 
@@ -22,16 +22,16 @@ Compilers officially supported by the SIMDIS SDK:
   - Microsoft Visual C++ 2017 (VC-14.1)
   - Microsoft Visual C++ 2019 (VC-14.2)
 * Linux compilers:
-  - GCC, minimum 4.4
+  - GCC, minimum 8.3
 
 Other compiler combinations may work, or could work with minimal improvements
 to the CMake configuration.  This is only a list of the systems that we internally
 are able to support.  We are glad to accept pull requests supporting new
 compilers.
 
-C++-11 support will be mandatory for SIMDIS SDK compilers starting after
-September 2019, after the 1.11 release.  This will eliminate support for
-GCC 4.4.  RHEL 6 users can continue to build the SIMDIS SDK by using the
+C++-11 support is be mandatory for SIMDIS SDK compilers starting as of
+September 2019, after the 1.11 release.  This eliminated support for
+GCC 4.4.  RHEL 7 users can continue to build the SIMDIS SDK by using the
 devtoolset package from the RHEL SCL, in order to use an ABI-compatible
 compiler with newer language support.
 
@@ -207,4 +207,3 @@ these values globally by adding them to the "Include files" and "Library files"
 lists found in the "VC++ Directories" section of the "Projects and Solutions"
 section of the Options dialog.  The Options dialog is accessed through the
 Microsoft Visual Studio Tools menu.
-

@@ -92,6 +92,8 @@ public slots:
   void setIncludeText(bool include);
   /** Sets a flag indicating whether clicking on the color well will display the color dialog */
   void setDialogEnable(bool value);
+  /** Retrieve the pointer to the color label */
+  QLabel* colorLabel() const;
 
 signals:
   /** emitted when a color selection is made */

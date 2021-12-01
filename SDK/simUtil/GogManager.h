@@ -193,7 +193,7 @@ typedef std::shared_ptr<GogObject> GogObjectPtr;
 class GogManager
 {
 public:
-  /** Observer class to listen to the GogManager for new or removed GOGs */
+  /** Observer class to listen to the GogManager for new or removed GOGs. Notifications include finalized and editable provisional, but not fully provisional GOGs */
   class GogChangeObserver
   {
   public:
@@ -313,6 +313,20 @@ public:
   */
   virtual void removeGogObserver(GogChangeObserverPtr observer) = 0;
 
+  /**
+  * Set the editable state of a provisional GOG.
+  * @param gog provisional GOG id
+  * @param editable toggles the provisional GOG's editable state
+  * @return zero if successful, non-zero otherwise
+  */
+  virtual int setProvisionalGogEditable(simUtil::GogObject* gog, bool editable) = 0;
+
+  /**
+  * Get the editable state of a provisional GOG.
+  * @param gog provisional GOG id
+  * @return true if provisional GOG is editable, false otherwise
+  */
+  virtual bool getProvisionalGogEditable(const simUtil::GogObject* gog) const = 0;
 };
 
 }

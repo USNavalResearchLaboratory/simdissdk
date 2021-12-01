@@ -14,4 +14,10 @@ set_target_properties(example_radiallos PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Radial LOS"
 )
+
+if(TARGET ImGuiLib)
+    target_link_libraries(example_radiallos PRIVATE ImGuiLib)
+    target_compile_definitions(example_radiallos PRIVATE HAVE_IMGUI)
+endif()
+
 vsi_install_target(example_radiallos SDK_Examples)

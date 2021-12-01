@@ -2131,28 +2131,39 @@ int CoordinateConverter::convertEcefToGeodeticPos(const Vec3 &ecefPos, Vec3 &lla
   const double Z = FUKUSHIMA_eP * fabs(ecefPos.z()) / WGS_A;
   double S = Z;
   double C = WGS_ESQC * PP;
+  double Cc = C * FUKUSHIMA_eP;
 
-  // iterative section, Halley's iterative formula
+  for (int i = 0; i < 2; ++i)
   {
-    const double A = sqrt(S * S + C * C);
-    const double B = 1.5 * WGS_ESQ * S * C * C * ((PP * S - Z * C) * A - WGS_ESQ * S * C);
-    const double D = Z * A * A * A + WGS_ESQ * S * S * S;
-    const double F = PP * A * A * A - WGS_ESQ * C * C * C;
-    S = D * F - B * S;
-    C = F * F - B * C;
-  }
-  // end
+    // iterative section, Halley's iterative formula
+    {
+      const double A = sqrt(S * S + C * C);
+      const double B = 1.5 * WGS_ESQ * S * C * C * ((PP * S - Z * C) * A - WGS_ESQ * S * C);
+      const double D = Z * A * A * A + WGS_ESQ * S * S * S;
+      const double F = PP * A * A * A - WGS_ESQ * C * C * C;
+      S = D * F - B * S;
+      C = F * F - B * C;
+    }
 
-  // C == 0 should be equivalent to x == 0 && y == 0, which is handled by polar/center-of-earth code above
-  if (C == 0.0)
-  {
-    assert(0);
-    return 1;
-  }
+    // C == 0 should be equivalent to x == 0 && y == 0, which is handled by polar/center-of-earth code above
+    if (C == 0.0)
+    {
+      assert(0);
+      return 1;
+    }
 
-  const double Cc = C * FUKUSHIMA_eP;
-  // it is believed that S/Cc is always positive and the angle returned is always first-quadrant
-  assert(S == 0.0 || sign(S) == sign(Cc));
+    Cc = C * FUKUSHIMA_eP;
+    if (S == 0.0 || sign(S) == sign(Cc))
+    {
+      // testing suggests that one iteration is sufficient for cases when
+      // S/Cc is positive and the atan(S / Cc) is first-quadrant.
+      break;
+    }
+    //else
+    // SIM-13615 provided test cases with points near center-of-earth
+    // where one-iteration condition was not met. testing suggests that
+    // 2 iterations produces an acceptable result in these cases.
+  }
   const double lat = sign(ecefPos.z()) * atan(S / Cc);
   const double num = Cc * p + fabs(ecefPos.z()) * S - WGS_B * (sqrt(C * C + S * S));
   const double den = sqrt(Cc * Cc + S * S);

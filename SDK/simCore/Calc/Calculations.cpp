@@ -1559,24 +1559,22 @@ bool positionInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& posit
   double azimuthRad, double elevRad, double widthRad, double heightRad, double minRangeM, double maxRangeM,
   simCore::EarthModelCalculations earthModel, const CoordinateConverter& cc)
 {
-  double rae[3];
-
-  // gets the azimuth, elevation, and length from the host platform to the position of interest
-  simCore::calculateAbsAzEl(gateHostLLA, positionLLA, &rae[1], &rae[2], nullptr, earthModel, &cc);
-  rae[0] = simCore::calculateSlant(gateHostLLA, positionLLA, earthModel, &cc);
-
-  const double halfW = widthRad / 2.0;
-  const double halfH = heightRad / 2.0;
-
-  if (rae[0] >= minRangeM && rae[0] <= maxRangeM)
+  // gets the range from the host platform to the position of interest
+  const double range = simCore::calculateSlant(gateHostLLA, positionLLA, earthModel, &cc);
+  if (range >= minRangeM && range <= maxRangeM)
   {
-    if (rae[1] <= azimuthRad + halfW && rae[1] >= azimuthRad - halfW)
+    double az = 0.;
+    double el = 0.;
+    // gets the azimuth, elevation from the host platform to the position of interest
+    simCore::calculateAbsAzEl(gateHostLLA, positionLLA, &az, &el, nullptr, earthModel, &cc);
+    const double halfW = widthRad / 2.0;
+    if (az <= azimuthRad + halfW && az >= azimuthRad - halfW)
     {
-      if (rae[2] <= elevRad + halfH && rae[2] >= elevRad - halfH)
-	return true;
+      const double halfH = heightRad / 2.0;
+      if (el <= elevRad + halfH && el >= elevRad - halfH)
+        return true;
     }
   }
-
   return false;
 }
 

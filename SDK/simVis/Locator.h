@@ -157,7 +157,7 @@ public:
    * Sets the local offset position and orientation of this locator, relative to a
    * world position in a parent locator.
    * @param[in ] pos Local offset coords, meters.
-   * @param[in ] ori Local offset angles, radians.
+   * @param[in ] ori Local Euler offset angles, radians.
    * @param[in ] timestamp Updates the locator with this timestamp
    * @param[in ] notify Whether to immediately notify listeners
    */
@@ -175,8 +175,8 @@ public:
 
   /**
    * Gets the local offset coordinate (offset from parent locator)
-   * @param[out] out_pos Will contain the local offset position in XYZ after this call
-   * @param[out] out_ori will contain the local YPR orientation after this call
+   * @param[out] out_pos Will contain the local offset position in XYZ after this call, in meters
+   * @param[out] out_ori will contain the local Euler YPR orientation after this call, in radians
    * @return True upon success.
    */
   bool getLocalOffsets(simCore::Vec3& out_pos, simCore::Vec3& out_ori) const;
@@ -393,8 +393,22 @@ private:
   * using simCore methods avoids dependency on SRS, and uses a more accurate ecef->lla conversion
   * @param ecefPos specified position
   * @param local2world ENU matrix at specified position
+  * @return 0 on success, non-0 on failure
   */
-  void computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const;
+  int computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const;
+
+  /**
+  * Checks whether any of this locator's parent locators have been dereferenced
+  * @return  false if any parent locator was set but was dereferenced afterwards; true if all parents are referenced
+  */
+  bool isValidlyParented_() const;
+
+  /**
+  * Checks whether this locator has data
+  * defn: a locator hasNoData_() when it isEmpty_ and each parent isEmpty_
+  * @return  true if this and all parents are empty; false otherwise
+  */
+  bool hasNoData_() const;
 
   osg::observer_ptr<Locator> parentLoc_;
   unsigned int componentsToInherit_; // Locator::Components mask

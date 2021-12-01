@@ -44,7 +44,6 @@
 #include "simUtil/HudManager.h"
 
 #include "osgDB/ReadFile"
-#include "osgEarth/Controls"
 #include "osgEarth/SimpleOceanLayer"
 #include "osgEarth/Version"
 
@@ -65,7 +64,6 @@
 #define SUB_ALT         3.5
 
 using namespace osgEarth::Util;
-namespace ui = osgEarth::Util::Controls;
 
 // put a ship out there.
 static simCore::Coordinate s_shipPosOri(simCore::COORD_SYS_LLA,

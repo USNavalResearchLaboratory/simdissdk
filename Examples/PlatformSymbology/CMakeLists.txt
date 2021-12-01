@@ -14,4 +14,10 @@ set_target_properties(example_platformsymbology PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Platform Symbology"
 )
+
+if(TARGET ImGuiLib)
+    target_link_libraries(example_platformsymbology PRIVATE ImGuiLib)
+    target_compile_definitions(example_platformsymbology PRIVATE HAVE_IMGUI)
+endif()
+
 vsi_install_target(example_platformsymbology SDK_Examples)

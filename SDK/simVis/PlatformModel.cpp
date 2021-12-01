@@ -76,7 +76,7 @@ public:
   {
     osg::ref_ptr<PlatformModelNode> refPlatform;
     if (platform_.lock(refPlatform) && !ignoreResult_)
-      refPlatform->setModel(model.get(), isImage);
+      refPlatform->setModel_(model.get(), isImage);
   }
 
   void ignoreResult()
@@ -140,7 +140,8 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   autoRotate_(false),
   lastPrefsValid_(false),
   brightnessUniform_(new osg::Uniform(LIGHT0_AMBIENT_COLOR.c_str(), DEFAULT_AMBIENT)),
-  objectIndexTag_(0)
+  objectIndexTag_(0),
+  allowFastPath_(true)
 {
   // EntityLabelNode for platformModel is a special case - a locatorNode with no locator; it gets its location from parent, the platformmodelnode (which is a locatorNode).
   label_ = new EntityLabelNode();
@@ -196,7 +197,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   alphaVolumeGroup_->getOrCreateStateSet()->setAttributeAndModes(face.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
   // Set an initial model.  Without this, visitors expecting a node may fail early.
-  setModel(simVis::Registry::instance()->modelCache()->boxNode(), false);
+  setModel_(simVis::Registry::instance()->modelCache()->boxNode(), false);
 }
 
 PlatformModelNode::~PlatformModelNode()
@@ -253,7 +254,7 @@ void PlatformModelNode::syncWithLocator()
 bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
 {
   // Early return for fast path icon
-  ModelUpdate modelUpdate = updateFastPathModel_(prefs);
+  ModelUpdate modelUpdate = allowFastPath_ ? updateFastPathModel_(prefs) : NO_UPDATE;
   if (modelUpdate == NO_UPDATE)
     return true;
 
@@ -265,7 +266,7 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
 
   const simVis::Registry* registry = simVis::Registry::instance();
   if (prefs.icon().empty())
-    setModel(nullptr, false);
+    setModel_(nullptr, false);
   else if (!registry->isMemoryCheck())
   {
     // Find the fully qualified URI
@@ -274,7 +275,7 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
     if (uri.empty())
     {
       SIM_WARN << "Failed to find icon model: " << prefs.icon() << "\n";
-      setModel(simVis::Registry::instance()->modelCache()->boxNode(), false);
+      setModel_(simVis::Registry::instance()->modelCache()->boxNode(), false);
     }
     else
     {
@@ -343,6 +344,7 @@ PlatformModelNode::ModelUpdate PlatformModelNode::updateFastPathModel_(const sim
   imageOriginalSize_.y() = bounds.yMax() - bounds.yMin();
 
   // Fix the sizing node for the dynamic transform to avoid initial very-large icons.
+  dynamicXform_->setDynamicScaleToPixels(isImageModel_ && prefs.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
   dynamicXform_->setSizingNode(fastPathIcon_.get());
 
   // Kill off any pending async model loads
@@ -354,7 +356,21 @@ PlatformModelNode::ModelUpdate PlatformModelNode::updateFastPathModel_(const sim
   return fastPathValid ? NO_UPDATE : CHECK_FOR_UPDATE;
 }
 
-void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
+void PlatformModelNode::setModel(osg::Node* node, bool isImage)
+{
+  // If necessary turn off fast draw
+  if (fastPathIcon_.valid())
+  {
+    imageIconXform_->removeChild(fastPathIcon_.get());
+    fastPathIcon_ = nullptr;
+    offsetXform_->setNodeMask(getMask());
+  }
+
+  allowFastPath_ = false;
+  setModel_(node, isImage);
+}
+
+void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
 {
   if (model_ == newModel && isImageModel_ == isImage)
     return;
@@ -392,6 +408,8 @@ void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
     // re-add to the parent groups
     offsetXform_->addChild(model_.get());
     alphaVolumeGroup_->addChild(model_.get());
+    if (lastPrefsValid_)
+      dynamicXform_->setDynamicScaleToPixels(isImageModel_ && lastPrefs_.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
     dynamicXform_->setSizingNode(model_.get());
   }
 
@@ -575,7 +593,7 @@ bool PlatformModelNode::updateDynamicScale_(const simData::PlatformPrefs& prefs)
   {
     dynamicXform_->setDynamicScalar(prefs.dynamicscalescalar());
     dynamicXform_->setScaleOffset(prefs.dynamicscaleoffset());
-    dynamicXform_->setDynamicScaleToPixels(prefs.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
+    dynamicXform_->setDynamicScaleToPixels(isImageModel_ && prefs.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
   }
 
   return true;

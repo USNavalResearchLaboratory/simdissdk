@@ -99,6 +99,11 @@ simCore::TimeStamp SecondsContainer::timeStamp() const
   return widget_->timeStamp();
 }
 
+QString SecondsContainer::timeText() const
+{
+  return widget_->text();
+}
+
 void SecondsContainer::setTimeStamp(const simCore::TimeStamp& value)
 {
   widget_->setTimeStamp(value);
@@ -192,6 +197,11 @@ simCore::TimeStamp MonthContainer::timeStamp() const
   return widget_->timeStamp();
 }
 
+QString MonthContainer::timeText() const
+{
+  return widget_->text();
+}
+
 void MonthContainer::setTimeStamp(const simCore::TimeStamp& value)
 {
   widget_->setTimeStamp(value);
@@ -283,6 +293,11 @@ bool OrdinalContainer::hasFocus() const
 simCore::TimeStamp OrdinalContainer::timeStamp() const
 {
   return widget_->timeStamp();
+}
+
+QString OrdinalContainer::timeText() const
+{
+  return widget_->text();
 }
 
 void OrdinalContainer::setTimeStamp(const simCore::TimeStamp& value)
@@ -379,6 +394,11 @@ simCore::TimeStamp MinutesContainer::timeStamp() const
   return widget_->timeStamp();
 }
 
+QString MinutesContainer::timeText() const
+{
+  return widget_->text();
+}
+
 void MinutesContainer::setTimeStamp(const simCore::TimeStamp& value)
 {
   widget_->setTimeStamp(value);
@@ -470,6 +490,11 @@ bool HoursContainer::hasFocus() const
 simCore::TimeStamp HoursContainer::timeStamp() const
 {
   return widget_->timeStamp();
+}
+
+QString HoursContainer::timeText() const
+{
+  return widget_->text();
 }
 
 void HoursContainer::setTimeStamp(const simCore::TimeStamp& value)

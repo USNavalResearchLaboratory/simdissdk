@@ -129,7 +129,8 @@ void EarthManipulator::handleMovementAction(const ActionType& type, double dx, d
   {
     // Disable watch mode if we're in watch mode and encounter a break-tether action
     const ActionTypeVector& atv = getSettings()->getBreakTetherActions();
-    if (std::find(atv.begin(), atv.end(), type) != atv.end())
+    // Rotation doesn't break tether completely, but it does break the heading portion of a tether
+    if (std::find(atv.begin(), atv.end(), type) != atv.end() || (tetherHeading && type == EarthManipulator::ACTION_ROTATE))
     {
       // Set up a tether node, which will get broken cleanly in the handleMovementAction().  Note
       // that calling enableWatchMode() here directly will not be clean because there are side

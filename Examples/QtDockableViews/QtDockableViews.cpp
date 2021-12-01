@@ -38,8 +38,6 @@
 #include "simVis/View.h"
 #include "simVis/SceneManager.h"
 
-#include "osgEarth/Controls"
-
 #include <QAction>
 #include <QApplication>
 #include <QDialog>
@@ -52,8 +50,6 @@
 #include <QWindow>
 
 #include "MyMainWindow.h"
-
-namespace ui = osgEarth::Util::Controls;
 
 int usage(char** argv)
 {

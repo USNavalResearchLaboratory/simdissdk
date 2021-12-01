@@ -22,6 +22,7 @@
  */
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
+#include "osgEarth/ObjectIndex"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Math.h"
@@ -249,7 +250,8 @@ BeamNode::BeamNode(const simData::BeamProperties& props, Locator* hostLocator, c
     hasLastUpdate_(false),
     hasLastPrefs_(false),
     host_(host),
-    hostMissileOffset_(0.0)
+    hostMissileOffset_(0.0),
+    objectIndexTag_(0)
 {
   lastProps_ = props;
 
@@ -300,13 +302,19 @@ BeamNode::BeamNode(const simData::BeamProperties& props, Locator* hostLocator, c
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 
+  // Add a tag for picking
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(this, this);
+
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
   // SIM-10724: Labels need to not be flattened to be displayed in overhead mode
   simVis::OverheadMode::enableGeometryFlattening(false, label_.get());
 }
 
-BeamNode::~BeamNode() {}
+BeamNode::~BeamNode()
+{
+  osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
+}
 
 void BeamNode::updateLabel_(const simData::BeamPrefs& prefs)
 {
@@ -854,7 +862,11 @@ void BeamNode::setUpdateOverride(const std::string& id, const simData::BeamUpdat
   updateOverrides_[id] = update;
   // only apply override when we have a valid update from datastore
   if (hasLastUpdate_)
-    applyUpdateOverrides_(true);
+  {
+    // force = false ->allow beam logic to determine whether an in-place update can be used,
+    // instead of forcing a complete rebuild of the beam.
+    applyUpdateOverrides_(false);
+  }
 }
 
 void BeamNode::removeUpdateOverride(const std::string& id)
@@ -898,10 +910,35 @@ double BeamNode::getClosestPoint(const simCore::Vec3& toLla, simCore::Vec3& clos
   return distanceToBeam;
 }
 
+void BeamNode::getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const
+{
+  ecefVec.clear();
+  if (!isActive() || !hasLastPrefs_)
+    return;
+
+  // Get start position
+  simCore::Vec3 startPosition;
+  simCore::Vec3 ori;
+  if (0 != getPositionOrientation(&startPosition, &ori, simCore::COORD_SYS_LLA))
+    return;
+  simCore::Vec3 endPosition;
+  simCore::calculateGeodeticEndPoint(startPosition, ori.yaw(), ori.pitch(), lastUpdateFromDS_.range(), endPosition);
+
+  // Pull the origin again from locator in ECEF format; this is more efficient than converting
+  simCore::Vec3 startEcef;
+  if (0 != getPosition(&startEcef, simCore::COORD_SYS_ECEF))
+    return;
+  ecefVec.push_back({ startEcef.x(), startEcef.y(), startEcef.z() });
+
+  // Convert end point into ECEF
+  simCore::Vec3 endEcef;
+  simCore::CoordinateConverter::convertGeodeticPosToEcef(endPosition, endEcef);
+  ecefVec.push_back({ endEcef.x(), endEcef.y(), endEcef.z() });
+}
+
 unsigned int BeamNode::objectIndexTag() const
 {
-  // Not supported for beams
-  return 0;
+  return objectIndexTag_;
 }
 
 }

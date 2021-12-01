@@ -100,12 +100,14 @@ void AnimatedLineNode::HalfALine::fillSlantLine(unsigned int numSegments, const 
   line1->reserve(numSegments + 1);
   line2->reserve(numSegments + 1);
 
-  // Add points to the vertex list, from back to front, for consistent stippling.  Order
-  // matters because it affects the line direction during stippling.
+  // Add the points to the vertex list for consistent stippling. The order of vertices matters
+  // because it affects line direction while stipple animates. "forward" means that the stipple
+  // should move normally, from 0th element to last element. "!forward" means that the stipple
+  // should be reversed, by inverting the vertex order.
   for (unsigned int k = 0; k <= numSegments; ++k)
   {
     // Add in the subdivided line point
-    const double percentOfFull = forward ? (static_cast<double>(numSegments - k) / numSegments) : (static_cast<double>(k) / numSegments);
+    const double percentOfFull = forward ? (static_cast<double>(k) / numSegments) : (static_cast<double>(numSegments - k) / numSegments);
     osg::Vec3f point = lastPoint * percentOfFull;
     line1->pushVertex(point);
     line2->pushVertex(point);

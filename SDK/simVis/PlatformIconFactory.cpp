@@ -76,7 +76,7 @@ public:
     icon_ = simVis::Registry::instance()->findModelFile(prefs.icon());
     iconAlignment_ = prefs.iconalignment();
     const bool useOverride = prefs.commonprefs().has_useoverridecolor() && prefs.commonprefs().useoverridecolor() &&
-      ((prefs.commonprefs().overridecolor() & 0xFF) != 0);
+      (prefs.commonprefs().overridecolor() != 0xffffffff);
     overrideColor_ = useOverride ? simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA) : osg::Vec4f(1.f, 1.f, 1.f, 1.f);
     noDepthIcons_ = prefs.nodepthicons();
     useCullFace_ = prefs.usecullface();
@@ -422,6 +422,10 @@ bool PlatformIconFactory::canApply_(const simData::PlatformPrefs& prefs) const
   if (prefs.drawbodyaxis() || prefs.drawinertialaxis() || prefs.drawsunvec() || prefs.drawmoonvec())
     return false;
 
+  // Need to turn off fast draw if in legend so that the icon displays correctly in legend
+  if (prefs.commonprefs().includeinlegend())
+    return false;
+
   return true;
 }
 
@@ -444,6 +448,7 @@ bool PlatformIconFactory::hasRelevantChanges(const simData::PlatformPrefs& oldPr
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, brightness) ||
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, commonprefs, useoverridecolor) ||
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, commonprefs, overridecolor) ||
+    PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, commonprefs, includeinlegend) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, nodepthicons) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, usecullface) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, cullface);

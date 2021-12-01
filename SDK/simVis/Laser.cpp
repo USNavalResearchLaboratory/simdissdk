@@ -23,6 +23,7 @@
 #include "osg/Geometry"
 #include "osgEarth/Horizon"
 #include "osgEarth/LineDrawable"
+#include "osgEarth/ObjectIndex"
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
 #include "simVis/EntityLabel.h"
@@ -43,7 +44,8 @@ LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator
     host_(host),
     localGrid_(nullptr),
     hasLastPrefs_(false),
-    label_(nullptr)
+    label_(nullptr),
+    objectIndexTag_(0)
 {
   lastProps_ = props;
   Locator* locator = nullptr;
@@ -92,31 +94,37 @@ LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator
   simVis::OverheadMode::enableGeometryFlattening(true, this);
   // SIM-10724: Labels need to not be flattened to be displayed in overhead mode
   simVis::OverheadMode::enableGeometryFlattening(false, label_.get());
+
+  // Add a tag for picking
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(this, this);
 }
 
-LaserNode::~LaserNode() {}
+LaserNode::~LaserNode()
+{
+  osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
+}
 
 void LaserNode::updateLabel_(const simData::LaserPrefs& prefs)
 {
-  if (hasLastUpdate_)
+  if (!hasLastUpdate_)
+    return;
+
+  std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, false);
+  if (prefs.commonprefs().labelprefs().namelength() > 0)
+    label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
+
+  std::string text;
+  if (prefs.commonprefs().labelprefs().draw())
+    text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
+
+  if (!text.empty())
   {
-    std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, false);
-    if (prefs.commonprefs().labelprefs().namelength() > 0)
-      label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
-
-    std::string text;
-    if (prefs.commonprefs().labelprefs().draw())
-      text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
-
-    if (!text.empty())
-    {
-      label += "\n";
-      label += text;
-    }
-
-    const float zOffset = 0.0f;
-    label_->update(prefs.commonprefs(), label, zOffset);
+    label += "\n";
+    label += text;
   }
+
+  const float zOffset = 0.0f;
+  label_->update(prefs.commonprefs(), label, zOffset);
 }
 
 std::string LaserNode::popupText() const
@@ -434,10 +442,26 @@ void LaserNode::updateLaser_(const simData::LaserPrefs &prefs)
   geom->setLineWidth(prefs.laserwidth());
 }
 
+void LaserNode::getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const
+{
+  ecefVec.clear();
+  if (!isActive() || !hasLastPrefs_)
+    return;
+
+  // Pull the origin node from the locator node. This is more efficient than a matrix multiply
+  simCore::Vec3 firstPos;
+  locatorNode_->getPosition(&firstPos, simCore::COORD_SYS_ECEF);
+  ecefVec.push_back(osg::Vec3d(firstPos.x(), firstPos.y(), firstPos.z()));
+
+  // Use the full matrix of the locator node to calculate the correctly-oriented end point
+  const float length = lastPrefs_.maxrange();
+  const auto& locatorMatrix = locatorNode_->getMatrix();
+  ecefVec.push_back(osg::Vec3d(0., length, 0.) * locatorMatrix);
+}
+
 unsigned int LaserNode::objectIndexTag() const
 {
-  // Not supported for lasers
-  return 0;
+  return objectIndexTag_;
 }
 
 }

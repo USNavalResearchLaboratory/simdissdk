@@ -2,14 +2,11 @@
 # BUILD_SYSTEM_OS {win|linux}
 # BUILD_SYSTEM_ARCH {x86|amd64}
 # BUILD_COMPILER {vc-10.0|vc-12.0|vc-14.0|vc-14.1|vc-14.2|gcc-4.4}
-# DEPRECATED_BUILD_COMPILER {vc-10.0|vc-12.0|vc-14.0|vc-14.1|vc-14.2|gcc-4.4}
 # BUILD_COMPILER_NAME {vc|${CMAKE_C_COMPILER}}
 # BUILD_COMPILER_VERSION (Compiler name with max and min version numbers)
-# DEPRECATED_BUILD_COMPILER_VERSION (Compiler name with max, min, and patch version numbers)
 # BUILD_COMPILER_MAJOR_VERSION
 # BUILD_COMPILER_MINOR_VERSION
 # BUILD_SYSTEM_CANONICAL_NAME {${BUILD_PLATFORM}_${BUILD_COMPILER}}
-# BUILD_SYSTEM_LIB_SUFFIX     (Similar to BUILD_SYSTEM_CANONICAL_NAME, but uses DEPRECATED_BUILD_COMPILER for GCC to match old style lib names)
 # BUILD_TYPE {32|64}
 # BUILD_HWOS {x86-nt|amd64-nt|amd64-linux}
 # BUILD_PLATFORM {win32|win64|linux64}
@@ -21,7 +18,6 @@ if(BUILD_SYSTEM_ARCH STREQUAL "x86_64")
 elseif(BUILD_SYSTEM_ARCH MATCHES "i?86")
     set(BUILD_SYSTEM_ARCH "x86")
 endif()
-
 
 # Assign 32 or 64
 if(WIN32)
@@ -39,7 +35,6 @@ elseif(UNIX)
         set(BUILD_TYPE "32")
     endif()
 endif()
-
 
 # Get system name
 if(WIN32)
@@ -80,17 +75,14 @@ if(MSVC)
     math(EXPR BUILD_COMPILER_VERSION_MINOR "( ${MSVC_VERSION} % 100 ) / 10")
     # Put them together to form something like 9.0, 10.0, 7.1, etc.
     set(BUILD_COMPILER_VERSION "${BUILD_COMPILER_VERSION_MAJOR}.${BUILD_COMPILER_VERSION_MINOR}")
-    set(DEPRECATED_BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
 elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel" OR "${CMAKE_CXX_COMPILER}" MATCHES "clang\\+\\+$")
     # Intel compiler will use latest gcc build version for third party libraries
     set(BUILD_COMPILER_NAME gcc)
-    set(BUILD_COMPILER_VERSION "4.4")
-    set(DEPRECATED_BUILD_COMPILER_VERSION "4.4.7")
+    set(BUILD_COMPILER_VERSION "8.3")
 else()
     # Get compiler name and version (gcc and gcc-compatible compilers)
     exec_program(${CMAKE_C_COMPILER} ARGS --version OUTPUT_VARIABLE BUILD_COMPILER_VERSION)
     set(BUILD_COMPILER_NAME gcc)
-    string(REGEX REPLACE ".*([0-9]\\.[0-9]\\.[0-9]).*" "\\1" DEPRECATED_BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
     string(REGEX REPLACE ".*([0-9]\\.[0-9])\\.[0-9].*" "\\1" BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
 endif()
 
@@ -98,21 +90,19 @@ endif()
 string(REGEX REPLACE "([0-9]+)\\.[0-9]+" "\\1" BUILD_COMPILER_MAJOR_VERSION ${BUILD_COMPILER_VERSION})
 string(REGEX REPLACE "[0-9]+\\.([0-9]+)" "\\1" BUILD_COMPILER_MINOR_VERSION ${BUILD_COMPILER_VERSION})
 
-
 # Set the suffix for libraries
-if(WIN32)
-    set(BUILD_COMPILER "${BUILD_COMPILER_NAME}-${BUILD_COMPILER_VERSION}")
-    set(BUILD_SYSTEM_CANONICAL_NAME "${BUILD_PLATFORM}_${BUILD_COMPILER}")
-
-    set(DEPRECATED_BUILD_COMPILER "${BUILD_COMPILER}")
-    set(BUILD_SYSTEM_LIB_SUFFIX "${BUILD_PLATFORM}_${BUILD_COMPILER}")
-else()
+if(NOT WIN32)
     # These strings help identify the 3rd party libraries to link to
-    set(BUILD_COMPILER_VERSION "4.4")
-    set(DEPRECATED_BUILD_COMPILER_VERSION "4.4")
-    set(BUILD_COMPILER "${BUILD_COMPILER_NAME}-${BUILD_COMPILER_VERSION}")
-    set(BUILD_SYSTEM_CANONICAL_NAME "${BUILD_PLATFORM}_${BUILD_COMPILER}")
-
-    set(DEPRECATED_BUILD_COMPILER "${BUILD_COMPILER_NAME}-${DEPRECATED_BUILD_COMPILER_VERSION}")
-    set(BUILD_SYSTEM_LIB_SUFFIX "${BUILD_PLATFORM}_${DEPRECATED_BUILD_COMPILER}")
+    set(BUILD_COMPILER_VERSION "8.3")
+    # Determine whether we're on RHEL6. If so, fall back to GCC 4.4 tag, else use newer 8.3
+    if(EXISTS "/etc/redhat-release")
+        file(READ "/etc/redhat-release" _REDHAT_RELEASE)
+        if(_REDHAT_RELEASE MATCHES "release 6\\.")
+            set(BUILD_COMPILER_VERSION "4.4")
+        endif()
+        unset(_REDHAT_RELEASE)
+    endif()
 endif()
+
+set(BUILD_COMPILER "${BUILD_COMPILER_NAME}-${BUILD_COMPILER_VERSION}")
+set(BUILD_SYSTEM_CANONICAL_NAME "${BUILD_PLATFORM}_${BUILD_COMPILER}")

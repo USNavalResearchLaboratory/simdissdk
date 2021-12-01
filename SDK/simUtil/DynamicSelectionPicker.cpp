@@ -21,7 +21,9 @@
  *
  */
 #include "simCore/Calc/Math.h"
+#include "simVis/Beam.h"
 #include "simVis/CustomRendering.h"
+#include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
@@ -125,11 +127,55 @@ void DynamicSelectionPicker::setPlatformAdvantagePct(double platformAdvantage)
   platformAdvantagePct_ = osg::clampBetween(platformAdvantage, 0.0, 1.0);
 }
 
+void DynamicSelectionPicker::pickToVector(simVis::EntityVector& nodes, const osg::Vec2d& mouseXy, PickBehavior behavior)
+{
+  nodes.clear();
+  mouseXy_ = mouseXy;
+
+  // Figure out the view under the mouse
+  lastMouseView_ = viewManager_->getViewByMouseXy(mouseXy);
+  if (!lastMouseView_.valid())
+    return;
+
+  double mouseRangeSquaredPx = 0.;
+  pickToVector_(nodes, behavior, mouseRangeSquaredPx);
+}
+
 void DynamicSelectionPicker::pickThisFrame_()
+{
+  simVis::EntityVector nodes;
+  double mouseRangeSquaredPx = 0.;
+  pickToVector_(nodes, PickBehavior::Closest, mouseRangeSquaredPx);
+
+  simVis::EntityNode* picked = nullptr;
+  if (nodes.size() == 1)
+    picked = nodes.front().get();
+  else if (!nodes.empty())
+  {
+    // Need to deconflict to pick best selection. We know:
+    // * 0th item is going to be earliest created entity.
+    // * Platforms must be created before attachments.
+    // * Attachments to platforms (beams, lasers, LOBs, etc.) are most likely to be the colocated entity.
+    // * It's also possible, though more rare, to have custom rendering as 0th item
+    // Using this, we apply a preference to 0th item (most likely a platform) since they're most likely
+    // to be the desired entity. However, fall back to later items (likely attachments) the farther the
+    // mouse is from the center.
+    const double mouseRangePx = sqrt(mouseRangeSquaredPx);
+    const double platformAdvantagePx = platformAdvantagePct_ * maximumValidRange_;
+    picked = (mouseRangePx < platformAdvantagePx) ? nodes[0].get() : nodes[1].get();
+  }
+
+  // Set the picked entity
+  const unsigned int objectIndexTag = picked ? picked->objectIndexTag() : 0;
+  setPicked_(objectIndexTag, picked);
+}
+
+void DynamicSelectionPicker::pickToVector_(simVis::EntityVector& nodes, PickBehavior behavior, double& mouseRangeSquaredPx) const
 {
   // Create a calculator for screen coordinates
   simUtil::ScreenCoordinateCalculator calc;
   calc.updateMatrix(*lastMouseView_);
+  nodes.clear();
 
   // Request all entities from the scenario
   simVis::EntityVector allEntities;
@@ -137,40 +183,37 @@ void DynamicSelectionPicker::pickThisFrame_()
 
   // We square the range to avoid sqrt() in a tight loop
   const double maximumValidRangeSquared = osg::square(maximumValidRange_);
-  double closestRangePx = maximumValidRangeSquared;
-  const double platformAdvantageSquared = osg::square(maximumValidRange_ * platformAdvantagePct_);
-  simVis::EntityNode* closest = nullptr;
+  mouseRangeSquaredPx = maximumValidRangeSquared;
 
   // Loop through all entities
-  for (auto i = allEntities.begin(); i != allEntities.end(); ++i)
+  for (const auto entityRefPtr : allEntities)
   {
-    if (!isPickable_(i->get()))
+    auto* entityPtr = entityRefPtr.get();
+    if (!isPickable_(entityPtr))
       continue;
 
     // Ask the calculator for the range from the mouse position
     double rangeSquared;
-    if (calculateSquaredRange_(calc, *i->get(), rangeSquared) != 0)
+    if (calculateSquaredRange_(calc, *entityRefPtr, rangeSquared) != 0)
       continue;
 
-    // Platforms get a small advantage in picking, so that it's easier to pick platforms than other entities
-    const bool isPlatform = (dynamic_cast<simVis::PlatformNode*>(i->get()) != nullptr);
-    // Do not apply the advantage if platform is not already inside the picking area
-    if (isPlatform && rangeSquared < maximumValidRangeSquared)
-      rangeSquared -= platformAdvantageSquared;
-
-    // Choose the closest object
-    if (rangeSquared < closestRangePx)
+    if (behavior == PickBehavior::AllInRange)
     {
-      closestRangePx = rangeSquared;
-      closest = i->get();
+      if (rangeSquared <= mouseRangeSquaredPx)
+        nodes.emplace_back(entityPtr);
+    }
+    else
+    {
+      // PickBehavior::Closest: Choose the closest object
+      if (rangeSquared < mouseRangeSquaredPx)
+      {
+        mouseRangeSquaredPx = rangeSquared;
+        nodes = { entityPtr };
+      }
+      else if (rangeSquared == mouseRangeSquaredPx)
+        nodes.emplace_back(entityPtr);
     }
   }
-
-  // Pick the platform
-  if (closest)
-    setPicked_(closest->objectIndexTag(), closest);
-  else
-    setPicked_(0, closest);
 }
 
 bool DynamicSelectionPicker::isPickable_(const simVis::EntityNode* entityNode) const
@@ -197,6 +240,16 @@ int DynamicSelectionPicker::calculateSquaredRange_(simUtil::ScreenCoordinateCalc
   const simVis::CustomRenderingNode* customNode = dynamic_cast<const simVis::CustomRenderingNode*>(&entityNode);
   if (customNode)
     return calculateCustomRenderRange_(calc, *customNode, rangeSquared);
+
+  // Fall back to the Laser case if it's requesting a Laser, since it picks a line segment
+  const simVis::LaserNode* laserNode = dynamic_cast<const simVis::LaserNode*>(&entityNode);
+  if (laserNode)
+    return calculateLaserRange_(calc, *laserNode, rangeSquared);
+
+  // Fall back to the Beam case if it's requesting a Beam, since it picks along the boresight
+  const simVis::BeamNode* beamNode = dynamic_cast<const simVis::BeamNode*>(&entityNode);
+  if (beamNode)
+    return calculateBeamRange_(calc, *beamNode, rangeSquared);
 
   const simUtil::ScreenCoordinate& pos = calc.calculate(entityNode);
   // Ignore objects that are off screen or behind the camera
@@ -227,6 +280,26 @@ int DynamicSelectionPicker::calculateCustomRenderRange_(simUtil::ScreenCoordinat
     return calculateScreenRangeSegments_(calc, ecefVec, rangeSquared);
   // otherwise just check distance from the picking points
   return calculateScreenRangePoints_(calc, ecefVec, rangeSquared);
+}
+
+int DynamicSelectionPicker::calculateLaserRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LaserNode& laserNode, double& rangeSquared) const
+{
+  // Pull out the vector of all endpoints on the Laser that are visible
+  std::vector<osg::Vec3d> ecefVec;
+  laserNode.getVisibleEndPoints(ecefVec);
+
+  // Check the distance from the whole line segment, not just the end points
+  return calculateScreenRangeSegments_(calc, ecefVec, rangeSquared);
+}
+
+int DynamicSelectionPicker::calculateBeamRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::BeamNode& beamNode, double& rangeSquared) const
+{
+  // Pull out the vector of all endpoints on the Beam that are visible
+  std::vector<osg::Vec3d> ecefVec;
+  beamNode.getVisibleEndPoints(ecefVec);
+
+  // Check the distance from the whole line segment, not just the end points
+  return calculateScreenRangeSegments_(calc, ecefVec, rangeSquared);
 }
 
 int DynamicSelectionPicker::calculateScreenRangePoints_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const

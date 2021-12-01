@@ -158,6 +158,9 @@ namespace simVis
     */
     double getClosestPoint(const simCore::Vec3& toLla, simCore::Vec3& closestLLa) const;
 
+    /** Retrieves the currently visible end points, used for picking */
+    void getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const;
+
     /**
     * Returns the antenna gain
     * @param[in] az The azimuth, in radians
@@ -235,7 +238,7 @@ namespace simVis
     */
     virtual double range() const;
 
-    /** This entity type is, at this time, unpickable. */
+    /** Retrieve the object index tag for beams. */
     virtual unsigned int objectIndexTag() const;
 
     /**
@@ -355,6 +358,8 @@ namespace simVis
     std::map<std::string, simData::BeamUpdate> updateOverrides_;
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<BeamPulse> beamPulse_;
+
+    unsigned int objectIndexTag_;
   };
 
 } //namespace simVis
