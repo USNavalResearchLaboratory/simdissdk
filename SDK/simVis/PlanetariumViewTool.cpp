@@ -92,9 +92,12 @@ PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::D
   ds_(ds),
   displayHistory_(false),
   historyLength_(historyLength),
-  useGradient_(false)
+  useGradient_(false),
+  firstTime_(std::numeric_limits<double>::max())
 {
-  initGradient_();
+  auto updateSlice = ds_.beamUpdateSlice(beam_->getId());
+  if (updateSlice)
+    firstTime_ = updateSlice->firstTime();
 }
 
 PlanetariumViewTool::BeamHistory::~BeamHistory()
@@ -198,7 +201,8 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
   {
     if (iter.first > time)
       continue; // In the future
-    else if (iter.first < (time - historyLength_))
+    // historyLength_ == 0 means no limiting by history
+    else if (historyLength_ != 0 && iter.first < (time - historyLength_))
       continue; // Too old
 
     addChild(iter.second->node);
@@ -213,7 +217,17 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
     if (bv)
     {
       Color color;
-      float zeroToOne = (1. - ((time - iter.first) / historyLength_));
+      float divisor = historyLength_;
+      if (historyLength_ == 0)
+      {
+        if (firstTime_ != std::numeric_limits<double>::max())
+          divisor = time - firstTime_;
+        else
+          divisor = time; // fall back to time as divisor, prevents errors/crashes
+      }
+      if (divisor == 0)
+        divisor = 1.0; // ensure divide by zero doesn't happen
+      float zeroToOne = (1. - ((time - iter.first) / divisor));
       // Use color from history point to ensure color history is preserved
       simData::BeamPrefs newPrefs(prefs);
       if (useGradient_)

@@ -200,6 +200,8 @@ private:
     bool useGradient_;
     /** Gradient for history points. Used when useGradient_ is true. NULL until first needed */
     osg::ref_ptr<osg::TransferFunction1D> gradientFunction_;
+    /** Cached time of the first data point for the associated beam */
+    double firstTime_;
   };
 
   EntityFamily                   family_;
