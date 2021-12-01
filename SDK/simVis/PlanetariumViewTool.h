@@ -24,6 +24,7 @@
 #define SIMVIS_PLANETARIUM_VIEW_TOOL_H
 
 #include "osg/observer_ptr"
+#include "osg/TransferFunction"
 #include "simCore/Common/Common.h"
 #include "simVis/EntityFamily.h"
 #include "simVis/TargetDelegation.h"
@@ -116,6 +117,11 @@ public:
   /** Get whether gates are displayed */
   bool getDisplayGates() const;
 
+  /** Set whether to use a gradient when displaying history points */
+  void setUseGradient(bool useGradient);
+  /** Whether to use a gradient when displaying history points */
+  bool useGradient() const;
+
 public: // ScenarioTool
 
   /** @see ScenarioTool::onInstall() */
@@ -160,6 +166,8 @@ private:
     void updateBeamHistory(double time, double range);
     /** Set history length in seconds */
     void setHistoryLength(double historyLength);
+    /** Set whether to use a gradient when displaying history points */
+    void setUseGradient(bool useGradient);
 
   protected:
     /** Protect osg::Referenced-derived destructor */
@@ -178,6 +186,9 @@ private:
     /** Remove points such that all remaining points are within a time window defined by newestTime - timeLimit */
     void limitByTime_(double timeLimit);
 
+    /** Initialize the gradient used for history point colors */
+    void initGradient_();
+
     osg::observer_ptr<simVis::BeamNode> beam_;
     simData::DataStore& ds_;
     std::map<double, std::unique_ptr<HistoryPoint> > historyPoints_; /// History points, keyed by time in seconds since ref year
@@ -185,6 +196,10 @@ private:
     bool displayHistory_;
     /** History length to show in seconds */
     double historyLength_;
+    /** Whether to show history points in a gradient */
+    bool useGradient_;
+    /** Gradient for history points. Used when useGradient_ is true. NULL until first needed */
+    osg::ref_ptr<osg::TransferFunction1D> gradientFunction_;
   };
 
   EntityFamily                   family_;
@@ -204,6 +219,7 @@ private:
   bool                            displayGates_;
   double                          historyLength_; // seconds
   double                          lastUpdateTime_;
+  bool                            useGradient_;
 
   osg::observer_ptr<const ScenarioManager> scenario_;
 

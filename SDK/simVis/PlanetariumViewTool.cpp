@@ -91,8 +91,11 @@ PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::D
   beam_(beam),
   ds_(ds),
   displayHistory_(false),
-  historyLength_(historyLength)
-{}
+  historyLength_(historyLength),
+  useGradient_(false)
+{
+  initGradient_();
+}
 
 PlanetariumViewTool::BeamHistory::~BeamHistory()
 {
@@ -209,11 +212,23 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
     osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->node->asGroup()->getChild(0));
     if (bv)
     {
+      Color color;
+      float zeroToOne = (1. - ((time - iter.first) / historyLength_));
       // Use color from history point to ensure color history is preserved
       simData::BeamPrefs newPrefs(prefs);
-      Color color = iter.second->color;
-      // Fade the alpha based on the point's age and based on the current color's alpha
-      color.a() = (1. - ((time - iter.first) / historyLength_)) * origAlpha;
+      if (useGradient_)
+      {
+        if (gradientFunction_ == nullptr)
+          initGradient_();
+        color = gradientFunction_->getColor(zeroToOne);
+        color.a() = origAlpha;
+      }
+      else
+      {
+        color = iter.second->color;
+        // Fade the alpha based on the point's age and based on the current color's alpha
+        color.a() = zeroToOne * origAlpha;
+      }
       newPrefs.mutable_commonprefs()->set_color(color.asABGR());
       bv->performInPlacePrefChanges(&prefs, &newPrefs);
     }
@@ -222,7 +237,14 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
 
 void PlanetariumViewTool::BeamHistory::setHistoryLength(double historyLength)
 {
+  // No need to trigger update, caller will do so
   historyLength_ = historyLength;
+}
+
+void PlanetariumViewTool::BeamHistory::setUseGradient(bool useGradient)
+{
+  // No need to trigger update, caller will do so
+  useGradient_ = useGradient;
 }
 
 void PlanetariumViewTool::BeamHistory::limitByPoints_(unsigned int pointsLimit)
@@ -253,6 +275,19 @@ void PlanetariumViewTool::BeamHistory::limitByTime_(double timeLimit)
       return;
     }
   }
+}
+
+void PlanetariumViewTool::BeamHistory::initGradient_()
+{
+  if (gradientFunction_ != nullptr)
+    return;
+  gradientFunction_ = new osg::TransferFunction1D;
+  auto& map = gradientFunction_->getColorMap();
+  map[0.00f] = osg::Vec4(0.f, 0.f, 1.f, 1.f); // blue
+  map[0.25f] = osg::Vec4(0.f, 1.f, 1.f, 1.f); // cyan
+  map[0.50f] = osg::Vec4(0.f, 1.f, 0.f, 1.f); // green
+  map[0.75f] = osg::Vec4(1.f, 1.f, 0.f, 1.f); // yellow
+  map[1.00f] = osg::Vec4(1.f, 0.f, 0.f, 1.f); // red
 }
 
 //-------------------------------------------------------------------
@@ -404,6 +439,25 @@ void PlanetariumViewTool::setDisplayGates(bool display)
 bool PlanetariumViewTool::getDisplayGates() const
 {
   return displayGates_;
+}
+
+void PlanetariumViewTool::setUseGradient(bool useGradient)
+{
+  if (useGradient_ == useGradient)
+    return;
+
+  useGradient_ = useGradient;
+  for (const auto& hist : history_)
+  {
+    hist.second->setUseGradient(useGradient_);
+    // Trigger an update to the last update time to fix the history to the new colors
+    hist.second->updateBeamHistory(lastUpdateTime_, range_);
+  }
+}
+
+bool PlanetariumViewTool::useGradient() const
+{
+  return useGradient_;
 }
 
 void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
