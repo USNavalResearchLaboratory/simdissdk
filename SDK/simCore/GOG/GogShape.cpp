@@ -373,6 +373,11 @@ void GogShape::setOriginalUnits(const UnitsState& units)
   originalUnits_ = units;
 }
 
+UnitsState GogShape::originalUnits() const
+{
+  return originalUnits_;
+}
+
 void GogShape::serializeToStream(std::ostream& gogOutputStream) const
 {
   gogOutputStream << "start\n";

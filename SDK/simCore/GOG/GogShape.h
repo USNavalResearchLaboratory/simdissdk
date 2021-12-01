@@ -301,6 +301,8 @@ public:
 
   /// Set the original units of the shape for use when serializing the shape
   void setOriginalUnits(const UnitsState& units);
+  /// Retrieve the original units specified for this shape
+  UnitsState originalUnits() const;
 
   /// Serialize the shape to the specified stream
   void serializeToStream(std::ostream& gogOutputStream) const;
