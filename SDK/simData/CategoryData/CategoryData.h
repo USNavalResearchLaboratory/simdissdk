@@ -49,6 +49,9 @@ public:
   {
   }
 
+  ///@return Time of validity for the category data pair
+  virtual double time() const = 0;
+
   ///@return the category name as a string
   virtual std::string name() const = 0;
   ///@return the string value for the current category
