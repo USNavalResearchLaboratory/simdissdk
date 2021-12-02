@@ -162,6 +162,12 @@ public:
       if (displayGates != displayGates_)
         app_.planetarium->setDisplayGates(displayGates_);
 
+      // Use Gradient
+      bool useGradient = useGradient_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Use Gradient", &useGradient_);
+      if (useGradient != useGradient_)
+        app_.planetarium->setUseGradient(useGradient_);
+
       ImGui::EndTable();
     }
 
@@ -177,6 +183,7 @@ private:
   bool ldb_ = true;
   bool beamHistory_ = false;
   bool displayGates_ = false;
+  bool useGradient_ = false;
 };
 #else
 struct Toggle : public ui::ControlEventHandler
