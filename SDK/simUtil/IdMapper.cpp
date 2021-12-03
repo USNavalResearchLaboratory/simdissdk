@@ -104,6 +104,18 @@ int DataStoreIdMapper::addMapping(uint64_t id, uint64_t originalId, const std::s
   mapping.originalId = originalId;
   mapping.entityName = entityName;
   mapping.hostPlatformId = hostPlatformId;
+  mapping.type = simData::NONE;
+  return addMapping(mapping);
+}
+
+int DataStoreIdMapper::addMapping(uint64_t id, uint64_t originalId, const std::string& entityName, uint64_t hostPlatformId, simData::ObjectType type)
+{
+  EntityIdData mapping;
+  mapping.id = id;
+  mapping.originalId = originalId;
+  mapping.entityName = entityName;
+  mapping.hostPlatformId = hostPlatformId;
+  mapping.type = type;
   return addMapping(mapping);
 }
 
@@ -133,9 +145,11 @@ void DataStoreIdMapper::clearMappings()
 uint64_t DataStoreIdMapper::resolve_(const EntityIdData& fromIdData)
 {
   // Get the entity type -- either platform or all-but-platforms
-  const bool isPlatform = (fromIdData.id == fromIdData.hostPlatformId);
+  const bool isPlatform = fromIdData.type != simData::NONE ? (fromIdData.type == simData::PLATFORM) : (fromIdData.id == fromIdData.hostPlatformId);
   simData::ObjectType entityTypeFilter = simData::ALL;
-  if (isPlatform)
+  if (fromIdData.type != simData::NONE)
+    entityTypeFilter = fromIdData.type;
+  else if (isPlatform)
     entityTypeFilter = simData::PLATFORM;
   else
     entityTypeFilter = static_cast<simData::ObjectType>(entityTypeFilter ^ simData::PLATFORM);
@@ -152,7 +166,7 @@ uint64_t DataStoreIdMapper::resolve_(const EntityIdData& fromIdData)
     return ids[0];
 
   // Try to narrow down by host ID
-  if (!isPlatform)
+  if (!isPlatform && (fromIdData.hostPlatformId != 0))
     filterToHostPlatform_(map(fromIdData.hostPlatformId), ids);
   // Try to return results
   if (ids.empty())

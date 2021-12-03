@@ -189,11 +189,81 @@ int testMapping()
   return rv;
 }
 
+int testHostlessCustomRendering()
+{
+  int rv = 0;
+
+  // Create two CR
+  simUtil::DataStoreTestHelper dsHelper;
+  simData::DataStore& dataStore = *dsHelper.dataStore();
+
+  const uint64_t cr1 = dsHelper.addCustomRendering(0, 0);
+  setName(dataStore, cr1, "cr1");
+
+  const uint64_t cr2 = dsHelper.addCustomRendering(0, 0);
+  setName(dataStore, cr2, "cr2");
+
+  simUtil::DataStoreIdMapper map(dataStore);
+
+  // Expect nothing back because the mapper has not "remote" mappings
+  rv += SDK_ASSERT(map.map(0) == 0);
+  rv += SDK_ASSERT(map.map(cr1) == 0);
+  rv += SDK_ASSERT(map.map(cr2) == 0);
+  rv += SDK_ASSERT(map.map(1) == 0);
+  rv += SDK_ASSERT(map.map(10) == 0);
+  rv += SDK_ASSERT(map.map(210) == 0);
+
+  // Remote data store tells us it has a mapping of 210 that matches our cr1
+  rv += SDK_ASSERT(map.addMapping(210, 0, "cr1", 0, simData::CUSTOM_RENDERING) == 0);
+  rv += SDK_ASSERT(map.map(210) == cr1);
+
+  // Remote data store tells us it has a mapping of 220 that matches our cr2
+  rv += SDK_ASSERT(map.addMapping(220, 0, "cr2", 0, simData::CUSTOM_RENDERING) == 0);
+  rv += SDK_ASSERT(map.map(210) == cr1);
+  rv += SDK_ASSERT(map.map(220) == cr2);
+
+  // Clear the map and make sure there are no matches
+  map.clearMappings();
+  rv += SDK_ASSERT(map.map(210) == 0);
+  rv += SDK_ASSERT(map.map(220) == 0);
+
+  // Add back in with wrong original ids
+  rv += SDK_ASSERT(map.addMapping(210, 1, "cr1", 0, simData::CUSTOM_RENDERING) == 0);
+  rv += SDK_ASSERT(map.addMapping(220, 2, "cr2", 0, simData::CUSTOM_RENDERING) == 0);
+  rv += SDK_ASSERT(map.map(210) == 0);
+  rv += SDK_ASSERT(map.map(220) == 0);
+
+  // Clear the map and make sure there are no matches
+  map.clearMappings();
+  rv += SDK_ASSERT(map.map(210) == 0);
+  rv += SDK_ASSERT(map.map(220) == 0);
+
+  // Add back in
+  rv += SDK_ASSERT(map.addMapping(210, 0, "cr1", 0, simData::CUSTOM_RENDERING) == 0);
+  rv += SDK_ASSERT(map.addMapping(220, 0, "cr2", 0, simData::CUSTOM_RENDERING) == 0);
+  rv += SDK_ASSERT(map.map(210) == cr1);
+  rv += SDK_ASSERT(map.map(220) == cr2);
+
+  // Remove just one
+  map.removeId(210);
+  rv += SDK_ASSERT(map.map(210) == 0);
+  rv += SDK_ASSERT(map.map(220) == cr2);
+
+  // Remove the second entry
+  map.removeId(220);
+  rv += SDK_ASSERT(map.map(210) == 0);
+  rv += SDK_ASSERT(map.map(220) == 0);
+
+  return rv;
+}
+
 }
 
 int IdMapperTest(int argc, char* argv[])
 {
   int rv = 0;
   rv += SDK_ASSERT(testMapping() == 0);
+  rv += SDK_ASSERT(testHostlessCustomRendering() == 0);
+
   return rv;
 }
