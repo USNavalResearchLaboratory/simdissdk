@@ -27,14 +27,14 @@ namespace simUtil {
 Shaders::Shaders()
 {
   // Assign the fall-back shaders if the files are not found
-  add(mapScale(), "@MapScale.glsl@");
-  add(terrainToggleEffectVertex(), "@TerrainToggleEffect.frag.glsl@");
-  add(terrainToggleEffectFragment(), "@TerrainToggleEffect.vert.glsl@");
-  add(velocityParticleLayerParticleVertex(), "@VelocityParticleLayer.part.vert.glsl@");
-  add(velocityParticleLayerParticleFragment(), "@VelocityParticleLayer.part.frag.glsl@");
-  add(velocityParticleLayerComputeVertex(), "@VelocityParticleLayer.compute.vert.glsl@");
-  add(velocityParticleLayerComputePositionFragment(), "@VelocityParticleLayer.compute.pos.frag.glsl@");
-  add(velocityParticleLayerComputeDirectionFragment(), "@VelocityParticleLayer.compute.dir.frag.glsl@");
+  add(mapScale(), @MapScale.glsl@);
+  add(terrainToggleEffectVertex(), @TerrainToggleEffect.frag.glsl@);
+  add(terrainToggleEffectFragment(), @TerrainToggleEffect.vert.glsl@);
+  add(velocityParticleLayerParticleVertex(), @VelocityParticleLayer.part.vert.glsl@);
+  add(velocityParticleLayerParticleFragment(), @VelocityParticleLayer.part.frag.glsl@);
+  add(velocityParticleLayerComputeVertex(), @VelocityParticleLayer.compute.vert.glsl@);
+  add(velocityParticleLayerComputePositionFragment(), @VelocityParticleLayer.compute.pos.frag.glsl@);
+  add(velocityParticleLayerComputeDirectionFragment(), @VelocityParticleLayer.compute.dir.frag.glsl@);
 }
 
 std::string Shaders::mapScale() const

@@ -12,10 +12,9 @@ set(OUTPUT_CPP_FILE "@OUTPUT_CPP_FILE@")
 
 foreach(FILE ${SHADER_FILES})
     file(READ "${SOURCE_DIR}/${FILE}" CONTENTS)
-    # Replace \n with EOL text into TEMP_STR (append a newline)
-    string(REGEX REPLACE "\n" "%EOL%" TEMP_STR "${CONTENTS}\n")
-    # Replace " with QUOTE into ${FILE}, used as a configure in the .in file
-    string(REGEX REPLACE "\"" "%QUOTE%" ${FILE} "${TEMP_STR}")
+    # Compress whitespace
+    string(REGEX REPLACE "\n\n+" "\n" TEMP_STR "${CONTENTS}")
+    set(${FILE} "\nR\"shader(${TEMP_STR})shader\"")
 endforeach()
 
 # Next configure the template .in file with all of our variables

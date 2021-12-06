@@ -59,9 +59,6 @@ public:
   /** Name of fragment shader for glowing highlight */
   std::string glowHighlightFragment() const;
 
-  /** osgEarth LineDrawable placeholder shader */
-  std::string lineDrawable() const;
-
   /** Name of vertex shader for overhead mode */
   std::string overheadModeVertex() const;
 
@@ -75,9 +72,6 @@ public:
   std::string pickerVertex() const;
   /** Name of fragment shader for picker */
   std::string pickerFragment() const;
-
-  /** Name of vertex shader for point size */
-  std::string pointSizeVertex() const;
 
   /** Name of vertex shader for projector manager */
   std::string projectorManagerVertex() const;
