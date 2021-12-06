@@ -158,16 +158,18 @@ private:
   class BeamHistory : public osg::Group
   {
   public:
-    BeamHistory(simVis::BeamNode* beam, simData::DataStore& ds, double historyLength);
+    BeamHistory(simVis::BeamNode* beam, simData::DataStore& ds, double historyLength, double range);
 
     /** Set whether history is displayed  */
     void setDisplayHistory(bool display);
-    /** Update the beam history using the specified time and planetarium range */
-    void updateBeamHistory(double time, double range);
+    /** Update the beam history to the specified time */
+    void updateBeamHistory(double time);
     /** Set history length in seconds */
     void setHistoryLength(double historyLength);
     /** Set whether to use a gradient when displaying history points */
     void setUseGradient(bool useGradient);
+    /** Set the range of the planetarium. Used to correctly position history points */
+    void setRange(double range);
 
   protected:
     /** Protect osg::Referenced-derived destructor */
@@ -202,6 +204,8 @@ private:
     osg::ref_ptr<osg::TransferFunction1D> gradientFunction_;
     /** Cached time of the first data point for the associated beam */
     double firstTime_;
+    /** Current range of the planetarium, updated via setRange() */
+    double range_;
   };
 
   EntityFamily                   family_;

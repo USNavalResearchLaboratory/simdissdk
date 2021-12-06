@@ -84,16 +84,16 @@ namespace simVis
 // but this can't be done with a locator that dynamically tracks platform orientation,
 // since beam history points would move with current host motion across the planetarium, instead of being fixed.
 // so, body-beam history points store the static orientation of the host at their history-point-time.
-//
 
-PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::DataStore& ds, double historyLength)
+PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::DataStore& ds, double historyLength, double range)
   : osg::Group(),
   beam_(beam),
   ds_(ds),
   displayHistory_(false),
   historyLength_(historyLength),
   useGradient_(false),
-  firstTime_(std::numeric_limits<double>::max())
+  firstTime_(std::numeric_limits<double>::max()),
+  range_(range)
 {
   auto updateSlice = ds_.beamUpdateSlice(beam_->getId());
   if (updateSlice)
@@ -109,7 +109,7 @@ void PlanetariumViewTool::BeamHistory::setDisplayHistory(bool display)
   displayHistory_ = display;
 }
 
-void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double range)
+void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
 {
   if (!beam_.valid())
     return;
@@ -144,7 +144,7 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time, double ran
   {
     const double updateTime = (hasNewUpdate ? lastUpdate->time() : time);
     simData::BeamUpdate update(*lastUpdate);
-    update.set_range(range);
+    update.set_range(range_);
 
     prefs.set_blended(true);
     prefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
@@ -261,6 +261,29 @@ void PlanetariumViewTool::BeamHistory::setUseGradient(bool useGradient)
   useGradient_ = useGradient;
 }
 
+void PlanetariumViewTool::BeamHistory::setRange(double range)
+{
+  if (range_ == range)
+    return;
+  range_ = range;
+
+  // Update existing history points to the new range
+  for (const auto& point : historyPoints_)
+  {
+    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(point.second->node->asGroup()->getChild(0));
+    if (!bv)
+      continue;
+
+    // Update the range on the BeamVolume. performInPlaceUpdates() only updates if the range
+    // changes, so create an unused and slightly varied range update to compare against.
+    simData::BeamUpdate unused;
+    unused.set_range(range_ + 1);
+    simData::BeamUpdate rangeUpdate;
+    rangeUpdate.set_range(range_);
+    bv->performInPlaceUpdates(&unused, &rangeUpdate);
+  }
+}
+
 void PlanetariumViewTool::BeamHistory::limitByPoints_(unsigned int pointsLimit)
 {
   // limit of 0 means no limiting, do nothing
@@ -340,34 +363,34 @@ osg::Node* PlanetariumViewTool::getNode() const
 
 void PlanetariumViewTool::setRange(double range)
 {
-  if (range != range_)
+  if (range_ == range)
+    return;
+
+  range_ = range;
+
+  // clear all target delegates
+  if (targets_.valid())
+    targets_->removeAll();
+
+  // update all beam history
+  for (const auto& hist : history_)
+    hist.second->setRange(range);
+
+  updateDome_();
+
+  // rescale the one geode that is reused for all target delegates
+  scaleTargetGeometry_(range_);
+
+  // recreate our target delegates
+  if (scenario_.valid() && targets_.valid())
   {
-    range_ = range;
-
-    // clear all target delegates
-    if (targets_.valid())
-      targets_->removeAll();
-
-    // clear all beam history
-    for (const auto& hist : history_)
-      root_->removeChild(hist.second.get());
-
-    updateDome_();
-
-    // rescale the one geode that is reused for all target delegates
-    scaleTargetGeometry_(range_);
-
-    // recreate our target delegates
-    if (scenario_.valid() && targets_.valid())
+    EntityVector entities;
+    scenario_->getAllEntities(entities);
+    for (EntityVector::const_iterator i = entities.begin(); i != entities.end(); ++i)
     {
-      EntityVector entities;
-      scenario_->getAllEntities(entities);
-      for (EntityVector::const_iterator i = entities.begin(); i != entities.end(); ++i)
-      {
-        PlatformNode* platform = dynamic_cast<PlatformNode*>(i->get());
-        if (platform != nullptr && platform != host_.get() && platform->isActive())
-          targets_->addOrUpdate(platform);
-      }
+      PlatformNode* platform = dynamic_cast<PlatformNode*>(i->get());
+      if (platform != nullptr && platform != host_.get() && platform->isActive())
+        targets_->addOrUpdate(platform);
     }
 
     applyOverrides_(true);
@@ -412,7 +435,7 @@ void PlanetariumViewTool::setDisplayBeamHistory(bool display)
     if (displayBeamHistory_)
     {
       root_->addChild(hist.second.get());
-      hist.second->updateBeamHistory(lastUpdateTime_, range_);
+      hist.second->updateBeamHistory(lastUpdateTime_);
     }
     else
       root_->removeChild(hist.second.get());
@@ -435,7 +458,7 @@ void PlanetariumViewTool::setBeamHistoryLength(double history)
   {
     hist.second->setHistoryLength(historyLength_);
     // Trigger an update to the last update time to fix the history to the new length
-    hist.second->updateBeamHistory(lastUpdateTime_, range_);
+    hist.second->updateBeamHistory(lastUpdateTime_);
   }
 }
 
@@ -465,7 +488,7 @@ void PlanetariumViewTool::setUseGradient(bool useGradient)
   {
     hist.second->setUseGradient(useGradient_);
     // Trigger an update to the last update time to fix the history to the new colors
-    hist.second->updateBeamHistory(lastUpdateTime_, range_);
+    hist.second->updateBeamHistory(lastUpdateTime_);
   }
 }
 
@@ -524,7 +547,7 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
       continue;
     if (history_.find(beam->getId()) == history_.end())
     {
-      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
+      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_, range_);
       history_[beam->getId()] = history;
       root_->addChild(history.get());
     }
@@ -564,7 +587,7 @@ void PlanetariumViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNod
     osg::ref_ptr<simVis::BeamNode> beam = dynamic_cast<simVis::BeamNode*>(entity);
     if (beam.get())
     {
-      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
+      osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_, range_);
       history_[beam->getId()] = history;
       root_->addChild(history.get());
     }
@@ -611,7 +634,7 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
 
       if (history_.find(beam->getId()) == history_.end())
       {
-        osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_);
+        osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, historyLength_, range_);
         history_[beam->getId()] = history;
         if (displayBeamHistory_)
           root_->addChild(history.get());
@@ -630,7 +653,7 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
   }
 
   for (const auto& iter : history_)
-    iter.second->updateBeamHistory(lastUpdateTime_, range_);
+    iter.second->updateBeamHistory(lastUpdateTime_);
 
   // Force a call to this method next time scenario manager updates, even if there are no EntityVector updates
   setDirty();
