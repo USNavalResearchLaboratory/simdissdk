@@ -138,7 +138,7 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
   // body beams could be optimized to only add new history node based on some tolerance around host ori.
   const bool isBodyBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE);
   const bool hasNewUpdate = (historyPoints_.find(lastUpdate->time()) == historyPoints_.end());
-  simData::BeamPrefs prefs(beam_->getPrefs());
+  const simData::BeamPrefs& prefs = beam_->getPrefs();
   // Add a locator node for the most recent update if not already done
   if (isBodyBeam || hasNewUpdate)
   {
@@ -146,10 +146,12 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     simData::BeamUpdate update(*lastUpdate);
     update.set_range(range_);
 
-    prefs.set_blended(true);
-    prefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
+    simData::BeamPrefs newPrefs(prefs);
+    newPrefs.set_blended(true);
+    newPrefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
+    newPrefs.mutable_commonprefs()->set_useoverridecolor(false);
 
-    osg::ref_ptr<BeamVolume> volume = new BeamVolume(prefs, update);
+    osg::ref_ptr<BeamVolume> volume = new BeamVolume(newPrefs, update);
 
     Locator* beamOrientationLocator = beam_->getLocator();
 
@@ -177,7 +179,10 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
 
     std::unique_ptr<HistoryPoint> newPoint(new HistoryPoint);
     newPoint->node = bhpLocatorNode;
-    newPoint->color = Color(prefs.commonprefs().color(), osgEarth::Color::RGBA);
+    if (prefs.commonprefs().useoverridecolor())
+      newPoint->color = Color(prefs.commonprefs().overridecolor(), osgEarth::Color::RGBA);
+    else
+      newPoint->color = Color(prefs.commonprefs().color(), osgEarth::Color::RGBA);
 
     historyPoints_[updateTime] = std::move(newPoint);
   }
@@ -197,6 +202,9 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     limitByTime_(prefs.commonprefs().datalimittime());
 
   float origAlpha = Color(prefs.commonprefs().color()).a();
+  if (prefs.commonprefs().useoverridecolor())
+    origAlpha = Color(prefs.commonprefs().overridecolor()).a();
+
   for (const auto& iter : historyPoints_)
   {
     if (iter.first > time)
@@ -244,6 +252,7 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
         color.a() = zeroToOne * origAlpha;
       }
       newPrefs.mutable_commonprefs()->set_color(color.asABGR());
+      newPrefs.mutable_commonprefs()->set_useoverridecolor(false); // Always ignore use override color in new prefs, only use normal color
       bv->performInPlacePrefChanges(&prefs, &newPrefs);
     }
   }
