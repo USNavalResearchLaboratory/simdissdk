@@ -497,31 +497,30 @@ double RFPropagationFacade::getLoss(double azimRad, double gndRngMeters, double 
   // we want a Loss data provider
   const simRF::ProfileDataProvider* provider =
     (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS));
-  double lossVal = simCore::SMALL_DB_VAL;
   if (!provider)
   {
-    if (lossDataHelper_ && lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters, lossVal) == 0)
-      return lossVal;
+    if (lossDataHelper_)
+      return lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
 
     SIM_WARN << dataWarningMsg("Loss") << std::endl;
   }
   else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
   {
-    if (lossDataHelper_ && lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters, lossVal) == 0)
-      return lossVal;
+    if (lossDataHelper_)
+      return lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
 
     SIM_WARN << rangeWarningMsg("Loss") << std::endl;
   }
   else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
   {
-    if (lossDataHelper_ && lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters, lossVal) == 0)
-      return lossVal;
+    if (lossDataHelper_)
+      return lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
 
     SIM_WARN << heightWarningMsg("Loss") << std::endl;
   }
   else
   {
-    lossVal = provider->interpolateValue(hgtMeters, gndRngMeters);
+    const double lossVal = provider->interpolateValue(hgtMeters, gndRngMeters);
     return (lossVal > simCore::SMALL_DB_VAL ? lossVal : simCore::SMALL_DB_VAL);
   }
   return simCore::SMALL_DB_VAL;

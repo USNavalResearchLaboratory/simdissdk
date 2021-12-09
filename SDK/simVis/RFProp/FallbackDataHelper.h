@@ -43,10 +43,9 @@ public:
    * @param azimRad Azimuth angle referenced to True North in radians
    * @param gndRngMeters Ground range from emitter source, meters
    * @param hgtMeters Height, above surface referenced to HAE, meters
-   * @param data Will be set to the result for the given beam [-300: error or invalid data]
-   * @return 0 on success, non-zero otherwise
+   * @return -300 on success, valid value otherwise
    */
-  virtual int value(double azimRad, double gndRngMeters, double hgtMeters, double& data) = 0;
+  virtual double value(double azimRad, double gndRngMeters, double hgtMeters) = 0;
 };
 
 class NullDataHelper : public FallbackDataHelper
@@ -59,13 +58,11 @@ public:
    * @param azimRad Azimuth angle referenced to True North in radians
    * @param gndRngMeters Ground range from emitter source, meters
    * @param hgtMeters Height, above surface referenced to HAE, meters
-   * @param data Will be set to the result for the given beam [-300: error or invalid data]
-   * @return 0 on success, non-zero otherwise
+   * @return -300 on success, valid value otherwise
    */
-  virtual int value(double azimRad, double gndRngMeters, double hgtMeters, double& data) override
+  virtual double value(double azimRad, double gndRngMeters, double hgtMeters) override
   {
-    data = simCore::SMALL_DB_VAL;
-    return 1;
+    return simCore::SMALL_DB_VAL;
   }
 };
 
