@@ -490,6 +490,8 @@ double RFPropagationFacade::getLoss(double azimRad, double gndRngMeters, double 
   const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
   if (!cProvider)
   {
+    if (lossDataHelper_)
+      return lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
     SIM_WARN << bearingWarningMsg("Loss") << std::endl;
     return simCore::SMALL_DB_VAL;
   }
