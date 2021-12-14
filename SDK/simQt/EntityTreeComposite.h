@@ -50,8 +50,8 @@ class SDKQT_EXPORT FilterDialog : public QDialog
   Q_OBJECT;
 public:
   /** Constructor */
-  explicit FilterDialog(QWidget* parent = nullptr);
-  virtual ~FilterDialog(){};
+  explicit FilterDialog(SettingsPtr settings, QWidget* parent = nullptr);
+  virtual ~FilterDialog();
 
   /** Override the QDialog close event to emit the closedGui signal */
   virtual void closeEvent(QCloseEvent*);
@@ -59,6 +59,9 @@ public:
 signals:
   /** Signal emitted when this dialog is closed */
   void closedGui();
+private:
+  /// ptr to settings for saving/restoring geometry
+  SettingsPtr settings_;
 };
 
 
