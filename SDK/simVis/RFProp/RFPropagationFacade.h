@@ -406,11 +406,36 @@ public:
 
 public:
   /**
-  * Gets the composite provider for the specified azimuth the antenna height that will be used for the display
+  * Gets the composite provider for the specified azimuth
   * @param azimRad Azimuth angle referenced to True North in radians
   * @return the composite provider, or nullptr if no provider exists at the specified azimuth
   */
   const simRF::CompositeProfileProvider* getProfileProvider(double azimRad) const;
+
+  /**
+  * Gets the ProfileDataProvider for the specified parameters
+  * @param type  the type of provider requested
+  * @param azimRad  Azimuth angle referenced to True North in radians
+  * @param gndRngMeters  range value in meters for data that is requested
+  * @param hgtMeters  height value in meters for data that is requested
+  * @param msg  warning message that is returned on failure
+  * @return the ProfileDataProvider, or nullptr if no provider matches requested parameters
+  */
+  const simRF::ProfileDataProvider* getProfileDataProvider(
+    ProfileDataProvider::ThresholdType type,
+    double azimRad, double gndRngMeters, double hgtMeters, std::string& msg) const;
+
+  /**
+  * Gets the ProfileDataProvider for the specified parameters
+  * @param type  the type of provider requested
+  * @param azimRad  Azimuth angle referenced to True North in radians
+  * @param gndRngMeters  range value in meters for data that is requested
+  * @param msg  warning message that is returned on failure
+  * @return the ProfileDataProvider, or nullptr if no provider matches requested parameters
+  */
+  const simRF::ProfileDataProvider* getProfileDataProvider(
+    ProfileDataProvider::ThresholdType type,
+    double azimRad, double gndRngMeters, std::string& msg) const;
 
   /**
   * Sets the antenna height that will be used for the display

@@ -34,6 +34,19 @@ class SDKVIS_EXPORT TwoWayPowerDataProvider : public FunctionalProfileDataProvid
 {
 public:
   /**
+  * Gets the two-way-power value corresponding to a ppf in dB
+  * @param radarParameters  the radar parameters specified for this rf prop instance
+  * @param ppfdB  the ppf specified in dB
+  * @param slantRangeM  The slant range, in meters
+  * @param xmtGaindB  The transmit gain in dB
+  * @param rcvGaindB  The receiver gain in dB
+  * @param rcsSqm  The radar-cross-section to use for calculation, in square meters
+  * @return two-way-power value, in dB
+  */
+  static double getTwoWayPower(const simCore::RadarParameters& radarParameters, double ppfdB, double slantRangeM, double xmtGaindB, double rcvGaindB, double rcsSqm = 1.0);
+
+
+  /**
   * Construct a TwoWayPowerDataProvider with given parameters
   * @param templateProvider The provider that provides PPF information for this provider
   * @param radarParameters ptr to structure containing RF parameters to use for calculation
@@ -61,18 +74,6 @@ public:
 protected:
   /// osg::Referenced-derived
   virtual ~TwoWayPowerDataProvider() {}
-
-private:
-  /**
-  * Gets the two-way-power value corresponding to a ppf in dB
-  * @param ppfdB the ppf specified in dB
-  * @param slantRangeM The slant range, in meters
-  * @param xmtGaindB The transmit gain in dB
-  * @param rcvGaindB The receiver gain in dB
-  * @param rcsSqm The radar-cross-section to use for calculation, in square meters
-  * @return two-way-power value, in dB
-  */
-  double getTwoWayPower_(double ppfdB, double slantRangeM, double xmtGaindB, double rcvGaindB, double rcsSqm = 1.0) const;
 
 private:
   const RadarParametersPtr radarParameters_;
