@@ -156,13 +156,15 @@ bool FontWidget::customFontsAvailable() const
 
 void FontWidget::setFontFile(const QString& fontFile)
 {
+  const QFileInfo fi(fontFile);
+
   // use QRawFont to convert the file name to a font family name
-  QString fontFullPath = fontDir_->absoluteFilePath(fontFile);
+  QString fontFullPath = fontDir_->absoluteFilePath(fi.fileName());
   if (fontFullPath.isEmpty() || fontFile.isEmpty())
     return;
   // Only use getFriendlyFontName_() and QRawFont when we're able
   // to use SIMDIS fonts. Otherwise, just use the font file name. SDK-119
-  QString fontName = fontFile;
+  QString fontName = fi.fileName();
   if (useFriendlyFontName_)
     fontName = getFriendlyFontName_(fontFullPath);
   int index = ui_->fontNameComboBox->findText(fontName, Qt::MatchFixedString);
