@@ -529,10 +529,7 @@ assert(simCore.toNativeSeparators("Users\person\Documents") is not None)
 assert(simCore.sanitizeFilename("<Documents>") == "Documents")
 assert(simCore.hasEnv("var") is not None)
 
-# TODO: More testing here
 
-"""
-Not implemented due to MSVC 2019 errors.
 # simCore/EM
 
 #############################
@@ -556,6 +553,8 @@ assert(simCore.ANTENNA_STRING_ALGORITHM_SINXX is not None)
 assert(simCore.ANTENNA_STRING_FORMAT_MONOPULSE is not None)
 assert(simCore.ANTENNA_STRING_EXTENSION_MONOPULSE is not None)
 
+"""
+Not implemented due to MSVC 2019 errors.
 #############################
 # AntennaPattern.h
 assert(simCore.antennaPatternTypeString(simCore.ANTENNA_PATTERN_SINXX) is not None)
@@ -584,6 +583,14 @@ assert(apt.setAzimData(100, 10) is None)
 # success, symmetricGainAntPattern = simCore.readPattern("", "", 1)
 # assert(success is not None and symmetricAntennaPattern is not None)
 """
+
+# Decibel.h
+assert(simCore.SMALL_DB_VAL is not None)
+assert(simCore.SMALL_RCS_SM is not None)
+assert(simCore.SMALL_DB_COMPARE is not None)
+# TODO: More simCore/EM/Decibel.h testing here
+
+# TODO: More simCore/EM testing here
 
 print("Success!")
 
