@@ -92,7 +92,8 @@ OsgImGuiHandler::OsgImGuiHandler()
   mouseWheel_(0.0f),
   initialized_(false),
   firstFrame_(true),
-  firstDraw_(true)
+  firstDraw_(true),
+  autoAdjustProjectionMatrix_(true)
 {
 }
 
@@ -103,8 +104,8 @@ void OsgImGuiHandler::add(BaseGui* gui)
 }
 
 /**
- * Imporant Note: Dear ImGui expects the control Keys indices not to be
- * greater thant 511. It actually uses an array of 512 elements. However,
+ * Important Note: Dear ImGui expects the control Keys indices not to be
+ * greater than 511. It actually uses an array of 512 elements. However,
  * OSG has indices greater than that. So here I do a conversion for special
  * keys between ImGui and OSG.
  */
@@ -157,6 +158,16 @@ ImFont* OsgImGuiHandler::getDefaultFont() const
 ImFont* OsgImGuiHandler::getLargeFont() const
 {
   return largeFont_;
+}
+
+bool OsgImGuiHandler::getAutoAdjustProjectionMatrix() const
+{
+  return autoAdjustProjectionMatrix_;
+}
+
+void OsgImGuiHandler::setAutoAdjustProjectionMatrix(bool value)
+{
+  autoAdjustProjectionMatrix_ = value;
 }
 
 void OsgImGuiHandler::init_()
@@ -243,7 +254,11 @@ void OsgImGuiHandler::newFrame_(osg::RenderInfo& renderInfo)
 
 void OsgImGuiHandler::render_(osg::RenderInfo& ri)
 {
-  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_PassthruCentralNode;
+  auto camera = ri.getCurrentCamera();
+  auto viewport = camera->getViewport();
+
+  constexpr ImGuiDockNodeFlags dockspace_flags =
+    ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_PassthruCentralNode;
 
   auto dockSpaceId = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
 
@@ -255,27 +270,27 @@ void OsgImGuiHandler::render_(osg::RenderInfo& ri)
   auto centralNode = ImGui::DockBuilderGetCentralNode(dockSpaceId);
 
   auto io = ImGui::GetIO();
-
-  auto camera = ri.getCurrentCamera();
-  auto viewport = camera->getViewport();
   viewport->x() = centralNode->Pos.x;
   viewport->y() = io.DisplaySize.y - centralNode->Size.y - centralNode->Pos.y;
   viewport->width() = centralNode->Size.x;
   viewport->height() = centralNode->Size.y;
 
-  const osg::Matrixd& proj = camera->getProjectionMatrix();
-  bool isOrtho = osg::equivalent(proj(3, 3), 1.0);
-  if (!isOrtho)
+  if (autoAdjustProjectionMatrix_)
   {
-    double fovy, ar, znear, zfar;
-    camera->getProjectionMatrixAsPerspective(fovy, ar, znear, zfar);
-    camera->setProjectionMatrixAsPerspective(fovy, viewport->width() / viewport->height(), znear, zfar);
-  }
-  else
-  {
-    double left, right, bottom, top, znear, zfar;
-    camera->getProjectionMatrixAsOrtho(left, right, bottom, top, znear, zfar);
-    camera->setProjectionMatrixAsOrtho(viewport->x(), viewport->x() + viewport->width(), viewport->y(), viewport->y() + viewport->height(), znear, zfar);
+    const osg::Matrixd& proj = camera->getProjectionMatrix();
+    bool isOrtho = osg::equivalent(proj(3, 3), 1.0);
+    if (!isOrtho)
+    {
+      double fovy, ar, znear, zfar;
+      camera->getProjectionMatrixAsPerspective(fovy, ar, znear, zfar);
+      camera->setProjectionMatrixAsPerspective(fovy, viewport->width() / viewport->height(), znear, zfar);
+    }
+    else
+    {
+      double left, right, bottom, top, znear, zfar;
+      camera->getProjectionMatrixAsOrtho(left, right, bottom, top, znear, zfar);
+      camera->setProjectionMatrixAsOrtho(viewport->x(), viewport->x() + viewport->width(), viewport->y(), viewport->y() + viewport->height(), znear, zfar);
+    }
   }
 }
 
