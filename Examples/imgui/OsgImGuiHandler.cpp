@@ -27,6 +27,7 @@
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Interpolation.h"
 #include "simVis/Registry.h"
 
 namespace GUI {
@@ -270,15 +271,32 @@ void OsgImGuiHandler::render_(osg::RenderInfo& ri)
   auto centralNode = ImGui::DockBuilderGetCentralNode(dockSpaceId);
 
   auto io = ImGui::GetIO();
-  viewport->x() = centralNode->Pos.x;
-  viewport->y() = io.DisplaySize.y - centralNode->Size.y - centralNode->Pos.y;
-  viewport->width() = centralNode->Size.x;
-  viewport->height() = centralNode->Size.y;
+  const double newX = centralNode->Pos.x;
+  const double newY = io.DisplaySize.y - centralNode->Size.y - centralNode->Pos.y;
+  const double newWidth = centralNode->Size.x;
+  const double newHeight = centralNode->Size.y;
+
+  // If we do not adjust viewport, no need to adjust projection matrix
+  if (osg::equivalent(viewport->x(), newX) && osg::equivalent(viewport->y(), newY) &&
+    osg::equivalent(viewport->width(), newWidth) && osg::equivalent(viewport->height(), newHeight))
+  {
+    return;
+  }
+
+  // Make a copy of the viewport values before we change the positions; ortho calculations need these
+  const double oldX = viewport->x();
+  const double oldY = viewport->y();
+  const double oldWidth = viewport->width();
+  const double oldHeight = viewport->height();
+  viewport->x() = newX;
+  viewport->y() = newY;
+  viewport->width() = newWidth;
+  viewport->height() = newHeight;
 
   if (autoAdjustProjectionMatrix_)
   {
     const osg::Matrixd& proj = camera->getProjectionMatrix();
-    bool isOrtho = osg::equivalent(proj(3, 3), 1.0);
+    const bool isOrtho = osg::equivalent(proj(3, 3), 1.0);
     if (!isOrtho)
     {
       double fovy, ar, znear, zfar;
@@ -289,7 +307,21 @@ void OsgImGuiHandler::render_(osg::RenderInfo& ri)
     {
       double left, right, bottom, top, znear, zfar;
       camera->getProjectionMatrixAsOrtho(left, right, bottom, top, znear, zfar);
-      camera->setProjectionMatrixAsOrtho(viewport->x(), viewport->x() + viewport->width(), viewport->y(), viewport->y() + viewport->height(), znear, zfar);
+
+      // Scale the projection matrix by the same ratio that the viewport gets adjusted. This is required
+      // in order to deal with osgEarth EarthManipulator zoom in/out capabilities in ortho mode, where
+      // the left/right/top/bottom values are not equal to viewport coordinates.
+      auto mapX = [=](double x) -> double {
+        return simCore::linearInterpolate(left, right, oldX, x, oldX + oldWidth);
+      };
+      auto mapY = [=](double y) -> double {
+        return simCore::linearInterpolate(bottom, top, oldY, y, oldY + oldHeight);
+      };
+      const double newLeft = mapX(viewport->x());
+      const double newRight = mapX(viewport->x() + viewport->width());
+      const double newBottom = mapY(viewport->y());
+      const double newTop = mapY(viewport->y() + viewport->height());
+      camera->setProjectionMatrixAsOrtho(newLeft, newRight, newBottom, newTop, znear, zfar);
     }
   }
 }
