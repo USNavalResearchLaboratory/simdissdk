@@ -20,14 +20,13 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarth/Controls"
 #include "osgEarth/Sky"
 #include "osgEarthDrivers/sky_simple/SimpleSkyOptions"
 #include "osgEarthDrivers/sky_gl/GLSkyOptions"
 
 #include "simNotify/Notify.h"
-#include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
+#include "simCore/Common/Version.h"
 #include "simData/MemoryDataStore.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/NullSkyModel.h"
@@ -40,10 +39,16 @@
 #include "simVis/Platform.h"
 #include "simVis/SceneManager.h"
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+#include "osgEarth/Controls"
+using namespace osgEarth::Util::Controls;
+#endif
 
 namespace
 {
-using namespace osgEarth::Util::Controls;
 
 /** Command line argument usage */
 int usage(char** argv)
@@ -73,9 +78,13 @@ static const SkyModel INITIAL_SKY_MODEL = SKY_SIMPLE;
 /** Application settings in a struct with basic set/apply functions */
 struct AppData
 {
+#ifdef HAVE_IMGUI
+  float mag = INITIAL_AMBIENT;
+#else
   osg::ref_ptr<HSliderControl> ambient;
   osg::ref_ptr<HSliderControl> skyModelSlider;
   osg::ref_ptr<LabelControl> skyModelText;
+#endif
   osg::ref_ptr<simVis::SceneManager> sceneManager;
   osg::ref_ptr<simVis::View> mainView;
   std::string slUser;
@@ -94,17 +103,26 @@ struct AppData
   /** Apply ambient value from slider */
   void applyAmbient()
   {
+#ifndef HAVE_IMGUI
     float mag = ambient->getValue();
+#endif
 
     if (sceneManager->getSkyNode() != nullptr)
       sceneManager->getSkyNode()->getSunLight()->setAmbient(osg::Vec4f(mag, mag, mag, 1.f));
   }
 
+  SkyModel skyModel() const
+  {
+    return skyModelValue_;
+  }
+
   /** Changes the current sky model */
   void setSkyModel(SkyModel model)
   {
+#ifndef HAVE_IMGUI
     // Update the slider unconditionally for crisp values
     skyModelSlider->setValue(static_cast<float>(model));
+#endif
 
     // No-op if setting to the current value
     if (model == skyModelValue_)
@@ -136,17 +154,21 @@ private:
   /** Turns off the sky model */
   void setNoSky_()
   {
+#ifndef HAVE_IMGUI
     skyModelText->setText("None");
+#endif
     setSky_(new simUtil::NullSkyModel);
   }
 
   /** Sets up the Simple sky model */
   void setSimpleSky_()
   {
+#ifndef HAVE_IMGUI
     skyModelText->setText("Simple");
+#endif
 
     // Set up the Config for Simple
-    Config skyOptions;
+    osgEarth::Config skyOptions;
     skyOptions.set("driver", "simple");
     skyOptions.set("atmospheric_lighting", false);
     setSky_(createSky_(skyOptions));
@@ -155,10 +177,12 @@ private:
   /** Sets up the GL sky model */
   void setGlSky_()
   {
+#ifndef HAVE_IMGUI
     skyModelText->setText("GL");
+#endif
 
     // Set up the Config for GL
-    Config skyOptions;
+    osgEarth::Config skyOptions;
     skyOptions.set("driver", "gl");
     setSky_(createSky_(skyOptions));
   }
@@ -166,10 +190,12 @@ private:
   /** Sets up the SilverLining sky model with configured user/license */
   void setSilverLiningSky_()
   {
+#ifndef HAVE_IMGUI
     skyModelText->setText("SilverLining");
+#endif
 
     // Set up the Config for SilverLining
-    Config skyOptions;
+    osgEarth::Config skyOptions;
     skyOptions.set("driver", "silverlining");
     skyOptions.set("clouds", true);
     skyOptions.set("clouds_max_altitude", 100000.0);
@@ -185,7 +211,7 @@ private:
   /** Given a Config, creates a Sky node */
   osgEarth::SkyNode* createSky_(const osgEarth::Config& options)
   {
-    return osgEarth::SkyNode::create(ConfigOptions(options));
+    return osgEarth::SkyNode::create(osgEarth::ConfigOptions(options));
   }
 
   /** Given a Config, creates and attaches a sky node */
@@ -203,6 +229,93 @@ private:
   SkyModel skyModelValue_;
 };
 
+#ifdef HAVE_IMGUI
+// ImGui has this annoying habit of putting text associated with GUI elements like sliders and check boxes on
+// the right side of the GUI elements instead of on the left. Helper macro puts a label on the left instead,
+// while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
+#define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
+
+/** Delay sky model update until the update operation, to avoid SL GL problems changing mid-ImGui */
+class SetSkyModelOperation : public osg::Operation
+{
+public:
+  SetSkyModelOperation(AppData& app, SkyModel model)
+    : Operation("Set Sky Model", false),
+      app_(app),
+      model_(model)
+  {
+  }
+
+  // From osg::Operation:
+  virtual void operator()(osg::Object*) override
+  {
+    app_.setSkyModel(model_);
+  }
+
+private:
+  AppData& app_;
+  SkyModel model_;
+};
+
+class ControlPanel : public GUI::BaseGui
+{
+public:
+  explicit ControlPanel(AppData& app)
+    : GUI::BaseGui("Sky Model Example"),
+      app_(app)
+  {
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+
+    static int currentModelIdx = static_cast<int>(app_.skyModel());
+
+    if (ImGui::BeginTable("Table", 2))
+    {
+      float mag = app_.mag;
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Ambient", &app_.mag, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      if (mag != app_.mag)
+        app_.applyAmbient();
+
+      // Sky model combo box
+      ImGui::TableNextColumn(); ImGui::Text("Model"); ImGui::TableNextColumn();
+      static const char* MODELS[] = { "None", "Simple", "GL", "SilverLining" };
+      if (ImGui::BeginCombo("##model", MODELS[currentModelIdx], 0))
+      {
+        for (int i = 0; i < IM_ARRAYSIZE(MODELS); i++)
+        {
+          const bool isSelected = (currentModelIdx == i);
+          if (ImGui::Selectable(MODELS[i], isSelected))
+            currentModelIdx = i;
+
+          // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+
+      // Must set the sky model to/from SilverLining NOT in this loop, as this is during
+      // rendering, and SL messes up state. Better to postpone using a one-time operation.
+      auto newSkyModel = static_cast<SkyModel>(currentModelIdx);
+      if (newSkyModel != app_.skyModel())
+        app_.mainView->getViewerBase()->addUpdateOperation(new SetSkyModelOperation(app_, newSkyModel));
+
+      ImGui::EndTable();
+    }
+
+    ImGui::End();
+  }
+
+private:
+  AppData& app_;
+};
+
+#else
 /** Handler for Ambient changes, applying them using the AppData */
 struct ApplyAmbient : public ControlEventHandler
 {
@@ -254,6 +367,7 @@ Control* createUi(AppData& app)
 
   return vbox;
 }
+#endif
 
 }
 
@@ -299,8 +413,16 @@ int main(int argc, char** argv)
   arguments.read("--sllicense", sllicenseArg);
   arguments.read("--slpath", slpathArg);
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewMan->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewMan->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  mainView->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(app));
+#else
   // Create the User Interface controls
   mainView->addOverlayControl(createUi(app));
+#endif
 
   // Apply the current settings so the GUI is up to date
   app.applyAmbient();
