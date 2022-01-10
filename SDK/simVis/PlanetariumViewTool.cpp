@@ -719,35 +719,39 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
 }
 
 void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
-                                               const osg::Vec3d&     ecef)
+                                               const osg::Vec3d& ecef) const
 {
-  static osg::Vec3d s_up(0.0, 0.0, 1.0);
+  const static osg::Vec3d s_up(0.0, 0.0, 1.0); // z_axis
 
   // if the transform has no children, create the initial subgraph.
   if (mt->getNumChildren() == 0)
   {
-    mt->addChild(targetGeom_.get());
-    mt->addChild(buildVectorGeometry_());
+    mt->addChild(targetGeom_.get());      // simple cross is the target delegate (on planetarium surface)
+    mt->addChild(buildVectorGeometry_()); // line from target delegate to delegate's actual platform
   }
 
   // transform the target position into planetarium-local space:
-  osg::Vec3d local = ecef * locatorRoot_->getInverseMatrix();
-  double     local_len = local.length();
-  osg::Vec3d local_n   = local / local_len;
+  const osg::Vec3d local = ecef * locatorRoot_->getInverseMatrix();
+  const double     local_len = local.length();
+  const osg::Vec3d local_n   = local / local_len;  // unit vector from host to target
 
-  // update the vector.
-  osgEarth::LineDrawable* vector = static_cast<osgEarth::LineDrawable*>(mt->getChild(1));
-  vector->setNodeMask(displayTargetVectors_ ? ~0 : 0);
-  vector->setVertex(1, s_up * (local_len - range_));
-
-  osg::Vec3d V(s_up * (local_len - range_));
-  for (unsigned int i = 1; i < NUM_VECTOR_SEGS; ++i)
+  // update the line drawable vertices
+  osgEarth::LineDrawable* targetVector = static_cast<osgEarth::LineDrawable*>(mt->getChild(1));
+  if (!targetVector)
   {
-    const double t = static_cast<double>(i) / static_cast<double>(NUM_VECTOR_SEGS - 1);
-    vector->setVertex(i, V * t);
+    // child 1 is set by mt->addChild(buildVectorGeometry_()); above
+    assert(0);
+    return;
   }
-
-  // create the target vector and scale it to the dome's surface.
+  targetVector->setNodeMask(displayTargetVectors_ ? ~0 : 0);
+  // create simple vector of desired length (dome to target)
+  const osg::Vec3d V(s_up * (local_len - range_));
+  for (unsigned int i = 0; i < NUM_VECTOR_SEGS; ++i)
+  {
+    const double t = static_cast<double>(i) / (NUM_VECTOR_SEGS - 1);
+    targetVector->setVertex(i, V * t);
+  }
+  // orient & position the delegate and vector: rotate to point at target, translate to the dome's surface.
   mt->setMatrix(
     osg::Matrix::rotate(s_up, local_n) *
     osg::Matrix::translate(local_n * range_));

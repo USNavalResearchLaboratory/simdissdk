@@ -179,7 +179,7 @@ public: // Tool
 public: // internal
 
   /// Updates the geometries on the dome when target delegation's UpdateGeometryCallback detects geometry changes
-  void updateTargetGeometry(osg::MatrixTransform*, const osg::Vec3d&);
+  void updateTargetGeometry(osg::MatrixTransform*, const osg::Vec3d&) const;
 
 protected:
   virtual ~PlanetariumViewTool() { }
