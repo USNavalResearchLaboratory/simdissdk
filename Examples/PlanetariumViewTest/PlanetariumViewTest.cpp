@@ -124,6 +124,37 @@ public:
           app_.scenario->removeTool(app_.planetarium.get());
       }
 
+      // Sector
+      bool sector = sector_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Sector", &sector_);
+      if (sector != sector_)
+        app_.planetarium->setUseSector(sector_);
+
+      // Sector controls are only visible in sector mode
+      if (sector_)
+      {
+        // Azimuth
+        float sectorAzDeg = sectorAzDeg_;
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Azimuth", &sectorAzDeg_, 0.f, 360.f, "%.3f deg", ImGuiSliderFlags_AlwaysClamp);
+        if (sectorAzDeg != sectorAzDeg_)
+          app_.planetarium->setSectorAzimuth(sectorAzDeg_);
+        // Elevation
+        float sectorElDeg = sectorElDeg_;
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Elevation", &sectorElDeg_, 0.f, 90.f, "%.3f deg", ImGuiSliderFlags_AlwaysClamp);
+        if (sectorElDeg != sectorElDeg_)
+          app_.planetarium->setSectorElevation(sectorElDeg_);
+        // Width
+        float sectorWidthDeg = sectorWidthDeg_;
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Width", &sectorWidthDeg_, 0.01f, 360.f, "%.3f deg", ImGuiSliderFlags_AlwaysClamp);
+        if (sectorWidthDeg != sectorWidthDeg_)
+          app_.planetarium->setSectorWidth(sectorWidthDeg_);
+        // Height
+        float sectorHeightDeg = sectorHeightDeg_;
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Height", &sectorHeightDeg_, 0.f, 180.f, "%.3f deg", ImGuiSliderFlags_AlwaysClamp);
+        if (sectorHeightDeg != sectorHeightDeg_)
+          app_.planetarium->setSectorHeight(sectorHeightDeg_);
+      }
+
       // Target Vecs
       bool targetVecs = targetVecs_;
       IMGUI_ADD_ROW(ImGui::Checkbox, "Target Vecs", &targetVecs_);
@@ -177,6 +208,11 @@ public:
 private:
   AppData& app_;
   bool on_ = false;
+  bool sector_ = false;
+  float sectorAzDeg_ = 0.;
+  float sectorElDeg_ = 0.;
+  float sectorWidthDeg_ = 90.;
+  float sectorHeightDeg_ = 60.;
   bool targetVecs_ = true;
   float range_ = 90000.f;
   float color_[4] = { 1.f, 1.f, 1.f, .5f };

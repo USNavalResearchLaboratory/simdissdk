@@ -30,10 +30,12 @@
 #include "simCore/Time/TimeClass.h"
 #include "simData/MemoryDataStore.h"
 #include "simVis/Beam.h"
+#include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/Gate.h"
 #include "simVis/Locator.h"
 #include "simVis/Platform.h"
 #include "simVis/Scenario.h"
+#include "simVis/SphericalVolume.h"
 #include "simVis/Utils.h"
 #include "simVis/PlanetariumViewTool.h"
 
@@ -347,7 +349,13 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host, simData::DataStore&
   displayBeamHistory_(false),
   displayGates_(false),
   historyLength_(10.),
-  lastUpdateTime_(-1.)
+  lastUpdateTime_(-1.),
+  useGradient_(false),
+  useSector_(false),
+  sectorAzDeg_(0.),
+  sectorElDeg_(0.),
+  sectorWidthDeg_(90.),
+  sectorHeightDeg_(60.)
 {
   family_.reset();
 
@@ -506,9 +514,76 @@ bool PlanetariumViewTool::useGradient() const
   return useGradient_;
 }
 
+void PlanetariumViewTool::setUseSector(bool useSector)
+{
+  if (useSector_ == useSector)
+    return;
+  useSector_ = useSector;
+  updateDome_();
+}
+
+bool PlanetariumViewTool::getUseSector() const
+{
+  return useSector_;
+}
+
+void PlanetariumViewTool::setSectorAzimuth(double azDeg)
+{
+  if (sectorAzDeg_ == azDeg)
+    return;
+  sectorAzDeg_ = simCore::angFix360(azDeg);
+  updateDome_();
+}
+
+double PlanetariumViewTool::getSectorAzimuth() const
+{
+  return sectorAzDeg_;
+}
+
+void PlanetariumViewTool::setSectorElevation(double elDeg)
+{
+  if (sectorElDeg_ == elDeg)
+    return;
+  sectorElDeg_ = simCore::clamp(elDeg, 0.01, 90.);
+  updateDome_();
+}
+
+double PlanetariumViewTool::getSectorElevation() const
+{
+  return sectorElDeg_;
+}
+
+void PlanetariumViewTool::setSectorWidth(double widthDeg)
+{
+  if (sectorWidthDeg_ == widthDeg)
+    return;
+  sectorWidthDeg_ = simCore::clamp(widthDeg, 0.01, 360.0);
+  updateDome_();
+}
+
+double PlanetariumViewTool::getSectorWidth() const
+{
+  return sectorWidthDeg_;
+}
+
+void PlanetariumViewTool::setSectorHeight(double heightDeg)
+{
+  if (sectorHeightDeg_ == heightDeg)
+    return;
+  sectorHeightDeg_ = simCore::clamp(heightDeg, 0.01, 180.);
+  updateDome_();
+}
+
+double PlanetariumViewTool::getSectorHeight() const
+{
+  return sectorHeightDeg_;
+}
+
 void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
 {
   root_ = new osg::Group;
+  root_->getOrCreateStateSet()->setRenderBinDetails(BIN_AZIM_ELEV_TOOL, BIN_GLOBAL_SIMSDK);
+  simVis::DisableDepthOnAlpha::setValues(root_->getOrCreateStateSet(), osg::StateAttribute::OFF);
 
   // create a node to track the position of the host:
   locatorRoot_ = new LocatorNode(new Locator(host_->getLocator(), Locator::COMP_POSITION));
@@ -705,20 +780,65 @@ void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
 
 void PlanetariumViewTool::updateDome_()
 {
-  if (locatorRoot_.valid())
-  {
-    if (dome_.valid())
-      locatorRoot_->removeChild(dome_.get());
+  if (!locatorRoot_.valid())
+    return;
 
-    // build a sphere
-    osg::Geometry* drawable = osgEarth::AnnotationUtils::createEllipsoidGeometry(range_, range_, range_, domeColor_);
-    osg::StateSet* stateSet = drawable->getOrCreateStateSet();
-    stateSet->setMode(GL_BLEND, 1);
-    stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
-    stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
-    locatorRoot_->addChild(drawable);
-    dome_ = drawable;
+  if (dome_.valid())
+  {
+    locatorRoot_->removeChild(dome_.get());
+    dome_ = nullptr;
   }
+  if (sector_.valid())
+  {
+    locatorRoot_->removeChild(sector_.get());
+    sector_ = nullptr;
+  }
+
+  if (useSector_)
+    createSector_();
+  else
+  {
+    // build a sphere
+    dome_ = osgEarth::AnnotationUtils::createEllipsoidGeometry(range_, range_, range_, domeColor_);
+    dome_->setName("Planetarium Sphere Geometry");
+    osg::StateSet* stateSet = dome_->getOrCreateStateSet();
+    stateSet->setMode(GL_BLEND, 1);
+    // Turn off the depth writes to help with transparency
+    stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
+    locatorRoot_->addChild(dome_.get());
+  }
+}
+
+void PlanetariumViewTool::createSector_()
+{
+  simVis::SVData sv;
+
+  // Set up defaults
+  sv.shape_ = simVis::SVData::SHAPE_PYRAMID;
+  sv.drawMode_ = (simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_OUTLINE);
+  sv.color_ = domeColor_;
+  sv.blendingEnabled_ = true;
+
+  sv.azimOffset_deg_ = sectorAzDeg_;
+  sv.elevOffset_deg_ = sectorElDeg_;
+  sv.hfov_deg_ = sectorWidthDeg_;
+  sv.vfov_deg_ = sectorHeightDeg_;
+
+  // Below implementation matches resolution/tessellation implementation for GateVolume
+  const float maxFov = simCore::sdkMax(sv.hfov_deg_, sv.vfov_deg_);
+  const float capRes = osg::clampBetween((maxFov / 5.f), 5.f, 24.f);
+  sv.capRes_ = static_cast<unsigned int>(0.5f + capRes);
+  sv.wallRes_ = 3;
+
+  // No need to set up sv.nearRange_, as it is ignored when sv.drawCone_ is false
+  sv.farRange_ = range_;
+  sv.drawCone_ = false; // Draw flat sector only (no side/top/bottom walls)
+  sv.drawAsSphereSegment_ = true;
+
+  sector_ = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
+  // Turn off the depth writes to help with transparency
+  sector_->getOrCreateStateSet()->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
+  locatorRoot_->addChild(sector_.get());
 }
 
 void PlanetariumViewTool::applyOverrides_(bool enable)

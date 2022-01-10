@@ -122,6 +122,31 @@ public:
   /** Whether to use a gradient when displaying history points */
   bool useGradient() const;
 
+  /** Set whether to draw a sector instead of a full planetarium */
+  void setUseSector(bool useSector);
+  /** Get whether to draw a sector instead of a full planetarium */
+  bool getUseSector() const;
+
+  /** Set the pointing azimuth for the sector in degrees */
+  void setSectorAzimuth(double azDeg);
+  /** Get the pointing azimuth for the sector in degrees */
+  double getSectorAzimuth() const;
+
+  /** Set the pointing elevation for the sector in degrees */
+  void setSectorElevation(double elDeg);
+  /** Get the pointing elevation for the sector in degrees */
+  double getSectorElevation() const;
+
+  /** Set the sector width in degrees */
+  void setSectorWidth(double widthDeg);
+  /** Get the sector width in degrees */
+  double getSectorWidth() const;
+
+  /** Set the sector height in degrees */
+  void setSectorHeight(double heightDeg);
+  /** Get the sector height in degrees */
+  double getSectorHeight() const;
+
 public: // ScenarioTool
 
   /** @see ScenarioTool::onInstall() */
@@ -226,6 +251,11 @@ private:
   double                          historyLength_; // seconds
   double                          lastUpdateTime_;
   bool                            useGradient_;
+  bool                            useSector_;
+  double                          sectorAzDeg_;
+  double                          sectorElDeg_;
+  double                          sectorWidthDeg_;
+  double                          sectorHeightDeg_;
 
   osg::observer_ptr<const ScenarioManager> scenario_;
 
@@ -236,11 +266,14 @@ private:
   void applyOverrides_(EntityNode* node, bool enable);
 
   void updateDome_();
+  void createSector_();
 
   void scaleTargetGeometry_(double range) const;
   osg::Node* buildVectorGeometry_();
 
   osg::ref_ptr<osg::Geometry> dome_;
+  osg::ref_ptr<osg::MatrixTransform> sector_;
+  osg::ref_ptr<osg::Geometry> sectorGeo_;
   osg::ref_ptr<osg::Node> targetGeom_;
   std::map<simData::ObjectId, osg::ref_ptr<BeamHistory> > history_;
 };
