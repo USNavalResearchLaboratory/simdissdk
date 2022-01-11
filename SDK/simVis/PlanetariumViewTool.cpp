@@ -102,16 +102,25 @@ PlanetariumViewTool::BeamHistory::~BeamHistory()
 
 void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
 {
-  if (!beam_.valid())
-    return;
-
-  // add all points in (lastUpdateTime_, time]
-  backfill_(lastUpdateTime_, time);
-  lastUpdateTime_ = time; // remember time after updating, to be used next time on backfill
-  const simData::BeamPrefs& prefs = beam_->getPrefs();
-
-  // Update which history nodes are displayed based on the current time
+  // remove all this beam's history from scenegraph
   removeChildren(0, getNumChildren());
+  if (!beam_.valid())
+  {
+    // probably this can't happen; but maybe when a beam is about to be deleted.
+    return;
+  }
+  const simData::BeamPrefs& prefs = beam_->getPrefs();
+  if (!prefs.commonprefs().draw())
+  {
+    return;
+  }
+
+  if (time > lastUpdateTime_)
+  {
+    // add all points in (lastUpdateTime_, time]
+    backfill_(lastUpdateTime_, time);
+    lastUpdateTime_ = time; // remember time after updating, to be used next time on backfill
+  }
 
   // Perform data limiting as needed. Note that any points that are limited cannot
   // be retrieved unless the scenario repeats that time, because there is no backfill
@@ -134,11 +143,6 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
       continue; // Too old
 
     addChild(iter.second->node);
-    if (!prefs.commonprefs().draw())
-    {
-      iter.second->node->setNodeMask(simVis::DISPLAY_MASK_NONE);
-      continue;
-    }
 
     iter.second->node->setNodeMask(simVis::DISPLAY_MASK_BEAM);
     osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->node->asGroup()->getChild(0));
@@ -609,9 +613,7 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
   simVis::setLighting(targets_->getOrCreateStateSet(), 0);
 
   // sets horizon geofence to host position, which does not work correctly
-  simCore::Vec3 ecef;
-  locatorRoot_->getPosition(&ecef);
-  fence_->setLocation(osg::Vec3d(ecef.x(), ecef.y(), ecef.z()));
+  fence_->setLocation(locatorRoot_->getMatrix().getTrans());
 
   // initial pull of active target platforms
   EntityVector entities;
@@ -680,7 +682,7 @@ void PlanetariumViewTool::onEntityRemove(const ScenarioManager& scenario, Entity
 void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
 {
   // update the fence
-  fence_->setLocation(osg::Vec3d(0, 0, 0) * locatorRoot_->getMatrix());
+  fence_->setLocation(locatorRoot_->getMatrix().getTrans());
 
   lastUpdateTime_ = timeStamp.secondsSinceRefYear();
 
