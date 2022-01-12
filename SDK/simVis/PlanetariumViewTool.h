@@ -205,6 +205,12 @@ private:
     virtual ~BeamHistory();
 
   private:
+    const simVis::Color NO_COMMANDED_COLOR = osg::Vec4f(
+      std::numeric_limits<float>::max(),
+      std::numeric_limits<float>::max(),
+      std::numeric_limits<float>::max(),
+      std::numeric_limits<float>::max()); ///< sentinel value for no commanded color
+
     /** Represents a history point node and its original color */
     struct HistoryPoint
     {
@@ -215,14 +221,15 @@ private:
     /** Find all beam updates from dataStore/slice in interval (lastTime, currentTime] to add to the beam's history visualization */
     void backfill_(double lastTime, double currentTime);
     /** Add the specified update to a beam's history visualization */
-    void addPointFromUpdate_(const simData::BeamUpdate* update, double updateTime);
+    void addPointFromUpdate_(const simData::BeamPrefs& prefs, const simVis::Color& color, const simData::BeamUpdate* update, double updateTime);
     /** Limit history points according to time and point limit prefs */
     void applyDataLimiting_(const simData::BeamPrefs& prefs);
     /** Initialize the gradient used for history point colors */
     void initGradient_();
 
     osg::observer_ptr<simVis::BeamNode> beam_;
-    const simData::BeamUpdateSlice* slice_;
+    const simData::BeamUpdateSlice* beamUpdateSlice_;
+    const simData::BeamCommandSlice* beamCommandSlice_;
     /** History points, keyed by time in seconds since ref year */
     std::map<double, std::unique_ptr<HistoryPoint> > historyPoints_;
     /** History length to show in seconds */

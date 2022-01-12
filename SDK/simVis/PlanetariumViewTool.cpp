@@ -88,14 +88,21 @@ PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::D
   range_(range),
   lastUpdateTime_(-std::numeric_limits<double>::max())
 {
-  slice_ = ds.beamUpdateSlice(beam_->getId());
-  if (!slice_)
+  beamUpdateSlice_ = ds.beamUpdateSlice(beam_->getId());
+  if (!beamUpdateSlice_)
   {
     // beam must have an update to be here
     assert(0);
     return;
   }
-  firstTime_ = slice_->firstTime();
+  firstTime_ = beamUpdateSlice_->firstTime();
+  beamCommandSlice_ = ds.beamCommandSlice(beam_->getId());
+  if (!beamCommandSlice_)
+  {
+    // beam must have a cmd slice to be here
+    assert(0);
+    return;
+  }
 }
 
 PlanetariumViewTool::BeamHistory::~BeamHistory()
@@ -119,6 +126,9 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     return;
   }
 
+  // assumes that time is moving forward, need to think through what happens if time moves backward
+  // TODO: add ds listener to deal with flush()
+
   if (time > lastUpdateTime_)
   {
     // add all points in (lastUpdateTime_, time]
@@ -127,9 +137,24 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
   }
   applyDataLimiting_(prefs);
 
-  float origAlpha = Color(prefs.commonprefs().color()).a();
+  if (historyPoints_.empty())
+    return;
+
+  simVis::Color color;
+  // initialize color to reasonable values
   if (prefs.commonprefs().useoverridecolor())
-    origAlpha = Color(prefs.commonprefs().overridecolor()).a();
+  {
+    // if beam override color is active, it overrides all history points (when not using gradient)
+    color = Color(prefs.commonprefs().overridecolor(), osgEarth::Color::RGBA);
+  }
+  else
+  {
+    color = historyPoints_.crbegin()->second->color;
+    if (color == NO_COMMANDED_COLOR)
+      color = Color(prefs.commonprefs().color(), osgEarth::Color::RGBA);
+  }
+  // use initial color to initialize alpha for fading/gradient alpha
+  const float origAlpha = color.a();
 
   for (const auto& iter : historyPoints_)
   {
@@ -140,68 +165,134 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
       continue; // Too old
 
     addChild(iter.second->node);
-
-    iter.second->node->setNodeMask(simVis::DISPLAY_MASK_BEAM);
+    // addPointFromUpdate_ guarantees that nodemask is set correctly
+    assert(iter.second->node->getNodeMask() == simVis::DISPLAY_MASK_BEAM);
     osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->node->asGroup()->getChild(0));
-    if (bv)
+    if (!bv)
     {
-      Color color;
-      float divisor = historyLength_;
-      if (historyLength_ == 0)
-      {
-        if (firstTime_ != std::numeric_limits<double>::max())
-          divisor = time - firstTime_;
-        else
-          divisor = time; // fall back to time as divisor, prevents errors/crashes
-      }
-      if (divisor == 0)
-        divisor = 1.0; // ensure divide by zero doesn't happen
-      float zeroToOne = (1. - ((time - iter.first) / divisor));
-      // Use color from history point to ensure color history is preserved
-      simData::BeamPrefs newPrefs(prefs);
-      if (useGradient_)
-      {
-        if (gradientFunction_ == nullptr)
-          initGradient_();
-        color = gradientFunction_->getColor(zeroToOne);
-        color.a() = origAlpha;
-      }
-      else
-      {
-        color = iter.second->color;
-        // Fade the alpha based on the point's age and based on the current color's alpha
-        color.a() = zeroToOne * origAlpha;
-      }
-      newPrefs.mutable_commonprefs()->set_color(color.asABGR());
-      newPrefs.mutable_commonprefs()->set_useoverridecolor(false); // Always ignore use override color in new prefs, only use normal color
-      bv->performInPlacePrefChanges(&prefs, &newPrefs);
+      // can't be a history point without a beam volume
+      assert(0);
+      return;
     }
+
+    float divisor = historyLength_;
+    if (historyLength_ == 0)
+    {
+      if (firstTime_ != std::numeric_limits<double>::max())
+        divisor = time - firstTime_;
+      else
+        divisor = time; // fall back to time as divisor, prevents errors/crashes
+    }
+    if (divisor == 0)
+      divisor = 1.0; // ensure divide by zero doesn't happen
+    const float zeroToOne = (1. - ((time - iter.first) / divisor));
+    // Use color from history point to ensure color history is preserved
+    if (useGradient_)
+    {
+      // if useGradient_ is set, ignore beam override color
+      if (gradientFunction_ == nullptr)
+        initGradient_();
+      color = gradientFunction_->getColor(zeroToOne);
+      color.a() = origAlpha;
+    }
+    else
+    {
+      if (!prefs.commonprefs().useoverridecolor() &&
+        iter.second->color != NO_COMMANDED_COLOR)
+      {
+        // use commanded color when it is set and override is not active
+        color = iter.second->color;
+      }
+      // else, color has already been set (once) before loop
+
+      // this code must guarantee this; NO_COMMANDED_COLOR must always be replaced with a valid color
+      assert(color != NO_COMMANDED_COLOR);
+
+      // Fade the alpha based on the point's age and based on the current color's alpha
+      color.a() = zeroToOne * origAlpha;
+    }
+    simData::BeamPrefs newPrefs(prefs);
+    newPrefs.mutable_commonprefs()->set_color(color.as(osgEarth::Color::RGBA));
+    // code above is managing color, including override; prevent beam from interfering
+    newPrefs.mutable_commonprefs()->set_useoverridecolor(false);
+    bv->performInPlacePrefChanges(&prefs, &newPrefs);
   }
 }
 
 void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double currentTime)
 {
-  if (!slice_)
+  if (!beamUpdateSlice_)
   {
     // slice_ must be valid
     assert(0);
     return;
   }
-  // add all data points from just after lastTime to/including currentTime
-  auto iter = slice_->upper_bound(lastTime);
-  while (iter.hasNext())
+
+  const simData::BeamPrefs& prefs = beam_->getPrefs();
+  // starting point is: each point gets hbw, vbw & color from current prefs
+  double hbw = prefs.horizontalwidth();
+  double vbw = prefs.verticalwidth();
+  // override is handled by updateBeamHistory above
+  simVis::Color color = NO_COMMANDED_COLOR; // sentinel value for no commanded color
+
+  // Declared outside for loop so we can continue iteration after finding nearly-recent command
+  auto commandIter = beamCommandSlice_->lower_bound(-1.0);
+  // iterate once to find hbw, vbw & color commands up to lastTime
+  for (; commandIter.peekNext() != nullptr; commandIter.next())
   {
-    const simData::BeamUpdate* update = iter.next();
+    auto next = commandIter.peekNext();
+    if (next->time() > lastTime)
+      break;
+    if (next->has_updateprefs() && next->updateprefs().has_horizontalwidth())
+      hbw = next->updateprefs().horizontalwidth();
+    if (next->has_updateprefs() && next->updateprefs().has_verticalwidth())
+      vbw = next->updateprefs().verticalwidth();
+    if (next->has_updateprefs() && next->updateprefs().commonprefs().has_color())
+      color = simVis::Color(next->updateprefs().commonprefs().color(), osgEarth::Color::RGBA);
+  }
+
+  // add all data points from after lastTime to/including currentTime
+  auto updateIter = beamUpdateSlice_->upper_bound(lastTime);
+  while (updateIter.hasNext())
+  {
+    const simData::BeamUpdate* update = updateIter.next();
     if (update->time() <= currentTime)
-      addPointFromUpdate_(update, update->time());
+    {
+      // determine if there is a new command for this update's time
+      for (; commandIter.peekNext() != nullptr; commandIter.next())
+      {
+        auto next = commandIter.peekNext();
+        if (next->time() > update->time())
+          break;
+        if (next->has_updateprefs() && next->updateprefs().has_horizontalwidth())
+          hbw = next->updateprefs().horizontalwidth();
+        if (next->has_updateprefs() && next->updateprefs().has_verticalwidth())
+          vbw = next->updateprefs().verticalwidth();
+        if (next->has_updateprefs() && next->updateprefs().commonprefs().has_color())
+          color = simVis::Color(next->updateprefs().commonprefs().color(), osgEarth::Color::RGBA);
+      }
+
+      simData::BeamPrefs pointPrefs(prefs);
+      pointPrefs.set_horizontalwidth(hbw);
+      pointPrefs.set_verticalwidth(vbw);
+      pointPrefs.mutable_commonprefs()->set_useoverridecolor(false);
+      pointPrefs.set_blended(true);
+      pointPrefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
+      addPointFromUpdate_(pointPrefs, color, update, update->time());
+    }
     else
       break;
   }
 }
 
-void PlanetariumViewTool::BeamHistory::addPointFromUpdate_(const simData::BeamUpdate* update, double updateTime)
+void PlanetariumViewTool::BeamHistory::addPointFromUpdate_(const simData::BeamPrefs& prefs, const simVis::Color& color, const simData::BeamUpdate* update, double updateTime)
 {
-  const simData::BeamPrefs& prefs = beam_->getPrefs();
+  if (historyPoints_[updateTime].get())
+  {
+    // already have this point; but this should not happen
+    assert(0);
+    return;
+  }
   Locator* beamOrientationLocator = beam_->getLocator();
 
   // inherit only the dynamic resolved position of the beam origin
@@ -209,17 +300,16 @@ void PlanetariumViewTool::BeamHistory::addPointFromUpdate_(const simData::BeamUp
   // dynamic because planetarium is always relative to current host position.
   // this locator establishes that beam origin position and adds historical beam az/el as an offset.
   // (BeamVolume adds range)
-  // this does not handle beam-position-offset changes:
-  //   current beam-position-offset are applied to all points being added.
   Locator* beamHistoryPointLocator = new Locator(beamOrientationLocator, Locator::COMP_POSITION);
 
-  // ori offset should only be applied if useoffsetbeam is set
-  // beam orientation offsets are simply added to beam az/el data; they are not processed as a separate modeling transformation
+  // offset prefs (position and orientation) are not implemented as commands, and do not have history:
+  // points will retain the offsets as set when point is created, but
+  // if offsets are changed, the new value and the old value may be used in unexpected ways
+  // depending on how points are added - if backfilling a large interval of points,
+  // the current values will be applied to the entire interval of points.
 
-  // SIM-13705 - an issue will be that current prefs might not match previous prefs, and offsets might change,
-  // but should not be applied to points before the change was made...
-  // in most cases, a prefs change only applies to all points since lastUpdate
-  // (but cases where backfill is restoring complete history won't be right)
+  // ori offset beam implementation: ori offset should only be applied if useoffsetbeam is set
+  // beam orientation offsets are simply added to beam az/el data; they are not processed as a separate modeling transformation
   const simCore::Vec3& beamOrientation = (prefs.useoffsetbeam()) ?
     simCore::Vec3(update->azimuth() + prefs.azimuthoffset(), update->elevation() + prefs.elevationoffset(), prefs.rolloffset())
     : simCore::Vec3(update->azimuth(), update->elevation(), 0.0);
@@ -229,30 +319,13 @@ void PlanetariumViewTool::BeamHistory::addPointFromUpdate_(const simData::BeamUp
   simData::BeamUpdate newUpdate(*update);
   newUpdate.set_range(range_);
 
-  /* currently not handling historical hbw and vbw values;
-     current hbw and vbw are applied to all points added.
-     one way forward for hbw and vbw might be to copy track history implementation for color:
-      use a data table to cache the GD CommandHBW & CommandVBW values,
-      and once the data table has a value,
-      it always takes precedence over the prefs value.
-      if there are no commands, then the hbw and vbw in history are always what is current in prefs.
-  */
-
-  simData::BeamPrefs newPrefs(prefs);
-  newPrefs.set_blended(true);
-  newPrefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
-  newPrefs.mutable_commonprefs()->set_useoverridecolor(false);
-
-  osg::ref_ptr<BeamVolume> volume = new BeamVolume(newPrefs, newUpdate);
+  osg::ref_ptr<BeamVolume> volume = new BeamVolume(prefs, newUpdate);
   LocatorNode* beamHistoryPointLocatorNode = new LocatorNode(beamHistoryPointLocator, volume.get());
 
   std::unique_ptr<HistoryPoint> newPoint(new HistoryPoint);
   newPoint->node = beamHistoryPointLocatorNode;
-  if (prefs.commonprefs().useoverridecolor())
-    newPoint->color = Color(prefs.commonprefs().overridecolor(), osgEarth::Color::RGBA);
-  else
-    newPoint->color = Color(prefs.commonprefs().color(), osgEarth::Color::RGBA);
-
+  newPoint->node->setNodeMask(simVis::DISPLAY_MASK_BEAM);
+  newPoint->color = color;
   historyPoints_[updateTime] = std::move(newPoint);
 }
 
