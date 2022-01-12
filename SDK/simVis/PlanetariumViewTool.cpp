@@ -29,6 +29,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Time/TimeClass.h"
 #include "simData/MemoryDataStore.h"
+#include "simData/LimitData.h"
 #include "simVis/Beam.h"
 #include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/Gate.h"
@@ -82,6 +83,7 @@ PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::D
   beam_(beam),
   historyLength_(10.0),
   useGradient_(false),
+  limitingData_(ds.dataLimiting()),
   firstTime_(std::numeric_limits<double>::max()),
   range_(range),
   lastUpdateTime_(-std::numeric_limits<double>::max())
@@ -112,6 +114,8 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
   const simData::BeamPrefs& prefs = beam_->getPrefs();
   if (!prefs.commonprefs().draw())
   {
+    // ensure that history is correctly limited relative to current prefs, then exit
+    applyDataLimiting_(prefs);
     return;
   }
 
@@ -121,14 +125,7 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     backfill_(lastUpdateTime_, time);
     lastUpdateTime_ = time; // remember time after updating, to be used next time on backfill
   }
-
-  // Perform data limiting as needed. Note that any points that are limited cannot
-  // be retrieved unless the scenario repeats that time, because there is no backfill
-  // in beam history points.
-  if (prefs.commonprefs().has_datalimitpoints())
-    limitByPoints_(prefs.commonprefs().datalimitpoints());
-  if (prefs.commonprefs().datalimittime())
-    limitByTime_(prefs.commonprefs().datalimittime());
+  applyDataLimiting_(prefs);
 
   float origAlpha = Color(prefs.commonprefs().color()).a();
   if (prefs.commonprefs().useoverridecolor())
@@ -294,34 +291,14 @@ void PlanetariumViewTool::BeamHistory::setRange(double range)
   }
 }
 
-void PlanetariumViewTool::BeamHistory::limitByPoints_(unsigned int pointsLimit)
+void PlanetariumViewTool::BeamHistory::applyDataLimiting_(const simData::BeamPrefs& prefs)
 {
-  // limit of 0 means no limiting, do nothing
-  if (pointsLimit == 0 || historyPoints_.size() <= pointsLimit)
+  if (!limitingData_ || historyPoints_.empty())
     return;
-
-  const size_t amount = historyPoints_.size() - pointsLimit;
-  auto limitAtIter = historyPoints_.begin();
-  std::advance(limitAtIter, amount);
-  historyPoints_.erase(historyPoints_.begin(), limitAtIter);
-}
-
-void PlanetariumViewTool::BeamHistory::limitByTime_(double timeLimit)
-{
-  // limit of <= 0 means no limiting, do nothing
-  if (timeLimit <= 0.)
-    return;
-
-  const double cutoff = historyPoints_.rbegin()->first - timeLimit;
-  for (auto cutoffIter = historyPoints_.begin(); cutoffIter != historyPoints_.end(); ++cutoffIter)
-  {
-    if (cutoffIter->first >= cutoff)
-    {
-      if (cutoffIter != historyPoints_.begin())
-        historyPoints_.erase(historyPoints_.begin(), cutoffIter);
-      return;
-    }
-  }
+  simData::limitData<std::unique_ptr<HistoryPoint> >(historyPoints_, prefs.commonprefs().datalimittime(), prefs.commonprefs().datalimitpoints());
+  // data limiting always leaves at least one point in a non-empty container
+  assert(historyPoints_.size() >= 1);
+  firstTime_ = historyPoints_.begin()->first;
 }
 
 void PlanetariumViewTool::BeamHistory::initGradient_()

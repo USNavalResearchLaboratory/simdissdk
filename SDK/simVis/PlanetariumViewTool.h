@@ -216,10 +216,8 @@ private:
     void backfill_(double lastTime, double currentTime);
     /** Add the specified update to a beam's history visualization */
     void addPointFromUpdate_(const simData::BeamUpdate* update, double updateTime);
-    /** Remove oldest points (by time) such that the max number of history points does not exceed the given limit */
-    void limitByPoints_(unsigned int pointsLimit);
-    /** Remove points such that all remaining points are within a time window defined by newestTime - timeLimit */
-    void limitByTime_(double timeLimit);
+    /** Limit history points according to time and point limit prefs */
+    void applyDataLimiting_(const simData::BeamPrefs& prefs);
     /** Initialize the gradient used for history point colors */
     void initGradient_();
 
@@ -231,6 +229,8 @@ private:
     double historyLength_;
     /** Whether to show history points in a gradient */
     bool useGradient_;
+    /** Whether to limit data in history */
+    bool limitingData_;
     /** Gradient for history points. Used when useGradient_ is true. NULL until first needed */
     osg::ref_ptr<osg::TransferFunction1D> gradientFunction_;
     /** Cached time of the first data point for the associated beam */
