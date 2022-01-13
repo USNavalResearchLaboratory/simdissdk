@@ -24,20 +24,20 @@
 #define SIMVIS_PLANETARIUM_VIEW_TOOL_H
 
 #include "osg/observer_ptr"
-#include "osg/TransferFunction"
-#include "simCore/Common/Common.h"
 #include "simData/DataSlice.h"
 #include "simVis/EntityFamily.h"
-#include "simVis/TargetDelegation.h"
 #include "simVis/Tool.h"
 #include "simVis/Types.h"
 
 namespace osg {
 class Geometry;
+class TransferFunction1D;
 class Vec4f;
 }
 
 namespace osgEarth { class LineDrawable; }
+
+namespace simCore { class TimeStamp; }
 
 namespace simData
 {
@@ -48,9 +48,11 @@ class DataStore;
 namespace simVis
 {
 class BeamNode;
+class HorizonGeoFence;
 class LocatorNode;
 class PlatformNode;
 class ScenarioManager;
+class TargetDelegation;
 
 /**
  * PlanetariumViewTool is a tool that draws a translucent dome
@@ -263,7 +265,7 @@ private:
   EntityFamily                    family_;
   osg::observer_ptr<PlatformNode> host_;
   simData::DataStore&             ds_;
-  osg::observer_ptr<LocatorNode>  locatorRoot_;
+  osg::ref_ptr<LocatorNode>       locatorRoot_;
   osg::ref_ptr<osg::Group>        root_;
   double                          range_; ///< planetarium radius, in meters
   osg::Vec4f                      domeColor_;
