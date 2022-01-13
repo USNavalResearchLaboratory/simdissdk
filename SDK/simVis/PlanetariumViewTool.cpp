@@ -21,7 +21,6 @@
  *
  */
 #include "osg/Depth"
-#include "osg/Geode"
 #include "osg/CullFace"
 #include "osg/TransferFunction"
 #include "osgEarth/LineDrawable"
@@ -449,7 +448,7 @@ void PlanetariumViewTool::setRange(double range)
 
   updateDome_();
 
-  // rescale the one geode that is reused for all target delegates
+  // rescale the one target geometry that is reused for all target delegates
   scaleTargetGeometry_(range_);
 
   // recreate our target delegates

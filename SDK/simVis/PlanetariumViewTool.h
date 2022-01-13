@@ -23,6 +23,7 @@
 #ifndef SIMVIS_PLANETARIUM_VIEW_TOOL_H
 #define SIMVIS_PLANETARIUM_VIEW_TOOL_H
 
+#include "osg/Group"
 #include "osg/observer_ptr"
 #include "simData/DataSlice.h"
 #include "simVis/EntityFamily.h"
