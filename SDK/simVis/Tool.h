@@ -103,6 +103,13 @@ namespace simVis
     * @param updates the changes to the scenario's entities for the given update time
     */
     virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates) { }
+
+    /**
+    * Called when scenario or an entity is about to be flushed.
+    * @param scenario  the scenarioManager that is managing this tool.
+    * @param flushedId  0 if scenario flush, otherwise the ID of the entity that will be flushed
+    */
+    virtual void onFlush(const ScenarioManager& scenario, simData::ObjectId flushedId) { }
   };
 
 } // namespace simVis

@@ -470,6 +470,9 @@ protected:
   void notifyToolsOfAdd_(EntityNode* node);
   /// informs the scenario tools of an entity removal
   void notifyToolsOfRemove_(EntityNode* node);
+  /// informs the scenario tools of a flush
+  void notifyToolsOfFlush_(simData::ObjectId flushedId);
+
   /// locator that tracks earth rotation linked to sim time
   osg::ref_ptr<Locator> scenarioEciLocator_;
 

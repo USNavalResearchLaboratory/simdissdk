@@ -49,21 +49,21 @@
 
 namespace
 {
-  /** Number of segments in the vector line */
-  static const unsigned int NUM_VECTOR_SEGS = 25;
+/** Number of segments in the vector line */
+static const unsigned int NUM_VECTOR_SEGS = 25;
 
-  /**
-   * Adapter that routes geometry update calls back to our object.
-   */
-  struct UpdateGeometryAdapter : public simVis::TargetDelegation::UpdateGeometryCallback
+/**
+  * Adapter that routes geometry update calls back to our object.
+  */
+struct UpdateGeometryAdapter : public simVis::TargetDelegation::UpdateGeometryCallback
+{
+  simVis::PlanetariumViewTool* tool_;
+  explicit UpdateGeometryAdapter(simVis::PlanetariumViewTool* tool) : tool_(tool) { }
+  void operator()(osg::MatrixTransform* xform, const osg::Vec3d& ecef)
   {
-    simVis::PlanetariumViewTool* tool_;
-    explicit UpdateGeometryAdapter(simVis::PlanetariumViewTool* tool) : tool_(tool) { }
-    void operator()(osg::MatrixTransform* xform, const osg::Vec3d& ecef)
-    {
-      tool_->updateTargetGeometry(xform, ecef);
-    }
-  };
+    tool_->updateTargetGeometry(xform, ecef);
+  }
+};
 }
 
 //-------------------------------------------------------------------
@@ -429,7 +429,7 @@ osg::Node* PlanetariumViewTool::getNode() const
 
 void PlanetariumViewTool::setRange(double range)
 {
-  if (range_ == range)
+  if (!root_.valid() || range_ == range)
     return;
 
   range_ = range;
@@ -641,12 +641,13 @@ double PlanetariumViewTool::getSectorHeight() const
 void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
 {
   root_ = new osg::Group;
+  root_->setName("Planetarium Tool Root Node");
   root_->getOrCreateStateSet()->setRenderBinDetails(BIN_AZIM_ELEV_TOOL, BIN_GLOBAL_SIMSDK);
   simVis::DisableDepthOnAlpha::setValues(root_->getOrCreateStateSet(), osg::StateAttribute::OFF);
 
   // create a node to track the position of the host:
   locatorRoot_ = new LocatorNode(new Locator(host_->getLocator(), Locator::COMP_POSITION));
-  locatorRoot_->setName("Planetarium Tool Root Node");
+  locatorRoot_->setName("Planetarium Dome Root Node");
 
   root_->addChild(locatorRoot_.get());
 
@@ -688,11 +689,7 @@ void PlanetariumViewTool::onUninstall(const ScenarioManager& scenario)
   // disable all overrides
   applyOverrides_(false);
   family_.reset();
-
-  if (targets_.valid())
-    targets_->removeChildren(0, targets_->getNumChildren());
-
-  // scenario has already removed us from the scenegraph
+  history_.clear();
   locatorRoot_ = nullptr;
   targets_ = nullptr;
   dome_ = nullptr;
@@ -715,13 +712,7 @@ void PlanetariumViewTool::onEntityRemove(const ScenarioManager& scenario, Entity
   if (family_.dismiss(entity))
   {
     applyOverrides_(entity, false);
-    osg::ref_ptr<simVis::BeamNode> beam = dynamic_cast<simVis::BeamNode*>(entity);
-    if (beam.get() && history_.find(beam->getId()) != history_.end())
-    {
-      auto history = history_.find(beam->getId())->second;
-      root_->removeChild(history);
-      history_.erase(beam->getId());
-    }
+    flushFamilyEntity_(entity);
   }
   else if (dynamic_cast<PlatformNode*>(entity))
   {
@@ -768,6 +759,42 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
 
   // Force a call to this method next time scenario manager updates, even if there are no EntityVector updates
   setDirty();
+}
+
+void PlanetariumViewTool::onFlush(const ScenarioManager& scenario, simData::ObjectId flushedId)
+{
+  if (flushedId == 0)
+  {
+    // scenario flush: clear all beam history
+    for (const auto& entityObsPtr : family_.members())
+      flushFamilyEntity_(entityObsPtr.get());
+
+    // clear all target delegates
+    targets_->removeAll();
+    return;
+  }
+
+  const EntityNode* entity = scenario_->find(flushedId);
+  if (dynamic_cast<const PlatformNode*>(entity))
+    targets_->remove(static_cast<const PlatformNode*>(entity));
+  else if (family_.isMember(flushedId))
+    flushFamilyEntity_(entity);
+}
+
+// common code for flush and remove
+void PlanetariumViewTool::flushFamilyEntity_(const EntityNode* entity)
+{
+  const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(entity);
+  if (beam)
+  {
+    const auto historyIter = history_.find(beam->getId());
+    if (historyIter != history_.end())
+    {
+      // remove history from scenegraph, will re-add if entity gets a new update
+      root_->removeChild(historyIter->second.get());
+      history_.erase(beam->getId());
+    }
+  }
 }
 
 void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,

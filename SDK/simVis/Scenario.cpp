@@ -578,6 +578,7 @@ simRF::RFPropagationManagerPtr ScenarioManager::rfPropagationManager() const
 void ScenarioManager::flush(simData::ObjectId flushedId)
 {
   SAFETRYBEGIN;
+  notifyToolsOfFlush_(flushedId);
   // if id 0, flush entire scenario
   if (flushedId == 0)
   {
@@ -1249,6 +1250,12 @@ void ScenarioManager::notifyToolsOfRemove_(EntityNode* node)
   {
     i->get()->onEntityRemove(*this, node);
   }
+}
+
+void ScenarioManager::notifyToolsOfFlush_(simData::ObjectId flushedId)
+{
+  for (const auto& scenarioToolRefPtr : scenarioTools_)
+    scenarioToolRefPtr->onFlush(*this, flushedId);
 }
 
 void ScenarioManager::update(simData::DataStore* ds, bool force)

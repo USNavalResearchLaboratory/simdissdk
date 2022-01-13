@@ -157,19 +157,22 @@ public:
 public: // ScenarioTool
 
   /** @see ScenarioTool::onInstall() */
-  virtual void onInstall(const ScenarioManager& scenario);
+  virtual void onInstall(const ScenarioManager& scenario) override;
 
   /** @see ScenarioTool::onUninstall() */
-  virtual void onUninstall(const ScenarioManager& scenario);
+  virtual void onUninstall(const ScenarioManager& scenario) override;
 
   /** @see ScenarioTool::onEntityAdd() */
-  virtual void onEntityAdd(const ScenarioManager& scenario, EntityNode* entity);
+  virtual void onEntityAdd(const ScenarioManager& scenario, EntityNode* entity) override;
 
   /** @see ScenarioTool::onEntityRemove() */
-  virtual void onEntityRemove(const ScenarioManager& scenario, EntityNode* entity);
+  virtual void onEntityRemove(const ScenarioManager& scenario, EntityNode* entity) override;
 
   /** @see ScenarioTool::onUpdate() */
-  virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates);
+  virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates) override;
+
+  /** @see ScenarioTool::onFlush() */
+  virtual void onFlush(const ScenarioManager& scenario, simData::ObjectId flushedId) override;
 
 public: // Tool
 
@@ -255,13 +258,13 @@ private:
   void scaleTargetGeometry_(double range) const;
   osg::Node* buildVectorGeometry_() const;
   void addBeamToBeamHistory_(simVis::BeamNode* beam);
-
+  void flushFamilyEntity_(const EntityNode* entity);
 
   EntityFamily                    family_;
   osg::observer_ptr<PlatformNode> host_;
   simData::DataStore&             ds_;
   osg::observer_ptr<LocatorNode>  locatorRoot_;
-  osg::observer_ptr<osg::Group>   root_;
+  osg::ref_ptr<osg::Group>        root_;
   double                          range_; ///< planetarium radius, in meters
   osg::Vec4f                      domeColor_;
   simData::BeamPrefs              beamPrefs_;

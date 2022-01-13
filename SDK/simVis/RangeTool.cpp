@@ -53,6 +53,7 @@
 #include "simVis/Registry.h"
 #include "simVis/RFProp/RFPropagationFacade.h"
 #include "simVis/RFProp/RFPropagationManager.h"
+#include "simVis/Scenario.h"
 #include "simVis/Utils.h"
 
 #include "simVis/RangeTool.h"
