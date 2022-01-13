@@ -236,10 +236,12 @@ void ProjectorNode::init_()
   texProjDirUniform_      = new osg::Uniform(osg::Uniform::FLOAT_VEC3, "simProjDir");
   useColorOverrideUniform_= new osg::Uniform(osg::Uniform::BOOL,       "projectorUseColorOverride");
   colorOverrideUniform_   = new osg::Uniform(osg::Uniform::FLOAT_VEC4, "projectorColorOverride");
+  projectorMaxRangeSquaredUniform_ = new osg::Uniform(osg::Uniform::FLOAT, "projectorMaxRangeSquared");
 
   projectorActive_->set(false);
   projectorAlpha_->set(DEFAULT_ALPHA_VALUE);
   useColorOverrideUniform_->set(false);
+  projectorMaxRangeSquaredUniform_->set(FLT_MAX);
 
   // Set texture to default broken image
   texture_ = new osg::Texture2D(simVis::makeBrokenImage());
@@ -343,6 +345,7 @@ void ProjectorNode::applyToStateSet(osg::StateSet* stateSet) const
   stateSet->addUniform(texProjPosUniform_.get());
   stateSet->addUniform(useColorOverrideUniform_.get());
   stateSet->addUniform(colorOverrideUniform_.get());
+  stateSet->addUniform(projectorMaxRangeSquaredUniform_.get());
 
   if (hasLastUpdate_ && lastPrefs_.shadowmapping())
     stateSet->setDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
@@ -360,6 +363,7 @@ void ProjectorNode::removeFromStateSet(osg::StateSet* stateSet) const
   stateSet->removeUniform(texProjPosUniform_.get());
   stateSet->removeUniform(useColorOverrideUniform_.get());
   stateSet->removeUniform(colorOverrideUniform_.get());
+  stateSet->removeUniform(projectorMaxRangeSquaredUniform_.get());
 
   stateSet->removeDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
 }
@@ -440,6 +444,12 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
   if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, projectoralpha))
   {
     projectorAlpha_->set(prefs.projectoralpha());
+  }
+
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, maxdrawrange))
+  {
+    projectorMaxRangeSquaredUniform_->set(
+      prefs.maxdrawrange()*prefs.maxdrawrange());
   }
 
   updateOverrideColor_(prefs);

@@ -287,6 +287,7 @@ private:
   osg::ref_ptr<osg::Uniform> texProjSamplerUniform_;
   osg::ref_ptr<osg::Uniform> useColorOverrideUniform_;
   osg::ref_ptr<osg::Uniform> colorOverrideUniform_;
+  osg::ref_ptr<osg::Uniform> projectorMaxRangeSquaredUniform_;
 
   osg::ref_ptr<osg::NodeCallback> projectOnNodeCallback_;
   // Keep track of the nodes projected onto so the projections can be removed when projector is deleted.
