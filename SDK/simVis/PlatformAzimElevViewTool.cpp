@@ -29,6 +29,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simVis/Beam.h"
 #include "simVis/Gate.h"
+#include "simVis/GeoFence.h"
 #include "simVis/Locator.h"
 #include "simVis/Platform.h"
 #include "simVis/Shaders.h"
@@ -83,6 +84,10 @@ PlatformAzimElevViewTool::PlatformAzimElevViewTool(EntityNode* host) :
 
   // the geofence will filter out visible objects
   fence_ = new HorizonGeoFence();
+}
+
+PlatformAzimElevViewTool::~PlatformAzimElevViewTool()
+{
 }
 
 osg::Node* PlatformAzimElevViewTool::getNode() const

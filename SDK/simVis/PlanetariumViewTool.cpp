@@ -33,6 +33,7 @@
 #include "simVis/Beam.h"
 #include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/Gate.h"
+#include "simVis/GeoFence.h"
 #include "simVis/LocatorNode.h"
 #include "simVis/Platform.h"
 #include "simVis/Scenario.h"
@@ -421,6 +422,10 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host, simData::DataStore&
   targetGeom_ = geom;
 
   scaleTargetGeometry_(range_);
+}
+
+PlanetariumViewTool::~PlanetariumViewTool()
+{
 }
 
 osg::Node* PlanetariumViewTool::getNode() const

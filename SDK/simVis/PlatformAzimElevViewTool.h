@@ -30,10 +30,6 @@
 #include "simVis/Tool.h"
 #include "simVis/Types.h"
 
-namespace osg {
-  class Geode;
-}
-
 namespace simVis
 {
 class LocatorNode;
@@ -117,7 +113,7 @@ public: // internal
   void updateTargetGeometry(osg::MatrixTransform* xform, const osg::Vec3d& ecef);
 
 protected:
-  virtual ~PlatformAzimElevViewTool() { }
+  virtual ~PlatformAzimElevViewTool();
 
 private:
   osg::MatrixTransform* createAzElGrid_();

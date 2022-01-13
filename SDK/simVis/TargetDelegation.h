@@ -24,14 +24,13 @@
 #define SIMVIS_TARGET_DELEGATION_H
 
 #include "simCore/Common/Common.h"
-#include "simVis/GeoFence.h"
 #include "osg/Group"
 #include "osg/MatrixTransform"
 #include <osg/ref_ptr>
 
 namespace simVis
 {
-
+class GeoFence;
 class PlatformNode;
 
 /**
@@ -93,7 +92,7 @@ public:
   void addUpdateGeometryCallback(UpdateGeometryCallback* cb);
 
 protected:
-  virtual ~TargetDelegation() { }
+  virtual ~TargetDelegation();
 
 private:
   typedef std::map< const PlatformNode*, osg::ref_ptr<osg::MatrixTransform> > TargetNodeMap;

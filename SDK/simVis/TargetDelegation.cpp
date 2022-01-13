@@ -31,21 +31,21 @@ namespace simVis
 {
 TargetDelegation::TargetDelegation()
 {
-  //nop
 }
 
+TargetDelegation::~TargetDelegation()
+{
+}
 
 void TargetDelegation::setGeoFence(const GeoFence* fence)
 {
   fence_ = fence;
 }
 
-
 void TargetDelegation::addUpdateGeometryCallback(UpdateGeometryCallback* cb)
 {
   updateGeometryCallbacks_.push_back(cb);
 }
-
 
 void TargetDelegation::updateGeometry_(osg::MatrixTransform* xform, const osg::Vec3d& ecef)
 {
@@ -56,7 +56,6 @@ void TargetDelegation::updateGeometry_(osg::MatrixTransform* xform, const osg::V
     i->get()->operator()(xform, ecef);
   }
 }
-
 
 void TargetDelegation::addOrUpdate(const PlatformNode* platform)
 {
@@ -106,7 +105,6 @@ void TargetDelegation::addOrUpdate(const PlatformNode* platform)
   }
 }
 
-
 void TargetDelegation::remove(const PlatformNode* platform)
 {
   // untrack if tracked
@@ -127,4 +125,3 @@ void TargetDelegation::removeAll()
 }
 
 }
-

@@ -188,7 +188,7 @@ public: // internal
   void updateTargetGeometry(osg::MatrixTransform*, const osg::Vec3d&) const;
 
 protected:
-  virtual ~PlanetariumViewTool() { }
+  virtual ~PlanetariumViewTool();
 
 private:
   /** Group that stores and manages a beam's history points on a planetarium */
