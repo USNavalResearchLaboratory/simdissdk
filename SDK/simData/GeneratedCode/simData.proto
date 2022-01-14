@@ -1367,6 +1367,8 @@ message ProjectorPrefs {
 
   // Determine if the projector should use shadow mapping
   optional bool shadowMapping = 8 [default = false];
+  // Maximum distance from projector at which to draw projected image
+  optional float maxDrawRange = 9 [default = 1e10];
 };
 
 /// common update to projector data

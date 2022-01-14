@@ -92,6 +92,8 @@ static const std::string s_togglePlatformFiveShadowMap =
 #else
 " % :    toggle the shadow map on platform 5";
 #endif
+static const std::string s_togglePlatformFiveMaxDrawRange =
+" ^ :    toggle the max draw range on platform 5";
 
 /// global variables for camera tethering between platforms
 simData::ObjectId platformId_0 = 0;
@@ -126,6 +128,7 @@ struct ControlPanel : public GUI::BaseGui
     ImGui::Text(s_viewPlatformFour.c_str());
     ImGui::Text(s_viewPlatformFive.c_str());
     ImGui::Text(s_togglePlatformFiveShadowMap.c_str());
+    ImGui::Text(s_togglePlatformFiveMaxDrawRange.c_str());
     ImGui::End();
   }
 };
@@ -148,6 +151,7 @@ static Control* createHelp()
   vbox->addControl(new LabelControl(s_viewPlatformFour, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_viewPlatformFive, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_togglePlatformFiveShadowMap, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_togglePlatformFiveMaxDrawRange, 14, simVis::Color::Silver));
   s_helpControl = vbox;
   return vbox;
 }
@@ -198,6 +202,19 @@ struct MenuHandler : public osgGA::GUIEventHandler
     if (prefs)
     {
       prefs->set_shadowmapping(!prefs->shadowmapping());
+      txn.complete(&prefs);
+    }
+  }
+
+  void toggleMaxRange()
+  {
+    simData::DataStore::Transaction txn;
+    simData::ProjectorPrefs* prefs = dataStore_.mutable_projectorPrefs(projectorId_4, &txn);
+    if (prefs)
+    {
+      const float test_value = 5000.0; // meters
+      float newvalue = prefs->maxdrawrange() == test_value ? FLT_MAX : test_value;
+      prefs->set_maxdrawrange(newvalue);
       txn.complete(&prefs);
     }
   }
@@ -285,8 +302,12 @@ struct MenuHandler : public osgGA::GUIEventHandler
         toggleInterpolate();
         handled = true;
         break;
-      case'%':
+      case '%':
         toggleShadowMap();
+        handled = true;
+        break;
+      case '^':
+        toggleMaxRange();
         handled = true;
         break;
     }

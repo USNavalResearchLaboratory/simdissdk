@@ -11,6 +11,7 @@ uniform float projectorAlpha;
 uniform sampler2D simProjSampler;
 uniform bool projectorUseColorOverride;
 uniform vec4 projectorColorOverride;
+uniform float projectorMaxRangeSquared;
 
 #ifdef SIMVIS_PROJECT_USE_SHADOWMAP
 uniform sampler2D simProjShadowMap;
@@ -75,6 +76,10 @@ void sim_proj_frag(inout vec4 color)
 
   // only draw in front of projector (not behind)
   if (dot(simProjLookVector_VIEW, simProjToVert_VIEW) < 0.0)  
+    return;
+
+  // only draw up to maximum range
+  if (projectorMaxRangeSquared < dot(simProjToVert_VIEW, simProjToVert_VIEW))
     return;
 
   float vert_dot_normal = dot(normalize(simProjToVert_VIEW), normalize(vp_Normal));
