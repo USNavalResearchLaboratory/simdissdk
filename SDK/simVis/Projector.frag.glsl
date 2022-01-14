@@ -75,11 +75,11 @@ void sim_proj_frag(inout vec4 color)
     return;
 
   // only draw in front of projector (not behind)
-  if (dot(simProjLookVector_VIEW, simProjToVert_VIEW) < 0.0)  
+  if (dot(simProjLookVector_VIEW, simProjToVert_VIEW) < 0.0)
     return;
 
   // only draw up to maximum range
-  if (projectorMaxRangeSquared < dot(simProjToVert_VIEW, simProjToVert_VIEW))
+  if (projectorMaxRangeSquared > 0.0 && projectorMaxRangeSquared < dot(simProjToVert_VIEW, simProjToVert_VIEW))
     return;
 
   float vert_dot_normal = dot(normalize(simProjToVert_VIEW), normalize(vp_Normal));

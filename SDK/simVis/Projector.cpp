@@ -55,6 +55,7 @@
 
 namespace
 {
+
 static const double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
 static const float DEFAULT_ALPHA_VALUE = 0.1f;
 
@@ -241,7 +242,7 @@ void ProjectorNode::init_()
   projectorActive_->set(false);
   projectorAlpha_->set(DEFAULT_ALPHA_VALUE);
   useColorOverrideUniform_->set(false);
-  projectorMaxRangeSquaredUniform_->set(FLT_MAX);
+  projectorMaxRangeSquaredUniform_->set(0.f);
 
   // Set texture to default broken image
   texture_ = new osg::Texture2D(simVis::makeBrokenImage());
@@ -448,8 +449,10 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
 
   if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, maxdrawrange))
   {
-    projectorMaxRangeSquaredUniform_->set(
-      prefs.maxdrawrange()*prefs.maxdrawrange());
+    if (prefs.maxdrawrange() <= 0.)
+      projectorMaxRangeSquaredUniform_->set(0.f);
+    else
+      projectorMaxRangeSquaredUniform_->set(prefs.maxdrawrange() * prefs.maxdrawrange());
   }
 
   updateOverrideColor_(prefs);

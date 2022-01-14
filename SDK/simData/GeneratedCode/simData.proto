@@ -762,7 +762,7 @@ message PlatformPrefs {
   /// Automatically use the platform's orientation clamp values at extremely low velocity.
   optional bool clampOrientationAtLowVelocity = 60 [default = false];
 
-  // Keep platform clamp to the surface
+  /// Keep platform clamp to the surface
   optional bool surfaceClamping = 61 [default = false];
   /// Keep platform above the surface
   optional bool aboveSurfaceClamping = 69 [default = false];
@@ -1365,16 +1365,16 @@ message ProjectorPrefs {
   /// Field of view for projector in radians, if overrideFov is true (default is ~10 degrees)
   optional double overrideFovAngle = 7 [default = 0.174533];
 
-  // Determine if the projector should use shadow mapping
+  /// Determine if the projector should use shadow mapping
   optional bool shadowMapping = 8 [default = false];
-  // Maximum distance from projector at which to draw projected image
-  optional float maxDrawRange = 9 [default = 1e10];
+  /// Maximum distance from projector at which to draw projected image (<=0 means no limiting)
+  optional float maxDrawRange = 9 [default = 0.0];
 };
 
 /// common update to projector data
 message ProjectorUpdate {
   optional double time = 1;
-  // Projector field of view: radians
+  /// Projector field of view: radians
   optional double fov = 2;
 };
 
