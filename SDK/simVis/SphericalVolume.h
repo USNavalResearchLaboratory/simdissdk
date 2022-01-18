@@ -76,9 +76,9 @@ struct SVData
   /** True if should be drawn as a spherical segment */
   bool       drawAsSphereSegment_;
   /** Horizontal field of view in degrees */
-  float hfov_deg_;
+  double hfov_deg_;
   /** Vertical field of view in degrees */
-  float vfov_deg_;
+  double vfov_deg_;
   /** Azimuth offset in degrees */
   float azimOffset_deg_;
   /** Elevation offset in degrees */
@@ -131,9 +131,9 @@ public:
   /// move the verts comprising the near range
   static void updateFarRange(osg::MatrixTransform* xform, double range);
   /// tweak the verts to update the horizontal angle
-  static void updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle);
+  static void updateHorizAngle(osg::MatrixTransform* xform, double newAngle);
   /// tweak the verts to update the vertical angle
-  static void updateVertAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle);
+  static void updateVertAngle(osg::MatrixTransform* xform, double newAngle);
 
   /// Retrieves the 2nd/opaque group (e.g., outline or wireframe), or nullptr if there is none
   static osg::Group* opaqueGroup(osg::MatrixTransform* xform);

@@ -221,9 +221,9 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
   }
 #ifdef BEAM_IN_PLACE_UPDATES
   if (PB_FIELD_CHANGED(a, b, verticalwidth))
-    SVFactory::updateVertAngle(beamSV_.get(), a->verticalwidth(), b->verticalwidth());
+    SVFactory::updateVertAngle(beamSV_.get(), b->verticalwidth());
   if (PB_FIELD_CHANGED(a, b, horizontalwidth))
-    SVFactory::updateHorizAngle(beamSV_.get(), a->horizontalwidth(), b->horizontalwidth());
+    SVFactory::updateHorizAngle(beamSV_.get(), b->horizontalwidth());
 #endif
   if (PB_FIELD_CHANGED(a, b, beamscale))
     setBeamScale_(b->beamscale());

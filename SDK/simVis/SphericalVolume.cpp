@@ -96,14 +96,12 @@ namespace
 
   struct SVMetaContainer : public osg::Referenced
   {
-    /// vector of vertex metadata
-    std::vector<SVMeta> vertMeta_;
-    /// quaternion that will "point" the volume along our direction vector
-    osg::Quat           dirQ_;
-    /// range of near face of sv
-    float               nearRange_;
-    /// range of far face of sv
-    float               farRange_;
+    std::vector<SVMeta> vertMeta_; ///< vector of vertex metadata
+    osg::Quat dirQ_;               ///< quaternion that will "point" the volume along our direction vector
+    float     nearRange_;          ///< range of near face of sv
+    float     farRange_;           ///< range of far face of sv
+    double    horizontalAngleRad_; ///< horizontal angle/width of sv (x dimension) in radians
+    double    verticalAngleRad_;   ///< vertical angle/height of sv (z dimension) in radians
   };
 
   // class that adds an outline to an svPyramid
@@ -368,14 +366,14 @@ namespace
     osg::ref_ptr<osg::Vec3Array> vertexArray_;
     osg::ref_ptr<osg::Vec3Array> normalArray_;
     SVMetaContainer* metaContainer_;
-    float hfov_deg_;
-    float vfov_deg_;
+    double hfov_deg_;
+    double vfov_deg_;
     unsigned int numPointsX_;
-    float x_start_;
-    float spacingX_;
+    double x_start_;
+    double spacingX_;
     unsigned int numPointsZ_;
-    float z_start_;
-    float spacingZ_;
+    double z_start_;
+    double spacingZ_;
     unsigned int reserveSizeFace_;
     unsigned int reserveSizeCone_;
     unsigned short farFaceOffset_;
@@ -424,9 +422,9 @@ namespace
     color_ = data.color_;
     wallRes_ = data.wallRes_;
 
-    hfov_deg_ = osg::clampBetween(data.hfov_deg_, 0.01f, 360.0f);
+    hfov_deg_ = osg::clampBetween(data.hfov_deg_, 0.01, 360.0);
     numPointsX_ = data.capRes_ + 1;
-    x_start_ = -0.5f * hfov_deg_;
+    x_start_ = -0.5 * hfov_deg_;
     spacingX_ = hfov_deg_ / (numPointsX_ - 1);
     // in sphere-seg mode, bake the azim offsets into the model
     if (data.drawAsSphereSegment_)
@@ -434,12 +432,15 @@ namespace
       x_start_ += data.azimOffset_deg_;
     }
 
-    vfov_deg_ = osg::clampBetween(data.vfov_deg_, 0.01f, 180.0f);
-    z_start_ = -0.5f * vfov_deg_;
-    float z_end = 0.5f * vfov_deg_;
+    vfov_deg_ = osg::clampBetween(data.vfov_deg_, 0.01, 180.0);
+    z_start_ = -0.5 * vfov_deg_;
+    double z_end = 0.5 * vfov_deg_;
     // in sphere-seg mode, bake the elev offsets into the model, and clamp to [-90,90]
     if (data.drawAsSphereSegment_)
     {
+      // in-place updates (updateNearRange, updateFarRange, updateHorizAngle, updateVertAngle)
+      // not supported for this draw mode
+      // caller must ensure that in-place updates are disallowed
       z_start_ = simCore::angFix90(z_start_ + data.elevOffset_deg_);
       z_end = simCore::angFix90(z_end + data.elevOffset_deg_);
       vfov_deg_ = z_end - z_start_;
@@ -460,10 +461,10 @@ namespace
     if (drawFaces_ && drawWalls_)
     {
       // bottom & top faces are only drawn if vfov_deg < 180
-      if (vfov_deg_ < 180.0f) // 2 faces * (2 * (numPointsX - 1) * (1 + d.wallRes_)) vertices/face
+      if (vfov_deg_ < 180.0) // 2 faces * (2 * (numPointsX - 1) * (1 + d.wallRes_)) vertices/face
         reserveSizeCone_ += (numPointsX_ - 1) * (1 + data.wallRes_) * 2 * 2;
       // right & left faces only drawn if hfov_deg < 360
-      if (hfov_deg_ < 360.0f) // 2 faces * (2 * (numPointsZ - 1) * (1 + d.wallRes_)) vertices/face
+      if (hfov_deg_ < 360.0) // 2 faces * (2 * (numPointsZ - 1) * (1 + d.wallRes_)) vertices/face
         reserveSizeCone_ += (numPointsZ_ - 1) * (1 + data.wallRes_) * 2 * 2;
     }
 
@@ -476,11 +477,15 @@ namespace
     normalArray_ = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
     normalArray_->reserve(reserveSizeFace_ + reserveSizeCone_);
 
+    // store information to support in-place updates
     metaContainer_ = new SVMetaContainer();
     // quaternion that "points" the volume along our direction vector
     metaContainer_->dirQ_.makeRotate(osg::Y_AXIS, direction);
     metaContainer_->nearRange_ = data.nearRange_;
     metaContainer_->farRange_ = data.farRange_;
+    metaContainer_->horizontalAngleRad_ = hfov_deg_ * simCore::DEG2RAD;
+    metaContainer_->verticalAngleRad_ = vfov_deg_ * simCore::DEG2RAD;
+
     std::vector<SVMeta>& vertexMetaData = metaContainer_->vertMeta_;
     vertexMetaData.reserve(reserveSizeFace_ + reserveSizeCone_);
 
@@ -533,15 +538,15 @@ namespace
     // iterate from x min (left) to xmax (right)
     for (unsigned int x = 0; x < numPointsX_; ++x)
     {
-      const float angleX_rad = osg::DegreesToRadians(x_start_ + spacingX_ * x);
-      const float sinAngleX = sin(angleX_rad);
-      const float cosAngleX = cos(angleX_rad);
+      const double angleX_rad = simCore::DEG2RAD * (x_start_ + spacingX_ * x);
+      const double sinAngleX = sin(angleX_rad);
+      const double cosAngleX = cos(angleX_rad);
 
       for (unsigned int z = 0; z < numPointsZ_; ++z)
       {
-        const float angleZ_rad = osg::DegreesToRadians(z_start_ + spacingZ_ * z);
-        const float sinAngleZ = sin(angleZ_rad);
-        const float cosAngleZ = cos(angleZ_rad);
+        const double angleZ_rad = simCore::DEG2RAD * (z_start_ + spacingZ_ * z);
+        const double sinAngleZ = sin(angleZ_rad);
+        const double cosAngleZ = cos(angleZ_rad);
 
         const osg::Vec3 unitUnrot(sinAngleX*cosAngleZ, cosAngleX*cosAngleZ, sinAngleZ);
         const osg::Vec3 unit = dirQ * unitUnrot;
@@ -797,11 +802,11 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
   // the number of concentric rings forming a face
   const unsigned int numRings = osg::clampBetween(d.capRes_, 1u, 10u);
   // cone cannot support anything > 180
-  const double hfov_deg = osg::clampBetween(static_cast<double>(d.hfov_deg_), 0.01, 180.0);
-  const double vfov_deg = osg::clampBetween(static_cast<double>(d.vfov_deg_), 0.01, 180.0);
+  const double hfov_deg = osg::clampBetween(d.hfov_deg_, 0.01, 180.0);
+  const double vfov_deg = osg::clampBetween(d.vfov_deg_, 0.01, 180.0);
   // each ring has this angular span
-  const double ringSpanX = 0.5 * osg::DegreesToRadians(hfov_deg) / numRings;
-  const double ringSpanZ = 0.5 * osg::DegreesToRadians(vfov_deg) / numRings;
+  const double ringSpanX = 0.5 * simCore::DEG2RAD * hfov_deg / numRings;
+  const double ringSpanZ = 0.5 * simCore::DEG2RAD * vfov_deg / numRings;
 
   // determine if the near face will be drawn
   const bool hasNear = d.nearRange_ > 0.0 && d.drawCone_;
@@ -835,6 +840,8 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
   m->resize(numVerts);
   metaContainer->nearRange_ = d.nearRange_;
   metaContainer->farRange_  = d.farRange_;
+  metaContainer->horizontalAngleRad_ = hfov_deg * simCore::DEG2RAD;
+  metaContainer->verticalAngleRad_ = vfov_deg * simCore::DEG2RAD;
 
   // quaternion that will "point" the volume along our direction vector
   metaContainer->dirQ_.makeRotate(osg::Y_AXIS, direction);
@@ -1337,7 +1344,7 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, double farRange)
   dirtyBound_(xform);
 }
 
-void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle)
+void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double newAngleRad)
 {
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
   if (geom == nullptr || geom->empty())
@@ -1359,10 +1366,11 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
   const bool isCone = (vertMeta[0].usage_ == USAGE_CONEFAR);
   // for horiz bw: cone clamped to PI, pyramid clamped to TWOPI
   const double maxClamp = (isCone ? M_PI : M_TWOPI);
-  oldAngle = osg::clampBetween(oldAngle, (0.01 * simCore::DEG2RAD), maxClamp);
-  newAngle = osg::clampBetween(newAngle, (0.01 * simCore::DEG2RAD), maxClamp);
-  const double oldMinAngle = oldAngle * 0.5;
-  const double newMinAngle = newAngle * 0.5;
+  const double oldAngleRad = meta->horizontalAngleRad_;
+  newAngleRad = osg::clampBetween(newAngleRad, (0.01 * simCore::DEG2RAD), maxClamp);
+  meta->horizontalAngleRad_ = newAngleRad;
+  const double oldHalfAngleRad = oldAngleRad * 0.5;
+  const double newHalfAngleRad = newAngleRad * 0.5;
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
     SVMeta& m = vertMeta[i];
@@ -1379,23 +1387,23 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
     case USAGE_CONEFAR:
     {
       // osg::clampBetween above guarantees this assert
-      assert(oldMinAngle > 0.);
-      // anglez_ in metadata is in a fixed ratio to max angle;
+      assert(oldHalfAngleRad > 0.);
+      // anglex_ in metadata is in a fixed ratio to max angle;
       // it may be the angle to a subring (in face), or max angle (in the cone)
       // max angle will change, but that ratio does not change, as we're not adding rings.
 
-      // createCone_ and updateVertAngle guarantee this
+      // createCone_ and updateHorizAngle guarantee this
       assert(m.anglex_ > 0. && m.anglex_ <= (M_PI_2 + std::numeric_limits<float>::epsilon()));
 
-      // developer error indicated; oldMinAngle is the max possible value for m.anglex_
-      assert(m.anglex_ <= (oldMinAngle + std::numeric_limits<float>::epsilon()));
+      // developer error indicated; oldHalfAngle is the max possible value for m.anglex_
+      assert(m.anglex_ <= (oldHalfAngleRad + std::numeric_limits<float>::epsilon()));
 
       // if ratio is less than 1, this is a vertex in a subring in the face
       // simple ratio logic works since cone is symmetric around 0; if not symmetric around 0, need to use pyramid logic
-      const double ratio = (simCore::areEqual(m.anglex_, oldMinAngle) ? 1.0 : m.anglex_ / oldMinAngle);
+      const double ratio = (simCore::areEqual(m.anglex_, oldHalfAngleRad) ? 1.0 : m.anglex_ / oldHalfAngleRad);
       // previous asserts and clamps guarantee this
       assert(ratio > 0. && ratio <= 1.);
-      const double ax_new = newMinAngle * ratio;
+      const double ax_new = newHalfAngleRad * ratio;
 
       // clamping and previous asserts guaranteee this
       assert(ax_new > 0. && ax_new <= M_PI_2);
@@ -1426,9 +1434,9 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
     case USAGE_RIGHT:
     {
       // osg::clampBetween above guarantees this assert
-      assert(oldAngle > 0.);
-      const double t = (m.anglex_ + oldMinAngle) / oldAngle;
-      const double ax = -newMinAngle + t * newAngle;
+      assert(oldAngleRad > 0.);
+      const double t = (m.anglex_ + oldHalfAngleRad) / oldAngleRad;
+      const double ax = -newHalfAngleRad + t * newAngleRad;
       const double sinx = sin(ax);
       const double cosx = cos(ax);
       const float sinz = sin(m.anglez_);
@@ -1489,7 +1497,7 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
   dirtyBound_(xform);
 }
 
-void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle)
+void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double newAngleRad)
 {
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
   if (geom == nullptr || geom->empty())
@@ -1510,10 +1518,11 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
 
   // clamp to M_PI, to match clamping in pyramid and cone
-  oldAngle = osg::clampBetween(oldAngle, (0.01 * simCore::DEG2RAD), M_PI);
-  newAngle = osg::clampBetween(newAngle, (0.01 * simCore::DEG2RAD), M_PI);
-  const double oldMinAngle = oldAngle * 0.5;
-  const double newMinAngle = newAngle * 0.5;
+  const double oldAngleRad = meta->verticalAngleRad_;
+  newAngleRad = osg::clampBetween(newAngleRad, (0.01 * simCore::DEG2RAD), M_PI);
+  meta->verticalAngleRad_ = newAngleRad;
+  const double oldHalfAngleRad = oldAngleRad * 0.5;
+  const double newHalfAngleRad = newAngleRad * 0.5;
 
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
@@ -1532,7 +1541,7 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
     case USAGE_CONEFAR:
     {
       // osg::clampBetween above guarantees this assert
-      assert(oldMinAngle > 0.);
+      assert(oldHalfAngleRad > 0.);
       // anglez_ in metadata is in a fixed ratio to max angle;
       // it may be the angle to a subring (in face), or max angle (in the cone)
       // that ratio does not change, as we're not adding rings
@@ -1541,15 +1550,15 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
       assert(m.anglez_ > 0. && m.anglez_ <= (M_PI_2 + std::numeric_limits<float>::epsilon()));
 
       // developer error indicated; oldMinAngle is the max possible value for m.anglez_
-      assert(m.anglez_ <= (oldMinAngle + std::numeric_limits<float>::epsilon()));
+      assert(m.anglez_ <= (oldHalfAngleRad + std::numeric_limits<float>::epsilon()));
 
       // if ratio is less than 1, this is a vertex in a subring in the face
       // simple ratio logic works since cone is symmetric around 0; if not, need to use (pyramid) logic below
-      const double ratio = (simCore::areEqual(m.anglez_, oldMinAngle) ? 1.0 : m.anglez_ / oldMinAngle);
+      const double ratio = (simCore::areEqual(m.anglez_, oldHalfAngleRad) ? 1.0 : m.anglez_ / oldHalfAngleRad);
       // previous asserts and clamps guarantee this
       assert(ratio > 0. && ratio <= 1.);
 
-      const double az_new = newMinAngle * ratio;
+      const double az_new = newHalfAngleRad * ratio;
       // clamping and previous asserts guaranteee this
       assert(az_new > 0. && az_new <= M_PI_2);
 
@@ -1577,9 +1586,9 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
     case USAGE_RIGHT:
     {
       // osg::clampBetween above guarantees this assert
-      assert(oldAngle > 0.);
-      const double t = (m.anglez_ + oldMinAngle) / oldAngle;
-      const double az = -newMinAngle + t * newAngle;
+      assert(oldAngleRad > 0.);
+      const double t = (m.anglez_ + oldHalfAngleRad) / oldAngleRad;
+      const double az = -newHalfAngleRad + t * newAngleRad;
       const float sinx = sin(m.anglex_);
       const float cosx = cos(m.anglex_);
       const double sinz = sin(az);

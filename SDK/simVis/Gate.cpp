@@ -133,11 +133,11 @@ void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a, const simDa
   }
   if (PB_FIELD_CHANGED(a, b, width) && PB_BOTH_HAVE_FIELD(a, b, width))
   {
-    SVFactory::updateHorizAngle(gateSV_.get(), a->width(), b->width());
+    SVFactory::updateHorizAngle(gateSV_.get(), b->width());
   }
   if (PB_FIELD_CHANGED(a, b, height) && PB_BOTH_HAVE_FIELD(a, b, height))
   {
-    SVFactory::updateVertAngle(gateSV_.get(), a->height(), b->height());
+    SVFactory::updateVertAngle(gateSV_.get(), b->height());
   }
 #endif
 }
