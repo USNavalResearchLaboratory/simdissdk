@@ -213,11 +213,24 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
       // Fade the alpha based on the point's age and based on the current color's alpha
       color.a() = zeroToOne * origAlpha;
     }
+
     simData::BeamPrefs newPrefs(prefs);
+    // only the changes introduced here are applied to the bv
     newPrefs.mutable_commonprefs()->set_color(color.as(osgEarth::Color::RGBA));
     // code above is managing color, including override; prevent beam from interfering
     newPrefs.mutable_commonprefs()->set_useoverridecolor(false);
     bv->performInPlacePrefChanges(&prefs, &newPrefs);
+
+    if (!iter.second->hasCommandedHbw || !iter.second->hasCommandedVbw)
+    {
+      simData::BeamPrefs fakePrefs(prefs);
+      // if no commanded value, force the application of the current prefs value
+      if (!iter.second->hasCommandedHbw)
+        fakePrefs.set_horizontalwidth(0);
+      if (!iter.second->hasCommandedVbw)
+        fakePrefs.set_verticalwidth(0);
+      bv->performInPlacePrefChanges(&fakePrefs, &prefs);
+    }
   }
 }
 
@@ -230,12 +243,19 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
     return;
   }
 
+  // starting point is: each point sets hbw, vbw & color to sentinel value;
+  // only set to non-sentinel value if a command is found below
+  // updateBeamHistory replaces sentinel with current pref if no command found
+  double hbw = NO_COMMANDED_BEAMWIDTH;
+  double vbw = NO_COMMANDED_BEAMWIDTH;
+  simVis::Color color = NO_COMMANDED_COLOR;
+
+  // prepare the prefs for all points being added
   const simData::BeamPrefs& prefs = beam_->getPrefs();
-  // starting point is: each point gets hbw, vbw & color from current prefs
-  double hbw = prefs.horizontalwidth();
-  double vbw = prefs.verticalwidth();
-  // override is handled by updateBeamHistory above
-  simVis::Color color = NO_COMMANDED_COLOR; // sentinel value for no commanded color
+  simData::BeamPrefs pointPrefs(prefs);
+  pointPrefs.mutable_commonprefs()->set_useoverridecolor(false);
+  pointPrefs.set_blended(true);
+  pointPrefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
 
   // Declared outside for loop so we can continue iteration after finding nearly-recent command
   auto commandIter = beamCommandSlice_->lower_bound(-1.0);
@@ -245,20 +265,22 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
     auto next = commandIter.peekNext();
     if (next->time() > lastTime)
       break;
-    if (next->has_updateprefs() && next->updateprefs().has_horizontalwidth())
+    if (!next->has_updateprefs())
+      continue;
+    if (next->updateprefs().has_horizontalwidth())
       hbw = next->updateprefs().horizontalwidth();
-    if (next->has_updateprefs() && next->updateprefs().has_verticalwidth())
+    if (next->updateprefs().has_verticalwidth())
       vbw = next->updateprefs().verticalwidth();
-    if (next->has_updateprefs() && next->updateprefs().commonprefs().has_color())
+    if (next->updateprefs().commonprefs().has_color())
       color = simVis::Color(next->updateprefs().commonprefs().color(), osgEarth::Color::RGBA);
   }
 
-  // add all data points from after lastTime to/including currentTime
+  // add all data points from after lastTime to/including currentTime, if the range
   auto updateIter = beamUpdateSlice_->upper_bound(lastTime);
   while (updateIter.hasNext())
   {
     const simData::BeamUpdate* update = updateIter.next();
-    if (update->time() <= currentTime)
+    if (update->time() <= currentTime) // SIM-13779     && update->range() >= range_
     {
       // determine if there is a new command for this update's time
       for (; commandIter.peekNext() != nullptr; commandIter.next())
@@ -266,28 +288,36 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
         auto next = commandIter.peekNext();
         if (next->time() > update->time())
           break;
-        if (next->has_updateprefs() && next->updateprefs().has_horizontalwidth())
+        if (!next->has_updateprefs())
+          continue;
+        if (next->updateprefs().has_horizontalwidth())
           hbw = next->updateprefs().horizontalwidth();
-        if (next->has_updateprefs() && next->updateprefs().has_verticalwidth())
+        if (next->updateprefs().has_verticalwidth())
           vbw = next->updateprefs().verticalwidth();
-        if (next->has_updateprefs() && next->updateprefs().commonprefs().has_color())
+        if (next->updateprefs().commonprefs().has_color())
           color = simVis::Color(next->updateprefs().commonprefs().color(), osgEarth::Color::RGBA);
       }
 
-      simData::BeamPrefs pointPrefs(prefs);
-      pointPrefs.set_horizontalwidth(hbw);
-      pointPrefs.set_verticalwidth(vbw);
-      pointPrefs.mutable_commonprefs()->set_useoverridecolor(false);
-      pointPrefs.set_blended(true);
-      pointPrefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
-      addPointFromUpdate_(pointPrefs, color, update, update->time());
+      const bool hasCommandedHbw = (hbw != NO_COMMANDED_BEAMWIDTH);
+      if (hasCommandedHbw)
+        pointPrefs.set_horizontalwidth(hbw);
+      else
+        pointPrefs.set_horizontalwidth(prefs.horizontalwidth());
+      const bool hasCommandedVbw = (vbw != NO_COMMANDED_BEAMWIDTH);
+      if (hasCommandedVbw)
+        pointPrefs.set_verticalwidth(vbw);
+      else
+        pointPrefs.set_verticalwidth(prefs.verticalwidth());
+      addPointFromUpdate_(pointPrefs, hasCommandedHbw, hasCommandedVbw, color, update, update->time());
     }
     else
       break;
   }
 }
 
-void PlanetariumViewTool::BeamHistory::addPointFromUpdate_(const simData::BeamPrefs& prefs, const simVis::Color& color, const simData::BeamUpdate* update, double updateTime)
+void PlanetariumViewTool::BeamHistory::addPointFromUpdate_(const simData::BeamPrefs& prefs,
+  bool hasCommandedHbw, bool hasCommandedVbw, const simVis::Color& color,
+  const simData::BeamUpdate* update, double updateTime)
 {
   if (historyPoints_[updateTime].get())
   {
@@ -328,6 +358,8 @@ void PlanetariumViewTool::BeamHistory::addPointFromUpdate_(const simData::BeamPr
   newPoint->node = beamHistoryPointLocatorNode;
   newPoint->node->setNodeMask(simVis::DISPLAY_MASK_BEAM);
   newPoint->color = color;
+  newPoint->hasCommandedHbw = hasCommandedHbw;
+  newPoint->hasCommandedVbw = hasCommandedVbw;
   historyPoints_[updateTime] = std::move(newPoint);
 }
 
