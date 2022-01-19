@@ -214,23 +214,14 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
       color.a() = zeroToOne * origAlpha;
     }
 
-    simData::BeamPrefs newPrefs(prefs);
-    // only the changes introduced here are applied to the bv
-    newPrefs.mutable_commonprefs()->set_color(color.as(osgEarth::Color::RGBA));
-    // code above is managing color, including override; prevent beam from interfering
-    newPrefs.mutable_commonprefs()->set_useoverridecolor(false);
-    bv->performInPlacePrefChanges(&prefs, &newPrefs);
-
-    if (!iter.second->hasCommandedHbw || !iter.second->hasCommandedVbw)
+    SVFactory::updateColor(bv, color);
+    if (!iter.second->hasCommandedHbw)
     {
-      simData::BeamPrefs fakePrefs(prefs);
-      // if no commanded value, force the application of the current prefs value
-      if (!iter.second->hasCommandedHbw)
-        fakePrefs.set_horizontalwidth(0);
-      if (!iter.second->hasCommandedVbw)
-        fakePrefs.set_verticalwidth(0);
-      bv->performInPlacePrefChanges(&fakePrefs, &prefs);
+      int hbwStatus = SVFactory::updateHorizAngle(bv, prefs.horizontalwidth());
+      // TODO: what to do if this fails? recreate beam history with new hbw?
     }
+    if (!iter.second->hasCommandedVbw)
+      SVFactory::updateVertAngle(bv, prefs.verticalwidth());
   }
 }
 
@@ -386,15 +377,12 @@ void PlanetariumViewTool::BeamHistory::setRange(double range)
   {
     osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(point.second->node->asGroup()->getChild(0));
     if (!bv)
+    {
+      // can't be a history point without a beam volume
+      assert(0);
       continue;
-
-    // Update the range on the BeamVolume. performInPlaceUpdates() only updates if the range
-    // changes, so create an unused and slightly varied range update to compare against.
-    simData::BeamUpdate unused;
-    unused.set_range(range_ + 1);
-    simData::BeamUpdate rangeUpdate;
-    rangeUpdate.set_range(range_);
-    bv->performInPlaceUpdates(&unused, &rangeUpdate);
+    }
+    SVFactory::updateFarRange(bv, range_);
   }
 }
 

@@ -32,7 +32,6 @@ namespace osg {
 
 namespace simVis
 {
-
 /// Configuration data for creating volumetric geometry for beams and gates
 struct SVData
 {
@@ -117,6 +116,8 @@ class SVFactory
 public:
   /// create a node visualizing the spherical volume given in 'data'
   static osg::MatrixTransform* createNode(const SVData &data, const osg::Vec3& dir = osg::Y_AXIS);
+  /// create a node visualizing the spherical volume given in 'data'
+  static void createNode(osg::MatrixTransform& xform, const SVData &data, const osg::Vec3& dir = osg::Y_AXIS);
 
   /// set lighting
   static void updateLighting(osg::MatrixTransform* xform, bool lighting);
@@ -126,12 +127,18 @@ public:
   static void updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color);
   /// set the stipple mode
   static void updateStippling(osg::MatrixTransform* xform, bool stippling);
-  /// move the verts comprising the far range
-  static void updateNearRange(osg::MatrixTransform* xform, double range);
   /// move the verts comprising the near range
+  static void updateNearRange(osg::MatrixTransform* xform, double range);
+  /// move the verts comprising the far range
   static void updateFarRange(osg::MatrixTransform* xform, double range);
-  /// tweak the verts to update the horizontal angle
-  static void updateHorizAngle(osg::MatrixTransform* xform, double newAngle);
+
+  /**
+  * Recalculate vertices for a new horizontal angle.
+  * @param xform  the spherical volume to apply to
+  * @param newAngle  the new angle to use
+  * @param 0 on success, non-zero on failure (algorithm can't support the new angle)
+  */
+  static int updateHorizAngle(osg::MatrixTransform* xform, double newAngle);
   /// tweak the verts to update the vertical angle
   static void updateVertAngle(osg::MatrixTransform* xform, double newAngle);
 

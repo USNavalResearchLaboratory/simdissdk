@@ -41,7 +41,7 @@ namespace simVis
   class Locator;
 
   /// Scene graph node representing the Beam volume
-  class SDKVIS_EXPORT BeamVolume : public osg::Group
+  class SDKVIS_EXPORT BeamVolume : public osg::MatrixTransform
   {
   public:
     /** Constructor */
@@ -62,13 +62,11 @@ namespace simVis
     virtual const char* className() const { return "BeamVolume"; }
 
   private:
-    /// build the osg volume
-    osg::MatrixTransform* createBeamSV_(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update);
+    /// build the spherical volume
+    void createBeamSV_(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update);
 
     /// apply the beam scale pref to the specified node
     void setBeamScale_(double beamScale);
-
-    osg::ref_ptr<osg::MatrixTransform> beamSV_;
   };
 
 

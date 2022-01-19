@@ -1076,31 +1076,40 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
 {
   osg::MatrixTransform* xform = new osg::MatrixTransform();
   xform->setName("SVFactory Node Transform");
+  createNode(*xform, d, dir);
+  return xform;
+}
 
+void SVFactory::createNode(osg::MatrixTransform& xform, const SVData& d, const osg::Vec3& dir)
+{
+  if (xform.getNumChildren() > 0)
+  {
+    // dev error; the provided xform must be empty
+    assert(0);
+    return;
+  }
   if (d.shape_ == SVData::SHAPE_PYRAMID)
   {
-    svPyramidFactory(*xform, d, dir);
+    svPyramidFactory(xform, d, dir);
   }
   else
   {
     osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
     geodeSolid->setName("Solid Geode");
-    xform->addChild(geodeSolid.get());
+    xform.addChild(geodeSolid.get());
     createCone_(geodeSolid.get(), d, dir);
   }
 
   // draw-as-wireframe or add wireframe to stipple/solid geom
   if (SVData::DRAW_MODE_WIRE & d.drawMode_)
-    processWireframe_(xform, d.drawMode_);
+    processWireframe_(&xform, d.drawMode_);
 
-  // Turn off backface culling
-  xform->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
+  // Turn off backface culling - we want to see the entire volume
+  xform.getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 
-  updateLighting(xform, d.lightingEnabled_);
-  updateBlending(xform, d.blendingEnabled_);
-  updateStippling(xform, ((SVData::DRAW_MODE_STIPPLE & d.drawMode_) == SVData::DRAW_MODE_STIPPLE));
-
-  return xform;
+  updateLighting(&xform, d.lightingEnabled_);
+  updateBlending(&xform, d.blendingEnabled_);
+  updateStippling(&xform, ((SVData::DRAW_MODE_STIPPLE & d.drawMode_) == SVData::DRAW_MODE_STIPPLE));
 }
 
 void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
@@ -1307,7 +1316,7 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, double nearRange)
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
     const double farRatio = m[i].ratio_;
-    (*verts)[i] = m[i].unit_ * (nearRange + range*farRatio);
+    (*verts)[i] = m[i].unit_ * (nearRange + range * farRatio);
   }
   verts->dirty();
   dirtyBound_(xform);
@@ -1338,21 +1347,22 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, double farRange)
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
     const double farRatio = m[i].ratio_;
-    (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range*farRatio);
+    (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range * farRatio);
   }
   verts->dirty();
   dirtyBound_(xform);
 }
 
-void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double newAngleRad)
+int SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double newAngleRad)
 {
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
-    return;
+    return 1;
   }
+
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
   osg::Vec3Array* normals = static_cast<osg::Vec3Array*>(geom->getNormalArray());
@@ -1360,14 +1370,23 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double newAngleRad
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
-    return;
+    return 1;
   }
+
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
   const bool isCone = (vertMeta[0].usage_ == USAGE_CONEFAR);
+  if ((isCone && newAngleRad > M_PI))
+  {
+    // representation switch between cone to pyramid - need to rebuild the volume, can't do in-place update
+    return 1;
+  }
+
   // for horiz bw: cone clamped to PI, pyramid clamped to TWOPI
   const double maxClamp = (isCone ? M_PI : M_TWOPI);
   const double oldAngleRad = meta->horizontalAngleRad_;
   newAngleRad = osg::clampBetween(newAngleRad, (0.01 * simCore::DEG2RAD), maxClamp);
+  if (oldAngleRad == newAngleRad)
+    return 0;
   meta->horizontalAngleRad_ = newAngleRad;
   const double oldHalfAngleRad = oldAngleRad * 0.5;
   const double newHalfAngleRad = newAngleRad * 0.5;
@@ -1495,6 +1514,7 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double newAngleRad
   verts->dirty();
   normals->dirty();
   dirtyBound_(xform);
+  return 0;
 }
 
 void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double newAngleRad)
@@ -1520,6 +1540,8 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double newAngleRad)
   // clamp to M_PI, to match clamping in pyramid and cone
   const double oldAngleRad = meta->verticalAngleRad_;
   newAngleRad = osg::clampBetween(newAngleRad, (0.01 * simCore::DEG2RAD), M_PI);
+  if (oldAngleRad == newAngleRad)
+    return;
   meta->verticalAngleRad_ = newAngleRad;
   const double oldHalfAngleRad = oldAngleRad * 0.5;
   const double newHalfAngleRad = newAngleRad * 0.5;

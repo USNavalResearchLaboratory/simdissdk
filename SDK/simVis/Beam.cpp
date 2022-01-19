@@ -101,13 +101,12 @@ namespace simVis
 {
 BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
 {
+  createBeamSV_(prefs, update);
   setName("Beam Volume");
-  beamSV_ = createBeamSV_(prefs, update);
-  addChild(beamSV_);
   setBeamScale_(prefs.beamscale());
 
   // if blended, use BIN_BEAM & TPA, otherwise use BIN_OPAQUE_BEAM & BIN_GLOBAL_SIMSDK
-  osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(beamSV_.get());
+  osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(this);
   if (solidGeometry != nullptr)
   {
     solidGeometry->getOrCreateStateSet()->setRenderBinDetails(
@@ -116,7 +115,7 @@ BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdat
   }
 
   // if there is a wireframe/2nd group, it should be renderbin'd to BIN_OPAQUE_BEAM
-  osg::Group* wireframeGroup = simVis::SVFactory::opaqueGroup(beamSV_.get());
+  osg::Group* wireframeGroup = simVis::SVFactory::opaqueGroup(this);
   if (wireframeGroup != nullptr)
   {
     // SphericalVolume code only adds the opaque geode when it is adding a geometry or lineGroup
@@ -125,7 +124,7 @@ BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdat
   }
 }
 
-osg::MatrixTransform* BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
+void BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
 {
   simVis::SVData sv;
 
@@ -168,18 +167,18 @@ osg::MatrixTransform* BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs,
   sv.drawCone_ = prefs.drawtype() != simData::BeamPrefs_DrawType_COVERAGE;
 
   // use a "Y-forward" direction vector because the Beam is drawn in ENU LTP space.
-  return simVis::SVFactory::createNode(sv, osg::Y_AXIS);
+  simVis::SVFactory::createNode(*this, sv, osg::Y_AXIS);
 }
 
 void BeamVolume::setBeamScale_(double beamScale)
 {
-  osg::Matrix m = beamSV_->getMatrix();
-  const osg::Vec3d currentScale = m.getScale();
+  osg::Matrix m = getMatrix();
+  const osg::Vec3d& currentScale = m.getScale();
   if (currentScale.x() > 0.0)
   {
     const double s = beamScale / currentScale.x();   // undo the old, apply the new.
     m.preMultScale(osg::Vec3d(s, s, s));
-    beamSV_->setMatrix(m);
+    setMatrix(m);
   }
 }
 
@@ -194,7 +193,7 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
     // Check for transition between color and override color, then check for color change
     if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
     {
-      SVFactory::updateColor(beamSV_.get(), simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
+      SVFactory::updateColor(this, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
     }
   }
   else
@@ -202,28 +201,32 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
     // Check for transition between color and override color, then check for color change
     if ((a->commonprefs().has_useoverridecolor() && a->commonprefs().useoverridecolor()) || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
     {
-      SVFactory::updateColor(beamSV_.get(), simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
+      SVFactory::updateColor(this, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
     }
   }
   if (PB_FIELD_CHANGED(a, b, shaded))
-    SVFactory::updateLighting(beamSV_.get(), b->shaded());
+    SVFactory::updateLighting(this, b->shaded());
   if (PB_FIELD_CHANGED(a, b, blended))
   {
     // if blended, use BIN_BEAM & TPA, otherwise use BIN_OPAQUE_BEAM & BIN_GLOBAL_SIMSDK
-    osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(beamSV_.get());
+    osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(this);
     if (solidGeometry != nullptr)
     {
       solidGeometry->getOrCreateStateSet()->setRenderBinDetails(
         (b->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
         (b->blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
     }
-    SVFactory::updateBlending(beamSV_.get(), b->blended());
+    SVFactory::updateBlending(this, b->blended());
   }
 #ifdef BEAM_IN_PLACE_UPDATES
   if (PB_FIELD_CHANGED(a, b, verticalwidth))
-    SVFactory::updateVertAngle(beamSV_.get(), b->verticalwidth());
+    SVFactory::updateVertAngle(this, b->verticalwidth());
   if (PB_FIELD_CHANGED(a, b, horizontalwidth))
-    SVFactory::updateHorizAngle(beamSV_.get(), b->horizontalwidth());
+  {
+    int status = SVFactory::updateHorizAngle(this, b->horizontalwidth());
+    // dev error; must check changeRequiresRebuild before attempting in-place update
+    assert(status == 0);
+  }
 #endif
   if (PB_FIELD_CHANGED(a, b, beamscale))
     setBeamScale_(b->beamscale());
@@ -238,7 +241,7 @@ void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simDa
   // the update method calls dirtyBound on all beam volume geometries, so no need for that here
   if (PB_FIELD_CHANGED(a, b, range))
   {
-    SVFactory::updateFarRange(beamSV_.get(), b->range());
+    SVFactory::updateFarRange(this, b->range());
   }
 #endif
 }
