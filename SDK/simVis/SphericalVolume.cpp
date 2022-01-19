@@ -24,7 +24,6 @@
 #include "osg/CullFace"
 #include "osg/Depth"
 #include "osg/Geode"
-#include "osg/MatrixTransform"
 #include "osg/PolygonMode"
 #include "osg/ref_ptr"
 #include "osg/UserDataContainer"
@@ -111,7 +110,7 @@ namespace
   class svPyramidOutline : public osgEarth::LineGroup
   {
   public:
-    svPyramidOutline(osg::MatrixTransform& xform, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls);
+    svPyramidOutline(simVis::SphericalVolume& sv, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls);
     void regenerate();
     void setColor(const osg::Vec4f& color);
   protected:
@@ -134,7 +133,7 @@ namespace
     bool drawWalls_;
   };
 
-  svPyramidOutline::svPyramidOutline(osg::MatrixTransform& xform, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls)
+  svPyramidOutline::svPyramidOutline(simVis::SphericalVolume& sv, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls)
     : vertexArray_(vertexArray),
     numPointsX_(numPointsX),
     numPointsZ_(numPointsZ),
@@ -145,7 +144,7 @@ namespace
     // svPyramid must provide a non-nullptr vertex array
     assert(vertexArray);
     setName("simVis::SphericalVolume::svPyramidOutline");
-    xform.addChild(this);
+    sv.addChild(this);
     // Line smoothing is not enabled by default, as it might cause problems with multisampling, or maybe with draw order.
 
     const bool hasNearFace = (nearFaceOffset_ > 0);
@@ -350,11 +349,11 @@ namespace
     };
 
   public:
-    svPyramidFactory(osg::MatrixTransform& xform, const simVis::SVData& data, const osg::Vec3& direction);
+    svPyramidFactory(simVis::SphericalVolume& sv, const simVis::SVData& data, const osg::Vec3& direction);
 
   private:  // helper methods
     void initializeData_(const simVis::SVData& d, const osg::Vec3& direction);
-    void initializePyramid(osg::MatrixTransform& xform);
+    void initializePyramid(simVis::SphericalVolume& sv);
     void populateFaceVertices_(Face face);
     void generateFaces_(osg::Geometry* geometry);
     void generateWalls_(osg::Geometry* volumeGeometry);
@@ -383,14 +382,14 @@ namespace
     bool hasNear_;
   };
 
-  svPyramidFactory::svPyramidFactory(osg::MatrixTransform& xform, const simVis::SVData& data, const osg::Vec3& direction)
+  svPyramidFactory::svPyramidFactory(simVis::SphericalVolume& sv, const simVis::SVData& data, const osg::Vec3& direction)
   {
     if (data.drawMode_ == simVis::SVData::DRAW_MODE_NONE || data.capRes_ == 0)
       return;
 
     initializeData_(data, direction);
 
-    initializePyramid(xform);
+    initializePyramid(sv);
 
     populateFaceVertices_(FARFACE);
     if (hasNear_)
@@ -411,7 +410,7 @@ namespace
     {
       // must provide a non-nullptr vertexArray to svPyramidOutline
       assert(vertexArray_);
-      svPyramidOutline* outline = new svPyramidOutline(xform, vertexArray_.get(), numPointsX_, numPointsZ_, farFaceOffset_, nearFaceOffset_, drawWalls_);
+      svPyramidOutline* outline = new svPyramidOutline(sv, vertexArray_.get(), numPointsX_, numPointsZ_, farFaceOffset_, nearFaceOffset_, drawWalls_);
       outline->setColor(color_);
       outline->regenerate();
     }
@@ -499,12 +498,12 @@ namespace
     }
   }
 
-  void svPyramidFactory::initializePyramid(osg::MatrixTransform& xform)
+  void svPyramidFactory::initializePyramid(simVis::SphericalVolume& sv)
   {
-    // by convention, the sv xform always contains a primary geode for the volume
+    // by convention, the sv always contains a primary geode for the volume
     osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
     geodeSolid->setName("simVis::SphericalVolume::PrimaryGeode");
-    xform.addChild(geodeSolid.get());
+    sv.addChild(geodeSolid.get());
 
     // if we are drawing outline only, we still need a solid geometry (with no primitives) to hold the metadata that support in-place-update of the vertices that lineDrawable uses
     solidGeometry_ = new osg::Geometry();
@@ -1072,51 +1071,51 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
 // For the pyramid sv, it contains the outline.
 // For the cone sv, it contains a wireframe (polygon) geometry.
 
-osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& dir)
+SphericalVolume* SVFactory::createNode(const SVData& d, const osg::Vec3& dir)
 {
-  osg::MatrixTransform* xform = new osg::MatrixTransform();
-  xform->setName("SVFactory Node Transform");
-  createNode(*xform, d, dir);
-  return xform;
+  SphericalVolume* sv = new SphericalVolume();
+  sv->setName("SVFactory Node Transform");
+  createNode(*sv, d, dir);
+  return sv;
 }
 
-void SVFactory::createNode(osg::MatrixTransform& xform, const SVData& d, const osg::Vec3& dir)
+void SVFactory::createNode(SphericalVolume& sv, const SVData& d, const osg::Vec3& dir)
 {
-  if (xform.getNumChildren() > 0)
+  if (sv.getNumChildren() > 0)
   {
-    // dev error; the provided xform must be empty
+    // dev error; the provided sv must be empty
     assert(0);
     return;
   }
   if (d.shape_ == SVData::SHAPE_PYRAMID)
   {
-    svPyramidFactory(xform, d, dir);
+    svPyramidFactory(sv, d, dir);
   }
   else
   {
     osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
     geodeSolid->setName("Solid Geode");
-    xform.addChild(geodeSolid.get());
+    sv.addChild(geodeSolid.get());
     createCone_(geodeSolid.get(), d, dir);
   }
 
   // draw-as-wireframe or add wireframe to stipple/solid geom
   if (SVData::DRAW_MODE_WIRE & d.drawMode_)
-    processWireframe_(&xform, d.drawMode_);
+    processWireframe_(&sv, d.drawMode_);
 
   // Turn off backface culling - we want to see the entire volume
-  xform.getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
+  sv.getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 
-  updateLighting(&xform, d.lightingEnabled_);
-  updateBlending(&xform, d.blendingEnabled_);
-  updateStippling(&xform, ((SVData::DRAW_MODE_STIPPLE & d.drawMode_) == SVData::DRAW_MODE_STIPPLE));
+  updateLighting(&sv, d.lightingEnabled_);
+  updateBlending(&sv, d.blendingEnabled_);
+  updateStippling(&sv, ((SVData::DRAW_MODE_STIPPLE & d.drawMode_) == SVData::DRAW_MODE_STIPPLE));
 }
 
-void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
+void SVFactory::processWireframe_(SphericalVolume* sv, int drawMode)
 {
   if (SVData::DRAW_MODE_WIRE & drawMode)
   {
-    osg::Geometry* solidGeom = SVFactory::solidGeometry(xform);
+    osg::Geometry* solidGeom = SVFactory::solidGeometry(sv);
     if (solidGeom == nullptr || solidGeom->empty())
     {
       assert(0);
@@ -1149,10 +1148,10 @@ void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
       }
       wireframeGeom->setColorArray(wireframeColor);
 
-      // add this to a 2nd group in the xform: the 2nd group in the xform is for opaque features
+      // add this to a 2nd group in the sv: the 2nd group in the sv is for opaque features
       osg::Group* groupWire = new osg::Group();
       groupWire->addChild(wireframeGeom);
-      xform->addChild(groupWire);
+      sv->addChild(groupWire);
 
       osg::StateSet* stateset = wireframeGeom->getOrCreateStateSet();
       osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
@@ -1172,10 +1171,10 @@ void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
   }
 }
 
-void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
+void SVFactory::updateStippling(SphericalVolume* sv, bool stippling)
 {
   // only the solid geometry can be stippled
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1185,10 +1184,10 @@ void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
   simVis::PolygonStipple::setValues(geom->getOrCreateStateSet(), stippling, 0u);
 }
 
-void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
+void SVFactory::updateLighting(SphericalVolume* sv, bool lighting)
 {
   // lighting is only applied to the solid geometry
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1201,10 +1200,10 @@ void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
     osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
 }
 
-void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
+void SVFactory::updateBlending(SphericalVolume* sv, bool blending)
 {
   // blending is only applied to the solid geometry
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1216,9 +1215,9 @@ void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
     osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
 }
 
-void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color)
+void SVFactory::updateColor(SphericalVolume* sv, const osg::Vec4f& color)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1242,7 +1241,7 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   }
 
   // if we have an 2nd (optional) group, it is opaque; update its color, but remove transparency
-  osg::Group* opaqueGroup = SVFactory::opaqueGroup(xform);
+  osg::Group* opaqueGroup = SVFactory::opaqueGroup(sv);
   if (opaqueGroup == nullptr)
     return;
 
@@ -1291,9 +1290,9 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   }
 }
 
-void SVFactory::updateNearRange(osg::MatrixTransform* xform, double nearRange)
+void SVFactory::updateNearRange(SphericalVolume* sv, double nearRange)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1319,12 +1318,12 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, double nearRange)
     (*verts)[i] = m[i].unit_ * (nearRange + range * farRatio);
   }
   verts->dirty();
-  dirtyBound_(xform);
+  dirtyBound_(sv);
 }
 
-void SVFactory::updateFarRange(osg::MatrixTransform* xform, double farRange)
+void SVFactory::updateFarRange(SphericalVolume* sv, double farRange)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1350,12 +1349,12 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, double farRange)
     (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range * farRatio);
   }
   verts->dirty();
-  dirtyBound_(xform);
+  dirtyBound_(sv);
 }
 
-int SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double newAngleRad)
+int SVFactory::updateHorizAngle(SphericalVolume* sv, double newAngleRad)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1513,13 +1512,13 @@ int SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double newAngleRad)
 
   verts->dirty();
   normals->dirty();
-  dirtyBound_(xform);
+  dirtyBound_(sv);
   return 0;
 }
 
-void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double newAngleRad)
+void SVFactory::updateVertAngle(SphericalVolume* sv, double newAngleRad)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1668,40 +1667,40 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double newAngleRad)
 
   verts->dirty();
   normals->dirty();
-  dirtyBound_(xform);
+  dirtyBound_(sv);
 }
 
-osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
+osg::Geometry* SVFactory::solidGeometry(SphericalVolume* sv)
 {
-  if (xform == nullptr || xform->getNumChildren() == 0)
+  if (sv == nullptr || sv->getNumChildren() == 0)
     return nullptr;
-  osg::Geode* geode = xform->getChild(0)->asGeode();
+  osg::Geode* geode = sv->getChild(0)->asGeode();
   if (geode == nullptr || geode->getNumDrawables() == 0)
     return nullptr;
   return geode->getDrawable(0)->asGeometry();
 }
 
 // if the sv has a 2nd geode that adds outline or wireframe, it will be the MatrixTransform 2nd child
-osg::Group* SVFactory::opaqueGroup(osg::MatrixTransform* xform)
+osg::Group* SVFactory::opaqueGroup(SphericalVolume* sv)
 {
-  if (xform == nullptr || xform->getNumChildren() < 2)
+  if (sv == nullptr || sv->getNumChildren() < 2)
     return nullptr;
-  return xform->getChild(1)->asGroup();
+  return sv->getChild(1)->asGroup();
 }
 
-// dirty bounds for all geometries in the xform
-void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
+// dirty bounds for all geometries in the sv
+void SVFactory::dirtyBound_(SphericalVolume* sv)
 {
-  if (xform == nullptr || xform->getNumChildren() == 0)
+  if (sv == nullptr || sv->getNumChildren() == 0)
     return;
 
   // handle the geometries in the primary geode
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom && !geom->empty())
     geom->dirtyBound();
 
   // handle the 2nd/opaque group
-  osg::Group* opaqueGroup = SVFactory::opaqueGroup(xform);
+  osg::Group* opaqueGroup = SVFactory::opaqueGroup(sv);
   if (opaqueGroup && opaqueGroup->getNumChildren() > 0)
   {
     // the opaque group may be an svPyramidOutline; svPyramidOutline must be regenerated using the updated vertices

@@ -29,6 +29,7 @@
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 #include "simVis/LocatorNode.h"
+#include "simVis/SphericalVolume.h"
 
 namespace osg { class MatrixTransform; }
 
@@ -41,7 +42,7 @@ namespace simVis
   class Locator;
 
   /// Scene graph node representing the Beam volume
-  class SDKVIS_EXPORT BeamVolume : public osg::MatrixTransform
+  class SDKVIS_EXPORT BeamVolume : public SphericalVolume
   {
   public:
     /** Constructor */
@@ -60,6 +61,10 @@ namespace simVis
 
     /** Return the class name */
     virtual const char* className() const { return "BeamVolume"; }
+
+  protected:
+    /// osg::Referenced-derived
+    virtual ~BeamVolume() {}
 
   private:
     /// build the spherical volume

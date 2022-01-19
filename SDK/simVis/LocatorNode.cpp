@@ -35,7 +35,8 @@ namespace simVis
 
 LocatorNode::LocatorNode()
   : locatorCallback_(nullptr),
-    overheadModeHint_(false)
+  componentsToTrack_(Locator::COMP_ALL),
+  overheadModeHint_(false)
 {
   // LocatorNode is valid without any locator; it functions as a group.
 }

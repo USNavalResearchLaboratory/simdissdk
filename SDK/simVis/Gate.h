@@ -35,6 +35,7 @@ namespace simVis
   class EntityLabelNode;
   class LocalGridNode;
   class Locator;
+  class SphericalVolume;
 
   /// Scene graph node representing the Gate volume
   class SDKVIS_EXPORT GateVolume : public simVis::LocatorNode
@@ -64,9 +65,9 @@ namespace simVis
     // Not implemented
     GateVolume(const GateVolume&);
 
-    osg::MatrixTransform* createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update);
+    SphericalVolume* createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update);
 
-    osg::ref_ptr<osg::MatrixTransform> gateSV_;
+    osg::ref_ptr<SphericalVolume> gateSV_;
   };
 
   /// Scene graph node representing a Gate centroid

@@ -142,7 +142,7 @@ void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a, const simDa
 #endif
 }
 
-osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update)
+SphericalVolume* GateVolume::createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update)
 {
   simVis::SVData sv;
 
@@ -217,7 +217,7 @@ osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, c
   sv.drawAsSphereSegment_ = prefs->gatedrawmode() == simData::GatePrefs_DrawMode_COVERAGE;
 
   // use a Y-forward directional vector to correspond with the gate's locator.
-  osg::MatrixTransform* node = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
+  SphericalVolume* node = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
   return node;
 }
 

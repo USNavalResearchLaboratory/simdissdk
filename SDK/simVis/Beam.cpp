@@ -35,7 +35,7 @@
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Types.h"
-#include "simVis/SphericalVolume.h"
+
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
 #include "simVis/Scenario.h"
