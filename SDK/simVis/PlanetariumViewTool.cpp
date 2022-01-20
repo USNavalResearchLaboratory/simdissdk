@@ -455,10 +455,14 @@ osg::Node* PlanetariumViewTool::getNode() const
 
 void PlanetariumViewTool::setRange(double range)
 {
-  if (!root_.valid() || range_ == range)
+  if (range_ == range)
     return;
 
+  // Remember the new range even if root is not valid
   range_ = range;
+
+  if (!root_.valid())
+    return;
 
   // clear all target delegates
   if (targets_.valid())
