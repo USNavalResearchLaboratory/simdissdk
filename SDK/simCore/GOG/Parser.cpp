@@ -54,6 +54,10 @@ bool startsWith(const std::string& token, const std::string& start)
 
 namespace simCore { namespace GOG {
 
+// GOG default reference origin: a location off the Pacific Missile Range Facility "BARSTUR Center"
+// (ref SIMDIS user manual, sec. 8.8.1)
+const simCore::Vec3 BSTUR(simCore::DEG2RAD*22.1194392, simCore::DEG2RAD*-159.9194988, 0.0);
+
 Parser::Parser()
   : units_(nullptr)
 {

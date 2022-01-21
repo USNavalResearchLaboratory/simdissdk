@@ -41,6 +41,11 @@ namespace GOG
 class UnitsState;
 
 /**
+ * Default reference point for relative GOG data. LLA, in radians, radians, meters.
+ */
+extern SDKCORE_EXPORT const simCore::Vec3 BSTUR;
+
+/**
  * Parses GOG files (streams).
  *
  * The GOG Parser will read a GOG file or stream, and encode it into a vector
