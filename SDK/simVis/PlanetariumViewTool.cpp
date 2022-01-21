@@ -271,38 +271,39 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
   while (updateIter.hasNext())
   {
     const simData::BeamUpdate* update = updateIter.next();
-    if (update->time() <= currentTime) // SIM-13779     && update->range() >= range_
-    {
-      // determine if there is a new command for this update's time
-      for (; commandIter.peekNext() != nullptr; commandIter.next())
-      {
-        auto next = commandIter.peekNext();
-        if (next->time() > update->time())
-          break;
-        if (!next->has_updateprefs())
-          continue;
-        if (next->updateprefs().has_horizontalwidth())
-          hbw = next->updateprefs().horizontalwidth();
-        if (next->updateprefs().has_verticalwidth())
-          vbw = next->updateprefs().verticalwidth();
-        if (next->updateprefs().commonprefs().has_color())
-          color = simVis::Color(next->updateprefs().commonprefs().color(), osgEarth::Color::RGBA);
-      }
-
-      const bool hasCommandedHbw = (hbw != NO_COMMANDED_BEAMWIDTH);
-      if (hasCommandedHbw)
-        pointPrefs.set_horizontalwidth(hbw);
-      else
-        pointPrefs.set_horizontalwidth(prefs.horizontalwidth());
-      const bool hasCommandedVbw = (vbw != NO_COMMANDED_BEAMWIDTH);
-      if (hasCommandedVbw)
-        pointPrefs.set_verticalwidth(vbw);
-      else
-        pointPrefs.set_verticalwidth(prefs.verticalwidth());
-      addPointFromUpdate_(pointPrefs, hasCommandedHbw, hasCommandedVbw, color, update, update->time());
-    }
-    else
+    if (update->time() > currentTime)
       break;
+
+    if (update->range() < range_)
+      continue;
+
+    // determine if there is a new command for this update's time
+    for (; commandIter.peekNext() != nullptr; commandIter.next())
+    {
+      auto next = commandIter.peekNext();
+      if (next->time() > update->time())
+        break;
+      if (!next->has_updateprefs())
+        continue;
+      if (next->updateprefs().has_horizontalwidth())
+        hbw = next->updateprefs().horizontalwidth();
+      if (next->updateprefs().has_verticalwidth())
+        vbw = next->updateprefs().verticalwidth();
+      if (next->updateprefs().commonprefs().has_color())
+        color = simVis::Color(next->updateprefs().commonprefs().color(), osgEarth::Color::RGBA);
+    }
+
+    const bool hasCommandedHbw = (hbw != NO_COMMANDED_BEAMWIDTH);
+    if (hasCommandedHbw)
+      pointPrefs.set_horizontalwidth(hbw);
+    else
+      pointPrefs.set_horizontalwidth(prefs.horizontalwidth());
+    const bool hasCommandedVbw = (vbw != NO_COMMANDED_BEAMWIDTH);
+    if (hasCommandedVbw)
+      pointPrefs.set_verticalwidth(vbw);
+    else
+      pointPrefs.set_verticalwidth(prefs.verticalwidth());
+    addPointFromUpdate_(pointPrefs, hasCommandedHbw, hasCommandedVbw, color, update, update->time());
   }
 }
 
