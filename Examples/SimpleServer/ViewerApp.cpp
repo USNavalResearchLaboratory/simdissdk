@@ -45,7 +45,6 @@
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
-#include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Loader.h"
 #include "simUtil/DefaultDataStoreValues.h"
