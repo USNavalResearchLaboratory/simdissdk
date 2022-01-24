@@ -58,7 +58,6 @@
 #include "simVis/Registry.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
-#include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/LoaderUtils.h"
 #include "simVis/GOG/ParsedShape.h"

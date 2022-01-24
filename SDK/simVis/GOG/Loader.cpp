@@ -46,7 +46,6 @@
 #include "simVis/GOG/Polygon.h"
 #include "simVis/GOG/Sphere.h"
 
-#include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/LoaderUtils.h"
 #include "simVis/GOG/Loader.h"
