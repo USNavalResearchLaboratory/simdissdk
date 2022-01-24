@@ -570,11 +570,10 @@ int main(int argc, char** argv)
   // add the gog file vector layers.
   for (const std::string& gogFile : gogFiles)
   {
-
     simCore::GOG::Parser parser;
     simVis::GOG::Loader loader(parser, scene->getMapNode());
     // sets a default reference location for relative GOGs:
-    loader.setReferencePosition(simVis::GOG::BSTUR.position());
+    loader.setReferencePosition(simCore::GOG::BSTUR);
 
     std::ifstream is(simCore::streamFixUtf8(gogFile));
     if (!is.is_open())

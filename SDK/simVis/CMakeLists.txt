@@ -187,7 +187,6 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/Ellipse.h
     ${VIS_INC}GOG/Ellipsoid.h
     ${VIS_INC}GOG/ErrorHandler.h
-    ${VIS_INC}GOG/GOG.h
     ${VIS_INC}GOG/GOGNode.h
     ${VIS_INC}GOG/GogNodeInterface.h
     ${VIS_INC}GOG/GOGRegistry.h
@@ -338,7 +337,6 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/Cylinder.cpp
     ${VIS_SRC}GOG/Ellipse.cpp
     ${VIS_SRC}GOG/Ellipsoid.cpp
-    ${VIS_SRC}GOG/GOG.cpp
     ${VIS_SRC}GOG/GOGNode.cpp
     ${VIS_SRC}GOG/GogNodeInterface.cpp
     ${VIS_SRC}GOG/GOGRegistry.cpp

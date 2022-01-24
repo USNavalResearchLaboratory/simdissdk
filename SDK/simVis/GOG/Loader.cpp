@@ -57,9 +57,9 @@ namespace simVis { namespace GOG {
 
 Loader::Loader(const simCore::GOG::Parser& parser, osgEarth::MapNode* mapNode)
   : parser_(parser),
-    mapNode_(mapNode)
+  mapNode_(mapNode),
+  referencePosition_(simCore::GOG::BSTUR)
 {
-  referencePosition_ = simCore::Vec3(BSTUR.lat(), BSTUR.lon(), BSTUR.alt());
 }
 
 Loader::~Loader()

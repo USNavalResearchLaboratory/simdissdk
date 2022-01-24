@@ -570,7 +570,7 @@ int ViewerApp::loadGog_(const std::string& filename)
 
   simCore::GOG::Parser parser;
   simVis::GOG::Loader loader(parser, sceneManager_->getMapNode());
-  loader.setReferencePosition(simVis::GOG::BSTUR.position());
+  loader.setReferencePosition(simCore::GOG::BSTUR);
 
   simVis::GOG::Loader::GogNodeVector gogs;
   loader.loadGogs(is, filename, false, gogs);
