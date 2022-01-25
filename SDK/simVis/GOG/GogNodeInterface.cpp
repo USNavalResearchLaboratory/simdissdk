@@ -2683,9 +2683,15 @@ int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint*
 
 void ImageOverlayInterface::setOpacity(float opacity)
 {
+  // Sets GogNodeInterface::opacity_, which updates GOG Tool GUI
   GogNodeInterface::setOpacity(opacity);
+  // Updates the actual image on-screen
   if (imageNode_.valid())
     imageNode_->setAlpha(opacity);
+  // Updates the internal shape copy, simCore::GOG::ImageOverlay, used for serialization
+  simCore::GOG::ImageOverlay* simCoreOverlay = dynamic_cast<simCore::GOG::ImageOverlay*>(shape_.get());
+  if (simCoreOverlay)
+    simCoreOverlay->setOpacity(opacity);
 }
 
 void ImageOverlayInterface::adjustAltitude_()

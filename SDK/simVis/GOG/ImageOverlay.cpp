@@ -70,6 +70,7 @@ GogNodeInterface* ImageOverlay::deserialize(
   imageNode->setPriority(8000);
 
   rv = new ImageOverlayInterface(imageNode, metaData);
+  rv->setOpacity(parsedShape.doubleValue(GOG_OPACITY, 1.0));
 
   return rv;
 }
@@ -99,7 +100,11 @@ GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOver
   imageNode->setPriority(8000);
 
   GogMetaData metaData;
-  return new ImageOverlayInterface(imageNode, metaData);
+  auto* rv = new ImageOverlayInterface(imageNode, metaData);
+  double shapeOpacity = 1.;
+  imageOverlay.getOpacity(shapeOpacity);
+  rv->setOpacity(shapeOpacity);
+  return rv;
 }
 
 } }

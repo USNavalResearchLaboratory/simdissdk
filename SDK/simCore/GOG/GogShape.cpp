@@ -24,6 +24,7 @@
 #include <cassert>
 #include <sstream>
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
 #include "simCore/Time/String.h"
 #include "simCore/GOG/GogShape.h"
@@ -1456,12 +1457,26 @@ void ImageOverlay::setImageFile(const std::string& imageFile)
   imageFile_ = imageFile;
 }
 
+int ImageOverlay::getOpacity(double& opacity) const
+{
+  opacity = opacity_.value_or(1.);
+  return (opacity_.has_value() ? 0 : 1);
+}
+
+void ImageOverlay::setOpacity(double opacity)
+{
+  opacity_ = simCore::clamp(opacity, 0.0, 1.0);
+}
+
 void ImageOverlay::serializeToStream_(std::ostream& gogOutputStream) const
 {
   // Write out the imageoverlay type command
   gogOutputStream << GogShape::shapeTypeToString(shapeType()) << " " << (north_ * simCore::RAD2DEG) << " " << (south_ * simCore::RAD2DEG) << " "
     << (west_ * simCore::RAD2DEG) << " " << (east_ * simCore::RAD2DEG) << " " << (rotation_ * simCore::RAD2DEG) << "\n";
   gogOutputStream << "imagefile " << imageFile_ << "\n";
+  // Only write non-default opacity
+  if (opacity_.has_value())
+    gogOutputStream << "opacity " << *opacity_ << "\n";
 }
 
 }}

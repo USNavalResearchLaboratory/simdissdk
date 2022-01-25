@@ -798,6 +798,11 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       if (tokens.size() >= 2)
         current.set(ShapeParameter::IMAGE, tokens[1]);
     }
+    else if (tokens[0] == "opacity")
+    {
+      if (tokens.size() >= 2)
+        current.set(ShapeParameter::OPACITY, tokens[1]);
+    }
     else // treat everything as a name/value pair
     {
       if (!tokens.empty())
@@ -1167,6 +1172,12 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
         imageOverlay->setWest(corner);
         validValues++;
       }
+
+      // Extract opacity value, which is optional and only applies to image overlay
+      double opacity = 1.0;
+      if (parsed.hasValue(ShapeParameter::OPACITY))
+        imageOverlay->setOpacity(parsed.doubleValue(ShapeParameter::OPACITY, 1.0));
+
       if (validValues == 4)
       {
         imageOverlay->setImageFile(parsed.stringValue(ShapeParameter::IMAGE));

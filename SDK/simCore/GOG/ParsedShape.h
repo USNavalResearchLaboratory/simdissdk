@@ -160,6 +160,7 @@ enum class ShapeParameter
   LLABOX_ROT, // rotation used by KML ground overlay latlonbox
   TIME_START,
   TIME_END,
+  OPACITY, // Used by ImageOverlay; opacity of the image file; other shapes use full RGBA values
 
   // Set to non-empty when GOG points are absolute (lla), rather than relative (xyz)
   ABSOLUTE_POINTS = 200,

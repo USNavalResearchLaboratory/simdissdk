@@ -167,6 +167,7 @@ enum ShapeParameter
   GOG_TEXTOUTLINETHICKNESS,
   GOG_IMAGEFILE,
   GOG_LLABOX_ROT, // rotation used by KML ground overlay latlonbox
+  GOG_OPACITY, // Used by ImageOverlay; opacity of the image file; other shapes use full RGBA values
 
   // Set to non-empty when GOG is absolute
   GOG_ABSOLUTE = 200,

@@ -1077,6 +1077,13 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
     {
       current.set(GOG_IMAGEFILE, tokens[1]);
     }
+    else if (tokens[0] == "opacity")
+    {
+      if (tokens.size() >= 2)
+        current.set(GOG_OPACITY, tokens[1]);
+      else
+        printError_(lineNumber, "opacity command requires 1 argument");
+    }
     else // treat everything as a name/value pair
     {
       if (!tokens.empty())

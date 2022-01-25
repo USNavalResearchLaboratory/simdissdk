@@ -871,27 +871,27 @@ public:
 
   virtual ShapeType shapeType() const;
 
-  // Box north corner latitude in radians
+  /// Box north corner latitude in radians
   double north() const;
   void setNorth(double northRad);
 
-  // Box south corner latitude in radians
+  /// Box south corner latitude in radians
   double south() const;
   void setSouth(double southRad);
 
-  // Box east corner longitude in radians
+  /// Box east corner longitude in radians
   double east() const;
   void setEast(double eastRad);
 
-  // Box west corner longitude in radians
+  /// Box west corner longitude in radians
   double west() const;
   void setWest(double westRad);
 
-  // Altitude of the bottom of the box in meters
+  /// Altitude of the bottom of the box in meters
   double altitude() const;
   void setAltitude(double altitudeMeters);
 
-  // Box optional height in meters
+  /// Box optional height in meters
   int getHeight(double& height) const;
   void setHeight(double heightMeters);
 
@@ -939,6 +939,10 @@ public:
   std::string imageFile() const;
   void setImageFile(const std::string& imageFile);
 
+  /// opacity value for image (0.0 transparent, 1.0 opaque)
+  int getOpacity(double& opacity) const;
+  void setOpacity(double opacity);
+
 private:
   /// Serialize the shape's specific implementation attributes to the stream
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
@@ -949,6 +953,7 @@ private:
   double west_; ///< west corner latitude, radians
   double rotation_; ///< rotation angle from true north, radians
   std::string imageFile_; ///< image file to display
+  simCore::Optional<double> opacity_; ///< 0.0 (transparent) to 1.0 (opaque)
 };
 
 /// Define a shared ptr
