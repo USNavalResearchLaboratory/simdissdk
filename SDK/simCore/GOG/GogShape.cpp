@@ -915,7 +915,7 @@ void Orbit::serializeToStream_(std::ostream& gogOutputStream) const
     gogOutputStream << "centerll2 " << center2_.lat() * simCore::RAD2DEG << " " << center2_.lon() * simCore::RAD2DEG << "\n";
 }
 
-void Orbit::createOrbitShape(double azimuthRad, double lengthM, double radiusM, double altitudeM, std::vector<simCore::Vec3>& xyz)
+void Orbit::createOrbitShape(double azimuthRad, double lengthM, double radiusM, double altitudeM, double segmentLenM, std::vector<simCore::Vec3>& xyz)
 {
   xyz.clear();
   if (radiusM <= 0)
@@ -924,9 +924,8 @@ void Orbit::createOrbitShape(double azimuthRad, double lengthM, double radiusM, 
   const double startRad = simCore::angFix2PI(azimuthRad + M_PI_2);
   const double endRad = startRad + M_PI;
   const double span = M_PI;
-  const double segLen = radiusM / 8.0;
   const double circumference = 2 * M_PI * radiusM;
-  const double numSegments = ceil(circumference / segLen);
+  const double numSegments = ceil(circumference / segmentLenM);
   const double step = span / numSegments;
 
   double ctrX = 0;

@@ -44,7 +44,7 @@ osgEarth::Geometry* createOrbitGeometry(double azimuthRad, double lengthM, doubl
   if (radiusM <= 0)
     return nullptr;
   std::vector<simCore::Vec3> xyzVec;
-  simCore::GOG::Orbit::createOrbitShape(azimuthRad, lengthM, radiusM, altitudeM, xyzVec);
+  simCore::GOG::Orbit::createOrbitShape(azimuthRad, lengthM, radiusM, altitudeM, radiusM / 8., xyzVec);
   osgEarth::Geometry* geom = new osgEarth::LineString();
   for (const auto& xyz : xyzVec)
     geom->push_back(osg::Vec3d(xyz.x(), xyz.y(), xyz.z()));

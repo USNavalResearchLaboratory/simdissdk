@@ -608,10 +608,11 @@ public:
    *   the distance formula (sqrt(xd*xd + yd*yd)).
    * @param radiusM Radius of the orbit ends in meters. Must be > 0.
    * @param altitudeM Altitude of the output relative coordinates. The resulting coordinates will have this value.
+   * @param segmentLenM Length of orbit end segments, in meters. A good typical value is radiusM / 8.
    * @param xyz Output vector that will hold the XYZ points defining the orbit shape relative to the origin.
    *   This results in a closed shape, i.e. xyz.front() == xyz.back()
    */
-  static void createOrbitShape(double azimuthRad, double lengthM, double radiusM, double altitudeM, std::vector<simCore::Vec3>& xyz);
+  static void createOrbitShape(double azimuthRad, double lengthM, double radiusM, double altitudeM, double segmentLenM, std::vector<simCore::Vec3>& xyz);
 
 private:
   /// Serialize the shape's specific implementation attributes to the stream
