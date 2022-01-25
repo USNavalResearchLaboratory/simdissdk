@@ -915,6 +915,48 @@ void Orbit::serializeToStream_(std::ostream& gogOutputStream) const
     gogOutputStream << "centerll2 " << center2_.lat() * simCore::RAD2DEG << " " << center2_.lon() * simCore::RAD2DEG << "\n";
 }
 
+void Orbit::createOrbitShape(double azimuthRad, double lengthM, double radiusM, double altitudeM, std::vector<simCore::Vec3>& xyz)
+{
+  xyz.clear();
+  if (radiusM <= 0)
+    return;
+
+  const double startRad = simCore::angFix2PI(azimuthRad + M_PI_2);
+  const double endRad = startRad + M_PI;
+  const double span = M_PI;
+  const double segLen = radiusM / 8.0;
+  const double circumference = 2 * M_PI * radiusM;
+  const double numSegments = ceil(circumference / segLen);
+  const double step = span / numSegments;
+
+  double ctrX = 0;
+  double ctrY = 0;
+
+  // generate arc on first end of the orbit
+  for (int i = static_cast<int>(numSegments); i >= 0; --i)
+  {
+    const double angle = simCore::angFix2PI(startRad + step * static_cast<double>(i));
+    const double x = ctrX + sin(angle) * radiusM;
+    const double y = ctrY + cos(angle) * radiusM;
+    xyz.push_back({ x, y, altitudeM });
+  }
+
+  // calculate center point on other end of orbit
+  ctrX = sin(azimuthRad) * lengthM;
+  ctrY = cos(azimuthRad) * lengthM;
+
+  // generate arc on other end of the orbit
+  for (int i = static_cast<int>(numSegments); i >= 0; --i)
+  {
+    const double angle = simCore::angFix2PI(endRad + step * static_cast<double>(i));
+    const double x = ctrX + sin(angle) * radiusM;
+    const double y = ctrY + cos(angle) * radiusM;
+    xyz.push_back({ x, y, altitudeM });
+  }
+  // add back in first point to close the shape
+  xyz.push_back(xyz.front());
+}
+
 EllipticalShape::EllipticalShape()
   : CircularShape()
 {

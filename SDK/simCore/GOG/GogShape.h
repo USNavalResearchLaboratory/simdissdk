@@ -598,6 +598,21 @@ public:
   /// Set the orbit's second center position, ignores z value in favor of z from first center position;  in lla radians if absolute, xyz meters if relative
   void setCenterPosition2(const simCore::Vec3& center2);
 
+  /**
+   * Helper function to create XYZ (meters) orbit geometry from the specified parameters.
+   * @param azimuthRad Azimuth from the first center position to second center position. If the orbit is
+   *   in LLA (absolute), simCore::sodanoInverse() can help with this. If in relative, atan(xd / yd) can
+   *   provide this value. This is in radians.
+   * @param lengthM Length from one center position to another, in meters. For absolute LLA coordinates,
+   *   simCore::sodanoInverse() can also provide this. For relative coordinates, this is equivalent to
+   *   the distance formula (sqrt(xd*xd + yd*yd)).
+   * @param radiusM Radius of the orbit ends in meters. Must be > 0.
+   * @param altitudeM Altitude of the output relative coordinates. The resulting coordinates will have this value.
+   * @param xyz Output vector that will hold the XYZ points defining the orbit shape relative to the origin.
+   *   This results in a closed shape, i.e. xyz.front() == xyz.back()
+   */
+  static void createOrbitShape(double azimuthRad, double lengthM, double radiusM, double altitudeM, std::vector<simCore::Vec3>& xyz);
+
 private:
   /// Serialize the shape's specific implementation attributes to the stream
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
