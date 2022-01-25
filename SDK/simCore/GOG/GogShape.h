@@ -915,27 +915,27 @@ public:
 
   virtual ShapeType shapeType() const;
 
-  // Box north corner latitude in radians
+  /// Box north corner latitude in radians
   double north() const;
   void setNorth(double northRad);
 
-  // Box south corner latitude in radians
+  /// Box south corner latitude in radians
   double south() const;
   void setSouth(double southRad);
 
-  // Box east corner longitude in radians
+  /// Box east corner longitude in radians
   double east() const;
   void setEast(double eastRad);
 
-  // Box west corner longitude in radians
+  /// Box west corner longitude in radians
   double west() const;
   void setWest(double westRad);
 
-  // Rotation of the image offset from true north, in radians
+  /// Rotation of the image offset counterclockwise from true north (matching KML GroundOverlay), in radians
   double getRotation() const;
   void setRotation(double rotation);
 
-  // image filename
+  /// image filename
   std::string imageFile() const;
   void setImageFile(const std::string& imageFile);
 

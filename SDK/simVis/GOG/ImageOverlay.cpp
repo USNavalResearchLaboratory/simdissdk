@@ -60,7 +60,8 @@ GogNodeInterface* ImageOverlay::deserialize(
   double south = p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_S), 0.0));
   double east = p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_E), 0.0));
   double west = p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_W), 0.0));
-  double rot = p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_ROT), 0.0));
+  // KML and GOG rotation is CCW; osgEarth rotation is CW
+  double rot = -p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_ROT), 0.0));
   osgEarth::Angular rotation(rot, osgEarth::Units::DEGREES);
 
   osgEarth::ImageOverlay* imageNode = new osgEarth::ImageOverlay(mapNode, image.get());
@@ -88,7 +89,8 @@ GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOver
   double south = imageOverlay.south() * simCore::RAD2DEG;
   double east = imageOverlay.east() * simCore::RAD2DEG;
   double west = imageOverlay.west() * simCore::RAD2DEG;
-  double rot = imageOverlay.getRotation() * simCore::RAD2DEG;
+  // KML and GOG rotation is CCW; osgEarth rotation is CW
+  double rot = -imageOverlay.getRotation() * simCore::RAD2DEG;
   osgEarth::Angular rotation(rot, osgEarth::Units::DEGREES);
 
   osgEarth::ImageOverlay* imageNode = new osgEarth::ImageOverlay(mapNode, image.get());
