@@ -129,7 +129,6 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
   }
 
   // assumes that time is moving forward, need to think through what happens if time moves backward
-  // TODO: add ds listener to deal with flush()
 
   if (time > lastUpdateTime_)
   {
@@ -166,9 +165,6 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     else if (historyLength_ != 0 && iter.first < (time - historyLength_))
       continue; // Too old
 
-    addChild(iter.second->node);
-    // addPointFromUpdate_ guarantees that nodemask is set correctly
-    assert(iter.second->node->getNodeMask() == simVis::DISPLAY_MASK_BEAM);
     osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->node->asGroup()->getChild(0));
     if (!bv)
     {
@@ -176,6 +172,11 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
       assert(0);
       return;
     }
+    // addPointFromUpdate_ guarantees that nodemask is set correctly
+    assert(iter.second->node->getNodeMask() == simVis::DISPLAY_MASK_BEAM);
+
+    // add to the scenegraph
+    addChild(iter.second->node);
 
     float divisor = historyLength_;
     if (historyLength_ == 0)
@@ -373,18 +374,12 @@ void PlanetariumViewTool::BeamHistory::setRange(double range)
     return;
   range_ = range;
 
-  // Update existing history points to the new range
-  for (const auto& point : historyPoints_)
-  {
-    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(point.second->node->asGroup()->getChild(0));
-    if (!bv)
-    {
-      // can't be a history point without a beam volume
-      assert(0);
-      continue;
-    }
-    SVFactory::updateFarRange(bv, range_);
-  }
+  // wipe history, reset times, rebuild
+  historyPoints_.clear();
+  firstTime_ = beamUpdateSlice_->firstTime();
+  const double time = lastUpdateTime_;
+  lastUpdateTime_ = -std::numeric_limits<double>::max();
+  updateBeamHistory(time);
 }
 
 void PlanetariumViewTool::BeamHistory::applyDataLimiting_(const simData::BeamPrefs& prefs)
