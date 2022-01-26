@@ -37,6 +37,20 @@ namespace GOG
 
 class ParsedShape;
 
+/** Generic reusable GOG-related methods */
+class SDKCORE_EXPORT GogUtils
+{
+public:
+  /** Converts an annotation string to a displayable string, de-encoding newlines and underscores */
+  static std::string decodeAnnotation(const std::string& anno);
+
+  /**
+   * Processes a URL e.g. from imagefile or annotations. Removes quotes and attempts to dereference
+   * file protocol ("file://") links to raw filenames.
+   */
+  static std::string processUrl(const std::string& addr);
+};
+
 /**
  * Current state of default units. This object communicates to parsing elements
  * what Units are in effect when parsing coordinate and measurement data.

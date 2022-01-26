@@ -26,14 +26,15 @@
 #include "osgEarth/LocalGeometryNode"
 
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Angle.h"
+#include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/Calc/Mgrs.h"
 #include "simCore/Common/Exception.h"
+#include "simCore/GOG/GogUtils.h"
 #include "simCore/String/Angle.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Utils.h"
-#include "simCore/Calc/Angle.h"
-#include "simCore/Calc/CoordinateConverter.h"
-#include "simCore/Calc/Mgrs.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/ParsedShape.h"
@@ -390,7 +391,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
         // Store the un-decoded text in textToken to avoid problems with trim in osgEarth code. (SIMDIS-2875)
         current.set(GOG_TEXT, textToken);
         // add support to show annotation text in dialog
-        current.set(GOG_3D_NAME, Utils::decodeAnnotation(textToken));
+        current.set(GOG_3D_NAME, simCore::GOG::GogUtils::decodeAnnotation(textToken));
       }
       else
       {

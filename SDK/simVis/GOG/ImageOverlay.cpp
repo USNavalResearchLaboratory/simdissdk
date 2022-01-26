@@ -48,8 +48,9 @@ GogNodeInterface* ImageOverlay::deserialize(
   if (!parsedShape.hasValue(GOG_IMAGEFILE))
     return rv;
 
-  std::string iconFile = parsedShape.stringValue(GOG_IMAGEFILE);
-  osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
+  const std::string& iconFile = parsedShape.stringValue(GOG_IMAGEFILE);
+  osg::ref_ptr<osg::Image> image = Utils::readRefImage(iconFile);
+
   // if icon can't load, return failure
   if (!image.valid())
   {
@@ -77,9 +78,9 @@ GogNodeInterface* ImageOverlay::deserialize(
 
 GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOverlay& imageOverlay, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  std::string iconFile = imageOverlay.imageFile();
+  const std::string& iconFile = imageOverlay.imageFile();
+  osg::ref_ptr<osg::Image> image = Utils::readRefImage(iconFile);
 
-  osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
   // if icon can't load, return failure
   if (!image.valid())
   {

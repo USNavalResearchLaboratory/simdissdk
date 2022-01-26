@@ -143,7 +143,11 @@ namespace simVis { namespace GOG
       static void configureStyleForClipping(osgEarth::Style& style);
 
       /** Converts an annotation string to a displayable string, de-encoding newlines and underscores */
-      static std::string decodeAnnotation(const std::string& anno);
+      SDK_DEPRECATE(static std::string decodeAnnotation(const std::string& anno),
+        "Use simCore::GOG::GogUtils::decodeAnnotation. This method will be removed in a future version.");
+
+      /** Attempts to read an image, given a filename or URL; attempts to resolve file:// references */
+      static osg::ref_ptr<osg::Image> readRefImage(const std::string& addr);
   };
 
   /**
