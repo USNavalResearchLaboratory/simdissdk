@@ -36,6 +36,7 @@
 #include "simCore/GOG/Parser.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Tokenizer.h"
+#include "simCore/String/Utils.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Loader.h"
 #include "simVis/GOG/ParsedShape.h"
@@ -196,6 +197,26 @@ int testLocalGeometry(osg::Node* gog, const std::vector<osg::Vec3d>& points)
   // make sure all points were found in the Geometry
   rv += SDK_ASSERT(numPoints == points.size());
   return rv;
+}
+
+/** Searches for a PNG file in a couple of environment variables, for image overlay testing */
+std::string getValidPngFile()
+{
+  if (getenv("SIMDIS_SDK_FILE_PATH"))
+  {
+    const std::string& rv = simCore::getEnvVar("SIMDIS_SDK_FILE_PATH") + "/textures/reticle.png";
+    std::ifstream ifs(rv.c_str(), std::ios::binary);
+    if (ifs.good())
+      return rv;
+  }
+  if (getenv("SIMDIS_DIR"))
+  {
+    const std::string& rv = simCore::getEnvVar("SIMDIS_DIR") + "/data/textures/app/compass.png";
+    std::ifstream ifs(rv.c_str(), std::ios::binary);
+    if (ifs.good())
+      return rv;
+  }
+  return "";
 }
 
 int testShapes(bool useCore)
@@ -683,6 +704,28 @@ int testShapes(bool useCore)
     rv += SDK_ASSERT(gogNode != nullptr);
     if (gogNode)
       rv += SDK_ASSERT(comparePositions(gogNode->getLocalOffset(), osg::Vec3d(500.0, -200.0, 0.0)));
+  }
+
+  // test image overlay (there is no relative, only absolute). Image File will fail if it cannot
+  // load the filename provided. Try to use a file from SIMDIS_SDK_FILE_PATH if set, or SIMDIS_DIR
+  // if that's set.
+  const std::string& validIcon = getValidPngFile();
+  if (!validIcon.empty())
+  {
+    std::string imageOverlayGogFile = FILE_VERSION +
+      "start\n imageoverlay 25.1 25.3 55.4 55.6 0\n imagefile " + validIcon + "\n 3d name Image Overlay\n opacity 0.75\n end\n";
+    simVis::GOG::GogNodeInterfacePtr imageOverlayGog = (useCore ? parseGogFileWithCore(false, imageOverlayGogFile, rv) : parseGogFile(parser, simVis::GOG::GOGNODE_GEOGRAPHIC, imageOverlayGogFile, rv));
+    rv += SDK_ASSERT(imageOverlayGog != nullptr);
+    if (imageOverlayGog)
+    {
+      rv += SDK_ASSERT(imageOverlayGog->shape() == simVis::GOG::GOG_IMAGEOVERLAY);
+      rv += SDK_ASSERT(imageOverlayGog->getDraw());
+      rv += SDK_ASSERT(imageOverlayGog->osgNode()->getName() == "Image Overlay");
+      float opacity = 1.f;
+      rv += SDK_ASSERT(imageOverlayGog->getOpacity(opacity) == 0);
+      rv += SDK_ASSERT(simCore::areEqual(opacity, 0.75));
+      // Do not bother testing getPosition(), it does not get updated until first pass of render
+    }
   }
 
   // test annotation
