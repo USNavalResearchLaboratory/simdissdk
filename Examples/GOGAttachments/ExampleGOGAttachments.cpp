@@ -590,6 +590,12 @@ int main(int argc, char **argv)
   /// add some stock OSG handlers
   viewer->installDebugHandlers();
 
-  return viewer->run();
+  const int status = viewer->run();
+
+  // clean up resources held in static containers
+  s_attachments.clear();
+  s_overlayNodes.clear();
+
+  return status;
 }
 
