@@ -48,6 +48,11 @@ bool startsWith(const std::string& token, const std::string& start)
   return token.substr(0, start.size()) == start;
 }
 
+/** List of tokens that are case sensitive and shouldn't be lowercase'd for parsing */
+static const std::set<std::string> CASE_SENSITIVE_GOG_TOKENS = {
+  "annotation", "comment", "name", "imagefile", "kml_icon", "starttime", "endtime"
+};
+
 }
 
 //------------------------------------------------------------------------
@@ -153,7 +158,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       {
         token = simCore::lowerCase(token);
         // stop further lower case conversion on text based values
-        if (token == "annotation" || token == "comment" || token == "name" || token == "starttime" || token == "endtime")
+        if (CASE_SENSITIVE_GOG_TOKENS.find(token) != CASE_SENSITIVE_GOG_TOKENS.end())
           break;
       }
     }

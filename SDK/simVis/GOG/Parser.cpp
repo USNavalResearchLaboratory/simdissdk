@@ -70,6 +70,11 @@ class NotifyErrorHandler : public simVis::GOG::ErrorHandler
   }
 };
 
+/** List of tokens that are case sensitive and shouldn't be lowercase'd for parsing */
+static const std::set<std::string> CASE_SENSITIVE_GOG_TOKENS = {
+  "annotation", "comment", "name", "imagefile", "kml_icon", "starttime", "endtime"
+};
+
 }
 
 //------------------------------------------------------------------------
@@ -242,7 +247,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       {
         token = toLower(token);
         // stop further lower case conversion on text based values
-        if (token == "annotation" || token == "comment" || token == "name")
+        if (CASE_SENSITIVE_GOG_TOKENS.find(token) != CASE_SENSITIVE_GOG_TOKENS.end())
           break;
       }
     }
