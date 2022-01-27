@@ -35,7 +35,7 @@ std::string GogUtils::decodeAnnotation(const std::string& anno)
 
 std::string GogUtils::processUrl(const std::string& addr)
 {
-  std::string candidate = simCore::removeQuotes(addr);
+  std::string candidate = simCore::removeQuotes(simCore::expandEnv(addr));
   // OSG cannot handle "file://" protocol out of the box
   if (candidate.substr(0, 7) == "file://")
   {
