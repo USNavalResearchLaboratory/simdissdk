@@ -20,6 +20,7 @@
 * disclose, or release this software.
 *
 */
+#include <algorithm>
 #include "simNotify/Notify.h"
 #include "simCore/String/XmlWriter.h"
 
