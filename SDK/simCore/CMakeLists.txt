@@ -119,6 +119,7 @@ set(CORE_STRING_HEADERS
     ${CORE_STRING_INC}UtfUtils.h
     ${CORE_STRING_INC}Utils.h
     ${CORE_STRING_INC}ValidNumber.h
+    ${CORE_STRING_INC}XmlWriter.h
 )
 set(CORE_STRING_SOURCES
     ${CORE_STRING_SRC}Angle.cpp
@@ -130,6 +131,7 @@ set(CORE_STRING_SOURCES
     ${CORE_STRING_SRC}UnitContextFormatter.cpp
     ${CORE_STRING_SRC}Utils.cpp
     ${CORE_STRING_SRC}ValidNumber.cpp
+    ${CORE_STRING_SRC}XmlWriter.cpp
 )
 source_group(Headers\\String FILES ${CORE_STRING_HEADERS})
 source_group("Source Files\\String" FILES ${CORE_STRING_SOURCES})
