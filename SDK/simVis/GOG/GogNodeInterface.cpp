@@ -1940,12 +1940,10 @@ void FeatureNodeInterface::setAltitudeMode(AltitudeMode altMode)
   case ALTITUDE_GROUND_CLAMPED:
     style_.getOrCreate<osgEarth::AltitudeSymbol>()->clamping() = osgEarth::AltitudeSymbol::CLAMP_TO_TERRAIN;
     style_.getOrCreate<osgEarth::AltitudeSymbol>()->technique() = osgEarth::AltitudeSymbol::TECHNIQUE_SCENE;
-    style_.getOrCreate<osgEarth::RenderSymbol>()->depthOffset()->automatic() = true;
     break;
   case ALTITUDE_GROUND_RELATIVE:
     style_.getOrCreate<osgEarth::AltitudeSymbol>()->clamping() = osgEarth::AltitudeSymbol::CLAMP_RELATIVE_TO_TERRAIN;
     style_.getOrCreate<osgEarth::AltitudeSymbol>()->technique() = osgEarth::AltitudeSymbol::TECHNIQUE_SCENE;
-    style_.getOrCreate<osgEarth::RenderSymbol>()->depthOffset()->automatic() = true;
     break;
   case ALTITUDE_EXTRUDE:
     // Shouldn't get here; failure in setExtrude()
