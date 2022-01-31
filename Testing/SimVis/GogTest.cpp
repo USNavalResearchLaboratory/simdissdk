@@ -23,6 +23,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "gdal.h"
 #include "osgEarth/FeatureNode"
 #include "osgEarth/GeoPositionNode"
 #include "osgEarth/LabelNode"
@@ -1717,6 +1718,8 @@ int GogTest(int argc, char* argv[])
   google::protobuf::ShutdownProtobufLibrary();
   // Need to destroy simVis Registry for valgrind testing
   simVis::Registry::destroy();
+  // Shut down GDAL for valgrind testing
+  GDALDestroy();
 
   return rv;
 }
