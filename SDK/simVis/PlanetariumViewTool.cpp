@@ -36,6 +36,7 @@
 #include "simVis/GeoFence.h"
 #include "simVis/LocatorNode.h"
 #include "simVis/Platform.h"
+#include "simVis/Projector.h"
 #include "simVis/Scenario.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/TargetDelegation.h"
@@ -407,6 +408,123 @@ void PlanetariumViewTool::BeamHistory::initGradient_()
 
 //-------------------------------------------------------------------
 
+/** Calls a lambda function when preferences change. */
+class PrefsChangeLambda : public simData::DataStore::DefaultListener
+{
+public:
+  PrefsChangeLambda(const std::function<void()>& func, simData::ObjectId id)
+    : lambda_(func),
+    idOfInterest_(id)
+  {
+  }
+
+  virtual void onPrefsChange(simData::DataStore* source, simData::ObjectId id)
+  {
+    if (id == idOfInterest_)
+      lambda_();
+  }
+
+private:
+  std::function<void()> lambda_;
+  simData::ObjectId idOfInterest_;
+};
+
+/**
+ * Encapsulates the update, remove, and prefs detection logic for draping a projector on the
+ * Planetarium dome, watching for commonPrefs.acceptProjectorId changes on the host. Implemented
+ * as a standalone struct to increase cohesion and reduce scattered code in Planetarium.
+ */
+class PlanetariumViewTool::ProjectorMonitor
+{
+public:
+  explicit ProjectorMonitor(PlanetariumViewTool& parent)
+    : parent_(parent)
+  {
+    if (parent_.host_.valid())
+      hostId_ = parent_.host_->getId();
+
+    prefsChange_.reset(new PrefsChangeLambda([this]() { checkForPrefsUpdate(); }, hostId_));
+    parent_.ds_.addListener(prefsChange_);
+    // Do an initial check
+    checkForPrefsUpdate();
+  }
+
+  /** Uninstall the projection code on destruction */
+  virtual ~ProjectorMonitor()
+  {
+    parent_.ds_.removeListener(prefsChange_);
+    if (projectorNode_.valid())
+      projectorNode_->removeProjectionFromNode(parent_.root_.get());
+  }
+
+  /**
+   * Call this once per update, to monitor for changes in the prefs. This could be optimized
+   * by only being called when prefs from the planetarium platform host change, or if we
+   * knew when the acceptprojectorid() field changes. Automatically called by data store listener.
+   */
+  void checkForPrefsUpdate()
+  {
+    // Need a scenario, or all work below is useless (and can be delayed until there is a scenario)
+    if (!parent_.scenario_.valid() || !parent_.root_.valid())
+      return;
+
+    uint64_t newProjId = 0;
+    { // Transaction minimal scope
+      simData::DataStore::Transaction txn;
+      const auto* prefs = parent_.ds_.platformPrefs(hostId_, &txn);
+      if (prefs)
+        newProjId = prefs->commonprefs().acceptprojectorid();
+    }
+
+    // Did the Accepts Projector pref change on the host?
+    if (newProjId == projectorId_)
+      return;
+
+    projectorId_ = newProjId;
+    // Remove old projector
+    if (projectorNode_.valid())
+    {
+      projectorNode_->removeProjectionFromNode(parent_.root_.get());
+      projectorNode_ = nullptr;
+    }
+    // Try to add projection from new ID
+    projectorNode_ = parent_.scenario_->find<simVis::ProjectorNode>(projectorId_);
+    if (projectorNode_.valid())
+      projectorNode_->addProjectionToNode(parent_.root_.get(), parent_.root_.get());
+  }
+
+  /** Forward calls from PlanetariumViewTool::onEntityAdd() here. */
+  void notifyNewEntity(EntityNode* entity)
+  {
+    if (entity && entity->getId() == projectorId_ && entity->type() == simData::PROJECTOR)
+    {
+      // Should not be any way to get here with an already-valid projector node
+      assert(projectorNode_.valid());
+      projectorNode_ = static_cast<simVis::ProjectorNode*>(entity);
+    }
+  }
+
+  /** Forward calls from PlanetariumViewTool::onEntityRemove() here. */
+  void notifyRemoveEntity(EntityNode* entity)
+  {
+    // Remove projection if needed
+    if (entity && projectorNode_.get() == entity)
+    {
+      projectorNode_->removeProjectionFromNode(parent_.root_.get());
+      projectorNode_ = nullptr;
+    }
+  }
+
+private:
+  PlanetariumViewTool& parent_;
+  simData::ObjectId hostId_ = 0;
+  simData::ObjectId projectorId_ = 0;
+  osg::observer_ptr<simVis::ProjectorNode> projectorNode_;
+  std::shared_ptr<PrefsChangeLambda> prefsChange_;
+};
+
+//-------------------------------------------------------------------
+
 PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host, simData::DataStore& ds)
   : host_(host),
   ds_(ds),
@@ -708,10 +826,14 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
 
   // cache the scenario pointer
   scenario_ = &scenario;
+
+  // Configure projection
+  projectorMonitor_.reset(new ProjectorMonitor(*this));
 }
 
 void PlanetariumViewTool::onUninstall(const ScenarioManager& scenario)
 {
+  projectorMonitor_.reset();
   // disable all overrides
   applyOverrides_(false);
   family_.reset();
@@ -731,6 +853,9 @@ void PlanetariumViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNod
     if (beam.get())
       addBeamToBeamHistory_(beam);
   }
+
+  if (projectorMonitor_)
+    projectorMonitor_->notifyNewEntity(entity);
 }
 
 void PlanetariumViewTool::onEntityRemove(const ScenarioManager& scenario, EntityNode* entity)
@@ -744,6 +869,9 @@ void PlanetariumViewTool::onEntityRemove(const ScenarioManager& scenario, Entity
   {
     targets_->remove(static_cast<PlatformNode*>(entity));
   }
+
+  if (projectorMonitor_)
+    projectorMonitor_->notifyRemoveEntity(entity);
 }
 
 void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)

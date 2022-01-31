@@ -23,6 +23,7 @@
 #ifndef SIMVIS_PLANETARIUM_VIEW_TOOL_H
 #define SIMVIS_PLANETARIUM_VIEW_TOOL_H
 
+#include <memory>
 #include "osg/Group"
 #include "osg/observer_ptr"
 #include "simData/DataSlice.h"
@@ -299,6 +300,9 @@ private:
   osg::ref_ptr<osg::Geometry>     sectorGeo_;
   osg::ref_ptr<osg::Node>         targetGeom_;
   std::map<simData::ObjectId, osg::ref_ptr<BeamHistory> > history_;
+
+  class ProjectorMonitor;
+  std::unique_ptr<ProjectorMonitor> projectorMonitor_;
 };
 
 } // namespace simVis
