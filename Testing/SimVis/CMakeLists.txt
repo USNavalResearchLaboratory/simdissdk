@@ -26,4 +26,4 @@ set_target_properties(SimVisTests PROPERTIES
 
 add_test(NAME LocatorTest COMMAND SimVisTests LocatorTest)
 add_test(NAME FontSizeTest COMMAND SimVisTests FontSizeTest)
-add_test(NAME GogTest COMMAND SimVisTests GogTest)
+add_test(NAME SimVisGogTest COMMAND SimVisTests GogTest)

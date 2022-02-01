@@ -1702,6 +1702,12 @@ int GogTest(int argc, char* argv[])
 {
   int rv = 0;
 
+  // osgEarth uses std::atexit() to clean up the Registry, which makes calls into
+  // GDAL. To resolve leaks with GDAL without introducing errors, we need to install
+  // an at-exit handler for destroying GDAL BEFORE osgEarth's registry adds theirs,
+  // so that they execute in the correct order.
+  std::atexit(GDALDestroy);
+
   // Check the SIMDIS SDK version
   simCore::checkVersionThrow();
 
@@ -1718,8 +1724,6 @@ int GogTest(int argc, char* argv[])
   google::protobuf::ShutdownProtobufLibrary();
   // Need to destroy simVis Registry for valgrind testing
   simVis::Registry::destroy();
-  // Shut down GDAL for valgrind testing
-  GDALDestroy();
 
   return rv;
 }
