@@ -1153,21 +1153,13 @@ unsigned int PlatformNode::objectIndexTag() const
 
 int PlatformNode::acceptProjector(ProjectorNode* proj)
 {
-  // Stop accepting the previous projector node, if one exists
-  if (acceptedProjectorNode_ != nullptr)
-  {
-    acceptedProjectorNode_->removeProjectionFromNode(model_->offsetNode());
-    acceptedProjectorNode_ = nullptr;
-  }
-
   // Passing in NULL clears the pairing, not an error
   if (proj == nullptr)
     return 0;
 
-  int rv = proj->addProjectionToNode(this, model_->offsetNode());
-  if (rv == 0)
-    acceptedProjectorNode_ = proj;
-  return rv;
+  proj->addProjectionToNode(this, model_->offsetNode());
+  
+  return 0;
 }
 
 }

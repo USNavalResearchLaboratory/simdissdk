@@ -27,6 +27,7 @@ set(SHADER_FILES
     PolygonStipple.frag.glsl
     Projector.vert.glsl
     Projector.frag.glsl
+    ProjectorOnEntity.glsl
     RF.LossToColor.Default.lib.glsl
     RF.LossToColor.Threshold.lib.glsl
     RF.Texture.vert.glsl

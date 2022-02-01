@@ -301,21 +301,12 @@ LabelContentCallback& EntityNode::labelContentCallback() const
 
 int EntityNode::acceptProjector(ProjectorNode* proj)
 {
-  // Stop accepting the previous projector node, if one exists
-  osg::ref_ptr<simVis::ProjectorNode> lock;
-  if (acceptedProjectorNode_.lock(lock))
-  {
-    acceptedProjectorNode_->removeProjectionFromNode(this);
-    acceptedProjectorNode_ = nullptr;
-  }
-
   // Passing in NULL clears the pairing, not an error
   if (proj == nullptr)
     return 0;
 
-  int rv = proj->addProjectionToNode(this, this);
-  if (rv == 0)
-    acceptedProjectorNode_ = proj;
+  proj->addProjectionToNode(this, this);
+
   return 0;
 }
 
