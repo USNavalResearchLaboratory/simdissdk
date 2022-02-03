@@ -380,7 +380,11 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
 
           imageLayer->setOpacity(opacity);
           imageLayer->setVisible(active);
+#if OSGEARTH_SOVERSION >= 127
+          imageLayer->setOpenAutomatically(active);
+#else
           imageLayer->setEnabled(active);
+#endif
           imageLayer->setName(layerName);
           map->addLayer(imageLayer);
         }
@@ -426,7 +430,11 @@ void DbConfigurationFile::parseCloudLayers_(const std::vector<std::string>& toke
       imageLayer->setName(layerName);
 
       imageLayer->setVisible(false);
+#if OSGEARTH_SOVERSION >= 127
+      imageLayer->setOpenAutomatically(false);
+#else
       imageLayer->setEnabled(false);
+#endif
       map->addLayer(imageLayer);
 
       // process the cloud processing thresholds
