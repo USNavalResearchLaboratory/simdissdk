@@ -448,11 +448,11 @@ int main(int argc, char **argv)
   simExamples::configureSearchPaths();
 
   // load the image.
-  std::string imageURL = "H:/devel/osgearth/master/repo/data/hospital.png"; //"LandSiteV.png";
+  std::string imageURL = "LandSiteV.png";
   if (argc > 1)
     imageURL = argv[1];
 
-  std::string imageURL2 = "H:/devel/osgearth/master/repo/data/icon.png";
+  std::string imageURL2 = "A6V.png";
   if (argc > 2)
     imageURL2 = argv[2];
 
@@ -496,7 +496,7 @@ int main(int argc, char **argv)
   osg::ref_ptr<simVis::GateNode> gateNode = scenario->find<simVis::GateNode>(gateId);
   osg::ref_ptr<simVis::ProjectorNode> projector_1 = scenario->find<simVis::ProjectorNode>(projectorId_1);
   if (gateNode.valid() && projector_1.valid())
-      gateNode->acceptProjector(projector_1.get());
+    gateNode->acceptProjector(projector_1.get());
 
   // a second projector on the gate, to show that multiple projectors can project on the same node:
   projectorId_1b = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL2, false);

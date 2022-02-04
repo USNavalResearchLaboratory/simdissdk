@@ -145,7 +145,7 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
       //nop
     }
 
-    //! Adds a projector from this callback. 
+    //! Adds a projector from this callback.
     //! Returns the number of projectors being managed by the callback, or
     //! -1 on error.
     int add(simVis::ProjectorNode* node)
