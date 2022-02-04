@@ -143,7 +143,11 @@ void LayerRefreshCallback::runImpl_()
   for (auto it = watchedLayers_.begin(); it != watchedLayers_.end(); ++it)
   {
     osg::observer_ptr<osgEarth::TileLayer> layer = (*it).layer;
+#if OSGEARTH_SOVERSION >= 127
+    if (!layer.valid() || !layer->getOpenAutomatically())
+#else
     if (!layer.valid() || !layer->getEnabled())
+#endif
     {
       assert(0); // Should not be watching a nullptr or disabled layer
       continue;

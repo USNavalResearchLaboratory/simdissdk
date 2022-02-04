@@ -459,7 +459,11 @@ void SceneManager::applyImageLayerDisplaySettings_(const osgEarth::ImageLayer& s
 {
   destLayer->setOpacity(sourceLayer.getOpacity());
   destLayer->setVisible(sourceLayer.getVisible());
+#if OSGEARTH_SOVERSION >= 127
+  destLayer->setOpenAutomatically(sourceLayer.getOpenAutomatically());
+#else
   destLayer->setEnabled(sourceLayer.getEnabled());
+#endif
 }
 
 std::string SceneManager::getLayerHash_(osgEarth::TileLayer* layer) const
