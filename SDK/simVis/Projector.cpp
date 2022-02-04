@@ -190,7 +190,7 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
         if (projector.valid())
           keep.push_back(projector);
       }
-      projectors_.swap(std::move(keep));
+      projectors_.swap(keep);
     }
 
     void configureStateSet(osg::StateSet* ss)
