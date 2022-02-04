@@ -327,8 +327,6 @@ namespace simVis
 
     /** Function used to get a projector node from an ID. Set by ScenarioManager after EntityNode creation using setNodeGetter(). */
     std::function<EntityNode* (simData::ObjectId)> nodeGetter_ = [](simData::ObjectId) ->EntityNode* { return nullptr; };
-    /** The currently accepted projector node, can be NULL */
-    osg::observer_ptr<simVis::ProjectorNode> acceptedProjectorNode_;
 
   private:
     /** Copy constructor, not implemented or available. */

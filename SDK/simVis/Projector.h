@@ -126,6 +126,9 @@ public:
   /// Remove projector uniforms from the given StateSet
   void removeFromStateSet(osg::StateSet* stateSet) const;
 
+  /// Copy uniform values to an array stateset
+  void copyUniformsTo(osg::StateSet* stateSet, unsigned size, unsigned index) const;
+
   /// Set the calculator that can calculate the projector's ellipsoid intersection
   void setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator);
 

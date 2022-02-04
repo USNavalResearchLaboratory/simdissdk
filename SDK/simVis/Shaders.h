@@ -77,6 +77,8 @@ public:
   std::string projectorManagerVertex() const;
   /** Name of fragment shader for projector manager */
   std::string projectorManagerFragment() const;
+  /** Name of the shaders for projecting on an entity */
+  std::string projectorOnEntity() const;
 
   /** Name of RF Propagation vertex based main shader */
   std::string rfPropVertexBasedVertex() const;

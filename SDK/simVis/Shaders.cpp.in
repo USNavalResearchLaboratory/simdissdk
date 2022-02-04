@@ -45,6 +45,7 @@ Shaders::Shaders()
   add(polygonStippleFragment(), @PolygonStipple.frag.glsl@);
   add(projectorManagerVertex(), @Projector.vert.glsl@);
   add(projectorManagerFragment(), @Projector.frag.glsl@);
+  add(projectorOnEntity(), @ProjectorOnEntity.glsl@);
   add(rfPropVertexBasedVertex(), @RF.Vertex.vert.glsl@);
   add(rfPropVertexBasedFragment(), @RF.Vertex.frag.glsl@);
   add(rfPropTextureBasedVertex(), @RF.Texture.vert.glsl@);
@@ -100,6 +101,11 @@ std::string Shaders::projectorManagerVertex() const
 std::string Shaders::projectorManagerFragment() const
 {
   return "Projector.frag.glsl";
+}
+
+std::string Shaders::projectorOnEntity() const
+{
+  return "ProjectorOnEntity.glsl";
 }
 
 std::string Shaders::trackHistoryVertex() const

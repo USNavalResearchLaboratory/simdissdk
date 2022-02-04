@@ -106,6 +106,8 @@ simData::ObjectId platformId_3 = 0;
 simData::ObjectId projectorId_4 = 0;
 simData::ObjectId platformId_4 = 0;
 
+simData::ObjectId projectorId_1b = 0;
+
 #ifdef HAVE_IMGUI
 
 struct ControlPanel : public GUI::BaseGui
@@ -378,7 +380,9 @@ simData::ObjectId addProjector(simVis::ScenarioManager* scenario,
   txn.complete(&prefs);
 
   if (varyFov)
+  {
     varyProjectorFov(id, dataStore);
+  }
   else
   {
     simData::ProjectorUpdate* update = dataStore.addProjectorUpdate(id, &txn);
@@ -444,9 +448,13 @@ int main(int argc, char **argv)
   simExamples::configureSearchPaths();
 
   // load the image.
-  std::string imageURL = "LandSiteV.png";
+  std::string imageURL = "H:/devel/osgearth/master/repo/data/hospital.png"; //"LandSiteV.png";
   if (argc > 1)
     imageURL = argv[1];
+
+  std::string imageURL2 = "H:/devel/osgearth/master/repo/data/icon.png";
+  if (argc > 2)
+    imageURL2 = argv[2];
 
   /// use the utility code to create a basic world map (terrain imagery and height)
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
@@ -489,6 +497,12 @@ int main(int argc, char **argv)
   osg::ref_ptr<simVis::ProjectorNode> projector_1 = scenario->find<simVis::ProjectorNode>(projectorId_1);
   if (gateNode.valid() && projector_1.valid())
       gateNode->acceptProjector(projector_1.get());
+
+  // a second projector on the gate, to show that multiple projectors can project on the same node:
+  projectorId_1b = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL2, false);
+  osg::ref_ptr<simVis::ProjectorNode> projector_1b = scenario->find<simVis::ProjectorNode>(projectorId_1b);
+  if (gateNode.valid() && projector_1b.valid())
+    gateNode->acceptProjector(projector_1b.get());
 
   /// platform to use as a target to test projecting on to a platform
   platformId_2 = addPlatform(dataStore);

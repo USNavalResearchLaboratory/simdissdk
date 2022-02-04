@@ -132,30 +132,143 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
    * will be replaced with osg::Callback, after which these two can be
    * unified.
    */
-  class UpdateProjMatrix : public osg::NodeCallback
+#define SIM_MAX_NODE_PROJECTORS 4
+
+  class ProjectOnNodeUpdater : public osg::NodeCallback
   {
+    using ProjectorObserver = osg::observer_ptr<simVis::ProjectorNode>;
+    using ProjectorObservers = std::vector<ProjectorObserver>;
+
   public:
-    explicit UpdateProjMatrix(simVis::ProjectorNode* node) : proj_(node)
+    ProjectOnNodeUpdater()
     {
       //nop
     }
 
-    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    //! Adds a projector from this callback. 
+    //! Returns the number of projectors being managed by the callback, or
+    //! -1 on error.
+    int add(simVis::ProjectorNode* node)
     {
-      if (proj_ == nullptr)
+      OE_SOFT_ASSERT_AND_RETURN(node != nullptr, -1);
+      OE_SOFT_ASSERT_AND_RETURN(projectors_.size() < SIM_MAX_NODE_PROJECTORS, -1);
+
+      prune();
+
+      if (std::find(projectors_.begin(), projectors_.end(), node) == projectors_.end())
+      {
+        projectors_.push_back(node);
+        return projectors_.size();
+      }
+      else
+      {
+        // already installed - do nothing
+        return -1;
+      }
+    }
+
+    //! Removes a projector from this callback
+    //! Return the number of remaining projectors
+    int remove(simVis::ProjectorNode* node)
+    {
+      auto iter = std::find(projectors_.begin(), projectors_.end(), node);
+      if (iter != projectors_.end())
+        projectors_.erase(iter);
+      prune();
+      return projectors_.size();
+    }
+
+    //! prune any orphaned nodes from the set
+    void prune()
+    {
+      if (projectors_.empty())
         return;
 
-      osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
-      osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
-      osg::Matrixf projMat = cv->getCurrentCamera()->getInverseViewMatrix() * proj_->getTexGenMatrix();
-      ss->addUniform(new osg::Uniform("simProjTexGenMat", projMat));
-      cv->pushStateSet(ss.get());
-      traverse(node, nv);
-      cv->popStateSet();
+      ProjectorObservers keep;
+      for (auto& projector : projectors_)
+      {
+        if (projector.valid())
+          keep.push_back(projector);
+      }
+      projectors_.swap(keep);
+    }
+
+    void configureStateSet(osg::StateSet* ss)
+    {
+      prune();
+
+      osgEarth::Util::ArrayUniform sampler(
+        "simProjSampler",
+        osg::Uniform::SAMPLER_2D,
+        ss,
+        SIM_MAX_NODE_PROJECTORS);
+
+      unsigned count = projectors_.size();
+      unsigned index = 0;
+
+      for (auto& proj : projectors_)
+      {
+        sampler.setElement(index, (int)(simVis::ProjectorManager::getTextureImageUnit() + index));
+        //ss->getOrCreateUniform("simProjSampler", osg::Uniform::SAMPLER_2D, SIM_MAX_NODE_PROJECTORS)
+        //  ->setElement(index, (int)(simVis::ProjectorManager::getTextureImageUnit() + index));
+
+        ss->setTextureAttribute(
+          simVis::ProjectorManager::getTextureImageUnit() + index,
+          proj->getTexture());
+
+        ++index;
+      }
+
+      ss->setDefine("SIMVIS_NUM_PROJECTORS", std::to_string(count));
+
+      updateUniforms(ss);
+    }
+
+    void updateUniforms(osg::StateSet* ss)
+    {
+      prune();
+      unsigned index = 0;
+      for (auto& proj : projectors_)
+      {
+        proj->copyUniformsTo(ss, projectors_.size(), index);
+        ++index;
+      }
+    }
+
+    //! Prunes the projector list and updates all texgen matrices
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+      prune();
+
+      if (!projectors_.empty())
+      {
+        // TODO: can we just put this on the node's stateset??
+        osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
+        osg::Uniform* u = new osg::Uniform(osg::Uniform::FLOAT_MAT4, "simProjTexGenMat", SIM_MAX_NODE_PROJECTORS);
+        ss->addUniform(u);
+
+        osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+        osg::Matrixd inverseViewMatrix = cv->getCurrentCamera()->getInverseViewMatrix();
+
+        unsigned count = 0;
+        for (auto& proj : projectors_)
+        {
+          osg::Matrixf matrix = inverseViewMatrix * proj->getTexGenMatrix();
+          u->setElement(count++, matrix);
+        }
+
+        // update all the individual project uniform values
+        // TODO: will this work in the current frame??
+        updateUniforms(node->getOrCreateStateSet());
+
+        cv->pushStateSet(ss.get());
+        traverse(node, nv);
+        cv->popStateSet();
+      }
     }
 
   private:
-    osg::observer_ptr<simVis::ProjectorNode> proj_;
+    ProjectorObservers projectors_;
   };
 }
 
@@ -367,6 +480,30 @@ void ProjectorNode::removeFromStateSet(osg::StateSet* stateSet) const
   stateSet->removeUniform(projectorMaxRangeSquaredUniform_.get());
 
   stateSet->removeDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
+}
+
+namespace
+{
+  template<typename T> void copyUniform(osg::StateSet* ss, osg::Uniform* src, unsigned size, unsigned index)
+  {
+    T temp;
+    src->get(temp);
+    osgEarth::Util::ArrayUniform u(src->getName(), src->getType(), ss, size);
+    u.setElement(index, temp);
+    //ss->getOrCreateUniform(src->getName(), src->getType(), size)
+    //  ->setElement(index, temp);
+  }
+}
+
+void ProjectorNode::copyUniformsTo(osg::StateSet* stateSet, unsigned size, unsigned index) const
+{
+  copyUniform<bool>(stateSet, projectorActive_.get(), size, index);
+  copyUniform<float>(stateSet, projectorAlpha_.get(), size, index);
+  copyUniform<osg::Vec3f>(stateSet, texProjDirUniform_.get(), size, index);
+  copyUniform<osg::Vec3f>(stateSet, texProjPosUniform_.get(), size, index);
+  copyUniform<bool>(stateSet, useColorOverrideUniform_.get(), size, index);
+  copyUniform<osg::Vec4f>(stateSet, colorOverrideUniform_.get(), size, index);
+  copyUniform<float>(stateSet, projectorMaxRangeSquaredUniform_.get(), size, index);
 }
 
 std::string ProjectorNode::popupText() const
@@ -897,47 +1034,41 @@ int ProjectorNode::addProjectionToNode(osg::Node* entity, osg::Node* attachmentP
   if (!attachmentPoint)
     return 1;
 
-  // Cycle through the nested callbacks in the node, to ensure there's not already
-  // an UpdateProjMatrix callback.  If there is, then that means there's already a
-  // projector with a "claim" to the node and adding another projector will fail,
-  // possibly introducing infinite loops if that UpdateProjMatrix == projectOnNodeCallback_.
-  bool foundProjCallback = false;
+  // If there is already an update callback installed, find it:
+  ProjectOnNodeUpdater* projOnNodeCallback = nullptr;
   osg::Callback* nestedCallback = attachmentPoint->getCullCallback();
-  while (nestedCallback && !foundProjCallback)
+  while (nestedCallback && !projOnNodeCallback)
   {
-    if (dynamic_cast<UpdateProjMatrix*>(nestedCallback))
-      foundProjCallback = true;
-    else
-      nestedCallback = nestedCallback->getNestedCallback();
+    projOnNodeCallback = dynamic_cast<ProjectOnNodeUpdater*>(nestedCallback);
+    nestedCallback = nestedCallback->getNestedCallback();
   }
-  if (foundProjCallback)
-    return 1;
 
-  projectedNodes_[entity] = attachmentPoint;
+  // not found? create one and install it
+  if (!projOnNodeCallback)
+  {
+    projOnNodeCallback = new ProjectOnNodeUpdater();
+    attachmentPoint->addCullCallback(projOnNodeCallback);
+  }
 
-  // create the projection matrix callback on demand:
-  if (!projectOnNodeCallback_.valid())
-    projectOnNodeCallback_ = new UpdateProjMatrix(this);
+  // Add this projector node to the entity node's callback.
+  // This will return the total number of projectors projecting
+  // on this entity, or -1 upon error.
+  int count = projOnNodeCallback->add(this);
+  if (count > 0)
+  {
+    projectedNodes_[entity] = attachmentPoint;
 
-  // install the texture application snippet.
-  // TODO: optimize by creating this VP once and sharing across all projectors (low priority)
-  osg::StateSet* stateSet = attachmentPoint->getOrCreateStateSet();
-  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
-  simVis::Shaders package;
-  package.load(vp, package.projectorManagerVertex());
-  package.load(vp, package.projectorManagerFragment());
+    // install the texture application snippet.
+    // TODO: optimize by creating this VP once and sharing across all projectors (low priority)
+    osg::StateSet* stateSet = attachmentPoint->getOrCreateStateSet();
 
-  stateSet->setDefine("SIMVIS_PROJECT_ON_PLATFORM");
+    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
+    simVis::Shaders package;
+    package.load(vp, package.projectorOnEntity());
 
-  // tells the shader where to bind the sampler uniform
-  stateSet->addUniform(new osg::Uniform("simProjSampler", ProjectorManager::getTextureImageUnit()));
-  // Set texture from projector into state set
-  stateSet->setTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
+    projOnNodeCallback->configureStateSet(stateSet);
+  }
 
-  applyToStateSet(stateSet);
-
-  // to compute the texture generation matrix:
-  attachmentPoint->addCullCallback(projectOnNodeCallback_.get());
   return 0;
 }
 
@@ -950,22 +1081,48 @@ int ProjectorNode::removeProjectionFromNode(osg::Node* node)
   if (attachmentPoint == projectedNodes_.end())
     return 1;
 
+  // Find the management callback:
+  ProjectOnNodeUpdater* projOnNodeCallback = nullptr;
+  osg::Callback* nestedCallback = attachmentPoint->second->getCullCallback();
+  while (nestedCallback && !projOnNodeCallback)
+  {
+    projOnNodeCallback = dynamic_cast<ProjectOnNodeUpdater*>(nestedCallback);
+    nestedCallback = nestedCallback->getNestedCallback();
+  }
+
+  // This is actually a failed assertion! (should not happen)
+  if (!projOnNodeCallback)
+    return 1;
+
+  // Remove from the updater:
+  int count = projOnNodeCallback->remove(this);
+
   osg::StateSet* stateSet = attachmentPoint->second->getStateSet();
   if (stateSet)
   {
-    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::get(stateSet);
-    if (vp)
+    // Was that the last one? If so, remove all the state info
+    if (count == 0)
     {
-      simVis::Shaders package;
-      package.unload(vp, package.projectorManagerVertex());
-      package.unload(vp, package.projectorManagerFragment());
+      osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::get(stateSet);
+      if (vp)
+      {
+        simVis::Shaders package;
+        package.unload(vp, package.projectorOnEntity());
+      }
+
+      stateSet->removeDefine("SIMVIS_NUM_PROJECTORS");
+      stateSet->removeUniform("simProjSampler");
+      stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
+
+      removeFromStateSet(stateSet);
     }
+    else
+    {
+      projOnNodeCallback->configureStateSet(stateSet);
 
-    stateSet->removeDefine("SIMVIS_PROJECT_ON_PLATFORM");
-    stateSet->removeUniform("simProjSampler");
-    stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
-
-    removeFromStateSet(stateSet);
+      // remove the last one
+      stateSet->removeTextureAttribute(count, osg::StateAttribute::TEXTURE);
+    }
   }
 
   attachmentPoint->second->removeCullCallback(projectOnNodeCallback_.get());
