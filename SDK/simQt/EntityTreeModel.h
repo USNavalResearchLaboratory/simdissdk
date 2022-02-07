@@ -166,7 +166,6 @@ private:
   class TreeListener;
 
   // Setup the tree
-  void setupModelData_(EntityTreeItem *parent, simData::DataStore* dataStore);
   void buildTree_(simData::ObjectType type, const simData::DataStore* dataStore,
     const simData::DataStore::IdList& idList, EntityTreeItem *parent);
   EntityTreeItem* findItem_(uint64_t entityId) const;

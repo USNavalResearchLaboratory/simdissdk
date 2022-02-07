@@ -23,6 +23,7 @@
 
 #include <cassert>
 #include <set>
+#include <QHeaderView>
 #include <QSortFilterProxyModel>
 #include <QTreeWidget>
 #include <QTimer>
@@ -113,16 +114,26 @@ QList<QWidget*> EntityTreeWidget::filterWidgets(QWidget* newWidgetParent) const
 void EntityTreeWidget::setModel(AbstractEntityTreeModel* model)
 {
   if (model_ != nullptr)
-  {
-    disconnect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(delaySend_()));
-    disconnect(model_, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(delaySend_()));
-  }
+    disconnect(model_, nullptr, this, nullptr);
 
   model_ = model;
-  proxyModel_->setSourceModel(model_);
 
   connect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(delaySend_()));
   connect(model_, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(delaySend_()));
+
+  connect(model_, SIGNAL(rowsAboutToBeInserted(QModelIndex, int, int)), this, SLOT(captureVisible_()));
+  connect(model_, SIGNAL(rowsAboutToBeRemoved(QModelIndex, int, int)), this, SLOT(captureVisible_()));
+  connect(model_, SIGNAL(rowsAboutToBeMoved(QModelIndex, int, int, QModelIndex, int)), this, SLOT(captureVisible_()));
+  /** Handle rename, since there is only one signal the slot needs to handle both capture and keep */
+  connect(model_, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)), this, SLOT(captureAndKeepVisible_()));
+
+  proxyModel_->setSourceModel(model_);
+
+  // Need to allow the view to update before checking if the selected item is still visible
+  auto keepVisibleOnTimer = [this]() { QTimer::singleShot(10, this, SLOT(keepVisible_())); };
+  connect(model_, &QAbstractItemModel::rowsInserted, this, keepVisibleOnTimer);
+  connect(model_, &QAbstractItemModel::rowsRemoved, this, keepVisibleOnTimer);
+  connect(model_, &QAbstractItemModel::rowsMoved, this, keepVisibleOnTimer);
 
   // new model set, update from our settings
   if (settings_)
@@ -136,6 +147,66 @@ void EntityTreeWidget::setModel(AbstractEntityTreeModel* model)
   view_->setColumnWidth(0, 140);
   view_->setColumnWidth(1, 35);
   view_->setColumnWidth(2, 45);
+}
+
+void EntityTreeWidget::captureAndKeepVisible_()
+{
+  /** There is no before or after signal for rename, just dataChanged.  Need to capture before the proxy and keep after everyone */
+  captureVisible_();
+  if (!setVisible_.empty())
+    QTimer::singleShot(10, this, SLOT(keepVisible_()));
+}
+
+void EntityTreeWidget::captureVisible_()
+{
+  // Temporary structure to sort the selected items by vertical location in the list
+  struct Entry
+  {
+    QRect rect;
+    QModelIndex index;
+    Entry(const QRect& inRect, const QModelIndex& inIndex)
+      : rect(inRect),
+        index(inIndex)
+    {}
+
+    bool operator<(const Entry& a) const
+    {
+      return rect.top() < a.rect.top();
+    }
+  };
+
+  std::vector<Entry> entries;
+  for (const auto& index : view_->selectionModel()->selectedRows())
+  {
+    auto rect = view_->visualRect(index);
+    // Contrary to the documentation, rect is not invalid if index is not visible.  Manually check if the index is visible.
+    auto height = view_->height() - view_->header()->height();
+    if (!rect.isValid() || (rect.bottom() < 0)  || (rect.top() > height))
+      continue;
+
+    entries.push_back(Entry(rect, index));
+  }
+
+  std::sort(entries.begin(), entries.end());
+  for (const auto& entry : entries)
+    setVisible_.push_back(model_->uniqueId(proxyModel_->mapToSource(entry.index)));
+}
+
+void EntityTreeWidget::keepVisible_()
+{
+  for (auto id : setVisible_)
+  {
+    auto index = proxyModel_->mapFromSource(model_->index(id));
+
+    // if the entity was deleted, continue to the next one
+    if (!index.isValid())
+      continue;
+
+    view_->scrollTo(index);
+    break;
+  }
+
+  setVisible_.clear();
 }
 
 void EntityTreeWidget::clearSelection()
