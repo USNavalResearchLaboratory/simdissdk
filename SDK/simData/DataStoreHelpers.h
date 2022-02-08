@@ -78,6 +78,17 @@ public:
   static bool isEntityActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime);
   /** Returns the user vertical datum value, in meters, for the given entity. */
   static double getUserVerticalDatum(const simData::DataStore& dataStore, simData::ObjectId id);
+
+  /** Replaces contents of repeated field with the contents of the provided vector. */
+  template <typename T>
+  static void vecToRepeated(typename google::protobuf::RepeatedField<T>* field, const typename std::vector<T>& vec)
+  {
+    if (!field)
+      return;
+    field->Clear();
+    for (const auto& value : vec)
+      field->Add(value);
+  }
 };
 
 }

@@ -495,23 +495,19 @@ int main(int argc, char **argv)
   simData::ObjectId gateId = addGate(platformId_1, dataStore);
   osg::ref_ptr<simVis::GateNode> gateNode = scenario->find<simVis::GateNode>(gateId);
   osg::ref_ptr<simVis::ProjectorNode> projector_1 = scenario->find<simVis::ProjectorNode>(projectorId_1);
-  if (gateNode.valid() && projector_1.valid())
-    gateNode->acceptProjector(projector_1.get());
 
   // a second projector on the gate, to show that multiple projectors can project on the same node:
   projectorId_1b = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL2, false);
   osg::ref_ptr<simVis::ProjectorNode> projector_1b = scenario->find<simVis::ProjectorNode>(projectorId_1b);
-  if (gateNode.valid() && projector_1b.valid())
-    gateNode->acceptProjector(projector_1b.get());
+  if (gateNode.valid())
+    gateNode->acceptProjectors({ projector_1.get(), projector_1b.get() });
 
   /// platform to use as a target to test projecting on to a platform
   platformId_2 = addPlatform(dataStore);
   osg::ref_ptr<simVis::PlatformNode> vehicle_2 = scenario->find<simVis::PlatformNode>(platformId_2);
   osg::ref_ptr<simVis::ProjectorNode> projector_0 = scenario->find<simVis::ProjectorNode>(projectorId_0);
   if (vehicle_2.valid() && projector_0.valid())
-  {
-    vehicle_2->acceptProjector(projector_0.get());
-  }
+    vehicle_2->acceptProjectors({ projector_0.get() });
 
   /// platform that shines on Hawaii
   platformId_3 = addPlatform(dataStore);

@@ -602,8 +602,7 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
     syncAfterPrefsUpdate = true;
   }
 
-  if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
-    applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
+  applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
 
   if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, shadowmapping))
   {
@@ -1072,12 +1071,12 @@ int ProjectorNode::addProjectionToNode(osg::Node* entity, osg::Node* attachmentP
   return 0;
 }
 
-int ProjectorNode::removeProjectionFromNode(osg::Node* node)
+int ProjectorNode::removeProjectionFromNode(osg::Node* entity)
 {
-  if (!node)
+  if (!entity)
     return 1;
 
-  auto attachmentPoint = projectedNodes_.find(node);
+  auto attachmentPoint = projectedNodes_.find(entity);
   if (attachmentPoint == projectedNodes_.end())
     return 1;
 

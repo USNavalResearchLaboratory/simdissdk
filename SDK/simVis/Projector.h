@@ -136,7 +136,7 @@ public:
   int addProjectionToNode(osg::Node* entity, osg::Node* attachmentPoint);
 
   /** Remove the setup configured by addProjectionToNode.  Returns 0 on success. */
-  int removeProjectionFromNode(osg::Node* node);
+  int removeProjectionFromNode(osg::Node* entity);
 
   /**
   * Get the traversal mask for this node type

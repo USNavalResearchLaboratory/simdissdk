@@ -446,8 +446,7 @@ void GateNode::setPrefs(const simData::GatePrefs& prefs)
   // validate localgrid prefs changes that might provide user notifications
   localGrid_->validatePrefs(prefs.commonprefs().localgrid());
 
-  if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefsFromDS_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
-    applyProjectorPrefs_(lastPrefsFromDS_.commonprefs(), prefs.commonprefs());
+  applyProjectorPrefs_(lastPrefsFromDS_.commonprefs(), prefs.commonprefs());
 
   applyPrefs_(prefs);
   updateLabel_(prefs);

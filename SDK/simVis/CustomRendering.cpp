@@ -177,9 +177,7 @@ void CustomRenderingNode::setPrefs(const simData::CustomRenderingPrefs& prefs)
   }
 
   updateOverrideColor_(prefs);
-
-  if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
-    applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
+  applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
 
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;

@@ -194,11 +194,8 @@ public: // EntityNode interface
   */
   virtual double range() const;
 
-  /**
-   * Accept textures from a projector. Can only accept one projector per entity.
-   * Pass in NULL to stop accepting a projector. Returns 0 on success.
-   */
-  virtual int acceptProjector(ProjectorNode* projector) override;
+  /** Override Entity::acceptProjectors() to handle Platform-specific scene layout */
+  virtual int acceptProjectors(const std::vector<ProjectorNode*>& projectors) override;
 
   /** Retrieve the object index tag for platforms. */
   virtual unsigned int objectIndexTag() const;

@@ -187,7 +187,7 @@ EntityNode::EntityNode(simData::ObjectType type, Locator* locator)
 
 EntityNode::~EntityNode()
 {
-  acceptProjector(nullptr);
+  acceptProjectors({});
   setLocator(nullptr);
 }
 
@@ -275,15 +275,16 @@ int EntityNode::applyProjectorPrefs_(const simData::CommonPrefs& lastPrefs, cons
   if (!PB_FIELD_CHANGED(&lastPrefs, &prefs, acceptprojectorid))
     return 1;
 
+  // Clear out accepted projectors if needed
   auto id = prefs.acceptprojectorid();
   if (id == 0)
-    return acceptProjector(nullptr);
+    return acceptProjectors({});
 
   auto projectorNode = dynamic_cast<ProjectorNode*>(nodeGetter_(id));
   if (projectorNode == nullptr)
     return 1;
 
-  return acceptProjector(projectorNode);
+  return acceptProjectors({ projectorNode });
 }
 
 void EntityNode::setLabelContentCallback(LabelContentCallback* cb)
@@ -299,14 +300,46 @@ LabelContentCallback& EntityNode::labelContentCallback() const
   return *contentCallback_;
 }
 
-int EntityNode::acceptProjector(ProjectorNode* proj)
+int EntityNode::acceptProjectors(const std::vector<ProjectorNode*>& projectors)
 {
-  // Passing in NULL clears the pairing, not an error
-  if (proj == nullptr)
-    return 0;
+  return acceptProjectors_(this, projectors);
+}
 
-  proj->addProjectionToNode(this, this);
+int EntityNode::acceptProjectors_(osg::Node* attachmentPoint, const std::vector<ProjectorNode*>& projectors)
+{
+  // Avoid expensive projector operations if the vector matches our internal set
+  if (acceptedProjectors_.size() == projectors.size())
+  {
+    bool foundDifferent = false;
+    for (size_t k = 0; k < projectors.size() && !foundDifferent; ++k)
+    {
+      if (projectors[k] != acceptedProjectors_[k].get())
+        foundDifferent = true;
+    }
+    // No changes, return early
+    if (!foundDifferent)
+      return 0;
+  }
 
+  // Remove all previous projectors
+  for (const auto& projObserver : acceptedProjectors_)
+  {
+    if (projObserver.valid())
+      projObserver->removeProjectionFromNode(this);
+  }
+  acceptedProjectors_.clear();
+
+  // Add projection
+  for (auto* proj : projectors)
+  {
+    // Limit to only 4 projectors
+    if (acceptedProjectors_.size() >= 4)
+      return 1;
+
+    // Add the projector to the node
+    proj->addProjectionToNode(this, attachmentPoint);
+    acceptedProjectors_.emplace_back(proj);
+  }
   return 0;
 }
 

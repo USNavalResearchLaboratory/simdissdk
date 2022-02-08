@@ -389,9 +389,7 @@ void BeamNode::setPrefs(const simData::BeamPrefs& prefs)
     target_ = nullptr;
   }
 
-  if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefsFromDS_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
-    applyProjectorPrefs_(lastPrefsFromDS_.commonprefs(), prefs.commonprefs());
-
+  applyProjectorPrefs_(lastPrefsFromDS_.commonprefs(), prefs.commonprefs());
   applyPrefs_(prefs);
   updateLabel_(prefs);
   lastPrefsFromDS_ = prefs;
