@@ -1,5 +1,5 @@
 #version $GLSL_VERSION_STR
-#pragma vp_function sim_proj_on_entity_vert, vertex_view
+#pragma vp_function sim_proj_on_entity_vert vertex_view
 #pragma import_defines(SIMVIS_NUM_PROJECTORS)
 
 uniform mat4 osg_ViewMatrix;
@@ -36,7 +36,7 @@ void sim_proj_on_entity_vert(inout vec4 vertex_VIEW)
 
 [break]
 #version $GLSL_VERSION_STR
-#pragma vp_function sim_proj_on_entity_frag, fragment
+#pragma vp_function sim_proj_on_entity_frag fragment
 #pragma import_defines(SIMVIS_NUM_PROJECTORS)
 
 in vec3 vp_Normal;
@@ -65,7 +65,17 @@ void sim_proj_on_entity_frag(inout vec4 color)
             vec2 local = simProjTexCoord[i].st / simProjTexCoord[i].q;
             if (clamp(local, 0.0, 1.0) == local)
             {
-                vec4 textureColor = textureProj(simProjSampler[i], simProjTexCoord[i]);
+                vec4 textureColor;
+                // Circumvent "error: sampler arrays indexed with non-constant expressions are forbidden in GLSL 1.30 and later"
+                if (i == 1)
+                    textureColor = textureProj(simProjSampler[1], simProjTexCoord[i]);
+                if (i == 2)
+                    textureColor = textureProj(simProjSampler[2], simProjTexCoord[i]);
+                if (i == 3)
+                    textureColor = textureProj(simProjSampler[3], simProjTexCoord[i]);
+                else
+                    textureColor = textureProj(simProjSampler[0], simProjTexCoord[i]);
+
                 if (projectorUseColorOverride[i])
                 {
                     color.rgb = textureColor.rgb * projectorColorOverride[i].rgb;
