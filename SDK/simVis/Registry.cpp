@@ -494,10 +494,17 @@ std::string simVis::Registry::findFontFile(const std::string& name) const
     // Try to find it in the typical path list using SIMDIS_FONTPATH
     osgDB::FilePathList filePaths;
 
-    // search for font in the SIMDIS_FONTPATH directory, falling back on SIMDIS_SDK_FILE_PATH (/fonts)
+    // search for font in the SIMDIS_FONTPATH directory, falling back to SIMDIS_DIR/data/fonts if set
     std::string tempString = simCore::getEnvVar("SIMDIS_FONTPATH");
     if (!tempString.empty())
       filePaths.push_back(tempString);
+    else
+    {
+      tempString = simCore::getEnvVar("SIMDIS_DIR");
+      if (!tempString.empty())
+        filePaths.push_back(tempString + "/data/fonts");
+    }
+    // Add in SIMDIS_SDK_FILE_PATH fonts directory which may or may not exist
     tempString = simCore::getEnvVar("SIMDIS_SDK_FILE_PATH");
     if (!tempString.empty())
     {
