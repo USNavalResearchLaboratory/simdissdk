@@ -30,6 +30,7 @@
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Time/Clock.h"
 #include "simData/DataStore.h"
+#include "simData/DataStoreHelpers.h"
 #include "simData/DataTypes.h"
 
 #include "osg/BoundingBox"
@@ -74,6 +75,10 @@
 #define PB_FIELD_CHANGED(a, b, field) ( \
   PB_FIELD_STATUS_CHANGED((a), (b), field) || ( \
     PB_BOTH_HAVE_FIELD((a), (b), field) && ((a)->field() != (b)->field()) ) )
+
+#define PB_REPEATED_FIELD_CHANGED(a, b, field) ( \
+  ((a)->field ## _size() != (b)->field ## _size()) || \
+  (simData::DataStoreHelpers::vecFromRepeated((a)->field()) != simData::DataStoreHelpers::vecFromRepeated((b)->field())) )
 
 
 #define PB_HAS_SUBFIELD(a, first, second) ( \

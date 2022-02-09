@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
 #include "osg/Depth"
 #include "osg/CullFace"
 #include "osg/TransferFunction"
@@ -453,8 +454,11 @@ public:
   virtual ~ProjectorMonitor()
   {
     parent_.ds_.removeListener(prefsChange_);
-    if (projectorNode_.valid())
-      projectorNode_->removeProjectionFromNode(parent_.root_.get());
+    for (const auto& projectorNode : projectorNodes_)
+    {
+      if (projectorNode.valid())
+        projectorNode->removeProjectionFromNode(parent_.root_.get());
+    }
   }
 
   /**
@@ -468,58 +472,91 @@ public:
     if (!parent_.scenario_.valid() || !parent_.root_.valid())
       return;
 
-    uint64_t newProjId = 0;
+    std::vector<simData::ObjectId> newProjIds;
     { // Transaction minimal scope
       simData::DataStore::Transaction txn;
       const auto* prefs = parent_.ds_.platformPrefs(hostId_, &txn);
       if (prefs)
-        newProjId = prefs->commonprefs().acceptprojectorid();
+      {
+        newProjIds = simData::DataStoreHelpers::vecFromRepeated(prefs->commonprefs().acceptprojectorids());
+        // Remove "0" entries, which might be present for Commands
+        newProjIds.erase(std::remove(newProjIds.begin(), newProjIds.end(), 0), newProjIds.end());
+      }
     }
 
     // Did the Accepts Projector pref change on the host?
-    if (newProjId == projectorId_)
+    if (newProjIds == projectorIds_)
       return;
 
-    projectorId_ = newProjId;
-    // Remove old projector
-    if (projectorNode_.valid())
+    projectorIds_ = newProjIds;
+    // Remove old projections
+    for (const auto& projectorNode : projectorNodes_)
     {
-      projectorNode_->removeProjectionFromNode(parent_.root_.get());
-      projectorNode_ = nullptr;
+      if (projectorNode.valid())
+        projectorNode->removeProjectionFromNode(parent_.root_.get());
     }
-    // Try to add projection from new ID
-    projectorNode_ = parent_.scenario_->find<simVis::ProjectorNode>(projectorId_);
-    if (projectorNode_.valid())
-      projectorNode_->addProjectionToNode(parent_.root_.get(), parent_.root_.get());
+    projectorNodes_.clear();
+
+    // Try to re-add projection from nodes
+    for (const auto& projectorId : projectorIds_)
+    {
+      auto* projectorNode = parent_.scenario_->find<simVis::ProjectorNode>(projectorId);
+      if (projectorNode)
+      {
+        projectorNode->addProjectionToNode(parent_.root_.get(), parent_.root_.get());
+        projectorNodes_.emplace_back(projectorNode);
+      }
+    }
   }
 
   /** Forward calls from PlanetariumViewTool::onEntityAdd() here. */
   void notifyNewEntity(EntityNode* entity)
   {
-    if (entity && entity->getId() == projectorId_ && entity->type() == simData::PROJECTOR)
+    if (!entity || entity->type() != simData::PROJECTOR)
+      return;
+    if (std::find(projectorIds_.begin(), projectorIds_.end(), entity->getId()) == projectorIds_.end())
+      return;
+    auto* projectorNode = dynamic_cast<ProjectorNode*>(entity);
+    if (projectorNode)
     {
-      // Should not be any way to get here with an already-valid projector node
-      assert(projectorNode_.valid());
-      projectorNode_ = static_cast<simVis::ProjectorNode*>(entity);
+      projectorNode->addProjectionToNode(parent_.root_.get(), parent_.root_.get());
+      projectorNodes_.emplace_back(projectorNode);
     }
   }
 
   /** Forward calls from PlanetariumViewTool::onEntityRemove() here. */
   void notifyRemoveEntity(EntityNode* entity)
   {
-    // Remove projection if needed
-    if (entity && projectorNode_.get() == entity)
+    if (!entity || entity->type() != simData::PROJECTOR)
+      return;
+    // Remove from projectorNodes_ if it was in there, pruning nulls as needed
+    auto iter = projectorNodes_.begin();
+    while (iter != projectorNodes_.end())
     {
-      projectorNode_->removeProjectionFromNode(parent_.root_.get());
-      projectorNode_ = nullptr;
+      if (!(*iter).valid())
+      {
+        // pruned null
+        iter = projectorNodes_.erase(iter);
+      }
+      else if ((*iter).get() == entity)
+      {
+        // Remove entry, but first remove the projection from our node
+        auto* projectorNode = dynamic_cast<ProjectorNode*>(entity);
+        if (projectorNode)
+          projectorNode->removeProjectionFromNode(parent_.root_.get());
+
+        iter = projectorNodes_.erase(iter);
+      }
+      else
+        ++iter;
     }
   }
 
 private:
   PlanetariumViewTool& parent_;
   simData::ObjectId hostId_ = 0;
-  simData::ObjectId projectorId_ = 0;
-  osg::observer_ptr<simVis::ProjectorNode> projectorNode_;
+  std::vector<simData::ObjectId> projectorIds_;
+  std::vector<osg::observer_ptr<simVis::ProjectorNode> > projectorNodes_;
   std::shared_ptr<PrefsChangeLambda> prefsChange_;
 };
 

@@ -33,6 +33,41 @@
 namespace simData
 {
 
+namespace {
+
+/// Message Visitor that clears out a message's repeated fields, in preparation for a MergeFrom() that replaces instead of merging
+class ClearRepeatedScalar : public simData::protobuf::MessageVisitor::Visitor
+{
+public:
+  explicit ClearRepeatedScalar(google::protobuf::Message& messageToClear)
+    : messageToClear_(messageToClear)
+  {
+  }
+
+  // From MessageVisitor::Visitor::visit()
+  virtual void visit(const google::protobuf::Message& message, const google::protobuf::FieldDescriptor& descriptor, const std::string& variableName) override
+  {
+    // Only care about repeated scalars. The non-repeated and repeated messages are ignored
+    if (!descriptor.is_repeated() || descriptor.cpp_type() == google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE)
+      return;
+
+    // If the field is empty with no values, ignore it
+    const google::protobuf::Reflection& reflection = *message.GetReflection();
+    if (reflection.FieldSize(message, &descriptor) == 0)
+      return;
+
+    // Find and clear the field in the original message
+    std::pair<google::protobuf::Message*, const google::protobuf::FieldDescriptor*> result;
+    if (simData::protobuf::getField(messageToClear_, result, variableName) == 0 && result.second)
+      result.first->GetReflection()->ClearField(result.first, result.second);
+  }
+
+private:
+  google::protobuf::Message& messageToClear_;
+};
+}
+
+
 namespace MemorySliceHelper
 {
 template<typename T>
@@ -702,6 +737,10 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
     // time moved forward: execute all commands from startTime to new current time
     hasChanged_ = advance_(startTime, time);
 
+    // Check for repeated scalars in the command, forcing complete replacement instead of add-value
+    ClearRepeatedScalar clearRepeatedScalars(*prefs);
+    simData::protobuf::MessageVisitor::visit(commandPrefsCache_, clearRepeatedScalars);
+
     // apply the current command state at every update, even if no change in command state occurred with this update; commands override prefs settings
     prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
@@ -719,6 +758,11 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
     advance_(-0.5, time);
 
     hasChanged_ = true;
+
+    // Check for repeated scalars in the command, forcing complete replacement instead of add-value
+    ClearRepeatedScalar clearRepeatedScalars(*prefs);
+    simData::protobuf::MessageVisitor::visit(commandPrefsCache_, clearRepeatedScalars);
+
     prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
   }
@@ -815,6 +859,9 @@ bool MemoryCommandSlice<CommandType, PrefType>::advance_(double startTime, doubl
       }
       else
       {
+        // Check for repeated scalars in the command, forcing complete replacement instead of add-value
+        ClearRepeatedScalar clearRepeatedScalars(commandPrefsCache_);
+        simData::protobuf::MessageVisitor::visit(cmd->updateprefs(), clearRepeatedScalars);
         // execute the command
         commandPrefsCache_.MergeFrom(cmd->updateprefs());
       }

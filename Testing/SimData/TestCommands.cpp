@@ -21,6 +21,7 @@
  *
  */
 #include "simCore/Common/SDKAssert.h"
+#include "simData/DataStoreHelpers.h"
 #include "simUtil/DataStoreTestHelper.h"
 
 namespace {
@@ -468,6 +469,85 @@ int testPlatformCommand()
   return rv;
 }
 
+int validateAcceptProjectorIds(const simData::DataStore* ds, simData::ObjectId id, const std::vector<simData::ObjectId>& expectedValues)
+{
+  int rv = 0;
+  rv += SDK_ASSERT(ds != nullptr);
+  simData::DataStore::Transaction txn;
+  auto* prefs = ds->commonPrefs(id, &txn);
+  rv += SDK_ASSERT(prefs != nullptr);
+  const auto& actualValues = simData::DataStoreHelpers::vecFromRepeated(prefs->acceptprojectorids());
+  rv += SDK_ASSERT(actualValues == expectedValues);
+  return rv;
+}
+
+int testAcceptProjectorsCommand()
+{
+  int rv = 0;
+
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore* ds = testHelper.dataStore();
+  // insert platform
+  simData::DataStore::Transaction t;
+  uint64_t platId1 = testHelper.addPlatform();
+  ds->update(0.1);
+
+  // Confirm initial state
+  rv += validateAcceptProjectorIds(ds, platId1, { });
+
+  // Add one projector ID
+  simData::PlatformPrefs* newPlatPrefs = ds->mutable_platformPrefs(platId1, &t);
+  newPlatPrefs->mutable_commonprefs()->add_acceptprojectorids(4);
+  t.commit();
+
+  // Confirm new value
+  rv += validateAcceptProjectorIds(ds, platId1, { 4 });
+
+  // Add a few commands
+  simData::PlatformCommand* cmd;
+  // "5,6" at time 5
+  cmd = ds->addPlatformCommand(platId1, &t);
+  cmd->set_time(5.0);
+  simData::DataStoreHelpers::vecToRepeated(cmd->mutable_updateprefs()->mutable_commonprefs()->mutable_acceptprojectorids(), { 5, 6 });
+  t.complete(&cmd);
+  // "6,15" at time 15
+  cmd = ds->addPlatformCommand(platId1, &t);
+  cmd->set_time(15.0);
+  simData::DataStoreHelpers::vecToRepeated(cmd->mutable_updateprefs()->mutable_commonprefs()->mutable_acceptprojectorids(), { 6, 15 });
+  t.complete(&cmd);
+  // "10" only, at time 10
+  cmd = ds->addPlatformCommand(platId1, &t);
+  cmd->set_time(10.0);
+  simData::DataStoreHelpers::vecToRepeated(cmd->mutable_updateprefs()->mutable_commonprefs()->mutable_acceptprojectorids(), { 10 });
+  t.complete(&cmd);
+
+  // Since time hasn't updated, we shouldn't have any changes -- nothing prior to time 5
+  rv += validateAcceptProjectorIds(ds, platId1, { 4 });
+  ds->update(1.);
+  rv += validateAcceptProjectorIds(ds, platId1, { 4 });
+
+  // Check time 5
+  ds->update(5.);
+  rv += validateAcceptProjectorIds(ds, platId1, { 5, 6 });
+  // Check time 10
+  ds->update(10.);
+  rv += validateAcceptProjectorIds(ds, platId1, { 10 });
+  // Check time 15
+  ds->update(15.);
+  rv += validateAcceptProjectorIds(ds, platId1, { 6, 15 });
+  // Back to time 2, no commands before this, so we should have same value
+  ds->update(2.);
+  rv += validateAcceptProjectorIds(ds, platId1, { 6, 15 });
+
+  // Clear out the projector IDs and confirm
+  newPlatPrefs = ds->mutable_platformPrefs(platId1, &t);
+  newPlatPrefs->mutable_commonprefs()->clear_acceptprojectorids();
+  t.commit();
+  rv += validateAcceptProjectorIds(ds, platId1, { });
+
+  return rv;
+}
+
 }
 
 int TestCommands(int argc, char* argv[])
@@ -477,6 +557,7 @@ int TestCommands(int argc, char* argv[])
   rv += testGateCommand();
   rv += testBeamCommand();
   rv += testPlatformCommand();
+  rv += testAcceptProjectorsCommand();
 
   return rv;
 }

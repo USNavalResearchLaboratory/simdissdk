@@ -101,7 +101,6 @@ simData::ObjectId projectorId_0 = 0;
 simData::ObjectId platformId_1 = 0;
 simData::ObjectId projectorId_1 = 0;
 simData::ObjectId platformId_2 = 0;
-simData::ObjectId projectorId_3 = 0;
 simData::ObjectId platformId_3 = 0;
 simData::ObjectId projectorId_4 = 0;
 simData::ObjectId platformId_4 = 0;
@@ -440,6 +439,19 @@ void configurePrefs(simData::ObjectId platformId,
   node->setPrefs(prefs);
 }
 
+int setAcceptedProjectors(simData::DataStore& ds, simData::ObjectId entityId, const std::vector<simData::ObjectId>& projIds)
+{
+  // Get the entity's commonPrefs, then set up the accepted projector IDs
+  simData::DataStore::Transaction txn;
+  auto* prefs = ds.mutable_commonPrefs(entityId, &txn);
+  if (!prefs)
+    return 1;
+  // Fill out the repeated field of projector IDs to accept
+  simData::DataStoreHelpers::vecToRepeated(prefs->mutable_acceptprojectorids(), projIds);
+  txn.complete(&prefs);
+  return 0;
+}
+
 //----------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
@@ -492,32 +504,24 @@ int main(int argc, char **argv)
   projectorId_1 = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL, true);
 
   // add a gate to use it as a projection surface:
-  simData::ObjectId gateId = addGate(platformId_1, dataStore);
-  osg::ref_ptr<simVis::GateNode> gateNode = scenario->find<simVis::GateNode>(gateId);
-  osg::ref_ptr<simVis::ProjectorNode> projector_1 = scenario->find<simVis::ProjectorNode>(projectorId_1);
+  const simData::ObjectId gateId = addGate(platformId_1, dataStore);
 
   // a second projector on the gate, to show that multiple projectors can project on the same node:
   projectorId_1b = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL2, false);
-  osg::ref_ptr<simVis::ProjectorNode> projector_1b = scenario->find<simVis::ProjectorNode>(projectorId_1b);
-  if (gateNode.valid())
-    gateNode->acceptProjectors({ projector_1.get(), projector_1b.get() });
+  setAcceptedProjectors(dataStore, gateId, { projectorId_1, projectorId_1b });
 
   /// platform to use as a target to test projecting on to a platform
   platformId_2 = addPlatform(dataStore);
   osg::ref_ptr<simVis::PlatformNode> vehicle_2 = scenario->find<simVis::PlatformNode>(platformId_2);
-  osg::ref_ptr<simVis::ProjectorNode> projector_0 = scenario->find<simVis::ProjectorNode>(projectorId_0);
-  if (vehicle_2.valid() && projector_0.valid())
-    vehicle_2->acceptProjectors({ projector_0.get() });
+  setAcceptedProjectors(dataStore, platformId_2, { projectorId_0 });
 
   /// platform that shines on Hawaii
   platformId_3 = addPlatform(dataStore);
-  osg::ref_ptr<simVis::EntityNode> vehicle_3 = scenario->find(platformId_3);
-  projectorId_3 = addProjector(scenario.get(), vehicle_3->getId(), dataStore, imageURL, false);
+  const simData::ObjectId projectorId_3 = addProjector(scenario.get(), platformId_3, dataStore, imageURL, false);
 
   /// platform that looks at the side of a mountain to test the shadowmap
   platformId_4 = addPlatform(dataStore);
-  osg::ref_ptr<simVis::EntityNode> vehicle_4 = scenario->find(platformId_4);
-  projectorId_4 = addProjector(scenario.get(), vehicle_4->getId(), dataStore, imageURL, false);
+  projectorId_4 = addProjector(scenario.get(), platformId_4, dataStore, imageURL, false);
 
   /// connect them and add some additional settings
   configurePrefs(platformId_0, 2.0, scenario.get());

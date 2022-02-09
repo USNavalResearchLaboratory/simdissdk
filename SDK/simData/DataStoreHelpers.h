@@ -89,6 +89,20 @@ public:
     for (const auto& value : vec)
       field->Add(value);
   }
+
+  /** Converts a protobuf RepeatedField into a std::vector of same type. */
+  template <typename T>
+  static typename std::vector<T> vecFromRepeated(const typename google::protobuf::RepeatedField<T>& field)
+  {
+    typename std::vector<T> rv;
+    if (!field.empty())
+    {
+      rv.reserve(field.size());
+      for (int k = 0; k < field.size(); ++k)
+        rv.emplace_back(field.Get(k));
+    }
+    return rv;
+  }
 };
 
 }

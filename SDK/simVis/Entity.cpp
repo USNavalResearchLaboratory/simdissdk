@@ -272,19 +272,27 @@ std::string EntityNode::getEntityName_(const simData::CommonPrefs& common, Entit
 
 int EntityNode::applyProjectorPrefs_(const simData::CommonPrefs& lastPrefs, const simData::CommonPrefs& prefs)
 {
-  if (!PB_FIELD_CHANGED(&lastPrefs, &prefs, acceptprojectorid))
+  if (!PB_REPEATED_FIELD_CHANGED(&lastPrefs, &prefs, acceptprojectorids))
     return 1;
 
   // Clear out accepted projectors if needed
-  auto id = prefs.acceptprojectorid();
-  if (id == 0)
+  const auto& ids = prefs.acceptprojectorids();
+  if (ids.empty())
     return acceptProjectors({});
 
-  auto projectorNode = dynamic_cast<ProjectorNode*>(nodeGetter_(id));
-  if (projectorNode == nullptr)
-    return 1;
-
-  return acceptProjectors({ projectorNode });
+  // Get a vector of all projector nodes to accept
+  std::vector<ProjectorNode*> projectors;
+  for (const auto id : ids)
+  {
+    // Skip ID 0, which might be present due to commands
+    if (id != 0)
+    {
+      auto projectorNode = dynamic_cast<ProjectorNode*>(nodeGetter_(id));
+      if (projectorNode)
+        projectors.push_back(projectorNode);
+    }
+  }
+  return acceptProjectors(projectors);
 }
 
 void EntityNode::setLabelContentCallback(LabelContentCallback* cb)
