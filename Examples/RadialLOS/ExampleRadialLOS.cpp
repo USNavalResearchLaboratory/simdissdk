@@ -427,9 +427,9 @@ int main(int argc, char **argv)
   // Set up the scene:
   simCore::checkVersionThrow();
   simExamples::configureSearchPaths();
-  osg::ref_ptr<osgEarth::Map> map = simExamples::createRemoteWorldMap();
 
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
+  osg::ref_ptr<osgEarth::Map> map = simExamples::createRemoteWorldMap();
   viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
@@ -476,6 +476,11 @@ int main(int argc, char **argv)
 
   // add some stock OSG handlers and go
   viewer->installDebugHandlers();
-  return viewer->run();
+  const int rv = viewer->run();
+
+  // Remove the LOS to avoid hang on exit while loading terrain in some conditions
+  scene->getScenario()->removeChild(app.los.get());
+
+  return rv;
 }
 
