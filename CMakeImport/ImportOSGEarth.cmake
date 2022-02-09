@@ -181,10 +181,16 @@ if(OSGEARTH_SHOULD_INSTALL)
             REGEX ${DEBUG_INSTALL_PATTERN}
             PATTERN "*billboard.*" EXCLUDE)
 
+    # SIM-13848: Install release DLLs on Linux if debug not found
+    set(CONFIG "Release")
+    if(UNIX AND NOT EXISTS "${OSG_PLUGIN_PATH}/osgdb_rotd.so")
+        set(CONFIG)
+    endif()
+
     # Note that "*billboard.*" is a release pattern and needs inclusion
     install(DIRECTORY ${OSGEARTH_PLUGIN_PATH}/
         DESTINATION ${OSGEARTH_PLUGIN_INSTALL_DIR}
-        CONFIGURATIONS "Release"
+        CONFIGURATIONS ${CONFIG}
         COMPONENT ${OSGEARTH_INSTALL_COMPONENT}
         FILES_MATCHING
             REGEX ${RELEASE_INSTALL_PATTERN}
