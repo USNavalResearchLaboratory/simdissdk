@@ -601,7 +601,9 @@ void MemoryCommandSlice<CommandType, PrefType>::modify(typename DataSlice<Comman
   {
     if (modifier->modify(*(updates_[index])) < 0)
     {
-      updates_.erase(updates_.begin() + index);
+      auto it = updates_.begin() + index;
+      delete *it;
+      updates_.erase(it);
       --size;
     }
     else
