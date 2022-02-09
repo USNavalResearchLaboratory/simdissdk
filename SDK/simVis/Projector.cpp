@@ -490,8 +490,6 @@ namespace
     src->get(temp);
     osgEarth::Util::ArrayUniform u(src->getName(), src->getType(), ss, size);
     u.setElement(index, temp);
-    //ss->getOrCreateUniform(src->getName(), src->getType(), size)
-    //  ->setElement(index, temp);
   }
 }
 
@@ -502,7 +500,10 @@ void ProjectorNode::copyUniformsTo(osg::StateSet* stateSet, unsigned size, unsig
   copyUniform<osg::Vec3f>(stateSet, texProjDirUniform_.get(), size, index);
   copyUniform<osg::Vec3f>(stateSet, texProjPosUniform_.get(), size, index);
   copyUniform<bool>(stateSet, useColorOverrideUniform_.get(), size, index);
+#if OSGEARTH_SOVERSION >= 127
+  // Color uniforms might not work properly under osgEarth SOVERSION 127
   copyUniform<osg::Vec4f>(stateSet, colorOverrideUniform_.get(), size, index);
+#endif
   copyUniform<float>(stateSet, projectorMaxRangeSquaredUniform_.get(), size, index);
 }
 
