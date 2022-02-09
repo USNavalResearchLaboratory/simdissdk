@@ -182,8 +182,8 @@ typedef osg::NodeCallback PlatformBuoyancyCallback;
 // An event handler to assist in testing Ocean
 struct MenuHandler : public osgGA::GUIEventHandler
 {
-  osg::ref_ptr<simVis::Viewer> viewer_;
-  osg::ref_ptr<simVis::SceneManager> scene_;
+  osg::observer_ptr<simVis::Viewer> viewer_;
+  osg::observer_ptr<simVis::SceneManager> scene_;
 #ifndef HAVE_IMGUI
   osgEarth::Util::Controls::Control* menuControl_;
 
@@ -1170,7 +1170,8 @@ int main(int argc, char** argv)
   // Set up the search paths
   simExamples::configureSearchPaths();
 
-  // Construct a map.
+  // start up a SIMDIS viewer, prior to creating the map, to make sure they destruct in proper order
+  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
   osg::ref_ptr<osgEarth::Map> map = new Map();
 
   // worldwide imagery layer:
@@ -1197,8 +1198,6 @@ int main(int argc, char** argv)
     map->addLayer(layer);
   }
 
-  // start up a SIMDIS viewer
-  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
   viewer->setMap(map.get());
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
@@ -1277,5 +1276,5 @@ int main(int argc, char** argv)
 #endif
 
   viewer->installDebugHandlers();
-  viewer->run();
+  return viewer->run();
 }
