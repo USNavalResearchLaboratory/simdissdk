@@ -69,9 +69,9 @@ void sim_proj_on_entity_frag(inout vec4 color)
                 // Circumvent "error: sampler arrays indexed with non-constant expressions are forbidden in GLSL 1.30 and later"
                 if (i == 1)
                     textureColor = textureProj(simProjSampler[1], simProjTexCoord[i]);
-                if (i == 2)
+                else if (i == 2)
                     textureColor = textureProj(simProjSampler[2], simProjTexCoord[i]);
-                if (i == 3)
+                else if (i == 3)
                     textureColor = textureProj(simProjSampler[3], simProjTexCoord[i]);
                 else
                     textureColor = textureProj(simProjSampler[0], simProjTexCoord[i]);
