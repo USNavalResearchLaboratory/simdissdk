@@ -240,31 +240,35 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
     {
       prune();
 
-      if (!projectors_.empty())
+      // Shouldn't happen, but continue the cull callback anyways
+      if (projectors_.empty())
       {
-        // TODO: can we just put this on the node's stateset??
-        osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
-        osg::Uniform* u = new osg::Uniform(osg::Uniform::FLOAT_MAT4, "simProjTexGenMat", SIM_MAX_NODE_PROJECTORS);
-        ss->addUniform(u);
-
-        osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
-        osg::Matrixd inverseViewMatrix = cv->getCurrentCamera()->getInverseViewMatrix();
-
-        unsigned count = 0;
-        for (auto& proj : projectors_)
-        {
-          osg::Matrixf matrix = inverseViewMatrix * proj->getTexGenMatrix();
-          u->setElement(count++, matrix);
-        }
-
-        // update all the individual project uniform values
-        // TODO: will this work in the current frame??
-        updateUniforms(node->getOrCreateStateSet());
-
-        cv->pushStateSet(ss.get());
         traverse(node, nv);
-        cv->popStateSet();
+        return;
       }
+
+      // TODO: can we just put this on the node's stateset??
+      osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
+      osg::Uniform* u = new osg::Uniform(osg::Uniform::FLOAT_MAT4, "simProjTexGenMat", SIM_MAX_NODE_PROJECTORS);
+      ss->addUniform(u);
+
+      osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+      osg::Matrixd inverseViewMatrix = cv->getCurrentCamera()->getInverseViewMatrix();
+
+      unsigned count = 0;
+      for (auto& proj : projectors_)
+      {
+        osg::Matrixf matrix = inverseViewMatrix * proj->getTexGenMatrix();
+        u->setElement(count++, matrix);
+      }
+
+      // update all the individual project uniform values
+      // TODO: will this work in the current frame??
+      updateUniforms(node->getOrCreateStateSet());
+
+      cv->pushStateSet(ss.get());
+      traverse(node, nv);
+      cv->popStateSet();
     }
 
   private:
@@ -1125,7 +1129,7 @@ int ProjectorNode::removeProjectionFromNode(osg::Node* entity)
     }
   }
 
-  attachmentPoint->second->removeCullCallback(projectOnNodeCallback_.get());
+  attachmentPoint->second->removeCullCallback(projOnNodeCallback);
   projectedNodes_.erase(attachmentPoint);
   return 0;
 }
