@@ -65,6 +65,9 @@ void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
 
     // time moved forward: execute all commands from startTime to new current time
     hasChanged_ = advance_(startTime, time);
+    // Must do an overwrite for accept projectors ID, a merge results in the same value over and over
+    if (!commandPrefsCache_.commonprefs().acceptprojectorids().empty())
+      prefs->mutable_commonprefs()->mutable_acceptprojectorids()->Clear();
     // apply the current command state at every update; commands override prefs settings
     prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
@@ -83,6 +86,10 @@ void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
 
     // advance time forward, execute all commands from 0.0 (use -1.0 since we need a time before 0.0) to new current time
     advance_(-1.0, time);
+    // Must do an overwrite for accept projectors ID, a merge results in the same value over and over
+    if (!commandPrefsCache_.commonprefs().acceptprojectorids().empty())
+      prefs->mutable_commonprefs()->mutable_acceptprojectorids()->Clear();
+    // apply the current command state at every update; commands override prefs settings
     prefs->MergeFrom(commandPrefsCache_);
 
     hasChanged_ = true;
