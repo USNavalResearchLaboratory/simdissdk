@@ -655,6 +655,9 @@ void MemoryCommandSlice<CommandType, PrefType>::insert(CommandType *data)
   }
   else
   {
+    // Must clear out the shared fields in target, that are repeated and non-empty
+    ClearRepeatedScalar clearRepeatedScalars(**iter);
+    simData::protobuf::MessageVisitor::visit(*data, clearRepeatedScalars);
     // merge into existing command at same time
     (*iter)->MergeFrom(*data);
     // in this case, deque does not take ownership of the (committed) data item; we need to delete it.
