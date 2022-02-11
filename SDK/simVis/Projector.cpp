@@ -190,6 +190,7 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
         if (projector.valid())
           keep.push_back(projector);
       }
+
       projectors_.swap(keep);
     }
 
@@ -232,6 +233,13 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
       {
         proj->copyUniformsTo(ss, projectors_.size(), index);
         ++index;
+      }
+
+      // disable projector-active on the stateset for any remaining projectors
+      for (; index < SIM_MAX_NODE_PROJECTORS; ++index)
+      {
+        osgEarth::Util::ArrayUniform u("projectorActive", osg::Uniform::BOOL, ss, SIM_MAX_NODE_PROJECTORS);
+        u.setElement(index, false);
       }
     }
 
@@ -316,7 +324,7 @@ ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::
 ProjectorNode::~ProjectorNode()
 {
   if (hostLocator_.valid())
-    hostLocator_.get()->removeCallback(locatorCallback_.get());
+    hostLocator_->removeCallback(locatorCallback_.get());
 
   auto localCopy = projectedNodes_;
   for (auto node : localCopy)
@@ -340,7 +348,7 @@ void ProjectorNode::init_()
   // listen for host locator changes so we can update the matrices
   locatorCallback_ = new simVis::SyncLocatorCallback<ProjectorNode>(this);
   if (hostLocator_.valid())
-    hostLocator_.get()->addCallback(locatorCallback_.get());
+    hostLocator_->addCallback(locatorCallback_.get());
 
   // Create matrix transform node that houses graphics frustum and set the node mask to off
   graphics_ = new osg::MatrixTransform();
@@ -770,9 +778,7 @@ void ProjectorNode::getMatrices_(osg::Matrixd& projection, osg::Matrixd& locator
   const double ar = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
   projection.makePerspective(getVFOV(), ar, 1.0, 1e7);
   if (hostLocator_.valid())
-  {
-    hostLocator_.get()->getLocatorMatrix(locatorMat);
-  }
+    hostLocator_->getLocatorMatrix(locatorMat);
   else
   {
     // it is believed that the host locator cannot go missing
@@ -790,7 +796,7 @@ void ProjectorNode::syncWithLocator()
 
   // establish the view matrix:
   osg::Matrixd locatorMat;
-  hostLocator_.get()->getLocatorMatrix(locatorMat);
+  hostLocator_->getLocatorMatrix(locatorMat);
   osg::Matrixd viewMat_temp = osg::Matrixd::inverse(locatorMat);
 
   // establish the projection matrix:
@@ -882,7 +888,7 @@ bool ProjectorNode::isActive() const
 bool ProjectorNode::isVisible() const
 {
   bool isVisible;
-  projectorActive_.get()->get(isVisible);
+  projectorActive_->get(isVisible);
   return isVisible;
 }
 
@@ -1129,7 +1135,9 @@ int ProjectorNode::removeProjectionFromNode(osg::Node* entity)
     }
   }
 
-  attachmentPoint->second->removeCullCallback(projOnNodeCallback);
+  // Only remove the cull callback if this was the last projector on the target node
+  if (count == 0)
+    attachmentPoint->second->removeCullCallback(projOnNodeCallback);
   projectedNodes_.erase(attachmentPoint);
   return 0;
 }

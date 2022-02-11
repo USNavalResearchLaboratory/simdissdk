@@ -132,7 +132,7 @@ public:
   /// Set the calculator that can calculate the projector's ellipsoid intersection
   void setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator);
 
-  /** Configure an entity to accept the texture projected by this projector.  An entity can accept only one projector.  Returns 0 on success. */
+  /** Configure an entity to accept the texture projected by this projector.  An entity can accept up to 4 projectors.  Returns 0 on success. */
   int addProjectionToNode(osg::Node* entity, osg::Node* attachmentPoint);
 
   /** Remove the setup configured by addProjectionToNode.  Returns 0 on success. */
