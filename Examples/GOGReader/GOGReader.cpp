@@ -527,7 +527,7 @@ int main(int argc, char** argv)
   osg::ArgumentParser ap(&argc, argv);
 
   // start up a SIMDIS viewer
-  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(simVis::Viewer::WINDOWED, 100, 100, 800, 800);
+  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
   viewer->setMap(map.get());
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 

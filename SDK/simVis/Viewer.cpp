@@ -33,13 +33,13 @@ namespace simVis
 
 Viewer::Viewer()
 {
-  init_(FULLSCREEN, 100, 100, 1024, 768);
+  init_(WINDOWED, 100, 100, 1024, 768);
 }
 
 Viewer::Viewer(osg::ArgumentParser& parser)
   : simVis::ViewManager(parser)
 {
-  init_(FULLSCREEN, 100, 100, 1024, 768);
+  init_(WINDOWED, 100, 100, 1024, 768);
 }
 
 Viewer::Viewer(DefaultScreenSize screenSize, int x, int y, int w, int h)

@@ -442,7 +442,7 @@ int main(int argc, char **argv)
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
 
   // SDK viewer to display the scene
-  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(simVis::Viewer::WINDOWED, 200, 100, 1024, 768);
+  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
   viewer->getViewer()->setThreadingModel(osgViewer::ViewerBase::ThreadingModel::SingleThreaded);
   viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
