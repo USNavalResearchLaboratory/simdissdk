@@ -1,15 +1,15 @@
 # Define system specific parameters:
 # BUILD_SYSTEM_OS {win|linux}
-# BUILD_SYSTEM_ARCH {x86|amd64}
-# BUILD_COMPILER {vc-10.0|vc-12.0|vc-14.0|vc-14.1|vc-14.2|gcc-4.4}
+# BUILD_SYSTEM_ARCH {amd64}
+# BUILD_COMPILER {vc-14.1|vc-14.2|vc-14.3|gcc-8.3}
 # BUILD_COMPILER_NAME {vc|${CMAKE_C_COMPILER}}
 # BUILD_COMPILER_VERSION (Compiler name with max and min version numbers)
 # BUILD_COMPILER_MAJOR_VERSION
 # BUILD_COMPILER_MINOR_VERSION
 # BUILD_SYSTEM_CANONICAL_NAME {${BUILD_PLATFORM}_${BUILD_COMPILER}}
-# BUILD_TYPE {32|64}
-# BUILD_HWOS {x86-nt|amd64-nt|amd64-linux}
-# BUILD_PLATFORM {win32|win64|linux64}
+# BUILD_TYPE {64}
+# BUILD_HWOS {amd64-nt|amd64-linux}
+# BUILD_PLATFORM {win64|linux64}
 
 # CMAKE_SYSTEM_PROCESSOR is set to the PROCESSOR_ARCHITECTURE value (eg x86 or AMD64) for Windows and uname -p result or UNIX/Linux
 string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} BUILD_SYSTEM_ARCH)
