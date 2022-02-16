@@ -138,7 +138,7 @@ private:
 class DockWidget::DoubleClickFrame : public QFrame
 {
 public:
-  DoubleClickFrame(DockWidget& dockWidget, QWidget* parent=nullptr, Qt::WindowFlags flags=0)
+  explicit DoubleClickFrame(DockWidget& dockWidget, QWidget* parent=nullptr, Qt::WindowFlags flags=0)
     : QFrame(parent, flags),
       dockWidget_(dockWidget)
   {

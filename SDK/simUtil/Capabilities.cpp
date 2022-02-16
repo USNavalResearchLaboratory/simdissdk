@@ -191,7 +191,6 @@ void Capabilities::init_(osg::GraphicsContext& gc)
   const std::string glVersionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
   caps_.push_back(std::make_pair("OpenGL Version", glVersionString));
   glVersion_ = extractGlVersion_(glVersionString);
-  const unsigned int contextId = gc.getState()->getContextID();
 
   // Detect core profile by investigating GL_CONTEXT_PROFILE_MASK
   GLint profileMask = 0;

@@ -46,8 +46,8 @@ namespace simVis_db
       const size_t size = sizeof(T);
       const size_t halfSize = size >> 1;
       const size_t end = size - 1;
-      for (size_t i = 0; i < halfSize; ++i)
-        std::swap(ptr[end - i], ptr[i]);
+      for (size_t j = 0; j < halfSize; ++j)
+        std::swap(ptr[end - j], ptr[j]);
     }
   }
 

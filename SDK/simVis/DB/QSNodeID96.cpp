@@ -135,12 +135,14 @@ QSNodeID96 QSNodeID96::operator>>(int numBitsToShift) const
       returnValue.two_ = three_ >> (numBitsToShift-32);
       // Number of bits to shift the third field by. Separated into a local var to avoid cppCheck false positive
       int thirdFieldBits = 64 - numBitsToShift;
+      // cppCheck warnings of undefined behavior are wrong
       returnValue.one_ = (two_ >> (numBitsToShift-32)) | (three_ << thirdFieldBits);
     }
     else if (numBitsToShift < 96)
     {
       returnValue.three_ = 0;
       returnValue.two_ = 0;
+      // cppCheck warnings of undefined behavior are wrong
       returnValue.one_ = three_ >> (numBitsToShift-64);
     }
     else

@@ -226,7 +226,7 @@ namespace simCore
   //  1. Value of 't0' must lie between t[0] and t[2].
   //  2. This calculation uses the "zig zag" path through the data; see
   //  reference for details.
-  int newtonInterp(double t0, double t[3], double f[3], double &funcAtT0)
+  int newtonInterp(double t0, const double t[3], const double f[3], double &funcAtT0)
   {
     // Make sure 't0' lies between t[0] and t[2].
     if (((t0 < t[0]) && (t0 < t[2])) ||

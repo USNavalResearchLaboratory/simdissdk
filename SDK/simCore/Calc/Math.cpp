@@ -476,7 +476,6 @@ int simCore::getPowerOfTenForSignificance(double num, unsigned int significance)
   if (num == 0.0)
     return 0;
 
-  const double precisionMax = pow(10.0, static_cast<double>(significance));
   // Determine the number of digits difference from the significance to the provided value's significance
   const double log10Diff = static_cast<double>(significance) - log10(fabs(num));
 

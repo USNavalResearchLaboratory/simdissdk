@@ -1257,7 +1257,6 @@ float AntennaPatternCRUISE::gain(const AntennaGainParameters &params)
   double adelta=0;
   double edelta=0;
   double fdelta=0;
-  double temp=0;
 
   double dazim = RAD2DEG*(angFixPI(params.azim_));
   double delev = RAD2DEG*(angFixPI(params.elev_));
@@ -1278,7 +1277,7 @@ float AntennaPatternCRUISE::gain(const AntennaGainParameters &params)
   }
   else
   {
-    temp      = (dazim-azimMin_);
+    double temp      = (dazim-azimMin_);
     if (azimStep_ != 0.0)
       temp    = temp/azimStep_;
     alowindex = static_cast<int>(floor(temp));
@@ -1298,7 +1297,7 @@ float AntennaPatternCRUISE::gain(const AntennaGainParameters &params)
   }
   else
   {
-    temp      = (delev-elevMin_);
+    double temp      = (delev-elevMin_);
     if (elevStep_ != 0.0)
       temp    = temp/elevStep_;
     elowindex = static_cast<int>(floor(temp));
@@ -1851,7 +1850,7 @@ bool readPattern(SymmetricGainAntPattern *sap, std::istream &in, double frequenc
   size_t numfreq = 0;
   size_t numel = 0;
   size_t numaz = 0;
-  size_t i = 0, j = 0, k = 0;
+  size_t i = 0;
   double magnitude = 0;
   bool found = false;
   bool freqFound = false;
@@ -1985,9 +1984,9 @@ bool readPattern(SymmetricGainAntPattern *sap, std::istream &in, double frequenc
     if (frequency < currentFreq + frequencyThreshold && frequency > currentFreq - frequencyThreshold)
     {
       freqFound = true;
-      for (j = 0; j < numaz; ++j)
+      for (size_t j = 0; j < numaz; ++j)
       {
-        for (k = 0; k < numel; ++k)
+        for (size_t k = 0; k < numel; ++k)
         {
           st.clear();
           getStrippedLine(in, st);
@@ -2017,7 +2016,7 @@ bool readPattern(SymmetricGainAntPattern *sap, std::istream &in, double frequenc
     else
     {
       // skip over data until the next frequency
-      for (j = 0; j < numaz*numel; ++j)
+      for (size_t j = 0; j < numaz*numel; ++j)
       {
         getStrippedLine(in, st);
       }

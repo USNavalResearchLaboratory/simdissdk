@@ -202,7 +202,7 @@ void CloseableItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
 
     // Turn off state flags that we manage ourselves
     tbOpt.state = inOption.state & ~QStyle::State_HasFocus;
-    tbOpt.state = inOption.state & ~QStyle::State_MouseOver;
+    tbOpt.state = tbOpt.state & ~QStyle::State_MouseOver;
     // Turn on auto-raise
     tbOpt.state |= QStyle::State_AutoRaise;
     if (index == hoverIndex_)

@@ -682,10 +682,7 @@ void Math::clampMatrixOrientation(osg::Matrixd& mat, osg::Vec3d& min_hpr_deg, os
       0.0;
   }
   if (delta[0] != 0.0 || delta[1] != 0.0 || delta[2] != 0.0)
-  {
-    const osg::Quat& q = eulerDegToQuat(osg::Vec3d(delta[0], delta[1], delta[2]));
-    mat.postMultRotate(q);
-  }
+    mat.postMultRotate(eulerDegToQuat(osg::Vec3d(delta[0], delta[1], delta[2])));
 }
 
 osg::Vec3d Math::ecefEarthPoint(const simCore::Vec3& ecefPos, const osg::Matrixd& world2local)

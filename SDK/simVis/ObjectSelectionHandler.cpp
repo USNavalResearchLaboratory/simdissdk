@@ -153,7 +153,7 @@ bool ObjectSelectionHandler::isMouseClick_(const osgGA::GUIEventAdapter &upEv)
     ::fabs(upEv.getY() - mouseDownEvent_->getY()) <= 3.0f;
 }
 
-static bool nodeListContains(const osg::NodeList &list, osg::Node *node)
+static bool nodeListContains(const osg::NodeList &list, const osg::Node *node)
 {
   for (osg::NodeList::const_iterator i = list.begin(); i != list.end(); ++i)
   {

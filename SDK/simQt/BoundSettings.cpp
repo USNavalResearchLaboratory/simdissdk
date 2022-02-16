@@ -572,7 +572,6 @@ void BoundVariantMapSetting::setValue(const QMap<QString, QVariant>& v)
 
 void BoundVariantMapSetting::mergeValues(const QMap<QString, QVariant>& v)
 {
-  const auto keys = v.keys();
   QMap<QString, QVariant> newValues = value_;
   for (QMap<QString, QVariant>::const_iterator vIter = v.begin(); vIter != v.end(); ++vIter)
     newValues[vIter.key()] = vIter.value();

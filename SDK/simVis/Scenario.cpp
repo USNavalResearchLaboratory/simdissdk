@@ -1074,7 +1074,7 @@ namespace {
 class AssertOverheadModeHint : public osg::NodeVisitor
 {
 public:
-  AssertOverheadModeHint(bool expectedHint, TraversalMode tm = osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN)
+  explicit AssertOverheadModeHint(bool expectedHint, TraversalMode tm = osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN)
     : NodeVisitor(tm),
     expectedHint_(expectedHint)
   {

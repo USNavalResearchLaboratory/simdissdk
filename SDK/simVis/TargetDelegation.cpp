@@ -95,7 +95,7 @@ void TargetDelegation::addOrUpdate(const PlatformNode* platform)
   }
 
   // if it's outside out fence, ignore it.
-  else if (isTracked && !needToTrack)
+  else if (isTracked)
   {
     SIM_DEBUG << LC << "STOP tracking: " << platform->getId() << std::endl;
 

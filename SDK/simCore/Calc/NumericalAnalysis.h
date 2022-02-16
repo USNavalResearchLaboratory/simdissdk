@@ -149,7 +149,7 @@ namespace simCore
   * @param[out] funcAtT0 Value of the function f(t) at 't0'
   * @return error condition, 0: success, 1 failure
   */
-  SDKCORE_EXPORT int newtonInterp(double t0, double t[3], double f[3], double &funcAtT0);
+  SDKCORE_EXPORT int newtonInterp(double t0, const double t[3], const double f[3], double &funcAtT0);
 
   /**
   * @brief Compute time at which tabular function f(t) has a given value

@@ -61,15 +61,12 @@ GogNodeInterface* Circle::deserialize(const ParsedShape& parsedShape,
   }
   else
     node = new HostedLocalGeometryNode(shape, p.style_);
-  node->setName("GOG Circle Position");
 
-  GogNodeInterface* rv = nullptr;
-  if (node)
-  {
-    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
-    rv = new LocalGeometryNodeInterface(node, metaData);
-    rv->applyToStyle(parsedShape, p.units_);
-  }
+  node->setName("GOG Circle Position");
+  Utils::applyLocalGeometryOffsets(*node, p, nodeType);
+  GogNodeInterface* rv = new LocalGeometryNodeInterface(node, metaData);
+  rv->applyToStyle(parsedShape, p.units_);
+
   return rv;
 }
 

@@ -76,15 +76,12 @@ GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
   }
   else
     node = new HostedLocalGeometryNode(shape, p.style_);
-  node->setName("GOG Hemisphere Position");
 
-  GogNodeInterface* rv = nullptr;
-  if (node)
-  {
-    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
-    rv = new SphericalNodeInterface(node, metaData);
-    rv->applyToStyle(parsedShape, p.units_);
-  }
+  node->setName("GOG Hemisphere Position");
+  Utils::applyLocalGeometryOffsets(*node, p, nodeType);
+  GogNodeInterface* rv = new SphericalNodeInterface(node, metaData);
+  rv->applyToStyle(parsedShape, p.units_);
+
   return rv;
 }
 

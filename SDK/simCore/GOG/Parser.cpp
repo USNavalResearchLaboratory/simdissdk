@@ -1179,7 +1179,6 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       }
 
       // Extract opacity value, which is optional and only applies to image overlay
-      double opacity = 1.0;
       if (parsed.hasValue(ShapeParameter::OPACITY))
         imageOverlay->setOpacity(parsed.doubleValue(ShapeParameter::OPACITY, 1.0));
 
@@ -1538,7 +1537,6 @@ void Parser::parseCircularOptional_(const ParsedShape& parsed, bool relative, co
 
   simCore::Vec3 position;
   ShapeParameter param = (relative ? ShapeParameter::CENTERXY : ShapeParameter::CENTERLL);
-  bool foundPosition = false;
   if (parsed.hasValue(param))
   {
     if (getPosition_(parsed.positionValue(param), relative, units, position) == 0)

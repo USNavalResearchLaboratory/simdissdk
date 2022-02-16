@@ -70,15 +70,12 @@ GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
   {
     node = new HostedLocalGeometryNode(shape, p.style_);
   }
-  node->setName("GOG Sphere Position");
 
-  GogNodeInterface* rv = nullptr;
-  if (node)
-  {
-    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
-    rv = new SphericalNodeInterface(node, metaData);
-    rv->applyToStyle(parsedShape, p.units_);
-  }
+  node->setName("GOG Sphere Position");
+  Utils::applyLocalGeometryOffsets(*node, p, nodeType);
+  GogNodeInterface* rv = new SphericalNodeInterface(node, metaData);
+  rv->applyToStyle(parsedShape, p.units_);
+
   return rv;
 }
 
