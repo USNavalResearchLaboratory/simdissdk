@@ -460,6 +460,7 @@ endfunction()
 # This function also creates a new alias target VSI::<TARGET> for ease of use, so that in-source
 # builds and out-of-source builds can refer to the target by the same name.
 function(vsi_install_export TARGET VERSION COMPATIBILITY)
+    set_target_properties(${TARGET} PROPERTIES VERSION "${VERSION}")
     install(TARGETS ${TARGET} EXPORT ${TARGET}Targets
         LIBRARY DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
         RUNTIME DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
