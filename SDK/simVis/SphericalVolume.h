@@ -168,6 +168,7 @@ private:
   static float calcYValue_(double x, double z);
   static void processWireframe_(SphericalVolume* sv, int drawMode);
   static void dirtyBound_(SphericalVolume* sv);
+  static void updateSideOutlines_(SphericalVolume* sv);
 };
 
 }

@@ -101,6 +101,7 @@ namespace
     float     farRange_;           ///< range of far face of sv
     double    horizontalAngleRad_; ///< horizontal angle/width of sv (x dimension) in radians
     double    verticalAngleRad_;   ///< vertical angle/height of sv (z dimension) in radians
+    bool      hasNearFace_ = false;
   };
 
   // class that adds an outline to an svPyramid
@@ -112,7 +113,9 @@ namespace
   public:
     svPyramidOutline(simVis::SphericalVolume& sv, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls);
     void regenerate();
+    void hideSideOutlines(bool hideThem);
     void setColor(const osg::Vec4f& color);
+    bool hasNearFace() const;
   protected:
     /// osg::Referenced-derived
     virtual ~svPyramidOutline();
@@ -235,6 +238,11 @@ namespace
     }
   }
 
+  bool svPyramidOutline::hasNearFace() const
+  {
+    return nearFaceOffset_ > 0;
+  }
+
   void svPyramidOutline::regenerate()
   {
     const bool hasNearFace = (nearFaceOffset_ > 0);
@@ -339,6 +347,20 @@ namespace
     }
   }
 
+  void svPyramidOutline::hideSideOutlines(bool hideThem)
+  {
+    // This method is useful for hiding the sides, e.g when rendering a complete circle
+    const unsigned int newNodeMask = (hideThem ? 0u : ~0u);
+    if (farLeftOutline_.valid())
+      farLeftOutline_->setNodeMask(newNodeMask);
+    if (farRightOutline_.valid())
+      farRightOutline_->setNodeMask(newNodeMask);
+    if (nearLeftOutline_.valid())
+      nearLeftOutline_->setNodeMask(newNodeMask);
+    if (nearRightOutline_.valid())
+      nearRightOutline_->setNodeMask(newNodeMask);
+  }
+
   class svPyramidFactory
   {
   private:
@@ -413,6 +435,7 @@ namespace
       svPyramidOutline* outline = new svPyramidOutline(sv, vertexArray_.get(), numPointsX_, numPointsZ_, farFaceOffset_, nearFaceOffset_, drawWalls_);
       outline->setColor(color_);
       outline->regenerate();
+      outline->hideSideOutlines(simCore::areAnglesEqual(hfov_deg_ * simCore::DEG2RAD, M_TWOPI));
     }
   }
 
@@ -484,6 +507,7 @@ namespace
     metaContainer_->farRange_ = data.farRange_;
     metaContainer_->horizontalAngleRad_ = hfov_deg_ * simCore::DEG2RAD;
     metaContainer_->verticalAngleRad_ = vfov_deg_ * simCore::DEG2RAD;
+    metaContainer_->hasNearFace_ = hasNear_;
 
     std::vector<SVMeta>& vertexMetaData = metaContainer_->vertMeta_;
     vertexMetaData.reserve(reserveSizeFace_ + reserveSizeCone_);
@@ -841,6 +865,7 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
   metaContainer->farRange_  = d.farRange_;
   metaContainer->horizontalAngleRad_ = hfov_deg * simCore::DEG2RAD;
   metaContainer->verticalAngleRad_ = vfov_deg * simCore::DEG2RAD;
+  metaContainer->hasNearFace_ = hasNear;
 
   // quaternion that will "point" the volume along our direction vector
   metaContainer->dirQ_.makeRotate(osg::Y_AXIS, direction);
@@ -1513,6 +1538,9 @@ int SVFactory::updateHorizAngle(SphericalVolume* sv, double newAngleRad)
   verts->dirty();
   normals->dirty();
   dirtyBound_(sv);
+
+  // hide or show the sides as needed
+  SVFactory::updateSideOutlines_(sv);
   return 0;
 }
 
@@ -1615,7 +1643,7 @@ void SVFactory::updateVertAngle(SphericalVolume* sv, double newAngleRad)
       const double sinz = sin(az);
       const double cosz = cos(az);
       m.anglez_ = az;
-      m.unit_.set(sinx*cosz, cosx*cosz, sinz);
+      m.unit_.set(sinx * cosz, cosx * cosz, sinz);
       // this is a unit vector, no need to normalize
       assert(simCore::areEqual(m.unit_.length(), 1.0));
       break;
@@ -1688,6 +1716,23 @@ osg::Group* SVFactory::opaqueGroup(SphericalVolume* sv)
   return sv->getChild(1)->asGroup();
 }
 
+void SVFactory::updateSideOutlines_(SphericalVolume* sv)
+{
+  osg::Group* opaqueGroup = SVFactory::opaqueGroup(sv);
+  if (!opaqueGroup || opaqueGroup->getNumChildren() == 0)
+    return;
+  // the opaque group may be an svPyramidOutline; svPyramidOutline must be regenerated using the updated vertices
+  svPyramidOutline* pyramidOutline = dynamic_cast<svPyramidOutline*>(opaqueGroup);
+  if (!pyramidOutline)
+    return;
+  // handle the geometries in the primary geode
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
+  SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
+  if (!meta)
+    return;
+  pyramidOutline->hideSideOutlines(!meta->hasNearFace_ && simCore::areAnglesEqual(meta->horizontalAngleRad_, M_TWOPI));
+}
+
 // dirty bounds for all geometries in the sv
 void SVFactory::dirtyBound_(SphericalVolume* sv)
 {
@@ -1699,6 +1744,7 @@ void SVFactory::dirtyBound_(SphericalVolume* sv)
   if (geom && !geom->empty())
     geom->dirtyBound();
 
+  SVFactory::updateSideOutlines_(sv);
   // handle the 2nd/opaque group
   osg::Group* opaqueGroup = SVFactory::opaqueGroup(sv);
   if (opaqueGroup && opaqueGroup->getNumChildren() > 0)
