@@ -279,7 +279,6 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         textToken = simCore::StringUtils::substitute(textToken, "\\n", "\n");
         current.set(ShapeParameter::TEXT, textToken);
         current.set(ShapeParameter::NAME, textToken);
-        invalidShape = false;
       }
       else
       {
