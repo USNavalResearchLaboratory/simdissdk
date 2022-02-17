@@ -270,7 +270,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         if (current.shape() != ShapeType::UNKNOWN)
         {
           SIM_WARN << "Multiple shape keywords found in single start/end block, " << filename << " line: " << lineNumber << "\n";
-          invalidShape = true;
+          // treat as an annotation and keep going
         }
         current.setShape(ShapeType::ANNOTATION);
         std::string textToken = simCore::StringUtils::trim(line.substr(tokens[0].length() + 1));
@@ -279,6 +279,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         textToken = simCore::StringUtils::substitute(textToken, "\\n", "\n");
         current.set(ShapeParameter::TEXT, textToken);
         current.set(ShapeParameter::NAME, textToken);
+        invalidShape = false;  // Required to allow processing of valid annotations after an invalid annotation
       }
       else
       {
