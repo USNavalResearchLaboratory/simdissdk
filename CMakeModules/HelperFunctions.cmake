@@ -460,7 +460,6 @@ endfunction()
 # This function also creates a new alias target VSI::<TARGET> for ease of use, so that in-source
 # builds and out-of-source builds can refer to the target by the same name.
 function(vsi_install_export TARGET VERSION COMPATIBILITY)
-    set_target_properties(${TARGET} PROPERTIES VERSION "${VERSION}")
     install(TARGETS ${TARGET} EXPORT ${TARGET}Targets
         LIBRARY DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
         RUNTIME DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
@@ -476,6 +475,11 @@ function(vsi_install_export TARGET VERSION COMPATIBILITY)
     get_target_property(TARGET_TYPE ${TARGET} TYPE)
     if(UNIX AND TARGET_TYPE STREQUAL "SHARED_LIBRARY")
         vsi_set_rpath(${TARGET} ${INSTALLSETTINGS_SHARED_LIBRARY_DIR})
+    endif()
+
+    # CMake prior to 3.19 did not support VERSION as whitelisted property on INTERFACE targets
+    if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY" OR NOT CMAKE_VERSION VERSION_LESS "3.19")
+        set_target_properties(${TARGET} PROPERTIES VERSION "${VERSION}")
     endif()
 
     # Create the ConfigVersion.cmake file for the target
