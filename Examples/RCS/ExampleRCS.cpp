@@ -23,6 +23,7 @@
 /* -*-c++-*- */
 /**
  * Demonstrates and tests the loading and display of a radar cross section (RCS) on a platform.
+ * Most data files do not have data to drive all options, so some selected options may result in no graphics.
  */
 
 /// the simulator provides time/space data for our platform
