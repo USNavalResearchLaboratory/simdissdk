@@ -96,19 +96,26 @@ struct AppData
     colorIndex = colors.size()-1;
   }
 
-  void setProjectorsVisible(bool visible)
+  void setShadowMapping(bool shadowMapping)
   {
-    setDraw(proj1Id, visible);
-    setDraw(proj2Id, visible);
-    setDraw(proj3Id, visible);
+    for (const auto& projId : { proj1Id, proj2Id, proj3Id })
+    {
+      simData::DataStore::Transaction txn;
+      auto* prefs = dataStore.mutable_projectorPrefs(projId, &txn);
+      prefs->set_shadowmapping(shadowMapping);
+      txn.complete(&prefs);
+    }
   }
 
-  void setDraw(simData::ObjectId id, bool visible)
+  void setProjectorsVisible(bool visible)
   {
-    simData::DataStore::Transaction txn;
-    auto* prefs = dataStore.mutable_commonPrefs(id, &txn);
-    prefs->set_draw(visible);
-    txn.complete(&prefs);
+    for (const auto& projId : { proj1Id, proj2Id, proj3Id })
+    {
+      simData::DataStore::Transaction txn;
+      auto* prefs = dataStore.mutable_commonPrefs(projId, &txn);
+      prefs->set_draw(visible);
+      txn.complete(&prefs);
+    }
   }
 };
 
@@ -221,6 +228,12 @@ public:
       if (displayProjectors != displayProjectors_)
         app_.setProjectorsVisible(displayProjectors_);
 
+      // Shadow Mapping
+      bool shadowMapping = shadowMapping_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Shadow Mapping", &shadowMapping_);
+      if (shadowMapping != shadowMapping_)
+        app_.setShadowMapping(shadowMapping_);
+
       // Use Gradient
       bool useGradient = useGradient_;
       IMGUI_ADD_ROW(ImGui::Checkbox, "Use Gradient", &useGradient_);
@@ -249,6 +262,7 @@ private:
   bool displayGates_ = false;
   bool useGradient_ = false;
   bool displayProjectors_ = false;
+  bool shadowMapping_ = true;
 };
 #else
 struct Toggle : public ui::ControlEventHandler
@@ -291,6 +305,16 @@ struct ToggleProjectors : public ui::ControlEventHandler
   void onValueChanged(ui::Control* c, bool value)
   {
     a.setProjectorsVisible(value);
+  }
+};
+
+struct ToggleShadowMapping : public ui::ControlEventHandler
+{
+  explicit ToggleShadowMapping(AppData& app) : a(app) {}
+  AppData& a;
+  void onValueChanged(ui::Control* c, bool value)
+  {
+    a.setShadowMapping(value);
   }
 };
 
@@ -352,6 +376,10 @@ ui::Control* createUI(AppData& app)
   r++;
   grid->setControl(c, r, new ui::LabelControl("Projectors:"));
   grid->setControl(c + 1, r, new ui::CheckBoxControl(false, new ToggleProjectors(app)));
+
+  r++;
+  grid->setControl(c, r, new ui::LabelControl("Shadow Map:"));
+  grid->setControl(c + 1, r, new ui::CheckBoxControl(true, new ToggleShadowMapping(app)));
 
   // force a width.
   app.rangeSlider->setHorizFill(true, 200);
@@ -444,7 +472,6 @@ simData::ObjectId addProjector(simData::DataStore& dataStore, simData::ObjectId 
   beamPoint->set_azimuth(angleRad);
   beamPoint->set_elevation(elevRad);
   beamPoint->set_range(0.1);
-  //beamPoint->set_range(1000000.);
   txn.complete(&beamPoint);
 
   // Create the projector
@@ -458,6 +485,7 @@ simData::ObjectId addProjector(simData::DataStore& dataStore, simData::ObjectId 
   prefs->set_rasterfile(projIcon);
   prefs->set_showfrustum(false);
   prefs->set_projectoralpha(0.8f);
+  prefs->set_shadowmapping(true);
   txn.complete(&prefs);
 
   // Set the FOV
@@ -593,11 +621,12 @@ int main(int argc, char **argv)
   app.dataStore.update(0);
 
   // Add projectors, make the host (and therefore planetarium) accept them, and hide the projectors (GUI control)
-  app.proj1Id = addProjector(app.dataStore, app.projHost1Id, M_PI, -M_PI / 20., "A6V.png", M_PI / 10.);
+  app.proj1Id = addProjector(app.dataStore, app.projHost1Id, M_PI, -M_PI / 10., "A6V.png", M_PI / 4.);
   app.proj2Id = addProjector(app.dataStore, app.projHost2Id, M_PI, -M_PI / 30., "AIS.png", M_PI / 10.);
   app.proj3Id = addProjector(app.dataStore, app.platformId, -M_PI / 4, M_PI / 8., "earthcolor.jpg", M_PI / 5.);
   acceptProjectors(app.dataStore, app.platformId, { app.proj1Id, app.proj2Id, app.proj3Id });
   app.setProjectorsVisible(false);
+  app.setShadowMapping(true);
 
   // the planetarium view:
   osg::observer_ptr<simVis::PlatformNode> platform = app.scenario->find<simVis::PlatformNode>(app.platformId);
