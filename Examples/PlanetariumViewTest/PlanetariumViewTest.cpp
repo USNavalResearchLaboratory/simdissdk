@@ -64,7 +64,14 @@ struct AppData
   osg::ref_ptr<simVis::Viewer> viewer;
   osg::ref_ptr<simVis::SceneManager> scene;
   osg::ref_ptr<simVis::ScenarioManager> scenario;
-  simData::ObjectId platformId;
+  simData::ObjectId platformId = 0;
+
+  simData::ObjectId projHost1Id = 0;
+  simData::ObjectId projHost2Id = 0;
+
+  simData::ObjectId proj1Id = 0; // external projector, pointing in
+  simData::ObjectId proj2Id = 0; // external projector, pointing in
+  simData::ObjectId proj3Id = 0; // internal projector, pointing out
 
 #ifndef HAVE_IMGUI
   osg::ref_ptr<ui::CheckBoxControl>     toggleCheck;
@@ -77,7 +84,7 @@ struct AppData
 #endif
 
   std::vector< std::pair<simVis::Color, std::string> > colors;
-  int colorIndex;
+  int colorIndex = 0;
 
   AppData()
   {
@@ -87,6 +94,21 @@ struct AppData
     colors.push_back(std::make_pair(simVis::Color(0xffffff00u), "Invisible"));
     colors.push_back(std::make_pair(simVis::Color(0xffff003fu), "Yellow"));
     colorIndex = colors.size()-1;
+  }
+
+  void setProjectorsVisible(bool visible)
+  {
+    setDraw(proj1Id, visible);
+    setDraw(proj2Id, visible);
+    setDraw(proj3Id, visible);
+  }
+
+  void setDraw(simData::ObjectId id, bool visible)
+  {
+    simData::DataStore::Transaction txn;
+    auto* prefs = dataStore.mutable_commonPrefs(id, &txn);
+    prefs->set_draw(visible);
+    txn.complete(&prefs);
   }
 };
 
@@ -193,6 +215,12 @@ public:
       if (displayGates != displayGates_)
         app_.planetarium->setDisplayGates(displayGates_);
 
+      // Display Projectors
+      bool displayProjectors = displayProjectors_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Display Projectors", &displayProjectors_);
+      if (displayProjectors != displayProjectors_)
+        app_.setProjectorsVisible(displayProjectors_);
+
       // Use Gradient
       bool useGradient = useGradient_;
       IMGUI_ADD_ROW(ImGui::Checkbox, "Use Gradient", &useGradient_);
@@ -220,6 +248,7 @@ private:
   bool beamHistory_ = false;
   bool displayGates_ = false;
   bool useGradient_ = false;
+  bool displayProjectors_ = false;
 };
 #else
 struct Toggle : public ui::ControlEventHandler
@@ -252,6 +281,16 @@ struct ToggleLDB : public ui::ControlEventHandler
   void onValueChanged(ui::Control* c, bool value)
   {
     a.viewer->setLogarithmicDepthBufferEnabled(!a.viewer->isLogarithmicDepthBufferEnabled());
+  }
+};
+
+struct ToggleProjectors : public ui::ControlEventHandler
+{
+  explicit ToggleProjectors(AppData& app) : a(app) {}
+  AppData& a;
+  void onValueChanged(ui::Control* c, bool value)
+  {
+    a.setProjectorsVisible(value);
   }
 };
 
@@ -310,6 +349,10 @@ ui::Control* createUI(AppData& app)
   grid->setControl(c, r, new ui::LabelControl("LDB:"));
   app.ldbCheck = grid->setControl(c+1, r, new ui::CheckBoxControl(true, new ToggleLDB(app)));
 
+  r++;
+  grid->setControl(c, r, new ui::LabelControl("Projectors:"));
+  grid->setControl(c + 1, r, new ui::CheckBoxControl(false, new ToggleProjectors(app)));
+
   // force a width.
   app.rangeSlider->setHorizFill(true, 200);
 
@@ -320,7 +363,7 @@ ui::Control* createUI(AppData& app)
 //----------------------------------------------------------------------------
 
 // create a platform and add it to 'dataStore'
-simData::ObjectId addPlatform(simData::DataStore& dataStore, const char* iconFile)
+simData::ObjectId addPlatform(simData::DataStore& dataStore, const std::string& iconFile, const std::string& name)
 {
   // create the platform:
   simData::ObjectId platformId;
@@ -339,6 +382,8 @@ simData::ObjectId addPlatform(simData::DataStore& dataStore, const char* iconFil
     prefs->set_scale(1.0f);
     prefs->set_dynamicscale(true);
     prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
+    if (!name.empty())
+      prefs->mutable_commonprefs()->set_name(name);
     xaction.complete(&prefs);
   }
 
@@ -389,10 +434,51 @@ simData::ObjectId addGate(const simData::ObjectId hostId, simData::DataStore& da
   return result;
 }
 
+simData::ObjectId addProjector(simData::DataStore& dataStore, simData::ObjectId platformHost, double angleRad, double elevRad, const std::string& projIcon, double fovRad)
+{
+  // Create a hosting beam ID with very short range
+  auto beamId = addBeam(platformHost, dataStore, 0., 0.);
+  simData::DataStore::Transaction txn;
+  auto beamPoint = dataStore.addBeamUpdate(beamId, &txn);
+  beamPoint->set_time(0.);
+  beamPoint->set_azimuth(angleRad);
+  beamPoint->set_elevation(elevRad);
+  beamPoint->set_range(0.1);
+  //beamPoint->set_range(1000000.);
+  txn.complete(&beamPoint);
+
+  // Create the projector
+  simData::ProjectorProperties* projProps = dataStore.addProjector(&txn);
+  projProps->set_hostid(beamId);
+  const simData::ObjectId projId = projProps->id();
+  txn.complete(&projProps);
+
+  // Configure prefs appropriately
+  simData::ProjectorPrefs* prefs = dataStore.mutable_projectorPrefs(projId, &txn);
+  prefs->set_rasterfile(projIcon);
+  prefs->set_showfrustum(false);
+  prefs->set_projectoralpha(0.8f);
+  txn.complete(&prefs);
+
+  // Set the FOV
+  simData::ProjectorUpdate* update = dataStore.addProjectorUpdate(projId, &txn);
+  update->set_time(0.);
+  update->set_fov(fovRad);
+  txn.complete(&update);
+  return projId;
+}
+
+void acceptProjectors(simData::DataStore& dataStore, simData::ObjectId platform, const std::vector<simData::ObjectId>& projectors)
+{
+  simData::DataStore::Transaction txn;
+  auto* prefs = dataStore.mutable_platformPrefs(platform, &txn);
+  simData::DataStoreHelpers::vecToRepeated(prefs->mutable_commonprefs()->mutable_acceptprojectorids(), projectors);
+  txn.complete(&prefs);
+}
 
 //----------------------------------------------------------------------------
 
-void simulate(simData::ObjectId hostId, std::vector<simData::ObjectId>& targetIds, simData::DataStore& ds, simVis::Viewer* viewer)
+void simulate(const AppData& app, std::vector<simData::ObjectId>& targetIds, simData::DataStore& ds, simVis::Viewer* viewer)
 {
   SIM_NOTICE << LC << "Building simulation.... please wait." << std::endl;
 
@@ -400,7 +486,7 @@ void simulate(simData::ObjectId hostId, std::vector<simData::ObjectId>& targetId
 
   // set up a simple simulation to move the platform.
   {
-    osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(hostId);
+    osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(app.platformId);
     sim->addWaypoint(simUtil::Waypoint(0.0, -30.0, 0.0, 1000));
     sim->addWaypoint(simUtil::Waypoint(0.0, -35.0, 0.0, 1000));
     simman->addSimulator(sim.get());
@@ -418,6 +504,20 @@ void simulate(simData::ObjectId hostId, std::vector<simData::ObjectId>& targetId
       double lon = -60 + double(::rand() % 60);
       sim->addWaypoint(simUtil::Waypoint(lat, lon, alt, 100));
     }
+    simman->addSimulator(sim.get());
+  }
+
+  // Add projector platforms that point towards the planetarium; note planetarium is 40km to 120km wide
+  { // Projector 1: North of main platform, flies a little faster from east to west
+    osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(app.projHost1Id);
+    sim->addWaypoint(simUtil::Waypoint(2.0, -29.8, 80000.0, 100));
+    sim->addWaypoint(simUtil::Waypoint(2.0, -31.1, 60000.0, 100));
+    simman->addSimulator(sim.get());
+  }
+  { // Projector 2: Also north, flies a little slower from east to west
+    osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(app.projHost2Id);
+    sim->addWaypoint(simUtil::Waypoint(2.4, -30.2, 60000.0, 100));
+    sim->addWaypoint(simUtil::Waypoint(2.1, -29.5, 90000.0, 100));
     simman->addSimulator(sim.get());
   }
 
@@ -456,11 +556,11 @@ int main(int argc, char **argv)
   app.scenario->bind(&app.dataStore);
 
   // place a platform and put it in motion
-  app.platformId = addPlatform(app.dataStore, EXAMPLE_SHIP_ICON);
+  app.platformId = addPlatform(app.dataStore, EXAMPLE_SHIP_ICON, "Host");
 
   // place some random beams.
   ::srand(time(nullptr));
-  for (int i=0; i<numBeams; ++i)
+  for (int i = 0; i < numBeams; ++i)
   {
     double az, el, roll;
 
@@ -476,16 +576,28 @@ int main(int argc, char **argv)
     addGate(beamId, app.dataStore, az, el, roll);
   }
 
+  // Add projectors onto the planetarium surface
+  app.projHost1Id = addPlatform(app.dataStore, EXAMPLE_MISSILE_ICON, "Proj Host 1");
+  app.projHost2Id = addPlatform(app.dataStore, EXAMPLE_MISSILE_ICON, "Proj Host 2");
+
+  // Add projector from center of planetarium, pointing out
+
   // make some targets flying around.
   std::vector<simData::ObjectId> targetIds;
   for (int i = 0; i < numTargets; ++i)
   {
-    simData::ObjectId targetId = addPlatform(app.dataStore, EXAMPLE_AIRPLANE_ICON);
+    simData::ObjectId targetId = addPlatform(app.dataStore, EXAMPLE_AIRPLANE_ICON, "");
     targetIds.push_back(targetId);
   }
-
-  simulate(app.platformId, targetIds, app.dataStore, viewer.get());
+  simulate(app, targetIds, app.dataStore, viewer.get());
   app.dataStore.update(0);
+
+  // Add projectors, make the host (and therefore planetarium) accept them, and hide the projectors (GUI control)
+  app.proj1Id = addProjector(app.dataStore, app.projHost1Id, M_PI, -M_PI / 20., "A6V.png", M_PI / 10.);
+  app.proj2Id = addProjector(app.dataStore, app.projHost2Id, M_PI, -M_PI / 30., "AIS.png", M_PI / 10.);
+  app.proj3Id = addProjector(app.dataStore, app.platformId, -M_PI / 4, M_PI / 8., "earthcolor.jpg", M_PI / 5.);
+  acceptProjectors(app.dataStore, app.platformId, { app.proj1Id, app.proj2Id, app.proj3Id });
+  app.setProjectorsVisible(false);
 
   // the planetarium view:
   osg::observer_ptr<simVis::PlatformNode> platform = app.scenario->find<simVis::PlatformNode>(app.platformId);
@@ -507,7 +619,7 @@ int main(int argc, char **argv)
 
   // zoom the camera
   view->tetherCamera(platform.get());
-  view->setFocalOffsets(0, -45, 350000);
+  view->setFocalOffsets(180, -45, 350000);
 
   // add some stock OSG handlers and go
   viewer->installDebugHandlers();
@@ -516,4 +628,3 @@ int main(int argc, char **argv)
   app.scenario->removeTool(app.planetarium.get());
   return rv;
 }
-
