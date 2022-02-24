@@ -412,7 +412,7 @@ ui::Control* createUI(AppData& app)
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Double-sided:"));
-  grid->setControl(c + 1, r, new ui::CheckBoxControl(true, new ToggleDoubleSidedProjection(app)));
+  grid->setControl(c + 1, r, new ui::CheckBoxControl(false, new ToggleDoubleSidedProjection(app)));
 
   // force a width.
   app.rangeSlider->setHorizFill(true, 200);
