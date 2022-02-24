@@ -829,6 +829,9 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
   // create a node to track the position of the host:
   locatorRoot_ = new LocatorNode(new Locator(host_->getLocator(), Locator::COMP_POSITION));
   locatorRoot_->setName("Planetarium Dome Root Node");
+  // Turn off cull face, so that both sides of the planetarium get drawn, in order for projectors
+  // to render properly on both sides.
+  locatorRoot_->getOrCreateStateSet()->setMode(GL_CULL_FACE, 0);
 
   root_->addChild(locatorRoot_.get());
 
