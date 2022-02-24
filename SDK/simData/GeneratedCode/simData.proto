@@ -1371,6 +1371,8 @@ message ProjectorPrefs {
   optional bool shadowMapping = 8 [default = false];
   /// Maximum distance from projector at which to draw projected image (<=0 means no limiting)
   optional float maxDrawRange = 9 [default = 0.0];
+  /// Whether to project on backfacing geometry as well as front
+  optional bool doubleSided = 10 [default = false];
 };
 
 /// common update to projector data

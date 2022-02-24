@@ -210,8 +210,6 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
       for (auto& proj : projectors_)
       {
         sampler.setElement(index, (int)(simVis::ProjectorManager::getTextureImageUnit() + index));
-        //ss->getOrCreateUniform("simProjSampler", osg::Uniform::SAMPLER_2D, SIM_MAX_NODE_PROJECTORS)
-        //  ->setElement(index, (int)(simVis::ProjectorManager::getTextureImageUnit() + index));
 
         ss->setTextureAttribute(
           simVis::ProjectorManager::getTextureImageUnit() + index,
@@ -363,11 +361,13 @@ void ProjectorNode::init_()
   useColorOverrideUniform_= new osg::Uniform(osg::Uniform::BOOL,       "projectorUseColorOverride");
   colorOverrideUniform_   = new osg::Uniform(osg::Uniform::FLOAT_VEC4, "projectorColorOverride");
   projectorMaxRangeSquaredUniform_ = new osg::Uniform(osg::Uniform::FLOAT, "projectorMaxRangeSquared");
+  doubleSidedUniform_ = new osg::Uniform(osg::Uniform::BOOL, "projectorDoubleSided");
 
   projectorActive_->set(false);
   projectorAlpha_->set(DEFAULT_ALPHA_VALUE);
   useColorOverrideUniform_->set(false);
   projectorMaxRangeSquaredUniform_->set(0.f);
+  doubleSidedUniform_->set(false);
 
   // Set texture to default broken image
   texture_ = new osg::Texture2D(simVis::makeBrokenImage());
@@ -417,8 +417,8 @@ void ProjectorNode::init_()
   osg::StateSet* ss = shadowCam_->getOrCreateStateSet();
 
   // ignore any uber shaders (like the LDB or Sky)
-  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(ss);
-  vp->setInheritShaders(false);
+  //osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(ss);
+  //vp->setInheritShaders(false);
 
   // only draw back faces to the shadow depth map
   ss->setAttributeAndModes(
@@ -472,6 +472,7 @@ void ProjectorNode::applyToStateSet(osg::StateSet* stateSet) const
   stateSet->addUniform(useColorOverrideUniform_.get());
   stateSet->addUniform(colorOverrideUniform_.get());
   stateSet->addUniform(projectorMaxRangeSquaredUniform_.get());
+  stateSet->addUniform(doubleSidedUniform_.get());
 
   if (hasLastUpdate_ && lastPrefs_.shadowmapping())
     stateSet->setDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
@@ -490,6 +491,7 @@ void ProjectorNode::removeFromStateSet(osg::StateSet* stateSet) const
   stateSet->removeUniform(useColorOverrideUniform_.get());
   stateSet->removeUniform(colorOverrideUniform_.get());
   stateSet->removeUniform(projectorMaxRangeSquaredUniform_.get());
+  stateSet->removeUniform(doubleSidedUniform_.get());
 
   stateSet->removeDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
 }
@@ -517,6 +519,7 @@ void ProjectorNode::copyUniformsTo(osg::StateSet* stateSet, unsigned size, unsig
   copyUniform<osg::Vec4f>(stateSet, colorOverrideUniform_.get(), size, index);
 #endif
   copyUniform<float>(stateSet, projectorMaxRangeSquaredUniform_.get(), size, index);
+  copyUniform<bool>(stateSet, doubleSidedUniform_.get(), size, index);
 }
 
 std::string ProjectorNode::popupText() const
@@ -603,6 +606,11 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
       projectorMaxRangeSquaredUniform_->set(0.f);
     else
       projectorMaxRangeSquaredUniform_->set(prefs.maxdrawrange() * prefs.maxdrawrange());
+  }
+
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, doublesided))
+  {
+    doubleSidedUniform_->set(prefs.doublesided());
   }
 
   updateOverrideColor_(prefs);

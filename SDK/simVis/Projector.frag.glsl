@@ -9,6 +9,7 @@ uniform sampler2D simProjSampler;
 uniform bool projectorUseColorOverride;
 uniform vec4 projectorColorOverride;
 uniform float projectorMaxRangeSquared;
+uniform bool projectorDoubleSided;
 
 in vec3 vp_Normal;
 in vec3 oe_UpVectorView;
@@ -73,11 +74,16 @@ void sim_proj_frag(inout vec4 color)
 
 #endif // SIMVIS_PROJECT_USE_SHADOWMAP
 
-  // don't draw over the horizon or on any back-facing surface
-  float vis = -vert_dot_normal;
-  if (vis <= 0.0 && fail_mix < 1.0) {
+  float vis;
+
+  // don't draw on any back-facing surface
+  if (!projectorDoubleSided)
+  {
+    vis = -vert_dot_normal;
+    if (vis <= 0.0 && fail_mix < 1.0) {
       fail_mix = 1.0;
       fail_color = vec4(1, 1, 0, 1);
+    }
   }
 
   // don't draw on geometry whose plane is very close to the projection vector

@@ -48,6 +48,7 @@ uniform sampler2D simProjSampler[4];
 uniform bool projectorUseColorOverride[4];
 uniform vec4 projectorColorOverride[4];
 uniform float projectorMaxRangeSquared[4];
+uniform bool projectorDoubleSided[4];
 
 in vec4 simProjTexCoord[4];
 in vec3 simProjToVert_VIEW[4];
@@ -58,34 +59,50 @@ void sim_proj_on_entity_frag(inout vec4 color)
 {
     for (int i = 0; i < SIMVIS_NUM_PROJECTORS; ++i)
     {
-        if (projectorActive[i] && simProjTexCoord[i].q > 0)
-        {
-            // clip to projected texture domain; otherwise the texture will project
-            // even when the target is outside the projection frustum
-            vec2 local = simProjTexCoord[i].st / simProjTexCoord[i].q;
-            if (clamp(local, 0.0, 1.0) == local)
-            {
-                vec4 textureColor;
-                // Circumvent "error: sampler arrays indexed with non-constant expressions are forbidden in GLSL 1.30 and later"
-                if (i == 1)
-                    textureColor = textureProj(simProjSampler[1], simProjTexCoord[i]);
-                else if (i == 2)
-                    textureColor = textureProj(simProjSampler[2], simProjTexCoord[i]);
-                else if (i == 3)
-                    textureColor = textureProj(simProjSampler[3], simProjTexCoord[i]);
-                else
-                    textureColor = textureProj(simProjSampler[0], simProjTexCoord[i]);
+        // skip if the projector is not active
+        if (projectorActive[i] == false)
+            continue;
 
-                if (projectorUseColorOverride[i])
-                {
-                    color.rgb = textureColor.rgb * projectorColorOverride[i].rgb;
-                    color.a = textureColor.a * projectorAlpha[i];
-                }
-                else
-                {
-                    color.rgb = mix(color.rgb, textureColor.rgb, textureColor.a*projectorAlpha[i]);
-                }
-            }
+        // only draw in front of projector (not behind)
+        if (simProjTexCoord[i].q <= 0 || dot(simProjLookVector_VIEW[i], simProjToVert_VIEW[i]) < 0.0)
+            continue;
+
+        // only draw up to maximum range
+        if (projectorMaxRangeSquared[i] > 0.0 && projectorMaxRangeSquared[i] < dot(simProjToVert_VIEW[i], simProjToVert_VIEW[i]))
+            continue;
+
+        // only draw on polygons facing the projector
+        if (!projectorDoubleSided[i] && dot(simProjToVert_VIEW[i], vp_Normal) >= 0)
+        {
+            continue;
+        }
+
+        // clip to projected texture domain; otherwise the texture will project
+        // even when the target is outside the projection frustum
+        vec2 local = simProjTexCoord[i].st / simProjTexCoord[i].q;
+        if (clamp(local, 0.0, 1.0) != local)
+            continue;
+
+        // We are good, draw something:
+        vec4 textureColor;
+        // Circumvent "error: sampler arrays indexed with non-constant expressions are forbidden in GLSL 1.30 and later"
+        if (i == 1)
+            textureColor = textureProj(simProjSampler[1], simProjTexCoord[i]);
+        else if (i == 2)
+            textureColor = textureProj(simProjSampler[2], simProjTexCoord[i]);
+        else if (i == 3)
+            textureColor = textureProj(simProjSampler[3], simProjTexCoord[i]);
+        else
+            textureColor = textureProj(simProjSampler[0], simProjTexCoord[i]);
+
+        if (projectorUseColorOverride[i])
+        {
+            color.rgb = textureColor.rgb * projectorColorOverride[i].rgb;
+            color.a = textureColor.a * projectorAlpha[i];
+        }
+        else
+        {
+            color.rgb = mix(color.rgb, textureColor.rgb, textureColor.a*projectorAlpha[i]);
         }
     }
 }
