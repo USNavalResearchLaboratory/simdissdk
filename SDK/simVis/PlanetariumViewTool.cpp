@@ -1055,6 +1055,7 @@ void PlanetariumViewTool::updateDome_()
     dome_->setName("Planetarium Sphere Geometry");
     osg::StateSet* stateSet = dome_->getOrCreateStateSet();
     stateSet->setMode(GL_BLEND, 1);
+    stateSet->setMode(GL_CULL_FACE, 0 | osg::StateAttribute::PROTECTED);
     // Turn off the depth writes to help with transparency
     stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
     locatorRoot_->addChild(dome_.get());

@@ -291,6 +291,7 @@ private:
   osg::ref_ptr<osg::Uniform> useColorOverrideUniform_;
   osg::ref_ptr<osg::Uniform> colorOverrideUniform_;
   osg::ref_ptr<osg::Uniform> projectorMaxRangeSquaredUniform_;
+  osg::ref_ptr<osg::Uniform> doubleSidedUniform_;
 
   // Keep track of the nodes projected onto so the projections can be removed when projector is deleted.
   // The key is the entity the value is the attachment point

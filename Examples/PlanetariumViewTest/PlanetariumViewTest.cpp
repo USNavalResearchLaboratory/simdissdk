@@ -81,6 +81,7 @@ struct AppData
   osg::ref_ptr<ui::HSliderControl>      colorSlider;
   osg::ref_ptr<ui::LabelControl>        colorLabel;
   osg::ref_ptr<ui::CheckBoxControl>     ldbCheck;
+  osg::ref_ptr<ui::CheckBoxControl>     doubleSidedCheck;
 #endif
 
   std::vector< std::pair<simVis::Color, std::string> > colors;
@@ -114,6 +115,17 @@ struct AppData
       simData::DataStore::Transaction txn;
       auto* prefs = dataStore.mutable_commonPrefs(projId, &txn);
       prefs->set_draw(visible);
+      txn.complete(&prefs);
+    }
+  }
+
+  void setDoubleSidedProjection(bool value)
+  {
+    for (const auto& projId : { proj1Id, proj2Id, proj3Id })
+    {
+      simData::DataStore::Transaction txn;
+      auto* prefs = dataStore.mutable_projectorPrefs(projId, &txn);
+      prefs->set_doublesided(value);
       txn.complete(&prefs);
     }
   }
@@ -234,6 +246,12 @@ public:
       if (shadowMapping != shadowMapping_)
         app_.setShadowMapping(shadowMapping_);
 
+      // Double-sided projection
+      bool doubleSided = doubleSided_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Double-sided Projection", &doubleSided_);
+      if (doubleSided != doubleSided_)
+        app_.setDoubleSidedProjection(doubleSided_);
+
       // Use Gradient
       bool useGradient = useGradient_;
       IMGUI_ADD_ROW(ImGui::Checkbox, "Use Gradient", &useGradient_);
@@ -263,6 +281,7 @@ private:
   bool useGradient_ = false;
   bool displayProjectors_ = false;
   bool shadowMapping_ = true;
+  bool doubleSided_ = false;
 };
 #else
 struct Toggle : public ui::ControlEventHandler
@@ -315,6 +334,16 @@ struct ToggleShadowMapping : public ui::ControlEventHandler
   void onValueChanged(ui::Control* c, bool value)
   {
     a.setShadowMapping(value);
+  }
+};
+
+struct ToggleDoubleSidedProjection : public ui::ControlEventHandler
+{
+  explicit ToggleDoubleSidedProjection(AppData& app) : a(app) {}
+  AppData& a;
+  void onValueChanged(ui::Control* c, bool value)
+  {
+    a.setDoubleSidedProjection(value);
   }
 };
 
@@ -380,6 +409,10 @@ ui::Control* createUI(AppData& app)
   r++;
   grid->setControl(c, r, new ui::LabelControl("Shadow Map:"));
   grid->setControl(c + 1, r, new ui::CheckBoxControl(true, new ToggleShadowMapping(app)));
+
+  r++;
+  grid->setControl(c, r, new ui::LabelControl("Double-sided:"));
+  grid->setControl(c + 1, r, new ui::CheckBoxControl(true, new ToggleDoubleSidedProjection(app)));
 
   // force a width.
   app.rangeSlider->setHorizFill(true, 200);
