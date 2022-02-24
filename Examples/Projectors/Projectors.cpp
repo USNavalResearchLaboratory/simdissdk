@@ -557,8 +557,8 @@ int main(int argc, char **argv)
   sim_3->addWaypoint(simUtil::Waypoint(34.0, -110.0, 1000000, -89.9, 0.0, 1.0));
 
   /// flies along the mountains in Kuaui to test shadowmap occlusion
-  sim_4->addWaypoint(simUtil::Waypoint(22.092, -159.494, 850.0, 0.0, 0.0, 20.0));
-  sim_4->addWaypoint(simUtil::Waypoint(22.192, -159.494, 850.0, 0.0, 0.0, 20.0));
+  sim_4->addWaypoint(simUtil::Waypoint(22.092, -159.5, 850.0, 0.0, 0.0, 20.0));
+  sim_4->addWaypoint(simUtil::Waypoint(22.192, -159.5, 850.0, 0.0, 0.0, 20.0));
   sim_4->setSimulateRoll(false);
   sim_4->setSimulatePitch(false);
 

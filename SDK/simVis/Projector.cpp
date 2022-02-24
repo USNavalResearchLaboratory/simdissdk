@@ -398,7 +398,6 @@ void ProjectorNode::init_()
   shadowMap_->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
   shadowMap_->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
   shadowMap_->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-  shadowMap_->setBorderColor(osg::Vec4(1, 1, 1, 1));
 
   shadowCam_ = new osg::Camera();
   shadowCam_->setReferenceFrame(osg::Camera::ABSOLUTE_RF_INHERIT_VIEWPOINT);
@@ -417,8 +416,8 @@ void ProjectorNode::init_()
   osg::StateSet* ss = shadowCam_->getOrCreateStateSet();
 
   // ignore any uber shaders (like the LDB or Sky)
-  //osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(ss);
-  //vp->setInheritShaders(false);
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(ss);
+  vp->setInheritShaders(false);
 
   // only draw back faces to the shadow depth map
   ss->setAttributeAndModes(
@@ -475,9 +474,9 @@ void ProjectorNode::applyToStateSet(osg::StateSet* stateSet) const
   stateSet->addUniform(doubleSidedUniform_.get());
 
   if (hasLastUpdate_ && lastPrefs_.shadowmapping())
-    stateSet->setDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
+    stateSet->setDefine("SIMVIS_PROJECT_USE_SHADOWMAP", "1");
   else
-    stateSet->removeDefine("SIMVIS_PROJECT_USE_SHADOWMAP");
+    stateSet->setDefine("SIMVIS_PROJECT_USE_SHADOWMAP", "0");
 
   stateDirty_ = false;
 }
@@ -810,7 +809,9 @@ void ProjectorNode::syncWithLocator()
   // establish the projection matrix:
   osg::Matrixd projectionMat;
   const double ar = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
-  projectionMat.makePerspective(getVFOV(), ar, 1.0, 1.0e7);
+  float zfar = lastPrefs_.maxdrawrange();
+  if (zfar == 0.0) zfar = 1e6;
+  projectionMat.makePerspective(getVFOV(), ar, 10.0, zfar);
 
   // The model matrix coordinate system of the projector is a normal tangent plane,
   // which means the projector will point straight down by default (since the view vector

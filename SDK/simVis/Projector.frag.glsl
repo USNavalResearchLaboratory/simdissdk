@@ -10,20 +10,22 @@ uniform bool projectorUseColorOverride;
 uniform vec4 projectorColorOverride;
 uniform float projectorMaxRangeSquared;
 uniform bool projectorDoubleSided;
+uniform mat4 simProjShadowMapMat;
 
 in vec3 vp_Normal;
 in vec3 oe_UpVectorView;
 in vec4 simProjTexCoord;
 in vec3 simProjToVert_VIEW;
 in vec3 simProjLookVector_VIEW;
+in vec4 simProjVert_VIEW;
 
-#ifdef SIMVIS_PROJECT_USE_SHADOWMAP
+#if SIMVIS_PROJECT_USE_SHADOWMAP
 uniform sampler2D simProjShadowMap;
 in vec4 simProjShadowMapCoord;
 #endif
 
 
-// #define PROJ_DEBUG
+//#define PROJ_DEBUG
 
 // for a projector texturing the terrain:
 void sim_proj_frag(inout vec4 color)
@@ -50,27 +52,26 @@ void sim_proj_frag(inout vec4 color)
     return;
 
   // only draw up to maximum range
-  if (projectorMaxRangeSquared > 0.0 && projectorMaxRangeSquared < dot(simProjToVert_VIEW, simProjToVert_VIEW))
+  float distanceToVertSq = dot(simProjToVert_VIEW, simProjToVert_VIEW);
+  if (projectorMaxRangeSquared > 0.0 && projectorMaxRangeSquared < distanceToVertSq)
     return;
 
+  // cos of the angle at which the projector is viewing a surface.
+  // <0 = front face, >0 = back face
   float vert_dot_normal = dot(normalize(simProjToVert_VIEW), normalize(vp_Normal));
 
   vec4 pass_color;
+  fail_color = vec4(1, 0, 0, 1);
   float fail_mix = 0.0;
 
-#ifdef SIMVIS_PROJECT_USE_SHADOWMAP
+#if SIMVIS_PROJECT_USE_SHADOWMAP
 
   // sample the depth texture as a mask
-  const float shadow_bias = 0.00005;
-  vec3 shadow_coord = simProjShadowMapCoord.xyz / simProjShadowMapCoord.w;
-  float d = textureProj(simProjShadowMap, simProjShadowMapCoord).r; // depth from shadow map
-  float z = simProjShadowMapCoord.z / simProjShadowMapCoord.w; // depth of reprojected vertex
-
-  fail_color = vec4(1, 0, 0, 1);
-  float a = z + shadow_bias;
-  if (d < a) fail_mix = 1.0;
-  else if (d >= z) fail_mix = 0.0;
-  else fail_mix = 1.0 - ((a - d) / (z - d));
+  float shadow_bias = clamp(0.00005 * tan(acos(-vert_dot_normal)), 0.0, 0.00005);
+  float shadow_d = textureProj(simProjShadowMap, simProjShadowMapCoord).z; // depth from shadow map
+  float vertex_d = simProjShadowMapCoord.z / simProjShadowMapCoord.w; // depth of reprojected vertex
+  float vertex_biased_d = vertex_d - shadow_bias; // apply a little bias
+  fail_mix = 1.0 - clamp((shadow_d - vertex_biased_d) / shadow_bias, 0.0, 1.0);
 
 #endif // SIMVIS_PROJECT_USE_SHADOWMAP
 
