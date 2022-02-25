@@ -330,12 +330,18 @@ static const std::string MBTILES_IMAGE_LAYER_FILE_PATTERNS =
   "MBTiles Files (*.mbtiles)\n"
   "All Files (*)";
 
-/** Pattern for GDAL, DB, MBTiles files -- image file layer pattern */
+/** JSON files for osgEarth MapBox GL Image driver image layers */
+static const std::string MAPBOX_GL_IMAGE_LAYER_FILE_PATTERNS =
+  "MapBox GL Image Style Files (*.json)\n"
+  "All Files (*)";
+
+/** Pattern for GDAL, DB, MBTiles, MapBox GL files -- image file layer pattern */
 static const std::string FILEBASED_IMAGE_LAYER_FILE_PATTERNS =
-  "All Layer Files (*.mbtiles,*.db,*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil)\n"
+  "All Layer Files (*.mbtiles,*.db,*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil,*.json)\n"
   "MBTiles Files (*.mbtiles)\n"
   "DB Files (*.db)\n"
   "GDAL Files (*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil)\n"
+  "MapBox GL Image Style Files (*.json)\n"
   "All Files (*)";
 
 /** Pattern for GDAL, DB, MBTiles files -- elevation file layer pattern */
