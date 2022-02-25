@@ -35,6 +35,7 @@ namespace osgEarth
   class ElevationLayer;
   class GDALElevationLayer;
   class GDALImageLayer;
+  class MapBoxGLImageLayer;
   class MBTilesElevationLayer;
   class MBTilesImageLayer;
   class Profile;
@@ -65,6 +66,8 @@ public:
   osgEarth::MBTilesImageLayer* newMbTilesImageLayer(const std::string& fullPath) const;
   /** Returns an image layer properly configured for GDAL layer. */
   osgEarth::GDALImageLayer* newGdalImageLayer(const std::string& fullPath) const;
+  /** Returns an image layer properly configured for MapboxGLImageLayer layer. */
+  osgEarth::MapBoxGLImageLayer* newMapBoxGlImageLayer(const std::string& fullPath) const;
 
   /** Returns an elevation layer properly configured for DB layer. May return nullptr if not configured with DB support. */
   simVis::DBElevationLayer* newDbElevationLayer(const std::string& fullPath) const;

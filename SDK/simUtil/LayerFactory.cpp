@@ -25,6 +25,7 @@
 #include "osgEarth/FeatureModelLayer"
 #include "osgEarth/GDAL"
 #include "osgEarth/ImageLayer"
+#include "osgEarth/MapboxGLImageLayer"
 #include "osgEarth/MBTiles"
 #include "osgEarth/OGRFeatureSource"
 #include "simCore/Common/Exception.h"
@@ -101,6 +102,25 @@ osgEarth::GDALImageLayer* LayerFactory::newGdalImageLayer(const std::string& ful
   const std::string suffixWithDot = simCore::getExtension(fullPath);
   if (suffixWithDot == ".jp2" || suffixWithDot == ".sid")
     layer->setInterpolation(osgEarth::INTERP_NEAREST);
+
+  return layer.release();
+}
+
+osgEarth::MapBoxGLImageLayer* LayerFactory::newMapBoxGlImageLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  osgEarth::MapBoxGLImageLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::MapBoxGLImageLayer> layer = new osgEarth::MapBoxGLImageLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+  layer->setURL(fullPath);
+  layer->setTileSize(512u);
+
+  // Use the same cache policy as GDAL
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
 
   return layer.release();
 }
