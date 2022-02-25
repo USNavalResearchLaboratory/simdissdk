@@ -68,7 +68,7 @@ void sim_proj_frag(inout vec4 color)
 
   // sample the depth texture as a mask
   float shadow_bias = clamp(0.00005 * tan(acos(-vert_dot_normal)), 0.0, 0.00005);
-  float shadow_d = textureProj(simProjShadowMap, simProjShadowMapCoord).z; // depth from shadow map
+  float shadow_d = textureProj(simProjShadowMap, simProjShadowMapCoord).r; // depth from shadow map
   float vertex_d = simProjShadowMapCoord.z / simProjShadowMapCoord.w; // depth of reprojected vertex
   float vertex_biased_d = vertex_d - shadow_bias; // apply a little bias
   fail_mix = 1.0 - clamp((shadow_d - vertex_biased_d) / shadow_bias, 0.0, 1.0);
