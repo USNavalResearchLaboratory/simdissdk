@@ -35,6 +35,7 @@
 #include "simVis/PlanetariumViewTool.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
+#include "simVis/Projector.h"
 #include "simVis/Locator.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
@@ -47,6 +48,7 @@
 #ifdef HAVE_IMGUI
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
+#include "osgEarth/ImGui/ImGui"
 #else
 #include "osgEarth/Controls"
 namespace ui = osgEarth::Util::Controls;
@@ -259,6 +261,20 @@ public:
         app_.planetarium->setUseGradient(useGradient_);
 
       ImGui::EndTable();
+
+      if (displayProjectors_ && shadowMapping_) {
+        auto p1 = app_.scenario->find<simVis::ProjectorNode>(app_.proj1Id);
+        if (p1) {
+          ImGui::Text("Projector 1 shadow map:");
+          ImGuiUtil::Texture(p1->getShadowMap(), ri);
+        }
+        auto p2 = app_.scenario->find<simVis::ProjectorNode>(app_.proj2Id);
+        if (p2) {
+          ImGui::Separator();
+          ImGui::Text("Projector 2 shadow map:");
+          ImGuiUtil::Texture(p2->getShadowMap(), ri);
+        }
+      }
     }
 
     ImGui::End();

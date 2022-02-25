@@ -11,8 +11,9 @@ uniform vec3 simProjPos;
 out vec4 simProjTexCoord;
 out vec3 simProjToVert_VIEW;
 out vec3 simProjLookVector_VIEW;
+out vec4 simProjVert_VIEW;
 
-#ifdef SIMVIS_PROJECT_USE_SHADOWMAP
+#if SIMVIS_PROJECT_USE_SHADOWMAP
 uniform mat4 simProjShadowMapMat;
 out vec4 simProjShadowMapCoord;
 #endif
@@ -32,8 +33,9 @@ void sim_proj_vert(inout vec4 vertex_VIEW)
   // projector look-vector in view space
   simProjLookVector_VIEW = vm3 * simProjDir;
 
-#ifdef SIMVIS_PROJECT_USE_SHADOWMAP
+#if SIMVIS_PROJECT_USE_SHADOWMAP
   // vertex projected into shadow map space
   simProjShadowMapCoord = simProjShadowMapMat * vertex_VIEW;
+  simProjVert_VIEW = vertex_VIEW;
 #endif
 }
