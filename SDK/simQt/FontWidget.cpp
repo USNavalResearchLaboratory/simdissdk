@@ -16,7 +16,7 @@
  * For more information please send email to simdis@enews.nrl.navy.mil
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * U.S. Naval Research Laboratory.
  *
