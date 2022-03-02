@@ -116,6 +116,11 @@ osgEarth::MapBoxGLImageLayer* LayerFactory::newMapBoxGlImageLayer(const std::str
   layer->setName(LayerFactory::completeBaseName(fullPath));
   layer->setURL(fullPath);
   layer->setTileSize(512u);
+#if OSGEARTH_SOVERSION >= 128
+  // A good rule of thumb is: (tile size / 256) * (FOV / 30). This results in a scale of 4.f
+  // for most SIMDIS cases, but this is still a bit small, so boost it up to 6.f.
+  layer->setPixelScale(6.f);
+#endif
 
   // Use the same cache policy as GDAL
   osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
