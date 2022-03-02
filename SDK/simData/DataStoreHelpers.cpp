@@ -319,7 +319,7 @@ int DataStoreHelpers::addMediaFile(const std::string& fileName, simData::DataSto
 
 simData::DataTable* DataStoreHelpers::getOrCreateDataTable(ObjectId objectId, const std::string& tableName, simData::DataStore* dataStore)
 {
-  if ((dataStore->objectType(objectId) == simData::NONE) || tableName.empty() || (dataStore == nullptr))
+  if ((dataStore == nullptr) || (dataStore->objectType(objectId) == simData::NONE) || tableName.empty())
     return nullptr;
 
   simData::DataTableManager& tableManager = dataStore->dataTableManager();
