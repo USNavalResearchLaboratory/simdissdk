@@ -56,8 +56,6 @@
 /// include interpolator
 #include "simData/LinearInterpolator.h"
 
-#define LC "[Projectors] "
-
 #ifdef HAVE_IMGUI
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
@@ -94,6 +92,8 @@ static const std::string s_togglePlatformFiveShadowMap =
 #endif
 static const std::string s_togglePlatformFiveMaxDrawRange =
 " ^ :    toggle the max draw range on platform 5";
+static const std::string s_reloadMap =
+" r : reload map";
 
 /// global variables for camera tethering between platforms
 simData::ObjectId platformId_0 = 0;
@@ -130,6 +130,7 @@ struct ControlPanel : public GUI::BaseGui
     ImGui::Text(s_viewPlatformFive.c_str());
     ImGui::Text(s_togglePlatformFiveShadowMap.c_str());
     ImGui::Text(s_togglePlatformFiveMaxDrawRange.c_str());
+    ImGui::Text(s_reloadMap.c_str());
     ImGui::End();
   }
 };
@@ -153,6 +154,7 @@ static Control* createHelp()
   vbox->addControl(new LabelControl(s_viewPlatformFive, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_togglePlatformFiveShadowMap, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_togglePlatformFiveMaxDrawRange, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_reloadMap, 14, simVis::Color::Silver));
   s_helpControl = vbox;
   return vbox;
 }
@@ -164,8 +166,9 @@ static Control* createHelp()
 struct MenuHandler : public osgGA::GUIEventHandler
 {
   /// constructor grabs all the state it needs for updating
-  MenuHandler(simData::DataStore& ds, simVis::View& view, const simData::ObjectId& projId, const std::string &initialImage) :
+  MenuHandler(simData::DataStore& ds, simVis::Viewer& viewer, simVis::View& view, const simData::ObjectId& projId, const std::string &initialImage) :
     dataStore_(ds),
+    viewer_(viewer),
     view_(view),
     projId_(projId),
     initialImage_(initialImage),
@@ -247,6 +250,12 @@ struct MenuHandler : public osgGA::GUIEventHandler
     return true;
   }
 
+  void reloadMap()
+  {
+    auto* mapNode = new osgEarth::MapNode(simExamples::createDefaultExampleMap());
+    viewer_.setMapNode(mapNode);
+  }
+
   /// callback to process user input
   bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
   {
@@ -311,6 +320,9 @@ struct MenuHandler : public osgGA::GUIEventHandler
         toggleMaxRange();
         handled = true;
         break;
+      case 'r':
+        reloadMap();
+        break;
     }
 
     return handled;
@@ -318,6 +330,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
 private: // data
   simData::DataStore& dataStore_;
+  simVis::Viewer& viewer_;
   simVis::View& view_;
   simData::ObjectId projId_;
   std::string initialImage_;
@@ -376,6 +389,7 @@ simData::ObjectId addProjector(simVis::ScenarioManager* scenario,
   prefs->set_rasterfile(imageURL);
   prefs->set_showfrustum(true); // Set to false to remove line frustum
   prefs->set_projectoralpha(0.8f);
+  prefs->set_doublesided(true);
   txn.complete(&prefs);
 
   if (varyFov)
@@ -583,7 +597,7 @@ int main(int argc, char **argv)
   viewer->getMainView()->setFocalOffsets(0, -45, 5e5);
 
   /// handle key press events
-  viewer->addEventHandler(new MenuHandler(dataStore, *viewer->getView(0), projectorId_0, imageURL));
+  viewer->addEventHandler(new MenuHandler(dataStore, *viewer, *viewer->getView(0), projectorId_0, imageURL));
 
   /// hovering the mouse over the platform should trigger a popup
   viewer->addEventHandler(new simVis::PopupHandler(scene.get()));
