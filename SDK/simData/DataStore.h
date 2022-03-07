@@ -626,6 +626,7 @@ public: // methods
 
   /**
    * Modify commands for a given platform
+   * Does not support modifying acceptsProjectors
    * @param id Platform that needs commands modified
    * @param modifier The object to modify the commands
    * @return 0 on success
@@ -634,6 +635,7 @@ public: // methods
 
   /**
    * Modify commands for a given custom rendering entity
+   * Does not support modifying acceptsProjectors
    * @param id Custom rendering entity that needs commands modified
    * @param modifier The object to modify the commands
    * @return 0 on success

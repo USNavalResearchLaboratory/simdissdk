@@ -33,6 +33,7 @@ void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
   if (updates_.empty())
   {
     reset_();
+    resetRepeatedFields_(ds, id);
     return;
   }
 
@@ -51,6 +52,7 @@ void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
       // commands have been executed - beam may no longer be in default state, so we need to reset beam to default
       prefs->clear_targetid();
       prefs->mutable_commonprefs()->set_datadraw(false);
+      clearRepeatedFields_(prefs);
       t.complete(&prefs);
     }
     reset_();
@@ -60,14 +62,19 @@ void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
   const BeamCommand* lastBeamCommand = current();
   if (!lastBeamCommand || time >= lastBeamCommand->time())
   {
+    // First starting from beginning make sure repeated fields are cleared
+    if (!lastBeamCommand)
+      clearRepeatedFields_(prefs);
+
     // Start from the earlier of lastUpdateTime_ or earliestInsert_
     const double startTime = (lastUpdateTime_ < earliestInsert_) ? lastUpdateTime_ : (earliestInsert_ - 0.0000001);  // Need the minus delta because of upper_bound in advanceTime_
 
     // time moved forward: execute all commands from startTime to new current time
     hasChanged_ = advance_(startTime, time);
-    // Must do an overwrite for accept projectors ID, a merge results in the same value over and over
-    if (!commandPrefsCache_.commonprefs().acceptprojectorids().empty())
-      prefs->mutable_commonprefs()->mutable_acceptprojectorids()->Clear();
+
+    // Check for repeated scalars in the command, forcing complete replacement instead of add-value
+    conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
+
     // apply the current command state at every update; commands override prefs settings
     prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
@@ -80,19 +87,19 @@ void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
     // time moved backwards: reset and execute all commands from start to new current time
     // reset lastUpdateTime_
     reset_();
+    clearRepeatedFields_(prefs);
+
     // reset important prefs to default; we will commit these changes regardless of commands
     prefs->clear_targetid();
     prefs->mutable_commonprefs()->set_datadraw(false);
 
     // advance time forward, execute all commands from 0.0 (use -1.0 since we need a time before 0.0) to new current time
     advance_(-1.0, time);
-    // Must do an overwrite for accept projectors ID, a merge results in the same value over and over
-    if (!commandPrefsCache_.commonprefs().acceptprojectorids().empty())
-      prefs->mutable_commonprefs()->mutable_acceptprojectorids()->Clear();
-    // apply the current command state at every update; commands override prefs settings
-    prefs->MergeFrom(commandPrefsCache_);
 
     hasChanged_ = true;
+
+    // apply the current command state at every update; commands override prefs settings
+    prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
   }
 }

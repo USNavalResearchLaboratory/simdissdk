@@ -418,6 +418,24 @@ protected: // methods
   void reset_();
 
   /**
+   * Repeated fields for command processing have unique requirements with respect to updating.
+   * If a repeated field of the update command has values, then the current preferences
+   * should be updated.  If the repeated field of the update command is empty, the current
+   * preferences should not be updated.   The routines below implement the unique
+   * requirements.  Currently the only repeated field that is part of command processing
+   * is acceptprojectorids().  If a new repeated field command is added then the routines
+   * hasRepeatedFields_() and clearRepeatedFields_() require changes.
+   */
+  /// Returns true if any repeated field has at least one value
+  bool hasRepeatedFields_(const PrefType* prefs) const;
+  /// Clears all repeated fields
+  void clearRepeatedFields_(PrefType* prefs) const;
+  /// Clears the repeated fields in pref if the corresponding repeated field in condition has at least one value
+  void conditionalClearRepeatedFields_(PrefType* prefs, const PrefType* condition) const;
+  /// Clears the repeated fields for the given entity
+  void resetRepeatedFields_(DataStore *ds, ObjectId id) const;
+
+  /**
   * Clear a command from the command cache
   * The affected preference fields in the commandPrefsCache_ will be clear()'ed.
   * @param commandPref a prefs message in which the fields that are set represent the command that is to be cleared

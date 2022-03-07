@@ -33,41 +33,6 @@
 namespace simData
 {
 
-namespace {
-
-/// Message Visitor that clears out a message's repeated fields, in preparation for a MergeFrom() that replaces instead of merging
-class ClearRepeatedScalar : public simData::protobuf::MessageVisitor::Visitor
-{
-public:
-  explicit ClearRepeatedScalar(google::protobuf::Message& messageToClear)
-    : messageToClear_(messageToClear)
-  {
-  }
-
-  // From MessageVisitor::Visitor::visit()
-  virtual void visit(const google::protobuf::Message& message, const google::protobuf::FieldDescriptor& descriptor, const std::string& variableName) override
-  {
-    // Only care about repeated scalars. The non-repeated and repeated messages are ignored
-    if (!descriptor.is_repeated() || descriptor.cpp_type() == google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE)
-      return;
-
-    // If the field is empty with no values, ignore it
-    const google::protobuf::Reflection& reflection = *message.GetReflection();
-    if (reflection.FieldSize(message, &descriptor) == 0)
-      return;
-
-    // Find and clear the field in the original message
-    std::pair<google::protobuf::Message*, const google::protobuf::FieldDescriptor*> result;
-    if (simData::protobuf::getField(messageToClear_, result, variableName) == 0 && result.second)
-      result.first->GetReflection()->ClearField(result.first, result.second);
-  }
-
-private:
-  google::protobuf::Message& messageToClear_;
-};
-}
-
-
 namespace MemorySliceHelper
 {
 template<typename T>
@@ -656,8 +621,7 @@ void MemoryCommandSlice<CommandType, PrefType>::insert(CommandType *data)
   else
   {
     // Must clear out the shared fields in target, that are repeated and non-empty
-    ClearRepeatedScalar clearRepeatedScalars(**iter);
-    simData::protobuf::MessageVisitor::visit(*data, clearRepeatedScalars);
+    conditionalClearRepeatedFields_((*iter)->mutable_updateprefs(), data->mutable_updateprefs());
     // merge into existing command at same time
     (*iter)->MergeFrom(*data);
     // in this case, deque does not take ownership of the (committed) data item; we need to delete it.
@@ -712,17 +676,11 @@ template<class CommandType, class PrefType>
 void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId id, double time)
 {
   clearChanged();
-  if (updates_.empty())
-  {
-    reset_();
-    return;
-  }
 
-  // if requested time is before the beginning
-  const CommandType *first = updates_.front();
-  if (time < first->time())
+  if (updates_.empty() || (time < updates_.front()->time()))
   {
     reset_();
+    resetRepeatedFields_(ds, id);
     return;
   }
 
@@ -736,6 +694,10 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
   const CommandType *lastCommand = current();
   if (!lastCommand || time >= lastCommand->time())
   {
+    // First starting from beginning make sure repeated fields are cleared
+    if (!lastCommand)
+      clearRepeatedFields_(prefs);
+
     // Start from the earlier of lastUpdateTime_ or earliestInsert_
     const double startTime = (lastUpdateTime_ < earliestInsert_) ? lastUpdateTime_ : (earliestInsert_ - 0.0000001);  // Need the minus delta because of upper_bound in advance_
 
@@ -743,8 +705,7 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
     hasChanged_ = advance_(startTime, time);
 
     // Check for repeated scalars in the command, forcing complete replacement instead of add-value
-    ClearRepeatedScalar clearRepeatedScalars(*prefs);
-    simData::protobuf::MessageVisitor::visit(commandPrefsCache_, clearRepeatedScalars);
+    conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
 
     // apply the current command state at every update, even if no change in command state occurred with this update; commands override prefs settings
     prefs->MergeFrom(commandPrefsCache_);
@@ -758,15 +719,12 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
     // time moved backwards: reset and execute all commands from start to new current time
     // reset lastUpdateTime_
     reset_();
+    clearRepeatedFields_(prefs);
 
-    // advance time forward, execute all commands from 0.0 (use -0.5 since we need a time before 0.0) to new current time
-    advance_(-0.5, time);
+    // advance time forward, execute all commands from 0.0 (use -1.0 since we need a time before 0.0) to new current time
+    advance_(-1.0, time);
 
     hasChanged_ = true;
-
-    // Check for repeated scalars in the command, forcing complete replacement instead of add-value
-    ClearRepeatedScalar clearRepeatedScalars(*prefs);
-    simData::protobuf::MessageVisitor::visit(commandPrefsCache_, clearRepeatedScalars);
 
     prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
@@ -865,8 +823,7 @@ bool MemoryCommandSlice<CommandType, PrefType>::advance_(double startTime, doubl
       else
       {
         // Check for repeated scalars in the command, forcing complete replacement instead of add-value
-        ClearRepeatedScalar clearRepeatedScalars(commandPrefsCache_);
-        simData::protobuf::MessageVisitor::visit(cmd->updateprefs(), clearRepeatedScalars);
+        conditionalClearRepeatedFields_(&commandPrefsCache_, &cmd->updateprefs());
         // execute the command
         commandPrefsCache_.MergeFrom(cmd->updateprefs());
       }
@@ -887,6 +844,42 @@ void MemoryCommandSlice<CommandType, PrefType>::reset_()
   earliestInsert_ = std::numeric_limits<double>::max();
 }
 
+template<class CommandType, class PrefType>
+bool MemoryCommandSlice<CommandType, PrefType>::hasRepeatedFields_(const PrefType* prefs) const
+{
+  return prefs->commonprefs().acceptprojectorids_size() != 0;
+}
+
+template<class CommandType, class PrefType>
+void MemoryCommandSlice<CommandType, PrefType>::clearRepeatedFields_(PrefType* prefs) const
+{
+  prefs->mutable_commonprefs()->mutable_acceptprojectorids()->Clear();
+}
+
+template<class CommandType, class PrefType>
+void MemoryCommandSlice<CommandType, PrefType>::conditionalClearRepeatedFields_(PrefType* prefs, const PrefType* condition) const
+{
+  if (hasRepeatedFields_(condition))
+    clearRepeatedFields_(prefs);
+}
+
+template<class CommandType, class PrefType>
+void MemoryCommandSlice<CommandType, PrefType>::resetRepeatedFields_(DataStore *ds, ObjectId id) const
+{
+  DataStore::Transaction t;
+  PrefType* prefs = nullptr;
+  simData::getPreference(ds, id, &prefs, &t);
+  if (prefs == nullptr)
+    return;
+
+  if (hasRepeatedFields_(prefs))
+  {
+    clearRepeatedFields_(prefs);
+    t.complete(&prefs);
+  }
+  else
+    t.release(&prefs);
+}
 
 namespace {
 /// Implementation of the Visitor interface that finds only fields that are set, adding them to the specified fieldList
