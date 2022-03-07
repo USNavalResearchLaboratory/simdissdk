@@ -432,8 +432,6 @@ protected: // methods
   void clearRepeatedFields_(PrefType* prefs) const;
   /// Clears the repeated fields in pref if the corresponding repeated field in condition has at least one value
   void conditionalClearRepeatedFields_(PrefType* prefs, const PrefType* condition) const;
-  /// Clears the repeated fields for the given entity
-  void resetRepeatedFields_(DataStore *ds, ObjectId id) const;
 
   /**
   * Clear a command from the command cache

@@ -680,7 +680,6 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
   if (updates_.empty() || (time < updates_.front()->time()))
   {
     reset_();
-    resetRepeatedFields_(ds, id);
     return;
   }
 
@@ -694,10 +693,6 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
   const CommandType *lastCommand = current();
   if (!lastCommand || time >= lastCommand->time())
   {
-    // First starting from beginning make sure repeated fields are cleared
-    if (!lastCommand)
-      clearRepeatedFields_(prefs);
-
     // Start from the earlier of lastUpdateTime_ or earliestInsert_
     const double startTime = (lastUpdateTime_ < earliestInsert_) ? lastUpdateTime_ : (earliestInsert_ - 0.0000001);  // Need the minus delta because of upper_bound in advance_
 
@@ -719,10 +714,10 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
     // time moved backwards: reset and execute all commands from start to new current time
     // reset lastUpdateTime_
     reset_();
-    clearRepeatedFields_(prefs);
 
     // advance time forward, execute all commands from 0.0 (use -1.0 since we need a time before 0.0) to new current time
     advance_(-1.0, time);
+    conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
 
     hasChanged_ = true;
 
@@ -861,24 +856,6 @@ void MemoryCommandSlice<CommandType, PrefType>::conditionalClearRepeatedFields_(
 {
   if (hasRepeatedFields_(condition))
     clearRepeatedFields_(prefs);
-}
-
-template<class CommandType, class PrefType>
-void MemoryCommandSlice<CommandType, PrefType>::resetRepeatedFields_(DataStore *ds, ObjectId id) const
-{
-  DataStore::Transaction t;
-  PrefType* prefs = nullptr;
-  simData::getPreference(ds, id, &prefs, &t);
-  if (prefs == nullptr)
-    return;
-
-  if (hasRepeatedFields_(prefs))
-  {
-    clearRepeatedFields_(prefs);
-    t.complete(&prefs);
-  }
-  else
-    t.release(&prefs);
 }
 
 namespace {
