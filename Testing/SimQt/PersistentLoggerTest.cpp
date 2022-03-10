@@ -334,7 +334,7 @@ int PersistentLoggerTest(int argc, char* argv[])
 
   QCoreApplication::setApplicationName("Persistent Logger Test");
   QCoreApplication::setOrganizationName(ORG_DOMAIN);
-  QCoreApplication::setOrganizationDomain("https://simdis.nrl.navy.mil");
+  QCoreApplication::setOrganizationDomain("https://www.trmc.osd.mil/simdis.html");
 
   rv += SDK_ASSERT(testFileRemoveByDate() == 0);
   rv += SDK_ASSERT(settingAgeCleansFiles() == 0);

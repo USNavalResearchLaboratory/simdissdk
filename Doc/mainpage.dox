@@ -14,7 +14,7 @@
  *
  *  The intent of the SIMDIS SDK is to provide a C++ framework to be used by third party developers to incorporate functionality similar to that provided by the SIMDIS 3D Visualization and Analysis Toolkit within their own applications.  The SIMDIS SDK will also serve as the basis for development of the next major SIMDIS release, SIMDIS 10.  
  *
- *  The SIMDIS SDK was developed by the Visualization Systems Integration branch of the Tactical Electronic Warfare Division at the U.S. Naval Research Laboratory.  For more information visit:  <a href=https://simdis.nrl.navy.mil>https://simdis.nrl.navy.mil</a>
+ *  The SIMDIS SDK was developed by the Visualization Systems Integration branch of the Tactical Electronic Warfare Division at the U.S. Naval Research Laboratory.  For more information visit:  <a href=https://www.trmc.osd.mil/helpdesk/projects/SIMDIS/issues>SIMDIS (CAC)</a> or <a href=https://www.tena-sda.org/helpdesk/projects/SIMDIS>SIMDIS (Public)</a>
  *
  *  This document is the SIMDIS SDK reference.  It contains reference documentation
  *  for all components of the SDK, consisting of:
