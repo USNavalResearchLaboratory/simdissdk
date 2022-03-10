@@ -170,7 +170,8 @@ Map* simExamples::createHawaiiMap()
   MBTilesElevationLayer* elev = new MBTilesElevationLayer();
   elev->setName("Kauai Elevation");
   elev->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB);
-  elev->setMinLevel(7u);
+  // SIM-13914 - setting min_level on elevation layers causing artifacts
+  //elev->setMinLevel(7u);
   map->addLayer(elev);
 
   return map;
