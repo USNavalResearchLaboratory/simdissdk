@@ -87,13 +87,16 @@ void sim_proj_frag(inout vec4 color)
     }
   }
 
+#if SIMVIS_PROJECT_USE_SHADOWMAP
   // don't draw on geometry whose plane is very close to the projection vector
-  // since it causes nasty artifacts
+  // since it causes nasty artifacts. Only enable this when shadow mapping, where
+  // the artifacts are most apparent.
   vis = abs(vert_dot_normal);
-  if (vis < 0.1 && fail_mix < 1.0) {
+  if (vis < 0.05 && fail_mix < 1.0) {
     fail_mix = 1.0;
     fail_color = vec4(1, 0, 1, 1);
   }
+#endif // SIMVIS_PROJECT_USE_SHADOWMAP
 
 #ifdef PROJ_DEBUG
 
