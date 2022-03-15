@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -24,7 +24,6 @@
 #include "osg/CullFace"
 #include "osg/Depth"
 #include "osg/Geode"
-#include "osg/MatrixTransform"
 #include "osg/PolygonMode"
 #include "osg/ref_ptr"
 #include "osg/UserDataContainer"
@@ -96,14 +95,13 @@ namespace
 
   struct SVMetaContainer : public osg::Referenced
   {
-    /// vector of vertex metadata
-    std::vector<SVMeta> vertMeta_;
-    /// quaternion that will "point" the volume along our direction vector
-    osg::Quat           dirQ_;
-    /// range of near face of sv
-    float               nearRange_;
-    /// range of far face of sv
-    float               farRange_;
+    std::vector<SVMeta> vertMeta_; ///< vector of vertex metadata
+    osg::Quat dirQ_;               ///< quaternion that will "point" the volume along our direction vector
+    float     nearRange_;          ///< range of near face of sv
+    float     farRange_;           ///< range of far face of sv
+    double    horizontalAngleRad_; ///< horizontal angle/width of sv (x dimension) in radians
+    double    verticalAngleRad_;   ///< vertical angle/height of sv (z dimension) in radians
+    bool      hasNearFace_ = false;
   };
 
   // class that adds an outline to an svPyramid
@@ -113,9 +111,11 @@ namespace
   class svPyramidOutline : public osgEarth::LineGroup
   {
   public:
-    svPyramidOutline(osg::MatrixTransform& xform, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls);
+    svPyramidOutline(simVis::SphericalVolume& sv, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls);
     void regenerate();
+    void hideSideOutlines(bool hideThem);
     void setColor(const osg::Vec4f& color);
+    bool hasNearFace() const;
   protected:
     /// osg::Referenced-derived
     virtual ~svPyramidOutline();
@@ -136,7 +136,7 @@ namespace
     bool drawWalls_;
   };
 
-  svPyramidOutline::svPyramidOutline(osg::MatrixTransform& xform, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls)
+  svPyramidOutline::svPyramidOutline(simVis::SphericalVolume& sv, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls)
     : vertexArray_(vertexArray),
     numPointsX_(numPointsX),
     numPointsZ_(numPointsZ),
@@ -147,7 +147,7 @@ namespace
     // svPyramid must provide a non-nullptr vertex array
     assert(vertexArray);
     setName("simVis::SphericalVolume::svPyramidOutline");
-    xform.addChild(this);
+    sv.addChild(this);
     // Line smoothing is not enabled by default, as it might cause problems with multisampling, or maybe with draw order.
 
     const bool hasNearFace = (nearFaceOffset_ > 0);
@@ -236,6 +236,11 @@ namespace
       if (line)
         line->setColor(outlineColor_);
     }
+  }
+
+  bool svPyramidOutline::hasNearFace() const
+  {
+    return nearFaceOffset_ > 0;
   }
 
   void svPyramidOutline::regenerate()
@@ -342,6 +347,20 @@ namespace
     }
   }
 
+  void svPyramidOutline::hideSideOutlines(bool hideThem)
+  {
+    // This method is useful for hiding the sides, e.g when rendering a complete circle
+    const unsigned int newNodeMask = (hideThem ? 0u : ~0u);
+    if (farLeftOutline_.valid())
+      farLeftOutline_->setNodeMask(newNodeMask);
+    if (farRightOutline_.valid())
+      farRightOutline_->setNodeMask(newNodeMask);
+    if (nearLeftOutline_.valid())
+      nearLeftOutline_->setNodeMask(newNodeMask);
+    if (nearRightOutline_.valid())
+      nearRightOutline_->setNodeMask(newNodeMask);
+  }
+
   class svPyramidFactory
   {
   private:
@@ -352,11 +371,11 @@ namespace
     };
 
   public:
-    svPyramidFactory(osg::MatrixTransform& xform, const simVis::SVData& data, const osg::Vec3& direction);
+    svPyramidFactory(simVis::SphericalVolume& sv, const simVis::SVData& data, const osg::Vec3& direction);
 
   private:  // helper methods
     void initializeData_(const simVis::SVData& d, const osg::Vec3& direction);
-    void initializePyramid(osg::MatrixTransform& xform);
+    void initializePyramid(simVis::SphericalVolume& sv);
     void populateFaceVertices_(Face face);
     void generateFaces_(osg::Geometry* geometry);
     void generateWalls_(osg::Geometry* volumeGeometry);
@@ -368,14 +387,14 @@ namespace
     osg::ref_ptr<osg::Vec3Array> vertexArray_;
     osg::ref_ptr<osg::Vec3Array> normalArray_;
     SVMetaContainer* metaContainer_;
-    float hfov_deg_;
-    float vfov_deg_;
+    double hfov_deg_;
+    double vfov_deg_;
     unsigned int numPointsX_;
-    float x_start_;
-    float spacingX_;
+    double x_start_;
+    double spacingX_;
     unsigned int numPointsZ_;
-    float z_start_;
-    float spacingZ_;
+    double z_start_;
+    double spacingZ_;
     unsigned int reserveSizeFace_;
     unsigned int reserveSizeCone_;
     unsigned short farFaceOffset_;
@@ -385,14 +404,14 @@ namespace
     bool hasNear_;
   };
 
-  svPyramidFactory::svPyramidFactory(osg::MatrixTransform& xform, const simVis::SVData& data, const osg::Vec3& direction)
+  svPyramidFactory::svPyramidFactory(simVis::SphericalVolume& sv, const simVis::SVData& data, const osg::Vec3& direction)
   {
     if (data.drawMode_ == simVis::SVData::DRAW_MODE_NONE || data.capRes_ == 0)
       return;
 
     initializeData_(data, direction);
 
-    initializePyramid(xform);
+    initializePyramid(sv);
 
     populateFaceVertices_(FARFACE);
     if (hasNear_)
@@ -413,9 +432,10 @@ namespace
     {
       // must provide a non-nullptr vertexArray to svPyramidOutline
       assert(vertexArray_);
-      svPyramidOutline* outline = new svPyramidOutline(xform, vertexArray_.get(), numPointsX_, numPointsZ_, farFaceOffset_, nearFaceOffset_, drawWalls_);
+      svPyramidOutline* outline = new svPyramidOutline(sv, vertexArray_.get(), numPointsX_, numPointsZ_, farFaceOffset_, nearFaceOffset_, drawWalls_);
       outline->setColor(color_);
       outline->regenerate();
+      outline->hideSideOutlines(simCore::areAnglesEqual(hfov_deg_ * simCore::DEG2RAD, M_TWOPI));
     }
   }
 
@@ -424,9 +444,9 @@ namespace
     color_ = data.color_;
     wallRes_ = data.wallRes_;
 
-    hfov_deg_ = osg::clampBetween(data.hfov_deg_, 0.01f, 360.0f);
+    hfov_deg_ = osg::clampBetween(data.hfov_deg_, 0.01, 360.0);
     numPointsX_ = data.capRes_ + 1;
-    x_start_ = -0.5f * hfov_deg_;
+    x_start_ = -0.5 * hfov_deg_;
     spacingX_ = hfov_deg_ / (numPointsX_ - 1);
     // in sphere-seg mode, bake the azim offsets into the model
     if (data.drawAsSphereSegment_)
@@ -434,12 +454,15 @@ namespace
       x_start_ += data.azimOffset_deg_;
     }
 
-    vfov_deg_ = osg::clampBetween(data.vfov_deg_, 0.01f, 180.0f);
-    z_start_ = -0.5f * vfov_deg_;
-    float z_end = 0.5f * vfov_deg_;
+    vfov_deg_ = osg::clampBetween(data.vfov_deg_, 0.01, 180.0);
+    z_start_ = -0.5 * vfov_deg_;
+    double z_end = 0.5 * vfov_deg_;
     // in sphere-seg mode, bake the elev offsets into the model, and clamp to [-90,90]
     if (data.drawAsSphereSegment_)
     {
+      // in-place updates (updateNearRange, updateFarRange, updateHorizAngle, updateVertAngle)
+      // not supported for this draw mode
+      // caller must ensure that in-place updates are disallowed
       z_start_ = simCore::angFix90(z_start_ + data.elevOffset_deg_);
       z_end = simCore::angFix90(z_end + data.elevOffset_deg_);
       vfov_deg_ = z_end - z_start_;
@@ -460,10 +483,10 @@ namespace
     if (drawFaces_ && drawWalls_)
     {
       // bottom & top faces are only drawn if vfov_deg < 180
-      if (vfov_deg_ < 180.0f) // 2 faces * (2 * (numPointsX - 1) * (1 + d.wallRes_)) vertices/face
+      if (vfov_deg_ < 180.0) // 2 faces * (2 * (numPointsX - 1) * (1 + d.wallRes_)) vertices/face
         reserveSizeCone_ += (numPointsX_ - 1) * (1 + data.wallRes_) * 2 * 2;
       // right & left faces only drawn if hfov_deg < 360
-      if (hfov_deg_ < 360.0f) // 2 faces * (2 * (numPointsZ - 1) * (1 + d.wallRes_)) vertices/face
+      if (hfov_deg_ < 360.0) // 2 faces * (2 * (numPointsZ - 1) * (1 + d.wallRes_)) vertices/face
         reserveSizeCone_ += (numPointsZ_ - 1) * (1 + data.wallRes_) * 2 * 2;
     }
 
@@ -476,11 +499,16 @@ namespace
     normalArray_ = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
     normalArray_->reserve(reserveSizeFace_ + reserveSizeCone_);
 
+    // store information to support in-place updates
     metaContainer_ = new SVMetaContainer();
     // quaternion that "points" the volume along our direction vector
     metaContainer_->dirQ_.makeRotate(osg::Y_AXIS, direction);
     metaContainer_->nearRange_ = data.nearRange_;
     metaContainer_->farRange_ = data.farRange_;
+    metaContainer_->horizontalAngleRad_ = hfov_deg_ * simCore::DEG2RAD;
+    metaContainer_->verticalAngleRad_ = vfov_deg_ * simCore::DEG2RAD;
+    metaContainer_->hasNearFace_ = hasNear_;
+
     std::vector<SVMeta>& vertexMetaData = metaContainer_->vertMeta_;
     vertexMetaData.reserve(reserveSizeFace_ + reserveSizeCone_);
 
@@ -494,12 +522,12 @@ namespace
     }
   }
 
-  void svPyramidFactory::initializePyramid(osg::MatrixTransform& xform)
+  void svPyramidFactory::initializePyramid(simVis::SphericalVolume& sv)
   {
-    // by convention, the sv xform always contains a primary geode for the volume
+    // by convention, the sv always contains a primary geode for the volume
     osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
     geodeSolid->setName("simVis::SphericalVolume::PrimaryGeode");
-    xform.addChild(geodeSolid.get());
+    sv.addChild(geodeSolid.get());
 
     // if we are drawing outline only, we still need a solid geometry (with no primitives) to hold the metadata that support in-place-update of the vertices that lineDrawable uses
     solidGeometry_ = new osg::Geometry();
@@ -533,15 +561,15 @@ namespace
     // iterate from x min (left) to xmax (right)
     for (unsigned int x = 0; x < numPointsX_; ++x)
     {
-      const float angleX_rad = osg::DegreesToRadians(x_start_ + spacingX_ * x);
-      const float sinAngleX = sin(angleX_rad);
-      const float cosAngleX = cos(angleX_rad);
+      const double angleX_rad = simCore::DEG2RAD * (x_start_ + spacingX_ * x);
+      const double sinAngleX = sin(angleX_rad);
+      const double cosAngleX = cos(angleX_rad);
 
       for (unsigned int z = 0; z < numPointsZ_; ++z)
       {
-        const float angleZ_rad = osg::DegreesToRadians(z_start_ + spacingZ_ * z);
-        const float sinAngleZ = sin(angleZ_rad);
-        const float cosAngleZ = cos(angleZ_rad);
+        const double angleZ_rad = simCore::DEG2RAD * (z_start_ + spacingZ_ * z);
+        const double sinAngleZ = sin(angleZ_rad);
+        const double cosAngleZ = cos(angleZ_rad);
 
         const osg::Vec3 unitUnrot(sinAngleX*cosAngleZ, cosAngleX*cosAngleZ, sinAngleZ);
         const osg::Vec3 unit = dirQ * unitUnrot;
@@ -797,11 +825,11 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
   // the number of concentric rings forming a face
   const unsigned int numRings = osg::clampBetween(d.capRes_, 1u, 10u);
   // cone cannot support anything > 180
-  const double hfov_deg = osg::clampBetween(static_cast<double>(d.hfov_deg_), 0.01, 180.0);
-  const double vfov_deg = osg::clampBetween(static_cast<double>(d.vfov_deg_), 0.01, 180.0);
+  const double hfov_deg = osg::clampBetween(d.hfov_deg_, 0.01, 180.0);
+  const double vfov_deg = osg::clampBetween(d.vfov_deg_, 0.01, 180.0);
   // each ring has this angular span
-  const double ringSpanX = 0.5 * osg::DegreesToRadians(hfov_deg) / numRings;
-  const double ringSpanZ = 0.5 * osg::DegreesToRadians(vfov_deg) / numRings;
+  const double ringSpanX = 0.5 * simCore::DEG2RAD * hfov_deg / numRings;
+  const double ringSpanZ = 0.5 * simCore::DEG2RAD * vfov_deg / numRings;
 
   // determine if the near face will be drawn
   const bool hasNear = d.nearRange_ > 0.0 && d.drawCone_;
@@ -835,6 +863,9 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
   m->resize(numVerts);
   metaContainer->nearRange_ = d.nearRange_;
   metaContainer->farRange_  = d.farRange_;
+  metaContainer->horizontalAngleRad_ = hfov_deg * simCore::DEG2RAD;
+  metaContainer->verticalAngleRad_ = vfov_deg * simCore::DEG2RAD;
+  metaContainer->hasNearFace_ = hasNear;
 
   // quaternion that will "point" the volume along our direction vector
   metaContainer->dirQ_.makeRotate(osg::Y_AXIS, direction);
@@ -1065,42 +1096,51 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
 // For the pyramid sv, it contains the outline.
 // For the cone sv, it contains a wireframe (polygon) geometry.
 
-osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& dir)
+SphericalVolume* SVFactory::createNode(const SVData& d, const osg::Vec3& dir)
 {
-  osg::MatrixTransform* xform = new osg::MatrixTransform();
-  xform->setName("SVFactory Node Transform");
+  SphericalVolume* sv = new SphericalVolume();
+  sv->setName("SVFactory Node Transform");
+  createNode(*sv, d, dir);
+  return sv;
+}
 
+void SVFactory::createNode(SphericalVolume& sv, const SVData& d, const osg::Vec3& dir)
+{
+  if (sv.getNumChildren() > 0)
+  {
+    // dev error; the provided sv must be empty
+    assert(0);
+    return;
+  }
   if (d.shape_ == SVData::SHAPE_PYRAMID)
   {
-    svPyramidFactory(*xform, d, dir);
+    svPyramidFactory(sv, d, dir);
   }
   else
   {
     osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
     geodeSolid->setName("Solid Geode");
-    xform->addChild(geodeSolid.get());
+    sv.addChild(geodeSolid.get());
     createCone_(geodeSolid.get(), d, dir);
   }
 
   // draw-as-wireframe or add wireframe to stipple/solid geom
   if (SVData::DRAW_MODE_WIRE & d.drawMode_)
-    processWireframe_(xform, d.drawMode_);
+    processWireframe_(&sv, d.drawMode_);
 
-  // Turn off backface culling
-  xform->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
+  // Turn off backface culling - we want to see the entire volume
+  sv.getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 
-  updateLighting(xform, d.lightingEnabled_);
-  updateBlending(xform, d.blendingEnabled_);
-  updateStippling(xform, ((SVData::DRAW_MODE_STIPPLE & d.drawMode_) == SVData::DRAW_MODE_STIPPLE));
-
-  return xform;
+  updateLighting(&sv, d.lightingEnabled_);
+  updateBlending(&sv, d.blendingEnabled_);
+  updateStippling(&sv, ((SVData::DRAW_MODE_STIPPLE & d.drawMode_) == SVData::DRAW_MODE_STIPPLE));
 }
 
-void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
+void SVFactory::processWireframe_(SphericalVolume* sv, int drawMode)
 {
   if (SVData::DRAW_MODE_WIRE & drawMode)
   {
-    osg::Geometry* solidGeom = SVFactory::solidGeometry(xform);
+    osg::Geometry* solidGeom = SVFactory::solidGeometry(sv);
     if (solidGeom == nullptr || solidGeom->empty())
     {
       assert(0);
@@ -1133,10 +1173,10 @@ void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
       }
       wireframeGeom->setColorArray(wireframeColor);
 
-      // add this to a 2nd group in the xform: the 2nd group in the xform is for opaque features
+      // add this to a 2nd group in the sv: the 2nd group in the sv is for opaque features
       osg::Group* groupWire = new osg::Group();
       groupWire->addChild(wireframeGeom);
-      xform->addChild(groupWire);
+      sv->addChild(groupWire);
 
       osg::StateSet* stateset = wireframeGeom->getOrCreateStateSet();
       osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
@@ -1156,10 +1196,10 @@ void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
   }
 }
 
-void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
+void SVFactory::updateStippling(SphericalVolume* sv, bool stippling)
 {
   // only the solid geometry can be stippled
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1169,10 +1209,10 @@ void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
   simVis::PolygonStipple::setValues(geom->getOrCreateStateSet(), stippling, 0u);
 }
 
-void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
+void SVFactory::updateLighting(SphericalVolume* sv, bool lighting)
 {
   // lighting is only applied to the solid geometry
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1185,10 +1225,10 @@ void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
     osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
 }
 
-void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
+void SVFactory::updateBlending(SphericalVolume* sv, bool blending)
 {
   // blending is only applied to the solid geometry
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1200,9 +1240,9 @@ void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
     osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
 }
 
-void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color)
+void SVFactory::updateColor(SphericalVolume* sv, const osg::Vec4f& color)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1226,7 +1266,7 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   }
 
   // if we have an 2nd (optional) group, it is opaque; update its color, but remove transparency
-  osg::Group* opaqueGroup = SVFactory::opaqueGroup(xform);
+  osg::Group* opaqueGroup = SVFactory::opaqueGroup(sv);
   if (opaqueGroup == nullptr)
     return;
 
@@ -1275,9 +1315,9 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   }
 }
 
-void SVFactory::updateNearRange(osg::MatrixTransform* xform, double nearRange)
+void SVFactory::updateNearRange(SphericalVolume* sv, double nearRange)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1300,15 +1340,15 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, double nearRange)
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
     const double farRatio = m[i].ratio_;
-    (*verts)[i] = m[i].unit_ * (nearRange + range*farRatio);
+    (*verts)[i] = m[i].unit_ * (nearRange + range * farRatio);
   }
   verts->dirty();
-  dirtyBound_(xform);
+  dirtyBound_(sv);
 }
 
-void SVFactory::updateFarRange(osg::MatrixTransform* xform, double farRange)
+void SVFactory::updateFarRange(SphericalVolume* sv, double farRange)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1331,21 +1371,22 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, double farRange)
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
     const double farRatio = m[i].ratio_;
-    (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range*farRatio);
+    (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range * farRatio);
   }
   verts->dirty();
-  dirtyBound_(xform);
+  dirtyBound_(sv);
 }
 
-void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle)
+int SVFactory::updateHorizAngle(SphericalVolume* sv, double newAngleRad)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
-    return;
+    return 1;
   }
+
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
   osg::Vec3Array* normals = static_cast<osg::Vec3Array*>(geom->getNormalArray());
@@ -1353,16 +1394,26 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
-    return;
+    return 1;
   }
+
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
   const bool isCone = (vertMeta[0].usage_ == USAGE_CONEFAR);
+  if ((isCone && newAngleRad > M_PI))
+  {
+    // representation switch between cone to pyramid - need to rebuild the volume, can't do in-place update
+    return 1;
+  }
+
   // for horiz bw: cone clamped to PI, pyramid clamped to TWOPI
   const double maxClamp = (isCone ? M_PI : M_TWOPI);
-  oldAngle = osg::clampBetween(oldAngle, (0.01 * simCore::DEG2RAD), maxClamp);
-  newAngle = osg::clampBetween(newAngle, (0.01 * simCore::DEG2RAD), maxClamp);
-  const double oldMinAngle = oldAngle * 0.5;
-  const double newMinAngle = newAngle * 0.5;
+  const double oldAngleRad = meta->horizontalAngleRad_;
+  newAngleRad = osg::clampBetween(newAngleRad, (0.01 * simCore::DEG2RAD), maxClamp);
+  if (oldAngleRad == newAngleRad)
+    return 0;
+  meta->horizontalAngleRad_ = newAngleRad;
+  const double oldHalfAngleRad = oldAngleRad * 0.5;
+  const double newHalfAngleRad = newAngleRad * 0.5;
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
     SVMeta& m = vertMeta[i];
@@ -1379,23 +1430,23 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
     case USAGE_CONEFAR:
     {
       // osg::clampBetween above guarantees this assert
-      assert(oldMinAngle > 0.);
-      // anglez_ in metadata is in a fixed ratio to max angle;
+      assert(oldHalfAngleRad > 0.);
+      // anglex_ in metadata is in a fixed ratio to max angle;
       // it may be the angle to a subring (in face), or max angle (in the cone)
       // max angle will change, but that ratio does not change, as we're not adding rings.
 
-      // createCone_ and updateVertAngle guarantee this
+      // createCone_ and updateHorizAngle guarantee this
       assert(m.anglex_ > 0. && m.anglex_ <= (M_PI_2 + std::numeric_limits<float>::epsilon()));
 
-      // developer error indicated; oldMinAngle is the max possible value for m.anglex_
-      assert(m.anglex_ <= (oldMinAngle + std::numeric_limits<float>::epsilon()));
+      // developer error indicated; oldHalfAngle is the max possible value for m.anglex_
+      assert(m.anglex_ <= (oldHalfAngleRad + std::numeric_limits<float>::epsilon()));
 
       // if ratio is less than 1, this is a vertex in a subring in the face
       // simple ratio logic works since cone is symmetric around 0; if not symmetric around 0, need to use pyramid logic
-      const double ratio = (simCore::areEqual(m.anglex_, oldMinAngle) ? 1.0 : m.anglex_ / oldMinAngle);
+      const double ratio = (simCore::areEqual(m.anglex_, oldHalfAngleRad) ? 1.0 : m.anglex_ / oldHalfAngleRad);
       // previous asserts and clamps guarantee this
       assert(ratio > 0. && ratio <= 1.);
-      const double ax_new = newMinAngle * ratio;
+      const double ax_new = newHalfAngleRad * ratio;
 
       // clamping and previous asserts guaranteee this
       assert(ax_new > 0. && ax_new <= M_PI_2);
@@ -1426,9 +1477,9 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
     case USAGE_RIGHT:
     {
       // osg::clampBetween above guarantees this assert
-      assert(oldAngle > 0.);
-      const double t = (m.anglex_ + oldMinAngle) / oldAngle;
-      const double ax = -newMinAngle + t * newAngle;
+      assert(oldAngleRad > 0.);
+      const double t = (m.anglex_ + oldHalfAngleRad) / oldAngleRad;
+      const double ax = -newHalfAngleRad + t * newAngleRad;
       const double sinx = sin(ax);
       const double cosx = cos(ax);
       const float sinz = sin(m.anglez_);
@@ -1486,12 +1537,16 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
 
   verts->dirty();
   normals->dirty();
-  dirtyBound_(xform);
+  dirtyBound_(sv);
+
+  // hide or show the sides as needed
+  SVFactory::updateSideOutlines_(sv);
+  return 0;
 }
 
-void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle)
+void SVFactory::updateVertAngle(SphericalVolume* sv, double newAngleRad)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1510,10 +1565,13 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
 
   // clamp to M_PI, to match clamping in pyramid and cone
-  oldAngle = osg::clampBetween(oldAngle, (0.01 * simCore::DEG2RAD), M_PI);
-  newAngle = osg::clampBetween(newAngle, (0.01 * simCore::DEG2RAD), M_PI);
-  const double oldMinAngle = oldAngle * 0.5;
-  const double newMinAngle = newAngle * 0.5;
+  const double oldAngleRad = meta->verticalAngleRad_;
+  newAngleRad = osg::clampBetween(newAngleRad, (0.01 * simCore::DEG2RAD), M_PI);
+  if (oldAngleRad == newAngleRad)
+    return;
+  meta->verticalAngleRad_ = newAngleRad;
+  const double oldHalfAngleRad = oldAngleRad * 0.5;
+  const double newHalfAngleRad = newAngleRad * 0.5;
 
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
@@ -1532,7 +1590,7 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
     case USAGE_CONEFAR:
     {
       // osg::clampBetween above guarantees this assert
-      assert(oldMinAngle > 0.);
+      assert(oldHalfAngleRad > 0.);
       // anglez_ in metadata is in a fixed ratio to max angle;
       // it may be the angle to a subring (in face), or max angle (in the cone)
       // that ratio does not change, as we're not adding rings
@@ -1541,15 +1599,15 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
       assert(m.anglez_ > 0. && m.anglez_ <= (M_PI_2 + std::numeric_limits<float>::epsilon()));
 
       // developer error indicated; oldMinAngle is the max possible value for m.anglez_
-      assert(m.anglez_ <= (oldMinAngle + std::numeric_limits<float>::epsilon()));
+      assert(m.anglez_ <= (oldHalfAngleRad + std::numeric_limits<float>::epsilon()));
 
       // if ratio is less than 1, this is a vertex in a subring in the face
       // simple ratio logic works since cone is symmetric around 0; if not, need to use (pyramid) logic below
-      const double ratio = (simCore::areEqual(m.anglez_, oldMinAngle) ? 1.0 : m.anglez_ / oldMinAngle);
+      const double ratio = (simCore::areEqual(m.anglez_, oldHalfAngleRad) ? 1.0 : m.anglez_ / oldHalfAngleRad);
       // previous asserts and clamps guarantee this
       assert(ratio > 0. && ratio <= 1.);
 
-      const double az_new = newMinAngle * ratio;
+      const double az_new = newHalfAngleRad * ratio;
       // clamping and previous asserts guaranteee this
       assert(az_new > 0. && az_new <= M_PI_2);
 
@@ -1577,15 +1635,15 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
     case USAGE_RIGHT:
     {
       // osg::clampBetween above guarantees this assert
-      assert(oldAngle > 0.);
-      const double t = (m.anglez_ + oldMinAngle) / oldAngle;
-      const double az = -newMinAngle + t * newAngle;
+      assert(oldAngleRad > 0.);
+      const double t = (m.anglez_ + oldHalfAngleRad) / oldAngleRad;
+      const double az = -newHalfAngleRad + t * newAngleRad;
       const float sinx = sin(m.anglex_);
       const float cosx = cos(m.anglex_);
       const double sinz = sin(az);
       const double cosz = cos(az);
       m.anglez_ = az;
-      m.unit_.set(sinx*cosz, cosx*cosz, sinz);
+      m.unit_.set(sinx * cosz, cosx * cosz, sinz);
       // this is a unit vector, no need to normalize
       assert(simCore::areEqual(m.unit_.length(), 1.0));
       break;
@@ -1637,40 +1695,58 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
 
   verts->dirty();
   normals->dirty();
-  dirtyBound_(xform);
+  dirtyBound_(sv);
 }
 
-osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
+osg::Geometry* SVFactory::solidGeometry(SphericalVolume* sv)
 {
-  if (xform == nullptr || xform->getNumChildren() == 0)
+  if (sv == nullptr || sv->getNumChildren() == 0)
     return nullptr;
-  osg::Geode* geode = xform->getChild(0)->asGeode();
+  osg::Geode* geode = sv->getChild(0)->asGeode();
   if (geode == nullptr || geode->getNumDrawables() == 0)
     return nullptr;
   return geode->getDrawable(0)->asGeometry();
 }
 
 // if the sv has a 2nd geode that adds outline or wireframe, it will be the MatrixTransform 2nd child
-osg::Group* SVFactory::opaqueGroup(osg::MatrixTransform* xform)
+osg::Group* SVFactory::opaqueGroup(SphericalVolume* sv)
 {
-  if (xform == nullptr || xform->getNumChildren() < 2)
+  if (sv == nullptr || sv->getNumChildren() < 2)
     return nullptr;
-  return xform->getChild(1)->asGroup();
+  return sv->getChild(1)->asGroup();
 }
 
-// dirty bounds for all geometries in the xform
-void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
+void SVFactory::updateSideOutlines_(SphericalVolume* sv)
 {
-  if (xform == nullptr || xform->getNumChildren() == 0)
+  osg::Group* opaqueGroup = SVFactory::opaqueGroup(sv);
+  if (!opaqueGroup || opaqueGroup->getNumChildren() == 0)
+    return;
+  // the opaque group may be an svPyramidOutline; svPyramidOutline must be regenerated using the updated vertices
+  svPyramidOutline* pyramidOutline = dynamic_cast<svPyramidOutline*>(opaqueGroup);
+  if (!pyramidOutline)
+    return;
+  // handle the geometries in the primary geode
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
+  SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
+  if (!meta)
+    return;
+  pyramidOutline->hideSideOutlines(!meta->hasNearFace_ && simCore::areAnglesEqual(meta->horizontalAngleRad_, M_TWOPI));
+}
+
+// dirty bounds for all geometries in the sv
+void SVFactory::dirtyBound_(SphericalVolume* sv)
+{
+  if (sv == nullptr || sv->getNumChildren() == 0)
     return;
 
   // handle the geometries in the primary geode
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(sv);
   if (geom && !geom->empty())
     geom->dirtyBound();
 
+  SVFactory::updateSideOutlines_(sv);
   // handle the 2nd/opaque group
-  osg::Group* opaqueGroup = SVFactory::opaqueGroup(xform);
+  osg::Group* opaqueGroup = SVFactory::opaqueGroup(sv);
   if (opaqueGroup && opaqueGroup->getNumChildren() > 0)
   {
     // the opaque group may be an svPyramidOutline; svPyramidOutline must be regenerated using the updated vertices

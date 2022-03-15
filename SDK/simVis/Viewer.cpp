@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -33,13 +33,13 @@ namespace simVis
 
 Viewer::Viewer()
 {
-  init_(FULLSCREEN, 100, 100, 1024, 768);
+  init_(WINDOWED, 100, 100, 1024, 768);
 }
 
 Viewer::Viewer(osg::ArgumentParser& parser)
   : simVis::ViewManager(parser)
 {
-  init_(FULLSCREEN, 100, 100, 1024, 768);
+  init_(WINDOWED, 100, 100, 1024, 768);
 }
 
 Viewer::Viewer(DefaultScreenSize screenSize, int x, int y, int w, int h)

@@ -13,14 +13,11 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * For more information please send email to simdis@enews.nrl.navy.mil
- *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
- ****************************************************************************
  *
  */
 #include <cassert>
@@ -58,7 +55,6 @@
 #include "simVis/Registry.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
-#include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/LoaderUtils.h"
 #include "simVis/GOG/ParsedShape.h"
@@ -1941,12 +1937,10 @@ void FeatureNodeInterface::setAltitudeMode(AltitudeMode altMode)
   case ALTITUDE_GROUND_CLAMPED:
     style_.getOrCreate<osgEarth::AltitudeSymbol>()->clamping() = osgEarth::AltitudeSymbol::CLAMP_TO_TERRAIN;
     style_.getOrCreate<osgEarth::AltitudeSymbol>()->technique() = osgEarth::AltitudeSymbol::TECHNIQUE_SCENE;
-    style_.getOrCreate<osgEarth::RenderSymbol>()->depthOffset()->automatic() = true;
     break;
   case ALTITUDE_GROUND_RELATIVE:
     style_.getOrCreate<osgEarth::AltitudeSymbol>()->clamping() = osgEarth::AltitudeSymbol::CLAMP_RELATIVE_TO_TERRAIN;
     style_.getOrCreate<osgEarth::AltitudeSymbol>()->technique() = osgEarth::AltitudeSymbol::TECHNIQUE_SCENE;
-    style_.getOrCreate<osgEarth::RenderSymbol>()->depthOffset()->automatic() = true;
     break;
   case ALTITUDE_EXTRUDE:
     // Shouldn't get here; failure in setExtrude()
@@ -2684,9 +2678,15 @@ int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint*
 
 void ImageOverlayInterface::setOpacity(float opacity)
 {
+  // Sets GogNodeInterface::opacity_, which updates GOG Tool GUI
   GogNodeInterface::setOpacity(opacity);
+  // Updates the actual image on-screen
   if (imageNode_.valid())
     imageNode_->setAlpha(opacity);
+  // Updates the internal shape copy, simCore::GOG::ImageOverlay, used for serialization
+  simCore::GOG::ImageOverlay* simCoreOverlay = dynamic_cast<simCore::GOG::ImageOverlay*>(shape_.get());
+  if (simCoreOverlay)
+    simCoreOverlay->setOpacity(opacity);
 }
 
 void ImageOverlayInterface::adjustAltitude_()

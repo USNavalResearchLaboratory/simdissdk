@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -50,8 +50,8 @@ class SDKQT_EXPORT FilterDialog : public QDialog
   Q_OBJECT;
 public:
   /** Constructor */
-  explicit FilterDialog(QWidget* parent = nullptr);
-  virtual ~FilterDialog(){};
+  explicit FilterDialog(SettingsPtr settings, QWidget* parent = nullptr);
+  virtual ~FilterDialog();
 
   /** Override the QDialog close event to emit the closedGui signal */
   virtual void closeEvent(QCloseEvent*);
@@ -59,6 +59,9 @@ public:
 signals:
   /** Signal emitted when this dialog is closed */
   void closedGui();
+private:
+  /// ptr to settings for saving/restoring geometry
+  SettingsPtr settings_;
 };
 
 

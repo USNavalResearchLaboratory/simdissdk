@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -319,7 +319,7 @@ int DataStoreHelpers::addMediaFile(const std::string& fileName, simData::DataSto
 
 simData::DataTable* DataStoreHelpers::getOrCreateDataTable(ObjectId objectId, const std::string& tableName, simData::DataStore* dataStore)
 {
-  if ((dataStore->objectType(objectId) == simData::NONE) || tableName.empty() || (dataStore == nullptr))
+  if ((dataStore == nullptr) || (dataStore->objectType(objectId) == simData::NONE) || tableName.empty())
     return nullptr;
 
   simData::DataTableManager& tableManager = dataStore->dataTableManager();

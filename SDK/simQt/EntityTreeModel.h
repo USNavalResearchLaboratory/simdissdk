@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -166,7 +166,6 @@ private:
   class TreeListener;
 
   // Setup the tree
-  void setupModelData_(EntityTreeItem *parent, simData::DataStore* dataStore);
   void buildTree_(simData::ObjectType type, const simData::DataStore* dataStore,
     const simData::DataStore::IdList& idList, EntityTreeItem *parent);
   EntityTreeItem* findItem_(uint64_t entityId) const;

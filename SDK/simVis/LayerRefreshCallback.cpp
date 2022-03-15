@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -143,7 +143,11 @@ void LayerRefreshCallback::runImpl_()
   for (auto it = watchedLayers_.begin(); it != watchedLayers_.end(); ++it)
   {
     osg::observer_ptr<osgEarth::TileLayer> layer = (*it).layer;
+#if OSGEARTH_SOVERSION >= 127
+    if (!layer.valid() || !layer->getOpenAutomatically())
+#else
     if (!layer.valid() || !layer->getEnabled())
+#endif
     {
       assert(0); // Should not be watching a nullptr or disabled layer
       continue;

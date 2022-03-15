@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -59,9 +59,6 @@ public:
   /** Name of fragment shader for glowing highlight */
   std::string glowHighlightFragment() const;
 
-  /** osgEarth LineDrawable placeholder shader */
-  std::string lineDrawable() const;
-
   /** Name of vertex shader for overhead mode */
   std::string overheadModeVertex() const;
 
@@ -76,13 +73,12 @@ public:
   /** Name of fragment shader for picker */
   std::string pickerFragment() const;
 
-  /** Name of vertex shader for point size */
-  std::string pointSizeVertex() const;
-
   /** Name of vertex shader for projector manager */
   std::string projectorManagerVertex() const;
   /** Name of fragment shader for projector manager */
   std::string projectorManagerFragment() const;
+  /** Name of the shaders for projecting on an entity */
+  std::string projectorOnEntity() const;
 
   /** Name of RF Propagation vertex based main shader */
   std::string rfPropVertexBasedVertex() const;

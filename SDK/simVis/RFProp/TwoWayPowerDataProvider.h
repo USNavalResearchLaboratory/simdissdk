@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -33,6 +33,19 @@ namespace simRF
 class SDKVIS_EXPORT TwoWayPowerDataProvider : public FunctionalProfileDataProvider
 {
 public:
+  /**
+  * Gets the two-way-power value corresponding to a ppf in dB
+  * @param radarParameters  the radar parameters specified for this rf prop instance
+  * @param ppfdB  the ppf specified in dB
+  * @param slantRangeM  The slant range, in meters
+  * @param xmtGaindB  The transmit gain in dB
+  * @param rcvGaindB  The receiver gain in dB
+  * @param rcsSqm  The radar-cross-section to use for calculation, in square meters
+  * @return two-way-power value, in dB
+  */
+  static double getTwoWayPower(const simCore::RadarParameters& radarParameters, double ppfdB, double slantRangeM, double xmtGaindB, double rcvGaindB, double rcsSqm = 1.0);
+
+
   /**
   * Construct a TwoWayPowerDataProvider with given parameters
   * @param templateProvider The provider that provides PPF information for this provider
@@ -61,18 +74,6 @@ public:
 protected:
   /// osg::Referenced-derived
   virtual ~TwoWayPowerDataProvider() {}
-
-private:
-  /**
-  * Gets the two-way-power value corresponding to a ppf in dB
-  * @param ppfdB the ppf specified in dB
-  * @param slantRangeM The slant range, in meters
-  * @param xmtGaindB The transmit gain in dB
-  * @param rcvGaindB The receiver gain in dB
-  * @param rcsSqm The radar-cross-section to use for calculation, in square meters
-  * @return two-way-power value, in dB
-  */
-  double getTwoWayPower_(double ppfdB, double slantRangeM, double xmtGaindB, double rcvGaindB, double rcsSqm = 1.0) const;
 
 private:
   const RadarParametersPtr radarParameters_;

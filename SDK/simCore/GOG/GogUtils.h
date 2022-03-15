@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -36,6 +36,20 @@ namespace GOG
 {
 
 class ParsedShape;
+
+/** Generic reusable GOG-related methods */
+class SDKCORE_EXPORT GogUtils
+{
+public:
+  /** Converts an annotation string to a displayable string, de-encoding newlines and underscores */
+  static std::string decodeAnnotation(const std::string& anno);
+
+  /**
+   * Processes a URL e.g. from imagefile or annotations. Removes quotes and attempts to dereference
+   * file protocol ("file://") links to raw filenames.
+   */
+  static std::string processUrl(const std::string& addr);
+};
 
 /**
  * Current state of default units. This object communicates to parsing elements

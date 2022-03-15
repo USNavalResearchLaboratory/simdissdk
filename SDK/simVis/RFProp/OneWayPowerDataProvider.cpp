@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -36,34 +36,35 @@ double OneWayPowerDataProvider::getValueByIndex(unsigned int heightIndex, unsign
 {
   double ppfdB = FunctionalProfileDataProvider::templateGetValueByIndex_(heightIndex, rangeIndex);
   return (ppfdB <= simCore::SMALL_DB_VAL) ?
-    simCore::SMALL_DB_VAL : getOneWayPower_(ppfdB, FunctionalProfileDataProvider::getRange_(rangeIndex), radarParameters_->antennaGaindBi, radarParameters_->antennaGaindBi);
+    simCore::SMALL_DB_VAL : OneWayPowerDataProvider::getOneWayPower(*radarParameters_, ppfdB, FunctionalProfileDataProvider::getRange_(rangeIndex), radarParameters_->antennaGaindBi, radarParameters_->antennaGaindBi);
 }
 
 double OneWayPowerDataProvider::interpolateValue(double height, double range) const
 {
   double ppfdB = FunctionalProfileDataProvider::templateInterpolateValue_(height, range);
   return (ppfdB <= simCore::SMALL_DB_VAL) ?
-    simCore::SMALL_DB_VAL : getOneWayPower_(ppfdB, range, radarParameters_->antennaGaindBi, radarParameters_->antennaGaindBi);
+    simCore::SMALL_DB_VAL : OneWayPowerDataProvider::getOneWayPower(*radarParameters_, ppfdB, range, radarParameters_->antennaGaindBi, radarParameters_->antennaGaindBi);
 }
 
 double OneWayPowerDataProvider::getOneWayPower(double height, double range, double slantRangeM, double xmtGaindB, double rcvGaindB) const
 {
   double ppfdB = FunctionalProfileDataProvider::templateInterpolateValue_(height, range);
   return (ppfdB <= simCore::SMALL_DB_VAL) ?
-    simCore::SMALL_DB_VAL : getOneWayPower_(ppfdB, slantRangeM, xmtGaindB, rcvGaindB);
+    simCore::SMALL_DB_VAL : OneWayPowerDataProvider::getOneWayPower(*radarParameters_, ppfdB, slantRangeM, xmtGaindB, rcvGaindB);
 }
 
-double OneWayPowerDataProvider::getOneWayPower_(double ppfdB, double slantRangeM, double xmtGaindB, double rcvGaindB) const
+// static
+double OneWayPowerDataProvider::getOneWayPower(const simCore::RadarParameters& radarParameters, double ppfdB, double slantRangeM, double xmtGaindB, double rcvGaindB)
 {
   return simCore::getRcvdPowerBlake(
     slantRangeM,
-    radarParameters_->freqMHz,
-    radarParameters_->xmtPowerW,
+    radarParameters.freqMHz,
+    radarParameters.xmtPowerW,
     xmtGaindB,
     rcvGaindB,
     0,          // rcs, only required for two-way propagation
     ppfdB,
-    radarParameters_->systemLossdB,
+    radarParameters.systemLossdB,
     true);
 }
 

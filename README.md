@@ -20,7 +20,8 @@ The SIMDIS SDK was developed by the Visualization Systems Integration branch
 of the Tactical Electronic Warfare Division at the U.S. Naval Research
 Laboratory.  For more information visit:
 
-  https://simdis.nrl.navy.mil
+ * [SIMDIS Help Desk CAC Required]
+ * [SIMDIS Help Desk Public]
 
 The SIMDIS SDK is not SIMDIS.  It is a C++ framework that is the underlying
 application framework supporting SIMDIS.  SIMDIS is built on top of the SIMDIS
@@ -103,7 +104,7 @@ applications in the SIMDIS toolkit.
   [Doxygen]: <http://www.doxygen.nl/>
   [OpenSceneGraph]: <https://github.com/OpenSceneGraph/OpenSceneGraph>
   [osgEarth]: <https://github.com/gwaldron/osgearth>
-  [SIMDIS]: <https://simdis.nrl.navy.mil>
+  [SIMDIS]: <https://www.trmc.osd.mil/simdis.html>
   [SIMDIS Help Desk CAC Required]: <https://www.trmc.osd.mil/helpdesk/projects/SIMDIS>
   [SIMDIS Help Desk Public]: <https://www.tena-sda.org/helpdesk/projects/SIMDIS>
   [Pelican Mapping]: <http://www.pelicanmapping.com>

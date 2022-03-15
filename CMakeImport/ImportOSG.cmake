@@ -267,18 +267,27 @@ set(OSG_ALL_LIBDEPENDENCIES
 
 # Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true
 if(OSG_SHOULD_INSTALL)
+    # osg_p3d.dll/so is release, and need special treatment
     install(DIRECTORY ${OSG_PLUGIN_PATH}/
         DESTINATION ${OSG_PLUGIN_INSTALL_DIR}
         CONFIGURATIONS "Debug"
         COMPONENT ${OSG_INSTALL_COMPONENT}
-        FILES_MATCHING REGEX ${DEBUG_INSTALL_PATTERN}
+        FILES_MATCHING
+            REGEX ${DEBUG_INSTALL_PATTERN}
+            PATTERN "*p3d.*" EXCLUDE
     )
 
+    # SIM-13848: Install release DLLs on Linux if debug not found
+    set(CONFIG "Release")
+    if(UNIX AND NOT EXISTS "${OSG_PLUGIN_PATH}/osgdb_rotd.so")
+        set(CONFIG)
+    endif()
     install(DIRECTORY ${OSG_PLUGIN_PATH}/
         DESTINATION ${OSG_PLUGIN_INSTALL_DIR}
-        CONFIGURATIONS "Release"
+        CONFIGURATIONS ${CONFIG}
         COMPONENT ${OSG_INSTALL_COMPONENT}
-        FILES_MATCHING REGEX ${RELEASE_INSTALL_PATTERN}
+            REGEX ${RELEASE_INSTALL_PATTERN}
+            PATTERN "*p3d.*"
     )
 endif()
 

@@ -14,16 +14,44 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
 #include "simCore/GOG/ParsedShape.h"
+#include "simCore/String/Tokenizer.h"
+#include "simCore/String/Utils.h"
 #include "simCore/GOG/GogUtils.h"
 
 namespace simCore { namespace GOG {
+
+std::string GogUtils::decodeAnnotation(const std::string& anno)
+{
+  const std::string r1 = simCore::StringUtils::substitute(anno, "_", " ");
+  return simCore::StringUtils::substitute(r1, "\\n", "\n");
+}
+
+std::string GogUtils::processUrl(const std::string& addr)
+{
+  std::string candidate = simCore::removeQuotes(simCore::expandEnv(addr));
+  // OSG cannot handle "file://" protocol out of the box
+  if (candidate.substr(0, 7) == "file://")
+  {
+    // Trim file://. This will automatically handle "file://c:/home/loc.png" and "file:///home/user/loc.png"
+    candidate = candidate.substr(7);
+#ifdef WIN32
+    // On Windows, check for difference between e.g. "file://c:/home/loc.png" and "file:///c:/home/loc.png".
+    // We're left with "/c:/home..." in triple slash condition...
+    if (candidate.size() > 3 && candidate[0] == '/' && candidate[2] == ':')
+      candidate = candidate.substr(1);
+#endif
+  }
+  return candidate;
+}
+
+////////////////////////////////////////////////////////////////////
 
 UnitsState::UnitsState()
 {

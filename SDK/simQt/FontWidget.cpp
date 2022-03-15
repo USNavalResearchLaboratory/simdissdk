@@ -9,21 +9,15 @@
  *
  *
  * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
- *               EW Modeling and Simulation, Code 5770
+ *               EW Modeling & Simulation, Code 5773
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * For more information please send email to simdis@enews.nrl.navy.mil
- *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
- *
- * U.S. Naval Research Laboratory.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
- ****************************************************************************
- *
  *
  */
 #include <cassert>
@@ -156,13 +150,15 @@ bool FontWidget::customFontsAvailable() const
 
 void FontWidget::setFontFile(const QString& fontFile)
 {
+  const QFileInfo fi(fontFile);
+
   // use QRawFont to convert the file name to a font family name
-  QString fontFullPath = fontDir_->absoluteFilePath(fontFile);
+  QString fontFullPath = fontDir_->absoluteFilePath(fi.fileName());
   if (fontFullPath.isEmpty() || fontFile.isEmpty())
     return;
   // Only use getFriendlyFontName_() and QRawFont when we're able
   // to use SIMDIS fonts. Otherwise, just use the font file name. SDK-119
-  QString fontName = fontFile;
+  QString fontName = fi.fileName();
   if (useFriendlyFontName_)
     fontName = getFriendlyFontName_(fontFullPath);
   int index = ui_->fontNameComboBox->findText(fontName, Qt::MatchFixedString);

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -99,9 +99,9 @@ namespace
     osg::ref_ptr<LabelControl>   p2p_result;
 #endif
 
-    osg::ref_ptr<simVis::RadialLOSNode> los;
-    osg::ref_ptr<osgEarth::MapNode>     mapNode;
-    osg::ref_ptr<osgEarth::FeatureNode> p2pFeature;
+    osg::observer_ptr<simVis::RadialLOSNode> los;
+    osg::observer_ptr<osgEarth::MapNode>     mapNode;
+    osg::observer_ptr<osgEarth::FeatureNode> p2pFeature;
 
     // Applies the UI control values to the Radial LOS data model.
     void apply()
@@ -141,7 +141,7 @@ namespace
       }
 
       p2p_result->setText("");
-      if (p2pFeature)
+      if (p2pFeature.valid())
         p2pFeature->setNodeMask(0);
 #endif
     }
@@ -411,11 +411,10 @@ private:
 
     osg::Group* editorGroup = new osg::Group;
     editorGroup->addChild(dragger);
-    editorGroup->addChild(node);
-    editorGroup->addChild(app.p2pFeature);
+    editorGroup->addChild(node.get());
+    editorGroup->addChild(app.p2pFeature.get());
 
     dragger->addPositionChangedCallback(new RunPointToPointLOSCallback(app));
-
     return editorGroup;
   }
 }
@@ -427,10 +426,9 @@ int main(int argc, char **argv)
   // Set up the scene:
   simCore::checkVersionThrow();
   simExamples::configureSearchPaths();
-  osg::ref_ptr<osgEarth::Map> map = simExamples::createRemoteWorldMap();
 
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map.get());
+  viewer->setMap(simExamples::createRemoteWorldMap());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // add sky node
@@ -445,8 +443,9 @@ int main(int argc, char **argv)
 #endif
 
   // Initialize the LOS:
-  osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
+  osg::observer_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
   app.mapNode = scene->getMapNode();
+
   app.los = new simVis::RadialLOSNode(app.mapNode.get());
   app.los->setCoordinate(simCore::Coordinate(
     simCore::COORD_SYS_LLA,
@@ -457,7 +456,7 @@ int main(int argc, char **argv)
   app.apply();
 
   // Add it to the scene:
-  scene->getScenario()->addChild(app.los);
+  scene->getScenario()->addChild(app.los.get());
 
   // Create a cursor for positioning a P2P LOS test:
   scene->getScenario()->addChild(createP2PGraphics(app));

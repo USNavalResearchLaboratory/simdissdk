@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -42,10 +42,27 @@
 namespace simQt {
 
 const QString SETTING_NAME_FILTER = "/FilterSettings/";
+const QString FILTER_DIALOG_GEOMETRY = "/FilterDialogGeometry";
 
-FilterDialog::FilterDialog(QWidget* parent)
-  :QDialog(parent)
-{}
+FilterDialog::FilterDialog(SettingsPtr settings, QWidget* parent)
+  :QDialog(parent),
+   settings_(settings)
+{
+  // restore geometry if settings is valid
+  if (settings_)
+  {
+    QVariant geom = settings_->value(FILTER_DIALOG_GEOMETRY);
+    if (geom.isValid())
+      restoreGeometry(geom.toByteArray());
+  }
+}
+
+FilterDialog::~FilterDialog()
+{
+  // save geometry if settings is valid
+  if (settings_)
+    settings_->setValue(FILTER_DIALOG_GEOMETRY, saveGeometry());
+}
 
 void FilterDialog::closeEvent(QCloseEvent* ev)
 {
@@ -609,7 +626,7 @@ void EntityTreeComposite::showFilters_()
     return;
   }
   // create a new filter dialog, using the filter widgets from the EntityTreeWidget's proxy model
-  filterDialog_ = new FilterDialog(this);
+  filterDialog_ = new FilterDialog(settings_, this);
   QList<QWidget*> filterWidgets = entityTreeWidget_->filterWidgets(filterDialog_);
   filterDialog_->setMinimumWidth(200);
   filterDialog_->setWindowTitle(tr("Entity Filters"));

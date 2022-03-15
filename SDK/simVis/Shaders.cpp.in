@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -27,36 +27,35 @@ namespace simVis {
 Shaders::Shaders()
 {
   // Assign the fall-back shaders if the files are not found
-  add(alphaColorFilterFragment(), "@AlphaColorFilter.frag.glsl@");
-  add(alphaTestFragment(), "@AlphaTest.frag.glsl@");
-  add(areaHighlightVertex(), "@AreaHighlight.vert.glsl@");
-  add(areaHighlightFragment(), "@AreaHighlight.frag.glsl@");
-  add(bathymetryGeneratorVertex(), "@BathymetryGenerator.vert.glsl@");
-  add(beamPulseVertex(), "@BeamPulse.vert.glsl@");
-  add(beamPulseFragment(), "@BeamPulse.frag.glsl@");
-  add(disableDepthOnAlphaFragment(), "@DisableDepthOnAlpha.frag.glsl@");
-  add(flashingFragment(), "@Flashing.frag.glsl@");
-  add(glowHighlightFragment(), "@GlowHighlight.frag.glsl@");
-  add(lineDrawable(), "@LineDrawable.glsl@");
-  add(overheadModeVertex(), "@OverheadMode.vert.glsl@");
-  add(overrideColorFragment(), "@OverrideColor.frag.glsl@");
-  add(pickerVertex(), "@Picker.vert.glsl@");
-  add(pickerFragment(), "@Picker.frag.glsl@");
-  add(platformAzimElevWarpVertex(), "@PlatformAzimElevViewTool.vert.glsl@");
-  add(polygonStippleFragment(), "@PolygonStipple.frag.glsl@");
-  add(pointSizeVertex(), "@PointSize.vert.glsl@");
-  add(projectorManagerVertex(), "@Projector.vert.glsl@");
-  add(projectorManagerFragment(), "@Projector.frag.glsl@");
-  add(rfPropVertexBasedVertex(), "@RF.Vertex.vert.glsl@");
-  add(rfPropVertexBasedFragment(), "@RF.Vertex.frag.glsl@");
-  add(rfPropTextureBasedVertex(), "@RF.Texture.vert.glsl@");
-  add(rfPropTextureBasedFragment(), "@RF.Texture.frag.glsl@");
-  add(rfPropLossToColorDefault(), "@RF.LossToColor.Default.lib.glsl@");
-  add(rfPropLossToColorThreshold(), "@RF.LossToColor.Threshold.lib.glsl@");
-  add(rocketBurn(), "@RocketBurn.glsl@");
-  add(setClipVertex(), "@SetClipVertex.vert.glsl@");
-  add(trackHistoryVertex(), "@TrackHistory.vert.glsl@");
-  add(trackHistoryFragment(), "@TrackHistory.frag.glsl@");
+  add(alphaColorFilterFragment(), @AlphaColorFilter.frag.glsl@);
+  add(alphaTestFragment(), @AlphaTest.frag.glsl@);
+  add(areaHighlightVertex(), @AreaHighlight.vert.glsl@);
+  add(areaHighlightFragment(), @AreaHighlight.frag.glsl@);
+  add(bathymetryGeneratorVertex(), @BathymetryGenerator.vert.glsl@);
+  add(beamPulseVertex(), @BeamPulse.vert.glsl@);
+  add(beamPulseFragment(), @BeamPulse.frag.glsl@);
+  add(disableDepthOnAlphaFragment(), @DisableDepthOnAlpha.frag.glsl@);
+  add(flashingFragment(), @Flashing.frag.glsl@);
+  add(glowHighlightFragment(), @GlowHighlight.frag.glsl@);
+  add(overheadModeVertex(), @OverheadMode.vert.glsl@);
+  add(overrideColorFragment(), @OverrideColor.frag.glsl@);
+  add(pickerVertex(), @Picker.vert.glsl@);
+  add(pickerFragment(), @Picker.frag.glsl@);
+  add(platformAzimElevWarpVertex(), @PlatformAzimElevViewTool.vert.glsl@);
+  add(polygonStippleFragment(), @PolygonStipple.frag.glsl@);
+  add(projectorManagerVertex(), @Projector.vert.glsl@);
+  add(projectorManagerFragment(), @Projector.frag.glsl@);
+  add(projectorOnEntity(), @ProjectorOnEntity.glsl@);
+  add(rfPropVertexBasedVertex(), @RF.Vertex.vert.glsl@);
+  add(rfPropVertexBasedFragment(), @RF.Vertex.frag.glsl@);
+  add(rfPropTextureBasedVertex(), @RF.Texture.vert.glsl@);
+  add(rfPropTextureBasedFragment(), @RF.Texture.frag.glsl@);
+  add(rfPropLossToColorDefault(), @RF.LossToColor.Default.lib.glsl@);
+  add(rfPropLossToColorThreshold(), @RF.LossToColor.Threshold.lib.glsl@);
+  add(rocketBurn(), @RocketBurn.glsl@);
+  add(setClipVertex(), @SetClipVertex.vert.glsl@);
+  add(trackHistoryVertex(), @TrackHistory.vert.glsl@);
+  add(trackHistoryFragment(), @TrackHistory.frag.glsl@);
 }
 
 std::string Shaders::alphaColorFilterFragment() const
@@ -94,11 +93,6 @@ std::string Shaders::disableDepthOnAlphaFragment() const
   return "DisableDepthOnAlpha.frag.glsl";
 }
 
-std::string Shaders::lineDrawable() const
-{
-  return "LineDrawable.glsl";
-}
-
 std::string Shaders::projectorManagerVertex() const
 {
   return "Projector.vert.glsl";
@@ -107,6 +101,11 @@ std::string Shaders::projectorManagerVertex() const
 std::string Shaders::projectorManagerFragment() const
 {
   return "Projector.frag.glsl";
+}
+
+std::string Shaders::projectorOnEntity() const
+{
+  return "ProjectorOnEntity.glsl";
 }
 
 std::string Shaders::trackHistoryVertex() const
@@ -142,11 +141,6 @@ std::string Shaders::glowHighlightFragment() const
 std::string Shaders::platformAzimElevWarpVertex() const
 {
   return "PlatformAzimElevViewTool.vert.glsl";
-}
-
-std::string Shaders::pointSizeVertex() const
-{
-  return "PointSize.vert.glsl";
 }
 
 std::string Shaders::rfPropVertexBasedVertex() const

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -56,8 +56,6 @@
 /// include interpolator
 #include "simData/LinearInterpolator.h"
 
-#define LC "[Projectors] "
-
 #ifdef HAVE_IMGUI
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
@@ -92,6 +90,10 @@ static const std::string s_togglePlatformFiveShadowMap =
 #else
 " % :    toggle the shadow map on platform 5";
 #endif
+static const std::string s_togglePlatformFiveMaxDrawRange =
+" ^ :    toggle the max draw range on platform 5";
+static const std::string s_reloadMap =
+" r : reload map";
 
 /// global variables for camera tethering between platforms
 simData::ObjectId platformId_0 = 0;
@@ -99,10 +101,11 @@ simData::ObjectId projectorId_0 = 0;
 simData::ObjectId platformId_1 = 0;
 simData::ObjectId projectorId_1 = 0;
 simData::ObjectId platformId_2 = 0;
-simData::ObjectId projectorId_3 = 0;
 simData::ObjectId platformId_3 = 0;
 simData::ObjectId projectorId_4 = 0;
 simData::ObjectId platformId_4 = 0;
+
+simData::ObjectId projectorId_1b = 0;
 
 #ifdef HAVE_IMGUI
 
@@ -126,6 +129,8 @@ struct ControlPanel : public GUI::BaseGui
     ImGui::Text(s_viewPlatformFour.c_str());
     ImGui::Text(s_viewPlatformFive.c_str());
     ImGui::Text(s_togglePlatformFiveShadowMap.c_str());
+    ImGui::Text(s_togglePlatformFiveMaxDrawRange.c_str());
+    ImGui::Text(s_reloadMap.c_str());
     ImGui::End();
   }
 };
@@ -148,6 +153,8 @@ static Control* createHelp()
   vbox->addControl(new LabelControl(s_viewPlatformFour, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_viewPlatformFive, 14, simVis::Color::Silver));
   vbox->addControl(new LabelControl(s_togglePlatformFiveShadowMap, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_togglePlatformFiveMaxDrawRange, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_reloadMap, 14, simVis::Color::Silver));
   s_helpControl = vbox;
   return vbox;
 }
@@ -159,8 +166,9 @@ static Control* createHelp()
 struct MenuHandler : public osgGA::GUIEventHandler
 {
   /// constructor grabs all the state it needs for updating
-  MenuHandler(simData::DataStore& ds, simVis::View& view, const simData::ObjectId& projId, const std::string &initialImage) :
+  MenuHandler(simData::DataStore& ds, simVis::Viewer& viewer, simVis::View& view, const simData::ObjectId& projId, const std::string &initialImage) :
     dataStore_(ds),
+    viewer_(viewer),
     view_(view),
     projId_(projId),
     initialImage_(initialImage),
@@ -202,6 +210,19 @@ struct MenuHandler : public osgGA::GUIEventHandler
     }
   }
 
+  void toggleMaxRange()
+  {
+    simData::DataStore::Transaction txn;
+    simData::ProjectorPrefs* prefs = dataStore_.mutable_projectorPrefs(projectorId_4, &txn);
+    if (prefs)
+    {
+      const float test_value = 5000.0; // meters
+      float newvalue = prefs->maxdrawrange() == test_value ? FLT_MAX : test_value;
+      prefs->set_maxdrawrange(newvalue);
+      txn.complete(&prefs);
+    }
+  }
+
   /// tether view to selected platform ID and corresponding projector and reset texture to initial image
   bool tetherView(simData::ObjectId tetherId, simData::ObjectId projectorId)
   {
@@ -227,6 +248,12 @@ struct MenuHandler : public osgGA::GUIEventHandler
     view_.tetherCamera(plat);
     counter_ = 0;
     return true;
+  }
+
+  void reloadMap()
+  {
+    auto* mapNode = new osgEarth::MapNode(simExamples::createDefaultExampleMap());
+    viewer_.setMapNode(mapNode);
   }
 
   /// callback to process user input
@@ -285,9 +312,16 @@ struct MenuHandler : public osgGA::GUIEventHandler
         toggleInterpolate();
         handled = true;
         break;
-      case'%':
+      case '%':
         toggleShadowMap();
         handled = true;
+        break;
+      case '^':
+        toggleMaxRange();
+        handled = true;
+        break;
+      case 'r':
+        reloadMap();
         break;
     }
 
@@ -296,6 +330,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
 private: // data
   simData::DataStore& dataStore_;
+  simVis::Viewer& viewer_;
   simVis::View& view_;
   simData::ObjectId projId_;
   std::string initialImage_;
@@ -354,10 +389,13 @@ simData::ObjectId addProjector(simVis::ScenarioManager* scenario,
   prefs->set_rasterfile(imageURL);
   prefs->set_showfrustum(true); // Set to false to remove line frustum
   prefs->set_projectoralpha(0.8f);
+  prefs->set_doublesided(true);
   txn.complete(&prefs);
 
   if (varyFov)
+  {
     varyProjectorFov(id, dataStore);
+  }
   else
   {
     simData::ProjectorUpdate* update = dataStore.addProjectorUpdate(id, &txn);
@@ -415,6 +453,19 @@ void configurePrefs(simData::ObjectId platformId,
   node->setPrefs(prefs);
 }
 
+int setAcceptedProjectors(simData::DataStore& ds, simData::ObjectId entityId, const std::vector<simData::ObjectId>& projIds)
+{
+  // Get the entity's commonPrefs, then set up the accepted projector IDs
+  simData::DataStore::Transaction txn;
+  auto* prefs = ds.mutable_commonPrefs(entityId, &txn);
+  if (!prefs)
+    return 1;
+  // Fill out the repeated field of projector IDs to accept
+  simData::DataStoreHelpers::vecToRepeated(prefs->mutable_acceptprojectorids(), projIds);
+  txn.complete(&prefs);
+  return 0;
+}
+
 //----------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
@@ -426,6 +477,10 @@ int main(int argc, char **argv)
   std::string imageURL = "LandSiteV.png";
   if (argc > 1)
     imageURL = argv[1];
+
+  std::string imageURL2 = "A6V.png";
+  if (argc > 2)
+    imageURL2 = argv[2];
 
   /// use the utility code to create a basic world map (terrain imagery and height)
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
@@ -463,30 +518,24 @@ int main(int argc, char **argv)
   projectorId_1 = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL, true);
 
   // add a gate to use it as a projection surface:
-  simData::ObjectId gateId = addGate(platformId_1, dataStore);
-  osg::ref_ptr<simVis::GateNode> gateNode = scenario->find<simVis::GateNode>(gateId);
-  osg::ref_ptr<simVis::ProjectorNode> projector_1 = scenario->find<simVis::ProjectorNode>(projectorId_1);
-  if (gateNode.valid() && projector_1.valid())
-      gateNode->acceptProjector(projector_1.get());
+  const simData::ObjectId gateId = addGate(platformId_1, dataStore);
+
+  // a second projector on the gate, to show that multiple projectors can project on the same node:
+  projectorId_1b = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL2, false);
+  setAcceptedProjectors(dataStore, gateId, { projectorId_1, projectorId_1b });
 
   /// platform to use as a target to test projecting on to a platform
   platformId_2 = addPlatform(dataStore);
   osg::ref_ptr<simVis::PlatformNode> vehicle_2 = scenario->find<simVis::PlatformNode>(platformId_2);
-  osg::ref_ptr<simVis::ProjectorNode> projector_0 = scenario->find<simVis::ProjectorNode>(projectorId_0);
-  if (vehicle_2.valid() && projector_0.valid())
-  {
-    vehicle_2->acceptProjector(projector_0.get());
-  }
+  setAcceptedProjectors(dataStore, platformId_2, { projectorId_0 });
 
   /// platform that shines on Hawaii
   platformId_3 = addPlatform(dataStore);
-  osg::ref_ptr<simVis::EntityNode> vehicle_3 = scenario->find(platformId_3);
-  projectorId_3 = addProjector(scenario.get(), vehicle_3->getId(), dataStore, imageURL, false);
+  const simData::ObjectId projectorId_3 = addProjector(scenario.get(), platformId_3, dataStore, imageURL, false);
 
   /// platform that looks at the side of a mountain to test the shadowmap
   platformId_4 = addPlatform(dataStore);
-  osg::ref_ptr<simVis::EntityNode> vehicle_4 = scenario->find(platformId_4);
-  projectorId_4 = addProjector(scenario.get(), vehicle_4->getId(), dataStore, imageURL, false);
+  projectorId_4 = addProjector(scenario.get(), platformId_4, dataStore, imageURL, false);
 
   /// connect them and add some additional settings
   configurePrefs(platformId_0, 2.0, scenario.get());
@@ -522,8 +571,8 @@ int main(int argc, char **argv)
   sim_3->addWaypoint(simUtil::Waypoint(34.0, -110.0, 1000000, -89.9, 0.0, 1.0));
 
   /// flies along the mountains in Kuaui to test shadowmap occlusion
-  sim_4->addWaypoint(simUtil::Waypoint(22.092, -159.494, 850.0, 0.0, 0.0, 20.0));
-  sim_4->addWaypoint(simUtil::Waypoint(22.192, -159.494, 850.0, 0.0, 0.0, 20.0));
+  sim_4->addWaypoint(simUtil::Waypoint(22.092, -159.5, 850.0, 0.0, 0.0, 20.0));
+  sim_4->addWaypoint(simUtil::Waypoint(22.192, -159.5, 850.0, 0.0, 0.0, 20.0));
   sim_4->setSimulateRoll(false);
   sim_4->setSimulatePitch(false);
 
@@ -548,7 +597,7 @@ int main(int argc, char **argv)
   viewer->getMainView()->setFocalOffsets(0, -45, 5e5);
 
   /// handle key press events
-  viewer->addEventHandler(new MenuHandler(dataStore, *viewer->getView(0), projectorId_0, imageURL));
+  viewer->addEventHandler(new MenuHandler(dataStore, *viewer, *viewer->getView(0), projectorId_0, imageURL));
 
   /// hovering the mouse over the platform should trigger a popup
   viewer->addEventHandler(new simVis::PopupHandler(scene.get()));

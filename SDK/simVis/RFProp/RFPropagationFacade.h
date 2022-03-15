@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -42,6 +42,7 @@ namespace simCore
 
 namespace simRF
 {
+class FallbackDataHelper;
 class Profile;
 
 /** Facade to the simRF module, managing RF data for a single beam. */
@@ -330,6 +331,9 @@ public:
    */
   double getPOD(double azimRad, double gndRngMeters, double hgtMeters) const;
 
+  /** Sets the helper to use for Loss calculations. Takes ownership of the helper. */
+  void setLossDataHelper(std::unique_ptr<FallbackDataHelper> helper);
+
   /**
    * Return the propagation loss for a given beam with RF Prop parameters
    * @param azimRad Azimuth angle referenced to True North in radians
@@ -402,11 +406,36 @@ public:
 
 public:
   /**
-  * Gets the composite provider for the specified azimuth the antenna height that will be used for the display
+  * Gets the composite provider for the specified azimuth
   * @param azimRad Azimuth angle referenced to True North in radians
   * @return the composite provider, or nullptr if no provider exists at the specified azimuth
   */
   const simRF::CompositeProfileProvider* getProfileProvider(double azimRad) const;
+
+  /**
+  * Gets the ProfileDataProvider for the specified parameters
+  * @param type  the type of provider requested
+  * @param azimRad  Azimuth angle referenced to True North in radians
+  * @param gndRngMeters  range value in meters for data that is requested
+  * @param hgtMeters  height value in meters for data that is requested
+  * @param msg  warning message that is returned on failure
+  * @return the ProfileDataProvider, or nullptr if no provider matches requested parameters
+  */
+  const simRF::ProfileDataProvider* getProfileDataProvider(
+    ProfileDataProvider::ThresholdType type,
+    double azimRad, double gndRngMeters, double hgtMeters, std::string& msg) const;
+
+  /**
+  * Gets the ProfileDataProvider for the specified parameters
+  * @param type  the type of provider requested
+  * @param azimRad  Azimuth angle referenced to True North in radians
+  * @param gndRngMeters  range value in meters for data that is requested
+  * @param msg  warning message that is returned on failure
+  * @return the ProfileDataProvider, or nullptr if no provider matches requested parameters
+  */
+  const simRF::ProfileDataProvider* getProfileDataProvider(
+    ProfileDataProvider::ThresholdType type,
+    double azimRad, double gndRngMeters, std::string& msg) const;
 
   /**
   * Sets the antenna height that will be used for the display
@@ -498,6 +527,9 @@ private:
 
   /// profile manager manages all the profiles that hold the rf prop data
   osg::ref_ptr<simRF::ProfileManager> profileManager_;
+
+  /// DataHelper to fall back on for Loss calculations
+  std::unique_ptr<simRF::FallbackDataHelper> lossDataHelper_;
 
   /// parent node in the scene graph of our profileManager
   osg::observer_ptr<osg::Group> parent_;

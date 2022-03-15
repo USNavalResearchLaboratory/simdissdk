@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -194,11 +194,8 @@ public: // EntityNode interface
   */
   virtual double range() const;
 
-  /**
-   * Accept textures from a projector. Can only accept one projector per entity.
-   * Pass in NULL to stop accepting a projector. Returns 0 on success.
-   */
-  virtual int acceptProjector(ProjectorNode* projector) override;
+  /** Override Entity::acceptProjectors() to handle Platform-specific scene layout */
+  virtual int acceptProjectors(const std::vector<ProjectorNode*>& projectors) override;
 
   /** Retrieve the object index tag for platforms. */
   virtual unsigned int objectIndexTag() const;

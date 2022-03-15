@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -373,7 +373,8 @@ int main(int argc, char** argv)
   viewer->addEventHandler(app.simHandler_.get());
 
   // popup handler:
-  viewer->addEventHandler(new simVis::PopupHandler(scene.get()));
+  osg::ref_ptr popupHandler = new simVis::PopupHandler(scene.get());
+  viewer->addEventHandler(popupHandler);
 
 #ifdef HAVE_IMGUI
   // Pass in existing realize operation as parent op, parent op will be called first
@@ -389,6 +390,13 @@ int main(int argc, char** argv)
   // add some stock OSG handlers
   viewer->installDebugHandlers();
 
-  return viewer->run();
+  const int status = viewer->run();
+
+
+  viewer->removeEventHandler(app.simHandler_.get());
+  viewer->removeEventHandler(popupHandler.get());
+  popupHandler = nullptr;
+
+  return status;
 }
 

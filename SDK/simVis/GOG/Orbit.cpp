@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -39,47 +39,15 @@
 namespace {
 
 // generate an orbit geometry from specified parameters, azimuth in radians, others in meters
-osgEarth::Geometry* createOrbitShape(double azimuthRad, double lengthM, double radiusM, double altitudeM)
+osgEarth::Geometry* createOrbitGeometry(double azimuthRad, double lengthM, double radiusM, double altitudeM)
 {
-  osgEarth::Geometry* geom = new osgEarth::LineString();
   if (radiusM <= 0)
     return nullptr;
-
-  const double startRad = simCore::angFix2PI(azimuthRad + M_PI_2);
-  const double endRad = startRad + M_PI;
-  const double span = M_PI;
-  const double segLen = radiusM / 8.0;
-  const double circumference = 2 * M_PI * radiusM;
-  const double numSegments = ceil(circumference / segLen);
-  const double step = span / numSegments;
-
-  double ctrX = 0;
-  double ctrY = 0;
-
-  // generate arc on first end of the orbit
-  for (int i = numSegments; i >= 0; --i)
-  {
-    const double angle = simCore::angFix2PI(startRad + step * static_cast<double>(i));
-    const double x = ctrX + sin(angle) * radiusM;
-    const double y = ctrY + cos(angle) * radiusM;
-    geom->push_back(osg::Vec3d(x, y, altitudeM));
-  }
-
-  // calculate center point on other end of orbit
-  ctrX = sin(azimuthRad) * lengthM;
-  ctrY = cos(azimuthRad) * lengthM;
-
-  // generate arc on other end of the orbit
-  for (int i = numSegments; i >= 0; --i)
-  {
-    const double angle = simCore::angFix2PI(endRad + step * static_cast<double>(i));
-    const double x = ctrX + sin(angle) * radiusM;
-    const double y = ctrY + cos(angle) * radiusM;
-    geom->push_back(osg::Vec3d(x, y, altitudeM));
-  }
-  // add back in first point to close the shape
-  geom->push_back(geom->front());
-
+  std::vector<simCore::Vec3> xyzVec;
+  simCore::GOG::Orbit::createOrbitShape(azimuthRad, lengthM, radiusM, altitudeM, radiusM / 8., xyzVec);
+  osgEarth::Geometry* geom = new osgEarth::LineString();
+  for (const auto& xyz : xyzVec)
+    geom->push_back(osg::Vec3d(xyz.x(), xyz.y(), xyz.z()));
   geom->rewind(osgEarth::Geometry::ORIENTATION_CCW);
   return geom;
 }
@@ -104,7 +72,7 @@ GogNodeInterface* Orbit::deserialize(
     context.errorHandler_->printError(lineNumber, "Orbit must have a valid radius");
     return nullptr;
   }
- 
+
   osgEarth::LocalGeometryNode* node = nullptr;
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
@@ -125,7 +93,7 @@ GogNodeInterface* Orbit::deserialize(
     double azimuth = 0.;
     double length = simCore::sodanoInverse(ctr1.y() * simCore::DEG2RAD, ctr1.x() * simCore::DEG2RAD, ctr1.z(),
       ctr2.y() * simCore::DEG2RAD, ctr2.x() * simCore::DEG2RAD, &azimuth, nullptr);
-    osgEarth::Geometry* geom = createOrbitShape(azimuth, length, radius, ctr1.z());
+    osgEarth::Geometry* geom = createOrbitGeometry(azimuth, length, radius, ctr1.z());
 
     osgEarth::Style style(p.style_);
     node = new osgEarth::LocalGeometryNode(geom, style);
@@ -154,7 +122,7 @@ GogNodeInterface* Orbit::deserialize(
     if (yLen > 0)
       azimuth += M_PI;
 
-    osgEarth::Geometry* geom = createOrbitShape(simCore::angFix2PI(azimuth), length, radius, ctr1.z());
+    osgEarth::Geometry* geom = createOrbitGeometry(simCore::angFix2PI(azimuth), length, radius, ctr1.z());
     osgEarth::Style style(p.style_);
     node = new HostedLocalGeometryNode(geom, style);
   }
@@ -188,7 +156,7 @@ GogNodeInterface* Orbit::createOrbit(const simCore::GOG::Orbit& orbit, bool atta
     double azimuth = 0.;
     double length = simCore::sodanoInverse(center1.x(), center1.y(), center1.z(),
       center2.x(), center2.y(), &azimuth, nullptr);
-    osgEarth::Geometry* geom = createOrbitShape(azimuth, length, radius, center1.z());
+    osgEarth::Geometry* geom = createOrbitGeometry(azimuth, length, radius, 0.); // Pass in 0 altitude, relative to host center1
 
     node = new osgEarth::LocalGeometryNode(geom, style);
     node->setMapNode(mapNode);
@@ -197,7 +165,7 @@ GogNodeInterface* Orbit::createOrbit(const simCore::GOG::Orbit& orbit, bool atta
   {
     double xLen = center1.x() - center2.x();
     double yLen = center1.y() - center2.y();
-    
+
     double length = 0.;
     if (xLen != 0. || yLen != 0.)
       length = sqrt((xLen * xLen) + (yLen * yLen));
@@ -210,7 +178,7 @@ GogNodeInterface* Orbit::createOrbit(const simCore::GOG::Orbit& orbit, bool atta
 
     if (yLen > 0.)
       azimuth += M_PI;
-    osgEarth::Geometry* geom = createOrbitShape(simCore::angFix2PI(azimuth), length, radius, center1.z());
+    osgEarth::Geometry* geom = createOrbitGeometry(simCore::angFix2PI(azimuth), length, radius, 0.); // Pass in 0 altitude, relative to host center1
     if (attached)
       node = new HostedLocalGeometryNode(geom, style);
     else

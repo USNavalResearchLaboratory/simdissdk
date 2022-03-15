@@ -27,6 +27,7 @@ set(SHADER_FILES
     PolygonStipple.frag.glsl
     Projector.vert.glsl
     Projector.frag.glsl
+    ProjectorOnEntity.glsl
     RF.LossToColor.Default.lib.glsl
     RF.LossToColor.Threshold.lib.glsl
     RF.Texture.vert.glsl
@@ -159,6 +160,7 @@ set(VIS_HEADERS_RFPROP
     ${VIS_INC}RFProp/ColorProvider.h
     ${VIS_INC}RFProp/CompositeColorProvider.h
     ${VIS_INC}RFProp/CompositeProfileProvider.h
+    ${VIS_INC}RFProp/FallbackDataHelper.h
     ${VIS_INC}RFProp/FunctionalProfileDataProvider.h
     ${VIS_INC}RFProp/GradientColorProvider.h
     ${VIS_INC}RFProp/LUTProfileDataProvider.h
@@ -186,7 +188,6 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/Ellipse.h
     ${VIS_INC}GOG/Ellipsoid.h
     ${VIS_INC}GOG/ErrorHandler.h
-    ${VIS_INC}GOG/GOG.h
     ${VIS_INC}GOG/GOGNode.h
     ${VIS_INC}GOG/GogNodeInterface.h
     ${VIS_INC}GOG/GOGRegistry.h
@@ -337,7 +338,6 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/Cylinder.cpp
     ${VIS_SRC}GOG/Ellipse.cpp
     ${VIS_SRC}GOG/Ellipsoid.cpp
-    ${VIS_SRC}GOG/GOG.cpp
     ${VIS_SRC}GOG/GOGNode.cpp
     ${VIS_SRC}GOG/GogNodeInterface.cpp
     ${VIS_SRC}GOG/GOGRegistry.cpp

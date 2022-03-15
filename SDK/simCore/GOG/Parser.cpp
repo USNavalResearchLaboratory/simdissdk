@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -48,11 +48,20 @@ bool startsWith(const std::string& token, const std::string& start)
   return token.substr(0, start.size()) == start;
 }
 
+/** List of tokens that are case sensitive and shouldn't be lowercase'd for parsing */
+static const std::set<std::string> CASE_SENSITIVE_GOG_TOKENS = {
+  "annotation", "comment", "name", "imagefile", "kml_icon", "starttime", "endtime"
+};
+
 }
 
 //------------------------------------------------------------------------
 
 namespace simCore { namespace GOG {
+
+// GOG default reference origin: a location off the Pacific Missile Range Facility "BARSTUR Center"
+// (ref SIMDIS user manual, sec. 8.8.1)
+const simCore::Vec3 BSTUR(simCore::DEG2RAD*22.1194392, simCore::DEG2RAD*-159.9194988, 0.0);
 
 Parser::Parser()
   : units_(nullptr)
@@ -149,7 +158,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       {
         token = simCore::lowerCase(token);
         // stop further lower case conversion on text based values
-        if (token == "annotation" || token == "comment" || token == "name" || token == "starttime" || token == "endtime")
+        if (CASE_SENSITIVE_GOG_TOKENS.find(token) != CASE_SENSITIVE_GOG_TOKENS.end())
           break;
       }
     }
@@ -261,7 +270,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         if (current.shape() != ShapeType::UNKNOWN)
         {
           SIM_WARN << "Multiple shape keywords found in single start/end block, " << filename << " line: " << lineNumber << "\n";
-          invalidShape = true;
+          // treat as an annotation and keep going
         }
         current.setShape(ShapeType::ANNOTATION);
         std::string textToken = simCore::StringUtils::trim(line.substr(tokens[0].length() + 1));
@@ -270,7 +279,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         textToken = simCore::StringUtils::substitute(textToken, "\\n", "\n");
         current.set(ShapeParameter::TEXT, textToken);
         current.set(ShapeParameter::NAME, textToken);
-        invalidShape = false;
+        invalidShape = false;  // Required to allow processing of valid annotations after an invalid annotation
       }
       else
       {
@@ -794,6 +803,11 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       if (tokens.size() >= 2)
         current.set(ShapeParameter::IMAGE, tokens[1]);
     }
+    else if (tokens[0] == "opacity")
+    {
+      if (tokens.size() >= 2)
+        current.set(ShapeParameter::OPACITY, tokens[1]);
+    }
     else // treat everything as a name/value pair
     {
       if (!tokens.empty())
@@ -1163,6 +1177,11 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
         imageOverlay->setWest(corner);
         validValues++;
       }
+
+      // Extract opacity value, which is optional and only applies to image overlay
+      if (parsed.hasValue(ShapeParameter::OPACITY))
+        imageOverlay->setOpacity(parsed.doubleValue(ShapeParameter::OPACITY, 1.0));
+
       if (validValues == 4)
       {
         imageOverlay->setImageFile(parsed.stringValue(ShapeParameter::IMAGE));
@@ -1518,7 +1537,6 @@ void Parser::parseCircularOptional_(const ParsedShape& parsed, bool relative, co
 
   simCore::Vec3 position;
   ShapeParameter param = (relative ? ShapeParameter::CENTERXY : ShapeParameter::CENTERLL);
-  bool foundPosition = false;
   if (parsed.hasValue(param))
   {
     if (getPosition_(parsed.positionValue(param), relative, units, position) == 0)

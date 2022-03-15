@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -145,6 +145,13 @@ private slots:
   /// Unconditionally emits the items selected; O(n) on selection list and emits a signal
   void emitItemsSelected_();
 
+  /** Before items are added/removed/moved capture if any selected item is visible */
+  void captureVisible_();
+  /** If an item was visible before add/remove/move make sure it is still visible */
+  void keepVisible_();
+  /** If an item was visible before rename make sure it is still visible */
+  void captureAndKeepVisible_();
+
 protected:
   QTreeView* view_; ///< wrapped view
   AbstractEntityTreeModel* model_; ///< original data model
@@ -167,6 +174,8 @@ private:
   // Maintain a list (to match return value) and a set (for fast searches) of selections
   QList<uint64_t> selectionList_; ///< Cached version of all selected entities
   QSet<uint64_t> selectionSet_; ///< Parallel cache of all selected entities
+
+  std::vector<uint64_t> setVisible_; ///< Possibly make the items visible after the view has updated
 };
 
 }

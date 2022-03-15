@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -345,26 +345,22 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
     shapeNode = new HostedLocalGeometryNode(outlineShape.get(), shapeStyle);
     fillNode = new HostedLocalGeometryNode(filledShape.get(), fillStyle);
   }
+
   shapeNode->setName("Arc Outline Node");
   fillNode->setName("Arc Fill Node");
 
-  GogNodeInterface* rv = nullptr;
-  if (shapeNode)
-  {
-    Utils::applyLocalGeometryOffsets(*shapeNode, p, nodeType);
-    // only bother with fill node if we have the shape
-    if (fillNode)
-    {
-      Utils::applyLocalGeometryOffsets(*fillNode, p, nodeType);
-      // show the filled node only if filled
-      fillNode->setNodeMask(filled ? simVis::DISPLAY_MASK_GOG : simVis::DISPLAY_MASK_NONE);
-      g->addChild(fillNode);
-    }
-    g->addChild(shapeNode);
+  Utils::applyLocalGeometryOffsets(*shapeNode, p, nodeType);
+  // only bother with fill node if we have the shape
 
-    rv = new ArcNodeInterface(g, shapeNode, fillNode, metaData);
-    rv->applyToStyle(parsedShape, p.units_);
-  }
+  Utils::applyLocalGeometryOffsets(*fillNode, p, nodeType);
+  // show the filled node only if filled
+  fillNode->setNodeMask(filled ? simVis::DISPLAY_MASK_GOG : simVis::DISPLAY_MASK_NONE);
+  g->addChild(fillNode);
+
+  g->addChild(shapeNode);
+
+  GogNodeInterface* rv = new ArcNodeInterface(g, shapeNode, fillNode, metaData);
+  rv->applyToStyle(parsedShape, p.units_);
 
   return rv;
 }

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -31,21 +31,21 @@ namespace simVis
 {
 TargetDelegation::TargetDelegation()
 {
-  //nop
 }
 
+TargetDelegation::~TargetDelegation()
+{
+}
 
 void TargetDelegation::setGeoFence(const GeoFence* fence)
 {
   fence_ = fence;
 }
 
-
 void TargetDelegation::addUpdateGeometryCallback(UpdateGeometryCallback* cb)
 {
   updateGeometryCallbacks_.push_back(cb);
 }
-
 
 void TargetDelegation::updateGeometry_(osg::MatrixTransform* xform, const osg::Vec3d& ecef)
 {
@@ -56,7 +56,6 @@ void TargetDelegation::updateGeometry_(osg::MatrixTransform* xform, const osg::V
     i->get()->operator()(xform, ecef);
   }
 }
-
 
 void TargetDelegation::addOrUpdate(const PlatformNode* platform)
 {
@@ -96,7 +95,7 @@ void TargetDelegation::addOrUpdate(const PlatformNode* platform)
   }
 
   // if it's outside out fence, ignore it.
-  else if (isTracked && !needToTrack)
+  else if (isTracked)
   {
     SIM_DEBUG << LC << "STOP tracking: " << platform->getId() << std::endl;
 
@@ -105,7 +104,6 @@ void TargetDelegation::addOrUpdate(const PlatformNode* platform)
     targetNodes_.erase(t);
   }
 }
-
 
 void TargetDelegation::remove(const PlatformNode* platform)
 {
@@ -127,4 +125,3 @@ void TargetDelegation::removeAll()
 }
 
 }
-

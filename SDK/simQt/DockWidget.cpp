@@ -9,19 +9,15 @@
  *
  *
  * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
- *               EW Modeling and Simulation, Code 5770
+ *               EW Modeling & Simulation, Code 5773
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * For more information please send email to simdis@enews.nrl.navy.mil
- *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
- ****************************************************************************
- *
  *
  */
 #include <iostream>
@@ -138,7 +134,7 @@ private:
 class DockWidget::DoubleClickFrame : public QFrame
 {
 public:
-  DoubleClickFrame(DockWidget& dockWidget, QWidget* parent=nullptr, Qt::WindowFlags flags=0)
+  explicit DoubleClickFrame(DockWidget& dockWidget, QWidget* parent=nullptr, Qt::WindowFlags flags=0)
     : QFrame(parent, flags),
       dockWidget_(dockWidget)
   {

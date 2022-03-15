@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -29,6 +29,7 @@
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 #include "simVis/LocatorNode.h"
+#include "simVis/SphericalVolume.h"
 
 namespace osg { class MatrixTransform; }
 
@@ -41,7 +42,7 @@ namespace simVis
   class Locator;
 
   /// Scene graph node representing the Beam volume
-  class SDKVIS_EXPORT BeamVolume : public osg::Group
+  class SDKVIS_EXPORT BeamVolume : public SphericalVolume
   {
   public:
     /** Constructor */
@@ -61,14 +62,16 @@ namespace simVis
     /** Return the class name */
     virtual const char* className() const { return "BeamVolume"; }
 
+  protected:
+    /// osg::Referenced-derived
+    virtual ~BeamVolume() {}
+
   private:
-    /// build the osg volume
-    osg::MatrixTransform* createBeamSV_(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update);
+    /// build the spherical volume
+    void createBeamSV_(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update);
 
     /// apply the beam scale pref to the specified node
     void setBeamScale_(double beamScale);
-
-    osg::ref_ptr<osg::MatrixTransform> beamSV_;
   };
 
 

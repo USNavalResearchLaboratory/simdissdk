@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -61,15 +61,12 @@ GogNodeInterface* Circle::deserialize(const ParsedShape& parsedShape,
   }
   else
     node = new HostedLocalGeometryNode(shape, p.style_);
-  node->setName("GOG Circle Position");
 
-  GogNodeInterface* rv = nullptr;
-  if (node)
-  {
-    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
-    rv = new LocalGeometryNodeInterface(node, metaData);
-    rv->applyToStyle(parsedShape, p.units_);
-  }
+  node->setName("GOG Circle Position");
+  Utils::applyLocalGeometryOffsets(*node, p, nodeType);
+  GogNodeInterface* rv = new LocalGeometryNodeInterface(node, metaData);
+  rv->applyToStyle(parsedShape, p.units_);
+
   return rv;
 }
 

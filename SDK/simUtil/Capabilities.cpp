@@ -9,21 +9,15 @@
  *
  *
  * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
- *               EW Modeling and Simulation, Code 5770
+ *               EW Modeling & Simulation, Code 5773
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * For more information please send email to simdis@enews.nrl.navy.mil
- *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
- *
- * U.S. Naval Research Laboratory.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
- ****************************************************************************
- *
  *
  */
 #include <cassert>
@@ -191,7 +185,6 @@ void Capabilities::init_(osg::GraphicsContext& gc)
   const std::string glVersionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
   caps_.push_back(std::make_pair("OpenGL Version", glVersionString));
   glVersion_ = extractGlVersion_(glVersionString);
-  const unsigned int contextId = gc.getState()->getContextID();
 
   // Detect core profile by investigating GL_CONTEXT_PROFILE_MASK
   GLint profileMask = 0;

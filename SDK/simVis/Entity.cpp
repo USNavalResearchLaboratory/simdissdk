@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -187,7 +187,7 @@ EntityNode::EntityNode(simData::ObjectType type, Locator* locator)
 
 EntityNode::~EntityNode()
 {
-  acceptProjector(nullptr);
+  acceptProjectors({});
   setLocator(nullptr);
 }
 
@@ -272,18 +272,27 @@ std::string EntityNode::getEntityName_(const simData::CommonPrefs& common, Entit
 
 int EntityNode::applyProjectorPrefs_(const simData::CommonPrefs& lastPrefs, const simData::CommonPrefs& prefs)
 {
-  if (!PB_FIELD_CHANGED(&lastPrefs, &prefs, acceptprojectorid))
+  if (!PB_REPEATED_FIELD_CHANGED(&lastPrefs, &prefs, acceptprojectorids))
     return 1;
 
-  auto id = prefs.acceptprojectorid();
-  if (id == 0)
-    return acceptProjector(nullptr);
+  // Clear out accepted projectors if needed
+  const auto& ids = prefs.acceptprojectorids();
+  if (ids.empty())
+    return acceptProjectors({});
 
-  auto projectorNode = dynamic_cast<ProjectorNode*>(nodeGetter_(id));
-  if (projectorNode == nullptr)
-    return 1;
-
-  return acceptProjector(projectorNode);
+  // Get a vector of all projector nodes to accept
+  std::vector<ProjectorNode*> projectors;
+  for (const auto id : ids)
+  {
+    // Skip ID 0, which might be present due to commands
+    if (id != 0)
+    {
+      auto projectorNode = dynamic_cast<ProjectorNode*>(nodeGetter_(id));
+      if (projectorNode)
+        projectors.push_back(projectorNode);
+    }
+  }
+  return acceptProjectors(projectors);
 }
 
 void EntityNode::setLabelContentCallback(LabelContentCallback* cb)
@@ -299,23 +308,46 @@ LabelContentCallback& EntityNode::labelContentCallback() const
   return *contentCallback_;
 }
 
-int EntityNode::acceptProjector(ProjectorNode* proj)
+int EntityNode::acceptProjectors(const std::vector<ProjectorNode*>& projectors)
 {
-  // Stop accepting the previous projector node, if one exists
-  osg::ref_ptr<simVis::ProjectorNode> lock;
-  if (acceptedProjectorNode_.lock(lock))
+  return acceptProjectors_(this, projectors);
+}
+
+int EntityNode::acceptProjectors_(osg::Node* attachmentPoint, const std::vector<ProjectorNode*>& projectors)
+{
+  // Avoid expensive projector operations if the vector matches our internal set
+  if (acceptedProjectors_.size() == projectors.size())
   {
-    acceptedProjectorNode_->removeProjectionFromNode(this);
-    acceptedProjectorNode_ = nullptr;
+    bool foundDifferent = false;
+    for (size_t k = 0; k < projectors.size() && !foundDifferent; ++k)
+    {
+      if (projectors[k] != acceptedProjectors_[k].get())
+        foundDifferent = true;
+    }
+    // No changes, return early
+    if (!foundDifferent)
+      return 0;
   }
 
-  // Passing in NULL clears the pairing, not an error
-  if (proj == nullptr)
-    return 0;
+  // Remove all previous projectors
+  for (const auto& projObserver : acceptedProjectors_)
+  {
+    if (projObserver.valid())
+      projObserver->removeProjectionFromNode(this);
+  }
+  acceptedProjectors_.clear();
 
-  int rv = proj->addProjectionToNode(this, this);
-  if (rv == 0)
-    acceptedProjectorNode_ = proj;
+  // Add projection
+  for (auto* proj : projectors)
+  {
+    // Limit to only 4 projectors
+    if (acceptedProjectors_.size() >= 4)
+      return 1;
+
+    // Add the projector to the node
+    proj->addProjectionToNode(this, attachmentPoint);
+    acceptedProjectors_.emplace_back(proj);
+  }
   return 0;
 }
 

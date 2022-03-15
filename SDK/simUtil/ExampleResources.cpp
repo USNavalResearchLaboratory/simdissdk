@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -170,7 +170,8 @@ Map* simExamples::createHawaiiMap()
   MBTilesElevationLayer* elev = new MBTilesElevationLayer();
   elev->setName("Kauai Elevation");
   elev->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB);
-  elev->setMinLevel(7u);
+  // SIM-13914 - setting min_level on elevation layers causing artifacts
+  //elev->setMinLevel(7u);
   map->addLayer(elev);
 
   return map;

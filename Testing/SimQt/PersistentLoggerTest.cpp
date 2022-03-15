@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -334,7 +334,7 @@ int PersistentLoggerTest(int argc, char* argv[])
 
   QCoreApplication::setApplicationName("Persistent Logger Test");
   QCoreApplication::setOrganizationName(ORG_DOMAIN);
-  QCoreApplication::setOrganizationDomain("https://simdis.nrl.navy.mil");
+  QCoreApplication::setOrganizationDomain("https://www.trmc.osd.mil/simdis.html");
 
   rv += SDK_ASSERT(testFileRemoveByDate() == 0);
   rv += SDK_ASSERT(settingAgeCleansFiles() == 0);

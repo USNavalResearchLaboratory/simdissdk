@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -396,8 +396,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     forceUpdateFromDataStore_ = true;
   }
 
-  if (!lastPrefsValid_ || PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
-    applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
+  applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
 
   lastPrefs_ = prefs;
   lastPrefsValid_ = true;
@@ -1151,23 +1150,9 @@ unsigned int PlatformNode::objectIndexTag() const
   return model_->objectIndexTag();
 }
 
-int PlatformNode::acceptProjector(ProjectorNode* proj)
+int PlatformNode::acceptProjectors(const std::vector<ProjectorNode*>& projectors)
 {
-  // Stop accepting the previous projector node, if one exists
-  if (acceptedProjectorNode_ != nullptr)
-  {
-    acceptedProjectorNode_->removeProjectionFromNode(model_->offsetNode());
-    acceptedProjectorNode_ = nullptr;
-  }
-
-  // Passing in NULL clears the pairing, not an error
-  if (proj == nullptr)
-    return 0;
-
-  int rv = proj->addProjectionToNode(this, model_->offsetNode());
-  if (rv == 0)
-    acceptedProjectorNode_ = proj;
-  return rv;
+  return acceptProjectors_(model_->offsetNode(), projectors);
 }
 
 }

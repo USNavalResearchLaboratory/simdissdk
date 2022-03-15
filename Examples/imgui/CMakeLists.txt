@@ -3,11 +3,13 @@ if (NOT TARGET GLEW)
 endif()
 
 set(SOURCE_FILES
+    imgui.h
     imgui.cpp
     imgui_demo.cpp
     imgui_draw.cpp
     imgui_widgets.cpp
     imgui_tables.cpp
+    imgui_impl_opengl3.h
     imgui_impl_opengl3.cpp
     BaseGui.h
     BaseGui.cpp

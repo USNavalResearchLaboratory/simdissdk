@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -27,14 +27,14 @@ namespace simUtil {
 Shaders::Shaders()
 {
   // Assign the fall-back shaders if the files are not found
-  add(mapScale(), "@MapScale.glsl@");
-  add(terrainToggleEffectVertex(), "@TerrainToggleEffect.frag.glsl@");
-  add(terrainToggleEffectFragment(), "@TerrainToggleEffect.vert.glsl@");
-  add(velocityParticleLayerParticleVertex(), "@VelocityParticleLayer.part.vert.glsl@");
-  add(velocityParticleLayerParticleFragment(), "@VelocityParticleLayer.part.frag.glsl@");
-  add(velocityParticleLayerComputeVertex(), "@VelocityParticleLayer.compute.vert.glsl@");
-  add(velocityParticleLayerComputePositionFragment(), "@VelocityParticleLayer.compute.pos.frag.glsl@");
-  add(velocityParticleLayerComputeDirectionFragment(), "@VelocityParticleLayer.compute.dir.frag.glsl@");
+  add(mapScale(), @MapScale.glsl@);
+  add(terrainToggleEffectVertex(), @TerrainToggleEffect.frag.glsl@);
+  add(terrainToggleEffectFragment(), @TerrainToggleEffect.vert.glsl@);
+  add(velocityParticleLayerParticleVertex(), @VelocityParticleLayer.part.vert.glsl@);
+  add(velocityParticleLayerParticleFragment(), @VelocityParticleLayer.part.frag.glsl@);
+  add(velocityParticleLayerComputeVertex(), @VelocityParticleLayer.compute.vert.glsl@);
+  add(velocityParticleLayerComputePositionFragment(), @VelocityParticleLayer.compute.pos.frag.glsl@);
+  add(velocityParticleLayerComputeDirectionFragment(), @VelocityParticleLayer.compute.dir.frag.glsl@);
 }
 
 std::string Shaders::mapScale() const

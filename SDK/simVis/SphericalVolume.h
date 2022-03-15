@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -23,15 +23,28 @@
 #ifndef SIMVIS_SPHERICAL_VOLUME_H
 #define SIMVIS_SPHERICAL_VOLUME_H
 
+#include "osg/MatrixTransform"
 #include "simCore/Common/Common.h"
 
 namespace osg {
+  class Geode;
   class Geometry;
-  class MatrixTransform;
 }
 
 namespace simVis
 {
+// A SphericalVolume is a MatrixTransform that parents up to two geode/groups.
+// The first contains the primary geometry;
+//   that geometry will always exist, but in some cases will have no primitives.
+// The second geode/group (if it exists) contains the opaque elements of the sv:
+//   For the pyramid sv, it contains the outline.
+//   For the cone sv, it contains a wireframe (polygon) geometry.
+class SphericalVolume : public osg::MatrixTransform
+{
+protected:
+  /// osg::Referenced-derived
+  virtual ~SphericalVolume() {}
+};
 
 /// Configuration data for creating volumetric geometry for beams and gates
 struct SVData
@@ -76,9 +89,9 @@ struct SVData
   /** True if should be drawn as a spherical segment */
   bool       drawAsSphereSegment_;
   /** Horizontal field of view in degrees */
-  float hfov_deg_;
+  double hfov_deg_;
   /** Vertical field of view in degrees */
-  float vfov_deg_;
+  double vfov_deg_;
   /** Azimuth offset in degrees */
   float azimOffset_deg_;
   /** Elevation offset in degrees */
@@ -116,37 +129,46 @@ class SVFactory
 {
 public:
   /// create a node visualizing the spherical volume given in 'data'
-  static osg::MatrixTransform* createNode(const SVData &data, const osg::Vec3& dir = osg::Y_AXIS);
+  static SphericalVolume* createNode(const SVData &data, const osg::Vec3& dir = osg::Y_AXIS);
+  /// create a node visualizing the spherical volume given in 'data'
+  static void createNode(SphericalVolume& sv, const SVData &data, const osg::Vec3& dir = osg::Y_AXIS);
 
   /// set lighting
-  static void updateLighting(osg::MatrixTransform* xform, bool lighting);
+  static void updateLighting(SphericalVolume* sv, bool lighting);
   /// set blending
-  static void updateBlending(osg::MatrixTransform* xform, bool blending);
+  static void updateBlending(SphericalVolume* sv, bool blending);
   /// set the color
-  static void updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color);
+  static void updateColor(SphericalVolume* sv, const osg::Vec4f& color);
   /// set the stipple mode
-  static void updateStippling(osg::MatrixTransform* xform, bool stippling);
-  /// move the verts comprising the far range
-  static void updateNearRange(osg::MatrixTransform* xform, double range);
+  static void updateStippling(SphericalVolume* sv, bool stippling);
   /// move the verts comprising the near range
-  static void updateFarRange(osg::MatrixTransform* xform, double range);
-  /// tweak the verts to update the horizontal angle
-  static void updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle);
+  static void updateNearRange(SphericalVolume* sv, double range);
+  /// move the verts comprising the far range
+  static void updateFarRange(SphericalVolume* sv, double range);
+
+  /**
+  * Recalculate vertices for a new horizontal angle.
+  * @param xform  the spherical volume to apply to
+  * @param newAngle  the new angle to use
+  * @param 0 on success, non-zero on failure (algorithm can't support the new angle)
+  */
+  static int updateHorizAngle(SphericalVolume* sv, double newAngle);
   /// tweak the verts to update the vertical angle
-  static void updateVertAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle);
+  static void updateVertAngle(SphericalVolume* sv, double newAngle);
 
   /// Retrieves the 2nd/opaque group (e.g., outline or wireframe), or nullptr if there is none
-  static osg::Group* opaqueGroup(osg::MatrixTransform* xform);
+  static osg::Group* opaqueGroup(SphericalVolume* sv);
   /// Retrieves the primary 'solid' geometry, or nullptr if there is no such geometry
-  static osg::Geometry* solidGeometry(osg::MatrixTransform* xform);
+  static osg::Geometry* solidGeometry(SphericalVolume* sv);
 
 private:
   /// Create an sv cone using specified data & direction, as a child geometry of the specified geode
   static void createCone_(osg::Geode* geode, const SVData &data, const osg::Vec3& direction);
   /// Calculate the y value that will make a unit vector from specified x and z
   static float calcYValue_(double x, double z);
-  static void processWireframe_(osg::MatrixTransform* xform, int drawMode);
-  static void dirtyBound_(osg::MatrixTransform* xform);
+  static void processWireframe_(SphericalVolume* sv, int drawMode);
+  static void dirtyBound_(SphericalVolume* sv);
+  static void updateSideOutlines_(SphericalVolume* sv);
 };
 
 }

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -135,12 +135,14 @@ QSNodeID96 QSNodeID96::operator>>(int numBitsToShift) const
       returnValue.two_ = three_ >> (numBitsToShift-32);
       // Number of bits to shift the third field by. Separated into a local var to avoid cppCheck false positive
       int thirdFieldBits = 64 - numBitsToShift;
+      // cppCheck warnings of undefined behavior are wrong
       returnValue.one_ = (two_ >> (numBitsToShift-32)) | (three_ << thirdFieldBits);
     }
     else if (numBitsToShift < 96)
     {
       returnValue.three_ = 0;
       returnValue.two_ = 0;
+      // cppCheck warnings of undefined behavior are wrong
       returnValue.one_ = three_ >> (numBitsToShift-64);
     }
     else

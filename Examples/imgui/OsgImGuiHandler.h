@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -49,7 +49,7 @@ class OsgImGuiHandler : public osgGA::GUIEventHandler
 public:
   OsgImGuiHandler();
 
-  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
 
   /** Add a GUI to the manager */
   void add(BaseGui* gui);
@@ -80,6 +80,10 @@ public:
   /** Get a pointer to the large font, may be NULL */
   ImFont* getLargeFont() const;
 
+  /** True if the projection matrix should be auto-adjusted, e.g. during docking */
+  bool getAutoAdjustProjectionMatrix() const;
+  void setAutoAdjustProjectionMatrix(bool value);
+
 protected:
   /// Initialize the ImGui environment
   void init_();
@@ -101,6 +105,8 @@ private:
   bool initialized_;
   bool firstFrame_;
   bool firstDraw_;
+  bool autoAdjustProjectionMatrix_;
+
   std::vector<std::unique_ptr<BaseGui> > guis_;
 
   ImFont* defaultFont_;

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -27,7 +27,6 @@
  */
 
 #include "osgEarth/NodeUtils"
-#include "osgEarth/Controls"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
@@ -50,7 +49,13 @@
 
 #define LC "[Overhead Example] "
 
+#ifdef HAVE_IMGUI
+#include "BaseGui.h"
+#include "OsgImGuiHandler.h"
+#else
+#include "osgEarth/Controls"
 namespace ui = osgEarth::Util::Controls;
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -77,6 +82,27 @@ void loadEarthFile(const std::string& earthFile, simVis::Viewer& viewer)
   osg::ref_ptr<osgEarth::MapNode> mapNode = osgEarth::MapNode::findMapNode(loadedModel.get());
   if (mapNode.valid())
     viewer.setMapNode(mapNode.get());
+}
+
+simData::ObjectId getCenteredPlatformId(const simVis::View* view)
+{
+  osg::Node* tether = view->getCameraTether();
+  if (tether == nullptr)
+    return 0;
+  else
+  {
+    simVis::PlatformModelNode* model = dynamic_cast<simVis::PlatformModelNode*>(tether);
+    assert(model != nullptr);
+
+    std::vector<osg::Group*> parents = model->getParents();
+    for (auto iter = parents.begin(); iter != parents.end(); ++iter)
+    {
+      simVis::PlatformNode* entity = dynamic_cast<simVis::PlatformNode*>(*iter);
+      if (entity)
+        return entity->getId();
+    }
+  }
+  return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -108,28 +134,219 @@ private:
   double lastElev_;
 };
 
-// An event handler to assist in testing the Inset functionality.
-struct MouseAndMenuHandler : public osgGA::GUIEventHandler
+#ifdef HAVE_IMGUI
+struct ControlPanel : public GUI::BaseGui
 {
-  MouseAndMenuHandler(simVis::Viewer* viewer, simVis::CreateInsetEventHandler* handler,
-    simUtil::MouseDispatcher* mouseDispatcher, ui::LabelControl* status, simData::DataStore& dataStore,
+  ControlPanel(simVis::Viewer* viewer, simVis::CreateInsetEventHandler* handler,
+    const LatLonElevListener* latLonElevListener, simData::DataStore& dataStore,
     simData::ObjectId centeredPlat, bool showElevation)
-  : viewer_(viewer),
+    : BaseGui("Overhead Example"),
+    viewer_(viewer),
     handler_(handler),
-    statusLabel_(status),
-    mouseDispatcher_(mouseDispatcher),
+    latLonElevListener_(latLonElevListener),
     dataStore_(dataStore),
     centeredPlat_(centeredPlat),
     showElevation_(showElevation),
     removeAllRequested_(false),
     insertViewPortMode_(false),
     dynamicScaleOn_(true),
-    labelsOn_(true),
-    border_(0)
+    labelsOn_(true)
   {
-    mouseDispatcher_->setViewManager(nullptr);
-    latLonElevListener_.reset(new LatLonElevListener());
-    setUpMouseManip_(viewer_.get());
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+
+    ImGui::Text("o : toggle overhead mode in focused view");
+    ImGui::Text("i : toggle mode for creating a new inset");
+    ImGui::Text("v : toggle visibility of all insets");
+    ImGui::Text("r : remove all insets");
+    ImGui::Text("c : center on next platform in focused view");
+    ImGui::Text("n : toggle labels for all platforms");
+    ImGui::Text("d : toggle dynamic scale for all platforms");
+
+    ImGui::Separator();
+
+    std::stringstream ss;
+    ss << "Dynamic Scale: " << (dynamicScaleOn_ ? "ON" : "OFF");
+    ImGui::Text(ss.str().c_str()); ss.str(""); ss.clear();
+
+    const simVis::View* focusedView = viewer_->getMainView()->getFocusManager()->getFocusedView();
+    ss << std::fixed << std::setprecision(2) << "Camera Distance: " << focusedView->getViewpoint().range().value().getValue() << " m";
+    ImGui::Text(ss.str().c_str()); ss.str(""); ss.clear();
+
+    ss << "Centered: ";
+    centeredPlat_ = getCenteredPlatformId(focusedView);
+    if (centeredPlat_ == 0)
+      ss << "NONE";
+    else
+    {
+      // now get centered entity's name
+      simData::DataStore::Transaction tn;
+      const simData::PlatformPrefs* prefs = dataStore_.platformPrefs(centeredPlat_, &tn);
+      if (prefs)
+        ss << prefs->commonprefs().name();
+    }
+    ImGui::Text(ss.str().c_str()); ss.str(""); ss.clear();
+
+    ss << "Focused View: " << focusedView->getName() << (focusedView->isOverheadEnabled() ? " OVERHEAD" : " PERSPECTIVE");
+    ImGui::Text(ss.str().c_str()); ss.str(""); ss.clear();
+
+    // Avoid showing the sentinel value for off-map
+    if (latLonElevListener_->lat() == simUtil::MousePositionManipulator::INVALID_POSITION_VALUE)
+    {
+      ss << "Mouse lat: ---, lon: ---";
+      if (showElevation_)
+        ss << ", elev: ---";
+    }
+    else
+    {
+      ss << "Mouse lat: " << latLonElevListener_->lat() << ", lon: " << latLonElevListener_->lon();
+      if (showElevation_)
+        ss << ", elev: " << latLonElevListener_->elev();
+    }
+    ImGui::Text(ss.str().c_str());
+
+    auto& io = ImGui::GetIO();
+    if (io.InputQueueCharacters.size() > 0)
+    {
+      switch (io.InputQueueCharacters.front())
+      {
+      case 'o':
+      {
+        simVis::View* curView = viewer_->getMainView()->getFocusManager()->getFocusedView();
+        if (curView)
+          curView->enableOverheadMode(!curView->isOverheadEnabled());
+        break;
+      }
+      case 'i':
+        insertViewPortMode_ = !insertViewPortMode_;
+        handler_->setEnabled(insertViewPortMode_);
+        break;
+      case 'v':
+      {
+        simVis::View* main = viewer_->getMainView();
+        for (unsigned i = 0; i < main->getNumInsets(); ++i)
+        {
+          simVis::View* inset = main->getInset(i);
+          inset->setVisible(!inset->isVisible());
+        }
+        break;
+      }
+      case 'r':
+      {
+        removeAllRequested_ = true;
+        simVis::View::Insets insets;
+        viewer_->getMainView()->getInsets(insets);
+        for (unsigned i = 0; i < insets.size(); ++i)
+          viewer_->getMainView()->removeInset(insets[i].get());
+
+        SIM_NOTICE << LC << "Removed all insets." << std::endl;
+        break;
+      }
+      case 'c':
+      {
+        // find the next platform to center on
+        std::vector<simData::ObjectId>  ids;
+        dataStore_.idList(&ids, simData::PLATFORM);
+        if (centeredPlat_ == 0)
+          centeredPlat_ = ids.front();
+        else
+        {
+          for (auto iter = ids.begin(); iter != ids.end(); ++iter)
+          {
+            // find current centered
+            if (centeredPlat_ == *iter)
+            {
+              ++iter;
+              if (iter == ids.end())
+                centeredPlat_ = ids.front();
+              else
+                centeredPlat_ = *iter;
+              break;
+            }
+          }
+        }
+
+        simVis::EntityNode* plat = viewer_->getSceneManager()->getScenario()->find<simVis::EntityNode>(centeredPlat_);
+        simVis::View* curView = viewer_->getMainView()->getFocusManager()->getFocusedView();
+        if (curView)
+        {
+          simVis::Viewpoint vp = curView->getViewpoint();
+          // Reset the position offset if there was one
+          vp.positionOffset() = osg::Vec3();
+          curView->tetherCamera(plat, vp, 0.0);
+        }
+        break;
+      }
+      case 'n': // lowercase
+      {
+        labelsOn_ = !labelsOn_;
+        std::vector<simData::ObjectId> ids;
+        dataStore_.idList(&ids, simData::PLATFORM);
+        for (auto iter = ids.begin(); iter != ids.end(); ++iter)
+        {
+          simData::DataStore::Transaction tn;
+          simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(*iter, &tn);
+          prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(labelsOn_);
+          tn.complete(&prefs);
+        }
+        break;
+      }
+      case 'd':
+      {
+        dynamicScaleOn_ = !dynamicScaleOn_;
+        std::vector<simData::ObjectId> ids;
+        dataStore_.idList(&ids, simData::PLATFORM);
+        for (auto iter = ids.begin(); iter != ids.end(); ++iter)
+        {
+          simData::DataStore::Transaction tn;
+          simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(*iter, &tn);
+          prefs->set_dynamicscale(dynamicScaleOn_);
+          tn.complete(&prefs);
+        }
+        break;
+      }
+      }
+    }
+
+    ImGui::End();
+  }
+
+private:
+  osg::ref_ptr<simVis::Viewer> viewer_;
+  osg::observer_ptr<simVis::CreateInsetEventHandler> handler_;
+  const LatLonElevListener* latLonElevListener_;
+  simData::DataStore& dataStore_;
+  simData::ObjectId centeredPlat_;
+  bool showElevation_;
+  bool removeAllRequested_;
+  bool insertViewPortMode_;
+  bool dynamicScaleOn_;
+  bool labelsOn_;
+};
+#else
+// An event handler to assist in testing the Inset functionality.
+struct MouseAndMenuHandler : public osgGA::GUIEventHandler
+{
+  MouseAndMenuHandler(simVis::Viewer* viewer, simVis::CreateInsetEventHandler* handler,
+    ui::LabelControl* status, const LatLonElevListener* latLonElevListener, simData::DataStore& dataStore,
+    simData::ObjectId centeredPlat, bool showElevation)
+  : viewer_(viewer),
+    handler_(handler),
+    statusLabel_(status),
+    latLonElevListener_(latLonElevListener),
+    dataStore_(dataStore),
+    centeredPlat_(centeredPlat),
+    showElevation_(showElevation),
+    removeAllRequested_(false),
+    insertViewPortMode_(false),
+    dynamicScaleOn_(true),
+    labelsOn_(true)
+  {
     updateStatusAndLabel_();
   }
 
@@ -288,7 +505,7 @@ private:
     // get centered plat name
     text += "Centered: ";
 
-    centeredPlat_ = getCenteredPlatformId_(focusedView);
+    centeredPlat_ = getCenteredPlatformId(focusedView);
     if (centeredPlat_ == 0)
       text += "NONE\n";
     else
@@ -306,52 +523,28 @@ private:
     text += "\n";
 
     std::ostringstream mouseOs;
-    mouseOs << "Mouse lat:" << latLonElevListener_->lat() << ", lon:" << latLonElevListener_->lon();
-    if (showElevation_)
-      mouseOs << ", elev:" << latLonElevListener_->elev();
+    // Avoid showing the sentinel value for off-map
+    if (latLonElevListener_->lat() == simUtil::MousePositionManipulator::INVALID_POSITION_VALUE)
+    {
+      mouseOs << "Mouse lat: ---, lon: ---";
+      if (showElevation_)
+        mouseOs << ", elev: ---";
+    }
+    else
+    {
+      mouseOs << "Mouse lat: " << latLonElevListener_->lat() << ", lon: " << latLonElevListener_->lon();
+      if (showElevation_)
+        mouseOs << ", elev: " << latLonElevListener_->elev();
+    }
     text += mouseOs.str() + "\n";
 
     statusLabel_->setText(text);
   }
 
-  simData::ObjectId getCenteredPlatformId_(const simVis::View* view) const
-  {
-    osg::Node* tether = view->getCameraTether();
-    if (tether == nullptr)
-      return 0;
-    else
-    {
-      simVis::PlatformModelNode* model = dynamic_cast<simVis::PlatformModelNode*>(tether);
-      assert(model != nullptr);
-
-      std::vector<osg::Group*> parents = model->getParents();
-      for (auto iter = parents.begin(); iter != parents.end(); ++iter)
-      {
-        simVis::PlatformNode* entity = dynamic_cast<simVis::PlatformNode*>(*iter);
-        if (entity)
-          return entity->getId();
-      }
-    }
-    return 0;
-  }
-
-  void setUpMouseManip_(simVis::Viewer* viewer)
-  {
-    if (viewer == nullptr || viewer->getSceneManager() == nullptr || !mouseDispatcher_)
-      return;
-    mouseManip_.reset(new simUtil::MousePositionManipulator(viewer->getSceneManager()->getMapNode(), viewer->getSceneManager()->getOrCreateAttachPoint("Map Callbacks")));
-    mouseManip_->setTerrainResolution(0.0001);
-    mouseDispatcher_->setViewManager(viewer);
-    mouseDispatcher_->addManipulator(0, mouseManip_);
-    mouseManip_->addListener(latLonElevListener_.get(), showElevation_);
-  }
-
   osg::ref_ptr<simVis::Viewer> viewer_;
   osg::observer_ptr<simVis::CreateInsetEventHandler> handler_;
   osg::observer_ptr<ui::LabelControl> statusLabel_;
-  std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher_;
-  std::shared_ptr<LatLonElevListener> latLonElevListener_;
-  std::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
+  const LatLonElevListener* latLonElevListener_;
   simData::DataStore& dataStore_;
   simData::ObjectId centeredPlat_;
   bool showElevation_;
@@ -359,8 +552,9 @@ private:
   bool insertViewPortMode_;
   bool dynamicScaleOn_;
   bool labelsOn_;
-  int border_;
 };
+
+#endif
 
 simData::ObjectId createPlatform(simData::DataStore& dataStore, simUtil::PlatformSimulatorManager& simMgr, const std::string& name, const std::string& icon, const simUtil::Waypoint& startPos, const simUtil::Waypoint& endPos, int labelYOffset)
 {
@@ -451,6 +645,7 @@ int main(int argc, char** argv)
   hud->setUpViewAsHUD(mainView);
   mainView->getViewManager()->addView(hud);
 
+#ifndef HAVE_IMGUI
   // add help and status labels
   ui::VBox* vbox = new ui::VBox();
   vbox->setPadding(10);
@@ -460,6 +655,7 @@ int main(int argc, char** argv)
   ui::LabelControl* statusLabel = new ui::LabelControl("STATUS", 14, simVis::Color::Silver);
   vbox->addControl(statusLabel);
   hud->addOverlayControl(vbox);
+#endif
 
   // data source which will provide positions for the platform
   // based on the simulation time.
@@ -513,12 +709,32 @@ int main(int argc, char** argv)
   }
   mainView->enableOverheadMode(true);
 
+  // Set up mouse manipulator, which ties into a mouse dispatcher that helps to manage multiple manipulators in real apps
   std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher;
   mouseDispatcher.reset(new simUtil::MouseDispatcher);
+  mouseDispatcher->setViewManager(viewer);
+  auto mouseManip = std::make_shared<simUtil::MousePositionManipulator>(
+  viewer->getSceneManager()->getMapNode(),
+  viewer->getSceneManager()->getOrCreateAttachPoint("Map Callbacks"));
+  mouseManip->setTerrainResolution(0.0001);
+  mouseDispatcher->addManipulator(0, mouseManip);
+  auto latLonElevListener = std::make_shared<LatLonElevListener>();
+  mouseManip->addListener(latLonElevListener.get(), showElevation);
 
+#ifdef HAVE_IMGUI
+  // Pass in existing realize operation as parent op, parent op will be called first
+  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  // Adjusted projection matrix is incorrect in ortho mode
+  gui->setAutoAdjustProjectionMatrix(false);
+
+  viewer->getMainView()->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(viewer.get(), createInsetsHandler.get(), latLonElevListener.get(), dataStore, centeredPlat, showElevation));
+#else
   // Install a handler to respond to the demo keys in this sample.
-  osg::ref_ptr<MouseAndMenuHandler> mouseHandler = new MouseAndMenuHandler(viewer.get(), createInsetsHandler.get(), mouseDispatcher.get(), statusLabel, dataStore, centeredPlat, showElevation);
+  osg::ref_ptr<MouseAndMenuHandler> mouseHandler = new MouseAndMenuHandler(viewer.get(), createInsetsHandler.get(), statusLabel, latLonElevListener.get(), dataStore, centeredPlat, showElevation);
   mainView->getCamera()->addEventCallback(mouseHandler);
+#endif
 
   // hovering the mouse over the platform should trigger a popup
   viewer->addEventHandler(new simVis::PopupHandler(viewer->getSceneManager()));

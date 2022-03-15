@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -33,6 +33,7 @@
 #include "simVis/RFProp/ArepsLoader.h"
 #include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/CompositeProfileProvider.h"
+#include "simVis/RFProp/FallbackDataHelper.h"
 #include "simVis/RFProp/OneWayPowerDataProvider.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
 #include "simVis/RFProp/ProfileManager.h"
@@ -91,24 +92,28 @@ void setDefaultPODVector(simRF::PODVectorPtr podLossThresholds)
   }
 }
 
-std::string bearingWarningMsg(const std::string& dataType)
+std::string dataTypeToString(simRF::ProfileDataProvider::ThresholdType dataType)
 {
-  return "No " + dataType + " data found for beam at requested bearing";
-}
-
-std::string dataWarningMsg(const std::string& dataType)
-{
-  return "No " + dataType + " data found for beam";
-}
-
-std::string rangeWarningMsg(const std::string& dataType)
-{
-  return dataType + " range request outside of propagation data limits";
-}
-
-std::string heightWarningMsg(const std::string& dataType)
-{
-  return dataType + " height request outside of propagation data limits";
+  switch (dataType)
+  {
+  case simRF::ProfileDataProvider::THRESHOLDTYPE_POD:
+    return "POD";
+  case simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS:
+    return "Loss";
+  case simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR:
+    return "PPF";
+  case simRF::ProfileDataProvider::THRESHOLDTYPE_SNR:
+    return "SNR";
+  case simRF::ProfileDataProvider::THRESHOLDTYPE_CNR:
+    return "CNR";
+  case simRF::ProfileDataProvider::THRESHOLDTYPE_ONEWAYPOWER:
+    return "One-way power";
+  case simRF::ProfileDataProvider::THRESHOLDTYPE_RECEIVEDPOWER:
+    return "Received power";
+  default:
+    break;
+  }
+  return "?";
 }
 }
 
@@ -450,224 +455,104 @@ int RFPropagationFacade::clearCache(bool reset)
 
 double RFPropagationFacade::getPOD(double azimRad, double gndRngMeters, double hgtMeters) const
 {
-  const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
-  if (!cProvider)
-  {
-    SIM_WARN << bearingWarningMsg("POD") << std::endl;
-    return 0.0;
-  }
-
-  // we want a POD data provider
-  const simRF::ProfileDataProvider* provider =
-    (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_POD));
-  if (!provider)
-  {
-    SIM_WARN << dataWarningMsg("POD") << std::endl;
-  }
-  else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
-  {
-    SIM_WARN << rangeWarningMsg("POD") << std::endl;
-  }
-  else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
-  {
-    SIM_WARN << heightWarningMsg("POD") << std::endl;
-  }
-  else
+  std::string msg;
+  const simRF::ProfileDataProvider* provider = getProfileDataProvider(
+    simRF::ProfileDataProvider::THRESHOLDTYPE_POD,
+    azimRad, gndRngMeters, hgtMeters, msg);
+  if (provider)
   {
     return provider->interpolateValue(hgtMeters, gndRngMeters);
   }
+  SIM_WARN << msg << "\n";
   return 0.0;
+}
+
+void RFPropagationFacade::setLossDataHelper(std::unique_ptr<FallbackDataHelper> helper)
+{
+  lossDataHelper_ = std::move(helper);
 }
 
 double RFPropagationFacade::getLoss(double azimRad, double gndRngMeters, double hgtMeters) const
 {
-  const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
-  if (!cProvider)
+  std::string msg;
+  const simRF::ProfileDataProvider* provider = getProfileDataProvider(
+    simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS,
+    azimRad, gndRngMeters, hgtMeters, msg);
+  if (provider)
   {
-    SIM_WARN << bearingWarningMsg("loss") << std::endl;
-    return simCore::SMALL_DB_VAL;
-  }
-
-  // we want a Loss data provider
-  const simRF::ProfileDataProvider* provider =
-    (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS));
-  if (!provider)
-  {
-    SIM_WARN << dataWarningMsg("loss") << std::endl;
-  }
-  else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
-  {
-    SIM_WARN << rangeWarningMsg("Loss") << std::endl;
-  }
-  else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
-  {
-    SIM_WARN << heightWarningMsg("Loss") << std::endl;
-  }
-  else
-  {
-    double lossVal = provider->interpolateValue(hgtMeters, gndRngMeters);
+    const double lossVal = provider->interpolateValue(hgtMeters, gndRngMeters);
     return (lossVal > simCore::SMALL_DB_VAL ? lossVal : simCore::SMALL_DB_VAL);
   }
+  if (lossDataHelper_)
+  {
+    const double lossdB = lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
+    if (lossdB != simCore::SMALL_DB_VAL)
+      return lossdB;
+  }
+  SIM_WARN << msg << "\n";
   return simCore::SMALL_DB_VAL;
 }
 
 double RFPropagationFacade::getPPF(double azimRad, double gndRngMeters, double hgtMeters) const
 {
-  const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
-  if (!cProvider)
+  std::string msg;
+  const simRF::ProfileDataProvider* provider = getProfileDataProvider(
+    simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR,
+    azimRad, gndRngMeters, hgtMeters, msg);
+  if (provider)
   {
-    SIM_WARN << bearingWarningMsg("PPF") << std::endl;
-    return simCore::SMALL_DB_VAL;
+    const double ppf_dB = provider->interpolateValue(hgtMeters, gndRngMeters);
+    return (ppf_dB > simCore::SMALL_DB_VAL ? ppf_dB : simCore::SMALL_DB_VAL);
   }
 
-  // we want a PPF data provider
-  const simRF::ProfileDataProvider* provider =
-    (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR));
-  if (!provider)
+  if (lossDataHelper_)
   {
-    SIM_WARN << dataWarningMsg("PPF") << std::endl;
+    const double lossdB = lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
+    const double slantRangeM = sqrt(simCore::square(gndRngMeters) + simCore::square(hgtMeters));
+    const double ppf_dB = simCore::lossToPpf(slantRangeM, radarParameters_->freqMHz, lossdB);
+    if (ppf_dB != simCore::SMALL_DB_VAL)
+      return ppf_dB;
   }
-  else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
-  {
-    SIM_WARN << rangeWarningMsg("PPF") << std::endl;
-  }
-  else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
-  {
-    SIM_WARN << heightWarningMsg("PPF") << std::endl;
-  }
-  else
-  {
-    double ppfVal = provider->interpolateValue(hgtMeters, gndRngMeters);
-    return (ppfVal > simCore::SMALL_DB_VAL ? ppfVal : simCore::SMALL_DB_VAL);
-  }
+  SIM_WARN << msg << "\n";
   return simCore::SMALL_DB_VAL;
 }
 
 double RFPropagationFacade::getSNR(double azimRad, double slantRngMeters, double hgtMeters, double xmtGaindB, double rcvGaindB, double rcsSqm, double gndRngMeters) const
 {
-  const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
-  if (!cProvider)
-  {
-    SIM_WARN << bearingWarningMsg("SNR") << std::endl;
+  const double rcvPowerdB = getReceivedPower(azimRad, slantRngMeters, hgtMeters, xmtGaindB, rcvGaindB, rcsSqm, gndRngMeters);
+  if (rcvPowerdB == simCore::SMALL_DB_VAL)
     return simCore::SMALL_DB_VAL;
-  }
-
-  const simRF::ProfileDataProvider* provider =
-  (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_SNR));
-  if (!provider)
-  {
-    SIM_WARN << dataWarningMsg("SNR") << std::endl;
-  }
-  else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
-  {
-    SIM_WARN << rangeWarningMsg("SNR") << std::endl;
-  }
-  else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
-  {
-    SIM_WARN << heightWarningMsg("SNR") << std::endl;
-  }
-  else
-  {
-    const simRF::SNRDataProvider* snrProvider = dynamic_cast<const simRF::SNRDataProvider*>(provider);
-    if (snrProvider)
-      return snrProvider->getSNR(hgtMeters, gndRngMeters, slantRngMeters, xmtGaindB, rcvGaindB, rcsSqm);
-  }
-  // not found, return simCore::SMALL_DB_VAL as a near -infinity dB value
-  return simCore::SMALL_DB_VAL;
+  return (rcvPowerdB - radarParameters_->noisePowerdB);
 }
 
 double RFPropagationFacade::getCNR(double azimRad, double gndRngMeters) const
 {
-  const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
-  if (!cProvider)
-  {
-    SIM_WARN << bearingWarningMsg("CNR") << std::endl;
-    return simCore::SMALL_DB_VAL;
-  }
-
-  // we want a CNR data provider
-  const simRF::ProfileDataProvider* provider =
-    (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_CNR));
-  if (!provider)
-  {
-    SIM_WARN << dataWarningMsg("CNR") << std::endl;
-  }
-  else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
-  {
-    SIM_WARN << rangeWarningMsg("CNR") << std::endl;
-  }
-  else
+  std::string msg;
+  const simRF::ProfileDataProvider* provider = getProfileDataProvider(
+    simRF::ProfileDataProvider::THRESHOLDTYPE_CNR,
+    azimRad, gndRngMeters, msg);
+  if (provider)
   {
     return provider->interpolateValue(0.0, gndRngMeters);
   }
-  // not found, return simCore::SMALL_DB_VAL as a near -infinity dB value
+  SIM_WARN << msg << "\n";
   return simCore::SMALL_DB_VAL;
 }
 
 double RFPropagationFacade::getOneWayPower(double azimRad, double slantRngMeters, double hgtMeters, double xmtGaindB, double gndRngMeters, double rcvGaindB) const
 {
-  const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
-  if (!cProvider)
-  {
-    SIM_WARN << bearingWarningMsg("one-way power") << std::endl;
+  const double ppf_dB = getPPF(azimRad, gndRngMeters, hgtMeters);
+  if (ppf_dB == simCore::SMALL_DB_VAL)
     return simCore::SMALL_DB_VAL;
-  }
-
-  const simRF::ProfileDataProvider* provider =
-    (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_ONEWAYPOWER));
-  if (!provider)
-  {
-    SIM_WARN << dataWarningMsg("one-way power") << std::endl;
-  }
-  else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
-  {
-    SIM_WARN << rangeWarningMsg("One-way power") << std::endl;
-  }
-  else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
-  {
-    SIM_WARN << heightWarningMsg("One-way power") << std::endl;
-  }
-  else
-  {
-    const simRF::OneWayPowerDataProvider* owpProvider = dynamic_cast<const simRF::OneWayPowerDataProvider*>(provider);
-    if (owpProvider)
-      return owpProvider->getOneWayPower(hgtMeters, gndRngMeters, slantRngMeters, xmtGaindB, rcvGaindB);
-  }
-  // not found, return simCore::SMALL_DB_VAL as a near -infinity dB value
-  return simCore::SMALL_DB_VAL;
+  return simRF::OneWayPowerDataProvider::getOneWayPower(*radarParameters_, ppf_dB, slantRngMeters, xmtGaindB, rcvGaindB);
 }
 
 double RFPropagationFacade::getReceivedPower(double azimRad, double slantRngMeters, double hgtMeters, double xmtGaindB, double rcvGaindB, double rcsSqm, double gndRngMeters) const
 {
-  const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
-  if (!cProvider)
-  {
-    SIM_WARN << bearingWarningMsg("received power") << std::endl;
+  const double ppf_dB = getPPF(azimRad, gndRngMeters, hgtMeters);
+  if (ppf_dB == simCore::SMALL_DB_VAL)
     return simCore::SMALL_DB_VAL;
-  }
-
-  const simRF::ProfileDataProvider* provider =
-    (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_RECEIVEDPOWER));
-  if (!provider)
-  {
-    SIM_WARN << dataWarningMsg("received power") << std::endl;
-  }
-  else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
-  {
-    SIM_WARN << rangeWarningMsg("Received power") << std::endl;
-  }
-  else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
-  {
-    SIM_WARN << heightWarningMsg("Received power") << std::endl;
-  }
-  else
-  {
-    const simRF::TwoWayPowerDataProvider* twpProvider = dynamic_cast<const simRF::TwoWayPowerDataProvider*>(provider);
-    if (twpProvider)
-      return twpProvider->getTwoWayPower(hgtMeters, gndRngMeters, slantRngMeters, xmtGaindB, rcvGaindB, rcsSqm);
-  }
-  // not found, return simCore::SMALL_DB_VAL as a near -infinity dB value
-  return simCore::SMALL_DB_VAL;
+  return simRF::TwoWayPowerDataProvider::getTwoWayPower(*radarParameters_, ppf_dB, slantRngMeters, xmtGaindB, rcvGaindB, rcsSqm);
 }
 
 bool RFPropagationFacade::valid() const
@@ -740,9 +625,59 @@ int RFPropagationFacade::loadArepsFiles(const simCore::TimeStamp& time, const st
 const simRF::CompositeProfileProvider* RFPropagationFacade::getProfileProvider(double azimRad) const
 {
   const simRF::Profile *profile = getSlotData(azimRad);
-  if (profile)
-    return dynamic_cast<const simRF::CompositeProfileProvider*>(profile->getDataProvider());
-  return nullptr;
+  return (profile ?
+    dynamic_cast<const simRF::CompositeProfileProvider*>(profile->getDataProvider()) :
+    nullptr);
+}
+
+const simRF::ProfileDataProvider* RFPropagationFacade::getProfileDataProvider(
+  ProfileDataProvider::ThresholdType type,
+  double azimRad, double gndRngMeters, std::string& msg) const
+{
+  const simRF::Profile *profile = getSlotData(azimRad);
+  if (!profile)
+  {
+    msg = "No data found for beam at requested bearing";
+    return nullptr;
+  }
+  const simRF::CompositeProfileProvider* cProvider =
+    dynamic_cast<const simRF::CompositeProfileProvider*>(profile->getDataProvider());
+  if (!cProvider)
+  {
+    msg = "No data found for beam at requested bearing";
+    return nullptr;
+  }
+  const simRF::ProfileDataProvider* provider = cProvider->getProvider(type);
+  if (!provider)
+  {
+    msg = "No " + dataTypeToString(type) + " data found for beam at requested bearing";
+    return nullptr;
+  }
+  if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
+  {
+    msg = "Requested range is outside of " + dataTypeToString(type) +" data limits";
+    return nullptr;
+  }
+  return provider;
+}
+
+const simRF::ProfileDataProvider* RFPropagationFacade::getProfileDataProvider(
+  ProfileDataProvider::ThresholdType type,
+  double azimRad, double gndRngMeters, double hgtMeters, std::string& msg) const
+{
+  const simRF::ProfileDataProvider* provider = getProfileDataProvider(type, azimRad, gndRngMeters, msg);
+  if (!provider)
+  {
+    // msg already populated
+    assert(!msg.empty());
+    return nullptr;
+  }
+  if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
+  {
+    msg = "Requested height is outside of " + dataTypeToString(type) + " data limits";
+    return nullptr;
+  }
+  return provider;
 }
 
 void RFPropagationFacade::setAntennaHeight(float antennaHeightM)

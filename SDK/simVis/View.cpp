@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -1494,7 +1494,7 @@ void View::enableOverheadMode(bool enableOverhead)
     this->setViewpoint(vp);
 
     // Set an orthographic camera. We don't call enableOrthographic() here
-    // because we'd rather quitely reset the original mode once overhead mode
+    // because we'd rather quietly reset the original mode once overhead mode
     // is disabled later.
     if (orthoEnabled_ == false)
     {

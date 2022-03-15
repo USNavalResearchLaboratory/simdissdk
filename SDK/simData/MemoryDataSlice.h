@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -416,6 +416,22 @@ protected: // methods
 
   /// Set values to default
   void reset_();
+
+  /**
+   * Repeated fields for command processing have unique requirements with respect to updating.
+   * If a repeated field of the update command has values, then the current preferences
+   * should be updated.  If the repeated field of the update command is empty, the current
+   * preferences should not be updated.   The routines below implement the unique
+   * requirements.  Currently the only repeated field that is part of command processing
+   * is acceptprojectorids().  If a new repeated field command is added then the routines
+   * hasRepeatedFields_() and clearRepeatedFields_() require changes.
+   */
+  /// Returns true if any repeated field has at least one value
+  bool hasRepeatedFields_(const PrefType* prefs) const;
+  /// Clears all repeated fields
+  void clearRepeatedFields_(PrefType* prefs) const;
+  /// Clears the repeated fields in pref if the corresponding repeated field in condition has at least one value
+  void conditionalClearRepeatedFields_(PrefType* prefs, const PrefType* condition) const;
 
   /**
   * Clear a command from the command cache

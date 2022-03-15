@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -578,6 +578,7 @@ simRF::RFPropagationManagerPtr ScenarioManager::rfPropagationManager() const
 void ScenarioManager::flush(simData::ObjectId flushedId)
 {
   SAFETRYBEGIN;
+  notifyToolsOfFlush_(flushedId);
   // if id 0, flush entire scenario
   if (flushedId == 0)
   {
@@ -1073,7 +1074,7 @@ namespace {
 class AssertOverheadModeHint : public osg::NodeVisitor
 {
 public:
-  AssertOverheadModeHint(bool expectedHint, TraversalMode tm = osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN)
+  explicit AssertOverheadModeHint(bool expectedHint, TraversalMode tm = osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN)
     : NodeVisitor(tm),
     expectedHint_(expectedHint)
   {
@@ -1249,6 +1250,12 @@ void ScenarioManager::notifyToolsOfRemove_(EntityNode* node)
   {
     i->get()->onEntityRemove(*this, node);
   }
+}
+
+void ScenarioManager::notifyToolsOfFlush_(simData::ObjectId flushedId)
+{
+  for (const auto& scenarioToolRefPtr : scenarioTools_)
+    scenarioToolRefPtr->onFlush(*this, flushedId);
 }
 
 void ScenarioManager::update(simData::DataStore* ds, bool force)

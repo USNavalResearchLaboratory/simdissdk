@@ -21,6 +21,7 @@ Compilers officially supported by the SIMDIS SDK:
 * Windows compilers:
   - Microsoft Visual C++ 2017 (VC-14.1)
   - Microsoft Visual C++ 2019 (VC-14.2)
+  - Microsoft Visual C++ 2022 (VC-14.3)
 * Linux compilers:
   - GCC, minimum 8.3
 
@@ -69,12 +70,8 @@ If you build OpenSceneGraph yourself, we recommend
 [building OpenSceneGraph with GL3 support](https://github.com/openscenegraph/OpenSceneGraph/blob/master/examples/osgsimplegl3/osgsimplegl3.cpp#L121).
 
 We also maintain a "Third Party Pack" for each supported architecture on the
-SIMDIS website.  This is a set of precompiled binaries for each dependency,
-in a directory layout that is automatically detected by CMake.  To download
-the Third Party Pack for your platform, visit the [SIMDIS website](https://simdis.nrl.navy.mil).
-We host Third Party Packs for each major release, and on the current
-[nightly build page](https://simdis.nrl.navy.mil/NightlySDK.aspx) too.  A
-free SIMDIS account is required to access this download.
+[Releases page](https://github.com/USNavalResearchLaboratory/simdissdk/releases).
+
 
 SWIG and Python are only required if you intend to build the Python modules
 in the swig/ subdirectory.  This feature is disabled by default.

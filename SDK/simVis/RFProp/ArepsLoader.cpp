@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -297,24 +297,24 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
         cnr->initialize(minRange_, maxRange_, numRanges_);
 
         size_t rngCnt = 0;
-        std::vector<std::string> tmpvec;
+        std::vector<std::string> noiseVec;
         do
         {
           if (simCore::getStrippedLine(inFile, st))
           {
             // tokenize based on white space
-            simCore::stringTokenizer(tmpvec, st);
+            simCore::stringTokenizer(noiseVec, st);
           }
           else
           {
-            tmpvec.clear();
+            noiseVec.clear();
           }
-          vecLen = tmpvec.size();
+          vecLen = noiseVec.size();
           for (size_t i = 0; i < vecLen; ++i)
           {
             // AREPS CNR data stored as decibels, convert to centibels
             float cnr_dB;
-            if (rngCnt == numRanges_ || !simCore::isValidNumber(tmpvec[i], cnr_dB))
+            if (rngCnt == numRanges_ || !simCore::isValidNumber(noiseVec[i], cnr_dB))
             {
               SIM_ERROR << "Invalid CNR data for AREPS file: " << arepsFile << std::endl;
               delete cnr;

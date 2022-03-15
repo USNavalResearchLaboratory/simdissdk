@@ -14,13 +14,14 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
 #include <limits>
+#include "osgDB/ReadFile"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/GeoPositionNode"
 #include "osgEarth/LocalGeometryNode"
@@ -28,6 +29,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/GOG/GogUtils.h"
 #include "simCore/String/Angle.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
@@ -255,13 +257,19 @@ void Utils::configureStyleForClipping(Style& style)
 
 std::string Utils::decodeAnnotation(const std::string& anno)
 {
-  const std::string r1 = simCore::StringUtils::substitute(anno, "_", " ");
-  return simCore::StringUtils::substitute(r1, "\\n", "\n");
+  return simCore::GOG::GogUtils::decodeAnnotation(anno);
 }
+
+osg::ref_ptr<osg::Image> Utils::readRefImage(const std::string& addr)
+{
+  return osgDB::readRefImageFile(simCore::GOG::GogUtils::processUrl(addr));
+}
+
+//------------------------------------------------------------------------
 
 UnitsState::UnitsState()
 {
-  //defaults
+  // defaults
   altitudeUnits_ = simCore::Units::FEET;
   rangeUnits_ = simCore::Units::YARDS;
   timeUnits_ = simCore::Units::SECONDS;

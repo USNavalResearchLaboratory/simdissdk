@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -626,6 +626,7 @@ public: // methods
 
   /**
    * Modify commands for a given platform
+   * Does not support modifying acceptsProjectors
    * @param id Platform that needs commands modified
    * @param modifier The object to modify the commands
    * @return 0 on success
@@ -634,6 +635,7 @@ public: // methods
 
   /**
    * Modify commands for a given custom rendering entity
+   * Does not support modifying acceptsProjectors
    * @param id Custom rendering entity that needs commands modified
    * @param modifier The object to modify the commands
    * @return 0 on success

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -46,7 +46,6 @@
 #include "simVis/GOG/Polygon.h"
 #include "simVis/GOG/Sphere.h"
 
-#include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/LoaderUtils.h"
 #include "simVis/GOG/Loader.h"
@@ -57,9 +56,9 @@ namespace simVis { namespace GOG {
 
 Loader::Loader(const simCore::GOG::Parser& parser, osgEarth::MapNode* mapNode)
   : parser_(parser),
-    mapNode_(mapNode)
+  mapNode_(mapNode),
+  referencePosition_(simCore::GOG::BSTUR)
 {
-  referencePosition_ = simCore::Vec3(BSTUR.lat(), BSTUR.lon(), BSTUR.alt());
 }
 
 Loader::~Loader()

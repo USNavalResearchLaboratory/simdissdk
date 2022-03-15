@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -572,7 +572,6 @@ void BoundVariantMapSetting::setValue(const QMap<QString, QVariant>& v)
 
 void BoundVariantMapSetting::mergeValues(const QMap<QString, QVariant>& v)
 {
-  const auto keys = v.keys();
   QMap<QString, QVariant> newValues = value_;
   for (QMap<QString, QVariant>::const_iterator vIter = v.begin(); vIter != v.end(); ++vIter)
     newValues[vIter.key()] = vIter.value();

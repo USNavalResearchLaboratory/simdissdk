@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -136,13 +136,13 @@ public:
 
       // Horizontal width
       float horzSize = horzSize_;
-      IMGUI_ADD_ROW(ImGui::SliderFloat, "Horiz. Size", &horzSize_, 1.f, 400.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Horiz. Size", &horzSize_, .01f, 400.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
       if (horzSize != horzSize_)
         needUpdate = true;
 
       // Vertical size
       float vertSize = vertSize_;
-      IMGUI_ADD_ROW(ImGui::SliderFloat, "Vert. Size", &vertSize_, 1.f, 200.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      IMGUI_ADD_ROW(ImGui::SliderFloat, "Vert. Size", &vertSize_, .01f, 200.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
       if (vertSize != vertSize_)
         needUpdate = true;
 
@@ -495,12 +495,12 @@ ui::Control* createUI(AppData& app)
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Horiz. Size"));
-  app.horizSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(1.0, 400.0, 45.0, applyUI.get()));
+  app.horizSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(.01, 400.0, 45.0, applyUI.get()));
   app.horizLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.horizSlider_.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Vert. Size"));
-  app.vertSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(1.0, 200.0, 45.0, applyUI.get()));
+  app.vertSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(.01, 200.0, 45.0, applyUI.get()));
   app.vertLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.vertSlider_.get()));
 
   r++;

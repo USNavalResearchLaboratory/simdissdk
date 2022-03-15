@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -78,6 +78,31 @@ public:
   static bool isEntityActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime);
   /** Returns the user vertical datum value, in meters, for the given entity. */
   static double getUserVerticalDatum(const simData::DataStore& dataStore, simData::ObjectId id);
+
+  /** Replaces contents of repeated field with the contents of the provided vector. */
+  template <typename T>
+  static void vecToRepeated(typename google::protobuf::RepeatedField<T>* field, const typename std::vector<T>& vec)
+  {
+    if (!field)
+      return;
+    field->Clear();
+    for (const auto& value : vec)
+      field->Add(value);
+  }
+
+  /** Converts a protobuf RepeatedField into a std::vector of same type. */
+  template <typename T>
+  static typename std::vector<T> vecFromRepeated(const typename google::protobuf::RepeatedField<T>& field)
+  {
+    typename std::vector<T> rv;
+    if (!field.empty())
+    {
+      rv.reserve(field.size());
+      for (int k = 0; k < field.size(); ++k)
+        rv.emplace_back(field.Get(k));
+    }
+    return rv;
+  }
 };
 
 }

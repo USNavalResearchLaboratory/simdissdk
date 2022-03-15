@@ -1,9 +1,6 @@
 #version $GLSL_VERSION_STR
-
 #pragma vp_function sim_proj_frag, fragment
-
 #pragma import_defines(SIMVIS_USE_REX)
-#pragma import_defines(SIMVIS_PROJECT_ON_PLATFORM)
 #pragma import_defines(SIMVIS_PROJECT_USE_SHADOWMAP)
 
 uniform bool projectorActive;
@@ -11,47 +8,24 @@ uniform float projectorAlpha;
 uniform sampler2D simProjSampler;
 uniform bool projectorUseColorOverride;
 uniform vec4 projectorColorOverride;
+uniform float projectorMaxRangeSquared;
+uniform bool projectorDoubleSided;
+uniform mat4 simProjShadowMapMat;
 
-#ifdef SIMVIS_PROJECT_USE_SHADOWMAP
+in vec3 vp_Normal;
+in vec3 oe_UpVectorView;
+in vec4 simProjTexCoord;
+in vec3 simProjToVert_VIEW;
+in vec3 simProjLookVector_VIEW;
+in vec4 simProjVert_VIEW;
+
+#if SIMVIS_PROJECT_USE_SHADOWMAP
 uniform sampler2D simProjShadowMap;
 in vec4 simProjShadowMapCoord;
 #endif
 
-in vec4 simProjTexCoord;
-in vec3 simProjToVert_VIEW;
-in vec3 simProjLookVector_VIEW;
-in vec3 vp_Normal;
-in vec3 oe_UpVectorView;
 
-#ifdef SIMVIS_PROJECT_ON_PLATFORM
-
-// for a projector texturing a platform or other model:
-void sim_proj_frag(inout vec4 color)
-{
-  if (projectorActive && simProjTexCoord.q > 0)
-  {
-    // clip to projected texture domain; otherwise the texture will project
-    // even when the target is outside the projection frustum
-    vec2 local = simProjTexCoord.st / simProjTexCoord.q;
-    if (clamp(local, 0.0, 1.0) == local)
-    {
-      vec4 textureColor = textureProj(simProjSampler, simProjTexCoord);
-      if (projectorUseColorOverride)
-      {
-        color.rgb = textureColor.rgb * projectorColorOverride.rgb;
-        color.a = textureColor.a * projectorAlpha;
-      }
-      else
-      {
-        color.rgb = mix(color.rgb, textureColor.rgb, textureColor.a * projectorAlpha);
-      }
-    }
-  }
-}
-
-#else
-
-// #define PROJ_DEBUG
+//#define PROJ_DEBUG
 
 // for a projector texturing the terrain:
 void sim_proj_frag(inout vec4 color)
@@ -74,48 +48,61 @@ void sim_proj_frag(inout vec4 color)
     return;
 
   // only draw in front of projector (not behind)
-  if (dot(simProjLookVector_VIEW, simProjToVert_VIEW) < 0.0)  
+  if (dot(simProjLookVector_VIEW, simProjToVert_VIEW) < 0.0)
     return;
 
+  // only draw up to maximum range
+  float distanceToVertSq = dot(simProjToVert_VIEW, simProjToVert_VIEW);
+  if (projectorMaxRangeSquared > 0.0 && projectorMaxRangeSquared < distanceToVertSq)
+    return;
+
+  // cos of the angle at which the projector is viewing a surface.
+  // <0 = front face, >0 = back face
   float vert_dot_normal = dot(normalize(simProjToVert_VIEW), normalize(vp_Normal));
 
   vec4 pass_color;
+  fail_color = vec4(1, 0, 0, 1);
   float fail_mix = 0.0;
 
-#ifdef SIMVIS_PROJECT_USE_SHADOWMAP
+#if SIMVIS_PROJECT_USE_SHADOWMAP
 
   // sample the depth texture as a mask
-  const float shadow_bias = 0.00005;
-  vec3 shadow_coord = simProjShadowMapCoord.xyz / simProjShadowMapCoord.w;
-  float d = textureProj(simProjShadowMap, simProjShadowMapCoord).r; // depth from shadow map
-  float z = simProjShadowMapCoord.z / simProjShadowMapCoord.w; // depth of reprojected vertex
+  float shadow_bias = clamp(0.00005 * tan(acos(-vert_dot_normal)), 0.0, 0.00005);
+  float shadow_d = textureProj(simProjShadowMap, simProjShadowMapCoord).r; // depth from shadow map
+  float vertex_d = simProjShadowMapCoord.z / simProjShadowMapCoord.w; // depth of reprojected vertex
+  float vertex_biased_d = vertex_d - shadow_bias; // apply a little bias
+  fail_mix = 1.0 - clamp((shadow_d - vertex_biased_d) / shadow_bias, 0.0, 1.0);
 
-  fail_color = vec4(1, 0, 0, 1);
-  float a = z + shadow_bias;
-  if (d < a) fail_mix = 1.0;
-  else if (d >= z) fail_mix = 0.0;
-  else fail_mix = 1.0 - ((a - d) / (z - d));
+#endif // SIMVIS_PROJECT_USE_SHADOWMAP
 
-#endif
+  float vis;
 
-  // don't draw over the horizon or on any back-facing surface
-  float vis = -vert_dot_normal;
-  if (vis <= 0.0 && fail_mix < 1.0) {
+  // don't draw on any back-facing surface
+  if (!projectorDoubleSided)
+  {
+    vis = -vert_dot_normal;
+    if (vis <= 0.0 && fail_mix < 1.0) {
       fail_mix = 1.0;
       fail_color = vec4(1, 1, 0, 1);
+    }
   }
 
+#if SIMVIS_PROJECT_USE_SHADOWMAP
   // don't draw on geometry whose plane is very close to the projection vector
-  // since it causes nasty artifacts
+  // since it causes nasty artifacts. Only enable this when shadow mapping, where
+  // the artifacts are most apparent.
   vis = abs(vert_dot_normal);
-  if (vis < 0.1 && fail_mix < 1.0) {
+  if (vis < 0.05 && fail_mix < 1.0) {
     fail_mix = 1.0;
     fail_color = vec4(1, 0, 1, 1);
   }
+#endif // SIMVIS_PROJECT_USE_SHADOWMAP
 
 #ifdef PROJ_DEBUG
+
   pass_color = vec4(0, 1, 0, 1);
-#else
+
+#else // !PROJ_DEBUG
 
   // sample the projector texture:
   vec4 textureColor = texture(simProjSampler, local);
@@ -132,8 +119,7 @@ void sim_proj_frag(inout vec4 color)
 
   fail_color = vec4(0);
 
-#endif
+#endif // !PROJ_DEBUG
+
   color = mix(pass_color, fail_color, fail_mix);
 }
-
-#endif

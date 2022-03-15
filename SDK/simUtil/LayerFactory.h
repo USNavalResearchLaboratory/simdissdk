@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -35,6 +35,7 @@ namespace osgEarth
   class ElevationLayer;
   class GDALElevationLayer;
   class GDALImageLayer;
+  class MapBoxGLImageLayer;
   class MBTilesElevationLayer;
   class MBTilesImageLayer;
   class Profile;
@@ -65,6 +66,8 @@ public:
   osgEarth::MBTilesImageLayer* newMbTilesImageLayer(const std::string& fullPath) const;
   /** Returns an image layer properly configured for GDAL layer. */
   osgEarth::GDALImageLayer* newGdalImageLayer(const std::string& fullPath) const;
+  /** Returns an image layer properly configured for MapboxGLImageLayer layer. */
+  osgEarth::MapBoxGLImageLayer* newMapBoxGlImageLayer(const std::string& fullPath) const;
 
   /** Returns an elevation layer properly configured for DB layer. May return nullptr if not configured with DB support. */
   simVis::DBElevationLayer* newDbElevationLayer(const std::string& fullPath) const;

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -30,6 +30,7 @@
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Time/Clock.h"
 #include "simData/DataStore.h"
+#include "simData/DataStoreHelpers.h"
 #include "simData/DataTypes.h"
 
 #include "osg/BoundingBox"
@@ -74,6 +75,10 @@
 #define PB_FIELD_CHANGED(a, b, field) ( \
   PB_FIELD_STATUS_CHANGED((a), (b), field) || ( \
     PB_BOTH_HAVE_FIELD((a), (b), field) && ((a)->field() != (b)->field()) ) )
+
+#define PB_REPEATED_FIELD_CHANGED(a, b, field) ( \
+  ((a)->field ## _size() != (b)->field ## _size()) || \
+  (simData::DataStoreHelpers::vecFromRepeated((a)->field()) != simData::DataStoreHelpers::vecFromRepeated((b)->field())) )
 
 
 #define PB_HAS_SUBFIELD(a, first, second) ( \

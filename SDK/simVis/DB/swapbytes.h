@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -46,8 +46,8 @@ namespace simVis_db
       const size_t size = sizeof(T);
       const size_t halfSize = size >> 1;
       const size_t end = size - 1;
-      for (size_t i = 0; i < halfSize; ++i)
-        std::swap(ptr[end - i], ptr[i]);
+      for (size_t j = 0; j < halfSize; ++j)
+        std::swap(ptr[end - j], ptr[j]);
     }
   }
 

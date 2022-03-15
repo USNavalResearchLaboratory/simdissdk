@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -64,6 +64,10 @@ void GateMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
 
     // time moved forward: execute all commands from startTime to new current time
     hasChanged_ = advance_(startTime, time);
+
+    // Check for repeated scalars in the command, forcing complete replacement instead of add-value
+    conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
+
     // apply the current command state at every update; commands override prefs settings
     prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
@@ -76,13 +80,16 @@ void GateMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
     // time moved backwards: reset and execute all commands from start to new current time
     // reset lastUpdateTime_
     reset_();
+
     // reset important prefs to default; we will commit these changes regardless of commands
     prefs->mutable_commonprefs()->set_datadraw(false);
 
     // advance time forward, execute all commands from 0.0 (use -1.0 since we need a time before 0.0) to new current time
     advance_(-1.0, time);
-    prefs->MergeFrom(commandPrefsCache_);
+    conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
     hasChanged_ = true;
+
+    prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
   }
 }

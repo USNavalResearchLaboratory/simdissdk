@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -177,9 +177,7 @@ void CustomRenderingNode::setPrefs(const simData::CustomRenderingPrefs& prefs)
   }
 
   updateOverrideColor_(prefs);
-
-  if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefs_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
-    applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
+  applyProjectorPrefs_(lastPrefs_.commonprefs(), prefs.commonprefs());
 
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;

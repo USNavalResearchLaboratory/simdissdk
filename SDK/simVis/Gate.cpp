@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -133,16 +133,16 @@ void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a, const simDa
   }
   if (PB_FIELD_CHANGED(a, b, width) && PB_BOTH_HAVE_FIELD(a, b, width))
   {
-    SVFactory::updateHorizAngle(gateSV_.get(), a->width(), b->width());
+    SVFactory::updateHorizAngle(gateSV_.get(), b->width());
   }
   if (PB_FIELD_CHANGED(a, b, height) && PB_BOTH_HAVE_FIELD(a, b, height))
   {
-    SVFactory::updateVertAngle(gateSV_.get(), a->height(), b->height());
+    SVFactory::updateVertAngle(gateSV_.get(), b->height());
   }
 #endif
 }
 
-osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update)
+SphericalVolume* GateVolume::createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update)
 {
   simVis::SVData sv;
 
@@ -217,7 +217,7 @@ osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, c
   sv.drawAsSphereSegment_ = prefs->gatedrawmode() == simData::GatePrefs_DrawMode_COVERAGE;
 
   // use a Y-forward directional vector to correspond with the gate's locator.
-  osg::MatrixTransform* node = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
+  SphericalVolume* node = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
   return node;
 }
 
@@ -446,8 +446,7 @@ void GateNode::setPrefs(const simData::GatePrefs& prefs)
   // validate localgrid prefs changes that might provide user notifications
   localGrid_->validatePrefs(prefs.commonprefs().localgrid());
 
-  if (!hasLastPrefs_ || PB_FIELD_CHANGED((&lastPrefsFromDS_.commonprefs()), (&prefs.commonprefs()), acceptprojectorid))
-    applyProjectorPrefs_(lastPrefsFromDS_.commonprefs(), prefs.commonprefs());
+  applyProjectorPrefs_(lastPrefsFromDS_.commonprefs(), prefs.commonprefs());
 
   applyPrefs_(prefs);
   updateLabel_(prefs);

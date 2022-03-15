@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -598,6 +598,22 @@ public:
   /// Set the orbit's second center position, ignores z value in favor of z from first center position;  in lla radians if absolute, xyz meters if relative
   void setCenterPosition2(const simCore::Vec3& center2);
 
+  /**
+   * Helper function to create XYZ (meters) orbit geometry from the specified parameters.
+   * @param azimuthRad Azimuth from the first center position to second center position. If the orbit is
+   *   in LLA (absolute), simCore::sodanoInverse() can help with this. If in relative, atan(xd / yd) can
+   *   provide this value. This is in radians.
+   * @param lengthM Length from one center position to another, in meters. For absolute LLA coordinates,
+   *   simCore::sodanoInverse() can also provide this. For relative coordinates, this is equivalent to
+   *   the distance formula (sqrt(xd*xd + yd*yd)).
+   * @param radiusM Radius of the orbit ends in meters. Must be > 0.
+   * @param altitudeM Altitude of the output relative coordinates. The resulting coordinates will have this value.
+   * @param segmentLenM Length of orbit end segments, in meters. A good typical value is radiusM / 8.
+   * @param xyz Output vector that will hold the XYZ points defining the orbit shape relative to the origin.
+   *   This results in a closed shape, i.e. xyz.front() == xyz.back()
+   */
+  static void createOrbitShape(double azimuthRad, double lengthM, double radiusM, double altitudeM, double segmentLenM, std::vector<simCore::Vec3>& xyz);
+
 private:
   /// Serialize the shape's specific implementation attributes to the stream
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
@@ -871,27 +887,27 @@ public:
 
   virtual ShapeType shapeType() const;
 
-  // Box north corner latitude in radians
+  /// Box north corner latitude in radians
   double north() const;
   void setNorth(double northRad);
 
-  // Box south corner latitude in radians
+  /// Box south corner latitude in radians
   double south() const;
   void setSouth(double southRad);
 
-  // Box east corner longitude in radians
+  /// Box east corner longitude in radians
   double east() const;
   void setEast(double eastRad);
 
-  // Box west corner longitude in radians
+  /// Box west corner longitude in radians
   double west() const;
   void setWest(double westRad);
 
-  // Altitude of the bottom of the box in meters
+  /// Altitude of the bottom of the box in meters
   double altitude() const;
   void setAltitude(double altitudeMeters);
 
-  // Box optional height in meters
+  /// Box optional height in meters
   int getHeight(double& height) const;
   void setHeight(double heightMeters);
 
@@ -915,29 +931,33 @@ public:
 
   virtual ShapeType shapeType() const;
 
-  // Box north corner latitude in radians
+  /// Box north corner latitude in radians
   double north() const;
   void setNorth(double northRad);
 
-  // Box south corner latitude in radians
+  /// Box south corner latitude in radians
   double south() const;
   void setSouth(double southRad);
 
-  // Box east corner longitude in radians
+  /// Box east corner longitude in radians
   double east() const;
   void setEast(double eastRad);
 
-  // Box west corner longitude in radians
+  /// Box west corner longitude in radians
   double west() const;
   void setWest(double westRad);
 
-  // Rotation of the image offset from true north, in radians
+  /// Rotation of the image offset counterclockwise from true north (matching KML GroundOverlay), in radians
   double getRotation() const;
   void setRotation(double rotation);
 
-  // image filename
+  /// image filename
   std::string imageFile() const;
   void setImageFile(const std::string& imageFile);
+
+  /// opacity value for image (0.0 transparent, 1.0 opaque)
+  int getOpacity(double& opacity) const;
+  void setOpacity(double opacity);
 
 private:
   /// Serialize the shape's specific implementation attributes to the stream
@@ -949,6 +969,7 @@ private:
   double west_; ///< west corner latitude, radians
   double rotation_; ///< rotation angle from true north, radians
   std::string imageFile_; ///< image file to display
+  simCore::Optional<double> opacity_; ///< 0.0 (transparent) to 1.0 (opaque)
 };
 
 /// Define a shared ptr

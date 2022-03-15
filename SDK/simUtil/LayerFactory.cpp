@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -25,6 +25,7 @@
 #include "osgEarth/FeatureModelLayer"
 #include "osgEarth/GDAL"
 #include "osgEarth/ImageLayer"
+#include "osgEarth/MapboxGLImageLayer"
 #include "osgEarth/MBTiles"
 #include "osgEarth/OGRFeatureSource"
 #include "simCore/Common/Exception.h"
@@ -101,6 +102,30 @@ osgEarth::GDALImageLayer* LayerFactory::newGdalImageLayer(const std::string& ful
   const std::string suffixWithDot = simCore::getExtension(fullPath);
   if (suffixWithDot == ".jp2" || suffixWithDot == ".sid")
     layer->setInterpolation(osgEarth::INTERP_NEAREST);
+
+  return layer.release();
+}
+
+osgEarth::MapBoxGLImageLayer* LayerFactory::newMapBoxGlImageLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  osgEarth::MapBoxGLImageLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::MapBoxGLImageLayer> layer = new osgEarth::MapBoxGLImageLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+  layer->setURL(fullPath);
+  layer->setTileSize(512u);
+#if OSGEARTH_SOVERSION >= 128
+  // A good rule of thumb is: (tile size / 256) * (FOV / 30). This results in a scale of 4.f
+  // for most SIMDIS cases, but this is still a bit small, so boost it up to 6.f.
+  layer->setPixelScale(6.f);
+#endif
+
+  // Use the same cache policy as GDAL
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
 
   return layer.release();
 }

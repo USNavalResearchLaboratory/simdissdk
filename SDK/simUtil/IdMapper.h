@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -29,8 +29,7 @@
 #include <vector>
 
 #include "simCore/Common/Common.h"
-
-namespace simData { class DataStore; }
+#include "simData/DataStore.h"
 
 namespace simUtil {
 
@@ -74,14 +73,25 @@ public:
     uint64_t originalId;
     /** Name of the entity */
     std::string entityName;
-    /** Host platform's ID on remote system, if not a platform.  Should match "id" for platforms. */
+    /** Host platform's ID on remote system, if not a platform or host-less custom rendering.  Should match "id" for platforms and zero for host-less custom rendering. */
     uint64_t hostPlatformId;
+    /** Type of entity, if provided used to limit search for match */
+    simData::ObjectType type;
+
+    EntityIdData()
+      : id(0),
+        originalId(0),
+        hostPlatformId(0),
+        type(simData::NONE)
+    {}
   };
 
   /** Adds a mapping to a remote entry */
   int addMapping(const EntityIdData& mapping);
-  /** Adds a mapping to a remote entry; convenience method that combines into an EntityIdData. */
+  /** Adds a mapping to a remote entry; convenience method that combines into an EntityIdData. Member variable type will be set to simData::NONE. */
   int addMapping(uint64_t id, uint64_t originalId, const std::string& entityName, uint64_t hostPlatformId);
+  /** Adds a mapping to a remote entry; convenience method that combines into an EntityIdData. */
+  int addMapping(uint64_t id, uint64_t originalId, const std::string& entityName, uint64_t hostPlatformId, simData::ObjectType type);
 
   /** Removes a foreign remote ID from our list */
   int removeId(uint64_t id);

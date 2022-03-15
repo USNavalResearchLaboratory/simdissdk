@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -35,6 +35,7 @@ namespace simVis
   class EntityLabelNode;
   class LocalGridNode;
   class Locator;
+  class SphericalVolume;
 
   /// Scene graph node representing the Gate volume
   class SDKVIS_EXPORT GateVolume : public simVis::LocatorNode
@@ -64,9 +65,9 @@ namespace simVis
     // Not implemented
     GateVolume(const GateVolume&);
 
-    osg::MatrixTransform* createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update);
+    SphericalVolume* createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update);
 
-    osg::ref_ptr<osg::MatrixTransform> gateSV_;
+    osg::ref_ptr<SphericalVolume> gateSV_;
   };
 
   /// Scene graph node representing a Gate centroid

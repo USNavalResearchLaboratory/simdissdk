@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -27,6 +27,7 @@
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Interpolation.h"
 #include "simVis/Registry.h"
 
 namespace GUI {
@@ -92,7 +93,8 @@ OsgImGuiHandler::OsgImGuiHandler()
   mouseWheel_(0.0f),
   initialized_(false),
   firstFrame_(true),
-  firstDraw_(true)
+  firstDraw_(true),
+  autoAdjustProjectionMatrix_(true)
 {
 }
 
@@ -103,8 +105,8 @@ void OsgImGuiHandler::add(BaseGui* gui)
 }
 
 /**
- * Imporant Note: Dear ImGui expects the control Keys indices not to be
- * greater thant 511. It actually uses an array of 512 elements. However,
+ * Important Note: Dear ImGui expects the control Keys indices not to be
+ * greater than 511. It actually uses an array of 512 elements. However,
  * OSG has indices greater than that. So here I do a conversion for special
  * keys between ImGui and OSG.
  */
@@ -157,6 +159,16 @@ ImFont* OsgImGuiHandler::getDefaultFont() const
 ImFont* OsgImGuiHandler::getLargeFont() const
 {
   return largeFont_;
+}
+
+bool OsgImGuiHandler::getAutoAdjustProjectionMatrix() const
+{
+  return autoAdjustProjectionMatrix_;
+}
+
+void OsgImGuiHandler::setAutoAdjustProjectionMatrix(bool value)
+{
+  autoAdjustProjectionMatrix_ = value;
 }
 
 void OsgImGuiHandler::init_()
@@ -243,7 +255,11 @@ void OsgImGuiHandler::newFrame_(osg::RenderInfo& renderInfo)
 
 void OsgImGuiHandler::render_(osg::RenderInfo& ri)
 {
-  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_PassthruCentralNode;
+  auto camera = ri.getCurrentCamera();
+  auto viewport = camera->getViewport();
+
+  constexpr ImGuiDockNodeFlags dockspace_flags =
+    ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_PassthruCentralNode;
 
   auto dockSpaceId = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
 
@@ -255,27 +271,58 @@ void OsgImGuiHandler::render_(osg::RenderInfo& ri)
   auto centralNode = ImGui::DockBuilderGetCentralNode(dockSpaceId);
 
   auto io = ImGui::GetIO();
+  const double newX = centralNode->Pos.x;
+  const double newY = io.DisplaySize.y - centralNode->Size.y - centralNode->Pos.y;
+  const double newWidth = centralNode->Size.x;
+  const double newHeight = centralNode->Size.y;
 
-  auto camera = ri.getCurrentCamera();
-  auto viewport = camera->getViewport();
-  viewport->x() = centralNode->Pos.x;
-  viewport->y() = io.DisplaySize.y - centralNode->Size.y - centralNode->Pos.y;
-  viewport->width() = centralNode->Size.x;
-  viewport->height() = centralNode->Size.y;
-
-  const osg::Matrixd& proj = camera->getProjectionMatrix();
-  bool isOrtho = osg::equivalent(proj(3, 3), 1.0);
-  if (!isOrtho)
+  // If we do not adjust viewport, no need to adjust projection matrix
+  if (osg::equivalent(viewport->x(), newX) && osg::equivalent(viewport->y(), newY) &&
+    osg::equivalent(viewport->width(), newWidth) && osg::equivalent(viewport->height(), newHeight))
   {
-    double fovy, ar, znear, zfar;
-    camera->getProjectionMatrixAsPerspective(fovy, ar, znear, zfar);
-    camera->setProjectionMatrixAsPerspective(fovy, viewport->width() / viewport->height(), znear, zfar);
+    return;
   }
-  else
+
+  // Make a copy of the viewport values before we change the positions; ortho calculations need these
+  const double oldX = viewport->x();
+  const double oldY = viewport->y();
+  const double oldWidth = viewport->width();
+  const double oldHeight = viewport->height();
+  viewport->x() = newX;
+  viewport->y() = newY;
+  viewport->width() = newWidth;
+  viewport->height() = newHeight;
+
+  if (autoAdjustProjectionMatrix_)
   {
-    double left, right, bottom, top, znear, zfar;
-    camera->getProjectionMatrixAsOrtho(left, right, bottom, top, znear, zfar);
-    camera->setProjectionMatrixAsOrtho(viewport->x(), viewport->x() + viewport->width(), viewport->y(), viewport->y() + viewport->height(), znear, zfar);
+    const osg::Matrixd& proj = camera->getProjectionMatrix();
+    const bool isOrtho = osg::equivalent(proj(3, 3), 1.0);
+    if (!isOrtho)
+    {
+      double fovy, ar, znear, zfar;
+      camera->getProjectionMatrixAsPerspective(fovy, ar, znear, zfar);
+      camera->setProjectionMatrixAsPerspective(fovy, viewport->width() / viewport->height(), znear, zfar);
+    }
+    else
+    {
+      double left, right, bottom, top, znear, zfar;
+      camera->getProjectionMatrixAsOrtho(left, right, bottom, top, znear, zfar);
+
+      // Scale the projection matrix by the same ratio that the viewport gets adjusted. This is required
+      // in order to deal with osgEarth EarthManipulator zoom in/out capabilities in ortho mode, where
+      // the left/right/top/bottom values are not equal to viewport coordinates.
+      auto mapX = [=](double x) -> double {
+        return simCore::linearInterpolate(left, right, oldX, x, oldX + oldWidth);
+      };
+      auto mapY = [=](double y) -> double {
+        return simCore::linearInterpolate(bottom, top, oldY, y, oldY + oldHeight);
+      };
+      const double newLeft = mapX(viewport->x());
+      const double newRight = mapX(viewport->x() + viewport->width());
+      const double newBottom = mapY(viewport->y());
+      const double newTop = mapY(viewport->y() + viewport->height());
+      camera->setProjectionMatrixAsOrtho(newLeft, newRight, newBottom, newTop, znear, zfar);
+    }
   }
 }
 
@@ -348,6 +395,11 @@ bool OsgImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
   case osgGA::GUIEventAdapter::DOUBLECLICK:
   {
     io.MousePos = ImVec2(ea.getX(), io.DisplaySize.y - ea.getY());
+    // Need to set mousePressed_ flags in addition to mouseDoubleClicked_ flags to satisfy
+    // double click requirements of some ImGui elements like ImGui::TreeNodeEx
+    mousePressed_[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
+    mousePressed_[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
+    mousePressed_[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
     mouseDoubleClicked_[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
     mouseDoubleClicked_[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
     mouseDoubleClicked_[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;

@@ -120,6 +120,7 @@ if(OSG_FOUND)
     )
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}ColorGradient.h
+        ${SIMQT_INC}MergeValues.h
         ${SIMQT_INC}QtConversion.h
     )
 endif()

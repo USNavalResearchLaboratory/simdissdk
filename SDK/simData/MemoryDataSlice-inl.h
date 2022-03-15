@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -566,7 +566,9 @@ void MemoryCommandSlice<CommandType, PrefType>::modify(typename DataSlice<Comman
   {
     if (modifier->modify(*(updates_[index])) < 0)
     {
-      updates_.erase(updates_.begin() + index);
+      auto it = updates_.begin() + index;
+      delete *it;
+      updates_.erase(it);
       --size;
     }
     else
@@ -618,6 +620,8 @@ void MemoryCommandSlice<CommandType, PrefType>::insert(CommandType *data)
   }
   else
   {
+    // Must clear out the shared fields in target, that are repeated and non-empty
+    conditionalClearRepeatedFields_((*iter)->mutable_updateprefs(), data->mutable_updateprefs());
     // merge into existing command at same time
     (*iter)->MergeFrom(*data);
     // in this case, deque does not take ownership of the (committed) data item; we need to delete it.
@@ -672,15 +676,8 @@ template<class CommandType, class PrefType>
 void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId id, double time)
 {
   clearChanged();
-  if (updates_.empty())
-  {
-    reset_();
-    return;
-  }
 
-  // if requested time is before the beginning
-  const CommandType *first = updates_.front();
-  if (time < first->time())
+  if (updates_.empty() || (time < updates_.front()->time()))
   {
     reset_();
     return;
@@ -702,6 +699,9 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
     // time moved forward: execute all commands from startTime to new current time
     hasChanged_ = advance_(startTime, time);
 
+    // Check for repeated scalars in the command, forcing complete replacement instead of add-value
+    conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
+
     // apply the current command state at every update, even if no change in command state occurred with this update; commands override prefs settings
     prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
@@ -715,10 +715,12 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
     // reset lastUpdateTime_
     reset_();
 
-    // advance time forward, execute all commands from 0.0 (use -0.5 since we need a time before 0.0) to new current time
-    advance_(-0.5, time);
+    // advance time forward, execute all commands from 0.0 (use -1.0 since we need a time before 0.0) to new current time
+    advance_(-1.0, time);
+    conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
 
     hasChanged_ = true;
+
     prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
   }
@@ -815,6 +817,8 @@ bool MemoryCommandSlice<CommandType, PrefType>::advance_(double startTime, doubl
       }
       else
       {
+        // Check for repeated scalars in the command, forcing complete replacement instead of add-value
+        conditionalClearRepeatedFields_(&commandPrefsCache_, &cmd->updateprefs());
         // execute the command
         commandPrefsCache_.MergeFrom(cmd->updateprefs());
       }
@@ -835,6 +839,24 @@ void MemoryCommandSlice<CommandType, PrefType>::reset_()
   earliestInsert_ = std::numeric_limits<double>::max();
 }
 
+template<class CommandType, class PrefType>
+bool MemoryCommandSlice<CommandType, PrefType>::hasRepeatedFields_(const PrefType* prefs) const
+{
+  return prefs->commonprefs().acceptprojectorids_size() != 0;
+}
+
+template<class CommandType, class PrefType>
+void MemoryCommandSlice<CommandType, PrefType>::clearRepeatedFields_(PrefType* prefs) const
+{
+  prefs->mutable_commonprefs()->mutable_acceptprojectorids()->Clear();
+}
+
+template<class CommandType, class PrefType>
+void MemoryCommandSlice<CommandType, PrefType>::conditionalClearRepeatedFields_(PrefType* prefs, const PrefType* condition) const
+{
+  if (hasRepeatedFields_(condition))
+    clearRepeatedFields_(prefs);
+}
 
 namespace {
 /// Implementation of the Visitor interface that finds only fields that are set, adding them to the specified fieldList

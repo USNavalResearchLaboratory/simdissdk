@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -50,7 +50,6 @@
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
-#include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Loader.h"
 #include "simUtil/ExampleResources.h"
@@ -528,7 +527,7 @@ int main(int argc, char** argv)
   osg::ArgumentParser ap(&argc, argv);
 
   // start up a SIMDIS viewer
-  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(simVis::Viewer::WINDOWED, 100, 100, 800, 800);
+  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
   viewer->setMap(map.get());
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
@@ -570,11 +569,10 @@ int main(int argc, char** argv)
   // add the gog file vector layers.
   for (const std::string& gogFile : gogFiles)
   {
-
     simCore::GOG::Parser parser;
     simVis::GOG::Loader loader(parser, scene->getMapNode());
     // sets a default reference location for relative GOGs:
-    loader.setReferencePosition(simVis::GOG::BSTUR.position());
+    loader.setReferencePosition(simCore::GOG::BSTUR);
 
     std::ifstream is(simCore::streamFixUtf8(gogFile));
     if (!is.is_open())

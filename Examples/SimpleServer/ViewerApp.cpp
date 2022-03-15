@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -45,7 +45,6 @@
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
-#include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Loader.h"
 #include "simUtil/DefaultDataStoreValues.h"
@@ -570,7 +569,7 @@ int ViewerApp::loadGog_(const std::string& filename)
 
   simCore::GOG::Parser parser;
   simVis::GOG::Loader loader(parser, sceneManager_->getMapNode());
-  loader.setReferencePosition(simVis::GOG::BSTUR.position());
+  loader.setReferencePosition(simCore::GOG::BSTUR);
 
   simVis::GOG::Loader::GogNodeVector gogs;
   loader.loadGogs(is, filename, false, gogs);

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -202,7 +202,7 @@ void CloseableItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
 
     // Turn off state flags that we manage ourselves
     tbOpt.state = inOption.state & ~QStyle::State_HasFocus;
-    tbOpt.state = inOption.state & ~QStyle::State_MouseOver;
+    tbOpt.state = tbOpt.state & ~QStyle::State_MouseOver;
     // Turn on auto-raise
     tbOpt.state |= QStyle::State_AutoRaise;
     if (index == hoverIndex_)

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -48,8 +48,9 @@ GogNodeInterface* ImageOverlay::deserialize(
   if (!parsedShape.hasValue(GOG_IMAGEFILE))
     return rv;
 
-  std::string iconFile = parsedShape.stringValue(GOG_IMAGEFILE);
-  osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
+  const std::string& iconFile = parsedShape.stringValue(GOG_IMAGEFILE);
+  osg::ref_ptr<osg::Image> image = Utils::readRefImage(iconFile);
+
   // if icon can't load, return failure
   if (!image.valid())
   {
@@ -60,7 +61,8 @@ GogNodeInterface* ImageOverlay::deserialize(
   double south = p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_S), 0.0));
   double east = p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_E), 0.0));
   double west = p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_W), 0.0));
-  double rot = p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_ROT), 0.0));
+  // KML and GOG rotation is CCW; osgEarth rotation is CW
+  double rot = -p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_ROT), 0.0));
   osgEarth::Angular rotation(rot, osgEarth::Units::DEGREES);
 
   osgEarth::ImageOverlay* imageNode = new osgEarth::ImageOverlay(mapNode, image.get());
@@ -69,15 +71,16 @@ GogNodeInterface* ImageOverlay::deserialize(
   imageNode->setPriority(8000);
 
   rv = new ImageOverlayInterface(imageNode, metaData);
+  rv->setOpacity(parsedShape.doubleValue(GOG_OPACITY, 1.0));
 
   return rv;
 }
 
 GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOverlay& imageOverlay, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  std::string iconFile = imageOverlay.imageFile();
+  const std::string& iconFile = imageOverlay.imageFile();
+  osg::ref_ptr<osg::Image> image = Utils::readRefImage(iconFile);
 
-  osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
   // if icon can't load, return failure
   if (!image.valid())
   {
@@ -88,7 +91,8 @@ GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOver
   double south = imageOverlay.south() * simCore::RAD2DEG;
   double east = imageOverlay.east() * simCore::RAD2DEG;
   double west = imageOverlay.west() * simCore::RAD2DEG;
-  double rot = imageOverlay.getRotation() * simCore::RAD2DEG;
+  // KML and GOG rotation is CCW; osgEarth rotation is CW
+  double rot = -imageOverlay.getRotation() * simCore::RAD2DEG;
   osgEarth::Angular rotation(rot, osgEarth::Units::DEGREES);
 
   osgEarth::ImageOverlay* imageNode = new osgEarth::ImageOverlay(mapNode, image.get());
@@ -97,7 +101,11 @@ GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOver
   imageNode->setPriority(8000);
 
   GogMetaData metaData;
-  return new ImageOverlayInterface(imageNode, metaData);
+  auto* rv = new ImageOverlayInterface(imageNode, metaData);
+  double shapeOpacity = 1.;
+  imageOverlay.getOpacity(shapeOpacity);
+  rv->setOpacity(shapeOpacity);
+  return rv;
 }
 
 } }

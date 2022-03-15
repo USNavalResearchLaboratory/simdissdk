@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -24,6 +24,7 @@
 #include <cassert>
 #include <sstream>
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
 #include "simCore/Time/String.h"
 #include "simCore/GOG/GogShape.h"
@@ -914,6 +915,47 @@ void Orbit::serializeToStream_(std::ostream& gogOutputStream) const
     gogOutputStream << "centerll2 " << center2_.lat() * simCore::RAD2DEG << " " << center2_.lon() * simCore::RAD2DEG << "\n";
 }
 
+void Orbit::createOrbitShape(double azimuthRad, double lengthM, double radiusM, double altitudeM, double segmentLenM, std::vector<simCore::Vec3>& xyz)
+{
+  xyz.clear();
+  if (radiusM <= 0)
+    return;
+
+  const double startRad = simCore::angFix2PI(azimuthRad + M_PI_2);
+  const double endRad = startRad + M_PI;
+  const double span = M_PI;
+  const double circumference = 2 * M_PI * radiusM;
+  const double numSegments = ceil(circumference / segmentLenM);
+  const double step = span / numSegments;
+
+  double ctrX = 0;
+  double ctrY = 0;
+
+  // generate arc on first end of the orbit
+  for (int i = static_cast<int>(numSegments); i >= 0; --i)
+  {
+    const double angle = simCore::angFix2PI(startRad + step * static_cast<double>(i));
+    const double x = ctrX + sin(angle) * radiusM;
+    const double y = ctrY + cos(angle) * radiusM;
+    xyz.push_back({ x, y, altitudeM });
+  }
+
+  // calculate center point on other end of orbit
+  ctrX = sin(azimuthRad) * lengthM;
+  ctrY = cos(azimuthRad) * lengthM;
+
+  // generate arc on other end of the orbit
+  for (int i = static_cast<int>(numSegments); i >= 0; --i)
+  {
+    const double angle = simCore::angFix2PI(endRad + step * static_cast<double>(i));
+    const double x = ctrX + sin(angle) * radiusM;
+    const double y = ctrY + cos(angle) * radiusM;
+    xyz.push_back({ x, y, altitudeM });
+  }
+  // add back in first point to close the shape
+  xyz.push_back(xyz.front());
+}
+
 EllipticalShape::EllipticalShape()
   : CircularShape()
 {
@@ -1456,12 +1498,26 @@ void ImageOverlay::setImageFile(const std::string& imageFile)
   imageFile_ = imageFile;
 }
 
+int ImageOverlay::getOpacity(double& opacity) const
+{
+  opacity = opacity_.value_or(1.);
+  return (opacity_.has_value() ? 0 : 1);
+}
+
+void ImageOverlay::setOpacity(double opacity)
+{
+  opacity_ = simCore::clamp(opacity, 0.0, 1.0);
+}
+
 void ImageOverlay::serializeToStream_(std::ostream& gogOutputStream) const
 {
   // Write out the imageoverlay type command
   gogOutputStream << GogShape::shapeTypeToString(shapeType()) << " " << (north_ * simCore::RAD2DEG) << " " << (south_ * simCore::RAD2DEG) << " "
     << (west_ * simCore::RAD2DEG) << " " << (east_ * simCore::RAD2DEG) << " " << (rotation_ * simCore::RAD2DEG) << "\n";
   gogOutputStream << "imagefile " << imageFile_ << "\n";
+  // Only write non-default opacity
+  if (opacity_.has_value())
+    gogOutputStream << "opacity " << *opacity_ << "\n";
 }
 
 }}

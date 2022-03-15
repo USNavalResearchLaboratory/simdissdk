@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -35,6 +35,7 @@
 #include "simVis/PlanetariumViewTool.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
+#include "simVis/Projector.h"
 #include "simVis/Locator.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
@@ -47,6 +48,7 @@
 #ifdef HAVE_IMGUI
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
+#include "osgEarth/ImGui/ImGui"
 #else
 #include "osgEarth/Controls"
 namespace ui = osgEarth::Util::Controls;
@@ -64,7 +66,14 @@ struct AppData
   osg::ref_ptr<simVis::Viewer> viewer;
   osg::ref_ptr<simVis::SceneManager> scene;
   osg::ref_ptr<simVis::ScenarioManager> scenario;
-  simData::ObjectId platformId;
+  simData::ObjectId platformId = 0;
+
+  simData::ObjectId projHost1Id = 0;
+  simData::ObjectId projHost2Id = 0;
+
+  simData::ObjectId proj1Id = 0; // external projector, pointing in
+  simData::ObjectId proj2Id = 0; // external projector, pointing in
+  simData::ObjectId proj3Id = 0; // internal projector, pointing out
 
 #ifndef HAVE_IMGUI
   osg::ref_ptr<ui::CheckBoxControl>     toggleCheck;
@@ -74,10 +83,11 @@ struct AppData
   osg::ref_ptr<ui::HSliderControl>      colorSlider;
   osg::ref_ptr<ui::LabelControl>        colorLabel;
   osg::ref_ptr<ui::CheckBoxControl>     ldbCheck;
+  osg::ref_ptr<ui::CheckBoxControl>     doubleSidedCheck;
 #endif
 
   std::vector< std::pair<simVis::Color, std::string> > colors;
-  int colorIndex;
+  int colorIndex = 0;
 
   AppData()
   {
@@ -87,6 +97,39 @@ struct AppData
     colors.push_back(std::make_pair(simVis::Color(0xffffff00u), "Invisible"));
     colors.push_back(std::make_pair(simVis::Color(0xffff003fu), "Yellow"));
     colorIndex = colors.size()-1;
+  }
+
+  void setShadowMapping(bool shadowMapping)
+  {
+    for (const auto& projId : { proj1Id, proj2Id, proj3Id })
+    {
+      simData::DataStore::Transaction txn;
+      auto* prefs = dataStore.mutable_projectorPrefs(projId, &txn);
+      prefs->set_shadowmapping(shadowMapping);
+      txn.complete(&prefs);
+    }
+  }
+
+  void setProjectorsVisible(bool visible)
+  {
+    for (const auto& projId : { proj1Id, proj2Id, proj3Id })
+    {
+      simData::DataStore::Transaction txn;
+      auto* prefs = dataStore.mutable_commonPrefs(projId, &txn);
+      prefs->set_draw(visible);
+      txn.complete(&prefs);
+    }
+  }
+
+  void setDoubleSidedProjection(bool value)
+  {
+    for (const auto& projId : { proj1Id, proj2Id, proj3Id })
+    {
+      simData::DataStore::Transaction txn;
+      auto* prefs = dataStore.mutable_projectorPrefs(projId, &txn);
+      prefs->set_doublesided(value);
+      txn.complete(&prefs);
+    }
   }
 };
 
@@ -122,6 +165,37 @@ public:
           app_.scenario->addTool(app_.planetarium.get());
         else
           app_.scenario->removeTool(app_.planetarium.get());
+      }
+
+      // Sector
+      bool sector = sector_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Sector", &sector_);
+      if (sector != sector_)
+        app_.planetarium->setUseSector(sector_);
+
+      // Sector controls are only visible in sector mode
+      if (sector_)
+      {
+        // Azimuth
+        float sectorAzDeg = sectorAzDeg_;
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Azimuth", &sectorAzDeg_, 0.f, 360.f, "%.3f deg", ImGuiSliderFlags_AlwaysClamp);
+        if (sectorAzDeg != sectorAzDeg_)
+          app_.planetarium->setSectorAzimuth(sectorAzDeg_);
+        // Elevation
+        float sectorElDeg = sectorElDeg_;
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Elevation", &sectorElDeg_, 0.f, 90.f, "%.3f deg", ImGuiSliderFlags_AlwaysClamp);
+        if (sectorElDeg != sectorElDeg_)
+          app_.planetarium->setSectorElevation(sectorElDeg_);
+        // Width
+        float sectorWidthDeg = sectorWidthDeg_;
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Width", &sectorWidthDeg_, 0.01f, 360.f, "%.3f deg", ImGuiSliderFlags_AlwaysClamp);
+        if (sectorWidthDeg != sectorWidthDeg_)
+          app_.planetarium->setSectorWidth(sectorWidthDeg_);
+        // Height
+        float sectorHeightDeg = sectorHeightDeg_;
+        IMGUI_ADD_ROW(ImGui::SliderFloat, "Height", &sectorHeightDeg_, 0.f, 180.f, "%.3f deg", ImGuiSliderFlags_AlwaysClamp);
+        if (sectorHeightDeg != sectorHeightDeg_)
+          app_.planetarium->setSectorHeight(sectorHeightDeg_);
       }
 
       // Target Vecs
@@ -162,7 +236,45 @@ public:
       if (displayGates != displayGates_)
         app_.planetarium->setDisplayGates(displayGates_);
 
+      // Display Projectors
+      bool displayProjectors = displayProjectors_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Display Projectors", &displayProjectors_);
+      if (displayProjectors != displayProjectors_)
+        app_.setProjectorsVisible(displayProjectors_);
+
+      // Shadow Mapping
+      bool shadowMapping = shadowMapping_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Shadow Mapping", &shadowMapping_);
+      if (shadowMapping != shadowMapping_)
+        app_.setShadowMapping(shadowMapping_);
+
+      // Double-sided projection
+      bool doubleSided = doubleSided_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Double-sided Projection", &doubleSided_);
+      if (doubleSided != doubleSided_)
+        app_.setDoubleSidedProjection(doubleSided_);
+
+      // Use Gradient
+      bool useGradient = useGradient_;
+      IMGUI_ADD_ROW(ImGui::Checkbox, "Use Gradient", &useGradient_);
+      if (useGradient != useGradient_)
+        app_.planetarium->setUseGradient(useGradient_);
+
       ImGui::EndTable();
+
+      if (displayProjectors_ && shadowMapping_) {
+        auto p1 = app_.scenario->find<simVis::ProjectorNode>(app_.proj1Id);
+        if (p1) {
+          ImGui::Text("Projector 1 shadow map:");
+          ImGuiUtil::Texture(p1->getShadowMap(), ri);
+        }
+        auto p2 = app_.scenario->find<simVis::ProjectorNode>(app_.proj2Id);
+        if (p2) {
+          ImGui::Separator();
+          ImGui::Text("Projector 2 shadow map:");
+          ImGuiUtil::Texture(p2->getShadowMap(), ri);
+        }
+      }
     }
 
     ImGui::End();
@@ -171,12 +283,21 @@ public:
 private:
   AppData& app_;
   bool on_ = false;
+  bool sector_ = false;
+  float sectorAzDeg_ = 0.;
+  float sectorElDeg_ = 0.;
+  float sectorWidthDeg_ = 90.;
+  float sectorHeightDeg_ = 60.;
   bool targetVecs_ = true;
   float range_ = 90000.f;
   float color_[4] = { 1.f, 1.f, 1.f, .5f };
   bool ldb_ = true;
   bool beamHistory_ = false;
   bool displayGates_ = false;
+  bool useGradient_ = false;
+  bool displayProjectors_ = false;
+  bool shadowMapping_ = true;
+  bool doubleSided_ = false;
 };
 #else
 struct Toggle : public ui::ControlEventHandler
@@ -209,6 +330,36 @@ struct ToggleLDB : public ui::ControlEventHandler
   void onValueChanged(ui::Control* c, bool value)
   {
     a.viewer->setLogarithmicDepthBufferEnabled(!a.viewer->isLogarithmicDepthBufferEnabled());
+  }
+};
+
+struct ToggleProjectors : public ui::ControlEventHandler
+{
+  explicit ToggleProjectors(AppData& app) : a(app) {}
+  AppData& a;
+  void onValueChanged(ui::Control* c, bool value)
+  {
+    a.setProjectorsVisible(value);
+  }
+};
+
+struct ToggleShadowMapping : public ui::ControlEventHandler
+{
+  explicit ToggleShadowMapping(AppData& app) : a(app) {}
+  AppData& a;
+  void onValueChanged(ui::Control* c, bool value)
+  {
+    a.setShadowMapping(value);
+  }
+};
+
+struct ToggleDoubleSidedProjection : public ui::ControlEventHandler
+{
+  explicit ToggleDoubleSidedProjection(AppData& app) : a(app) {}
+  AppData& a;
+  void onValueChanged(ui::Control* c, bool value)
+  {
+    a.setDoubleSidedProjection(value);
   }
 };
 
@@ -267,6 +418,18 @@ ui::Control* createUI(AppData& app)
   grid->setControl(c, r, new ui::LabelControl("LDB:"));
   app.ldbCheck = grid->setControl(c+1, r, new ui::CheckBoxControl(true, new ToggleLDB(app)));
 
+  r++;
+  grid->setControl(c, r, new ui::LabelControl("Projectors:"));
+  grid->setControl(c + 1, r, new ui::CheckBoxControl(false, new ToggleProjectors(app)));
+
+  r++;
+  grid->setControl(c, r, new ui::LabelControl("Shadow Map:"));
+  grid->setControl(c + 1, r, new ui::CheckBoxControl(true, new ToggleShadowMapping(app)));
+
+  r++;
+  grid->setControl(c, r, new ui::LabelControl("Double-sided:"));
+  grid->setControl(c + 1, r, new ui::CheckBoxControl(false, new ToggleDoubleSidedProjection(app)));
+
   // force a width.
   app.rangeSlider->setHorizFill(true, 200);
 
@@ -277,7 +440,7 @@ ui::Control* createUI(AppData& app)
 //----------------------------------------------------------------------------
 
 // create a platform and add it to 'dataStore'
-simData::ObjectId addPlatform(simData::DataStore& dataStore, const char* iconFile)
+simData::ObjectId addPlatform(simData::DataStore& dataStore, const std::string& iconFile, const std::string& name)
 {
   // create the platform:
   simData::ObjectId platformId;
@@ -296,6 +459,8 @@ simData::ObjectId addPlatform(simData::DataStore& dataStore, const char* iconFil
     prefs->set_scale(1.0f);
     prefs->set_dynamicscale(true);
     prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
+    if (!name.empty())
+      prefs->mutable_commonprefs()->set_name(name);
     xaction.complete(&prefs);
   }
 
@@ -346,10 +511,51 @@ simData::ObjectId addGate(const simData::ObjectId hostId, simData::DataStore& da
   return result;
 }
 
+simData::ObjectId addProjector(simData::DataStore& dataStore, simData::ObjectId platformHost, double angleRad, double elevRad, const std::string& projIcon, double fovRad)
+{
+  // Create a hosting beam ID with very short range
+  auto beamId = addBeam(platformHost, dataStore, 0., 0.);
+  simData::DataStore::Transaction txn;
+  auto beamPoint = dataStore.addBeamUpdate(beamId, &txn);
+  beamPoint->set_time(0.);
+  beamPoint->set_azimuth(angleRad);
+  beamPoint->set_elevation(elevRad);
+  beamPoint->set_range(0.1);
+  txn.complete(&beamPoint);
+
+  // Create the projector
+  simData::ProjectorProperties* projProps = dataStore.addProjector(&txn);
+  projProps->set_hostid(beamId);
+  const simData::ObjectId projId = projProps->id();
+  txn.complete(&projProps);
+
+  // Configure prefs appropriately
+  simData::ProjectorPrefs* prefs = dataStore.mutable_projectorPrefs(projId, &txn);
+  prefs->set_rasterfile(projIcon);
+  prefs->set_showfrustum(false);
+  prefs->set_projectoralpha(0.8f);
+  prefs->set_shadowmapping(true);
+  txn.complete(&prefs);
+
+  // Set the FOV
+  simData::ProjectorUpdate* update = dataStore.addProjectorUpdate(projId, &txn);
+  update->set_time(0.);
+  update->set_fov(fovRad);
+  txn.complete(&update);
+  return projId;
+}
+
+void acceptProjectors(simData::DataStore& dataStore, simData::ObjectId platform, const std::vector<simData::ObjectId>& projectors)
+{
+  simData::DataStore::Transaction txn;
+  auto* prefs = dataStore.mutable_platformPrefs(platform, &txn);
+  simData::DataStoreHelpers::vecToRepeated(prefs->mutable_commonprefs()->mutable_acceptprojectorids(), projectors);
+  txn.complete(&prefs);
+}
 
 //----------------------------------------------------------------------------
 
-void simulate(simData::ObjectId hostId, std::vector<simData::ObjectId>& targetIds, simData::DataStore& ds, simVis::Viewer* viewer)
+void simulate(const AppData& app, std::vector<simData::ObjectId>& targetIds, simData::DataStore& ds, simVis::Viewer* viewer)
 {
   SIM_NOTICE << LC << "Building simulation.... please wait." << std::endl;
 
@@ -357,7 +563,7 @@ void simulate(simData::ObjectId hostId, std::vector<simData::ObjectId>& targetId
 
   // set up a simple simulation to move the platform.
   {
-    osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(hostId);
+    osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(app.platformId);
     sim->addWaypoint(simUtil::Waypoint(0.0, -30.0, 0.0, 1000));
     sim->addWaypoint(simUtil::Waypoint(0.0, -35.0, 0.0, 1000));
     simman->addSimulator(sim.get());
@@ -375,6 +581,20 @@ void simulate(simData::ObjectId hostId, std::vector<simData::ObjectId>& targetId
       double lon = -60 + double(::rand() % 60);
       sim->addWaypoint(simUtil::Waypoint(lat, lon, alt, 100));
     }
+    simman->addSimulator(sim.get());
+  }
+
+  // Add projector platforms that point towards the planetarium; note planetarium is 40km to 120km wide
+  { // Projector 1: North of main platform, flies a little faster from east to west
+    osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(app.projHost1Id);
+    sim->addWaypoint(simUtil::Waypoint(2.0, -29.8, 80000.0, 100));
+    sim->addWaypoint(simUtil::Waypoint(2.0, -31.1, 60000.0, 100));
+    simman->addSimulator(sim.get());
+  }
+  { // Projector 2: Also north, flies a little slower from east to west
+    osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(app.projHost2Id);
+    sim->addWaypoint(simUtil::Waypoint(2.4, -30.2, 60000.0, 100));
+    sim->addWaypoint(simUtil::Waypoint(2.1, -29.5, 90000.0, 100));
     simman->addSimulator(sim.get());
   }
 
@@ -413,11 +633,11 @@ int main(int argc, char **argv)
   app.scenario->bind(&app.dataStore);
 
   // place a platform and put it in motion
-  app.platformId = addPlatform(app.dataStore, EXAMPLE_SHIP_ICON);
+  app.platformId = addPlatform(app.dataStore, EXAMPLE_SHIP_ICON, "Host");
 
   // place some random beams.
   ::srand(time(nullptr));
-  for (int i=0; i<numBeams; ++i)
+  for (int i = 0; i < numBeams; ++i)
   {
     double az, el, roll;
 
@@ -433,16 +653,29 @@ int main(int argc, char **argv)
     addGate(beamId, app.dataStore, az, el, roll);
   }
 
+  // Add projectors onto the planetarium surface
+  app.projHost1Id = addPlatform(app.dataStore, EXAMPLE_MISSILE_ICON, "Proj Host 1");
+  app.projHost2Id = addPlatform(app.dataStore, EXAMPLE_MISSILE_ICON, "Proj Host 2");
+
+  // Add projector from center of planetarium, pointing out
+
   // make some targets flying around.
   std::vector<simData::ObjectId> targetIds;
   for (int i = 0; i < numTargets; ++i)
   {
-    simData::ObjectId targetId = addPlatform(app.dataStore, EXAMPLE_AIRPLANE_ICON);
+    simData::ObjectId targetId = addPlatform(app.dataStore, EXAMPLE_AIRPLANE_ICON, "");
     targetIds.push_back(targetId);
   }
-
-  simulate(app.platformId, targetIds, app.dataStore, viewer.get());
+  simulate(app, targetIds, app.dataStore, viewer.get());
   app.dataStore.update(0);
+
+  // Add projectors, make the host (and therefore planetarium) accept them, and hide the projectors (GUI control)
+  app.proj1Id = addProjector(app.dataStore, app.projHost1Id, M_PI, -M_PI / 10., "A6V.png", M_PI / 4.);
+  app.proj2Id = addProjector(app.dataStore, app.projHost2Id, M_PI, -M_PI / 30., "AIS.png", M_PI / 10.);
+  app.proj3Id = addProjector(app.dataStore, app.platformId, -M_PI / 4, M_PI / 8., "earthcolor.jpg", M_PI / 5.);
+  acceptProjectors(app.dataStore, app.platformId, { app.proj1Id, app.proj2Id, app.proj3Id });
+  app.setProjectorsVisible(false);
+  app.setShadowMapping(true);
 
   // the planetarium view:
   osg::observer_ptr<simVis::PlatformNode> platform = app.scenario->find<simVis::PlatformNode>(app.platformId);
@@ -464,10 +697,12 @@ int main(int argc, char **argv)
 
   // zoom the camera
   view->tetherCamera(platform.get());
-  view->setFocalOffsets(0, -45, 350000);
+  view->setFocalOffsets(180, -45, 350000);
 
   // add some stock OSG handlers and go
   viewer->installDebugHandlers();
-  return viewer->run();
+  int rv = viewer->run();
+  // Remove the planetarium on exit so it can deregister from the data store
+  app.scenario->removeTool(app.planetarium.get());
+  return rv;
 }
-

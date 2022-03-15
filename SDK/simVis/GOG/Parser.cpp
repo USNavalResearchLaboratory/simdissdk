@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -26,14 +26,15 @@
 #include "osgEarth/LocalGeometryNode"
 
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Angle.h"
+#include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/Calc/Mgrs.h"
 #include "simCore/Common/Exception.h"
+#include "simCore/GOG/GogUtils.h"
 #include "simCore/String/Angle.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Utils.h"
-#include "simCore/Calc/Angle.h"
-#include "simCore/Calc/CoordinateConverter.h"
-#include "simCore/Calc/Mgrs.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/ParsedShape.h"
@@ -67,6 +68,11 @@ class NotifyErrorHandler : public simVis::GOG::ErrorHandler
   {
     SIM_ERROR << "GOG error: " << errorText << ", line: " << lineNumber << std::endl;
   }
+};
+
+/** List of tokens that are case sensitive and shouldn't be lowercase'd for parsing */
+static const std::set<std::string> CASE_SENSITIVE_GOG_TOKENS = {
+  "annotation", "comment", "name", "imagefile", "kml_icon", "starttime", "endtime"
 };
 
 }
@@ -241,7 +247,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       {
         token = toLower(token);
         // stop further lower case conversion on text based values
-        if (token == "annotation" || token == "comment" || token == "name")
+        if (CASE_SENSITIVE_GOG_TOKENS.find(token) != CASE_SENSITIVE_GOG_TOKENS.end())
           break;
       }
     }
@@ -390,7 +396,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
         // Store the un-decoded text in textToken to avoid problems with trim in osgEarth code. (SIMDIS-2875)
         current.set(GOG_TEXT, textToken);
         // add support to show annotation text in dialog
-        current.set(GOG_3D_NAME, Utils::decodeAnnotation(textToken));
+        current.set(GOG_3D_NAME, simCore::GOG::GogUtils::decodeAnnotation(textToken));
       }
       else
       {
@@ -1076,6 +1082,13 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
     else if (tokens[0] == "imagefile")
     {
       current.set(GOG_IMAGEFILE, tokens[1]);
+    }
+    else if (tokens[0] == "opacity")
+    {
+      if (tokens.size() >= 2)
+        current.set(GOG_OPACITY, tokens[1]);
+      else
+        printError_(lineNumber, "opacity command requires 1 argument");
     }
     else // treat everything as a name/value pair
     {

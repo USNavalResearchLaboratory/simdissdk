@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -167,6 +167,7 @@ enum ShapeParameter
   GOG_TEXTOUTLINETHICKNESS,
   GOG_IMAGEFILE,
   GOG_LLABOX_ROT, // rotation used by KML ground overlay latlonbox
+  GOG_OPACITY, // Used by ImageOverlay; opacity of the image file; other shapes use full RGBA values
 
   // Set to non-empty when GOG is absolute
   GOG_ABSOLUTE = 200,

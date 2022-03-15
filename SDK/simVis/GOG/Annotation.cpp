@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -51,15 +51,16 @@ GogNodeInterface* TextAnnotation::deserialize(
                             MapNode*                 mapNode)
 {
   // parse:
-  const std::string text = Utils::decodeAnnotation(parsedShape.stringValue(GOG_TEXT));
+  const std::string text = simCore::GOG::GogUtils::decodeAnnotation(parsedShape.stringValue(GOG_TEXT));
 
   p.parseGeometry<Geometry>(parsedShape);
   GogNodeInterface* rv = nullptr;
   osgEarth::GeoPositionNode* label = nullptr;
   if (parsedShape.hasValue(GOG_IMAGEFILE))
   {
-    std::string iconFile = parsedShape.stringValue(GOG_IMAGEFILE);
-    osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
+    const std::string& iconFile = parsedShape.stringValue(GOG_IMAGEFILE);
+    osg::ref_ptr<osg::Image> image = Utils::readRefImage(iconFile);
+
     // if icon can't load, use default icon
     if (!image.valid())
     {
@@ -114,7 +115,7 @@ GogNodeInterface* TextAnnotation::createAnnotation(const simCore::GOG::Annotatio
   std::string imageFile = "";
   if (anno.getImageFile(imageFile) == 0)
   {
-    osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(imageFile, "\""));
+    osg::ref_ptr<osg::Image> image = Utils::readRefImage(imageFile);
     // if icon can't load, use default icon
     if (!image.valid())
     {

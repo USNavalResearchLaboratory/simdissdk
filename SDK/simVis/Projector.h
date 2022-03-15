@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -126,14 +126,17 @@ public:
   /// Remove projector uniforms from the given StateSet
   void removeFromStateSet(osg::StateSet* stateSet) const;
 
+  /// Copy uniform values to an array stateset
+  void copyUniformsTo(osg::StateSet* stateSet, unsigned size, unsigned index) const;
+
   /// Set the calculator that can calculate the projector's ellipsoid intersection
   void setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator);
 
-  /** Configure an entity to accept the texture projected by this projector.  An entity can accept only one projector.  Returns 0 on success. */
+  /** Configure an entity to accept the texture projected by this projector.  An entity can accept up to 4 projectors.  Returns 0 on success. */
   int addProjectionToNode(osg::Node* entity, osg::Node* attachmentPoint);
 
   /** Remove the setup configured by addProjectionToNode.  Returns 0 on success. */
-  int removeProjectionFromNode(osg::Node* node);
+  int removeProjectionFromNode(osg::Node* entity);
 
   /**
   * Get the traversal mask for this node type
@@ -287,8 +290,9 @@ private:
   osg::ref_ptr<osg::Uniform> texProjSamplerUniform_;
   osg::ref_ptr<osg::Uniform> useColorOverrideUniform_;
   osg::ref_ptr<osg::Uniform> colorOverrideUniform_;
+  osg::ref_ptr<osg::Uniform> projectorMaxRangeSquaredUniform_;
+  osg::ref_ptr<osg::Uniform> doubleSidedUniform_;
 
-  osg::ref_ptr<osg::NodeCallback> projectOnNodeCallback_;
   // Keep track of the nodes projected onto so the projections can be removed when projector is deleted.
   // The key is the entity the value is the attachment point
   std::map<osg::observer_ptr<osg::Node>, osg::observer_ptr<osg::Node> > projectedNodes_;

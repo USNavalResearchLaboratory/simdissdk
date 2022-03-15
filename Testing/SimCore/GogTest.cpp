@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -1723,11 +1723,20 @@ int testSerialization()
     imageOverlayItems.push_back("imageoverlay 25.1 25.3 55.4 55.6 0\n");
     imageOverlayItems.push_back("imagefile image.png\n");
     rv += testSerializeShape<simCore::GOG::ImageOverlay>("start\n imageoverlay 25.1 25.3 55.4 55.6 0\n imagefile image.png\n" + BASE_FIELDS + "end\n", imageOverlayItems);
+    // Note that 1.0 writes as "1" in text output
+    imageOverlayItems.push_back("opacity 1\n");
+    // Tests the opacity keyword
+    rv += testSerializeShape<simCore::GOG::ImageOverlay>("start\n imageoverlay 25.1 25.3 55.4 55.6 0\n imagefile image.png\n" + BASE_FIELDS + "opacity 1.0\nend\n", imageOverlayItems);
+    // Tests clamping on opacity
+    rv += testSerializeShape<simCore::GOG::ImageOverlay>("start\n imageoverlay 25.1 25.3 55.4 55.6 0\n imagefile image.png\n" + BASE_FIELDS + "opacity 3.5\nend\n", imageOverlayItems);
+    // Tests non-1.0 opacity
+    imageOverlayItems.back() = "opacity 0.5\n";
+    rv += testSerializeShape<simCore::GOG::ImageOverlay>("start\n imageoverlay 25.1 25.3 55.4 55.6 0\n imagefile image.png\n" + BASE_FIELDS + "opacity 0.5\nend\n", imageOverlayItems);
   }
 
   // relative shapes
 
-    // define common center xyz for centered items
+  // define common center xyz for centered items
   const std::string centerXyz = "centerxyz 100 1000 10\n";
   // add the ref item for the relative shapes
   circularItems.push_back("ref 24.5 55.6 10\n");

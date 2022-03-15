@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@enews.nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -470,6 +470,9 @@ protected:
   void notifyToolsOfAdd_(EntityNode* node);
   /// informs the scenario tools of an entity removal
   void notifyToolsOfRemove_(EntityNode* node);
+  /// informs the scenario tools of a flush
+  void notifyToolsOfFlush_(simData::ObjectId flushedId);
+
   /// locator that tracks earth rotation linked to sim time
   osg::ref_ptr<Locator> scenarioEciLocator_;
 
