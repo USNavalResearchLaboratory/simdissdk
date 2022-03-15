@@ -234,70 +234,50 @@ bool SettingsNoEmptyFoldersFilter::isFolder_(int sourceRow, const QModelIndex& s
 SettingsProxyModel::SettingsProxyModel(QAbstractItemModel* settingsModel, QWidget* parent)
   : QSortFilterProxyModel(parent)
 {
-  // Chain so that search>dataLevel>noempty
-  search_ = new SettingsSearchFilter(settingsModel, parent);
-  dataLevel_ = new SettingsDataLevelFilter(search_, parent);
-  noEmptyFolders_ = new SettingsNoEmptyFoldersFilter(dataLevel_, parent);
+  // Chain so that dataLevel>search>noempty
+  dataLevel_ = new SettingsDataLevelFilter(settingsModel, parent);
+  search_ = new SettingsSearchFilter(dataLevel_, parent);
+  noEmptyFolders_ = new SettingsNoEmptyFoldersFilter(search_, parent);
   setSourceModel(noEmptyFolders_);
 
-  connect(settingsModel, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(invalidateAll_()));
-  connect(settingsModel, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(invalidateAll_()));
-  connect(settingsModel, SIGNAL(modelReset()), this, SLOT(invalidateAll_()));
+  connect(settingsModel, SIGNAL(rowsInserted(QModelIndex, int, int)), dataLevel_, SLOT(invalidate()));
+  connect(settingsModel, SIGNAL(rowsRemoved(QModelIndex, int, int)), dataLevel_, SLOT(invalidate()));
+  connect(settingsModel, SIGNAL(modelReset()), dataLevel_, SLOT(invalidate()));
 }
 
 SettingsProxyModel::~SettingsProxyModel()
 {
   delete noEmptyFolders_;
-  delete dataLevel_;
   delete search_;
+  delete dataLevel_;
 }
 
 void SettingsProxyModel::setFilterText(const QString& filterText)
 {
   if (filterText != search_->filterText())
-  {
     search_->setFilterText(filterText);
-    noEmptyFolders_->invalidate();
-    invalidateFilter();
-  }
 }
 
 QModelIndexList SettingsProxyModel::match(const QModelIndex& start, int role, const QVariant& value, int hits, Qt::MatchFlags flags) const
 {
-  auto searchList = search_->match(start, role, value, hits, flags);
+  auto searchList = search_->match(noEmptyFolders_->mapToSource(mapToSource(start)), role, value, hits, flags);
   QModelIndexList rv;
   for (auto index : searchList)
-    rv.push_back(mapFromSource(noEmptyFolders_->mapFromSource(dataLevel_->mapFromSource(index))));
+    rv.push_back(mapFromSource(noEmptyFolders_->mapFromSource(index)));
 
   return rv;
-}
-
-void SettingsProxyModel::invalidateAll_()
-{
-  search_->invalidate();
-  dataLevel_->invalidate();
-  noEmptyFolders_->invalidate();
-  invalidateFilter();
 }
 
 void SettingsProxyModel::setShowAdvanced(bool showAdvanced)
 {
   if (showAdvanced != dataLevel_->showAdvanced())
-  {
     dataLevel_->setShowAdvanced(showAdvanced);
-    noEmptyFolders_->invalidate();
-    invalidateFilter();
-  }
 }
 
 void SettingsProxyModel::setShowUnknown(bool showUnknown)
 {
   if (showUnknown != dataLevel_->showUnknown())
-  {
     dataLevel_->setShowUnknown(showUnknown);
-    noEmptyFolders_->invalidate();
-    invalidateFilter();
-  }
 }
 
 }
