@@ -106,8 +106,6 @@ std::string GradientShader::buildShader() const
 {
   std::stringstream buf;
 
-  buf << "#version " GLSL_VERSION_STR << "\n";
-  buf << GLSL_DEFAULT_PRECISION_FLOAT << "\n";
   buf << "vec4 " << functionName_ << "(in float value)\n";
   buf << "{\n";
 
