@@ -1,5 +1,3 @@
-#version $GLSL_VERSION_STR
-
 #pragma vp_entryPoint simutil_terraintoggle_vert
 #pragma vp_location   vertex_view
 #pragma vp_order      4.0

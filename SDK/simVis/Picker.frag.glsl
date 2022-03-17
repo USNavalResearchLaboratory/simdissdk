@@ -1,5 +1,3 @@
-#version $GLSL_VERSION_STR
-
 #pragma vp_location fragment_coloring
 #pragma vp_entryPoint sdkPickHighlightFragment
 #pragma vp_order 3.0

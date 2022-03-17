@@ -1,5 +1,3 @@
-#version $GLSL_VERSION_STR
-
 #pragma vp_entryPoint simutil_vpl_frag
 #pragma vp_location   fragment_coloring
 

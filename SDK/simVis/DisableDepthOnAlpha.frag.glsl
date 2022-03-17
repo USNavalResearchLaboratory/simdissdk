@@ -1,5 +1,3 @@
-#version $GLSL_VERSION_STR
-
 #pragma import_defines(SV_USE_DISABLE_DEPTH_ON_ALPHA)
 #pragma import_defines(SV_USE_LOG_DEPTH_BUFFER)
 
