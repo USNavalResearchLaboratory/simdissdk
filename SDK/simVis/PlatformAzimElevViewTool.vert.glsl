@@ -1,3 +1,5 @@
+#version $GLSL_VERSION_STR
+
 #pragma vp_entryPoint simvis_azel_warp_vertex
 #pragma vp_location vertex_view
 

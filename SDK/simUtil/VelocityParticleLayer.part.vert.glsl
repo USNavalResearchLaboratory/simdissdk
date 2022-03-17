@@ -1,3 +1,5 @@
+#version $GLSL_VERSION_STR
+
 #pragma vp_entryPoint simutil_vpl_rtt_vertex
 #pragma vp_location   vertex_model
 

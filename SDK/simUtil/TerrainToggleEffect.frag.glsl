@@ -1,3 +1,5 @@
+#version $GLSL_VERSION_STR
+
 #pragma vp_entryPoint simutil_terraintoggle_frag
 #pragma vp_location   fragment_coloring
 #pragma vp_order      4.0

@@ -1,3 +1,5 @@
+#version $GLSL_VERSION_STR
+
 #pragma vp_location vertex_clip
 #pragma vp_entryPoint sdkPickCheckHighlight
 

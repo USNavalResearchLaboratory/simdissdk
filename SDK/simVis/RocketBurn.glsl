@@ -1,3 +1,4 @@
+#version $GLSL_VERSION_STR
 #pragma vp_entryPoint sim_RocketBurn_VS
 #pragma vp_location vertex_view
 
@@ -24,6 +25,7 @@ void sim_RocketBurn_VS(inout vec4 vertexView)
 
 [break]
 
+#version $GLSL_VERSION_STR
 #pragma vp_entryPoint sim_RocketBurn_FS
 #pragma vp_location fragment_coloring
 

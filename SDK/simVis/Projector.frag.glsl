@@ -1,3 +1,4 @@
+#version $GLSL_VERSION_STR
 #pragma vp_function sim_proj_frag, fragment
 #pragma import_defines(SIMVIS_USE_REX)
 #pragma import_defines(SIMVIS_PROJECT_USE_SHADOWMAP)

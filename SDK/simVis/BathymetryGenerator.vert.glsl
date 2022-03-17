@@ -1,3 +1,5 @@
+#version $GLSL_VERSION_STR
+
 #pragma import_defines(SIMVIS_IGNORE_BATHYMETRY_GEN)
 
 #pragma vp_entryPoint simVis_BathymetryGenerator_vertex
