@@ -143,7 +143,8 @@ inline void applyMesaGlVersionOverride()
   osg::DisplaySettings* instance = osg::DisplaySettings::instance().get();
   if (instance->getGLContextVersion() == "1.0")
     instance->setGLContextVersion("3.3");
-#ifdef __linux__
+// el6/mesa needed this; el7/mesa/nouveau does not
+#if defined(__linux__) && defined(RHEL6_MESA)
   // To compound the problem, certain MESA drivers on Linux have an additional requirement of setting
   // the MESA_GL_VERSION_OVERRIDE environment variable, else we get a bad version.
   if (getenv("MESA_GL_VERSION_OVERRIDE") == nullptr)
