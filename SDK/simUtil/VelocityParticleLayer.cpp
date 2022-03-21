@@ -865,4 +865,11 @@ void VelocityParticleLayer::recreatePointSprite_()
     pointSprite_ = nullptr;
 }
 
+void VelocityParticleLayer::init()
+{
+  ImageLayer::init();
+  // Avoid crash from invalid texture access
+  setRenderType(RENDERTYPE_CUSTOM);
+}
+
 }

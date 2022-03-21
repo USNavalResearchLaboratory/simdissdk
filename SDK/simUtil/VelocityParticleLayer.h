@@ -155,11 +155,15 @@ public:
 
   // From ImageLayer:
   virtual osgEarth::Status openImplementation() override;
+
   // From Layer:
   virtual osg::Node* getNode() const override;
 
 protected:
   virtual ~VelocityParticleLayer();
+
+  // From ImageLayer:
+  virtual void init() override;
 
 private:
   /** Helper function to cast node_; due to ref_ptr issues, can't store node_ as a VelocityTextureNode */
