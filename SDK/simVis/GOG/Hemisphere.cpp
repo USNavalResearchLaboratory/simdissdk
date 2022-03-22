@@ -56,7 +56,7 @@ GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
     SIM_WARN << "Cannot create hemisphere with no radius\n";
     return nullptr;
   }
-  osg::Node* shape = osgEarth::AnnotationUtils::createHemisphere(
+  osg::ref_ptr<osg::Node> shape = simVis::createHemisphere(
     radius_m, color);
   shape->setName("GOG Hemisphere");
 
@@ -67,7 +67,7 @@ GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
     node = new osgEarth::LocalGeometryNode();
     node->setMapNode(mapNode);
     node->setPosition(p.getMapPosition());
-    node->getPositionAttitudeTransform()->addChild(shape);
+    node->getPositionAttitudeTransform()->addChild(shape.get());
     node->setStyle(p.style_);
     osg::Quat yaw(p.localHeadingOffset_->as(osgEarth::Units::RADIANS), -osg::Vec3(0, 0, 1));
     osg::Quat pitch(p.localPitchOffset_->as(osgEarth::Units::RADIANS), osg::Vec3(1, 0, 0));
@@ -75,7 +75,7 @@ GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
     node->setLocalRotation(roll * pitch * yaw);
   }
   else
-    node = new HostedLocalGeometryNode(shape, p.style_);
+    node = new HostedLocalGeometryNode(shape.get(), p.style_);
 
   node->setName("GOG Hemisphere Position");
   Utils::applyLocalGeometryOffsets(*node, p, nodeType);
@@ -101,7 +101,7 @@ GogNodeInterface* Hemisphere::createHemisphere(const simCore::GOG::Hemisphere& h
     SIM_WARN << "Cannot create hemisphere with no radius\n";
     return nullptr;
   }
-  osg::Node* shape = osgEarth::AnnotationUtils::createHemisphere(
+  osg::ref_ptr<osg::Node> shape = simVis::createHemisphere(
     radius_m, color);
   shape->setName("GOG Hemisphere");
 
@@ -110,11 +110,11 @@ GogNodeInterface* Hemisphere::createHemisphere(const simCore::GOG::Hemisphere& h
   if (!attached)
   {
     node = new osgEarth::LocalGeometryNode();
-    node->getPositionAttitudeTransform()->addChild(shape);
+    node->getPositionAttitudeTransform()->addChild(shape.get());
     node->setMapNode(mapNode);
   }
   else
-    node = new HostedLocalGeometryNode(shape, style);
+    node = new HostedLocalGeometryNode(shape.get(), style);
   node->setName("GOG Hemisphere Position");
 
   // use the ref point as the center if no center defined by the shape

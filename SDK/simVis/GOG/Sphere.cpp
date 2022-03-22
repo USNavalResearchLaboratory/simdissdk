@@ -53,7 +53,7 @@ GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
     SIM_WARN << "Cannot create sphere with no radius\n";
     return nullptr;
   }
-  osg::Node* shape = osgEarth::AnnotationUtils::createSphere(
+  osg::ref_ptr<osg::Node> shape = simVis::createSphere(
     radius_m, color);
   shape->setName("GOG Sphere");
 
@@ -62,13 +62,13 @@ GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
     node = new osgEarth::LocalGeometryNode();
-    node->getPositionAttitudeTransform()->addChild(shape);
+    node->getPositionAttitudeTransform()->addChild(shape.get());
     node->setStyle(p.style_);
     node->setMapNode(mapNode);
   }
   else
   {
-    node = new HostedLocalGeometryNode(shape, p.style_);
+    node = new HostedLocalGeometryNode(shape.get(), p.style_);
   }
 
   node->setName("GOG Sphere Position");
@@ -92,20 +92,20 @@ GogNodeInterface* Sphere::createSphere(const simCore::GOG::Sphere& sphere, bool 
   }
 
   osg::Vec4f color(osgEarth::Color::White);
-  osg::Node* shape = osgEarth::AnnotationUtils::createSphere(radiusM, color);
+  osg::ref_ptr<osg::Node> shape = simVis::createSphere(radiusM, color);
   shape->setName("GOG Sphere");
 
   osgEarth::LocalGeometryNode* node = nullptr;
   if (!attached)
   {
     node = new osgEarth::LocalGeometryNode();
-    node->getPositionAttitudeTransform()->addChild(shape);
+    node->getPositionAttitudeTransform()->addChild(shape.get());
     node->setMapNode(mapNode);
   }
   else
   {
     osgEarth::Style style;
-    node = new HostedLocalGeometryNode(shape, style);
+    node = new HostedLocalGeometryNode(shape.get(), style);
   }
   node->setName("GOG Sphere Position");
 

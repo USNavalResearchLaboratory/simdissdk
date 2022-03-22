@@ -1051,7 +1051,7 @@ void PlanetariumViewTool::updateDome_()
   else
   {
     // build a sphere
-    dome_ = osgEarth::AnnotationUtils::createEllipsoidGeometry(range_, range_, range_, domeColor_);
+    dome_ = simVis::createEllipsoidGeometry(range_, range_, range_, domeColor_);
     dome_->setName("Planetarium Sphere Geometry");
     osg::StateSet* stateSet = dome_->getOrCreateStateSet();
     stateSet->setMode(GL_BLEND, 1);

@@ -468,6 +468,71 @@ namespace simVis
   SDKVIS_EXPORT osg::Image* makeBrokenImage(int size=32);
 
   /**
+   * Builds a sphere mesh geometry, configured potentially with a two-pass alpha render bin for
+   * colors that are transparent.
+   * @param r Radius of the sphere, in scene graph units (meters)
+   * @param color The geometry is given a BIND_OVERALL mapping to this color.
+   * @param maxAngle Degrees, used to divide the number of vertical segments. For example, if the
+   *   latitude spans 90 degrees vertically and maxAngle is 10.0, there are 10 vertical strips.
+   *   Maximum angle between vertices (controls tessellation).
+   * @return Node representing the sphere
+   */
+  SDKVIS_EXPORT osg::ref_ptr<osg::Node> createSphere(float r, const osg::Vec4& color, float maxAngle = 15.0f);
+
+  /**
+   * Builds a hemisphere mesh geometry, configured potentially with a two-pass alpha render bin for
+   * colors that are transparent.
+   * @param r Radius of the hemisphere, in scene graph units (meters)
+   * @param color The geometry is given a BIND_OVERALL mapping to this color.
+   * @param maxAngle Degrees, used to divide the number of vertical segments. For example, if the
+   *   latitude spans 90 degrees vertically and maxAngle is 10.0, there are 10 vertical strips.
+   *   Maximum angle between vertices (controls tessellation).
+   * @return Node representing the hemisphere
+   */
+  SDKVIS_EXPORT osg::ref_ptr<osg::Node> createHemisphere(float r, const osg::Vec4& color, float maxAngle = 15.0f);
+
+  /**
+   * Builds an ellipsoidal mesh geometry, configured potentially with a two-pass alpha render bin for
+   * colors that are transparent.
+   * @param xRadius Radius in X dimension of the ellipsoid, in scene graph units (meters)
+   * @param yRadius Radius in Y dimension of the ellipsoid, in scene graph units (meters)
+   * @param zRadius Radius in Z dimension of the ellipsoid, in scene graph units (meters)
+   * @param color The geometry is given a BIND_OVERALL mapping to this color.
+   * @param maxAngle Degrees, used to divide the number of vertical segments. For example, if the
+   *   latitude spans 90 degrees vertically and maxAngle is 10.0, there are 10 vertical strips.
+   *   Maximum angle between vertices (controls tessellation).
+   * @param minLat Used for sectors, this is the minimum vertical angle in degrees.
+   * @param maxLat Used for sectors, this is the maximum vertical angle in degrees.
+   * @param minLon Used for sectors, this is the minimum horizontal angle in degrees.
+   * @param maxLon Used for sectors, this is the maximum horizontal angle in degrees.
+   * @return Ellipsoidal mesh adhering to input parameters
+   */
+  SDKVIS_EXPORT osg::ref_ptr<osg::Node> createEllipsoid(float xRadius, float yRadius, float zRadius,
+    const osg::Vec4& color, float maxAngle = 10.0f, float minLat = -90.0, float maxLat = 90.0,
+    float minLon = -180.0, float maxLon = 180.0);
+
+  /**
+   * Creates an ellipsoidal geometry mesh. This mesh is optionally textured. This code is adapted
+   * from the osgEarth AnnotationUtils::createEllipsoidGeometry() call.
+   * @param xRadius Radius in X dimension of the ellipsoid, in scene graph units (meters)
+   * @param yRadius Radius in Y dimension of the ellipsoid, in scene graph units (meters)
+   * @param zRadius Radius in Z dimension of the ellipsoid, in scene graph units (meters)
+   * @param color The geometry is given a BIND_OVERALL mapping to this color.
+   * @param maxAngle Degrees, used to divide the number of vertical segments. For example, if the
+   *   latitude spans 90 degrees vertically and maxAngle is 10.0, there are 10 vertical strips.
+   *   Maximum angle between vertices (controls tessellation).
+   * @param minLat Used for sectors, this is the minimum vertical angle in degrees.
+   * @param maxLat Used for sectors, this is the maximum vertical angle in degrees.
+   * @param minLon Used for sectors, this is the minimum horizontal angle in degrees.
+   * @param maxLon Used for sectors, this is the maximum horizontal angle in degrees.
+   * @param genTexCoords If true, texture coordinates are generated too for each vetex.
+   * @return Ellipsoidal mesh adhering to input parameters
+   */
+  SDKVIS_EXPORT osg::ref_ptr<osg::Geometry> createEllipsoidGeometry(float xRadius, float yRadius, float zRadius,
+    const osg::Vec4f& color, float maxAngle = 10.f, float minLat = -90.f, float maxLat = 90.f,
+    float minLon = -180.f, float maxLon = 180.f, bool genTexCoords = false);
+
+  /**
    * Computes the world matrix for a node, using its local matrix.
    * @param node Node for which to get the world coordinates
    * @return 4x4 matrix from OSG representing the world coordinates for the node

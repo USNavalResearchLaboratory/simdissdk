@@ -22,6 +22,7 @@
  */
 #include "osg/Billboard"
 #include "osg/BlendFunc"
+#include "osg/CullFace"
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osg/Geometry"
@@ -36,11 +37,13 @@
 #include "osgUtil/MeshOptimizers"
 #include "osgViewer/ViewerEventHandlers"
 
+#include "osgEarth/AnnotationUtils"
 #include "osgEarth/Capabilities"
 #include "osgEarth/CullingUtils"
 #include "osgEarth/Lighting"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/MapNode"
+#include "osgEarth/MeshSubdivider"
 #include "osgEarth/Terrain"
 #include "osgEarth/Utils"
 #include "osgEarth/VirtualProgram"
@@ -833,6 +836,214 @@ osg::Image* makeBrokenImage(int size)
   }
 
   return image;
+}
+
+osg::ref_ptr<osg::Node> createSphere(float r, const osg::Vec4& color, float maxAngle)
+{
+  osg::Geometry* geom = new osg::Geometry();
+  geom->setUseVertexBufferObjects(true);
+
+  osg::Vec3Array* v = new osg::Vec3Array();
+  v->reserve(6);
+  v->push_back(osg::Vec3(0, 0, r)); // top
+  v->push_back(osg::Vec3(0, 0, -r)); // bottom
+  v->push_back(osg::Vec3(-r, 0, 0)); // left
+  v->push_back(osg::Vec3(r, 0, 0)); // right
+  v->push_back(osg::Vec3(0, r, 0)); // back
+  v->push_back(osg::Vec3(0, -r, 0)); // front
+  geom->setVertexArray(v);
+  if (v->getVertexBufferObject())
+    v->getVertexBufferObject()->setUsage(GL_STATIC_DRAW_ARB);
+
+  osg::DrawElementsUByte* b = new osg::DrawElementsUByte(GL_TRIANGLES);
+  b->reserve(24);
+  b->push_back(0); b->push_back(3); b->push_back(4);
+  b->push_back(0); b->push_back(4); b->push_back(2);
+  b->push_back(0); b->push_back(2); b->push_back(5);
+  b->push_back(0); b->push_back(5); b->push_back(3);
+  b->push_back(1); b->push_back(3); b->push_back(5);
+  b->push_back(1); b->push_back(4); b->push_back(3);
+  b->push_back(1); b->push_back(2); b->push_back(4);
+  b->push_back(1); b->push_back(5); b->push_back(2);
+  geom->addPrimitiveSet(b);
+
+  osg::Vec3Array* n = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+  n->reserve(6);
+  n->push_back(osg::Vec3(0, 0, 1));
+  n->push_back(osg::Vec3(0, 0, -1));
+  n->push_back(osg::Vec3(-1, 0, 0));
+  n->push_back(osg::Vec3(1, 0, 0));
+  n->push_back(osg::Vec3(0, 1, 0));
+  n->push_back(osg::Vec3(0, -1, 0));
+  geom->setNormalArray(n);
+
+  osgEarth::MeshSubdivider ms;
+  ms.run(*geom, osg::DegreesToRadians(maxAngle), osgEarth::GEOINTERP_GREAT_CIRCLE);
+
+  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+  (*c)[0] = color;
+  geom->setColorArray(c);
+
+  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
+  geode->addDrawable(geom);
+
+  // need 2-pass alpha so you can view it properly from below.
+  if (color.a() < 1.0f)
+    return osgEarth::AnnotationUtils::installTwoPassAlpha(geode.get());
+  return geode;
+}
+
+osg::ref_ptr<osg::Node> createHemisphere(float r, const osg::Vec4& color, float maxAngle)
+{
+  osg::Geometry* geom = new osg::Geometry();
+  geom->setUseVertexBufferObjects(true);
+
+  osg::Vec3Array* v = new osg::Vec3Array();
+  v->reserve(5);
+  v->push_back(osg::Vec3(0, 0, r)); // top
+  v->push_back(osg::Vec3(-r, 0, 0)); // left
+  v->push_back(osg::Vec3(r, 0, 0)); // right
+  v->push_back(osg::Vec3(0, r, 0)); // back
+  v->push_back(osg::Vec3(0, -r, 0)); // front
+  geom->setVertexArray(v);
+  if (v->getVertexBufferObject())
+    v->getVertexBufferObject()->setUsage(GL_STATIC_DRAW_ARB);
+
+  osg::DrawElementsUByte* b = new osg::DrawElementsUByte(GL_TRIANGLES);
+  b->reserve(12);
+  b->push_back(0); b->push_back(2); b->push_back(3);
+  b->push_back(0); b->push_back(3); b->push_back(1);
+  b->push_back(0); b->push_back(1); b->push_back(4);
+  b->push_back(0); b->push_back(4); b->push_back(2);
+  geom->addPrimitiveSet(b);
+
+  osg::Vec3Array* n = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+  n->reserve(5);
+  n->push_back(osg::Vec3(0, 0, 1));
+  n->push_back(osg::Vec3(-1, 0, 0));
+  n->push_back(osg::Vec3(1, 0, 0));
+  n->push_back(osg::Vec3(0, 1, 0));
+  n->push_back(osg::Vec3(0, -1, 0));
+  geom->setNormalArray(n);
+
+  osgEarth::MeshSubdivider ms;
+  ms.run(*geom, osg::DegreesToRadians(maxAngle), osgEarth::GEOINTERP_GREAT_CIRCLE);
+
+  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+  (*c)[0] = color;
+  geom->setColorArray(c);
+
+  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
+  geode->addDrawable(geom);
+
+  // need 2-pass alpha so you can view it properly from below.
+  if (color.a() < 1.0f)
+    return osgEarth::AnnotationUtils::installTwoPassAlpha(geode.get());
+  return geode;
+}
+
+osg::ref_ptr<osg::Geometry> createEllipsoidGeometry(float xRadius, float yRadius, float zRadius, const osg::Vec4f& color,
+  float maxAngle, float minLat, float maxLat, float minLon, float maxLon, bool genTexCoords)
+{
+  osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+  geom->setUseVertexBufferObjects(true);
+
+  const float latSpan = maxLat - minLat;
+  const float lonSpan = maxLon - minLon;
+  const float aspectRatio = lonSpan / latSpan;
+  const int latSegments = osg::maximum(6, static_cast<int>(ceil(latSpan / maxAngle)));
+  const int lonSegments = osg::maximum(3, static_cast<int>(ceil(latSegments * aspectRatio)));
+  const float segmentSize = latSpan / latSegments; // degrees
+
+  osg::Vec3Array* verts = new osg::Vec3Array();
+  verts->reserve(latSegments * lonSegments);
+
+  // Create texture coordinates only if needed
+  osg::Vec2Array* texCoords = 0;
+  if (genTexCoords)
+  {
+    texCoords = new osg::Vec2Array();
+    texCoords->reserve(latSegments * lonSegments);
+    geom->setTexCoordArray(0, texCoords);
+  }
+
+  // Normals are required for shading / lighting
+  osg::Vec3Array* normals = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+  normals->reserve(latSegments * lonSegments);
+  geom->setNormalArray(normals);
+
+  osg::DrawElementsUShort* el = new osg::DrawElementsUShort(GL_TRIANGLES);
+  el->reserve(latSegments * lonSegments * 6);
+
+  for (int y = 0; y <= latSegments; ++y)
+  {
+    const float lat = minLat + segmentSize * (float)y;
+    for (int x = 0; x < lonSegments; ++x)
+    {
+      const float lon = minLon + segmentSize * (float)x;
+
+      const float u = osg::DegreesToRadians(lon);
+      const float v = osg::DegreesToRadians(lat);
+      const float cos_u = cosf(u);
+      const float sin_u = sinf(u);
+      const float cos_v = cosf(v);
+      const float sin_v = sinf(v);
+
+      verts->push_back(osg::Vec3(
+        xRadius * cos_u * cos_v,
+        yRadius * sin_u * cos_v,
+        zRadius * sin_v));
+
+      if (genTexCoords)
+      {
+        const double s = (lon + 180) / 360.0;
+        const double t = (lat + 90.0) / 180.0;
+        texCoords->push_back(osg::Vec2(s, t));
+      }
+
+      normals->push_back(verts->back());
+      normals->back().normalize();
+
+      if (y < latSegments)
+      {
+        const int x_plus_1 = x < lonSegments - 1 ? x + 1 : 0;
+        const int y_plus_1 = y + 1;
+        el->push_back(y * lonSegments + x);
+        el->push_back(y * lonSegments + x_plus_1);
+        el->push_back(y_plus_1 * lonSegments + x);
+        el->push_back(y * lonSegments + x_plus_1);
+        el->push_back(y_plus_1 * lonSegments + x_plus_1);
+        el->push_back(y_plus_1 * lonSegments + x);
+      }
+    }
+  }
+
+  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+  (*c)[0] = color;
+  geom->setColorArray(c);
+
+  geom->setVertexArray(verts);
+  geom->addPrimitiveSet(el);
+
+  return geom;
+}
+
+osg::ref_ptr<osg::Node> createEllipsoid(float xRadius, float yRadius, float zRadius, const osg::Vec4f& color,
+  float maxAngle, float minLat, float maxLat, float minLon, float maxLon)
+{
+  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
+  geode->addDrawable(createEllipsoidGeometry(xRadius, yRadius, zRadius, color, maxAngle, minLat, maxLat, minLon, maxLon));
+
+  if (color.a() < 1.0f)
+    geode->getOrCreateStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+
+  const bool solid = (maxLat - minLat >= 180.0f && maxLon - minLon >= 360.0f);
+  if (solid)
+    geode->getOrCreateStateSet()->setAttributeAndModes(new osg::CullFace(osg::CullFace::BACK), 1);
+  else if (color.a() < 1.0f)
+    return osgEarth::AnnotationUtils::installTwoPassAlpha(geode.get());
+
+  return geode;
 }
 
 osg::Matrix computeLocalToWorld(const osg::Node* node)
