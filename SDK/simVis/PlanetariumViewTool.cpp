@@ -868,6 +868,9 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
   // install all overrides
   applyOverrides_(true);
 
+  // Scale the "X" on the dome side
+  scaleTargetGeometry_(range_);
+
   // cache the scenario pointer
   scenario_ = &scenario;
 
