@@ -951,37 +951,51 @@ osg::ref_ptr<osg::Geometry> createEllipsoidGeometry(float xRadius, float yRadius
   const float latSpan = maxLat - minLat;
   const float lonSpan = maxLon - minLon;
   const float aspectRatio = lonSpan / latSpan;
+  // Calculate vertical slicing. There are (numSeg+1) points in a vertical slice
   const int latSegments = osg::maximum(6, static_cast<int>(ceil(latSpan / maxAngle)));
+  const int numLatPoints = latSegments + 1;
+  // Calculate horizontal slicing. There are (numSeg+1) points in a horizontal slice
   const int lonSegments = osg::maximum(3, static_cast<int>(ceil(latSegments * aspectRatio)));
-  const float segmentSize = latSpan / latSegments; // degrees
+  const int numLonPoints = lonSegments + 1;
+  // Calculate the step size for latitude and longitude, from 0 to latSegments or lonSegments, in degrees
+  const float latSegmentSize = latSpan / latSegments;
+  const float lonSegmentSize = lonSpan / lonSegments;
 
   osg::Vec3Array* verts = new osg::Vec3Array();
-  verts->reserve(latSegments * lonSegments);
+  verts->reserve(numLatPoints * numLonPoints);
 
   // Create texture coordinates only if needed
   osg::Vec2Array* texCoords = 0;
   if (genTexCoords)
   {
     texCoords = new osg::Vec2Array();
-    texCoords->reserve(latSegments * lonSegments);
+
+    texCoords->reserve(numLatPoints * numLonPoints);
     geom->setTexCoordArray(0, texCoords);
   }
 
   // Normals are required for shading / lighting
   osg::Vec3Array* normals = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
-  normals->reserve(latSegments * lonSegments);
+  normals->reserve(numLatPoints * numLonPoints);
   geom->setNormalArray(normals);
 
   osg::DrawElementsUShort* el = new osg::DrawElementsUShort(GL_TRIANGLES);
+  // The last (uppermost) latitude and last longitude do not get a series of draw-elements,
+  // they're connected from bottom and left respectively. So reserve fewer draw-elements.
   el->reserve(latSegments * lonSegments * 6);
 
-  for (int y = 0; y <= latSegments; ++y)
+  // Outer loop goes through latitude, starting at lowest to the top
+  for (int y = 0; y < numLatPoints; ++y)
   {
-    const float lat = minLat + segmentSize * (float)y;
-    for (int x = 0; x < lonSegments; ++x)
+    // Calculates the latitude for this strip in degrees
+    const float lat = minLat + latSegmentSize * (float)y;
+    // Inner loop goes through longitude, starting left (west)-most to right (east)-most
+    for (int x = 0; x < numLonPoints; ++x)
     {
-      const float lon = minLon + segmentSize * (float)x;
+      // Calculate the longitude value for this point
+      const float lon = minLon + lonSegmentSize * (float)x;
 
+      // Sin and cos calculations for the point
       const float u = osg::DegreesToRadians(lon);
       const float v = osg::DegreesToRadians(lat);
       const float cos_u = cosf(u);
@@ -989,11 +1003,13 @@ osg::ref_ptr<osg::Geometry> createEllipsoidGeometry(float xRadius, float yRadius
       const float cos_v = cosf(v);
       const float sin_v = sinf(v);
 
+      // Vertex is pushed out by the radius values using sphere/ellipsoid formula
       verts->push_back(osg::Vec3(
         xRadius * cos_u * cos_v,
         yRadius * sin_u * cos_v,
         zRadius * sin_v));
 
+      // Assign texture coordinates, scaled from 0.0 (west, south) to 1.0 (east, north)
       if (genTexCoords)
       {
         const double s = (lon + 180) / 360.0;
@@ -1001,19 +1017,29 @@ osg::ref_ptr<osg::Geometry> createEllipsoidGeometry(float xRadius, float yRadius
         texCoords->push_back(osg::Vec2(s, t));
       }
 
+      // Normal for the angle is simply the coordinate value (relative to 0,0,0) normalized
       normals->push_back(verts->back());
       normals->back().normalize();
 
-      if (y < latSegments)
+      // Use draw-elements array to connect all points into a mesh. Note that the top-most line
+      // of latitude does not get any triangles attached with it as the starting point, because
+      // the line right below it links up to all those points. The right-most vertical line of
+      // longitude also doesn't get triangles for an analogous reason. Triangles for the mesh are
+      // created from the bottom-left side (south and west) of the mesh point as we loop through.
+      if (y < latSegments && x < lonSegments)
       {
-        const int x_plus_1 = x < lonSegments - 1 ? x + 1 : 0;
+        // X always looks right (though as noted before, right-most x doesn't get any draw-elements)
+        const int x_plus_1 = x + 1;
+        // Y always looks up (though as noted before, topmost y doesn't get any draw-elements)
         const int y_plus_1 = y + 1;
-        el->push_back(y * lonSegments + x);
-        el->push_back(y * lonSegments + x_plus_1);
-        el->push_back(y_plus_1 * lonSegments + x);
-        el->push_back(y * lonSegments + x_plus_1);
-        el->push_back(y_plus_1 * lonSegments + x_plus_1);
-        el->push_back(y_plus_1 * lonSegments + x);
+
+        // Create the two sets of triangles representing this patch
+        el->push_back(y * numLonPoints + x); // lower-left
+        el->push_back(y * numLonPoints + x_plus_1); // lower-right
+        el->push_back(y_plus_1 * numLonPoints + x); // upper-left
+        el->push_back(y * numLonPoints + x_plus_1); // lower-right
+        el->push_back(y_plus_1 * numLonPoints + x_plus_1); // upper-right
+        el->push_back(y_plus_1 * numLonPoints + x); // upper-left
       }
     }
   }
