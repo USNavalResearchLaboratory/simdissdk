@@ -40,7 +40,6 @@
 #include "simVis/Projector.h"
 #include "simVis/Scenario.h"
 #include "simVis/Shaders.h"
-#include "simVis/SphericalVolume.h"
 #include "simVis/TargetDelegation.h"
 #include "simVis/Utils.h"
 #include "simVis/PlanetariumViewTool.h"
@@ -1047,70 +1046,39 @@ void PlanetariumViewTool::updateDome_()
     locatorRoot_->removeChild(dome_.get());
     dome_ = nullptr;
   }
-  if (sector_.valid())
-  {
-    locatorRoot_->removeChild(sector_.get());
-    sector_ = nullptr;
-  }
 
+  double south = -90;
+  double north = 90;
+  double west = -180;
+  double east = 180;
   if (useSector_)
-    createSector_();
-  else
   {
-    // build a sphere
-    dome_ = simVis::createEllipsoidGeometry(range_, range_, range_,
-      domeColor_,
-      10.f, -90.f, 90.f, -180.f, 180.f, true);
-    dome_->setName("Planetarium Sphere Geometry");
-    osg::StateSet* stateSet = dome_->getOrCreateStateSet();
-    stateSet->setMode(GL_BLEND, 1);
-    stateSet->setMode(GL_CULL_FACE, 0 | osg::StateAttribute::PROTECTED);
-
-    // Maximum number of textures supported
-    stateSet->setDefine("SIMVIS_PLANETARIUM_NUM_TEXTURES", std::to_string(1 + static_cast<int>(TextureUnit::UNIT3)));
-    // Dome just got recreated, reapply all textures
-    applyAllTextures_();
-
-    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
-    simVis::Shaders package;
-    package.load(vp, package.planetariumTexture());
-
-    // Turn off the depth writes to help with transparency
-    stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
-    locatorRoot_->addChild(dome_.get());
+    west = 180 - sectorAzDeg_ - sectorWidthDeg_ / 2;
+    east = 180 - sectorAzDeg_ + sectorWidthDeg_ / 2;
+    south = simCore::sdkMax(sectorElDeg_ - sectorHeightDeg_ / 2, -90.);
+    north = simCore::sdkMin(sectorElDeg_ + sectorHeightDeg_ / 2, 90.);
   }
-}
+  // build a sphere or spherical patch
+  dome_ = simVis::createEllipsoidGeometry(range_, range_, range_,
+    domeColor_,
+    10.f, south, north, west, east, true);
+  dome_->setName("Planetarium Sphere Geometry");
+  osg::StateSet* stateSet = dome_->getOrCreateStateSet();
+  stateSet->setMode(GL_BLEND, 1);
+  stateSet->setMode(GL_CULL_FACE, 0 | osg::StateAttribute::PROTECTED);
 
-void PlanetariumViewTool::createSector_()
-{
-  simVis::SVData sv;
+  // Maximum number of textures supported
+  stateSet->setDefine("SIMVIS_PLANETARIUM_NUM_TEXTURES", std::to_string(1 + static_cast<int>(TextureUnit::UNIT3)));
+  // Dome just got recreated, reapply all textures
+  applyAllTextures_();
 
-  // Set up defaults
-  sv.shape_ = simVis::SVData::SHAPE_PYRAMID;
-  sv.drawMode_ = (simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_OUTLINE);
-  sv.color_ = domeColor_;
-  sv.blendingEnabled_ = true;
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
+  simVis::Shaders package;
+  package.load(vp, package.planetariumTexture());
 
-  sv.azimOffset_deg_ = sectorAzDeg_;
-  sv.elevOffset_deg_ = sectorElDeg_;
-  sv.hfov_deg_ = sectorWidthDeg_;
-  sv.vfov_deg_ = sectorHeightDeg_;
-
-  // Below implementation matches resolution/tessellation implementation for GateVolume
-  const float maxFov = simCore::sdkMax(sv.hfov_deg_, sv.vfov_deg_);
-  const float capRes = osg::clampBetween((maxFov / 5.f), 5.f, 24.f);
-  sv.capRes_ = static_cast<unsigned int>(0.5f + capRes);
-  sv.wallRes_ = 3;
-
-  // No need to set up sv.nearRange_, as it is ignored when sv.drawCone_ is false
-  sv.farRange_ = range_;
-  sv.drawCone_ = false; // Draw flat sector only (no side/top/bottom walls)
-  sv.drawAsSphereSegment_ = true;
-
-  sector_ = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
   // Turn off the depth writes to help with transparency
-  sector_->getOrCreateStateSet()->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
-  locatorRoot_->addChild(sector_.get());
+  stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
+  locatorRoot_->addChild(dome_.get());
 }
 
 void PlanetariumViewTool::applyOverrides_(bool enable)

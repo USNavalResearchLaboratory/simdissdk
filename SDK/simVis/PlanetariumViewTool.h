@@ -312,7 +312,6 @@ private:
   void applyOverrides_(bool enable);
   void applyOverrides_(EntityNode* node, bool enable) const;
   void updateDome_();
-  void createSector_();
   void scaleTargetGeometry_(double range) const;
   osg::Node* buildVectorGeometry_() const;
   void addBeamToBeamHistory_(simVis::BeamNode* beam);
@@ -351,8 +350,6 @@ private:
   osg::ref_ptr<TargetDelegation>  targets_;
   osg::ref_ptr<HorizonGeoFence>   fence_;
   osg::ref_ptr<osg::Geometry>     dome_;
-  osg::ref_ptr<osg::MatrixTransform> sector_;
-  osg::ref_ptr<osg::Geometry>     sectorGeo_;
   osg::ref_ptr<osg::Node>         targetGeom_;
   std::map<simData::ObjectId, osg::ref_ptr<BeamHistory> > history_;
   std::vector<TextureData> textures_;
