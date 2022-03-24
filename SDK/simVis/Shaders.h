@@ -73,6 +73,9 @@ public:
   /** Name of fragment shader for picker */
   std::string pickerFragment() const;
 
+  /** Name of the shader package for planetariums */
+  std::string planetariumTexture() const;
+
   /** Name of vertex shader for projector manager */
   std::string projectorManagerVertex() const;
   /** Name of fragment shader for projector manager */

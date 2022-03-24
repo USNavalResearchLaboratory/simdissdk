@@ -25,6 +25,7 @@
 
 #include <memory>
 #include "osg/Group"
+#include "osg/Texture2D"
 #include "osg/observer_ptr"
 #include "simData/DataSlice.h"
 #include "simVis/EntityFamily.h"
@@ -158,6 +159,34 @@ public:
   /** Get the sector height in degrees */
   double getSectorHeight() const;
 
+  /** Planetarium can be textured with up to 4 textures */
+  enum class TextureUnit {
+    UNIT0 = 0,
+    UNIT1,
+    UNIT2,
+    UNIT3
+  };
+
+  /** Changes the texture overlay for the given texture unit. Textures are off by default, use setTextureActive() as needed. */
+  void setTextureImage(TextureUnit texUnit, osg::Image* image);
+  /** Retrieves the texture overlay for the given texture unit */
+  osg::Image* getTextureImage(TextureUnit texUnit) const;
+
+  /** Changes texture coordinates for a given image unit; Defaults are latitude from -90 to +90, longitude from -180 to +180. */
+  void setTextureCoords(TextureUnit texUnit, double minLat, double maxLat, double minLon, double maxLon);
+  /** Retrieves texture coordinates for the given image units. */
+  void getTextureCoords(TextureUnit texUnit, double& minLat, double& maxLat, double& minLon, double& maxLon) const;
+
+  /** Changes the alpha for applying the texture (multiplied against the alpha of the image); value is 0.0 to 1.0. */
+  void setTextureAlpha(TextureUnit texUnit, float alpha);
+  /** Retrieves the alpha value for a given texture */
+  float getTextureAlpha(TextureUnit texUnit) const;
+
+  /** Changes whether a texture is drawn or not. Textures default off. */
+  void setTextureEnabled(TextureUnit texUnit, bool active);
+  /** Returns true if the texture has been enabled on the dome. */
+  bool getTextureEnabled(TextureUnit texUnit) const;
+
 public: // ScenarioTool
 
   /** @see ScenarioTool::onInstall() */
@@ -263,6 +292,23 @@ private:
     double lastUpdateTime_;
   };
 
+  /** Represeents a single texture overlay */
+  struct TextureData
+  {
+    /** Pointer to the image in the texture */
+    osg::ref_ptr<osg::Image> image;
+    /** Pointer to the texture being used */
+    osg::ref_ptr<osg::Texture2D> texture;
+    /** Latitude values for texture on the dome; e.g. -90. is bottom of dome, 90 is top. */
+    osg::Vec2d latitudeSpan = { -90., 90. };
+    /** Longitude values for texture on the dome; e.g. -180. is back (left) of dome, 90 is halfway from front to back on right. */
+    osg::Vec2d longitudeSpan = { -180., 180. };
+    /** Alpha value to apply on top of the texture when mixing colors. */
+    float alpha = 1.f;
+    /** Toggle this to make the image not be rendered, without removing it entirely from the dome. */
+    bool enabled = false;
+  };
+
   void applyOverrides_(bool enable);
   void applyOverrides_(EntityNode* node, bool enable) const;
   void updateDome_();
@@ -271,6 +317,15 @@ private:
   osg::Node* buildVectorGeometry_() const;
   void addBeamToBeamHistory_(simVis::BeamNode* beam);
   void flushFamilyEntity_(const EntityNode* entity);
+
+  /** Retrieves a single texture, given a unit */
+  TextureData& getTexture_(TextureUnit texUnit);
+  /** Retrieves a single texture, given a unit (const version) */
+  const TextureData& getTexture_(TextureUnit texUnit) const;
+  /** Sets shader values for the given unit, pulling them from the saved texture info */
+  void applyTexture_(TextureUnit texUnit);
+  /** Sets all shader values for all texture units */
+  void applyAllTextures_();
 
   EntityFamily                    family_;
   osg::observer_ptr<PlatformNode> host_;
@@ -300,6 +355,7 @@ private:
   osg::ref_ptr<osg::Geometry>     sectorGeo_;
   osg::ref_ptr<osg::Node>         targetGeom_;
   std::map<simData::ObjectId, osg::ref_ptr<BeamHistory> > history_;
+  std::vector<TextureData> textures_;
 
   class ProjectorMonitor;
   std::unique_ptr<ProjectorMonitor> projectorMonitor_;

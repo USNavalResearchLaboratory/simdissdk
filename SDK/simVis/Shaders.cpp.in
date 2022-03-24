@@ -41,6 +41,7 @@ Shaders::Shaders()
   add(overrideColorFragment(), @OverrideColor.frag.glsl@);
   add(pickerVertex(), @Picker.vert.glsl@);
   add(pickerFragment(), @Picker.frag.glsl@);
+  add(planetariumTexture(), @PlanetariumTexture.glsl@);
   add(platformAzimElevWarpVertex(), @PlatformAzimElevViewTool.vert.glsl@);
   add(polygonStippleFragment(), @PolygonStipple.frag.glsl@);
   add(projectorManagerVertex(), @Projector.vert.glsl@);
@@ -136,6 +137,11 @@ std::string Shaders::overheadModeVertex() const
 std::string Shaders::glowHighlightFragment() const
 {
   return "GlowHighlight.frag.glsl";
+}
+
+std::string Shaders::planetariumTexture() const
+{
+  return "PlanetariumTexture.glsl";
 }
 
 std::string Shaders::platformAzimElevWarpVertex() const

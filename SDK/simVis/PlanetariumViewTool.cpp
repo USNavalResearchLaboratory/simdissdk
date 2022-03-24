@@ -39,6 +39,7 @@
 #include "simVis/Platform.h"
 #include "simVis/Projector.h"
 #include "simVis/Scenario.h"
+#include "simVis/Shaders.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/TargetDelegation.h"
 #include "simVis/Utils.h"
@@ -580,6 +581,9 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host, simData::DataStore&
   sectorHeightDeg_(60.)
 {
   family_.reset();
+  // Add all initial textures
+  for (int k = 0; k <= static_cast<int>(TextureUnit::UNIT3); ++k)
+    textures_.push_back(TextureData());
 
   // the geofence will filter out visible objects
   fence_ = new HorizonGeoFence();
@@ -1051,11 +1055,23 @@ void PlanetariumViewTool::updateDome_()
   else
   {
     // build a sphere
-    dome_ = simVis::createEllipsoidGeometry(range_, range_, range_, domeColor_);
+    dome_ = simVis::createEllipsoidGeometry(range_, range_, range_,
+      domeColor_,
+      10.f, -90.f, 90.f, -180.f, 180.f, true);
     dome_->setName("Planetarium Sphere Geometry");
     osg::StateSet* stateSet = dome_->getOrCreateStateSet();
     stateSet->setMode(GL_BLEND, 1);
     stateSet->setMode(GL_CULL_FACE, 0 | osg::StateAttribute::PROTECTED);
+
+    // Maximum number of textures supported
+    stateSet->setDefine("SIMVIS_PLANETARIUM_NUM_TEXTURES", std::to_string(1 + static_cast<int>(TextureUnit::UNIT3)));
+    // Dome just got recreated, reapply all textures
+    applyAllTextures_();
+
+    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
+    simVis::Shaders package;
+    package.load(vp, package.planetariumTexture());
+
     // Turn off the depth writes to help with transparency
     stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
     locatorRoot_->addChild(dome_.get());
@@ -1203,5 +1219,117 @@ void PlanetariumViewTool::addBeamToBeamHistory_(simVis::BeamNode* beam)
   }
 }
 
+PlanetariumViewTool::TextureData& PlanetariumViewTool::getTexture_(TextureUnit texUnit)
+{
+  return textures_[static_cast<int>(texUnit)];
 }
 
+const PlanetariumViewTool::TextureData& PlanetariumViewTool::getTexture_(TextureUnit texUnit) const
+{
+  return textures_[static_cast<int>(texUnit)];
+}
+
+void PlanetariumViewTool::setTextureImage(TextureUnit texUnit, osg::Image* image)
+{
+  if (getTexture_(texUnit).image == image)
+    return;
+  getTexture_(texUnit).image = image;
+  applyTexture_(texUnit);
+}
+
+osg::Image* PlanetariumViewTool::getTextureImage(TextureUnit texUnit) const
+{
+  return getTexture_(texUnit).image.get();
+}
+
+void PlanetariumViewTool::setTextureCoords(TextureUnit texUnit, double minLat, double maxLat, double minLon, double maxLon)
+{
+  auto& td = getTexture_(texUnit);
+  if (minLat == td.latitudeSpan.x() && maxLat == td.latitudeSpan.y() &&
+    minLon == td.longitudeSpan.x() && maxLon == td.longitudeSpan.y())
+    return;
+  td.latitudeSpan.x() = minLat;
+  td.latitudeSpan.y() = maxLat;
+  td.longitudeSpan.x() = minLon;
+  td.longitudeSpan.y() = maxLon;
+  applyTexture_(texUnit);
+}
+
+void PlanetariumViewTool::getTextureCoords(TextureUnit texUnit, double& minLat, double& maxLat, double& minLon, double& maxLon) const
+{
+  auto& td = getTexture_(texUnit);
+  minLat = td.latitudeSpan.x();
+  maxLat = td.latitudeSpan.y();
+  minLon = td.longitudeSpan.x();
+  maxLon = td.longitudeSpan.y();
+}
+
+void PlanetariumViewTool::setTextureAlpha(TextureUnit texUnit, float alpha)
+{
+  if (getTexture_(texUnit).alpha == alpha)
+    return;
+  getTexture_(texUnit).alpha = alpha;
+  applyTexture_(texUnit);
+}
+
+float PlanetariumViewTool::getTextureAlpha(TextureUnit texUnit) const
+{
+  return getTexture_(texUnit).alpha;
+}
+
+void PlanetariumViewTool::setTextureEnabled(TextureUnit texUnit, bool active)
+{
+  if (getTexture_(texUnit).enabled == active)
+    return;
+  getTexture_(texUnit).enabled = active;
+  applyTexture_(texUnit);
+}
+
+bool PlanetariumViewTool::getTextureEnabled(TextureUnit texUnit) const
+{
+  return getTexture_(texUnit).enabled;
+}
+
+void PlanetariumViewTool::applyAllTextures_()
+{
+  for (int k = 0; k <= static_cast<int>(TextureUnit::UNIT3); ++k)
+    applyTexture_(static_cast<TextureUnit>(k));
+}
+
+/** Helper function for applyTexture_() to set a uniform value in an array (because osg interface requires const char*) */
+template<typename T>
+void setUniformArrayValue(osg::StateSet& ss, PlanetariumViewTool::TextureUnit arrayIndex, const std::string& param, const T& value)
+{
+  std::stringstream stream;
+  stream << "sv_planet_tex[" << static_cast<int>(arrayIndex) << "]." << param;
+  ss.addUniform(new osg::Uniform(stream.str().c_str(), value));
+}
+
+void PlanetariumViewTool::applyTexture_(TextureUnit texUnit)
+{
+  // Need a valid dome to apply texture content
+  if (!dome_.valid())
+    return;
+
+  // Extract the texture data, state set
+  auto& td = getTexture_(texUnit);
+  auto* ss = dome_->getOrCreateStateSet();
+
+  // Configure all shader uniform values
+  setUniformArrayValue(*ss, texUnit, "alpha", td.alpha);
+  setUniformArrayValue(*ss, texUnit, "coords", osg::Vec4f(
+    td.longitudeSpan.x(), td.longitudeSpan.y(),
+    td.latitudeSpan.x(), td.latitudeSpan.y()));
+  const bool enabled = td.image.valid() && td.enabled;
+  setUniformArrayValue(*ss, texUnit, "enabled", enabled);
+  const int glTextureUnit = static_cast<int>(texUnit);
+  setUniformArrayValue(*ss, texUnit, "sampler", glTextureUnit);
+
+  // Create a texture if needed
+  if (!td.texture)
+    td.texture = new osg::Texture2D(td.image.get());
+  td.texture->setImage(td.image.get());
+  ss->setTextureAttribute(glTextureUnit, td.texture.get());
+}
+
+}

@@ -24,6 +24,7 @@ set(SHADER_FILES
     Picker.vert.glsl
     Picker.frag.glsl
     PlatformAzimElevViewTool.vert.glsl
+    PlanetariumTexture.glsl
     PolygonStipple.frag.glsl
     Projector.vert.glsl
     Projector.frag.glsl

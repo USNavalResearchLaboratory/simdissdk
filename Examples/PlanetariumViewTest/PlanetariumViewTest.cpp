@@ -45,6 +45,8 @@
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
 
+#include "osgDB/ReadFile"
+
 #ifdef HAVE_IMGUI
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
@@ -55,6 +57,9 @@ namespace ui = osgEarth::Util::Controls;
 #endif
 
 #define LC "[Planetarium Test] "
+
+// Uncomment to show debug textures for shadow mapping (IMGUI only)
+// #define SHOW_SHADOW_MAP_DEBUG_TEXTURES
 
 //----------------------------------------------------------------------------
 
@@ -260,21 +265,68 @@ public:
       if (useGradient != useGradient_)
         app_.planetarium->setUseGradient(useGradient_);
 
+      if (on_)
+      {
+        using TextureUnit = simVis::PlanetariumViewTool::TextureUnit;
+        // Image 1
+        bool showImage1 = showImage1_;
+        IMGUI_ADD_ROW(ImGui::Checkbox, "Show Image 1", &showImage1_);
+        if (showImage1 != showImage1_)
+          app_.planetarium->setTextureEnabled(TextureUnit::UNIT0, showImage1_);
+        if (showImage1_)
+        {
+          float image1Alpha = image1Alpha_;
+          IMGUI_ADD_ROW(ImGui::SliderFloat, "Image 1 Alpha", &image1Alpha_, 0.f, 1.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+          if (image1Alpha != image1Alpha_)
+            app_.planetarium->setTextureAlpha(TextureUnit::UNIT0, image1Alpha_);
+        }
+
+        // Image 2
+        bool showImage2 = showImage2_;
+        IMGUI_ADD_ROW(ImGui::Checkbox, "Show Image 2", &showImage2_);
+        if (showImage2 != showImage2_)
+          app_.planetarium->setTextureEnabled(TextureUnit::UNIT1, showImage2_);
+        if (showImage2_)
+        {
+          float image2Alpha = image2Alpha_;
+          IMGUI_ADD_ROW(ImGui::SliderFloat, "Image 2 Alpha", &image2Alpha_, 0.f, 1.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+          if (image2Alpha != image2Alpha_)
+            app_.planetarium->setTextureAlpha(TextureUnit::UNIT1, image2Alpha_);
+
+          // Coordinates for Image 2
+          float image2Lat[2] = { image2Lat_[0], image2Lat_[1] };
+          IMGUI_ADD_ROW(ImGui::SliderFloat2, "Image 2 Latitude", image2Lat_, -90.f, 90.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+          float image2Lon[2] = { image2Lon_[0], image2Lon_[1] };
+          IMGUI_ADD_ROW(ImGui::SliderFloat2, "Image 2 Longitude", image2Lon_, -180.f, 180.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+          if (image2Lat[0] != image2Lat_[0] || image2Lat[1] != image2Lat_[1] ||
+            image2Lon[0] != image2Lon_[0] || image2Lon[1] != image2Lon_[1])
+          {
+            app_.planetarium->setTextureCoords(TextureUnit::UNIT1, image2Lat_[0], image2Lat_[1],
+              image2Lon_[0], image2Lon_[1]);
+          }
+        }
+      }
+
       ImGui::EndTable();
 
-      if (displayProjectors_ && shadowMapping_) {
+#ifdef SHOW_SHADOW_MAP_DEBUG_TEXTURES
+      if (displayProjectors_ && shadowMapping_)
+      {
         auto p1 = app_.scenario->find<simVis::ProjectorNode>(app_.proj1Id);
-        if (p1) {
+        if (p1)
+        {
           ImGui::Text("Projector 1 shadow map:");
           ImGuiUtil::Texture(p1->getShadowMap(), ri);
         }
         auto p2 = app_.scenario->find<simVis::ProjectorNode>(app_.proj2Id);
-        if (p2) {
+        if (p2)
+        {
           ImGui::Separator();
           ImGui::Text("Projector 2 shadow map:");
           ImGuiUtil::Texture(p2->getShadowMap(), ri);
         }
       }
+#endif
     }
 
     ImGui::End();
@@ -298,6 +350,13 @@ private:
   bool displayProjectors_ = false;
   bool shadowMapping_ = true;
   bool doubleSided_ = false;
+
+  bool showImage1_ = false;
+  float image1Alpha_ = 0.75f;
+  bool showImage2_ = false;
+  float image2Alpha_ = 0.5f;
+  float image2Lat_[2] = { 0.f, 40.f };
+  float image2Lon_[2] = { 80.f, 150.f };
 };
 #else
 struct Toggle : public ui::ControlEventHandler
@@ -467,7 +526,6 @@ simData::ObjectId addPlatform(simData::DataStore& dataStore, const std::string& 
   return platformId;
 }
 
-
 simData::ObjectId addBeam(const simData::ObjectId hostId, simData::DataStore& dataStore, double az, double el)
 {
   simData::DataStore::Transaction xaction;
@@ -488,7 +546,6 @@ simData::ObjectId addBeam(const simData::ObjectId hostId, simData::DataStore& da
   return result;
 }
 
-
 simData::ObjectId addGate(const simData::ObjectId hostId, simData::DataStore& dataStore, double az, double el, double roll)
 {
   simData::DataStore::Transaction xaction;
@@ -506,6 +563,7 @@ simData::ObjectId addGate(const simData::ObjectId hostId, simData::DataStore& da
   prefs->set_gateazimuthoffset(simCore::DEG2RAD * az);
   prefs->set_gateelevationoffset(simCore::DEG2RAD * el);
   prefs->set_gaterolloffset(simCore::DEG2RAD * roll);
+  prefs->mutable_commonprefs()->set_draw(false);
   xaction.complete(&prefs);
 
   return result;
@@ -681,6 +739,16 @@ int main(int argc, char **argv)
   osg::observer_ptr<simVis::PlatformNode> platform = app.scenario->find<simVis::PlatformNode>(app.platformId);
   app.planetarium = new simVis::PlanetariumViewTool(platform.get(), app.dataStore);
   app.planetarium->setRange(75000);
+
+  // Add planetarium textures. These can be edited only in IMGUI configuration
+  using TextureUnit = simVis::PlanetariumViewTool::TextureUnit;
+  app.planetarium->setTextureImage(TextureUnit::UNIT0, osgDB::readImageFile("earthcolor.jpg"));
+  app.planetarium->setTextureEnabled(TextureUnit::UNIT0, false);
+  app.planetarium->setTextureAlpha(TextureUnit::UNIT0, 0.75);
+  app.planetarium->setTextureImage(TextureUnit::UNIT1, osgDB::readImageFile("moon_1024x512.jpg"));
+  app.planetarium->setTextureEnabled(TextureUnit::UNIT1, false);
+  app.planetarium->setTextureAlpha(TextureUnit::UNIT1, 0.5);
+  app.planetarium->setTextureCoords(TextureUnit::UNIT1, 0, 40, 80, 150);
 
   // set up the controls
   osg::observer_ptr<simVis::View> view = viewer->getMainView();
