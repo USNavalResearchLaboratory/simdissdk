@@ -57,11 +57,11 @@ void planetarium_texture_frag(inout vec4 color)
       float pctX = sv_planet_map0to1(
         (180.0 + sv_planet_tex[k].coords.x) / 360.0,
         (180.0 + sv_planet_tex[k].coords.y) / 360.0,
-        planet_texcoord.s);
+        mod(planet_texcoord.s, 1.0));
       float pctY = sv_planet_map0to1(
         (90.0 + sv_planet_tex[k].coords.z) / 180.0,
         (90.0 + sv_planet_tex[k].coords.w) / 180.0,
-        planet_texcoord.t);
+        mod(planet_texcoord.t, 1.0));
 
       // If .st is outside the range, don't alter the color pixel
       if (pctX < 0.0 || pctX > 1.0 || pctY < 0.0 || pctY > 1.0)

@@ -995,8 +995,9 @@ osg::ref_ptr<osg::Geometry> createEllipsoidGeometry(float xRadius, float yRadius
       // Calculate the longitude value for this point
       const float lon = minLon + lonSegmentSize * (float)x;
 
-      // Sin and cos calculations for the point
-      const float u = osg::DegreesToRadians(lon);
+      // Sin and cos calculations for the point. Offset longitude by 90 degrees so that
+      // the "0" texture coordinate starts on the north side.
+      const float u = osg::DegreesToRadians(lon - 90.f);
       const float v = osg::DegreesToRadians(lat);
       const float cos_u = cosf(u);
       const float sin_u = sinf(u);

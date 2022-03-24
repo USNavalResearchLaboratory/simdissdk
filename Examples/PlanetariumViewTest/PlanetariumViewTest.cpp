@@ -769,7 +769,7 @@ int main(int argc, char **argv)
 
   // add some stock OSG handlers and go
   viewer->installDebugHandlers();
-  int rv = viewer->run();
+  const int rv = viewer->run();
   // Remove the planetarium on exit so it can deregister from the data store
   app.scenario->removeTool(app.planetarium.get());
   return rv;

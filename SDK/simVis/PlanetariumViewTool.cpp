@@ -1330,8 +1330,13 @@ void PlanetariumViewTool::applyTexture_(TextureUnit texUnit)
 
   // Create a texture if needed
   if (!td.texture)
-    td.texture = new osg::Texture2D(td.image.get());
+  {
+    td.texture = new osg::Texture2D();
+    td.texture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    td.texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP);
+  }
   td.texture->setImage(td.image.get());
+  simVis::fixTextureForGlCoreProfile(td.texture);
   ss->setTextureAttribute(glTextureUnit, td.texture.get());
 }
 
