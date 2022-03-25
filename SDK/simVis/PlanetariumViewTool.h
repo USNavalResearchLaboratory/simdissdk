@@ -132,7 +132,7 @@ public:
   /** Set whether to use a gradient when displaying history points */
   void setUseGradient(bool useGradient);
   /** Whether to use a gradient when displaying history points */
-  bool useGradient() const;
+  bool getUseGradient() const;
 
   /** Set whether to draw a sector instead of a full planetarium */
   void setUseSector(bool useSector);

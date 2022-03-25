@@ -752,7 +752,7 @@ void PlanetariumViewTool::setUseGradient(bool useGradient)
   }
 }
 
-bool PlanetariumViewTool::useGradient() const
+bool PlanetariumViewTool::getUseGradient() const
 {
   return useGradient_;
 }
