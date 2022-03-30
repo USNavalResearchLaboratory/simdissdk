@@ -147,7 +147,11 @@ int EntityTreeItem::row() const
   {
     auto it = parentItem_->childToRowIndex_.find(this);
     if (it != parentItem_->childToRowIndex_.end())
+    {
+      // verify the childToRowIndex_ map is correct
+      assert(parentItem_->childItems_[it->second] == this);
       return it->second;
+    }
   }
 
   return 0;
