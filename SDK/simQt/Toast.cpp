@@ -104,7 +104,7 @@ ToastOnWidget::~ToastOnWidget()
   delete popIn_;
   delete popOut_;
   delete hideTimer_;
-  delete toast_;
+  // Do not delete toast_, its life span handled by Qt parent
 }
 
 void ToastOnWidget::showText(const QString& text, Duration duration)
