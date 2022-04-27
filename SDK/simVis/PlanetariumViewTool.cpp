@@ -787,7 +787,7 @@ void PlanetariumViewTool::setSectorElevation(double elDeg)
 {
   if (sectorElDeg_ == elDeg)
     return;
-  sectorElDeg_ = simCore::clamp(elDeg, 0.01, 90.);
+  sectorElDeg_ = simCore::angFix90(elDeg);
   updateDome_();
 }
 
