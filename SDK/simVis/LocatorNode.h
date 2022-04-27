@@ -46,8 +46,6 @@ public:
   explicit LocatorNode(Locator* locator, unsigned int componentsToTrack = Locator::COMP_ALL);
   /// Creates a LocatorNode using the locator provided as the position, adding the child provided to this
   LocatorNode(Locator* locator, osg::Node* child);
-  /// OSG copy constructor implementation
-  LocatorNode(const LocatorNode &rhs, const osg::CopyOp& = osg::CopyOp::SHALLOW_COPY);
 
   /// locator that is driving this locator node
   Locator* getLocator()       { return locator_.get(); }
@@ -103,6 +101,8 @@ public: // osg::MatrixTransform
 protected:
   /// osg::Referenced-derived
   virtual ~LocatorNode();
+  /// OSG copy constructor implementation, required by META_Node
+  LocatorNode(const LocatorNode &rhs, const osg::CopyOp& = osg::CopyOp::SHALLOW_COPY);
 
 private: // data
   osg::ref_ptr<Locator> locator_;
