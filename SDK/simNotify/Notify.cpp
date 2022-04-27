@@ -184,7 +184,7 @@ namespace simNotify
 
   void setNotifyHandler(NotifySeverity severity, NotifyHandlerPtr handler)
   {
-    return notifyContext_->setHandler(severity, handler);
+    notifyContext_->setHandler(severity, handler);
   }
 
   void setNotifyHandlers(NotifyHandlerPtr handler)
