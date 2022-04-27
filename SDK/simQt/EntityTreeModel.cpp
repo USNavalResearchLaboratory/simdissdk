@@ -503,8 +503,12 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
   else
     parentItem = findItem_(parentId);
 
-  // itemsById_ is out of sync WRT tree
-  assert(itemsById_.find(id) == itemsById_.end());
+  if (parentItem == nullptr)
+  {
+    // itemsById_ is out of sync WRT tree
+    assert(false);
+    return;
+  }
 
   if ((parentItem != rootItem_) && treeView_)
   {
