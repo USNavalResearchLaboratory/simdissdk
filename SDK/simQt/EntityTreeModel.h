@@ -167,7 +167,7 @@ private:
 
   // Setup the tree
   void buildTree_(simData::ObjectType type, const simData::DataStore* dataStore,
-    const simData::DataStore::IdList& idList, EntityTreeItem *parent);
+    const simData::DataStore::IdList& ids, EntityTreeItem *parent);
   EntityTreeItem* findItem_(uint64_t entityId) const;
   void addTreeItem_(uint64_t id, simData::ObjectType type, uint64_t parentId);
 

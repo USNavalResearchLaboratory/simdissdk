@@ -816,9 +816,9 @@ int EntityTreeModel::rowCount(const QModelIndex &parent) const
 }
 
 void EntityTreeModel::buildTree_(simData::ObjectType type, const simData::DataStore* dataStore,
-                                 const simData::DataStore::IdList& idList, EntityTreeItem *parent)
+                                 const simData::DataStore::IdList& ids, EntityTreeItem *parent)
 {
-  for (simData::DataStore::IdList::const_iterator iter = idList.begin(); iter != idList.end(); ++iter)
+  for (simData::DataStore::IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
   {
     EntityTreeItem* newItem;
     if (parent && treeView_)
