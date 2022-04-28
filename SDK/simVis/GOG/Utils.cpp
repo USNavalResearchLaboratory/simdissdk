@@ -481,6 +481,10 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
   name_ = parsedShape.stringValue(GOG_3D_NAME);
   if (name_.empty())
     name_ = simVis::GOG::Parser::getKeywordFromShape(shape);
+
+  // Note, tools like Klocwork might point to uninitialized variables at the end of this
+  // function, such as refPointLLA_, geoInterp_, and style_. This is an incorrect finding
+  // because the default initializer is desired for these instances.
 }
 
 void ParserData::init()
