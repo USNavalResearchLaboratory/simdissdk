@@ -417,4 +417,16 @@ void TimeButtons::resizeButtons(int size)
   ui_->button_Realtime->setIconSize(newQSize);
 }
 
+bool TimeButtons::isSingleButtonPlayStop() const
+{
+  return ui_->button_Stop->isHidden();
+}
+
+void TimeButtons::setSingleButtonPlayStop(bool fl)
+{
+  ui_->button_StartStop->setHidden(!fl);
+  ui_->button_Stop->setHidden(fl);
+  ui_->button_Play->setHidden(fl);
+}
+
 }
