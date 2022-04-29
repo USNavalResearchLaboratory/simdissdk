@@ -665,6 +665,142 @@ int testAngleDifference()
   return rv;
 }
 
+int testIsAngleBetween()
+{
+  int rv = 0;
+
+  // Test isAngleBetweenDeg(), which wraps isAngleBetween(), and is easier for human reading
+
+  // Positive sweep
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(30.0, 10.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(10.0, 10.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(50.0, 10.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(9.999, 10.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(60.001, 10.0, 50.0));
+
+  // Wrapped test angle (positive)
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(390.0, 10.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(370.0, 10.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(410.0, 10.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(369.999, 10.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(420.001, 10.0, 50.0));
+
+  // Wrapped test angle (negative)
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(-330.0, 10.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(-350.0, 10.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(-300.0, 10.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(-350.001, 10.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(-299.999, 10.0, 50.0));
+
+  // Wrapped start angle (positive)
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(30.0, 370.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(10.0, 370.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(50.0, 370.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(9.999, 370.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(60.001, 370.0, 50.0));
+
+  // Wrapped start angle (negative)
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(30.0, -350.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(10.0, -350.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(50.0, -350.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(9.999, -350.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(60.001, -350.0, 50.0));
+
+  // Zero sweep
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(9.999, 10.0, 0.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(10.001, 10.0, 0.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(10.0, 10.0, 0.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(369.999, 10.0, 0.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(370.001, 10.0, 0.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(370.0, 10.0, 0.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(-350.001, 10.0, 0.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(-349.999, 10.0, 0.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(-350.0, 10.0, 0.0));
+
+  // Sweep wraps around 360  (340 to 390, or 340 to 30)
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(339.999, 340.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(340.0, 340.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(0.0, 340.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(360.0, 340.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(720.0, 340.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(30.0, 340.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(30.001, 340.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(700.0, 340.0, 50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(700.1, 340.0, 50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(699.9, 340.0, 50.0));
+
+  // Sweep of 360 degrees
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(4.999, 5.0, 360.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(5.0, 5.0, 360.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(5.001, 5.0, 360.0));
+  for (int k = 0; k <= 360; ++k)
+  {
+    rv += SDK_ASSERT(simCore::isAngleBetweenDeg(k, 5.0, 360.0));
+    rv += SDK_ASSERT(simCore::isAngleBetweenDeg(k, 5.0, 365.0));
+  }
+
+  //////////////////////////////////////////////////////
+  // Retest, with negative sweep
+
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(30.0, 60.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(10.0, 60.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(50.0, 60.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(9.999, 60.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(60.001, 60.0, -50.0));
+
+  // Wrapped test angle (positive)
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(390.0, 60.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(370.0, 60.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(410.0, 60.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(369.999, 60.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(420.001, 60.0, -50.0));
+
+  // Wrapped test angle (negative)
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(-330.0, 60.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(-350.0, 60.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(-300.0, 60.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(-350.001, 60.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(-299.999, 60.0, -50.0));
+
+  // Wrapped start angle (positive)
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(30.0, 420.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(10.0, 420.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(50.0, 420.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(9.999, 420.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(60.001, 420.0, -50.0));
+
+  // Wrapped start angle (negative)
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(30.0, -300.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(10.0, -300.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(50.0, -300.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(9.999, -300.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(60.001, -300.0, -50.0));
+
+  // Sweep wraps around 360 (30 to 340 or 390 to 340)
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(339.999, 30.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(340.0, 30.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(0.0, 30.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(360.0, 30.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(720.0, 30.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(30.0, 30.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(30.001, 30.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(700.0, 30.0, -50.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(700.1, 30.0, -50.0));
+  rv += SDK_ASSERT(!simCore::isAngleBetweenDeg(699.9, 30.0, -50.0));
+
+  // Sweep of 360 degrees
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(4.999, 5.0, -360.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(5.0, 5.0, -360.0));
+  rv += SDK_ASSERT(simCore::isAngleBetweenDeg(5.001, 5.0, -360.0));
+  for (int k = 0; k <= 360; ++k)
+  {
+    rv += SDK_ASSERT(simCore::isAngleBetweenDeg(k, 5.0, -360.0));
+    rv += SDK_ASSERT(simCore::isAngleBetweenDeg(k, 5.0, -365.0));
+  }
+
+  return rv;
+}
+
 }
 
 int AngleTest(int argc, char* argv[])
@@ -681,6 +817,7 @@ int AngleTest(int argc, char* argv[])
   rv += testSim7284();
   rv += test360();
   rv += testAngleDifference();
+  rv += testIsAngleBetween();
 
   return rv;
 }

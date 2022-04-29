@@ -155,3 +155,21 @@ double simCore::angleDifferenceDeg(double fromDeg, double toDeg)
 {
   return simCore::RAD2DEG * simCore::angleDifference(simCore::DEG2RAD * fromDeg, simCore::DEG2RAD * toDeg);
 }
+
+bool simCore::isAngleBetween(double testAngle, double fromAngle, double sweep)
+{
+  // Reformat with a positive sweep to simplify math
+  if (sweep < 0.)
+  {
+    fromAngle = fromAngle + sweep;
+    sweep = -sweep;
+  }
+  const double diff1 = simCore::angFix2PI(testAngle - fromAngle);
+  return diff1 <= sweep;
+}
+
+bool simCore::isAngleBetweenDeg(double testAngleDeg, double fromAngleDeg, double sweepDeg)
+{
+  return simCore::isAngleBetween(simCore::DEG2RAD * testAngleDeg, simCore::DEG2RAD * fromAngleDeg,
+    simCore::DEG2RAD * sweepDeg);
+}
