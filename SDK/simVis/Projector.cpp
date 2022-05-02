@@ -28,7 +28,6 @@
 #include "osg/PolygonOffset"
 #include "osgDB/ReadFile"
 #include "osgUtil/CullVisitor"
-#include "osgEarth/EllipsoidIntersector"
 #include "osgEarth/Horizon"
 #include "osgEarth/Shadowing"
 #include "osgEarth/NodeUtils"
@@ -55,7 +54,6 @@
 
 namespace
 {
-
 static const double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
 static const float DEFAULT_ALPHA_VALUE = 0.1f;
 

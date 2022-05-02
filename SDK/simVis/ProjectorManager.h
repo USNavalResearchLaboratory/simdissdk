@@ -25,13 +25,10 @@
 
 #include "osgEarth/MapNode"
 #include "osgEarth/MapNodeObserver"
+#include "simVis/Projector.h"
 #include "simCore/Common/Common.h"
 #include "simData/ObjectId.h"
 
-namespace osgEarth
-{
-  namespace Util { class EllipsoidIntersector; }
-}
 namespace simVis
 {
 class ProjectorNode;
