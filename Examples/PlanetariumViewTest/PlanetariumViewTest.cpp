@@ -297,7 +297,7 @@ public:
           float image2Lat[2] = { image2Lat_[0], image2Lat_[1] };
           IMGUI_ADD_ROW(ImGui::SliderFloat2, "Image 2 Latitude", image2Lat_, -90.f, 90.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
           float image2Lon[2] = { image2Lon_[0], image2Lon_[1] };
-          IMGUI_ADD_ROW(ImGui::SliderFloat2, "Image 2 Longitude", image2Lon_, -180.f, 180.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+          IMGUI_ADD_ROW(ImGui::SliderFloat2, "Image 2 Longitude", image2Lon_, -360.f, 360.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
           if (image2Lat[0] != image2Lat_[0] || image2Lat[1] != image2Lat_[1] ||
             image2Lon[0] != image2Lon_[0] || image2Lon[1] != image2Lon_[1])
           {

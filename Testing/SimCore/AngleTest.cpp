@@ -801,6 +801,285 @@ int testIsAngleBetween()
   return rv;
 }
 
+// Mirrors content of PlanetariumTexture.glsl function of same name
+double sv_planet_maplon0to1(double edge0, double edge1, double x)
+{
+  // Precondition: x is between 0 and 1 inclusive
+  assert(simCore::isBetween(x, 0.0, 1.0));
+
+  // Normalize the edge values
+  if ((edge0 > 1.0 && edge1 > 1.0) || (edge0 < 0.0 && edge1 < 0.0))
+  {
+    double delta = floor(edge0);
+    edge1 -= delta;
+    edge0 -= delta;
+  }
+
+  // Still needed for some edge cases, e.g. (1.16, 0.9523, 0.15)
+  while ((edge1 > 1.0 && x < edge0) || (edge0 > 1.0 && x < edge1))
+    x += 1;
+  while ((edge1 < 0.0 && x > edge0) || (edge0 < 0.0 && x > edge1))
+    x -= 1;
+
+  // Do a remapping
+  double rv0to1 = (x - edge0) / (edge1 - edge0);
+  // Can't use fmod because it excludes 1.0; need to return a value from 0.0 to 1.0 inclusive
+  while (rv0to1 > 1)
+    rv0to1 -= 1;
+  while (rv0to1 < 0)
+    rv0to1 += 1;
+  return rv0to1;
+}
+
+/** Helper function to return [-180,180] value mapped to [-1,1]. Input is angfix'ed. */
+double degreesAsPct(double deg)
+{
+  // Special case, avoid [-180,180) issue with angFix360
+  if (deg == 180.)
+    return 1.;
+
+  double rv = simCore::angFix360(deg) / 360. - 0.5;
+  if (rv < 0)
+    return rv + 1.;
+  return rv;
+}
+
+int testPlanetariumShaderImageWrapping()
+{
+  // Intended to test sv_planet_maplon0to1() function from the shader, hitting all edge cases
+  int rv = 0;
+
+  // Identity tests
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.0, 1.0, 0.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.0, 1.0, 1.0), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.0, 1.0, 0.5), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.0, 1.0, 0.25), 0.25));
+
+  // Shorten the length
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, 0.75, 0.25), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, 0.75, 0.75), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, 0.75, 0.5), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, 0.75, 0.0), 0.5));
+
+  // Cases we want for posiive wrap-around
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.75), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.99), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.01), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.25), 1.0));
+
+  // Except we will actually be getting coordinates on the S between 0 and 1 exclusively, wrapped
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.01), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.25), 1.0));
+
+  // Try negative values, which should also work
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.25, 0.25, 0.75), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.25, 0.25, 0.99), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.25, 0.25, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.25, 0.25, 0.01), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.25, 0.25, 0.25), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.25, 0.25, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.25, 0.25, 0.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.25, 0.25, 0.01), 0.52));
+
+  // Test wrapping case around "dateline", 90 degrees to 270 degrees
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.75), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.99), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.01), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.02), 0.54));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.24), 0.98));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 1.25, 0.25), 1.0));
+
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.75, 2.25, 0.75), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.75, 2.25, 0.99), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.75, 2.25, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.75, 2.25, 0.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.75, 2.25, 0.01), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.75, 2.25, 0.02), 0.54));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.75, 2.25, 0.24), 0.98));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.75, 2.25, 0.25), 1.0));
+
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-1.25, -0.75, 0.75), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-1.25, -0.75, 0.99), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-1.25, -0.75, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-1.25, -0.75, 0.01), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-1.25, -0.75, 0.25), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-1.25, -0.75, 0.0), 0.5));
+
+
+  ///////////////////////////////////////////////////////////////////////
+  // Test again but with inverted image (edge0 > edge1)
+
+  // Identity tests
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.0, 0.0, 0.0), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.0, 0.0, 1.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.0, 0.0, 0.5), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.0, 0.0, 0.25), 0.75));
+
+  // Shorten the length
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 0.25, 0.25), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 0.25, 0.75), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 0.25, 0.5), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.75, 0.25, 0.26), 0.98));
+
+  // Cases we want for negative wrap-around
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.75), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.99), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.01), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.25), 0.0));
+
+  // Except we will actually be getting coordinates on the S between 0 and 1 exclusively, wrapped
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.01), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.25), 0.0));
+
+  // Try negative values, which should also work
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, -0.25, 0.75), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, -0.25, 0.99), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, -0.25, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, -0.25, 0.01), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, -0.25, 0.25), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, -0.25, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, -0.25, 0.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(0.25, -0.25, 0.01), 0.48));
+
+  // Test wrapping case around "dateline", 90 degrees to 270 degrees
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.75), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.99), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.01), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.02), 0.46));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.24), 0.02));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.25), 0.0));
+
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(2.25, 1.75, 0.75), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(2.25, 1.75, 0.99), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(2.25, 1.75, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(2.25, 1.75, 0.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(2.25, 1.75, 0.01), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(2.25, 1.75, 0.02), 0.46));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(2.25, 1.75, 0.24), 0.02));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(2.25, 1.75, 0.25), 0.0));
+
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.75, -1.25, 0.75), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.75, -1.25, 0.99), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.75, -1.25, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.75, -1.25, 0.01), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.75, -1.25, 0.25), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.75, -1.25, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(-0.75, -1.25, 0.0), 0.5));
+
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.25), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.24), 0.02));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.23), 0.04));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.01), 0.48));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 1.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.99), 0.52));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.98), 0.54));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.76), 0.98));
+  rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(1.25, 0.75, 0.75), 1.0));
+
+  // Test deg-as-percent
+  rv += SDK_ASSERT(simCore::areEqual(degreesAsPct(-180.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(degreesAsPct(-90.0), 0.25));
+  rv += SDK_ASSERT(simCore::areEqual(degreesAsPct(0.0), 0.5));
+  rv += SDK_ASSERT(simCore::areEqual(degreesAsPct(90.0), 0.75));
+  rv += SDK_ASSERT(simCore::areEqual(degreesAsPct(180.0), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(degreesAsPct(270.0), 0.25));
+
+  ///////////////////////////////////////////////////////////////////////
+  // Test various individual use cases identified during runtime of example_planetariumviewtest
+
+  {
+    double start = 240.0;  // -120
+    double end = 162.86;   // 162.86
+    double startRemap = (180 + start) / 360.;   // 1.1666666
+    double endRemap = (180 + end) / 360.;       // 0.9523888
+
+    double percentPerDeg = 1. / (end - start);  // -0.01296344
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start)), 0 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start - 1)), -1 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start - 2)), -2 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start - 3)), -3 * percentPerDeg));
+
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 0)), 1. + 0 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 5)), 1. + 5 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 10)), 1. + 10 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 15)), 1. + 15 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 20)), 1. + 20 * percentPerDeg));
+  }
+
+  // Also failing: 300 start, 220 end
+  {
+    double start = 320.0;  // -40
+    double end = 220.0;   // -140
+    double startRemap = (180 + start) / 360.;   // 1.388888
+    double endRemap = (180 + end) / 360.;       // 1.111112
+
+    double percentPerDeg = 1. / (end - start);  // -0.01
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start)), 0 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start - 1)), -1 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start - 2)), -2 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start - 3)), -3 * percentPerDeg));
+
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 0)), 1. + 0 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 5)), 1. + 5 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 10)), 1. + 10 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 15)), 1. + 15 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 20)), 1. + 20 * percentPerDeg));
+  }
+
+  // Also failing: -282 start, -214 end (positive)
+  {
+    double start = -282.0;  // 78
+    double end = -214.0;   // 146
+    double startRemap = (180 + start) / 360.;   // -0.283333
+    double endRemap = (180 + end) / 360.;       // -0.094444
+
+    double percentPerDeg = 1. / (end - start);  // 0.01470
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start)), 0 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start + 1)), 1 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start + 2)), 2 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start + 3)), 3 * percentPerDeg));
+
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end - 0)), 1. - 0 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end - 5)), 1. - 5 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end - 10)), 1. - 10 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end - 15)), 1. - 15 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end - 20)), 1. - 20 * percentPerDeg));
+  }
+
+  // Also failing: 80.0 start, -214 end (negative)
+  {
+    double start = 80.0;  // 80
+    double end = -214.0;   // 146
+    double startRemap = (180 + start) / 360.;   // 0.722222
+    double endRemap = (180 + end) / 360.;       // -0.094444
+
+    double percentPerDeg = 1. / (end - start);  // -0.0034013
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start)), 0 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start - 1)), -1 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start - 2)), -2 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(start - 3)), -3 * percentPerDeg));
+
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 0)), 1. + 0 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 5)), 1. + 5 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 10)), 1. + 10 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 15)), 1. + 15 * percentPerDeg));
+    rv += SDK_ASSERT(simCore::areEqual(sv_planet_maplon0to1(startRemap, endRemap, degreesAsPct(end + 20)), 1. + 20 * percentPerDeg));
+  }
+
+  return rv;
+}
+
 }
 
 int AngleTest(int argc, char* argv[])
@@ -818,6 +1097,7 @@ int AngleTest(int argc, char* argv[])
   rv += test360();
   rv += testAngleDifference();
   rv += testIsAngleBetween();
+  rv += testPlanetariumShaderImageWrapping();
 
   return rv;
 }
