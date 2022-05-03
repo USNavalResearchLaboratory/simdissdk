@@ -36,6 +36,7 @@ struct sv_Planetarium_Parameters {
 };
 // Input values of all planetarium parameters
 uniform sv_Planetarium_Parameters sv_planet_tex[SIMVIS_PLANETARIUM_NUM_TEXTURES];
+uniform bool sv_planet_textureonly;
 
 // Given range [edge0, edge1], maps x into a linear space of [0,1]. Output < 0 and > 1 possible if outside edges.
 float sv_planet_maplat0to1(float edge0, float edge1, float x)
@@ -90,10 +91,15 @@ bool isAngleBetween(float testAngle, float fromAngle, float sweep)
 // Fragment shader that renders a texture onto a planetarium sphere
 void planetarium_texture_frag(inout vec4 color)
 {
+  bool haveTexel = false;
+  bool haveValidTexture = false;
+
   for (int k = 0; k < SIMVIS_PLANETARIUM_NUM_TEXTURES; ++k)
   {
     if (sv_planet_tex[k].enabled)
     {
+      haveValidTexture = true;
+
       // Coverage: .xy is -360 to 360 for X coordinates
       //           .zw is -90 to 90 for Y coordinates
 
@@ -122,10 +128,15 @@ void planetarium_texture_frag(inout vec4 color)
       if (pctY < 0.0 || pctY > 1.0)
         continue;
       vec4 texel = texture(sv_planet_tex[k].sampler, vec2(pctX, pctY));
+      haveTexel = true;
 
       // Do RGB color mixing using 1-alpha formula
       float applyAlpha = texel.a * sv_planet_tex[k].alpha;
       color.rgb = color.rgb * (1.0 - applyAlpha) + texel.rgb * applyAlpha;
     }
   }
+
+  // Process "texture only" mode, disabling the fragment if no texel applies
+  if (sv_planet_textureonly && haveValidTexture && !haveTexel)
+    discard;
 }

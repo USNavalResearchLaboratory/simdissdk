@@ -577,7 +577,8 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host, simData::DataStore&
   sectorAzDeg_(0.),
   sectorElDeg_(0.),
   sectorWidthDeg_(90.),
-  sectorHeightDeg_(60.)
+  sectorHeightDeg_(60.),
+  textureOnlyMode_(false)
 {
   family_.reset();
   // Add all initial textures
@@ -1071,6 +1072,7 @@ void PlanetariumViewTool::updateDome_()
   stateSet->setDefine("SIMVIS_PLANETARIUM_NUM_TEXTURES", std::to_string(1 + static_cast<int>(TextureUnit::UNIT3)));
   // Dome just got recreated, reapply all textures
   applyAllTextures_();
+  applyTextureOnlyMode_();
 
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
   simVis::Shaders package;
@@ -1306,6 +1308,28 @@ void PlanetariumViewTool::applyTexture_(TextureUnit texUnit)
   td.texture->setImage(td.image.get());
   simVis::fixTextureForGlCoreProfile(td.texture);
   ss->setTextureAttribute(glTextureUnit, td.texture.get());
+}
+
+void PlanetariumViewTool::setTextureOnlyMode(bool textureOnlyMode)
+{
+  if (textureOnlyMode_ == textureOnlyMode)
+    return;
+  textureOnlyMode_ = textureOnlyMode;
+  applyTextureOnlyMode_();
+}
+
+bool PlanetariumViewTool::getTextureOnlyMode() const
+{
+  return textureOnlyMode_;
+}
+
+void PlanetariumViewTool::applyTextureOnlyMode_()
+{
+  // Need a valid dome to apply texture content
+  if (!dome_.valid())
+    return;
+  auto* ss = dome_->getOrCreateStateSet();
+  ss->addUniform(new osg::Uniform("sv_planet_textureonly", textureOnlyMode_));
 }
 
 }
