@@ -561,7 +561,8 @@ namespace simCore
 
   /**
    * Given an object and its gate, determines whether or not a given
-   * position falls inside the gate.  This function only works with linear
+   * position falls inside the gate.  A position on the edge is
+   * considered outside.  This function only works with linear
    * range gates.
    * @param gateHostLLA LLA location of the entity that hosts the gate
    * @param positionLLA LLA location of the position to check if it's inside the gate

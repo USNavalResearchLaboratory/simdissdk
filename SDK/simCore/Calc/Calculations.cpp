@@ -1561,19 +1561,14 @@ bool positionInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& posit
 {
   // gets the range from the host platform to the position of interest
   const double range = simCore::calculateSlant(gateHostLLA, positionLLA, earthModel, &cc);
-  if (range >= minRangeM && range <= maxRangeM)
+  if (range > minRangeM && range < maxRangeM)
   {
     double az = 0.;
     double el = 0.;
     // gets the azimuth, elevation from the host platform to the position of interest
     simCore::calculateAbsAzEl(gateHostLLA, positionLLA, &az, &el, nullptr, earthModel, &cc);
-    const double halfW = widthRad / 2.0;
-    if (az <= azimuthRad + halfW && az >= azimuthRad - halfW)
-    {
-      const double halfH = heightRad / 2.0;
-      if (el <= elevRad + halfH && el >= elevRad - halfH)
-        return true;
-    }
+    return simCore::areAnglesEqual(az, azimuthRad, widthRad / 2.0) &&
+      simCore::areAnglesEqual(el, elevRad, heightRad / 2.0);
   }
   return false;
 }
