@@ -181,9 +181,12 @@ PlatformNode::PlatformNode(const simData::PlatformProperties& props,
   forceUpdateFromDataStore_(false),
   queuedInvalidate_(false)
 {
-  model_ = new PlatformModelNode(new Locator(getLocator()));
+  // PlatformModelNode can simply re-use the Platform locator: it does not add any offsets
+  model_ = new PlatformModelNode(getLocator());
   addChild(model_);
   model_->addCallback(new BoundsUpdater(this));
+  // model's locatorNode optimized to not calculate when not shown
+  model_->setEntityToMonitor(this);
 
   this->setProperties(props);
 

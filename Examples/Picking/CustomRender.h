@@ -30,6 +30,7 @@
 #include "simData/DataStore.h"
 #include "simVis/CustomRendering.h"
 #include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/Scenario.h"
 
 namespace ExamplePicking

@@ -641,8 +641,8 @@ void PlatformModelNode::updateImageIconRotation_(const simData::PlatformPrefs& p
     setRotateToScreen(false);
     imageIconXform_->setRotateInScreenSpace(false);
     // Reset components to inherit
-    getLocator()->setComponentsToInherit(
-      getLocator()->getComponentsToInherit() | simVis::Locator::COMP_ORIENTATION);
+    setLocator(getLocator(),
+      (getLocator()->getComponentsToInherit() | simVis::Locator::COMP_ORIENTATION));
     return;
   }
 
@@ -652,21 +652,21 @@ void PlatformModelNode::updateImageIconRotation_(const simData::PlatformPrefs& p
 
   if (prefs.rotateicons() == simData::IR_3D_YPR)
   {
-    getLocator()->setComponentsToInherit(
-      getLocator()->getComponentsToInherit() | simVis::Locator::COMP_ORIENTATION);
+    setLocator(getLocator(),
+      (getLocator()->getComponentsToInherit() | simVis::Locator::COMP_ORIENTATION));
   }
   else if (prefs.rotateicons() == simData::IR_3D_YAW || prefs.rotateicons() == simData::IR_2D_YAW)
   {
     unsigned int mask = getLocator()->getComponentsToInherit();
     mask &= ~Locator::COMP_ORIENTATION;
     mask |=  Locator::COMP_HEADING;
-    getLocator()->setComponentsToInherit(mask);
+    setLocator(getLocator(), mask);
   }
   else if (prefs.rotateicons() == simData::IR_3D_NORTH || prefs.rotateicons() == simData::IR_2D_UP)
   {
     unsigned int mask = getLocator()->getComponentsToInherit();
     mask &= ~Locator::COMP_ORIENTATION;
-    getLocator()->setComponentsToInherit(mask);
+    setLocator(getLocator(), mask);
   }
 }
 

@@ -104,10 +104,10 @@ namespace
   {
     void apply(osg::Node& node)
     {
-      simVis::LocatorNode* locator = dynamic_cast<simVis::LocatorNode*>(&node);
-      if (locator)
+      simVis::LocatorNode* locatorNode = dynamic_cast<simVis::LocatorNode*>(&node);
+      if (locatorNode)
       {
-        locator->dirtyBound();
+        locatorNode->dirtyBound();
         ++_count;
       }
 
