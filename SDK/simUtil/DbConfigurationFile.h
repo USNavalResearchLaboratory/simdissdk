@@ -122,7 +122,7 @@ public:
 
 private:
   /// does some error checking on the parsed tokens, returns false on error
-  static int parseCommonTokens_(const std::vector<std::string>& tokens, int currentLineNumber);
+  static int parseCommonTokens_(const std::vector<std::string>& tokens, unsigned int currentLineNumber);
   /// parse the image and elevation layers
   static void parseLayers_(const std::vector<std::string>& tokens, osgEarth::Map* map, int& imageCount, int& elevationCount, const std::string& filePath);
   /// parse the cloud layers

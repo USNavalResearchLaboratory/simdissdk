@@ -170,7 +170,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
     // load the new pattern file
     delete(antennaPattern_);
     // Frequency must be > 0, if <= 0 use default value
-    const double freq = prefs.frequency() > 0 ? prefs.frequency() : simCore::DEFAULT_FREQUENCY;
+    const float freq = static_cast<float>(prefs.frequency() > 0 ? prefs.frequency() : simCore::DEFAULT_FREQUENCY);
     antennaPattern_ = simCore::loadPatternFile(patternFile_, freq);
     loadedOK_ = (antennaPattern_ != nullptr);
   }
