@@ -116,26 +116,17 @@ private:
     ss >> *val;
   }
 
-  static void toString_(uint8_t val, std::string* str) { toStringInt_(val, str); }
-  static void toString_(int8_t val, std::string* str) { toStringInt_(val, str); }
-  static void toString_(uint16_t val, std::string* str) { toStringInt_(val, str); }
-  static void toString_(int16_t val, std::string* str) { toStringInt_(val, str); }
-  static void toString_(uint32_t val, std::string* str) { toStringInt_(val, str); }
-  static void toString_(int32_t val, std::string* str) { toStringInt_(val, str); }
-  static void toString_(uint64_t val, std::string* str) { toStringInt_(val, str); }
-  static void toString_(int64_t val, std::string* str) { toStringInt_(val, str); }
+  static void toString_(uint8_t val, std::string* str) { *str = std::to_string(val); }
+  static void toString_(int8_t val, std::string* str) { *str = std::to_string(val); }
+  static void toString_(uint16_t val, std::string* str) { *str = std::to_string(val); }
+  static void toString_(int16_t val, std::string* str) { *str = std::to_string(val); }
+  static void toString_(uint32_t val, std::string* str) { *str = std::to_string(val); }
+  static void toString_(int32_t val, std::string* str) { *str = std::to_string(val); }
+  static void toString_(uint64_t val, std::string* str) { *str = std::to_string(val); }
+  static void toString_(int64_t val, std::string* str) { *str = std::to_string(val); }
   static void toString_(float val, std::string* str) { toStringFloat_(val, str); }
   static void toString_(double val, std::string* str) { toStringFloat_(val, str); }
   static void toString_(const std::string& val, std::string* str) { *str = val; }
-
-  /** Helper function to use stringstream to convert value to string */
-  template<typename T>
-  static void toStringInt_(T val, std::string* str)
-  {
-    std::stringstream ss;
-    ss << val;
-    *str = ss.str();
-  }
 
   /** Helper function to use stringstream to convert value to string */
   template<typename T>

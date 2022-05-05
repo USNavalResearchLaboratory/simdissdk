@@ -278,9 +278,9 @@ std::string CenteredVariable::getText() const
     // Return the name
     if (entityNode)
     {
-      std::string rv = entityNode->getEntityName(simVis::EntityNode::DISPLAY_NAME);
+      const std::string& rv = entityNode->getEntityName(simVis::EntityNode::DISPLAY_NAME);
       if (rv.empty())
-        rv = " ";
+        return " ";
       return rv;
     }
     else if (focusedView->getCameraTether() != nullptr)
@@ -289,9 +289,7 @@ std::string CenteredVariable::getText() const
       const simVis::AveragePositionNode* centroid = dynamic_cast<simVis::AveragePositionNode*>(focusedView->getCameraTether());
       if (centroid)
       {
-        std::stringstream ss;
-        ss << "Centroid of " << centroid->getNumTrackedNodes() << " Entities";
-        return ss.str();
+        return "Centroid of " + std::to_string(centroid->getNumTrackedNodes()) + " Entities";
       }
     }
   }
@@ -324,9 +322,9 @@ std::string WatchedVariable::getText() const
     // Pull out the watched node and make sure it is valid
     if (focusedView->isWatchEnabled() && focusedView->getWatchedNode())
     {
-      std::string rv = focusedView->getWatchedNode()->getEntityName(simVis::EntityNode::DISPLAY_NAME);
+      const std::string& rv = focusedView->getWatchedNode()->getEntityName(simVis::EntityNode::DISPLAY_NAME);
       if (rv.empty())
-        rv = " ";
+        return " ";
       return rv;
     }
   }

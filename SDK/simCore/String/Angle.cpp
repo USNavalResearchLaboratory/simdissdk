@@ -224,17 +224,13 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
       degreeAngle = 0.0;
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
 
-    std::stringstream strDeg;
-    strDeg << static_cast<int>(degreeAngle) << degreeSymbolString << " ";
-    std::stringstream strMin;
-    strMin.setf(std::ios::fixed, std::ios::floatfield);
-    strMin << std::setfill('0') << std::setw(2) << static_cast<int>(minValue) << minuteSymbolString << " ";
-
-    std::stringstream strSec;
-    strSec.setf(std::ios::fixed, std::ios::floatfield);
-    size_t width = (precision == 0 ? (2) : (precision + 3));  // Account for decimal if precision is non-zero
-    strSec << std::setfill('0') << std::setw(width) << std::setprecision(precision) << secValue << secondSymbolString;
-    angleString = strDeg.str() + strMin.str() + strSec.str();
+    std::stringstream strDegMinSec;
+    strDegMinSec << static_cast<int>(degreeAngle) << degreeSymbolString << " ";
+    strDegMinSec.setf(std::ios::fixed, std::ios::floatfield);
+    strDegMinSec << std::setfill('0') << std::setw(2) << static_cast<int>(minValue) << minuteSymbolString << " ";
+    const size_t width = (precision == 0 ? (2) : (precision + 3));  // Account for decimal if precision is non-zero
+    strDegMinSec << std::setfill('0') << std::setw(width) << std::setprecision(precision) << secValue << secondSymbolString;
+    angleString = strDegMinSec.str();
   }
   break;
 
@@ -266,13 +262,12 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
       degreeAngle = 0.0;
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
 
-    std::stringstream strDeg;
-    strDeg << static_cast<int>(degreeAngle) << degreeSymbolString << " ";
-    std::stringstream strMin;
-    strMin.setf(std::ios::fixed, std::ios::floatfield);
+    std::stringstream strDegMin;
+    strDegMin << static_cast<int>(degreeAngle) << degreeSymbolString << " ";
+    strDegMin.setf(std::ios::fixed, std::ios::floatfield);
     size_t width = (precision == 0 ? (2) : (precision + 3));  // Account for decimal if precision is non-zero
-    strMin << std::setfill('0') << std::setw(width) << std::setprecision(precision) << minValue << minuteSymbolString;
-    angleString = strDeg.str() + strMin.str();
+    strDegMin << std::setfill('0') << std::setw(width) << std::setprecision(precision) << minValue << minuteSymbolString;
+    angleString = strDegMin.str();
   }
   break;
 
