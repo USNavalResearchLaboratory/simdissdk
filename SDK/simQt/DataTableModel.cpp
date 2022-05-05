@@ -180,7 +180,7 @@ QVariant DataTableModel::headerData(int section, Qt::Orientation orientation, in
   {
     // column 0 is special case, time column
     if (section == 0)
-      return "Time";
+      return tr("Time");
 
     const simData::TableColumn* col = columns_[section];
 
@@ -191,7 +191,7 @@ QVariant DataTableModel::headerData(int section, Qt::Orientation orientation, in
       if (units.isValid())
         name = units.name();
       if (name.empty())
-        name = "Unknown";
+        name = tr("Unknown").toStdString();
       return QString::fromStdString(col->name() + "\n(" + name + ")");
     }
 
@@ -200,6 +200,9 @@ QVariant DataTableModel::headerData(int section, Qt::Orientation orientation, in
 
   if (role == Qt::TextAlignmentRole)
     return Qt::AlignHCenter;
+
+  if (role == Qt::ToolTipRole)
+    return tr("Resize the column width to the contents by double clicking on the right edge of the column header.");
 
   // Isn't the bar across the top -- fall back to whatever QAIM does
   return QAbstractItemModel::headerData(section, orientation, role);
@@ -362,13 +365,13 @@ QVariant DataTableModel::cellDisplayValue_(simData::VariableType type, simData::
       cell.next()->getValue(val);
 
       if (std::isnan(val))
-        return QVariant(QString::fromStdString("NaN"));
+        return QVariant(tr("NaN"));
 
       if (std::isinf(val))
       {
         if (val > 0)
-          return QVariant(QString::fromStdString("Infinity"));
-        return QVariant(QString::fromStdString("-Infinity"));
+          return QVariant(tr("Infinity"));
+        return QVariant(tr("-Infinity"));
       }
 
       return QVariant(QString::number(val, 'f', static_cast<int>(genericPrecision_)));
@@ -379,13 +382,13 @@ QVariant DataTableModel::cellDisplayValue_(simData::VariableType type, simData::
       cell.next()->getValue(val);
 
       if (std::isnan(val))
-        return QVariant(QString::fromStdString("NaN"));
+        return QVariant(tr("NaN"));
 
       if (std::isinf(val))
       {
         if (val > 0)
-          return QVariant(QString::fromStdString("Infinity"));
-        return QVariant(QString::fromStdString("-Infinity"));
+          return QVariant(tr("Infinity"));
+        return QVariant(tr("-Infinity"));
       }
 
       return QVariant(QString::number(val, 'f', static_cast<int>(genericPrecision_)));
