@@ -243,6 +243,7 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
   double hbw = NO_COMMANDED_BEAMWIDTH;
   double vbw = NO_COMMANDED_BEAMWIDTH;
   simVis::Color color = NO_COMMANDED_COLOR;
+  bool active = false;
 
   // prepare the prefs for all points being added
   const simData::BeamPrefs& prefs = beam_->getPrefs();
@@ -261,6 +262,8 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
       break;
     if (!next->has_updateprefs())
       continue;
+    if (next->updateprefs().commonprefs().has_datadraw())
+      active = next->updateprefs().commonprefs().datadraw();
     if (next->updateprefs().has_horizontalwidth())
       hbw = next->updateprefs().horizontalwidth();
     if (next->updateprefs().has_verticalwidth())
@@ -288,6 +291,8 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
         break;
       if (!next->has_updateprefs())
         continue;
+      if (next->updateprefs().commonprefs().has_datadraw())
+        active = next->updateprefs().commonprefs().datadraw();
       if (next->updateprefs().has_horizontalwidth())
         hbw = next->updateprefs().horizontalwidth();
       if (next->updateprefs().has_verticalwidth())
@@ -306,7 +311,9 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
       pointPrefs.set_verticalwidth(vbw);
     else
       pointPrefs.set_verticalwidth(prefs.verticalwidth());
-    addPointFromUpdate_(pointPrefs, hasCommandedHbw, hasCommandedVbw, color, update, update->time());
+
+    if (active)
+      addPointFromUpdate_(pointPrefs, hasCommandedHbw, hasCommandedVbw, color, update, update->time());
   }
 }
 
