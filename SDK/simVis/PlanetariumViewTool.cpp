@@ -159,15 +159,41 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
   // use initial color to initialize alpha for fading/gradient alpha
   const float origAlpha = color.a();
 
-  for (const auto& iter : historyPoints_)
+  // Use a std::set of Angles to prevent old circles from overwriting new circles
+  struct Angles
   {
-    if (iter.first > time)
+    double az;
+    double el;
+    Angles(double inAz, double inEl)
+      : az(inAz),
+      el(inEl)
+    {}
+    bool operator<(const Angles& rhs) const
+    {
+      if (az < rhs.az)
+        return true;
+      if (az > rhs.az)
+        return false;
+      return el < rhs.el;
+    }
+  };
+
+  std::set<Angles> angles;
+  simCore::Vec3 pos;
+  simCore::Vec3 ori;
+
+  for (auto iter = historyPoints_.crbegin(); iter != historyPoints_.crend(); ++iter)
+  {
+    const double pointTime = iter->first;
+    const auto& point = iter->second;
+
+    if (pointTime > time)
       continue; // In the future
     // historyLength_ == 0 means no limiting by history
-    else if (historyLength_ != 0 && iter.first < (time - historyLength_))
-      continue; // Too old
+    else if (historyLength_ != 0 && pointTime < (time - historyLength_))
+      break; // Too old
 
-    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->node->asGroup()->getChild(0));
+    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(point->node->asGroup()->getChild(0));
     if (!bv)
     {
       // can't be a history point without a beam volume
@@ -175,10 +201,17 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
       return;
     }
     // addPointFromUpdate_ guarantees that nodemask is set correctly
-    assert(iter.second->node->getNodeMask() == simVis::DISPLAY_MASK_BEAM);
+    assert(point->node->getNodeMask() == simVis::DISPLAY_MASK_BEAM);
+
+    // Don't overwrite a previous circle
+    point->node->getLocator()->getLocalOffsets(pos, ori);
+    Angles key(ori.yaw(), ori.pitch());
+    if (angles.find(key) != angles.end())
+      continue;
+    angles.insert(key);
 
     // add to the scenegraph
-    addChild(iter.second->node);
+    addChild(point->node);
 
     float divisor = historyLength_;
     if (historyLength_ == 0)
@@ -190,7 +223,7 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     }
     if (divisor == 0)
       divisor = 1.0; // ensure divide by zero doesn't happen
-    const float zeroToOne = (1. - ((time - iter.first) / divisor));
+    const float zeroToOne = (1. - ((time - pointTime) / divisor));
     // Use color from history point to ensure color history is preserved
     if (useGradient_)
     {
@@ -203,10 +236,10 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     else
     {
       if (!prefs.commonprefs().useoverridecolor() &&
-        iter.second->color != NO_COMMANDED_COLOR)
+        point->color != NO_COMMANDED_COLOR)
       {
         // use commanded color when it is set and override is not active
-        color = iter.second->color;
+        color = point->color;
       }
       // else, color has already been set (once) before loop
 
@@ -218,12 +251,12 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     }
 
     SVFactory::updateColor(bv, color);
-    if (!iter.second->hasCommandedHbw)
+    if (!point->hasCommandedHbw)
     {
       int hbwStatus = SVFactory::updateHorizAngle(bv, prefs.horizontalwidth());
       // TODO: what to do if this fails? recreate beam history with new hbw?
     }
-    if (!iter.second->hasCommandedVbw)
+    if (!point->hasCommandedVbw)
       SVFactory::updateVertAngle(bv, prefs.verticalwidth());
   }
 }
