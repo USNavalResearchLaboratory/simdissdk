@@ -58,13 +58,10 @@ void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
   }
 
   const BeamCommand* lastBeamCommand = current();
-  if (!lastBeamCommand || time >= lastBeamCommand->time())
+  if ((!lastBeamCommand || time >= lastBeamCommand->time()) && (earliestInsert_ > lastUpdateTime_))
   {
-    // Start from the earlier of lastUpdateTime_ or earliestInsert_
-    const double startTime = (lastUpdateTime_ < earliestInsert_) ? lastUpdateTime_ : (earliestInsert_ - 0.0000001);  // Need the minus delta because of upper_bound in advanceTime_
-
-    // time moved forward: execute all commands from startTime to new current time
-    hasChanged_ = advance_(startTime, time);
+    // time moved forward: execute all commands from lastUpdateTime_ to new current time
+    hasChanged_ = advance_(lastUpdateTime_, time);
 
     // Check for repeated scalars in the command, forcing complete replacement instead of add-value
     conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
@@ -72,9 +69,6 @@ void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
     // apply the current command state at every update; commands override prefs settings
     prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
-
-    // reset to no inserted commands
-    earliestInsert_ = std::numeric_limits<double>::max();
   }
   else
   {
@@ -96,6 +90,9 @@ void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
     prefs->MergeFrom(commandPrefsCache_);
     t.complete(&prefs);
   }
+
+  // reset to no inserted commands
+  earliestInsert_ = std::numeric_limits<double>::max();
 }
 
 
