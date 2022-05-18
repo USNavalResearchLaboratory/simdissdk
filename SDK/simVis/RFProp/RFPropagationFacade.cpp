@@ -182,22 +182,34 @@ bool areEqual(const simCore::RadarParameters& first, const simCore::RadarParamet
 
 int RFPropagationFacade::setRadarParams(const simCore::RadarParameters& radarParams)
 {
-  if (!radarParameters_)
+  if (radarParameters_)
   {
-    // use copy constructor
-    radarParameters_ = std::make_shared<simCore::RadarParameters>(radarParams);
-    // noise power in db = 10 log (kT/pw); for T, use standard ambient temperature: 17°C/290K
-    radarParameters_->noisePowerdB = simCore::linear2dB(4e-15 / radarParams.pulseWidth_uSec) + radarParams.noiseFiguredB;
-    radarParameters_->xmtPowerW = radarParams.xmtPowerKW * 1e03;
-    return 0;
+    if (areEqual(*radarParameters_.get(), radarParams))
+      return 0;
+    if (display() || !arepsFilesetTimeMap_.empty() || profileManager_->getProfile(0))
+    {
+      // facade is not in an initial state, disallow resetting params;
+      // possibly reset cache; but probably need a dialog with user to do so.
+      return 1;
+    }
+    simCore::RadarParameters* params = radarParameters_.get();
+    params->antennaGaindBi = radarParams.antennaGaindBi;
+    params->freqMHz = radarParams.freqMHz;
+    params->hbwD = radarParams.hbwD;
+    params->noiseFiguredB = radarParams.noiseFiguredB;
+    //params->noisePowerdB = // calculated below
+    params->pulseWidth_uSec = radarParams.pulseWidth_uSec;
+    params->systemLossdB = radarParams.systemLossdB;
+    params->xmtPowerKW = radarParams.xmtPowerKW;
+    //params->xmtPowerW = // calculated below
   }
-  if (areEqual(*radarParameters_.get(), radarParams))
-    return 0;
+  else
+    radarParameters_ = std::make_shared<simCore::RadarParameters>(radarParams);
 
-  // TODO: if params don't match: reset facade and create new facade with new timestamp?
-  // adapt implementation to allow multiple facades per entity?
-  // for now, return error.
-  return 1;
+  // noise power in db = 10 log (kT/pw); for T, use standard ambient temperature: 17°C/290K
+  radarParameters_->noisePowerdB = simCore::linear2dB(4e-15 / radarParams.pulseWidth_uSec) + radarParams.noiseFiguredB;
+  radarParameters_->xmtPowerW = radarParams.xmtPowerKW * 1e03;
+  return 0;
 }
 
 const RadarParametersPtr RFPropagationFacade::radarParams() const
@@ -463,13 +475,23 @@ double RFPropagationFacade::getPOD(double azimRad, double gndRngMeters, double h
   {
     return provider->interpolateValue(hgtMeters, gndRngMeters);
   }
-  SIM_WARN << msg << "\n";
+
+  // TODO: POD is derived from Loss data, should be able to use losshelper to provide underlying data
+  //if (lossDataHelper_)
+  //{
+  //  const double lossdB = lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
+  //  return (lossdB != simCore::SMALL_DB_VAL) ? getPOD_(-lossdB) : lossdB;
+  //}
+
+  SIM_WARN << "RFPropagationFacade::getPOD: " << msg << "\n";
   return 0.0;
 }
 
 void RFPropagationFacade::setLossDataHelper(std::unique_ptr<FallbackDataHelper> helper)
 {
   lossDataHelper_ = std::move(helper);
+  // rework data helper constructor;
+  // TODO: bind, check error state, message on failure
 }
 
 double RFPropagationFacade::getLoss(double azimRad, double gndRngMeters, double hgtMeters) const
@@ -489,7 +511,7 @@ double RFPropagationFacade::getLoss(double azimRad, double gndRngMeters, double 
     if (lossdB != simCore::SMALL_DB_VAL)
       return lossdB;
   }
-  SIM_WARN << msg << "\n";
+  SIM_WARN << "RFPropagationFacade::getLoss: " << msg << "\n";
   return simCore::SMALL_DB_VAL;
 }
 
@@ -513,7 +535,7 @@ double RFPropagationFacade::getPPF(double azimRad, double gndRngMeters, double h
     if (ppf_dB != simCore::SMALL_DB_VAL)
       return ppf_dB;
   }
-  SIM_WARN << msg << "\n";
+  SIM_WARN << "RFPropagationFacade::getPPF: " << msg << "\n";
   return simCore::SMALL_DB_VAL;
 }
 
@@ -535,7 +557,7 @@ double RFPropagationFacade::getCNR(double azimRad, double gndRngMeters) const
   {
     return provider->interpolateValue(0.0, gndRngMeters);
   }
-  SIM_WARN << msg << "\n";
+  SIM_WARN << "RFPropagationFacade::getCNR: " << msg << "\n";
   return simCore::SMALL_DB_VAL;
 }
 
