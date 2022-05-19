@@ -65,17 +65,17 @@ public:
    */
   virtual double interpolateValue(double height, double range) const;
 
-protected:
-  /// osg::Referenced-derived
-  virtual ~PODProfileDataProvider();
-
-private:
   /**
   * Gets the POD value corresponding to a loss in dB
   * @param lossdB the loss specified in dB, must be a negative number
+  * @param podVector  shared_ptr to the POD table, as a vector of floats
   * @return POD value for the specified loss, a probability between 0 and 99.9
   */
-  double getPOD_(double lossdB) const;
+  static double getPOD(double lossdB, const PODVectorPtr podVector);
+
+protected:
+  /// osg::Referenced-derived
+  virtual ~PODProfileDataProvider();
 
 private:
   const PODVectorPtr podVector_;

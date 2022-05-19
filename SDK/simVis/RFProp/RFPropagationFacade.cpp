@@ -47,50 +47,18 @@ namespace
 const simVis::Color SIMDIS_ORANGE(1.0f, 0.5f, 0.0f, 1.0f); // darker than dark orange
 const simVis::Color SIMDIS_CYAN(0.0f, 0.75f, 0.75f, 1.0f); // medium-dark cyan
 
-void setDefaultPODVector(simRF::PODVectorPtr podLossThresholds)
-{
-  // Set default detection thresholds - these are the same values used in SIMDIS 9
-  {
-    float pod[10] = {161.81f,   161.38f,   161.08f,   160.84f,   160.64f,   160.46f,   160.30f,   160.16f,   160.03f,   159.91f};
-    podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
-  }
-  {
-    float pod[10] = {159.79f,   159.68f,   159.58f,   159.48f,   159.39f,   159.29f,   159.21f,   159.12f,   159.04f,   158.96f};
-    podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
-  }
-  {
-    float pod[10] = {158.88f,   158.80f,   158.72f,   158.65f,   158.57f,   158.50f,   158.43f,   158.36f,   158.29f,   158.22f};
-    podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
-  }
-  {
-    float pod[10] = {158.15f,   158.08f,   158.01f,   157.95f,   157.88f,   157.81f,   157.75f,   157.68f,   157.61f,   157.54f};
-    podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
-  }
-  {
-    float pod[10] = {157.48f,   157.41f,   157.34f,   157.28f,   157.21f,   157.14f,   157.07f,   157.01f,   156.94f,   156.87f};
-    podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
-  }
-  {
-    float pod[10] = {156.80f,   156.73f,   156.66f,   156.58f,   156.51f,   156.44f,   156.36f,   156.29f,   156.21f,   156.13f};
-    podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
-  }
-  {
-    float pod[10] = {156.06f,   155.98f,   155.90f,   155.81f,   155.73f,   155.64f,   155.55f,   155.47f,   155.37f,   155.28f};
-    podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
-  }
-  {
-    float pod[10] = {155.18f,   155.08f,   154.98f,   154.88f,   154.77f,   154.66f,   154.54f,   154.42f,   154.30f,   154.17f};
-    podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
-  }
-  {
-    float pod[10] = {154.03f,   153.89f,   153.74f,   153.59f,   153.42f,   153.25f,   153.06f,   152.86f,   152.64f,   152.40f};
-    podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
-  }
-  {
-    float pod[10] = {152.14f,   151.86f,   151.53f,   151.16f,   150.73f,   150.20f,   149.53f,   148.60f,   147.04f,   147.04f};
-    podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
-  }
-}
+// default probability-of-detection thresholds - these are the same values used in SIMDIS 9
+std::vector<float> defaultPodLoss
+{ 161.81f,  161.38f,  161.08f,  160.84f,  160.64f,  160.46f,  160.30f,  160.16f,  160.03f,  159.91f,
+  159.79f,  159.68f,  159.58f,  159.48f,  159.39f,  159.29f,  159.21f,  159.12f,  159.04f,  158.96f,
+  158.88f,  158.80f,  158.72f,  158.65f,  158.57f,  158.50f,  158.43f,  158.36f,  158.29f,  158.22f,
+  158.15f,  158.08f,  158.01f,  157.95f,  157.88f,  157.81f,  157.75f,  157.68f,  157.61f,  157.54f,
+  157.48f,  157.41f,  157.34f,  157.28f,  157.21f,  157.14f,  157.07f,  157.01f,  156.94f,  156.87f,
+  156.80f,  156.73f,  156.66f,  156.58f,  156.51f,  156.44f,  156.36f,  156.29f,  156.21f,  156.13f,
+  156.06f,  155.98f,  155.90f,  155.81f,  155.73f,  155.64f,  155.55f,  155.47f,  155.37f,  155.28f,
+  155.18f,  155.08f,  154.98f,  154.88f,  154.77f,  154.66f,  154.54f,  154.42f,  154.30f,  154.17f,
+  154.03f,  153.89f,  153.74f,  153.59f,  153.42f,  153.25f,  153.06f,  152.86f,  152.64f,  152.40f,
+  152.14f,  151.86f,  151.53f,  151.16f,  150.73f,  150.20f,  149.53f,  148.60f,  147.04f,  147.04f};
 
 std::string dataTypeToString(simRF::ProfileDataProvider::ThresholdType dataType)
 {
@@ -139,8 +107,8 @@ RFPropagationFacade::RFPropagationFacade(osg::Group* parent, std::shared_ptr<sim
   // set the default visualization mode
   setDrawMode(simRF::Profile::DRAWMODE_2D_HORIZONTAL);
 
-  podLossThresholds_ = PODVectorPtr(new std::vector<float>);
-  setDefaultPODVector(podLossThresholds_);
+  podLossThresholds_ = PODVectorPtr(new std::vector<float>(100));
+  setPODLossThreshold(defaultPodLoss);
 
   // do not create radarParameters_ until actually set
 
@@ -465,6 +433,11 @@ int RFPropagationFacade::clearCache(bool reset)
   return 0;
 }
 
+void RFPropagationFacade::setLossDataHelper(std::unique_ptr<FallbackDataHelper> helper)
+{
+  lossDataHelper_ = std::move(helper);
+}
+
 double RFPropagationFacade::getPOD(double azimRad, double gndRngMeters, double hgtMeters) const
 {
   std::string msg;
@@ -475,23 +448,14 @@ double RFPropagationFacade::getPOD(double azimRad, double gndRngMeters, double h
   {
     return provider->interpolateValue(hgtMeters, gndRngMeters);
   }
-
-  // TODO: POD is derived from Loss data, should be able to use losshelper to provide underlying data
-  //if (lossDataHelper_)
-  //{
-  //  const double lossdB = lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
-  //  return (lossdB != simCore::SMALL_DB_VAL) ? getPOD_(-lossdB) : lossdB;
-  //}
-
+  if (lossDataHelper_)
+  {
+    const double lossdB = lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
+    return (lossdB != simCore::SMALL_DB_VAL) ?
+      simRF::PODProfileDataProvider::getPOD(-lossdB, podLossThresholds_) : 0.0;
+  }
   SIM_WARN << "RFPropagationFacade::getPOD: " << msg << "\n";
   return 0.0;
-}
-
-void RFPropagationFacade::setLossDataHelper(std::unique_ptr<FallbackDataHelper> helper)
-{
-  lossDataHelper_ = std::move(helper);
-  // rework data helper constructor;
-  // TODO: bind, check error state, message on failure
 }
 
 double RFPropagationFacade::getLoss(double azimRad, double gndRngMeters, double hgtMeters) const
@@ -507,9 +471,7 @@ double RFPropagationFacade::getLoss(double azimRad, double gndRngMeters, double 
   }
   if (lossDataHelper_)
   {
-    const double lossdB = lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
-    if (lossdB != simCore::SMALL_DB_VAL)
-      return lossdB;
+    return lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
   }
   SIM_WARN << "RFPropagationFacade::getLoss: " << msg << "\n";
   return simCore::SMALL_DB_VAL;
@@ -531,9 +493,7 @@ double RFPropagationFacade::getPPF(double azimRad, double gndRngMeters, double h
   {
     const double lossdB = lossDataHelper_->value(azimRad, gndRngMeters, hgtMeters);
     const double slantRangeM = sqrt(simCore::square(gndRngMeters) + simCore::square(hgtMeters));
-    const double ppf_dB = simCore::lossToPpf(slantRangeM, radarParameters_->freqMHz, lossdB);
-    if (ppf_dB != simCore::SMALL_DB_VAL)
-      return ppf_dB;
+    return simCore::lossToPpf(slantRangeM, radarParameters_->freqMHz, lossdB);
   }
   SIM_WARN << "RFPropagationFacade::getPPF: " << msg << "\n";
   return simCore::SMALL_DB_VAL;
