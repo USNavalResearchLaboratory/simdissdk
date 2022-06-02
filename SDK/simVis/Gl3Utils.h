@@ -141,14 +141,15 @@ inline void applyMesaGlVersionOverride()
 {
 #ifdef OSG_GL3_AVAILABLE
   osg::DisplaySettings* instance = osg::DisplaySettings::instance().get();
-  if (instance->getGLContextVersion() == "1.0")
+  const std::string& glContextVersion = instance->getGLContextVersion();
+  if (glContextVersion == "1.0")
     instance->setGLContextVersion("3.3");
-// el6/mesa needed this; el7/mesa/nouveau does not
-#if defined(__linux__) && defined(RHEL6_MESA)
-  // To compound the problem, certain MESA drivers on Linux have an additional requirement of setting
+
+#if defined(__linux__)
+  // some combinations of graphics hardware and MESA drivers on Linux have an additional requirement of setting
   // the MESA_GL_VERSION_OVERRIDE environment variable, else we get a bad version.
-  if (getenv("MESA_GL_VERSION_OVERRIDE") == nullptr)
-    setenv("MESA_GL_VERSION_OVERRIDE", instance->getGLContextVersion().c_str(), 1);
+  if (atof(glContextVersion.c_str()) <= 3.3f && getenv("MESA_GL_VERSION_OVERRIDE") == nullptr)
+    setenv("MESA_GL_VERSION_OVERRIDE", "3.3", 1);
 #endif
 #endif
 }
