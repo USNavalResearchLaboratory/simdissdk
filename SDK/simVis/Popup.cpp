@@ -428,7 +428,7 @@ void PopupHandler::setLimitVisibility(bool limit)
 void PopupHandler::setShowInCorner(bool showInCorner)
 {
   location_ = (showInCorner ? simVis::PopupLocation::LOWER_RIGHT : simVis::PopupLocation::OVER_ENTITY);
-  popup_->setShowInCorner(showInCorner);
+  popup_->setPopupLocation(location_);
 }
 
 void PopupHandler::setPopupLocation(PopupLocation location)
