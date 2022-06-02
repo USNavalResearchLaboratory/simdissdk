@@ -757,7 +757,7 @@ int main(int argc, char** argv)
 
   // Add a popup handler to demonstrate its use of the picker
   osg::ref_ptr<simVis::PopupHandler> popupHandler = new simVis::PopupHandler(app.picker.get(), superHud.get());
-  popupHandler->setShowInCorner(true);
+  popupHandler->setPopupLocation(simVis::PopupLocation::LOWER_RIGHT);
   popupHandler->setBackColor(simVis::Color(0.f, 0.f, 0.f, 0.8f));
   popupHandler->setBorderColor(simVis::Color::Green);
   popupHandler->setTitleColor(simVis::Color::Lime);

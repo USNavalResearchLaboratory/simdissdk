@@ -96,7 +96,7 @@ bool PlatformPopupManipulator::isEnabled() const
 
 void PlatformPopupManipulator::setShowInCorner(bool showInCorner)
 {
-  popupHandler_->setShowInCorner(showInCorner);
+  popupHandler_->setPopupLocation(showInCorner ? simVis::PopupLocation::LOWER_RIGHT : simVis::PopupLocation::OVER_ENTITY);
 }
 
 void PlatformPopupManipulator::setPopupLocation(simVis::PopupLocation location)

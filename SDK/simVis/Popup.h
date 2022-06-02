@@ -62,7 +62,7 @@ protected:
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Define a screen location to display a popup
-enum PopupLocation
+enum class PopupLocation
 {
   OVER_ENTITY = 0,
   UPPER_LEFT,

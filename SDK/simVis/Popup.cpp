@@ -97,7 +97,7 @@ bool EntityPopup::WindowResizeHandler::handle(const osgGA::GUIEventAdapter& ea, 
   // Get a hard lock on the parent
   osg::ref_ptr<EntityPopup> parent;
   // Update parent location if showing in corner
-  if (parent_.lock(parent) && parent_->location_ != OVER_ENTITY)
+  if (parent_.lock(parent) && parent_->location_ != simVis::PopupLocation::OVER_ENTITY)
     parent_->positionInCorner_();
 
   return false;
@@ -116,7 +116,7 @@ EntityPopup::EntityPopup()
   spacingPx_(DEFAULT_SPACING),
   widthPx_(0.f),
   heightPx_(0.f),
-  location_(OVER_ENTITY)
+  location_(simVis::PopupLocation::OVER_ENTITY)
 {
   setDataVariance(osg::Object::DYNAMIC);
   initGraphics_();
@@ -154,7 +154,7 @@ EntityPopup::~EntityPopup()
 
 void EntityPopup::setPosition(float xPx, float yPx)
 {
-  if (location_ != OVER_ENTITY)
+  if (location_ != simVis::PopupLocation::OVER_ENTITY)
     return;
 
   // Keep box from going off screen
@@ -231,11 +231,11 @@ void EntityPopup::setChildSpacing(int width)
 
 void EntityPopup::setShowInCorner(bool showInCorner)
 {
-  PopupLocation location = (showInCorner ? LOWER_RIGHT : OVER_ENTITY);
+  PopupLocation location = (showInCorner ? simVis::PopupLocation::LOWER_RIGHT : simVis::PopupLocation::OVER_ENTITY);
   if (location_ == location)
     return;
   // Note: changing to display over entity will require mouse movement to correctly position
-  if (location_ != OVER_ENTITY)
+  if (location_ != simVis::PopupLocation::OVER_ENTITY)
     positionInCorner_();
 }
 
@@ -245,7 +245,7 @@ void EntityPopup::setPopupLocation(PopupLocation location)
     return;
   location_ = location;
   // Note: changing to display over entity will require mouse movement to correctly position
-  if (location_ != OVER_ENTITY)
+  if (location_ != simVis::PopupLocation::OVER_ENTITY)
     positionInCorner_();
 }
 
@@ -315,28 +315,28 @@ void EntityPopup::updateLabelPositions_()
   outline_->dirty();
 
   // Fix the position in the corner to account for the newly changed sizes
-  if (location_ != OVER_ENTITY)
+  if (location_ != simVis::PopupLocation::OVER_ENTITY)
     positionInCorner_();
 }
 
 void EntityPopup::positionInCorner_()
 {
   // don't position in corner if located over entity
-  if (location_ == OVER_ENTITY)
+  if (location_ == simVis::PopupLocation::OVER_ENTITY)
     return;
   // default to lower right
   float xPos = resizeHandler_->windowSize().x() - BUFFER_PX - widthPx_;
   float yPos = BUFFER_PX + heightPx_;
   switch (location_)
   {
-  case LOWER_LEFT:
+  case simVis::PopupLocation::LOWER_LEFT:
     xPos = BUFFER_PX;
     break;
-  case UPPER_LEFT:
+  case simVis::PopupLocation::UPPER_LEFT:
     xPos = BUFFER_PX;
     yPos = resizeHandler_->windowSize().y() - BUFFER_PX;
     break;
-  case UPPER_RIGHT:
+  case simVis::PopupLocation::UPPER_RIGHT:
     yPos = resizeHandler_->windowSize().y() - BUFFER_PX;
     break;
   default:
@@ -372,7 +372,7 @@ void PopupHandler::init_()
   lastMY_ = 0.0f;
   mouseDirty_ = false;
   enabled_ = true;
-  location_ = OVER_ENTITY;
+  location_ = simVis::PopupLocation::OVER_ENTITY;
   limitVisibility_ = true;
   borderWidth_ = DEFAULT_BORDER_WIDTH;
   borderColor_ = DEFAULT_BORDER_COLOR;
@@ -427,7 +427,7 @@ void PopupHandler::setLimitVisibility(bool limit)
 
 void PopupHandler::setShowInCorner(bool showInCorner)
 {
-  location_ = (showInCorner ? LOWER_RIGHT : OVER_ENTITY);
+  location_ = (showInCorner ? simVis::PopupLocation::LOWER_RIGHT : simVis::PopupLocation::OVER_ENTITY);
   popup_->setShowInCorner(showInCorner);
 }
 
@@ -536,7 +536,7 @@ bool PopupHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
     // In the case of not limiting visibility, and if we're using the RTT picker code
     // (which has better performance), AND if we're showing in the corner (don't need
     // mouse coords), then always dirty the mouse.  This helps SDK examples.
-    if (!limitVisibility_ && location_ != OVER_ENTITY && picker_.valid())
+    if (!limitVisibility_ && location_ != simVis::PopupLocation::OVER_ENTITY && picker_.valid())
         mouseDirty_ = true;
 
     osg::observer_ptr<View> currentView = static_cast<View*>(aa.asView());
@@ -627,7 +627,7 @@ void PopupHandler::updatePopupFromView(simVis::View* currentView)
     locator->sync(entityLocatorRev_);
   }
 
-  if (location_ == OVER_ENTITY)
+  if (location_ == simVis::PopupLocation::OVER_ENTITY)
     popup_->setPosition(lastMX_, lastMY_);
 }
 
