@@ -99,6 +99,11 @@ void PlatformPopupManipulator::setShowInCorner(bool showInCorner)
   popupHandler_->setShowInCorner(showInCorner);
 }
 
+void PlatformPopupManipulator::setPopupLocation(simVis::PopupLocation location)
+{
+  popupHandler_->setPopupLocation(location);
+}
+
 simVis::PopupHandler* PlatformPopupManipulator::popupHandler() const
 {
   return popupHandler_.get();
