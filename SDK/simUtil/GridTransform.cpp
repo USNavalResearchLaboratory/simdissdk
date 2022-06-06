@@ -712,8 +712,8 @@ void GridTransform::doLayout_()
       childHeight = node->defaultHeight();
 
     // Save the width and height
-    columnWidths[column] = simCore::sdkMax(columnWidths[column], childWidth);
-    rowHeights[row] = simCore::sdkMax(rowHeights[row], childHeight);
+    columnWidths[column] = simCore::sdkMax(columnWidths[column], std::abs(childWidth));
+    rowHeights[row] = simCore::sdkMax(rowHeights[row], std::abs(childHeight));
     // Clear out the column/row stretch if needed
     if (!node->stretchColumn())
       stretchColumns[column] = false;

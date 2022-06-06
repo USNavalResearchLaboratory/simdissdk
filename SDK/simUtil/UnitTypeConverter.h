@@ -54,15 +54,15 @@ public:
 
   /** Returns a simCore::Units mapped from the osgEarth::Units provided; !isValid() on error. */
   const simCore::Units& toCore(const osgEarth::Units& osg) const;
-  /** Returns a simCore::Units mapped from the osgEarth::Units provided; !isValid() on error, but should not error. */
+  /** Returns a simCore::Units mapped from the simData::ElapsedTimeFormat provided; !isValid() on error, but should not error. */
   const simCore::Units& toCore(simData::ElapsedTimeFormat data) const;
-  /** Returns a simCore::Units mapped from the osgEarth::Units provided; !isValid() on error, but should not error. */
+  /** Returns a simCore::Units mapped from the simData::AngleUnits provided; !isValid() on error, but should not error. */
   const simCore::Units& toCore(simData::AngleUnits data) const;
-  /** Returns a simCore::Units mapped from the osgEarth::Units provided; !isValid() on error, but should not error. */
+  /** Returns a simCore::Units mapped from the simData::DistanceUnits provided; !isValid() on error, but should not error. */
   const simCore::Units& toCore(simData::DistanceUnits data) const;
-  /** Returns a simCore::Units mapped from the osgEarth::Units provided; !isValid() on error, but should not error. */
+  /** Returns a simCore::Units mapped from the simData::SpeedUnits provided; !isValid() on error, but should not error. */
   const simCore::Units& toCore(simData::SpeedUnits data) const;
-  /** Returns a simCore::Units mapped from the osgEarth::Units provided; !isValid() on error, but should not error. */
+  /** Returns a simCore::Units mapped from the simData units provided; !isValid() on error, but should not error. */
   const simCore::Units& toCoreFromData(int data) const;
 
   /** Returns an simData units value mapped from the osgEarth::Units provided; 0 (CU_UNKNOWN) on error. */
@@ -72,11 +72,11 @@ public:
 
   /** Convenience to add a new mapping */
   void addMapping(const osgEarth::Units& osg, const simCore::Units& core, int data);
-  /** Convenience to add a new mapping without valid data enum*/
+  /** Convenience to add a new mapping without valid data enum */
   void addMapping(const osgEarth::Units& osg, const simCore::Units& core);
-  /** Convenience to add a new mapping without valid osgEarth enum*/
+  /** Convenience to add a new mapping without valid osgEarth enum */
   void addMapping(const simCore::Units& core, int data);
-  /** Convenience to add a new mapping without valid simCore enum*/
+  /** Convenience to add a new mapping without valid simCore enum */
   void addMapping(const osgEarth::Units& osg, int data);
 
   /** Helper method to determine if a given unit is registered with this system.  Useful for unit tests. */

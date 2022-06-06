@@ -21,6 +21,7 @@
  *
  */
 #include <algorithm>
+#include <cassert>
 #include "simVis/RFProp/PODProfileDataProvider.h"
 
 namespace simRF
@@ -38,35 +39,40 @@ PODProfileDataProvider::~PODProfileDataProvider()
 
 double PODProfileDataProvider::getValueByIndex(unsigned int heightIndex, unsigned int rangeIndex) const
 {
-  double lossdB = FunctionalProfileDataProvider::templateGetValueByIndex_(heightIndex, rangeIndex);
-  return getPOD_(-lossdB);
+  const double lossdB = FunctionalProfileDataProvider::templateGetValueByIndex_(heightIndex, rangeIndex);
+  return getPOD(-lossdB, podVector_);
 }
 
 double PODProfileDataProvider::interpolateValue(double height, double range) const
 {
-  double lossdB = FunctionalProfileDataProvider::templateInterpolateValue_(height, range);
-  return getPOD_(-lossdB);
+  const double lossdB = FunctionalProfileDataProvider::templateInterpolateValue_(height, range);
+  return getPOD(-lossdB, podVector_);
 }
 
-double PODProfileDataProvider::getPOD_(double lossdB) const
+// static
+double PODProfileDataProvider::getPOD(double lossdB, const PODVectorPtr podVector)
 {
-  if (lossdB > 0 || podVector_->size() != POD_VECTOR_SIZE || lossdB <= static_cast<double>((*podVector_)[0]))
-  {
+  // cast to float to avoid float vs double artifacts
+  const float lossdBfloat = static_cast<float>(lossdB);
+  if (lossdBfloat > 0 || podVector->size() != POD_VECTOR_SIZE || lossdBfloat < (*podVector)[0])
     return 0.0;
-  }
-  else if (lossdB >= static_cast<double>((*podVector_)[POD_VECTOR_SIZE - 1]))
-  {
+  else if (lossdBfloat == (*podVector)[0])
+    return 1.0;
+  else if (lossdBfloat >= (*podVector)[POD_VECTOR_SIZE - 1])
     return 99.9;
-  }
   else
   {
     // highPOD is the high integral value of the Probability of Detection, 96(%), for example.
     // the((lossdB - loVal) / (hiVal - loVal)) calculates the fractional probability that is between the high POD(96) and the low POD(95)
-    std::vector<float>::const_iterator iter = std::lower_bound(podVector_->begin(), podVector_->end(), lossdB);
-    std::vector<float>::const_iterator beginiter = podVector_->begin();
-    size_t highPOD = std::distance(beginiter, iter);
-    float hiVal = *iter;
-    float loVal = (*podVector_)[highPOD - 1];
+    const std::vector<float>::const_iterator iter = std::lower_bound(podVector->begin(), podVector->end(), lossdBfloat);
+    const std::vector<float>::const_iterator beginiter = podVector->begin();
+    const size_t highPOD = std::distance(beginiter, iter);
+    // highPOD = 0 is: lossdBfloat == (*podVector)[0] above
+    assert(highPOD != 0);
+    const float hiVal = *iter;
+    const float loVal = (*podVector)[highPOD - 1];
+    if (hiVal - loVal == 0.0)
+      return loVal;
     return ((highPOD)+((lossdB - loVal) / (hiVal - loVal)));
   }
 }

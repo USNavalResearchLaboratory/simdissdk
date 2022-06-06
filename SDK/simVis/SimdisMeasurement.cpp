@@ -179,13 +179,12 @@ void RfMeasurement::getRfParameters_(RangeToolState& state, double *azAbs, doubl
 //----------------------------------------------------------------------------
 
 RFGainMeasurement::RFGainMeasurement()
-  : RfMeasurement("Gain", "Gain", LOG10)
+  : RelOriMeasurement("Gain", "Gain", LOG10)
 { }
 
 double RFGainMeasurement::value(RangeToolState& state) const
 {
-  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
-
+  const auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
   if (simdisState)
   {
     const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(simdisState->node_.get());
@@ -204,7 +203,6 @@ bool RFGainMeasurement::willAccept(const RangeToolState& state) const
 {
   return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
-
 
 //----------------------------------------------------------------------------
 
@@ -428,8 +426,7 @@ bool PodMeasurement::willAccept(const RangeToolState& state) const
   if (simdisState == nullptr)
     return false;
 
-  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_) &&
-    (simdisState->rfPropagation_ != nullptr);
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -461,8 +458,7 @@ bool LossMeasurement::willAccept(const RangeToolState& state) const
   if (simdisState == nullptr)
     return false;
 
-  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_) &&
-    (simdisState->rfPropagation_ != nullptr);
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -494,8 +490,7 @@ bool PpfMeasurement::willAccept(const RangeToolState& state) const
   if (simdisState == nullptr)
     return false;
 
-  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_) &&
-    (simdisState->rfPropagation_ != nullptr);
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -537,8 +532,7 @@ bool SnrMeasurement::willAccept(const RangeToolState& state) const
   if (simdisState == nullptr)
     return false;
 
-  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_) &&
-    (simdisState->rfPropagation_ != nullptr);
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -571,8 +565,7 @@ bool CnrMeasurement::willAccept(const RangeToolState& state) const
   if (simdisState == nullptr)
     return false;
 
-  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_) &&
-    (simdisState->rfPropagation_ != nullptr);
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------

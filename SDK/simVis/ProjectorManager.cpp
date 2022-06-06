@@ -23,17 +23,21 @@
 #include "osg/Depth"
 #include "osg/BlendFunc"
 #include "osgUtil/CullVisitor"
-#include "osgEarth/EllipsoidIntersector"
 #include "osgEarth/StringUtils"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/NodeUtils"
+
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Projector.h"
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"
 #include "simVis/ProjectorManager.h"
+
+#if OSGEARTH_SOVERSION < 135
+#include "osgEarth/EllipsoidIntersector"
+#endif
 
 #undef LC
 #define LC "simVis::ProjectorManager "

@@ -65,6 +65,10 @@ assert(simCore.areAnglesEqual(0, math.pi * 2) == True)
 angleExtents = simCore.ANGLEEXTENTS_TWOPI
 assert(angleExtents is not None)
 assert(simCore.angFixDegrees(360, angleExtents) == 0)
+assert(simCore.angleDifference(1.5, 2.5) == 1.0)
+assert(simCore.areEqual(simCore.angleDifferenceDeg(100.0, 125.0), 25.0))
+assert(simCore.isAngleBetween(1.25, 0.5, 1.0))
+assert(simCore.isAngleBetweenDeg(25.0, 20.0, 10.0))
 
 #############################
 # CoordinateSystem.h

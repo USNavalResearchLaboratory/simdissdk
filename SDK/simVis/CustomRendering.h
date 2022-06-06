@@ -28,13 +28,13 @@
 #include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simVis/LocatorNode.h"
 
 namespace simVis
 {
 class CustomLabelContentCallback;
 class EntityLabelNode;
 class LocalGridNode;
+class LocatorNode;
 class OverrideColor;
 class ScenarioManager;
 

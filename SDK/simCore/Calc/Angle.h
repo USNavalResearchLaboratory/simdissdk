@@ -270,6 +270,23 @@ namespace simCore
    */
   SDKCORE_EXPORT double angleDifferenceDeg(double fromDeg, double toDeg);
 
+  /**
+   * Determines if testAngle is within the sector defined by fromAngle and sweep. All angles
+   * are in radians. The sector is defined by fromAngle, which can be in any range, and
+   * sweep, which can also be positive (clockwise) or negative (counterclockwise). The
+   * function will angle fix the fromAngle and testAngle, and returns true if the testAngle
+   * is within the sweep from the starting point, respecting angle wrapping.
+   * @param testAngle Angle to test, in radians
+   * @param fromAngle Starting angle defining the sector, in radians
+   * @param sweep Sector width in radians, may be positive for clockwise sweep or negative
+   *   for a counterclockwise sweep, matching ENU/LLA azimuth definitions.
+   * @return True if testAngle is inside the sector, False otherwise.
+   */
+  SDKCORE_EXPORT bool isAngleBetween(double testAngle, double fromAngle, double sweep);
+
+  /** Convenience wrapper around isAngleBetween() for degree angles. */
+  SDKCORE_EXPORT bool isAngleBetweenDeg(double testAngleDeg, double fromAngleDeg, double sweepDeg);
+
 } // End of namespace simCore
 
 #endif /* SIMCORE_CALC_ANGLE_H */

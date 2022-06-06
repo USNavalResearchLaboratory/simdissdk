@@ -29,6 +29,7 @@
 #include "osgEarth/NodeUtils"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
+#include "simVis/View.h"
 #include "simUtil/HudPositionManager.h"
 #include "simUtil/MouseDispatcher.h"
 #include "simUtil/HudPositionEditor.h"
@@ -577,6 +578,11 @@ int HudEditorMouse::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
   const osg::View* view = aa.asView();
   if (!view || !view->getCamera() || !view->getCamera()->getViewport())
     return 0;
+  // only use the superhud to update the width and height
+  const simVis::View* simView = dynamic_cast<const simVis::View*>(view);
+  if (simView && simView->type() != simVis::View::VIEW_SUPERHUD)
+    return 0;
+
   // Save the width and height for future mouse movement calculations
   const osg::Viewport* vp = view->getCamera()->getViewport();
   widthPx_ = vp->width();

@@ -63,7 +63,7 @@ GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
   float y_radius_m = y_diam.as(osgEarth::Units::METERS) / 2.0;
   float z_radius_m = z_diam.as(osgEarth::Units::METERS) / 2.0;
 
-  osg::Node* shape = osgEarth::AnnotationUtils::createEllipsoid(
+  osg::ref_ptr<osg::Node> shape = simVis::createEllipsoid(
     y_radius_m, x_radius_m, z_radius_m, color);  // y, x, z order to match SIMDIS 9
   shape->setName("GOG Ellipsoid");
 
@@ -72,12 +72,12 @@ GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
     node = new osgEarth::LocalGeometryNode();
-    node->getPositionAttitudeTransform()->addChild(shape);
+    node->getPositionAttitudeTransform()->addChild(shape.get());
     node->setStyle(p.style_);
     node->setMapNode(mapNode);
   }
   else
-    node = new HostedLocalGeometryNode(shape, p.style_);
+    node = new HostedLocalGeometryNode(shape.get(), p.style_);
 
   node->setName("GOG Ellipsoid Position");
   Utils::applyLocalGeometryOffsets(*node, p, nodeType);
@@ -117,7 +117,7 @@ GogNodeInterface* Ellipsoid::createEllipsoid(const simCore::GOG::Ellipsoid& elli
   float y_radius_m = y_diam.as(osgEarth::Units::METERS) / 2.0;
   float z_radius_m = z_diam.as(osgEarth::Units::METERS) / 2.0;
 
-  osg::Node* shape = osgEarth::AnnotationUtils::createEllipsoid(
+  osg::ref_ptr<osg::Node> shape = simVis::createEllipsoid(
     y_radius_m, x_radius_m, z_radius_m, color);  // y, x, z order to match SIMDIS 9
   shape->setName("GOG Ellipsoid");
 
@@ -126,12 +126,12 @@ GogNodeInterface* Ellipsoid::createEllipsoid(const simCore::GOG::Ellipsoid& elli
   if (!attached)
   {
     node = new osgEarth::LocalGeometryNode();
-    node->getPositionAttitudeTransform()->addChild(shape);
+    node->getPositionAttitudeTransform()->addChild(shape.get());
     node->setStyle(style);
     node->setMapNode(mapNode);
   }
   else
-    node = new HostedLocalGeometryNode(shape, style);
+    node = new HostedLocalGeometryNode(shape.get(), style);
   node->setName("GOG Ellipsoid Position");
 
   // use the ref point as the center if no center defined by the shape

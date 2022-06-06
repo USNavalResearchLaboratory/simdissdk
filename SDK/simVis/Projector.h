@@ -30,7 +30,26 @@
 #include "osgEarth/MapNodeObserver"
 
 namespace osg { class Texture2D; }
-namespace osgEarth { namespace Util { class EllipsoidIntersector; } }
+
+#if OSGEARTH_SOVERSION >= 135
+// Adapter for the deprecated EllipsoidIntersector class
+#include "osgEarth/Ellipsoid"
+namespace osgEarth {
+  namespace Util {
+    class EllipsoidIntersector {
+    public:
+      EllipsoidIntersector(const osgEarth::Ellipsoid& ellipsoid) : ellipsoid_(ellipsoid) { }
+      bool intersectLine(const osg::Vec3d& p0, const osg::Vec3d& p1, osg::Vec3d& out) const {
+        return ellipsoid_.intersectGeocentricLine(p0, p1, out);
+      }
+      osgEarth::Ellipsoid ellipsoid_;
+    };
+  }
+}
+#else
+#include "osgEarth/EllipsoidIntersector"
+#endif
+
 namespace simVis
 {
 class EntityLabelNode;

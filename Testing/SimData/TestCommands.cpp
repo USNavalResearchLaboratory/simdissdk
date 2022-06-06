@@ -619,11 +619,96 @@ int testAcceptProjectorsCommands()
   return rv;
 }
 
+/// Tests the command executer for platforms given different time conditions
+
+int testCommandTiming()
+{
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore* ds = testHelper.dataStore();
+
+  // insert platform
+  simData::DataStore::Transaction t;
+  uint64_t platId1 = testHelper.addPlatform();
+
+  // set name
+  simData::PlatformPrefs* newPlatPrefs = ds->mutable_platformPrefs(platId1, &t);
+  newPlatPrefs->mutable_commonprefs()->set_name("Joe");
+  t.complete(&newPlatPrefs);
+
+  int rv = 0;
+
+  // move to time around middle of 2022, where double issues started to manifest in MemoryCommandSlice
+  double curTime = 1682723805.0;
+
+  ds->update(curTime);
+
+  simData::PlatformCommand* cmd;
+
+  // name update at time 1 second behind current data time
+  cmd = ds->addPlatformCommand(platId1, &t);
+  cmd->set_time(curTime - 1.);
+  cmd->mutable_updateprefs()->mutable_commonprefs()->set_name("Bill");
+  t.complete(&cmd);
+
+  curTime += 1.;
+
+  ds->update(curTime);
+  {
+    const simData::PlatformPrefs* pp = ds->platformPrefs(platId1, &t);
+    // since this is the first command added, it should always succeed
+    rv += SDK_ASSERT(pp->commonprefs().name() == "Bill");
+  }
+
+  // another name update at time 1 second behind current data time
+  cmd = ds->addPlatformCommand(platId1, &t);
+  cmd->set_time(curTime - 1.);
+  cmd->mutable_updateprefs()->mutable_commonprefs()->set_name("Sally");
+  t.complete(&cmd);
+
+  curTime += 1.;
+
+  ds->update(curTime);
+  {
+    const simData::PlatformPrefs* pp = ds->platformPrefs(platId1, &t);
+    // now the MemoryCommandSlice is going to need to apply the next sequentially inserted command, even though it's behind current scenario time
+    rv += SDK_ASSERT(pp->commonprefs().name() == "Sally");
+  }
+
+  // name at time 1 seconds ahead of current data time
+  cmd = ds->addPlatformCommand(platId1, &t);
+  cmd->set_time(curTime + 1.);
+  cmd->mutable_updateprefs()->mutable_commonprefs()->set_name("Sue");
+  t.complete(&cmd);
+
+  // move ahead only a half second
+  curTime += 0.5;
+
+  ds->update(curTime);
+  {
+    const simData::PlatformPrefs* pp = ds->platformPrefs(platId1, &t);
+    // newest command should not have been applied yet
+    rv += SDK_ASSERT(pp->commonprefs().name() == "Sally");
+  }
+
+  // move ahead another half second to reach the next command time
+  curTime += 0.5;
+
+  ds->update(curTime);
+  {
+    const simData::PlatformPrefs* pp = ds->platformPrefs(platId1, &t);
+    // newest command should now be applied
+    rv += SDK_ASSERT(pp->commonprefs().name() == "Sue");
+  }
+
+  return rv;
+}
+
 }
 
 int TestCommands(int argc, char* argv[])
 {
   int rv = 0;
+  rv += testCommandTiming();
   rv += testCommand();
   rv += testGateCommand();
   rv += testBeamCommand();

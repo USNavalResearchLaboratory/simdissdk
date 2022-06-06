@@ -137,7 +137,10 @@ SDK source code.
   the SIMDIS SDK source code.
 
   **NOTE: If you have installed all of the third party dependencies in the same
-  directory, the SIMDIS SDK CMake configuration should locate the files.  You
+  directory(for example if you download 3rd party dependencies from
+  [Releases page](https://github.com/USNavalResearchLaboratory/simdissdk/releases),
+  extract it and put the "3rd" folder in the source code directory not the build
+  directory), the SIMDIS SDK CMake configuration should locate the files.  You
   do not have to specify the location of each 3rd party library independently.**
 
   **NOTE: You can specify the installation location for the SIMDIS SDK with

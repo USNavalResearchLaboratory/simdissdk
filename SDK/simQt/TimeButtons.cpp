@@ -84,25 +84,32 @@ ButtonActions::ButtonActions(QWidget *parent)
   stepDecrease_(new QAction(QIcon(":/simQt/images/Navigation Blue Left.png"), "Decrease Rate", parent)),
   stepBack_(new QAction(QIcon(":/simQt/images/Navigation Blue First.png"), "Step Back", parent)),
   playReverse_(new QAction(QIcon(":/simQt/images/Navigation Blue Previous.png"), "Play Backward", parent)),
-  stop_(new QAction(QIcon(":/simQt/images/Navigation Blue Stop.png"), "Stop", parent)),
-  play_(new QAction(QIcon(":/simQt/images/Navigation Blue Next.png"), "Play Forward", parent)),
+  stop_(new QAction("Stop", parent)),
+  play_(new QAction("Play Forward", parent)),
+  startStop_(new QAction(QIcon(":/simQt/images/Navigation Blue Next.png"), "Start/Stop", parent)),
   stepForward_(new QAction(QIcon(":/simQt/images/Navigation Blue Last.png"), "Step Forward", parent)),
   stepIncrease_(new QAction(QIcon(":/simQt/images/Navigation Blue Right.png"), "Increase Rate", parent)),
   realTime_(new QAction(QIcon(":/simQt/images/Symbol Clock.png"), "Real Time", parent)),
   toggleLoop_(new QAction(QIcon(":/simQt/images/Loop.png"), "Toggle Looping", parent))
 {
+  stopIcon_ = QIcon(":/simQt/images/Navigation Blue Stop.png");
+  playIcon_ = QIcon(":/simQt/images/Navigation Blue Next.png");
+  stop_->setIcon(stopIcon_);
+  play_->setIcon(playIcon_);
   // set default shortcuts
   stepDecrease_->setShortcut(QKeySequence(Qt::Key_Minus));
   playReverse_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_D));
   stepForward_->setShortcut(QKeySequence(Qt::Key_Space));
   stepIncrease_->setShortcut(QKeySequence(Qt::Key_Equal));
   realTime_->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_R));
+  startStop_->setShortcut(QKeySequence(Qt::Key_P));
   // set tooltips
   stepDecrease_->setToolTip(formatTooltip(tr("Decrease Rate"), tr("Slow down the rate of playback.")));
   stepBack_->setToolTip(formatTooltip(tr("Step Back"), tr("Move the scenario one time-step backward.")));
   playReverse_->setToolTip(formatTooltip(tr("Play Backward"), tr("Play the scenario backward.")));
   stop_->setToolTip(formatTooltip(tr("Stop"), tr("Stop the scenario playback.")));
   play_->setToolTip(formatTooltip(tr("Play"), tr("Play the scenario forward.")));
+  startStop_->setToolTip(formatTooltip(tr("Start/Stop"), tr("Start or stop the scenario playback.")));
   stepForward_->setToolTip(formatTooltip(tr("Step Forward"), tr("Move the scenario one time-step forward.")));
   stepIncrease_->setToolTip(formatTooltip(tr("Increase Rate"), tr("Speed up the rate of playback.")));
   realTime_->setToolTip(formatTooltip(tr("Real Time"), tr("Set the scenario playback to real time.")));
@@ -112,6 +119,7 @@ ButtonActions::ButtonActions(QWidget *parent)
   connect(playReverse_, SIGNAL(triggered()), this, SLOT(clockPlayBackwards_()));
   connect(stop_, SIGNAL(triggered()), this, SLOT(clockStop_()));
   connect(play_, SIGNAL(triggered()), this, SLOT(clockPlay_()));
+  connect(startStop_, SIGNAL(triggered()), this, SLOT(clockStartStop_()));
   connect(stepForward_, SIGNAL(triggered()), this, SLOT(clockStepForward_()));
   connect(stepIncrease_, SIGNAL(triggered()), this, SLOT(clockStepIncrease_()));
   connect(realTime_, SIGNAL(triggered(bool)), this, SLOT(clockRealTime_(bool)));
@@ -139,6 +147,7 @@ QList<QAction*> ButtonActions::actions() const
   rv.push_back(playReverse_);
   rv.push_back(stop_);
   rv.push_back(play_);
+  rv.push_back(startStop_);
   rv.push_back(stepForward_);
   rv.push_back(stepIncrease_);
   rv.push_back(realTime_);
@@ -189,6 +198,11 @@ QAction* ButtonActions::realTimeAction() const
 QAction* ButtonActions::toggleLoopAction() const
 {
   return toggleLoop_;
+}
+
+QAction* ButtonActions::startStopAction() const
+{
+  return startStop_;
 }
 
 void ButtonActions::setClockManager(simCore::Clock *clock)
@@ -247,10 +261,30 @@ void ButtonActions::updateCheckedState_()
   realTime_->setChecked(m == simCore::Clock::MODE_REALTIME || m == simCore::Clock::MODE_FREEWHEEL);
 }
 
+void ButtonActions::clockStartStop_()
+{
+  if (clock_)
+  {
+    // If clock is playing in either direction, stop the clock, then show the play icon
+    if (clock_->isPlaying())
+    {
+      clock_->stop();
+      startStop_->setIcon(playIcon_);
+    }
+    else // Otherwise, play the clock forward and show the stop icon
+    {
+      clock_->playForward();
+      startStop_->setIcon(stopIcon_);
+    }
+  }
+  updateCheckedState_();
+}
+
 void ButtonActions::clockStop_()
 {
   if (clock_)
     clock_->stop();
+  startStop_->setIcon(playIcon_);
   updateCheckedState_();
 }
 
@@ -258,6 +292,7 @@ void ButtonActions::clockPlay_()
 {
   if (clock_)
     clock_->playForward();
+  startStop_->setIcon(stopIcon_);
   updateCheckedState_();
 }
 
@@ -291,6 +326,8 @@ void ButtonActions::clockPlayBackwards_()
 {
   if (clock_)
     clock_->playReverse();
+  // Fix start/stop button icon
+  startStop_->setIcon(stopIcon_);
   updateCheckedState_();
 }
 
@@ -319,6 +356,8 @@ TimeButtons::TimeButtons(QWidget *parent)
 {
   ui_ = new Ui_TimeButtons;
   ui_->setupUi(this);
+  ui_->button_Stop->setHidden(true);
+  ui_->button_Play->setHidden(true);
 }
 
 TimeButtons::~TimeButtons()
@@ -334,6 +373,7 @@ void TimeButtons::bindToActions(ButtonActions* actions)
     ui_->button_StepDecrease->setDefaultAction(actions->stepDecreaseAction());
     ui_->button_StepBack->setDefaultAction(actions->stepBackAction());
     ui_->button_PlayBackwards->setDefaultAction(actions->playReverseAction());
+    ui_->button_StartStop->setDefaultAction(actions->startStopAction());
     ui_->button_Stop->setDefaultAction(actions->stopAction());
     ui_->button_Play->setDefaultAction(actions->playAction());
     ui_->button_Step->setDefaultAction(actions->stepForwardAction());
@@ -345,6 +385,7 @@ void TimeButtons::bindToActions(ButtonActions* actions)
     ui_->button_StepDecrease->setDefaultAction(nullptr);
     ui_->button_StepBack->setDefaultAction(nullptr);
     ui_->button_PlayBackwards->setDefaultAction(nullptr);
+    ui_->button_StartStop->setDefaultAction(nullptr);
     ui_->button_Stop->setDefaultAction(nullptr);
     ui_->button_Play->setDefaultAction(nullptr);
     ui_->button_Step->setDefaultAction(nullptr);
@@ -362,6 +403,8 @@ void TimeButtons::resizeButtons(int size)
   ui_->button_StepBack->setIconSize(newQSize);
   ui_->button_PlayBackwards->resize(newQSize);
   ui_->button_PlayBackwards->setIconSize(newQSize);
+  ui_->button_StartStop->resize(newQSize);
+  ui_->button_StartStop->setIconSize(newQSize);
   ui_->button_Stop->resize(newQSize);
   ui_->button_Stop->setIconSize(newQSize);
   ui_->button_Play->resize(newQSize);
@@ -372,6 +415,18 @@ void TimeButtons::resizeButtons(int size)
   ui_->button_StepIncrease->setIconSize(newQSize);
   ui_->button_Realtime->resize(newQSize);
   ui_->button_Realtime->setIconSize(newQSize);
+}
+
+bool TimeButtons::isSingleButtonPlayStop() const
+{
+  return ui_->button_Stop->isHidden();
+}
+
+void TimeButtons::setSingleButtonPlayStop(bool fl)
+{
+  ui_->button_StartStop->setHidden(!fl);
+  ui_->button_Stop->setHidden(fl);
+  ui_->button_Play->setHidden(fl);
 }
 
 }

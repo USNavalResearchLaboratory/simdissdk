@@ -39,7 +39,7 @@
 #include "simVis/Platform.h"
 #include "simVis/Projector.h"
 #include "simVis/Scenario.h"
-#include "simVis/SphericalVolume.h"
+#include "simVis/Shaders.h"
 #include "simVis/TargetDelegation.h"
 #include "simVis/Utils.h"
 #include "simVis/PlanetariumViewTool.h"
@@ -159,15 +159,41 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
   // use initial color to initialize alpha for fading/gradient alpha
   const float origAlpha = color.a();
 
-  for (const auto& iter : historyPoints_)
+  // Use a std::set of Angles to prevent old circles from overwriting new circles
+  struct Angles
   {
-    if (iter.first > time)
+    double az;
+    double el;
+    Angles(double inAz, double inEl)
+      : az(inAz),
+      el(inEl)
+    {}
+    bool operator<(const Angles& rhs) const
+    {
+      if (az < rhs.az)
+        return true;
+      if (az > rhs.az)
+        return false;
+      return el < rhs.el;
+    }
+  };
+
+  std::set<Angles> angles;
+  simCore::Vec3 pos;
+  simCore::Vec3 ori;
+
+  for (auto iter = historyPoints_.crbegin(); iter != historyPoints_.crend(); ++iter)
+  {
+    const double pointTime = iter->first;
+    const auto& point = iter->second;
+
+    if (pointTime > time)
       continue; // In the future
     // historyLength_ == 0 means no limiting by history
-    else if (historyLength_ != 0 && iter.first < (time - historyLength_))
-      continue; // Too old
+    else if (historyLength_ != 0 && pointTime < (time - historyLength_))
+      break; // Too old
 
-    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(iter.second->node->asGroup()->getChild(0));
+    osg::ref_ptr<BeamVolume> bv = dynamic_cast<BeamVolume*>(point->node->asGroup()->getChild(0));
     if (!bv)
     {
       // can't be a history point without a beam volume
@@ -175,10 +201,17 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
       return;
     }
     // addPointFromUpdate_ guarantees that nodemask is set correctly
-    assert(iter.second->node->getNodeMask() == simVis::DISPLAY_MASK_BEAM);
+    assert(point->node->getNodeMask() == simVis::DISPLAY_MASK_BEAM);
+
+    // Don't overwrite a previous circle
+    point->node->getLocator()->getLocalOffsets(pos, ori);
+    Angles key(ori.yaw(), ori.pitch());
+    if (angles.find(key) != angles.end())
+      continue;
+    angles.insert(key);
 
     // add to the scenegraph
-    addChild(iter.second->node);
+    addChild(point->node);
 
     float divisor = historyLength_;
     if (historyLength_ == 0)
@@ -190,7 +223,7 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     }
     if (divisor == 0)
       divisor = 1.0; // ensure divide by zero doesn't happen
-    const float zeroToOne = (1. - ((time - iter.first) / divisor));
+    const float zeroToOne = (1. - ((time - pointTime) / divisor));
     // Use color from history point to ensure color history is preserved
     if (useGradient_)
     {
@@ -203,10 +236,10 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     else
     {
       if (!prefs.commonprefs().useoverridecolor() &&
-        iter.second->color != NO_COMMANDED_COLOR)
+        point->color != NO_COMMANDED_COLOR)
       {
         // use commanded color when it is set and override is not active
-        color = iter.second->color;
+        color = point->color;
       }
       // else, color has already been set (once) before loop
 
@@ -218,12 +251,12 @@ void PlanetariumViewTool::BeamHistory::updateBeamHistory(double time)
     }
 
     SVFactory::updateColor(bv, color);
-    if (!iter.second->hasCommandedHbw)
+    if (!point->hasCommandedHbw)
     {
       int hbwStatus = SVFactory::updateHorizAngle(bv, prefs.horizontalwidth());
       // TODO: what to do if this fails? recreate beam history with new hbw?
     }
-    if (!iter.second->hasCommandedVbw)
+    if (!point->hasCommandedVbw)
       SVFactory::updateVertAngle(bv, prefs.verticalwidth());
   }
 }
@@ -243,6 +276,7 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
   double hbw = NO_COMMANDED_BEAMWIDTH;
   double vbw = NO_COMMANDED_BEAMWIDTH;
   simVis::Color color = NO_COMMANDED_COLOR;
+  bool active = false;
 
   // prepare the prefs for all points being added
   const simData::BeamPrefs& prefs = beam_->getPrefs();
@@ -261,6 +295,8 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
       break;
     if (!next->has_updateprefs())
       continue;
+    if (next->updateprefs().commonprefs().has_datadraw())
+      active = next->updateprefs().commonprefs().datadraw();
     if (next->updateprefs().has_horizontalwidth())
       hbw = next->updateprefs().horizontalwidth();
     if (next->updateprefs().has_verticalwidth())
@@ -288,6 +324,8 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
         break;
       if (!next->has_updateprefs())
         continue;
+      if (next->updateprefs().commonprefs().has_datadraw())
+        active = next->updateprefs().commonprefs().datadraw();
       if (next->updateprefs().has_horizontalwidth())
         hbw = next->updateprefs().horizontalwidth();
       if (next->updateprefs().has_verticalwidth())
@@ -306,7 +344,9 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
       pointPrefs.set_verticalwidth(vbw);
     else
       pointPrefs.set_verticalwidth(prefs.verticalwidth());
-    addPointFromUpdate_(pointPrefs, hasCommandedHbw, hasCommandedVbw, color, update, update->time());
+
+    if (active)
+      addPointFromUpdate_(pointPrefs, hasCommandedHbw, hasCommandedVbw, color, update, update->time());
   }
 }
 
@@ -577,9 +617,13 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host, simData::DataStore&
   sectorAzDeg_(0.),
   sectorElDeg_(0.),
   sectorWidthDeg_(90.),
-  sectorHeightDeg_(60.)
+  sectorHeightDeg_(60.),
+  textureOnlyMode_(false)
 {
   family_.reset();
+  // Add all initial textures
+  for (int k = 0; k <= static_cast<int>(TextureUnit::UNIT3); ++k)
+    textures_.push_back(TextureData());
 
   // the geofence will filter out visible objects
   fence_ = new HorizonGeoFence();
@@ -749,7 +793,7 @@ void PlanetariumViewTool::setUseGradient(bool useGradient)
   }
 }
 
-bool PlanetariumViewTool::useGradient() const
+bool PlanetariumViewTool::getUseGradient() const
 {
   return useGradient_;
 }
@@ -784,7 +828,7 @@ void PlanetariumViewTool::setSectorElevation(double elDeg)
 {
   if (sectorElDeg_ == elDeg)
     return;
-  sectorElDeg_ = simCore::clamp(elDeg, 0.01, 90.);
+  sectorElDeg_ = simCore::angFix90(elDeg);
   updateDome_();
 }
 
@@ -863,6 +907,9 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
 
   // install all overrides
   applyOverrides_(true);
+
+  // Scale the "X" on the dome side
+  scaleTargetGeometry_(range_);
 
   // cache the scenario pointer
   scenario_ = &scenario;
@@ -1040,58 +1087,40 @@ void PlanetariumViewTool::updateDome_()
     locatorRoot_->removeChild(dome_.get());
     dome_ = nullptr;
   }
-  if (sector_.valid())
-  {
-    locatorRoot_->removeChild(sector_.get());
-    sector_ = nullptr;
-  }
 
+  double south = -90;
+  double north = 90;
+  double west = -180;
+  double east = 180;
   if (useSector_)
-    createSector_();
-  else
   {
-    // build a sphere
-    dome_ = osgEarth::AnnotationUtils::createEllipsoidGeometry(range_, range_, range_, domeColor_);
-    dome_->setName("Planetarium Sphere Geometry");
-    osg::StateSet* stateSet = dome_->getOrCreateStateSet();
-    stateSet->setMode(GL_BLEND, 1);
-    stateSet->setMode(GL_CULL_FACE, 0 | osg::StateAttribute::PROTECTED);
-    // Turn off the depth writes to help with transparency
-    stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
-    locatorRoot_->addChild(dome_.get());
+    west = 180 - sectorAzDeg_ - sectorWidthDeg_ / 2;
+    east = 180 - sectorAzDeg_ + sectorWidthDeg_ / 2;
+    south = simCore::sdkMax(sectorElDeg_ - sectorHeightDeg_ / 2, -90.);
+    north = simCore::sdkMin(sectorElDeg_ + sectorHeightDeg_ / 2, 90.);
   }
-}
+  // build a sphere or spherical patch
+  dome_ = simVis::createEllipsoidGeometry(range_, range_, range_,
+    domeColor_,
+    10.f, south, north, west, east, true);
+  dome_->setName("Planetarium Sphere Geometry");
+  osg::StateSet* stateSet = dome_->getOrCreateStateSet();
+  stateSet->setMode(GL_BLEND, 1);
+  stateSet->setMode(GL_CULL_FACE, 0 | osg::StateAttribute::PROTECTED);
 
-void PlanetariumViewTool::createSector_()
-{
-  simVis::SVData sv;
+  // Maximum number of textures supported
+  stateSet->setDefine("SIMVIS_PLANETARIUM_NUM_TEXTURES", std::to_string(1 + static_cast<int>(TextureUnit::UNIT3)));
+  // Dome just got recreated, reapply all textures
+  applyAllTextures_();
+  applyTextureOnlyMode_();
 
-  // Set up defaults
-  sv.shape_ = simVis::SVData::SHAPE_PYRAMID;
-  sv.drawMode_ = (simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_OUTLINE);
-  sv.color_ = domeColor_;
-  sv.blendingEnabled_ = true;
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
+  simVis::Shaders package;
+  package.load(vp, package.planetariumTexture());
 
-  sv.azimOffset_deg_ = sectorAzDeg_;
-  sv.elevOffset_deg_ = sectorElDeg_;
-  sv.hfov_deg_ = sectorWidthDeg_;
-  sv.vfov_deg_ = sectorHeightDeg_;
-
-  // Below implementation matches resolution/tessellation implementation for GateVolume
-  const float maxFov = simCore::sdkMax(sv.hfov_deg_, sv.vfov_deg_);
-  const float capRes = osg::clampBetween((maxFov / 5.f), 5.f, 24.f);
-  sv.capRes_ = static_cast<unsigned int>(0.5f + capRes);
-  sv.wallRes_ = 3;
-
-  // No need to set up sv.nearRange_, as it is ignored when sv.drawCone_ is false
-  sv.farRange_ = range_;
-  sv.drawCone_ = false; // Draw flat sector only (no side/top/bottom walls)
-  sv.drawAsSphereSegment_ = true;
-
-  sector_ = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
   // Turn off the depth writes to help with transparency
-  sector_->getOrCreateStateSet()->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
-  locatorRoot_->addChild(sector_.get());
+  stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
+  locatorRoot_->addChild(dome_.get());
 }
 
 void PlanetariumViewTool::applyOverrides_(bool enable)
@@ -1203,5 +1232,144 @@ void PlanetariumViewTool::addBeamToBeamHistory_(simVis::BeamNode* beam)
   }
 }
 
+PlanetariumViewTool::TextureData& PlanetariumViewTool::getTexture_(TextureUnit texUnit)
+{
+  return textures_[static_cast<int>(texUnit)];
 }
 
+const PlanetariumViewTool::TextureData& PlanetariumViewTool::getTexture_(TextureUnit texUnit) const
+{
+  return textures_[static_cast<int>(texUnit)];
+}
+
+void PlanetariumViewTool::setTextureImage(TextureUnit texUnit, osg::Image* image)
+{
+  if (getTexture_(texUnit).image == image)
+    return;
+  getTexture_(texUnit).image = image;
+  applyTexture_(texUnit);
+}
+
+osg::Image* PlanetariumViewTool::getTextureImage(TextureUnit texUnit) const
+{
+  return getTexture_(texUnit).image.get();
+}
+
+void PlanetariumViewTool::setTextureCoords(TextureUnit texUnit, double minLat, double maxLat, double minLon, double maxLon)
+{
+  auto& td = getTexture_(texUnit);
+  if (minLat == td.latitudeSpan.x() && maxLat == td.latitudeSpan.y() &&
+    minLon == td.longitudeSpan.x() && maxLon == td.longitudeSpan.y())
+    return;
+  td.latitudeSpan.x() = minLat;
+  td.latitudeSpan.y() = maxLat;
+  td.longitudeSpan.x() = minLon;
+  td.longitudeSpan.y() = maxLon;
+  applyTexture_(texUnit);
+}
+
+void PlanetariumViewTool::getTextureCoords(TextureUnit texUnit, double& minLat, double& maxLat, double& minLon, double& maxLon) const
+{
+  auto& td = getTexture_(texUnit);
+  minLat = td.latitudeSpan.x();
+  maxLat = td.latitudeSpan.y();
+  minLon = td.longitudeSpan.x();
+  maxLon = td.longitudeSpan.y();
+}
+
+void PlanetariumViewTool::setTextureAlpha(TextureUnit texUnit, float alpha)
+{
+  if (getTexture_(texUnit).alpha == alpha)
+    return;
+  getTexture_(texUnit).alpha = alpha;
+  applyTexture_(texUnit);
+}
+
+float PlanetariumViewTool::getTextureAlpha(TextureUnit texUnit) const
+{
+  return getTexture_(texUnit).alpha;
+}
+
+void PlanetariumViewTool::setTextureEnabled(TextureUnit texUnit, bool active)
+{
+  if (getTexture_(texUnit).enabled == active)
+    return;
+  getTexture_(texUnit).enabled = active;
+  applyTexture_(texUnit);
+}
+
+bool PlanetariumViewTool::getTextureEnabled(TextureUnit texUnit) const
+{
+  return getTexture_(texUnit).enabled;
+}
+
+void PlanetariumViewTool::applyAllTextures_()
+{
+  for (int k = 0; k <= static_cast<int>(TextureUnit::UNIT3); ++k)
+    applyTexture_(static_cast<TextureUnit>(k));
+}
+
+/** Helper function for applyTexture_() to set a uniform value in an array (because osg interface requires const char*) */
+template<typename T>
+void setUniformArrayValue(osg::StateSet& ss, PlanetariumViewTool::TextureUnit arrayIndex, const std::string& param, const T& value)
+{
+  std::stringstream stream;
+  stream << "sv_planet_tex[" << static_cast<int>(arrayIndex) << "]." << param;
+  ss.addUniform(new osg::Uniform(stream.str().c_str(), value));
+}
+
+void PlanetariumViewTool::applyTexture_(TextureUnit texUnit)
+{
+  // Need a valid dome to apply texture content
+  if (!dome_.valid())
+    return;
+
+  // Extract the texture data, state set
+  auto& td = getTexture_(texUnit);
+  auto* ss = dome_->getOrCreateStateSet();
+
+  // Configure all shader uniform values
+  setUniformArrayValue(*ss, texUnit, "alpha", td.alpha);
+  setUniformArrayValue(*ss, texUnit, "coords", osg::Vec4f(
+    td.longitudeSpan.x(), td.longitudeSpan.y(),
+    td.latitudeSpan.x(), td.latitudeSpan.y()));
+  const bool enabled = td.image.valid() && td.enabled;
+  setUniformArrayValue(*ss, texUnit, "enabled", enabled);
+  const int glTextureUnit = static_cast<int>(texUnit);
+  setUniformArrayValue(*ss, texUnit, "sampler", glTextureUnit);
+
+  // Create a texture if needed
+  if (!td.texture)
+  {
+    td.texture = new osg::Texture2D();
+    td.texture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    td.texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP);
+  }
+  td.texture->setImage(td.image.get());
+  simVis::fixTextureForGlCoreProfile(td.texture);
+  ss->setTextureAttribute(glTextureUnit, td.texture.get());
+}
+
+void PlanetariumViewTool::setTextureOnlyMode(bool textureOnlyMode)
+{
+  if (textureOnlyMode_ == textureOnlyMode)
+    return;
+  textureOnlyMode_ = textureOnlyMode;
+  applyTextureOnlyMode_();
+}
+
+bool PlanetariumViewTool::getTextureOnlyMode() const
+{
+  return textureOnlyMode_;
+}
+
+void PlanetariumViewTool::applyTextureOnlyMode_()
+{
+  // Need a valid dome to apply texture content
+  if (!dome_.valid())
+    return;
+  auto* ss = dome_->getOrCreateStateSet();
+  ss->addUniform(new osg::Uniform("sv_planet_textureonly", textureOnlyMode_));
+}
+
+}

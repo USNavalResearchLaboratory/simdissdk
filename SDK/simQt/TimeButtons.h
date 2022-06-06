@@ -23,8 +23,9 @@
 #ifndef SIMQT_TIMEBUTTONS_H
 #define SIMQT_TIMEBUTTONS_H
 
-#include <QWidget>
 #include <QAction>
+#include <QIcon>
+#include <QWidget>
 #include "simCore/Common/Export.h"
 #include "simCore/Time/Clock.h"
 
@@ -59,6 +60,8 @@ public:
   QAction* realTimeAction() const;
   /** Returns toggle loop action */
   QAction* toggleLoopAction() const;
+  /** Returns Start/Stop action */
+  QAction* startStopAction() const;
   /** Returns all actions */
   QList<QAction*> actions() const;
   /** Sets the clock manager */
@@ -71,6 +74,7 @@ signals:
 private slots:
   void clockStop_();
   void clockPlay_();
+  void clockStartStop_();
   void clockPlayBackwards_();
   void clockStepBack_();
   void clockStepForward_();
@@ -91,10 +95,13 @@ private:
   QAction* playReverse_;
   QAction* stop_;
   QAction* play_;
+  QAction* startStop_;
   QAction* stepForward_;
   QAction* stepIncrease_;
   QAction* realTime_;
   QAction* toggleLoop_;
+  QIcon stopIcon_;
+  QIcon playIcon_;
 };
 
 /**
@@ -108,6 +115,9 @@ class SDKQT_EXPORT TimeButtons : public QWidget
 {
   Q_OBJECT;
 
+  /** Sets/gets the whether to hide the play and stop buttons in Qt Designer */
+  Q_PROPERTY(bool SingleButtonPlayStop READ isSingleButtonPlayStop WRITE setSingleButtonPlayStop);
+
 public:
   /** Constructor */
   TimeButtons(QWidget *parent = nullptr);
@@ -119,9 +129,15 @@ public:
   /** Resizes all the buttons to the given size; default size is 32 pixels */
   void resizeButtons(int size);
 
+  /** Get whether the play and stop buttons are hidden. Hidden by default. */
+  bool isSingleButtonPlayStop() const;
+
+public slots:
+  /** Set whether the play and stop buttons are hidden. Hidden by default. */
+  void setSingleButtonPlayStop(bool fl);
+
 private:
   Ui_TimeButtons *ui_; ///< wrapper on the QT Designer widget
-  ButtonActions* actions_;
 };
 
 }

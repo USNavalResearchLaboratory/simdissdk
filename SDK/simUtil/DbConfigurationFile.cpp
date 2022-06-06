@@ -256,7 +256,7 @@ int DbConfigurationFile::resolveFilePath(std::string& fileName)
   return 1;
 }
 
-int DbConfigurationFile::parseCommonTokens_(const std::vector<std::string>& tokens, int currentLineNumber)
+int DbConfigurationFile::parseCommonTokens_(const std::vector<std::string>& tokens, unsigned int currentLineNumber)
 {
   if (tokens.empty())
     return 1;

@@ -46,7 +46,7 @@ LocatorNode::LocatorNode(Locator* locator, unsigned int componentsToTrack)
   componentsToTrack_(componentsToTrack),
   overheadModeHint_(false)
 {
-  setLocator(locator);
+  setLocator(locator, componentsToTrack_);
 }
 
 LocatorNode::LocatorNode(const LocatorNode& rhs, const osg::CopyOp& op)
@@ -56,7 +56,8 @@ LocatorNode::LocatorNode(const LocatorNode& rhs, const osg::CopyOp& op)
   componentsToTrack_(rhs.componentsToTrack_),
   overheadModeHint_(rhs.overheadModeHint_)
 {
-  setLocator(locator_.get()); // to update the trav count
+  // ensure a new callback is set
+  setLocator(rhs.locator_.get(), componentsToTrack_);
 }
 
 LocatorNode::LocatorNode(Locator* locator, osg::Node* child)
@@ -74,6 +75,18 @@ LocatorNode::~LocatorNode()
 
 void LocatorNode::setLocator(Locator* locator, unsigned int componentsToTrack)
 {
+  if (locator_ == locator)
+  {
+    if (componentsToTrack_ != componentsToTrack)
+    {
+      componentsToTrack_ = componentsToTrack;
+      matrixRevision_.reset();
+      // ensure locatorNode has correct matrix for new components
+      syncWithLocator();
+    }
+    return;
+  }
+
   if (locator_.valid() && locatorCallback_.valid())
     locator_->removeCallback(locatorCallback_.get());
 

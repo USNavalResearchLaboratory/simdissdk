@@ -29,6 +29,7 @@
 #include "osgDB/FileNameUtils"
 #include "osgDB/ReadFile"
 #include "osgDB/Registry"
+#include "osgEarth/HTTPClient"
 #include "osgEarth/Registry"
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"

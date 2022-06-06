@@ -805,11 +805,10 @@ std::string View::getUniqueInsetName() const
 {
   for (int ii = 1; ii < 100; ++ii)
   {
-    std::stringstream name;
-    name << "NewInset"  << ii;
-    osg::ref_ptr<simVis::View> inset = getInsetByName(name.str());
+    const std::string name = "NewInset" + std::to_string(ii);
+    osg::ref_ptr<simVis::View> inset = getInsetByName(name);
     if (!inset.valid())
-      return name.str();
+      return name;
   }
 
   // Unlikely there are 99 insets
