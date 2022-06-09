@@ -121,7 +121,7 @@ void AnimatedLineNode::HalfALine::fillSlantLine(unsigned int numSegments, const 
 AnimatedLineNode::AnimatedLineNode(float lineWidth, bool depthBufferTest) :
 stipple1_(0xFF00),
 stipple2_(0x00FF),
-shiftsPerSecond_(10.0),
+shiftsPerSecond_(0.0),
 color1_(simVis::Color::Blue),
 color2_(simVis::Color::Yellow),
 colorOverride_(osg::Vec4()),    // transparent
@@ -139,6 +139,9 @@ depthBufferTest_(depthBufferTest)
   initializeGeometry_();
 
   OverheadMode::enableGeometryFlattening(true, this);
+
+  // inititialize dynamic stipple, force shader setup to match
+  setShiftsPerSecond(10.0);
 }
 
 AnimatedLineNode::~AnimatedLineNode()
@@ -236,9 +239,19 @@ simData::AnimatedLineBend AnimatedLineNode::getLineBending() const
 
 void AnimatedLineNode::setShiftsPerSecond(double value)
 {
+  const bool wasDynamicStippled = (shiftsPerSecond_ != 0.);
+
   shiftsPerSecond_ = value;
   // Need to reset the time shift to recalculate shifting correctly, per SIMDIS-3104
   timeLastShift_ = 0.0;
+
+  const bool isDynamicStippled = (shiftsPerSecond_ != 0.);
+  if (isDynamicStippled != wasDynamicStippled)
+  {
+    // enable dynamic stipple shader when needed
+    osg::StateSet* stateSet = lineGroup_->getOrCreateStateSet();
+    stateSet->setDefine("USE_DYNAMIC_STIPPLE_SHADER", osg::StateAttribute::OverrideValue(isDynamicStippled ? 1 : 0));
+  }
 }
 
 void AnimatedLineNode::initializeGeometry_()

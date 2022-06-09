@@ -299,10 +299,10 @@ void simExamples::configureSearchPaths()
   pathList = osgDB::getDataFilePathList();
   if (!SIMDIS_DIR.empty())
   {
+    // SIMDIS SDK shaders are placed here; SIMDIS shaders override data/osgEarth shaders
+    pathList.push_back(SIMDIS_DIR + PATH_SEP + "data" + PATH_SEP + "shaders");
     // osgEarth textures, including the moon
     pathList.push_back(SIMDIS_DIR + PATH_SEP + "data" + PATH_SEP + "osgEarth");
-    // SIMDIS SDK shaders are placed here
-    pathList.push_back(SIMDIS_DIR + PATH_SEP + "data" + PATH_SEP + "shaders");
     // SIMDIS model textures
     pathList.push_back(SIMDIS_DIR + PATH_SEP + "data" + PATH_SEP + "textures" + PATH_SEP + "modelsFull");
     pathList.push_back(SIMDIS_DIR + PATH_SEP + "data" + PATH_SEP + "textures" + PATH_SEP + "models");
