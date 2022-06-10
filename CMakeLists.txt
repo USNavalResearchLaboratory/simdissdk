@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 
+# Disable in-source builds and avoid writing to source directories directly
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+
 # Append our CMakeModules to the CMAKE_MODULE_PATH for better include() support
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeImport")
