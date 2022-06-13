@@ -342,6 +342,7 @@ static const std::string FILEBASED_IMAGE_LAYER_FILE_PATTERNS =
   "DB Files (*.db)\n"
   "GDAL Files (*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil)\n"
   "MapBox GL Image Style Files (*.json)\n"
+  "Tile Package Configuration (Conf.xml,conf.xml)\n"
   "All Files (*)";
 
 /** Pattern for GDAL, DB, MBTiles files -- elevation file layer pattern */
@@ -351,6 +352,7 @@ static const std::string FILEBASED_ELEVATION_LAYER_FILE_PATTERNS =
   "DB Files (*.db)\n"
   "GDAL Files (*.tif,*.tiff,*.sid,*.jp2,*.bil,*.hgt)\n"
   "DTED Elevation Files (*.dt0,*.dt1,*.dt2)\n"
+  "Tile Package Configuration (Conf.xml,conf.xml)\n"
   "All Files (*)";
 
 /** Generic pattern for all files */

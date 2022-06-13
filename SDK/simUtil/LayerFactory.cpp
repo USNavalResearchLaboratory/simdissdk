@@ -21,6 +21,7 @@
  *
  */
 #include <cassert>
+#include "osgEarth/ArcGISTilePackage"
 #include "osgEarth/ElevationLayer"
 #include "osgEarth/FeatureModelLayer"
 #include "osgEarth/GDAL"
@@ -130,6 +131,24 @@ osgEarth::MapBoxGLImageLayer* LayerFactory::newMapBoxGlImageLayer(const std::str
   return layer.release();
 }
 
+osgEarth::ArcGISTilePackageImageLayer* LayerFactory::newArcGisTilePackageImageLayer(const std::string& confXmlPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(confXmlPath);
+
+  osgEarth::ArcGISTilePackageImageLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::ArcGISTilePackageImageLayer> layer = new osgEarth::ArcGISTilePackageImageLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(confXmlPath));
+  layer->setURL(confXmlPath);
+
+  // Use the same cache policy as GDAL
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
+
+  return layer.release();
+}
+
 simVis::DBElevationLayer* LayerFactory::newDbElevationLayer(const std::string& fullPath) const
 {
 #ifndef SIM_HAVE_DB_SUPPORT
@@ -188,6 +207,24 @@ osgEarth::GDALElevationLayer* LayerFactory::newGdalElevationLayer(const std::str
   const std::string suffixWithDot = simCore::getExtension(fullPath);
   if (suffixWithDot == ".jp2" || suffixWithDot == ".sid")
     layer->setInterpolation(osgEarth::INTERP_NEAREST);
+
+  return layer.release();
+}
+
+osgEarth::ArcGISTilePackageElevationLayer* LayerFactory::newArcGisTilePackageElevationLayer(const std::string& confXmlPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(confXmlPath);
+
+  osgEarth::ArcGISTilePackageElevationLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::ArcGISTilePackageElevationLayer> layer = new osgEarth::ArcGISTilePackageElevationLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(confXmlPath));
+  layer->setURL(confXmlPath);
+
+  // Use the same cache policy as GDAL
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
 
   return layer.release();
 }
