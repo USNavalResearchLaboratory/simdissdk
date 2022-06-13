@@ -335,9 +335,9 @@ static const std::string MAPBOX_GL_IMAGE_LAYER_FILE_PATTERNS =
   "MapBox GL Image Style Files (*.json)\n"
   "All Files (*)";
 
-/** Pattern for GDAL, DB, MBTiles, MapBox GL files -- image file layer pattern */
+/** Pattern for GDAL, DB, MBTiles, MapBox GL, other files -- image file layer pattern */
 static const std::string FILEBASED_IMAGE_LAYER_FILE_PATTERNS =
-  "All Layer Files (*.mbtiles,*.db,*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil,*.json)\n"
+  "All Layer Files (*.mbtiles,*.db,*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil,*.json,Conf.xml,conf.xml)\n"
   "MBTiles Files (*.mbtiles)\n"
   "DB Files (*.db)\n"
   "GDAL Files (*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil)\n"
@@ -345,9 +345,9 @@ static const std::string FILEBASED_IMAGE_LAYER_FILE_PATTERNS =
   "Tile Package Configuration (Conf.xml,conf.xml)\n"
   "All Files (*)";
 
-/** Pattern for GDAL, DB, MBTiles files -- elevation file layer pattern */
+/** Pattern for GDAL, DB, MBTiles, other files -- elevation file layer pattern */
 static const std::string FILEBASED_ELEVATION_LAYER_FILE_PATTERNS =
-  "All Layer Files (*.mbtiles,*.db,*.tif,*.tiff,*.sid,*.jp2,*.bil,*.hgt,*.dt0,*.dt1,*.dt2)\n"
+  "All Layer Files (*.mbtiles,*.db,*.tif,*.tiff,*.sid,*.jp2,*.bil,*.hgt,*.dt0,*.dt1,*.dt2,Conf.xml,conf.xml)\n"
   "MBTiles Files (*.mbtiles)\n"
   "DB Files (*.db)\n"
   "GDAL Files (*.tif,*.tiff,*.sid,*.jp2,*.bil,*.hgt)\n"
