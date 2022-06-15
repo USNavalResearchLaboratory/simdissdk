@@ -1632,7 +1632,7 @@ int testArcSweep()
   // test same start/end angles, should not create GOG
   {
     std::stringstream shape;
-    shape << "start\n arc\n anglestart 0\n anglend 0\n end\n";
+    shape << "start\n arc\n anglestart 0\n angleend 0\n end\n";
     loader.loadGogs(shape, "", false, gogs);
   }
   rv += SDK_ASSERT(gogs.empty());
@@ -1641,7 +1641,7 @@ int testArcSweep()
   // test same start/end angles, should not create GOG
   {
     std::stringstream shape;
-    shape << "start\n arc\n anglestart 0\n anglend 360\n end\n";
+    shape << "start\n arc\n anglestart 0\n angleend 360\n end\n";
     loader.loadGogs(shape, "", false, gogs);
   }
   rv += SDK_ASSERT(gogs.empty());
@@ -1650,7 +1650,7 @@ int testArcSweep()
   // test same start/end angles, should not create GOG
   {
     std::stringstream shape;
-    shape << "start\n arc\n anglestart 45\n anglend 405\n end\n";
+    shape << "start\n arc\n anglestart 45\n angleend 405\n end\n";
     loader.loadGogs(shape, "", false, gogs);
   }
   rv += SDK_ASSERT(gogs.empty());
