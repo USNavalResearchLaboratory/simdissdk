@@ -11,6 +11,7 @@ set(TEST_FILENAMES
     MemoryDataTableTest.cpp
     TestCommands.cpp
     TestDataLimiting.cpp
+    TestEntityNameCache.cpp
     TestFlush.cpp
     TestGenericData.cpp
     TestInterpolation.cpp

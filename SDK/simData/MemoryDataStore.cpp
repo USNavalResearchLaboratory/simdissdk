@@ -1250,6 +1250,10 @@ void MemoryDataStore::idList(IdList *ids, simData::ObjectType type) const
 /// Retrieve a list of IDs for objects of 'type' with the given name
 void MemoryDataStore::idListByName(const std::string& name, IdList* ids, simData::ObjectType type) const
 {
+  if (ids == nullptr)
+    return;
+  ids->clear();
+
   // If null someone is call this routine before entityNameCache_ is made in the constructor
   assert(entityNameCache_ != nullptr);
   if (entityNameCache_ == nullptr)
@@ -2630,10 +2634,14 @@ void MemoryDataStore::MutableSettingsTransactionImpl<T>::commit()
   {
     committed_ = true; // transaction is valid
 
-    // check for name change, if shown or alias change, if shown or change for show name to/from show alias
-    if ((!modifiedSettings_->commonprefs().usealias() && modifiedSettings_->commonprefs().name() != currentSettings_->commonprefs().name()) ||
-        (modifiedSettings_->commonprefs().usealias() && modifiedSettings_->commonprefs().alias() != currentSettings_->commonprefs().alias()) ||
-        (modifiedSettings_->commonprefs().usealias() != currentSettings_->commonprefs().usealias()))
+    // Check for name change. It will be considered changed if the alias changes and alias is on, if the alias setting toggles,
+    // or if the name switches, regardless of alias setting. This all ensures that EntityNameCache is updated properly (which
+    // only ever tracks name()), and also ensures onNameChanged() observer fires properly.
+    const bool useAlias = modifiedSettings_->commonprefs().usealias();
+    const bool useAliasChanged = (useAlias != currentSettings_->commonprefs().usealias());
+    const bool nameChanged = modifiedSettings_->commonprefs().name() != currentSettings_->commonprefs().name();
+    const bool aliasChanged = useAlias && (modifiedSettings_->commonprefs().alias() != currentSettings_->commonprefs().alias());
+    if (nameChanged || aliasChanged || useAliasChanged)
     {
       oldName_ = currentSettings_->commonprefs().name();
       newName_ = modifiedSettings_->commonprefs().name();

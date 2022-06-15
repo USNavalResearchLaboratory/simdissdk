@@ -174,7 +174,7 @@ public:
     /// something has changed in the entity category data
     virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, simData::ObjectType ot) = 0;
 
-    /// entity name has changed
+    /// entity name or alias has changed
     virtual void onNameChange(DataStore *source, ObjectId changeId) = 0;
 
     /// entity's data was flushed, 0 means entire scenario was flushed
@@ -212,7 +212,7 @@ public:
     /// something has changed in the entity category data
     virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, simData::ObjectType ot) {}
 
-    /// entity name has changed
+    /// entity name or alias has changed
     virtual void onNameChange(DataStore *source, ObjectId changeId) {}
 
     /// entity's data was flushed, 0 means entire scenario was flushed
@@ -437,7 +437,7 @@ public: // methods
   /// Retrieve a list of IDs for objects of 'type'
   virtual void idList(IdList *ids, simData::ObjectType type = simData::ALL) const = 0;
 
-  /// Retrieve a list of IDs for objects of 'type' with the given name
+  /// Retrieve a list of IDs for objects of 'type' with the given name. Does not respect alias.
   virtual void idListByName(const std::string& name, IdList* ids, simData::ObjectType type = simData::ALL) const = 0;
 
   /// Retrieve a list of IDs for objects with the given original id
