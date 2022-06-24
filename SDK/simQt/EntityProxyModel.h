@@ -72,7 +72,13 @@ signals:
 protected:
   /// filtering function
   virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
-  /// sorting function
+  /**
+    * sorting function
+    * Accounts for embedded integers in the entity name.   Example:
+    *  Platform 1
+    *  Platform 2
+    *  Platform 10
+    */
   virtual bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 
 private slots:

@@ -168,6 +168,65 @@ namespace simQt {
 
   bool EntityProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
   {
+    if (left.column() == 0)
+    {
+      const auto& leftString = left.data().toString();
+      const auto& rightString = right.data().toString();
+
+      auto leftIt = leftString.begin();
+      auto rightIt = rightString.begin();
+
+      while ((leftIt != leftString.end()) && (rightIt != rightString.end()))
+      {
+        // Keep going as long as the two string match independently of character or digit
+        if (*leftIt == *rightIt)
+        {
+          ++leftIt;
+          ++rightIt;
+          continue;
+        }
+
+        // If the difference is due to digits then get all the following digits to compare the number
+        if (leftIt->isDigit() && rightIt->isDigit())
+        {
+          // Get all the remaining digits in the number for the left side string
+          auto leftEnd = leftIt;
+          ++leftEnd;
+          while (leftEnd != leftString.end())
+          {
+            if (!leftEnd->isDigit())
+              break;
+            ++leftEnd;
+          }
+
+          // Get all the remaining digits in the number for the right side string
+          auto rightEnd = rightIt;
+          ++rightEnd;
+          while (rightEnd != rightString.end())
+          {
+            if (!rightEnd->isDigit())
+              break;
+            ++rightEnd;
+          }
+
+          // Compare the number of digits in the strings
+          auto leftSize = std::distance(leftIt, leftEnd);
+          auto rightSize = std::distance(rightIt, rightEnd);
+
+          // return true if left has fewer digits or false if right has fewer digits
+          if (leftSize != rightSize)
+            return leftSize < rightSize;
+
+          // same number of digits and the first one must be different, so drop down to the return and just check the first digits
+        }
+
+        return *leftIt < *rightIt;
+      }
+
+      // If left is at the end and the right is not then it is less
+      return ((leftIt == leftString.end()) && (rightIt != rightString.end()));
+    }
+
     // Sorting Original ID as numbers
     if (left.column() == 2)
     {
@@ -175,8 +234,9 @@ namespace simQt {
       uint64_t rightId = sourceModel()->data(right).toULongLong();
       return leftId < rightId;
     }
+
     // Sorting based on entity type
-    else if (left.column() == 1)
+    if (left.column() == 1)
     {
       int leftSortVal = sourceModel()->data(left, SORT_BY_ENTITY_ROLE).toInt();
       int rightSortVal = sourceModel()->data(right, SORT_BY_ENTITY_ROLE).toInt();
