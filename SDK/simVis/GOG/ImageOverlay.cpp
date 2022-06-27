@@ -22,6 +22,7 @@
  */
 #include "osgDB/ReadFile"
 #include "osgEarth/ImageOverlay"
+#include "osgEarth/Version"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/GOG/GogShape.h"
@@ -66,7 +67,11 @@ GogNodeInterface* ImageOverlay::deserialize(
   osgEarth::Angular rotation(rot, osgEarth::Units::DEGREES);
 
   osgEarth::ImageOverlay* imageNode = new osgEarth::ImageOverlay(mapNode, image.get());
+#if OSGEARTH_SOVERSION >= 138
+  imageNode->setBoundsAndRotation(osgEarth::Bounds(west, south, 0.0, east, north, 0.0), rotation);
+#else
   imageNode->setBoundsAndRotation(osgEarth::Bounds(west, south, east, north), rotation);
+#endif
   imageNode->setDynamic(true);
   imageNode->setPriority(8000);
 
@@ -96,7 +101,11 @@ GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOver
   osgEarth::Angular rotation(rot, osgEarth::Units::DEGREES);
 
   osgEarth::ImageOverlay* imageNode = new osgEarth::ImageOverlay(mapNode, image.get());
+#if OSGEARTH_SOVERSION >= 138
+  imageNode->setBoundsAndRotation(osgEarth::Bounds(west, south, 0.0, east, north, 0.0), rotation);
+#else
   imageNode->setBoundsAndRotation(osgEarth::Bounds(west, south, east, north), rotation);
+#endif
   imageNode->setDynamic(true);
   imageNode->setPriority(8000);
 
