@@ -1,0 +1,9 @@
+# Use the continuous build's rules, to avoid triggering unnecessarily
+include:
+  - project: 'unclass/vsi/ci/continuous'
+    ref: main
+    file: 'workflow_rules.yml'
+
+# Pushes to this repository will run the continuous build
+trigger_continuous:
+  trigger: 'unclass/vsi/ci/continuous'
