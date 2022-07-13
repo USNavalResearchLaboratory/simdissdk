@@ -113,9 +113,13 @@ public:
   virtual bool run(osg::Object* object, osg::Object* data)
   {
     CompositeHighlightNode* area = dynamic_cast<CompositeHighlightNode*>(object);
-    // Scale down the radius by a small amount -- 80% -- to reduce highlight size
     if (area != nullptr && platform_.valid())
-      area->setRadius(VectorScaling::lineLength(platform_->getModel(), 0.8));
+    {
+      const double size = platform_->getPrefs().circlehilightsize();
+      // When scaling by model size scale down the radius by a small amount -- 80% -- to reduce highlight size
+      const double radius = (size == 0.0) ? VectorScaling::lineLength(platform_->getModel(), 0.8) : size;
+      area->setRadius(radius);
+    }
     return traverse(object, data);
   }
 
