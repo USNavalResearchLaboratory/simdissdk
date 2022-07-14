@@ -103,6 +103,8 @@ public:
   void setPadding(int paddingPx);
   /// Sets the width between title and content
   void setChildSpacing(int spacingPx);
+  /// Sets the maximum width of the title and content
+  void setMaxWidth(int widthPx);
 
   /// Sets to show popup in the lower right corner of the view
   SDK_DEPRECATE(void setShowInCorner(bool showInCorner),
@@ -210,6 +212,8 @@ public:
   void setPadding(int width);
   /// Sets the width between title and content
   void setChildSpacing(int width);
+  /// Sets the maximum width of the title and content
+  void setMaxWidth(int widthPx);
 
   /**
   * Sets a custom callback that will be used to generate the string
@@ -279,6 +283,7 @@ private:
   int padding_; ///< Space between text and border
   int childSpacing_; ///< Space between title and content
   int duration_; ///< Duration in seconds popup should remain visible once shown
+  int maxWidth_; ///< Maximum width in pixels of the popup title and content
   double showStartTime_; ///< Time popup started being shown
   bool installed_; ///< True when the EntityPopup is installed in the view
 };

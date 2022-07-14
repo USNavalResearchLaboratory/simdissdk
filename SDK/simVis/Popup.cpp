@@ -137,6 +137,7 @@ EntityPopup::EntityPopup()
   contentLabel_->setFont(DEFAULT_FONT);
   contentLabel_->setCharacterSize(simVis::osgFontSize(DEFAULT_CONTENT_SIZE));
   contentLabel_->setAlignment(osgText::TextBase::LEFT_BOTTOM_BASE_LINE);
+  contentLabel_->setMaximumWidth(300.f);
   addChild(contentLabel_);
 
   // Set stateset values for the background box: Fill front-face, blend
@@ -227,6 +228,13 @@ void EntityPopup::setChildSpacing(int width)
     return;
   spacingPx_ = width;
   updateLabelPositions_();
+}
+
+void EntityPopup::setMaxWidth(int widthPx)
+{
+  const float widthF = static_cast<float>(widthPx);
+  titleLabel_->setMaximumWidth(widthF);
+  contentLabel_->setMaximumWidth(widthF);
 }
 
 void EntityPopup::setShowInCorner(bool showInCorner)
@@ -384,6 +392,7 @@ void PopupHandler::init_()
   padding_ = DEFAULT_PADDING;
   childSpacing_ = DEFAULT_SPACING;
   duration_ = 5;
+  maxWidth_ = 0; // 0 means off by default
   popup_ = new simVis::EntityPopup;
 }
 
@@ -506,6 +515,14 @@ void PopupHandler::setChildSpacing(int width)
   if (childSpacing_ == width)
     return;
   childSpacing_ = width;
+  applySettings_();
+}
+
+void PopupHandler::setMaxWidth(int widthPx)
+{
+  if (maxWidth_ == widthPx)
+    return;
+  maxWidth_ = widthPx;
   applySettings_();
 }
 
@@ -644,6 +661,7 @@ void PopupHandler::applySettings_()
   popup_->contentLabel()->setCharacterSize(simVis::osgFontSize(contentFontSize_));
   popup_->setPadding(padding_);
   popup_->setChildSpacing(childSpacing_);
+  popup_->setMaxWidth(maxWidth_);
 }
 
 }
