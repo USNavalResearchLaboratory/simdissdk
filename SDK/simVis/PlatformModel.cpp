@@ -93,8 +93,10 @@ private:
  *
  *       /= label_                           /= rcs_         /= alphaVolumeGroup_ => model_
  * this => dynamicXform_ => imageIconXform_ <=> offsetXform_ => model_
- *                                           \= other scaled children
- *                                           \= fastPathIcon_
+ *       \                                   \= other scaled children
+ *        \                                  \= fastPathIcon_
+ *         \
+ *          \=> fixedDynamicXform_ => fixedImageIconXform_ => highlight
  *
  * model_ is the representative for the 3D model or 2D image, and may be set to nullptr at times.
  * It is set from the call to simVis::Registry::instance()->getOrCreateIconModel().
@@ -123,6 +125,10 @@ private:
  * scaling if enabled.  Dynamic scaling will make the icon larger based on current distance from
  * the eye, based on various scaling tweaks that are in the platform prefs.
  *
+ * Both fixedDynamicXform_ and fixedImageIconXform_ deal with dynamic scaling where the icon size
+ * is replaced with a user supplied numerical value in meters.  This allows highlights of different
+ * platforms to be the same size independent of the icon size.
+
  * PlatformModelNode is a locator, and is tied to the platform's position in space.
  *
  * alphaVolumeGroup_ is only on when the alphavolume() preference is on.  It does a second pass on
@@ -236,6 +242,72 @@ bool PlatformModelNode::removeScaledChild(osg::Node* node)
   return imageIconXform_->removeChild(node);
 }
 
+bool PlatformModelNode::addFixedScaledChild(osg::Node* node)
+{
+  if (fixedImageIconXform_ == nullptr)
+  {
+    // Set up the transform responsible for rotating the 2-D image icons
+    fixedImageIconXform_ = new BillboardAutoTransform();
+    fixedImageIconXform_->setAutoScaleToScreen(false);
+    fixedImageIconXform_->setAutoRotateMode(autoRotate_ ? osg::AutoTransform::ROTATE_TO_SCREEN : BillboardAutoTransform::NO_ROTATION);
+    fixedImageIconXform_->setRotation(osg::Quat());
+    fixedImageIconXform_->setName("fixedImageIconXform");
+    if (!isImageModel_)
+      fixedImageIconXform_->setRotateInScreenSpace(false);
+    else
+      fixedImageIconXform_->setRotateInScreenSpace(lastPrefs_.rotateicons() == simData::IR_2D_YAW);
+    fixedImageIconXform_->dirty();
+
+    //TODO: Is a HorizonCullCallback needed for fixedImageIconXform_?
+
+    fixedDynamicXform_ = new simVis::DynamicScaleTransform();
+    fixedDynamicXform_->setName("fixedDynamicXform");
+    fixedDynamicXform_->setDynamicScaleToPixels(false);
+
+    if (lastPrefs_.has_scalexyz())
+      fixedDynamicXform_->setOverrideScale(osg::Vec3d(lastPrefs_.scalexyz().y(), lastPrefs_.scalexyz().x(), lastPrefs_.scalexyz().z()));
+    else
+    {
+      fixedDynamicXform_->setDynamicScalingEnabled(lastPrefs_.dynamicscale());
+      fixedDynamicXform_->setStaticScalar(lastPrefs_.scale());
+      if (lastPrefs_.dynamicscale())
+      {
+        fixedDynamicXform_->setDynamicScalar(lastPrefs_.dynamicscalescalar());
+        fixedDynamicXform_->setScaleOffset(lastPrefs_.dynamicscaleoffset());
+      }
+    }
+
+    addChild(fixedDynamicXform_);
+    fixedDynamicXform_->addChild(fixedImageIconXform_);
+  }
+
+  return fixedImageIconXform_->addChild(node);
+}
+
+bool PlatformModelNode::removeFixedScaledChild(osg::Node* node)
+{
+  if (fixedImageIconXform_ == nullptr)
+    return false;
+
+  bool rv = fixedImageIconXform_->removeChild(node);
+
+  if (fixedImageIconXform_->getNumChildren() == 0)
+  {
+    fixedDynamicXform_ = nullptr;
+    fixedImageIconXform_ = nullptr;
+  }
+
+  return rv;
+}
+
+void PlatformModelNode::setFixedSize(double meters)
+{
+  if (fixedDynamicXform_ == nullptr)
+    return;
+
+  fixedDynamicXform_->setFixedSize(meters);
+
+}
 void PlatformModelNode::syncWithLocator()
 {
   // call the base class first to update the matrix.
@@ -248,6 +320,8 @@ void PlatformModelNode::syncWithLocator()
     simCore::Coordinate c;
     getLocator()->getCoordinate(&c, simCore::COORD_SYS_LLA);
     imageIconXform_->setScreenSpaceRotation(c.yaw());
+    if (fixedImageIconXform_.valid())
+      fixedImageIconXform_->setScreenSpaceRotation(c.yaw());
   }
 }
 
@@ -442,13 +516,22 @@ void PlatformModelNode::setRotateToScreen(bool value)
   if (autoRotate_)
   {
     imageIconXform_->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
+    if (fixedImageIconXform_.valid())
+      fixedImageIconXform_->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
   }
   else
   {
     imageIconXform_->setAutoRotateMode(osg::AutoTransform::NO_ROTATION);
     imageIconXform_->setRotation(osg::Quat());
+    if (fixedImageIconXform_.valid())
+    {
+      fixedImageIconXform_->setAutoRotateMode(osg::AutoTransform::NO_ROTATION);
+      fixedImageIconXform_->setRotation(osg::Quat());
+    }
   }
   imageIconXform_->dirty();
+  if (fixedImageIconXform_.valid())
+    fixedImageIconXform_->dirty();
 }
 
 bool PlatformModelNode::updateOffsets_(const simData::PlatformPrefs& prefs, bool force)
@@ -558,6 +641,8 @@ bool PlatformModelNode::updateScale_(const simData::PlatformPrefs& prefs)
 
   // Clear out the override scaling at this point so latent values don't take over
   dynamicXform_->clearOverrideScale();
+  if (fixedDynamicXform_.valid())
+    fixedDynamicXform_->clearOverrideScale();
   return updateDynamicScale_(prefs);
 }
 
@@ -570,6 +655,8 @@ bool PlatformModelNode::updateScaleXyz_(const simData::PlatformPrefs& prefs)
 
   // update the static scaling using the scaleXYZ pref
   dynamicXform_->setOverrideScale(osg::Vec3d(prefs.scalexyz().y(), prefs.scalexyz().x(), prefs.scalexyz().z()));
+  if (fixedDynamicXform_.valid())
+    fixedDynamicXform_->setOverrideScale(osg::Vec3d(prefs.scalexyz().y(), prefs.scalexyz().x(), prefs.scalexyz().z()));
   return true;
 }
 
@@ -586,14 +673,23 @@ bool PlatformModelNode::updateDynamicScale_(const simData::PlatformPrefs& prefs)
   const bool ds = prefs.dynamicscale();
 
   dynamicXform_->setDynamicScalingEnabled(ds);
+  if (fixedDynamicXform_.valid())
+    fixedDynamicXform_->setDynamicScalingEnabled(ds);
   // Scale applies whether dynamic scaling is enabled or static scaling is enabled
   dynamicXform_->setStaticScalar(prefs.scale());
+  if (fixedDynamicXform_.valid())
+    fixedDynamicXform_->setStaticScalar(prefs.scale());
   // Scale scalar, scale offset, and algorithm only apply when dynamic scaling is on
   if (ds)
   {
     dynamicXform_->setDynamicScalar(prefs.dynamicscalescalar());
     dynamicXform_->setScaleOffset(prefs.dynamicscaleoffset());
     dynamicXform_->setDynamicScaleToPixels(isImageModel_ && prefs.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
+    if (fixedDynamicXform_.valid())
+    {
+      fixedDynamicXform_->setDynamicScalar(prefs.dynamicscalescalar());
+      fixedDynamicXform_->setScaleOffset(prefs.dynamicscaleoffset());
+    }
   }
 
   return true;
@@ -640,15 +736,18 @@ void PlatformModelNode::updateImageIconRotation_(const simData::PlatformPrefs& p
   {
     setRotateToScreen(false);
     imageIconXform_->setRotateInScreenSpace(false);
+    if (fixedImageIconXform_.valid())
+      fixedImageIconXform_->setRotateInScreenSpace(false);
     // Reset components to inherit
     setLocator(getLocator(),
       (getLocator()->getComponentsToInherit() | simVis::Locator::COMP_ORIENTATION));
     return;
   }
 
-  setRotateToScreen(
-    prefs.rotateicons() == simData::IR_2D_UP);
+  setRotateToScreen(prefs.rotateicons() == simData::IR_2D_UP);
   imageIconXform_->setRotateInScreenSpace(prefs.rotateicons() == simData::IR_2D_YAW);
+  if (fixedImageIconXform_.valid())
+    fixedImageIconXform_->setRotateInScreenSpace(prefs.rotateicons() == simData::IR_2D_YAW);
 
   if (prefs.rotateicons() == simData::IR_3D_YPR)
   {
