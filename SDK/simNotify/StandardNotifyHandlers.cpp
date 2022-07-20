@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
 #include <cassert>
 #include "simNotify/StandardNotifyHandlers.h"
 
