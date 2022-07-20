@@ -33,24 +33,26 @@
 #include "simNotify/NotifyHandler.h"
 #include "simNotify/StandardNotifyHandlers.h"
 #include "simCore/Common/Common.h"
+#include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Version.h"
 #include "simCore/String/UtfUtils.h"
-
-using namespace std;
 
 namespace
 {
 
-class AssertionException : public exception
+class AssertionException : public std::exception
 {
 public:
-  explicit AssertionException(const string &message) : message_(message) { }
+  explicit AssertionException(const std::string &message) : message_(message) { }
   ~AssertionException() throw() {}
 
-  virtual const char *what() const throw() { return message_.c_str(); }
+  virtual const char *what() const throw() override
+  {
+    return message_.c_str();
+  }
 
 private:
-  string message_;
+  std::string message_;
 
 };
 
@@ -132,7 +134,7 @@ public:
 
   void clearBuffer() { buffer_.clear(); }
 
-  virtual void notify(const std::string &message)
+  virtual void notify(const std::string &message) override
   {
     buffer_ += message;
   }
@@ -502,7 +504,7 @@ void testFileNotifyHandler()
   handler.reset();
 
   // Read the string from the file
-  ifstream fd(simCore::streamFixUtf8(filename));
+  std::ifstream fd(simCore::streamFixUtf8(filename));
 
   if (!fd.is_open())
   {
@@ -538,11 +540,73 @@ void testStreamNotifyHandler()
   ss.str("");
 }
 
+int testComposite()
+{
+  int rv = 0;
+
+  auto handler1 = std::make_shared<NotifyHandlerTest<simNotify::NotifyHandler> >();
+  auto handler2 = std::make_shared<NotifyHandlerTest<simNotify::NotifyHandler> >();
+  auto composite = std::make_shared<simNotify::CompositeHandler>();
+  simNotify::setNotifyHandlers(composite);
+  simNotify::setNotifyLevel(simNotify::NOTIFY_DEBUG_FP);
+
+  SIM_ALWAYS << "Test 1\n";
+  rv += SDK_ASSERT(handler1->getBuffer().empty());
+  rv += SDK_ASSERT(handler2->getBuffer().empty());
+
+  rv += SDK_ASSERT(composite->addHandler(handler1) == 0);
+  SIM_ALWAYS << "Test 2\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "ALWAYS:  Test 2\n");
+  rv += SDK_ASSERT(handler2->getBuffer().empty());
+
+  rv += SDK_ASSERT(composite->addHandler(handler2) == 0);
+  SIM_ERROR << "Test 3\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "ALWAYS:  Test 2\nERROR:  Test 3\n");
+  rv += SDK_ASSERT(handler2->getBuffer() == "ERROR:  Test 3\n");
+
+  rv += SDK_ASSERT(composite->addHandler(handler1) != 0);
+  SIM_INFO << "Test 4\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "ALWAYS:  Test 2\nERROR:  Test 3\nINFO:  Test 4\n");
+  rv += SDK_ASSERT(handler2->getBuffer() == "ERROR:  Test 3\nINFO:  Test 4\n");
+
+  // Test remove
+  rv += SDK_ASSERT(composite->removeHandler(simNotify::NotifyHandlerPtr()) != 0);
+  rv += SDK_ASSERT(composite->removeHandler(handler1) == 0);
+  SIM_ALWAYS << "Test 5\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "ALWAYS:  Test 2\nERROR:  Test 3\nINFO:  Test 4\n");
+  rv += SDK_ASSERT(handler2->getBuffer() == "ERROR:  Test 3\nINFO:  Test 4\nALWAYS:  Test 5\n");
+  rv += SDK_ASSERT(composite->removeHandler(handler1) != 0);
+
+  handler1->clearBuffer();
+  handler2->clearBuffer();
+
+  // Test adding back in still works
+  SIM_ALWAYS << "Test 6\n";
+  rv += SDK_ASSERT(handler1->getBuffer().empty());
+  rv += SDK_ASSERT(handler2->getBuffer() == "ALWAYS:  Test 6\n");
+  rv += SDK_ASSERT(composite->addHandler(handler1) == 0);
+  SIM_ALWAYS << "Test 7\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "ALWAYS:  Test 7\n");
+  rv += SDK_ASSERT(handler2->getBuffer() == "ALWAYS:  Test 6\nALWAYS:  Test 7\n");
+
+  // Test severity
+  handler1->clearBuffer();
+  handler2->clearBuffer();
+  simNotify::setNotifyLevel(simNotify::NOTIFY_NOTICE);
+  SIM_DEBUG << "Test 8\n";
+  SIM_WARN << "Test 9\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "WARN:  Test 9\n");
+  rv += SDK_ASSERT(handler2->getBuffer() == "WARN:  Test 9\n");
+
+  return rv;
+}
+
 }
 
 int TestNotify(int argc, char** const argv)
 {
   simCore::checkVersionThrow();
+  int rv = 0;
   try
   {
     // Test functions for setting and querying notify severity level
@@ -557,12 +621,13 @@ int TestNotify(int argc, char** const argv)
     testStderrNotifyHandler();
     testFileNotifyHandler();
     testStreamNotifyHandler();
+    rv += testComposite();
   }
   catch (AssertionException& e)
   {
-    cout << e.what() << endl;
+    std::cout << e.what() << std::endl;
     return 1;
   }
 
-  return 0;
+  return rv;
 }

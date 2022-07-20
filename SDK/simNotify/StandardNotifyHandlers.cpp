@@ -81,4 +81,42 @@ void StreamNotifyHandler::notify(const std::string &message)
     os_ << message;
 }
 
+void CompositeHandler::notifyPrefix()
+{
+  for (const auto& handlerPtr : handlers_)
+  {
+    // Must set severity for each handler, since we cannot propagate it
+    // due to virtual function limitations.
+    handlerPtr->setSeverity(severity());
+    handlerPtr->notifyPrefix();
+  }
+}
+
+void CompositeHandler::notify(const std::string& message)
+{
+  for (const auto& handlerPtr : handlers_)
+    handlerPtr->notify(message);
+}
+
+int CompositeHandler::addHandler(simNotify::NotifyHandlerPtr handler)
+{
+  // Do not add null handlers. Note that a NullNotifyHandler is OK
+  if (!handler)
+    return 1;
+  // Do not add the same handler more than once
+  if (std::find(handlers_.begin(), handlers_.end(), handler) != handlers_.end())
+    return 1;
+  handlers_.push_back(handler);
+  return 0;
+}
+
+int CompositeHandler::removeHandler(simNotify::NotifyHandlerPtr handler)
+{
+  auto iter = std::find(handlers_.begin(), handlers_.end(), handler);
+  if (iter == handlers_.end())
+    return 1;
+  handlers_.erase(iter);
+  return 0;
+}
+
 }

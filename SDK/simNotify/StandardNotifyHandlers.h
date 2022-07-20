@@ -25,6 +25,7 @@
 
 #include <fstream>
 #include <string>
+#include <vector>
 
 #include "simCore/Common/Common.h"
 #include "simNotify/NotifyHandler.h"
@@ -61,7 +62,7 @@ namespace simNotify
     *
     * @param[in ] message the message to be written.
     */
-    virtual void notify(const std::string &message);
+    virtual void notify(const std::string &message) override;
   };
 
   /**
@@ -92,7 +93,7 @@ namespace simNotify
     * The following severity levels will cause messages to be written to stdout:
     *   NOTICE, INFO, DEBUG_INFO, DEBUG_FP
     */
-    virtual void notifyPrefix();
+    virtual void notifyPrefix() override;
   };
 
   /**
@@ -112,7 +113,7 @@ namespace simNotify
     *
     * @param[in ] message the message to be written.
     */
-    virtual void notify(const std::string &message);
+    virtual void notify(const std::string &message) override;
   };
 
   /**
@@ -132,7 +133,7 @@ namespace simNotify
     *
     * @param[in ] message the message to be written.
     */
-    virtual void notify(const std::string &message);
+    virtual void notify(const std::string &message) override;
   };
 
   /**
@@ -174,7 +175,7 @@ namespace simNotify
     *
     * @param[in ] message the message to be written.
     */
-    virtual void notify(const std::string &message);
+    virtual void notify(const std::string &message) override;
 
   private:
     std::fstream file_;
@@ -208,11 +209,29 @@ namespace simNotify
     *
     * @param[in ] message the message to be written.
     */
-    virtual void notify(const std::string &message);
+    virtual void notify(const std::string &message) override;
 
   private:
     std::ostream& os_;
   };
+
+  /** Provides a way to send the same notification messages to multiple handlers. */
+  class SDKNOTIFY_EXPORT CompositeHandler : public simNotify::NotifyHandler
+  {
+  public:
+    // From NotifyHandler:
+    virtual void notifyPrefix() override;
+    virtual void notify(const std::string& message) override;
+
+    /** Adds a handler to process messages. Returns 0 on success. */
+    int addHandler(simNotify::NotifyHandlerPtr handler);
+    /** Removes a handler from processing. Returns 0 on success. */
+    int removeHandler(simNotify::NotifyHandlerPtr handler);
+
+  private:
+    std::vector<simNotify::NotifyHandlerPtr> handlers_;
+  };
+
 
 }
 
