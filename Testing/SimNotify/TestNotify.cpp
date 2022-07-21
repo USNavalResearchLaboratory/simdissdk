@@ -601,6 +601,95 @@ int testComposite()
   return rv;
 }
 
+
+
+int testCapture()
+{
+  int rv = 0;
+  // Create a stream capture notify handler, as a baseline for the test
+  std::stringstream ss1;
+  simNotify::setNotifyHandlers(std::make_shared<simNotify::StreamNotifyHandler>(ss1));
+  simNotify::setNotifyLevel(simNotify::NOTIFY_DEBUG_FP);
+
+  // Write to the stream and confirm content; note, missing newlines in many of these outputs
+  SIM_ALWAYS << "Always";
+  SIM_INFO << "Info" << "Two";
+  SIM_ALWAYS << "AlwaysMore\n\n";
+  SIM_ALWAYS << "Repeat\n";
+  SIM_ERROR << "";
+  SIM_ALWAYS << "Again";
+  rv += SDK_ASSERT(ss1.str()  == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Install a capturing notify handler, and print the same content
+  auto capture = std::make_shared<simNotify::CaptureHandler>();
+  simNotify::setNotifyHandlers(capture);
+
+  SIM_ALWAYS << "Always";
+  SIM_INFO << "Info" << "Two";
+  SIM_ALWAYS << "AlwaysMore\n\n";
+  SIM_ALWAYS << "Repeat\n";
+  SIM_ERROR << "";
+  SIM_ALWAYS << "Again";
+
+  // Write back out to a new handler
+  std::stringstream ss2;
+  simNotify::setNotifyHandlers(std::make_shared<simNotify::StreamNotifyHandler>(ss2));
+  capture->writeToGlobal();
+  rv += SDK_ASSERT(ss2.str() == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Write back out to a specific handler
+  std::stringstream ss3;
+  auto stream3 = std::make_shared<simNotify::StreamNotifyHandler>(ss3);
+  capture->writeTo(*stream3, false);
+  rv += SDK_ASSERT(ss2.str() == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+  rv += SDK_ASSERT(ss3.str() == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Clear the content and confirm it's cleared by writing to another handler
+  rv += SDK_ASSERT(!capture->empty());
+  capture->clear();
+  rv += SDK_ASSERT(capture->empty());
+  std::stringstream ss4;
+  auto stream4 = std::make_shared<simNotify::StreamNotifyHandler>(ss4);
+  capture->writeTo(*stream4, false);
+  rv += SDK_ASSERT(ss4.str().empty());
+
+  // Test notify level. First, rewrite the strings to the capture, with everything enabled.
+  simNotify::setNotifyHandlers(capture);
+  SIM_ALWAYS << "Always";
+  SIM_INFO << "Info" << "Two";
+  SIM_ALWAYS << "AlwaysMore\n\n";
+  SIM_ALWAYS << "Repeat\n";
+  SIM_ERROR << "";
+  SIM_ALWAYS << "Again";
+  // Now, transfer that to stream4 with notification level changed; should be no change in output
+  simNotify::setNotifyLevel(simNotify::NOTIFY_ERROR);
+  capture->writeTo(*stream4, false);
+  rv += SDK_ASSERT(ss4.str() == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Rewrite, respecting notify level
+  std::stringstream ss5;
+  auto stream5 = std::make_shared<simNotify::StreamNotifyHandler>(ss5);
+  capture->writeTo(*stream5, true);
+  rv += SDK_ASSERT(ss5.str() == "ALWAYS:  AlwaysALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Attempt the same, using global writer; note that notify level is now respected so output is different
+  std::stringstream ss6;
+  simNotify::setNotifyHandlers(std::make_shared<simNotify::StreamNotifyHandler>(ss6));
+  capture->writeToGlobal();
+  rv += SDK_ASSERT(ss6.str() == "ALWAYS:  AlwaysALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Test that we can forget to remove the capture, do a write-to, and not fail
+  simNotify::setNotifyHandlers(capture);
+  capture->writeToGlobal();
+  capture->writeTo(*capture, false);
+  std::stringstream ss7;
+  auto stream7 = std::make_shared<simNotify::StreamNotifyHandler>(ss7);
+  capture->writeTo(*stream7, false);
+  rv += SDK_ASSERT(ss7.str() == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  return rv;
+}
+
 }
 
 int TestNotify(int argc, char** const argv)
@@ -622,6 +711,7 @@ int TestNotify(int argc, char** const argv)
     testFileNotifyHandler();
     testStreamNotifyHandler();
     rv += testComposite();
+    rv += testCapture();
   }
   catch (AssertionException& e)
   {

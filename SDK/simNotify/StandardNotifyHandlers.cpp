@@ -22,6 +22,7 @@
  */
 #include <algorithm>
 #include <cassert>
+#include "simNotify/Notify.h"
 #include "simNotify/StandardNotifyHandlers.h"
 
 namespace simNotify {
@@ -80,6 +81,73 @@ void StreamNotifyHandler::notify(const std::string &message)
 {
   if (os_.good())
     os_ << message;
+}
+
+void CaptureHandler::notifyPrefix()
+{
+  lines_.push_back(NewLine{ severity(), {} });
+}
+
+void CaptureHandler::notify(const std::string& message)
+{
+  if (lines_.empty())
+  {
+    // notifyPrefix() should be called before notify(), filling the vector
+    assert(0);
+    notifyPrefix();
+  }
+
+  auto& line = lines_.back();
+  line.messages.push_back(message);
+}
+
+void CaptureHandler::clear()
+{
+  lines_.clear();
+}
+
+bool CaptureHandler::empty() const
+{
+  return lines_.empty();
+}
+
+void CaptureHandler::writeTo(simNotify::NotifyHandler& handler, bool respectNotifyLevel)
+{
+  // Avoid writing to self
+  if (&handler == this)
+    return;
+
+  for (const auto& line : lines_)
+  {
+    // Skip the line if it's not enabled
+    if (respectNotifyLevel && !simNotify::isNotifyEnabled(line.severity))
+      continue;
+
+    handler.setSeverity(line.severity);
+    // Typically notifyPrefix() is handled by simNotify::notify(). We do it manually
+    handler.notifyPrefix();
+    for (const auto& message : line.messages)
+      handler.notify(message);
+  }
+}
+
+/**
+ * Writes to the global notify handler. Call simNotify::setNotifyHandlers() or equivalent
+ * before calling this. There are no options to ignore notify levels when using this function.
+ */
+void CaptureHandler::writeToGlobal()
+{
+  for (const auto& line : lines_)
+  {
+    // Avoid writing to self, which would invalidate lines_
+    if (this == simNotify::notifyHandler(line.severity).get())
+      continue;
+
+    // Send the message over
+    auto& handler = simNotify::notify(line.severity);
+    for (const auto& message : line.messages)
+      handler.notify(message);
+  }
 }
 
 void CompositeHandler::notifyPrefix()
