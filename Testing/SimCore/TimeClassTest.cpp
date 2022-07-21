@@ -733,6 +733,77 @@ namespace
 
     return rv;
   }
+
+  int testStrptime()
+  {
+    int rv = 0;
+    simCore::TimeStamp ts;
+    std::string remain;
+    
+    // Test individual components
+    rv += SDK_ASSERT(ts.strptime("10", "%d", &remain) == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 9 * 86400));
+    rv += SDK_ASSERT(remain.empty());
+
+    // %y on Linux systems demonstrated different behavior than MSVC 2022. For example,
+    // "10" was parsed as 2010 (110) on Windows, but only 10 (1910) on Linux
+
+    rv += SDK_ASSERT(ts.strptime("2010", "%Y", &remain) == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.referenceYear(), 2010));
+    rv += SDK_ASSERT(remain.empty());
+
+    rv += SDK_ASSERT(ts.strptime("2", "%m", &remain) == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 * 31));
+    rv += SDK_ASSERT(remain.empty());
+
+    rv += SDK_ASSERT(ts.strptime("10", "%H", &remain) == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 36000));
+    rv += SDK_ASSERT(remain.empty());
+
+    rv += SDK_ASSERT(ts.strptime("10", "%M", &remain) == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 600));
+    rv += SDK_ASSERT(remain.empty());
+
+    rv += SDK_ASSERT(ts.strptime("10", "%S", &remain) == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 10));
+    rv += SDK_ASSERT(remain.empty());
+
+    // Test some combined times/dates
+    rv += SDK_ASSERT(ts.strptime("1:02:03", "%H:%M:%S", &remain) == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 3600 + 120 + 3));
+    rv += SDK_ASSERT(remain.empty());
+
+    rv += SDK_ASSERT(ts.strptime("1/2/2012 1:02:03", "%m/%d/%Y %H:%M:%S", &remain) == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3));
+    rv += SDK_ASSERT(simCore::areEqual(ts.referenceYear(), 2012));
+    rv += SDK_ASSERT(remain.empty());
+
+    // Testing demonstrated errors in either C++ documentation or MSVC 2022
+    // implementation with %j. %j is "day of year as decimal range 001-366",
+    // so 001 is January 1. This is tm_yday of 0. %j indicates this is
+    // tm_yday of 1, which is wrong.
+
+    // Test failing content:
+    // Letters for a number
+    rv += SDK_ASSERT(ts.strptime("abc", "%S", &remain) != 0);
+    // Missing tokens (:) and not enough digits
+    rv += SDK_ASSERT(ts.strptime("1 2", "&H:%M:%S", &remain) != 0);
+    // Out of bounds values
+    rv += SDK_ASSERT(ts.strptime("1:2:63", "%H:%M:%S", &remain) != 0);
+    // Invalid format string
+    rv += SDK_ASSERT(ts.strptime("1:2:3", "&H:%M:%S", &remain) != 0);
+    rv += SDK_ASSERT(ts.strptime("1", "%f", &remain) != 0);
+
+    // Successes with trailing characters
+    rv += SDK_ASSERT(ts.strptime("15.f", "%S", &remain) == 0);
+    rv += SDK_ASSERT(remain == ".f");
+    rv += SDK_ASSERT(ts.strptime("1/2/2012 1:02:03.5", "%m/%d/%Y %H:%M:%S", &remain) == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3));
+    rv += SDK_ASSERT(simCore::areEqual(ts.referenceYear(), 2012));
+    rv += SDK_ASSERT(remain == ".5");
+
+    return rv;
+  }
 }
 
 int TimeClassTest(int argc, char* argv[])
@@ -749,6 +820,7 @@ int TimeClassTest(int argc, char* argv[])
   rv += testNegativeSeconds();
   rv += testPositiveSeconds();
   rv += testTimeStampComparison();
+  rv += testStrptime();
 
   std::cout << "TimeClassTest " << (rv == 0 ? "PASSED" : "FAILED") << std::endl;
 

@@ -390,6 +390,26 @@ namespace simCore
     */
     void getTimeComponents(unsigned int& day, unsigned int& hour, unsigned int& min, unsigned int& sec) const;
 
+    /// Functional equivalent of C function strptime(). See std::get_time() for format specifications.
+    /**
+     * Reads a user-provided time string, using a user-provided formatting string, returning
+     * 0 on success and non-zero on error. Intended to match ::strptime() functionality.
+     * Optionally returns the string remainder on success. Notably, this canot process
+     * milliseconds values. This function is dependent on correct implementation of strptime()
+     * on Linux and std::get_time() on MSVC. Implementation errors in these functions will
+     * cascade into this function.
+     * @param timeStr User time string value
+     * @param format Formatting string, such as "%m/%d/%Y %H:%M:%S". The format values are
+     *   identical to those in std::get_time().
+     * @param remainder After parsing the string, this will be the remaining content, copied
+     *   from the original string. This is useful for processing trailing milliseconds. On
+     *   failure, this is the same as the input parameter timeStr.
+     * @return 0 on success, and TimeStamp is set to the time string provided. Non-zero
+     *   on error, such as invalid format string or inability to read values. On failure,
+     *   the time stamp is not changed. On success, the time stamp is updated to value read.
+     */
+    int strptime(const std::string& timeStr, const std::string& format, std::string* remainder);
+
   protected:
 
     int referenceYear_;            /**< Reference Gregorian calendar year, such as 1970, 2000, etc.  Must be >= 1970 */

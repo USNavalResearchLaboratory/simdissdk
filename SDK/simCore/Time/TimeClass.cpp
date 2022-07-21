@@ -20,15 +20,19 @@
  * disclose, or release this software.
  *
  */
-#include <iostream>
 #include <cassert>
 #include <cstdlib>
+#include <iostream>
+#include <iomanip>
 #include <limits>
+#include <locale>
+#include <time.h>
 
 #include "simCore/Calc/Math.h"
-#include "simCore/Time/Utils.h"
-#include "simCore/Time/TimeClass.h"
 #include "simCore/Time/Constants.h"
+#include "simCore/Time/Exception.h"
+#include "simCore/Time/TimeClass.h"
+#include "simCore/Time/Utils.h"
 
 namespace simCore {
 
@@ -404,4 +408,82 @@ void TimeStamp::getTimeComponents(unsigned int& day, unsigned int& hour, unsigne
   time -= (min*simCore::SECPERMIN);
   sec = static_cast<unsigned int>(time);
 }
+
+void print(const std::tm& t)
+{
+  std::cout << t.tm_mon << "/" << t.tm_mday << "/" << t.tm_year << " "
+   << t.tm_hour << ":" << t.tm_min << ":" << t.tm_sec << "   yday=" << t.tm_yday << "\n";
+}
+
+//------------------------------------------------------------------------
+
+int TimeStamp::strptime(const std::string& timeStr, const std::string& format, std::string* remainder)
+{
+  // Avoid any simCore time utility exceptions
+  try {
+    std::tm tm = {};
+    if (remainder)
+      remainder->clear();
+
+#ifdef _MSC_VER
+    // Adapted from https://stackoverflow.com/questions/321849/strptime-equivalent-on-windows
+    std::istringstream is(timeStr);
+    is.imbue(std::locale(setlocale(LC_ALL, nullptr)));
+
+    // Note that std::get_Time wasn't implemented in GCC until 5.1, and is
+    // reported as broken in MSVC 2015.
+    is >> std::get_time(&tm, format.c_str());
+    if (is.fail())
+    {
+      if (remainder)
+        *remainder = timeStr;
+      return 1;
+    }
+
+    // Fill out the remainder value
+    if (remainder && !is.eof())
+      *remainder = timeStr.substr(is.tellg());
+#else
+    // Linux use strptime(), which returns null on error
+    const char* rv = ::strptime(timeStr.c_str(), format.c_str(), &tm);
+    if (!rv)
+    {
+      if (remainder)
+        *remainder = timeStr;
+      return 1;
+    }
+    if (remainder)
+      *remainder = rv;
+#endif
+
+    // Make sane values for year, mday, and mon, before calling mktime()
+    tm.tm_year = simCore::sdkMax(70, tm.tm_year);
+    tm.tm_mday = simCore::sdkMax(tm.tm_mday, 1);
+    if (tm.tm_yday > 0 && tm.tm_mday == 1 && tm.tm_mon == 0)
+      simCore::getMonthAndDayOfMonth(tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_yday);
+
+    // mktime() will return in local time, use timezone to offset back to UTC
+#ifdef _MSC_VER
+    auto asTime = std::mktime(&tm) - _timezone;
+#else
+    auto asTime = std::mktime(&tm) - timezone;
+#endif
+
+    // Check for failure state
+    if (asTime < 0)
+    {
+      if (remainder)
+        *remainder = timeStr;
+      return 1;
+    }
+    setTime(1970, asTime);
+    return 0;
+  }
+  catch (const simCore::TimeException&)
+  {
+    // noop
+  }
+  return 1;
+}
+
 }
