@@ -476,7 +476,7 @@ int TimeStamp::strptime(const std::string& timeStr, const std::string& format, s
         *remainder = timeStr;
       return 1;
     }
-    setTime(1970, asTime);
+    setTime(1970, static_cast<double>(asTime));
     return 0;
   }
   catch (const simCore::TimeException&)
