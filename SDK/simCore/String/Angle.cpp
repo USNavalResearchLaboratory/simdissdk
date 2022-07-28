@@ -225,6 +225,9 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
 
     std::stringstream strDegMinSec;
+    // SIM-14416: force leading -, as stringstream won't handle -0 as -0
+    if (negative && printNegativeSign && degreeAngle == -0.)
+      strDegMinSec << '-';
     strDegMinSec << static_cast<int>(degreeAngle) << degreeSymbolString << " ";
     strDegMinSec.setf(std::ios::fixed, std::ios::floatfield);
     strDegMinSec << std::setfill('0') << std::setw(2) << static_cast<int>(minValue) << minuteSymbolString << " ";
@@ -263,6 +266,9 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
 
     std::stringstream strDegMin;
+    // SIM-14416: force leading -, as stringstream won't handle -0 as -0
+    if (negative && printNegativeSign && degreeAngle == -0.)
+      strDegMin << '-';
     strDegMin << static_cast<int>(degreeAngle) << degreeSymbolString << " ";
     strDegMin.setf(std::ios::fixed, std::ios::floatfield);
     size_t width = (precision == 0 ? (2) : (precision + 3));  // Account for decimal if precision is non-zero

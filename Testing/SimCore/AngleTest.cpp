@@ -241,6 +241,18 @@ int testGetDegreeAngleFromDegreeString()
   errCode = simCore::getAngleFromDegreeString(testString, false, conv);
   rv += SDK_ASSERT(simCore::areEqual(atof(testString.c_str()), lat, 0.0001) && errCode == 0);
 
+
+  // SIM-14416: test for corrrect output of -0
+  lat = -0.99991000024535082 * simCore::DEG2RAD;
+
+  testString = simCore::printLatitude(lat, simCore::FMT_DEGREES_MINUTES_SECONDS, true, 2, simCore::DEG_SYM_NONE);
+  errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+  rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.0001) && errCode == 0);
+
+  testString = simCore::printLatitude(lat, simCore::FMT_DEGREES_MINUTES, true, 2, simCore::DEG_SYM_NONE);
+  errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+  rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.0001) && errCode == 0);
+
   return rv;
 }
 
