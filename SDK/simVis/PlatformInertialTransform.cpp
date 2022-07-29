@@ -49,6 +49,12 @@ PlatformInertialTransform::PlatformInertialTransform(const PlatformInertialTrans
 {
 }
 
+PlatformInertialTransform::~PlatformInertialTransform()
+{
+  if (locator_.valid())
+    locator_->removeCallback(callback_.get());
+}
+
 bool PlatformInertialTransform::computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const
 {
   // Pre-3.6, there's no access to the MV stack.  As a result, billboard image icons

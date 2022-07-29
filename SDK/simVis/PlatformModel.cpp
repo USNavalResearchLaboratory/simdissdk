@@ -293,6 +293,8 @@ bool PlatformModelNode::removeFixedScaledChild(osg::Node* node)
 
   if (fixedImageIconXform_->getNumChildren() == 0)
   {
+    fixedDynamicXform_->removeChild(fixedImageIconXform_.get());
+    removeChild(fixedDynamicXform_.get());
     fixedDynamicXform_ = nullptr;
     fixedImageIconXform_ = nullptr;
   }
