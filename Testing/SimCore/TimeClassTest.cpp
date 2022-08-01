@@ -804,6 +804,69 @@ namespace
 
     return rv;
   }
+
+  int testStrftime()
+  {
+    int rv = 0;
+
+    // January 3, 14:52:17.8
+    const simCore::TimeStamp jan4_14_52_17(2022, 86400 * 3 + 3600 * 14 + 60 * 52 + 17.8);
+
+    // Test individual components: Year
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%Y") == "2022");
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%y") == "22");
+
+    // Month (%b and %B are locale-dependent and may fail on some systems)
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%b") == "Jan");
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%B") == "January");
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%m") == "01");
+
+    // Day of month
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%j") == "004");
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%d") == "04");
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%e") == " 4");
+
+    // H/M/S
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%H") == "14");
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%I") == "02");
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%M") == "52");
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%S") == "17");
+    // Note, no millisecond representation
+
+    // Attempt to "flood" output string. This is white box testing, since we know that
+    // the C implementation can have a format string significantly smaller than the output
+    // and the C function doesn't tell you exactly how big to make the buffer.
+    std::string manyJan;
+    std::string formatStr;
+    for (int k = 0; k < 1500; ++k)
+    {
+      formatStr += "%B";
+      manyJan += "January";
+    }
+    rv += SDK_ASSERT(jan4_14_52_17.strftime(formatStr) == manyJan);
+
+    // Percentage encoded
+    rv += SDK_ASSERT(jan4_14_52_17.strftime("%%") == "%");
+
+    // Bounds checking
+    rv += SDK_ASSERT(simCore::MIN_TIME_STAMP.strftime("%m/%d/%Y %H:%M:%S") == "01/01/1970 00:00:00");
+    rv += SDK_ASSERT(simCore::MAX_TIME_STAMP.strftime("%m/%d/%Y %H:%M:%S") == "12/31/2200 23:59:59");
+    rv += SDK_ASSERT(simCore::INFINITE_TIME_STAMP.strftime("%m/%d/%Y %H:%M:%S") == "");
+
+#if !defined(_MSC_VER) || defined(NDEBUG)
+    // Invalid specifier. This asserts in MSVC code (even with invalid handler),
+    // so do not test this in debug mode. The return value on MSVC is empty string
+    // because it cannot process the input. On Linux, the input string is returned.
+    // Therefore we permit either empty string or input string here in failure.
+#ifdef _MSC_VER
+    std::cout << "Invalid argument being passed in, exception that follows is normal:\n";
+#endif
+    const std::string& failResult = jan4_14_52_17.strftime("%3");
+    rv += SDK_ASSERT(failResult == "" || failResult == " %3");
+#endif
+
+    return rv;
+  }
 }
 
 int TimeClassTest(int argc, char* argv[])
@@ -821,6 +884,7 @@ int TimeClassTest(int argc, char* argv[])
   rv += testPositiveSeconds();
   rv += testTimeStampComparison();
   rv += testStrptime();
+  rv += testStrftime();
 
   std::cout << "TimeClassTest " << (rv == 0 ? "PASSED" : "FAILED") << std::endl;
 

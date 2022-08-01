@@ -410,6 +410,22 @@ namespace simCore
      */
     int strptime(const std::string& timeStr, const std::string& format, std::string* remainder);
 
+    /// Functional equivalent of C function strftime(). See std::put_time() for format specifications.
+    /**
+     * Reads a developer-provided format string, and prints the values of the TimeStamp according
+     * to that format string. Intended to match ::strftime() functionality. This function is
+     * dependent on correction implementation of std:put_time(), and implementation errors in that
+     * function will cascade into this function. Note that underlying library implementation will
+     * impact results, and format strings from strftime() are not necessarily the same as format
+     * strings accepted by strptime().
+     * Invalid format strings may assert in debug mode.
+     * @param format Formatting string, such as "%m/%d/%Y %H:%M:%S". The format values are
+     *   identical to those in std::pet_time().
+     * @return String value representing the time. On error, this may be empty string, or it may
+     *   be a partially converted output string, depending on underlying system implementation.
+     */
+    std::string strftime(const std::string& format) const;
+
   protected:
 
     int referenceYear_;            /**< Reference Gregorian calendar year, such as 1970, 2000, etc.  Must be >= 1970 */

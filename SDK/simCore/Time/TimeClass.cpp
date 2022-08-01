@@ -28,6 +28,7 @@
 #include <locale>
 #include <time.h>
 
+#include "simCore/Common/Exception.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/Exception.h"
@@ -409,12 +410,6 @@ void TimeStamp::getTimeComponents(unsigned int& day, unsigned int& hour, unsigne
   sec = static_cast<unsigned int>(time);
 }
 
-void print(const std::tm& t)
-{
-  std::cout << t.tm_mon << "/" << t.tm_mday << "/" << t.tm_year << " "
-   << t.tm_hour << ":" << t.tm_min << ":" << t.tm_sec << "   yday=" << t.tm_yday << "\n";
-}
-
 //------------------------------------------------------------------------
 
 int TimeStamp::strptime(const std::string& timeStr, const std::string& format, std::string* remainder)
@@ -484,6 +479,61 @@ int TimeStamp::strptime(const std::string& timeStr, const std::string& format, s
     // noop
   }
   return 1;
+}
+
+/**
+ * MSVC strftime() and put_time() both execute the invalid parameter handler in cases
+ * of invalid parameters. In debug mode, this may also assert. The default implementation
+ * will fatally terminate the application, which is almost always not what we want. This
+ * is not a problem on Linux, so MSVC implementation installs a temporary handler using
+ * this class.
+ */
+class InvalidParameterDetection
+{
+public:
+#ifndef _MSC_VER
+  InvalidParameterDetection() {}
+  virtual ~InvalidParameterDetection() {}
+
+#else
+  InvalidParameterDetection()
+  {
+    oldHandler_ = _get_invalid_parameter_handler();
+    _set_invalid_parameter_handler(&InvalidParameterDetection::invalidParameter_);
+  }
+
+  virtual ~InvalidParameterDetection()
+  {
+    _set_invalid_parameter_handler(oldHandler_);
+  }
+  
+private:
+  static void invalidParameter_(const wchar_t* expression, const wchar_t* function,
+    const wchar_t* file, unsigned int line, uintptr_t pReserved)
+  {
+    throw simCore::TimeException(0, "Invalid parameter detected");
+  }
+
+  _invalid_parameter_handler oldHandler_;
+#endif
+};
+
+std::string TimeStamp::strftime(const std::string& format) const
+{
+  // Avoid testing INFINITE_TIME_STAMP
+  if (simCore::INFINITE_TIME_STAMP == *this)
+    return "";
+
+  InvalidParameterDetection detectInvalid;
+  const auto& timeStruct = simCore::getTimeStruct(*this);
+
+  // Try/catch since MSVC version will throw an exception on error
+  SAFETRYBEGIN;
+  std::stringstream ss;
+  ss << std::put_time(&timeStruct, format.c_str());
+  return ss.str();
+  SAFETRYEND("during TimeStamp::strftime");
+  return "";
 }
 
 }
