@@ -394,7 +394,7 @@ namespace simCore
     /**
      * Reads a user-provided time string, using a user-provided formatting string, returning
      * 0 on success and non-zero on error. Intended to match ::strptime() functionality.
-     * Optionally returns the string remainder on success. Notably, this canot process
+     * Optionally returns the string remainder on success. Notably, this cannot process
      * milliseconds values. This function is dependent on correct implementation of strptime()
      * on Linux and std::get_time() on MSVC. Implementation errors in these functions will
      * cascade into this function.
