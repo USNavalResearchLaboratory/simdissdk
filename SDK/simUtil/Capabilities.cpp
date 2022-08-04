@@ -106,13 +106,8 @@ void Capabilities::init_()
 
   checkVendorOpenGlSupport_(caps.getVendor(), caps.getVersion());
 
-  caps_.push_back(std::make_pair("Max FFP texture units", toString_(caps.getMaxFFPTextureUnits())));
   caps_.push_back(std::make_pair("Max GPU texture units", toString_(caps.getMaxGPUTextureUnits())));
-  caps_.push_back(std::make_pair("Max GPU texture coordinate sets", toString_(caps.getMaxGPUTextureCoordSets())));
-  caps_.push_back(std::make_pair("Max GPU attributes", toString_(caps.getMaxGPUAttribs())));
-  caps_.push_back(std::make_pair("Depth buffer bits", toString_(caps.getDepthBufferBits())));
   caps_.push_back(std::make_pair("Max texture size", toString_(caps.getMaxTextureSize())));
-  caps_.push_back(std::make_pair("Max lights", toString_(caps.getMaxLights())));
   caps_.push_back(std::make_pair("GLSL", toString_(caps.supportsGLSL())));
   if (caps.supportsGLSL())
   {
@@ -122,19 +117,9 @@ void Capabilities::init_()
   }
   else
     recordUsabilityConcern_(UNUSABLE, "GLSL is not supported.");
-  caps_.push_back(std::make_pair("Texture arrays", toString_(caps.supportsTextureArrays())));
-  caps_.push_back(std::make_pair("3D textures", toString_(caps.supportsTexture3D())));
-  caps_.push_back(std::make_pair("Multitexturing", toString_(caps.supportsMultiTexture())));
-  caps_.push_back(std::make_pair("Stencil wrap", toString_(caps.supportsStencilWrap())));
-  caps_.push_back(std::make_pair("2-sided stencils", toString_(caps.supportsTwoSidedStencil())));
   caps_.push_back(std::make_pair("Depth-packed stencil", toString_(caps.supportsDepthPackedStencilBuffer())));
-  caps_.push_back(std::make_pair("Occlusion query", toString_(caps.supportsOcclusionQuery())));
   caps_.push_back(std::make_pair("Draw instanced", toString_(caps.supportsDrawInstanced())));
-  caps_.push_back(std::make_pair("Max uniform block size", toString_(caps.getMaxUniformBlockSize())));
-  caps_.push_back(std::make_pair("Uniform buffer objects", toString_(caps.supportsUniformBufferObjects())));
   caps_.push_back(std::make_pair("NPOT textures", toString_(caps.supportsNonPowerOfTwoTextures())));
-  caps_.push_back(std::make_pair("Static geometry style", caps.preferDisplayListsForStaticGeometry() ? "Display List" : "VBO"));
-  caps_.push_back(std::make_pair("Mipmapped texture updates", toString_(caps.supportsMipmappedTextureUpdates())));
   caps_.push_back(std::make_pair("Max fast texture size", toString_(caps.getMaxFastTextureSize())));
 
   // Reconstruct the supported compressions string
