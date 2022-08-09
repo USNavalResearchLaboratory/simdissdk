@@ -159,15 +159,16 @@ void Capabilities::init_(osg::GraphicsContext& gc)
     return;
   }
 
-  const std::string vendorString = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+  const std::string& vendorString = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
   caps_.push_back(std::make_pair("osgEarth Version", osgEarthGetVersion()));
   caps_.push_back(std::make_pair("OSG Version", osgGetVersion()));
 #ifdef GDAL_RELEASE_NAME
   caps_.push_back(std::make_pair("GDAL Version", GDAL_RELEASE_NAME));
 #endif
   caps_.push_back(std::make_pair("Vendor", vendorString));
-  caps_.push_back(std::make_pair("Renderer", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
-  const std::string glVersionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+  const std::string& rendererString = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+  caps_.push_back(std::make_pair("Renderer", rendererString));
+  const std::string& glVersionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
   caps_.push_back(std::make_pair("OpenGL Version", glVersionString));
   glVersion_ = extractGlVersion_(glVersionString);
 
@@ -221,6 +222,15 @@ double Capabilities::extractGlVersion_(const std::string& glVersionString) const
 
 void Capabilities::checkVendorOpenGlSupport_(const std::string& vendor, const std::string& glVersionString)
 {
+  // osgEarth 1b9c06725 introduced a Capabilities-breaking headless mode that can be
+  // detected by looking at the vendor and renderer strings
+  if (vendor == "Unknown")
+  {
+    glVersion_ = 0.0;
+    recordUsabilityConcern_(Capabilities::UNUSABLE, "Unable to detect vendor, OpenGL may not be available.");
+    return;
+  }
+
   // Based on recommendation from https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_information_queries
   // Note that Mesa, Gallium, and Direct3D renderers are all potentially backed by a hardware
   // acceleration, and do not necessarily imply software acceleration.
