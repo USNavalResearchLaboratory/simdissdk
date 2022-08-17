@@ -259,6 +259,11 @@ void ButtonActions::updateCheckedState_()
   // free wheel mode is real time driven by a plug-in
   const simCore::Clock::Mode m = (clock_ != nullptr) ? clock_->mode() : simCore::Clock::MODE_STEP;
   realTime_->setChecked(m == simCore::Clock::MODE_REALTIME || m == simCore::Clock::MODE_FREEWHEEL);
+
+  if ((clock_ != nullptr) && clock_->isPlaying())
+    startStop_->setIcon(stopIcon_);
+  else
+    startStop_->setIcon(playIcon_);
 }
 
 void ButtonActions::clockStartStop_()
@@ -269,12 +274,10 @@ void ButtonActions::clockStartStop_()
     if (clock_->isPlaying())
     {
       clock_->stop();
-      startStop_->setIcon(playIcon_);
     }
     else // Otherwise, play the clock forward and show the stop icon
     {
       clock_->playForward();
-      startStop_->setIcon(stopIcon_);
     }
   }
   updateCheckedState_();
@@ -284,7 +287,6 @@ void ButtonActions::clockStop_()
 {
   if (clock_)
     clock_->stop();
-  startStop_->setIcon(playIcon_);
   updateCheckedState_();
 }
 
@@ -292,7 +294,6 @@ void ButtonActions::clockPlay_()
 {
   if (clock_)
     clock_->playForward();
-  startStop_->setIcon(stopIcon_);
   updateCheckedState_();
 }
 
@@ -326,8 +327,6 @@ void ButtonActions::clockPlayBackwards_()
 {
   if (clock_)
     clock_->playReverse();
-  // Fix start/stop button icon
-  startStop_->setIcon(stopIcon_);
   updateCheckedState_();
 }
 
