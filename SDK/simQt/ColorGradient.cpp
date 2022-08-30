@@ -57,6 +57,24 @@ ColorGradient::ColorGradient(const std::map<float, osg::Vec4>& colors)
   setColors(colors);
 }
 
+ColorGradient::ColorGradient(const ColorGradient& rhs)
+  : function_(new osg::TransferFunction1D),
+    discrete_(rhs.discrete_)
+{
+  clearColors();
+  setColors(rhs.colors());
+}
+
+ColorGradient& ColorGradient::operator=(const ColorGradient& rhs)
+{
+  if (this == &rhs)
+    return *this;
+  discrete_ = rhs.discrete_;
+  clearColors();
+  setColors(rhs.colors());
+  return *this;
+}
+
 ColorGradient::~ColorGradient()
 {
 }
@@ -249,12 +267,14 @@ bool ColorGradient::discrete() const
 
 bool ColorGradient::operator==(const ColorGradient& rhs) const
 {
-  return function_->getColorMap() == rhs.function_->getColorMap();
+  return discrete_ == rhs.discrete_ &&
+    function_->getColorMap() == rhs.function_->getColorMap();
 }
 
 bool ColorGradient::operator!=(const ColorGradient& rhs) const
 {
-  return function_->getColorMap() != rhs.function_->getColorMap();
+  return discrete_ != rhs.discrete_ ||
+    function_->getColorMap() != rhs.function_->getColorMap();
 }
 
 }

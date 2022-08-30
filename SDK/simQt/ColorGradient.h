@@ -50,6 +50,11 @@ public:
   explicit ColorGradient(const std::map<float, QColor>& colors);
   /** Creates a gradient with colors in given range. Values outside [0,1] are discarded. */
   explicit ColorGradient(const std::map<float, osg::Vec4>& colors);
+  /** Copy constructor required for dynamic memory */
+  ColorGradient(const ColorGradient& rhs);
+
+  /** Assignment operator required for dynamic memory */
+  ColorGradient& operator=(const ColorGradient& rhs);
 
   virtual ~ColorGradient();
 
