@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
 #include <cassert>
 #include "simCore/Calc/Interpolation.h"
 #include "simQt/QtConversion.h"
@@ -36,9 +37,10 @@ ColorGradient::ColorGradient()
   colors[0.50f] = osg::Vec4(0.f, 1.f, 0.f, 1.f); // green
   colors[0.75f] = osg::Vec4(1.f, 1.f, 0.f, 1.f); // yellow
   colors[1.00f] = osg::Vec4(1.f, 0.f, 0.f, 1.f); // red
-  setColors(colors);
+  function_->setColorMap(colors);
 }
 
+#ifdef OLD_SIMQT_COLORGRADIENT_API
 ColorGradient::ColorGradient(const std::map<float, QColor>& colors)
   : function_(new osg::TransferFunction1D)
 {
@@ -56,13 +58,13 @@ ColorGradient::ColorGradient(const std::map<float, osg::Vec4>& colors)
   // setColors will fix values outside [0,1]
   setColors(colors);
 }
+#endif
 
 ColorGradient::ColorGradient(const ColorGradient& rhs)
   : function_(new osg::TransferFunction1D),
     discrete_(rhs.discrete_)
 {
-  clearColors();
-  setColors(rhs.colors());
+  function_->setColorMap(rhs.function_->getColorMap());
 }
 
 ColorGradient& ColorGradient::operator=(const ColorGradient& rhs)
@@ -70,8 +72,7 @@ ColorGradient& ColorGradient::operator=(const ColorGradient& rhs)
   if (this == &rhs)
     return *this;
   discrete_ = rhs.discrete_;
-  clearColors();
-  setColors(rhs.colors());
+  function_->setColorMap(rhs.function_->getColorMap());
   return *this;
 }
 
@@ -86,6 +87,8 @@ ColorGradient ColorGradient::newDefaultGradient()
 
 ColorGradient ColorGradient::newDarkGradient()
 {
+  ColorGradient rv;
+
   std::map<float, osg::Vec4> colors;
   colors[0.0f] = osg::Vec4(0.f, 0.f, 0.f, 1.f); // black
   colors[0.2f] = osg::Vec4(0.f, 0.f, 1.f, 1.f); // blue
@@ -94,19 +97,25 @@ ColorGradient ColorGradient::newDarkGradient()
   colors[0.6f] = osg::Vec4(1.f, 1.f, 0.f, 1.f); // yellow
   colors[0.8f] = osg::Vec4(1.f, 0.f, 0.f, 1.f); // red
   colors[1.0f] = osg::Vec4(0.f, 0.f, 0.f, 1.f); // black
-  return ColorGradient(colors);
+  rv.function_->setColorMap(colors);
+  return rv;
 }
 
 ColorGradient ColorGradient::newGreyscaleGradient()
 {
+  ColorGradient rv;
+
   std::map<float, osg::Vec4> colors;
   colors[0.0f] = osg::Vec4(0.f, 0.f, 0.f, 1.f);
   colors[1.0f] = osg::Vec4(1.f, 1.f, 1.f, 1.f);
-  return ColorGradient(colors);
+  rv.function_->setColorMap(colors);
+  return rv;
 }
 
 ColorGradient ColorGradient::newDopplerGradient()
 {
+  ColorGradient rv;
+
   std::map<float, osg::Vec4> colors;
   colors[0.0f] = osg::Vec4(0.753f, 0.753f, 0.753f, 1.f); // grey
   colors[0.00170775f] = osg::Vec4(0.753f, 0.753f, 0.753f, 1.f); // grey
@@ -119,7 +128,8 @@ ColorGradient ColorGradient::newDopplerGradient()
   colors[0.875984f] = osg::Vec4(1.f, 0.f, 0.f, 1.f); // red
   colors[0.998292f] = osg::Vec4(1.f, 0.f, 1.f, 1.f); // magenta
   colors[1.0f] = osg::Vec4(1.f, 1.f, 1.f, 1.f); // white
-  return ColorGradient(colors);
+  rv.function_->setColorMap(colors);
+  return rv;
 }
 
 QColor ColorGradient::colorAt(float zeroToOne) const
@@ -138,6 +148,7 @@ osg::Vec4 ColorGradient::osgColorAt(float zeroToOne) const
   return iter->second;
 }
 
+#ifdef OLD_SIMQT_COLORGRADIENT_API
 int ColorGradient::setColor(float zeroToOne, const QColor& color)
 {
   return setColor(zeroToOne, simQt::getOsgColorFromQt(color));
@@ -243,6 +254,132 @@ int ColorGradient::setColors(const std::map<float, osg::Vec4>& colors)
   }
   return 0;
 }
+#endif
+
+#ifdef NEW_SIMQT_COLORGRADIENT_API
+size_t ColorGradient::addControlColor(float zeroToOne, const QColor& color)
+{
+  return addControlColor(zeroToOne, simQt::getOsgColorFromQt(color));
+}
+
+size_t ColorGradient::addControlColor(float zeroToOne, const osg::Vec4& color)
+{
+  auto& colorMap = function_->getColorMap();
+  zeroToOne = simCore::clamp(zeroToOne, 0.f, 1.f);
+  colorMap[zeroToOne] = color;
+  auto iter = colorMap.find(zeroToOne);
+  if (iter == colorMap.end())
+  {
+    // Should not be possible
+    assert(0);
+    return 0; // index of added color; invalid, return value can't make sense
+  }
+  return std::distance(colorMap.begin(), iter);
+}
+
+int ColorGradient::setControlColor(size_t index, float zeroToOne, const QColor& color)
+{
+  return setControlColor(index, zeroToOne, simQt::getOsgColorFromQt(color));
+}
+
+int ColorGradient::setControlColor(size_t index, float zeroToOne, const osg::Vec4& color)
+{
+  auto& colorMap = function_->getColorMap();
+  if (index >= colorMap.size())
+    return 1;
+  auto iter = colorMap.begin();
+  std::advance(iter, index);
+  // First need to remove the value, then need to re-add it. Avoid editing std::map::iterator::first
+  colorMap.erase(iter);
+  colorMap[simCore::clamp(zeroToOne, 0.f, 1.f)] = color;
+  return 0;
+}
+
+int ColorGradient::removeControlColor(size_t index)
+{
+  auto& colorMap = function_->getColorMap();
+  if (index >= colorMap.size())
+    return 1;
+  auto iter = colorMap.begin();
+  std::advance(iter, index);
+  colorMap.erase(iter);
+  return 0;
+}
+
+void ColorGradient::clearControlColors()
+{
+  function_->clear();
+}
+
+QColor ColorGradient::controlColor(size_t index) const
+{
+  const auto& colorMap = function_->getColorMap();
+  if (index >= colorMap.size())
+    return QColor(QRgb(0));
+  auto iter = colorMap.begin();
+  std::advance(iter, index);
+  return simQt::getQtColorFromOsg(iter->second);
+}
+
+osg::Vec4 ColorGradient::osgControlColor(size_t index) const
+{
+  return simQt::getOsgColorFromQt(controlColor(index));
+}
+
+float ColorGradient::controlColorPct(size_t index) const
+{
+  const auto& colorMap = function_->getColorMap();
+  if (index >= colorMap.size())
+    return -1.f;
+  auto iter = colorMap.begin();
+  std::advance(iter, index);
+  return iter->first;
+}
+
+size_t ColorGradient::numControlColors() const
+{
+  return function_->getColorMap().size();
+}
+
+void ColorGradient::importColorMap(const std::map<float, QColor>& colors)
+{
+  std::map<float, osg::Vec4> osgColors;
+  for (const auto& pctColor : colors)
+    osgColors[simCore::clamp(pctColor.first, 0.f, 1.f)] = simQt::getOsgColorFromQt(pctColor.second);
+
+  if (osgColors.empty())
+  {
+    // Reset both ends to white
+    osgColors[0.f] = osg::Vec4(1.f, 1.f, 1.f, 1.f);
+    osgColors[1.f] = osg::Vec4(1.f, 1.f, 1.f, 1.f);
+  }
+  else
+  {
+    // Ensure values at 0.f and 1.f
+    if (osgColors.begin()->first != 0.f)
+      osgColors[0.f] = osgColors.begin()->second;
+    if (osgColors.rbegin()->first != 1.f)
+      osgColors[1.f] = osgColors.rbegin()->second;
+  }
+
+  function_->setColorMap(osgColors);
+}
+
+void ColorGradient::importColorVector(const std::vector<std::pair<float, QColor> >& colorVec)
+{
+  // Map the colors into 0-to-1 space, so long as the transfer function is underlying data struct
+  std::map<float, QColor> colorMap;
+  for (const auto& pctColor : colorVec)
+    colorMap[pctColor.first] = pctColor.second;
+  importColorMap(colorMap);
+}
+
+std::map<float, osg::Vec4> ColorGradient::effectiveColorMap() const
+{
+  return function_->getColorMap();
+}
+
+#endif // NEW_SIMQT_COLORGRADIENT_API
 
 QColor ColorGradient::interpolate(const QColor& lowColor, const QColor& highColor, float low, float val, float high)
 {

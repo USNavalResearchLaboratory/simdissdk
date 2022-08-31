@@ -304,8 +304,13 @@ public:
     emit beginResetModel();
     colorStops_.clear();
 
-    for (const auto& colorVal : gradient.colors())
-      colorStops_.push_back(std::make_pair(colorVal.first, colorVal.second));
+    const size_t numColors = gradient.numControlColors();
+    for (size_t k = 0; k < numColors; ++k)
+    {
+      const QColor controlColor = gradient.controlColor(k);
+      const float pct = gradient.controlColorPct(k);
+      colorStops_.emplace_back(std::make_pair(pct, controlColor));
+    }
 
     emit endResetModel();
   }
@@ -313,11 +318,15 @@ public:
   /** Retrieves the current color gradient from the model */
   ColorGradient getColorGradient() const
   {
+#ifdef OLD_SIMQT_COLORGRADIENT_API
     std::map<float, QColor> colors;
     for (const auto& colorStop : colorStops_)
       colors[colorStop.first] = colorStop.second;
-
     ColorGradient grad(colors);
+#else
+    ColorGradient grad;
+    grad.importColorVector(colorStops_);
+#endif
     return grad;
   }
 

@@ -24,10 +24,15 @@
 #define SIMQT_COLORGRADIENT_H
 
 #include <map>
+#include <utility>
+#include <vector>
 #include <QColor>
 #include <QMetaType>
 #include "osg/TransferFunction"
 #include "simCore/Common/Export.h"
+
+#define OLD_SIMQT_COLORGRADIENT_API
+#define NEW_SIMQT_COLORGRADIENT_API
 
 namespace simQt {
 
@@ -46,10 +51,14 @@ class SDKQT_EXPORT ColorGradient
 public:
   /** Creates a default gradient. */
   ColorGradient();
+
+#ifdef OLD_SIMQT_COLORGRADIENT_API
   /** Creates a gradient with colors in given range. Values outside [0,1] are discarded. */
   explicit ColorGradient(const std::map<float, QColor>& colors);
   /** Creates a gradient with colors in given range. Values outside [0,1] are discarded. */
   explicit ColorGradient(const std::map<float, osg::Vec4>& colors);
+#endif // OLD_SIMQT_COLORGRADIENT_API
+
   /** Copy constructor required for dynamic memory */
   ColorGradient(const ColorGradient& rhs);
 
@@ -87,6 +96,7 @@ public:
    */
   osg::Vec4 osgColorAt(float zeroToOne) const;
 
+#ifdef OLD_SIMQT_COLORGRADIENT_API
   /** Adds a control color, returning 0 on success. Overwrites existing colors. */
   int setColor(float zeroToOne, const QColor& color);
   /** Adds a control color, returning 0 on success. Overwrites existing colors. */
@@ -120,6 +130,63 @@ public:
    * If the given map is invalid, no changes are made to the gradient.
    */
   int setColors(const std::map<float, osg::Vec4>& colors);
+#endif // OLD_SIMQT_COLORGRADIENT_API
+
+#ifdef NEW_SIMQT_COLORGRADIENT_API
+  /** Adds a control color. The percentage need not be unique. Index of color returned. (QColor version)*/
+  size_t addControlColor(float zeroToOne, const QColor& color);
+  /** Adds a control color. The percentage need not be unique. Index of color returned. (osg::Vec4 version)*/
+  size_t addControlColor(float zeroToOne, const osg::Vec4& color);
+
+  /** Sets a control color by index (QColor version). Returns 0 on success. */
+  int setControlColor(size_t index, float zeroToOne, const QColor& color);
+  /** Sets a control color by index (osg::Vec4 version). Returns 0 on success. */
+  int setControlColor(size_t index, float zeroToOne, const osg::Vec4& color);
+
+  /**
+   * Removes the control color at the given index. Index 0 and 1 cannot be removed. Returns 0 on success.
+   * This function will reorder control colors if given an index in the middle. In other words, control color
+   * indices are not persistent through this call.
+   */
+  int removeControlColor(size_t index);
+  /** Removes all control colors and resets to 0=white and 1=white */
+  void clearControlColors();
+
+  /** Retrieves a control color's color (transparent black if not found) - QColor version */
+  QColor controlColor(size_t index) const;
+  /** Retrieves a control color's color (transparent black if not found) - osg::Vec4 version */
+  osg::Vec4 osgControlColor(size_t index) const;
+  /** Retrieves the percentage (0-1) of a given control color index (-1 on invalid index) */
+  float controlColorPct(size_t index) const;
+
+  /** Retrieves total number of control colors */
+  size_t numControlColors() const;
+
+  /**
+   * Replaces the content with the given color map. Additional control stops may be added
+   * if the color map provided does not have stops at 0.0 and 1.0. Note that a std::map
+   * of colors is incapable of representing the underlying data structure of the color
+   * gradient because it cannot have multiple stops at the same percentage value, so relying
+   * on this function can result in an incomplete color mapping.
+   */
+  void importColorMap(const std::map<float, QColor>& colors);
+
+  /**
+   * Replaces colors with those specified in the vector of colors. Unlike importColorMap(),
+   * this function can be lossless because there may be multiple entries for a single stop pct.
+   */
+  void importColorVector(const std::vector<std::pair<float, QColor> >& colorVec);
+
+  /**
+   * Retrieves the effective color gradient. Use this to get an ordered list of all stops,
+   * with duplicates removed. This is not a whole representation of the underlying data model,
+   * because the underlying data might have duplicates and this representation (by definition)
+   * will have no duplicate stops.
+   */
+  std::map<float, osg::Vec4> effectiveColorMap() const;
+
+
+#endif // NEW_SIMQT_COLORGRADIENT_API
 
   /** Comparison operator */
   bool operator==(const ColorGradient& rhs) const;

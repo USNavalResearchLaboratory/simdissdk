@@ -30,6 +30,8 @@ int testGradient()
 {
   int rv = 0;
   simQt::ColorGradient grad;
+
+#ifdef OLD_SIMQT_COLORGRADIENT_API
   rv += SDK_ASSERT(grad.colors().size() == 5);
   rv += SDK_ASSERT(grad.colorAt(0.f) == Qt::blue);
   rv += SDK_ASSERT(grad.colorAt(0.25f) == Qt::cyan);
@@ -92,6 +94,7 @@ int testGradient()
   rv += SDK_ASSERT(mid.blue() == 0);
   rv += SDK_ASSERT(mid.alpha() == 255);
   rv += SDK_ASSERT(grad.colorAt(1.f) == Qt::green);
+#endif
 
   return rv;
 }
@@ -99,11 +102,13 @@ int testGradient()
 int testFactories()
 {
   int rv = 0;
+#ifdef OLD_SIMQT_COLORGRADIENT_API
   rv += SDK_ASSERT(simQt::ColorGradient().colors().size() == 5);
   rv += SDK_ASSERT(simQt::ColorGradient::newDefaultGradient().colors().size() == 5);
   rv += SDK_ASSERT(simQt::ColorGradient::newDarkGradient().colors().size() == 7);
   rv += SDK_ASSERT(simQt::ColorGradient::newGreyscaleGradient().colors().size() == 2);
   rv += SDK_ASSERT(simQt::ColorGradient::newDopplerGradient().colors().size() == 11);
+#endif
   return rv;
 }
 
@@ -114,7 +119,6 @@ int testVariant()
   vMap["grey"] = QVariant::fromValue(simQt::ColorGradient::newGreyscaleGradient());
   const auto& grey = vMap["grey"].value<simQt::ColorGradient>();
   int rv = 0;
-  rv += SDK_ASSERT(grey.colors().size() == 2);
   rv += SDK_ASSERT(grey.colorAt(0.f) == Qt::black);
   const QColor color = grey.colorAt(0.5f);
   rv += SDK_ASSERT(color.red() == 127);
@@ -122,6 +126,9 @@ int testVariant()
   rv += SDK_ASSERT(color.blue() == 127);
   rv += SDK_ASSERT(color.alpha() == 255);
   rv += SDK_ASSERT(grey.colorAt(1.) == Qt::white);
+#ifdef OLD_SIMQT_COLORGRADIENT_API
+  rv += SDK_ASSERT(grey.colors().size() == 2);
+#endif
   return rv;
 }
 
@@ -132,7 +139,12 @@ int testDiscrete()
   std::map<float, QColor> colorMap;
   colorMap[0.2f] = Qt::red;
   colorMap[0.8f] = Qt::green;
+#ifdef OLD_SIMQT_COLORGRADIENT_API
   simQt::ColorGradient grad(colorMap);
+#else
+  simQt::ColorGradient grad;
+  grad.importColorMap(colorMap);
+#endif
   QColor col = grad.colorAt(0.5f);
   rv += SDK_ASSERT(col.red() == 127);
   rv += SDK_ASSERT(col.green() == 127);
