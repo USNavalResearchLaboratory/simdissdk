@@ -84,6 +84,11 @@ public:
   /** Retrieves the currently configured units provider.  This is never NULL. */
   UnitsProvider* unitsProvider() const;
 
+  /** If true, then less text is displayed */
+  void setCondenseText(bool condense);
+  /** Retrieves the condense text state */
+  bool condenseText() const;
+
   /** Retrieves current total height in pixels. This includes padding. */
   float height() const;
 
@@ -182,6 +187,9 @@ private:
   osg::observer_ptr<simVis::View> view_;
   /** Units provider (non-NULL) that gives units for current range */
   osg::ref_ptr<UnitsProvider> unitsProvider_;
+
+  /** If true, then less text is displayed */
+  bool condenseText_;
 };
 
 /** Simple implementation of MapScale::UnitsProvider that always returns a single units value. */

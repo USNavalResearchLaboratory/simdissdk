@@ -96,7 +96,8 @@ MapScale::MapScale()
     barColor1_(0.f, 0.f, 0.f, 1.f),
     barColor2_(1.f, 1.f, 1.f, 1.f),
     lrtbBgPadding_(10.f, 10.f, 5.f, 5.f),
-    unitsProvider_(new MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::KILOMETERS, 10000.0))
+    unitsProvider_(new MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::KILOMETERS, 10000.0)),
+    condenseText_(false)
 {
   getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
 
@@ -223,6 +224,16 @@ void MapScale::setUnitsProvider(UnitsProvider* unitsProvider)
 MapScale::UnitsProvider* MapScale::unitsProvider() const
 {
   return unitsProvider_.get();
+}
+
+void MapScale::setCondenseText(bool condense)
+{
+  condenseText_ = condense;
+}
+
+bool MapScale::condenseText() const
+{
+  return condenseText_;
 }
 
 float MapScale::height() const
@@ -382,7 +393,10 @@ void MapScale::recalculateScale_(double maxDataRangeM)
   // Convert the data range into the range units we expect
   const simCore::Units& targetUnits = unitsProvider_->units(maxDataRangeM);
   const double inUnitsRange = simCore::Units::METERS.convertTo(targetUnits, maxDataRangeM);
-  unitsText_->setText(targetUnits.name());
+  if (condenseText_)
+    unitsText_->setText(targetUnits.abbreviation());
+  else
+    unitsText_->setText(targetUnits.name());
 
   // Determine exponent and significand
   int exponent = 0;
@@ -462,10 +476,23 @@ void MapScale::drawBars_(double maxValue, unsigned int numDivisions, float width
   size_t vertIndex = 0;
   for (unsigned int k = 0; k <= numDivisions; ++k)
   {
-    simVis::Text* valueText = new simVis::Text(*valueTextPrototype_);//, osg::CopyOp::DEEP_COPY_ALL);
-    valueText->setPosition(osg::Vec3f(pixelIncrement * k, heightPx_, 0.f));
-    valueText->setText(valueToString_(dataIncrement * k, precision));
-    textGroup_->addChild(valueText);
+    if (condenseText_ && (k == 0))
+    {
+      simVis::Text* valueText = new simVis::Text(*valueTextPrototype_);
+      valueText->setPosition(osg::Vec3f(pixelIncrement * k, heightPx_, 0.f));
+      valueText->setAlignment(osgText::Text::LEFT_TOP);
+      valueText->setText("Div: " + valueToString_(dataIncrement, precision) + " " + unitsText_->getText().createUTF8EncodedString());
+      textGroup_->addChild(valueText);
+    }
+    else if (!condenseText_ || (k == numDivisions))
+    {
+      simVis::Text* valueText = new simVis::Text(*valueTextPrototype_);
+      valueText->setPosition(osg::Vec3f(pixelIncrement * k, heightPx_, 0.f));
+      if (condenseText_ && (k == numDivisions))
+        valueText->setAlignment(osgText::Text::RIGHT_TOP);
+      valueText->setText(valueToString_(dataIncrement * k, precision));
+      textGroup_->addChild(valueText);
+    }
 
     // Push back top and bottom vertices and colors
     (*verts)[vertIndex].set(pixelIncrement * k, vertsTop, 0.f);
