@@ -28,15 +28,26 @@
 
 namespace simQt {
 
+const osg::Vec4 CC_BLACK(0.f, 0.f, 0.f, 1.f);
+const osg::Vec4 CC_WHITE(1.f, 1.f, 1.f, 1.f);
+const osg::Vec4 CC_BLUE(0.f, 0.f, 1.f, 1.f);
+const osg::Vec4 CC_CYAN(0.f, 1.f, 1.f, 1.f);
+const osg::Vec4 CC_GREEN(0.f, 1.f, 0.f, 1.f);
+const osg::Vec4 CC_YELLOW(1.f, 1.f, 0.f, 1.f);
+const osg::Vec4 CC_RED(1.f, 0.f, 0.f, 1.f);
+const osg::Vec4 CC_ORANGE(1.f, 0.5, 0.f, 1.f);
+const osg::Vec4 CC_MAGENTA(1.f, 0.f, 1.f, 1.f);
+const osg::Vec4 CC_GREY_753(0.753f, 0.753f, 0.753f, 1.f);
+
 ColorGradient::ColorGradient()
   : function_(new osg::TransferFunction1D)
 {
   std::map<float, osg::Vec4> colors;
-  colors[0.00f] = osg::Vec4(0.f, 0.f, 1.f, 1.f); // blue
-  colors[0.25f] = osg::Vec4(0.f, 1.f, 1.f, 1.f); // cyan
-  colors[0.50f] = osg::Vec4(0.f, 1.f, 0.f, 1.f); // green
-  colors[0.75f] = osg::Vec4(1.f, 1.f, 0.f, 1.f); // yellow
-  colors[1.00f] = osg::Vec4(1.f, 0.f, 0.f, 1.f); // red
+  colors[0.00f] = CC_BLUE;
+  colors[0.25f] = CC_CYAN;
+  colors[0.50f] = CC_GREEN;
+  colors[0.75f] = CC_YELLOW;
+  colors[1.00f] = CC_RED;
   function_->setColorMap(colors);
 }
 
@@ -90,13 +101,13 @@ ColorGradient ColorGradient::newDarkGradient()
   ColorGradient rv;
 
   std::map<float, osg::Vec4> colors;
-  colors[0.0f] = osg::Vec4(0.f, 0.f, 0.f, 1.f); // black
-  colors[0.2f] = osg::Vec4(0.f, 0.f, 1.f, 1.f); // blue
-  colors[0.4f] = osg::Vec4(0.f, 1.f, 1.f, 1.f); // cyan
-  colors[0.5f] = osg::Vec4(0.f, 1.f, 0.f, 1.f); // green
-  colors[0.6f] = osg::Vec4(1.f, 1.f, 0.f, 1.f); // yellow
-  colors[0.8f] = osg::Vec4(1.f, 0.f, 0.f, 1.f); // red
-  colors[1.0f] = osg::Vec4(0.f, 0.f, 0.f, 1.f); // black
+  colors[0.0f] = CC_BLACK;
+  colors[0.2f] = CC_BLUE;
+  colors[0.4f] = CC_CYAN;
+  colors[0.5f] = CC_GREEN;
+  colors[0.6f] = CC_YELLOW;
+  colors[0.8f] = CC_RED;
+  colors[1.0f] = CC_BLACK;
   rv.function_->setColorMap(colors);
   return rv;
 }
@@ -106,8 +117,8 @@ ColorGradient ColorGradient::newGreyscaleGradient()
   ColorGradient rv;
 
   std::map<float, osg::Vec4> colors;
-  colors[0.0f] = osg::Vec4(0.f, 0.f, 0.f, 1.f);
-  colors[1.0f] = osg::Vec4(1.f, 1.f, 1.f, 1.f);
+  colors[0.0f] = CC_BLACK;
+  colors[1.0f] = CC_WHITE;
   rv.function_->setColorMap(colors);
   return rv;
 }
@@ -117,17 +128,17 @@ ColorGradient ColorGradient::newDopplerGradient()
   ColorGradient rv;
 
   std::map<float, osg::Vec4> colors;
-  colors[0.0f] = osg::Vec4(0.753f, 0.753f, 0.753f, 1.f); // grey
-  colors[0.00170775f] = osg::Vec4(0.753f, 0.753f, 0.753f, 1.f); // grey
+  colors[0.0f] = CC_GREY_753;
+  colors[0.00170775f] = CC_GREY_753;
   colors[0.126281f] = osg::Vec4(0.f, 0.878f, 1.f, 1.f); // cyan
   colors[0.250854f] = osg::Vec4(0.f, 0.941f, 0.f, 1.f); // green
   colors[0.375427f] = osg::Vec4(0.f, 0.584f, 0.f, 1.f); // olive green
   colors[0.50f] = osg::Vec4(0.f, 0.333f, 0.f, 1.f); // dark green
-  colors[0.626838f] = osg::Vec4(1.f, 1.f, 0.f, 1.f); // yellow
-  colors[0.749146f] = osg::Vec4(1.f, 0.5f, 0.f, 1.f); // orange
-  colors[0.875984f] = osg::Vec4(1.f, 0.f, 0.f, 1.f); // red
-  colors[0.998292f] = osg::Vec4(1.f, 0.f, 1.f, 1.f); // magenta
-  colors[1.0f] = osg::Vec4(1.f, 1.f, 1.f, 1.f); // white
+  colors[0.626838f] = CC_YELLOW;
+  colors[0.749146f] = CC_ORANGE;
+  colors[0.875984f] = CC_RED;
+  colors[0.998292f] = CC_MAGENTA;
+  colors[1.0f] = CC_WHITE;
   rv.function_->setColorMap(colors);
   return rv;
 }
@@ -350,8 +361,8 @@ void ColorGradient::importColorMap(const std::map<float, QColor>& colors)
   if (osgColors.empty())
   {
     // Reset both ends to white
-    osgColors[0.f] = osg::Vec4(1.f, 1.f, 1.f, 1.f);
-    osgColors[1.f] = osg::Vec4(1.f, 1.f, 1.f, 1.f);
+    osgColors[0.f] = CC_WHITE;
+    osgColors[1.f] = CC_WHITE;
   }
   else
   {
