@@ -823,8 +823,15 @@ osgEarth::Status VelocityParticleLayer::openImplementation()
     velocityNode->setBoundingBox(*_options->boundingBox());
     geoExtent = osgEarth::GeoExtent(osgEarth::SpatialReference::get("wgs84"), *_options->boundingBox());
   }
+
+#if OSGEARTH_SOVERSION >= 142
+  osgEarth::DataExtentList allExtents;
+  allExtents.push_back(osgEarth::DataExtent(geoExtent, 0, 0));
+  setDataExtents(allExtents);
+#else
   dataExtents().clear();
   dataExtents().push_back(osgEarth::DataExtent(geoExtent, 0, 0));
+#endif
 
   // Create the sprite if needed
   recreatePointSprite_();

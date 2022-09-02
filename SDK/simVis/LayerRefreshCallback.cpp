@@ -166,10 +166,16 @@ void LayerRefreshCallback::runImpl_()
     // Print debug text to the log.  This shouldn't run often, and users might need to figure out why map refreshes
     SIM_DEBUG_FP << "simVis::LayerRefreshCallback::run() attempting to refresh layer \"" << layer->getName() << "\".\n";
 
-    const auto extents = layer->getDataExtents();
+#if OSGEARTH_SOVERSION >= 142
+    osgEarth::DataExtentList dataExtents;
+    layer->getDataExtents(dataExtents);
+#else
+    const auto& dataExtents = layer->getDataExtents();
+#endif
+
     std::vector<const osgEarth::Layer*> layerVec;
     layerVec.push_back(layer.get());
-    for (const auto& extent : extents)
+    for (const auto& extent : dataExtents)
       terrainEngine->invalidateRegion(layerVec, extent);
 
     layer->setUserValue(LAST_REFRESH_TIME_TAG, sysTime);
