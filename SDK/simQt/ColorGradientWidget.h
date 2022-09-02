@@ -30,7 +30,6 @@
 #include "simQt/ColorGradient.h"
 
 class QGroupBox;
-class QSortFilterProxyModel;
 class QTreeView;
 class Ui_ColorGradientWidget;
 
@@ -141,7 +140,6 @@ private:
 
   class ColorGradientModel;
   ColorGradientModel* model_;
-  QSortFilterProxyModel* proxyModel_;
 
   class GradientDisplayWidget;
   GradientDisplayWidget* display_;
