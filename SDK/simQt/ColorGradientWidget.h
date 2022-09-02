@@ -128,6 +128,15 @@ private slots:
   /** Spawns a help dialog explaining the display widget */
   void showHelpDialog_();
 
+  /** Sets the gradient to default */
+  void setGradientDefault_();
+  /** Sets the gradient to darker */
+  void setGradientDarker_();
+  /** Sets the gradient to greyscale */
+  void setGradientGreyscale_();
+  /** Sets the gradient to doppler */
+  void setGradientDoppler_();
+
 private:
   /** Creates or destroys the stops table based on showTable_ flag */
   void showOrHideTable_();

@@ -306,6 +306,9 @@ public:
   /** Resets the model with the given color gradient */
   void setColorGradient(const ColorGradient& gradient)
   {
+    if (editedGradient_ == gradient)
+      return;
+
     emit beginResetModel();
     editedGradient_ = gradient;
     emit endResetModel();
@@ -375,6 +378,27 @@ public:
     return stopFound;
   }
 
+  void sortByPercent()
+  {
+    // Avoid noop
+    const size_t numColors = editedGradient_.numControlColors();
+    if (numColors <= 2)
+      return;
+
+    // Add all stops into a multimap
+    std::multimap<float, QColor> colorStops;
+    for (size_t index = 2; index < numColors; ++index)
+      colorStops.insert(std::make_pair(editedGradient_.controlColorPct(index), editedGradient_.controlColor(index)));
+    // Create a new gradient to replace old one
+    ColorGradient newGradient;
+    newGradient.clearControlColors();
+    newGradient.setControlColor(0, 0.f, editedGradient_.controlColor(0));
+    newGradient.setControlColor(1, 1.f, editedGradient_.controlColor(1));
+    for (const auto& pctColor : colorStops)
+      newGradient.addControlColor(pctColor.first, pctColor.second);
+    setColorGradient(newGradient);
+  }
+
 private:
   /** Convenience method to add a stop with proper signaling */
   QModelIndex addStop_(float value, const QColor& color)
@@ -420,6 +444,7 @@ public:
     toUserValue_(TO_USER_VALUE),
     valueSuffix_(DEFAULT_VALUE_SUFFIX)
   {
+    setContextMenuPolicy(Qt::CustomContextMenu); // none
     setMinimumHeight(HANDLE_SIZE_PX + HANDLE_THICKNESS_PX + OUTLINE_THICKNESS_PX);
     // Enable mouse tracking so we get move events with no buttons pressed
     setMouseTracking(true);
@@ -649,6 +674,8 @@ ColorGradientWidget::ColorGradientWidget(QWidget* parent)
   maxUserValue_(100.f),
   valueSuffix_(DEFAULT_VALUE_SUFFIX)
 {
+  // Default to actions context menu, but this can be overridden by UI
+  setContextMenuPolicy(Qt::ActionsContextMenu);
   model_ = new ColorGradientModel(this);
 
   ui_->setupUi(this);
@@ -665,6 +692,22 @@ ColorGradientWidget::ColorGradientWidget(QWidget* parent)
 
   ui_->helpButton->setVisible(showHelp_);
   connect(ui_->helpButton, SIGNAL(clicked(bool)), this, SLOT(showHelpDialog_()));
+
+  QAction* toDefaultAction = new QAction(tr("Reset to Default"), this);
+  addAction(toDefaultAction);
+  connect(toDefaultAction, &QAction::triggered, this, &ColorGradientWidget::setGradientDefault_);
+
+  QAction* toDarkerAction = new QAction(tr("Reset to Darker"), this);
+  addAction(toDarkerAction);
+  connect(toDarkerAction, &QAction::triggered, this, &ColorGradientWidget::setGradientDarker_);
+
+  QAction* toGreyscaleAction = new QAction(tr("Reset to Greyscale"), this);
+  addAction(toGreyscaleAction);
+  connect(toGreyscaleAction, &QAction::triggered, this, &ColorGradientWidget::setGradientGreyscale_);
+
+  QAction* toDopplerAction = new QAction(tr("Reset to Doppler"), this);
+  addAction(toDopplerAction);
+  connect(toDopplerAction, &QAction::triggered, this, &ColorGradientWidget::setGradientDoppler_);
 
   // Configure using a default gradient
   setColorGradient(ColorGradient::newDefaultGradient());
@@ -885,7 +928,38 @@ void ColorGradientWidget::showOrHideTable_()
   groupLayout->addWidget(treeView_);
   tableGroup_->setLayout(groupLayout);
   ui_->verticalLayout->addWidget(tableGroup_);
+
+  QAction* separator = new QAction(treeView_);
+  separator->setSeparator(true);
+  QAction* sortAction = new QAction(tr("Sort"), treeView_);
+
+  for (auto* actionPtr : actions())
+    treeView_->addAction(actionPtr);
+  treeView_->addAction(separator);
+  treeView_->addAction(sortAction);
+
+  treeView_->setContextMenuPolicy(Qt::ActionsContextMenu);
+  connect(sortAction, &QAction::triggered, model_, &ColorGradientModel::sortByPercent);
 }
 
+void ColorGradientWidget::setGradientDefault_()
+{
+  model_->setColorGradient(ColorGradient::newDefaultGradient());
+}
+
+void ColorGradientWidget::setGradientDarker_()
+{
+  model_->setColorGradient(ColorGradient::newDarkGradient());
+}
+
+void ColorGradientWidget::setGradientGreyscale_()
+{
+  model_->setColorGradient(ColorGradient::newGreyscaleGradient());
+}
+
+void ColorGradientWidget::setGradientDoppler_()
+{
+  model_->setColorGradient(ColorGradient::newDopplerGradient());
+}
 
 }
