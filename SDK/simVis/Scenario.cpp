@@ -1164,7 +1164,7 @@ EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMa
   DynamicScaleTransform::recalculateAllDynamicScaleBounds(*cam);
 
   // configure the line segment intersector
-  osgUtil::LineSegmentIntersector* lsi = new osgUtil::LineSegmentIntersector(beg, end);
+  osg::ref_ptr<osgUtil::LineSegmentIntersector> lsi(new osgUtil::LineSegmentIntersector(beg, end));
   osgUtil::IntersectionVisitor iv(lsi);
   iv.setTraversalMask(typeMask);
   iv.setReferenceEyePoint(osg::Vec3d(0, 0, 0) * view->getCamera()->getInverseViewMatrix());
