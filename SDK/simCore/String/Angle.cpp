@@ -137,7 +137,7 @@ const simCore::Units& formatToUnits(GeodeticFormat format)
 
 /// return a formatted angle string
 std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNumerics,
-  size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir, char negativeDir)
+  size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir, char negativeDir, bool allowRollover)
 {
   double degreeAngle = simCore::Units::RADIANS.convertTo(simCore::Units::DEGREES, radianAngle);
   precision = simCore::sdkMin(precision, static_cast<size_t>(16));
@@ -293,9 +293,14 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
   case FMT_DEGREES:
   default:
   {
-    const double rounding = 5.0 / pow(10.0, precision + 1.0);
-    if ((degreeAngle + rounding > 360.0) || simCore::areEqual(degreeAngle + rounding, 360.0))
-      degreeAngle = 0.0;
+    if (!allowRollover)
+    {
+      const double rounding = 5.0 / pow(10.0, precision + 1.0);
+      degreeAngle = simCore::angFix360(degreeAngle);
+      if (fabs(simCore::angleDifferenceDeg(degreeAngle, 360.0)) < rounding)
+        degreeAngle = 0.0;
+    }
+
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
     std::stringstream str;
     str.setf(std::ios::fixed, std::ios::floatfield);

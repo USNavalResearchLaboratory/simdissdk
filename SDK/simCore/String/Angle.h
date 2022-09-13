@@ -68,7 +68,8 @@ namespace simCore
   };
 
   /**
-   * Underlying method used by printLatitude and printLongitude for a formatted angle string.
+   * Underlying method used by printLatitude and printLongitude for a formatted angle string. Note that angles
+   * requested in simCore::FMT_DEGREES will be clamped to 0 if the value exceeds 360 (see allowRollover parameter)
    * @param radianAngle Angle in radians to print to string
    * @param format Geodetic output format.
    * @param allNumerics If true, string omits positiveDir and negativeDir, and omits the degree, minute, and second
@@ -80,10 +81,12 @@ namespace simCore
    *   to not append anything for positive directions.
    * @param positiveDir Character to append for negative angles, only when allNumerics==false.  Set this to 0 (\0 or NULL)
    *   to not append anything for negative directions, in which case a negative sign is prepended.
+   * @param allowRollover If true, allows angle returns that go over 360. If false, angle returns in simCore::FMT_DEGREES
+   *   will be clamped to 0 if they exceed 360.
    * @return Formatted string
    */
   SDKCORE_EXPORT std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNumerics,
-    size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir, char negativeDir);
+    size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir, char negativeDir, bool allowRollover = false);
 
   /**
    * Formats a latitude value (in radians) into a string value according to the format specification.
