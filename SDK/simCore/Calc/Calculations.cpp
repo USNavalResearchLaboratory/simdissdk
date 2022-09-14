@@ -244,7 +244,7 @@ double calculateGroundDist(const Vec3 &fromLla, const Vec3 &toLla, const EarthMo
     Coordinate fromPos;
     Coordinate toPos;
 
-    if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
+    if (model == FLAT_EARTH && coordConv->hasReferenceOrigin())
     {
       coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
       coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);

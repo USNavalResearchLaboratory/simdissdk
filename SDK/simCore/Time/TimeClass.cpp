@@ -331,20 +331,19 @@ Seconds TimeStamp::operator - (const TimeStamp& t) const
     return ZERO_SECONDS;
   }
 
-  int year = 0;
   Seconds secondsValue;
 
   if (yearDifference > 0)
   {
     secondsValue = Seconds(SECPERDAY * daysPerYear(t.referenceYear_), 0) - t.secondsSinceRefYear_;
-    for (year = t.referenceYear_ + 1; year < referenceYear_; ++year)
+    for (auto year = t.referenceYear_ + 1; year < referenceYear_; ++year)
       secondsValue += Seconds(SECPERDAY * daysPerYear(year), 0);
     secondsValue += secondsSinceRefYear_;
   }
   else if (yearDifference < 0)
   {
     secondsValue = (Seconds(-1, 0) * t.secondsSinceRefYear_);
-    for (year = t.referenceYear_ - 1; year > referenceYear_; --year)
+    for (auto year = t.referenceYear_ - 1; year > referenceYear_; --year)
       secondsValue -= Seconds(SECPERDAY * daysPerYear(year), 0);
     secondsValue -= (Seconds(SECPERDAY * daysPerYear(referenceYear_), 0) - secondsSinceRefYear_);
   }
@@ -506,7 +505,7 @@ public:
   {
     _set_invalid_parameter_handler(oldHandler_);
   }
-  
+
 private:
   static void invalidParameter_(const wchar_t* expression, const wchar_t* function,
     const wchar_t* file, unsigned int line, uintptr_t pReserved)
@@ -524,7 +523,9 @@ std::string TimeStamp::strftime(const std::string& format) const
   if (simCore::INFINITE_TIME_STAMP == *this)
     return "";
 
+  // Do not remove; cppCheck flags as unused but the constructor and destructor do actual work.
   InvalidParameterDetection detectInvalid;
+
   const auto& timeStruct = simCore::getTimeStruct(*this);
 
   // Try/catch since MSVC version will throw an exception on error
