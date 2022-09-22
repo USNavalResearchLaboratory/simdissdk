@@ -2,7 +2,7 @@
 # Setting the GDAL_DIR environment variable will allow use of a custom built library
 
 set(LIBRARYNAME GDAL)
-set(${LIBRARYNAME}_VERSION 3.4.2)
+set(${LIBRARYNAME}_VERSION 3.4.3)
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 
 # Setup search paths based off GDAL_ROOT

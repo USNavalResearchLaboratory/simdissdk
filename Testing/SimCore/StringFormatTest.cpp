@@ -235,6 +235,76 @@ int testHasExtension()
   return rv;
 }
 
+int testReplaceExtension()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(simCore::replaceExtension("", "") == "");
+  rv += SDK_ASSERT(simCore::replaceExtension("", "txt") == "");
+  rv += SDK_ASSERT(simCore::replaceExtension("", ".txt") == "");
+  rv += SDK_ASSERT(simCore::replaceExtension("", ".") == "");
+  rv += SDK_ASSERT(simCore::replaceExtension("", "..txt") == "");
+  rv += SDK_ASSERT(simCore::replaceExtension("", ".my.txt") == "");
+
+  rv += SDK_ASSERT(simCore::replaceExtension("foo", "") == "foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo", "txt") == "foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo", ".txt") == "foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo", ".") == "foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo", "..txt") == "foo..txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo", ".my.txt") == "foo.my.txt");
+
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.", "") == "foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.", "txt") == "foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.", ".txt") == "foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.", ".") == "foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.", "..txt") == "foo..txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.", ".my.txt") == "foo.my.txt");
+
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar", "") == "foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar", "txt") == "foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar", ".txt") == "foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar", ".") == "foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar", "..txt") == "foo..txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar", ".my.txt") == "foo.my.txt");
+
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.txt", "") == "foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.txt", "txt") == "foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.txt", ".txt") == "foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.txt", ".") == "foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.txt", "..txt") == "foo..txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.txt", ".my.txt") == "foo.my.txt");
+
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar.txt", "") == "foo.bar");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar.txt", "txt") == "foo.bar.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar.txt", ".txt") == "foo.bar.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar.txt", ".") == "foo.bar");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar.txt", "..txt") == "foo.bar..txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.bar.txt", ".my.txt") == "foo.bar.my.txt");
+
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.TxT", "") == "foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.TxT", "txt") == "foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.TxT", ".txt") == "foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.TxT", ".") == "foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.TxT", "..txt") == "foo..txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("foo.TxT", ".my.txt") == "foo.my.txt");
+
+  rv += SDK_ASSERT(simCore::replaceExtension("c:/a.b.c/foo.bar", "") == "c:/a.b.c/foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("c:/a.b.c/foo.bar", "txt") == "c:/a.b.c/foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("c:/a.b.c/foo.bar", ".txt") == "c:/a.b.c/foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("c:/a.b.c/foo.bar", ".") == "c:/a.b.c/foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("c:/a.b.c/foo.bar", "..txt") == "c:/a.b.c/foo..txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("c:/a.b.c/foo.bar", ".my.txt") == "c:/a.b.c/foo.my.txt");
+
+  rv += SDK_ASSERT(simCore::replaceExtension("c:\\a.b.c\\foo.bar", "") == "c:\\a.b.c\\foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("c:\\a.b.c\\foo.bar", "txt") == "c:\\a.b.c\\foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("c:\\a.b.c\\foo.bar", ".txt") == "c:\\a.b.c\\foo.txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("c:\\a.b.c\\foo.bar", ".") == "c:\\a.b.c\\foo");
+  rv += SDK_ASSERT(simCore::replaceExtension("c:\\a.b.c\\foo.bar", "..txt") == "c:\\a.b.c\\foo..txt");
+  rv += SDK_ASSERT(simCore::replaceExtension("c:\\a.b.c\\foo.bar", ".my.txt") == "c:\\a.b.c\\foo.my.txt");
+
+  return rv;
+}
+
 int testBuildString()
 {
   int rv = 0;
@@ -270,17 +340,21 @@ int testBuildString()
 
   rv += SDK_ASSERT("1" == simCore::buildString("", 1.0, 1, 0, "", false, 1., 1.));
 
-  // windows < vs2019 and linux have different interpretations of 0 precision in scientific notation
-#if defined(WIN32) && (_MSC_VER < 1928)
-  // windows vs2019 < 16.8, vs 2017, vs2015
-  rv += SDK_ASSERT("1.000000e+00" == simCore::buildString("", 1.0, 1, 0, "", false, 0., 1.));
-  rv += SDK_ASSERT(" 1.000000e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1. - std::numeric_limits<double>::epsilon(), 1));
-  rv += SDK_ASSERT(" 1.000000e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1., 1. + std::numeric_limits<double>::epsilon()));
+  // test 0 precision in scientific notation; it can be complicated
+  const std::string& prec0string1 = simCore::buildString("", 1.0, 1, 0, "", false, 0., 1.);
+  const std::string& prec0string2 = simCore::buildString("", 1.0, 13, 0, "", false, 1. - std::numeric_limits<double>::epsilon(), 1);
+  const std::string& prec0string3 = simCore::buildString("", 1.0, 13, 0, "", false, 1., 1. + std::numeric_limits<double>::epsilon());
+
+#if defined(WIN32)
+  // newer VisualStudio seem to match linux, but not always.
+  rv += SDK_ASSERT(prec0string1 == "1e+00" || prec0string1 == "1.000000e+00");
+  rv += SDK_ASSERT(prec0string2 == "        1e+00" || prec0string2 == " 1.000000e+00");
+  rv += SDK_ASSERT(prec0string3 == "        1e+00" || prec0string3 == " 1.000000e+00");
 #else
-  // windows vs2019 >= 16.8 and linux
-  rv += SDK_ASSERT("1e+00" == simCore::buildString("", 1.0, 1, 0, "", false, 0., 1.));
-  rv += SDK_ASSERT("        1e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1. - std::numeric_limits<double>::epsilon(), 1));
-  rv += SDK_ASSERT("        1e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1., 1. + std::numeric_limits<double>::epsilon()));
+  // linux seems consistent
+  rv += SDK_ASSERT("1e+00" == prec0string1);
+  rv += SDK_ASSERT("        1e+00" == prec0string2);
+  rv += SDK_ASSERT("        1e+00" == prec0string3);
 #endif
 
   rv += SDK_ASSERT("1.0e+00" == simCore::buildString("", 1.0, 1, 1, "", false, 0., 1.));
@@ -303,6 +377,7 @@ int StringFormatTest(int argc, char* argv[])
   rv += SDK_ASSERT(testGetStrippedLine() == 0);
   rv += SDK_ASSERT(testGetExtension() == 0);
   rv += SDK_ASSERT(testHasExtension() == 0);
+  rv += SDK_ASSERT(testReplaceExtension() == 0);
   rv += SDK_ASSERT(testBuildString() == 0);
   std::cout << "simCore StringFormatTest " << ((rv == 0) ? "passed" : "failed") << std::endl;
 

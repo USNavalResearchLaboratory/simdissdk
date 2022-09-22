@@ -12,7 +12,7 @@ if(DEFINED INSTALL_THIRDPARTY_LIBRARIES AND NOT INSTALL_THIRDPARTY_LIBRARIES)
 endif()
 
 set(LIBRARYNAME GEOS)
-set(GEOS_VERSION 3.9.1)
+set(GEOS_VERSION 3.11.0)
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 
 # Setup search paths
@@ -45,8 +45,8 @@ if(WIN32)
     geos_install_library(bin geos.dll)
     geos_install_library(bin geos_c.dll)
 else()
-    geos_install_library(lib libgeos.so)
-    geos_install_library(lib libgeos_c.so)
+    geos_install_library(lib64 libgeos.so)
+    geos_install_library(lib64 libgeos_c.so)
 endif()
 
 # Mark variables as advanced

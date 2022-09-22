@@ -364,10 +364,23 @@ void ClockImpl::setTime(const simCore::TimeStamp& timeVal)
 
 void ClockImpl::setTime_(const simCore::TimeStamp& timeVal, bool isJump)
 {
+  if (timeVal == simCore::INFINITE_TIME_STAMP)
+  {
+    // Infinite end time implies developer error, using an invalid time to set the clock
+    assert(0);
+    return;
+  }
+
   // If we're in freewheel mode, don't set the time unless we pass a threshold
   static const double FREEWHEEL_THRESHOLD = 0.1;
   if (mode() == Clock::MODE_FREEWHEEL && fabs(timeVal - currentTime()) < FREEWHEEL_THRESHOLD)
-    return;
+  {
+    // TimeStamp::operator-() will return ZERO_SECONDS if either year is infinite. Detect that
+    // (unlikely and probably erroneous condition) to avoid false freewheel threshold matches.
+    if (timeVal.referenceYear() != simCore::INFINITE_TIME_YEAR && currentTime().referenceYear() != simCore::INFINITE_TIME_YEAR)
+      return;
+  }
+
   restartRTClock_(timeVal);
   setTimeNoThresholdCheck_(timeVal, isJump);
 }

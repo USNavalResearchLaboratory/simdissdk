@@ -254,12 +254,18 @@ int GogToGeoFence::parseShape_(const std::vector<std::string>& tokens, int lineN
     return 1;
   }
 
-  const std::string keyword = simCore::lowerCase(tokens[0]); // Make the keyword lowercase
+  const std::string& keyword = simCore::lowerCase(tokens[0]); // Make the keyword lowercase
 
   // check for 3d name keyword
   if (keyword == "3d" && simCore::lowerCase(tokens[1]) == "name")
   {
+    // 3d name is not necessarily quoted; it can be multiple tokens
     name = tokens[2];
+    for (size_t index = 3; index < tokens.size(); ++index)
+    {
+      if (!tokens[index].empty())
+        name += " " + tokens[index];
+    }
     return 0;
   }
 

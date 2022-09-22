@@ -99,6 +99,13 @@ public:
   /** Removes previously added scaled child */
   bool removeScaledChild(osg::Node* node);
 
+  /** addChild(), but adds to the fixed dynamic-scaled portion of model; returns true on success */
+  bool addFixedScaledChild(osg::Node* node);
+  /** Removes previously added fixed scaled child */
+  bool removeFixedScaledChild(osg::Node* node);
+  /** Set the size for the fixed scaled transform so all highlights are the same size; must call addFixedScaledChild first */
+  void setFixedSize(double meters);
+
   /** Returns true if the model is a 2D image, false otherwise */
   bool isImageModel() const;
 
@@ -180,6 +187,11 @@ private:
   osg::ref_ptr<simVis::DynamicScaleTransform> dynamicXform_;
   osg::ref_ptr<simVis::BillboardAutoTransform> imageIconXform_;
   osg::ref_ptr<osg::MatrixTransform> offsetXform_;
+
+  // Uses a numerical scale instead of the icon size
+  osg::ref_ptr<simVis::DynamicScaleTransform> fixedDynamicXform_;
+  osg::ref_ptr<simVis::BillboardAutoTransform> fixedImageIconXform_;
+
   osg::Vec2f                         imageOriginalSize_;
   bool                               autoRotate_;
   bool                               lastPrefsValid_;

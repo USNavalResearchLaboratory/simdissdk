@@ -70,7 +70,7 @@ protected:
  * possible (through the attempted retrieval of function points in GL library), and providing
  * functions to control message registration.
  *
- * One method of using this class is to register for messages immediately on graphcis context
+ * One method of using this class is to register for messages immediately on graphics context
  * realization, such as to track down errors reported by OSG.  To do this, add code like the
  * following to your OnRealize method (like the one in ViewManager.cpp) and set a breakpoint
  * as needed in the callback:

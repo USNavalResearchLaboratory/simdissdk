@@ -61,6 +61,7 @@ public:
   virtual void syncWithLocator();
 
 protected:
+  virtual ~PlatformInertialTransform();
   /** Override childInserted() to call syncWithLocator() when needed */
   virtual void childInserted(unsigned int pos);
 

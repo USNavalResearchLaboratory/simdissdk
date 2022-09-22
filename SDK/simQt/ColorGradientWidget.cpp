@@ -28,7 +28,6 @@
 #include <QPainter>
 #include <QToolTip>
 #include <QTreeView>
-#include <QSortFilterProxyModel>
 #include "simCore/Calc/Interpolation.h"
 #include "simCore/Calc/Math.h"
 #include "simQt/ColorWidget.h"
@@ -41,7 +40,7 @@
 
 namespace simQt {
 
-static const QString VALUE_TOOLTIP = QObject::tr("Value of the color stop, in the range [0,1].");
+static const QString VALUE_TOOLTIP = QObject::tr("Value of the color stop, in the range [%1,%2].");
 static const QString COLOR_TOOLTIP = QObject::tr("Color of the stop, interpolated with adjacent stops to create gradient.");
 
 /** Width/height of color stop handles, in pixels */
@@ -57,6 +56,7 @@ static const float HANDLE_TOLERANCE_PX = HALF_HANDLE_PX + OUTLINE_THICKNESS_PX;
 static const QColor OUTLINE_COLOR = Qt::darkGray;
 static const QColor HANDLE_COLOR = Qt::lightGray;
 static const QColor HANDLE_PICK_COLOR = Qt::white;
+static const QColor HANDLE_UNEDITABLE_COLOR = Qt::black;
 
 static const QString GRAD_WIDGET_TOOLTIP = QObject::tr("Left-click and drag to move a color stop, changing its value.<p>Double-click to add or edit a stop.<p>Right-click to remove a stop.");
 
@@ -105,8 +105,8 @@ public:
     toUserValue_ = toUserValue;
     fromUserValue_ = fromUserValue;
     // Emit dataChanged on the column for stops
-    if (!colorStops_.empty())
-      emit dataChanged(createIndex(0, COL_VALUE), createIndex(colorStops_.size() - 1, COL_VALUE));
+    if (editedGradient_.numControlColors() > 0)
+      emit dataChanged(createIndex(0, COL_VALUE), createIndex(editedGradient_.numControlColors() - 1, COL_VALUE));
   }
 
   /** Changes the values suffix */
@@ -117,8 +117,8 @@ public:
     valueSuffix_ = suffix;
 
     // Emit dataChanged on the column for stops
-    if (!colorStops_.empty() && suffixInTableItems_)
-      emit dataChanged(createIndex(0, COL_VALUE), createIndex(colorStops_.size() - 1, COL_VALUE));
+    if (editedGradient_.numControlColors() > 0 && suffixInTableItems_)
+      emit dataChanged(createIndex(0, COL_VALUE), createIndex(editedGradient_.numControlColors() - 1, COL_VALUE));
     if (suffixInTableHeader_)
       emit headerDataChanged(Qt::Horizontal, COL_VALUE, COL_VALUE);
   }
@@ -129,8 +129,8 @@ public:
     if (suffixInTableItems_ == val)
       return;
     suffixInTableItems_ = val;
-    if (!colorStops_.empty())
-      emit dataChanged(createIndex(0, COL_VALUE), createIndex(colorStops_.size() - 1, COL_VALUE));
+    if (editedGradient_.numControlColors() > 0)
+      emit dataChanged(createIndex(0, COL_VALUE), createIndex(editedGradient_.numControlColors() - 1, COL_VALUE));
   }
 
   /** Changes whether suffix is shown in table header */
@@ -160,7 +160,7 @@ public:
     // Flat table, no parents
     if (parent.isValid())
       return 0;
-    return static_cast<int>(colorStops_.size());
+    return static_cast<int>(editedGradient_.numControlColors());
   }
 
   virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override
@@ -176,6 +176,9 @@ public:
     if (!index.isValid())
       return Qt::NoItemFlags;
 
+    // All items are editable, except the value column for index 0 and 1
+    if (index.column() == COL_VALUE && (index.row() == 0 || index.row() == 1))
+      return (Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     return (Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable);
   }
 
@@ -191,7 +194,7 @@ public:
     {
     case COL_VALUE:
       if (role == Qt::ToolTipRole)
-        return VALUE_TOOLTIP;
+        return VALUE_TOOLTIP.arg(toUserValue_(0.f)).arg(toUserValue_(1.f));
       return (suffixInTableHeader_ && !valueSuffix_.isEmpty()) ? tr("Value (%1)").arg(valueSuffix_.trimmed()) : tr("Value");
     case COL_COLOR:
       return (role == Qt::DisplayRole ? tr("Color") : COLOR_TOOLTIP);
@@ -218,7 +221,7 @@ public:
       switch (static_cast<Column>(index.column()))
       {
       case COL_VALUE:
-        return VALUE_TOOLTIP;
+        return VALUE_TOOLTIP.arg(toUserValue_(0.f)).arg(toUserValue_(1.f));
       case COL_COLOR:
         return COLOR_TOOLTIP;
       default:
@@ -229,23 +232,25 @@ public:
 
     if (role == Qt::DisplayRole || role == Qt::EditRole || role == DECIMAL_VALUE_ROLE)
     {
-      auto iter = colorStops_.begin();
-      std::advance(iter, index.row());
-
       switch (static_cast<Column>(index.column()))
       {
       case COL_VALUE:
       {
         if (role == DECIMAL_VALUE_ROLE)
-          return iter->first;
-        else if (role == Qt::EditRole)
-          return toUserValue_(iter->first);
+          return editedGradient_.controlColorPct(index.row());
+        const float percent = editedGradient_.controlColorPct(index.row());
+        if (role == Qt::EditRole)
+          return toUserValue_(percent);
         // Use rint() to round the value to avoid floating point rounding issues (e.g. 2.999987 to 2)
-        const QString userString = QString::number(static_cast<int>(simCore::rint(toUserValue_(iter->first))), 'f', 0);
-        return suffixInTableItems_ ? (userString + valueSuffix_) : userString;
+        const QString& userString = QString::number(static_cast<int>(simCore::rint(toUserValue_(percent))), 'f', 0);
+        const QString& withSuffix = suffixInTableItems_ ? (userString + valueSuffix_) : userString;
+        // Display " (Fixed)" on the values that can't be moved
+        return (index.row() == 0 || index.row() == 1) ? tr("%1 (Fixed)").arg(withSuffix) : withSuffix;
       }
+
       case COL_COLOR:
-        return iter->second;
+        return editedGradient_.controlColor(index.row());
+
       default:
         assert(0); // Invalid column received
       }
@@ -267,7 +272,6 @@ public:
       return false;
     }
 
-    auto iter = colorStops_.begin() + index.row();
     switch (static_cast<Column>(index.column()))
     {
     case COL_VALUE:
@@ -278,16 +282,17 @@ public:
       else
         val = fromUserValue_(value.toString().replace(valueSuffix_.trimmed(), "").toFloat());
 
-      // Block invalid or duplicate values
-      if (val < 0.f || val > 1.f || hasStop_(val))
+      // Block invalid values
+      if (val < 0.f || val > 1.f)
         return false;
-      iter->first = val;
+
+      editedGradient_.setControlColor(index.row(), val, editedGradient_.controlColor(index.row()));
       emit dataChanged(createIndex(index.row(), COL_VALUE), createIndex(index.row(), COL_VALUE));
       return true;
     }
     case COL_COLOR:
     {
-      iter->second = value.value<QColor>();
+      editedGradient_.setControlColor(index.row(), editedGradient_.controlColorPct(index.row()), value.value<QColor>());
       emit dataChanged(createIndex(index.row(), COL_COLOR), createIndex(index.row(), COL_COLOR));
       return true;
     }
@@ -301,34 +306,25 @@ public:
   /** Resets the model with the given color gradient */
   void setColorGradient(const ColorGradient& gradient)
   {
+    if (editedGradient_ == gradient)
+      return;
+
     emit beginResetModel();
-    colorStops_.clear();
-
-    for (const auto& colorVal : gradient.colors())
-      colorStops_.push_back(std::make_pair(colorVal.first, colorVal.second));
-
+    editedGradient_ = gradient;
     emit endResetModel();
   }
 
   /** Retrieves the current color gradient from the model */
   ColorGradient getColorGradient() const
   {
-    std::map<float, QColor> colors;
-    for (const auto& colorStop : colorStops_)
-      colors[colorStop.first] = colorStop.second;
-
-    ColorGradient grad(colors);
-    return grad;
+    return editedGradient_;
   }
 
   /** Removes all color stops from the model */
   void clear()
   {
-    if (colorStops_.empty())
-      return;
-
     emit beginResetModel();
-    colorStops_.clear();
+    editedGradient_.clearControlColors();
     emit endResetModel();
   }
 
@@ -337,10 +333,12 @@ public:
   {
     if (!index.isValid() || index.row() >= rowCount())
       return;
+    // Don't allow removal of stop 0 or 1 (they are fixed)
+    if (index.row() < 2)
+      return;
 
-    auto iter = colorStops_.begin() + index.row();
     beginRemoveRows(QModelIndex(), index.row(), index.row());
-    colorStops_.erase(iter);
+    editedGradient_.removeControlColor(index.row());
     endRemoveRows();
   }
 
@@ -351,47 +349,27 @@ public:
     if (value < 0.f || value > 1.f)
       return QModelIndex();
 
-    return addStop_(value, guessColor_(value));
-  }
-
-  /** Sets or creates the stop at the given value with the given color */
-  void setColor(float value, const QColor& color)
-  {
-    for (auto stopIter = colorStops_.begin(); stopIter != colorStops_.end(); ++stopIter)
-    {
-      if (stopIter->first == value)
-      {
-        if (stopIter->second != color)
-        {
-          stopIter->second = color;
-          const int row = std::distance(colorStops_.begin(), stopIter);
-          const QModelIndex topLeft = index(row, 0);
-          const QModelIndex bottomRight = index(row, COL_LAST - 1);
-          emit dataChanged(topLeft, bottomRight);
-        }
-        return;
-      }
-    }
-
-    addStop_(value, color);
+    return addStop_(value, editedGradient_.colorAt(value));
   }
 
   /**
    * Updates the given persistent index to point to the stop closest
    * to the given value within the defined range, if one exists.
-   * Returns true if a stop was found.
+   * Returns true if a stop was found. Never returns index 0 or 1.
    */
-  bool indexForValue(float trueValue, QPersistentModelIndex& stopIdx, float tolerance = 0.1f) const
+  bool controlIndexForValue(float trueValue, QPersistentModelIndex& stopIdx, float tolerance) const
   {
     stopIdx = QModelIndex();
+
     bool stopFound = false;
-    for (auto stopIter = colorStops_.begin(); stopIter != colorStops_.end(); ++stopIter)
+    // Advance past the immovable color stops
+    for (size_t controlIndex = 2; controlIndex < editedGradient_.numControlColors(); ++controlIndex)
     {
-      const float delta = fabs(stopIter->first - trueValue);
+      const float delta = fabs(editedGradient_.controlColorPct(controlIndex) - trueValue);
       if (delta <= tolerance)
       {
         tolerance = delta;
-        stopIdx = index(std::distance(colorStops_.begin(), stopIter), COL_VALUE);
+        stopIdx = index(controlIndex, COL_VALUE);
         stopFound = true;
         // Later stop could be closer, keep searching
       }
@@ -400,77 +378,41 @@ public:
     return stopFound;
   }
 
+  void sortByPercent()
+  {
+    // Avoid noop
+    const size_t numColors = editedGradient_.numControlColors();
+    if (numColors <= 2)
+      return;
+
+    // Add all stops into a multimap
+    std::multimap<float, QColor> colorStops;
+    for (size_t index = 2; index < numColors; ++index)
+      colorStops.insert(std::make_pair(editedGradient_.controlColorPct(index), editedGradient_.controlColor(index)));
+    // Create a new gradient to replace old one
+    ColorGradient newGradient;
+    newGradient.clearControlColors();
+    newGradient.setControlColor(0, 0.f, editedGradient_.controlColor(0));
+    newGradient.setControlColor(1, 1.f, editedGradient_.controlColor(1));
+    for (const auto& pctColor : colorStops)
+      newGradient.addControlColor(pctColor.first, pctColor.second);
+    setColorGradient(newGradient);
+  }
+
 private:
   /** Convenience method to add a stop with proper signaling */
   QModelIndex addStop_(float value, const QColor& color)
   {
-    const int rowIdx = colorStops_.size();
+    const int rowIdx = editedGradient_.numControlColors();
     emit beginInsertRows(QModelIndex(), rowIdx, rowIdx);
-    colorStops_.push_back(std::make_pair(value, color));
+    editedGradient_.addControlColor(value, color);
     emit endInsertRows();
 
     return index(rowIdx, COL_VALUE);
   }
 
-  /** Returns true if there is a stop with the given value */
-  bool hasStop_(float value) const
-  {
-    for (const auto& colorStop : colorStops_)
-    {
-      if (colorStop.first == value)
-        return true;
-    }
-    return false;
-  }
-
-  /** Guesses at a default color for a new stop at the given value */
-  QColor guessColor_(float value) const
-  {
-    // Skip color guessing if we're empty
-    if (colorStops_.empty())
-      return Qt::black;
-
-    // Can't interpolate from one value
-    if (rowCount() == 1)
-      return colorStops_.begin()->second;
-
-    // Get the value less than new value
-    auto leftIter = colorStops_.rbegin();
-    while (leftIter != colorStops_.rend() && leftIter->first >= value)
-      ++leftIter;
-
-    // New value is new lowest, use color of previous lowest
-    if (leftIter == colorStops_.rend())
-    {
-      --leftIter;
-      return leftIter->second;
-    }
-
-    // Get the value greater than or equal to new value
-    auto rightIter = colorStops_.begin();
-    while (rightIter != colorStops_.end() && rightIter->first < value)
-      ++rightIter;
-
-    // New value is new highest, use color of previous highest
-    if (rightIter == colorStops_.end())
-    {
-      --rightIter;
-      return rightIter->second;
-    }
-
-    // Don't try to add duplicate values
-    if (rightIter->first == value)
-    {
-      assert(0); // Testing, shouldn't be able to duplicate values
-      return Qt::black;
-    }
-
-    // Get the interpolated color
-    return ColorGradient::interpolate(leftIter->second, rightIter->second, leftIter->first, value, rightIter->first);
-  }
-
-  /** Unordered vector pairing values with corresponding colors */
-  std::vector<std::pair<float, QColor> > colorStops_;
+  /** Maintains a copy of the currently edited gradient */
+  simQt::ColorGradient editedGradient_;
 
   /** Convert to and from user values */
   std::function<float(float)> toUserValue_;
@@ -502,6 +444,7 @@ public:
     toUserValue_(TO_USER_VALUE),
     valueSuffix_(DEFAULT_VALUE_SUFFIX)
   {
+    setContextMenuPolicy(Qt::CustomContextMenu); // none
     setMinimumHeight(HANDLE_SIZE_PX + HANDLE_THICKNESS_PX + OUTLINE_THICKNESS_PX);
     // Enable mouse tracking so we get move events with no buttons pressed
     setMouseTracking(true);
@@ -552,20 +495,27 @@ public:
       auto index = model_.index(i, ColorGradientModel::COL_VALUE);
       const float value = index.data(ColorGradientModel::DECIMAL_VALUE_ROLE).toFloat();
       const int x = (value * width) - HALF_HANDLE_PX;
-      bool highlight = false;
-      if (dragIndex_.isValid())
-        highlight = (index == dragIndex_);
-      else
-        highlight = (index == pickIndex_);
 
-      drawStopRect_(painter, x, y, highlight);
+      QColor handleColor = (i < 2) ? HANDLE_UNEDITABLE_COLOR : HANDLE_COLOR;
+      if (dragIndex_.isValid())
+      {
+        // If we're dragging, highlight only the dragging item
+        if (index == dragIndex_)
+          handleColor = HANDLE_PICK_COLOR;
+      }
+      else if (pickIndex_.isValid() && i >= 2)
+      {
+        // Highlight the item under mouse, only if it's not index 0 or 1 (uneditable)
+        if (index == pickIndex_)
+          handleColor = HANDLE_PICK_COLOR;
+      }
+      drawStopRect_(painter, x, y, handleColor);
     }
   }
 
   virtual void mousePressEvent(QMouseEvent* evt) override
   {
-    if (evt->button() != Qt::RightButton
-      && evt->button() != Qt::LeftButton)
+    if (evt->button() != Qt::RightButton && evt->button() != Qt::LeftButton)
       return;
 
     // Use our cached pick index if we have one, else try to pick
@@ -635,22 +585,28 @@ public:
       return;
 
     // Have to re-find index, since we received a release
+    bool createdIndex = false;
     if (!findStopForEvent_(evt, dragIndex_))
     {
       // If we didn't doubleclick on a stop, create a new stop
       const float newVal = (static_cast<float>(evt->x()) / width());
       dragIndex_ = model_.addStop(newVal);
+      createdIndex = true;
     }
 
     // Open color dialog to set the stop's color
-    const QModelIndex colorIdx = dragIndex_.sibling(dragIndex_.row(), ColorGradientModel::COL_COLOR);
+    const QModelIndex& colorIdx = dragIndex_.sibling(dragIndex_.row(), ColorGradientModel::COL_COLOR);
     QColor tempColor = model_.data(colorIdx).value<QColor>();
     if (showAlpha_)
       tempColor = QColorDialog::getColor(tempColor, this, tr("Gradient Stop Color"), COLOR_DIALOG_OPTIONS | QColorDialog::ShowAlphaChannel);
     else
       tempColor = QColorDialog::getColor(tempColor, this, tr("Gradient Stop Color"), COLOR_DIALOG_OPTIONS);
+
+    // Cancellation of the GUI results in color not being valid; remove stop if needed for cancel
     if (tempColor.isValid())
       model_.setData(colorIdx, QVariant(tempColor));
+    else if (createdIndex)
+      model_.removeStop(colorIdx);
 
     // Clear both, since the color dialog likely ate our release event
     dragIndex_ = QModelIndex();
@@ -659,7 +615,7 @@ public:
 
 private:
   /** Draws the rectangular handle used to control a color stop */
-  void drawStopRect_(QPainter& painter, int x, int y, bool highlight)
+  void drawStopRect_(QPainter& painter, int x, int y, const QColor& handleColor)
   {
     painter.save();
 
@@ -668,7 +624,7 @@ private:
     painter.setPen(outlinePen);
     painter.drawRect(x, y, HANDLE_SIZE_PX, HANDLE_SIZE_PX);
 
-    QPen handlePen(highlight ? HANDLE_PICK_COLOR : HANDLE_COLOR);
+    QPen handlePen(handleColor);
     handlePen.setWidth(HANDLE_THICKNESS_PX);
     painter.setPen(handlePen);
     painter.drawRect(x, y, HANDLE_SIZE_PX, HANDLE_SIZE_PX);
@@ -683,8 +639,7 @@ private:
   {
     const int midY = (height() / 2);
     // Ignore events outside the vertical center
-    if (width() == 0 || evt->y() < (midY - HANDLE_SIZE_PX)
-      || evt->y() > (midY + HANDLE_SIZE_PX))
+    if (width() == 0 || !simCore::isBetween(evt->y(), midY - HANDLE_SIZE_PX, midY + HANDLE_SIZE_PX))
     {
       stopIdx = QModelIndex();
       return false;
@@ -692,7 +647,7 @@ private:
 
     const float trueVal = (static_cast<float>(evt->x()) / width());
     const float maxDelta = (HANDLE_TOLERANCE_PX / width());
-    return model_.indexForValue(trueVal, stopIdx, maxDelta);
+    return model_.controlIndexForValue(trueVal, stopIdx, maxDelta);
   }
 
   ColorGradientModel& model_;
@@ -719,14 +674,11 @@ ColorGradientWidget::ColorGradientWidget(QWidget* parent)
   maxUserValue_(100.f),
   valueSuffix_(DEFAULT_VALUE_SUFFIX)
 {
+  // Default to actions context menu, but this can be overridden by UI
+  setContextMenuPolicy(Qt::ActionsContextMenu);
   model_ = new ColorGradientModel(this);
-  proxyModel_ = new QSortFilterProxyModel(this);
 
   ui_->setupUi(this);
-
-  proxyModel_->setSourceModel(model_);
-  // Sort by the edit role to avoid "string order"
-  proxyModel_->setSortRole(Qt::EditRole);
 
   display_ = new GradientDisplayWidget(*model_);
   QSizePolicy policy;
@@ -740,6 +692,22 @@ ColorGradientWidget::ColorGradientWidget(QWidget* parent)
 
   ui_->helpButton->setVisible(showHelp_);
   connect(ui_->helpButton, SIGNAL(clicked(bool)), this, SLOT(showHelpDialog_()));
+
+  QAction* toDefaultAction = new QAction(tr("Reset to Default"), this);
+  addAction(toDefaultAction);
+  connect(toDefaultAction, &QAction::triggered, this, &ColorGradientWidget::setGradientDefault_);
+
+  QAction* toDarkerAction = new QAction(tr("Reset to Darker"), this);
+  addAction(toDarkerAction);
+  connect(toDarkerAction, &QAction::triggered, this, &ColorGradientWidget::setGradientDarker_);
+
+  QAction* toGreyscaleAction = new QAction(tr("Reset to Greyscale"), this);
+  addAction(toGreyscaleAction);
+  connect(toGreyscaleAction, &QAction::triggered, this, &ColorGradientWidget::setGradientGreyscale_);
+
+  QAction* toDopplerAction = new QAction(tr("Reset to Doppler"), this);
+  addAction(toDopplerAction);
+  connect(toDopplerAction, &QAction::triggered, this, &ColorGradientWidget::setGradientDoppler_);
 
   // Configure using a default gradient
   setColorGradient(ColorGradient::newDefaultGradient());
@@ -954,14 +922,44 @@ void ColorGradientWidget::showOrHideTable_()
   treeView_ = new QTreeView(tableGroup_);
   treeView_->setObjectName("colorGradientTreeView");
   treeView_->setRootIsDecorated(false);
-  treeView_->setModel(proxyModel_);
+  treeView_->setModel(model_);
   treeView_->setItemDelegateForColumn(ColorGradientModel::COL_COLOR, new ColorWidgetDelegate(showAlpha_, this));
-  treeView_->sortByColumn(ColorGradientModel::COL_VALUE, Qt::AscendingOrder);
 
   groupLayout->addWidget(treeView_);
   tableGroup_->setLayout(groupLayout);
   ui_->verticalLayout->addWidget(tableGroup_);
+
+  QAction* separator = new QAction(treeView_);
+  separator->setSeparator(true);
+  QAction* sortAction = new QAction(tr("Sort"), treeView_);
+
+  for (auto* actionPtr : actions())
+    treeView_->addAction(actionPtr);
+  treeView_->addAction(separator);
+  treeView_->addAction(sortAction);
+
+  treeView_->setContextMenuPolicy(Qt::ActionsContextMenu);
+  connect(sortAction, &QAction::triggered, model_, &ColorGradientModel::sortByPercent);
 }
 
+void ColorGradientWidget::setGradientDefault_()
+{
+  model_->setColorGradient(ColorGradient::newDefaultGradient());
+}
+
+void ColorGradientWidget::setGradientDarker_()
+{
+  model_->setColorGradient(ColorGradient::newDarkGradient());
+}
+
+void ColorGradientWidget::setGradientGreyscale_()
+{
+  model_->setColorGradient(ColorGradient::newGreyscaleGradient());
+}
+
+void ColorGradientWidget::setGradientDoppler_()
+{
+  model_->setColorGradient(ColorGradient::newDopplerGradient());
+}
 
 }

@@ -1,0 +1,19 @@
+include:
+  # Template to pull in rules
+  - project: 'unclass/vsi/ci/continuous'
+    ref: main
+    file: 'template_continuous.yml'
+
+  # Merge requests will trigger all the MR-related continuous builds
+  - project: 'unclass/vsi/ci/continuous'
+    ref: main
+    file: 'mergerequest_all.yml'
+
+
+# Push to main, will trigger a continuous full build
+trigger_continuous:
+  trigger:
+    project: 'unclass/vsi/ci/continuous'
+    strategy: depend
+  rules:
+    - !reference [.template_continuous, rules]

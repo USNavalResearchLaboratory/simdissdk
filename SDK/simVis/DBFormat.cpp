@@ -405,6 +405,9 @@ osgEarth::Status DBImageLayer::openImplementation()
 
     // Lat/long extents (for debugging)
     osgEarth::GeoExtent llex[6];
+#if OSGEARTH_SOVERSION >= 142
+    osgEarth::DataExtentList allExtents;
+#endif
 
     // Tell the engine how deep the data actually goes:
     for (unsigned int f = 0; f < 6; ++f)
@@ -421,9 +424,17 @@ osgEarth::Status DBImageLayer::openImplementation()
         // Transform to lat/long for the debugging msgs
         cubeEx.transform(profile->getSRS()->getGeodeticSRS(), llex[f]);
 
+#if OSGEARTH_SOVERSION >= 142
+        allExtents.push_back(osgEarth::DataExtent(cubeEx, cx.shallowLevel_, cx.deepLevel_));
+#else
         dataExtents().push_back(osgEarth::DataExtent(cubeEx, cx.shallowLevel_, cx.deepLevel_));
+#endif
       }
     }
+
+#if OSGEARTH_SOVERSION >= 142
+    setDataExtents(allExtents);
+#endif
 
     // Set time value of image if a time was found in the db
     if (cx.timeStamp_ != simCore::INFINITE_TIME_STAMP)
@@ -694,6 +705,9 @@ osgEarth::Status DBElevationLayer::openImplementation()
 
     // Lat/long extents (for debugging)
     osgEarth::GeoExtent llex[6];
+#if OSGEARTH_SOVERSION >= 142
+    osgEarth::DataExtentList allExtents;
+#endif
 
     // Tell the engine how deep the data actually goes:
     for (unsigned int f = 0; f < 6; ++f)
@@ -710,9 +724,17 @@ osgEarth::Status DBElevationLayer::openImplementation()
         // Transform to lat/long for the debugging msgs
         cubeEx.transform(profile->getSRS()->getGeodeticSRS(), llex[f]);
 
+#if OSGEARTH_SOVERSION >= 142
+        allExtents.push_back(osgEarth::DataExtent(cubeEx, cx.shallowLevel_, cx.deepLevel_));
+#else
         dataExtents().push_back(osgEarth::DataExtent(cubeEx, cx.shallowLevel_, cx.deepLevel_));
+#endif
       }
     }
+
+#if OSGEARTH_SOVERSION >= 142
+    setDataExtents(allExtents);
+#endif
 
     // Set time value of image if a time was found in the db
     if (cx.timeStamp_ != simCore::INFINITE_TIME_STAMP)

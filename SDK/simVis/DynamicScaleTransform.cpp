@@ -121,7 +121,8 @@ DynamicScaleTransform::DynamicScaleTransform()
     overrideScaleSet_(false),
     overrideScale_(NO_SCALE),
     cachedScale_(NO_SCALE),
-    iconScaleFactor_(INVALID_SCALE_FACTOR)
+    iconScaleFactor_(INVALID_SCALE_FACTOR),
+    fixedIconScaleFactor_(INVALID_SCALE_FACTOR)
 {
   setName("DynamicScaleTransform");
 }
@@ -137,7 +138,8 @@ DynamicScaleTransform::DynamicScaleTransform(const DynamicScaleTransform& rhs, c
     overrideScaleSet_(rhs.overrideScaleSet_),
     overrideScale_(rhs.overrideScale_),
     cachedScale_(rhs.cachedScale_),
-    iconScaleFactor_(INVALID_SCALE_FACTOR)
+    iconScaleFactor_(INVALID_SCALE_FACTOR),
+    fixedIconScaleFactor_(INVALID_SCALE_FACTOR)
 {
 }
 
@@ -202,6 +204,12 @@ bool DynamicScaleTransform::dynamicScaleToPixels() const
   return dynamicScalePixel_;
 }
 
+void DynamicScaleTransform::setFixedSize(double meters)
+{
+  fixedIconScaleFactor_ = DS_SIZE_SCALAR * powf(meters, DS_SIZE_EXPONENT);
+  iconScaleFactor_ = fixedIconScaleFactor_;
+}
+
 osg::Node* DynamicScaleTransform::getSizingNode_() const
 {
   if (sizingNode_.valid())
@@ -219,6 +227,12 @@ void DynamicScaleTransform::setSizingNode(osg::Node* node)
 
 void DynamicScaleTransform::recomputeBounds()
 {
+  if (fixedIconScaleFactor_ != INVALID_SCALE_FACTOR)
+  {
+    iconScaleFactor_ = fixedIconScaleFactor_;
+    return;
+  }
+
   // Compute the bounding box of the icon
   osg::ComputeBoundsVisitor cb;
   cb.setTraversalMask(cb.getTraversalMask() |~ simVis::DISPLAY_MASK_LABEL);
@@ -440,8 +454,7 @@ osg::Vec3f DynamicScaleTransform::computeDynamicScale_(double range, osg::CullSt
   }
 
   // Traditional dynamic scale algorithm
-  osg::ref_ptr<const osg::Node> sizeNode = getSizingNode_();
-  if (sizeNode.valid() && iconScaleFactor_ != INVALID_SCALE_FACTOR)
+  if (iconScaleFactor_ != INVALID_SCALE_FACTOR)
   {
     // Compute the distance at which scaling begins
     const float maxLen = iconScaleFactor_ * dynamicScalar_ + scaleOffset_;

@@ -42,6 +42,7 @@
 #include "simVis/GOG/Loader.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Parser.h"
+#include "simVis/Headless.h"
 #include "simVis/Registry.h"
 
 namespace
@@ -1700,6 +1701,11 @@ int testArcSweep()
 
 int GogTest(int argc, char* argv[])
 {
+  if (simVis::isHeadless())
+  {
+    std::cerr << "Headless display detected; aborting test.\n";
+    return 0;
+  }
   int rv = 0;
 
   // osgEarth uses std::atexit() to clean up the Registry, which makes calls into

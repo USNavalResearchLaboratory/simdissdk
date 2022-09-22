@@ -108,6 +108,17 @@ namespace simCore
   SDKCORE_EXPORT bool hasExtension(const std::string& inName, std::string newExt);
 
   /**
+  * Given an input filename, replaces its extension with a new one. If the input filename
+  * has no extension, then the new extension is added.
+  * @param[in ] inName Input filename, must not be empty.
+  * @param[in ] newExt Extension to replace. Leading period is optional.
+  * @return Input filename with old extension replaced by new extension. If the new extension
+  *   is empty, the output file will lose its extension. If input filename is empty, empty
+  *   string is also returned as an error.
+  */
+  SDKCORE_EXPORT std::string replaceExtension(const std::string& inName, const std::string& newExt);
+
+  /**
    * Builds a formatted double output string, with optional prefix and suffix.  Will fall
    * back from decimal notation to scientific notation if the value is greater-than or
    * less-than the specified values.

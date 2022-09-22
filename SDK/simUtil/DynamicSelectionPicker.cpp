@@ -186,7 +186,7 @@ void DynamicSelectionPicker::pickToVector_(simVis::EntityVector& nodes, PickBeha
   mouseRangeSquaredPx = maximumValidRangeSquared;
 
   // Loop through all entities
-  for (const auto entityRefPtr : allEntities)
+  for (const auto& entityRefPtr : allEntities)
   {
     auto* entityPtr = entityRefPtr.get();
     if (!isPickable_(entityPtr))

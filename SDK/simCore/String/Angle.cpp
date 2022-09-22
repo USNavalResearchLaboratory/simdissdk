@@ -137,7 +137,7 @@ const simCore::Units& formatToUnits(GeodeticFormat format)
 
 /// return a formatted angle string
 std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNumerics,
-  size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir, char negativeDir)
+  size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir, char negativeDir, bool allowRollover)
 {
   double degreeAngle = simCore::Units::RADIANS.convertTo(simCore::Units::DEGREES, radianAngle);
   precision = simCore::sdkMin(precision, static_cast<size_t>(16));
@@ -225,6 +225,9 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
 
     std::stringstream strDegMinSec;
+    // SIM-14416: force leading -, as stringstream won't handle -0 as -0
+    if (negative && printNegativeSign && degreeAngle == -0.)
+      strDegMinSec << '-';
     strDegMinSec << static_cast<int>(degreeAngle) << degreeSymbolString << " ";
     strDegMinSec.setf(std::ios::fixed, std::ios::floatfield);
     strDegMinSec << std::setfill('0') << std::setw(2) << static_cast<int>(minValue) << minuteSymbolString << " ";
@@ -263,6 +266,9 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
 
     std::stringstream strDegMin;
+    // SIM-14416: force leading -, as stringstream won't handle -0 as -0
+    if (negative && printNegativeSign && degreeAngle == -0.)
+      strDegMin << '-';
     strDegMin << static_cast<int>(degreeAngle) << degreeSymbolString << " ";
     strDegMin.setf(std::ios::fixed, std::ios::floatfield);
     size_t width = (precision == 0 ? (2) : (precision + 3));  // Account for decimal if precision is non-zero
@@ -287,9 +293,14 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
   case FMT_DEGREES:
   default:
   {
-    const double rounding = 5.0 / pow(10.0, precision + 1.0);
-    if ((degreeAngle + rounding > 360.0) || simCore::areEqual(degreeAngle + rounding, 360.0))
-      degreeAngle = 0.0;
+    if (!allowRollover)
+    {
+      const double rounding = 5.0 / pow(10.0, precision + 1.0);
+      degreeAngle = simCore::angFix360(degreeAngle);
+      if (fabs(simCore::angleDifferenceDeg(degreeAngle, 360.0)) < rounding)
+        degreeAngle = 0.0;
+    }
+
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
     std::stringstream str;
     str.setf(std::ios::fixed, std::ios::floatfield);

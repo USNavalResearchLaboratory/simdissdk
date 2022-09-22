@@ -64,6 +64,21 @@ std::string DataStoreHelpers::nameOrAliasFromId(const ObjectId& objectId, const 
   return prefs->name();
 }
 
+int DataStoreHelpers::setName(const std::string& newName, const ObjectId& objectId, simData::DataStore* dataStore)
+{
+  if (dataStore == nullptr)
+    return 1;
+
+  simData::DataStore::Transaction trans;
+  auto prefs = dataStore->mutable_commonPrefs(objectId, &trans);
+  if (!prefs)
+    return 1;
+
+  prefs->set_name(newName);
+  trans.complete(&prefs);
+  return 0;
+}
+
 simData::ObjectType DataStoreHelpers::typeFromChar(char entityTypeChar)
 {
   switch (entityTypeChar)

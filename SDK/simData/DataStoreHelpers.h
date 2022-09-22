@@ -33,7 +33,7 @@ namespace simData {
 
 class DataStore;
 
-/** Methods for getting entity information given an entity ID */
+/** Methods for getting/setting entity information given an entity ID */
 class SDKDATA_EXPORT DataStoreHelpers
 {
 public:
@@ -43,6 +43,8 @@ public:
   static std::string aliasFromId(const ObjectId& objectId, const simData::DataStore* dataStore);
   /// Get the name or alias based on the entity's preference for the given objectId
   static std::string nameOrAliasFromId(const ObjectId& objectId, const simData::DataStore* dataStore, bool allowBlankAlias=false);
+  /// Set the name of the entity; returns 0 on success
+  static int setName(const std::string& newName, const ObjectId& objectId, simData::DataStore* dataStore);
   /// Get one character (PBGLD) for the given entity type
   static std::string typeToString(simData::ObjectType entityType);
   /// Get the object type from the given entity type character (PBGLD)

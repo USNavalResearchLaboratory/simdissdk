@@ -271,7 +271,10 @@ QModelIndexList SettingsProxyModel::match(const QModelIndex& start, int role, co
 void SettingsProxyModel::setShowAdvanced(bool showAdvanced)
 {
   if (showAdvanced != dataLevel_->showAdvanced())
+  {
     dataLevel_->setShowAdvanced(showAdvanced);
+    search_->invalidate();
+  }
 }
 
 void SettingsProxyModel::setShowUnknown(bool showUnknown)

@@ -33,24 +33,26 @@
 #include "simNotify/NotifyHandler.h"
 #include "simNotify/StandardNotifyHandlers.h"
 #include "simCore/Common/Common.h"
+#include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Version.h"
 #include "simCore/String/UtfUtils.h"
-
-using namespace std;
 
 namespace
 {
 
-class AssertionException : public exception
+class AssertionException : public std::exception
 {
 public:
-  explicit AssertionException(const string &message) : message_(message) { }
+  explicit AssertionException(const std::string &message) : message_(message) { }
   ~AssertionException() throw() {}
 
-  virtual const char *what() const throw() { return message_.c_str(); }
+  virtual const char *what() const throw() override
+  {
+    return message_.c_str();
+  }
 
 private:
-  string message_;
+  std::string message_;
 
 };
 
@@ -132,7 +134,7 @@ public:
 
   void clearBuffer() { buffer_.clear(); }
 
-  virtual void notify(const std::string &message)
+  virtual void notify(const std::string &message) override
   {
     buffer_ += message;
   }
@@ -502,7 +504,7 @@ void testFileNotifyHandler()
   handler.reset();
 
   // Read the string from the file
-  ifstream fd(simCore::streamFixUtf8(filename));
+  std::ifstream fd(simCore::streamFixUtf8(filename));
 
   if (!fd.is_open())
   {
@@ -538,11 +540,162 @@ void testStreamNotifyHandler()
   ss.str("");
 }
 
+int testComposite()
+{
+  int rv = 0;
+
+  auto handler1 = std::make_shared<NotifyHandlerTest<simNotify::NotifyHandler> >();
+  auto handler2 = std::make_shared<NotifyHandlerTest<simNotify::NotifyHandler> >();
+  auto composite = std::make_shared<simNotify::CompositeHandler>();
+  simNotify::setNotifyHandlers(composite);
+  simNotify::setNotifyLevel(simNotify::NOTIFY_DEBUG_FP);
+
+  SIM_ALWAYS << "Test 1\n";
+  rv += SDK_ASSERT(handler1->getBuffer().empty());
+  rv += SDK_ASSERT(handler2->getBuffer().empty());
+
+  rv += SDK_ASSERT(composite->addHandler(handler1) == 0);
+  SIM_ALWAYS << "Test 2\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "ALWAYS:  Test 2\n");
+  rv += SDK_ASSERT(handler2->getBuffer().empty());
+
+  rv += SDK_ASSERT(composite->addHandler(handler2) == 0);
+  SIM_ERROR << "Test 3\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "ALWAYS:  Test 2\nERROR:  Test 3\n");
+  rv += SDK_ASSERT(handler2->getBuffer() == "ERROR:  Test 3\n");
+
+  rv += SDK_ASSERT(composite->addHandler(handler1) != 0);
+  SIM_INFO << "Test 4\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "ALWAYS:  Test 2\nERROR:  Test 3\nINFO:  Test 4\n");
+  rv += SDK_ASSERT(handler2->getBuffer() == "ERROR:  Test 3\nINFO:  Test 4\n");
+
+  // Test remove
+  rv += SDK_ASSERT(composite->removeHandler(simNotify::NotifyHandlerPtr()) != 0);
+  rv += SDK_ASSERT(composite->removeHandler(handler1) == 0);
+  SIM_ALWAYS << "Test 5\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "ALWAYS:  Test 2\nERROR:  Test 3\nINFO:  Test 4\n");
+  rv += SDK_ASSERT(handler2->getBuffer() == "ERROR:  Test 3\nINFO:  Test 4\nALWAYS:  Test 5\n");
+  rv += SDK_ASSERT(composite->removeHandler(handler1) != 0);
+
+  handler1->clearBuffer();
+  handler2->clearBuffer();
+
+  // Test adding back in still works
+  SIM_ALWAYS << "Test 6\n";
+  rv += SDK_ASSERT(handler1->getBuffer().empty());
+  rv += SDK_ASSERT(handler2->getBuffer() == "ALWAYS:  Test 6\n");
+  rv += SDK_ASSERT(composite->addHandler(handler1) == 0);
+  SIM_ALWAYS << "Test 7\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "ALWAYS:  Test 7\n");
+  rv += SDK_ASSERT(handler2->getBuffer() == "ALWAYS:  Test 6\nALWAYS:  Test 7\n");
+
+  // Test severity
+  handler1->clearBuffer();
+  handler2->clearBuffer();
+  simNotify::setNotifyLevel(simNotify::NOTIFY_NOTICE);
+  SIM_DEBUG << "Test 8\n";
+  SIM_WARN << "Test 9\n";
+  rv += SDK_ASSERT(handler1->getBuffer() == "WARN:  Test 9\n");
+  rv += SDK_ASSERT(handler2->getBuffer() == "WARN:  Test 9\n");
+
+  return rv;
+}
+
+
+
+int testCapture()
+{
+  int rv = 0;
+  // Create a stream capture notify handler, as a baseline for the test
+  std::stringstream ss1;
+  simNotify::setNotifyHandlers(std::make_shared<simNotify::StreamNotifyHandler>(ss1));
+  simNotify::setNotifyLevel(simNotify::NOTIFY_DEBUG_FP);
+
+  // Write to the stream and confirm content; note, missing newlines in many of these outputs
+  SIM_ALWAYS << "Always";
+  SIM_INFO << "Info" << "Two";
+  SIM_ALWAYS << "AlwaysMore\n\n";
+  SIM_ALWAYS << "Repeat\n";
+  SIM_ERROR << "";
+  SIM_ALWAYS << "Again";
+  rv += SDK_ASSERT(ss1.str()  == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Install a capturing notify handler, and print the same content
+  auto capture = std::make_shared<simNotify::CaptureHandler>();
+  simNotify::setNotifyHandlers(capture);
+
+  SIM_ALWAYS << "Always";
+  SIM_INFO << "Info" << "Two";
+  SIM_ALWAYS << "AlwaysMore\n\n";
+  SIM_ALWAYS << "Repeat\n";
+  SIM_ERROR << "";
+  SIM_ALWAYS << "Again";
+
+  // Write back out to a new handler
+  std::stringstream ss2;
+  simNotify::setNotifyHandlers(std::make_shared<simNotify::StreamNotifyHandler>(ss2));
+  capture->writeToGlobal();
+  rv += SDK_ASSERT(ss2.str() == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Write back out to a specific handler
+  std::stringstream ss3;
+  auto stream3 = std::make_shared<simNotify::StreamNotifyHandler>(ss3);
+  capture->writeTo(*stream3, false);
+  rv += SDK_ASSERT(ss2.str() == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+  rv += SDK_ASSERT(ss3.str() == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Clear the content and confirm it's cleared by writing to another handler
+  rv += SDK_ASSERT(!capture->empty());
+  capture->clear();
+  rv += SDK_ASSERT(capture->empty());
+  std::stringstream ss4;
+  auto stream4 = std::make_shared<simNotify::StreamNotifyHandler>(ss4);
+  capture->writeTo(*stream4, false);
+  rv += SDK_ASSERT(ss4.str().empty());
+
+  // Test notify level. First, rewrite the strings to the capture, with everything enabled.
+  simNotify::setNotifyHandlers(capture);
+  SIM_ALWAYS << "Always";
+  SIM_INFO << "Info" << "Two";
+  SIM_ALWAYS << "AlwaysMore\n\n";
+  SIM_ALWAYS << "Repeat\n";
+  SIM_ERROR << "";
+  SIM_ALWAYS << "Again";
+  // Now, transfer that to stream4 with notification level changed; should be no change in output
+  simNotify::setNotifyLevel(simNotify::NOTIFY_ERROR);
+  capture->writeTo(*stream4, false);
+  rv += SDK_ASSERT(ss4.str() == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Rewrite, respecting notify level
+  std::stringstream ss5;
+  auto stream5 = std::make_shared<simNotify::StreamNotifyHandler>(ss5);
+  capture->writeTo(*stream5, true);
+  rv += SDK_ASSERT(ss5.str() == "ALWAYS:  AlwaysALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Attempt the same, using global writer; note that notify level is now respected so output is different
+  std::stringstream ss6;
+  simNotify::setNotifyHandlers(std::make_shared<simNotify::StreamNotifyHandler>(ss6));
+  capture->writeToGlobal();
+  rv += SDK_ASSERT(ss6.str() == "ALWAYS:  AlwaysALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  // Test that we can forget to remove the capture, do a write-to, and not fail
+  simNotify::setNotifyHandlers(capture);
+  capture->writeToGlobal();
+  capture->writeTo(*capture, false);
+  std::stringstream ss7;
+  auto stream7 = std::make_shared<simNotify::StreamNotifyHandler>(ss7);
+  capture->writeTo(*stream7, false);
+  rv += SDK_ASSERT(ss7.str() == "ALWAYS:  AlwaysINFO:  InfoTwoALWAYS:  AlwaysMore\n\nALWAYS:  Repeat\nERROR:  ALWAYS:  Again");
+
+  return rv;
+}
+
 }
 
 int TestNotify(int argc, char** const argv)
 {
   simCore::checkVersionThrow();
+  int rv = 0;
   try
   {
     // Test functions for setting and querying notify severity level
@@ -557,12 +710,14 @@ int TestNotify(int argc, char** const argv)
     testStderrNotifyHandler();
     testFileNotifyHandler();
     testStreamNotifyHandler();
+    rv += testComposite();
+    rv += testCapture();
   }
   catch (AssertionException& e)
   {
-    cout << e.what() << endl;
+    std::cout << e.what() << std::endl;
     return 1;
   }
 
-  return 0;
+  return rv;
 }

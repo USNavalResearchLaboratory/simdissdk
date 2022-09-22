@@ -23,6 +23,7 @@
 #include "osgDB/ReadFile"
 #include "osgEarth/ImageLayer"
 #include "osgEarth/Random"
+#include "osgEarth/Version"
 #include "osgEarth/VirtualProgram"
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
@@ -585,7 +586,11 @@ void VelocityParticleLayer::Options::fromConfig(const osgEarth::Config& conf)
     bbConf.get("east", east);
     bbConf.get("south", south);
     bbConf.get("north", north);
+#if OSGEARTH_SOVERSION >= 138
+    _boundingBox->set(west, south, 0.0, east, north, 0.0);
+#else
     _boundingBox->set(west, south, east, north);
+#endif
   }
 
   if (conf.hasChild("gradient"))
@@ -809,13 +814,24 @@ osgEarth::Status VelocityParticleLayer::openImplementation()
   // Set the bounding box on the velocity node, and update data extents
   setProfile(osgEarth::Profile::create("global-geodetic"));
   osgEarth::GeoExtent geoExtent = getProfile()->getExtent();
+#if OSGEARTH_SOVERSION >= 138
+  if (_options->boundingBox().isSet() && _options->boundingBox()->valid())
+#else
   if (_options->boundingBox().isSet() && _options->boundingBox()->isValid())
+#endif
   {
     velocityNode->setBoundingBox(*_options->boundingBox());
     geoExtent = osgEarth::GeoExtent(osgEarth::SpatialReference::get("wgs84"), *_options->boundingBox());
   }
+
+#if OSGEARTH_SOVERSION >= 142
+  osgEarth::DataExtentList allExtents;
+  allExtents.push_back(osgEarth::DataExtent(geoExtent, 0, 0));
+  setDataExtents(allExtents);
+#else
   dataExtents().clear();
   dataExtents().push_back(osgEarth::DataExtent(geoExtent, 0, 0));
+#endif
 
   // Create the sprite if needed
   recreatePointSprite_();

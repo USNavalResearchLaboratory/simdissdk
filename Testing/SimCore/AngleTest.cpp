@@ -241,6 +241,18 @@ int testGetDegreeAngleFromDegreeString()
   errCode = simCore::getAngleFromDegreeString(testString, false, conv);
   rv += SDK_ASSERT(simCore::areEqual(atof(testString.c_str()), lat, 0.0001) && errCode == 0);
 
+
+  // SIM-14416: test for corrrect output of -0
+  lat = -0.99991000024535082 * simCore::DEG2RAD;
+
+  testString = simCore::printLatitude(lat, simCore::FMT_DEGREES_MINUTES_SECONDS, true, 2, simCore::DEG_SYM_NONE);
+  errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+  rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.0001) && errCode == 0);
+
+  testString = simCore::printLatitude(lat, simCore::FMT_DEGREES_MINUTES, true, 2, simCore::DEG_SYM_NONE);
+  errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+  rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.0001) && errCode == 0);
+
   return rv;
 }
 
@@ -604,6 +616,33 @@ int test360()
   rv += SDK_ASSERT(simCore::getAngleString(dmsAsRadian(359.0, 59.0, 59.9995), simCore::FMT_DEGREES_MINUTES_SECONDS, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "0 00 00.000");
   rv += SDK_ASSERT(simCore::getAngleString(dmsAsRadian(359.0, 59.0, 59.9995), simCore::FMT_DEGREES_MINUTES_SECONDS, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "0 00 00.000");
   rv += SDK_ASSERT(simCore::getAngleString(dmsAsRadian(359.0, 59.0, 59.99949), simCore::FMT_DEGREES_MINUTES_SECONDS, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "359 59 59.999");
+
+  return rv;
+}
+
+int testAngleRollover()
+{
+  int rv = 0;
+
+  // test degrees
+  rv += SDK_ASSERT(simCore::getAngleString(0.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "0.000");
+  rv += SDK_ASSERT(simCore::getAngleString(180.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "180.000");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "360.000");
+  rv += SDK_ASSERT(simCore::getAngleString(361.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "361.000");
+  rv += SDK_ASSERT(simCore::getAngleString(450.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "450.000");
+  rv += SDK_ASSERT(simCore::getAngleString(720.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "720.000");
+
+  // test 360 boundary with flag on and off
+  rv += SDK_ASSERT(simCore::getAngleString(359.999 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "359.999");
+  rv += SDK_ASSERT(simCore::getAngleString(359.999 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, false) == "359.999");
+  rv += SDK_ASSERT(simCore::getAngleString(359.9999 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "360.000");
+  rv += SDK_ASSERT(simCore::getAngleString(359.9999 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, false) == "0.000");
+  rv += SDK_ASSERT(simCore::getAngleString(360 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "360.000");
+  rv += SDK_ASSERT(simCore::getAngleString(360 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, false) == "0.000");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0004 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "360.000");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0004 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, false) == "0.000");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0009 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, true) == "360.001");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0009 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0, false) == "0.001");
 
   return rv;
 }
@@ -1095,6 +1134,7 @@ int AngleTest(int argc, char* argv[])
   rv += testSim4481();
   rv += testSim7284();
   rv += test360();
+  rv += testAngleRollover();
   rv += testAngleDifference();
   rv += testIsAngleBetween();
   rv += testPlanetariumShaderImageWrapping();

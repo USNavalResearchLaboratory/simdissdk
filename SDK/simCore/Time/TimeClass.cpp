@@ -20,15 +20,20 @@
  * disclose, or release this software.
  *
  */
-#include <iostream>
 #include <cassert>
 #include <cstdlib>
+#include <iostream>
+#include <iomanip>
 #include <limits>
+#include <locale>
+#include <time.h>
 
+#include "simCore/Common/Exception.h"
 #include "simCore/Calc/Math.h"
-#include "simCore/Time/Utils.h"
-#include "simCore/Time/TimeClass.h"
 #include "simCore/Time/Constants.h"
+#include "simCore/Time/Exception.h"
+#include "simCore/Time/TimeClass.h"
+#include "simCore/Time/Utils.h"
 
 namespace simCore {
 
@@ -326,20 +331,19 @@ Seconds TimeStamp::operator - (const TimeStamp& t) const
     return ZERO_SECONDS;
   }
 
-  int year = 0;
   Seconds secondsValue;
 
   if (yearDifference > 0)
   {
     secondsValue = Seconds(SECPERDAY * daysPerYear(t.referenceYear_), 0) - t.secondsSinceRefYear_;
-    for (year = t.referenceYear_ + 1; year < referenceYear_; ++year)
+    for (auto year = t.referenceYear_ + 1; year < referenceYear_; ++year)
       secondsValue += Seconds(SECPERDAY * daysPerYear(year), 0);
     secondsValue += secondsSinceRefYear_;
   }
   else if (yearDifference < 0)
   {
     secondsValue = (Seconds(-1, 0) * t.secondsSinceRefYear_);
-    for (year = t.referenceYear_ - 1; year > referenceYear_; --year)
+    for (auto year = t.referenceYear_ - 1; year > referenceYear_; --year)
       secondsValue -= Seconds(SECPERDAY * daysPerYear(year), 0);
     secondsValue -= (Seconds(SECPERDAY * daysPerYear(referenceYear_), 0) - secondsSinceRefYear_);
   }
@@ -404,4 +408,133 @@ void TimeStamp::getTimeComponents(unsigned int& day, unsigned int& hour, unsigne
   time -= (min*simCore::SECPERMIN);
   sec = static_cast<unsigned int>(time);
 }
+
+//------------------------------------------------------------------------
+
+int TimeStamp::strptime(const std::string& timeStr, const std::string& format, std::string* remainder)
+{
+  // Avoid any simCore time utility exceptions
+  try {
+    std::tm tm = {};
+    if (remainder)
+      remainder->clear();
+
+#ifdef _MSC_VER
+    // Adapted from https://stackoverflow.com/questions/321849/strptime-equivalent-on-windows
+    std::istringstream is(timeStr);
+    is.imbue(std::locale(setlocale(LC_ALL, nullptr)));
+
+    // Note that std::get_Time wasn't implemented in GCC until 5.1, and is
+    // reported as broken in MSVC 2015.
+    is >> std::get_time(&tm, format.c_str());
+    if (is.fail())
+    {
+      if (remainder)
+        *remainder = timeStr;
+      return 1;
+    }
+
+    // Fill out the remainder value
+    if (remainder && !is.eof())
+      *remainder = timeStr.substr(is.tellg());
+#else
+    // Linux use strptime(), which returns null on error
+    const char* rv = ::strptime(timeStr.c_str(), format.c_str(), &tm);
+    if (!rv)
+    {
+      if (remainder)
+        *remainder = timeStr;
+      return 1;
+    }
+    if (remainder)
+      *remainder = rv;
+#endif
+
+    // Make sane values for year, mday, and mon, before calling mktime()
+    tm.tm_year = simCore::sdkMax(70, tm.tm_year);
+    tm.tm_mday = simCore::sdkMax(tm.tm_mday, 1);
+    if (tm.tm_yday > 0 && tm.tm_mday == 1 && tm.tm_mon == 0)
+      simCore::getMonthAndDayOfMonth(tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_yday);
+
+    // mktime() will return in local time, use timezone to offset back to UTC
+#ifdef _MSC_VER
+    auto asTime = std::mktime(&tm) - _timezone;
+#else
+    auto asTime = std::mktime(&tm) - timezone;
+#endif
+
+    // Check for failure state
+    if (asTime < 0)
+    {
+      if (remainder)
+        *remainder = timeStr;
+      return 1;
+    }
+    setTime(1970, static_cast<double>(asTime));
+    return 0;
+  }
+  catch (const simCore::TimeException&)
+  {
+    // noop
+  }
+  return 1;
+}
+
+/**
+ * MSVC strftime() and put_time() both execute the invalid parameter handler in cases
+ * of invalid parameters. In debug mode, this may also assert. The default implementation
+ * will fatally terminate the application, which is almost always not what we want. This
+ * is not a problem on Linux, so MSVC implementation installs a temporary handler using
+ * this class.
+ */
+class InvalidParameterDetection
+{
+public:
+#ifndef _MSC_VER
+  InvalidParameterDetection() {}
+  virtual ~InvalidParameterDetection() {}
+
+#else
+  InvalidParameterDetection()
+  {
+    oldHandler_ = _get_invalid_parameter_handler();
+    _set_invalid_parameter_handler(&InvalidParameterDetection::invalidParameter_);
+  }
+
+  virtual ~InvalidParameterDetection()
+  {
+    _set_invalid_parameter_handler(oldHandler_);
+  }
+
+private:
+  static void invalidParameter_(const wchar_t* expression, const wchar_t* function,
+    const wchar_t* file, unsigned int line, uintptr_t pReserved)
+  {
+    throw simCore::TimeException(0, "Invalid parameter detected");
+  }
+
+  _invalid_parameter_handler oldHandler_;
+#endif
+};
+
+std::string TimeStamp::strftime(const std::string& format) const
+{
+  // Avoid testing INFINITE_TIME_STAMP
+  if (simCore::INFINITE_TIME_STAMP == *this)
+    return "";
+
+  // Do not remove; cppCheck flags as unused but the constructor and destructor do actual work.
+  InvalidParameterDetection detectInvalid;
+
+  const auto& timeStruct = simCore::getTimeStruct(*this);
+
+  // Try/catch since MSVC version will throw an exception on error
+  SAFETRYBEGIN;
+  std::stringstream ss;
+  ss << std::put_time(&timeStruct, format.c_str());
+  return ss.str();
+  SAFETRYEND("during TimeStamp::strftime");
+  return "";
+}
+
 }

@@ -30,7 +30,7 @@ namespace
 {
   std::string okGog = "start\n"               // valid example
                       "poly\n"
-                      "3d name NamedGog\n"
+                      "3d name Named GOG\n"
                       "ll 34 -121\n"
                       "ll 32 -93\n"
                       "ll 47 -94\n"
@@ -85,6 +85,7 @@ namespace
 
   std::string invalidLatGog = "start\n"
                               "poly\n"
+                              "3d name Invalid Lat GOG\n"
                               "ll xx -121\n"          // invalid latitude value
                               "ll 32 -93\n"
                               "ll 47 -94\n"
@@ -94,6 +95,7 @@ namespace
 
   std::string invalidLonGog = "start\n"
                               "poly\n"
+                              "3d name Invalid Lon GOG\n"
                               "ll 34 xx\n"          // invalid longitude value
                               "ll 32 -93\n"
                               "ll 47 -94\n"
@@ -103,6 +105,7 @@ namespace
 
   std::string invalidAltGog = "start\n"
                               "poly\n"
+                              "3d name Invalid Alt GOG\n"
                               "ll 29 -156 xxxxx\n"  // invalid altitude value
                               "ll 27 -158 30000\n"
                               "ll 25 -156 30000\n"
@@ -112,6 +115,7 @@ namespace
 
   std::string tooFewArgsGog = "start\n"
                               "poly\n"
+                              "3d name Too Few Arguments GOG\n"
                               "ll 29\n"  // too few arguments
                               "ll 27 -158 30000\n"
                               "ll 25 -156 30000\n"
@@ -182,6 +186,7 @@ namespace
 
   std::string invalidGog = "start\n"
                            "poly\n"
+                           "3d name Invalid GOG\n"
                            "ll 11 -144\n"
                            "ll -6 -144\n"
                            "ll  2 -129\n"

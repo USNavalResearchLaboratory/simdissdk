@@ -109,6 +109,27 @@ bool hasExtension(const std::string& inName, std::string newExt)
   return getExtension(inName) == newExt;
 }
 
+/// Replaces existing extension on inName with newExt
+std::string replaceExtension(const std::string& inName, const std::string& newExt)
+{
+  // Avoid adding extension to empty string
+  if (inName.empty())
+    return "";
+  // Remove the old extension
+  const std::string& oldExtension = simCore::getExtension(inName, false);
+  // Assertion failure implies getExtension() failure
+  assert(oldExtension.size() <= inName.size());
+  const std::string& withoutExtension = inName.substr(0, inName.size() - oldExtension.size());
+
+  // Return extensionless if needed. Avoid names like "filename." and use "filename" instead.
+  if (newExt.empty() || newExt == ".")
+    return withoutExtension;
+  // Append the suffix, including dot if needed
+  if (newExt[0] != '.')
+    return withoutExtension + "." + newExt;
+  return withoutExtension + newExt;
+}
+
 /// Builds a formatted string with prefix and suffix
 std::string buildString(const std::string &prefix, double value, size_t width, size_t precision,
   const std::string &suffix, bool padZero, double sciNoteGT, double sciNoteLT)

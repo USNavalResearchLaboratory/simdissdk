@@ -113,9 +113,13 @@ public:
   virtual bool run(osg::Object* object, osg::Object* data)
   {
     CompositeHighlightNode* area = dynamic_cast<CompositeHighlightNode*>(object);
-    // Scale down the radius by a small amount -- 80% -- to reduce highlight size
     if (area != nullptr && platform_.valid())
-      area->setRadius(VectorScaling::lineLength(platform_->getModel(), 0.8));
+    {
+      const double size = platform_->getPrefs().circlehilightsize();
+      // When scaling by model size scale down the radius by a small amount -- 80% -- to reduce highlight size
+      const double radius = (size == 0.0) ? VectorScaling::lineLength(platform_->getModel(), 0.8) : size;
+      area->setRadius(radius);
+    }
     return traverse(object, data);
   }
 
@@ -978,15 +982,56 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
     {
       highlight_ = new CompositeHighlightNode(prefs.circlehilightshape());
       highlight_->addUpdateCallback(new SetCircleRadiusCallback(this));
-      scaledInertialTransform_->addChild(highlight_.get());
+
+      // set the owner of highlight_
+      if (prefs.circlehilightsize() == 0.0)
+        scaledInertialTransform_->addChild(highlight_.get());
+      else
+      {
+        fixedScaledInertialTransform_ = new PlatformInertialTransform;
+        fixedScaledInertialTransform_->setLocator(getLocator());
+        model_->addFixedScaledChild(fixedScaledInertialTransform_.get());
+        fixedScaledInertialTransform_->addChild(highlight_.get());
+      }
     }
     else
+    {
+      // See if the owner of highlight needs to switch
+      if ((prefs.circlehilightsize() == 0.0) && fixedScaledInertialTransform_.valid())
+      {
+        model_->removeFixedScaledChild(fixedScaledInertialTransform_.get());
+        fixedScaledInertialTransform_ = nullptr;
+        scaledInertialTransform_->addChild(highlight_.get());
+      }
+      else if ((prefs.circlehilightsize() != 0.0) && !fixedScaledInertialTransform_.valid())
+      {
+        scaledInertialTransform_->removeChild(highlight_.get());
+
+        fixedScaledInertialTransform_ = new PlatformInertialTransform;
+        fixedScaledInertialTransform_->setLocator(getLocator());
+        model_->addFixedScaledChild(fixedScaledInertialTransform_.get());
+        fixedScaledInertialTransform_->addChild(highlight_.get());
+      }
+
       highlight_->setShape(prefs.circlehilightshape());
+    }
+
     highlight_->setColor(simVis::Color(prefs.circlehilightcolor(), simVis::Color::RGBA));
+
+    if (prefs.circlehilightsize() != 0.0)
+      model_->setFixedSize(prefs.circlehilightsize());
   }
   else if (highlight_.valid()) // remove if present
   {
-    scaledInertialTransform_->removeChild(highlight_);
+    if (fixedScaledInertialTransform_.valid())
+    {
+      fixedScaledInertialTransform_->removeChild(highlight_.get());
+      model_->removeFixedScaledChild(fixedScaledInertialTransform_.get());
+      fixedScaledInertialTransform_ = nullptr;
+    }
+    else
+      scaledInertialTransform_->removeChild(highlight_.get());
+
     highlight_ = nullptr;
   }
 }

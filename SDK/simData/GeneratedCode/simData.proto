@@ -817,6 +817,8 @@ message PlatformPrefs {
   optional fixed32 circleHilightColor = 36 [default = 0xFFFFFFFF];
   /// Shape for "circle" highlight
   optional CircleHilightShape circleHilightShape = 71 [default = CH_PULSING_CIRCLE];
+  /// Shape size in meters; 0 means use icon size
+  optional double circleHilightSize = 75 [default = 0.0];
 
   /// Position values are interpolated between data points
   optional bool interpolatePos = 37 [default = true];

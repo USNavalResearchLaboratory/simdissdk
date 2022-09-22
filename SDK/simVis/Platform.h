@@ -331,6 +331,7 @@ private:
   osg::ref_ptr<AxisVector>        bodyAxisVector_;
   osg::ref_ptr<AxisVector>        inertialAxisVector_;
   osg::ref_ptr<PlatformInertialTransform> scaledInertialTransform_;
+  osg::ref_ptr<PlatformInertialTransform> fixedScaledInertialTransform_;
   osg::ref_ptr<VelocityVector>    velocityAxisVector_;
   osg::ref_ptr<EphemerisVector>   ephemerisVector_;
   osg::ref_ptr<PlatformModelNode> model_;
