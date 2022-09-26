@@ -254,6 +254,14 @@ enum AnimatedLineBend {
   ALB_BEND = 2;
 }
 
+/// Override color combination mode
+enum OverrideColorCombineMode {
+  /// Multiply the override color against incoming color; good for shaded items and 2D images
+  MULTIPLY_COLOR = 0;
+  /// Replace the incoming color with the override color; good for flat items
+  REPLACE_COLOR = 1;
+};
+
 /// Coordinate system definition for scenario and platforms
 message CoordinateFrame {
   /// Coordinate system flag.  SIMDIS SDK stores all data internally as ECEF; this is only descriptive for input/output
@@ -735,6 +743,8 @@ message PlatformPrefs {
   optional bool noDepthIcons = 5 [default = true];
   /// Sets the horizontal and vertical alignment for 2D image icons
   optional TextAlignment iconAlignment = 63 [default = ALIGN_CENTER_CENTER];
+  /// Method for applying the override color combine mode (only applies for platforms)
+  optional OverrideColorCombineMode overrideColorCombineMode = 76 [default = MULTIPLY_COLOR];
 
   /// Display options for the track history
   optional TrackPrefs trackPrefs = 6;

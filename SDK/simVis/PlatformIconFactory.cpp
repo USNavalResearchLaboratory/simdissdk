@@ -78,6 +78,7 @@ public:
     const bool useOverride = prefs.commonprefs().has_useoverridecolor() && prefs.commonprefs().useoverridecolor() &&
       (prefs.commonprefs().overridecolor() != 0xffffffff);
     overrideColor_ = useOverride ? simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA) : osg::Vec4f(1.f, 1.f, 1.f, 1.f);
+    combineMode_ = prefs.overridecolorcombinemode();
     noDepthIcons_ = prefs.nodepthicons();
     useCullFace_ = prefs.usecullface();
     cullFace_ = osg::CullFace::FRONT_AND_BACK;
@@ -108,7 +109,7 @@ public:
     auto asTuple = [](const MergeSettings& rhs) {
       return std::tie(rhs.platPositionOffset_, rhs.orientationOffset_,
         rhs.icon_, rhs.iconAlignment_, rhs.overrideColor_, rhs.noDepthIcons_,
-        rhs.useCullFace_, rhs.cullFace_, rhs.brightness_);
+        rhs.useCullFace_, rhs.cullFace_, rhs.brightness_, rhs.combineMode_);
     };
     return asTuple(*this) < asTuple(rhs);
   }
@@ -119,6 +120,7 @@ private:
   std::string icon_;
   simData::TextAlignment iconAlignment_;
   osg::Vec4f overrideColor_;
+  simData::OverrideColorCombineMode combineMode_ = simData::MULTIPLY_COLOR;
   bool noDepthIcons_ = true;
   bool useCullFace_ = false;
   osg::CullFace::Mode cullFace_ = osg::CullFace::FRONT_AND_BACK;
@@ -246,8 +248,15 @@ public:
     if (overrideColor_.valid())
     {
       overrideColor_->setColor(simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA));
-      overrideColor_->setCombineMode(prefs.commonprefs().useoverridecolor() ?
-        OverrideColor::MULTIPLY_COLOR : OverrideColor::OFF);
+      if (!prefs.commonprefs().useoverridecolor())
+        overrideColor_->setCombineMode(OverrideColor::OFF);
+      else
+      {
+        if (prefs.overridecolorcombinemode() == simData::REPLACE_COLOR)
+          overrideColor_->setCombineMode(OverrideColor::REPLACE_COLOR);
+        else
+          overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
+      }
     }
 
     // Apply cull face
@@ -448,6 +457,7 @@ bool PlatformIconFactory::hasRelevantChanges(const simData::PlatformPrefs& oldPr
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, brightness) ||
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, commonprefs, useoverridecolor) ||
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, commonprefs, overridecolor) ||
+    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, overridecolorcombinemode) ||
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, commonprefs, includeinlegend) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, nodepthicons) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, usecullface) ||

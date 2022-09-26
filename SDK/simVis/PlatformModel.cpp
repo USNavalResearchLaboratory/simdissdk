@@ -948,7 +948,8 @@ void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs
 
   if (lastPrefsValid_ &&
     !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
-    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor))
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor) &&
+    !PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridecolorcombinemode))
     return;
 
   // using an override color?
@@ -956,7 +957,12 @@ void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs
   if (!prefs.commonprefs().useoverridecolor())
     overrideColor_->setCombineMode(OverrideColor::OFF);
   else
-    overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
+  {
+    if (prefs.overridecolorcombinemode() == simData::REPLACE_COLOR)
+      overrideColor_->setCombineMode(OverrideColor::REPLACE_COLOR);
+    else
+      overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
+  }
 }
 
 void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
