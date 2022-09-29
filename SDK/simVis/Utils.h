@@ -137,29 +137,41 @@ namespace simVis
   SDKVIS_EXPORT void fixTextureForGlCoreProfile(osg::Texture* texture);
 
   /**
-   * Internal update template callback - binds an update callback to the
-   * template-class's "update()" method.
-   * @tparam T osg::Node that has a method matching the signature update(const osg::FrameStamp*).
+   * Wraps a simple callback method. This callback can be used for any of a variety of OSG
+   * methods, such as update callbacks. For example:
+   *
+   * <code>
+   * node->addUpdateCallback(new LambdaOsgCallback([] { SIM_INFO << "Update!\n"; }));
+   * </code>
+   *
+   * This class supports lambdas matching the interface void(void).
    */
-  template<typename T>
-  struct NodeUpdateCallback : public osg::NodeCallback
+  struct LambdaOsgCallback : public osg::Callback
   {
-    /** Calls update on the node and continues traversal */
-    void operator()(osg::Node *node, osg::NodeVisitor *nv)
+    /** Instantiates the callback with your lambda */
+    explicit LambdaOsgCallback(const std::function<void()>& voidFunc)
+      : voidFunc_(voidFunc)
     {
-      static_cast<T*>(node)->update(nv->getFrameStamp());
-      traverse(node, nv);
+    }
+
+    /** Calls update on the node and continues traversal */
+    virtual bool run(osg::Object* object, osg::Object* data) override
+    {
+      voidFunc_();
+      return traverse(object, data);
     }
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
-
     /** Return the class name */
-    virtual const char* className() const { return "NodeUpdateCallback<T>"; }
+    virtual const char* className() const { return "LambdaOsgCallback"; }
 
   protected:
     /// osg::Referenced-derived
-    virtual ~NodeUpdateCallback() {}
+    virtual ~LambdaOsgCallback() {}
+
+  private:
+    std::function<void()> voidFunc_;
   };
 
   /**
@@ -219,13 +231,13 @@ namespace simVis
     return simCore::Vec3(in.x(), in.y(), in.z());
   }
 
-  /// convert a SIM vec2 to an OSG vec3
+  /// convert a OSG vec3 to a simCore::Coordinate
   inline simCore::Coordinate convertOSGtoSimCoord(const osg::Vec3d& in, const simCore::CoordinateSystem& cs)
   {
     return simCore::Coordinate(cs, simCore::Vec3(in.x(), in.y(), in.z()));
   }
 
-  /// convert a SIM vec2 to an OSG vec3
+  /// convert a SIM vec3 to an OSG vec3
   inline osg::Vec3d convertToOSG(const simCore::Vec3& in)
   {
     return osg::Vec3d(in.x(), in.y(), in.z());
