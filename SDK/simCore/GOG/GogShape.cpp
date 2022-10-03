@@ -489,7 +489,7 @@ void GogShape::serializeToStream(std::ostream& gogOutputStream) const
 void GogShape::serializePoints_(const std::vector<simCore::Vec3>& points, std::ostream& gogOutputStream) const
 {
   simCore::Units distanceUnits(simCore::Units::METERS);
-  for (simCore::Vec3 point : points)
+  for (const simCore::Vec3& point : points)
   {
     if (isRelative())
       gogOutputStream << "xyz " << distanceUnits.convertTo(originalUnits_.rangeUnits(), point.x()) << " "

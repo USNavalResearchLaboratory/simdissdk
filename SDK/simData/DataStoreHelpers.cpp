@@ -267,7 +267,7 @@ ObjectId DataStoreHelpers::getPlatformHostId(ObjectId objectId, const simData::D
 std::string DataStoreHelpers::description(const simData::DataStore* dataStore)
 {
   if (dataStore == nullptr)
-    return 0;
+    return "";
   simData::DataStore::Transaction transaction;
   return dataStore->scenarioProperties(&transaction)->description();
 }
