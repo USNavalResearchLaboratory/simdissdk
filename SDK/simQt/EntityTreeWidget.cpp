@@ -65,7 +65,8 @@ EntityTreeWidget::EntityTreeWidget(QTreeView* view)
     pendingSendNumItems_(false),
     processSelectionModelSignals_(true),
     countEntityTypes_(simData::ALL),
-    lastSelectionChangedTime_(0.0)
+    lastSelectionChangedTime_(0.0),
+    pendingKeepVisible_(false)
 {
   proxyModel_ = new simQt::EntityProxyModel(this);
   proxyModel_->setDynamicSortFilter(true);
@@ -113,6 +114,9 @@ QList<QWidget*> EntityTreeWidget::filterWidgets(QWidget* newWidgetParent) const
 
 void EntityTreeWidget::setModel(AbstractEntityTreeModel* model)
 {
+  if (model_ == model)
+    return;
+
   if (model_ != nullptr)
     disconnect(model_, nullptr, this, nullptr);
 
@@ -130,7 +134,12 @@ void EntityTreeWidget::setModel(AbstractEntityTreeModel* model)
   proxyModel_->setSourceModel(model_);
 
   // Need to allow the view to update before checking if the selected item is still visible
-  auto keepVisibleOnTimer = [this]() { QTimer::singleShot(10, this, SLOT(keepVisible_())); };
+  auto keepVisibleOnTimer = [this]() {
+    if (!setVisible_.empty() && !pendingKeepVisible_) {
+      QTimer::singleShot(10, this, SLOT(keepVisible_()));
+      pendingKeepVisible_ = true;
+    }
+  };
   connect(model_, &QAbstractItemModel::rowsInserted, this, keepVisibleOnTimer);
   connect(model_, &QAbstractItemModel::rowsRemoved, this, keepVisibleOnTimer);
   connect(model_, &QAbstractItemModel::rowsMoved, this, keepVisibleOnTimer);
@@ -153,12 +162,19 @@ void EntityTreeWidget::captureAndKeepVisible_()
 {
   /** There is no before or after signal for rename, just dataChanged.  Need to capture before the proxy and keep after everyone */
   captureVisible_();
-  if (!setVisible_.empty())
+  if (!setVisible_.empty() && !pendingKeepVisible_)
+  {
     QTimer::singleShot(10, this, SLOT(keepVisible_()));
+    pendingKeepVisible_ = true;
+  }
 }
 
 void EntityTreeWidget::captureVisible_()
 {
+  // Only need to capture once
+  if (!setVisible_.empty())
+    return;
+
   // Temporary structure to sort the selected items by vertical location in the list
   struct Entry
   {
@@ -207,6 +223,7 @@ void EntityTreeWidget::keepVisible_()
   }
 
   setVisible_.clear();
+  pendingKeepVisible_ = false;
 }
 
 void EntityTreeWidget::clearSelection()

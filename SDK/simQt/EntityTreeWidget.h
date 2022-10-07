@@ -176,6 +176,7 @@ private:
   QSet<uint64_t> selectionSet_; ///< Parallel cache of all selected entities
 
   std::vector<uint64_t> setVisible_; ///< Possibly make the items visible after the view has updated
+  bool pendingKeepVisible_;  ///< Only set one timer for callback to keepVisible_()
 };
 
 }
