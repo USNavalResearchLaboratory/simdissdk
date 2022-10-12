@@ -1,7 +1,7 @@
 # Define system specific parameters:
 # BUILD_SYSTEM_OS {win|linux}
 # BUILD_SYSTEM_ARCH {amd64}
-# BUILD_COMPILER {vc-14.1|vc-14.2|vc-14.3|gcc-8.3}
+# BUILD_COMPILER {vc-14.2|vc-14.3|gcc-8.3}
 # BUILD_COMPILER_NAME {vc|${CMAKE_C_COMPILER}}
 # BUILD_COMPILER_VERSION (Compiler name with max and min version numbers)
 # BUILD_COMPILER_MAJOR_VERSION
