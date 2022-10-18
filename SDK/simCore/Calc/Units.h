@@ -191,7 +191,7 @@ public:
   ///@}
 
   ///@{
-  /// Predefined unit families
+  /// Predefined unit families; @deprecated, prefer simCore::xyz_FAMILY instead; will be removed in a future version
   static const std::string INVALID_FAMILY ATTRIB_HIDDEN;
   static const std::string UNITLESS_FAMILY ATTRIB_HIDDEN;
   static const std::string ELAPSED_TIME_FAMILY ATTRIB_HIDDEN;

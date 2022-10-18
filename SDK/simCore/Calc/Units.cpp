@@ -155,7 +155,7 @@ Units::Units()
     abbrev_("inv"),
     toBaseOffset_(0.0),
     toBase_(1.0),
-    family_(Units::INVALID_FAMILY)
+    family_(simCore::INVALID_FAMILY)
 {
 }
 
@@ -172,7 +172,7 @@ Units::~Units()
 
 bool Units::isValid() const
 {
-  return family_ != Units::INVALID_FAMILY;
+  return family_ != simCore::INVALID_FAMILY;
 }
 
 const std::string& Units::name() const

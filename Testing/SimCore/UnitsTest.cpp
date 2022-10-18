@@ -37,13 +37,13 @@ int testRegistryFamilies()
 
   // Nothing should be in the registry until we register default units
   rv += SDK_ASSERT(reg.families().empty());
-  rv += SDK_ASSERT(reg.units(Units::INVALID_FAMILY).empty());
-  rv += SDK_ASSERT(reg.units(Units::UNITLESS_FAMILY).empty());
-  rv += SDK_ASSERT(reg.units(Units::ELAPSED_TIME_FAMILY).empty());
-  rv += SDK_ASSERT(reg.units(Units::ANGLE_FAMILY).empty());
-  rv += SDK_ASSERT(reg.units(Units::LENGTH_FAMILY).empty());
-  rv += SDK_ASSERT(reg.units(Units::SPEED_FAMILY).empty());
-  rv += SDK_ASSERT(reg.units(Units::FREQUENCY_FAMILY).empty());
+  rv += SDK_ASSERT(reg.units(simCore::INVALID_FAMILY).empty());
+  rv += SDK_ASSERT(reg.units(simCore::UNITLESS_FAMILY).empty());
+  rv += SDK_ASSERT(reg.units(simCore::ELAPSED_TIME_FAMILY).empty());
+  rv += SDK_ASSERT(reg.units(simCore::ANGLE_FAMILY).empty());
+  rv += SDK_ASSERT(reg.units(simCore::LENGTH_FAMILY).empty());
+  rv += SDK_ASSERT(reg.units(simCore::SPEED_FAMILY).empty());
+  rv += SDK_ASSERT(reg.units(simCore::FREQUENCY_FAMILY).empty());
   rv += SDK_ASSERT(reg.units("Not a real family").empty());
   rv += SDK_ASSERT(!reg.unitsByName("").isValid()); // Units::UNITLESS
   rv += SDK_ASSERT(!reg.unitsByName("meters").isValid());
@@ -57,23 +57,23 @@ int testRegistryFamilies()
   // Register defaults, then validate each family exists
   reg.registerDefaultUnits();
   std::vector<std::string> fams = reg.families();
-  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), Units::UNITLESS_FAMILY) != fams.end());
-  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), Units::ELAPSED_TIME_FAMILY) != fams.end());
-  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), Units::ANGLE_FAMILY) != fams.end());
-  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), Units::LENGTH_FAMILY) != fams.end());
-  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), Units::SPEED_FAMILY) != fams.end());
+  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), simCore::UNITLESS_FAMILY) != fams.end());
+  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), simCore::ELAPSED_TIME_FAMILY) != fams.end());
+  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), simCore::ANGLE_FAMILY) != fams.end());
+  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), simCore::LENGTH_FAMILY) != fams.end());
+  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), simCore::SPEED_FAMILY) != fams.end());
   // Make sure invalid values don't exist
-  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), Units::INVALID_FAMILY) == fams.end());
+  rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), simCore::INVALID_FAMILY) == fams.end());
   rv += SDK_ASSERT(std::find(fams.begin(), fams.end(), "Does Not Exist") == fams.end());
 
   // Spot check several families for known entries
 
   // Elapsed time
-  const UnitsRegistry::UnitsVector& unitlessVec = reg.units(Units::UNITLESS_FAMILY);
+  const UnitsRegistry::UnitsVector& unitlessVec = reg.units(simCore::UNITLESS_FAMILY);
   rv += SDK_ASSERT(std::find(unitlessVec.begin(), unitlessVec.end(), Units::UNITLESS) != unitlessVec.end());
 
   // Elapsed time
-  const UnitsRegistry::UnitsVector& timeVec = reg.units(Units::ELAPSED_TIME_FAMILY);
+  const UnitsRegistry::UnitsVector& timeVec = reg.units(simCore::ELAPSED_TIME_FAMILY);
   rv += SDK_ASSERT(std::find(timeVec.begin(), timeVec.end(), Units::SECONDS) != timeVec.end());
   rv += SDK_ASSERT(std::find(timeVec.begin(), timeVec.end(), Units::MILLISECONDS) != timeVec.end());
   rv += SDK_ASSERT(std::find(timeVec.begin(), timeVec.end(), Units::MICROSECONDS) != timeVec.end());
@@ -85,7 +85,7 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(timeVec.begin(), timeVec.end(), Units::METERS) == timeVec.end());
   rv += SDK_ASSERT(std::find(timeVec.begin(), timeVec.end(), Units::METERS_PER_SECOND) == timeVec.end());
 
-  const UnitsRegistry::UnitsVector& angleVec = reg.units(Units::ANGLE_FAMILY);
+  const UnitsRegistry::UnitsVector& angleVec = reg.units(simCore::ANGLE_FAMILY);
   rv += SDK_ASSERT(std::find(angleVec.begin(), angleVec.end(), Units::RADIANS) != angleVec.end());
   rv += SDK_ASSERT(std::find(angleVec.begin(), angleVec.end(), Units::DEGREES) != angleVec.end());
   rv += SDK_ASSERT(std::find(angleVec.begin(), angleVec.end(), Units::BAM) != angleVec.end());
@@ -96,7 +96,7 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(angleVec.begin(), angleVec.end(), Units::METERS) == angleVec.end());
   rv += SDK_ASSERT(std::find(angleVec.begin(), angleVec.end(), Units::METERS_PER_SECOND) == angleVec.end());
 
-  const UnitsRegistry::UnitsVector& lengthVec = reg.units(Units::LENGTH_FAMILY);
+  const UnitsRegistry::UnitsVector& lengthVec = reg.units(simCore::LENGTH_FAMILY);
   rv += SDK_ASSERT(std::find(lengthVec.begin(), lengthVec.end(), Units::METERS) != lengthVec.end());
   rv += SDK_ASSERT(std::find(lengthVec.begin(), lengthVec.end(), Units::KILOMETERS) != lengthVec.end());
   rv += SDK_ASSERT(std::find(lengthVec.begin(), lengthVec.end(), Units::YARDS) != lengthVec.end());
@@ -114,7 +114,7 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(lengthVec.begin(), lengthVec.end(), Units::RADIANS) == lengthVec.end());
   rv += SDK_ASSERT(std::find(lengthVec.begin(), lengthVec.end(), Units::METERS_PER_SECOND) == lengthVec.end());
 
-  const UnitsRegistry::UnitsVector& speedVec = reg.units(Units::SPEED_FAMILY);
+  const UnitsRegistry::UnitsVector& speedVec = reg.units(simCore::SPEED_FAMILY);
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::METERS_PER_SECOND) != speedVec.end());
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::KILOMETERS_PER_HOUR) != speedVec.end());
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::KNOTS) != speedVec.end());
@@ -128,7 +128,7 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::RADIANS) == speedVec.end());
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::METERS) == speedVec.end());
 
-  const UnitsRegistry::UnitsVector& accelerationVec = reg.units(Units::ACCELERATION_FAMILY);
+  const UnitsRegistry::UnitsVector& accelerationVec = reg.units(simCore::ACCELERATION_FAMILY);
   rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND_SQUARED) != accelerationVec.end());
   rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::KILOMETERS_PER_SECOND_SQUARED) != accelerationVec.end());
   rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::YARDS_PER_SECOND_SQUARED) != accelerationVec.end());
@@ -141,7 +141,7 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::RADIANS) == accelerationVec.end());
   rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND) == accelerationVec.end());
 
-  const UnitsRegistry::UnitsVector& temperatureVec = reg.units(Units::TEMPERATURE_FAMILY);
+  const UnitsRegistry::UnitsVector& temperatureVec = reg.units(simCore::TEMPERATURE_FAMILY);
   rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::CELSIUS) != temperatureVec.end());
   rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::FAHRENHEIT) != temperatureVec.end());
   rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::KELVIN) != temperatureVec.end());
@@ -152,7 +152,7 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::RADIANS) == temperatureVec.end());
   rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::METERS_PER_SECOND) == temperatureVec.end());
 
-  const UnitsRegistry::UnitsVector& frequencyVeq = reg.units(Units::FREQUENCY_FAMILY);
+  const UnitsRegistry::UnitsVector& frequencyVeq = reg.units(simCore::FREQUENCY_FAMILY);
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::HERTZ) != frequencyVeq.end());
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::REVOLUTIONS_PER_MINUTE) != frequencyVeq.end());
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::RADIANS_PER_SECOND) != frequencyVeq.end());
@@ -162,7 +162,7 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::RADIANS) == frequencyVeq.end());
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::METERS) == frequencyVeq.end());
 
-  const UnitsRegistry::UnitsVector& volumeVec = reg.units(Units::VOLUME_FAMILY);
+  const UnitsRegistry::UnitsVector& volumeVec = reg.units(simCore::VOLUME_FAMILY);
   rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::LITER) != volumeVec.end());
   rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::MILLILITER) != volumeVec.end());
   rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::FLUID_OUNCE) != volumeVec.end());
@@ -177,7 +177,7 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::RADIANS) == volumeVec.end());
   rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::METERS) == volumeVec.end());
 
-  const UnitsRegistry::UnitsVector& pressureVec = reg.units(Units::PRESSURE_FAMILY);
+  const UnitsRegistry::UnitsVector& pressureVec = reg.units(simCore::PRESSURE_FAMILY);
   rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::MILLIBAR) != pressureVec.end());
   rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::BAR) != pressureVec.end());
   rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::POUNDS_PER_SQUARE_INCH) != pressureVec.end());
@@ -191,7 +191,7 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::RADIANS) == pressureVec.end());
   rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::METERS) == pressureVec.end());
 
-  const UnitsRegistry::UnitsVector& potentialVec = reg.units(Units::POTENTIAL_FAMILY);
+  const UnitsRegistry::UnitsVector& potentialVec = reg.units(simCore::POTENTIAL_FAMILY);
   rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::VOLT) != potentialVec.end());
   rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::MILLIVOLT) != potentialVec.end());
   rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::MICROVOLT) != potentialVec.end());
@@ -649,17 +649,17 @@ int testCustomUnitsToExistingFamily()
   UnitsRegistry reg;
   reg.registerDefaultUnits();
 
-  const UnitsRegistry::UnitsVector lengthVecCopy1 = reg.units(Units::LENGTH_FAMILY);
-  const UnitsRegistry::UnitsVector& lengthVecRef = reg.units(Units::LENGTH_FAMILY);
+  const UnitsRegistry::UnitsVector lengthVecCopy1 = reg.units(simCore::LENGTH_FAMILY);
+  const UnitsRegistry::UnitsVector& lengthVecRef = reg.units(simCore::LENGTH_FAMILY);
   rv += SDK_ASSERT(lengthVecCopy1 == lengthVecRef);
   rv += SDK_ASSERT(!lengthVecCopy1.empty());
 
   // From https://en.wikipedia.org/wiki/List_of_unusual_units_of_measurement
-  const Units RACK_UNITS("rack units", "rck", 0.04445, Units::LENGTH_FAMILY);
+  const Units RACK_UNITS("rack units", "rck", 0.04445, simCore::LENGTH_FAMILY);
   // Add units inside a scope to ensure they persist outside of scope
   {
     // Hands are equal to 4 inches; Intentionally do not create a constant for testing scoping
-    rv += SDK_ASSERT(reg.registerUnits(Units("hands", "hnd", 0.1016, Units::LENGTH_FAMILY)) == 0);
+    rv += SDK_ASSERT(reg.registerUnits(Units("hands", "hnd", 0.1016, simCore::LENGTH_FAMILY)) == 0);
     // Rack unit is 1.75 inches
     rv += SDK_ASSERT(reg.registerUnits(RACK_UNITS) == 0);
   }
@@ -675,11 +675,11 @@ int testCustomUnitsToExistingFamily()
   rv += SDK_ASSERT(rackByName.isValid());
   rv += SDK_ASSERT(rackByAbbrev.isValid());
 
-  rv += SDK_ASSERT(handByAbbrev.family() == Units::LENGTH_FAMILY);
-  rv += SDK_ASSERT(rackByName.family() == Units::LENGTH_FAMILY);
+  rv += SDK_ASSERT(handByAbbrev.family() == simCore::LENGTH_FAMILY);
+  rv += SDK_ASSERT(rackByName.family() == simCore::LENGTH_FAMILY);
 
   // Make sure the show up in the family list
-  const UnitsRegistry::UnitsVector lengthVecCopy2 = reg.units(Units::LENGTH_FAMILY);
+  const UnitsRegistry::UnitsVector lengthVecCopy2 = reg.units(simCore::LENGTH_FAMILY);
   rv += SDK_ASSERT(lengthVecCopy1.size() != lengthVecCopy2.size());
   // The reference should have update though
   rv += SDK_ASSERT(lengthVecRef == lengthVecCopy2);

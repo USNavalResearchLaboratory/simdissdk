@@ -1,3 +1,4 @@
+// Add a date here to trigger forced regeneration: 10/18/2022
 %ignore simCore::Vec3::operator=;
 %ignore simCore::Vec3::operator[];
 %ignore simCore::Coordinate::operator=;
