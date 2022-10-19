@@ -110,8 +110,11 @@ struct AppData
     {
       simData::DataStore::Transaction txn;
       auto* prefs = dataStore.mutable_projectorPrefs(projId, &txn);
-      prefs->set_shadowmapping(shadowMapping);
-      txn.complete(&prefs);
+      if (prefs)
+      {
+        prefs->set_shadowmapping(shadowMapping);
+        txn.complete(&prefs);
+      }
     }
   }
 
@@ -121,8 +124,11 @@ struct AppData
     {
       simData::DataStore::Transaction txn;
       auto* prefs = dataStore.mutable_commonPrefs(projId, &txn);
-      prefs->set_draw(visible);
-      txn.complete(&prefs);
+      if (prefs)
+      {
+        prefs->set_draw(visible);
+        txn.complete(&prefs);
+      }
     }
   }
 
@@ -132,8 +138,11 @@ struct AppData
     {
       simData::DataStore::Transaction txn;
       auto* prefs = dataStore.mutable_projectorPrefs(projId, &txn);
-      prefs->set_doublesided(value);
-      txn.complete(&prefs);
+      if (prefs)
+      {
+        prefs->set_doublesided(value);
+        txn.complete(&prefs);
+      }
     }
   }
 };

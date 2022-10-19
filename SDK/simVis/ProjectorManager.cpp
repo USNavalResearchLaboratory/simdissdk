@@ -45,9 +45,9 @@
 namespace simVis
 {
 /// Projector texture unit for shader and projector state sets
-static const int PROJECTOR_TEXTURE_UNIT = 5;
+static const int PROJECTOR_TEXTURE_UNIT = 6;
 /// Projector shadowmap unit for shader
-static const int PROJECTOR_SHADOWMAP_UNIT = 6;
+static const int PROJECTOR_SHADOWMAP_UNIT = 7;
 
 ProjectorManager::ProjectorLayer::ProjectorLayer(simData::ObjectId id)
   : osgEarth::Layer(),
