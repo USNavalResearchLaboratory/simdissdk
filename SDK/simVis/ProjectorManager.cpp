@@ -44,10 +44,8 @@
 
 namespace simVis
 {
-/// Projector texture unit for shader and projector state sets
-static const int PROJECTOR_TEXTURE_UNIT = 6;
-/// Projector shadowmap unit for shader
-static const int PROJECTOR_SHADOWMAP_UNIT = 7;
+// static:
+int ProjectorManager::baseTextureImageUnit_ = 6;
 
 ProjectorManager::ProjectorLayer::ProjectorLayer(simData::ObjectId id)
   : osgEarth::Layer(),
@@ -147,14 +145,19 @@ ProjectorManager::~ProjectorManager()
     mapNode_->getMap()->removeMapCallback(mapListener_.get());
 }
 
+void ProjectorManager::setBaseTextureImageUnit(int value)
+{
+  baseTextureImageUnit_ = value;
+}
+
 const int ProjectorManager::getTextureImageUnit()
 {
-  return PROJECTOR_TEXTURE_UNIT;
+  return baseTextureImageUnit_ + 1;
 }
 
 const int ProjectorManager::getShadowMapImageUnit()
 {
-  return PROJECTOR_SHADOWMAP_UNIT;
+  return baseTextureImageUnit_;
 }
 
 void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
@@ -226,16 +229,16 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
   projStateSet->setDefine("SIMVIS_USE_REX");
 
   // tells the shader where to bind the sampler uniform
-  projStateSet->addUniform(new osg::Uniform("simProjSampler", PROJECTOR_TEXTURE_UNIT));
+  projStateSet->addUniform(new osg::Uniform("simProjSampler", getTextureImageUnit()));
 
   // Set texture from projector into state set
-  projStateSet->setTextureAttribute(PROJECTOR_TEXTURE_UNIT, proj->getTexture());
+  projStateSet->setTextureAttribute(getTextureImageUnit(), proj->getTexture());
 
   // tells the shader where to bind the shadow map sampler
-  projStateSet->addUniform(new osg::Uniform("simProjShadowMap", ProjectorManager::getShadowMapImageUnit()));
+  projStateSet->addUniform(new osg::Uniform("simProjShadowMap", getShadowMapImageUnit()));
 
   // Bind the shadow map texture to the shader
-  projStateSet->setTextureAttribute(ProjectorManager::getShadowMapImageUnit(), proj->getShadowMap());
+  projStateSet->setTextureAttribute(getShadowMapImageUnit(), proj->getShadowMap());
 
   // ask the projector to apply its particular values to the stateset
   proj->applyToStateSet(projStateSet);
