@@ -579,7 +579,7 @@ simData::ObjectId addGate(const simData::ObjectId hostId, simData::DataStore& da
   prefs->set_gateazimuthoffset(simCore::DEG2RAD * az);
   prefs->set_gateelevationoffset(simCore::DEG2RAD * el);
   prefs->set_gaterolloffset(simCore::DEG2RAD * roll);
-  prefs->mutable_commonprefs()->set_draw(false);
+  prefs->mutable_commonprefs()->set_draw(true);
   xaction.complete(&prefs);
 
   return result;
