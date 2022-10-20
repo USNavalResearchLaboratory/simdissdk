@@ -549,14 +549,19 @@ simData::ObjectId addBeam(const simData::ObjectId hostId, simData::DataStore& da
   simData::BeamProperties* props = dataStore.addBeam(&xaction);
   simData::ObjectId result = props->id();
   props->set_hostid(hostId);
+  props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
   xaction.complete(&props);
 
   simData::BeamPrefs* prefs = dataStore.mutable_beamPrefs(result, &xaction);
   prefs->set_azimuthoffset(simCore::DEG2RAD * az);
   prefs->set_elevationoffset(simCore::DEG2RAD * el);
+  prefs->set_useoffsetbeam(true);
   prefs->set_verticalwidth(simCore::DEG2RAD * 20.0);
   prefs->set_horizontalwidth(simCore::DEG2RAD * 30.0);
   prefs->set_rendercone(true);
+  prefs->mutable_commonprefs()->set_draw(true);
+  prefs->mutable_commonprefs()->set_datadraw(true);
+  prefs->mutable_commonprefs()->set_color(0xffff0080); // yellow
   xaction.complete(&prefs);
 
   return result;
