@@ -27,10 +27,12 @@
 #include <osgViewer/ViewerEventHandlers>
 
 namespace osg { class Camera; }
+namespace osgEarth { namespace GUI { class BaseGUI; } }
 
 struct ImFont;
 struct ImGuiSettingsHandler;
 
+// TODO: update namespace to SimExamples
 namespace GUI {
 
 class BaseGui;
@@ -52,14 +54,16 @@ public:
   virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
 
   /** Add a GUI to the manager */
-  void add(BaseGui* gui);
+  void add(osgEarth::GUI::BaseGUI* gui);
+  /** Add deprecated GUI to the manager. No-op TODO: Remove once ::GUI::BaseGUI is removed */
+  void add(::GUI::BaseGui* gui);
 
-  class RealizeOperation : public GUI::GlewInitOperation
+  class RealizeOperation : public ::GUI::GlewInitOperation
   {
   public:
     /** Constructor. If passed a valid operation for parentOp, its operator() will be called first */
     explicit RealizeOperation(osg::Operation* parentOp = nullptr)
-      : GUI::GlewInitOperation(),
+      : ::GUI::GlewInitOperation(),
       parentOp_(parentOp)
     {
     }
@@ -107,7 +111,7 @@ private:
   bool firstDraw_;
   bool autoAdjustProjectionMatrix_;
 
-  std::vector<std::unique_ptr<BaseGui> > guis_;
+  std::map<std::string, std::vector<std::unique_ptr<osgEarth::GUI::BaseGUI> > > menus_;
 
   ImFont* defaultFont_;
   ImFont* largeFont_;

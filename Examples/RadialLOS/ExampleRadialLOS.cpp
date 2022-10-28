@@ -206,11 +206,11 @@ namespace
 // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
 
-class ControlPanel : public GUI::BaseGui
+class ControlPanel : public ::GUI::BaseGui
 {
 public:
   ControlPanel(AppData& app)
-    : GUI::BaseGui(s_title),
+    : ::GUI::BaseGui(s_title),
     app_(app)
   {
   }
@@ -467,8 +467,8 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_IMGUI
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
 #endif

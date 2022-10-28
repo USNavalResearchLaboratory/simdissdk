@@ -20,29 +20,29 @@
  * disclose, or release this software.
  *
  */
+#include "osgEarth/BuildConfig.h"
+#if OSGEARTH_SOVERSION < 146
+#include "imgui.h"
+#endif
 #include "osgEarth/ImGui/ImGui"
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 
-namespace GUI {
+namespace simExamples {
 
-BaseGui::BaseGui(const std::string& name)
-  : name_(name),
+SimExamplesGui::SimExamplesGui(const std::string& name)
+  : osgEarth::GUI::BaseGUI(name.c_str()),
+  firstDraw_(true),
   defaultFont_(nullptr),
   largeFont_(nullptr),
   largeFontPushed_(false)
 {
 }
 
-BaseGui::~BaseGui()
+SimExamplesGui::~SimExamplesGui()
 {
 }
 
-const char* BaseGui::name() const
-{
-  return name_.c_str();
-}
-
-void BaseGui::setDefaultFont(ImFont* font)
+void SimExamplesGui::setDefaultFont(ImFont* font)
 {
   if (defaultFont_ != nullptr || font == nullptr)
   {
@@ -52,7 +52,7 @@ void BaseGui::setDefaultFont(ImFont* font)
   defaultFont_ = font;
 }
 
-void BaseGui::setLargeFont(ImFont* font)
+void SimExamplesGui::setLargeFont(ImFont* font)
 {
   if (largeFont_ != nullptr || font == nullptr)
   {
@@ -62,7 +62,7 @@ void BaseGui::setLargeFont(ImFont* font)
   largeFont_ = font;
 }
 
-void BaseGui::pushLargeFont_()
+void SimExamplesGui::pushLargeFont_()
 {
   if (!largeFontPushed_)
   {
@@ -71,7 +71,7 @@ void BaseGui::pushLargeFont_()
   }
 }
 
-void BaseGui::popLargeFont_()
+void SimExamplesGui::popLargeFont_()
 {
   if (largeFontPushed_)
   {

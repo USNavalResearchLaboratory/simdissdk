@@ -197,10 +197,10 @@ osg::Node* createNode(float s)
 // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(150); func("##" label, __VA_ARGS__)
 
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public ::GUI::BaseGui
 {
   ControlPanel(const SpatialReference* mapSRS, osg::Group* graph)
-    : BaseGui("Locator Test"),
+    : ::GUI::BaseGui("Locator Test"),
     mapSRS_(mapSRS),
     graph_(graph)
   {
@@ -635,8 +635,8 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_IMGUI
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(mapSRS, graph.get()));
 #else

@@ -15,6 +15,8 @@ set(SOURCE_FILES
     BaseGui.cpp
     OsgImGuiHandler.h
     OsgImGuiHandler.cpp
+    SimExamplesGui.h
+    SimExamplesGui.cpp
 )
 
 add_library(ImGuiLib ${SOURCE_FILES})

@@ -529,13 +529,13 @@ namespace
   // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(250); func("##" label, __VA_ARGS__)
 
-  class ControlPanel : public GUI::BaseGui
+  class ControlPanel : public ::GUI::BaseGui
   {
   public:
     ControlPanel(osgEarth::SimpleOceanLayer* simpleOceanLayer, osgEarth::VisibleLayer* tritonLayer,
       PlatformBuoyancyCallback* buoyancyCallback, SkyNode* skyNode, simVis::View* view,
       bool useTriton, bool useSilverLining)
-      : GUI::BaseGui("Ocean Demo"),
+      : ::GUI::BaseGui("Ocean Demo"),
       simpleOceanLayer_(simpleOceanLayer),
       tritonLayer_(tritonLayer),
       buoyancyCallback_(buoyancyCallback),
@@ -1267,8 +1267,8 @@ int main(int argc, char** argv)
   viewer->addEventHandler(new MenuHandler(viewer.get(), scene.get(), menu));
 #else
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(simpleOceanLayer.get(), tritonLayer.get(), buoyancyCallback.get(),
     sky.get(), viewer->getMainView(), useTriton, useSilverLining));

@@ -128,10 +128,10 @@ static void makeStar(Geometry* geom, bool close)
 
 #ifdef HAVE_IMGUI
 
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public ::GUI::BaseGui
 {
   ControlPanel()
-    : GUI::BaseGui("GOG Attachments Example"),
+    : ::GUI::BaseGui("GOG Attachments Example"),
     swChild_(static_cast<unsigned int>(~0))
   {
   }
@@ -578,8 +578,8 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_IMGUI
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel());
 #else

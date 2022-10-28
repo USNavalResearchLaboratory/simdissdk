@@ -175,7 +175,7 @@ struct AutoBearingHandler : public osgGA::GUIEventHandler
 // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
 
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public ::GUI::BaseGui
 {
   float minHeight;
   float maxHeight;
@@ -187,7 +187,7 @@ struct ControlPanel : public GUI::BaseGui
   osg::ref_ptr<simRF::GradientColorProvider> heatColorProvider;
 
   ControlPanel(simRF::ProfileManager* pm, simRF::ThresholdColorProvider* tcp)
-    : GUI::BaseGui("RF Prop Example"),
+    : ::GUI::BaseGui("RF Prop Example"),
     pm_(pm),
     tcp_(tcp)
   {
@@ -1004,8 +1004,8 @@ int main(int argc, char** argv)
   controlPanel->heatColorProvider->setColorMap(heatColors);
 
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   controlPanel->minHeight = minHeight;
   controlPanel->maxHeight = maxHeight;

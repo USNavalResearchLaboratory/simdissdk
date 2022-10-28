@@ -448,10 +448,10 @@ simData::ObjectId addPlatform(simData::DataStore &dataStore, const std::string& 
 }
 
 #ifdef HAVE_IMGUI
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public ::GUI::BaseGui
 {
   explicit ControlPanel(MouseAndMenuHandler& handler)
-    : GUI::BaseGui("GOG Example"),
+    : ::GUI::BaseGui("GOG Example"),
     handler_(handler)
   {
   }
@@ -726,8 +726,8 @@ int main(int argc, char** argv)
 
 #ifdef HAVE_IMGUI
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   mainView->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(*mouseHandler.get()));
 #endif

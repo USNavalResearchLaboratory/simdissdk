@@ -134,11 +134,11 @@ static const std::string s_help =
   " C : toggle overhead clamping\n";
 
 #ifdef HAVE_IMGUI
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public ::GUI::BaseGui
 {
 public:
   ControlPanel()
-    : GUI::BaseGui(s_title)
+    : ::GUI::BaseGui(s_title)
   {
   }
 
@@ -1078,8 +1078,8 @@ int main(int argc, char **argv)
   ControlPanel* controlPanel = new ControlPanel();
   menuHandler->setImGuiControlPanel(controlPanel);
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(controlPanel);
 #else
