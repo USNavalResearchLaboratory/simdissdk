@@ -119,9 +119,7 @@ OsgImGuiHandler::OsgImGuiHandler()
 {
   menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::CameraGUI>());
   menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::EnvironmentGUI>());
-//#if OSGEARTH_SOVERSION > 145
   menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::LayersGUI>());
-//#endif
   menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::NetworkMonitorGUI>());
   menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::NVGLInspectorGUI>());
   menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::RenderingGUI>());
@@ -143,6 +141,7 @@ void OsgImGuiHandler::add(osgEarth::GUI::BaseGUI* gui)
 void OsgImGuiHandler::add(::GUI::BaseGui* gui)
 {
   std::cerr << "GUI \"" << gui->name() << "\" is of a deprecated type (::GUI::BaseGui). Update to simExamples::SimExamplesGui\n";
+  deprecatedGuis_.push_back(std::unique_ptr<::GUI::BaseGui>(gui));
 }
 
 /**
@@ -509,6 +508,18 @@ void OsgImGuiHandler::draw_(osg::RenderInfo& ri)
       }
       gui->draw(ri);
     }
+  }
+
+  for (auto& gui : deprecatedGuis_)
+  {
+    if (firstDraw_)
+    {
+      if (defaultFont_)
+        gui->setDefaultFont(defaultFont_);
+      if (largeFont_)
+        gui->setLargeFont(largeFont_);
+    }
+    gui->draw(ri);
   }
 
   firstDraw_ = false;

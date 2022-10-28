@@ -55,7 +55,7 @@ public:
 
   /** Add a GUI to the manager */
   void add(osgEarth::GUI::BaseGUI* gui);
-  /** Add deprecated GUI to the manager. No-op TODO: Remove once ::GUI::BaseGUI is removed */
+  /** Add deprecated GUI to the manager. TODO: Remove once ::GUI::BaseGUI is removed */
   void add(::GUI::BaseGui* gui);
 
   class RealizeOperation : public ::GUI::GlewInitOperation
@@ -112,6 +112,7 @@ private:
   bool autoAdjustProjectionMatrix_;
 
   std::map<std::string, std::vector<std::unique_ptr<osgEarth::GUI::BaseGUI> > > menus_;
+  std::vector<std::unique_ptr<::GUI::BaseGui> > deprecatedGuis_;
 
   ImFont* defaultFont_;
   ImFont* largeFont_;
