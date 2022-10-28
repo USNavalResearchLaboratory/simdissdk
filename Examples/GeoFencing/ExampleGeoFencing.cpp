@@ -40,7 +40,7 @@
 #include "osgEarth/FeatureNode"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 #include "osgEarth/Controls"
@@ -74,19 +74,26 @@ struct AppData
 
 #ifdef HAVE_IMGUI
 
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   explicit ControlPanel(AppData& app)
-    : GUI::BaseGui("GeoFencing Test Example"),
+    : simExamples::SimExamplesGui("GeoFencing Test Example"),
     app_(app)
   {
   }
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), "The yellow areas are geofences.");
     ImGui::TextColored(ImVec4(1.f, 0.f, 0.f, 1.f), "The red areas are invalid (concave) geofences.");

@@ -64,7 +64,6 @@ public:
     imperialUnits_(new simUtil::MapScaleTwoUnitsProvider(simCore::Units::YARDS, simCore::Units::MILES, 16093.4)),
     nauticalUnits_(new simUtil::MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::NAUTICAL_MILES, 18520.0))
   {
-    setVisible(true);
   }
 
   void draw(osg::RenderInfo& ri) override

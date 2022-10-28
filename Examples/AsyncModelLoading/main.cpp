@@ -46,7 +46,7 @@
 #include "simUtil/PlatformSimulator.h"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 using namespace osgEarth::Util::Controls;
@@ -196,11 +196,11 @@ struct App
 
 #ifdef HAVE_IMGUI
 
-class ControlPanel : public GUI::BaseGui
+class ControlPanel : public simExamples::SimExamplesGui
 {
 public:
   explicit ControlPanel(App& app)
-    : GUI::BaseGui("Asynchronous Loading Node Example"),
+    : simExamples::SimExamplesGui("Asynchronous Loading Node Example"),
     app_(app)
   {
   }
@@ -215,11 +215,19 @@ public:
 
   void draw(osg::RenderInfo& ri) override
   {
-    // This GUI positions bottom left instead of top left, need the size of the window
-    ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
-    ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      // This GUI positions bottom left instead of top left, need the size of the window
+      ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
+      ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+      firstDraw_ = false;
+    }
+
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("c: Center Next");
 

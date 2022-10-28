@@ -36,6 +36,7 @@ SimExamplesGui::SimExamplesGui(const std::string& name)
   largeFont_(nullptr),
   largeFontPushed_(false)
 {
+  setVisible(true);
 }
 
 SimExamplesGui::~SimExamplesGui()

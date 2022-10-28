@@ -71,7 +71,7 @@
 #include "osgEarth/Sky"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 using namespace osgEarth::Util::Controls;
@@ -128,19 +128,26 @@ static void makeStar(Geometry* geom, bool close)
 
 #ifdef HAVE_IMGUI
 
-struct ControlPanel : public ::GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   ControlPanel()
-    : ::GUI::BaseGui("GOG Attachments Example"),
+    : simExamples::SimExamplesGui("GOG Attachments Example"),
     swChild_(static_cast<unsigned int>(~0))
   {
   }
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     auto& io = ImGui::GetIO();
     ImGui::Text("g : cycle through the various GOG types");
