@@ -50,7 +50,7 @@
 #define LC "[Overhead Example] "
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 #include "osgEarth/Controls"
@@ -135,12 +135,12 @@ private:
 };
 
 #ifdef HAVE_IMGUI
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   ControlPanel(simVis::Viewer* viewer, simVis::CreateInsetEventHandler* handler,
     const LatLonElevListener* latLonElevListener, simData::DataStore& dataStore,
     simData::ObjectId centeredPlat, bool showElevation)
-    : BaseGui("Overhead Example"),
+    : simExamples::SimExamplesGui("Overhead Example"),
     viewer_(viewer),
     handler_(handler),
     latLonElevListener_(latLonElevListener),
@@ -156,9 +156,16 @@ struct ControlPanel : public GUI::BaseGui
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("o : toggle overhead mode in focused view");
     ImGui::Text("i : toggle mode for creating a new inset");
