@@ -54,7 +54,7 @@
 #include "simUtil/ExampleResources.h"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 using namespace osgEarth::Util::Controls;
@@ -79,10 +79,10 @@ static int s_lineCalcIndex = -1, s_angleCalcIndex = -1;
 static const std::string s_title = "Range Tool Example";
 
 #ifdef HAVE_IMGUI
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   ControlPanel()
-    : GUI::BaseGui(s_title)
+    : simExamples::SimExamplesGui(s_title)
   {
   }
 
@@ -90,9 +90,17 @@ struct ControlPanel : public GUI::BaseGui
   {
     static ImVec4 gray(0.5f, 0.5f, 0.5f, 1.f);
     static ImVec4 yellow(1.f, 1.f, 0.f, 1.f);
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("1: cycle through line calculations");
     ImGui::TextColored(yellow, lineCalcText.c_str());
     ImGui::Text("2: cycle through angle calculations");

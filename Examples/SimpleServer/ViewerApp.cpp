@@ -25,7 +25,7 @@
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/ScreenSpaceLayout"
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #endif
 #include "simCore/GOG/Parser.h"
@@ -151,19 +151,26 @@ private:
 //////////////////////////////////////////////////////////////////
 
 #ifdef HAVE_IMGUI
-struct TestPanel : public GUI::BaseGui
+struct TestPanel : public simExamples::SimExamplesGui
 {
   explicit TestPanel(ViewerApp& app)
-    : GUI::BaseGui("Simple Server SDK Example"),
+    : simExamples::SimExamplesGui("Simple Server SDK Example"),
     app_(app)
   {
   }
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("c : Cycle centered platform");
     ImGui::Text("C : Toggle overhead clamping");

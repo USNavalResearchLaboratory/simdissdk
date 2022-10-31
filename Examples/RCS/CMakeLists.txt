@@ -17,7 +17,7 @@ set_target_properties(example_rcs PROPERTIES
 
 if (TARGET ImGuiLib)
     target_link_libraries(example_rcs PRIVATE ImGuiLib)
-    #target_compile_definitions(example_rcs PRIVATE HAVE_IMGUI)
+    target_compile_definitions(example_rcs PRIVATE HAVE_IMGUI)
 endif()
 
 vsi_install_target(example_rcs SDK_Examples)
