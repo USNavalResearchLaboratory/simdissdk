@@ -188,6 +188,10 @@ int WidgetSettings::saveQDialog_(simQt::Settings& settings, const QString& path,
 
 void WidgetSettings::saveWindowGeometry_(simQt::Settings& settings, const QString& path, const QObject *object)
 {
+  auto shouldSkip = object->property(DO_NOT_SAVE_GEOMETRY);
+  if (shouldSkip.isValid() && shouldSkip.toBool())
+    return;
+
   QString newPath = path;
   if (object->objectName().isEmpty())
     newPath += "NA";  // NA for Not Available

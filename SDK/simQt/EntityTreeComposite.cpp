@@ -37,6 +37,7 @@
 #include "simQt/ResourceInitializer.h"
 #include "simQt/ScopedSignalBlocker.h"
 #include "simQt/SettingsGroup.h"
+#include "simQt/WidgetSettings.h"
 #include "ui_EntityTreeComposite.h"
 
 namespace simQt {
@@ -48,6 +49,10 @@ FilterDialog::FilterDialog(SettingsPtr settings, QWidget* parent)
   :QDialog(parent),
    settings_(settings)
 {
+  setObjectName("Entity Tree Composite Filter Dialog");
+  // Since the object saves its own geometry, skip having the Widget Setting save the geometry
+  setProperty(DO_NOT_SAVE_GEOMETRY, true);
+
   // restore geometry if settings is valid
   if (settings_)
   {
