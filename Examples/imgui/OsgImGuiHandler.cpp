@@ -28,15 +28,15 @@
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
 #include "osgEarth/BuildConfig.h"
-#if OSGEARTH_SOVERSION < 146
 #include "osgEarth/ShaderLoader"
 #include "osgEarth/VirtualProgram"
-#endif
 #include "osgEarth/ImGui/CameraGUI"
 #include "osgEarth/ImGui/EnvironmentGUI"
+
 #if OSGEARTH_SOVERSION < 146
 #undef NOMINMAX
 #endif
+
 #include "osgEarth/ImGui/LayersGUI"
 #include "osgEarth/ImGui/NetworkMonitorGUI"
 #include "osgEarth/ImGui/RenderingGUI"

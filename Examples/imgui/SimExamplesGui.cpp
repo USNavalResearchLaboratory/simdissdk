@@ -20,10 +20,7 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarth/BuildConfig.h"
-#if OSGEARTH_SOVERSION < 146
 #include "imgui.h"
-#endif
 #include "osgEarth/ImGui/ImGui"
 #include "SimExamplesGui.h"
 
