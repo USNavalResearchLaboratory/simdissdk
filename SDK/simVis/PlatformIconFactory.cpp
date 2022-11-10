@@ -339,7 +339,7 @@ PlatformIconFactory* PlatformIconFactory::instance()
   static std::unique_ptr<PlatformIconFactory> s_Instance;
   if (!s_Instance)
   {
-    std::lock_guard lock(s_InstanceMutex);
+    const std::lock_guard<std::mutex> lock(s_InstanceMutex);
     // Double check pattern
     if (!s_Instance)
       s_Instance.reset(new PlatformIconFactory);
