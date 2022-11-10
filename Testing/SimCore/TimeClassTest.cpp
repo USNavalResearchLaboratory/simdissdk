@@ -862,7 +862,7 @@ namespace
     std::cout << "Invalid argument being passed in, exception that follows is normal:\n";
 #endif
     const std::string& failResult = jan4_14_52_17.strftime("%3");
-    rv += SDK_ASSERT(failResult == "" || failResult == " %3" || failResult == "3");
+    rv += SDK_ASSERT(failResult == "" || failResult == " %3" || failResult == "3" || failResult == "%3");
 #endif
 
     return rv;
