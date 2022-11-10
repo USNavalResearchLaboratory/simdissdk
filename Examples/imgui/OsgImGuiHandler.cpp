@@ -117,19 +117,19 @@ OsgImGuiHandler::OsgImGuiHandler()
   firstDraw_(true),
   autoAdjustProjectionMatrix_(true)
 {
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::CameraGUI>());
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::EnvironmentGUI>());
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::LayersGUI>());
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::NetworkMonitorGUI>());
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::NVGLInspectorGUI>());
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::RenderingGUI>());
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::SceneGraphGUI>());
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::CameraGUI>(new osgEarth::GUI::CameraGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::EnvironmentGUI>(new osgEarth::GUI::EnvironmentGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::LayersGUI>(new osgEarth::GUI::LayersGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::NetworkMonitorGUI>(new osgEarth::GUI::NetworkMonitorGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::NVGLInspectorGUI>(new osgEarth::GUI::NVGLInspectorGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::RenderingGUI>(new osgEarth::GUI::RenderingGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::SceneGraphGUI>(new osgEarth::GUI::SceneGraphGUI));
   // Not including ShaderGUI as it expects command line arguments. Can be added later if needed
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::SystemGUI>());
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::TerrainEditGUI>());
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::TerrainGUI>());
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::TextureInspectorGUI>());
-  menus_["Tools"].push_back(std::make_unique<osgEarth::GUI::ViewpointsGUI>());
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::SystemGUI>(new osgEarth::GUI::SystemGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TerrainEditGUI>(new osgEarth::GUI::TerrainEditGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TerrainGUI>(new osgEarth::GUI::TerrainGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TextureInspectorGUI>(new osgEarth::GUI::TextureInspectorGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::ViewpointsGUI>(new osgEarth::GUI::ViewpointsGUI));
 }
 
 void OsgImGuiHandler::add(osgEarth::GUI::BaseGUI* gui)
