@@ -380,7 +380,7 @@ int main(int argc, char** argv)
   viewer->addEventHandler(app.simHandler_.get());
 
   // popup handler:
-  osg::ref_ptr popupHandler = new simVis::PopupHandler(scene.get());
+  osg::ref_ptr<simVis::PopupHandler> popupHandler = new simVis::PopupHandler(scene.get());
   viewer->addEventHandler(popupHandler);
 
 #ifdef HAVE_IMGUI
