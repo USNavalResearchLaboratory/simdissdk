@@ -85,7 +85,14 @@ void StreamNotifyHandler::notify(const std::string &message)
 
 void CaptureHandler::notifyPrefix()
 {
+#if __cplusplus >= 201402L
+  // C++14 provides an easier way to add the severity
   lines_.push_back(NewLine{ severity(), {} });
+#else
+  NewLine newLine;
+  newLine.severity = severity();
+  lines_.push_back(newLine);
+#endif
 }
 
 void CaptureHandler::notify(const std::string& message)
