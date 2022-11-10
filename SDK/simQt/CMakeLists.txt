@@ -362,6 +362,8 @@ if(TARGET simVis)
         target_compile_definitions(simQt PRIVATE HAVE_SIMUTIL)
         target_link_libraries(simQt PRIVATE simUtil)
     endif()
+elseif(OSG_FOUND)
+    target_link_libraries(simQt PRIVATE OSG OPENTHREADS)
 endif()
 
 if(TARGET OSGQT)

@@ -1,4 +1,4 @@
-if (NOT TARGET GLEW)
+if(NOT TARGET GLEW OR NOT TARGET simVis)
     return()
 endif()
 
@@ -21,7 +21,7 @@ set(SOURCE_FILES
 
 add_library(ImGuiLib ${SOURCE_FILES})
 target_include_directories(ImGuiLib PUBLIC . )
-target_link_libraries(ImGuiLib PUBLIC VSI::GL GLEW OSGEARTH PRIVATE simVis)
+target_link_libraries(ImGuiLib PUBLIC VSI::GL GLEW OSGEARTH PRIVATE simVis simCore simNotify)
 set_target_properties(ImGuiLib PROPERTIES
     FOLDER "ImGui Library"
     PROJECT_LABEL "ImGui"
