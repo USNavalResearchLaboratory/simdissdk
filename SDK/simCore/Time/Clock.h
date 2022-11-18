@@ -24,6 +24,7 @@
 #define SIMCORE_TIME_CLOCK_H
 
 #include <memory>
+#include "simCore/Common/Optional.h"
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/TimeClass.h"
 
@@ -95,6 +96,10 @@ public:
    * this is a "meta" value combining other clock states.
    */
   virtual bool isUserEditable() const = 0;
+  /** Get the user-provided start time */
+  virtual simCore::Optional<simCore::TimeStamp> userStartTime() const = 0;
+  /** Get the user-provided end time */
+  virtual simCore::Optional<simCore::TimeStamp> userEndTime() const = 0;
 
   /**
   * Note that for MODE_SIMULATION start time is set to the minimum time stamp, while end time is set to the
@@ -113,6 +118,13 @@ public:
   virtual void setEndTime(const simCore::TimeStamp& timeVal) = 0;
   virtual void setCanLoop(bool fl) = 0;
   virtual void setControlsDisabled(bool fl) = 0;
+  /**
+   * Set user time bounds on the clock. These bounds will serve as a custom begin and end time in file mode only.
+   * @param start  Start time (can be unset)
+   * @param end  End time (can be unset)
+   * @return 0 on success, non-zero otherwise
+   */
+  virtual int setUserTimeBounds(const simCore::Optional<simCore::TimeStamp>& start, const simCore::Optional<simCore::TimeStamp>& end) = 0;
   ///@}
 
   /**@name controls
