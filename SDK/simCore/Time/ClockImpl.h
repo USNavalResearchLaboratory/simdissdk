@@ -79,8 +79,8 @@ namespace simCore
     virtual simCore::TimeStamp currentTime() const;
     virtual double timeScale() const;
     virtual bool realTime() const;
-    virtual simCore::TimeStamp startTime() const;
-    virtual simCore::TimeStamp endTime() const;
+    virtual simCore::TimeStamp startTime(bool ignoreUserStartTime = false) const;
+    virtual simCore::TimeStamp endTime(bool ignoreUserEndTime = false) const;
     virtual bool canLoop() const;
     virtual bool isPlaying() const;
     virtual simCore::TimeDirection timeDirection() const;
@@ -210,8 +210,8 @@ namespace simCore
     virtual simCore::TimeStamp currentTime() const;
     virtual double timeScale() const;
     virtual bool realTime() const;
-    virtual simCore::TimeStamp startTime() const;
-    virtual simCore::TimeStamp endTime() const;
+    virtual simCore::TimeStamp startTime(bool ignoreUserStartTime = false) const;
+    virtual simCore::TimeStamp endTime(bool ignoreUserEndTime = false) const;
     virtual bool canLoop() const;
     virtual bool isPlaying() const;
     virtual simCore::TimeDirection timeDirection() const;

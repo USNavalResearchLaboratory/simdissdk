@@ -260,18 +260,18 @@ void ClockImpl::setTimeScale(double scale)
   notifyScaleChange_(scale);
 }
 
-simCore::TimeStamp ClockImpl::startTime() const
+simCore::TimeStamp ClockImpl::startTime(bool ignoreUserStartTime) const
 {
-  if (!isLiveMode())
-    return userStartTime_.value_or(beginTime_);
-  return beginTime_;
+  if (ignoreUserStartTime || isLiveMode())
+    return beginTime_;
+  return userStartTime_.value_or(beginTime_);
 }
 
-simCore::TimeStamp ClockImpl::endTime() const
+simCore::TimeStamp ClockImpl::endTime(bool ignoreUserEndTime) const
 {
-  if (!isLiveMode())
-    return userEndTime_.value_or(endTime_);
-  return endTime_;
+  if (ignoreUserEndTime || isLiveMode())
+    return endTime_;
+  return userEndTime_.value_or(endTime_);
 }
 
 void ClockImpl::setStartTime(const simCore::TimeStamp& timeVal)
@@ -951,20 +951,20 @@ bool VisualizationClock::realTime() const
   return localClock_->realTime();
 }
 
-simCore::TimeStamp VisualizationClock::startTime() const
+simCore::TimeStamp VisualizationClock::startTime(bool ignoreUserStartTime) const
 {
   if (lockToDataClock_)
-    return dataClock_.startTime();
+    return dataClock_.startTime(ignoreUserStartTime);
 
-  return localClock_->startTime();
+  return localClock_->startTime(ignoreUserStartTime);
 }
 
-simCore::TimeStamp VisualizationClock::endTime() const
+simCore::TimeStamp VisualizationClock::endTime(bool ignoreUserEndTime) const
 {
   if (lockToDataClock_)
-    return dataClock_.endTime();
+    return dataClock_.endTime(ignoreUserEndTime);
 
-  return localClock_->endTime();
+  return localClock_->endTime(ignoreUserEndTime);
 }
 
 bool VisualizationClock::canLoop() const
@@ -1009,11 +1009,15 @@ bool VisualizationClock::isUserEditable() const
 
 simCore::Optional<simCore::TimeStamp> VisualizationClock::userStartTime() const
 {
+  if (lockToDataClock_)
+    return dataClock_.userStartTime();
   return simCore::Optional<simCore::TimeStamp>();
 }
 
 simCore::Optional<simCore::TimeStamp> VisualizationClock::userEndTime() const
 {
+  if (lockToDataClock_)
+    return dataClock_.userEndTime();
   return simCore::Optional<simCore::TimeStamp>();
 }
 
@@ -1091,6 +1095,8 @@ void VisualizationClock::setControlsDisabled(bool fl)
 
 int VisualizationClock::setUserTimeBounds(const simCore::Optional<simCore::TimeStamp>& start, const simCore::Optional<simCore::TimeStamp>& end)
 {
+  if (lockToDataClock_)
+    return dataClock_.setUserTimeBounds(start, end);
   // No-op
   return 1;
 }

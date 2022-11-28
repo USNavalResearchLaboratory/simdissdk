@@ -77,10 +77,10 @@ public:
   virtual double timeScale() const = 0;
   /** Returns true in real-time mode, false in step time mode. THIS IS UNRELATED TO LIVE MODE VERSUS FILE MODE */
   virtual bool realTime() const = 0;
-  /** Start of the clock bounds */
-  virtual simCore::TimeStamp startTime() const = 0;
-  /** End of the clock bounds */
-  virtual simCore::TimeStamp endTime() const = 0;
+  /** Start of the clock bounds. If ignoreUserStartTime is true, scenario start time will always be returned. Otherwise, user start time is returned if set. */
+  virtual simCore::TimeStamp startTime(bool ignoreUserStartTime = false) const = 0;
+  /** End of the clock bounds. If ignoreUserEndTime is true, scenario end time will always be returned. Otherwise, user end time is returned if set. */
+  virtual simCore::TimeStamp endTime(bool ignoreUserEndTime = false) const = 0;
   /** Returns true when playing past the end will loop time to the beginning */
   virtual bool canLoop() const = 0;
   /** Returns true when the clock is playing. */
