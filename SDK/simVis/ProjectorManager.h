@@ -66,6 +66,9 @@ public:
   /// Texture image unit for shadow map raster
   static const int getShadowMapImageUnit();
 
+  /// Set the base (starting) texture image unit for projector textures.
+  static void setBaseTextureImageUnit(int unit);
+
 public: // MapNodeObserver
 
   /** Gets the map node */
@@ -129,6 +132,9 @@ private:
 
   /// A flag to mark when projector layers need to be moved to ensure visibility
   bool needReorderProjectorLayers_;
+
+  /// Base (starting) texture image unit for projector textures
+  static int baseTextureImageUnit_;
 };
 }
 

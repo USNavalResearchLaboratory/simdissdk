@@ -44,7 +44,7 @@ UnitsComboBoxTest::UnitsComboBoxTest(QWidget* parent)
   simQt::UnitsComboBox::addVerticalData(*ui_->vertDatumCombo);
   simQt::UnitsComboBox::addMagneticVariances(*ui_->magVarCombo);
   // Orientation angle units
-  simQt::UnitsComboBox::addUnits(*ui_->angleCombo, simCore::Units::ANGLE_FAMILY, reg);
+  simQt::UnitsComboBox::addUnits(*ui_->angleCombo, simCore::ANGLE_FAMILY, reg);
   // Geodetic angle units
   simQt::UnitsComboBox::addGeodeticFormats(*ui_->geodeticCombo);
 

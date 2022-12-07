@@ -5,4 +5,4 @@ if(QT_FOUND)
     endif()
 endif()
 
-
+add_subdirectory(wbp)

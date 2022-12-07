@@ -530,9 +530,30 @@ std::string TimeStamp::strftime(const std::string& format) const
 
   // Try/catch since MSVC version will throw an exception on error
   SAFETRYBEGIN;
+
+#if defined(__GNUC__) && __GNU__C < 5
+  // g++ 5.x is first to support std::put_time(), although it's a C++11 feature.
+  // Provides a fallback of ::strftime() if put_time() is unavailable.
+  std::string localFormatStr = format;
+  localFormatStr += '\a'; // Avoid infinite loop by having some content
+  std::string buffer;
+  buffer.resize(format.size());
+  int bufferLen = ::strftime(&buffer[0], buffer.size(), localFormatStr.c_str(), &timeStruct);
+  while (bufferLen == 0)
+  {
+    buffer.resize(buffer.size() * 2);
+    bufferLen = ::strftime(&buffer[0], buffer.size(), localFormatStr.c_str(), &timeStruct);
+  }
+  // Remove the character added to local format string
+  buffer.resize(bufferLen - 1);
+  return buffer;
+#else
+  // C++11-compatible put_time()
   std::stringstream ss;
   ss << std::put_time(&timeStruct, format.c_str());
   return ss.str();
+#endif
+
   SAFETRYEND("during TimeStamp::strftime");
   return "";
 }

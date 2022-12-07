@@ -231,7 +231,7 @@ void LoaderUtils::setPoints(const std::vector<simCore::Vec3>& points, bool relat
 {
   if (relative)
   {
-    for (auto xyz : points)
+    for (const auto& xyz : points)
     {
       const osg::Vec3d point(xyz.x(), xyz.y(), xyz.z());
       // Avoid adding the same point twice
@@ -240,7 +240,7 @@ void LoaderUtils::setPoints(const std::vector<simCore::Vec3>& points, bool relat
     }
     return;
   }
-  for (auto lla : points)
+  for (const auto& lla : points)
   {
     const osg::Vec3d point(lla.lon() * simCore::RAD2DEG, lla.lat() * simCore::RAD2DEG, lla.alt());
 

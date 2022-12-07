@@ -46,7 +46,7 @@
 // #define GRID_TESTING
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 namespace ui = osgEarth::Util::Controls;
@@ -82,10 +82,10 @@ static std::string s_help =
 
 #ifdef HAVE_IMGUI
 
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   ControlPanel(simUtil::HudPositionEditor& hudEditor, simData::DataStore& dataStore)
-    : GUI::BaseGui("HUD Position Manager Example"),
+    : simExamples::SimExamplesGui("HUD Position Manager Example"),
     hudEditor_(hudEditor),
     dataStore_(dataStore)
   {
@@ -93,9 +93,16 @@ struct ControlPanel : public GUI::BaseGui
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("1 : Move 'Demo Text' to the mouse position");
     ImGui::Text("2 : Move 'Map Scale' to the mouse position");

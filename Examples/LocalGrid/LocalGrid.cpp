@@ -43,7 +43,7 @@
 #define LC "[LocalGrid demo] "
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 #include "osgEarth/Controls"
@@ -126,10 +126,10 @@ simData::ObjectId createPlatform(simData::DataStore& ds)
 // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(150); func("##" label, __VA_ARGS__)
 
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   ControlPanel(simData::DataStore& ds, simData::ObjectId id)
-    : BaseGui(s_title),
+    : simExamples::SimExamplesGui(s_title),
     ds_(ds),
     id_(id)
   {
@@ -138,9 +138,16 @@ struct ControlPanel : public GUI::BaseGui
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     bool needUpdate = false;
 

@@ -24,6 +24,8 @@
 #define SIMCORE_CSV_READER_H
 
 #include <istream>
+#include <map>
+#include <string>
 #include <vector>
 #include "simCore/Common/Common.h"
 
@@ -94,5 +96,61 @@ private:
   size_t lineNumber_;
 };
 
+/** Convenience interface into a CsvReader that can read headers and reference fields by header name */
+class SDKCORE_EXPORT RowReader
+{
+public:
+  explicit RowReader(simCore::CsvReader& reader);
+  RowReader(const RowReader& rhs) = delete;
+  RowReader& operator=(const RowReader& rhs) = delete;
+
+  /** Returns true if readHeader/readRow failed, or if there is no CSV reader  (end of file) */
+  bool eof() const;
+
+  /** Read the row as a header, storing values for access with string-based field() calls, returning 0 on success. Consumes line. */
+  int readHeader();
+  /** Reads a row into memory. Returns 0 on success, non-zero on file error/completion. Consumes line. */
+  int readRow();
+
+  /** Returns number of headers known */
+  size_t numHeaders() const;
+  /** Gets the header name by index from last call to readHeader() */
+  std::string header(size_t colIndex) const;
+
+  /** Retrieves the field index, given a header string. Returns -1 if not found. */
+  int headerIndex(const std::string& key) const;
+
+  /** Returns the tokens in vector format for most recently read header (empty if readHeaders() not called). */
+  const std::vector<std::string>& headerTokens() const;
+  /** Returns the tokens in vector format for most recently read row. */
+  const std::vector<std::string>& rowTokens() const;
+
+  /** Gets a field from the most recent readRow() call. */
+  std::string field(size_t colIndex) const;
+
+  /** Returns the field from most recent readRow() from given column, identified by name */
+  std::string field(const std::string& key, const std::string& defaultValue = "") const;
+  /** Returns the field from most recent readRow() from given column, identified by name (double version) */
+  double fieldDouble(const std::string& key, double defaultValue = 0.0) const;
+  /** Returns the field from most recent readRow() from given column, identified by name (int version) */
+  int fieldInt(const std::string& key, int defaultValue = 0) const;
+
+  /** Convenience operator for accessing keys by index */
+  std::string operator[](size_t colIndex) const;
+  /** Convenience operator for accessing keys by name */
+  std::string operator[](const std::string& key) const;
+
+private:
+  /// CSV Reader may be null depending on construction method
+  simCore::CsvReader& reader_;
+  std::vector<std::string> row_;
+
+  std::vector<std::string> headers_;
+  std::map<std::string, size_t> headerMap_;
+
+  bool eof_ = true;
+};
+
 }
+
 #endif /* SIMCORE_CSV_READER_H */

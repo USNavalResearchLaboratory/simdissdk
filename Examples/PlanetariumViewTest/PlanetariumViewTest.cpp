@@ -48,9 +48,8 @@
 #include "osgDB/ReadFile"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#include "osgEarth/ImGui/ImGui"
 #else
 #include "osgEarth/Controls"
 namespace ui = osgEarth::Util::Controls;
@@ -110,8 +109,11 @@ struct AppData
     {
       simData::DataStore::Transaction txn;
       auto* prefs = dataStore.mutable_projectorPrefs(projId, &txn);
-      prefs->set_shadowmapping(shadowMapping);
-      txn.complete(&prefs);
+      if (prefs)
+      {
+        prefs->set_shadowmapping(shadowMapping);
+        txn.complete(&prefs);
+      }
     }
   }
 
@@ -121,8 +123,11 @@ struct AppData
     {
       simData::DataStore::Transaction txn;
       auto* prefs = dataStore.mutable_commonPrefs(projId, &txn);
-      prefs->set_draw(visible);
-      txn.complete(&prefs);
+      if (prefs)
+      {
+        prefs->set_draw(visible);
+        txn.complete(&prefs);
+      }
     }
   }
 
@@ -132,8 +137,11 @@ struct AppData
     {
       simData::DataStore::Transaction txn;
       auto* prefs = dataStore.mutable_projectorPrefs(projId, &txn);
-      prefs->set_doublesided(value);
-      txn.complete(&prefs);
+      if (prefs)
+      {
+        prefs->set_doublesided(value);
+        txn.complete(&prefs);
+      }
     }
   }
 };
@@ -144,20 +152,27 @@ struct AppData
 // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
 
-class ControlPanel : public GUI::BaseGui
+class ControlPanel : public simExamples::SimExamplesGui
 {
 public:
   explicit ControlPanel(AppData& app)
-    : GUI::BaseGui("Planetarium View Example"),
+    : simExamples::SimExamplesGui("Planetarium View Example"),
     app_(app)
   {
   }
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     if (ImGui::BeginTable("Table", 2))
     {
@@ -540,14 +555,19 @@ simData::ObjectId addBeam(const simData::ObjectId hostId, simData::DataStore& da
   simData::BeamProperties* props = dataStore.addBeam(&xaction);
   simData::ObjectId result = props->id();
   props->set_hostid(hostId);
+  props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
   xaction.complete(&props);
 
   simData::BeamPrefs* prefs = dataStore.mutable_beamPrefs(result, &xaction);
   prefs->set_azimuthoffset(simCore::DEG2RAD * az);
   prefs->set_elevationoffset(simCore::DEG2RAD * el);
+  prefs->set_useoffsetbeam(true);
   prefs->set_verticalwidth(simCore::DEG2RAD * 20.0);
   prefs->set_horizontalwidth(simCore::DEG2RAD * 30.0);
   prefs->set_rendercone(true);
+  prefs->mutable_commonprefs()->set_draw(true);
+  prefs->mutable_commonprefs()->set_datadraw(true);
+  prefs->mutable_commonprefs()->set_color(0xffff0080); // yellow
   xaction.complete(&prefs);
 
   return result;
@@ -570,7 +590,7 @@ simData::ObjectId addGate(const simData::ObjectId hostId, simData::DataStore& da
   prefs->set_gateazimuthoffset(simCore::DEG2RAD * az);
   prefs->set_gateelevationoffset(simCore::DEG2RAD * el);
   prefs->set_gaterolloffset(simCore::DEG2RAD * roll);
-  prefs->mutable_commonprefs()->set_draw(false);
+  prefs->mutable_commonprefs()->set_draw(true);
   xaction.complete(&prefs);
 
   return result;

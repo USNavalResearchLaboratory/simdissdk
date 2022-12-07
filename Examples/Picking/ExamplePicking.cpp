@@ -59,7 +59,7 @@
 #include "CustomRender.h"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 namespace ui = osgEarth::Util::Controls;
@@ -321,10 +321,10 @@ private:
 };
 
 #ifdef HAVE_IMGUI
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   ControlPanel(Application& app, bool rttEnabled)
-    : GUI::BaseGui("Picking Example"),
+    : simExamples::SimExamplesGui("Picking Example"),
     app_(app),
     rttEnabled_(rttEnabled)
   {
@@ -332,9 +332,16 @@ struct ControlPanel : public GUI::BaseGui
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("h : Toggle highlighting");
     ImGui::Text("O : Toggle overhead mode");

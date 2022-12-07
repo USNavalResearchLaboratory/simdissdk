@@ -25,12 +25,15 @@
 
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "osgEarth/ImGui/ImGui"
 #include <string>
 
 struct ImFont;
 namespace osg { class RenderInfo; }
+
 namespace GUI {
 
+// DEPRECATED, all SDK examples using ImGui should update to using simExamples::SimExamplesGui instead
 /** Base class for an ImGui GUI window */
 class BaseGui
 {

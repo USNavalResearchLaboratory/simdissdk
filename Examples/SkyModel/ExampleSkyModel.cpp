@@ -40,7 +40,7 @@
 #include "simVis/SceneManager.h"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 #include "osgEarth/Controls"
@@ -257,20 +257,27 @@ private:
   SkyModel model_;
 };
 
-class ControlPanel : public GUI::BaseGui
+class ControlPanel : public simExamples::SimExamplesGui
 {
 public:
   explicit ControlPanel(AppData& app)
-    : GUI::BaseGui("Sky Model Example"),
+    : simExamples::SimExamplesGui("Sky Model Example"),
       app_(app)
   {
   }
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     static int currentModelIdx = static_cast<int>(app_.skyModel());
 

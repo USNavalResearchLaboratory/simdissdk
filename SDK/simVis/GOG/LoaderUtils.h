@@ -27,8 +27,6 @@
 #include "simCore/Common/Common.h"
 #include "simData/DataTypes.h"
 #include "simVis/GOG/GogNodeInterface.h"
-#include "simVis/GOG/Utils.h"
-#include "simVis/GOG/LoaderUtils.h"
 
 namespace osgEarth {
   class LocalGeometryNode;
@@ -55,7 +53,7 @@ public:
   * Applies the shape's orientation offsets to the node's local rotation.
   * @param node the LocalGeometryNode that needs position and orientation offsets set
   * @param shape the parsed shape data to use for applying offsets
-  * @param centerPoint treated as lla radians or xyz meters, depening on if shape is relative
+  * @param centerPoint treated as lla radians or xyz meters, depending on if shape is relative
   * @param refPoint default reference point for use with relative un-attached shapes, lla radians
   * @param attached true if shape is attached to a platform
   * @param ignoreOffset ignore the offset values provided for relative un-attached shapes, uses the shape's reference point or the provided refPoint
@@ -66,7 +64,7 @@ public:
   * Return the geographical position of the shape. If it's an absolute shape, simply uses the passed in centerPoint. For relative shapes, uses the shape's
   * reference position and apply the centerPoint xyz offsets, falling back to the specified refPoint if shape has no reference position.
   * @param shape the parsed shape data to use for applying offsets
-  * @param centerPoint treated as lla radians or xyz meters, depening on if shape is relative
+  * @param centerPoint treated as lla radians or xyz meters, depending on if shape is relative
   * @param refPoint default reference point for use with relative un-attached shapes, lla radians
   * @param ignoreOffset ignore the offset values provided for relative un-attached shapes, uses the shape's reference point or the provided refPoint
   */

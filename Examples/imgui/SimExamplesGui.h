@@ -20,65 +20,46 @@
  * disclose, or release this software.
  *
  */
+#ifndef SIMEXAMPLES_SIMEXAMPLESGUI_H
+#define SIMEXAMPLES_SIMEXAMPLESGUI_H
+
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "osgEarth/ImGui/ImGui"
-#include "BaseGui.h"
+#include <string>
 
-namespace GUI {
+struct ImFont;
+namespace osg { class RenderInfo; }
 
-BaseGui::BaseGui(const std::string& name)
-  : name_(name),
-  defaultFont_(nullptr),
-  largeFont_(nullptr),
-  largeFontPushed_(false)
+namespace simExamples {
+
+/** Base class for an ImGui GUI window */
+class SimExamplesGui : public osgEarth::GUI::BaseGUI
 {
-}
+public:
+  virtual ~SimExamplesGui();
 
-BaseGui::~BaseGui()
-{
-}
+  /** Set the default font used by all text in the GUI */
+  void setDefaultFont(ImFont* font);
+  /** Set the large font used optionally used by text in the GUI. See pushLargeFont_() and popLargeFont_() */
+  void setLargeFont(ImFont* font);
 
-const char* BaseGui::name() const
-{
-  return name_.c_str();
-}
+protected:
+  explicit SimExamplesGui(const std::string& name);
 
-void BaseGui::setDefaultFont(ImFont* font)
-{
-  if (defaultFont_ != nullptr || font == nullptr)
-  {
-    assert(0); // Dev error, should only be set once and should be set to a valid font
-    return;
-  }
-  defaultFont_ = font;
-}
+  /** Push the large font onto the font stack. Any text created before calling popLargeFont_() will use the large font. */
+  void pushLargeFont_();
+  /** Pop the large font off of the font stack. Reverts to using the default font. */
+  void popLargeFont_();
 
-void BaseGui::setLargeFont(ImFont* font)
-{
-  if (largeFont_ != nullptr || font == nullptr)
-  {
-    assert(0); // Dev error, should only be set once and should be set to a valid font
-    return;
-  }
-  largeFont_ = font;
-}
+  bool firstDraw_;
 
-void BaseGui::pushLargeFont_()
-{
-  if (!largeFontPushed_)
-  {
-    ImGui::PushFont(largeFont_);
-    largeFontPushed_ = true;
-  }
-}
-
-void BaseGui::popLargeFont_()
-{
-  if (largeFontPushed_)
-  {
-    ImGui::PopFont();
-    largeFontPushed_ = false;
-  }
-}
+private:
+  ImFont* defaultFont_;
+  ImFont* largeFont_;
+  bool largeFontPushed_;
+};
 
 }
+
+#endif

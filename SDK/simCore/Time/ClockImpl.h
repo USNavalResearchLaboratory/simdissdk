@@ -79,13 +79,15 @@ namespace simCore
     virtual simCore::TimeStamp currentTime() const;
     virtual double timeScale() const;
     virtual bool realTime() const;
-    virtual simCore::TimeStamp startTime() const;
-    virtual simCore::TimeStamp endTime() const;
+    virtual simCore::TimeStamp startTime(bool ignoreUserStartTime = false) const;
+    virtual simCore::TimeStamp endTime(bool ignoreUserEndTime = false) const;
     virtual bool canLoop() const;
     virtual bool isPlaying() const;
     virtual simCore::TimeDirection timeDirection() const;
     virtual bool controlsDisabled() const;
     virtual bool isUserEditable() const;
+    virtual simCore::Optional<simCore::TimeStamp> userStartTime() const;
+    virtual simCore::Optional<simCore::TimeStamp> userEndTime() const;
 
     virtual void setMode(Clock::Mode mode);
     virtual void setMode(Clock::Mode mode, const simCore::TimeStamp& liveStartTime);
@@ -96,6 +98,7 @@ namespace simCore
     virtual void setEndTime(const simCore::TimeStamp& timeVal);
     virtual void setCanLoop(bool fl);
     virtual void setControlsDisabled(bool fl);
+    virtual int setUserTimeBounds(const simCore::Optional<simCore::TimeStamp>& start, const simCore::Optional<simCore::TimeStamp>& end);
     ///@}
 
     /**@name controls
@@ -155,6 +158,10 @@ namespace simCore
 
     /// Utility class to send out notifications when user's permission to edit changes
     class ScopedUserEditableWatch;
+
+    /// User provided time bounds
+    simCore::Optional<simCore::TimeStamp> userStartTime_;
+    simCore::Optional<simCore::TimeStamp> userEndTime_;
   };
 
   /**
@@ -203,13 +210,15 @@ namespace simCore
     virtual simCore::TimeStamp currentTime() const;
     virtual double timeScale() const;
     virtual bool realTime() const;
-    virtual simCore::TimeStamp startTime() const;
-    virtual simCore::TimeStamp endTime() const;
+    virtual simCore::TimeStamp startTime(bool ignoreUserStartTime = false) const;
+    virtual simCore::TimeStamp endTime(bool ignoreUserEndTime = false) const;
     virtual bool canLoop() const;
     virtual bool isPlaying() const;
     virtual simCore::TimeDirection timeDirection() const;
     virtual bool controlsDisabled() const;
     virtual bool isUserEditable() const;
+    virtual simCore::Optional<simCore::TimeStamp> userStartTime() const;
+    virtual simCore::Optional<simCore::TimeStamp> userEndTime() const;
 
     virtual void setMode(Clock::Mode mode);
     virtual void setMode(Clock::Mode mode, const simCore::TimeStamp& liveStartTime);
@@ -220,6 +229,7 @@ namespace simCore
     virtual void setEndTime(const simCore::TimeStamp& timeVal);
     virtual void setCanLoop(bool fl);
     virtual void setControlsDisabled(bool fl);
+    virtual int setUserTimeBounds(const simCore::Optional<simCore::TimeStamp>& start, const simCore::Optional<simCore::TimeStamp>& end);
     ///@}
 
     /**@name controls

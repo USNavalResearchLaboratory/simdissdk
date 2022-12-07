@@ -57,7 +57,7 @@
 #include "osgEarth/Sky"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #endif
 
@@ -76,11 +76,11 @@ static const std::string s_title = "Antenna Pattern Example";
 // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
 
-class ControlPanel : public GUI::BaseGui
+class ControlPanel : public simExamples::SimExamplesGui
 {
 public:
   explicit ControlPanel(simData::MemoryDataStore& ds, simData::ObjectId beamId)
-    : GUI::BaseGui("Antenna Pattern Example"),
+    : simExamples::SimExamplesGui("Antenna Pattern Example"),
     ds_(ds),
     beamId_(beamId)
   {
@@ -89,9 +89,16 @@ public:
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     bool needUpdate = false;
 
@@ -573,8 +580,8 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_IMGUI
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
 
   simData::MemoryDataStore ds;

@@ -56,7 +56,7 @@
 #include "simUtil/ExampleResources.h"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 #include "osgEarth/Controls"
@@ -87,10 +87,10 @@ namespace
 // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(150); func("##" label, __VA_ARGS__)
 
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   ControlPanel(App& app, float duration)
-    : BaseGui("Massive Data Example"),
+    : simExamples::SimExamplesGui("Massive Data Example"),
     app_(app),
     duration_(duration)
   {
@@ -98,11 +98,18 @@ struct ControlPanel : public GUI::BaseGui
 
   void draw(osg::RenderInfo& ri) override
   {
-    // This GUI positions bottom left instead of top left, need the size of the window
-    ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
-    ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      // This GUI positions bottom left instead of top left, need the size of the window
+      ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
+      ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     bool needUpdate = false;
 
@@ -373,7 +380,7 @@ int main(int argc, char** argv)
   viewer->addEventHandler(app.simHandler_.get());
 
   // popup handler:
-  osg::ref_ptr popupHandler = new simVis::PopupHandler(scene.get());
+  osg::ref_ptr<simVis::PopupHandler> popupHandler = new simVis::PopupHandler(scene.get());
   viewer->addEventHandler(popupHandler);
 
 #ifdef HAVE_IMGUI

@@ -38,6 +38,9 @@ namespace simQt
 
 class Settings;
 
+/** To skip saving QObject settings, set this property to `true`, e.g. widget->setProperty(DO_NOT_SAVE_GEOMETRY, true) */
+static const char* DO_NOT_SAVE_GEOMETRY = "Widget Settings Skip Geometry";
+
 /**
  * The routines saveWidget and loadWidget are helper routines to save off routine window layout
  * information.  Information includes:
@@ -60,7 +63,8 @@ public:
 
   /**
    * Saves widget layout information.  Includes QDialog window location and size, QSplitter
-   * splitter locations, QTreeView and QTable column widgets.
+   * splitter locations, QTreeView and QTable column widgets. To skip an QObject set the
+   * property of DO_NOT_SAVE_GEOMETRY to true
    * @param settings Settings in which to save the values
    * @param widget Widget to recursively search for other widgets to save
    */

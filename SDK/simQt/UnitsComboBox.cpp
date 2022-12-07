@@ -69,12 +69,12 @@ void UnitsComboBox::addUnits(QComboBox& comboBox, const std::string& unitFamily,
 
   // Establish a list of candidate priority units based on type.
   SortedUnitsSet candidatePriority;
-  if (unitFamily == simCore::Units::ANGLE_FAMILY)
+  if (unitFamily == simCore::ANGLE_FAMILY)
   {
     candidatePriority.insert(simCore::Units::DEGREES);
     candidatePriority.insert(simCore::Units::RADIANS);
   }
-  else if (unitFamily == simCore::Units::LENGTH_FAMILY)
+  else if (unitFamily == simCore::LENGTH_FAMILY)
   {
     candidatePriority.insert(simCore::Units::FEET);
     candidatePriority.insert(simCore::Units::YARDS);
@@ -84,7 +84,7 @@ void UnitsComboBox::addUnits(QComboBox& comboBox, const std::string& unitFamily,
     candidatePriority.insert(simCore::Units::KILOMETERS);
     candidatePriority.insert(simCore::Units::NAUTICAL_MILES);
   }
-  else if (unitFamily == simCore::Units::SPEED_FAMILY)
+  else if (unitFamily == simCore::SPEED_FAMILY)
   {
     candidatePriority.insert(simCore::Units::MILES_PER_HOUR);
     candidatePriority.insert(simCore::Units::KNOTS);

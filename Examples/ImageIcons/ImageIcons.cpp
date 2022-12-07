@@ -53,7 +53,7 @@
 #include "simUtil/ExampleResources.h"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 using namespace osgEarth::Util::Controls;
@@ -71,10 +71,10 @@ static const std::string s_title = "Image Icons Example";
 
 #ifdef HAVE_IMGUI
 
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   ControlPanel(simData::DataStore& dataStore, simData::ObjectId platId)
-    : GUI::BaseGui(s_title),
+    : simExamples::SimExamplesGui(s_title),
     dataStore_(dataStore),
     platId_(platId)
   {
@@ -82,9 +82,16 @@ struct ControlPanel : public GUI::BaseGui
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("1 : cycle through rotation types");
     ImGui::Text("2 : toggle highlight");

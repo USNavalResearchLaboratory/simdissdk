@@ -276,10 +276,11 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
   double hbw = NO_COMMANDED_BEAMWIDTH;
   double vbw = NO_COMMANDED_BEAMWIDTH;
   simVis::Color color = NO_COMMANDED_COLOR;
-  bool active = false;
 
   // prepare the prefs for all points being added
   const simData::BeamPrefs& prefs = beam_->getPrefs();
+  bool dataDraw = prefs.commonprefs().datadraw();
+  bool draw = prefs.commonprefs().draw();
   simData::BeamPrefs pointPrefs(prefs);
   pointPrefs.mutable_commonprefs()->set_useoverridecolor(false);
   pointPrefs.set_blended(true);
@@ -296,7 +297,9 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
     if (!next->has_updateprefs())
       continue;
     if (next->updateprefs().commonprefs().has_datadraw())
-      active = next->updateprefs().commonprefs().datadraw();
+      dataDraw = next->updateprefs().commonprefs().datadraw();
+    if (next->updateprefs().commonprefs().has_draw())
+      draw = next->updateprefs().commonprefs().draw();
     if (next->updateprefs().has_horizontalwidth())
       hbw = next->updateprefs().horizontalwidth();
     if (next->updateprefs().has_verticalwidth())
@@ -325,7 +328,9 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
       if (!next->has_updateprefs())
         continue;
       if (next->updateprefs().commonprefs().has_datadraw())
-        active = next->updateprefs().commonprefs().datadraw();
+        dataDraw = next->updateprefs().commonprefs().datadraw();
+      if (next->updateprefs().commonprefs().has_draw())
+        draw = next->updateprefs().commonprefs().draw();
       if (next->updateprefs().has_horizontalwidth())
         hbw = next->updateprefs().horizontalwidth();
       if (next->updateprefs().has_verticalwidth())
@@ -345,7 +350,7 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
     else
       pointPrefs.set_verticalwidth(prefs.verticalwidth());
 
-    if (active)
+    if (draw && dataDraw)
       addPointFromUpdate_(pointPrefs, hasCommandedHbw, hasCommandedVbw, color, update, update->time());
   }
 }
@@ -1220,7 +1225,7 @@ void PlanetariumViewTool::addBeamToBeamHistory_(simVis::BeamNode* beam)
   // SIM-13705 - only supporting beam history for absolute/linear beams;
   //   body beam implementation is difficult and not relevant for customer
   const simData::BeamProperties& props = beam->getProperties();
-  const bool isLinearBeam = (props.has_type() && props.type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+  const bool isLinearBeam = (props.type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
   if (isLinearBeam && history_.find(beam->getId()) == history_.end())
   {
     osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, range_);

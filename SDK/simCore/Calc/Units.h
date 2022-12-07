@@ -38,6 +38,23 @@
 
 namespace simCore {
 
+///@{
+/// Predefined unit families
+static const std::string INVALID_FAMILY = "invalid";
+static const std::string UNITLESS_FAMILY = "unitless";
+static const std::string ELAPSED_TIME_FAMILY = "elapsed time";
+static const std::string ANGLE_FAMILY = "angle";
+static const std::string LENGTH_FAMILY = "length";
+static const std::string SPEED_FAMILY = "speed";
+static const std::string ACCELERATION_FAMILY = "acceleration";
+static const std::string TEMPERATURE_FAMILY = "temperature";
+static const std::string FREQUENCY_FAMILY = "frequency";
+static const std::string VOLUME_FAMILY = "volume";
+static const std::string PRESSURE_FAMILY = "pressure";
+static const std::string POTENTIAL_FAMILY = "potential";
+///@}
+
+
 /** Definition for a single unit of measurement */
 class SDKCORE_EXPORT Units
 {
@@ -174,7 +191,7 @@ public:
   ///@}
 
   ///@{
-  /// Predefined unit families
+  /// Predefined unit families; @deprecated, prefer simCore::xyz_FAMILY instead; will be removed in a future version
   static const std::string INVALID_FAMILY ATTRIB_HIDDEN;
   static const std::string UNITLESS_FAMILY ATTRIB_HIDDEN;
   static const std::string ELAPSED_TIME_FAMILY ATTRIB_HIDDEN;

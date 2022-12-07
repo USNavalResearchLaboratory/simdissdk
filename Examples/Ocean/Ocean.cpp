@@ -63,7 +63,7 @@
 #include "osgEarth/Version"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #endif
 
@@ -529,13 +529,13 @@ namespace
   // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(250); func("##" label, __VA_ARGS__)
 
-  class ControlPanel : public GUI::BaseGui
+  class ControlPanel : public simExamples::SimExamplesGui
   {
   public:
     ControlPanel(osgEarth::SimpleOceanLayer* simpleOceanLayer, osgEarth::VisibleLayer* tritonLayer,
       PlatformBuoyancyCallback* buoyancyCallback, SkyNode* skyNode, simVis::View* view,
       bool useTriton, bool useSilverLining)
-      : GUI::BaseGui("Ocean Demo"),
+      : simExamples::SimExamplesGui("Ocean Demo"),
       simpleOceanLayer_(simpleOceanLayer),
       tritonLayer_(tritonLayer),
       buoyancyCallback_(buoyancyCallback),
@@ -548,9 +548,16 @@ namespace
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("0: reset view (to ship)");
     ImGui::Text("1: untether camera");
@@ -1267,8 +1274,8 @@ int main(int argc, char** argv)
   viewer->addEventHandler(new MenuHandler(viewer.get(), scene.get(), menu));
 #else
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(simpleOceanLayer.get(), tritonLayer.get(), buoyancyCallback.get(),
     sky.get(), viewer->getMainView(), useTriton, useSilverLining));

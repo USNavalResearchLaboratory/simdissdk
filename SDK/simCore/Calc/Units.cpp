@@ -29,110 +29,110 @@
 
 namespace simCore {
 
-const std::string Units::INVALID_FAMILY("invalid");
-const std::string Units::UNITLESS_FAMILY("unitless");
-const std::string Units::ELAPSED_TIME_FAMILY("elapsed time");
-const std::string Units::ANGLE_FAMILY("angle");
-const std::string Units::LENGTH_FAMILY("length");
-const std::string Units::SPEED_FAMILY("speed");
-const std::string Units::ACCELERATION_FAMILY("acceleration");
-const std::string Units::TEMPERATURE_FAMILY("temperature");
-const std::string Units::FREQUENCY_FAMILY("frequency");
-const std::string Units::VOLUME_FAMILY("volume");
-const std::string Units::PRESSURE_FAMILY("pressure");
-const std::string Units::POTENTIAL_FAMILY("potential");
+const std::string Units::INVALID_FAMILY = simCore::INVALID_FAMILY;
+const std::string Units::UNITLESS_FAMILY = simCore::UNITLESS_FAMILY;
+const std::string Units::ELAPSED_TIME_FAMILY = simCore::ELAPSED_TIME_FAMILY;
+const std::string Units::ANGLE_FAMILY = simCore::ANGLE_FAMILY;
+const std::string Units::LENGTH_FAMILY = simCore::LENGTH_FAMILY;
+const std::string Units::SPEED_FAMILY = simCore::SPEED_FAMILY;
+const std::string Units::ACCELERATION_FAMILY = simCore::ACCELERATION_FAMILY;
+const std::string Units::TEMPERATURE_FAMILY = simCore::TEMPERATURE_FAMILY;
+const std::string Units::FREQUENCY_FAMILY = simCore::FREQUENCY_FAMILY;
+const std::string Units::VOLUME_FAMILY = simCore::VOLUME_FAMILY;
+const std::string Units::PRESSURE_FAMILY = simCore::PRESSURE_FAMILY;
+const std::string Units::POTENTIAL_FAMILY = simCore::POTENTIAL_FAMILY;
 
-const Units Units::UNITLESS("", "", 1.0, Units::UNITLESS_FAMILY);
+const Units Units::UNITLESS("", "", 1.0, simCore::UNITLESS_FAMILY);
 
-const Units Units::SECONDS("seconds", "s", 1.0, Units::ELAPSED_TIME_FAMILY);
-const Units Units::MILLISECONDS("milliseconds", "ms", 0.001, Units::ELAPSED_TIME_FAMILY);
-const Units Units::MICROSECONDS("microseconds", "us", 1e-6, Units::ELAPSED_TIME_FAMILY);
-const Units Units::NANOSECONDS("nanoseconds", "ns", 1e-9, Units::ELAPSED_TIME_FAMILY);
-const Units Units::MINUTES("minutes", "min", SECPERMIN, Units::ELAPSED_TIME_FAMILY);
-const Units Units::HOURS("hours", "hr", SECPERHOUR, Units::ELAPSED_TIME_FAMILY);
-const Units Units::DAYS("days", "d", SECPERDAY, Units::ELAPSED_TIME_FAMILY);
+const Units Units::SECONDS("seconds", "s", 1.0, simCore::ELAPSED_TIME_FAMILY);
+const Units Units::MILLISECONDS("milliseconds", "ms", 0.001, simCore::ELAPSED_TIME_FAMILY);
+const Units Units::MICROSECONDS("microseconds", "us", 1e-6, simCore::ELAPSED_TIME_FAMILY);
+const Units Units::NANOSECONDS("nanoseconds", "ns", 1e-9, simCore::ELAPSED_TIME_FAMILY);
+const Units Units::MINUTES("minutes", "min", SECPERMIN, simCore::ELAPSED_TIME_FAMILY);
+const Units Units::HOURS("hours", "hr", SECPERHOUR, simCore::ELAPSED_TIME_FAMILY);
+const Units Units::DAYS("days", "d", SECPERDAY, simCore::ELAPSED_TIME_FAMILY);
 
-const Units Units::RADIANS("radians", "rad", 1.0, Units::ANGLE_FAMILY);
-const Units Units::DEGREES("degrees", "deg", simCore::DEG2RAD, Units::ANGLE_FAMILY);
-const Units Units::MILLIRADIANS("milliradians", "mrad", 1e-3, Units::ANGLE_FAMILY);
-const Units Units::BAM("binary angle measurement", "bam", M_2_PI, Units::ANGLE_FAMILY);
+const Units Units::RADIANS("radians", "rad", 1.0, simCore::ANGLE_FAMILY);
+const Units Units::DEGREES("degrees", "deg", simCore::DEG2RAD, simCore::ANGLE_FAMILY);
+const Units Units::MILLIRADIANS("milliradians", "mrad", 1e-3, simCore::ANGLE_FAMILY);
+const Units Units::BAM("binary angle measurement", "bam", M_2_PI, simCore::ANGLE_FAMILY);
 // Based on NATO definition of angular mils (6400 mils in a circle)
-const Units Units::MIL("angular mil", "mil", 9.8174770424681038701957605727484e-4, Units::ANGLE_FAMILY);
+const Units Units::MIL("angular mil", "mil", 9.8174770424681038701957605727484e-4, simCore::ANGLE_FAMILY);
 
-const Units Units::METERS("meters", "m", 1.0, Units::LENGTH_FAMILY);
-const Units Units::KILOMETERS("kilometers", "km", 1e3, Units::LENGTH_FAMILY);
-const Units Units::YARDS("yards", "yd", 0.91439997, Units::LENGTH_FAMILY);
-const Units Units::MILES("miles", "mi", 1609.344, Units::LENGTH_FAMILY);
-const Units Units::FEET("feet", "ft", 0.30479999, Units::LENGTH_FAMILY);
-const Units Units::INCHES("inches", "in", 0.025399999, Units::LENGTH_FAMILY);
-const Units Units::NAUTICAL_MILES("nautical miles", "nm", 1852.0, Units::LENGTH_FAMILY);
-const Units Units::CENTIMETERS("centimeters", "cm", 1e-2, Units::LENGTH_FAMILY);
-const Units Units::MILLIMETERS("millimeters", "mm", 1e-3, Units::LENGTH_FAMILY);
-const Units Units::KILOYARDS("kiloyards", "kyd", 914.399998610, Units::LENGTH_FAMILY);
-const Units Units::FATHOMS("fathoms", "fm", 1.82879994, Units::LENGTH_FAMILY);
-const Units Units::KILOFEET("kilofeet", "kf", 304.79999, Units::LENGTH_FAMILY);
+const Units Units::METERS("meters", "m", 1.0, simCore::LENGTH_FAMILY);
+const Units Units::KILOMETERS("kilometers", "km", 1e3, simCore::LENGTH_FAMILY);
+const Units Units::YARDS("yards", "yd", 0.91439997, simCore::LENGTH_FAMILY);
+const Units Units::MILES("miles", "mi", 1609.344, simCore::LENGTH_FAMILY);
+const Units Units::FEET("feet", "ft", 0.30479999, simCore::LENGTH_FAMILY);
+const Units Units::INCHES("inches", "in", 0.025399999, simCore::LENGTH_FAMILY);
+const Units Units::NAUTICAL_MILES("nautical miles", "nm", 1852.0, simCore::LENGTH_FAMILY);
+const Units Units::CENTIMETERS("centimeters", "cm", 1e-2, simCore::LENGTH_FAMILY);
+const Units Units::MILLIMETERS("millimeters", "mm", 1e-3, simCore::LENGTH_FAMILY);
+const Units Units::KILOYARDS("kiloyards", "kyd", 914.399998610, simCore::LENGTH_FAMILY);
+const Units Units::FATHOMS("fathoms", "fm", 1.82879994, simCore::LENGTH_FAMILY);
+const Units Units::KILOFEET("kilofeet", "kf", 304.79999, simCore::LENGTH_FAMILY);
 // Distance used in radar related subjects, equal to 6000 feet
-const Units Units::DATA_MILES("data miles", "dm", 1828.800164446, Units::LENGTH_FAMILY);
+const Units Units::DATA_MILES("data miles", "dm", 1828.800164446, simCore::LENGTH_FAMILY);
 
-const Units Units::METERS_PER_SECOND("meters per second", "m/sec", 1.0, Units::SPEED_FAMILY);
-const Units Units::KILOMETERS_PER_HOUR("kilometers per hour", "km/hr", 0.27777778, Units::SPEED_FAMILY);
-const Units Units::KNOTS("knots", "kts", 0.51444444, Units::SPEED_FAMILY);
-const Units Units::MILES_PER_HOUR("miles per hour", "mph", 0.44703997, Units::SPEED_FAMILY);
-const Units Units::FEET_PER_SECOND("feet per second", "ft/sec", 0.3047999, Units::SPEED_FAMILY);
-const Units Units::KILOMETERS_PER_SECOND("kilometers per second", "km/sec", 1e3, Units::SPEED_FAMILY);
-const Units Units::DATA_MILES_PER_HOUR("data miles per hour", "dm/hr", 0.50797738, Units::SPEED_FAMILY);
-const Units Units::YARDS_PER_SECOND("yards per second", "yd/sec", 0.91439997, Units::SPEED_FAMILY);
+const Units Units::METERS_PER_SECOND("meters per second", "m/sec", 1.0, simCore::SPEED_FAMILY);
+const Units Units::KILOMETERS_PER_HOUR("kilometers per hour", "km/hr", 0.27777778, simCore::SPEED_FAMILY);
+const Units Units::KNOTS("knots", "kts", 0.51444444, simCore::SPEED_FAMILY);
+const Units Units::MILES_PER_HOUR("miles per hour", "mph", 0.44703997, simCore::SPEED_FAMILY);
+const Units Units::FEET_PER_SECOND("feet per second", "ft/sec", 0.3047999, simCore::SPEED_FAMILY);
+const Units Units::KILOMETERS_PER_SECOND("kilometers per second", "km/sec", 1e3, simCore::SPEED_FAMILY);
+const Units Units::DATA_MILES_PER_HOUR("data miles per hour", "dm/hr", 0.50797738, simCore::SPEED_FAMILY);
+const Units Units::YARDS_PER_SECOND("yards per second", "yd/sec", 0.91439997, simCore::SPEED_FAMILY);
 
-const Units Units::METERS_PER_SECOND_SQUARED("meters per second squared", "m/(s^2)", 1.0, Units::ACCELERATION_FAMILY);
-const Units Units::KILOMETERS_PER_SECOND_SQUARED("kilometers per second squared", "km/(s^2)", 1e3, Units::ACCELERATION_FAMILY);
-const Units Units::YARDS_PER_SECOND_SQUARED("yards per second squared", "yd/(s^2)", 0.91439997, Units::ACCELERATION_FAMILY);
-const Units Units::MILES_PER_SECOND_SQUARED("miles per second squared", "sm/(s^2)", 1609.344, Units::ACCELERATION_FAMILY);
-const Units Units::FEET_PER_SECOND_SQUARED("feet per second squared", "ft/(s^2)", 0.30479999, Units::ACCELERATION_FAMILY);
-const Units Units::INCHES_PER_SECOND_SQUARED("inches per second squared", "in/(s^2)", 0.025399999, Units::ACCELERATION_FAMILY);
-const Units Units::NAUTICAL_MILES_PER_SECOND_SQUARED("knots per second", "nm/(s^2)", 1852.0, Units::ACCELERATION_FAMILY);
+const Units Units::METERS_PER_SECOND_SQUARED("meters per second squared", "m/(s^2)", 1.0, simCore::ACCELERATION_FAMILY);
+const Units Units::KILOMETERS_PER_SECOND_SQUARED("kilometers per second squared", "km/(s^2)", 1e3, simCore::ACCELERATION_FAMILY);
+const Units Units::YARDS_PER_SECOND_SQUARED("yards per second squared", "yd/(s^2)", 0.91439997, simCore::ACCELERATION_FAMILY);
+const Units Units::MILES_PER_SECOND_SQUARED("miles per second squared", "sm/(s^2)", 1609.344, simCore::ACCELERATION_FAMILY);
+const Units Units::FEET_PER_SECOND_SQUARED("feet per second squared", "ft/(s^2)", 0.30479999, simCore::ACCELERATION_FAMILY);
+const Units Units::INCHES_PER_SECOND_SQUARED("inches per second squared", "in/(s^2)", 0.025399999, simCore::ACCELERATION_FAMILY);
+const Units Units::NAUTICAL_MILES_PER_SECOND_SQUARED("knots per second", "nm/(s^2)", 1852.0, simCore::ACCELERATION_FAMILY);
 
-const Units Units::CELSIUS("celsius", "C", 1.0, Units::TEMPERATURE_FAMILY);
-const Units Units::FAHRENHEIT(Units::offsetThenScaleUnit("fahrenheit", "F", -32.0, 5./9., Units::TEMPERATURE_FAMILY));
-const Units Units::KELVIN(Units::offsetThenScaleUnit("kelvin", "k", -273.15, 1.0, Units::TEMPERATURE_FAMILY));
-const Units Units::RANKINE(Units::offsetThenScaleUnit("rankine", "ra", -491.67, 5./9., Units::TEMPERATURE_FAMILY));
-const Units Units::REAUMUR("reaumur", "re", 1.25, Units::TEMPERATURE_FAMILY);
+const Units Units::CELSIUS("celsius", "C", 1.0, simCore::TEMPERATURE_FAMILY);
+const Units Units::FAHRENHEIT(Units::offsetThenScaleUnit("fahrenheit", "F", -32.0, 5./9., simCore::TEMPERATURE_FAMILY));
+const Units Units::KELVIN(Units::offsetThenScaleUnit("kelvin", "k", -273.15, 1.0, simCore::TEMPERATURE_FAMILY));
+const Units Units::RANKINE(Units::offsetThenScaleUnit("rankine", "ra", -491.67, 5./9., simCore::TEMPERATURE_FAMILY));
+const Units Units::REAUMUR("reaumur", "re", 1.25, simCore::TEMPERATURE_FAMILY);
 
 // Frequency units
-const Units Units::HERTZ("cycles per second", "Hz", 1.0, Units::FREQUENCY_FAMILY);
-const Units Units::KILOHERTZ("1000 cycles per second", "kHz", 1000.0, Units::FREQUENCY_FAMILY);
-const Units Units::MEGAHERTZ("1000000 cycles per second", "MHz", 1000000.0, Units::FREQUENCY_FAMILY);
-const Units Units::REVOLUTIONS_PER_MINUTE("revolutions per minute", "rpm", 0.01666666666, Units::FREQUENCY_FAMILY);
-const Units Units::RADIANS_PER_SECOND("radians per second", "rad/sec", 0.15915494309, Units::FREQUENCY_FAMILY);
-const Units Units::DEGREES_PER_SECOND("degrees per second", "deg/sec", 0.00277777777, Units::FREQUENCY_FAMILY);
+const Units Units::HERTZ("cycles per second", "Hz", 1.0, simCore::FREQUENCY_FAMILY);
+const Units Units::KILOHERTZ("1000 cycles per second", "kHz", 1000.0, simCore::FREQUENCY_FAMILY);
+const Units Units::MEGAHERTZ("1000000 cycles per second", "MHz", 1000000.0, simCore::FREQUENCY_FAMILY);
+const Units Units::REVOLUTIONS_PER_MINUTE("revolutions per minute", "rpm", 0.01666666666, simCore::FREQUENCY_FAMILY);
+const Units Units::RADIANS_PER_SECOND("radians per second", "rad/sec", 0.15915494309, simCore::FREQUENCY_FAMILY);
+const Units Units::DEGREES_PER_SECOND("degrees per second", "deg/sec", 0.00277777777, simCore::FREQUENCY_FAMILY);
 
 // Volume units
-const Units Units::LITER("liters", "l", 1.0, Units::VOLUME_FAMILY);
-const Units Units::MILLILITER("milliliters", "ml", 0.001, Units::VOLUME_FAMILY);
-const Units Units::FLUID_OUNCE("fluid ounces", "fl oz", 0.0295703125, Units::VOLUME_FAMILY);
-const Units Units::CUP("cups", "cup", 0.2365625, Units::VOLUME_FAMILY);
-const Units Units::PINT("pints", "pt", 0.473125, Units::VOLUME_FAMILY);
-const Units Units::QUART("quarts", "qt", 0.94625, Units::VOLUME_FAMILY);
-const Units Units::GALLON("gallons", "gal", 3.785, Units::VOLUME_FAMILY);
-const Units Units::TEASPOON("teaspoons", "tsp", 0.00492838542, Units::VOLUME_FAMILY);
-const Units Units::TABLESPOON("tablespoons", "tbsp", 0.01478515625, Units::VOLUME_FAMILY);
+const Units Units::LITER("liters", "l", 1.0, simCore::VOLUME_FAMILY);
+const Units Units::MILLILITER("milliliters", "ml", 0.001, simCore::VOLUME_FAMILY);
+const Units Units::FLUID_OUNCE("fluid ounces", "fl oz", 0.0295703125, simCore::VOLUME_FAMILY);
+const Units Units::CUP("cups", "cup", 0.2365625, simCore::VOLUME_FAMILY);
+const Units Units::PINT("pints", "pt", 0.473125, simCore::VOLUME_FAMILY);
+const Units Units::QUART("quarts", "qt", 0.94625, simCore::VOLUME_FAMILY);
+const Units Units::GALLON("gallons", "gal", 3.785, simCore::VOLUME_FAMILY);
+const Units Units::TEASPOON("teaspoons", "tsp", 0.00492838542, simCore::VOLUME_FAMILY);
+const Units Units::TABLESPOON("tablespoons", "tbsp", 0.01478515625, simCore::VOLUME_FAMILY);
 
 // Pressure units
-const Units Units::MILLIBAR("millibar", "mbar", 1.0, Units::PRESSURE_FAMILY);  // Equivalent to a hectopascal
-const Units Units::BAR("bars", "bar", 1000, Units::PRESSURE_FAMILY);
-const Units Units::POUNDS_PER_SQUARE_INCH("pounds per square inch", "psia", 68.94757, Units::PRESSURE_FAMILY);
-const Units Units::ATMOSPHERE("atmospheres", "atm", 1013.247139776643, Units::PRESSURE_FAMILY);
-const Units Units::TORR("torr", "torr", 1.33321992075874, Units::PRESSURE_FAMILY);
-const Units Units::PASCALS("pascals", "Pa", 0.01, Units::PRESSURE_FAMILY);
-const Units Units::KILOPASCAL("kilopascals", "kPa", 10, Units::PRESSURE_FAMILY);
-const Units Units::MEGAPASCAL("megapascals", "MPa", 1e4, Units::PRESSURE_FAMILY);
+const Units Units::MILLIBAR("millibar", "mbar", 1.0, simCore::PRESSURE_FAMILY);  // Equivalent to a hectopascal
+const Units Units::BAR("bars", "bar", 1000, simCore::PRESSURE_FAMILY);
+const Units Units::POUNDS_PER_SQUARE_INCH("pounds per square inch", "psia", 68.94757, simCore::PRESSURE_FAMILY);
+const Units Units::ATMOSPHERE("atmospheres", "atm", 1013.247139776643, simCore::PRESSURE_FAMILY);
+const Units Units::TORR("torr", "torr", 1.33321992075874, simCore::PRESSURE_FAMILY);
+const Units Units::PASCALS("pascals", "Pa", 0.01, simCore::PRESSURE_FAMILY);
+const Units Units::KILOPASCAL("kilopascals", "kPa", 10, simCore::PRESSURE_FAMILY);
+const Units Units::MEGAPASCAL("megapascals", "MPa", 1e4, simCore::PRESSURE_FAMILY);
 
 // Potential units
-const Units Units::VOLT("volts", "V", 1.0, Units::POTENTIAL_FAMILY);
-const Units Units::MILLIVOLT("millivolts", "mV", .001, Units::POTENTIAL_FAMILY);
-const Units Units::MICROVOLT("microvolts", "uV", 1e-6, Units::POTENTIAL_FAMILY);
-const Units Units::KILOVOLT("kilovolts", "kV", 1000, Units::POTENTIAL_FAMILY);
-const Units Units::MEGAVOLT("megavolts", "MV", 1e6, Units::POTENTIAL_FAMILY);
-const Units Units::GIGAVOLT("gigavolts", "GV", 1e9, Units::POTENTIAL_FAMILY);
+const Units Units::VOLT("volts", "V", 1.0, simCore::POTENTIAL_FAMILY);
+const Units Units::MILLIVOLT("millivolts", "mV", .001, simCore::POTENTIAL_FAMILY);
+const Units Units::MICROVOLT("microvolts", "uV", 1e-6, simCore::POTENTIAL_FAMILY);
+const Units Units::KILOVOLT("kilovolts", "kV", 1000, simCore::POTENTIAL_FAMILY);
+const Units Units::MEGAVOLT("megavolts", "MV", 1e6, simCore::POTENTIAL_FAMILY);
+const Units Units::GIGAVOLT("gigavolts", "GV", 1e9, simCore::POTENTIAL_FAMILY);
 
 ///////////////////////////////////////////////////////
 
@@ -155,7 +155,7 @@ Units::Units()
     abbrev_("inv"),
     toBaseOffset_(0.0),
     toBase_(1.0),
-    family_(Units::INVALID_FAMILY)
+    family_(simCore::INVALID_FAMILY)
 {
 }
 
@@ -172,7 +172,7 @@ Units::~Units()
 
 bool Units::isValid() const
 {
-  return family_ != Units::INVALID_FAMILY;
+  return family_ != simCore::INVALID_FAMILY;
 }
 
 const std::string& Units::name() const

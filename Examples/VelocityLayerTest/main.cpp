@@ -23,7 +23,7 @@
 #include <cmath>
 #include "osgDB/FileUtils"
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 #include "osgEarth/Controls"
@@ -263,20 +263,27 @@ Control* createMenu(osgEarth::Map* map, simUtil::VelocityParticleLayer* layer)
 // TODO: This should probably be added to osgImGuiHandler.h so that it's available to all SDK examples.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(-1); func("##" label, __VA_ARGS__)
 
-class ControlPanel : public GUI::BaseGui
+class ControlPanel : public simExamples::SimExamplesGui
 {
 public:
   explicit ControlPanel(simUtil::VelocityParticleLayer* layer)
-    : GUI::BaseGui("Velocity Particle Layer Demo"),
+    : simExamples::SimExamplesGui("Velocity Particle Layer Demo"),
     layer_(layer)
   {
   }
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     if (ImGui::BeginTable("Table", 2))
     {

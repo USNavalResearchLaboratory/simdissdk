@@ -26,7 +26,7 @@
  */
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 #include "osgEarth/Controls"
@@ -54,11 +54,11 @@ static std::string s_help =
   "o : toggle overhead mode \n";
 
 #ifdef HAVE_IMGUI
-class ControlPanel : public GUI::BaseGui
+class ControlPanel : public simExamples::SimExamplesGui
 {
 public:
   explicit ControlPanel(simUtil::MapScale* scale)
-    : GUI::BaseGui("Map Scale Example"),
+    : simExamples::SimExamplesGui("Map Scale Example"),
     scale_(scale),
     metricUnits_(new simUtil::MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::KILOMETERS, 10000.0)),
     imperialUnits_(new simUtil::MapScaleTwoUnitsProvider(simCore::Units::YARDS, simCore::Units::MILES, 16093.4)),
@@ -68,9 +68,16 @@ public:
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     ImGui::Text("o: Toggle overhead mode");
 

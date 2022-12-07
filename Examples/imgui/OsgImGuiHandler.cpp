@@ -23,12 +23,33 @@
 #include "GL/glew.h"
 #include <osg/Camera>
 #include <osg/RenderInfo>
+#include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
+#include "osgEarth/BuildConfig.h"
+#include "osgEarth/ShaderLoader"
+#include "osgEarth/VirtualProgram"
+#include "osgEarth/ImGui/CameraGUI"
+#include "osgEarth/ImGui/EnvironmentGUI"
+
+#if OSGEARTH_SOVERSION < 146
+#undef NOMINMAX
+#endif
+
+#include "osgEarth/ImGui/LayersGUI"
+#include "osgEarth/ImGui/NetworkMonitorGUI"
+#include "osgEarth/ImGui/RenderingGUI"
+#include "osgEarth/ImGui/SceneGraphGUI"
+#include "osgEarth/ImGui/SystemGUI"
+#include "osgEarth/ImGui/TerrainGUI"
+#include "osgEarth/ImGui/TerrainEditGUI"
+#include "osgEarth/ImGui/TextureInspectorGUI"
+#include "osgEarth/ImGui/ViewpointsGUI"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Interpolation.h"
 #include "simVis/Registry.h"
+#include "SimExamplesGui.h"
 
 namespace GUI {
 
@@ -96,12 +117,31 @@ OsgImGuiHandler::OsgImGuiHandler()
   firstDraw_(true),
   autoAdjustProjectionMatrix_(true)
 {
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::CameraGUI>(new osgEarth::GUI::CameraGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::EnvironmentGUI>(new osgEarth::GUI::EnvironmentGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::LayersGUI>(new osgEarth::GUI::LayersGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::NetworkMonitorGUI>(new osgEarth::GUI::NetworkMonitorGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::NVGLInspectorGUI>(new osgEarth::GUI::NVGLInspectorGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::RenderingGUI>(new osgEarth::GUI::RenderingGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::SceneGraphGUI>(new osgEarth::GUI::SceneGraphGUI));
+  // Not including ShaderGUI as it expects command line arguments. Can be added later if needed
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::SystemGUI>(new osgEarth::GUI::SystemGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TerrainEditGUI>(new osgEarth::GUI::TerrainEditGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TerrainGUI>(new osgEarth::GUI::TerrainGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TextureInspectorGUI>(new osgEarth::GUI::TextureInspectorGUI));
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::ViewpointsGUI>(new osgEarth::GUI::ViewpointsGUI));
 }
 
-void OsgImGuiHandler::add(BaseGui* gui)
+void OsgImGuiHandler::add(osgEarth::GUI::BaseGUI* gui)
 {
   if (gui != nullptr)
-    guis_.push_back(std::unique_ptr<BaseGui>(gui));
+    menus_["User"].push_back(std::unique_ptr<osgEarth::GUI::BaseGUI>(gui));
+}
+
+void OsgImGuiHandler::add(::GUI::BaseGui* gui)
+{
+  std::cerr << "GUI \"" << gui->name() << "\" is of a deprecated type (::GUI::BaseGui). Update to simExamples::SimExamplesGui\n";
+  deprecatedGuis_.push_back(std::unique_ptr<::GUI::BaseGui>(gui));
 }
 
 /**
@@ -425,9 +465,53 @@ bool OsgImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
 
 void OsgImGuiHandler::draw_(osg::RenderInfo& ri)
 {
-  for (auto& gui : guis_)
+  // Build the menu bar
+  if (ImGui::BeginMainMenuBar())
   {
-    // Installing fonts on first draw ensures all ImGui Context and environment requirements are completed
+    if (ImGui::BeginMenu("File"))
+    {
+      bool quit = false;
+      ImGui::MenuItem("Quit", nullptr, &quit);
+      if (quit) exit(0);
+      ImGui::EndMenu();
+    }
+
+    for (auto& menuIter : menus_)
+    {
+      if (ImGui::BeginMenu(menuIter.first.c_str()))
+      {
+        for (auto& gui : menuIter.second)
+          ImGui::MenuItem(gui->name(), nullptr, gui->visible());
+        ImGui::EndMenu();
+      }
+    }
+    ImGui::EndMainMenuBar();
+  }
+
+  // Draw each GUI
+  for (auto& menuIter : menus_)
+  {
+    for (auto& gui : menuIter.second)
+    {
+      // Initialize fonts for SimExamplesGuis on first draw
+      if (firstDraw_ && menuIter.first == "User")
+      {
+        simExamples::SimExamplesGui* seGui = dynamic_cast<simExamples::SimExamplesGui*>(gui.get());
+        assert(seGui); // Expected that all values added using add() are simExamples::SimExamplesGui type
+        if (seGui)
+        {
+          if (defaultFont_)
+            seGui->setDefaultFont(defaultFont_);
+          if (largeFont_)
+            seGui->setLargeFont(largeFont_);
+        }
+      }
+      gui->draw(ri);
+    }
+  }
+
+  for (auto& gui : deprecatedGuis_)
+  {
     if (firstDraw_)
     {
       if (defaultFont_)

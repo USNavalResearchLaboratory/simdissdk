@@ -56,7 +56,7 @@
 
 using namespace osgEarth::Util;
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 #include "osgEarth/Controls"
@@ -175,7 +175,7 @@ struct AutoBearingHandler : public osgGA::GUIEventHandler
 // while adding a row to a two column table started using ImGui::BeginTable(), which emulates a QFormLayout.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(200); func("##" label, __VA_ARGS__)
 
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   float minHeight;
   float maxHeight;
@@ -187,7 +187,7 @@ struct ControlPanel : public GUI::BaseGui
   osg::ref_ptr<simRF::GradientColorProvider> heatColorProvider;
 
   ControlPanel(simRF::ProfileManager* pm, simRF::ThresholdColorProvider* tcp)
-    : GUI::BaseGui("RF Prop Example"),
+    : simExamples::SimExamplesGui("RF Prop Example"),
     pm_(pm),
     tcp_(tcp)
   {
@@ -207,11 +207,18 @@ struct ControlPanel : public GUI::BaseGui
 
   void draw(osg::RenderInfo& ri) override
   {
-    // This GUI positions bottom left instead of top left, need the size of the window
-    ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
-    ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      // This GUI positions bottom left instead of top left, need the size of the window
+      ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
+      ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     if (ImGui::BeginTable("Table", 2))
     {
@@ -1004,8 +1011,8 @@ int main(int argc, char** argv)
   controlPanel->heatColorProvider->setColorMap(heatColors);
 
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   controlPanel->minHeight = minHeight;
   controlPanel->maxHeight = maxHeight;

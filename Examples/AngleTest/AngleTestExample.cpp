@@ -54,7 +54,7 @@
 #include "osgEarth/MGRSFormatter"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 #include "osgEarth/Controls"
@@ -80,11 +80,11 @@ static double s_time = 0.0;
 // Forces a width of 150 on the sliders. Otherwise, the sliders claim no horizontal space and are unusable.
 #define IMGUI_ADD_ROW(func, label, ...) ImGui::TableNextColumn(); ImGui::Text(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(150); func("##" label, __VA_ARGS__)
 
-class ControlPanel : public GUI::BaseGui
+class ControlPanel : public simExamples::SimExamplesGui
 {
 public:
   ControlPanel(simData::MemoryDataStore& ds, simData::ObjectId id)
-    : GUI::BaseGui("Angle Test Example"),
+    : simExamples::SimExamplesGui("Angle Test Example"),
     ds_(ds),
     id_(id),
     yawDeg_(0.f),
@@ -99,9 +99,16 @@ public:
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
     bool needUpdate = false;
 
     if (ImGui::BeginTable("Table", 2))
@@ -317,8 +324,8 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_IMGUI
   // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
-  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
+  ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(dataStore, s_id));
 #else

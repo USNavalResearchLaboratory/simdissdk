@@ -838,6 +838,77 @@ int adjustTimeTest()
   return rv;
 }
 
+int userTimeBoundsTest()
+{
+  int rv = 0;
+
+  simCore::ClockImpl clock;
+  clock.setMode(simCore::Clock::MODE_STEP);
+  clock.setTimeScale(1.0);
+  clock.setStartTime(simCore::TimeStamp(2016, 5.0));
+  clock.setEndTime(simCore::TimeStamp(2016, 30.0));
+  clock.setCanLoop(true);
+  clock.setTime(simCore::TimeStamp(2016, 29.0));
+  clock.stepForward();
+
+  // Test rollover in step mode
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 30.0));
+  clock.stepForward();
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 5.0));
+  clock.stepForward();
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 6.0));
+  clock.stepBackward();
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 5.0));
+  clock.stepBackward();
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 30.0));
+
+  simCore::Optional<simCore::TimeStamp> userStart;
+  userStart = simCore::TimeStamp(2016, 10);
+  simCore::Optional<simCore::TimeStamp> userEnd;
+  userEnd = simCore::TimeStamp(2016, 20);
+  rv += SDK_ASSERT(clock.setUserTimeBounds(userStart, userEnd) == 0);
+
+  // Test rollover in step mode with custom time bounds
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 20.0));
+  clock.stepForward();
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 10.0));
+  clock.stepBackward();
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 20.0));
+  clock.setTime(simCore::TimeStamp(2016, 8.00));
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 10.0));
+  clock.setTime(simCore::TimeStamp(2016, 22.00));
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 20.0));
+
+  // Test reseting time bounds. Clock should work with previously configured start/end times
+  userStart.reset();
+  userEnd.reset();
+  rv += SDK_ASSERT(clock.setUserTimeBounds(userStart, userEnd) == 0);
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 20.0));
+  clock.setTime(simCore::TimeStamp(2016, 30.00));
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 30.0));
+  clock.stepForward();
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 5.0));
+  clock.stepBackward();
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 30.0));
+
+  // Test real time mode
+  clock.setMode(simCore::Clock::MODE_REALTIME);
+  userStart = simCore::TimeStamp(2016, 10);
+  userEnd = simCore::TimeStamp(2016, 20);
+  rv += SDK_ASSERT(clock.setUserTimeBounds(userStart, userEnd) == 0);
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 20.0));
+  clock.stepForward();
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 10.0));
+
+  // User time bounds do not work in live mode
+  clock.setMode(simCore::Clock::MODE_FREEWHEEL);
+  rv += SDK_ASSERT(clock.setUserTimeBounds(userStart, userEnd) != 0);
+  clock.setMode(simCore::Clock::MODE_SIMULATION);
+  rv += SDK_ASSERT(clock.setUserTimeBounds(userStart, userEnd) != 0);
+
+  return rv;
+}
+
 }
 
 int TimeManagerTest(int argc, char* argv[])
@@ -849,5 +920,6 @@ int TimeManagerTest(int argc, char* argv[])
   rv += freewheelTest();
   rv += simulationTest();
   rv += adjustTimeTest();
+  rv += userTimeBoundsTest();
   return rv;
 }

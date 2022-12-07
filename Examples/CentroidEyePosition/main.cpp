@@ -47,7 +47,7 @@
 #include "simUtil/PlatformSimulator.h"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 using namespace osgEarth::Util::Controls;
@@ -96,21 +96,27 @@ private:
 };
 
 #ifdef HAVE_IMGUI
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   ControlPanel(App& app)
-    : GUI::BaseGui("Centroid Eye Position Example"),
+    : simExamples::SimExamplesGui("Centroid Eye Position Example"),
     app_(app)
   {
   }
 
   void draw(osg::RenderInfo& ri) override
   {
+    if (!isVisible())
+      return;
     // This GUI positions bottom left instead of top left, need the size of the window
     ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
-    ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     auto& io = ImGui::GetIO();
 

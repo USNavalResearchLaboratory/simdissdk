@@ -38,7 +38,7 @@
 #include "osgDB/ReadFile"
 
 #ifdef HAVE_IMGUI
-#include "BaseGui.h"
+#include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
 #else
 #include "osgEarth/Controls"
@@ -96,10 +96,10 @@ struct ViewReportCallback : public simVis::ViewManager::Callback
 //----------------------------------------------------------------------------
 
 #ifdef HAVE_IMGUI
-struct ControlPanel : public GUI::BaseGui
+struct ControlPanel : public simExamples::SimExamplesGui
 {
   ControlPanel(simVis::Viewer* viewer, simVis::InsetViewEventHandler* insetViewHandler, simVis::CreateInsetEventHandler* createHandler)
-    : GUI::BaseGui("Viewer Example"),
+    : simExamples::SimExamplesGui("Viewer Example"),
     viewer_(viewer),
     insetViewHandler_(insetViewHandler),
     createHandler_(createHandler)
@@ -108,9 +108,16 @@ struct ControlPanel : public GUI::BaseGui
 
   void draw(osg::RenderInfo& ri) override
   {
-    ImGui::SetNextWindowPos(ImVec2(15, 15));
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
     ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
     auto& io = ImGui::GetIO();
 

@@ -2,9 +2,9 @@ project(SIMDIS_SDK)
 
 # Configure various version fields
 set(SIMDIS_SDK_MAJOR_VERSION 1)
-set(SIMDIS_SDK_MINOR_VERSION 17)
+set(SIMDIS_SDK_MINOR_VERSION 18)
 set(SIMDIS_SDK_REVISION_VERSION 0)
-set(SIMDIS_SDK_SOVERSION 17)
+set(SIMDIS_SDK_SOVERSION 18)
 set(SIMDIS_SDK_VERSION_STRING ${SIMDIS_SDK_MAJOR_VERSION}.${SIMDIS_SDK_MINOR_VERSION}.${SIMDIS_SDK_REVISION_VERSION} CACHE INTERNAL "SIMDIS SDK Version String" FORCE)
 
 # Applies version data to static and shared library targets
@@ -26,11 +26,22 @@ endmacro()
 # Include the definition for installing shared objects post-build
 include(PostBuildInstallSharedObjects)
 
+option(BUILD_SIMDATA "If off, simData SDK libraries are not compiled; if on, library is built if dependencies are satisfied." ON)
+option(BUILD_SIMVIS "If off, simVis SDK libraries are not compiled; if on, library is built if dependencies are satisfied." ON)
+option(BUILD_SIMUTIL "If off, simUtil SDK libraries are not compiled; if on, library is built if dependencies are satisfied." ON)
+option(BUILD_SIMQT "If off, simQt SDK libraries are not compiled; if on, library is built if dependencies are satisfied." ON)
+
 add_subdirectory(simNotify)
 add_subdirectory(simCore)
-add_subdirectory(simData)
-add_subdirectory(simVis)
-add_subdirectory(simUtil)
-if(QT_FOUND)
+if(BUILD_SIMDATA)
+    add_subdirectory(simData)
+endif()
+if(BUILD_SIMVIS)
+    add_subdirectory(simVis)
+endif()
+if(BUILD_SIMUTIL)
+    add_subdirectory(simUtil)
+endif()
+if(QT_FOUND AND BUILD_SIMQT)
     add_subdirectory(simQt)
 endif()

@@ -24,6 +24,7 @@
 #define SIMCORE_TIME_CLOCK_H
 
 #include <memory>
+#include "simCore/Common/Optional.h"
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/TimeClass.h"
 
@@ -76,10 +77,10 @@ public:
   virtual double timeScale() const = 0;
   /** Returns true in real-time mode, false in step time mode. THIS IS UNRELATED TO LIVE MODE VERSUS FILE MODE */
   virtual bool realTime() const = 0;
-  /** Start of the clock bounds */
-  virtual simCore::TimeStamp startTime() const = 0;
-  /** End of the clock bounds */
-  virtual simCore::TimeStamp endTime() const = 0;
+  /** Start of the clock bounds. If ignoreUserStartTime is true, scenario start time will always be returned. Otherwise, user start time is returned if set. */
+  virtual simCore::TimeStamp startTime(bool ignoreUserStartTime = false) const = 0;
+  /** End of the clock bounds. If ignoreUserEndTime is true, scenario end time will always be returned. Otherwise, user end time is returned if set. */
+  virtual simCore::TimeStamp endTime(bool ignoreUserEndTime = false) const = 0;
   /** Returns true when playing past the end will loop time to the beginning */
   virtual bool canLoop() const = 0;
   /** Returns true when the clock is playing. */
@@ -95,6 +96,10 @@ public:
    * this is a "meta" value combining other clock states.
    */
   virtual bool isUserEditable() const = 0;
+  /** Get the user-provided start time */
+  virtual simCore::Optional<simCore::TimeStamp> userStartTime() const = 0;
+  /** Get the user-provided end time */
+  virtual simCore::Optional<simCore::TimeStamp> userEndTime() const = 0;
 
   /**
   * Note that for MODE_SIMULATION start time is set to the minimum time stamp, while end time is set to the
@@ -113,6 +118,13 @@ public:
   virtual void setEndTime(const simCore::TimeStamp& timeVal) = 0;
   virtual void setCanLoop(bool fl) = 0;
   virtual void setControlsDisabled(bool fl) = 0;
+  /**
+   * Set user time bounds on the clock. These bounds will serve as a custom begin and end time in file mode only.
+   * @param start  Start time (can be unset)
+   * @param end  End time (can be unset)
+   * @return 0 on success, non-zero otherwise
+   */
+  virtual int setUserTimeBounds(const simCore::Optional<simCore::TimeStamp>& start, const simCore::Optional<simCore::TimeStamp>& end) = 0;
   ///@}
 
   /**@name controls
