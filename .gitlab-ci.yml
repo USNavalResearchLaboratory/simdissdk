@@ -9,6 +9,11 @@ include:
     ref: main
     file: 'mergerequest_all.yml'
 
+  # SDK-specific MR template that will test the QT_NO_KEYWORDS build
+  - project: 'unclass/vsi/ci/continuous'
+    ref: main
+    file: 'mergerequest_sdk_qtnokeywords.yml'
+
 
 # Push to main, will trigger a continuous full build
 trigger_continuous:
