@@ -48,7 +48,7 @@ public:
   virtual QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int hits = 1,
     Qt::MatchFlags flags = Qt::MatchFlags(Qt::MatchStartsWith | Qt::MatchWrap)) const;
 
-public slots:
+public Q_SLOTS:
   /** Changes the filter text */
   void setFilterText(const QString& filterText);
 
@@ -134,7 +134,7 @@ public:
   virtual QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int hits = 1,
     Qt::MatchFlags flags = Qt::MatchFlags(Qt::MatchStartsWith | Qt::MatchWrap)) const;
 
-public slots:
+public Q_SLOTS:
   /** Set the show advanced filter, which will show settings with the ADVANCED data level settings if true */
   void setShowAdvanced(bool showAdvanced);
   /** Sets the show-unknown filter, which will show settings with the UNKNOWN data level settings if true */

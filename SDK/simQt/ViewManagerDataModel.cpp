@@ -408,7 +408,7 @@ void ViewManagerDataModel::notifyViewAdded_(simVis::View* view)
 void ViewManagerDataModel::notifyViewParamChange_(simVis::View* view)
 {
   QModelIndex idx = createIndex_(view);
-  emit(dataChanged(idx, idx));
+  Q_EMIT(dataChanged(idx, idx));
 }
 
 bool ViewManagerDataModel::isHierarchical() const
@@ -438,7 +438,7 @@ void ViewManagerDataModel::setUserCheckable(bool isCheckable)
   isCheckable_ = isCheckable;
   // Emitting this signal will force a redraw
   if (rowCount() > 0)
-    emit(dataChanged(index(0, 0), index(rowCount() - 1, 0)));
+    Q_EMIT(dataChanged(index(0, 0), index(rowCount() - 1, 0)));
 }
 
 simVis::View* ViewManagerDataModel::viewFromIndex_(const QModelIndex& index) const

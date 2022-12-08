@@ -43,7 +43,7 @@ public:
   explicit UnitsComboBoxTest(QWidget* parent = nullptr);
   virtual ~UnitsComboBoxTest();
 
-private slots:
+private Q_SLOTS:
   void updateUnitConverter_();
 
 private:

@@ -92,7 +92,7 @@ public:
   /** Const accessor to the style */
   const Style& style() const;
 
-signals:
+Q_SIGNALS:
   /** End user clicked on the close button for the given index */
   void closeClicked(const QModelIndex& index);
 
@@ -210,7 +210,7 @@ public:
   /** Sets value to that of the EntityCategoryFilter and keeps both widgets in sync. */
   void bindTo(simQt::EntityCategoryFilter* categoryFilter);
 
-public slots:
+public Q_SLOTS:
   /** Change the minimum number of items required to form a 'group' for a category name. */
   void setMinimumGroupSize(int value);
   /** Change whether the widget shows the empty text when empty, or is hidden. */
@@ -223,11 +223,11 @@ public slots:
   /** Changes the current filter. */
   void setFilter(const simData::CategoryFilter& filter);
 
-signals:
+Q_SIGNALS:
   /** End user changed the filter.  Note that this is a simplified filter and may not exactly match input. */
   void filterEdited(const simData::CategoryFilter& filter);
 
-private slots:
+private Q_SLOTS:
   /** Responds to the QListWidget item having a close button clicked */
   void removeFilter_(const QModelIndex& index);
   /** Synchronize the current state to the state in the sender() EntityCategoryFilter */

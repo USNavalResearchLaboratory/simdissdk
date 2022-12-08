@@ -691,7 +691,7 @@ void DockWidget::setVisible(bool fl)
 void DockWidget::closeEvent(QCloseEvent* event)
 {
   QDockWidget::closeEvent(event);
-  emit(closedGui());
+  Q_EMIT(closedGui());
 }
 
 void DockWidget::setWidget(QWidget* widget)
@@ -775,7 +775,7 @@ void DockWidget::setDockable(bool dockable)
   if (dockableAction_->isChecked() != dockable)
     dockableAction_->setChecked(dockable);
   if (emitIt)
-    emit isDockableChanged(isDockable_);
+    Q_EMIT isDockableChanged(isDockable_);
 }
 
 bool DockWidget::allDockingDisabled() const

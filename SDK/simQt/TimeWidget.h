@@ -108,7 +108,7 @@ public:
   /** Disable the tool tips over the time control, since the can interfere with the user editing time */
   void disableControlToolTips();
 
-public slots:
+public Q_SLOTS:
   /** Set the time format */
   void setTimeFormat(simCore::TimeFormat newFormat);
   /** Set the number of digits after the decimal point */
@@ -118,7 +118,7 @@ public slots:
   /** An alternative enable that replaces the time with ----- when disabled */
   void setTimeEnabled(bool value);
 
-signals:
+Q_SIGNALS:
   /** emitted when the time changes via the user */
   void timeEdited(const simCore::TimeStamp& time);
   /** emitted when the time is changed by the user or by setTimeStamp */
@@ -126,7 +126,7 @@ signals:
   /** emitted when the time range changes */
   void timeRangeChanged();
 
-protected slots:
+protected Q_SLOTS:
   /** User wants to see the right mouse click menu */
   void showRightMouseClickMenu_(const QPoint &pos);
 

@@ -134,7 +134,7 @@ void EntityFilterLineEdit::revalidate_()
   if (newValid != valid_)
   {
     valid_ = newValid;
-    emit isValidChanged(valid_);
+    Q_EMIT isValidChanged(valid_);
 
     // Update palette
     if (!valid_)
@@ -151,7 +151,7 @@ void EntityFilterLineEdit::revalidate_()
 void EntityFilterLineEdit::textFilterChanged()
 {
   revalidate_();
-  emit(changed(text(), caseSensitive_, expression_));
+  Q_EMIT(changed(text(), caseSensitive_, expression_));
 }
 
 void EntityFilterLineEdit::caseSensitive()
@@ -163,7 +163,7 @@ void EntityFilterLineEdit::caseSensitive()
     else
       caseSensitive_ = Qt::CaseSensitive;
     // Validity cannot change on this, don't revalidate
-    emit(changed(text(), caseSensitive_, expression_));
+    Q_EMIT(changed(text(), caseSensitive_, expression_));
   }
 }
 
@@ -173,7 +173,7 @@ void EntityFilterLineEdit::regularExpression()
   {
     expression_= QRegExp::RegExp;
     revalidate_();
-    emit(changed(text(), caseSensitive_, expression_));
+    Q_EMIT(changed(text(), caseSensitive_, expression_));
   }
 }
 
@@ -183,7 +183,7 @@ void EntityFilterLineEdit::wildcard()
   {
     expression_ = QRegExp::Wildcard;
     revalidate_();
-    emit(changed(text(), caseSensitive_, expression_));
+    Q_EMIT(changed(text(), caseSensitive_, expression_));
   }
 }
 
@@ -193,7 +193,7 @@ void EntityFilterLineEdit::fixedString()
   {
     expression_ = QRegExp::FixedString;
     revalidate_();
-    emit(changed(text(), caseSensitive_, expression_));
+    Q_EMIT(changed(text(), caseSensitive_, expression_));
   }
 }
 
@@ -223,7 +223,7 @@ void EntityFilterLineEdit::setRegexOnly(bool regexOnly)
     caseSensitive_ = Qt::CaseInsensitive;
     expression_ = QRegExp::RegExp;
     revalidate_();
-    emit changed(text(), caseSensitive_, expression_);
+    Q_EMIT changed(text(), caseSensitive_, expression_);
   }
 }
 

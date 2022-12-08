@@ -42,7 +42,7 @@ public:
   void addAction(simQt::ActionRegistry& registry, const QString& group, const QString& desc,
     QObject* target, const QString& slot, QList<QKeySequence> shortcuts = QList<QKeySequence>());
 
-public slots:
+public Q_SLOTS:
   // Responds to a cyclical button press
   void doNext();
   void superForm() { edit_->setText("superForm"); }

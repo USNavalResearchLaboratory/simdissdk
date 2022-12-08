@@ -43,20 +43,20 @@ public:
   DataGenerator();
   virtual ~DataGenerator();
 
-signals:
+Q_SIGNALS:
   /** Signaled when finally finishes. */
   void finished();
   /** Signaled when new data arrives (radians, radians, meters) */
   void newData(double lat, double lon, double alt);
 
-public slots:
+public Q_SLOTS:
   /** Starts the loop with the file descriptor set up on construction */
   void start();
   /** Tell the loop to stop execution; returns immediately, listen to the finished signal if need to know the actual finish */
   void stop();
 
   /** Slots not part of the public interface.  http://stackoverflow.com/questions/9147636/qt-private-slots-what-is-this */
-private slots:
+private Q_SLOTS:
   /** Called by the QTimer to generate more data */
   void update_();
 

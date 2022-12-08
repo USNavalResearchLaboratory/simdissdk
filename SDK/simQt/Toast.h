@@ -84,7 +84,7 @@ public:
   /** Shows the text in a small popup */
   virtual void showText(const QString& text, Duration duration = DURATION_SHORT);
 
-private slots:
+private Q_SLOTS:
   /** "Soft" hide of the toast window; If the mouse is over the label, then we will hide when mouse leaves it */
   void softCloseToast_();
 
@@ -113,7 +113,7 @@ protected:
   virtual void enterEvent(QEvent* evt);
   virtual void leaveEvent(QEvent* evt);
 
-signals:
+Q_SIGNALS:
   /** Mouse pressed down */
   void pressed();
   /** Previous press leads to a release, creates a click. */

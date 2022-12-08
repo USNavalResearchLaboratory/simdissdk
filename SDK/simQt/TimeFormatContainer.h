@@ -98,7 +98,7 @@ public:
   /// Returns the text for a tool tip
   virtual QString toolTipText() const = 0;
 
-signals:
+Q_SIGNALS:
   /// Emitted when the time changes via the user
   void timeEdited(const simCore::TimeStamp& value);
   /// Emitted when the time is changed by the user or by setTimeStamp

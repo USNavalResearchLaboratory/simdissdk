@@ -301,7 +301,7 @@ void DataTableModel::setGenericPrecision(unsigned int digitsAfterDecimal)
 
   genericPrecision_ = digitsAfterDecimal;
   if (!rows_.empty() && !columns_.empty())
-    emit dataChanged(createIndex(0, 0), createIndex(static_cast<int>(rows_.size() - 1), static_cast<int>(columns_.size() - 1)));
+    Q_EMIT dataChanged(createIndex(0, 0), createIndex(static_cast<int>(rows_.size() - 1), static_cast<int>(columns_.size() - 1)));
 }
 
 QVariant DataTableModel::cellDisplayValue_(simData::VariableType type, simData::TableColumn::Iterator& cell) const

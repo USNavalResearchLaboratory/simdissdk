@@ -87,9 +87,9 @@ void EntityCategoryFilter::setFilterSettings(const QMap<QString, QVariant>& sett
       categoryFilter_->deserialize(filter, false, &reFactory);
 
       // send out signal to alert any guis bound to this filter
-      emit categoryFilterChanged(*categoryFilter_);
+      Q_EMIT categoryFilterChanged(*categoryFilter_);
       // send out general filter update signal
-      emit filterUpdated();
+      Q_EMIT filterUpdated();
     }
   }
 }
@@ -112,9 +112,9 @@ void EntityCategoryFilter::setCategoryFilter(const simData::CategoryFilter& cate
   // use assign so that categoryFilter_ keeps its auto update
   categoryFilter_->assign(categoryFilter, false);
   // send out signal to alert any guis bound to this filter
-  emit categoryFilterChanged(*categoryFilter_);
+  Q_EMIT categoryFilterChanged(*categoryFilter_);
   // send out general filter update signal
-  emit filterUpdated();
+  Q_EMIT filterUpdated();
 }
 
 const simData::CategoryFilter& EntityCategoryFilter::categoryFilter() const
@@ -133,7 +133,7 @@ void EntityCategoryFilter::setCategoryFilterFromGui_(const simData::CategoryFilt
   // use assign so that categoryFilter_ keeps its auto update
   categoryFilter_->assign(categoryFilter, false);
   // the GUI has changed the filter, send out general filter update signal
-  emit filterUpdated();
+  Q_EMIT filterUpdated();
 }
 
 }

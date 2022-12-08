@@ -54,7 +54,7 @@ public:
   /** Redraw the view and update the user interface */
   void paintEvent(QPaintEvent* e);
 
-public slots:
+public Q_SLOTS:
   /** Display the user interface */
   void showGenerateDialog();
 

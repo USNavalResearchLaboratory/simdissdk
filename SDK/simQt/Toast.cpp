@@ -185,27 +185,27 @@ void ClickableLabel::mousePressEvent(QMouseEvent* evt)
 {
   QLabel::mousePressEvent(evt);
   evt->setAccepted(true);
-  emit pressed();
+  Q_EMIT pressed();
 }
 
 void ClickableLabel::mouseReleaseEvent(QMouseEvent* evt)
 {
   QLabel::mouseReleaseEvent(evt);
   evt->setAccepted(true);
-  emit clicked();
+  Q_EMIT clicked();
 }
 
 void ClickableLabel::enterEvent(QEvent* evt)
 {
   mouseInside_ = true;
-  emit mouseEntered();
+  Q_EMIT mouseEntered();
   return QLabel::enterEvent(evt);
 }
 
 void ClickableLabel::leaveEvent(QEvent* evt)
 {
   mouseInside_ = false;
-  emit mouseLeft();
+  Q_EMIT mouseLeft();
   return QLabel::leaveEvent(evt);
 }
 

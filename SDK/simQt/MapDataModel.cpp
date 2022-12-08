@@ -928,11 +928,11 @@ public:
 #ifdef HAVE_SIMUTIL
     simUtil::VelocityParticleLayer* velocityLayer = dynamic_cast<simUtil::VelocityParticleLayer*>(imageLayer);
     if (velocityLayer)
-      emit dataModel_.velocityLayerVisibleChanged(velocityLayer);
+      Q_EMIT dataModel_.velocityLayerVisibleChanged(velocityLayer);
     else
 #endif
       if (imageLayer)
-        emit dataModel_.imageLayerVisibleChanged(imageLayer);
+        Q_EMIT dataModel_.imageLayerVisibleChanged(imageLayer);
   }
 
   /** Inherited from VisibleLayerCallback */
@@ -942,11 +942,11 @@ public:
 #ifdef HAVE_SIMUTIL
     simUtil::VelocityParticleLayer* velocityLayer = dynamic_cast<simUtil::VelocityParticleLayer*>(imageLayer);
     if (velocityLayer)
-      emit dataModel_.velocityLayerOpacityChanged(velocityLayer);
+      Q_EMIT dataModel_.velocityLayerOpacityChanged(velocityLayer);
     else
 #endif
       if (imageLayer)
-        emit dataModel_.imageLayerOpacityChanged(imageLayer);
+        Q_EMIT dataModel_.imageLayerOpacityChanged(imageLayer);
   }
 
 private:
@@ -965,7 +965,7 @@ public:
   /** Inherited from VisibleLayerCallback */
   virtual void onVisibleChanged(osgEarth::VisibleLayer *layer) override
   {
-    emit dataModel_.elevationLayerVisibleChanged(static_cast<osgEarth::ElevationLayer*>(layer));
+    Q_EMIT dataModel_.elevationLayerVisibleChanged(static_cast<osgEarth::ElevationLayer*>(layer));
   }
 
 private:
@@ -987,7 +987,7 @@ public:
     osgEarth::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::FeatureModelLayer*>(layer);
     if (modelLayer)
     {
-      emit dataModel_.featureLayerVisibleChanged(modelLayer);
+      Q_EMIT dataModel_.featureLayerVisibleChanged(modelLayer);
     }
   }
 
@@ -997,7 +997,7 @@ public:
     osgEarth::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::FeatureModelLayer*>(layer);
     if (modelLayer)
     {
-      emit dataModel_.featureLayerOpacityChanged(modelLayer);
+      Q_EMIT dataModel_.featureLayerOpacityChanged(modelLayer);
     }
   }
 
@@ -1017,13 +1017,13 @@ public:
   /** Inherited from VisibleLayerCallback */
   virtual void onVisibleChanged(osgEarth::VisibleLayer *layer) override
   {
-    emit dataModel_.otherLayerVisibleChanged(layer);
+    Q_EMIT dataModel_.otherLayerVisibleChanged(layer);
   }
 
   /** Inherited from VisibleLayerCallback */
   virtual void onOpacityChanged(osgEarth::VisibleLayer *layer) override
   {
-    emit dataModel_.otherLayerOpacityChanged(layer);
+    Q_EMIT dataModel_.otherLayerOpacityChanged(layer);
   }
 
 private:
@@ -1272,7 +1272,7 @@ void MapDataModel::addImageLayer_(osgEarth::ImageLayer *layer, unsigned int inde
   osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ImageLayerListener(*this);
   imageCallbacks_[layer] = cb.get();
   static_cast<osgEarth::TileLayer*>(layer)->addCallback(cb.get());
-  emit imageLayerAdded(layer);
+  Q_EMIT imageLayerAdded(layer);
 }
 
 void MapDataModel::addElevationLayer_(osgEarth::ElevationLayer *layer, unsigned int index)
@@ -1286,7 +1286,7 @@ void MapDataModel::addElevationLayer_(osgEarth::ElevationLayer *layer, unsigned 
   osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ElevationLayerListener(*this);
   elevationCallbacks_[layer] = cb.get();
   static_cast<osgEarth::TileLayer*>(layer)->addCallback(cb.get());
-  emit elevationLayerAdded(layer);
+  Q_EMIT elevationLayerAdded(layer);
 }
 
 void MapDataModel::addFeatureLayer_(osgEarth::FeatureModelLayer *layer, unsigned int index)
@@ -1300,7 +1300,7 @@ void MapDataModel::addFeatureLayer_(osgEarth::FeatureModelLayer *layer, unsigned
   osg::ref_ptr<osgEarth::VisibleLayerCallback> cb = new FeatureModelLayerListener(*this);
   featureCallbacks_[layer] = cb.get();
   layer->addCallback(cb.get());
-  emit featureLayerAdded(layer);
+  Q_EMIT featureLayerAdded(layer);
 }
 
 void MapDataModel::addVelocityLayer_(simUtil::VelocityParticleLayer* layer, unsigned int index)
@@ -1315,7 +1315,7 @@ void MapDataModel::addVelocityLayer_(simUtil::VelocityParticleLayer* layer, unsi
   osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ImageLayerListener(*this);
   imageCallbacks_[layer] = cb.get();
   static_cast<osgEarth::TileLayer*>(layer)->addCallback(cb.get());
-  emit velocityLayerAdded(layer);
+  Q_EMIT velocityLayerAdded(layer);
 #endif
 }
 
@@ -1330,7 +1330,7 @@ void MapDataModel::addOtherLayer_(osgEarth::VisibleLayer *layer, unsigned int in
   osg::ref_ptr<osgEarth::VisibleLayerCallback> cb = new OtherLayerListener(*this);
   otherCallbacks_[layer] = cb.get();
   layer->addCallback(cb.get());
-  emit otherLayerAdded(layer);
+  Q_EMIT otherLayerAdded(layer);
 }
 
 MapDataModel::Item* MapDataModel::itemAt_(const QModelIndex &index) const
@@ -1484,7 +1484,7 @@ void MapDataModel::refreshText()
       const QModelIndex childItem = index(childType, 0, mapItem);
       // Assertion failure means the tree structure changed and this wasn't updated
       assert(childItem.isValid());
-      emit dataChanged(index(0, 0, childItem), index(group->rowCount() - 1, 0, childItem));
+      Q_EMIT dataChanged(index(0, 0, childItem), index(group->rowCount() - 1, 0, childItem));
     }
   };
 

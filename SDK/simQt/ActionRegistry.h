@@ -47,12 +47,12 @@ class ToolTipUpdater : public QObject
   Q_OBJECT
 public:
   explicit ToolTipUpdater(QObject* parent = nullptr);
-public slots:
+public Q_SLOTS:
   /** Add an action to the list of actions waiting to have their tool tip updated. */
   void addPending(simQt::Action* action);
   /** Remove an action from the pending list, if it exists in the list. */
   void removeAction(const simQt::Action* action);
-private slots:
+private Q_SLOTS:
   /** Update the tool tips on all pending actions. */
   void updateToolTips_();
 private:
@@ -177,7 +177,7 @@ public:
   /** Loads the file provided, returning 0 on success and non-zero on error */
   int deserialize(const QString& settingsFile, const QString& groupName="KeyBindings");
 
-signals:
+Q_SIGNALS:
   /** notice that a new action has been registered */
   void actionAdded(simQt::Action* action);
   /** notice that an action has been unregistered */

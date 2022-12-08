@@ -268,7 +268,7 @@ int EntityTreeWidget::setSelected(uint64_t id)
   processSelectionModelSignals_ = true;
 
   // Tell listeners about the new selections (could be empty list)
-  emit itemsSelected(selectionList_);
+  Q_EMIT itemsSelected(selectionList_);
   return 0;
 }
 
@@ -382,7 +382,7 @@ int EntityTreeWidget::setSelected(const QList<uint64_t>& list)
     selectionList_.push_back(*it);
 
   // Tell listeners about the new selections (could be empty list)
-  emit itemsSelected(selectionList_);
+  Q_EMIT itemsSelected(selectionList_);
   return 0;
 }
 
@@ -566,7 +566,7 @@ void EntityTreeWidget::selectionCleared_()
   {
     selectionList_.clear();
     selectionSet_.clear();
-    emit itemsSelected(selectionList_);
+    Q_EMIT itemsSelected(selectionList_);
   }
 }
 
@@ -596,7 +596,7 @@ void EntityTreeWidget::emitItemsSelected_()
   assert(selectionSet_.size() == selectionList_.size());
 
   // Tell listeners about the new selections (could be empty list)
-  emit itemsSelected(selectionList_);
+  Q_EMIT itemsSelected(selectionList_);
   emitItemsSelectedTimer_->stop();
   lastSelectionChangedTime_ = simCore::getSystemTime();
 }
@@ -636,7 +636,7 @@ void EntityTreeWidget::doubleClicked_(const QModelIndex& index)
   QModelIndex index2 = proxyModel_->mapToSource(index);
   AbstractEntityTreeItem *item = static_cast<AbstractEntityTreeItem*>(index2.internalPointer());
   if (item != nullptr)
-    emit itemDoubleClicked(item->id());
+    Q_EMIT itemDoubleClicked(item->id());
 }
 
 void EntityTreeWidget::delaySend_()
@@ -658,7 +658,7 @@ void EntityTreeWidget::emitSend_()
 void EntityTreeWidget::sendNumFilteredItems_()
 {
   if ((proxyModel_ != nullptr) && (model_ != nullptr))
-    emit numFilteredItemsChanged(proxyModel_->rowCount(), model_->countEntityTypes(countEntityTypes_));
+    Q_EMIT numFilteredItemsChanged(proxyModel_->rowCount(), model_->countEntityTypes(countEntityTypes_));
 }
 
 }

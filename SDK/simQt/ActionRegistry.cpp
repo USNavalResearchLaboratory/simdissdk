@@ -422,7 +422,7 @@ Action* ActionRegistry::registerAction(const QString &group, const QString &desc
     mainWindow_->addAction(action);
     assert(mainWindow_->actions().count(action) == 1);
   }
-  emit(actionAdded(newAct));
+  Q_EMIT(actionAdded(newAct));
 
   // Validate the actions are valid
   assertActionsByKeyValid_();
@@ -531,7 +531,7 @@ int ActionRegistry::removeAction(const QString& desc)
   // Remove it from the main window's action list
   if (mainWindow_ && action->action())
     mainWindow_->removeAction(action->action());
-  emit(actionRemoved(action));
+  Q_EMIT(actionRemoved(action));
 
   delete action;
 
@@ -713,7 +713,7 @@ int ActionRegistry::setHotKeys(Action* action, const QList<QKeySequence>& hotkey
   assert(uniqueHotkeys == action->hotkeys());
   // Assertion failure means our hotkeys list lost sync with action-by-key map
   assert(actionsByKey_.values().count(action) == uniqueHotkeys.size());
-  emit(hotKeysChanged(action));
+  Q_EMIT(hotKeysChanged(action));
 
   // Make sure internal consistency is correct
   assertActionsByKeyValid_();
@@ -780,8 +780,8 @@ int ActionRegistry::removeBinding_(Action* fromAction, QKeySequence key, bool up
     QList<QKeySequence> newKeys = fromAction->hotkeys();
     newKeys.removeOne(key);
     fromAction->action()->setShortcuts(newKeys);
-    emit(hotKeysChanged(fromAction));
-    emit(hotKeyLost(fromAction, key));
+    Q_EMIT(hotKeysChanged(fromAction));
+    Q_EMIT(hotKeyLost(fromAction, key));
   }
   return 0;
 }

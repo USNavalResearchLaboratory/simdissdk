@@ -377,7 +377,7 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
     if (clickedElement_ == SE_BRANCH)
     {
       clickedIndex_ = QModelIndex();
-      emit expandClicked(index);
+      Q_EMIT expandClicked(index);
       return true;
     }
     clickedIndex_ = index;
@@ -410,7 +410,7 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
       else if (clickedElement_ == SE_REGEXP_BUTTON)
       {
         // Need to talk to the tree itself to do the input GUI, so pass this off as a signal
-        emit editRegExpClicked(index);
+        Q_EMIT editRegExpClicked(index);
         clickedIndex_ = QModelIndex();
         return true;
       }
@@ -867,7 +867,7 @@ void CategoryFilterWidget::resetFilter_()
 
   // Tree would have sent out a changed signal, but not an edited signal (because we are
   // doing this programmatically).  That's OK, but we need to send out an edited signal.
-  emit filterEdited(treeModel_->categoryFilter());
+  Q_EMIT filterEdited(treeModel_->categoryFilter());
 }
 
 void CategoryFilterWidget::showContextMenu_(const QPoint& point)

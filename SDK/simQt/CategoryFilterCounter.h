@@ -76,7 +76,7 @@ public:
    */
   void prepare();
 
-public slots:
+public Q_SLOTS:
   /**
    * Performs the testing.  When done, results() will be valid, and resultsReady() will be emitted.
    * Though this method is not threaded, it is safe to call this in another thread with respect to
@@ -87,7 +87,7 @@ public slots:
    */
   void testAllCategories();
 
-signals:
+Q_SIGNALS:
   /** Called when testAllCategories() is completed. */
   void resultsReady(const simQt::CategoryCountResults& results);
 
@@ -143,7 +143,7 @@ public:
   /** Sets the entity filter, restricting the counts. Useful for only listing PLATFORMS, for example, in a platform-only list. */
   void setObjectTypes(simData::ObjectType objectTypes);
 
-public slots:
+public Q_SLOTS:
   /**
    * Sets the category filter to use.  Immediately calls testAsync().  If a count is already
    * queued, then it is dropped and this new filter is used instead.  Only one count occurs
@@ -160,11 +160,11 @@ public slots:
    */
   void asyncCountEntities();
 
-signals:
+Q_SIGNALS:
   /** Indicates that the asynchronous operation from testAsync() has completed. */
   void resultsReady(const simQt::CategoryCountResults& results);
 
-private slots:
+private Q_SLOTS:
   /** Captures the results from counter_, clears the future watcher, emits results, and restarts if needed. */
   void emitResults_();
 

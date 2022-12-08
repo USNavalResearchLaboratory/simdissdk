@@ -104,7 +104,7 @@ void ReferenceYearCache::onScenarioPropertiesChange(simData::DataStore* source)
     if (refYear_ != newYear)
     {
       refYear_ = newYear;
-      emit referenceYearChanged(refYear_);
+      Q_EMIT referenceYearChanged(refYear_);
     }
   }
 }

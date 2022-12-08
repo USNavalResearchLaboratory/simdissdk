@@ -53,7 +53,7 @@ namespace DataTableViewTest
     explicit MainWindow(QWidget *parent);
     virtual ~MainWindow();
 
-  private slots:
+  private Q_SLOTS:
     void addTable_();
     void tableSelected_(simData::DataTable* table);
     void addRow_();

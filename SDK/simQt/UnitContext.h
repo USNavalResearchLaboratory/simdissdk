@@ -40,7 +40,7 @@ public:
   /** Inherit a virtual destructor */
   virtual ~UnitContext() {}
 
-signals:
+Q_SIGNALS:
   /** One of the values in the provided unit context has changed.  Emitted after individual changes. */
   void unitsChanged(simQt::UnitContext* context=nullptr);
 
@@ -95,7 +95,7 @@ public:
   virtual int referenceYear() const;
   virtual simCore::DatumConvertPtr datumConvert() const;
 
-public slots:
+public Q_SLOTS:
   // Setters for various unit types
   virtual void setTimeFormat(simCore::TimeFormat unit);
   virtual void setTimePrecision(unsigned int prec);
@@ -174,7 +174,7 @@ public:
   virtual int referenceYear() const;
   virtual simCore::DatumConvertPtr datumConvert() const;
 
-public slots:
+public Q_SLOTS:
   // Setters for various unit types
   virtual void setTimeFormat(simCore::TimeFormat unit);
   virtual void setTimePrecision(unsigned int prec);
@@ -195,11 +195,11 @@ public slots:
   virtual void setReferenceYear(int refYear);
   virtual void setDatumConvert(simCore::DatumConvertPtr convert);
 
-signals:
+Q_SIGNALS:
   /** Emitted once the subject of the proxy has changed. */
   void subjectChanged(simQt::UnitContext* newSubject, simQt::UnitContext* oldSubject);
 
-private slots:
+private Q_SLOTS:
   /** We intercept the subject's unitsChanged() signal and re-emit it as our own for pointer integrity */
   void reemit_();
 

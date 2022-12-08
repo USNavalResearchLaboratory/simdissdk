@@ -40,7 +40,7 @@ public:
   Console(simQt::ConsoleDataModel& dataModel, QWidget* parent=nullptr);
   virtual ~Console();
 
-private slots:
+private Q_SLOTS:
   /** Generate a number of entries based on GUI state */
   void generateEntries_();
   /** Process a change in the flood rate */

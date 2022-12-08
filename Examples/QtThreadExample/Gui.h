@@ -42,7 +42,7 @@ public:
   /** Update the text for the number of updates processed */
   void updateNumberProcessed(unsigned int number);
 
-signals:
+Q_SIGNALS:
   void startClicked();
   void stopClicked();
 

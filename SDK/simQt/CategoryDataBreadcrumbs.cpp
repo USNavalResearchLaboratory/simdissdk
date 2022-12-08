@@ -262,7 +262,7 @@ bool CloseableItemDelegate::mouseReleaseEvent_(QMouseEvent* evt, QAbstractItemMo
   const bool click = (index == pressedIndex_ && index.isValid() && insideCloseButton && evt->button() == Qt::LeftButton);
   pressedIndex_ = QModelIndex();
   if (click)
-    emit closeClicked(index);
+    Q_EMIT closeClicked(index);
 
   return true;
 }
@@ -795,7 +795,7 @@ void CategoryDataBreadcrumbs::removeFilter_(const QModelIndex& index)
   update(contentsRect());
 
   // Notify change
-  emit filterEdited(*filter_);
+  Q_EMIT filterEdited(*filter_);
 }
 
 qreal CategoryDataBreadcrumbs::rectangleRadiusX() const

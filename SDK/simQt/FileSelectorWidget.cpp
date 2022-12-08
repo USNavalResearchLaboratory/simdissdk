@@ -221,9 +221,9 @@ void FileSelectorWidget::setFilename_(const QString& filename, bool canEmitFileS
     return;
   filename_ = osFilename;
   ui_->fileText->setText(filename_);
-  emit filenameChanged(filename_);
+  Q_EMIT filenameChanged(filename_);
   if (canEmitFileSelected)
-    emit fileSelected(filename_);
+    Q_EMIT fileSelected(filename_);
 }
 
 bool FileSelectorWidget::isValid() const

@@ -141,7 +141,7 @@ public:
   /// Change the read-only flag; read-only settings cannot save(), but can saveSettingsFileAs()
   void setReadOnly(bool readOnly);
 
-signals:
+Q_SIGNALS:
   /// Indicates that settings are about to be saved to a file
   void aboutToSaveSettingsFile(const QString& path);
   /// Indicates that a layout setting has been loaded
@@ -149,7 +149,7 @@ signals:
   /// Indicates that a setting has changed
   void settingChanged();
 
-public slots:
+public Q_SLOTS:
   /// Undoes an edit
   void undo();
   /// Redoes an edit

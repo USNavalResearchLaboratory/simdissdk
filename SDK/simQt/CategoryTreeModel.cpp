@@ -1068,7 +1068,7 @@ bool CategoryTreeModel::setData(const QModelIndex& idx, const QVariant& value, i
   if (rv)
   {
     // Update the GUI
-    emit dataChanged(idx, idx);
+    Q_EMIT dataChanged(idx, idx);
 
     // Alert users who are listening
     if (wasEdited)
@@ -1076,18 +1076,18 @@ bool CategoryTreeModel::setData(const QModelIndex& idx, const QVariant& value, i
       // Parent index, if it exists, is a category and might have updated its color data()
       const QModelIndex parentIndex = idx.parent();
       if (parentIndex.isValid())
-        emit dataChanged(parentIndex, parentIndex);
+        Q_EMIT dataChanged(parentIndex, parentIndex);
       emitChildrenDataChanged_(idx);
 
-      emit filterChanged(*filter_);
-      emit filterEdited(*filter_);
+      Q_EMIT filterChanged(*filter_);
+      Q_EMIT filterEdited(*filter_);
     }
     else
     {
       // Should only happen in cases where EXCLUDE got changed, but no filter was edited
       assert(!idx.parent().isValid());
       emitChildrenDataChanged_(idx);
-      emit excludeEdited(item->nameInt(), item->isUnlistedValueChecked());
+      Q_EMIT excludeEdited(item->nameInt(), item->isUnlistedValueChecked());
     }
   }
   return rv;
@@ -1141,9 +1141,9 @@ void CategoryTreeModel::setFilter(const simData::CategoryFilter& filter)
   assert(firstChangeRow != -1 && lastChangeRow != -1);
   if (firstChangeRow != -1 && lastChangeRow != -1)
   {
-    emit dataChanged(index(firstChangeRow, 0), index(lastChangeRow, 0));
+    Q_EMIT dataChanged(index(firstChangeRow, 0), index(lastChangeRow, 0));
   }
-  emit filterChanged(*filter_);
+  Q_EMIT filterChanged(*filter_);
 }
 
 const simData::CategoryFilter& CategoryTreeModel::categoryFilter() const
@@ -1221,7 +1221,7 @@ void CategoryTreeModel::setDataStore(simData::DataStore* dataStore)
 
   // Alert listeners if we have a new filter
   if (hadFilter && filter_)
-    emit filterChanged(*filter_);
+    Q_EMIT filterChanged(*filter_);
 }
 
 void CategoryTreeModel::setSettings(Settings* settings, const QString& settingsKeyPrefix)
@@ -1357,7 +1357,7 @@ void CategoryTreeModel::processCategoryCounts(const simQt::CategoryCountResults&
 
   // Emit data changed
   if (firstRowChanged != -1)
-    emit dataChanged(index(firstRowChanged, 0), index(lastRowChanged, 0));
+    Q_EMIT dataChanged(index(firstRowChanged, 0), index(lastRowChanged, 0));
 }
 
 void CategoryTreeModel::emitChildrenDataChanged_(const QModelIndex& parent)
@@ -1367,7 +1367,7 @@ void CategoryTreeModel::emitChildrenDataChanged_(const QModelIndex& parent)
   const int numCols = columnCount(parent);
   if (numRows == 0 || numCols == 0)
     return;
-  emit dataChanged(index(0, 0, parent), index(numRows - 1, numCols - 1, parent));
+  Q_EMIT dataChanged(index(0, 0, parent), index(numRows - 1, numCols - 1, parent));
 }
 
 }

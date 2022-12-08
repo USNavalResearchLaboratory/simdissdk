@@ -116,7 +116,7 @@ void FileDescriptorReplacement::ReadInLoop::readLoop()
   SAFETRYBEGIN;
   done_ = false;
   selectLoop_();
-  emit finished();
+  Q_EMIT finished();
   SAFETRYEND("reading File Descriptor Replacement in loop")
 }
 
@@ -168,7 +168,7 @@ int FileDescriptorReplacement::ReadInLoop::readBuffer_()
 
     // Emit the data over a Qt signal
     buffer_[rv] = '\0';
-    emit(textReceived(buffer_));
+    Q_EMIT(textReceived(buffer_));
   }
   return rv;
   SAFETRYEND("reading file descriptor buffer");

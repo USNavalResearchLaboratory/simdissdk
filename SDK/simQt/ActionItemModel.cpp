@@ -304,7 +304,7 @@ void ActionItemModel::setRegistry(ActionRegistry* registry)
   int row = 0;
   auto groupsCopy = groups_;
   for (auto it = groupsCopy.begin(); it != groupsCopy.end(); ++it)
-    emit groupAdded(createIndex(row++, 0, *it));
+    Q_EMIT groupAdded(createIndex(row++, 0, *it));
 }
 
 QModelIndex ActionItemModel::index(int row, int column, const QModelIndex &parent) const
@@ -500,7 +500,7 @@ void ActionItemModel::actionAdded(Action* action)
     endInsertRows();
     // Make sure the item was put in the correct location
     assert(newPosition == group->row());
-    emit(groupAdded(createIndex(newPosition, 0, group)));
+    Q_EMIT(groupAdded(createIndex(newPosition, 0, group)));
   }
 
   // Add to group
@@ -541,7 +541,7 @@ void ActionItemModel::hotKeysChanged(Action* action)
 {
   QModelIndex idx1 = indexOfAction_(action);
   if (idx1.isValid())
-    emit(dataChanged(idx1, createIndex(idx1.row(), 2, idx1.internalPointer())));
+    Q_EMIT(dataChanged(idx1, createIndex(idx1.row(), 2, idx1.internalPointer())));
 }
 
 ActionItemModel::GroupItem* ActionItemModel::findGroup_(const QString& name) const
@@ -603,7 +603,7 @@ void KeySequenceEdit::setKey(const QKeySequence& key, bool emitSignal)
   setText(key_.toString());
   if (emitSignal)
   {
-    emit(keyChanged(key));
+    Q_EMIT(keyChanged(key));
   }
 }
 
@@ -693,8 +693,8 @@ void ActionItemModelDelegate::closeAndCommitEditor_()
 {
   KeySequenceEdit* editor = qobject_cast<KeySequenceEdit*>(sender());
   assert(editor != nullptr);
-  emit commitData(editor);
-  emit closeEditor(editor);
+  Q_EMIT commitData(editor);
+  Q_EMIT closeEditor(editor);
 }
 
 QWidget* ActionItemModelDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const

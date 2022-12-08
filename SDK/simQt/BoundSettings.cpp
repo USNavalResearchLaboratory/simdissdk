@@ -151,7 +151,7 @@ void BoundBooleanSetting::updateValue_(const QVariant& newValue)
   if (newValue.toBool() != value_)
   {
     value_ = newValue.toBool();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -191,7 +191,7 @@ void BoundIntegerSetting::updateValue_(const QVariant& newValue)
   if (newValue.toInt() != value_)
   {
     value_ = newValue.toInt();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -372,7 +372,7 @@ void BoundDoubleSetting::updateValue_(const QVariant& newValue)
   if (newValue.toDouble() != value_)
   {
     value_ = newValue.toDouble();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -426,7 +426,7 @@ void BoundColorSetting::updateValue_(const QVariant& newValue)
   if (newValueColor != value_)
   {
     value_ = newValueColor;
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -496,7 +496,7 @@ void BoundStringSetting::updateValue_(const QVariant& newValue)
   if (newValue.toString() != value_)
   {
     value_ = newValue.toString();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -536,7 +536,7 @@ void BoundStringListSetting::updateValue_(const QVariant& newValue)
   if (newValue.toStringList() != value_)
   {
     value_ = newValue.toStringList();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -585,7 +585,7 @@ void BoundVariantMapSetting::updateValue_(const QVariant& newValue)
   if (newValue.toMap() != value_)
   {
     value_ = newValue.toMap();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 

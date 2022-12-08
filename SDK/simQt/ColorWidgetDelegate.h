@@ -57,7 +57,7 @@ public:
   /** Resizes the widget based on the size of cell */
   virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
-private slots:
+private Q_SLOTS:
   /** Triggered when editing is finished in the ColorWidget's dialog. Forces the model to update */
   void commitAndCloseEditor_();
 

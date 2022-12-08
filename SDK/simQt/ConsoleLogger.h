@@ -88,7 +88,7 @@ public:
   /** Remove files based on the determination of removable */
   int clean(const DetermineRemovable& removable) const;
 
-public slots:
+public Q_SLOTS:
   /** Handle single new console entry */
   void addEntry(double timeStamp, simNotify::NotifySeverity severity, const QString& channel, const QString& text);
 

@@ -260,7 +260,7 @@ void TimestampedLayerManager::setTime_(const simCore::TimeStamp& stamp)
         }
 
         currentLayer = i->second;
-        emit currentTimedLayerChanged(currentLayer.get(), oldLayer);
+        Q_EMIT currentTimedLayerChanged(currentLayer.get(), oldLayer);
         if (currentLayer.valid())
         {
           auto iter = originalVisibility_.find(currentLayer.get());
@@ -279,7 +279,7 @@ void TimestampedLayerManager::setTime_(const simCore::TimeStamp& stamp)
         oldLayer = currentLayer.get();
       }
       currentLayer = nullptr;
-      emit currentTimedLayerChanged(nullptr, oldLayer);
+      Q_EMIT currentTimedLayerChanged(nullptr, oldLayer);
     }
   }
 }

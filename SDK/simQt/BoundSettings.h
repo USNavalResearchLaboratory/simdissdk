@@ -128,11 +128,11 @@ public:
    */
   void bindTo(QAction* action, bool populateToolTip=true);
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(bool v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(bool v);
 
@@ -186,11 +186,11 @@ public:
    */
   void bindTo(QSlider* slider, bool populateToolTip=true, bool populateLimits=true);
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(int v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(int v);
 
@@ -224,11 +224,11 @@ public:
    */
   void bindTo(QDoubleSpinBox* box, bool populateToolTip=true, bool populateLimits=true);
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(double v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(double v);
 
@@ -259,11 +259,11 @@ public:
    */
   void bindTo(simQt::ColorWidget* colorWidget, bool populateToolTip=true);
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(const QColor& v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(const QColor& v);
 
@@ -305,11 +305,11 @@ public:
    */
   void bindTo(FileSelectorWidget* fileSelector, bool populateToolTip=true);
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(const QString& v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(const QString& v);
 
@@ -333,11 +333,11 @@ public:
   /** Current data value */
   QStringList value() const;
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(const QStringList& v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(const QStringList& v);
 
@@ -361,13 +361,13 @@ public:
   /** Current data value */
   QMap<QString, QVariant> value() const;
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(const QMap<QString, QVariant>& v);
   /** Add entries in 'v' to current value.  Does not remove values. */
   void mergeValues(const QMap<QString, QVariant>& v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes. */
   void valueChanged(const QMap<QString, QVariant>& value);
 

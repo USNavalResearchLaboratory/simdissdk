@@ -40,7 +40,7 @@ public:
   explicit MainWindow(QWidget *parent);
   virtual ~MainWindow();
 
-private slots:
+private Q_SLOTS:
   void test_();
   void timeChanged_(const simCore::TimeStamp& ts);
   void setPrecision_(int prec);

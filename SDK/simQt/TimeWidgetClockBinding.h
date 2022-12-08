@@ -82,7 +82,7 @@ public:
   /** Removes bindings from a previously bound data store */
   void unbindDataStore();
 
-private slots:
+private Q_SLOTS:
   void setClockTime_(const simCore::TimeStamp& clockTime);
 
   /** Called when the reference year changes, which requires a bounds update and a set-time on all children */
@@ -125,7 +125,7 @@ public:
   /** Returns the current reference year */
   int referenceYear() const;
 
-signals:
+Q_SIGNALS:
   /** Emitted only when reference year changes */
   void referenceYearChanged(int newYear);
 

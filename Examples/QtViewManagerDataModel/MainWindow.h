@@ -49,7 +49,7 @@ public:
   simVis::ViewManager* getViewManager();
   void addMainView(simVis::View* mainView);
 
-public slots:
+public Q_SLOTS:
   void addView();
   void removeView();
 

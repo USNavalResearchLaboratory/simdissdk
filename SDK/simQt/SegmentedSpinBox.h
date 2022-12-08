@@ -91,7 +91,7 @@ protected:
   /// Perform updates now that user has stopped input
   virtual void focusOutEvent(QFocusEvent* e);
 
-private slots:
+private Q_SLOTS:
   /// Applies timestamp entered by user
   void applyTimestamp_();
 

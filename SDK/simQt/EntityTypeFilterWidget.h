@@ -53,7 +53,7 @@ namespace simQt {
     /** Retrieve the currently selected entity types in a std::set. */
     std::set<simData::ObjectType> getSelectionsSet() const;
 
-  public slots:
+  public Q_SLOTS:
     /**
     * Set the current selected types in the widget
     * @param types bitmask of all the entity types to set as selected
@@ -63,11 +63,11 @@ namespace simQt {
     /** Alternative signature to setSelections that uses a set */
     void setSelections(const std::set<simData::ObjectType>& types);
 
-  signals:
+  Q_SIGNALS:
     /** Emits a bit mask of the new entity types selected, sent out whenever the GUI is changed */
     void entityTypesChanged(unsigned int types);
 
-  private slots:
+  private Q_SLOTS:
     /** Manages updating the filterTypes_ based on the GUI widget updates */
     void entityTypeClicked_();
     /** Manages toggling all entity types on/off */

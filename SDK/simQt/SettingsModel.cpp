@@ -867,7 +867,7 @@ void SettingsModel::undo()
 
     // Fix the GUI display
     refreshKey_(cmd->key());
-    emit(settingChanged());
+    Q_EMIT(settingChanged());
   }
 }
 
@@ -894,7 +894,7 @@ void SettingsModel::redo()
 
     // Fix the GUI display
     refreshKey_(cmd->key());
-    emit(settingChanged());
+    Q_EMIT(settingChanged());
   }
 }
 
@@ -951,7 +951,7 @@ void SettingsModel::refreshKey_(const QString& key)
     }
   }
 
-  emit(dataChanged(
+  Q_EMIT(dataChanged(
     index(idx.row(), 0, idx.parent()),
     index(idx.row(), columnCount(idx) - 1, idx.parent())));
 }
@@ -987,7 +987,7 @@ int SettingsModel::loadSettingsFile(const QString& path)
 
   // if there was a LAYOUT setting, emit signal
   if (containsLayout)
-    emit layoutLoaded();
+    Q_EMIT layoutLoaded();
 
   return 0;
 }
@@ -997,7 +997,7 @@ int SettingsModel::saveSettingsFileAs(const QString& path, bool onlyDeltas)
   if (path.isEmpty())
     return 1;
 
-  emit aboutToSaveSettingsFile(path);
+  Q_EMIT aboutToSaveSettingsFile(path);
 
   // Do not overwrite default file.
   const QFileInfo defaultFileInfo(fileName());
@@ -1063,14 +1063,14 @@ void SettingsModel::storeNodesDeltas_(QSettings& settings, TreeNode* node) const
 
 void SettingsModel::clear()
 {
-  emit beginResetModel();
+  beginResetModel();
   delete rootNode_;
   QList<QVariant> rootData;
   rootData << HEADER_NAME << HEADER_VALUE;
   rootNode_ = new TreeNode(noIcon_, rootData);
   observers_.clear();
   pendingObservers_.clear();
-  emit endResetModel();
+  endResetModel();
 }
 
 void SettingsModel::resetDefaults()

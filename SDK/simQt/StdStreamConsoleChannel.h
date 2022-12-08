@@ -45,7 +45,7 @@ public:
   /** Binds the streams to the console data model provided */
   void bindTo(ConsoleDataModel& model);
 
-private slots:
+private Q_SLOTS:
   /** Called when new text is available from stdout */
   void addStdoutText_(const QString& str);
   /** Called when new text is available from stderr */

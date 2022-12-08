@@ -99,14 +99,14 @@ QWidget* SettingsColorItemDelegate::createEditor(QWidget* parent, const QStyleOp
 void SettingsColorItemDelegate::commitAndCloseEditor_()
 {
   QColorDialog* editor = static_cast<QColorDialog*>(sender());
-  emit commitData(editor);
-  emit closeEditor(editor);
+  Q_EMIT commitData(editor);
+  Q_EMIT closeEditor(editor);
 }
 
 void SettingsColorItemDelegate::cancelEditor_()
 {
   QColorDialog* editor = static_cast<QColorDialog*>(sender());
-  emit closeEditor(editor);
+  Q_EMIT closeEditor(editor);
 }
 
 void SettingsColorItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
@@ -172,7 +172,7 @@ void SettingsDirectorySelectorDelegate::setModelData(QWidget* editor, QAbstractI
 void SettingsDirectorySelectorDelegate::commitEditor_()
 {
   DirectorySelectorWidget* selector = static_cast<DirectorySelectorWidget*>(sender());
-  emit commitData(selector);
+  Q_EMIT commitData(selector);
 }
 
 void SettingsDirectorySelectorDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -339,7 +339,7 @@ void SettingsFileSelectorDelegate::setModelData(QWidget* editor, QAbstractItemMo
 void SettingsFileSelectorDelegate::commitEditor_()
 {
   FileSelectorWidget* editor = static_cast<FileSelectorWidget*>(sender());
-  emit commitData(editor);
+  Q_EMIT commitData(editor);
 }
 
 void SettingsFileSelectorDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -599,7 +599,7 @@ void SettingsFontSelectorDelegate::setModelData(QWidget* editor, QAbstractItemMo
 void SettingsFontSelectorDelegate::commitEditor_()
 {
   FontWidget* editor = static_cast<FontWidget*>(sender());
-  emit commitData(editor);
+  Q_EMIT commitData(editor);
 }
 
 void SettingsFontSelectorDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -650,14 +650,14 @@ void SettingsQFontSelectorDelegate::setModelData(QWidget* editor, QAbstractItemM
 void SettingsQFontSelectorDelegate::commitAndCloseEditor_()
 {
   QFontDialog* editor = static_cast<QFontDialog*>(sender());
-  emit commitData(editor);
-  emit closeEditor(editor);
+  Q_EMIT commitData(editor);
+  Q_EMIT closeEditor(editor);
 }
 
 void SettingsQFontSelectorDelegate::cancelEditor_()
 {
   QFontDialog* editor = static_cast<QFontDialog*>(sender());
-  emit closeEditor(editor);
+  Q_EMIT closeEditor(editor);
 }
 
 void SettingsQFontSelectorDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const

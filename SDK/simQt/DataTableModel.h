@@ -88,7 +88,7 @@ namespace simQt {
     /** Set the UnitTypeConverter to show units in the column header */
     void setUnitTypeConverter(std::shared_ptr<simUtil::UnitTypeConverter> converter);
 
-  public slots:
+  public Q_SLOTS:
     /** Set the number of digits after the decimal for floats and doubles */
     void setGenericPrecision(unsigned int digitsAfterDecimal);
 

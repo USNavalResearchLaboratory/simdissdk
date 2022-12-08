@@ -79,7 +79,7 @@ public:
     timer_.start();
   }
 
-public slots:
+public Q_SLOTS:
 
   void setTimerInterval(int value)
   {

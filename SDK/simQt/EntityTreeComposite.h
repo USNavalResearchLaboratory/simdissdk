@@ -56,7 +56,7 @@ public:
   /** Override the QDialog close event to emit the closedGui signal */
   virtual void closeEvent(QCloseEvent*);
 
-signals:
+Q_SIGNALS:
   /** Signal emitted when this dialog is closed */
   void closedGui();
 private:
@@ -171,7 +171,7 @@ public:
     QMap<QString, QVariant> configuration_; ///< Map of all filter configuration settings
   };
 
-public slots:
+public Q_SLOTS:
   /** If true expand the tree on double click */
   void setExpandsOnDoubleClick(bool value);
   /** Returns true if double clicking on the tree expands the tree */
@@ -196,7 +196,7 @@ public slots:
   /** Returns the entity count type(s) */
   simData::ObjectType countEntityTypes() const;
 
-signals:
+Q_SIGNALS:
   /** Gives an unsorted list of currently selected entities */
   void itemsSelected(QList<uint64_t> ids);
   /** The unique ID of the entity just double clicked */
@@ -217,7 +217,7 @@ signals:
   /** Fired when entityTreeComposite toggles between tree and list view */
   void treeViewChanged(bool useTreeView);
 
-protected slots:
+protected Q_SLOTS:
   /** Receive notice of an inserted row */
   void rowsInserted_(const QModelIndex & parent, int start, int end);
   /** Receive notice to show filters */
@@ -225,7 +225,7 @@ protected slots:
   /** Receive notice that filters GUI is closed, to clean up resources*/
   void closeFilters_();
 
-private slots:
+private Q_SLOTS:
   /** Update the label displaying number of items after filter is applied */
   void setNumFilteredItemsLabel_(int numFilteredItems, int numTotalItems);
   /** The user has changed what, if any, entities are selected; use to enable the copy action */

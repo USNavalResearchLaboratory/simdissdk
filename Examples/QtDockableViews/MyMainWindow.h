@@ -57,7 +57,7 @@ public:
 protected:
   virtual void paintEvent(QPaintEvent* e);
 
-private slots:
+private Q_SLOTS:
   void createViewDialog_();
   void createViewDockable_();
   void createMainView_();

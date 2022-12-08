@@ -104,7 +104,7 @@ public:
   /** Returns the entity count type(s) */
   simData::ObjectType countEntityTypes() const;
 
-public slots:
+public Q_SLOTS:
   /** Swaps the view to the hierarchy tree */
   void setToTreeView();
   /** Swaps the view to a non-hierarchical list */
@@ -118,7 +118,7 @@ public slots:
   /** Set filters to the given settings */
   void setFilterSettings(const QMap<QString, QVariant>& settings);
 
-signals:
+Q_SIGNALS:
   /** Gives an unsorted list of currently selected entities */
   void itemsSelected(QList<uint64_t> ids);
   /** The unique ID of the entity just double clicked */
@@ -128,7 +128,7 @@ signals:
   /** A filter setting was changed */
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
 
-private slots:
+private Q_SLOTS:
   /** Intercepts the clicked message from the tree, so we can send the signal for itemsSelected() */
   void selectionChanged_(const QItemSelection& s1, const QItemSelection& s2);
   /** When selection has been cleared, sends out an empty itemsSelected signal */

@@ -94,7 +94,7 @@ EntityDialog::~EntityDialog()
 void EntityDialog::closeEvent(QCloseEvent* ev)
 {
   QDialog::closeEvent(ev);
-  emit(closedGui());
+  Q_EMIT(closedGui());
 }
 
 void EntityDialog::setItemSelected(uint64_t id)
@@ -149,14 +149,14 @@ void EntityDialog::setSelected_(const QList<uint64_t>& ids)
 {
   if (!ids.isEmpty())
   {
-    emit itemSelected(ids.front());
+    Q_EMIT itemSelected(ids.front());
   }
 }
 
 void EntityDialog::accept_()
 {
   accept();
-  emit closedGui();
+  Q_EMIT closedGui();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -297,7 +297,7 @@ void EntityLineEdit::setStateFilter(EntityStateFilter::State state)
   if (entityDialog_ != nullptr)
     entityDialog_->setStateFilter(state_);
 
-  emit stateFilterChanged(state_);
+  Q_EMIT stateFilterChanged(state_);
 }
 
 EntityStateFilter::State EntityLineEdit::stateFilter() const
@@ -323,7 +323,7 @@ void EntityLineEdit::wasActivated_(const QModelIndex& index)
   uniqueId_ = newId;
   needToVerify_ = false;
   setTextStyle_(true);
-  emit itemSelected(uniqueId_);
+  Q_EMIT itemSelected(uniqueId_);
   if (entityDialog_ != nullptr)
     entityDialog_->setItemSelected(uniqueId_);
 }
@@ -359,7 +359,7 @@ int EntityLineEdit::setSelected(uint64_t id)
     if (entityDialog_ != nullptr)
       entityDialog_->setItemSelected(uniqueId_);
     if (doEmit)
-      emit itemSelected(uniqueId_);
+      Q_EMIT itemSelected(uniqueId_);
     return 0;
   }
 
@@ -375,7 +375,7 @@ int EntityLineEdit::setSelected(uint64_t id)
   if (entityDialog_ != nullptr)
     entityDialog_->setItemSelected(uniqueId_);
   if (doEmit)
-    emit itemSelected(uniqueId_);
+    Q_EMIT itemSelected(uniqueId_);
   return 0;
 }
 
@@ -429,7 +429,7 @@ void EntityLineEdit::checkForReapply_()
   auto oldId = uniqueId_;
   editingFinished_();
   if ((oldId == uniqueId_) && (oldId != 0))
-    emit reapplied(uniqueId_);
+    Q_EMIT reapplied(uniqueId_);
 }
 
 void EntityLineEdit::editingFinished_()
@@ -447,7 +447,7 @@ void EntityLineEdit::editingFinished_()
     if (entityDialog_ != nullptr)
       entityDialog_->setItemSelected(uniqueId_);
     if (doEmit)
-      emit itemSelected(uniqueId_);
+      Q_EMIT itemSelected(uniqueId_);
     return;
   }
 
@@ -465,7 +465,7 @@ void EntityLineEdit::editingFinished_()
         entityDialog_->setItemSelected(uniqueId_);
     }
     if (oldId != uniqueId_)
-      emit itemSelected(uniqueId_);
+      Q_EMIT itemSelected(uniqueId_);
   }
 }
 
@@ -477,7 +477,7 @@ void EntityLineEdit::textEdited_(const QString& text)
   if (uniqueId_ != 0)
   {
     uniqueId_ = 0;
-    emit itemSelected(uniqueId_);
+    Q_EMIT itemSelected(uniqueId_);
   }
 }
 

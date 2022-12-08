@@ -119,7 +119,7 @@ public:
   */
   bool customFontsAvailable() const;
 
-public slots:
+public Q_SLOTS:
 
   /**
    * Set the current font name based on the provided font file name.  Searches in the fontDir_ to insure this font exists.
@@ -152,7 +152,7 @@ public slots:
    */
   void setShowFontSize(bool showSize);
 
-signals:
+Q_SIGNALS:
 
   /**
    * Emitted when the combo box is changed, sends out the new font file name for the selected font
@@ -172,7 +172,7 @@ signals:
    */
   void fontColorChanged(const QColor& fontColor);
 
-private slots:
+private Q_SLOTS:
   /** Called when the font name combo box is changed */
   void fontNameChanged_(const QString& fontName);
 

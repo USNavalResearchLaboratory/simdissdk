@@ -69,12 +69,12 @@ void DataGenerator::update_()
     delete timer_;
     timer_ = nullptr;
     // Send out signal indicating the thread is done
-    emit finished();
+    Q_EMIT finished();
     return;
   }
 
   // Send out a data point
-  emit newData(lat_, lon_, alt_);
+  Q_EMIT newData(lat_, lon_, alt_);
   lat_ += 0.00001;  // Move the platform North
 }
 

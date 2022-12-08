@@ -96,21 +96,21 @@ public:
   /** Set the settings object and key prefix that gets used by the CategoryFilterWidget */
   void setSettings(Settings* settings, const QString& settingsKeyPrefix);
 
-public slots:
+public Q_SLOTS:
   /**
    * Set a new CategoryFilter for this filter. Emits the general filterUpdated() and more specific categoryFilterChanged() signals
    * @param categoryFilter New filter to install
    */
   void setCategoryFilter(const simData::CategoryFilter& categoryFilter);
 
-signals:
+Q_SIGNALS:
   /**
    * Emitted when category filter is changed to update the widget
    * @param categoryFilter The filter
    */
   void categoryFilterChanged(const simData::CategoryFilter& categoryFilter);
 
-private slots:
+private Q_SLOTS:
   /**
    * Set a new CategoryFilter for this filter. Emits only the general filterUpdated().
    * @param categoryFilter New filter to install

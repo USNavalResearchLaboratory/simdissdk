@@ -57,7 +57,7 @@ public:
   /** True if the search icon should be shown, false otherwise */
   bool searchIconEnabled() const;
 
-public slots:
+public Q_SLOTS:
   /** Changes the search icon.  @see QLabel::setPixmap() */
   void setSearchPixmap(const QPixmap& pixmap);
   /** Sets interval in milliseconds after an edit to send out searchRequested() signal */
@@ -65,11 +65,11 @@ public slots:
   /** Set true to show search icon (default), or false to hide it */
   void setSearchIconEnabled(bool enabled);
 
-signals:
+Q_SIGNALS:
   /** Timer has expired after last edit.  Tie into this for a convenient method to activate your search */
   void searchRequested(const QString& text);
 
-private slots:
+private Q_SLOTS:
   /** Responsible for emitting searchRequested() with appropriate text, from QTimer */
   void emitSearchRequested_();
 
