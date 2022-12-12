@@ -551,7 +551,8 @@ void Table::removeObserver(TableObserverPtr callback)
 
 void Table::fireOnAddColumn_(const TableColumn& column) const
 {
-  for (TableObserverList::const_iterator i = observers_.begin(); i != observers_.end(); ++i)
+  auto observersCopy = observers_;
+  for (TableObserverList::const_iterator i = observersCopy.begin(); i != observersCopy.end(); ++i)
   {
     (*i)->onAddColumn(*const_cast<Table*>(this), column);
   }
@@ -559,7 +560,8 @@ void Table::fireOnAddColumn_(const TableColumn& column) const
 
 void Table::fireOnAddRow_(const TableRow& row) const
 {
-  for (TableObserverList::const_iterator i = observers_.begin(); i != observers_.end(); ++i)
+  auto observersCopy = observers_;
+  for (TableObserverList::const_iterator i = observersCopy.begin(); i != observersCopy.end(); ++i)
   {
     (*i)->onAddRow(*const_cast<Table*>(this), row);
   }
@@ -568,7 +570,8 @@ void Table::fireOnAddRow_(const TableRow& row) const
 // TODO make calls to these when rows/columns are removed, which is not currently implemented
 void Table::fireOnPreRemoveColumn_(const TableColumn& column) const
 {
-  for (TableObserverList::const_iterator i = observers_.begin(); i != observers_.end(); ++i)
+  auto observersCopy = observers_;
+  for (TableObserverList::const_iterator i = observersCopy.begin(); i != observersCopy.end(); ++i)
   {
     (*i)->onPreRemoveColumn(*const_cast<Table*>(this), column);
   }
@@ -576,7 +579,8 @@ void Table::fireOnPreRemoveColumn_(const TableColumn& column) const
 
 void Table::fireOnPreRemoveRow_(const TableRow& row) const
 {
-  for (TableObserverList::const_iterator i = observers_.begin(); i != observers_.end(); ++i)
+  auto observersCopy = observers_;
+  for (TableObserverList::const_iterator i = observersCopy.begin(); i != observersCopy.end(); ++i)
   {
     (*i)->onPreRemoveRow(*const_cast<Table*>(this), row.time());
   }
