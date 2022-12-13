@@ -158,10 +158,7 @@ void BoundBooleanSetting::bindTo(QAction* action, bool populateToolTip)
   action->setCheckable(true);
   action->setChecked(value());
   connect(action, SIGNAL(toggled(bool)), this, SLOT(setValue(bool)));
-  // Update the state of the action
   connect(this, SIGNAL(valueChanged(bool)), action, SLOT(setChecked(bool)));
-  // Update the state of anything listening to the action
-  connect(this, SIGNAL(valueChanged(bool)), action, SIGNAL(triggered(bool)));
 }
 
 /** Sets a new value for the variable */
