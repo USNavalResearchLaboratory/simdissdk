@@ -2,7 +2,7 @@ if(NOT TARGET simQt)
     return()
 endif()
 
-project(TestWidgetTest)
+project(TimeWidgetTest)
 
 set(APP_SOURCES
     TimeWidgetTest.cpp
