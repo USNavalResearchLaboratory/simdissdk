@@ -121,7 +121,8 @@ TimeWidgetClockBinding::TimeWidgetClockBinding(simQt::TimeWidget* parent)
    timeWidget_(parent),
    clock_(nullptr),
    dataStore_(nullptr),
-   respectLiveModeEndTime_(true)
+   respectLiveModeEndTime_(true),
+   ignoreUserTimeBounds_(false)
 {
   assert(parent != nullptr); // must pass in simQt::TimeWidget in constructor
   timeObserver_.reset(new TimeObserver(this));
@@ -148,6 +149,11 @@ void TimeWidgetClockBinding::setRespectLiveModeEndTime(bool respectLiveModeEndTi
 
   respectLiveModeEndTime_ = respectLiveModeEndTime;
   updateWidgetBounds_(false);
+}
+
+void TimeWidgetClockBinding::setIgnoreUserTimeBounds(bool fl)
+{
+  ignoreUserTimeBounds_ = fl;
 }
 
 void TimeWidgetClockBinding::bindClock(simCore::Clock* clock, bool bindCurrentTime)
@@ -231,15 +237,15 @@ void TimeWidgetClockBinding::updateWidgetBounds_(bool notifyTimeChange)
     int refYear = cache->referenceYear();
     if (refYear <= 0)
       refYear = clock_->startTime().referenceYear();
-    const simCore::TimeStamp& endBound = (!respectLiveModeEndTime_ && clock_->isLiveMode()) ? simCore::INFINITE_TIME_STAMP : clock_->endTime();
+    const simCore::TimeStamp& endBound = (!respectLiveModeEndTime_ && clock_->isLiveMode()) ? simCore::INFINITE_TIME_STAMP : clock_->endTime(ignoreUserTimeBounds_);
     if (!notifyTimeChange)
     {
       // Range is set before the clock time is set. On initialization, block signals so setting time range does not alter clock time
       simQt::ScopedSignalBlocker blockSignals(*timeWidget_);
-      timeWidget_->setTimeRange(refYear, clock_->startTime(), endBound);
+      timeWidget_->setTimeRange(refYear, clock_->startTime(ignoreUserTimeBounds_), endBound);
     }
     else
-      timeWidget_->setTimeRange(refYear, clock_->startTime(), endBound);
+      timeWidget_->setTimeRange(refYear, clock_->startTime(ignoreUserTimeBounds_), endBound);
   }
 }
 

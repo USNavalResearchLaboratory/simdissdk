@@ -62,6 +62,8 @@ public:
    *   will be infinite.  If true, the upper bound will be kept equal to the clock's end time.
    */
   void setRespectLiveModeEndTime(bool respectLiveModeEndTime);
+  /** If set to true, bounds on the time widget ignore user-configured time bounds. Defaults to false. */
+  void setIgnoreUserTimeBounds(bool fl);
 
   /**
    * Binds the slider to the value of the clock.  Can optionally bind the current time, which
@@ -110,6 +112,7 @@ private:
   simData::DataStore* dataStore_;
   simData::DataStore::ScenarioListenerPtr refYearCache_;
   bool respectLiveModeEndTime_;
+  bool ignoreUserTimeBounds_;
 };
 
 /** Caches the current reference year and emits signals when it changes */
