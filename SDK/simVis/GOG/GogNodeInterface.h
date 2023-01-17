@@ -607,8 +607,9 @@ private:
 };
 
 /**
-* Implementation of GogNodeInterface for LocalGeometryNodes, which represent both absolute Overlays with relative coordinates and attached Overlays
-*/
+ * Implementation of GogNodeInterface for LocalGeometryNodes, which represent both absolute Overlays with relative coordinates and attached Overlays
+ * Note that attached GOGs do not support AltitudeModes, as the attached GOG LocalGeometryNode has no reference to the map node.
+ */
 class SDKVIS_EXPORT LocalGeometryNodeInterface : public GogNodeInterface
 {
 public:
