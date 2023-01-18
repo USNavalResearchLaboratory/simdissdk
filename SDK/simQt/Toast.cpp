@@ -199,14 +199,14 @@ void ClickableLabel::enterEvent(QEvent* evt)
 {
   mouseInside_ = true;
   Q_EMIT mouseEntered();
-  return QLabel::enterEvent(evt);
+  QLabel::enterEvent(evt);
 }
 
 void ClickableLabel::leaveEvent(QEvent* evt)
 {
   mouseInside_ = false;
   Q_EMIT mouseLeft();
-  return QLabel::leaveEvent(evt);
+  QLabel::leaveEvent(evt);
 }
 
 } // namespace simQt
