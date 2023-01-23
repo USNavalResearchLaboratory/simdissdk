@@ -2,6 +2,12 @@ if(NOT TARGET GLEW OR NOT TARGET simVis)
     return()
 endif()
 
+# g++ 4.8.x does not work with osgEarth ImGUI due to unordered_map issues in C++1y
+if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
+    message(WARNING "Unable to build IMGUI example code; upgrade g++ past 4.8.")
+    return()
+endif()
+
 set(SOURCE_FILES
     imgui.h
     imgui.cpp
