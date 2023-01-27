@@ -466,14 +466,28 @@ TrackHistoryNode* PlatformNode::getTrackHistory()
   return track_.get();
 }
 
+simCore::Vec3 PlatformNode::pointNorth_(const simCore::Vec3& ecef) const
+{
+  simCore::Vec3 lla;
+  simCore::CoordinateConverter::convertEcefToGeodeticPos(ecef, lla);
+  simCore::Vec3 orientation;
+  simCore::CoordinateConverter::convertGeodeticOriToEcef(lla, simCore::Vec3(0.0, 0.0, 0.0), orientation);
+  return orientation;
+}
+
 void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
 {
   // static platforms by convention have elapsedEciTime 0
-  const simCore::Coordinate coord(
-        simCore::COORD_SYS_ECEF,
-        simCore::Vec3(u.x(), u.y(), u.z()),
-        simCore::Vec3(u.psi(), u.theta(), u.phi()),
-        simCore::Vec3(u.vx(), u.vy(), u.vz()));
+  simCore::Coordinate coord(simCore::COORD_SYS_ECEF, simCore::Vec3(u.x(), u.y(), u.z()));
+  if (u.has_orientation())
+    coord.setOrientation(simCore::Vec3(u.psi(), u.theta(), u.phi()));
+  else
+    coord.setOrientation(pointNorth_(simCore::Vec3(u.x(), u.y(), u.z())));
+
+  if (u.has_velocity())
+    coord.setVelocity(simCore::Vec3(u.vx(), u.vy(), u.vz()));
+  else
+    coord.setVelocity(simCore::Vec3());
 
   getLocator()->setCoordinate(coord, u.time(), lastProps_.coordinateframe().ecireferencetime());
 

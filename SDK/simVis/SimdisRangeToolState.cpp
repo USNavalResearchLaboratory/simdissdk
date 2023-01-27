@@ -138,14 +138,19 @@ int SimdisRangeToolState::populateEntityState(const simVis::ScenarioManager& sce
     if (update == nullptr)
       return 1;
 
-    simCore::Coordinate ecef(simCore::COORD_SYS_ECEF,
-      simCore::Vec3(update->x(), update->y(), update->z()),
-      simCore::Vec3(update->psi(), update->theta(), update->phi()),
-      simCore::Vec3(update->vx(), update->vy(), update->vz()));
-    simCore::Coordinate needVelocity;
-    simCore::CoordinateConverter::convertEcefToGeodetic(ecef, needVelocity);
-    // Take only the velocity since the other values have not gone been modified by any preferences
-    state->vel_ = needVelocity.velocity();
+    if (update->has_velocity())
+    {
+      simCore::Coordinate ecef(simCore::COORD_SYS_ECEF,
+        simCore::Vec3(update->x(), update->y(), update->z()),
+        simCore::Vec3(update->psi(), update->theta(), update->phi()),
+        simCore::Vec3(update->vx(), update->vy(), update->vz()));
+      simCore::Coordinate needVelocity;
+      simCore::CoordinateConverter::convertEcefToGeodetic(ecef, needVelocity);
+      // Take only the velocity since the other values have not gone been modified by any preferences
+      state->vel_ = needVelocity.velocity();
+    }
+    else
+      state->vel_ = simCore::Vec3();
   }
 
   if ((simdisState != nullptr) && (simdisState->type_ == simData::BEAM))

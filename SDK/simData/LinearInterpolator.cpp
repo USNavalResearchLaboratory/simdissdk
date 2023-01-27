@@ -42,17 +42,20 @@ bool LinearInterpolator::interpolate(double time, const PlatformUpdate &prev, co
   // compute time ratio
   double factor = simCore::getFactor(prev.time(), time, next.time());
 
-  simCore::Coordinate prevEcef(simCore::COORD_SYS_ECEF,
-                               simCore::Vec3(prev.x(), prev.y(), prev.z()),
-                               simCore::Vec3(prev.psi(), prev.theta(), prev.phi()),
-                               simCore::Vec3(prev.vx(), prev.vy(), prev.vz()));
+  simCore::Coordinate prevEcef(simCore::COORD_SYS_ECEF, simCore::Vec3(prev.x(), prev.y(), prev.z()));
+  if (prev.has_orientation() && next.has_orientation())
+    prevEcef.setOrientation(simCore::Vec3(prev.psi(), prev.theta(), prev.phi()));
+  if (prev.has_velocity() && next.has_velocity())
+    prevEcef.setVelocity(simCore::Vec3(prev.vx(), prev.vy(), prev.vz()));
+
   simCore::Coordinate prevLla;
   simCore::CoordinateConverter::convertEcefToGeodetic(prevEcef, prevLla);
 
-  simCore::Coordinate nextEcef(simCore::COORD_SYS_ECEF,
-                               simCore::Vec3(next.x(), next.y(), next.z()),
-                               simCore::Vec3(next.psi(), next.theta(), next.phi()),
-                               simCore::Vec3(next.vx(), next.vy(), next.vz()));
+  simCore::Coordinate nextEcef(simCore::COORD_SYS_ECEF, simCore::Vec3(next.x(), next.y(), next.z()));
+  if (prev.has_orientation() && next.has_orientation())
+    nextEcef.setOrientation(simCore::Vec3(next.psi(), next.theta(), next.phi()));
+  if (prev.has_velocity() && next.has_velocity())
+    nextEcef.setVelocity(simCore::Vec3(next.vx(), next.vy(), next.vz()));
   simCore::Coordinate nextLla;
   simCore::CoordinateConverter::convertEcefToGeodetic(nextEcef, nextLla);
 
@@ -71,63 +74,69 @@ bool LinearInterpolator::interpolate(double time, const PlatformUpdate &prev, co
   resultsLla.setCoordinateSystem(simCore::COORD_SYS_LLA);
   resultsLla.setPositionLLA(lla.lat(), lla.lon(), simCore::linearInterpolate(prevLla.z(), nextLla.z(), factor));
 
-  double l_yaw = (simCore::angFix2PI(prevLla.yaw()));
-  double l_pitch = (simCore::angFix2PI(prevLla.pitch()));
-  double l_roll = (simCore::angFix2PI(prevLla.roll()));
-  double h_yaw = (simCore::angFix2PI(nextLla.yaw()));
-  double h_pitch = (simCore::angFix2PI(nextLla.pitch()));
-  double h_roll = (simCore::angFix2PI(nextLla.roll()));
-
-  // orientations assumed to be between 0 and 360
-  double delta_yaw = (h_yaw - l_yaw);
-  double delta_pitch = (h_pitch - l_pitch);
-  double delta_roll = (h_roll - l_roll);
-
-  double yaw;
-  double pitch;
-  double roll;
-
-  if (delta_yaw == 0.)
-    yaw = l_yaw;
-  else if (std::abs(delta_yaw) < M_PI)
-    yaw = (l_yaw + factor * delta_yaw);
-  else
+  if (prev.has_orientation() && next.has_orientation())
   {
-    if (delta_yaw > 0)
-      yaw = (l_yaw - factor * (M_TWOPI - delta_yaw));
+    double l_yaw = (simCore::angFix2PI(prevLla.yaw()));
+    double l_pitch = (simCore::angFix2PI(prevLla.pitch()));
+    double l_roll = (simCore::angFix2PI(prevLla.roll()));
+    double h_yaw = (simCore::angFix2PI(nextLla.yaw()));
+    double h_pitch = (simCore::angFix2PI(nextLla.pitch()));
+    double h_roll = (simCore::angFix2PI(nextLla.roll()));
+
+    // orientations assumed to be between 0 and 360
+    double delta_yaw = (h_yaw - l_yaw);
+    double delta_pitch = (h_pitch - l_pitch);
+    double delta_roll = (h_roll - l_roll);
+
+    double yaw;
+    double pitch;
+    double roll;
+
+    if (delta_yaw == 0.)
+      yaw = l_yaw;
+    else if (std::abs(delta_yaw) < M_PI)
+      yaw = (l_yaw + factor * delta_yaw);
     else
-      yaw = (l_yaw + factor * (M_TWOPI + delta_yaw));
+    {
+      if (delta_yaw > 0)
+        yaw = (l_yaw - factor * (M_TWOPI - delta_yaw));
+      else
+        yaw = (l_yaw + factor * (M_TWOPI + delta_yaw));
+    }
+
+    if (delta_pitch == 0.)
+      pitch = l_pitch;
+    else if (std::abs(delta_pitch) < M_PI)
+      pitch = (l_pitch + factor * delta_pitch);
+    else
+    {
+      if (delta_pitch > 0)
+        pitch = (l_pitch - factor * (M_TWOPI - delta_pitch));
+      else
+        pitch = (l_pitch + factor * (M_TWOPI + delta_pitch));
+    }
+
+    if (delta_roll == 0.)
+      roll = l_roll;
+    else if (std::abs(delta_roll) < M_PI)
+      roll = (l_roll + factor * delta_roll);
+    else
+    {
+      if (delta_roll > 0)
+        roll = (l_roll - factor * (M_TWOPI - delta_roll));
+      else
+        roll = (l_roll + factor * (M_TWOPI + delta_roll));
+    }
+
+    resultsLla.setOrientation(yaw, pitch, roll);
   }
 
-  if (delta_pitch == 0.)
-    pitch = l_pitch;
-  else if (std::abs(delta_pitch) < M_PI)
-    pitch = (l_pitch + factor * delta_pitch);
-  else
+  if (prev.has_velocity() && next.has_velocity())
   {
-    if (delta_pitch > 0)
-      pitch = (l_pitch - factor * (M_TWOPI - delta_pitch));
-    else
-      pitch = (l_pitch + factor * (M_TWOPI + delta_pitch));
+    resultsLla.setVelocity(simCore::linearInterpolate(prevLla.vx(), nextLla.vx(), factor),
+                           simCore::linearInterpolate(prevLla.vy(), nextLla.vy(), factor),
+                           simCore::linearInterpolate(prevLla.vz(), nextLla.vz(), factor));
   }
-
-  if (delta_roll == 0.)
-    roll = l_roll;
-  else if (std::abs(delta_roll) < M_PI)
-    roll = (l_roll + factor * delta_roll);
-  else
-  {
-    if (delta_roll > 0)
-      roll = (l_roll - factor * (M_TWOPI - delta_roll));
-    else
-      roll = (l_roll + factor * (M_TWOPI + delta_roll));
-  }
-
-  resultsLla.setOrientation(yaw, pitch, roll);
-
-  resultsLla.setVelocity(simCore::linearInterpolate(prevLla.vx(), nextLla.vx(), factor),
-                         simCore::linearInterpolate(prevLla.vy(), nextLla.vy(), factor),
-                         simCore::linearInterpolate(prevLla.vz(), nextLla.vz(), factor));
 
   simCore::Coordinate resultsEcef;
   simCore::CoordinateConverter::convertGeodeticToEcef(resultsLla, resultsEcef);
@@ -138,13 +147,19 @@ bool LinearInterpolator::interpolate(double time, const PlatformUpdate &prev, co
   result->set_y(resultsEcef.y());
   result->set_z(resultsEcef.z());
 
-  result->set_vx(resultsEcef.vx());
-  result->set_vy(resultsEcef.vy());
-  result->set_vz(resultsEcef.vz());
+  if (resultsEcef.hasVelocity())
+  {
+    result->set_vx(resultsEcef.vx());
+    result->set_vy(resultsEcef.vy());
+    result->set_vz(resultsEcef.vz());
+  }
 
-  result->set_psi(resultsEcef.psi());
-  result->set_theta(resultsEcef.theta());
-  result->set_phi(resultsEcef.phi());
+  if (resultsEcef.hasOrientation())
+  {
+    result->set_psi(resultsEcef.psi());
+    result->set_theta(resultsEcef.theta());
+    result->set_phi(resultsEcef.phi());
+  }
 
   return true;
 }
