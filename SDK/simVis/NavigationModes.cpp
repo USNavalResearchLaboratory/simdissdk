@@ -20,10 +20,9 @@
  * disclose, or release this software.
  *
  */
-
+#include <cassert>
 #include "osgGA/GUIEventAdapter"
 #include "osgEarth/EarthManipulator"
-
 #include "simVis/BoxZoomMouseHandler.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/View.h"
@@ -107,9 +106,12 @@ RotatePanNavigationMode::~RotatePanNavigationMode()
 
 void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watchMode)
 {
+  const bool canRotate = !watchMode && !enableOverhead;
+  const bool canZoom = !watchMode;
   view_ = view;
+
   // left mouse + ctl+shift => box zoom (done with an external event handler)
-  if (!watchMode && view_.valid())
+  if (canZoom && view_.valid())
   {
     EarthManipulator::ActionOptions boxZoomOpts;
     boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
@@ -141,6 +143,9 @@ void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, boo
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
     if (!watchMode)
     {
+      // Cannot rotate in watch mode
+      assert(canRotate);
+
       // left mouse => continuous rotate
       bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, 0, RotateOptions());
 
@@ -153,7 +158,7 @@ void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, boo
   }
 
   // Zooming not permitted in watch mode
-  if (!watchMode)
+  if (canZoom)
   {
     // middle mouse => continuous zoom; Ctl+Alt+Right => continuous zoom
     ContinuousZoomOptions continuousZoomOpts;
@@ -186,6 +191,9 @@ void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, boo
 
 GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watchMode)
 {
+  const bool canRotate = !watchMode && !enableOverhead;
+  const bool canZoom = !watchMode;
+
   // left mouse => globe spin
   bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, 0);
 
@@ -209,6 +217,9 @@ GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watch
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
     if (!watchMode)
     {
+      // Cannot rotate in watch mode
+      assert(canRotate);
+
       // right mouse (or shift left mouse) => continuous rotate
       RotateOptions rotateOpt;
       bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON, 0, rotateOpt);
@@ -224,7 +235,7 @@ GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watch
   }
 
   // Zooming not permitted in watch mode
-  if (!watchMode)
+  if (canZoom)
   {
     // middle mouse => continuous zoom; Ctl+Alt+Right => continuous zoom
     ContinuousZoomOptions continuousZoomOpts;
@@ -261,6 +272,9 @@ GlobeSpinNavigationMode::~GlobeSpinNavigationMode()
 
 ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
 {
+  const bool canRotate = !watchMode && !enableOverhead;
+  const bool canZoom = !watchMode;
+
   if (enableOverhead)
   {
     // shift left mouse => continuous pan
@@ -278,6 +292,9 @@ ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
     if (!watchMode)
     {
+      // Cannot rotate in watch mode
+      assert(canRotate);
+
       // shift left mouse => continuous rotate
       bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_SHIFT, RotateOptions());
 
@@ -290,7 +307,7 @@ ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
   }
 
   // Zooming not permitted in watch mode
-  if (!watchMode)
+  if (canZoom)
   {
     // middle mouse => continuous zoom
     ContinuousZoomOptions contZoomOpt;
@@ -328,6 +345,9 @@ ZoomNavigationMode::~ZoomNavigationMode()
 
 CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool watchMode)
 {
+  const bool canRotate = !watchMode && !enableOverhead;
+  const bool canZoom = !watchMode;
+
   if (enableOverhead)
   {
     // shift left mouse => continuous pan
@@ -345,6 +365,9 @@ CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool wat
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
     if (!watchMode)
     {
+      // Cannot rotate in watch mode
+      assert(canRotate);
+
       // shift left mouse => continuous rotate
       bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_SHIFT, RotateOptions());
 
@@ -357,7 +380,7 @@ CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool wat
   }
 
   // Zooming not permitted in watch mode
-  if (!watchMode)
+  if (canZoom)
   {
     // middle mouse => continuous zoom; Ctl+Alt+Right => continuous zoom
     ContinuousZoomOptions continuousZoomOpts;
