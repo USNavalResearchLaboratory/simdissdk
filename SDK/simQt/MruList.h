@@ -113,4 +113,4 @@ private:
 
 }
 
-#endif /* MEDIAPLAYER2_MRULIST_H */
+#endif /* SIMQT_MRULIST_H */
