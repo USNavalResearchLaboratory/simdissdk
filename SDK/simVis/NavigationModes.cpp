@@ -51,6 +51,32 @@ NavigationMode::~NavigationMode()
 {
 }
 
+void NavigationMode::bindMultiTouch_(bool canZoom, bool canRotate)
+{
+  EarthManipulator::ActionOptions emptyOptions;
+  EarthManipulator::ActionOptions panOptions;
+  panOptions.add(EarthManipulator::OPTION_SCALE_X, 4.0);
+  panOptions.add(EarthManipulator::OPTION_SCALE_Y, 4.0);
+
+  if (canZoom)
+    bindPinch(EarthManipulator::ACTION_ZOOM, emptyOptions);
+  if (canRotate)
+  {
+    bindMultiDrag(EarthManipulator::ACTION_ROTATE, emptyOptions);
+    bindTwist(EarthManipulator::ACTION_ROTATE, emptyOptions);
+  }
+  else
+  {
+    // Inability to rotate means two fingers will drag earth (e.g. overhead mode)
+    bindMultiDrag(EarthManipulator::ACTION_PAN, panOptions);
+  }
+
+  // Single touch drag will pan (which may be different from left click)
+#ifdef HAVE_EARTHMANIPULATOR_BINDTOUCHDRAG
+  bindTouchDrag(EarthManipulator::ACTION_PAN, panOptions);
+#endif
+}
+
 NavigationMode::PanOptions::PanOptions()
   : EarthManipulator::ActionOptions()
 {
@@ -185,6 +211,7 @@ void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, boo
   bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_CTRL, goToOpt);
 
   setSingleAxisRotation(true);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 // ==========================================================================
@@ -262,6 +289,7 @@ GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watch
   bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_CTRL, goToOpt);
 
   setSingleAxisRotation(true);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 GlobeSpinNavigationMode::~GlobeSpinNavigationMode()
@@ -335,6 +363,7 @@ ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
   bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_CTRL, goToOpt);
 
   setSingleAxisRotation(true);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 ZoomNavigationMode::~ZoomNavigationMode()
@@ -409,6 +438,7 @@ CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool wat
   bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_CTRL, goToOpt);
 
   setSingleAxisRotation(true);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 CenterViewNavigationMode::~CenterViewNavigationMode()
@@ -540,6 +570,7 @@ void GisNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watc
   setArcViewpointTransitions(true);
   setThrowingEnabled(true);
   setLockAzimuthWhilePanning(false);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 // ==========================================================================
@@ -614,6 +645,7 @@ void BuilderNavigationMode::init_(bool enableOverhead, bool watchMode)
     setMinMaxPitch(-90, -90);
   else
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 // ==========================================================================
