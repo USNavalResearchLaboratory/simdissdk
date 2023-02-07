@@ -142,24 +142,19 @@ public:
   /** Constructs a mouse manipulator on the HUD and GUI provided. */
   HudEditorMouse(simUtil::HudPositionManager* hud, simUtil::HudEditorGui* gui);
 
-  /** Mouse button pushed, returns non-zero on handled */
-  virtual int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
-  /** Mouse button released, returns non-zero on handled */
-  virtual int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
-  /** Mouse being moved, returns non-zero on handled */
-  virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
-  /** Mouse being dragged, returns non-zero on handled */
-  virtual int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
-  /** Mouse button double clicked, returns non-zero on handled */
-  virtual int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
-  /** Mouse wheel scrolled, returns non-zero on handled */
-  virtual int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
-  /** Frame event, returns non-zero on handled */
-  virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
-
-  // From MouseManipulator
-  virtual void activate();
-  virtual void deactivate();
+  // From MouseManipulator:
+  virtual int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual int touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual int touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual int touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  virtual void activate() override;
+  virtual void deactivate() override;
 
   /** Set a pointer to the right click callback to be used by the mouse manipulator. */
   void setRightClickCallback(std::shared_ptr<simUtil::HudEditorRightClickCallback> cb);

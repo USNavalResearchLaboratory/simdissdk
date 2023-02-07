@@ -590,6 +590,24 @@ int HudEditorMouse::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
   return 0;
 }
 
+int HudEditorMouse::touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  // TODO: SIM-15089
+  return 0;
+}
+
+int HudEditorMouse::touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  // TODO: SIM-15089
+  return 0;
+}
+
+int HudEditorMouse::touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  // TODO: SIM-15089
+  return 0;
+}
+
 void HudEditorMouse::activate()
 {
   // Turn on the HUD GUI
