@@ -51,6 +51,10 @@ mark_as_advanced(Qt5Gui_DIR)
 if(WIN32 AND IS_DIRECTORY "${Qt5Widgets_DIR}")
     if(CMAKE_CL_64)
         set(QT_GLU_PATHS
+            "c:/Program Files (x86)/Windows Kits/10/Lib/10.0.20348.0/um/x64"
+            "c:/Program Files (x86)/Windows Kits/10/Lib/10.0.19041.685/um/x64"
+            "c:/Program Files (x86)/Windows Kits/10/Lib/10.0.19041.0/um/x64"
+            "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.18362.0/um/x64"
             "c:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x64"
             "c:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64"
             "c:/Program Files/Microsoft SDKs/Windows/7.1A/Lib"
