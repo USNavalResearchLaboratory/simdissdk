@@ -38,12 +38,12 @@ namespace simQt
  * Responsible for passing multi-touch events received from Qt, into the event queue
  * associated with a given graphics window. This is designed to be used with the
  * simQt::ViewWidget and its embedded GraphicsWindow.
- * 
+ *
  * This filter will correctly forward raw touch messages into the OSG event queue.
  * It includes the ability to filter out sporadic mouse events on the window while
  * the touch capability is active, which can cause conflicting input data, e.g.
  * in osgEarth EarthManipulator processing.
- * 
+ *
  * This filter also attempts to compensate for Qt widgets and touch. The Qt widget
  * should register for touch events with setAttribute(Qt::WA_AcceptTouchEvents),
  * and if it does not, the filter will get touch update and end events, but not
@@ -52,7 +52,7 @@ namespace simQt
 class SDKQT_EXPORT MultiTouchEventFilter : public QObject
 {
   Q_OBJECT;
-  
+
 public:
   explicit MultiTouchEventFilter(QObject* parent = nullptr);
   virtual ~MultiTouchEventFilter();
@@ -80,14 +80,14 @@ protected:
   // From QObject:
   virtual bool eventFilter(QObject* obj, QEvent* evt) override;
 
-  /** Touch operation begins */
-  virtual void touchBeginEvent_(QTouchEvent* evt);
-  /** Touch coordinates changed, after a begin */
-  virtual void touchUpdateEvent_(QTouchEvent* evt);
-  /** Touch ended */
-  virtual void touchEndEvent_(QTouchEvent* evt);
-  /** Touch has been canceled */
-  virtual void touchCancelEvent_(QTouchEvent* evt);
+  /** Touch operation begins. If return value is true, then event is filtered/blocked. */
+  virtual bool touchBeginEvent_(QTouchEvent* evt);
+  /** Touch coordinates changed, after a begin. If return value is true, then event is filtered/blocked. */
+  virtual bool touchUpdateEvent_(QTouchEvent* evt);
+  /** Touch ended. If return value is true, then event is filtered/blocked. */
+  virtual bool touchEndEvent_(QTouchEvent* evt);
+  /** Touch has been canceled. If return value is true, then event is filtered/blocked. */
+  virtual bool touchCancelEvent_(QTouchEvent* evt);
 
 private:
   /** Retrieves the current event queue (might be null) */

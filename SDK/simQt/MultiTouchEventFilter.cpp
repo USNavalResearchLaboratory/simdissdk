@@ -20,12 +20,37 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include <QTouchEvent>
 #include "osgViewer/GraphicsWindow"
 #include "osgGA/EventQueue"
 #include "simQt/MultiTouchEventFilter.h"
 
 namespace simQt {
+
+namespace {
+
+/** Anonymous function to convert from Qt touch state to OSG touch state */
+osgGA::GUIEventAdapter::TouchPhase toTouchPhase(Qt::TouchPointState state)
+{
+  switch (state)
+  {
+  case Qt::TouchPointPressed:
+    return osgGA::GUIEventAdapter::TOUCH_BEGAN;
+  case Qt::TouchPointMoved:
+    return osgGA::GUIEventAdapter::TOUCH_MOVED;
+  case Qt::TouchPointStationary:
+    return osgGA::GUIEventAdapter::TOUCH_STATIONERY;
+  case Qt::TouchPointReleased:
+    return osgGA::GUIEventAdapter::TOUCH_ENDED;
+  }
+
+  // Unknown state, return a moved
+  assert(0);
+  return osgGA::GUIEventAdapter::TOUCH_MOVED;
+}
+
+}
 
 MultiTouchEventFilter::MultiTouchEventFilter(QObject* parent)
   : QObject(parent)
@@ -69,20 +94,16 @@ bool MultiTouchEventFilter::eventFilter(QObject* obj, QEvent* evt)
   switch (evt->type())
   {
   case QEvent::TouchBegin:
-    touchBeginEvent_(static_cast<QTouchEvent*>(evt));
-    return evt->isAccepted();
+    return touchBeginEvent_(static_cast<QTouchEvent*>(evt));
 
   case QEvent::TouchUpdate:
-    touchUpdateEvent_(static_cast<QTouchEvent*>(evt));
-    return evt->isAccepted();
+    return touchUpdateEvent_(static_cast<QTouchEvent*>(evt));
 
   case QEvent::TouchEnd:
-    touchEndEvent_(static_cast<QTouchEvent*>(evt));
-    return evt->isAccepted();
+    return touchEndEvent_(static_cast<QTouchEvent*>(evt));
 
   case QEvent::TouchCancel:
-    touchCancelEvent_(static_cast<QTouchEvent*>(evt));
-    return evt->isAccepted();
+    return touchCancelEvent_(static_cast<QTouchEvent*>(evt));
 
   default:
     break;
@@ -92,18 +113,18 @@ bool MultiTouchEventFilter::eventFilter(QObject* obj, QEvent* evt)
   return false;
 }
 
-void MultiTouchEventFilter::touchBeginEvent_(QTouchEvent* evt)
+bool MultiTouchEventFilter::touchBeginEvent_(QTouchEvent* evt)
 {
   // Must have a valid event queue, or we ignore the touch event because we
   // can't really do anything with it.
   auto* eventQueue = eventQueue_();
   if (!eventQueue)
-    return;
+    return false;
 
   // Must be touching at least one finger
   const auto& touchPoints = evt->touchPoints();
   if (touchPoints.empty())
-    return;
+    return false;
 
   // Keep track of whether we're currently touching. If we're touching and
   // a mouse event comes in, that mouse event might need to be dropped.
@@ -117,25 +138,26 @@ void MultiTouchEventFilter::touchBeginEvent_(QTouchEvent* evt)
 
   // Queue a touchBegan() event
   const auto& firstPoint = touchPoints.constFirst();
-  osgGA::GUIEventAdapter* osgEvent = eventQueue->touchBegan(firstPoint.id(), osgGA::GUIEventAdapter::TOUCH_BEGAN,
+  osgGA::GUIEventAdapter* osgEvent = eventQueue->touchBegan(firstPoint.id(), toTouchPhase(firstPoint.state()),
     firstPoint.pos().x(), firstPoint.pos().y());
 
   // If more than one finger is present, add each finger's touch data
   for (int k = 1; k < touchPoints.size(); ++k)
   {
     const auto& thisPoint = touchPoints[k];
-    osgEvent->addTouchPoint(thisPoint.id(), osgGA::GUIEventAdapter::TOUCH_BEGAN,
+    osgEvent->addTouchPoint(thisPoint.id(), toTouchPhase(thisPoint.state()),
       thisPoint.pos().x(), thisPoint.pos().y());
   }
+  return true;
 }
 
-void MultiTouchEventFilter::touchUpdateEvent_(QTouchEvent* evt)
+bool MultiTouchEventFilter::touchUpdateEvent_(QTouchEvent* evt)
 {
   // Must have a valid event queue, or we ignore the touch event because we
   // can't really do anything with it.
   auto* eventQueue = eventQueue_();
   if (!eventQueue)
-    return;
+    return false;
 
   // If widget is missing WA_AcceptTouchEvents events, touch-begin is not sent out
   // but touch-update IS sent out. Simulate a touch-begin in this case.
@@ -145,23 +167,24 @@ void MultiTouchEventFilter::touchUpdateEvent_(QTouchEvent* evt)
   // Must be touching at least one finger
   const auto& touchPoints = evt->touchPoints();
   if (touchPoints.empty())
-    return;
+    return false;
 
   evt->accept();
   const auto& firstPoint = touchPoints.constFirst();
-  osgGA::GUIEventAdapter* osgEvent = eventQueue->touchMoved(firstPoint.id(), osgGA::GUIEventAdapter::TOUCH_MOVED,
+  osgGA::GUIEventAdapter* osgEvent = eventQueue->touchMoved(firstPoint.id(), toTouchPhase(firstPoint.state()),
     firstPoint.pos().x(), firstPoint.pos().y());
 
   // Add the rest of the fingers
   for (int k = 1; k < touchPoints.size(); ++k)
   {
     const auto& thisPoint = touchPoints[k];
-    osgEvent->addTouchPoint(thisPoint.id(), osgGA::GUIEventAdapter::TOUCH_MOVED,
+    osgEvent->addTouchPoint(thisPoint.id(), toTouchPhase(thisPoint.state()),
       thisPoint.pos().x(), thisPoint.pos().y());
   }
+  return true;
 }
 
-void MultiTouchEventFilter::touchEndEvent_(QTouchEvent* evt)
+bool MultiTouchEventFilter::touchEndEvent_(QTouchEvent* evt)
 {
   // On an end event, we definitely aren't touching, so make sure to at least
   // update our internal state regardless of the rest of the impl.
@@ -171,30 +194,31 @@ void MultiTouchEventFilter::touchEndEvent_(QTouchEvent* evt)
   // can't really do anything with it.
   auto* eventQueue = eventQueue_();
   if (!eventQueue)
-    return;
+    return false;
 
   // Must be touching at least one finger, even for end events
   const auto& touchPoints = evt->touchPoints();
   if (touchPoints.empty())
-    return;
+    return false;
 
   evt->accept();
   const auto& firstPoint = touchPoints.constFirst();
   // No double tap support at this time, so use 1 for push times. Double tap can
   // work using the MouseDoubleClick event generated by the system.
-  osgGA::GUIEventAdapter* osgEvent = eventQueue->touchEnded(firstPoint.id(), osgGA::GUIEventAdapter::TOUCH_ENDED,
+  osgGA::GUIEventAdapter* osgEvent = eventQueue->touchEnded(firstPoint.id(), toTouchPhase(firstPoint.state()),
     firstPoint.pos().x(), firstPoint.pos().y(), 1u);
 
   // Add the rest of the fingers
   for (int k = 1; k < touchPoints.size(); ++k)
   {
     const auto& thisPoint = touchPoints[k];
-    osgEvent->addTouchPoint(thisPoint.id(), osgGA::GUIEventAdapter::TOUCH_ENDED,
+    osgEvent->addTouchPoint(thisPoint.id(), toTouchPhase(thisPoint.state()),
       thisPoint.pos().x(), thisPoint.pos().y());
   }
+  return true;
 }
 
-void MultiTouchEventFilter::touchCancelEvent_(QTouchEvent* evt)
+bool MultiTouchEventFilter::touchCancelEvent_(QTouchEvent* evt)
 {
   // On an end event, we definitely aren't touching, so make sure to at least
   // update our internal state regardless of the rest of the impl.
@@ -202,8 +226,10 @@ void MultiTouchEventFilter::touchCancelEvent_(QTouchEvent* evt)
 
   // Cancel events don't have a representation in OSG, and I couldn't trigger it
   // in practice in Qt. Accept the event only if the event queue is configured.
-  if (eventQueue_() != nullptr)
-    evt->accept();
+  if (eventQueue_() == nullptr)
+    return false;
+  evt->accept();
+  return true;
 }
 
 void MultiTouchEventFilter::setAllowedMouseEvents(AllowedMouseEvents allowEvents)
