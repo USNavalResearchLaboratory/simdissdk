@@ -225,7 +225,7 @@ namespace simCore
    */
   inline bool isFinite(const Vec3 &u)
   {
-    return finite(u[0]) && finite(u[1]) && finite(u[2]);
+    return std::isfinite(u[0]) && std::isfinite(u[1]) && std::isfinite(u[2]);
   }
 
   /**
