@@ -154,28 +154,28 @@ void Coordinate::clear(CoordinateSystem system, double elapsedEciTime)
 /// Sets the individual position state components
 void Coordinate::setPosition(double x, double y, double z)
 {
-  assert(finite(x) && finite(y) && finite(z));
+  assert(std::isfinite(x) && std::isfinite(y) && std::isfinite(z));
   pos_.set(x, y, z);
 }
 
 /// Sets the individual position state components for a geodetic position
 void Coordinate::setPositionLLA(double lat, double lon, double alt)
 {
-  assert(finite(lat) && finite(lon) && finite(alt));
+  assert(std::isfinite(lat) && std::isfinite(lon) && std::isfinite(alt));
   pos_.set(lat, lon, alt);
 }
 
 /// Sets the position state vector
 void Coordinate::setPosition(const Vec3 &pos)
 {
-  assert(finite(pos.x()) && finite(pos.y()) && finite(pos.z()));
+  assert(std::isfinite(pos.x()) && std::isfinite(pos.y()) && std::isfinite(pos.z()));
   pos_.set(pos);
 }
 
 /// Sets the individual orientation state components
 void Coordinate::setOrientation(double yaw, double pitch, double roll)
 {
-  assert(finite(yaw) && finite(pitch) && finite(roll));
+  assert(std::isfinite(yaw) && std::isfinite(pitch) && std::isfinite(roll));
   hasOri_ = true;
   ori_.set(yaw, pitch, roll);
 }
@@ -183,7 +183,7 @@ void Coordinate::setOrientation(double yaw, double pitch, double roll)
 /// Sets the individual Euler orientation state components
 void Coordinate::setOrientationEuler(double psi, double theta, double phi)
 {
-  assert(finite(psi) && finite(theta) && finite(phi));
+  assert(std::isfinite(psi) && std::isfinite(theta) && std::isfinite(phi));
   hasOri_ = true;
   ori_.set(psi, theta, phi);
 }
@@ -191,7 +191,7 @@ void Coordinate::setOrientationEuler(double psi, double theta, double phi)
 /// Sets the orientation state vector
 void Coordinate::setOrientation(const Vec3 &ori)
 {
-  assert(finite(ori.yaw()) && finite(ori.pitch()) && finite(ori.roll()));
+  assert(std::isfinite(ori.yaw()) && std::isfinite(ori.pitch()) && std::isfinite(ori.roll()));
   hasOri_ = true;
   ori_.set(ori);
 }
@@ -199,7 +199,7 @@ void Coordinate::setOrientation(const Vec3 &ori)
 /// Sets the individual velocity state components
 void Coordinate::setVelocity(double x, double y, double z)
 {
-  assert(finite(x) && finite(y) && finite(z));
+  assert(std::isfinite(x) && std::isfinite(y) && std::isfinite(z));
   hasVel_ = true;
   vel_.set(x, y, z);
 }
@@ -207,7 +207,7 @@ void Coordinate::setVelocity(double x, double y, double z)
 /// Sets the velocity state vector
 void Coordinate::setVelocity(const Vec3 &vel)
 {
-  assert(finite(vel.x()) && finite(vel.y()) && finite(vel.z()));
+  assert(std::isfinite(vel.x()) && std::isfinite(vel.y()) && std::isfinite(vel.z()));
   hasVel_ = true;
   vel_.set(vel);
 }
@@ -215,7 +215,7 @@ void Coordinate::setVelocity(const Vec3 &vel)
 /// Sets the individual acceleration state components
 void Coordinate::setAcceleration(double x, double y, double z)
 {
-  assert(finite(x) && finite(y) && finite(z));
+  assert(std::isfinite(x) && std::isfinite(y) && std::isfinite(z));
   hasAcc_ = true;
   acc_.set(x, y, z);
 }
@@ -223,7 +223,7 @@ void Coordinate::setAcceleration(double x, double y, double z)
 /// Sets the acceleration state vector
 void Coordinate::setAcceleration(const Vec3 &acc)
 {
-  assert(finite(acc.x()) && finite(acc.y()) && finite(acc.z()));
+  assert(std::isfinite(acc.x()) && std::isfinite(acc.y()) && std::isfinite(acc.z()));
   hasAcc_ = true;
   acc_.set(acc);
 }

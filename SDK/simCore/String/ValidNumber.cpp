@@ -266,7 +266,7 @@ bool isValidNumber(const std::string& token, double& val, bool permitPlusToken)
   }
 
   // Must be finite
-  if (!finite(val))
+  if (!std::isfinite(val))
   {
     val = 0.0;
     return false;
