@@ -25,6 +25,7 @@
 
 #include <vector>
 #include "osg/Vec2f"
+#include "osgGA/GUIEventAdapter"
 #include "simCore/Common/Common.h"
 
 namespace simUtil {

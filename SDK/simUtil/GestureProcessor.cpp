@@ -20,7 +20,6 @@
  * disclose, or release this software.
  *
  */
-#include "osgGA/GUIEventAdapter"
 #include "simUtil/GestureProcessor.h"
 
 namespace simUtil {
