@@ -592,20 +592,29 @@ int HudEditorMouse::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 
 int HudEditorMouse::touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  // TODO: SIM-15089
-  return 0;
+  // Emulate mouse clicks
+  osg::ref_ptr<osgGA::GUIEventAdapter> newEa(new osgGA::GUIEventAdapter(ea));
+  newEa->setButton(newEa->LEFT_MOUSE_BUTTON);
+  newEa->setButtonMask(newEa->LEFT_MOUSE_BUTTON);
+  return push(*newEa, aa);
 }
 
 int HudEditorMouse::touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  // TODO: SIM-15089
-  return 0;
+  // Emulate mouse drag
+  osg::ref_ptr<osgGA::GUIEventAdapter> newEa(new osgGA::GUIEventAdapter(ea));
+  newEa->setButton(newEa->LEFT_MOUSE_BUTTON);
+  newEa->setButtonMask(newEa->LEFT_MOUSE_BUTTON);
+  return drag(*newEa, aa);
 }
 
 int HudEditorMouse::touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  // TODO: SIM-15089
-  return 0;
+  // Emulate mouse release
+  osg::ref_ptr<osgGA::GUIEventAdapter> newEa(new osgGA::GUIEventAdapter(ea));
+  newEa->setButton(newEa->LEFT_MOUSE_BUTTON);
+  newEa->setButtonMask(newEa->LEFT_MOUSE_BUTTON);
+  return release(*newEa, aa);
 }
 
 void HudEditorMouse::activate()
