@@ -421,6 +421,9 @@ public:
   /** Remove the specified listener */
   void removeGogNodeListener(GogNodeListenerPtr listener);
 
+  /** Force the node to be marked dirty and get rebuilt. */
+  virtual void markDirty();
+
   /** Retrieve the object index tag for picking GOGs. */
   unsigned int objectIndexTag() const;
 
@@ -585,18 +588,20 @@ public:
   /** Constructor with parent group node */
   FeatureNodeInterface(osg::Group* node, osgEarth::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~FeatureNodeInterface() {}
-  virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = nullptr) const;
-  virtual int getTessellation(TessellationStyle& style) const;
-  virtual void setAltitudeMode(AltitudeMode altMode);
-  virtual void setAltOffset(double altOffsetMeters);
-  virtual void setExtrude(bool extrude);
-  virtual void setTessellation(TessellationStyle style);
+
+  virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = nullptr) const override;
+  virtual int getTessellation(TessellationStyle& style) const override;
+  virtual void setAltitudeMode(AltitudeMode altMode) override;
+  virtual void setAltOffset(double altOffsetMeters) override;
+  virtual void setExtrude(bool extrude) override;
+  virtual void setTessellation(TessellationStyle style) override;
+  virtual void markDirty() override;
 
 protected:
-  virtual void adjustAltitude_();
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
-  virtual void setStyle_(const osgEarth::Style& style);
-  virtual void applyOrientationOffsets_();
+  virtual void adjustAltitude_() override;
+  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const override;
+  virtual void setStyle_(const osgEarth::Style& style) override;
+  virtual void applyOrientationOffsets_() override;
 
   osg::observer_ptr<osgEarth::FeatureNode> featureNode_;
   /// cache the original altitude values, to apply altitude offset dynamically
