@@ -54,6 +54,8 @@ FileSelectorWidget::FileSelectorWidget(QWidget* parent)
   connect(ui_->fileText, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
 #ifndef NDEBUG
   ui_->fileText->setReadOnly(false);  // Only allows developers to type in a file name; users must use the file browser
+#else
+  ui_->fileText->setReadOnly(true);
 #endif
   ui_->fileText->installEventFilter(this);
 
