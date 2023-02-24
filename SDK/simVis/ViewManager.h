@@ -32,6 +32,8 @@
 #include "osgViewer/CompositeViewer"
 #include "simCore/Common/Common.h"
 
+namespace osg { class GraphicsContext; }
+
 namespace simVis
 {
 
@@ -149,7 +151,7 @@ public:
   void removeView(simVis::View* view);
 
   /** Resizes all of the managed views */
-  void handleResize(int newwidth, int newheight);
+  void handleResize(const osg::GraphicsContext* gc, int newwidth, int newheight);
 
   /** Gets a list of the managed views. Includes top level and inset views. */
   void getViews(std::vector<simVis::View*>& out_views) const;

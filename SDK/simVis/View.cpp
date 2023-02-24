@@ -69,7 +69,7 @@ public:
   {
     setName("Border Node");
     osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
-    geom->setName("simVis::BorderNode Goemetry");
+    geom->setName("simVis::BorderNode Geometry");
     geom->setUseVertexBufferObjects(true);
     geom->setDataVariance(osg::Object::DYNAMIC);
 
@@ -1005,16 +1005,14 @@ void View::processResize(int width, int height)
 
   // limit the resize processing to the main view that has same height/width as the event report
   const osg::Viewport* vp = getCamera()->getViewport();
-  if (vp && width == vp->width() && height == vp->height())
-  {
-    // this is the main view that the resize event was for.  Make sure the width and height are
-    // positive values, else the projection and view matrix gets broken.  This can happen in rare
-    // cases on Linux, NVIDIA driver, Qt 5.9 with osgQt, with external display on laptop where
-    // the external display is marked primary display.  Since this is such a specific use case,
-    // it's hard to know if there are other cases where the problem shows up, so we just always
-    // force the width and height to be valid.
-    setExtents(Extents(this->extents_.x_, this->extents_.y_, simCore::sdkMax(1, width), simCore::sdkMax(1, height)));
-  }
+
+  // this is the main view (or superhud) that the resize event was for. Make sure the width and height
+  // are positive values, else the projection and view matrix gets broken. This can happen in rare
+  // cases on Linux, NVIDIA driver, Qt 5.9 with osgQt, with external display on laptop where
+  // the external display is marked primary display. Since this is such a specific use case,
+  // it's hard to know if there are other cases where the problem shows up, so we just always
+  // force the width and height to be valid.
+  setExtents(Extents(this->extents_.x_, this->extents_.y_, simCore::sdkMax(1, width), simCore::sdkMax(1, height)));
 }
 
 void View::setViewManager(simVis::ViewManager* viewman)
