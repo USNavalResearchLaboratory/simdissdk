@@ -26,7 +26,7 @@ macro(check_osgearth_method_exists VARIABLE FILENAME METHOD)
         if(EXISTS "${OSGEARTH_LIBRARY_INCLUDE_PATH}/${FILENAME}")
             file(STRINGS "${OSGEARTH_LIBRARY_INCLUDE_PATH}/${FILENAME}"
                 _OUTPUT
-                REGEX "^.* ${METHOD} *\\(.*\\)"
+                REGEX "^.* ${METHOD} *\\("
             )
         endif()
         if(NOT "${_OUTPUT}" STREQUAL "")

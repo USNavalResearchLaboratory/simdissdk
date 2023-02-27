@@ -81,11 +81,11 @@ public:
    */
   static FileDescriptorReplacement* replaceStderr(bool teeToStdErr, QObject* parent = nullptr);
 
-signals:
+Q_SIGNALS:
   /** Text has been read on the specified file descriptor */
   void textReceived(const QString& newText);
 
-private slots:
+private Q_SLOTS:
   /** Clear out the pointer to reader_ due to lazy deletion on thread */
   void setReaderToNull_();
 
@@ -131,13 +131,13 @@ public:
   ReadInLoop(int fd);
   virtual ~ReadInLoop();
 
-signals:
+Q_SIGNALS:
   /** Signaled when readLoop finally finishes. */
   void finished();
   /** Signaled when readLoop encounters a new text string. */
   void textReceived(const QString& newText);
 
-public slots:
+public Q_SLOTS:
   /** Starts the loop with the file descriptor set up on construction */
   void readLoop();
   /** Tell the loop to stop execution */

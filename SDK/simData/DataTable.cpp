@@ -24,20 +24,6 @@
 #include "simData/TableCellTranslator.h"
 #include "simData/DataTable.h"
 
-// Define NullTableCell as nullptr when available
-#ifdef WIN32
-#if _MSC_VER < 1600
-#define NullTableCell NULL
-#else
-#define NullTableCell nullptr
-#endif
-#else
-// SIMDIS-2239 - C++0x in gcc 4.4 (RHEL 6) does not provide nullptr, but errors on implicit cast of NULL to a templated type *
-// C++0x in gcc 4.8/RHEL 7 does provide nullptr, so this would not be needed, same in recent Ubuntu
-// unless we can detect that we have nullptr, provide the explicit correct cast of NULL
-#define NullTableCell (static_cast<TableCell*>(NULL))
-#endif
-
 namespace simData
 {
 
@@ -212,7 +198,7 @@ namespace
   template <typename T>
   TableStatus getCellValue(const std::vector<ColumnCellPair>& vec, TableColumnId columnId, T& value)
   {
-    std::vector<ColumnCellPair>::const_iterator i = std::lower_bound(vec.begin(), vec.end(), ColumnCellPair(columnId, NullTableCell));
+    std::vector<ColumnCellPair>::const_iterator i = std::lower_bound(vec.begin(), vec.end(), ColumnCellPair(columnId, nullptr));
     if (i == vec.end() || i->second == nullptr || i->first != columnId)
       return TableStatus::Error("Cell not found.");
     return i->second->value(value);
@@ -229,7 +215,7 @@ namespace
     }
 
     // Search for the cell
-    std::vector<ColumnCellPair>::iterator iter1 = std::lower_bound(vec.begin(), vec.end(), ColumnCellPair(columnId, NullTableCell));
+    std::vector<ColumnCellPair>::iterator iter1 = std::lower_bound(vec.begin(), vec.end(), ColumnCellPair(columnId, nullptr));
     if (iter1 != vec.end() && iter1->first == columnId)
     {
       // Found an entry, cell already exists
@@ -311,7 +297,7 @@ void TableRow::setTime(double t)
 
 bool TableRow::containsCell(TableColumnId columnId) const
 {
-  std::vector<ColumnCellPair>::const_iterator i = std::lower_bound(cells_.begin(), cells_.end(), ColumnCellPair(columnId, NullTableCell));
+  std::vector<ColumnCellPair>::const_iterator i = std::lower_bound(cells_.begin(), cells_.end(), ColumnCellPair(columnId, nullptr));
   return (i != cells_.end() && i->first == columnId);
 }
 

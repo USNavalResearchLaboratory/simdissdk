@@ -83,14 +83,14 @@ namespace simQt {
     */
     void disableEntityType(simData::ObjectType type);
 
-  signals:
+  Q_SIGNALS:
     /**
      * Emitted when type is changed to update the widget
      * @param types The types currently selected
      */
     void entityTypesChanged(unsigned int types);
 
-  private slots:
+  private Q_SLOTS:
     /** Manages updating the filterTypes_ based on the GUI widget updates, passes a bit mask of simData::ObjectType */
     void entityTypesChanged_(unsigned int types);
 

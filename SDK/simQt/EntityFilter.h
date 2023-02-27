@@ -83,7 +83,7 @@ namespace simQt {
      */
     virtual void setFilterSettings(const QMap<QString, QVariant>& settings) = 0;
 
-  signals:
+  Q_SIGNALS:
     /** This signal should be emitted by the filter when an update has occurred */
     void filterUpdated();
   };

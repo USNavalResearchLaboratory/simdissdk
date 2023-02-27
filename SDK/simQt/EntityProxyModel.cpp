@@ -256,7 +256,7 @@ namespace simQt {
     QMap<QString, QVariant> settings;
     for (auto it = entityFilters_.begin(); it != entityFilters_.end(); ++it)
       (*it)->getFilterSettings(settings);
-    emit filterSettingsChanged(settings);
+    Q_EMIT filterSettingsChanged(settings);
   }
 
   void EntityProxyModel::getFilterSettings(QMap<QString, QVariant>& settings) const

@@ -46,6 +46,9 @@ public:
   /** Registers a task to execute potentially on start-up */
   int registerTask(const QString& name, StartupLayoutTaskPtr task);
 
+  /** Unregisters a task */
+  int unregisterTask(const QString& name);
+
   /** Executes all tasks that are marked in the Settings for starting on initialization */
   void executeTasks(simQt::Settings& fromSettings);
   /** Saves a set of tasks to persistent storage that indicate they should execute on next start-up */

@@ -72,7 +72,7 @@ public:
   /** Returns the state of allowing visibility; see setVisible(); widget might still be hidden by disabledMode */
   bool allowVisible() const;
 
-public slots:
+public Q_SLOTS:
   /**
    * Indicates whether the slider can be shown; if true, it's still only shown if not disabled (depending on disabledMode()).
    * The following truth table is followed for whether clock is visible:
@@ -87,7 +87,7 @@ public slots:
    */
   void setAllowVisible(bool allowVisible);
 
-private slots:
+private Q_SLOTS:
   void valueChanged_(int sliderPos);
 
 private:

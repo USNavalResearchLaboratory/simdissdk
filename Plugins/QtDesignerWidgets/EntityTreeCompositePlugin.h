@@ -79,7 +79,7 @@ public:
   virtual bool useCenterAction() const { return useCenterAction_; }
   virtual bool expandsOnDoubleClick() const { return expandsOnDoubleClick_; }
 
-public slots:
+public Q_SLOTS:
   /** Swaps the view to the hierarchy tree */
   virtual void setToTreeView() {}
   /** Swaps the view to a non-hierarchical list */

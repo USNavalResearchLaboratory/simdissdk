@@ -48,7 +48,7 @@ public:
   /** Constructor */
   SliderTimeWidgetBinding(QSlider* slider, TimeWidget* timeWidget, QWidget *parent = nullptr);
 
-private slots:
+private Q_SLOTS:
   void setTimeWidgetValue_(int value);
   void setSliderValue_(const simCore::TimeStamp& time);
   void rescaleSlider_();

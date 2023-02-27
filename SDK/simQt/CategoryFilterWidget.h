@@ -70,7 +70,7 @@ public:
   /** Overrides from QAbstractItemDelegate */
   virtual bool helpEvent(QHelpEvent* evt, QAbstractItemView* view, const QStyleOptionViewItem& option, const QModelIndex& index);
 
-signals:
+Q_SIGNALS:
   /** User clicked on the custom expand button and index needs to be expanded/collapsed. */
   void expandClicked(const QModelIndex& index);
   /** User clicked on the custom RegExp edit button and index needs a RegExp assigned. */
@@ -139,7 +139,7 @@ public:
   /** Sets a filter on the entity counter, on the entity's object type. Only useful if showEntityCount() is on. */
   void setEntityCountObjectTypes(simData::ObjectType counterObjectTypes);
 
-public slots:
+public Q_SLOTS:
   /** Changes the model state to match the values in the filter. */
   void setFilter(const simData::CategoryFilter& filter);
   /** Updates the (#) count next to category values with the given category value counts. */
@@ -151,13 +151,13 @@ public slots:
    */
   void setEntityCountDirty();
 
-signals:
+Q_SIGNALS:
   /** The internal filter has changed, possibly from user editing or programmatically. */
   void filterChanged(const simData::CategoryFilter& filter);
   /** The internal filter has changed from user editing. */
   void filterEdited(const simData::CategoryFilter& filter);
 
-private slots:
+private Q_SLOTS:
   /** Shows a GUI for editing the regular expression of a given index */
   void showRegExpEditGui_(const QModelIndex& index);
 

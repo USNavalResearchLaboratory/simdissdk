@@ -20,10 +20,9 @@
  * disclose, or release this software.
  *
  */
-
+#include <cassert>
 #include "osgGA/GUIEventAdapter"
 #include "osgEarth/EarthManipulator"
-
 #include "simVis/BoxZoomMouseHandler.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/View.h"
@@ -50,6 +49,32 @@ NavigationMode::NavigationMode()
 
 NavigationMode::~NavigationMode()
 {
+}
+
+void NavigationMode::bindMultiTouch_(bool canZoom, bool canRotate)
+{
+  EarthManipulator::ActionOptions emptyOptions;
+  EarthManipulator::ActionOptions panOptions;
+  panOptions.add(EarthManipulator::OPTION_SCALE_X, 4.0);
+  panOptions.add(EarthManipulator::OPTION_SCALE_Y, 4.0);
+
+  if (canZoom)
+    bindPinch(EarthManipulator::ACTION_ZOOM, emptyOptions);
+  if (canRotate)
+  {
+    bindMultiDrag(EarthManipulator::ACTION_ROTATE, emptyOptions);
+    bindTwist(EarthManipulator::ACTION_ROTATE, emptyOptions);
+  }
+  else
+  {
+    // Inability to rotate means two fingers will drag earth (e.g. overhead mode)
+    bindMultiDrag(EarthManipulator::ACTION_PAN, panOptions);
+  }
+
+  // Single touch drag will pan (which may be different from left click)
+#ifdef HAVE_EARTHMANIPULATOR_BINDTOUCHDRAG
+  bindTouchDrag(EarthManipulator::ACTION_PAN, panOptions);
+#endif
 }
 
 NavigationMode::PanOptions::PanOptions()
@@ -107,9 +132,12 @@ RotatePanNavigationMode::~RotatePanNavigationMode()
 
 void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watchMode)
 {
+  const bool canRotate = !watchMode && !enableOverhead;
+  const bool canZoom = !watchMode;
   view_ = view;
+
   // left mouse + ctl+shift => box zoom (done with an external event handler)
-  if (!watchMode && view_.valid())
+  if (canZoom && view_.valid())
   {
     EarthManipulator::ActionOptions boxZoomOpts;
     boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
@@ -141,6 +169,9 @@ void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, boo
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
     if (!watchMode)
     {
+      // Cannot rotate in watch mode
+      assert(canRotate);
+
       // left mouse => continuous rotate
       bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, 0, RotateOptions());
 
@@ -153,7 +184,7 @@ void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, boo
   }
 
   // Zooming not permitted in watch mode
-  if (!watchMode)
+  if (canZoom)
   {
     // middle mouse => continuous zoom; Ctl+Alt+Right => continuous zoom
     ContinuousZoomOptions continuousZoomOpts;
@@ -180,12 +211,16 @@ void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, boo
   bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_CTRL, goToOpt);
 
   setSingleAxisRotation(true);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 // ==========================================================================
 
 GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watchMode)
 {
+  const bool canRotate = !watchMode && !enableOverhead;
+  const bool canZoom = !watchMode;
+
   // left mouse => globe spin
   bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, 0);
 
@@ -209,6 +244,9 @@ GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watch
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
     if (!watchMode)
     {
+      // Cannot rotate in watch mode
+      assert(canRotate);
+
       // right mouse (or shift left mouse) => continuous rotate
       RotateOptions rotateOpt;
       bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON, 0, rotateOpt);
@@ -224,7 +262,7 @@ GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watch
   }
 
   // Zooming not permitted in watch mode
-  if (!watchMode)
+  if (canZoom)
   {
     // middle mouse => continuous zoom; Ctl+Alt+Right => continuous zoom
     ContinuousZoomOptions continuousZoomOpts;
@@ -251,6 +289,7 @@ GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watch
   bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_CTRL, goToOpt);
 
   setSingleAxisRotation(true);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 GlobeSpinNavigationMode::~GlobeSpinNavigationMode()
@@ -261,6 +300,9 @@ GlobeSpinNavigationMode::~GlobeSpinNavigationMode()
 
 ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
 {
+  const bool canRotate = !watchMode && !enableOverhead;
+  const bool canZoom = !watchMode;
+
   if (enableOverhead)
   {
     // shift left mouse => continuous pan
@@ -278,6 +320,9 @@ ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
     if (!watchMode)
     {
+      // Cannot rotate in watch mode
+      assert(canRotate);
+
       // shift left mouse => continuous rotate
       bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_SHIFT, RotateOptions());
 
@@ -290,7 +335,7 @@ ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
   }
 
   // Zooming not permitted in watch mode
-  if (!watchMode)
+  if (canZoom)
   {
     // middle mouse => continuous zoom
     ContinuousZoomOptions contZoomOpt;
@@ -318,6 +363,7 @@ ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
   bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_CTRL, goToOpt);
 
   setSingleAxisRotation(true);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 ZoomNavigationMode::~ZoomNavigationMode()
@@ -328,6 +374,9 @@ ZoomNavigationMode::~ZoomNavigationMode()
 
 CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool watchMode)
 {
+  const bool canRotate = !watchMode && !enableOverhead;
+  const bool canZoom = !watchMode;
+
   if (enableOverhead)
   {
     // shift left mouse => continuous pan
@@ -345,6 +394,9 @@ CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool wat
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
     if (!watchMode)
     {
+      // Cannot rotate in watch mode
+      assert(canRotate);
+
       // shift left mouse => continuous rotate
       bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_SHIFT, RotateOptions());
 
@@ -357,7 +409,7 @@ CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool wat
   }
 
   // Zooming not permitted in watch mode
-  if (!watchMode)
+  if (canZoom)
   {
     // middle mouse => continuous zoom; Ctl+Alt+Right => continuous zoom
     ContinuousZoomOptions continuousZoomOpts;
@@ -386,6 +438,7 @@ CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool wat
   bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_CTRL, goToOpt);
 
   setSingleAxisRotation(true);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 CenterViewNavigationMode::~CenterViewNavigationMode()
@@ -517,6 +570,7 @@ void GisNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watc
   setArcViewpointTransitions(true);
   setThrowingEnabled(true);
   setLockAzimuthWhilePanning(false);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 // ==========================================================================
@@ -591,6 +645,7 @@ void BuilderNavigationMode::init_(bool enableOverhead, bool watchMode)
     setMinMaxPitch(-90, -90);
   else
     setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
+  bindMultiTouch_(canZoom, canRotate);
 }
 
 // ==========================================================================

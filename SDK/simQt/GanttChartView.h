@@ -125,11 +125,11 @@ public:
   /** Set true to use custom start and end times as bounds, false to calculate bounds to fit contents */
   void setUseCustomBounds(bool useCustomBounds);
 
-signals:
+Q_SIGNALS:
   /** Emits value in time of x-coordinate clicked */
   void timeValueAtPositionClicked(double timeValue);
 
-protected slots:
+protected Q_SLOTS:
   /** Redraw when data changes */
   virtual void dataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight);
   /** Redraw when data changes */

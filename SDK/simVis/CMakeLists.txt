@@ -377,9 +377,9 @@ endif()
 if(EXISTS "${OSGEARTH_LIBRARY_INCLUDE_PATH}/osgEarth/Threading")
     set(HAVE_OSGEARTH_THREADING 1)
 endif()
-# Detect change in ElevationPool::WorkingSet's LRU class, added in changeset (eed04b8a69)
+# Detect EarthManipulator's bindTouchDrag() needed for better touch support
 include(CheckOSGEarthMethodExists)
-check_osgearth_method_exists(HAVE_WORKINGSET_STRONGLRU "osgEarth/ElevationPool" "StrongLRU")
+check_osgearth_method_exists(HAVE_EARTHMANIPULATOR_BINDTOUCHDRAG "osgEarth/EarthManipulator" "bindTouchDrag")
 
 # TODO Once OSGEarth master hits 3.0, test properly.  For now, hardcode
 set(SDK_OSGEARTH_DEVEL 1)
@@ -472,8 +472,8 @@ if(SIM_HAVE_DB_SUPPORT)
         target_compile_definitions(simVis PRIVATE SIM_LITTLE_ENDIAN)
     endif()
 endif()
-if(HAVE_WORKINGSET_STRONGLRU)
-    target_compile_definitions(simVis PRIVATE HAVE_WORKINGSET_STRONGLRU)
+if(HAVE_EARTHMANIPULATOR_BINDTOUCHDRAG)
+    target_compile_definitions(simVis PRIVATE HAVE_EARTHMANIPULATOR_BINDTOUCHDRAG)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)

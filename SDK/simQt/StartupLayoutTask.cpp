@@ -51,7 +51,7 @@ bool StartupLayoutTask::shouldExecuteOnNextStartup() const
 
 void StartupLayoutTask::execute()
 {
-  emit(executed());
+  Q_EMIT(executed());
 }
 
 void StartupLayoutTask::setWidget(QWidget* widget)

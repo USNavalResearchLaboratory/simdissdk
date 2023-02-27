@@ -54,6 +54,8 @@ FileSelectorWidget::FileSelectorWidget(QWidget* parent)
   connect(ui_->fileText, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
 #ifndef NDEBUG
   ui_->fileText->setReadOnly(false);  // Only allows developers to type in a file name; users must use the file browser
+#else
+  ui_->fileText->setReadOnly(true);
 #endif
   ui_->fileText->installEventFilter(this);
 
@@ -221,9 +223,9 @@ void FileSelectorWidget::setFilename_(const QString& filename, bool canEmitFileS
     return;
   filename_ = osFilename;
   ui_->fileText->setText(filename_);
-  emit filenameChanged(filename_);
+  Q_EMIT filenameChanged(filename_);
   if (canEmitFileSelected)
-    emit fileSelected(filename_);
+    Q_EMIT fileSelected(filename_);
 }
 
 bool FileSelectorWidget::isValid() const

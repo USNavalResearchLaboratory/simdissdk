@@ -79,7 +79,7 @@ public:
   /** Return true if clicking on the color well will display the color dialog */
   bool dialogEnable() const;
 
-public slots:
+public Q_SLOTS:
   /** Changes the color of the widget */
   void setColor(const QColor& value);
   /** set the label text in the widget */
@@ -95,11 +95,11 @@ public slots:
   /** Retrieve the pointer to the color label */
   QLabel* colorLabel() const;
 
-signals:
+Q_SIGNALS:
   /** emitted when a color selection is made */
   void colorChanged(const QColor& color);
 
-private slots:
+private Q_SLOTS:
   /** handles internally updating the selected color, and passing it out to the user */
   void showColorDialog_();
 

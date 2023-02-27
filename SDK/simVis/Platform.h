@@ -290,6 +290,7 @@ private:
   */
   bool showExpiredTrackHistory_(const simData::PlatformPrefs& prefs) const;
   void setRcsPrefs_(const simData::PlatformPrefs& prefs);
+  simCore::Vec3 pointNorth_(const simCore::Vec3& ecef) const;
   void updateLocator_(const simData::PlatformUpdate& u);
   void updateHostBounds_(double scale);
   void updateLabel_(const simData::PlatformPrefs& prefs);

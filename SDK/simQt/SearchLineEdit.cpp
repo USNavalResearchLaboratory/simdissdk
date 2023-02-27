@@ -142,7 +142,7 @@ void SearchLineEdit::setSearchIconEnabled(bool enabled)
 
 void SearchLineEdit::emitSearchRequested_()
 {
-  emit searchRequested(text());
+  Q_EMIT searchRequested(text());
 }
 
 }

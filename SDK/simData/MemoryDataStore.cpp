@@ -362,7 +362,7 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
 ///destructor
 MemoryDataStore::~MemoryDataStore()
 {
-  clear();
+  clear(true);
   delete categoryNameManager_;
   categoryNameManager_ = nullptr;
   delete dataTableManager_;
@@ -373,12 +373,12 @@ MemoryDataStore::~MemoryDataStore()
   entityNameCache_ = nullptr;
 }
 
-void MemoryDataStore::clear()
+void MemoryDataStore::clear(bool invokeCallback)
 {
-
-  for (ListenerList::const_iterator i = listeners_.begin(); i != listeners_.end(); ++i)
+  if (invokeCallback)
   {
-    (**i).onScenarioDelete(this);
+    for (ListenerList::const_iterator i = listeners_.begin(); i != listeners_.end(); ++i)
+      (**i).onScenarioDelete(this);
   }
 
   deleteEntries_<Platforms>(&platforms_);

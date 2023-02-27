@@ -59,11 +59,11 @@ public:
   virtual Qt::ItemFlags flags(const QModelIndex& index) const;
   virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
 
-signals:
+Q_SIGNALS:
   /// Emitted when a new group is added; useful for connecting to an expand() slot
   void groupAdded(const QModelIndex& idx);
 
-private slots:
+private Q_SLOTS:
   void actionAdded(simQt::Action* action);
   void actionRemoved(const simQt::Action* action);
   void hotKeysChanged(simQt::Action* action);
@@ -116,7 +116,7 @@ public:
   /// Sets a key sequence, optionally emitting keyChanged
   void setKey(const QKeySequence& key, bool emitSignal=false);
 
-public slots:
+public Q_SLOTS:
 
   /**
    * Call this function to notify on key press.  Note that this can be called from the
@@ -138,7 +138,7 @@ protected:
   /** Override event() to ignore Shortcut and ShortcutOverride events */
   virtual bool event(QEvent* evt);
 
-signals:
+Q_SIGNALS:
   /// Hot key has been changed; newKey.isEmpty() means the key was removed
   void keyChanged(const QKeySequence& newKey);
 
@@ -168,7 +168,7 @@ protected:
   /// Override the default event filter to permit esc, tab, etc. to pass through to editor
   virtual bool eventFilter(QObject* editor, QEvent* evt);
 
-private slots:
+private Q_SLOTS:
   /// Helper to emit signals for commit/close in order
   void closeAndCommitEditor_();
 };

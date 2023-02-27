@@ -85,7 +85,7 @@ public:
   /** Remove files based on the determination of removable */
   int clean(const DetermineRemovable& removable);
 
-public slots:
+public Q_SLOTS:
   /**
    * Opens the log file if it was not already open, returning 0 on success and non-zero
    * on error.  If the file was already open, 0 is returned.  Log file will be in the

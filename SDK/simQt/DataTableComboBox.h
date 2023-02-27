@@ -65,14 +65,14 @@ public:
   */
   void setProviders(simData::DataStore* dataStore);
 
-signals:
+Q_SIGNALS:
   /**
   * Emitted when a new table is selected.  Will pass nullptr if combo box becomes empty
   * @param table  current selected table
   */
   void dataTableSelected(simData::DataTable* table);
 
-private slots:
+private Q_SLOTS:
   /** Called when the combo box selection has changed */
   void tableSelected_(int index);
 

@@ -185,28 +185,28 @@ void ClickableLabel::mousePressEvent(QMouseEvent* evt)
 {
   QLabel::mousePressEvent(evt);
   evt->setAccepted(true);
-  emit pressed();
+  Q_EMIT pressed();
 }
 
 void ClickableLabel::mouseReleaseEvent(QMouseEvent* evt)
 {
   QLabel::mouseReleaseEvent(evt);
   evt->setAccepted(true);
-  emit clicked();
+  Q_EMIT clicked();
 }
 
 void ClickableLabel::enterEvent(QEvent* evt)
 {
   mouseInside_ = true;
-  emit mouseEntered();
-  return QLabel::enterEvent(evt);
+  Q_EMIT mouseEntered();
+  QLabel::enterEvent(evt);
 }
 
 void ClickableLabel::leaveEvent(QEvent* evt)
 {
   mouseInside_ = false;
-  emit mouseLeft();
-  return QLabel::leaveEvent(evt);
+  Q_EMIT mouseLeft();
+  QLabel::leaveEvent(evt);
 }
 
 } // namespace simQt

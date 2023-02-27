@@ -41,7 +41,7 @@ public:
   MainWindow(QWidget *parent, simData::DataStore* dataStore);
   virtual ~MainWindow();
 
-protected slots:
+protected Q_SLOTS:
   void addPlatform_();
   void addBeam_();
   void addGate_();

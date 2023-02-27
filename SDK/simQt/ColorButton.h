@@ -59,14 +59,14 @@ public:
   */
   static void paintColoredSquare(QPainter* painter, const QRect& rect, const QColor& color, bool showAlpha = true);
 
-public slots:
+public Q_SLOTS:
 
   /** Changes the color of the widget */
   void setColor(const QColor& value);
   /** set whether to show alpha channel or not */
   void setShowAlpha(bool value);
 
-signals:
+Q_SIGNALS:
   /** Emitted when double clicked */
   void doubleClicked(QMouseEvent* evt=nullptr);
 

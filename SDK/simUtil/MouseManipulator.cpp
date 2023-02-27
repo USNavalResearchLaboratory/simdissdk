@@ -25,8 +25,9 @@
 
 namespace simUtil {
 
-MouseManipulatorAdapter::MouseManipulatorAdapter(osgGA::GUIEventHandler* handler)
-  : handler_(handler)
+MouseManipulatorAdapter::MouseManipulatorAdapter(osgGA::GUIEventHandler* handler, bool touchEmulatesMouse)
+  : handler_(handler),
+    touchEmulatesMouse_(touchEmulatesMouse)
 {
 }
 
@@ -83,6 +84,51 @@ int MouseManipulatorAdapter::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIA
   return handler_->handle(ea, aa);
 }
 
+int MouseManipulatorAdapter::touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (touchEmulatesMouse_)
+  {
+    osg::ref_ptr<osgGA::GUIEventAdapter> newEa(new osgGA::GUIEventAdapter(ea));
+    newEa->setButton(newEa->LEFT_MOUSE_BUTTON);
+    newEa->setButtonMask(newEa->LEFT_MOUSE_BUTTON);
+    return push(*newEa, aa);
+  }
+
+  if (handler_ == nullptr)
+    return 0;
+  return handler_->handle(ea, aa);
+}
+
+int MouseManipulatorAdapter::touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (touchEmulatesMouse_)
+  {
+    osg::ref_ptr<osgGA::GUIEventAdapter> newEa(new osgGA::GUIEventAdapter(ea));
+    newEa->setButton(newEa->LEFT_MOUSE_BUTTON);
+    newEa->setButtonMask(newEa->LEFT_MOUSE_BUTTON);
+    return drag(*newEa, aa);
+  }
+
+  if (handler_ == nullptr)
+    return 0;
+  return handler_->handle(ea, aa);
+}
+
+int MouseManipulatorAdapter::touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (touchEmulatesMouse_)
+  {
+    osg::ref_ptr<osgGA::GUIEventAdapter> newEa(new osgGA::GUIEventAdapter(ea));
+    newEa->setButton(newEa->LEFT_MOUSE_BUTTON);
+    newEa->setButtonMask(newEa->LEFT_MOUSE_BUTTON);
+    return release(*newEa, aa);
+  }
+
+  if (handler_ == nullptr)
+    return 0;
+  return handler_->handle(ea, aa);
+}
+
 void MouseManipulatorAdapter::activate()
 {
   // noop
@@ -101,6 +147,16 @@ osgGA::GUIEventHandler* MouseManipulatorAdapter::handler() const
 void MouseManipulatorAdapter::setHandler(osgGA::GUIEventHandler* handler)
 {
   handler_ = handler;
+}
+
+void MouseManipulatorAdapter::setTouchEmulatesMouse(bool emulateMouse)
+{
+  touchEmulatesMouse_ = emulateMouse;
+}
+
+bool MouseManipulatorAdapter::touchEmulatesMouse() const
+{
+  return touchEmulatesMouse_;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -161,6 +217,27 @@ int MouseManipulatorProxy::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIAct
   if (manipulator_ == nullptr)
     return 0;
   return manipulator_->frame(ea, aa);
+}
+
+int MouseManipulatorProxy::touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (manipulator_ == nullptr)
+    return 0;
+  return manipulator_->touchBegan(ea, aa);
+}
+
+int MouseManipulatorProxy::touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (manipulator_ == nullptr)
+    return 0;
+  return manipulator_->touchMoved(ea, aa);
+}
+
+int MouseManipulatorProxy::touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (manipulator_ == nullptr)
+    return 0;
+  return manipulator_->touchEnded(ea, aa);
 }
 
 void MouseManipulatorProxy::activate()

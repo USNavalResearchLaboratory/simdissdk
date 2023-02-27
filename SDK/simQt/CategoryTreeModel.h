@@ -87,7 +87,7 @@ public:
   explicit CategoryProxyModel(QObject *parent = 0);
   virtual ~CategoryProxyModel();
 
-public slots:
+public Q_SLOTS:
   /// string to filter against
   void setFilterText(const QString& filter);
   /// Rests the filter by calling invalidateFilter
@@ -139,13 +139,13 @@ public:
   /// data role for obtaining names that are remapped to force "Unlisted Value" and "No Value" to the top
   static const int SortRole = Qt::UserRole + 1;
 
-public slots:
+public Q_SLOTS:
   /** Changes the model state to match the values in the filter. */
   void setFilter(const simData::CategoryFilter& filter);
   /** Given results of a category count, updates the text for each category. */
   void processCategoryCounts(const simQt::CategoryCountResults& results);
 
-signals:
+Q_SIGNALS:
   /** The internal filter has changed, possibly from user editing or programmatically. */
   void filterChanged(const simData::CategoryFilter& filter);
   /** The internal filter has changed from user editing. */

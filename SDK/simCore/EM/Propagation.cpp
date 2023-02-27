@@ -105,7 +105,7 @@ double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, doubl
 
 double lossToPpf(double slantRange, double freqMHz, double loss_dB)
 {
-  if (!finite(loss_dB) || loss_dB <= simCore::SMALL_DB_VAL)
+  if (!std::isfinite(loss_dB) || loss_dB <= simCore::SMALL_DB_VAL)
     return simCore::SMALL_DB_VAL;
   if (slantRange <= 0.0 || freqMHz <= 0.0)
   {

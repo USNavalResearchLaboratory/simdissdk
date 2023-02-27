@@ -442,7 +442,7 @@ void GanttChartView::mouseDoubleClickEvent(QMouseEvent* event)
 {
   QModelIndex index = indexAt(event->pos());
   if (index != QModelIndex())
-    emit(doubleClicked(index));
+    Q_EMIT(doubleClicked(index));
 }
 
 void GanttChartView::mousePressEvent(QMouseEvent* event)
@@ -456,13 +456,13 @@ void GanttChartView::mousePressEvent(QMouseEvent* event)
       if (!isEmpty_())
         return;
 
-      emit clicked(indexAt(event->pos()));
+      Q_EMIT clicked(indexAt(event->pos()));
 
       // Zero scale not allowed and will crash here
       assert((scale_ * zoom_) != 0);
 
       double timeAtCursor = firstBegin_ + (horizontalScrollBar()->value() + event->pos().x()) / (scale_ * zoom_);
-      emit timeValueAtPositionClicked(timeAtCursor);
+      Q_EMIT timeValueAtPositionClicked(timeAtCursor);
       viewport()->update();
     }
   }

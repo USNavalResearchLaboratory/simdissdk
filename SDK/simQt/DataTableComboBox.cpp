@@ -128,7 +128,7 @@ void DataTableComboBox::setProviders(simData::DataStore* dataStore)
 void DataTableComboBox::tableSelected_(int index)
 {
   simData::DataTable* table = (simData::DataTable*)(ui_->TableComboBox->itemData(index).toLongLong());
-  emit(dataTableSelected(table));
+  Q_EMIT(dataTableSelected(table));
 }
 
 void DataTableComboBox::addTable_(simData::DataTable* table)
@@ -152,7 +152,7 @@ void DataTableComboBox::removeTable_(simData::DataTable* table)
     }
   }
   if (ui_->TableComboBox->count() == 0)
-    emit(dataTableSelected(nullptr));
+    Q_EMIT(dataTableSelected(nullptr));
 }
 
 }

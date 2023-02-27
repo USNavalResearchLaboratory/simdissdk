@@ -318,7 +318,8 @@ DataTable* TableManager::findTable(ObjectId ownerId, const std::string& tableNam
 
 void TableManager::fireOnAddTable_(DataTable* table) const
 {
-  for (ManagerObserverList::const_iterator i = observers_.begin(); i != observers_.end(); ++i)
+  auto observersCopy = observers_;
+  for (ManagerObserverList::const_iterator i = observersCopy.begin(); i != observersCopy.end(); ++i)
   {
     (*i)->onAddTable(table);
   }
@@ -326,7 +327,8 @@ void TableManager::fireOnAddTable_(DataTable* table) const
 
 void TableManager::fireOnPreRemoveTable_(DataTable* table) const
 {
-  for (ManagerObserverList::const_iterator i = observers_.begin(); i != observers_.end(); ++i)
+  auto observersCopy = observers_;
+  for (ManagerObserverList::const_iterator i = observersCopy.begin(); i != observersCopy.end(); ++i)
   {
     (*i)->onPreRemoveTable(table);
   }

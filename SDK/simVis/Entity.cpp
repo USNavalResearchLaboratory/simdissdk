@@ -21,6 +21,7 @@
  *
  */
 #include "osgEarth/Terrain"
+#include "osgEarth/Version"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simVis/LabelContentManager.h"
@@ -160,7 +161,7 @@ bool CoordSurfaceClamping::isValid() const
 void CoordSurfaceClamping::setMapNode(const osgEarth::MapNode* map)
 {
   mapNode_ = map;
-#ifdef HAVE_WORKINGSET_STRONGLRU
+#if OSGEARTH_MIN_VERSION_REQUIRED(3,0,0)
   workingSet_.clear();
 #else
   workingSet_._lru.clear();

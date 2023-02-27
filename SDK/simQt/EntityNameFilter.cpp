@@ -137,7 +137,7 @@ void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity 
     changed = true;
   }
   if (changed)
-    emit filterUpdated();
+    Q_EMIT filterUpdated();
 }
 
 bool EntityNameFilter::acceptIndex_(const QModelIndex& index) const

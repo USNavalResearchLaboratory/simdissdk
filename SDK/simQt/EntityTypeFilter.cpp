@@ -73,7 +73,7 @@ namespace simQt {
       if (receivers(SIGNAL(entityTypesChanged(unsigned int))) == 0)
         entityTypesChanged_(it.value().toUInt());
       else
-        emit entityTypesChanged(it.value().toUInt());
+        Q_EMIT entityTypesChanged(it.value().toUInt());
     }
   }
 
@@ -81,21 +81,21 @@ namespace simQt {
   {
     filterTypes_ |= type;
     // we changed the filter, emit the signal
-    emit(filterUpdated());
+    Q_EMIT(filterUpdated());
   }
 
   void EntityTypeFilter::disableEntityType(simData::ObjectType type)
   {
     filterTypes_ =  filterTypes_ & (filterTypes_ ^ type);
     // we changed the filter, emit the signal
-    emit(filterUpdated());
+    Q_EMIT(filterUpdated());
   }
 
   void EntityTypeFilter::entityTypesChanged_(unsigned int types)
   {
     // the GUI has changed the filter, now emit the signal (users will want to know)
     filterTypes_ = types;
-    emit(filterUpdated());
+    Q_EMIT(filterUpdated());
   }
 
 }

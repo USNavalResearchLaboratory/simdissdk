@@ -31,6 +31,7 @@
 #include "osgQt/GraphicsWindowQt"
 #include "simVis/Gl3Utils.h"
 #include "simQt/Gl3FormatGuesser.h"
+#include "simQt/MultiTouchEventFilter.h"
 #include "simQt/ViewWidget.h"
 
 namespace simQt
@@ -102,6 +103,9 @@ ViewWidget::ViewWidget(osgViewer::View* view)
 
   // Force a minimum size to prevent divide-by-zero issues w/ matrices in OSG
   setMinimumSize(QSize(2, 2));
+
+  // Do not process touch events from osgQt; it doesn't appear to do it right
+  setTouchEventsEnabled(false);
 }
 
 ViewWidget::~ViewWidget()
@@ -114,11 +118,24 @@ void ViewWidget::init_(osgViewer::View* view)
   autoRepeatFilter_ = new AutoRepeatFilter(this);
   installEventFilter(autoRepeatFilter_);
 
+  // Set that the widget accepts touch events. If we do not do this, multi-touch will
+  // still work just fine, because our multi-touch filter detects touch-update and simulates
+  // the touch-begin that we (otherwise) wouldn't get. But single-touch and drag is
+  // completely simulated by the mouse in this case, reducing our ability to implement
+  // touch-only drag events.
+  setAttribute(Qt::WA_AcceptTouchEvents);
+
+  // Install event handler to deal with multi-touch
+  multiTouchEventFilter_ = new MultiTouchEventFilter(this);
+  //multiTouchEventFilter_->setAllowedMouseEvents(MultiTouchEventFilter::AllowAll);
+  installEventFilter(multiTouchEventFilter_);
+
   if (!view)
     return;
 
   // Create the graphics context
   osg::GraphicsContext* gc = createGraphicsContext_();
+  multiTouchEventFilter_->setGraphicsWindow(getGraphicsWindow());
 
   // Create new camera if needed
   osg::Camera* camera = view->getCamera();

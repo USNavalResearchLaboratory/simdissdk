@@ -29,13 +29,14 @@
 #include "simCore/Common/Export.h"
 #include "simQt/Settings.h"
 
+class QAction;
+class QAbstractButton;
 class QComboBox;
 class QDoubleSpinBox;
-class QAbstractButton;
-class QSpinBox;
-class QSlider;
 class QLineEdit;
-class QAction;
+class QSlider;
+class QSpinBox;
+class QToolButton;
 
 namespace simQt {
 
@@ -122,17 +123,26 @@ public:
   void bindTo(QAbstractButton* button, bool populateToolTip=true);
 
   /**
+   * Helper routine to bind to a QToolButton. A possible bug in Qt was discovered where setting the check state on a
+   * tool button will not appropriately update the check state on the default action, if there is one. This routine
+   * compensates for the possibility.
+   * @param button Tool button to bind to
+   * @param populateToolTip If true, replace the existing tool tip on the widget with the value from Settings MetaData
+   */
+  void bindTo(QToolButton* button, bool populateToolTip = true);
+
+  /**
    * Helper routine to bind a QAction's check state to the BoundBooleanSetting.
    * @param action Action to bind to
    * @param populateToolTip If true, replace the existing tool tip on the action with the value from Settings MetaData
    */
   void bindTo(QAction* action, bool populateToolTip=true);
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(bool v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(bool v);
 
@@ -186,11 +196,11 @@ public:
    */
   void bindTo(QSlider* slider, bool populateToolTip=true, bool populateLimits=true);
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(int v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(int v);
 
@@ -224,11 +234,11 @@ public:
    */
   void bindTo(QDoubleSpinBox* box, bool populateToolTip=true, bool populateLimits=true);
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(double v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(double v);
 
@@ -259,11 +269,11 @@ public:
    */
   void bindTo(simQt::ColorWidget* colorWidget, bool populateToolTip=true);
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(const QColor& v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(const QColor& v);
 
@@ -305,11 +315,11 @@ public:
    */
   void bindTo(FileSelectorWidget* fileSelector, bool populateToolTip=true);
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(const QString& v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(const QString& v);
 
@@ -333,11 +343,11 @@ public:
   /** Current data value */
   QStringList value() const;
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(const QStringList& v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes */
   void valueChanged(const QStringList& v);
 
@@ -361,13 +371,13 @@ public:
   /** Current data value */
   QMap<QString, QVariant> value() const;
 
-public slots:
+public Q_SLOTS:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
   void setValue(const QMap<QString, QVariant>& v);
   /** Add entries in 'v' to current value.  Does not remove values. */
   void mergeValues(const QMap<QString, QVariant>& v);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the settings value changes. */
   void valueChanged(const QMap<QString, QVariant>& value);
 

@@ -148,11 +148,11 @@ public:
 
   class Item;
 
-public slots:
+public Q_SLOTS:
   /** Refreshes the data on the Map model.  Useful when names change (which aren't signaled by osgEarth) */
   void refreshText();
 
-signals:
+Q_SIGNALS:
   /** Qt signal as described by the signal name */
   void imageLayerVisibleChanged(osgEarth::ImageLayer* layer);
   /** Qt signal as described by the signal name */

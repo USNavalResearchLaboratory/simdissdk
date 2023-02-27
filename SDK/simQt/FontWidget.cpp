@@ -204,7 +204,7 @@ void FontWidget::fontNameChanged_(const QString& fontName)
   // we should have an entry in our hash table for this value, otherwise there is a problem
   QHash<QString, QFileInfo>::const_iterator iter = fontFiles_.find(fontName);
   if (iter != fontFiles_.end())
-    emit(fontFileChanged(iter->fileName()));
+    Q_EMIT(fontFileChanged(iter->fileName()));
   else
     assert(0);
 }

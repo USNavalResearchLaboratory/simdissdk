@@ -161,7 +161,7 @@ void TimeWidget::setTimeStamp(const simCore::TimeStamp& value)
     (*it)->setTimeStamp(value);
 
   if (emitSignal)
-    emit timeChanged(currentContainer_->timeStamp());
+    Q_EMIT timeChanged(currentContainer_->timeStamp());
 }
 
 void TimeWidget::setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end)
@@ -178,7 +178,7 @@ void TimeWidget::setTimeRange(int scenarioReferenceYear, const simCore::TimeStam
     for (auto it = containers_.begin(); it != containers_.end(); ++it)
       (*it)->setTimeRange(scenarioReferenceYear, start, end);
 
-    emit timeRangeChanged();
+    Q_EMIT timeRangeChanged();
   }
 }
 

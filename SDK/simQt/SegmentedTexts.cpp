@@ -634,12 +634,12 @@ static const unsigned int MAX_PRECISION = 6;
 
   void SecondsTexts::valueEdited()
   {
-    emit timeEdited(timeStamp());
+    Q_EMIT timeEdited(timeStamp());
   }
 
   void SecondsTexts::valueChanged()
   {
-    emit timeChanged(timeStamp());
+    Q_EMIT timeChanged(timeStamp());
   }
 
   //--------------------------------------------------------------------------
@@ -720,12 +720,12 @@ static const unsigned int MAX_PRECISION = 6;
 
   void MinutesTexts::valueEdited()
   {
-    emit timeEdited(timeStamp());
+    Q_EMIT timeEdited(timeStamp());
   }
 
   void MinutesTexts::valueChanged()
   {
-    emit timeChanged(timeStamp());
+    Q_EMIT timeChanged(timeStamp());
   }
 
   //------------------------------------------------------------------------------------------------------------------
@@ -815,12 +815,12 @@ static const unsigned int MAX_PRECISION = 6;
 
   void HoursTexts::valueEdited()
   {
-    emit timeEdited(timeStamp());
+    Q_EMIT timeEdited(timeStamp());
   }
 
   void HoursTexts::valueChanged()
   {
-    emit timeChanged(timeStamp());
+    Q_EMIT timeChanged(timeStamp());
   }
 
   //------------------------------------------------------------------------------------------------------------------
@@ -946,12 +946,12 @@ static const unsigned int MAX_PRECISION = 6;
 
   void OrdinalTexts::valueEdited()
   {
-    emit timeEdited(timeStamp());
+    Q_EMIT timeEdited(timeStamp());
   }
 
   void OrdinalTexts::valueChanged()
   {
-    emit timeChanged(timeStamp());
+    Q_EMIT timeChanged(timeStamp());
   }
 
   void OrdinalTexts::setTimeZone(simCore::TimeZone zone)
@@ -1084,12 +1084,12 @@ static const unsigned int MAX_PRECISION = 6;
 
   void MonthDayYearTexts::valueEdited()
   {
-    emit timeEdited(timeStamp());
+    Q_EMIT timeEdited(timeStamp());
   }
 
   void MonthDayYearTexts::valueChanged()
   {
-    emit timeChanged(timeStamp());
+    Q_EMIT timeChanged(timeStamp());
   }
 
   QValidator::State MonthDayYearTexts::validateText(const QString& text) const

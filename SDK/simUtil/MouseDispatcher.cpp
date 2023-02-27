@@ -21,6 +21,7 @@
  *
  */
 #include <algorithm>
+#include <cassert>
 #include <utility>
 #include "osgGA/GUIEventHandler"
 #include "simNotify/Notify.h"
@@ -43,6 +44,46 @@ MouseDispatcher::EventHandler::EventHandler(const MouseDispatcher& dispatch)
 
 bool MouseDispatcher::EventHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object* object, osg::NodeVisitor* nv)
 {
+  // Divert touch events
+  if (ea.isMultiTouchEvent())
+  {
+    for (MouseDispatcher::PriorityMap::const_iterator i = dispatch_.priorityMap_.begin();
+      i != dispatch_.priorityMap_.end(); ++i)
+    {
+      if (!i->second)
+        continue;
+      // the rv gets set to non-zero if event is handled
+      int rv = 0;
+      switch (ea.getEventType())
+      {
+      case osgGA::GUIEventAdapter::PUSH:
+        rv = i->second->touchBegan(ea, aa);
+        break;
+      case osgGA::GUIEventAdapter::DRAG:
+        rv = i->second->touchMoved(ea, aa);
+        break;
+      case osgGA::GUIEventAdapter::RELEASE:
+        rv = i->second->touchEnded(ea, aa);
+        break;
+
+      default:
+        // OSG source code (EventQueue.cpp) does not allow for any other event type combination
+        assert(false);
+        break;
+      }
+
+      // rv will be non-zero if the event was intercepted
+      if (rv != 0)
+      {
+        ea.setHandled(true);
+        return true;
+      }
+    }
+
+    // Fall back to default implementation (next in Chain of Responsibility)
+    return GUIEventHandler::handle(ea, aa, object, nv);
+  }
+
   if ((ea.getEventType() & MOUSE_EVENT_MASK) == 0)
     return false;
 

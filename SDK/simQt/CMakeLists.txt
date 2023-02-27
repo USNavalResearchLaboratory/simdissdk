@@ -95,6 +95,7 @@ if(TARGET simVis)
         ${SIMQT_INC}CenterEntity.h
         ${SIMQT_INC}EntityLineEdit.h
         ${SIMQT_INC}MapDataModel.h
+        ${SIMQT_INC}MultiTouchEventFilter.h
         ${SIMQT_INC}TimestampedLayerManager.h
         ${SIMQT_INC}ViewManagerDataModel.h
     )
@@ -218,6 +219,7 @@ if(TARGET simVis)
         ${SIMQT_SRC}EntityLineEdit.cpp
         ${SIMQT_SRC}FillItemModelWithNodeVisitor.cpp
         ${SIMQT_SRC}MapDataModel.cpp
+        ${SIMQT_SRC}MultiTouchEventFilter.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
         ${SIMQT_SRC}ViewManagerDataModel.cpp
     )

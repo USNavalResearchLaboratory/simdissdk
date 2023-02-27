@@ -45,13 +45,22 @@ StartupLayoutManager::~StartupLayoutManager()
 {
 }
 
-
 int StartupLayoutManager::registerTask(const QString& name, StartupLayoutTaskPtr task)
 {
   // Don't overwrite existing tasks
   if (tasks_.contains(name))
     return 1;
   tasks_[name] = task;
+  return 0;
+}
+
+int StartupLayoutManager::unregisterTask(const QString& name)
+{
+  auto it = tasks_.find(name);
+  if (it == tasks_.end())
+    return 1;
+
+  tasks_.erase(it);
   return 0;
 }
 

@@ -181,19 +181,19 @@ public:
   /** Returns the valid state */
   bool isValid() const;
 
-public slots:
+public Q_SLOTS:
   /** Sets the filename this selector represents */
   void setFilename(const QString& filename);
   /** Sets the valid state; if invalid the background is turned red */
   void setValid(bool valid);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the filename is set.  Applies to both programmatically set and user edits. */
   void filenameChanged(const QString& filename="");
   /** Emitted when the filename is set.  Only emitted when user changes value. */
   void fileSelected(const QString& filename="");
 
-private slots:
+private Q_SLOTS:
   /** Connects to the ... button */
   void loadButton_();
   /** used during debug to allow developer to type in a file name */

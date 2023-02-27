@@ -38,7 +38,7 @@ class MainWindow : public QMainWindow
 public:
   MainWindow();
 
-private slots:
+private Q_SLOTS:
   void notifyFrameUpdate_();
 
 private:

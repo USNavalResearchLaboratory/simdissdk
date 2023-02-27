@@ -1388,6 +1388,11 @@ void GogNodeInterface::removeGogNodeListener(GogNodeListenerPtr listener)
     listeners_.erase(i);
 }
 
+void GogNodeInterface::markDirty()
+{
+  // noop; implement as needed in derived classes
+}
+
 unsigned int GogNodeInterface::objectIndexTag() const
 {
   return objectIndexTag_;
@@ -1978,6 +1983,12 @@ void FeatureNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& 
     originalGeometry[i].z() = originalAltitude_.at(i);
   }
   Utils::serializeShapeGeometry(&originalGeometry, relativeShape, gogOutputStream);
+}
+
+void FeatureNodeInterface::markDirty()
+{
+  if (featureNode_.valid())
+    featureNode_->dirty();
 }
 
 void FeatureNodeInterface::setStyle_(const osgEarth::Style& style)

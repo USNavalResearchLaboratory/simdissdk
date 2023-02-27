@@ -138,7 +138,7 @@ public:
   /** Helper function to get the time/date in the format that is displayed by default */
   static QString dateTimeString(double timeSince1970);
 
-public slots:
+public Q_SLOTS:
   /** Appends a new entry to the data model and updates the attached views; performs processing on text data. */
   void addEntry(simNotify::NotifySeverity severity, const QString& channel, const QString& text);
   /** Clears out the data model */
@@ -154,7 +154,7 @@ public slots:
   /** If true, newest entries are at the top of the model; else they're at bottom. */
   void setNewestOnTop(bool fl);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the console gets a new line of text. This signal is not affected by the severity filter */
   void textAdded(simNotify::NotifySeverity severity);
   /** Emitted when the console gets a new line of text. This signal is not affected by the severity filter */
@@ -164,7 +164,7 @@ signals:
   /** Emitted when newest-on-top changes */
   void newestOnTopChanged(bool newestOnTop);
 
-private slots:
+private Q_SLOTS:
   /** New entries are kept in a pending list, to be batched up for processing all at once.  This processes the list */
   void processPendingAdds_();
 

@@ -53,7 +53,7 @@ public:
   /** Don't permit splash screen to hide until the destructor. (Avoids click-to-close behavior) */
   virtual void setVisible(bool showIt);
 
-public slots:
+public Q_SLOTS:
   /** Sets the text foreground color; only affects future showMessage() calls */
   void setTextColor(const QColor& color);
   /** Set the text alignment relative to the window (e.g. Qt::AlignHCenter|Qt::AlignBottom); only affects future showMessage() calls */

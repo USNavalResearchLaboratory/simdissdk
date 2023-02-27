@@ -92,7 +92,7 @@ void MruList::addFile(const QString& filename)
   // It's possible that the list of files didn't change, if user selected #1 entry.
   // Note that selecting #1 entry is not enough to determine that list didn't change.
   if (originalFiles != filenames_)
-    emit(mruListChanged(filenames_));
+    Q_EMIT(mruListChanged(filenames_));
 }
 
 void MruList::setFiles(const QStringList& files)
@@ -105,7 +105,7 @@ void MruList::setFiles(const QStringList& files)
   if (filenames_.size() > maximumSize())
     filenames_.erase(filenames_.begin() + maximumSize(), filenames_.end());
   fixActions_();
-  emit(mruListChanged(filenames_));
+  Q_EMIT(mruListChanged(filenames_));
 }
 
 int MruList::removeFile(const QString& filename)
@@ -113,7 +113,7 @@ int MruList::removeFile(const QString& filename)
   if (filenames_.removeAll(filename) > 0)
   {
     fixActions_();
-    emit(mruListChanged(filenames_));
+    Q_EMIT(mruListChanged(filenames_));
     return 0;
   }
   return 1;
@@ -125,14 +125,14 @@ void MruList::clear()
     return;
   filenames_.clear();
   fixActions_();
-  emit(mruListChanged(filenames_));
+  Q_EMIT(mruListChanged(filenames_));
 }
 
 void MruList::openRecentFile_()
 {
   QAction* action = qobject_cast<QAction*>(sender());
   if (action != nullptr)
-    emit(fileSelected(action->data().toString()));
+    Q_EMIT(fileSelected(action->data().toString()));
 }
 
 void MruList::fixActions_()

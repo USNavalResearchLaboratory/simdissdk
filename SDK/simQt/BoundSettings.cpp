@@ -25,9 +25,10 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleSpinBox>
+#include <QLineEdit>
 #include <QRadioButton>
 #include <QSlider>
-#include <QLineEdit>
+#include <QToolButton>
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
 #include "simQt/ColorWidget.h"
@@ -117,9 +118,37 @@ void BoundBooleanSetting::bindTo(QAbstractButton* button, bool populateToolTip)
 {
   if (populateToolTip)
     setToolTip_(button);
+  button->setCheckable(true);
   button->setChecked(value());
   connect(button, SIGNAL(toggled(bool)), this, SLOT(setValue(bool)));
   connect(this, SIGNAL(valueChanged(bool)), button, SLOT(setChecked(bool)));
+}
+
+void BoundBooleanSetting::bindTo(QToolButton* button, bool populateToolTip)
+{
+  if (populateToolTip)
+    setToolTip_(button);
+  button->setCheckable(true);
+  if (button->defaultAction())
+  {
+    button->defaultAction()->setCheckable(true);
+    button->defaultAction()->setChecked(value());
+  }
+  else
+    button->setChecked(value());
+  connect(button, SIGNAL(toggled(bool)), this, SLOT(setValue(bool)));
+
+  // Calling QToolButton::setChecked() will not update the associated default action's
+  // check state correctly. But, setting the action's check state will update the button
+  // properly. To compensate, we use the action if it exists to avoid the state change.
+  // This connection is made such that if "this" or "button" is deleted, the connection
+  // goes away, preventing dangling references.
+  connect(this, &BoundBooleanSetting::valueChanged, button, [button](bool v) {
+    if (button->defaultAction())
+      button->defaultAction()->setChecked(v);
+    else
+      button->setChecked(v);
+    });
 }
 
 void BoundBooleanSetting::bindTo(QAction* action, bool populateToolTip)
@@ -129,10 +158,7 @@ void BoundBooleanSetting::bindTo(QAction* action, bool populateToolTip)
   action->setCheckable(true);
   action->setChecked(value());
   connect(action, SIGNAL(toggled(bool)), this, SLOT(setValue(bool)));
-  // Update the state of the action
   connect(this, SIGNAL(valueChanged(bool)), action, SLOT(setChecked(bool)));
-  // Update the state of anything listening to the action
-  connect(this, SIGNAL(valueChanged(bool)), action, SIGNAL(triggered(bool)));
 }
 
 /** Sets a new value for the variable */
@@ -151,7 +177,7 @@ void BoundBooleanSetting::updateValue_(const QVariant& newValue)
   if (newValue.toBool() != value_)
   {
     value_ = newValue.toBool();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -191,7 +217,7 @@ void BoundIntegerSetting::updateValue_(const QVariant& newValue)
   if (newValue.toInt() != value_)
   {
     value_ = newValue.toInt();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -372,7 +398,7 @@ void BoundDoubleSetting::updateValue_(const QVariant& newValue)
   if (newValue.toDouble() != value_)
   {
     value_ = newValue.toDouble();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -426,7 +452,7 @@ void BoundColorSetting::updateValue_(const QVariant& newValue)
   if (newValueColor != value_)
   {
     value_ = newValueColor;
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -496,7 +522,7 @@ void BoundStringSetting::updateValue_(const QVariant& newValue)
   if (newValue.toString() != value_)
   {
     value_ = newValue.toString();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -536,7 +562,7 @@ void BoundStringListSetting::updateValue_(const QVariant& newValue)
   if (newValue.toStringList() != value_)
   {
     value_ = newValue.toStringList();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 
@@ -585,7 +611,7 @@ void BoundVariantMapSetting::updateValue_(const QVariant& newValue)
   if (newValue.toMap() != value_)
   {
     value_ = newValue.toMap();
-    emit(valueChanged(value_));
+    Q_EMIT(valueChanged(value_));
   }
 }
 

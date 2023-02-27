@@ -94,7 +94,7 @@ public:
   void setTimingActive(bool active);
   bool timingActive() const;
 
-signals:
+Q_SIGNALS:
   /**
    * Emitted when the current layer changes.   New layer or old layer can be nullptr.  If non-nullptr, newLayer
    * and oldLayer are guaranteed to be part of the map associated with this object at time of emission.  This

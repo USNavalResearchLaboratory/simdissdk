@@ -236,7 +236,7 @@ void ButtonActions::updateEnabledState_()
     toggleLoop_->setEnabled(enable);
 
     // Alert anyone bound to our signal
-    emit timeControlEnableStateChanged(enable);
+    Q_EMIT timeControlEnableStateChanged(enable);
   }
 }
 

@@ -92,15 +92,15 @@ public:
   /** Retrieve currently set directory */
   QString directory() const;
 
-public slots:
+public Q_SLOTS:
   /** Sets the directory this selector represents */
   void setDirectory(const QString& dir);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the directory changes */
   void directoryChanged(const QString& dir);
 
-private slots:
+private Q_SLOTS:
   /** Connects to the ... button */
   void loadButton_();
   /** used during debug to allow developer to type in a file name */

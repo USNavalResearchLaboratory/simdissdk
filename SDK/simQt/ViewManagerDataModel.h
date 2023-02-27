@@ -79,7 +79,7 @@ public:
   /// Returns true if the enable/disable checkboxes are shown, false if hidden
   bool isUserCheckable() const;
 
-public slots:
+public Q_SLOTS:
   /// Changes between a flat display and a hierarchical display
   void setHierarchical(bool useHierarchy);
   /// Changes between mode where checkboxes are shown for enable/disable, and not

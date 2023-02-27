@@ -84,7 +84,8 @@ namespace
       // wait until subsequent frame event to resize
       else if (resizeView_ && ea.getEventType() == osgGA::GUIEventAdapter::FRAME && aa.asView() == resizeView_)
       {
-        viewMan_->handleResize(width_, height_);
+        const osg::Camera* camera = resizeView_->getCamera();
+        viewMan_->handleResize(camera ? camera->getGraphicsContext() : nullptr, width_, height_);
         aa.requestRedraw();
         resizeView_ = nullptr;
       }
@@ -372,13 +373,14 @@ void ViewManager::sendPostCameraFrameNotifications_()
   }
 }
 
-void ViewManager::handleResize(int newwidth, int newheight)
+void ViewManager::handleResize(const osg::GraphicsContext* gc, int newwidth, int newheight)
 {
   unsigned int numViews = getNumViews();
   for (unsigned int i = 0; i < numViews; ++i)
   {
     simVis::View* view = getView(i);
-    if (view)
+    // Limit processResize() to views that share the same graphics context
+    if (view && view->getCamera() && view->getCamera()->getGraphicsContext() == gc)
       view->processResize(newwidth, newheight);
   }
 }

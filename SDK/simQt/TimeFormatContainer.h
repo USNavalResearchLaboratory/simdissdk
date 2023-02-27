@@ -48,6 +48,8 @@ class SDKQT_EXPORT TimeFormatContainer : public QObject
 public:
   /// constructor
   TimeFormatContainer(simCore::TimeFormat timeFormat, const QString& name);
+  TimeFormatContainer(const TimeFormatContainer&) = delete;
+  TimeFormatContainer& operator=(const TimeFormatContainer&) = delete;
   virtual ~TimeFormatContainer();
 
   ///@return the enumeration of the time format
@@ -98,7 +100,7 @@ public:
   /// Returns the text for a tool tip
   virtual QString toolTipText() const = 0;
 
-signals:
+Q_SIGNALS:
   /// Emitted when the time changes via the user
   void timeEdited(const simCore::TimeStamp& value);
   /// Emitted when the time is changed by the user or by setTimeStamp

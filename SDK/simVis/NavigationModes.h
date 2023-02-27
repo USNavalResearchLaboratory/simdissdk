@@ -153,6 +153,9 @@ class View;
 
     /// osg::Referenced-derived
     virtual ~NavigationMode();
+
+    /** Adds default bindings for multi-touch */
+    void bindMultiTouch_(bool canZoom, bool canRotate);
   };
 
   /**

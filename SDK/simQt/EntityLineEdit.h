@@ -71,13 +71,13 @@ protected:
   /** Override the QDialog close event to emit the closedGui signal */
   virtual void closeEvent(QCloseEvent* ev);
 
-signals:
+Q_SIGNALS:
   /** Signal emitted when the user selects an entity */
   void itemSelected(uint64_t id);
   /** Signal emitted when this dialog is closed */
   void closedGui();
 
-private slots:
+private Q_SLOTS:
   /** Sets the selection from EntityTreeComposite; EntityTreeComposite is in single select mode so QList will only have one entry*/
   void setSelected_(const QList<uint64_t>& ids);
   /** Accept the changes and emit closedGui */
@@ -140,7 +140,7 @@ public:
   /** Set the Center Entity to support the centering feature in the dialog */
   void setCenterEntity(CenterEntity* centerEntity);
 
-public slots:
+public Q_SLOTS:
   /** Set the state filter to the given state */
   void setStateFilter(simQt::EntityStateFilter::State state);
   /** Sets the Unique ID for the entity to display in the QEditLine */
@@ -150,7 +150,7 @@ public slots:
   /** The given id is in use by something else and should be considered not available, clear by setting to 0 */
   void setUnavailable(uint64_t id);
 
-signals:
+Q_SIGNALS:
   /** Signal emitted when the user selects an entity */
   void itemSelected(uint64_t id);
   /** Signal emitted when the user presses enter on an existing valid entity */
@@ -162,7 +162,7 @@ protected:
   /** Re-implement eventFilter() to allow a double click to display the dialog */
   virtual bool eventFilter(QObject* obj, QEvent* evt);
 
-private slots:
+private Q_SLOTS:
   /** Called when the user clicks the button for showing the Entity Tree Composite dialog */
   void showEntityDialog_();
   /** Called when the user selects an options from the QCompleter popup menu */
@@ -209,7 +209,7 @@ public:
   /** Returns standard meta data for entity active/inactive state */
   static simQt::Settings::MetaData metaData();
 
-private slots:
+private Q_SLOTS:
   void setStateFromLineEdit_(simQt::EntityStateFilter::State state);
   void setStateFromSettings_(int state);
 };

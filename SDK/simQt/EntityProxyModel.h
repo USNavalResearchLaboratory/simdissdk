@@ -63,7 +63,7 @@ public:
   /** Set filters to the given settings */
   void setFilterSettings(const QMap<QString, QVariant>& settings);
 
-signals:
+Q_SIGNALS:
   /** Emitted when the entity filter has changed */
   void filterChanged();
   /** A filter setting was changed */
@@ -81,7 +81,7 @@ protected:
     */
   virtual bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 
-private slots:
+private Q_SLOTS:
   /// Responds to the filters changing
   void filterUpdated_();
   /** Clear the AlwaysShow if parent has a child with the AlwaysShow ID */

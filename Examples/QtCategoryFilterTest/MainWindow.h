@@ -41,7 +41,7 @@ public:
   MainWindow(simData::DataStore* dataStore, QWidget *parent);
   virtual ~MainWindow();
 
-private slots:
+private Q_SLOTS:
   void addSmallAmount_();
   void addMassiveAmount_();
   void toggleState_();

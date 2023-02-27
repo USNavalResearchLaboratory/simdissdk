@@ -120,7 +120,7 @@ void EntityStateFilter::setFilterSettings(const QMap<QString, QVariant>& setting
     // If GUI is displayed update GUI which will call entityStateChanged_, otherwise directly call entityStateChanged_
     const bool hasGui = (receivers(SIGNAL(entityStateChanged(int))) != 0);
     if (hasGui)
-      emit entityStateChanged(it.value().toInt());
+      Q_EMIT entityStateChanged(it.value().toInt());
     else
       entityStateChanged_(it.value().toInt());
   }
@@ -131,7 +131,7 @@ void EntityStateFilter::setStateFilter(State state)
   // If GUI is displayed update GUI which will call entityStateChanged_, otherwise directly call entityStateChanged_
   const bool hasGui = (receivers(SIGNAL(entityStateChanged(int))) != 0);
   if (hasGui)
-    emit entityStateChanged(state);
+    Q_EMIT entityStateChanged(state);
   else
     entityStateChanged_(state);
 }
@@ -146,14 +146,14 @@ void EntityStateFilter::entityStateChanged_(int state)
   if (state_ != static_cast<State>(state))
   {
     state_ = static_cast<State>(state);
-    emit filterUpdated();
+    Q_EMIT filterUpdated();
   }
 }
 
 void EntityStateFilter::newTime_()
 {
   if (state_ != BOTH)
-    emit filterUpdated();
+    Q_EMIT filterUpdated();
 }
 
 }

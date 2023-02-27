@@ -193,7 +193,7 @@ public:
   /** Returns true if all docking is disabled via settings */
   bool allDockingDisabled() const;
 
-public slots:
+public Q_SLOTS:
 
   /**
   * Set the widget's dockable state. If false, docking will be disabled
@@ -219,13 +219,13 @@ public slots:
   /** Set the global settings ptr, which will apply any global settings if ptr is valid */
   void setGlobalSettings(Settings* globalSettings);
 
-signals:
+Q_SIGNALS:
   /** Emitted after the dock widget is closed. */
   void closedGui();
   /** Emitted when is-dockable flag has changed via setDockable */
   bool isDockableChanged(bool isDockable);
 
-protected slots:
+protected Q_SLOTS:
   /** Docks the window (as long as it's dockable) */
   void dock_();
   /** Undocks if necessary and maximizes the window */
@@ -280,7 +280,7 @@ protected:
   /** Parent main window */
   QMainWindow* mainWindow_;
 
-private slots:
+private Q_SLOTS:
   /** Applies the window's icon to the tab bar */
   void fixTabIcon_();
   /** Updates the title bar's enabled/visible states */

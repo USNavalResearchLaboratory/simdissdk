@@ -61,13 +61,13 @@ public:
   /** Emits the executed() signal */
   virtual void execute();
 
-public slots:
+public Q_SLOTS:
   /** Sets a widget to monitor for visibility.  You may set to nullptr when widget goes away. */
   void setWidget(QWidget* widget);
   /** Clears the widget; same behavior as setWidget(nullptr) */
   void clearWidget();
 
-signals:
+Q_SIGNALS:
   /** Emitted when the StartupLayoutManager requests we execute. */
   void executed();
 

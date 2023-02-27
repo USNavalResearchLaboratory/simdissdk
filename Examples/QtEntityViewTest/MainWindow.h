@@ -43,7 +43,7 @@ public:
   explicit MainWindow(QWidget *parent);
   virtual ~MainWindow();
 
-protected slots:
+protected Q_SLOTS:
   void addPlatforms_();
   void addBeams_();
   void addGates_();

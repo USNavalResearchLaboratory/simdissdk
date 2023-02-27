@@ -78,7 +78,7 @@ public:
   void insertMru(QMenu& menu, QAction* beforeAction, bool separatorBefore=true, bool separatorAfter=true,
     bool includeClear=true);
 
-public slots:
+public Q_SLOTS:
   /** Sets the list of files. */
   void setFiles(const QStringList& files);
   /** Adds the file to the most recently used list, at the very top.  Reorders list as needed. */
@@ -88,13 +88,13 @@ public slots:
   /** Clears the MRU file list */
   void clear();
 
-signals:
+Q_SIGNALS:
   /** Emitted when the user selects one of the recently used item menu items. */
   void fileSelected(const QString& filename);
   /** Emitted when the list of files maintained in the MRU changes. */
   void mruListChanged(const QStringList& files);
 
-private slots:
+private Q_SLOTS:
   /** Called when the user selects on of the MRU actions.  Fires off fileSelected(). */
   void openRecentFile_();
   /** Hides/shows actions and separators, and sets the filenames as appropriate. */
@@ -113,4 +113,4 @@ private:
 
 }
 
-#endif /* MEDIAPLAYER2_MRULIST_H */
+#endif /* SIMQT_MRULIST_H */

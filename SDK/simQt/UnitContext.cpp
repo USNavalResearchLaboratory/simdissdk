@@ -148,8 +148,8 @@ void UnitContextAdapter::setTimeFormat(simCore::TimeFormat unit)
   if (timeFormat_ != unit)
   {
     timeFormat_ = unit;
-    emit timeFormatChanged(unit);
-    emit unitsChanged(this);
+    Q_EMIT timeFormatChanged(unit);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -158,8 +158,8 @@ void UnitContextAdapter::setTimePrecision(unsigned int prec)
   if (timePrecision_ != prec)
   {
     timePrecision_ = prec;
-    emit timePrecisionChanged(prec);
-    emit unitsChanged(this);
+    Q_EMIT timePrecisionChanged(prec);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -168,8 +168,8 @@ void UnitContextAdapter::setCoordinateSystem(simCore::CoordinateSystem coordSys)
   if (coordinateSystem_ != coordSys)
   {
     coordinateSystem_ = coordSys;
-    emit coordinateSystemChanged(coordSys);
-    emit unitsChanged(this);
+    Q_EMIT coordinateSystemChanged(coordSys);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -178,8 +178,8 @@ void UnitContextAdapter::setGeodeticFormat(simCore::GeodeticFormat format)
   if (geodeticFormat_ != format)
   {
     geodeticFormat_ = format;
-    emit geodeticFormatChanged(format);
-    emit unitsChanged(this);
+    Q_EMIT geodeticFormatChanged(format);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -188,8 +188,8 @@ void UnitContextAdapter::setGeodeticPrecision(unsigned int prec)
   if (geodeticPrecision_ != prec)
   {
     geodeticPrecision_ = prec;
-    emit geodeticPrecisionChanged(prec);
-    emit unitsChanged(this);
+    Q_EMIT geodeticPrecisionChanged(prec);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -198,8 +198,8 @@ void UnitContextAdapter::setDistanceUnits(const simCore::Units& unit)
   if (distanceUnits_ != unit)
   {
     distanceUnits_ = unit;
-    emit distanceUnitsChanged(unit);
-    emit unitsChanged(this);
+    Q_EMIT distanceUnitsChanged(unit);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -208,8 +208,8 @@ void UnitContextAdapter::setDistancePrecision(unsigned int prec)
   if (distancePrecision_ != prec)
   {
     distancePrecision_ = prec;
-    emit distancePrecisionChanged(prec);
-    emit unitsChanged(this);
+    Q_EMIT distancePrecisionChanged(prec);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -218,8 +218,8 @@ void UnitContextAdapter::setAltitudeUnits(const simCore::Units& unit)
   if (altitudeUnits_ != unit)
   {
     altitudeUnits_ = unit;
-    emit altitudeUnitsChanged(unit);
-    emit unitsChanged(this);
+    Q_EMIT altitudeUnitsChanged(unit);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -228,8 +228,8 @@ void UnitContextAdapter::setAltitudePrecision(unsigned int prec)
   if (altitudePrecision_ != prec)
   {
     altitudePrecision_ = prec;
-    emit altitudePrecisionChanged(prec);
-    emit unitsChanged(this);
+    Q_EMIT altitudePrecisionChanged(prec);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -238,8 +238,8 @@ void UnitContextAdapter::setAngleUnits(const simCore::Units& unit)
   if (angleUnits_ != unit)
   {
     angleUnits_ = unit;
-    emit angleUnitsChanged(unit);
-    emit unitsChanged(this);
+    Q_EMIT angleUnitsChanged(unit);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -248,8 +248,8 @@ void UnitContextAdapter::setAnglePrecision(unsigned int prec)
   if (anglePrecision_ != prec)
   {
     anglePrecision_ = prec;
-    emit anglePrecisionChanged(prec);
-    emit unitsChanged(this);
+    Q_EMIT anglePrecisionChanged(prec);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -258,8 +258,8 @@ void UnitContextAdapter::setSpeedUnits(const simCore::Units& unit)
   if (speedUnits_ != unit)
   {
     speedUnits_ = unit;
-    emit speedUnitsChanged(unit);
-    emit unitsChanged(this);
+    Q_EMIT speedUnitsChanged(unit);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -268,8 +268,8 @@ void UnitContextAdapter::setSpeedPrecision(unsigned int prec)
   if (speedPrecision_ != prec)
   {
     speedPrecision_ = prec;
-    emit speedPrecisionChanged(prec);
-    emit unitsChanged(this);
+    Q_EMIT speedPrecisionChanged(prec);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -278,8 +278,8 @@ void UnitContextAdapter::setGenericPrecision(unsigned int prec)
   if (genericPrecision_ != prec)
   {
     genericPrecision_ = prec;
-    emit genericPrecisionChanged(prec);
-    emit unitsChanged(this);
+    Q_EMIT genericPrecisionChanged(prec);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -288,8 +288,8 @@ void UnitContextAdapter::setMagneticVariance(simCore::MagneticVariance mv)
   if (magneticVariance_ != mv)
   {
     magneticVariance_ = mv;
-    emit magneticVarianceChanged(mv);
-    emit unitsChanged(this);
+    Q_EMIT magneticVarianceChanged(mv);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -298,8 +298,8 @@ void UnitContextAdapter::setVerticalDatum(simCore::VerticalDatum vd)
   if (verticalDatum_ != vd)
   {
     verticalDatum_ = vd;
-    emit verticalDatumChanged(vd);
-    emit unitsChanged(this);
+    Q_EMIT verticalDatumChanged(vd);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -308,8 +308,8 @@ void UnitContextAdapter::setReferenceYear(int refYear)
   if (referenceYear_ != refYear)
   {
     referenceYear_ = refYear;
-    emit referenceYearChanged(refYear);
-    emit unitsChanged(this);
+    Q_EMIT referenceYearChanged(refYear);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -318,8 +318,8 @@ void UnitContextAdapter::setDatumConvert(simCore::DatumConvertPtr datumConvert)
   if (datumConvert_ != datumConvert)
   {
     datumConvert_ = datumConvert;
-    emit datumConvertPtrChanged(datumConvert);
-    emit unitsChanged(this);
+    Q_EMIT datumConvertPtrChanged(datumConvert);
+    Q_EMIT unitsChanged(this);
   }
 }
 
@@ -406,107 +406,107 @@ void UnitContextProxy::setSubject(UnitContext* newSubject)
   if (oldSubject == nullptr || oldSubject->timeFormat() != subject_->timeFormat())
   {
     foundChange = true;
-    emit timeFormatChanged(subject_->timeFormat());
+    Q_EMIT timeFormatChanged(subject_->timeFormat());
   }
   if (oldSubject == nullptr || oldSubject->timePrecision() != subject_->timePrecision())
   {
     foundChange = true;
-    emit timePrecisionChanged(subject_->timePrecision());
+    Q_EMIT timePrecisionChanged(subject_->timePrecision());
   }
   if (oldSubject == nullptr || oldSubject->geodeticFormat() != subject_->geodeticFormat())
   {
     foundChange = true;
-    emit geodeticFormatChanged(subject_->geodeticFormat());
+    Q_EMIT geodeticFormatChanged(subject_->geodeticFormat());
   }
   if (oldSubject == nullptr || oldSubject->geodeticPrecision() != subject_->geodeticPrecision())
   {
     foundChange = true;
-    emit geodeticPrecisionChanged(subject_->geodeticPrecision());
+    Q_EMIT geodeticPrecisionChanged(subject_->geodeticPrecision());
   }
   if (oldSubject == nullptr || oldSubject->distanceUnits() != subject_->distanceUnits())
   {
     foundChange = true;
-    emit distanceUnitsChanged(subject_->distanceUnits());
+    Q_EMIT distanceUnitsChanged(subject_->distanceUnits());
   }
   if (oldSubject == nullptr || oldSubject->distancePrecision() != subject_->distancePrecision())
   {
     foundChange = true;
-    emit distancePrecisionChanged(subject_->distancePrecision());
+    Q_EMIT distancePrecisionChanged(subject_->distancePrecision());
   }
   if (oldSubject == nullptr || oldSubject->altitudeUnits() != subject_->altitudeUnits())
   {
     foundChange = true;
-    emit altitudeUnitsChanged(subject_->altitudeUnits());
+    Q_EMIT altitudeUnitsChanged(subject_->altitudeUnits());
   }
   if (oldSubject == nullptr || oldSubject->altitudePrecision() != subject_->altitudePrecision())
   {
     foundChange = true;
-    emit altitudePrecisionChanged(subject_->altitudePrecision());
+    Q_EMIT altitudePrecisionChanged(subject_->altitudePrecision());
   }
   if (oldSubject == nullptr || oldSubject->angleUnits() != subject_->angleUnits())
   {
     foundChange = true;
-    emit angleUnitsChanged(subject_->angleUnits());
+    Q_EMIT angleUnitsChanged(subject_->angleUnits());
   }
   if (oldSubject == nullptr || oldSubject->anglePrecision() != subject_->anglePrecision())
   {
     foundChange = true;
-    emit anglePrecisionChanged(subject_->anglePrecision());
+    Q_EMIT anglePrecisionChanged(subject_->anglePrecision());
   }
   if (oldSubject == nullptr || oldSubject->speedUnits() != subject_->speedUnits())
   {
     foundChange = true;
-    emit speedUnitsChanged(subject_->speedUnits());
+    Q_EMIT speedUnitsChanged(subject_->speedUnits());
   }
   if (oldSubject == nullptr || oldSubject->speedPrecision() != subject_->speedPrecision())
   {
     foundChange = true;
-    emit speedPrecisionChanged(subject_->speedPrecision());
+    Q_EMIT speedPrecisionChanged(subject_->speedPrecision());
   }
   if (oldSubject == nullptr || oldSubject->genericPrecision() != subject_->genericPrecision())
   {
     foundChange = true;
-    emit genericPrecisionChanged(subject_->genericPrecision());
+    Q_EMIT genericPrecisionChanged(subject_->genericPrecision());
   }
   if (oldSubject == nullptr || oldSubject->coordinateSystem() != subject_->coordinateSystem())
   {
     foundChange = true;
-    emit coordinateSystemChanged(subject_->coordinateSystem());
+    Q_EMIT coordinateSystemChanged(subject_->coordinateSystem());
   }
   if (oldSubject == nullptr || oldSubject->magneticVariance() != subject_->magneticVariance())
   {
     foundChange = true;
-    emit magneticVarianceChanged(subject_->magneticVariance());
+    Q_EMIT magneticVarianceChanged(subject_->magneticVariance());
   }
   if (oldSubject == nullptr || oldSubject->verticalDatum() != subject_->verticalDatum())
   {
     foundChange = true;
-    emit verticalDatumChanged(subject_->verticalDatum());
+    Q_EMIT verticalDatumChanged(subject_->verticalDatum());
   }
   if (oldSubject == nullptr || oldSubject->referenceYear() != subject_->referenceYear())
   {
     foundChange = true;
-    emit referenceYearChanged(subject_->referenceYear());
+    Q_EMIT referenceYearChanged(subject_->referenceYear());
   }
   if (oldSubject == nullptr || oldSubject->datumConvert() != subject_->datumConvert())
   {
     foundChange = true;
-    emit datumConvertPtrChanged(subject_->datumConvert());
+    Q_EMIT datumConvertPtrChanged(subject_->datumConvert());
   }
 
   // Finally, detect any changes and send them out
   if (foundChange)
   {
-    emit unitsChanged(this);
+    Q_EMIT unitsChanged(this);
   }
 
   // Tell anyone who cares that we changed our underlying subject
-  emit subjectChanged(subject_, oldSubject);
+  Q_EMIT subjectChanged(subject_, oldSubject);
 }
 
 void UnitContextProxy::reemit_()
 {
-  emit unitsChanged(this);
+  Q_EMIT unitsChanged(this);
 }
 
 // Getters for various unit types

@@ -132,7 +132,7 @@ void EntityTypeFilterWidget::setSelections(unsigned int types)
   ui_->allCheckable->setChecked(types == simData::ALL);
 
   // Emit a signal that the values have changed
-  emit entityTypesChanged(getSelections());
+  Q_EMIT entityTypesChanged(getSelections());
 }
 
 void EntityTypeFilterWidget::setSelections(const std::set<simData::ObjectType>& types)
@@ -148,7 +148,7 @@ void EntityTypeFilterWidget::setSelections(const std::set<simData::ObjectType>& 
 void EntityTypeFilterWidget::entityTypeClicked_()
 {
   // send out a signal, get selections from the selected check boxes
-  emit(entityTypesChanged(getSelections()));
+  Q_EMIT(entityTypesChanged(getSelections()));
 }
 
 void EntityTypeFilterWidget::toggleAllTypes_(bool activateAllTypes)

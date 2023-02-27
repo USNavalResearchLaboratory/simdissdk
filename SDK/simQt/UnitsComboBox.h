@@ -142,15 +142,15 @@ public:
   /** Retrieves the currently displayed unit. */
   const simCore::Units& units() const;
 
-public slots:
+public Q_SLOTS:
   /** Change the currently displayed unit.  Will fill out the family of units if changing families. */
   void setUnits(const simCore::Units& unit);
 
-signals:
+Q_SIGNALS:
   /** Currently selected units have changed. */
   void unitsChanged(const simCore::Units& unit) const;
 
-private slots:
+private Q_SLOTS:
   /** Intercept the currentChanged() signal and re-emit in Units format. */
   void emitUnitsOnCurrentChange_(int newCurrent);
 

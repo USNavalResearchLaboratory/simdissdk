@@ -159,7 +159,7 @@ void ColorWidget::showColorDialog_()
   {
     color_ = tempColor;
     setColorButton_();
-    emit(colorChanged(color_));
+    Q_EMIT(colorChanged(color_));
   }
 }
 

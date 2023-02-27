@@ -67,11 +67,11 @@ public:
   /** Sets the clock manager */
   void setClockManager(simCore::Clock *clock);
 
-signals:
+Q_SIGNALS:
   /** Echo outs the time control enable state changed*/
   void timeControlEnableStateChanged(bool isEnabled);
 
-private slots:
+private Q_SLOTS:
   void clockStop_();
   void clockPlay_();
   void clockStartStop_();
@@ -132,7 +132,7 @@ public:
   /** Get whether the play and stop buttons are hidden. Hidden by default. */
   bool isSingleButtonPlayStop() const;
 
-public slots:
+public Q_SLOTS:
   /** Set whether the play and stop buttons are hidden. Hidden by default. */
   void setSingleButtonPlayStop(bool fl);
 

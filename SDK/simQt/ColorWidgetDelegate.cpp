@@ -92,8 +92,8 @@ void ColorWidgetDelegate::updateEditorGeometry(QWidget* editor, const QStyleOpti
 void ColorWidgetDelegate::commitAndCloseEditor_()
 {
   simQt::ColorWidget* editor = qobject_cast<simQt::ColorWidget*>(sender());
-  emit QAbstractItemDelegate::commitData(editor);
-  emit QAbstractItemDelegate::closeEditor(editor);
+  Q_EMIT QAbstractItemDelegate::commitData(editor);
+  Q_EMIT QAbstractItemDelegate::closeEditor(editor);
 }
 
 }

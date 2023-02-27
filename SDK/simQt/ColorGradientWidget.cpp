@@ -106,7 +106,7 @@ public:
     fromUserValue_ = fromUserValue;
     // Emit dataChanged on the column for stops
     if (editedGradient_.numControlColors() > 0)
-      emit dataChanged(createIndex(0, COL_VALUE), createIndex(editedGradient_.numControlColors() - 1, COL_VALUE));
+      Q_EMIT dataChanged(createIndex(0, COL_VALUE), createIndex(editedGradient_.numControlColors() - 1, COL_VALUE));
   }
 
   /** Changes the values suffix */
@@ -118,9 +118,9 @@ public:
 
     // Emit dataChanged on the column for stops
     if (editedGradient_.numControlColors() > 0 && suffixInTableItems_)
-      emit dataChanged(createIndex(0, COL_VALUE), createIndex(editedGradient_.numControlColors() - 1, COL_VALUE));
+      Q_EMIT dataChanged(createIndex(0, COL_VALUE), createIndex(editedGradient_.numControlColors() - 1, COL_VALUE));
     if (suffixInTableHeader_)
-      emit headerDataChanged(Qt::Horizontal, COL_VALUE, COL_VALUE);
+      Q_EMIT headerDataChanged(Qt::Horizontal, COL_VALUE, COL_VALUE);
   }
 
   /** Changes whether suffix is shown for each table item */
@@ -130,7 +130,7 @@ public:
       return;
     suffixInTableItems_ = val;
     if (editedGradient_.numControlColors() > 0)
-      emit dataChanged(createIndex(0, COL_VALUE), createIndex(editedGradient_.numControlColors() - 1, COL_VALUE));
+      Q_EMIT dataChanged(createIndex(0, COL_VALUE), createIndex(editedGradient_.numControlColors() - 1, COL_VALUE));
   }
 
   /** Changes whether suffix is shown in table header */
@@ -139,7 +139,7 @@ public:
     if (suffixInTableHeader_ == val)
       return;
     suffixInTableHeader_ = val;
-    emit headerDataChanged(Qt::Horizontal, COL_VALUE, COL_VALUE);
+    Q_EMIT headerDataChanged(Qt::Horizontal, COL_VALUE, COL_VALUE);
   }
 
   /** If true, suffix is shown in the table's header */
@@ -287,13 +287,13 @@ public:
         return false;
 
       editedGradient_.setControlColor(index.row(), val, editedGradient_.controlColor(index.row()));
-      emit dataChanged(createIndex(index.row(), COL_VALUE), createIndex(index.row(), COL_VALUE));
+      Q_EMIT dataChanged(createIndex(index.row(), COL_VALUE), createIndex(index.row(), COL_VALUE));
       return true;
     }
     case COL_COLOR:
     {
       editedGradient_.setControlColor(index.row(), editedGradient_.controlColorPct(index.row()), value.value<QColor>());
-      emit dataChanged(createIndex(index.row(), COL_COLOR), createIndex(index.row(), COL_COLOR));
+      Q_EMIT dataChanged(createIndex(index.row(), COL_COLOR), createIndex(index.row(), COL_COLOR));
       return true;
     }
     default:
@@ -309,9 +309,9 @@ public:
     if (editedGradient_ == gradient)
       return;
 
-    emit beginResetModel();
+    beginResetModel();
     editedGradient_ = gradient;
-    emit endResetModel();
+    endResetModel();
   }
 
   /** Retrieves the current color gradient from the model */
@@ -323,9 +323,9 @@ public:
   /** Removes all color stops from the model */
   void clear()
   {
-    emit beginResetModel();
+    beginResetModel();
     editedGradient_.clearControlColors();
-    emit endResetModel();
+    endResetModel();
   }
 
   /** Removes the color stop indicated by the given index */
@@ -404,9 +404,9 @@ private:
   QModelIndex addStop_(float value, const QColor& color)
   {
     const int rowIdx = editedGradient_.numControlColors();
-    emit beginInsertRows(QModelIndex(), rowIdx, rowIdx);
+    beginInsertRows(QModelIndex(), rowIdx, rowIdx);
     editedGradient_.addControlColor(value, color);
-    emit endInsertRows();
+    endInsertRows();
 
     return index(rowIdx, COL_VALUE);
   }
@@ -891,7 +891,7 @@ void ColorGradientWidget::updateMinMaxUserValues_()
 void ColorGradientWidget::emitGradientChanged_()
 {
   hasChanges_ = true;
-  emit gradientChanged(getColorGradient());
+  Q_EMIT gradientChanged(getColorGradient());
 }
 
 void ColorGradientWidget::showHelpDialog_()

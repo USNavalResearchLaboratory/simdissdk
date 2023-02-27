@@ -50,13 +50,13 @@ public:
   /// Flags whether the current text is valid
   bool isValid() const;
 
-signals:
+Q_SIGNALS:
   /// Let the outside know that a filter option has changed.
   void changed(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression);
   /// Indicates that the validity changed
   void isValidChanged(bool isValid);
 
-public slots:
+public Q_SLOTS:
   /// The text for the filtering was changed by the user
   void textFilterChanged();
   /// The case sensitive option was changed by the user
@@ -68,7 +68,7 @@ public slots:
   /// The user wants a fixed string filter
   void fixedString();
 
-private slots:
+private Q_SLOTS:
   /// A setting has changed; revalidate the text display
   void revalidate_();
 

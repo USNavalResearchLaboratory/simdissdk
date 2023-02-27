@@ -365,8 +365,8 @@ void ConsoleDataModel::addPlainEntry_(simNotify::NotifySeverity severity, const 
 
   // Notify users of new data -- this should be instant, even if we are just pending
   // NOTE that this signal is emitted no matter what the severity level is, unlike items in the pendingLines_
-  emit(textAdded(newEntry->severity()));
-  emit(textAdded(newEntry->timeStamp(), newEntry->severity(), newEntry->channel(), newEntry->text()));
+  Q_EMIT(textAdded(newEntry->severity()));
+  Q_EMIT(textAdded(newEntry->timeStamp(), newEntry->severity(), newEntry->channel(), newEntry->text()));
   if (severity <= minSeverity_ && !pendingTimer_->isActive())
     pendingTimer_->start();
 
@@ -534,7 +534,7 @@ void ConsoleDataModel::setColorizeText(bool fl)
   beginResetModel();
   colorizeText_ = fl;
   endResetModel();
-  emit(colorizeTextChanged(fl));
+  Q_EMIT(colorizeTextChanged(fl));
 }
 
 void ConsoleDataModel::addEntryFilter(EntryFilterPtr entryFilter)
@@ -559,7 +559,7 @@ void ConsoleDataModel::setNewestOnTop(bool fl)
     beginResetModel();
     newestOnTop_ = fl;
     endResetModel();
-    emit newestOnTopChanged(fl);
+    Q_EMIT newestOnTopChanged(fl);
   }
 }
 
@@ -574,7 +574,7 @@ void ConsoleDataModel::setTimeFormatString(const QString& formatString)
   // Return early if we have no data
   if (lines_.empty())
     return;
-  emit dataChanged(index(0, COLUMN_TIME, QModelIndex()), index(lines_.size() - 1, COLUMN_TIME, QModelIndex()));
+  Q_EMIT dataChanged(index(0, COLUMN_TIME, QModelIndex()), index(lines_.size() - 1, COLUMN_TIME, QModelIndex()));
 }
 
 ////////////////////////////////////////

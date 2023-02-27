@@ -120,7 +120,7 @@ void CategoryFilterCounter::testAllCategories()
   // Test every category we know about
   for (auto i = results_.allCategories.begin(); i != results_.allCategories.end(); ++i)
     testCategory_(i->first, i->second);
-  emit resultsReady(results_);
+  Q_EMIT resultsReady(results_);
 }
 
 const CategoryCountResults& CategoryFilterCounter::results() const
@@ -241,7 +241,7 @@ void AsyncCategoryCounter::emitResults_()
 {
   // This call happens in the main thread and is the "join" for the job
   lastResults_ = counter_->results();
-  emit resultsReady(lastResults_);
+  Q_EMIT resultsReady(lastResults_);
 
   // just set to nullptr, the deleteLater() for watcher will do the actual delete
   counter_ = nullptr;

@@ -77,11 +77,11 @@ public:
   /** Update the model ptr */
   void setModel(AbstractEntityTreeModel* model);
 
-public slots:
+public Q_SLOTS:
   /// Set the filter's QRegExp
   void setRegExp(const QRegExp& regExp);
 
-private slots:
+private Q_SLOTS:
   /// Set the attributes of the QRegExp filter
   void setRegExpAttributes_(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression);
 

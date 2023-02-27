@@ -245,7 +245,7 @@ public:
   /// Determines if the argument line has a valid form; the value could be out of range
   virtual QValidator::State validateText(const QString& text) const;
 
-signals:
+Q_SIGNALS:
   /// emitted when the time changes via the user
   void timeEdited(const simCore::TimeStamp& time);
   /// emitted when the time is changed by the user or by setTimeStamp

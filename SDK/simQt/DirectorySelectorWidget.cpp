@@ -149,7 +149,7 @@ void DirectorySelectorWidget::setDirectory(const QString& dir)
   if (osDir != ui_->directoryText->text())
   {
     ui_->directoryText->setText(osDir);
-    emit directoryChanged(osDir);
+    Q_EMIT directoryChanged(osDir);
   }
 }
 

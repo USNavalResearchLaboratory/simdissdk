@@ -79,14 +79,14 @@ namespace simQt {
     /** Returns the current state filter */
     State stateFilter() const;
 
-  signals:
+  Q_SIGNALS:
     /**
      * Emitted when state is changed to update the widget
      * @param state The current state
      */
     void entityStateChanged(int state);
 
-  private slots:
+  private Q_SLOTS:
     /** A new filter state picked by the user */
     void entityStateChanged_(int state);
 

@@ -75,7 +75,7 @@ public:
    */
   simVis::EntityNode* getViewCenterableNode(uint64_t id) const;
 
-public slots:
+public Q_SLOTS:
   /**
    * Center the current view port on the given entity Unique ID
    * @param id The entity to center on
@@ -109,13 +109,13 @@ public:
    */
   void bind(bool centerOnDoubleClick);
 
-public slots:
+public Q_SLOTS:
   /** The format for displaying the time in the right click mouse menu */
   void setTimeFormat(simCore::TimeFormat timeFormat);
   /** The digits after the decimal point in the time format */
   void setTimePrecision(unsigned int precision);
 
-private slots:
+private Q_SLOTS:
   void updateCenterEnable_();
   void centerOnEntity_(uint64_t id);
 

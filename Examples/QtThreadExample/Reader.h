@@ -46,17 +46,17 @@ public:
   /** Returns the number of data points processed */
   unsigned int numberProcessed() const;
 
-signals:
+Q_SIGNALS:
   /** Signaled when finally finishes. */
   void finished();
 
-public slots:
+public Q_SLOTS:
   /** Starts the reading of data */
   void start();
   /** Stops the reading of data */
   void stop();
 
-private slots:
+private Q_SLOTS:
   /** The reader get data from the thread via this slot */
   void addDataPoint_(double lat, double lon, double alt);
 

@@ -134,7 +134,7 @@ public:
   /// Should only be called by QtEntityTreeItem.  Removes the id from itemsById_
   void clearIndex(uint64_t id);
 
-public slots:
+public Q_SLOTS:
   /** Swaps the view to the hierarchy tree */
   virtual void setToTreeView();
   /** Swaps the view to a non-hierarchical list */
@@ -156,7 +156,7 @@ public slots:
    */
   void setIncludeScenario(bool showScenario);
 
-private slots:
+private Q_SLOTS:
   /** Add any delayed entities */
   void commitDelayedAdd_();
   /** Remove any delayed entities */

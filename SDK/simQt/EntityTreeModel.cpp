@@ -399,7 +399,7 @@ void EntityTreeModel::emitEntityDataChanged_(uint64_t entityId)
 
   QModelIndex start = createIndex(found->row(), 0, found);
   QModelIndex end = createIndex(found->row(), 2, found);
-  emit dataChanged(start, end);
+  Q_EMIT dataChanged(start, end);
 }
 
 void EntityTreeModel::setToTreeView()

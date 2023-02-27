@@ -26,6 +26,7 @@
 #include "osgQt/GraphicsWindowQt"
 #include "simCore/Common/Common.h"
 
+class MultiTouchEventFilter;
 namespace osg { class GraphicsContext; }
 namespace osgViewer { class View; }
 
@@ -106,7 +107,8 @@ private:
   /** Create a graphics context to associate with OSG Cameras/Views */
   osg::GraphicsContext* createGraphicsContext_();
 
-  AutoRepeatFilter* autoRepeatFilter_;
+  AutoRepeatFilter* autoRepeatFilter_ = nullptr;
+  MultiTouchEventFilter* multiTouchEventFilter_ = nullptr;
 };
 
 }

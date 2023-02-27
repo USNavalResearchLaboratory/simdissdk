@@ -308,13 +308,13 @@ void UnitsSelectorComboBox::setUnits(const simCore::Units& units)
   }
 
   // Tell listeners that the units changed.
-  emit unitsChanged(units_);
+  Q_EMIT unitsChanged(units_);
 }
 
 void UnitsSelectorComboBox::emitUnitsOnCurrentChange_(int newCurrent)
 {
   simQt::UnitsComboBox::getCurrentValue<simCore::Units>(*this, units_);
-  emit unitsChanged(units_);
+  Q_EMIT unitsChanged(units_);
 }
 
 }

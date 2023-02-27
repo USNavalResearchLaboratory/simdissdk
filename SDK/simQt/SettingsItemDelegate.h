@@ -49,7 +49,7 @@ public:
   /** Update the editor's geometry */
   virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
-private slots:
+private Q_SLOTS:
   /** Called on acceptance of the color GUI */
   void commitAndCloseEditor_();
   /** Called on rejection of the color GUI */
@@ -82,7 +82,7 @@ public:
   /** Update the editor's geometry */
   virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
-private slots:
+private Q_SLOTS:
   /** Called on acceptance of the pop up file GUI */
   void commitEditor_();
 };
@@ -135,7 +135,7 @@ class SDKQT_EXPORT SettingsFileSelectorDelegate : public QStyledItemDelegate
   /** Update the editor's geometry */
   virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
-private slots:
+private Q_SLOTS:
   /** Called on acceptance of the pop up file GUI */
   void commitEditor_();
 };
@@ -178,7 +178,7 @@ class SDKQT_EXPORT SettingsFontSelectorDelegate : public QStyledItemDelegate
   /** Update the editor's geometry */
   virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
-private slots:
+private Q_SLOTS:
   /** Called on acceptance of the pop up file GUI */
   void commitEditor_();
 };
@@ -201,7 +201,7 @@ public:
   /** Update the editor's geometry */
   virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
-private slots:
+private Q_SLOTS:
   /** Called on acceptance of the GUI */
   void commitAndCloseEditor_();
   /** Called on rejection of the GUI */
