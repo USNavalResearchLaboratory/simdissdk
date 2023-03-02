@@ -30,8 +30,6 @@
 #include "simData/MemoryTable/TableManager.h"
 #include "simUtil/DataStoreTestHelper.h"
 
-using namespace simData;
-
 namespace
 {
 
@@ -53,7 +51,7 @@ public:
     if (active_)
       numErrors_ += SDK_ASSERT(table->tableName() == tableName_);
   }
-  virtual void onPreRemoveTable(DataTable* table)
+  virtual void onPreRemoveTable(simData::DataTable* table)
   {
     if (active_)
       numErrors_ += SDK_ASSERT(table->tableName() == tableName_ || table->ownerId() == ownerId_);
@@ -86,25 +84,25 @@ public:
      table_(table)
   {}
 
-  virtual void onAddColumn(DataTable& table, const simData::TableColumn& column)
+  virtual void onAddColumn(simData::DataTable& table, const simData::TableColumn& column)
   {
     if (active_)
       numErrors_ += SDK_ASSERT(table_.tableId() == table.tableId() && column.name() == columnName_);
   }
 
-  virtual void onAddRow(DataTable& table, const simData::TableRow& row)
+  virtual void onAddRow(simData::DataTable& table, const simData::TableRow& row)
   {
     if (active_)
       numErrors_ += SDK_ASSERT(table_.tableId() == table.tableId() && row.time() == rowTime_);
   }
 
-  virtual void onPreRemoveColumn(DataTable& table, const simData::TableColumn& column)
+  virtual void onPreRemoveColumn(simData::DataTable& table, const simData::TableColumn& column)
   {
     if (active_)
       numErrors_ += SDK_ASSERT(table_.tableId() == table.tableId() && column.name() == columnName_);
   }
 
-  virtual void onPreRemoveRow(DataTable& table, double rowTime)
+  virtual void onPreRemoveRow(simData::DataTable& table, double rowTime)
   {
     if (active_)
     {
@@ -135,7 +133,7 @@ private:
   std::string columnName_;
 };
 
-int rowTest(TableRow& row)
+int rowTest(simData::TableRow& row)
 {
   int rv = 0;
 
@@ -223,7 +221,7 @@ int rowTest(TableRow& row)
   return rv;
 }
 
-int managerTest(DataTableManager& mgr)
+int managerTest(simData::DataTableManager& mgr)
 {
   int rv = 0;
   // Initial check
@@ -326,9 +324,9 @@ int managerTest(DataTableManager& mgr)
   rv += SDK_ASSERT(table11Bar->ownerId() == 11);
 
   // Test the table lists
-  const TableList* table10List = mgr.tablesForOwner(10);
-  const TableList* table11List = mgr.tablesForOwner(11);
-  const TableList* table12List = mgr.tablesForOwner(12);
+  const simData::TableList* table10List = mgr.tablesForOwner(10);
+  const simData::TableList* table11List = mgr.tablesForOwner(11);
+  const simData::TableList* table12List = mgr.tablesForOwner(12);
   rv += SDK_ASSERT(table10List != nullptr);
   rv += SDK_ASSERT(table11List != nullptr);
   rv += SDK_ASSERT(table12List == nullptr);
@@ -344,9 +342,9 @@ int managerTest(DataTableManager& mgr)
   rv += SDK_ASSERT(table11List->tableCount() == 2);
 
   // Test deleteTable, ensure it doesn't reorder IDs
-  TableId table10FooId = table10Foo->tableId();
-  TableId table10BarId = table10Bar->tableId();
-  TableId table10BazId = table10Baz->tableId();
+  simData::TableId table10FooId = table10Foo->tableId();
+  simData::TableId table10BarId = table10Bar->tableId();
+  simData::TableId table10BazId = table10Baz->tableId();
   testObserver->setExpectedTableName("Bar"); // set observer to prepare for Bar delete
   rv += SDK_ASSERT(mgr.deleteTable(table10BarId).isSuccess());
   rv += SDK_ASSERT(mgr.tableCount() == 4);
@@ -386,7 +384,7 @@ int managerTest(DataTableManager& mgr)
   return rv;
 }
 
-int timeContainerTest(MemoryTable::TimeContainer& times)
+int timeContainerTest(simData::MemoryTable::TimeContainer& times)
 {
   int rv = 0;
   rv += SDK_ASSERT(times.empty());
@@ -394,7 +392,7 @@ int timeContainerTest(MemoryTable::TimeContainer& times)
   rv += SDK_ASSERT(times.findOrAddTime(20).hasNext());
   rv += SDK_ASSERT(!times.empty());
   rv += SDK_ASSERT(times.size() == 1);
-  MemoryTable::TimeContainer* clone = times.clone();
+  simData::MemoryTable::TimeContainer* clone = times.clone();
   rv += SDK_ASSERT(!clone->empty());
   rv += SDK_ASSERT(clone->size() == 1);
   rv += SDK_ASSERT(times.findOrAddTime(40).hasNext());
@@ -430,7 +428,7 @@ int timeContainerTest(MemoryTable::TimeContainer& times)
   rv += SDK_ASSERT(!clone->find(49).hasNext());
 
   // Test front/back of iterators
-  MemoryTable::TimeContainer::Iterator iter = clone->end();
+  simData::MemoryTable::TimeContainer::Iterator iter = clone->end();
   rv += SDK_ASSERT(iter.hasPrevious());
   rv += SDK_ASSERT(!iter.hasNext());
   rv += SDK_ASSERT(simCore::areEqual(iter.peekPrevious(), 40.0));
@@ -525,15 +523,15 @@ int timeContainerTest(MemoryTable::TimeContainer& times)
   clone->findOrAddTime(100.0);
   rv += SDK_ASSERT(clone->size() == 10);
   // Erase the last item by itself
-  MemoryTable::TimeContainer::Iterator lastItem = clone->end();
+  simData::MemoryTable::TimeContainer::Iterator lastItem = clone->end();
   rv += SDK_ASSERT(simCore::areEqual(lastItem.previous(), 100.0));
-  clone->erase(lastItem, MemoryTable::TimeContainer::ERASE_FIXOFFSETS);
+  clone->erase(lastItem, simData::MemoryTable::TimeContainer::ERASE_FIXOFFSETS);
   rv += SDK_ASSERT(clone->size() == 9);
   rv += SDK_ASSERT(simCore::areEqual(clone->begin().next(), 10.0));
   rv += SDK_ASSERT(simCore::areEqual(clone->end().previous(), 90.0));
 
   // Erase the first item
-  clone->erase(clone->begin(), MemoryTable::TimeContainer::ERASE_FIXOFFSETS);
+  clone->erase(clone->begin(), simData::MemoryTable::TimeContainer::ERASE_FIXOFFSETS);
   rv += SDK_ASSERT(clone->size() == 8);
   rv += SDK_ASSERT(simCore::areEqual(clone->begin().next(), 20.0));
   rv += SDK_ASSERT(simCore::areEqual(clone->end().previous(), 90.0));
@@ -542,7 +540,7 @@ int timeContainerTest(MemoryTable::TimeContainer& times)
   lastItem = clone->begin();
   lastItem.next(); // points to 30 next
   lastItem.next(); // points to 40 next
-  clone->erase(lastItem, MemoryTable::TimeContainer::ERASE_FIXOFFSETS); // get rid of 40; [20,30,50,60,70,80,90]
+  clone->erase(lastItem, simData::MemoryTable::TimeContainer::ERASE_FIXOFFSETS); // get rid of 40; [20,30,50,60,70,80,90]
   rv += SDK_ASSERT(clone->size() == 7);
   rv += SDK_ASSERT(simCore::areEqual(clone->begin().next(), 20.0));
   rv += SDK_ASSERT(simCore::areEqual(clone->end().previous(), 90.0));
@@ -552,7 +550,7 @@ int timeContainerTest(MemoryTable::TimeContainer& times)
   lastItem.previous(); // next is 90
   lastItem.previous(); // next is 80
   lastItem.previous(); // next is 70
-  clone->erase(lastItem, MemoryTable::TimeContainer::ERASE_FIXOFFSETS); // get rid of 70; [20,30,50,60,80,90]
+  clone->erase(lastItem, simData::MemoryTable::TimeContainer::ERASE_FIXOFFSETS); // get rid of 70; [20,30,50,60,80,90]
   rv += SDK_ASSERT(clone->size() == 6);
   rv += SDK_ASSERT(simCore::areEqual(clone->begin().next(), 20.0));
   rv += SDK_ASSERT(simCore::areEqual(clone->end().previous(), 90.0));
@@ -561,25 +559,25 @@ int timeContainerTest(MemoryTable::TimeContainer& times)
   lastItem = clone->end();
   lastItem.previous(); // next is 90
   lastItem.previous(); // next is 80
-  clone->erase(lastItem, MemoryTable::TimeContainer::ERASE_FIXOFFSETS); // get rid of 80; [20,30,50,60,90]
+  clone->erase(lastItem, simData::MemoryTable::TimeContainer::ERASE_FIXOFFSETS); // get rid of 80; [20,30,50,60,90]
   rv += SDK_ASSERT(clone->size() == 5);
   rv += SDK_ASSERT(simCore::areEqual(clone->begin().next(), 20.0));
   rv += SDK_ASSERT(simCore::areEqual(clone->end().previous(), 90.0));
   // Test that erase(end) does nothing
   lastItem = clone->end();
-  clone->erase(lastItem, MemoryTable::TimeContainer::ERASE_FIXOFFSETS); // no-op
+  clone->erase(lastItem, simData::MemoryTable::TimeContainer::ERASE_FIXOFFSETS); // no-op
   rv += SDK_ASSERT(clone->size() == 5);
   rv += SDK_ASSERT(simCore::areEqual(clone->begin().next(), 20.0));
   rv += SDK_ASSERT(simCore::areEqual(clone->end().previous(), 90.0));
   lastItem.previous(); // next is 90
-  clone->erase(lastItem, MemoryTable::TimeContainer::ERASE_FIXOFFSETS); // get rid of 90; [20,30,50,60]
+  clone->erase(lastItem, simData::MemoryTable::TimeContainer::ERASE_FIXOFFSETS); // get rid of 90; [20,30,50,60]
   rv += SDK_ASSERT(clone->size() == 4);
   rv += SDK_ASSERT(simCore::areEqual(clone->begin().next(), 20.0));
   rv += SDK_ASSERT(simCore::areEqual(clone->end().previous(), 60.0));
 
   // Erase 2 in front
-  clone->erase(clone->begin(), MemoryTable::TimeContainer::ERASE_FIXOFFSETS);
-  clone->erase(clone->begin(), MemoryTable::TimeContainer::ERASE_FIXOFFSETS);
+  clone->erase(clone->begin(), simData::MemoryTable::TimeContainer::ERASE_FIXOFFSETS);
+  clone->erase(clone->begin(), simData::MemoryTable::TimeContainer::ERASE_FIXOFFSETS);
   rv += SDK_ASSERT(clone->size() == 2);
   rv += SDK_ASSERT(simCore::areEqual(clone->begin().next(), 50.0));
   rv += SDK_ASSERT(simCore::areEqual(clone->end().previous(), 60.0));
@@ -601,16 +599,16 @@ int tableTest(simData::DataTable& table)
 
   // Empty column name is an error
   rv += SDK_ASSERT(table.columnCount() == 0);
-  rv += SDK_ASSERT(table.addColumn("", VT_INT32, 0, &column1).isError());
+  rv += SDK_ASSERT(table.addColumn("", simData::VT_INT32, 0, &column1).isError());
   rv += SDK_ASSERT(column1 == nullptr);
   testObserver->setExpectedColumnName("1");
-  rv += SDK_ASSERT(table.addColumn("1", VT_INT32, 0, &column1).isSuccess());
+  rv += SDK_ASSERT(table.addColumn("1", simData::VT_INT32, 0, &column1).isSuccess());
   rv += SDK_ASSERT(column1 != nullptr);
   // Duplicate name is an error
-  rv += SDK_ASSERT(table.addColumn("1", VT_INT32, 0, &column2).isError());
+  rv += SDK_ASSERT(table.addColumn("1", simData::VT_INT32, 0, &column2).isError());
   rv += SDK_ASSERT(column2 == column1); // Should point to column 1, even though there's an error
   testObserver->setExpectedColumnName("2");
-  rv += SDK_ASSERT(table.addColumn("2", VT_INT32, 0, &column2).isSuccess());
+  rv += SDK_ASSERT(table.addColumn("2", simData::VT_INT32, 0, &column2).isSuccess());
   // Sanity checks
   rv += SDK_ASSERT(column2 != column1);
   rv += SDK_ASSERT(column2 != nullptr);
@@ -628,7 +626,7 @@ int tableTest(simData::DataTable& table)
 
   // Add another column
   testObserver->setExpectedColumnName("3");
-  rv += SDK_ASSERT(table.addColumn("3", VT_INT32, 0, &column3).isSuccess());
+  rv += SDK_ASSERT(table.addColumn("3", simData::VT_INT32, 0, &column3).isSuccess());
   rv += SDK_ASSERT(column3 != column1);
   rv += SDK_ASSERT(column3 != column2);
   rv += SDK_ASSERT(column3 != nullptr);
@@ -656,7 +654,7 @@ int tableTest(simData::DataTable& table)
   rv += SDK_ASSERT(table.columnCount() == 2);
 
   // Replacing column 2
-  rv += SDK_ASSERT(table.addColumn("2", VT_INT32, 0, &column2).isSuccess());
+  rv += SDK_ASSERT(table.addColumn("2", simData::VT_INT32, 0, &column2).isSuccess());
   rv += SDK_ASSERT(column2 != column1);
   rv += SDK_ASSERT(column2 != column3);
   rv += SDK_ASSERT(column2 != nullptr);
@@ -682,7 +680,7 @@ int tableTest(simData::DataTable& table)
   rv += SDK_ASSERT(end == 0.0);
 
   // Start to add cells
-  TableRow row;
+  simData::TableRow row;
   row.setTime(10.0);
   row.setValue(column1->columnId(), 1001);
   row.setValue(column2->columnId(), 1002);
@@ -693,7 +691,7 @@ int tableTest(simData::DataTable& table)
   rv += SDK_ASSERT(begin == 10.0);
   rv += SDK_ASSERT(end == 10.0);
 
-  row = TableRow();
+  row = simData::TableRow();
   row.setTime(20.0);
   row.setValue(column1->columnId(), 2001.0);
   row.setValue(column2->columnId(), 2002.0);
@@ -771,12 +769,12 @@ int tableTest(simData::DataTable& table)
   simData::TableColumn* column5 = nullptr;
   simData::TableColumn* column6 = nullptr;
   testObserver->setExpectedColumnName("4");
-  rv += SDK_ASSERT(table.addColumn("4", VT_UINT32, 0, &column4).isSuccess());
+  rv += SDK_ASSERT(table.addColumn("4", simData::VT_UINT32, 0, &column4).isSuccess());
   testObserver->setExpectedColumnName("5");
-  rv += SDK_ASSERT(table.addColumn("5", VT_STRING, 0, &column5).isSuccess());
+  rv += SDK_ASSERT(table.addColumn("5", simData::VT_STRING, 0, &column5).isSuccess());
   rv += SDK_ASSERT(table.columnCount() == 5);
   testObserver->setExpectedColumnName("6");
-  rv += SDK_ASSERT(table.addColumn("6", VT_INT16, 0, &column6).isSuccess());
+  rv += SDK_ASSERT(table.addColumn("6", simData::VT_INT16, 0, &column6).isSuccess());
 
   // Add values to 5 of the 6 columns, out of order
   row.clear();
@@ -872,11 +870,11 @@ int flushTest(simData::DataTable& table)
   rv += SDK_ASSERT(table.columnCount() != 0);
 
   // Define a class to figure out the amount of data in each column for the table
-  class SizeCounter : public DataTable::ColumnVisitor
+  class SizeCounter : public simData::DataTable::ColumnVisitor
   {
   public:
     SizeCounter() : size_(0), numColumns_(0) {}
-    virtual void visit(TableColumn* column)
+    virtual void visit(simData::TableColumn* column)
     {
       numColumns_++;
       size_ += column->size();
@@ -933,8 +931,8 @@ int dataLimitSecondsTest()
   // add some columns
   simData::TableColumn* column1 = nullptr;
   simData::TableColumn* column2 = nullptr;
-  rv += SDK_ASSERT(table->addColumn("1", VT_INT32, 0, &column1).isSuccess());
-  rv += SDK_ASSERT(table->addColumn("2", VT_INT64, 0, &column2).isSuccess());
+  rv += SDK_ASSERT(table->addColumn("1", simData::VT_INT32, 0, &column1).isSuccess());
+  rv += SDK_ASSERT(table->addColumn("2", simData::VT_INT64, 0, &column2).isSuccess());
 
   // add some rows
   simData::TableRow newRow;
@@ -1070,9 +1068,9 @@ int dataLimitingTest()
   simData::TableColumn* column1 = nullptr;
   simData::TableColumn* column2 = nullptr;
   testObserver->setExpectedColumnName("1");
-  rv += SDK_ASSERT(table->addColumn("1", VT_INT32, 0, &column1).isSuccess());
+  rv += SDK_ASSERT(table->addColumn("1", simData::VT_INT32, 0, &column1).isSuccess());
   testObserver->setExpectedColumnName("2");
-  rv += SDK_ASSERT(table->addColumn("2", VT_INT64, 0, &column2).isSuccess());
+  rv += SDK_ASSERT(table->addColumn("2", simData::VT_INT64, 0, &column2).isSuccess());
 
   // add some rows
   simData::TableRow newRow;
@@ -1212,9 +1210,9 @@ int dataLimitingTest()
   simData::TableColumn* column3 = nullptr;
   simData::TableColumn* column4 = nullptr;
   testObserver->setExpectedColumnName("3");
-  rv += SDK_ASSERT(table->addColumn("3", VT_INT8, 0, &column3).isSuccess());
+  rv += SDK_ASSERT(table->addColumn("3", simData::VT_INT8, 0, &column3).isSuccess());
   testObserver->setExpectedColumnName("4");
-  rv += SDK_ASSERT(table->addColumn("4", VT_INT16, 0, &column4).isSuccess());
+  rv += SDK_ASSERT(table->addColumn("4", simData::VT_INT16, 0, &column4).isSuccess());
 
   // now add a row at 5.95, with all columns filled, which will cause a split.
   newRow.clear();
@@ -1256,7 +1254,7 @@ int getTimeRangeTest()
 
   // Add a column
   simData::TableColumn* column1 = nullptr;
-  rv += SDK_ASSERT(table->addColumn("1", VT_INT32, 0, &column1).isSuccess());
+  rv += SDK_ASSERT(table->addColumn("1", simData::VT_INT32, 0, &column1).isSuccess());
 
   // add some rows
   simData::TableRow newRow;
@@ -1301,7 +1299,7 @@ int getTimeRangeTest()
   // Test again, with data being added in reverse. Creates situation where the
   // DoubleBufferTimeContainer's FRESH bin has earlier times than the STALE bin
   simData::TableColumn* column2 = nullptr;
-  rv += SDK_ASSERT(table->addColumn("2", VT_INT32, 0, &column2).isSuccess());
+  rv += SDK_ASSERT(table->addColumn("2", simData::VT_INT32, 0, &column2).isSuccess());
 
   newRow.clear();
   newRow.setTime(5.0);
@@ -1367,7 +1365,7 @@ int subTableIterationTest(simData::MemoryTable::TimeContainer* newTimeContainer)
   {
   public:
     NoSplit() : gotSplit(false) {}
-    virtual void notifySplit(SubTable* originalTable, SubTable* newTable, const std::vector<TableColumnId>& splitColumns)
+    virtual void notifySplit(SubTable* originalTable, SubTable* newTable, const std::vector<simData::TableColumnId>& splitColumns) override
     {
       gotSplit = true;
     }
@@ -1398,7 +1396,7 @@ int subTableIterationTest(simData::MemoryTable::TimeContainer* newTimeContainer)
   {
     lastTime += 10;
     rv += SDK_ASSERT(iter.peekNext().time() == lastTime);
-    TableRow row;
+    simData::TableRow row;
     row.setTime(lastTime - 1);
     iter.next().fillRow(row);
     // Assertion validates that the row time doesn't get set by fillRow()
@@ -1421,7 +1419,7 @@ int subTableIterationTest(simData::MemoryTable::TimeContainer* newTimeContainer)
   {
     lastTime -= 10;
     rv += SDK_ASSERT(iter.peekPrevious().time() == lastTime);
-    TableRow row;
+    simData::TableRow row;
     row.setTime(lastTime - 1);
     iter.previous().fillRow(row);
     // Assertion validates that the row time doesn't get set by fillRow()
@@ -1466,7 +1464,7 @@ int subTableIterationTest(simData::MemoryTable::TimeContainer* newTimeContainer)
   return rv;
 }
 
-class CheckDataVisitor : public DataTable::RowVisitor
+class CheckDataVisitor : public simData::DataTable::RowVisitor
 {
 public:
   CheckDataVisitor()
@@ -1481,7 +1479,7 @@ public:
       allowStops_(true)
   {
   }
-  virtual VisitReturn visit(const TableRow& row)
+  virtual VisitReturn visit(const simData::TableRow& row)
   {
     numErrors_ += SDK_ASSERT(!hasTime(row.time()));
     timesVisited_.insert(row.time());
@@ -1651,7 +1649,7 @@ int testRowIteration(simData::DataTable& table)
   return rv;
 }
 
-int testPeekPrevSetGetValues(TableColumn::Iterator iter)
+int testPeekPrevSetGetValues(simData::TableColumn::Iterator iter)
 {
   int rv = 0;
   // Check the value in various data formats too while we're here
@@ -1733,7 +1731,7 @@ int testPeekPrevSetGetValues(TableColumn::Iterator iter)
   rv += SDK_ASSERT(iter.peekPrevious()->setValue(12).isSuccess());
 
   // While we're here, test out toFront and toBack too
-  TableColumn::Iterator newIter = iter;
+  simData::TableColumn::Iterator newIter = iter;
   newIter.toFront();
   rv += SDK_ASSERT(!newIter.hasPrevious());
   rv += SDK_ASSERT(newIter.hasNext());
@@ -1802,7 +1800,7 @@ int testColumnIteration(simData::DataTable& table)
   rv += SDK_ASSERT(table.addRow(newRow).isSuccess());
 
   // Now iterate through and make sure the values match up what we expect, even with the out-of-order add
-  TableColumn::Iterator iter = c1->begin();
+  simData::TableColumn::Iterator iter = c1->begin();
   rv += SDK_ASSERT(!iter.hasPrevious());
   rv += SDK_ASSERT(iter.hasNext());
   rv += SDK_ASSERT(simCore::areEqual(iter.peekNext()->time(), 20.0)); // c1 skips time 10
@@ -1817,7 +1815,7 @@ int testColumnIteration(simData::DataTable& table)
   rv += SDK_ASSERT(iter.hasNext()); // time 30/13 next...
   rv += SDK_ASSERT(simCore::areEqual(iter.next()->time(), 30.0));
   rv += SDK_ASSERT(iter.hasNext()); // time 35/40 next...
-  TableColumn::IteratorDataPtr iterData;
+  simData::TableColumn::IteratorDataPtr iterData;
   iterData = iter.next();
   rv += SDK_ASSERT(simCore::areEqual(iterData->time(), 35.0));
   iterData->getValue(value);
@@ -1947,7 +1945,7 @@ int testColumnIteration(simData::DataTable& table)
 
 int rowTest()
 {
-  TableRow row;
+  simData::TableRow row;
   int rv = 0;
   rv += SDK_ASSERT(rowTest(row) == 0);
   return rv;
@@ -1963,7 +1961,7 @@ int managerTest()
 
 int timeContainerTest()
 {
-  MemoryTable::DoubleBufferTimeContainer dbContainer;
+  simData::MemoryTable::DoubleBufferTimeContainer dbContainer;
   int rv = 0;
   rv += SDK_ASSERT(timeContainerTest(dbContainer) == 0);
   return rv;
@@ -2104,7 +2102,7 @@ int doubleBufferTimeContainerTest()
   rv += SDK_ASSERT(tc.upper_bound(45).previous().index() == 3);
 
   // Do a swap, and redo the searches
-  std::vector<DataTable::TableObserverPtr> noObservers;
+  std::vector<simData::DataTable::TableObserverPtr> noObservers;
   tc.swapFreshStaleData(nullptr, noObservers);
   rv += SDK_ASSERT(tc.begin().hasNext());
   rv += SDK_ASSERT(tc.begin().next().index() == 0);
@@ -2136,8 +2134,8 @@ int doubleBufferTimeContainerTest()
   // Add some times in the middle, should go into the fresh bin
   tc.findOrAddTime(15);
   tc.findOrAddTime(25);
-  MemoryTable::TimeContainer::Iterator iter = tc.begin();
-  MemoryTable::TimeContainer::IteratorData value = iter.next();
+  simData::MemoryTable::TimeContainer::Iterator iter = tc.begin();
+  simData::MemoryTable::TimeContainer::IteratorData value = iter.next();
   rv += SDK_ASSERT(value.time() == 10.0);
   rv += SDK_ASSERT(value.index() == 0);
   rv += SDK_ASSERT(!value.isFreshBin());
