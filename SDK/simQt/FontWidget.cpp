@@ -21,6 +21,11 @@
  *
  */
 #include <cassert>
+
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include <QDir>
 #include <QRawFont>
 #include <QComboBox>
