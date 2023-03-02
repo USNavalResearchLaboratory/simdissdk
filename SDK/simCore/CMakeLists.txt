@@ -2,8 +2,6 @@
 
 set(CORE_COMMON_INC Common/)
 set(CORE_COMMON_HEADERS
-    ${CORE_COMMON_INC}inttypes.h
-    ${CORE_COMMON_INC}stdint.h
     ${CORE_COMMON_INC}Common.h
     ${CORE_COMMON_INC}Exception.h
     ${CORE_COMMON_INC}Export.h
