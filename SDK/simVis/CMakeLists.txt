@@ -476,6 +476,13 @@ if(HAVE_EARTHMANIPULATOR_BINDTOUCHDRAG)
     target_compile_definitions(simVis PRIVATE HAVE_EARTHMANIPULATOR_BINDTOUCHDRAG)
 endif()
 
+# Various bits of code check known non-null to null, as part of macros
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-Wno-nonnull-compare" HAVE_NONNULL_COMPARE)
+if(HAVE_NONNULL_COMPARE)
+    target_compile_options(simVis PRIVATE "-Wno-nonnull-compare")
+endif()
+
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     vsi_install_export(simVis ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
