@@ -23,6 +23,7 @@
 #ifndef SIMDATA_DATA_LIMITER_H
 #define SIMDATA_DATA_LIMITER_H
 
+#include <cassert>
 // required for gcc to find size_t
 #include <cstdlib>
 
