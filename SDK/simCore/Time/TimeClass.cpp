@@ -30,6 +30,8 @@
 
 #include "simCore/Common/Exception.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/String/Utils.h"
+#include "simCore/String/ValidNumber.h"
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/Exception.h"
 #include "simCore/Time/TimeClass.h"
@@ -413,71 +415,7 @@ void TimeStamp::getTimeComponents(unsigned int& day, unsigned int& hour, unsigne
 
 int TimeStamp::strptime(const std::string& timeStr, const std::string& format, std::string* remainder)
 {
-  // Avoid any simCore time utility exceptions
-  try {
-    std::tm tm = {};
-    if (remainder)
-      remainder->clear();
-
-#ifdef _MSC_VER
-    // Adapted from https://stackoverflow.com/questions/321849/strptime-equivalent-on-windows
-    std::istringstream is(timeStr);
-    is.imbue(std::locale(setlocale(LC_ALL, nullptr)));
-
-    // Note that std::get_Time wasn't implemented in GCC until 5.1, and is
-    // reported as broken in MSVC 2015.
-    is >> std::get_time(&tm, format.c_str());
-    if (is.fail())
-    {
-      if (remainder)
-        *remainder = timeStr;
-      return 1;
-    }
-
-    // Fill out the remainder value
-    if (remainder && !is.eof())
-      *remainder = timeStr.substr(is.tellg());
-#else
-    // Linux use strptime(), which returns null on error
-    const char* rv = ::strptime(timeStr.c_str(), format.c_str(), &tm);
-    if (!rv)
-    {
-      if (remainder)
-        *remainder = timeStr;
-      return 1;
-    }
-    if (remainder)
-      *remainder = rv;
-#endif
-
-    // Make sane values for year, mday, and mon, before calling mktime()
-    tm.tm_year = simCore::sdkMax(70, tm.tm_year);
-    tm.tm_mday = simCore::sdkMax(tm.tm_mday, 1);
-    if (tm.tm_yday > 0 && tm.tm_mday == 1 && tm.tm_mon == 0)
-      simCore::getMonthAndDayOfMonth(tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_yday);
-
-    // mktime() will return in local time, use timezone to offset back to UTC
-#ifdef _MSC_VER
-    auto asTime = std::mktime(&tm) - _timezone;
-#else
-    auto asTime = std::mktime(&tm) - timezone;
-#endif
-
-    // Check for failure state
-    if (asTime < 0)
-    {
-      if (remainder)
-        *remainder = timeStr;
-      return 1;
-    }
-    setTime(1970, static_cast<double>(asTime));
-    return 0;
-  }
-  catch (const simCore::TimeException&)
-  {
-    // noop
-  }
-  return 1;
+  return TimeStampStr().strptime(*this, timeStr, format, remainder);
 }
 
 /**
@@ -519,14 +457,121 @@ private:
 
 std::string TimeStamp::strftime(const std::string& format) const
 {
+  return TimeStampStr().strftime(*this, format);
+}
+
+//------------------------------------------------------------------------------------------
+
+TimeStampStr::TimeStampStr()
+{
+#ifdef _MSC_VER
+  is_.imbue(std::locale(setlocale(LC_ALL, nullptr)));
+#endif
+}
+TimeStampStr::~TimeStampStr()
+{
+}
+
+int TimeStampStr::strptime(TimeStamp& timeStamp, const std::string& timeStr, const std::string& format, std::string* remainder)
+{
+  // Avoid any simCore time utility exceptions
+  try {
+    std::tm tm = {};
+    if (remainder)
+      remainder->clear();
+
+#ifdef _MSC_VER
+    // Adapted from https://stackoverflow.com/questions/321849/strptime-equivalent-on-windows
+    is_.clear();
+    is_.str(timeStr);
+
+    // Note that std::get_Time wasn't implemented in GCC until 5.1, and is
+    // reported as broken in MSVC 2015.
+    is_ >> std::get_time(&tm, format.c_str());
+    if (is_.fail())
+    {
+      if (remainder)
+        *remainder = timeStr;
+      return 1;
+    }
+
+    // Fill out the remainder value
+    if (remainder && !is_.eof())
+      *remainder = timeStr.substr(is_.tellg());
+#else
+    // Linux use strptime(), which returns null on error
+    const char* rv = ::strptime(timeStr.c_str(), format.c_str(), &tm);
+    if (!rv)
+    {
+      if (remainder)
+        *remainder = timeStr;
+      return 1;
+    }
+    if (remainder)
+      *remainder = rv;
+#endif
+
+    // Make sane values for year, mday, and mon, before calling mktime()
+    tm.tm_year = simCore::sdkMax(70, tm.tm_year);
+    tm.tm_mday = simCore::sdkMax(tm.tm_mday, 1);
+    if (tm.tm_yday > 0 && tm.tm_mday == 1 && tm.tm_mon == 0)
+      simCore::getMonthAndDayOfMonth(tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_yday);
+
+    // mktime() will return in local time, use timezone to offset back to UTC
+#ifdef _MSC_VER
+    auto asTime = std::mktime(&tm) - _timezone;
+#else
+    auto asTime = std::mktime(&tm) - timezone;
+#endif
+
+    // Check for failure state
+    if (asTime < 0)
+    {
+      if (remainder)
+        *remainder = timeStr;
+      return 1;
+    }
+
+    timeStamp.setTime(1970, static_cast<double>(asTime));
+    return 0;
+  }
+  catch (const simCore::TimeException&)
+  {
+    // noop
+  }
+  return 1;
+}
+
+int TimeStampStr::strptime(TimeStamp& timeStamp, const std::string& timeStr, const std::string& format)
+{
+  std::string remainder;
+  if (strptime(timeStamp, timeStr, format, &remainder) != 0)
+    return 1;
+
+  // MSVC doesn't respect %f in format string, so process remainder of time string
+  remainder = simCore::StringUtils::trim(remainder);
+  if (!remainder.empty() && (remainder != "."))  // skip number like "12."
+  {
+    // Remainder might look like ".17482"
+    double decimalSeconds = 0.;
+    if (!simCore::isValidNumber(remainder, decimalSeconds))
+      return 1;
+    timeStamp += decimalSeconds;
+  }
+
+  return 0;
+}
+
+std::string TimeStampStr::strftime(const TimeStamp& timeStamp, const std::string& format)
+{
   // Avoid testing INFINITE_TIME_STAMP
-  if (simCore::INFINITE_TIME_STAMP == *this)
+  if (simCore::INFINITE_TIME_STAMP == timeStamp)
     return "";
 
   // Do not remove; cppCheck flags as unused but the constructor and destructor do actual work.
   InvalidParameterDetection detectInvalid;
 
-  const auto& timeStruct = simCore::getTimeStruct(*this);
+  const auto& timeStruct = simCore::getTimeStruct(timeStamp);
 
   // Try/catch since MSVC version will throw an exception on error
   SAFETRYBEGIN;
@@ -549,9 +594,10 @@ std::string TimeStamp::strftime(const std::string& format) const
   return buffer;
 #else
   // C++11-compatible put_time()
-  std::stringstream ss;
-  ss << std::put_time(&timeStruct, format.c_str());
-  return ss.str();
+  os_.clear();
+  os_.str(std::string());
+  os_ << std::put_time(&timeStruct, format.c_str());
+  return os_.str();
 #endif
 
   SAFETRYEND("during TimeStamp::strftime");

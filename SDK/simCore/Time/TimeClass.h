@@ -24,6 +24,7 @@
 #define SIMCORE_TIME_TIMECLASS_H
 
 #include <iostream>
+#include <sstream>
 
 #include "simCore/Common/Common.h"
 #include "simCore/Time/Constants.h"
@@ -448,6 +449,58 @@ namespace simCore
     TimeCompVal compare_(const TimeStamp& time) const;
   };
 
+  /** Wrapper for strptime() and strftime().  Significantly improve performance by reusing class object. */
+  class SDKCORE_EXPORT TimeStampStr
+  {
+  public:
+    TimeStampStr();
+    virtual ~TimeStampStr();
+
+    /// Functional equivalent of C function strptime(). See std::get_time() for format specifications.
+    /**
+     * Reads a user-provided time string, using a user-provided formatting string, returning
+     * 0 on success and non-zero on error. Intended to match ::strptime() functionality.
+     * Optionally returns the string remainder on success. Notably, this cannot process
+     * milliseconds values. This function is dependent on correct implementation of strptime()
+     * on Linux and std::get_time() on MSVC. Implementation errors in these functions will
+     * cascade into this function.
+     * @param timeStamp The object to update with the time from timeStr
+     * @param timeStr User time string value
+     * @param format Formatting string, such as "%m/%d/%Y %H:%M:%S". The format values are
+     *   identical to those in std::get_time().
+     * @param remainder After parsing the string, this will be the remaining content, copied
+     *   from the original string. This is useful for processing trailing milliseconds. On
+     *   failure, this is the same as the input parameter timeStr.
+     * @return 0 on success, and TimeStamp is set to the time string provided. Non-zero
+     *   on error, such as invalid format string or inability to read values. On failure,
+     *   the time stamp is not changed. On success, the time stamp is updated to value read.
+     */
+    int strptime(TimeStamp& timeStamp, const std::string& timeStr, const std::string& format, std::string* remainder);
+
+    /** Like strptime() above, but automatically processes the remainder */
+    int strptime(TimeStamp& timeStamp, const std::string& timeStr, const std::string& format);
+
+    /// Functional equivalent of C function strftime(). See std::put_time() for format specifications.
+    /**
+     * Reads a developer-provided format string, and prints the values of the TimeStamp according
+     * to that format string. Intended to match ::strftime() functionality. This function is
+     * dependent on correction implementation of std:put_time(), and implementation errors in that
+     * function will cascade into this function. Note that underlying library implementation will
+     * impact results, and format strings from strftime() are not necessarily the same as format
+     * strings accepted by strptime().
+     * Invalid format strings may assert in debug mode.
+     * @param timeStamp The object to extract time from
+     * @param format Formatting string, such as "%m/%d/%Y %H:%M:%S". The format values are
+     *   identical to those in std::pet_time().
+     * @return String value representing the time. On error, this may be empty string, or it may
+     *   be a partially converted output string, depending on underlying system implementation.
+     */
+    std::string strftime(const TimeStamp& timeStamp, const std::string& format);
+
+  private:
+    std::istringstream is_;
+    std::ostringstream os_;
+  };
   //------------------------------------------------------------------------
 
   /** Static value representing zero seconds, shared for performance reasons. */
