@@ -47,6 +47,14 @@ if(TARGET simUtil)
     target_link_libraries(SimCoreTests PRIVATE simUtil)
     target_compile_definitions(SimCoreTests PRIVATE HAVE_SIMUTIL)
 endif()
+
+# Suppress warning for TimeStamp methods
+if(UNIX)
+	target_compile_options(SimCoreTests PRIVATE "-Wno-deprecated-declarations")
+else()
+	target_compile_options(SimCoreTests PRIVATE "-wd4996")
+endif()
+
 set_target_properties(SimCoreTests PROPERTIES
     FOLDER "Unit Tests"
     PROJECT_LABEL "simCore Test"

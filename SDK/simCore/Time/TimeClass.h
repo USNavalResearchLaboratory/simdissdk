@@ -409,7 +409,8 @@ namespace simCore
      *   on error, such as invalid format string or inability to read values. On failure,
      *   the time stamp is not changed. On success, the time stamp is updated to value read.
      */
-    int strptime(const std::string& timeStr, const std::string& format, std::string* remainder);
+    SDK_DEPRECATE(int strptime(const std::string& timeStr, const std::string& format, std::string* remainder),
+      "Use TimeStampStr class instead");
 
     /// Functional equivalent of C function strftime(). See std::put_time() for format specifications.
     /**
@@ -425,7 +426,8 @@ namespace simCore
      * @return String value representing the time. On error, this may be empty string, or it may
      *   be a partially converted output string, depending on underlying system implementation.
      */
-    std::string strftime(const std::string& format) const;
+    SDK_DEPRECATE(std::string strftime(const std::string& format) const,
+      "Use TimeStampStr class instead");
 
   protected:
 
