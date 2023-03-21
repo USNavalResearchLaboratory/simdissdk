@@ -203,6 +203,76 @@ int observerTest()
   return rv;
 }
 
+/// Empty callbacks
+class Empty : public simCore::Clock::ModeChangeObserver
+{
+public:
+  virtual void onModeChange(simCore::Clock::Mode newMode) {}
+  virtual void onDirectionChange(simCore::TimeDirection newDirection) {}
+  virtual void onScaleChange(double newValue) {}
+  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) {}
+  virtual void onCanLoopChange(bool newVal) {}
+  virtual void onUserEditableChanged(bool userCanEdit) {}
+};
+
+/// A class that removes some else during a mode change
+class RemoveSomeone : public simCore::Clock::ModeChangeObserver
+{
+public:
+  RemoveSomeone(simCore::ClockImpl& t, std::shared_ptr<Empty> empty)
+    : t_(t),
+      empty_(empty)
+  {
+  }
+  virtual void onModeChange(simCore::Clock::Mode newMode) { t_.removeModeChangeCallback(empty_); }
+  virtual void onDirectionChange(simCore::TimeDirection newDirection) {}
+  virtual void onScaleChange(double newValue) {}
+  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) {}
+  virtual void onCanLoopChange(bool newVal) {}
+  virtual void onUserEditableChanged(bool userCanEdit) {}
+private:
+  simCore::ClockImpl& t_;
+  std::shared_ptr<Empty> empty_;
+};
+
+/// A class that adds some else during a mode change
+class AddSomeone : public simCore::Clock::ModeChangeObserver
+{
+public:
+  AddSomeone(simCore::ClockImpl& t, std::shared_ptr<Empty> empty)
+    : t_(t),
+    empty_(empty)
+  {
+  }
+  virtual void onModeChange(simCore::Clock::Mode newMode) { t_.registerModeChangeCallback(empty_); }
+  virtual void onDirectionChange(simCore::TimeDirection newDirection) {}
+  virtual void onScaleChange(double newValue) {}
+  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) {}
+  virtual void onCanLoopChange(bool newVal) {}
+  virtual void onUserEditableChanged(bool userCanEdit) {}
+private:
+  simCore::ClockImpl& t_;
+  std::shared_ptr<Empty> empty_;
+};
+
+int modeObserverTest()
+{
+  // Make sure the code does not crash when an observer removes an observer
+
+  simCore::ClockImpl t;
+  t.registerModeChangeCallback(std::make_shared<Empty>());
+  auto empty = std::make_shared<Empty>();
+  t.registerModeChangeCallback(empty);
+  t.registerModeChangeCallback(std::make_shared<RemoveSomeone>(t, empty));
+  t.registerModeChangeCallback(std::make_shared<Empty>());
+  empty = std::make_shared<Empty>();
+  t.registerModeChangeCallback(std::make_shared<AddSomeone>(t, empty));
+  t.registerModeChangeCallback(std::make_shared<Empty>());
+  t.setMode(simCore::Clock::MODE_FREEWHEEL);
+
+  return 0;
+}
+
 int stepTest()
 {
   int rv = 0;
@@ -914,6 +984,7 @@ int userTimeBoundsTest()
 int TimeManagerTest(int argc, char* argv[])
 {
   int rv = 0;
+  rv += modeObserverTest();
   rv += observerTest();
   rv += stepTest();
   rv += realtimeTest();

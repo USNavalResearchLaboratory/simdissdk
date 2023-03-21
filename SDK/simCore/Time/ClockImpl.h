@@ -62,6 +62,8 @@ namespace simCore
     std::vector<Clock::TimeObserverPtr> timeObservers_;
     /// List of all observers interested in changes not related to time value directly (mode, loop, etc.)
     std::vector<Clock::ModeChangeObserverPtr> modeChangeObservers_;
+    /// Need to handle the edge case of removing an observer while calling observers
+    bool removedModeObserver_ = false;
   };
 
   /** Implementation of clock controls (play rate, start/stop, etc) */
