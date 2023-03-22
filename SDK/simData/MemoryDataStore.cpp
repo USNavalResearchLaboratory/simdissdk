@@ -218,6 +218,63 @@ private:
 
 //----------------------------------------------------------------------------
 
+class MemoryDataStore::HostChildCache : public simData::DataStore::DefaultListener
+{
+public:
+  explicit HostChildCache(std::multimap<IdAndTypeKey, ObjectId>& hostToChildren)
+    : hostToChildren_(hostToChildren)
+  {
+  }
+
+  virtual ~HostChildCache()
+  {
+    // Should be empty
+    assert(hostToChildren_.empty());
+  }
+
+  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  {
+    // ignore non-children
+    if ((ot == simData::PLATFORM) || (ot == simData::NONE) || (ot == simData::ALL))
+      return;
+
+    auto hostId = source->entityHostId(newId);
+    hostToChildren_.insert(std::pair<IdAndTypeKey, ObjectId>(IdAndTypeKey(hostId, ot), newId));
+  }
+
+  virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
+  {
+    // ignore non-children
+    if ((ot == simData::PLATFORM) || (ot == simData::NONE) || (ot == simData::ALL))
+      return;
+
+    auto hostId = source->entityHostId(removedId);
+    auto pair = hostToChildren_.equal_range(IdAndTypeKey(hostId, ot));
+
+    for (auto iter = pair.first; iter != pair.second; ++iter)
+    {
+      if (iter->second == removedId)
+      {
+        hostToChildren_.erase(iter);
+        return;
+      }
+    }
+
+    // Have a child with no parent
+    assert(false);
+  }
+
+  virtual void onScenarioDelete(DataStore* source) override
+  {
+    // Do not optimize, must individually remove entities for correct clean up
+  }
+
+private:
+  std::multimap<IdAndTypeKey, ObjectId>& hostToChildren_;
+};
+
+//----------------------------------------------------------------------------
+
 /** Adapts NewRowDataListener to MemoryDataStore's newUpdatesListener_ */
 class NewRowDataToNewUpdatesAdapter : public MemoryTable::TableManager::NewRowDataListener
 {
@@ -276,8 +333,11 @@ public:
 
     // Add back all listeners
     for (ListenerList::const_iterator iter = listeners_.begin(); iter != listeners_.end(); ++iter)
-      ds.addListener(*iter);
-
+    {
+      // Do not copy the internal one
+      if (dynamic_cast<HostChildCache*>((*iter).get()) == nullptr)
+        ds.addListener(*iter);
+    }
     for (ScenarioListenerList::const_iterator iter2 = scenarioListeners_.begin(); iter2 != scenarioListeners_.end(); ++iter2)
       ds.addScenarioListener(*iter2);
 
@@ -331,6 +391,7 @@ MemoryDataStore::MemoryDataStore()
   boundClock_(nullptr),
   entityNameCache_(new EntityNameCache())
 {
+  addListener(std::make_shared<HostChildCache>(hostToChildren_));
   dataLimitsProvider_ = new DataStoreLimits(*this);
   dataTableManager_ = new MemoryTable::TableManager(dataLimitsProvider_);
   newRowDataListener_.reset(new NewRowDataToNewUpdatesAdapter(*this));
@@ -352,6 +413,7 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
   boundClock_(nullptr),
   entityNameCache_(new EntityNameCache())
 {
+  addListener(std::make_shared<HostChildCache>(hostToChildren_));
   dataLimitsProvider_ = new DataStoreLimits(*this);
   dataTableManager_ = new MemoryTable::TableManager(dataLimitsProvider_);
   newRowDataListener_.reset(new NewRowDataToNewUpdatesAdapter(*this));
@@ -1308,88 +1370,45 @@ void MemoryDataStore::idListByOriginalId(IdList *ids, uint64_t originalId, simDa
 ///Retrieve a list of IDs for all beams associated with a platform
 void MemoryDataStore::beamIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  // inefficient for extracting beam ids for a platform host
-  // A more efficient method (speed-wise, not memory-wise) is to keep a map of
-  // beam ids keyed by host id
-  for (Beams::const_iterator iter = beams_.begin(); iter != beams_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::BEAM, ids);
 }
 
 ///Retrieve a list of IDs for all gates associated with a beam
 void MemoryDataStore::gateIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  // inefficient for extracting gate ids for a beam host
-  // A more efficient method (speed-wise, not memory-wise) is to keep a map of
-  // gate ids keyed by host id
-  for (Gates::const_iterator iter = gates_.begin(); iter != gates_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::GATE, ids);
 }
 
 ///Retrieve a list of IDs for all lasers associated with a platform
 void MemoryDataStore::laserIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  // inefficient for extracting laser ids for a platform host
-  // A more efficient method (speed-wise, not memory-wise) is to keep a map of
-  // laser ids keyed by host id
-  for (Lasers::const_iterator iter = lasers_.begin(); iter != lasers_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::LASER, ids);
 }
 
 ///Retrieve a list of IDs for all projectors associated with a platform
 void MemoryDataStore::projectorIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  // inefficient for extracting projector ids for a platform host
-  // A more efficient method (speed-wise, not memory-wise) is to keep a map of
-  // projector ids keyed by host id
-  for (Projectors::const_iterator iter = projectors_.begin(); iter != projectors_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::PROJECTOR, ids);
 }
 
 ///Retrieve a list of IDs for all lobGroups associated with a platform
 void MemoryDataStore::lobGroupIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  // inefficient for extracting lobGroup ids for a platform host
-  // A more efficient method (speed-wise, not memory-wise) is to keep a map of
-  // lobGroup ids keyed by host id
-  for (LobGroups::const_iterator iter = lobGroups_.begin(); iter != lobGroups_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::LOB_GROUP, ids);
 }
 
 ///Retrieve a list of IDs for all customs associated with a platform
 void MemoryDataStore::customRenderingIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::CUSTOM_RENDERING, ids);
+}
+
+///Adds the children of hostid of type inType to the ids list
+void MemoryDataStore::idListForHost_(ObjectId hostid, simData::ObjectType inType, IdList* ids) const
+{
+  auto pair = hostToChildren_.equal_range(IdAndTypeKey(hostid, inType));
+  for (auto iter = pair.first; iter != pair.second; ++iter)
+    ids->push_back(iter->second);
 }
 
 ///Retrieves the ObjectType for a particular ID

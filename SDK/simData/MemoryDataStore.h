@@ -48,6 +48,8 @@ class SDKDATA_EXPORT MemoryDataStore : public DataStore
 public:
   MemoryDataStore();
   explicit MemoryDataStore(const ScenarioProperties &properties);
+  MemoryDataStore(const MemoryDataStore& rhs) = delete;
+  MemoryDataStore& operator=(const MemoryDataStore& rhs) = delete;
 
   virtual ~MemoryDataStore();
 
@@ -368,6 +370,9 @@ private:
   void checkForRemoval_(ListenerList& list);
   /// The Listener, if any, that got removed during the last callback
   ListenerList justRemoved_;
+
+  /// Adds the children of hostid of type inType to the ids list
+  void idListForHost_(ObjectId hostid, simData::ObjectType inType, IdList* ids) const;
 
 public:
   // Types for SIMDIS
@@ -698,6 +703,31 @@ private:
   CustomRenderings   customRenderings_;
   GenericDataMap     genericData_;  // Map to hold references for GenericData update slice contained by the DataEntry object with the associated id
   CategoryDataMap    categoryData_; // Map to hold references for CategoryData update slice contained by the DataEntry object with the associated id
+
+  /// To improve performance keep track of children entities by host
+  class HostChildCache;
+  /// Key by host id and child type
+  struct IdAndTypeKey {
+    ObjectId id;
+    simData::ObjectType type;
+    IdAndTypeKey(ObjectId inId, simData::ObjectType inType)
+      : id(inId),
+        type(inType)
+    {
+    }
+    bool operator<(const IdAndTypeKey& rhs) const
+    {
+      if (id < rhs.id)
+        return true;
+
+      if (id > rhs.id)
+        return false;
+
+      return type < rhs.type;
+    }
+  };
+  /// A secondary map to track childrend id by host id
+  std::multimap<IdAndTypeKey, ObjectId> hostToChildren_;
 
   // default prefs objects
   PlatformPrefs  defaultPlatformPrefs_;
