@@ -96,12 +96,8 @@ public:
   /** Removes a range of data from startTime up to but not including the endTime */
   virtual int flush(ObjectId id, FlushScope scope, FlushFields fields, double startTime, double endTime);
 
-  /**
-  * clear out the data store of all scenario specific data, including all entities and category data names.
-  * Invoke onScenarioDelete() unless the argument invokeCallback is false. This is useful if you are going
-  * to clear() manually prior to destroying the data store, to avoid double callbacks.
-  */
-  virtual void clear(bool invokeCallback = true);
+  /** clear out the data store of all scenario specific data, including all entities and category data names. */
+  virtual void clear();
 
   /**@name Interpolation
    *@{
@@ -637,6 +633,8 @@ private:
   };
 
 private:
+  /// Clean up memory
+  void clearMemory_();
   /// Updates all the platforms
   void updatePlatforms_(double time);
   /// Updates a target beam

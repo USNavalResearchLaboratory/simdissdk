@@ -1373,6 +1373,7 @@ int testScenarioDeleteCallback()
   ds->addListener(testListenShared);
 
   rv += SDK_ASSERT(testListen->deleteCount() == 0);
+  ds->clear();
   delete testHelper;
   rv += SDK_ASSERT(testListen->deleteCount() == 1);
 

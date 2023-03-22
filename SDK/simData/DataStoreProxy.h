@@ -101,12 +101,8 @@ public: // methods
   /** Removes a range of data from startTime up to but not including the endTime */
   virtual int flush(ObjectId id, FlushScope scope, FlushFields fields, double startTime, double endTime) {return dataStore_->flush(id, scope, fields, startTime, endTime);}
 
-  /**
-  * clear out the data store of all scenario specific data, including all entities and category data names.
-  * Invoke onScenarioDelete() unless the argument invokeCallback is false. This is useful if you are going
-  * to clear() manually prior to destroying the data store, to avoid double callbacks.
-  */
-  virtual void clear(bool invokeCallback = true) {dataStore_->clear(invokeCallback);}
+  /** Clear out the data store of all scenario specific data, including all entities and category data names. */
+  virtual void clear() {dataStore_->clear();}
 
   /**@name Interpolation
    *@{
