@@ -387,6 +387,9 @@ void CategoryFilter::setCategoryRegExp(int nameInt, const simData::RegExpFilterP
 
 bool CategoryFilter::match(const simData::DataStore& dataStore, uint64_t entityId) const
 {
+  if (categoryCheck_.empty() && categoryRegExp_.empty())
+    return true;
+
   CurrentCategoryValues curCategoryData;
   CategoryFilter::getCurrentCategoryValues(dataStore, entityId, curCategoryData);
   return matchData(curCategoryData);
