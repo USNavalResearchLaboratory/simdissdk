@@ -143,6 +143,10 @@ public Q_SLOTS:
   virtual void toggleTreeView(bool useTree);
   /** Updates the contents of the frame */
   virtual void forceRefresh();
+  /** Stop all model updates */
+  void beginExtendedChange();
+  /** Completely rebuild the model and start accepting model updates */
+  void endExtendedChange();
 
   /** Turns on or off entity icons */
   virtual void setUseEntityIcons(bool useIcons);
@@ -156,12 +160,6 @@ public Q_SLOTS:
    */
   void setIncludeScenario(bool showScenario);
 
-private Q_SLOTS:
-  /** Add any delayed entities */
-  void commitDelayedAdd_();
-  /** Remove any delayed entities */
-  void commitDelayedRemoval_();
-
 private:
   class TreeListener;
 
@@ -171,14 +169,27 @@ private:
   EntityTreeItem* findItem_(uint64_t entityId) const;
   void addTreeItem_(uint64_t id, simData::ObjectType type, uint64_t parentId);
 
-  /// Removes the entity specified by the id
-  void removeEntity_(uint64_t id);
-  /// Remove all entities from the model
+  /** Queue the removal of the entity specified by the id */
+  void queueRemoval_(uint64_t id);
+  /** Remove all entities from the model */
   void removeAllEntities_();
-  /// Adds the entity specified by the id
-  void addEntity_(uint64_t entityId);
-  /// The entity specified by the id has either an new name or its category data changed
-  void emitEntityDataChanged_(uint64_t entityId);
+  /** Queue the adding of the entity specified by the id */
+  void queueAdd_(uint64_t entityId);
+  /** Queue the renaming of the entity specified by the id */
+  void queueNameChange_(uint64_t id);
+  /** Queue the category data change of the entity specified by the id */
+  void queueCategoryDataChange_(uint64_t id);
+  /** Process any queue actions */
+  void commitAllDelayed_();
+  /** Add any delayed entities */
+  void commitDelayedAdd_();
+  /** Remove any delayed entities */
+  void commitDelayedRemoval_();
+  /** Emit signal for dealyed renames */
+  void commitDelayedNameChanged_();
+  /** Emit signal for dealyed category changes */
+  void commitDelayedCategoryChange_();
+
   /// Recursively counts the entities that match the given type(s)
   int countEntityTypes_(EntityTreeItem* parent, simData::ObjectType type) const;
 
@@ -189,16 +200,19 @@ private:
   simData::DataStore::ListenerPtr listener_;
 
   /**
-   * Immediately adding an entity can cause flashing if the tree view has category filtering.
-   * Delay the adding of the entity to give some time for the data source to set the category
-   * data.
+   * Immediately adding, removing or renaming an entity can result in poor performance.
+   * Accumlate the changes and process all at once.  Same applies to category data changes.
    */
   std::vector<simData::ObjectId> delayedAdds_;
-  /**
-   * Deleting immediately can result in poor performance.  Instead, mark entities for removal
-   * and efficiently remove everyone at the same time.
-   */
   bool pendingRemoval_;
+  std::vector<simData::ObjectId> delayedRenames_;
+  std::vector<simData::ObjectId> delayedCategoryDataChanges_;
+
+  /**
+   * Stop all updates while loading a file which can quickly add 1,000s of entities.
+   * Update the model once at the end of the file load
+   */
+  bool activeExtendedChange_;
 
   /** Icons for entity types */
   QIcon platformIcon_;
