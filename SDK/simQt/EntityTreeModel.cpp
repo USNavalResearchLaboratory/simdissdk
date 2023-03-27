@@ -292,6 +292,7 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     treeView_(false),
     dataStore_(nullptr),
     pendingRemoval_(false),
+    activeCategoryFilter_(false),
     activeExtendedChange_(false),
     platformIcon_(":/simQt/images/platform.png"),
     beamIcon_(":/simQt/images/beam.png"),
@@ -369,7 +370,7 @@ void EntityTreeModel::queueNameChange_(uint64_t id)
 
 void EntityTreeModel::queueCategoryDataChange_(uint64_t id)
 {
-  if (activeExtendedChange_)
+  if (activeExtendedChange_ || !activeCategoryFilter_)
     return;
 
   delayedCategoryDataChanges_.push_back(id);
@@ -448,7 +449,24 @@ void EntityTreeModel::commitDelayedCategoryChange_()
   if (delayedCategoryDataChanges_.empty())
     return;
 
-  //TODO: Impelement; most likely somewhere else
+  if (delayedCategoryDataChanges_.size() == 1)
+  {
+    EntityTreeItem* found = findItem_(delayedCategoryDataChanges_.front());
+    if (found)
+    {
+      QModelIndex index = createIndex(found->row(), 0, found);
+      Q_EMIT dataChanged(index, index);
+    }
+  }
+  else
+  {
+    if (rootItem_->childCount() > 0)
+    {
+      QModelIndex start = createIndex(0, 0, rootItem_);
+      QModelIndex end = createIndex(rootItem_->childCount() - 1, 0, rootItem_);
+      Q_EMIT dataChanged(start, end);
+    }
+  }
 
   delayedCategoryDataChanges_.clear();
 }
@@ -462,6 +480,11 @@ void EntityTreeModel::endExtendedChange()
 {
   activeExtendedChange_ = false;
   forceRefresh();
+}
+
+void EntityTreeModel::setActiveCategoryFilter(bool active)
+{
+  activeCategoryFilter_ = active;
 }
 
 void EntityTreeModel::setToTreeView()

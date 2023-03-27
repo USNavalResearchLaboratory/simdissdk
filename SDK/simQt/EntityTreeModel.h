@@ -147,6 +147,8 @@ public Q_SLOTS:
   void beginExtendedChange();
   /** Completely rebuild the model and start accepting model updates */
   void endExtendedChange();
+  /** Improve performance by only emitting changes if there is an active category filter */
+  void setActiveCategoryFilter(bool active);
 
   /** Turns on or off entity icons */
   virtual void setUseEntityIcons(bool useIcons);
@@ -207,6 +209,8 @@ private:
   bool pendingRemoval_;
   std::vector<simData::ObjectId> delayedRenames_;
   std::vector<simData::ObjectId> delayedCategoryDataChanges_;
+  /** Only accumulate category changes if there is an active category filter */
+  bool activeCategoryFilter_;
 
   /**
    * Stop all updates while loading a file which can quickly add 1,000s of entities.

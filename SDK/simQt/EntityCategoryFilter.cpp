@@ -21,6 +21,7 @@
  *
  */
 #include "simData/CategoryData/CategoryFilter.h"
+#include "simData/DataStore.h"
 #include "simQt/CategoryFilterWidget.h"
 #include "simQt/CategoryTreeModel.h"
 #include "simQt/RegExpImpl.h"
@@ -28,17 +29,65 @@
 
 namespace simQt {
 
+/// Monitor the category name manager for clear which will reset the category filter
+class EntityCategoryFilter::CategoryNameListener : public simData::CategoryNameManager::Listener
+{
+public:
+  /// Constructor
+  explicit CategoryNameListener(EntityCategoryFilter* parent)
+    : parent_(parent)
+  {
+  }
+
+  virtual ~CategoryNameListener()
+  {
+  }
+
+  /// Invoked when a new category is added
+  virtual void onAddCategory(int categoryIndex) override
+  {
+    // noop
+  }
+
+  /// Invoked when a new value is added to a category
+  virtual void onAddValue(int categoryIndex, int valueIndex) override
+  {
+    // noop
+  }
+
+  /// Invoked when all data is cleared
+  virtual void onClear() override
+  {
+    parent_->fireActiveChange_(false);
+  }
+
+  /// Invoked when all listeners have received onClear()
+  virtual void doneClearing() override
+  {
+    // noop
+  }
+
+private:
+  EntityCategoryFilter* parent_;
+};
+
+//---------------------------------------------------------------------------------------------------
+
 EntityCategoryFilter::EntityCategoryFilter(simData::DataStore* dataStore, WidgetType widgetType)
   : EntityFilter(),
     dataStore_(dataStore),
     categoryFilter_(new simData::CategoryFilter(dataStore_, true)),
     widgetType_(widgetType),
-    settings_(nullptr)
+    settings_(nullptr),
+    active_(false)
 {
+  listenerPtr_.reset(new CategoryNameListener(this));
+  dataStore_->categoryNameManager().addListener(listenerPtr_);
 }
 
 EntityCategoryFilter::~EntityCategoryFilter()
 {
+  dataStore_->categoryNameManager().removeListener(listenerPtr_);
   delete categoryFilter_;
   categoryFilter_ = nullptr;
 }
@@ -90,6 +139,8 @@ void EntityCategoryFilter::setFilterSettings(const QMap<QString, QVariant>& sett
       Q_EMIT categoryFilterChanged(*categoryFilter_);
       // send out general filter update signal
       Q_EMIT filterUpdated();
+      // Send out active flag
+      fireActiveChange_(!categoryFilter_->isEmpty());
     }
   }
 }
@@ -115,6 +166,8 @@ void EntityCategoryFilter::setCategoryFilter(const simData::CategoryFilter& cate
   Q_EMIT categoryFilterChanged(*categoryFilter_);
   // send out general filter update signal
   Q_EMIT filterUpdated();
+  // Send out active flag
+  fireActiveChange_(!categoryFilter_->isEmpty());
 }
 
 const simData::CategoryFilter& EntityCategoryFilter::categoryFilter() const
@@ -134,6 +187,17 @@ void EntityCategoryFilter::setCategoryFilterFromGui_(const simData::CategoryFilt
   categoryFilter_->assign(categoryFilter, false);
   // the GUI has changed the filter, send out general filter update signal
   Q_EMIT filterUpdated();
+  // Send out active flag
+  fireActiveChange_(!categoryFilter_->isEmpty());
+}
+
+void EntityCategoryFilter::fireActiveChange_(bool active)
+{
+  if (active == active_)
+    return;
+
+  active_ = active;
+  Q_EMIT categoryFilterActive(active_);
 }
 
 }
