@@ -92,12 +92,24 @@ private:
 };
 
 //----------------------------------------------------------------------------
-EntityTreeItem::EntityTreeItem(simData::ObjectId id, simData::ObjectType type, EntityTreeItem *parent)
+EntityTreeItem::EntityTreeItem(simData::DataStore* ds, simData::ObjectId id, simData::ObjectType type, EntityTreeItem *parent)
   : id_(id),
     type_(type),
     parentItem_(parent),
     markForRemoval_(false)
 {
+  if (id_ != 0)
+  {
+    displayName_ = QString::fromStdString(simData::DataStoreHelpers::nameOrAliasFromId(id_, ds));
+    typeString_ = QString::fromStdString(simData::DataStoreHelpers::typeFromId(id_, ds));
+    checkForHighlight(ds);
+  }
+  else
+  {
+    displayName_ = "Scenario Data";
+    typeString_ = "";
+    highlight_ = false;
+  }
 }
 
 EntityTreeItem::~EntityTreeItem()
@@ -129,6 +141,36 @@ simData::ObjectId EntityTreeItem::id() const
 simData::ObjectType EntityTreeItem::type() const
 {
   return type_;
+}
+
+QString EntityTreeItem::displayName() const
+{
+  return displayName_;
+}
+
+void EntityTreeItem::setDisplayName(const QString& name)
+{
+  displayName_ = name;
+}
+
+QString EntityTreeItem::typeString() const
+{
+  return typeString_;
+}
+
+void EntityTreeItem::checkForHighlight(simData::DataStore* ds)
+{
+  if (ds == nullptr)
+    return;
+
+  simData::DataStore::Transaction transaction;
+  const simData::CommonPrefs* prefs = ds->commonPrefs(id_, &transaction);
+  highlight_ = (prefs && prefs->usealias() && prefs->alias().empty());
+}
+
+bool EntityTreeItem::highlight() const
+{
+  return highlight_;
 }
 
 void EntityTreeItem::getChildrenIds(std::vector<uint64_t>& ids) const
@@ -422,6 +464,16 @@ void EntityTreeModel::commitDelayedNameChanged_()
   if (delayedRenames_.empty())
     return;
 
+  for (auto id : delayedRenames_)
+  {
+    EntityTreeItem* found = findItem_(id);
+    if (found)
+    {
+      found->setDisplayName(QString::fromStdString(simData::DataStoreHelpers::nameOrAliasFromId(id, dataStore_)));
+      found->checkForHighlight(dataStore_);
+    }
+  }
+
   if (delayedRenames_.size() == 1)
   {
     EntityTreeItem* found = findItem_(delayedRenames_.front());
@@ -525,7 +577,7 @@ void EntityTreeModel::forceRefresh()
 
     // clean up tree widget
     delete rootItem_;
-    rootItem_ = new EntityTreeItem(0, simData::NONE, nullptr); // has no parent
+    rootItem_ = new EntityTreeItem(dataStore_, 0, simData::NONE, nullptr); // has no parent
     delayedAdds_.clear();  // clear any delayed entities since building from the data store
     delayedRenames_.clear();
     delayedCategoryDataChanges_.clear();
@@ -600,7 +652,7 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
   if ((parentItem != rootItem_) && treeView_)
   {
     beginInsertRows(createIndex(parentItem->row(), 0, parentItem), parentItem->childCount(), parentItem->childCount());
-    EntityTreeItem* newItem = new EntityTreeItem(id, type, parentItem);
+    EntityTreeItem* newItem = new EntityTreeItem(dataStore_, id, type, parentItem);
     itemsById_[id] = newItem;
     parentItem->appendChild(newItem);
     endInsertRows();
@@ -608,7 +660,7 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
   else
   {
     beginInsertRows(QModelIndex(), rootItem_->childCount(), rootItem_->childCount());
-    EntityTreeItem* newItem = new EntityTreeItem(id, type, rootItem_);
+    EntityTreeItem* newItem = new EntityTreeItem(dataStore_, id, type, rootItem_);
     itemsById_[id] = newItem;
     rootItem_->appendChild(newItem);
     endInsertRows();
@@ -653,7 +705,7 @@ void EntityTreeModel::removeAllEntities_()
   beginResetModel();
 
   delete rootItem_;
-  rootItem_ = new EntityTreeItem(0, simData::NONE, nullptr);
+  rootItem_ = new EntityTreeItem(dataStore_, 0, simData::NONE, nullptr);
   itemsById_.clear();
 
   endResetModel();
@@ -677,22 +729,18 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
   {
   case Qt::DisplayRole:
     if (index.column() == 0)
-    {
-      if (item->id() == 0)
-        return "Scenario Data";
-      return QString::fromStdString(simData::DataStoreHelpers::nameOrAliasFromId(item->id(), dataStore_));
-    }
+      return item->displayName();
     if (index.column() == 1)
     {
       if ((useEntityIcons_) || (item->id() == 0))
         return QVariant();
-      return QString::fromStdString(simData::DataStoreHelpers::typeFromId(item->id(), dataStore_));
+      return item->typeString();
     }
     if (index.column() == 2)
     {
       if (item->id() == 0)
         return QVariant();
-      return QString("%1").arg(simData::DataStoreHelpers::originalIdFromId(item->id(), dataStore_));
+      return static_cast<qulonglong>(simData::DataStoreHelpers::originalIdFromId(item->id(), dataStore_));
     }
 
     // Invalid index encountered
@@ -703,7 +751,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     // Only show icon if icons are enabled
     if (useEntityIcons_ && index.column() == 1)
     {
-      switch (dataStore_->objectType(item->id()))
+      switch (item->type())
       {
       case simData::PLATFORM:
         return platformIcon_;
@@ -730,9 +778,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     if (index.column() == 0)
     {
       // If the user asked for alias, but it is empty use gray color for the displayed name
-      simData::DataStore::Transaction transaction;
-      const simData::CommonPrefs* prefs = dataStore_->commonPrefs(item->id(), &transaction);
-      if (prefs && prefs->usealias() && prefs->alias().empty())
+      if (item->highlight())
         return QColor(Qt::gray);
     }
     break;
@@ -781,7 +827,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     if (index.column() == 1)
     {
       // Use ints to force entity types into desired order whether they're currently being displayed as icons or text
-      return static_cast<int>(dataStore_->objectType(item->id()));
+      return static_cast<int>(item->type());
     }
     break;
   }
@@ -913,9 +959,9 @@ void EntityTreeModel::buildTree_(simData::ObjectType type, const simData::DataSt
   {
     EntityTreeItem* newItem;
     if (parent && treeView_)
-      newItem = new EntityTreeItem(*iter, type, parent);
+      newItem = new EntityTreeItem(dataStore_, *iter, type, parent);
     else
-      newItem = new EntityTreeItem(*iter, type, rootItem_);
+      newItem = new EntityTreeItem(dataStore_, *iter, type, rootItem_);
 
     if (type == simData::PLATFORM)
     {

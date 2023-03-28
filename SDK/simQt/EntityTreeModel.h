@@ -38,7 +38,7 @@ class SDKQT_EXPORT EntityTreeItem : public simQt::AbstractEntityTreeItem
 {
 public:
   /// constructor
-  EntityTreeItem(simData::ObjectId id, simData::ObjectType type, EntityTreeItem *parent=nullptr);
+  EntityTreeItem(simData::DataStore* ds, simData::ObjectId id, simData::ObjectType type, EntityTreeItem *parent=nullptr);
   virtual ~EntityTreeItem();
 
   /// Returns the Unique ID for the item
@@ -46,6 +46,21 @@ public:
 
   /// Returns the type for the item
   simData::ObjectType type() const;
+
+  /// Return the display name
+  QString displayName() const;
+
+  /// Set the display name
+  void setDisplayName(const QString& name);
+
+  /// Return the type string
+  QString typeString() const;
+
+  /// Set the highlight state
+  void checkForHighlight(simData::DataStore* ds);
+
+  /// Return the highlight state
+  bool highlight() const;
 
   /// Return all the IDs of the children and their children
   void getChildrenIds(std::vector<uint64_t>& ids) const;
@@ -78,6 +93,9 @@ protected:
 
   simData::ObjectId id_; ///< id of the entity represented
   simData::ObjectType type_; ///< type of the entity
+  QString displayName_; ///< display name
+  QString typeString_; ///< type string
+  bool highlight_;
   EntityTreeItem *parentItem_;  ///< parent of the item.  Null if top item
   QList<EntityTreeItem*> childItems_;  ///< Children of item, if any.  If no children, than item is a leaf
   std::map<const EntityTreeItem*, int> childToRowIndex_; ///< Use a map to cache the row index for better performance
