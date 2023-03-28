@@ -20,10 +20,13 @@
  * disclose, or release this software.
  *
  */
-#include <cassert>
 #include <algorithm>
-#include <functional>
+#include <cassert>
+#ifdef ENABLE_SIMDATA_MULTI_THREAD
+#include <execution>
+#endif
 #include <float.h>
+#include <functional>
 #include <limits>
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
@@ -1034,6 +1037,45 @@ simData::PlatformPrefs MemoryDataStore::defaultPlatformPrefs() const
   return defaultPlatformPrefs_;
 }
 
+void MemoryDataStore::updateCategoryData_(double time, ListenerList& listeners)
+{
+  std::vector<simData::ObjectId> ids;
+
+#ifdef ENABLE_SIMDATA_MULTI_THREAD
+  std::mutex mutex;
+  std::for_each(std::execution::par, categoryData_.begin(), categoryData_.end(), [&](std::pair<const ObjectId, MemoryCategoryDataSlice*>& pair)
+#else
+  std::for_each(categoryData_.begin(), categoryData_.end(), [&](std::pair<const ObjectId, MemoryCategoryDataSlice*>& pair)
+#endif
+
+    {
+      // if something changed
+      if (pair.second->update(time))
+      {
+#ifdef ENABLE_SIMDATA_MULTI_THREAD
+        std::unique_lock lock(mutex);
+#endif
+        ids.push_back(pair.first);
+      }
+    }
+  );
+
+  for (auto id : ids)
+  {
+    // send notification
+    const simData::ObjectType ot = objectType(id);
+
+    for (ListenerList::const_iterator j = listeners.begin(); j != listeners.end(); ++j)
+    {
+      if (*j != nullptr)
+      {
+        (**j).onCategoryDataChange(this, id, ot);
+        checkForRemoval_(listeners);
+      }
+    }
+  }
+}
+
 ///Update internal data to show 'time' as current
 void MemoryDataStore::update(double time)
 {
@@ -1049,26 +1091,8 @@ void MemoryDataStore::update(double time)
   // Need to handle recursion so make a local copy
   ListenerList localCopy = listeners_;
   justRemoved_.clear();
-  // for each category data slice
-  for (CategoryDataMap::const_iterator i = categoryData_.begin(); i != categoryData_.end(); ++i)
-  {
-    // if something changed
-    if (i->second->update(time))
-    {
-      // send notification
-      const simData::ObjectType ot = objectType(i->first);
 
-      for (ListenerList::const_iterator j = localCopy.begin(); j != localCopy.end(); ++j)
-      {
-        if (*j != nullptr)
-        {
-          (**j).onCategoryDataChange(this, i->first, ot);
-          checkForRemoval_(localCopy);
-        }
-      }
-    }
-  }
-
+  updateCategoryData_(time, localCopy);
   updateLasers_(time);
   updateProjectors_(time);
   updateLobGroups_(time);

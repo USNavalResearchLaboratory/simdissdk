@@ -641,7 +641,7 @@ private:
   void updateTargetBeam_(ObjectId id, BeamEntry* beam, double time);
   /// Updates all the beams
   void updateBeams_(double time);
-  ///Gets the beam that corresponds to specified gate
+  /// Gets the beam that corresponds to specified gate
   BeamEntry* getBeamForGate_(google::protobuf::uint64 gateID);
   /// Updates a target gate
   void updateTargetGate_(GateEntry* gate, double time);
@@ -661,8 +661,10 @@ private:
   void updateProjectors_(double time);
   /// Updates all the LobGroups
   void updateLobGroups_(double time);
-  ///Updates all the CustomRenderings
+  /// Updates all the CustomRenderings
   void updateCustomRenderings_(double time);
+  /// Updates all category data
+  void updateCategoryData_(double time, ListenerList& listeners);
   /// Flushes an entity based on the given scope, fields and time ranges
   void flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields, double startTime, double endTime);
   /// Flushes an entity's data tables
