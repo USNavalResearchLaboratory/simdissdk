@@ -333,7 +333,8 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     rootItem_(nullptr),
     treeView_(false),
     dataStore_(nullptr),
-    pendingRemoval_(false),
+    delayedRemovals_(false),
+    delayedCategoryDataChanges_(false),
     activeCategoryFilter_(false),
     activeExtendedChange_(false),
     platformIcon_(":/simQt/images/platform.png"),
@@ -398,24 +399,20 @@ simData::DataStore* EntityTreeModel::dataStore() const
 
 void EntityTreeModel::queueAdd_(uint64_t entityId)
 {
-  if (activeExtendedChange_)
-    return;
   delayedAdds_.push_back(entityId);
 }
 
 void EntityTreeModel::queueNameChange_(uint64_t id)
 {
-  if (activeExtendedChange_)
-    return;
   delayedRenames_.push_back(id);
 }
 
 void EntityTreeModel::queueCategoryDataChange_(uint64_t id)
 {
-  if (activeExtendedChange_ || !activeCategoryFilter_)
+  if (!activeCategoryFilter_)
     return;
 
-  delayedCategoryDataChanges_.push_back(id);
+  delayedCategoryDataChanges_ = true;
 }
 
 void EntityTreeModel::commitDelayedAdd_()
@@ -453,10 +450,44 @@ void EntityTreeModel::commitDelayedAdd_()
 
 void EntityTreeModel::commitAllDelayed_()
 {
-  commitDelayedRemoval_();
-  commitDelayedAdd_();
+  if (activeExtendedChange_)
+    return;
+
+  // Kick out eary if nothing changed; can happen if only changing time
+  if (delayedAdds_.empty() && delayedRenames_.empty() && !delayedRemovals_ && !delayedCategoryDataChanges_)
+    return;
+
+  // if model is empyty, just do a rebuild
+  if (itemsById_.empty())
+  {
+    forceRefresh();
+    return;
+  }
+
+  if (!delayedAdds_.empty() || delayedRemovals_)
+  {
+    Q_EMIT beginExtendedChanges();
+
+    commitDelayedRemoval_();
+    commitDelayedAdd_();
+    delayedRenames_.clear();
+    delayedCategoryDataChanges_ = false;
+
+    Q_EMIT endExtendedChanges();
+    return;
+  }
+
+  if (delayedCategoryDataChanges_)
+  {
+    // emit something
+    delayedRenames_.clear();
+    delayedCategoryDataChanges_ = false;
+
+    Q_EMIT requestApplyFilters();
+    return;
+  }
+
   commitDelayedNameChanged_();
-  commitDelayedCategoryChange_();
 }
 
 void EntityTreeModel::commitDelayedNameChanged_()
@@ -496,42 +527,16 @@ void EntityTreeModel::commitDelayedNameChanged_()
   delayedRenames_.clear();
 }
 
-void EntityTreeModel::commitDelayedCategoryChange_()
-{
-  if (delayedCategoryDataChanges_.empty())
-    return;
-
-  if (delayedCategoryDataChanges_.size() == 1)
-  {
-    EntityTreeItem* found = findItem_(delayedCategoryDataChanges_.front());
-    if (found)
-    {
-      QModelIndex index = createIndex(found->row(), 0, found);
-      Q_EMIT dataChanged(index, index);
-    }
-  }
-  else
-  {
-    if (rootItem_->childCount() > 0)
-    {
-      QModelIndex start = createIndex(0, 0, rootItem_);
-      QModelIndex end = createIndex(rootItem_->childCount() - 1, 0, rootItem_);
-      Q_EMIT dataChanged(start, end);
-    }
-  }
-
-  delayedCategoryDataChanges_.clear();
-}
-
 void EntityTreeModel::beginExtendedChange()
 {
   activeExtendedChange_ = true;
 }
 
-void EntityTreeModel::endExtendedChange()
+void EntityTreeModel::endExtendedChange(bool updateImmediately)
 {
   activeExtendedChange_ = false;
-  forceRefresh();
+  if (updateImmediately)
+    commitAllDelayed_();
 }
 
 void EntityTreeModel::setActiveCategoryFilter(bool active)
@@ -580,8 +585,8 @@ void EntityTreeModel::forceRefresh()
     rootItem_ = new EntityTreeItem(dataStore_, 0, simData::NONE, nullptr); // has no parent
     delayedAdds_.clear();  // clear any delayed entities since building from the data store
     delayedRenames_.clear();
-    delayedCategoryDataChanges_.clear();
-    pendingRemoval_ = false;
+    delayedRemovals_ = false;
+    delayedCategoryDataChanges_ = false;
     itemsById_.clear();
 
     // Get platform objects from DataStore
@@ -669,9 +674,6 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
 
 void EntityTreeModel::queueRemoval_(uint64_t id)
 {
-  if (activeExtendedChange_)
-    return;
-
   EntityTreeItem* found = findItem_(id);
   if (found == nullptr)
   {
@@ -680,11 +682,12 @@ void EntityTreeModel::queueRemoval_(uint64_t id)
     if (it != delayedAdds_.end())
       delayedAdds_.erase(it);
 
-    // lost track of it, this can happen if the parent is deleted before its children
+    // lost track of it, this can happen if the parent is deleted before its children,
+    // or calling removeEntity after deleting scenario
     return;
   }
 
-  pendingRemoval_ = true;
+  delayedRemovals_ = true;
   found->markForRemoval();
 }
 
@@ -695,8 +698,8 @@ void EntityTreeModel::removeAllEntities_()
 
   delayedAdds_.clear();
   delayedRenames_.clear();
-  delayedCategoryDataChanges_.clear();
-  pendingRemoval_ = false;
+  delayedRemovals_ = false;
+  delayedCategoryDataChanges_ = false;
 
   // no point in reseting an empty model
   if ((rootItem_ != nullptr) && (rootItem_->childCount() == 0))
@@ -1041,10 +1044,10 @@ int EntityTreeModel::countEntityTypes_(EntityTreeItem* parent, simData::ObjectTy
 void EntityTreeModel::commitDelayedRemoval_()
 {
   // A pending add can force the removal of entities before the one shot fires
-  if (!pendingRemoval_)
+  if (!delayedRemovals_)
     return;
 
-  pendingRemoval_ = false;
+  delayedRemovals_ = false;
   if (rootItem_->removeMarkedChildren(this) != 0)
   {
     // too many regions to delete, give up and reset the model

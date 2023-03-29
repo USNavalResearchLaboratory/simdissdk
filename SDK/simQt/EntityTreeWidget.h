@@ -152,6 +152,10 @@ private Q_SLOTS:
   /** If an item was visible before rename make sure it is still visible */
   void captureAndKeepVisible_();
 
+  void pauseSorting_();
+  void resumeSorting_();
+  void invalidateFilters_();
+
 protected:
   QTreeView* view_; ///< wrapped view
   AbstractEntityTreeModel* model_; ///< original data model

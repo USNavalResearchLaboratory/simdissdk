@@ -163,8 +163,13 @@ public Q_SLOTS:
   virtual void forceRefresh();
   /** Stop all model updates */
   void beginExtendedChange();
-  /** Completely rebuild the model and start accepting model updates */
-  void endExtendedChange();
+  /**
+   * Updates the model with queued changes, may reset the model.
+   * The data store update related to the extended changes may happen before or after this call.
+   * If updateImmediately is true the model is immediately updated.
+   * If updateImmediately is false the model will wait for the next data store update before updating the model.
+   */
+  void endExtendedChange(bool updateImmediately);
   /** Improve performance by only emitting changes if there is an active category filter */
   void setActiveCategoryFilter(bool active);
 
@@ -207,8 +212,6 @@ private:
   void commitDelayedRemoval_();
   /** Emit signal for dealyed renames */
   void commitDelayedNameChanged_();
-  /** Emit signal for dealyed category changes */
-  void commitDelayedCategoryChange_();
 
   /// Recursively counts the entities that match the given type(s)
   int countEntityTypes_(EntityTreeItem* parent, simData::ObjectType type) const;
@@ -224,10 +227,10 @@ private:
    * Accumlate the changes and process all at once.  Same applies to category data changes.
    */
   std::vector<simData::ObjectId> delayedAdds_;
-  bool pendingRemoval_;
   std::vector<simData::ObjectId> delayedRenames_;
-  std::vector<simData::ObjectId> delayedCategoryDataChanges_;
-  /** Only accumulate category changes if there is an active category filter */
+  bool delayedRemovals_;
+  bool delayedCategoryDataChanges_;
+  /** Only mark category changes if there is an active category filter */
   bool activeCategoryFilter_;
 
   /**
