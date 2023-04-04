@@ -302,6 +302,7 @@ int testGogSyntax()
   is.clear();
   is.str(lineGog);
   rv += SDK_ASSERT(g.parse(is) == 0);
+  g.clear();
 
   is.clear();
   is.str(invalidLatGog);
@@ -338,14 +339,16 @@ int testGogSyntax()
   rv += SDK_ASSERT(g.parse(is) == 1);
   g.clear();
 
+  // allow this to pass; ignore end (before start) at beginning of gog, if rest of gog passes.
   is.clear();
   is.str(endBeforeStartGog);
-  rv += SDK_ASSERT(g.parse(is) == 1);
+  rv += SDK_ASSERT(g.parse(is) == 0);
   g.clear();
 
   is.clear();
   is.str(notAGog);
   rv += SDK_ASSERT(g.parse(is) == 1);
+  g.clear();
 
   return rv;
 }
@@ -447,11 +450,9 @@ int testOff()
   g.parse(is);
   std::vector<simCore::Vec3String> coordinatesVec;
   simCore::GogToGeoFence::GeoFenceVec fences;
-  g.getCoordinatesVec(coordinatesVec);
   g.getFences(fences);
 
   rv += SDK_ASSERT(fences.size() == 1);
-  rv += SDK_ASSERT(coordinatesVec.size() == 1);
 
   return rv;
 }

@@ -42,7 +42,7 @@ public:
 
   /**
   * Converts a GOG to a GeoFence. Only works
-  * with the "poly" GOG keyword.
+  * with the "line" and "poly" GOG keywords.
   */
   GogToGeoFence();
 
@@ -50,28 +50,17 @@ public:
   virtual ~GogToGeoFence();
 
   /**
-  * Parses a serialized GOG std::istream, generates a matching
-  * Vec3String lla coordinate in radians, and creates a matching
-  * GeoFence before adding each to their respective vectors.
-  * @param[in ] is std::istream containing a serialized GOG
+  * Parses a serialized GOG std::istream, creates
+  * GeoFences from the GOGs and adds them to the fences vectors.
+  * @param is  std::istream containing a serialized GOG
+  * @param gogFileName  identifies the source GOG file or shape group
   * Returns 0 on success, 1 otherwise.
   */
-  int parse(std::istream& is);
+  int parse(std::istream& is, const std::string& gogFileName = "");
 
   /**
-  * Fill vec with vector of simCore::Vec3String coordinates generated
-  * from the ll or lla coordinates given in the converted GOG file.
-  * Each simCore::Vec3String has a matching simCore::GeoFence at the
-  * same index in the vector accessible by calling getFences().
-  * @param[in ] vec vector to be filled
-  */
-  void getCoordinatesVec(std::vector<simCore::Vec3String>& vec) const;
-
-  /**
-  * Fill fences with vector of simCore::GeoFence converted from GOG
-  * coordinates. Each simCore::GeoFence has a matching simCore::Vec3String
-  * at the same index in the vector accessible by calling getCoordinatesVec().
-  * @param[in ] fences vector to be filled
+  * Fills fences with vector of simCore::GeoFence converted from GOG coordinates.
+  * @param fences vector to be filled
   */
   void getFences(GeoFenceVec& fences) const;
 
@@ -79,20 +68,14 @@ public:
   void clear();
 
 private:
+  /**
+  * Convert gog coordinates into a geoFence, test for validity, and on success add it to the GeoFenceVec.
+  * @param name  name of the original GOG shape, used for error reporting
+  * @param coordinates  vector of coordinates to be converted to a geofence
+  * Returns 0 on success, 1 otherwise.
+  */
+  int generateGeoFence_(const std::string& name, const Vec3String& coordinates);
 
-  /// Parses a "start" GOG keyword
-  int parseStartKeyword_(int lineNumber, bool& start) const;
-  /// Parses a "poly", "polygon", or "line" GOG keyword
-  int parseObjKeyword_(int lineNumber, bool& start, bool& obj) const;
-  /// Parses an "end" GOG keyword
-  int parseEndKeyword_(int lineNumber, std::string, bool& start, bool& obj, bool& off, std::string& name, simCore::Vec3String& coordinates);
-  /// Parses a shape, called after "start" and an object keyword are found
-  int parseShape_(const std::vector<std::string>& tokens, int lineNumber, std::string& name, simCore::Vec3String& coordinates) const;
-  /// Parses an "ll", "lla", or "latlon" GOG keyword
-  int parseLatLonAlt_(const std::vector<std::string>& tokens, int lineNumber, simCore::Vec3String& coordinates) const;
-
-  /** Vector of all coordinate sets, one per GOG poly */
-  std::vector<simCore::Vec3String> coordinatesVec_;
   /** Vector of all generated simCore::GeoFence */
   GeoFenceVec fences_;
 };

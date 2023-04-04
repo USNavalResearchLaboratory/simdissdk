@@ -65,9 +65,9 @@ bool comparePositions(const simCore::Vec3& pos1, const simCore::Vec3& pos2)
 bool comparePositionVectors(const std::vector<simCore::Vec3>& pos1, const std::vector<simCore::Vec3>& pos2)
 {
   size_t found = 0;
-  for (simCore::Vec3 position : pos1)
+  for (const simCore::Vec3& position : pos1)
   {
-    for (simCore::Vec3 position2 : pos2)
+    for (const simCore::Vec3& position2 : pos2)
     {
       if (comparePositions(position, position2))
         found++;
