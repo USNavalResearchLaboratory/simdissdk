@@ -208,17 +208,24 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
     {
       if (validStartEndBlock && tokens[0] == "start")
       {
-        printError_(filename, lineNumber, "nested start command not allowed");
-        continue;
+        printError_(filename, lineNumber, "nested start command not allowed; error creating shape");
+        invalidShape = true;
+        validStartEndBlock = false;
+        // try to process the current/nested start as the beginning of a block (discarding what came before)
+        //continue;
       }
       if (!validStartEndBlock && tokens[0] == "end")
       {
-        printError_(filename, lineNumber, "end command encountered before start");
+        printError_(filename, lineNumber, "end command encountered before start; error creating shape");
+        invalidShape = true;
         continue;
       }
       if (tokens[0] == "end" && current.shape() == ShapeType::UNKNOWN)
       {
-        printError_(filename, lineNumber, "end command encountered before recognized GOG shape type keyword");
+        printError_(filename, lineNumber, "end command encountered before recognized GOG shape type keyword; error creating shape");
+        invalidShape = true;
+        // disallow this shape, possibly accept a subsequent shape
+        validStartEndBlock = false;
         continue;
       }
 
@@ -405,7 +412,10 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
           current.append(ParsedShape::LLA, PositionStrings(tokens[1], tokens[2]));
       }
       else
-        printError_(filename, lineNumber, "ll/lla/latlon command requires at least 2 arguments");
+      {
+        printError_(filename, lineNumber, "ll/lla/latlon command requires at least 2 arguments; error creating shape");
+        invalidShape = true;
+      }
     }
     else if (tokens[0] == "mgrs")
     {
@@ -1484,6 +1494,11 @@ int Parser::parsePointBased_(const ParsedShape& parsed, bool relative, const std
     simCore::Vec3 position;
     if (getPosition_(pos, relative, units, position) == 0)
       shape->addPoint(position);
+    else
+    {
+      printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + (name.empty() ? "" : " " + name) + " has an invalid point, cannot create shape");
+      return 1;
+    }
   }
   if (shape->points().empty())
   {
