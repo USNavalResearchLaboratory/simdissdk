@@ -34,15 +34,9 @@ namespace simQt {
 FileSelectorWidget::FileSelectorWidget(QWidget* parent)
   : QWidget(parent),
     registryKey_("Private/file"),
-    labelWidget_(nullptr),
-    includeLabel_(false),
     label_(tr("File")),
     browserTitle_(tr("Load Data File")),
-    flags_(FileSelectorWidget::FileLoad),
-    filterOption_(FileSelectorWidget::SIMDIS_ASI_FILE_PATTERNS),
-    customFileFilter_(tr("All Files (*)")),
-    iconBeforeText_(false),
-    isValid_(true)
+    customFileFilter_(tr("All Files (*)"))
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -53,7 +47,8 @@ FileSelectorWidget::FileSelectorWidget(QWidget* parent)
   connect(ui_->fileText, SIGNAL(textEdited(const QString&)), this, SLOT(textEdited_()));
   connect(ui_->fileText, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
 #ifndef NDEBUG
-  ui_->fileText->setReadOnly(false);  // Only allows developers to type in a file name; users must use the file browser
+  // Developers are allowed to type by default, in debug mode; users by default must use the file browser
+  ui_->fileText->setReadOnly(false);
 #else
   ui_->fileText->setReadOnly(true);
 #endif
@@ -367,6 +362,16 @@ QString FileSelectorWidget::filterOptions2QString_(FileSelectorWidget::FilterOpt
 
   assert(0);
   return tr("All Files (*)");
+}
+
+bool FileSelectorWidget::readOnlyLineEdit() const
+{
+  return ui_->fileText->isReadOnly();
+}
+
+void FileSelectorWidget::setReadOnlyLineEdit(bool readOnly)
+{
+  ui_->fileText->setReadOnly(readOnly);
 }
 
 }
