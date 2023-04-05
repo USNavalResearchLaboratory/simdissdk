@@ -245,13 +245,13 @@ private Q_SLOTS:
   void clearFilterConfig_(int index);
   /** Make and display the right mouse click menu */
   void makeAndDisplayMenu_(const QPoint& pos);
+  /** Update Collapse All, Expand All, and Toggle Tree View action enabled states */
+  void updateActionEnables_();
 
 private:
   /** Watch for settings changes related to the buttons */
   class Observer;
 
-  /** Update Collapse All and Expand All action enabled states */
-  void updateActionEnables_();
   /** Retrieves the QToolButton associated with the filter configuration index */
   QToolButton* configButtonForIndex_(int index) const;
   /** Retrieves the QIcon associated with the filter configuration index */

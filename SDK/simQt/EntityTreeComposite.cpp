@@ -373,7 +373,8 @@ void EntityTreeComposite::setModel(AbstractEntityTreeModel* model)
   // If the tree is pre-loaded, enable the tree/list button
   if (treeViewUsable_ && model_->rowCount() != 0)
     toggleTreeViewAction_->setEnabled(true);
-  connect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(rowsInserted_(QModelIndex, int, int)));
+  connect(model_, &QAbstractItemModel::rowsInserted, this, &EntityTreeComposite::rowsInserted_);
+  connect(model_, &QAbstractItemModel::modelReset, this, &EntityTreeComposite::updateActionEnables_);
 }
 
 
@@ -468,9 +469,7 @@ void EntityTreeComposite::addButton(QWidget* button)
 void EntityTreeComposite::setTreeViewActionEnabled(bool value)
 {
   treeViewUsable_ = value;
-  // Disable the action if needed
-  if (!value)
-    toggleTreeViewAction_->setEnabled(false);
+  updateActionEnables_();
 }
 
 QIcon EntityTreeComposite::configIconForIndex_(int index) const
@@ -618,8 +617,6 @@ void EntityTreeComposite::initializeSettings(SettingsPtr settings)
 
 void EntityTreeComposite::rowsInserted_(const QModelIndex & parent, int start, int end)
 {
-  if (treeViewUsable_)
-    toggleTreeViewAction_->setEnabled(true);
   updateActionEnables_();
 }
 
@@ -762,9 +759,12 @@ void EntityTreeComposite::setTreeView_(bool useTreeView)
 
 void EntityTreeComposite::updateActionEnables_()
 {
-  bool enableIt = entityTreeWidget_->isTreeView() && model_ && model_->rowCount() > 0;
-  collapseAllAction_->setEnabled(enableIt);
-  expandAllAction_->setEnabled(enableIt);
+  bool enableToggleAction = treeViewUsable_ && model_ && model_->rowCount() > 0;
+  toggleTreeViewAction_->setEnabled(enableToggleAction);
+
+  bool enableTreeActions = entityTreeWidget_->isTreeView() && model_ && model_->rowCount() > 0;
+  collapseAllAction_->setEnabled(enableTreeActions);
+  expandAllAction_->setEnabled(enableTreeActions);
 }
 
 bool EntityTreeComposite::useEntityIcons() const
