@@ -162,7 +162,7 @@ public Q_SLOTS:
   /** Updates the contents of the frame */
   virtual void forceRefresh();
   /** Stop all model updates */
-  void beginExtendedChange();
+  void beginExtendedChange(bool causedByTimeChanges);
   /**
    * Updates the model with queued changes, may reset the model.
    * The data store update related to the extended changes may happen before or after this call.
@@ -170,6 +170,13 @@ public Q_SLOTS:
    * If updateImmediately is false the model will wait for the next data store update before updating the model.
    */
   void endExtendedChange(bool updateImmediately);
+  /**
+   * Moving the time slider can flood the entity model with many time changes that can bog down EntityTreeWidget with signals.
+   * Set a threshold to throttle the signals.  Value of -1 emit the signals after every time change.  Value of 0 emit the signals
+   * after the time changes have stopped.  Value greater than 0 will stop emitting signals after each time change when the number
+   * of entities equals or exceeds the threshold value.
+   */
+  void setTimeChangeEntityThreshold(int timeChangeThreshold);
   /** Improve performance by only emitting changes if there is an active category filter */
   void setActiveCategoryFilter(bool active);
 
@@ -230,14 +237,23 @@ private:
   std::vector<simData::ObjectId> delayedRenames_;
   bool delayedRemovals_;
   bool delayedCategoryDataChanges_;
+  /** Controls how time change affect out going signals.  See setTimeChangeEntityThreshold() for details */
+  int timeChangeEntityThreshold_;
   /** Only mark category changes if there is an active category filter */
   bool activeCategoryFilter_;
 
   /**
    * Stop all updates while loading a file which can quickly add 1,000s of entities.
-   * Update the model once at the end of the file load
+   * Update the model once at the end of the file load.  Allow the user the option
+   * to update when there is rapid time changes
    */
-  bool activeExtendedChange_;
+  enum ModelState
+  {
+    NOMINAL,  ///< No extended changes are active
+    TIME_CHANGES,  ///< In an extended change mode caused by rapid changes in time
+    DATA_CHANGES  ///< In an extended change mode caused by rapid data changes like loading a file
+  };
+  ModelState modelState_;
 
   /** Icons for entity types */
   QIcon platformIcon_;

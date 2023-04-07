@@ -335,8 +335,9 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     dataStore_(nullptr),
     delayedRemovals_(false),
     delayedCategoryDataChanges_(false),
+    timeChangeEntityThreshold_(-1),  // emit signals with each time change
     activeCategoryFilter_(false),
-    activeExtendedChange_(false),
+    modelState_(NOMINAL),
     platformIcon_(":/simQt/images/platform.png"),
     beamIcon_(":/simQt/images/beam.png"),
     customRenderingIcon_(":/simQt/images/CustomRender.png"),
@@ -450,8 +451,21 @@ void EntityTreeModel::commitDelayedAdd_()
 
 void EntityTreeModel::commitAllDelayed_()
 {
-  if (activeExtendedChange_)
+  // Always kick out while data is changing
+  if (modelState_ == DATA_CHANGES)
     return;
+
+  // Kick out early during time change based on the user's option; never kick out if timeChangeEntityThreshold_ = -1
+  if (modelState_ == TIME_CHANGES)
+  {
+    // Kick out until the time changes are done
+    if (timeChangeEntityThreshold_ == 0)
+      return;
+
+    // Kick out if the number of enties exceeds the threshold value.
+    if ((timeChangeEntityThreshold_ > 0) && (static_cast<int>(itemsById_.size()) >= timeChangeEntityThreshold_))
+      return;
+  }
 
   // Kick out eary if nothing changed; can happen if only changing time
   if (delayedAdds_.empty() && delayedRenames_.empty() && !delayedRemovals_ && !delayedCategoryDataChanges_)
@@ -527,16 +541,21 @@ void EntityTreeModel::commitDelayedNameChanged_()
   delayedRenames_.clear();
 }
 
-void EntityTreeModel::beginExtendedChange()
+void EntityTreeModel::beginExtendedChange(bool causedByTimeChanges)
 {
-  activeExtendedChange_ = true;
+  modelState_ = causedByTimeChanges ? TIME_CHANGES : DATA_CHANGES;
 }
 
 void EntityTreeModel::endExtendedChange(bool updateImmediately)
 {
-  activeExtendedChange_ = false;
+  modelState_ = NOMINAL;
   if (updateImmediately)
     commitAllDelayed_();
+}
+
+void EntityTreeModel::setTimeChangeEntityThreshold(int timeChangeThreshold)
+{
+  timeChangeEntityThreshold_ = timeChangeThreshold;
 }
 
 void EntityTreeModel::setActiveCategoryFilter(bool active)
