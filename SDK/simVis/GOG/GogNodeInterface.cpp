@@ -817,7 +817,7 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
     gogOutputStream << "tessellate false\n";
 
   // altitude mode
-  simVis::GOG::AltitudeMode altMode;
+  simVis::GOG::AltitudeMode altMode = simVis::GOG::ALTITUDE_NONE;
   if (getAltitudeMode(altMode) == 0)
   {
     if (altMode == simVis::GOG::ALTITUDE_NONE && metaData_.isSetExplicitly(GOG_ALTITUDE_MODE_SET))
