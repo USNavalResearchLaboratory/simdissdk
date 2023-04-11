@@ -47,48 +47,6 @@ mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
 
-# Need to be able to find glu32.lib -- different places for different builders
-if(WIN32 AND IS_DIRECTORY "${Qt5Widgets_DIR}")
-    if(CMAKE_CL_64)
-        set(QT_GLU_PATHS
-            "c:/Program Files (x86)/Windows Kits/10/Lib/10.0.20348.0/um/x64"
-            "c:/Program Files (x86)/Windows Kits/10/Lib/10.0.19041.685/um/x64"
-            "c:/Program Files (x86)/Windows Kits/10/Lib/10.0.19041.0/um/x64"
-            "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.18362.0/um/x64"
-            "c:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x64"
-            "c:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64"
-            "c:/Program Files/Microsoft SDKs/Windows/7.1A/Lib"
-            "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.1A/Lib/x64"
-            "c:/Program Files (x86)/Microsoft SDKs/Windows/7.1A/Lib"
-            "c:/Program Files/Microsoft SDKs/Windows/7.0A/Lib"
-            "c:/Program Files/Microsoft SDKs/Windows/v7.0A/Lib"
-            "c:/Program Files (x86)/Microsoft SDKs/Windows/7.0A/Lib"
-            "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib"
-            "c:/Program Files/Microsoft SDKs/Windows/6.0A/Lib"
-            "c:/Program Files (x86)/Microsoft SDKs/Windows/6.0A/Lib"
-        )
-    else()
-        set(QT_GLU_PATHS
-            "c:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x86"
-            "c:/Program Files (x86)/Microsoft SDKs/Windows/7.1A/Lib"
-            "c:/Program Files/Microsoft SDKs/Windows/7.1A/Lib"
-            "c:/Program Files (x86)/Microsoft SDKs/Windows/7.0A/Lib"
-            "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib"
-            "c:/Program Files/Microsoft SDKs/Windows/7.0A/Lib"
-            "c:/Program Files/Microsoft SDKs/Windows/v7.0A/Lib"
-            "c:/Program Files (x86)/Microsoft SDKs/Windows/6.0A/Lib"
-            "c:/Program Files/Microsoft SDKs/Windows/6.0A/Lib"
-        )
-    endif()
-
-    # Locate glu32 and set up the CMAKE_PREFIX_PATH
-    find_path(QT_GLU_PATH NAMES glu32.lib user32.lib PATHS ${QT_GLU_PATHS})
-    if(NOT "${QT_GLU_PATH}" MATCHES "-NOTFOUND")
-        set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${QT_GLU_PATH}" CACHE PATH "Prefix path, where to find glu32.lib")
-        mark_as_advanced(QT_GLU_PATH CMAKE_PREFIX_PATH)
-    endif()
-endif()
-
 # Set up the version numbers
 set(QT_VERSION ${Qt5Widgets_VERSION_STRING})
 string(REPLACE "." ";" QT_VERSION_LIST ${QT_VERSION})
