@@ -234,13 +234,13 @@ public:
     if (ImGui::BeginTable("Table", 2))
     {
       ImGui::TableNextColumn(); ImGui::Text("Platform:"); ImGui::TableNextColumn();
-      addButtons_(currentEntity_, "##entity", [=](const std::string& filename) { app_.setEntityIcon(filename); });
+      addButtons_(currentEntity_, "##entity", [this](const std::string& filename) { app_.setEntityIcon(filename); });
 
       ImGui::TableNextColumn(); ImGui::Text("Asynchronous:"); ImGui::TableNextColumn();
-      addButtons_(currentAsync_, "##async", [=](const std::string& filename) { app_.setAsyncIcon(filename); });
+      addButtons_(currentAsync_, "##async", [this](const std::string& filename) { app_.setAsyncIcon(filename); });
 
       ImGui::TableNextColumn(); ImGui::Text("Synchronous:"); ImGui::TableNextColumn();
-      addButtons_(currentSync_, "##sync", [=](const std::string& filename) { app_.setSyncIcon(filename); });
+      addButtons_(currentSync_, "##sync", [this](const std::string& filename) { app_.setSyncIcon(filename); });
 
       ImGui::TableNextColumn();
       if (ImGui::Button("Clear Cache"))

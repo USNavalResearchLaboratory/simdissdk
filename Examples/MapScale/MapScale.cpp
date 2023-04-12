@@ -81,7 +81,7 @@ public:
 
     ImGui::Text("o: Toggle overhead mode");
 
-    auto setScaleColor = [=](const osgEarth::Color& color1, const osgEarth::Color& color2, const osgEarth::Color& unitsColor, const osgEarth::Color& valuesColor, const osgEarth::Color& bgColor)
+    auto setScaleColor = [this](const osgEarth::Color& color1, const osgEarth::Color& color2, const osgEarth::Color& unitsColor, const osgEarth::Color& valuesColor, const osgEarth::Color& bgColor)
     {
       scale_->setBarColor1(color1);
       scale_->setBarColor2(color2);
@@ -90,7 +90,7 @@ public:
       scale_->setBackgroundColor(bgColor);
     };
 
-    auto setScaleHeight = [=](float scalar)
+    auto setScaleHeight = [this](float scalar)
     {
       scale_->setBarHeight(8.f + 20.f * (scalar - 1));
       scale_->setUnitsCharacterSize(simVis::osgFontSize(12.f * scalar));
@@ -98,7 +98,7 @@ public:
       scale_->setPadding(10.f * scalar, 10.f * scalar, 5.f * scalar, 5.f * scalar);
     };
 
-    auto setScaleWidth = [=](float scalar)
+    auto setScaleWidth = [this](float scalar)
     {
       scale_->setBarHeight(8.f + 20.f * (scalar - 1));
       scale_->setUnitsCharacterSize(simVis::osgFontSize(12.f * scalar));

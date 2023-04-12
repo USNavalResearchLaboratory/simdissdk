@@ -39,25 +39,25 @@ EntityFilterLineEdit::EntityFilterLineEdit(QWidget *parent)
   caseSensitiveAction_ = new QAction(tr("Case Sensitive"), this);
   connect(caseSensitiveAction_, SIGNAL(triggered()), this, SLOT(caseSensitive()));
   caseSensitiveAction_->setCheckable(true);
-  caseSensitiveAction_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_S));
+  caseSensitiveAction_->setShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_S));
   addAction(caseSensitiveAction_);
 
   regularAction_ = new QAction(tr("&Regular Expression"), this);
   connect(regularAction_, SIGNAL(triggered()), this, SLOT(regularExpression()));
   regularAction_->setCheckable(true);
-  regularAction_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_R));
+  regularAction_->setShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_R));
   addAction(regularAction_);
 
   wildcardAction_ = new QAction(tr("&Wildcard"), this);
   connect(wildcardAction_, SIGNAL(triggered()), this, SLOT(wildcard()));
   wildcardAction_->setCheckable(true);
-  wildcardAction_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_I));
+  wildcardAction_->setShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_I));
   addAction(wildcardAction_);
 
   fixedAction_ = new QAction(tr("&Fixed String"), this);
   connect(fixedAction_, SIGNAL(triggered()), this, SLOT(fixedString()));
   fixedAction_->setCheckable(true);
-  fixedAction_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_N));
+  fixedAction_->setShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_N));
   addAction(fixedAction_);
 
   rightMouseClickMenu_ = new QMenu(this);
