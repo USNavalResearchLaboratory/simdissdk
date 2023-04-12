@@ -1478,7 +1478,7 @@ void MapDataModel::refreshText()
   assert(mapItem.isValid());
 
   // Create a lambda that emits dataChanged for each group type
-  auto emitDataChanged = [=, this](const Item* group, MapChildren childType) {
+  auto emitDataChanged = [mapItem, this](const Item* group, MapChildren childType) {
     if (group && group->rowCount() > 0)
     {
       const QModelIndex childItem = index(childType, 0, mapItem);
