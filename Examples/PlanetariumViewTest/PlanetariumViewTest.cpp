@@ -235,7 +235,13 @@ public:
       float oldColor[4] = { color_[0], color_[1], color_[2], color_[3] };
       ImGuiColorEditFlags flags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_NoOptions;
       ImGui::ColorEdit4("##color", &color_[0], flags);
-      if (color_ != oldColor)
+      bool needColorUpdate = false;
+      for (size_t k = 0; k < 4; ++k)
+      {
+        if (color_[k] != oldColor[k])
+          needColorUpdate = true;
+      }
+      if (needColorUpdate)
         app_.planetarium->setColor(osg::Vec4f(color_[0], color_[1], color_[2], color_[3]));
 
       // LDB
