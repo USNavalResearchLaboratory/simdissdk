@@ -375,7 +375,8 @@ void varyProjectorFov(simData::ObjectId projectorId, simData::DataStore& dataSto
     // Switch field of view every 10 seconds
     double fov = (i % 20 == 0) ? 20.0 : 100.0;
     update->set_time(i);
-    update->set_fov(fov * simCore::DEG2RAD);
+    update->set_fov(180 * simCore::DEG2RAD);
+    update->set_hfov((fov - 15) * simCore::DEG2RAD);
     txn.complete(&update);
   }
 }

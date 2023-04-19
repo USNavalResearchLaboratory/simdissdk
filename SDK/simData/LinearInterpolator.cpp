@@ -274,6 +274,11 @@ bool LinearInterpolator::interpolate(double time, const ProjectorUpdate &prev, c
   double factor = simCore::getFactor(prev.time(), time, next.time());
 
   result->set_fov(simCore::linearInterpolate(prev.fov(), next.fov(), factor));
+  // <=0 is a special value indicating to use the image's aspect ratio. Don't interpolate between that and a manual hfov
+  if (prev.hfov() > 0 && next.hfov() > 0)
+    result->set_hfov(simCore::linearInterpolate(prev.hfov(), next.hfov(), factor));
+  else
+    result->set_hfov(prev.hfov());
   return true;
 }
 

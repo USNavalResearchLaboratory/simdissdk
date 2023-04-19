@@ -257,11 +257,6 @@ private:
   /** Copy constructor, not implemented or available. */
   ProjectorNode(const ProjectorNode&);
 
-  void getMatrices_(
-    osg::Matrixd& out_projection,
-    osg::Matrixd& out_locator,
-    osg::Matrixd& out_view) const;
-
   void init_();
 
   /// Read video file

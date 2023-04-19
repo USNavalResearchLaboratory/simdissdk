@@ -777,21 +777,6 @@ osg::Texture2D* ProjectorNode::getShadowMap() const
   return shadowMap_.get();
 }
 
-
-void ProjectorNode::getMatrices_(osg::Matrixd& projection, osg::Matrixd& locatorMat, osg::Matrixd& modelView) const
-{
-  const double ar = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
-  projection.makePerspective(getVFOV(), ar, 1.0, 1e7);
-  if (hostLocator_.valid())
-    hostLocator_->getLocatorMatrix(locatorMat);
-  else
-  {
-    // it is believed that the host locator cannot go missing
-    assert(0);
-  }
-  modelView.invert(locatorMat);
-}
-
 void ProjectorNode::syncWithLocator()
 {
   if (!isActive())
@@ -806,10 +791,18 @@ void ProjectorNode::syncWithLocator()
 
   // establish the projection matrix:
   osg::Matrixd projectionMat;
-  const double ar = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
+  double vFov = getVFOV();
+  double hFov = (lastUpdate_.has_hfov() ? lastUpdate_.hfov() * simCore::RAD2DEG : -1);
+  double ar;
+  if (hFov <= 0)
+    ar = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
+  else if (vFov > 0)
+    ar = hFov / vFov;
+  else
+    ar = 0;
   float zfar = lastPrefs_.maxdrawrange();
   if (zfar == 0.0) zfar = 1e6;
-  projectionMat.makePerspective(getVFOV(), ar, 10.0, zfar);
+  projectionMat.makePerspective(vFov, ar, 10.0, zfar);
 
   // The model matrix coordinate system of the projector is a normal tangent plane,
   // which means the projector will point straight down by default (since the view vector

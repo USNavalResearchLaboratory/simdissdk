@@ -1390,8 +1390,11 @@ message ProjectorPrefs {
 /// common update to projector data
 message ProjectorUpdate {
   optional double time = 1;
-  /// Projector field of view: radians
+  
+  /// Projector vertical field of view: radians
   optional double fov = 2;
+  /// Projector hovizontal field of view: radians; <= 0 means to calculate from aspect ratio
+  optional double hFov = 3 [default = -1];
 };
 
 /// timed update to projector prefs; commands override prefs
