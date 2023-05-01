@@ -58,6 +58,11 @@ public:
   virtual std::string tableName() const;
   /** Unique ID of the owning entity. */
   virtual ObjectId ownerId() const;
+  /**
+   * If the table has no null values, the routine will return the number of rows in the table.
+   * If the table has null values the routine will return the number of rows in the largest sub-table.
+   */
+  virtual size_t maxSubTableRow() const;
   /** Number of columns in this table. */
   virtual size_t columnCount() const;
   /** Retrieves column by ID */

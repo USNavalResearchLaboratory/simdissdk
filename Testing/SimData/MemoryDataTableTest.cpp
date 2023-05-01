@@ -2246,6 +2246,73 @@ int testPartialFlush()
   return rv;
 }
 
+int maxSubTableRowTest()
+{
+  int rv = 0;
+
+  simData::MemoryDataStore ds;
+  simData::DataTableManager& mgr = ds.dataTableManager();
+  simData::DataTable* table = nullptr;
+  rv += SDK_ASSERT(mgr.addDataTable(1, "Test Table", &table).isSuccess());
+
+  // Should start empty
+  rv += SDK_ASSERT(table->maxSubTableRow() == 0);
+
+  simData::TableColumn* column1 = nullptr;
+  simData::TableColumn* column2 = nullptr;
+  simData::TableColumn* column3 = nullptr;
+
+  rv += SDK_ASSERT(table->addColumn("1", simData::VT_INT32, 0, &column1).isSuccess());
+  rv += SDK_ASSERT(table->addColumn("2", simData::VT_INT32, 0, &column2).isSuccess());
+  rv += SDK_ASSERT(table->addColumn("3", simData::VT_INT32, 0, &column3).isSuccess());
+
+  // Should start empty
+  rv += SDK_ASSERT(table->maxSubTableRow() == 0);
+
+  simData::TableRow row;
+  row.setTime(10.0);
+  row.setValue(column1->columnId(), 1001);
+  row.setValue(column2->columnId(), 1002);
+  row.setValue(column3->columnId(), 1003);
+  rv += SDK_ASSERT(table->addRow(row).isSuccess());
+  rv += SDK_ASSERT(table->maxSubTableRow() == 1);
+
+  row.setTime(11.0);
+  rv += SDK_ASSERT(table->addRow(row).isSuccess());
+  rv += SDK_ASSERT(table->maxSubTableRow() == 2);
+
+  // Add a Null value which will cause the creation of a sub-table
+  row.clear();
+  row.setTime(12.0);
+  row.setValue(column1->columnId(), 1001);
+  row.setValue(column2->columnId(), 1002);
+  rv += SDK_ASSERT(table->addRow(row).isSuccess());
+  rv += SDK_ASSERT(table->maxSubTableRow() == 3);
+
+  row.setTime(13.0);
+  rv += SDK_ASSERT(table->addRow(row).isSuccess());
+  rv += SDK_ASSERT(table->maxSubTableRow() == 4);
+
+  // Adding to column 3 should have no affect until it reaches 5 row
+  row.clear();
+  row.setTime(14.0);
+  row.setValue(column3->columnId(), 1003);
+  rv += SDK_ASSERT(table->addRow(row).isSuccess());
+  rv += SDK_ASSERT(table->maxSubTableRow() == 4);
+
+  row.setTime(15.0);
+  row.setValue(column3->columnId(), 1003);
+  rv += SDK_ASSERT(table->addRow(row).isSuccess());
+  rv += SDK_ASSERT(table->maxSubTableRow() == 4);
+
+  row.setTime(16.0);
+  row.setValue(column3->columnId(), 1003);
+  rv += SDK_ASSERT(table->addRow(row).isSuccess());
+  rv += SDK_ASSERT(table->maxSubTableRow() == 5);
+
+  return rv;
+}
+
 }
 
 int MemoryDataTableTest(int argc, char* argv[])
@@ -2263,5 +2330,6 @@ int MemoryDataTableTest(int argc, char* argv[])
   rv += doubleBufferTimeContainerTest();
   rv += testPartialFlush();
   rv += getTimeRangeTest();
+  rv += maxSubTableRowTest();
   return rv;
 }
