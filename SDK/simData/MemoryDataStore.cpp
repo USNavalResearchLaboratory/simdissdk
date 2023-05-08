@@ -1275,8 +1275,36 @@ void MemoryDataStore::applyDataLimiting_(ObjectId id)
     catIter->second->limitByPrefs(*prefs);
 }
 
+///Retrieves the number of objects of 'type' contained by the DataStore
+size_t MemoryDataStore::idCount(simData::ObjectType type) const
+{
+  size_t count = 0;
+  if (type & PLATFORM)
+    count += platforms_.size();
+
+  if (type & BEAM)
+    count += beams_.size();
+
+  if (type & GATE)
+    count += gates_.size();
+
+  if (type & LASER)
+    count += lasers_.size();
+
+  if (type & PROJECTOR)
+    count += projectors_.size();
+
+  if (type & LOB_GROUP)
+    count += lobGroups_.size();
+
+  if (type & CUSTOM_RENDERING)
+    count += customRenderings_.size();
+
+  return count;
+}
+
 ///Retrieve a list of IDs for objects contained by the DataStore
-void MemoryDataStore::idList(IdList *ids, simData::ObjectType type) const
+void MemoryDataStore::idList(IdList* ids, simData::ObjectType type) const
 {
   if (type & PLATFORM)
   {

@@ -125,8 +125,11 @@ public:
   /**@name ID Lists
    * @{
    */
+   /// Retrieves the number of objects of 'type'
+  virtual size_t idCount(simData::ObjectType type = simData::ALL) const;
+
   /// Retrieve a list of IDs for objects of 'type'
-  virtual void idList(IdList *ids, simData::ObjectType type = simData::ALL) const;
+  virtual void idList(IdList* ids, simData::ObjectType type = simData::ALL) const;
 
   /// Retrieve a list of IDs for objects of 'type' with the given name
   virtual void idListByName(const std::string& name, IdList* ids, simData::ObjectType type = simData::ALL) const;
