@@ -86,11 +86,13 @@ namespace
   /// Some updates can require a rebuild too
   bool changeRequiresRebuild(const simData::BeamUpdate* a, const simData::BeamUpdate* b)
   {
+    if (a == nullptr || b == nullptr)
+      return false;
+    if (a->range() == 0. || b->range() == 0.)
+      return true;
 #ifdef BEAM_IN_PLACE_UPDATES
     return false;
 #else
-    if (a == nullptr || b == nullptr)
-      return false;
     return PB_FIELD_CHANGED(a, b, range);
 #endif
   }
@@ -102,6 +104,8 @@ namespace simVis
 {
 BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
 {
+  if (update.range() == 0.)
+    return;
   createBeamSV_(prefs, update);
   setName("Beam Volume");
   setBeamScale_(prefs.beamscale());
