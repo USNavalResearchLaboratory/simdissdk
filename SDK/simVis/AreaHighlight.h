@@ -106,6 +106,8 @@ public:
   void makeCircle();
   /** Draws a squared reticle around the area, like [ ] but with sides gone */
   void makeSquareReticle();
+  /** Draws a coffin shape, such as for kill/rebirth functionality */
+  void makeCoffin();
 
   // From HighlightNode:
   virtual void setColor(const osg::Vec4f& rgba);

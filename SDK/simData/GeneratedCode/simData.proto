@@ -216,6 +216,8 @@ enum CircleHilightShape {
   CH_SQUARE = 3;
   /// Square outline with line sides cut off, looks like reticle; no animation
   CH_SQUARE_RETICLE = 4;
+  /// Coffin shaped, appropriate for e.g. kill/rebirth functionality
+  CH_COFFIN = 5;
 };
 
 /// Algorithm selection for Dynamic Scale
