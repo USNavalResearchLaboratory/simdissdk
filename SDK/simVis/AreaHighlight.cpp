@@ -41,16 +41,16 @@ namespace
 {
 
 /// Controls rotational speed -- higher values spin faster; positive counterclockwise, negative clockwise
-inline constexpr float ROTATE_FREQUENCY = -2.0f;
+static constexpr float ROTATE_FREQUENCY = -2.0f;
 /// Controls speed of the flashing -- higher values pulse more frequently
-inline constexpr float GLOW_FREQUENCY = 3.5f;
+static constexpr float GLOW_FREQUENCY = 3.5f;
 /// Controls amplitude of the flashing -- higher values strobe more drastically
-inline constexpr float GLOW_AMPLITUDE = 0.2f;
+static constexpr float GLOW_AMPLITUDE = 0.2f;
 /// Added to the pulsing amplitude's alpha so the highlight does not become completely transparent
-inline constexpr float GLOW_MINIMUM_ALPHA = 0.6f;
+static constexpr float GLOW_MINIMUM_ALPHA = 0.6f;
 
 /// Minimum number of line segments in a highlight circle
-inline constexpr int MIN_NUM_LINE_SEGMENTS = 90;
+static constexpr int MIN_NUM_LINE_SEGMENTS = 90;
 }
 
 // --------------------------------------------------------------------------
