@@ -207,7 +207,7 @@ public: // EntityNode interface
   /// Returns the legend text based on the label content callback, update and preference
   virtual std::string legendText() const override;
 
-  /** This entity type is, at this time, unpickable. */
+  /** Retrieve the object index tag for picking this projector. */
   virtual unsigned int objectIndexTag() const override;
 
   /** @copydoc EntityNode::getPosition() */
@@ -271,6 +271,10 @@ private:
   /// Update override color
   void updateOverrideColor_(const simData::ProjectorPrefs& prefs);
 
+  /// returns true if the user changes a preference that requires the projector manager to update the rendering state
+  bool isStateDirty_() const;
+  /// clears the dirty flag
+  void resetStateDirty_();
 
   simData::ProjectorProperties  lastProps_;
   simData::ProjectorPrefs       lastPrefs_;
@@ -280,8 +284,10 @@ private:
   osg::ref_ptr<LocatorCallback> locatorCallback_; ///< notifies when projector host (& origin) has moved
   osg::ref_ptr<LocatorNode>     projectorLocatorNode_; ///< locator node that tracks the projector/ellipsoid intersection
   osg::ref_ptr<EntityLabelNode> label_;
-  bool                          hasLastUpdate_;
-  bool                          hasLastPrefs_;
+  unsigned int                  objectIndexTag_ = 0;
+  bool                          hasLastUpdate_ = false;
+  bool                          hasLastPrefs_ = false;
+  mutable bool                  stateDirty_ = false;
 
   osg::Matrixd texGenMatrix_;
   osg::ref_ptr<osg::Texture2D> texture_;
@@ -296,7 +302,7 @@ private:
   // Playlist node that holds the video images that will be read into
   // the texture; loaded from "osgDB::readNodeFile".
   osg::ref_ptr<osg::Referenced> imageProvider_;
-  osg::MatrixTransform* graphics_;
+  osg::MatrixTransform* graphics_ = nullptr;
   osg::ref_ptr<osg::Uniform> projectorActive_;
   osg::ref_ptr<osg::Uniform> projectorAlpha_;
   osg::ref_ptr<osg::Uniform> texProjPosUniform_;
@@ -313,11 +319,7 @@ private:
 
   std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator_;
 
-  /// returns true if the user changes a preference that requires
-  /// the projector manager to update the rendering state
-  mutable bool stateDirty_;
-  bool isStateDirty_() const;
-  void resetStateDirty_();
+
 
   friend class ProjectorManager;
 };

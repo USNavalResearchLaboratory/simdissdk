@@ -31,6 +31,7 @@
 #include "osgEarth/Horizon"
 #include "osgEarth/Shadowing"
 #include "osgEarth/NodeUtils"
+#include "osgEarth/ObjectIndex"
 #include "osgEarth/CameraUtils"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/LogarithmicDepthBuffer"
@@ -308,11 +309,7 @@ ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::
   lastProps_(props),
   host_(host),
   hostLocator_(hostLocator),
-  hasLastUpdate_(false),
-  hasLastPrefs_(false),
-  projectorTextureImpl_(new ProjectorTextureImpl()),
-  graphics_(nullptr),
-  stateDirty_(false)
+  projectorTextureImpl_(new ProjectorTextureImpl())
 {
   init_();
 }
@@ -350,6 +347,9 @@ void ProjectorNode::init_()
   graphics_ = new osg::MatrixTransform();
   addChild(graphics_);
   graphics_->setNodeMask(DISPLAY_MASK_NONE);
+
+  // Add a tag for picking
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(this, this);
 
   // create the uniforms that will control the texture projection:
   projectorActive_        = new osg::Uniform(osg::Uniform::BOOL,       "projectorActive");
@@ -1034,8 +1034,7 @@ osgEarth::MapNode* ProjectorNode::getMapNode()
 
 unsigned int ProjectorNode::objectIndexTag() const
 {
-  // Not supported for projectors
-  return 0;
+  return objectIndexTag_;
 }
 
 void ProjectorNode::setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator)
