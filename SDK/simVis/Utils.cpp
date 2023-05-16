@@ -26,6 +26,7 @@
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osg/Geometry"
+#include "osg/LineSegment"
 #include "osg/Math"
 #include "osg/MatrixTransform"
 #include "osg/NodeVisitor"
@@ -55,6 +56,7 @@
 #endif
 
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/String/Format.h"
 #include "simNotify/Notify.h"
@@ -546,6 +548,22 @@ void fixStatsHandlerGl2BlockyText(osgViewer::StatsHandler* statsHandler)
   if (statsHandler && statsHandler->getCamera())
     statsHandler->getCamera()->getOrCreateStateSet()->removeAttribute(osg::StateAttribute::PROGRAM);
 #endif
+}
+
+bool calculateEarthIntersection(double lat, const osg::Vec3d& ecefStart, const osg::Vec3d& ecefEnd, osg::Vec3d& earthIntersection)
+{
+  // Use the scaled earth radius at the latitude
+  const double earthRadius = simCore::calculateEarthRadius(lat);
+  const osg::BoundingSphere earthSphere(osg::Vec3d(), earthRadius);
+  osg::ref_ptr<osg::LineSegment> lineSeg = new osg::LineSegment(ecefStart, ecefEnd);
+  double ratioFromStartToEnd1, ratioFromStartToEnd2;
+  const bool rv = lineSeg->intersectAndComputeRatios(earthSphere, ratioFromStartToEnd1, ratioFromStartToEnd2);
+  if (rv)
+  {
+    const osg::Vec3d& vector = osg::Vec3d(ecefEnd - ecefStart);
+    earthIntersection = ecefStart + (vector * ratioFromStartToEnd1);
+  }
+  return rv;
 }
 
 //--------------------------------------------------------------------------

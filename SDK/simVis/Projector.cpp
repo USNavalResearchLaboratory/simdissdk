@@ -787,7 +787,8 @@ void ProjectorNode::syncWithLocator()
   // establish the view matrix:
   osg::Matrixd locatorMat;
   hostLocator_->getLocatorMatrix(locatorMat);
-  osg::Matrixd viewMat_temp = osg::Matrixd::inverse(locatorMat);
+
+  const osg::Matrixd& viewMat_temp = osg::Matrixd::inverse(locatorMat);
 
   // establish the projection matrix:
   osg::Matrixd projectionMat;
@@ -808,7 +809,7 @@ void ProjectorNode::syncWithLocator()
   // which means the projector will point straight down by default (since the view vector
   // is -Z in view space). We want the projector to point along the entity vector, so
   // we create a view matrix that rotates the view to point along the +Y axis.
-  const osg::Matrix& rotateUp90Mat = osg::Matrix::rotate(-osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0));
+  const osg::Matrixd& rotateUp90Mat = osg::Matrixd::rotate(-osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0));
   viewMat_ = viewMat_temp * rotateUp90Mat;
 
   // flip the image if it's upside down
@@ -837,35 +838,6 @@ void ProjectorNode::syncWithLocator()
   texProjPosUniform_->set(osg::Vec3f(eye));
   texProjDirUniform_->set(osg::Vec3f(cen-eye));
 
-  // determine the best available position for the projector
-  double eciRefTime = 0.;
-  double time = 0.;
-  simCore::Vec3 hostPos;
-  // obtain current time and eci ref time from host
-  if (hostLocator_.valid())
-  {
-    const Locator* loc = hostLocator_.get();
-    eciRefTime = loc->getEciRefTime();
-    time = loc->getTime();
-  }
-  // if ellipsoid intersection can be calculated, use that result as the projector position
-  osg::Vec3d ellipsoidIntersection;
-  if (calculator_->intersectLine(eye, cen, ellipsoidIntersection))
-  {
-    const simCore::Vec3& intersection = convertToSim(ellipsoidIntersection);
-    const simCore::Coordinate projPosition(simCore::COORD_SYS_ECEF, intersection);
-    getLocator()->setCoordinate(projPosition, time, eciRefTime);
-  }
-  else
-  {
-    // default to "Null Island" if ellipsoid intersection is not calculable; but use host position if it is available
-    simCore::Vec3 hostPosEcef(simCore::EARTH_RADIUS, 0., 0.);
-    if (hostLocator_.valid())
-      hostLocator_->getLocatorPosition(&hostPosEcef);
-    const simCore::Coordinate projPosition(simCore::COORD_SYS_ECEF, hostPosEcef);
-    getLocator()->setCoordinate(projPosition, time, eciRefTime);
-  }
-
   // update the shadow camera
   if (shadowCam_.valid())
   {
@@ -875,6 +847,38 @@ void ProjectorNode::syncWithLocator()
 
   // update the frustum geometry
   makeFrustum(projectionMat, viewMat_, graphics_);
+
+  // determine the best available position for the projector
+  double eciRefTime = 0.;
+  double time = 0.;
+  // obtain current time and eci ref time from host
+  if (hostLocator_.valid())
+  {
+    const Locator* loc = hostLocator_.get();
+    eciRefTime = loc->getEciRefTime();
+    time = loc->getTime();
+  }
+
+  const osg::Vec3d& hostPosEcef = locatorMat.getTrans();
+  simCore::Vec3 hostPosLla;
+  if (0 == simCore::CoordinateConverter::convertEcefToGeodeticPos(convertToSim(hostPosEcef), hostPosLla))
+  {
+    // extend the projector vector at least as far as the earth surface to guarantee an intersection
+    const osg::Vec3d& vector = osg::Vec3d(cen - eye) * 2.0 * hostPosLla.alt();
+    const osg::Vec3d& endpoint = eye + vector;
+    osg::Vec3d ellipsoidIntersection;
+    if (calculateEarthIntersection(hostPosLla.lat(), eye, endpoint, ellipsoidIntersection))
+    {
+      // if ellipsoid intersection can be calculated, use that result as the projector position
+      const simCore::Vec3& intersection = convertToSim(ellipsoidIntersection);
+      const simCore::Coordinate projPosition(simCore::COORD_SYS_ECEF, intersection);
+      getLocator()->setCoordinate(projPosition, time, eciRefTime);
+      return;
+    }
+  }
+  // else, use host position
+  const simCore::Coordinate projPosition(simCore::COORD_SYS_ECEF, convertToSim(hostPosEcef));
+  getLocator()->setCoordinate(projPosition, time, eciRefTime);
 }
 
 bool ProjectorNode::isActive() const
