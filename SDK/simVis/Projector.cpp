@@ -345,7 +345,7 @@ void ProjectorNode::init_()
 
   // Create matrix transform node that houses graphics frustum and set the node mask to off
   graphics_ = new osg::MatrixTransform();
-  addChild(graphics_);
+  addChild(graphics_.get());
   graphics_->setNodeMask(DISPLAY_MASK_NONE);
 
   // Add a tag for picking
@@ -880,7 +880,7 @@ void ProjectorNode::syncWithLocator()
   }
 
   // update the frustum geometry
-  makeFrustum(projectionMat, viewMat_, graphics_);
+  makeFrustum(projectionMat, viewMat_, graphics_.get());
 
   // determine the best available position for the projector
   double eciRefTime = 0.;

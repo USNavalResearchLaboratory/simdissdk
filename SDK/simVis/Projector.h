@@ -304,7 +304,7 @@ private:
   // Playlist node that holds the video images that will be read into
   // the texture; loaded from "osgDB::readNodeFile".
   osg::ref_ptr<osg::Referenced> imageProvider_;
-  osg::MatrixTransform* graphics_ = nullptr;
+  osg::ref_ptr<osg::MatrixTransform> graphics_;
   osg::ref_ptr<osg::Uniform> projectorActive_;
   osg::ref_ptr<osg::Uniform> projectorAlpha_;
   osg::ref_ptr<osg::Uniform> texProjPosUniform_;
