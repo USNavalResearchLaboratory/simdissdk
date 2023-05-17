@@ -664,6 +664,46 @@ void ProjectorNode::updateOverrideColor_(const simData::ProjectorPrefs& prefs)
   useColorOverrideUniform_->set(prefs.commonprefs().useoverridecolor());
 }
 
+int ProjectorNode::calculatePerspectiveComponents_(double& vfov, double& aspectRatio) const
+{
+  if (!hasLastUpdate_)
+    return 1;
+
+  double dataVFov = getVFOV();
+  double dataHFov = (lastUpdate_.has_hfov() ? lastUpdate_.hfov() * simCore::RAD2DEG : -1);
+
+  // There are 3 possibilities:
+  // 1) Both FOVs have valid definition. Calculate the aspect ratio from them
+  // 2) One FOV has a valid definition. Calculate the other FOV from the image's aspect ratio
+  // 3) Neither FOV has a valid definition. Error
+
+  if (dataVFov > 0 && dataHFov > 0)
+  {
+    vfov = dataVFov;
+    aspectRatio = dataHFov / dataVFov;
+    return 0;
+  }
+  else if (dataVFov > 0)
+  {
+    vfov = dataVFov;
+    if (texture_->getImage()->s() > 0 && texture_->getImage()->t() > 0)
+      aspectRatio = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
+    else
+      aspectRatio = 1.0;
+    return 0;
+  }
+  else if (dataHFov > 0 && texture_->getImage()->s() > 0 && texture_->getImage()->t() > 0)
+  {
+    aspectRatio = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
+    vfov = 1 / (aspectRatio * dataHFov);
+    return 0;
+  }
+
+  vfov = DEFAULT_PROJECTOR_FOV_IN_DEG;
+  aspectRatio = 1.0;
+  return 1;
+}
+
 bool ProjectorNode::readVideoFile_(const std::string& filename)
 {
   osg::Node* result = nullptr;
@@ -792,15 +832,9 @@ void ProjectorNode::syncWithLocator()
 
   // establish the projection matrix:
   osg::Matrixd projectionMat;
-  double vFov = getVFOV();
-  double hFov = (lastUpdate_.has_hfov() ? lastUpdate_.hfov() * simCore::RAD2DEG : -1);
-  double ar;
-  if (hFov <= 0)
-    ar = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
-  else if (vFov > 0)
-    ar = hFov / vFov;
-  else
-    ar = 0;
+  double vFov = -1;
+  double ar = -1;
+  calculatePerspectiveComponents_(vFov, ar);
   float zfar = lastPrefs_.maxdrawrange();
   if (zfar == 0.0) zfar = 1e6;
   projectionMat.makePerspective(vFov, ar, 10.0, zfar);

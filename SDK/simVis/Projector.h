@@ -270,6 +270,8 @@ private:
   void updateLabel_(const simData::ProjectorPrefs& prefs);
   /// Update override color
   void updateOverrideColor_(const simData::ProjectorPrefs& prefs);
+  /// Calculate the vertical FOV (deg) and aspect ratio
+  int calculatePerspectiveComponents_(double& vFov, double& aspectRatio) const;
 
   /// returns true if the user changes a preference that requires the projector manager to update the rendering state
   bool isStateDirty_() const;
