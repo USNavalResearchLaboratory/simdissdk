@@ -556,7 +556,8 @@ bool calculateEarthIntersection(double lat, const osg::Vec3d& ecefStart, const o
   const double earthRadius = simCore::calculateEarthRadius(lat);
   const osg::BoundingSphere earthSphere(osg::Vec3d(), earthRadius);
   osg::ref_ptr<osg::LineSegment> lineSeg = new osg::LineSegment(ecefStart, ecefEnd);
-  double ratioFromStartToEnd1, ratioFromStartToEnd2;
+  double ratioFromStartToEnd1 = 0.;
+  double ratioFromStartToEnd2 = 0.;
   const bool rv = lineSeg->intersectAndComputeRatios(earthSphere, ratioFromStartToEnd1, ratioFromStartToEnd2);
   if (rv)
   {
