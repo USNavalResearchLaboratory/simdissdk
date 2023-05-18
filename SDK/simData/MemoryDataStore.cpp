@@ -946,10 +946,10 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
 
   if ((flushFields & FLUSH_GENERIC_DATA) != 0)
   {
-    auto it = genericData_.find(id);
+    const auto it = genericData_.find(id);
     if (it != genericData_.end())
     {
-      if ((startTime <= 0.0) & (endTime == std::numeric_limits<double>::max()))
+      if ((startTime <= 0.0) && (endTime == std::numeric_limits<double>::max()))
         it->second->flush();
       else
         it->second->flush(startTime, endTime);
@@ -1194,7 +1194,7 @@ int MemoryDataStore::flush(ObjectId id, FlushScope scope, FlushFields fields, do
       GenericDataMap::const_iterator it = genericData_.find(0);
       if (it != genericData_.end())
       {
-        if ((startTime <= 0.0) & (endTime == std::numeric_limits<double>::max()))
+        if ((startTime <= 0.0) && (endTime == std::numeric_limits<double>::max()))
           it->second->flush();
         else
           it->second->flush(startTime, endTime);
