@@ -40,6 +40,7 @@
 #include "FileSelectorWidgetPlugin.h"
 #include "FontWidgetPlugin.h"
 #include "GanttChartViewPlugin.h"
+#include "KeySequenceEditPlugin.h"
 #include "SearchLineEditPlugin.h"
 #include "TimeWidgetPlugin.h"
 #include "TimeButtonsPlugin.h"
@@ -68,6 +69,7 @@ simQtDesignerPlugins::simQtDesignerPlugins(QObject* parent) : QObject(parent)
   widgetFactories_.append(new FileSelectorWidgetPlugin(this));
   widgetFactories_.append(new FontWidgetPlugin(this));
   widgetFactories_.append(new GanttChartViewPlugin(this));
+  widgetFactories_.append(new KeySequenceEditPlugin(this));
   widgetFactories_.append(new SearchLineEditPlugin(this));
   widgetFactories_.append(new TimeButtonsPlugin(this));
   widgetFactories_.append(new TimeWidgetPlugin(this));
