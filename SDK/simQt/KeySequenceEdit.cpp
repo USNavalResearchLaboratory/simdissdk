@@ -54,6 +54,9 @@ bool KeySequenceEdit::isKeyValid() const
 
 void KeySequenceEdit::setKey(const QKeySequence& key, bool emitSignal)
 {
+  if (key_ == key)
+    return;
+
   key_ = key;
   setText(key_.toString());
   if (emitSignal)

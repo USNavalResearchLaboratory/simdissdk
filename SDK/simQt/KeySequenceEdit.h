@@ -37,6 +37,10 @@ namespace simQt {
 class SDKQT_EXPORT KeySequenceEdit : public QLineEdit
 {
   Q_OBJECT;
+
+  /** Sets/gets the key sequence in Qt Designer */
+  Q_PROPERTY(QKeySequence key READ key WRITE setKey NOTIFY keyChanged);
+
 public:
   /// constructor
   explicit KeySequenceEdit(QWidget* parent=nullptr);
