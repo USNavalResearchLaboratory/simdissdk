@@ -8,7 +8,7 @@ set(CORE_COMMON_HEADERS
     ${CORE_COMMON_INC}FileSearch.h
     ${CORE_COMMON_INC}HighPerformanceGraphics.h
     ${CORE_COMMON_INC}Optional.h
-    ${CORE_COMMON_INC}ScopedLambda.h
+    ${CORE_COMMON_INC}ScopeGuard.h
     ${CORE_COMMON_INC}SDKAssert.h
     ${CORE_COMMON_INC}Time.h
     ${CMAKE_CURRENT_BINARY_DIR}/include/simCore/Common/Version.h

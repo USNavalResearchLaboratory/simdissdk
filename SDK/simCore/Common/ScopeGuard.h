@@ -21,21 +21,21 @@
  *
  */
 
-#ifndef SIMCORE_SCOPED_LAMBDA_H
-#define SIMCORE_SCOPED_LAMBDA_H
+#ifndef SIMCORE_SCOPEGUARD_H
+#define SIMCORE_SCOPEGUARD_H
 
 #include <functional>
 
 namespace simCore
 {
   /** Scoped class that executes a lambda function on destruction. */
-  struct ScopedLambda
+  struct ScopeGuard
   {
-    explicit ScopedLambda(const std::function<void()>& onDestroy)
+    explicit ScopeGuard(const std::function<void()>& onDestroy)
       : onDestroy_(onDestroy)
     {
     }
-    ~ScopedLambda()
+    ~ScopeGuard()
     {
       onDestroy_();
     }
@@ -44,4 +44,4 @@ namespace simCore
   };
 }
 
-#endif /* SIMCORE_SCOPED_LAMBDA_H */
+#endif /* SIMCORE_SCOPEGUARD_H */
