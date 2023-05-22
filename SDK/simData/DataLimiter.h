@@ -126,7 +126,8 @@ private:
   void limitSeconds_(StlContainer &container, double maxSeconds) const
   {
     // Don't do data limiting with bad values
-    if (maxSeconds < 0.0 || container.empty())
+    // SIM-15215: 0 has always been documented as (and is now implemented as) no-limiting.
+    if (maxSeconds <= 0.0 || container.empty())
       return;
 
     // NOTE: This code will typically remove the DEFAULT time value of -1.  We could modify this
