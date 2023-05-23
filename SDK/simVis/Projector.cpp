@@ -658,20 +658,29 @@ void ProjectorNode::updateOverrideColor_(const simData::ProjectorPrefs& prefs)
     !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, color))
     return;
 
+  // apply override color whenever useoverridecolor is set; even when overridecolor is unset.
   const bool useOverrideColor =
     prefs.commonprefs().has_useoverridecolor() &&
-    prefs.commonprefs().useoverridecolor() &&
-    prefs.commonprefs().has_overridecolor();
+    prefs.commonprefs().useoverridecolor();
 
-  const simVis::Color projColor = useOverrideColor ?
-    simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA) :
-    simVis::Color(prefs.commonprefs().color(), simVis::Color::RGBA);
+  // do not apply commonprefs.color if it is unset (has default value).
+  const bool useColor = prefs.commonprefs().has_color();
 
-  // multiplying by white should be no change to original image
-  // if currently white, don't need to apply color, can simply disable the override action
-  colorOverrideUniform_->set(projColor);
-  const bool useProjColor = (projColor != simVis::Color::White);
-  useColorOverrideUniform_->set(useProjColor);
+  if (useOverrideColor || useColor)
+  {
+    const simVis::Color projColor = useOverrideColor ?
+      simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA) :
+      simVis::Color(prefs.commonprefs().color(), simVis::Color::RGBA);
+
+    // multiplying by white should be no change to original image; if currently white, don't apply color.
+    if (projColor != simVis::Color::White)
+    {
+      colorOverrideUniform_->set(projColor);
+      useColorOverrideUniform_->set(true);
+      return;
+    }
+  }
+  useColorOverrideUniform_->set(false);
 }
 
 int ProjectorNode::calculatePerspectiveComponents_(double& vfov, double& aspectRatio) const
