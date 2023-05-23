@@ -301,10 +301,13 @@ public:
   ///@}
 
   /// @copydoc simData::DataStore::modifyPlatformCommandSlice
-  virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier);
+  virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) override;
+
+  /// @copydoc simData::DataStore::modifyProjectorCommandSlice
+  virtual int modifyProjectorCommandSlice(ObjectId id, VisitableDataSlice<ProjectorCommand>::Modifier* modifier) override;
 
   /// @copydoc simData::DataStore::modifyCustomRenderingCommandSlice
-  virtual int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier);
+  virtual int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier) override;
 
   /**@name Listeners
    * @{

@@ -635,6 +635,14 @@ public: // methods
   virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) = 0;
 
   /**
+   * Modify commands for a given projector
+   * @param id Projector that needs commands modified
+   * @param modifier The object to modify the commands
+   * @return 0 on success
+   */
+  virtual int modifyProjectorCommandSlice(ObjectId id, VisitableDataSlice<ProjectorCommand>::Modifier* modifier) = 0;
+
+  /**
    * Modify commands for a given custom rendering entity
    * Does not support modifying acceptsProjectors
    * @param id Custom rendering entity that needs commands modified

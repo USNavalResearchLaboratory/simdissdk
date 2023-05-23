@@ -2526,43 +2526,46 @@ const CategoryDataSlice* MemoryDataStore::categoryDataSlice(ObjectId id) const
 
 int MemoryDataStore::modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier)
 {
-  switch (objectType(id))
-  {
-  case simData::PLATFORM:
+  if (objectType(id) == simData::PLATFORM)
   {
     PlatformEntry *entry = getEntry<PlatformEntry, Platforms>(id, &platforms_);
-    if (entry == nullptr)
-      return 1;
-    PlatformCommandSlice* commands = entry->commands();
-    commands->modify(modifier);
-    hasChanged_ = true;
-    break;
+    if (entry)
+    {
+      entry->commands()->modify(modifier);
+      hasChanged_ = true;
+      return 0;
+    }
   }
-  default:
-    break;
-  }
+  return 1;
+}
 
+int MemoryDataStore::modifyProjectorCommandSlice(ObjectId id, VisitableDataSlice<ProjectorCommand>::Modifier* modifier)
+{
+  if (objectType(id) == simData::PROJECTOR)
+  {
+    ProjectorEntry* entry = getEntry<ProjectorEntry, Projectors>(id, &projectors_);
+    if (entry)
+    {
+      entry->commands()->modify(modifier);
+      hasChanged_ = true;
+      return 0;
+    }
+  }
   return 1;
 }
 
 int MemoryDataStore::modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier)
 {
-  switch (objectType(id))
-  {
-  case simData::CUSTOM_RENDERING:
+  if (objectType(id) == simData::CUSTOM_RENDERING)
   {
     CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
-    if (entry == nullptr)
-      return 1;
-    CustomRenderingCommandSlice* commands = entry->commands();
-    commands->modify(modifier);
-    hasChanged_ = true;
-    break;
+    if (entry)
+    {
+      entry->commands()->modify(modifier);
+      hasChanged_ = true;
+      return 0;
+    }
   }
-  default:
-    break;
-  }
-
   return 1;
 }
 
