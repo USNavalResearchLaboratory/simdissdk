@@ -125,7 +125,7 @@ QVariant DataTableModel::data(const QModelIndex &index, int role) const
     if (cell.peekNext()->time() != time)
       return EMPTY_CELL;
 
-    return cellDisplayValue_(col->variableType(), cell);
+    return cellDisplayValue_(*col, cell);
   }
 
   if (role == SortRole)
@@ -145,7 +145,7 @@ QVariant DataTableModel::data(const QModelIndex &index, int role) const
     if (cell.peekNext()->time() != time)
       return EMPTY_CELL;
 
-    return cellSortValue_(col->variableType(), cell);
+    return cellSortValue_(*col, cell);
   }
 
   if (role == Qt::TextAlignmentRole)
@@ -186,13 +186,9 @@ QVariant DataTableModel::headerData(int section, Qt::Orientation orientation, in
 
     if (unitTypeConverter_ != nullptr)
     {
-      std::string name;
-      auto units = unitTypeConverter_->toCoreFromData(col->unitType());
-      if (units.isValid())
-        name = units.name();
-      if (name.empty())
-        name = tr("Unknown").toStdString();
-      return QString::fromStdString(col->name() + "\n(" + name + ")");
+      const QString& name = unitsName_(*col);
+      if (!name.isEmpty())
+        return tr("%1\n(%2)").arg(QString::fromStdString(col->name())).arg(name);
     }
 
     return QString::fromStdString(col->name());
@@ -206,6 +202,22 @@ QVariant DataTableModel::headerData(int section, Qt::Orientation orientation, in
 
   // Isn't the bar across the top -- fall back to whatever QAIM does
   return QAbstractItemModel::headerData(section, orientation, role);
+}
+
+QString DataTableModel::unitsName_(const simData::TableColumn& col) const
+{
+  // No units, don't bother trying to print anything
+  if (!unitTypeConverter_)
+    return QString();
+
+  const simCore::Units& coreUnits = unitTypeConverter_->toCoreFromData(col.unitType());
+  if (coreUnits.isValid() && !coreUnits.name().empty())
+    return QString::fromStdString(coreUnits.name());
+
+  // Use empty string instead of '(unknown)' here because unitless != unknown
+  if (col.unitType() == 0)
+    return QString();
+  return tr("unknown");
 }
 
 QModelIndex DataTableModel::index(int row, int column, const QModelIndex &parent) const
@@ -271,10 +283,8 @@ void DataTableModel::setDataTable(simData::DataTable* dataTable)
 
   // use size() instead of size() - 1 because of the time column
   const int lastColIndex = cv.columns().size();
-  beginInsertColumns(QModelIndex(), 0, lastColIndex);
   columns_.push_back(nullptr); // time column
   columns_ += cv.columns();
-  endInsertColumns();
 
   // Add rows
   RowValueAccumulator rvc(rows_);
@@ -300,117 +310,129 @@ void DataTableModel::setGenericPrecision(unsigned int digitsAfterDecimal)
     return;
 
   genericPrecision_ = digitsAfterDecimal;
+  emitAllDataChanged_();
+}
+
+void DataTableModel::emitAllDataChanged_()
+{
   if (!rows_.empty() && !columns_.empty())
     Q_EMIT dataChanged(createIndex(0, 0), createIndex(static_cast<int>(rows_.size() - 1), static_cast<int>(columns_.size() - 1)));
 }
 
-QVariant DataTableModel::cellDisplayValue_(simData::VariableType type, simData::TableColumn::Iterator& cell) const
+void DataTableModel::emitAllHeaderDataChanged_()
+{
+  if (!columns_.empty())
+    Q_EMIT headerDataChanged(Qt::Horizontal, 0, static_cast<int>(columns_.size() - 1));
+}
+
+QVariant DataTableModel::cellDisplayValue_(const simData::TableColumn& column, simData::TableColumn::Iterator& cell) const
 {
   if (!cell.hasNext())
     return QVariant();
 
+  const auto type = column.variableType();
   switch (type)
   {
   case simData::VT_UINT8:
-    {
-      uint8_t val;
-      cell.next()->getValue(val);
-      return QVariant(val);
-    }
+  {
+    uint8_t val = 0;
+    cell.next()->getValue(val);
+    return QVariant(val);
+  }
   case simData::VT_UINT16:
-    {
-      uint16_t val;
-      cell.next()->getValue(val);
-      return QVariant(val);
-    }
+  {
+    uint16_t val = 0;
+    cell.next()->getValue(val);
+    return QVariant(val);
+  }
   case simData::VT_UINT32:
-    {
-      uint32_t val;
-      cell.next()->getValue(val);
-      return QVariant(val);
-    }
+  {
+    uint32_t val = 0;
+    cell.next()->getValue(val);
+    return QVariant(val);
+  }
   case simData::VT_UINT64:
-    {
-      uint64_t val;
-      cell.next()->getValue(val);
-      return QVariant(static_cast<unsigned long long>(val));
-    }
+  {
+    uint64_t val = 0;
+    cell.next()->getValue(val);
+    return QVariant(static_cast<unsigned long long>(val));
+  }
   case simData::VT_INT8:
-    {
-      int8_t val;
-      cell.next()->getValue(val);
-      return QVariant(val);
-    }
+  {
+    int8_t val = 0;
+    cell.next()->getValue(val);
+    return QVariant(val);
+  }
   case simData::VT_INT16:
-    {
-      int16_t val;
-      cell.next()->getValue(val);
-      return QVariant(val);
-    }
+  {
+    int16_t val = 0;
+    cell.next()->getValue(val);
+    return QVariant(val);
+  }
   case simData::VT_INT32:
-    {
-      int32_t val;
-      cell.next()->getValue(val);
-      return QVariant(val);
-    }
+  {
+    int32_t val = 0;
+    cell.next()->getValue(val);
+    return QVariant(val);
+  }
   case simData::VT_INT64:
-    {
-      int64_t val;
-      cell.next()->getValue(val);
-      return QVariant(static_cast<long long>(val));
-    }
+  {
+    int64_t val = 0;
+    cell.next()->getValue(val);
+    return QVariant(static_cast<long long>(val));
+  }
   case simData::VT_FLOAT:
+  {
+    float val = 0.f;
+    cell.next()->getValue(val);
+
+    if (std::isnan(val))
+      return QVariant(tr("NaN"));
+
+    if (std::isinf(val))
     {
-      float val;
-      cell.next()->getValue(val);
-
-      if (std::isnan(val))
-        return QVariant(tr("NaN"));
-
-      if (std::isinf(val))
-      {
-        if (val > 0)
-          return QVariant(tr("Infinity"));
-        return QVariant(tr("-Infinity"));
-      }
-
-      return QVariant(QString::number(val, 'f', static_cast<int>(genericPrecision_)));
+      if (val > 0)
+        return QVariant(tr("Infinity"));
+      return QVariant(tr("-Infinity"));
     }
+
+    return QVariant(QString::number(val, 'f', static_cast<int>(genericPrecision_)));
+  }
   case simData::VT_DOUBLE:
+  {
+    double val = 0.;
+    cell.next()->getValue(val);
+
+    if (std::isnan(val))
+      return QVariant(tr("NaN"));
+
+    if (std::isinf(val))
     {
-      double val;
-      cell.next()->getValue(val);
-
-      if (std::isnan(val))
-        return QVariant(tr("NaN"));
-
-      if (std::isinf(val))
-      {
-        if (val > 0)
-          return QVariant(tr("Infinity"));
-        return QVariant(tr("-Infinity"));
-      }
-
-      return QVariant(QString::number(val, 'f', static_cast<int>(genericPrecision_)));
+      if (val > 0)
+        return QVariant(tr("Infinity"));
+      return QVariant(tr("-Infinity"));
     }
+
+    return QVariant(QString::number(val, 'f', static_cast<int>(genericPrecision_)));
+  }
   case simData::VT_STRING:
-    {
-      std::string val;
-      cell.next()->getValue(val);
-      return QVariant(val.c_str());
-    }
-  default:
-    assert(0);
-    return QVariant();
+  {
+    std::string val;
+    cell.next()->getValue(val);
+    return QVariant(QString::fromStdString(val));
+  }
   }
   return QVariant();
 }
 
-QVariant DataTableModel::cellSortValue_(simData::VariableType type, simData::TableColumn::Iterator& cell) const
+QVariant DataTableModel::cellSortValue_(const simData::TableColumn& column, simData::TableColumn::Iterator& cell) const
 {
   if (!cell.hasNext())
     return QVariant();
 
+  // Most types are double or float. Assume no unit influence on sorting. This also intentionally
+  // avoids any stringification of NaN and Infinity, and precision issues.
+  const auto type = column.variableType();
   if (type == simData::VT_FLOAT)
   {
     float val;
@@ -424,7 +446,7 @@ QVariant DataTableModel::cellSortValue_(simData::VariableType type, simData::Tab
     return QVariant(val);
   }
 
-  return cellDisplayValue_(type, cell);
+  return cellDisplayValue_(column, cell);
 }
 }
 

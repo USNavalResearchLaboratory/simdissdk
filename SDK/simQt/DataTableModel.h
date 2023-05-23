@@ -28,6 +28,7 @@
 #include <QAbstractItemModel>
 #include "simData/DataTable.h"
 
+namespace simCore { class Units; }
 namespace simUtil { class UnitTypeConverter; }
 
 namespace simQt {
@@ -92,17 +93,24 @@ namespace simQt {
     /** Set the number of digits after the decimal for floats and doubles */
     void setGenericPrecision(unsigned int digitsAfterDecimal);
 
+  protected Q_SLOTS:
+    /** Emits all data has changed. Use this for example if your units change. */
+    void emitAllDataChanged_();
+    /** Emits header display data changed. Use this if your unitsName_() returns a new value. */
+    void emitAllHeaderDataChanged_();
+
   protected:
+    /** Returns the units name for a given column, applied to QHeaderView's data(). Emit dataChanged() if this changes. */
+    virtual QString unitsName_(const simData::TableColumn& col) const;
     /** Convert the DataTable cell value to a QVariant; converting float and double into strings with the correct precision */
-    QVariant cellDisplayValue_(simData::VariableType type, simData::TableColumn::Iterator& cellIter) const;
-
+    virtual QVariant cellDisplayValue_(const simData::TableColumn& column, simData::TableColumn::Iterator& cellIter) const;
     /** Convert the DataTable cell value to a QVariant */
-    QVariant cellSortValue_(simData::VariableType type, simData::TableColumn::Iterator& cellIter) const;
+    virtual QVariant cellSortValue_(const simData::TableColumn& column, simData::TableColumn::Iterator& cellIter) const;
 
-    simData::DataTable* dataTable_; ///< reference to the data table this model represents
+    simData::DataTable* dataTable_ = nullptr; ///< reference to the data table this model represents
     QList<const simData::TableColumn*> columns_; ///< index in list corresponds to model column index
     QList<double> rows_; ///< index in list corresponds to model row index
-    unsigned int genericPrecision_;  ///< number of digits after the decimal for floats and doubles
+    unsigned int genericPrecision_ = 3;  ///< number of digits after the decimal for floats and doubles
     std::shared_ptr<simUtil::UnitTypeConverter> unitTypeConverter_;
   };
 
