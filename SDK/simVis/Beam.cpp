@@ -785,20 +785,7 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
   if (activePrefs.drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
   {
     force = force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawtype));
-
-    // beam visual is drawn by Antenna
-    // redraw if necessary, then update range and other prefs as necessary
-
-    // setPrefs will perform the antenna redraw as required, and its return indicates whether a redraw occurred
-    const bool refreshRequiresNewNode = (force || newPrefs) && antenna_->setPrefs(activePrefs);
-
-    if (force || (newUpdate && PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, range)))
-      antenna_->setRange(static_cast<float>(simCore::sdkMax(1.0, activeUpdate.range())));
-
-    // force && refreshRequiresNewNode - antenna was just redrawn and needs to be added as child
-    // !force && refreshRequiresNewNode - antenna was just redrawn and needs to be added as child (prefs change)
-    // force && !refreshRequiresNewNode - antenna was not redrawn, but needs to be added as child (just became active)
-    if (force || refreshRequiresNewNode)
+    if (force)
     {
       // remove any old (non-antenna) beam volume
       if (beamVolume_)
@@ -806,7 +793,23 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
         beamLocatorNode_->removeChild(beamVolume_);
         beamVolume_ = nullptr;
       }
+      // ensure that antenna pattern is in the scene graph; note that antenna_ is never deleted; it is needed to support gain calcs.
+      beamLocatorNode_->removeChild(antenna_);
       beamLocatorNode_->addChild(antenna_);
+    }
+    // beam visual is drawn by Antenna
+    // redraw if necessary, then update range and other prefs as necessary
+
+    // setPrefs will perform the antenna redraw as required, and its return indicates whether a redraw occurred
+    const bool refreshRequiresNewNode = (force || newPrefs) && antenna_->setPrefs(activePrefs);
+
+    if (force || (newUpdate && PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, range)))
+    {
+      antenna_->setRange(static_cast<float>(simCore::sdkMax(1.0, activeUpdate.range())));
+      dirtyBound();
+    }
+    else if (refreshRequiresNewNode)
+    {
       dirtyBound();
     }
     return;
