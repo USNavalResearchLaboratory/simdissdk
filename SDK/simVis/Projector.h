@@ -173,8 +173,8 @@ public:
   virtual void traverse(osg::NodeVisitor& nv) override;
 
   /// Override from MapNodeObserver
-  void setMapNode(osgEarth::MapNode*) override;
-  osgEarth::MapNode* getMapNode() override;
+  virtual void setMapNode(osgEarth::MapNode*) override;
+  virtual osgEarth::MapNode* getMapNode() override;
 
 public: // EntityNode interface
   /**
