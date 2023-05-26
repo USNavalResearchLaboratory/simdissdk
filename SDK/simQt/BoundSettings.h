@@ -150,7 +150,7 @@ private:
   /** Called by observer to update the value */
   virtual void updateValue_(const QVariant& newValue);
   /** Cache of the settings value */
-  bool value_;
+  bool value_ = false;
 };
 
 /** Integer setting that updates automatically from simQt::Settings and has slots/signals */
@@ -210,7 +210,7 @@ private:
   /** Populates a combo box with enumerated values */
   int populateCombo_(const Settings::MetaData& metaData, QComboBox* comboBox) const;
   /** Cache of the settings value */
-  int value_;
+  int value_ = 0;
 };
 
 /** Double setting that updates automatically from simQt::Settings and has slots/signals */
@@ -246,7 +246,7 @@ private:
   /** Called by observer to update the value */
   virtual void updateValue_(const QVariant& newValue);
   /** Cache of the settings value */
-  double value_;
+  double value_ = 0.0;
 };
 
 /** Color setting that updates automatically from simQt::Settings and has slots/signals */
