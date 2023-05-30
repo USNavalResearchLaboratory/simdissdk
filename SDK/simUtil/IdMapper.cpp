@@ -202,13 +202,8 @@ void DataStoreIdMapper::filterToHostPlatform_(uint64_t localPlatformHost, std::v
 
 void DataStoreIdMapper::filterToName_(const std::string& entityName, std::vector<uint64_t>& idList) const
 {
-  std::vector<uint64_t> matches;
-  for (std::vector<uint64_t>::const_iterator i = idList.begin(); i != idList.end(); ++i)
-  {
-    if (simData::DataStoreHelpers::nameFromId(*i, &dataStore_) == entityName)
-      matches.push_back(*i);
-  }
-  idList.swap(matches);
+  idList.clear();
+  dataStore_.idListByName(entityName, &idList);
 }
 
 int DataStoreIdMapper::removeLocalId_(uint64_t localId)
