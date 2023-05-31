@@ -115,7 +115,7 @@ public:
   /// get preferences
   const simData::ProjectorPrefs& getPrefs() const;
 
-  /// get field of view in degrees
+  /// get vertical field of view in degrees
   double getVFOV() const;
 
   /// Return texture
@@ -271,12 +271,15 @@ private:
   /// Update override color
   void updateOverrideColor_(const simData::ProjectorPrefs& prefs);
   /// Calculate the vertical FOV (deg) and aspect ratio
-  int calculatePerspectiveComponents_(double& vFov, double& aspectRatio) const;
+  int calculatePerspectiveComponents_(double& vFovDeg, double& aspectRatio) const;
 
   /// returns true if the user changes a preference that requires the projector manager to update the rendering state
   bool isStateDirty_() const;
   /// clears the dirty flag
   void resetStateDirty_();
+
+  /// get horizontal field of view in degrees; returns -1 if unset, which means that aspect ratio should be used
+  double getHFOVDegrees_() const;
 
   simData::ProjectorProperties  lastProps_;
   simData::ProjectorPrefs       lastPrefs_;

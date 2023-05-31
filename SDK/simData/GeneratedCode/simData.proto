@@ -1376,10 +1376,15 @@ message ProjectorPrefs {
   /// Determine if we should interpolate FOV
   optional bool interpolateProjectorFov = 5 [default = true];
 
-  /// Override the field of view display if true, using overrideFovValue and ignoring projector updates
+  /// Override the field of view Y (vertical FOV) value display if true, using overrideFovValue and ignoring projector updates
   optional bool overrideFov = 6 [default = false];
-  /// Field of view for projector in radians, if overrideFov is true (default is ~10 degrees)
+  /// Field of view for projector Y (vertical FOV) value in radians, if overrideFov is true (default is ~10 degrees)
   optional double overrideFovAngle = 7 [default = 0.174533];
+
+  /// Override the field of view X (horizontal FOV) value display if true, using overrideFovValue and ignoring projector updates
+  optional bool overrideHFov = 11 [default = false];
+  /// Field of view for projector X (horizontal FOV) value in radians, if overrideFov is true (default is ~10 degrees)
+  optional double overrideHFovAngle = 12 [default = 0.174533];
 
   /// Determine if the projector should use shadow mapping
   optional bool shadowMapping = 8 [default = false];

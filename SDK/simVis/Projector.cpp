@@ -614,8 +614,11 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
 
   // If override FOV changes, update the FOV with a sync-with-locator call
   bool syncAfterPrefsUpdate = false;
-  if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridefov) ||
-    PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridefovangle))
+  if (!hasLastPrefs_ ||
+    PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridefov) ||
+    PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridefovangle) ||
+    PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridehfov) ||
+    PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridehfovangle))
   {
     syncAfterPrefsUpdate = true;
   }
@@ -683,42 +686,42 @@ void ProjectorNode::updateOverrideColor_(const simData::ProjectorPrefs& prefs)
   useColorOverrideUniform_->set(false);
 }
 
-int ProjectorNode::calculatePerspectiveComponents_(double& vfov, double& aspectRatio) const
+int ProjectorNode::calculatePerspectiveComponents_(double& vFovDeg, double& aspectRatio) const
 {
   if (!hasLastUpdate_)
     return 1;
 
-  double dataVFov = getVFOV();
-  double dataHFov = (lastUpdate_.has_hfov() ? lastUpdate_.hfov() * simCore::RAD2DEG : -1);
+  const double dataVFovDeg = getVFOV();
+  const double dataHFovDeg = getHFOVDegrees_();
 
   // There are 3 possibilities:
   // 1) Both FOVs have valid definition. Calculate the aspect ratio from them
   // 2) One FOV has a valid definition. Calculate the other FOV from the image's aspect ratio
   // 3) Neither FOV has a valid definition. Error
 
-  if (dataVFov > 0 && dataHFov > 0)
+  if (dataVFovDeg > 0 && dataHFovDeg > 0)
   {
-    vfov = dataVFov;
-    aspectRatio = dataHFov / dataVFov;
+    vFovDeg = dataVFovDeg;
+    aspectRatio = dataHFovDeg / dataVFovDeg;
     return 0;
   }
-  else if (dataVFov > 0)
+  else if (dataVFovDeg > 0)
   {
-    vfov = dataVFov;
+    vFovDeg = dataVFovDeg;
     if (texture_->getImage()->s() > 0 && texture_->getImage()->t() > 0)
       aspectRatio = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
     else
       aspectRatio = 1.0;
     return 0;
   }
-  else if (dataHFov > 0 && texture_->getImage()->s() > 0 && texture_->getImage()->t() > 0)
+  else if (dataHFovDeg > 0 && texture_->getImage()->s() > 0 && texture_->getImage()->t() > 0)
   {
     aspectRatio = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
-    vfov = 1 / (aspectRatio * dataHFov);
+    vFovDeg = dataHFovDeg / aspectRatio;
     return 0;
   }
 
-  vfov = DEFAULT_PROJECTOR_FOV_IN_DEG;
+  vFovDeg = DEFAULT_PROJECTOR_FOV_IN_DEG;
   aspectRatio = 1.0;
   return 1;
 }
@@ -819,8 +822,8 @@ double ProjectorNode::getVFOV() const
   if (!hasLastUpdate_)
     return 0.0;
 
-  // Allow for override
-  if (hasLastPrefs_ && lastPrefs_.overridefov() && lastPrefs_.overridefovangle() > 0.)
+  // Allow for override; value of 0 means to return 0 (which also means calculate from aspect ratio)
+  if (hasLastPrefs_ && lastPrefs_.overridefov() && lastPrefs_.overridefovangle() >= 0.)
     return lastPrefs_.overridefovangle() * simCore::RAD2DEG;
 
   // Return last FOV sent as an update
@@ -829,6 +832,24 @@ double ProjectorNode::getVFOV() const
 
   // Set default if projector is active, but FOV has not been updated
   return DEFAULT_PROJECTOR_FOV_IN_DEG;
+}
+
+double ProjectorNode::getHFOVDegrees_() const
+{
+  // Not active, so return -1.0 (calculate from aspect ratio)
+  if (!hasLastUpdate_)
+    return -1.0;
+
+  // Allow for override; value of 0 means to return 0 (which also means calculate from aspect ratio)
+  if (hasLastPrefs_ && lastPrefs_.overridehfov() && lastPrefs_.overridehfovangle() >= 0.)
+    return lastPrefs_.overridehfovangle() * simCore::RAD2DEG;
+
+  // Return last H-FOV sent as an update
+  if (lastUpdate_.has_hfov())
+    return lastUpdate_.hfov() * simCore::RAD2DEG;
+
+  // Set default if projector is active, but FOV has not been updated
+  return -1.0;
 }
 
 osg::Texture2D* ProjectorNode::getShadowMap() const
