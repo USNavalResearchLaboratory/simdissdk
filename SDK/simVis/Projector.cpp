@@ -1097,6 +1097,7 @@ void ProjectorNode::setMapNode(osgEarth::MapNode* mapNode)
     if (mapNode)
     {
       shadowCam_->addChild(mapNode->getTerrainEngine()->getNode());
+      shadowCam_->setRenderingCache(nullptr);
     }
   }
 }
