@@ -715,6 +715,9 @@ private:
 
   /// To improve performance keep track of children entities by host
   class HostChildCache;
+  /// To improve performance keep track of Original IDs
+  class OriginalIdCache;
+
   /// Key by host id and child type
   struct IdAndTypeKey {
     ObjectId id;
@@ -766,6 +769,9 @@ private:
 
   /// Improves performance of by-name searches in the data store
   EntityNameCache* entityNameCache_;
+
+  /// Improve performance by caching the original Ids
+  std::shared_ptr<OriginalIdCache> originalIdCache_;
 
   /// Links together the TableManager::NewRowDataListener to our newUpdatesListener_
   std::shared_ptr<NewRowDataToNewUpdatesAdapter> newRowDataListener_;

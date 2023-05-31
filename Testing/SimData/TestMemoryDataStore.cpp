@@ -1712,6 +1712,46 @@ int testOriginalId()
   ds->idListByOriginalId(&ids, 1, simData::BEAM);
   rv += SDK_ASSERT(ids.size() == 0);
 
+
+  // Change the original id of 3 to a 1
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 1);
+  auto id = ids.front();
+
+  simData::DataStore::Transaction trans;
+  auto prop = ds->mutable_platformProperties(id, &trans);
+  prop->set_originalid(1);
+  trans.complete(&prop);
+
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+
   return rv;
 }
 

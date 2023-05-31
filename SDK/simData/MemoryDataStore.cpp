@@ -240,19 +240,25 @@ public:
 
   virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
   {
-    for (auto listener : listeners_)
+    for (const auto& listener : listeners_)
       listener->onAddEntity(source, newId, ot);
   }
 
   virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
   {
-    for (auto listener : listeners_)
+    for (const auto& listener : listeners_)
       listener->onRemoveEntity(source, removedId, ot);
+  }
+
+  virtual void onPropertiesChange(simData::DataStore* source, simData::ObjectId id) override
+  {
+    for (const auto& listener : listeners_)
+      listener->onPropertiesChange(source, id);
   }
 
   virtual void onScenarioDelete(DataStore* source) override
   {
-    for (auto listener : listeners_)
+    for (const auto& listener : listeners_)
       listener->onScenarioDelete(source);
   }
 
@@ -314,6 +320,109 @@ public:
 
 private:
   std::multimap<IdAndTypeKey, ObjectId>& hostToChildren_;
+};
+
+/** Maintains a cache of Original IDs */
+class MemoryDataStore::OriginalIdCache : public simData::DataStore::DefaultListener
+{
+public:
+  OriginalIdCache()
+  {
+  }
+
+  virtual ~OriginalIdCache()
+  {
+  }
+
+  void idListByOriginalId(IdList* ids, uint64_t originalId, simData::ObjectType type) const
+  {
+    if (ids == nullptr)
+      return;
+
+    auto range = originalIdToUniqueIds_.equal_range(originalId);
+    ids->reserve(ids->size() + std::distance(range.first, range.second));
+    for (auto rangeIt = range.first; rangeIt != range.second; ++rangeIt)
+    {
+      if ((rangeIt->second.type & type) != 0)
+        ids->emplace_back(rangeIt->second.id);
+    }
+  }
+
+  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  {
+    auto originalId = simData::DataStoreHelpers::originalIdFromId(newId, source);
+    uniqueIdToOriginalId_[newId] = originalId;
+    originalIdToUniqueIds_.insert(std::make_pair(originalId, Entry(newId, ot)));
+  }
+
+  virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
+  {
+    auto it = uniqueIdToOriginalId_.find(removedId);
+    if (it == uniqueIdToOriginalId_.end())
+      return;
+
+    auto range = originalIdToUniqueIds_.equal_range(it->second);
+
+    for (auto rangeIt = range.first; rangeIt != range.second; ++rangeIt)
+    {
+      if (rangeIt->second.id == removedId)
+      {
+        originalIdToUniqueIds_.erase(rangeIt);
+        break;
+      }
+    }
+
+    uniqueIdToOriginalId_.erase(it);
+  }
+
+  virtual void onPropertiesChange(simData::DataStore* source, simData::ObjectId id) override
+  {
+    auto it = uniqueIdToOriginalId_.find(id);
+    if (it == uniqueIdToOriginalId_.end())
+      return;
+
+    auto originalId = simData::DataStoreHelpers::originalIdFromId(id, source);
+    if (originalId == it->second)
+      return;
+
+    auto range = originalIdToUniqueIds_.equal_range(it->second);
+
+    for (auto rangeIt = range.first; rangeIt != range.second; ++rangeIt)
+    {
+      if (rangeIt->second.id == id)
+      {
+        it->second = originalId;
+        auto entry = rangeIt->second;
+        originalIdToUniqueIds_.erase(rangeIt);
+        originalIdToUniqueIds_.insert(std::make_pair(it->second, entry));
+        return;
+      }
+    }
+
+    // data structures out of sync
+    assert(false);
+  }
+
+  virtual void onScenarioDelete(DataStore* source) override
+  {
+    uniqueIdToOriginalId_.clear();
+    originalIdToUniqueIds_.clear();
+  }
+
+private:
+  std::map<ObjectId, uint64_t> uniqueIdToOriginalId_;
+
+  struct Entry
+  {
+    ObjectId id = 0;
+    ObjectType type = simData::NONE;
+    Entry(ObjectId inId, ObjectType inType)
+      : id(inId),
+        type(inType)
+    {}
+  };
+
+  std::multimap<uint64_t, Entry> originalIdToUniqueIds_;
 };
 
 //----------------------------------------------------------------------------
@@ -482,6 +591,8 @@ void MemoryDataStore::initCompositeListener_()
 {
   auto local = std::make_shared<CompositeDataStoreListener>();
   local->add(std::make_shared<HostChildCache>(hostToChildren_));
+  originalIdCache_ = std::make_shared<OriginalIdCache>();
+  local->add(originalIdCache_);
   addListener(local);
 }
 
@@ -1428,44 +1539,14 @@ void MemoryDataStore::idListByName(const std::string& name, IdList* ids, simData
     ids->push_back((*it)->id());
 }
 
-namespace
-{
-  /**
-  * Template helper function to map original ID to unique ID
-  * @param T Expected to be an associative container with an entity pointer as the value
-  * @param entityList Associative container of entities
-  * @param ids Container to hold the IDs that match up to the given original ID
-  * @param originalId Entities in the list with the given originalId are added to ids
-  */
-  template <typename T>
-  void idsByOriginalId(const T &entityList, DataStore::IdList *ids, uint64_t originalId)
-  {
-    for (typename T::const_iterator iter = entityList.begin(); iter != entityList.end(); ++iter)
-    {
-      if (iter->second->properties()->originalid() == originalId)
-        ids->push_back(iter->second->properties()->id());
-    }
-  }
-}
 
 /// Retrieve a list of IDs for objects with the given original id
 void MemoryDataStore::idListByOriginalId(IdList *ids, uint64_t originalId, simData::ObjectType type) const
 {
-  // Retrieve entities with matching original ID
-  if (type & PLATFORM)
-    idsByOriginalId(platforms_, ids, originalId);
-  if (type & BEAM)
-    idsByOriginalId(beams_, ids, originalId);
-  if (type & GATE)
-    idsByOriginalId(gates_, ids, originalId);
-  if (type & LASER)
-    idsByOriginalId(lasers_, ids, originalId);
-  if (type & PROJECTOR)
-    idsByOriginalId(projectors_, ids, originalId);
-  if (type & LOB_GROUP)
-    idsByOriginalId(lobGroups_, ids, originalId);
-  if (type & CUSTOM_RENDERING)
-    idsByOriginalId(customRenderings_, ids, originalId);
+  if (originalIdCache_ == nullptr)
+    return;
+
+  originalIdCache_->idListByOriginalId(ids, originalId, type);
 }
 
 ///Retrieve a list of IDs for all beams associated with a platform
