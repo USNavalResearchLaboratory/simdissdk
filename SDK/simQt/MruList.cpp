@@ -156,7 +156,7 @@ void MruList::fixActions_()
     // Note that actions are disabled so they cannot be activated by hotkey, and
     // hidden because their text name may be incorrect.
     action->setVisible(true);
-    action->setEnabled(true);
+    action->setEnabled(isEnabled_);
 
     // Text looks like: "&3 file.asi"; can only specify shortcuts (&) for items numbered < 10.
     if (idx < 9)
@@ -204,6 +204,19 @@ void MruList::insertMru(QMenu& menu, QAction* beforeAction, bool separatorBefore
 QAction* MruList::clearAction() const
 {
   return clearAction_;
+}
+
+void MruList::setEnabled(bool enabled)
+{
+  if (enabled == isEnabled_)
+    return;
+  isEnabled_ = enabled;
+  fixActions_();
+}
+
+bool MruList::isEnabled() const
+{
+  return isEnabled_;
 }
 
 }

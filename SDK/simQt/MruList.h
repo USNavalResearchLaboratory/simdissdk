@@ -78,6 +78,9 @@ public:
   void insertMru(QMenu& menu, QAction* beforeAction, bool separatorBefore=true, bool separatorAfter=true,
     bool includeClear=true);
 
+  /** Returns true if the MRU is enabled. Enabling only impacts the MRU actions that load files. */
+  bool isEnabled() const;
+
 public Q_SLOTS:
   /** Sets the list of files. */
   void setFiles(const QStringList& files);
@@ -87,6 +90,9 @@ public Q_SLOTS:
   int removeFile(const QString& filename);
   /** Clears the MRU file list */
   void clear();
+
+  /** Changes the is-enabled field for the MRU, enabling or disabling all load-file actions */
+  void setEnabled(bool enabled);
 
 Q_SIGNALS:
   /** Emitted when the user selects one of the recently used item menu items. */
@@ -106,9 +112,12 @@ private:
   /** Separators list is not owned (created by the menu they're in), but need removal on destruction */
   QList<QPointer<QAction> > separators_;
   /** Clear button */
-  QAction* clearAction_;
+  QAction* clearAction_ = nullptr;
   /** Current list of files in the MRU */
   QStringList filenames_;
+
+  /** Flags whether actions are enabled or disabled. */
+  bool isEnabled_ = true;
 };
 
 }
