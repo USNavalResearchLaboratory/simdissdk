@@ -221,6 +221,46 @@ private:
 
 //----------------------------------------------------------------------------
 
+/** Group multiple callbacks into one callback */
+class CompositeDataStoreListener : public simData::DataStore::DefaultListener
+{
+public:
+  CompositeDataStoreListener()
+  {
+  }
+
+  virtual ~CompositeDataStoreListener()
+  {
+  }
+
+  void add(simData::DataStore::ListenerPtr listener)
+  {
+    listeners_.push_back(listener);
+  }
+
+  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  {
+    for (auto listener : listeners_)
+      listener->onAddEntity(source, newId, ot);
+  }
+
+  virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
+  {
+    for (auto listener : listeners_)
+      listener->onRemoveEntity(source, removedId, ot);
+  }
+
+  virtual void onScenarioDelete(DataStore* source) override
+  {
+    for (auto listener : listeners_)
+      listener->onScenarioDelete(source);
+  }
+
+private:
+  simData::DataStore::ListenerList listeners_;
+};
+
+/** Maintains a cache with host child relationship */
 class MemoryDataStore::HostChildCache : public simData::DataStore::DefaultListener
 {
 public:
@@ -338,7 +378,7 @@ public:
     for (ListenerList::const_iterator iter = listeners_.begin(); iter != listeners_.end(); ++iter)
     {
       // Do not copy the internal one
-      if (dynamic_cast<HostChildCache*>((*iter).get()) == nullptr)
+      if (dynamic_cast<CompositeDataStoreListener*>((*iter).get()) == nullptr)
         ds.addListener(*iter);
     }
     for (ScenarioListenerList::const_iterator iter2 = scenarioListeners_.begin(); iter2 != scenarioListeners_.end(); ++iter2)
@@ -394,7 +434,7 @@ MemoryDataStore::MemoryDataStore()
   boundClock_(nullptr),
   entityNameCache_(new EntityNameCache())
 {
-  addListener(std::make_shared<HostChildCache>(hostToChildren_));
+  initCompositeListener_();
   dataLimitsProvider_ = new DataStoreLimits(*this);
   dataTableManager_ = new MemoryTable::TableManager(dataLimitsProvider_);
   newRowDataListener_.reset(new NewRowDataToNewUpdatesAdapter(*this));
@@ -416,7 +456,7 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
   boundClock_(nullptr),
   entityNameCache_(new EntityNameCache())
 {
-  addListener(std::make_shared<HostChildCache>(hostToChildren_));
+  initCompositeListener_();
   dataLimitsProvider_ = new DataStoreLimits(*this);
   dataTableManager_ = new MemoryTable::TableManager(dataLimitsProvider_);
   newRowDataListener_.reset(new NewRowDataToNewUpdatesAdapter(*this));
@@ -436,6 +476,13 @@ MemoryDataStore::~MemoryDataStore()
   dataLimitsProvider_ = nullptr;
   delete entityNameCache_;
   entityNameCache_ = nullptr;
+}
+
+void MemoryDataStore::initCompositeListener_()
+{
+  auto local = std::make_shared<CompositeDataStoreListener>();
+  local->add(std::make_shared<HostChildCache>(hostToChildren_));
+  addListener(local);
 }
 
 void MemoryDataStore::clear()
