@@ -163,13 +163,8 @@ public Q_SLOTS:
   virtual void forceRefresh();
   /** Stop all model updates */
   void beginExtendedChange(bool causedByTimeChanges);
-  /**
-   * Updates the model with queued changes, may reset the model.
-   * The data store update related to the extended changes may happen before or after this call.
-   * If updateImmediately is true the model is immediately updated.
-   * If updateImmediately is false the model will wait for the next data store update before updating the model.
-   */
-  void endExtendedChange(bool updateImmediately);
+  /** Updates the model with queued changes, may reset the model. */
+  void endExtendedChange();
   /**
    * Moving the time slider can flood the entity model with many time changes that can bog down EntityTreeWidget with signals.
    * Set a threshold to throttle the signals.  Value of -1 emit the signals after every time change.  Value of 0 emit the signals

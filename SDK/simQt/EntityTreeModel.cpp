@@ -546,11 +546,10 @@ void EntityTreeModel::beginExtendedChange(bool causedByTimeChanges)
   modelState_ = causedByTimeChanges ? TIME_CHANGES : DATA_CHANGES;
 }
 
-void EntityTreeModel::endExtendedChange(bool updateImmediately)
+void EntityTreeModel::endExtendedChange()
 {
   modelState_ = NOMINAL;
-  if (updateImmediately)
-    commitAllDelayed_();
+  commitAllDelayed_();
 }
 
 void EntityTreeModel::setTimeChangeEntityThreshold(int timeChangeThreshold)
