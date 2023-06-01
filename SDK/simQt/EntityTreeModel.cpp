@@ -47,53 +47,69 @@ public:
   }
 
   /// new entity has been added, with the given id and type
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot) override
   {
-    parent_->addEntity_(newId);
+    parent_->queueAdd_(newId);
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) override
   {
-    parent_->removeEntity_(removedId);
+    parent_->queueRemoval_(removedId);
   }
 
   /// entity name has changed
-  virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId)
+  virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId) override
   {
-    parent_->emitEntityDataChanged_(changeId);
+    parent_->queueNameChange_(changeId);
   }
 
   /// something has changed in the entity category data
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot) override
   {
-    parent_->emitEntityDataChanged_(changedId);
+    parent_->queueCategoryDataChange_(changedId);
   }
 
   /// The scenario is about to be deleted
-  virtual void onScenarioDelete(simData::DataStore* source)
+  virtual void onScenarioDelete(simData::DataStore* source) override
   {
     parent_->removeAllEntities_();
   }
 
+  virtual void onChange(simData::DataStore* source) override
+  {
+    parent_->commitAllDelayed_();
+  }
+
   // Fulfill the interface
-  virtual void onPostRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) {}
-  virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) {}
-  virtual void onPropertiesChange(simData::DataStore *source, simData::ObjectId id) {}
-  virtual void onChange(simData::DataStore *source) {}
-  virtual void onFlush(simData::DataStore* source, simData::ObjectId id) {}
+  virtual void onPostRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) override {}
+  virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) override {}
+  virtual void onPropertiesChange(simData::DataStore *source, simData::ObjectId id) override {}
+  virtual void onFlush(simData::DataStore* source, simData::ObjectId id) override {}
 
 private:
   EntityTreeModel *parent_; ///< model which receives notices
 };
 
 //----------------------------------------------------------------------------
-EntityTreeItem::EntityTreeItem(simData::ObjectId id, simData::ObjectType type, EntityTreeItem *parent)
+EntityTreeItem::EntityTreeItem(simData::DataStore* ds, simData::ObjectId id, simData::ObjectType type, EntityTreeItem *parent)
   : id_(id),
     type_(type),
     parentItem_(parent),
     markForRemoval_(false)
 {
+  if (id_ != 0)
+  {
+    displayName_ = QString::fromStdString(simData::DataStoreHelpers::nameOrAliasFromId(id_, ds));
+    typeString_ = QString::fromStdString(simData::DataStoreHelpers::typeFromId(id_, ds));
+    checkForHighlight(ds);
+  }
+  else
+  {
+    displayName_ = "Scenario Data";
+    typeString_ = "";
+    highlight_ = false;
+  }
 }
 
 EntityTreeItem::~EntityTreeItem()
@@ -125,6 +141,36 @@ simData::ObjectId EntityTreeItem::id() const
 simData::ObjectType EntityTreeItem::type() const
 {
   return type_;
+}
+
+QString EntityTreeItem::displayName() const
+{
+  return displayName_;
+}
+
+void EntityTreeItem::setDisplayName(const QString& name)
+{
+  displayName_ = name;
+}
+
+QString EntityTreeItem::typeString() const
+{
+  return typeString_;
+}
+
+void EntityTreeItem::checkForHighlight(simData::DataStore* ds)
+{
+  if (ds == nullptr)
+    return;
+
+  simData::DataStore::Transaction transaction;
+  const simData::CommonPrefs* prefs = ds->commonPrefs(id_, &transaction);
+  highlight_ = (prefs && prefs->usealias() && prefs->alias().empty());
+}
+
+bool EntityTreeItem::highlight() const
+{
+  return highlight_;
 }
 
 void EntityTreeItem::getChildrenIds(std::vector<uint64_t>& ids) const
@@ -287,7 +333,11 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     rootItem_(nullptr),
     treeView_(false),
     dataStore_(nullptr),
-    pendingRemoval_(false),
+    delayedRemovals_(false),
+    delayedCategoryDataChanges_(false),
+    timeChangeEntityThreshold_(-1),  // emit signals with each time change
+    activeCategoryFilter_(false),
+    modelState_(NOMINAL),
     platformIcon_(":/simQt/images/platform.png"),
     beamIcon_(":/simQt/images/beam.png"),
     customRenderingIcon_(":/simQt/images/CustomRender.png"),
@@ -348,21 +398,29 @@ simData::DataStore* EntityTreeModel::dataStore() const
   return dataStore_;
 }
 
-void EntityTreeModel::addEntity_(uint64_t entityId)
+void EntityTreeModel::queueAdd_(uint64_t entityId)
 {
-  if (delayedAdds_.empty())
-    QTimer::singleShot(100, this, SLOT(commitDelayedAdd_()));
   delayedAdds_.push_back(entityId);
+}
+
+void EntityTreeModel::queueNameChange_(uint64_t id)
+{
+  delayedRenames_.push_back(id);
+}
+
+void EntityTreeModel::queueCategoryDataChange_(uint64_t id)
+{
+  if (!activeCategoryFilter_)
+    return;
+
+  delayedCategoryDataChanges_ = true;
 }
 
 void EntityTreeModel::commitDelayedAdd_()
 {
-  // An add will cause a refresh of the view, so process any entities waiting for removal
-  commitDelayedRemoval_();
-
-  for (std::vector<simData::ObjectId>::const_iterator it = delayedAdds_.begin(); it != delayedAdds_.end(); ++it)
+  for (auto uniqueId : delayedAdds_)
   {
-    simData::ObjectType entityType = dataStore_->objectType(*it);
+    simData::ObjectType entityType = dataStore_->objectType(uniqueId);
     if (entityType == simData::NONE)
     {
       // the entity should have been removed from the vector
@@ -375,7 +433,7 @@ void EntityTreeModel::commitDelayedAdd_()
     bool getHostId = (entityType != simData::PLATFORM);
     // Even if allowing custom rendering to be top level, only those with host ID = 0 are.  Still need to check host ID
     if (getHostId)
-      hostId = dataStore_->entityHostId(*it);
+      hostId = dataStore_->entityHostId(uniqueId);
 
     bool entityTypeNeedsHost = (entityType != simData::PLATFORM);
     if (customAsTopLevel_)
@@ -385,21 +443,123 @@ void EntityTreeModel::commitDelayedAdd_()
     assert(!((hostId == 0) && entityTypeNeedsHost));
     if ((hostId > 0 || !entityTypeNeedsHost))
     {
-      addTreeItem_(*it, entityType, hostId);
+      addTreeItem_(uniqueId, entityType, hostId);
     }
   }
   delayedAdds_.clear();
 }
 
-void EntityTreeModel::emitEntityDataChanged_(uint64_t entityId)
+void EntityTreeModel::commitAllDelayed_()
 {
-  EntityTreeItem* found = findItem_(entityId);
-  if (!found)
+  // Always kick out while data is changing
+  if (modelState_ == DATA_CHANGES)
     return;
 
-  QModelIndex start = createIndex(found->row(), 0, found);
-  QModelIndex end = createIndex(found->row(), 2, found);
-  Q_EMIT dataChanged(start, end);
+  // Kick out early during time change based on the user's option; never kick out if timeChangeEntityThreshold_ = -1
+  if (modelState_ == TIME_CHANGES)
+  {
+    // Kick out until the time changes are done
+    if (timeChangeEntityThreshold_ == 0)
+      return;
+
+    // Kick out if the number of enties exceeds the threshold value.
+    if ((timeChangeEntityThreshold_ > 0) && (static_cast<int>(itemsById_.size()) >= timeChangeEntityThreshold_))
+      return;
+  }
+
+  // Kick out eary if nothing changed; can happen if only changing time
+  if (delayedAdds_.empty() && delayedRenames_.empty() && !delayedRemovals_ && !delayedCategoryDataChanges_)
+    return;
+
+  // if model is empyty, just do a rebuild
+  if (itemsById_.empty())
+  {
+    forceRefresh();
+    return;
+  }
+
+  if (!delayedAdds_.empty() || delayedRemovals_)
+  {
+    Q_EMIT beginExtendedChanges();
+
+    commitDelayedRemoval_();
+    commitDelayedAdd_();
+    delayedRenames_.clear();
+    delayedCategoryDataChanges_ = false;
+
+    Q_EMIT endExtendedChanges();
+    return;
+  }
+
+  if (delayedCategoryDataChanges_)
+  {
+    // emit something
+    delayedRenames_.clear();
+    delayedCategoryDataChanges_ = false;
+
+    Q_EMIT requestApplyFilters();
+    return;
+  }
+
+  commitDelayedNameChanged_();
+}
+
+void EntityTreeModel::commitDelayedNameChanged_()
+{
+  if (delayedRenames_.empty())
+    return;
+
+  for (auto id : delayedRenames_)
+  {
+    EntityTreeItem* found = findItem_(id);
+    if (found)
+    {
+      found->setDisplayName(QString::fromStdString(simData::DataStoreHelpers::nameOrAliasFromId(id, dataStore_)));
+      found->checkForHighlight(dataStore_);
+    }
+  }
+
+  if (delayedRenames_.size() == 1)
+  {
+    EntityTreeItem* found = findItem_(delayedRenames_.front());
+    if (found)
+    {
+      QModelIndex index = createIndex(found->row(), 0, found);
+      Q_EMIT dataChanged(index, index);
+    }
+  }
+  else
+  {
+    if (rootItem_->childCount() > 0)
+    {
+      QModelIndex start = createIndex(0, 0, rootItem_);
+      QModelIndex end = createIndex(rootItem_->childCount() - 1, 0, rootItem_);
+      Q_EMIT dataChanged(start, end);
+    }
+  }
+
+  delayedRenames_.clear();
+}
+
+void EntityTreeModel::beginExtendedChange(bool causedByTimeChanges)
+{
+  modelState_ = causedByTimeChanges ? TIME_CHANGES : DATA_CHANGES;
+}
+
+void EntityTreeModel::endExtendedChange()
+{
+  modelState_ = NOMINAL;
+  commitAllDelayed_();
+}
+
+void EntityTreeModel::setTimeChangeEntityThreshold(int timeChangeThreshold)
+{
+  timeChangeEntityThreshold_ = timeChangeThreshold;
+}
+
+void EntityTreeModel::setActiveCategoryFilter(bool active)
+{
+  activeCategoryFilter_ = active;
 }
 
 void EntityTreeModel::setToTreeView()
@@ -440,9 +600,11 @@ void EntityTreeModel::forceRefresh()
 
     // clean up tree widget
     delete rootItem_;
-    rootItem_ = new EntityTreeItem(0, simData::NONE, nullptr); // has no parent
+    rootItem_ = new EntityTreeItem(dataStore_, 0, simData::NONE, nullptr); // has no parent
     delayedAdds_.clear();  // clear any delayed entities since building from the data store
-    pendingRemoval_ = false;
+    delayedRenames_.clear();
+    delayedRemovals_ = false;
+    delayedCategoryDataChanges_ = false;
     itemsById_.clear();
 
     // Get platform objects from DataStore
@@ -486,7 +648,7 @@ void EntityTreeModel::setIncludeScenario(bool showScenario)
   if (showScenario)
     addTreeItem_(0, simData::NONE, 0);
   else
-    removeEntity_(0);
+    queueRemoval_(0);
 }
 
 void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64_t parentId)
@@ -513,7 +675,7 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
   if ((parentItem != rootItem_) && treeView_)
   {
     beginInsertRows(createIndex(parentItem->row(), 0, parentItem), parentItem->childCount(), parentItem->childCount());
-    EntityTreeItem* newItem = new EntityTreeItem(id, type, parentItem);
+    EntityTreeItem* newItem = new EntityTreeItem(dataStore_, id, type, parentItem);
     itemsById_[id] = newItem;
     parentItem->appendChild(newItem);
     endInsertRows();
@@ -521,14 +683,14 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
   else
   {
     beginInsertRows(QModelIndex(), rootItem_->childCount(), rootItem_->childCount());
-    EntityTreeItem* newItem = new EntityTreeItem(id, type, rootItem_);
+    EntityTreeItem* newItem = new EntityTreeItem(dataStore_, id, type, rootItem_);
     itemsById_[id] = newItem;
     rootItem_->appendChild(newItem);
     endInsertRows();
   }
 }
 
-void EntityTreeModel::removeEntity_(uint64_t id)
+void EntityTreeModel::queueRemoval_(uint64_t id)
 {
   EntityTreeItem* found = findItem_(id);
   if (found == nullptr)
@@ -538,16 +700,12 @@ void EntityTreeModel::removeEntity_(uint64_t id)
     if (it != delayedAdds_.end())
       delayedAdds_.erase(it);
 
-    // lost track of it, this can happen if the parent is deleted before its children
+    // lost track of it, this can happen if the parent is deleted before its children,
+    // or calling removeEntity after deleting scenario
     return;
   }
 
-  if (!pendingRemoval_)
-  {
-    pendingRemoval_ = true;
-    QTimer::singleShot(0, this, SLOT(commitDelayedRemoval_()));
-  }
-
+  delayedRemovals_ = true;
   found->markForRemoval();
 }
 
@@ -557,7 +715,9 @@ void EntityTreeModel::removeAllEntities_()
     return;
 
   delayedAdds_.clear();
-  pendingRemoval_ = false;
+  delayedRenames_.clear();
+  delayedRemovals_ = false;
+  delayedCategoryDataChanges_ = false;
 
   // no point in reseting an empty model
   if ((rootItem_ != nullptr) && (rootItem_->childCount() == 0))
@@ -566,7 +726,7 @@ void EntityTreeModel::removeAllEntities_()
   beginResetModel();
 
   delete rootItem_;
-  rootItem_ = new EntityTreeItem(0, simData::NONE, nullptr);
+  rootItem_ = new EntityTreeItem(dataStore_, 0, simData::NONE, nullptr);
   itemsById_.clear();
 
   endResetModel();
@@ -590,22 +750,18 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
   {
   case Qt::DisplayRole:
     if (index.column() == 0)
-    {
-      if (item->id() == 0)
-        return "Scenario Data";
-      return QString::fromStdString(simData::DataStoreHelpers::nameOrAliasFromId(item->id(), dataStore_));
-    }
+      return item->displayName();
     if (index.column() == 1)
     {
       if ((useEntityIcons_) || (item->id() == 0))
         return QVariant();
-      return QString::fromStdString(simData::DataStoreHelpers::typeFromId(item->id(), dataStore_));
+      return item->typeString();
     }
     if (index.column() == 2)
     {
       if (item->id() == 0)
         return QVariant();
-      return QString("%1").arg(simData::DataStoreHelpers::originalIdFromId(item->id(), dataStore_));
+      return static_cast<qulonglong>(simData::DataStoreHelpers::originalIdFromId(item->id(), dataStore_));
     }
 
     // Invalid index encountered
@@ -616,7 +772,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     // Only show icon if icons are enabled
     if (useEntityIcons_ && index.column() == 1)
     {
-      switch (dataStore_->objectType(item->id()))
+      switch (item->type())
       {
       case simData::PLATFORM:
         return platformIcon_;
@@ -643,9 +799,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     if (index.column() == 0)
     {
       // If the user asked for alias, but it is empty use gray color for the displayed name
-      simData::DataStore::Transaction transaction;
-      const simData::CommonPrefs* prefs = dataStore_->commonPrefs(item->id(), &transaction);
-      if (prefs && prefs->usealias() && prefs->alias().empty())
+      if (item->highlight())
         return QColor(Qt::gray);
     }
     break;
@@ -694,7 +848,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     if (index.column() == 1)
     {
       // Use ints to force entity types into desired order whether they're currently being displayed as icons or text
-      return static_cast<int>(dataStore_->objectType(item->id()));
+      return static_cast<int>(item->type());
     }
     break;
   }
@@ -826,9 +980,9 @@ void EntityTreeModel::buildTree_(simData::ObjectType type, const simData::DataSt
   {
     EntityTreeItem* newItem;
     if (parent && treeView_)
-      newItem = new EntityTreeItem(*iter, type, parent);
+      newItem = new EntityTreeItem(dataStore_, *iter, type, parent);
     else
-      newItem = new EntityTreeItem(*iter, type, rootItem_);
+      newItem = new EntityTreeItem(dataStore_, *iter, type, rootItem_);
 
     if (type == simData::PLATFORM)
     {
@@ -908,10 +1062,10 @@ int EntityTreeModel::countEntityTypes_(EntityTreeItem* parent, simData::ObjectTy
 void EntityTreeModel::commitDelayedRemoval_()
 {
   // A pending add can force the removal of entities before the one shot fires
-  if (!pendingRemoval_)
+  if (!delayedRemovals_)
     return;
 
-  pendingRemoval_ = false;
+  delayedRemovals_ = false;
   if (rootItem_->removeMarkedChildren(this) != 0)
   {
     // too many regions to delete, give up and reset the model

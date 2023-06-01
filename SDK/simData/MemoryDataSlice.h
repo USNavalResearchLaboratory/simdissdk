@@ -412,7 +412,7 @@ protected: // methods
    * @param time current time
    * @return True if a prefs was updated
    */
-  bool advance_(double startTime, double time);
+  bool advance_(PrefType* prefs, double startTime, double time);
 
   /// Set values to default
   void reset_();
@@ -434,11 +434,12 @@ protected: // methods
   void conditionalClearRepeatedFields_(PrefType* prefs, const PrefType* condition) const;
 
   /**
-  * Clear a command from the command cache
-  * The affected preference fields in the commandPrefsCache_ will be clear()'ed.
-  * @param commandPref a prefs message in which the fields that are set represent the command that is to be cleared
+  * Clear a command from entity prefs and command cache
+  * The affected preference fields in prefs and commandPrefsCache_ will be clear()'ed.
+  * @param prefs  entity prefs message for which the fields will be cleared
+  * @param commandPref  a prefs message in which the fields that are set represent the command that is to be cleared
   */
-  void clearCommand_(const PrefType& commandPref);
+  void clearCommand_(PrefType* prefs, const PrefType& commandPref);
 
   /// Helper function to return an iterator to first index
   virtual typename DataSlice<CommandType>::IteratorImpl* iterator_() const;

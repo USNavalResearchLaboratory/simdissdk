@@ -20,9 +20,11 @@
  * disclose, or release this software.
  *
  */
-#include <limits>
-#include <cassert>
+
 #include <algorithm>
+#include <cassert>
+#include <limits>
+#include <set>
 #include "simCore/Calc/Math.h"
 #include "simData/TableCellTranslator.h"
 #include "simData/MemoryTable/DoubleBufferTimeContainer.h"
@@ -193,6 +195,16 @@ TableId Table::tableId() const
 ObjectId Table::ownerId() const
 {
   return ownerId_;
+}
+
+size_t Table::maxSubTableRow() const
+{
+  size_t max = 0;
+
+  for (const auto& sub : subtables_)
+    max = simCore::sdkMax(max, sub->rowCount());
+
+  return max;
 }
 
 size_t Table::columnCount() const

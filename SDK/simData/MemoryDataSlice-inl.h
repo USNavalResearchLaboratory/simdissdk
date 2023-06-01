@@ -694,13 +694,14 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
   if ((!lastCommand || time >= lastCommand->time()) && (earliestInsert_ > lastUpdateTime_))
   {
     // time moved forward: execute all commands from lastUpdateTime_ to new current time
-    hasChanged_ = advance_(lastUpdateTime_, time);
+    hasChanged_ = advance_(prefs, lastUpdateTime_, time);
 
     // Check for repeated scalars in the command, forcing complete replacement instead of add-value
     conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
 
     // apply the current command state at every update, even if no change in command state occurred with this update; commands override prefs settings
     prefs->MergeFrom(commandPrefsCache_);
+
     t.complete(&prefs);
   }
   else
@@ -710,7 +711,7 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
     reset_();
 
     // advance time forward, execute all commands from 0.0 (use -1.0 since we need a time before 0.0) to new current time
-    advance_(-1.0, time);
+    advance_(prefs, -1.0, time);
     conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
 
     hasChanged_ = true;
@@ -792,7 +793,7 @@ double MemoryCommandSlice<CommandType, PrefType>::deltaTime(double time) const
 }
 
 template<class CommandType, class PrefType>
-bool MemoryCommandSlice<CommandType, PrefType>::advance_(double startTime, double time)
+bool MemoryCommandSlice<CommandType, PrefType>::advance_(PrefType* prefs, double startTime, double time)
 {
   if (time < startTime)
     return false;
@@ -809,8 +810,8 @@ bool MemoryCommandSlice<CommandType, PrefType>::advance_(double startTime, doubl
     {
       if (cmd->isclearcommand())
       {
-        // clear the command (fields that are set in updateprefs) from the commandPrefsCache_
-        clearCommand_(cmd->updateprefs());
+        // clear the command (fields that are set in updateprefs) from both prefs and commandPrefsCache_
+        clearCommand_(prefs, cmd->updateprefs());
       }
       else
       {
@@ -895,7 +896,7 @@ private:
 
 
 template<class CommandType, class PrefType>
-void MemoryCommandSlice<CommandType, PrefType>::clearCommand_(const PrefType& commandPref)
+void MemoryCommandSlice<CommandType, PrefType>::clearCommand_(PrefType* prefs, const PrefType& commandPref)
 {
   std::vector<std::string> fieldList;
   FindSetFieldsVisitor findSetFieldsVisitor(fieldList);
@@ -905,6 +906,7 @@ void MemoryCommandSlice<CommandType, PrefType>::clearCommand_(const PrefType& co
   {
     // clear set field value(s) from the commandPrefsCache_
     simData::protobuf::clearField(commandPrefsCache_, *iter);
+    simData::protobuf::clearField(*prefs, *iter);
   }
 }
 

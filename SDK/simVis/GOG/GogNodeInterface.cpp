@@ -817,7 +817,7 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
     gogOutputStream << "tessellate false\n";
 
   // altitude mode
-  simVis::GOG::AltitudeMode altMode;
+  simVis::GOG::AltitudeMode altMode = simVis::GOG::ALTITUDE_NONE;
   if (getAltitudeMode(altMode) == 0)
   {
     if (altMode == simVis::GOG::ALTITUDE_NONE && metaData_.isSetExplicitly(GOG_ALTITUDE_MODE_SET))
@@ -1997,9 +1997,8 @@ void FeatureNodeInterface::setStyle_(const osgEarth::Style& style)
     style_ = style;
   if (!deferringStyleUpdates_() && featureNode_.valid())
   {
-    featureNode_->setStyle(style_);
     featureNode_->getFeature()->style() = style_;
-    featureNode_->dirty();
+    featureNode_->setStyle(style_);
   }
 }
 
@@ -2767,9 +2766,8 @@ void LatLonAltBoxInterface::setStyle_(const osgEarth::Style& style)
     style_ = style;
   if (!deferringStyleUpdates_() && bottomNode_.valid())
   {
-    bottomNode_->setStyle(style_);
     bottomNode_->getFeature()->style() = style_;
-    bottomNode_->dirty();
+    bottomNode_->setStyle(style_);
   }
 }
 

@@ -131,6 +131,11 @@ void EntityTreeWidget::setModel(AbstractEntityTreeModel* model)
   /** Handle rename, since there is only one signal the slot needs to handle both capture and keep */
   connect(model_, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)), this, SLOT(captureAndKeepVisible_()));
 
+  connect(model_, SIGNAL(beginExtendedChanges()), this, SLOT(pauseSorting_()));
+  connect(model_, SIGNAL(endExtendedChanges()), this, SLOT(resumeSorting_()));
+  connect(model_, SIGNAL(requestApplyFilters()), this, SLOT(invalidateFilters_()));
+
+
   proxyModel_->setSourceModel(model_);
 
   // Need to allow the view to update before checking if the selected item is still visible
@@ -659,6 +664,27 @@ void EntityTreeWidget::sendNumFilteredItems_()
 {
   if ((proxyModel_ != nullptr) && (model_ != nullptr))
     Q_EMIT numFilteredItemsChanged(proxyModel_->rowCount(), model_->countEntityTypes(countEntityTypes_));
+}
+
+void EntityTreeWidget::pauseSorting_()
+{
+  if (view_)
+    view_->setSortingEnabled(false);
+}
+
+void EntityTreeWidget::resumeSorting_()
+{
+  if (view_)
+    view_->setSortingEnabled(true);
+}
+
+void EntityTreeWidget::invalidateFilters_()
+{
+  if (proxyModel_)
+  {
+    proxyModel_->invalidate();
+    delaySend_();
+  }
 }
 
 }

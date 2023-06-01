@@ -401,11 +401,11 @@ double BindCenterEntityToEntityTreeComposite::getNearestDrawTime_(double searchT
 
   // Find the times when the entity is on/off
   std::map<double, bool> drawState;
-  // LOBs are different; they default to on and therefore can have no draw state
-  bool isLob = (dataStore_.objectType(id) == simData::LOB_GROUP);
-  if (isLob)
+  // LOBs and projectors are different; they default to on and therefore can have no draw state
+  const bool defaultOn = ((dataStore_.objectType(id) == simData::LOB_GROUP) || (dataStore_.objectType(id) == simData::PROJECTOR));
+  if (defaultOn)
     drawState[0.0] = true;
-  if ((getEntityDrawState_(commands, drawState) != 0) && !isLob)
+  if ((getEntityDrawState_(commands, drawState) != 0) && !defaultOn)
     return INVALID_TIME;
 
   // Next check data points

@@ -28,6 +28,7 @@
 
 class Ui_DirectorySelectorWidget;
 class QLabel;
+class QPushButton;
 
 namespace simQt {
 
@@ -50,6 +51,8 @@ class SDKQT_EXPORT DirectorySelectorWidget : public QWidget
   Q_PROPERTY(QString registryKey READ registryKey WRITE setRegistryKey);
   /** Sets/gets the default path in Qt Designer */
   Q_PROPERTY(QString defaultPath READ defaultPath WRITE setDefaultPath);
+  /** Sets/gets whether to show the Open Directory Button in Qt Designer */
+  Q_PROPERTY(bool showOpenDirectoryButton READ showOpenDirectoryButton WRITE setShowOpenDirectoryButton);
 
 public:
   /** Constructor */
@@ -92,6 +95,11 @@ public:
   /** Retrieve currently set directory */
   QString directory() const;
 
+  /** Set whether to show the open directory button */
+  void setShowOpenDirectoryButton(bool show);
+  /** Get whether to show the open directory button */
+  bool showOpenDirectoryButton() const;
+
 public Q_SLOTS:
   /** Sets the directory this selector represents */
   void setDirectory(const QString& dir);
@@ -106,6 +114,8 @@ private Q_SLOTS:
   /** used during debug to allow developer to type in a file name */
   void editingFinished_();
   void textEdited_();
+  /** Open the current directory in a file browser */
+  void openDirectory_();
 
 private:
   Ui_DirectorySelectorWidget* ui_;
@@ -121,6 +131,10 @@ private:
   QString label_;
   /** The title for the file browser */
   QString browserTitle_;
+  /** Open directory button */
+  QPushButton* openDirectoryButton_ = nullptr;
+  /** Whether to show the open directory button */
+  bool showOpenDirectoryButton_ = false;
 
   /** Re-implement eventFilter() */
   virtual bool eventFilter(QObject* obj, QEvent* evt);

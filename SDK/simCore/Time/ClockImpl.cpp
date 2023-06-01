@@ -55,7 +55,10 @@ void ClockWithObservers::removeModeChangeCallback(Clock::ModeChangeObserverPtr p
 {
   std::vector<Clock::ModeChangeObserverPtr>::iterator i = std::find(modeChangeObservers_.begin(), modeChangeObservers_.end(), p);
   if (i != modeChangeObservers_.end())
+  {
     modeChangeObservers_.erase(i);
+    removedModeObserver_ = true;
+  }
 }
 
 void ClockWithObservers::notifySetTime_(const simCore::TimeStamp& newTime, bool isJump)
@@ -72,8 +75,15 @@ void ClockWithObservers::notifyTimeLoop_()
 
 void ClockWithObservers::notifyModeChange_(Clock::Mode newMode)
 {
-  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
-    (*i)->onModeChange(newMode);
+  // A change in mode might cause an observer to add or remove additional observers so make a local copy and monitor for removals
+  removedModeObserver_ = false;
+  auto localCopy = modeChangeObservers_;
+  for (auto i = localCopy.begin(); i != localCopy.end(); ++i)
+  {
+    // If nothing has been removed or the observer has not been removed then make the call
+    if (!removedModeObserver_ || std::find(modeChangeObservers_.begin(), modeChangeObservers_.end(), *i) != modeChangeObservers_.end())
+      (*i)->onModeChange(newMode);
+  }
 }
 
 void ClockWithObservers::notifyDirectionChange_(simCore::TimeDirection newDir)

@@ -742,16 +742,28 @@ int testScenarioDelete()
 {
   int rv = 0;
 
-  CounterListener* counter = new CounterListener;
-  simData::DataStore::ListenerPtr counterShared(counter);
-
   {
+    CounterListener* counter = new CounterListener;
+    simData::DataStore::ListenerPtr counterShared(counter);
+
     simUtil::DataStoreTestHelper testHelper;
     simData::DataStore* ds = testHelper.dataStore();
     ds->addListener(counterShared);
+    ds->clear();
+
+    rv += SDK_ASSERT(counter->compareAndClear(0, 0, 0, 0, 0, 0, 0, 1));
   }
 
-  rv += SDK_ASSERT(counter->compareAndClear(0, 0, 0, 0, 0, 0, 0, 1));
+  {
+    CounterListener* counter = new CounterListener;
+    simData::DataStore::ListenerPtr counterShared(counter);
+
+    simUtil::DataStoreTestHelper testHelper;
+    simData::DataStore* ds = testHelper.dataStore();
+    ds->addListener(counterShared);
+
+    rv += SDK_ASSERT(counter->compareAndClear(0, 0, 0, 0, 0, 0, 0, 0));
+  }
 
   // Not a reasonable use case to add and remove observers while deleting a scenario
   return rv;

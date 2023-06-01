@@ -101,12 +101,8 @@ public: // methods
   /** Removes a range of data from startTime up to but not including the endTime */
   virtual int flush(ObjectId id, FlushScope scope, FlushFields fields, double startTime, double endTime) {return dataStore_->flush(id, scope, fields, startTime, endTime);}
 
-  /**
-  * clear out the data store of all scenario specific data, including all entities and category data names.
-  * Invoke onScenarioDelete() unless the argument invokeCallback is false. This is useful if you are going
-  * to clear() manually prior to destroying the data store, to avoid double callbacks.
-  */
-  virtual void clear(bool invokeCallback = true) {dataStore_->clear(invokeCallback);}
+  /** Clear out the data store of all scenario specific data, including all entities and category data names. */
+  virtual void clear() {dataStore_->clear();}
 
   /**@name Interpolation
    *@{
@@ -135,8 +131,11 @@ public: // methods
   /**@name ID Lists
    * @{
    */
+   /// Retrieves the number of objects of 'type'
+  virtual size_t idCount(simData::ObjectType type = simData::ALL) const { return dataStore_->idCount(type); }
+
   /// Retrieve a list of IDs for objects of 'type'
-  virtual void idList(IdList *ids, simData::ObjectType type = simData::ALL) const {dataStore_->idList(ids, type);}
+  virtual void idList(IdList* ids, simData::ObjectType type = simData::ALL) const { dataStore_->idList(ids, type); }
 
   /// Retrieve a list of IDs for objects of 'type' with the given name
   virtual void idListByName(const std::string& name, IdList* ids, simData::ObjectType type = simData::ALL) const {dataStore_->idListByName(name, ids, type);}
@@ -319,10 +318,13 @@ public: // methods
   ///@}
 
   /// @copydoc simData::DataStore::modifyPlatformCommandSlice
-  virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) { return dataStore_->modifyPlatformCommandSlice(id, modifier); }
+  virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) override { return dataStore_->modifyPlatformCommandSlice(id, modifier); }
+
+  /// @copydoc simData::DataStore::modifyProjectorCommandSlice
+  virtual int modifyProjectorCommandSlice(ObjectId id, VisitableDataSlice<ProjectorCommand>::Modifier* modifier) override { return dataStore_->modifyProjectorCommandSlice(id, modifier); }
 
   /// @copydoc simData::DataStore::modifyCustomRenderingCommandSlice
-  virtual int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier) { return dataStore_->modifyCustomRenderingCommandSlice(id, modifier); }
+  virtual int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier) override { return dataStore_->modifyCustomRenderingCommandSlice(id, modifier); }
 
   /**@name Listeners
    * @{

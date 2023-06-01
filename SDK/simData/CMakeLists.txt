@@ -1,5 +1,5 @@
 if(NOT PROTOBUF_FOUND)
-    message(STATUS "Skipping simData because of missing dependencies.")
+    message(STATUS "Skipping simData because of missing PROTOBUF dependencies.")
     return()
 endif()
 
@@ -159,6 +159,16 @@ if(SIMDATA_SHARED)
     target_compile_definitions(simData PRIVATE simData_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simData PUBLIC simData_LIB_EXPORT_STATIC)
+endif()
+
+# Allow for the use of multiple threads with std::for_each
+include(TestParallelForEach)
+TEST_PARALLEL_FOREACH(HAVE_FOREACH)
+if(HAVE_FOREACH)
+    option(ENABLE_SIMDATA_MULTI_THREAD  "Use multiple threads when updating the data store." ON)
+    if(ENABLE_SIMDATA_MULTI_THREAD)
+        target_compile_definitions(simData PRIVATE ENABLE_SIMDATA_MULTI_THREAD)
+    endif()
 endif()
 
 if(WIN32)

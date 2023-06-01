@@ -109,6 +109,11 @@ Q_SIGNALS:
    * @param categoryFilter The filter
    */
   void categoryFilterChanged(const simData::CategoryFilter& categoryFilter);
+  /**
+   * Emitted when category filter changes active state
+   * @param active The active state
+   */
+  void categoryFilterActive(bool active);
 
 private Q_SLOTS:
   /**
@@ -118,6 +123,11 @@ private Q_SLOTS:
   void setCategoryFilterFromGui_(const simData::CategoryFilter& categoryFilter);
 
 private:
+  class CategoryNameListener;
+
+  /** Fire off the categoryFilterActive signal if the active argument differs from the current state */
+  void fireActiveChange_(bool active);
+
   /// Data store that we have been configured with
   simData::DataStore* dataStore_;
   /// holds the current category filter
@@ -128,6 +138,10 @@ private:
   Settings* settings_;
   /// settings key prefix that gets passed to the category filter widget
   QString settingsKeyPrefix_;
+  /// True if the category filter is active
+  bool active_;
+  /// Listen to the category name manager to reset when the names are cleared
+  std::shared_ptr<CategoryNameListener> listenerPtr_;
 };
 
 }

@@ -20,10 +20,13 @@
  * disclose, or release this software.
  *
  */
-#include <cassert>
 #include <algorithm>
-#include <functional>
+#include <cassert>
+#ifdef ENABLE_SIMDATA_MULTI_THREAD
+#include <execution>
+#endif
 #include <float.h>
+#include <functional>
 #include <limits>
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
@@ -218,6 +221,212 @@ private:
 
 //----------------------------------------------------------------------------
 
+/** Group multiple callbacks into one callback */
+class CompositeDataStoreListener : public simData::DataStore::DefaultListener
+{
+public:
+  CompositeDataStoreListener()
+  {
+  }
+
+  virtual ~CompositeDataStoreListener()
+  {
+  }
+
+  void add(simData::DataStore::ListenerPtr listener)
+  {
+    listeners_.push_back(listener);
+  }
+
+  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  {
+    for (const auto& listener : listeners_)
+      listener->onAddEntity(source, newId, ot);
+  }
+
+  virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
+  {
+    for (const auto& listener : listeners_)
+      listener->onRemoveEntity(source, removedId, ot);
+  }
+
+  virtual void onPropertiesChange(simData::DataStore* source, simData::ObjectId id) override
+  {
+    for (const auto& listener : listeners_)
+      listener->onPropertiesChange(source, id);
+  }
+
+  virtual void onScenarioDelete(DataStore* source) override
+  {
+    for (const auto& listener : listeners_)
+      listener->onScenarioDelete(source);
+  }
+
+private:
+  simData::DataStore::ListenerList listeners_;
+};
+
+/** Maintains a cache with host child relationship */
+class MemoryDataStore::HostChildCache : public simData::DataStore::DefaultListener
+{
+public:
+  explicit HostChildCache(std::multimap<IdAndTypeKey, ObjectId>& hostToChildren)
+    : hostToChildren_(hostToChildren)
+  {
+  }
+
+  virtual ~HostChildCache()
+  {
+    // Should be empty
+    assert(hostToChildren_.empty());
+  }
+
+  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  {
+    // ignore non-children
+    if ((ot == simData::PLATFORM) || (ot == simData::NONE) || (ot == simData::ALL))
+      return;
+
+    auto hostId = source->entityHostId(newId);
+    hostToChildren_.insert(std::pair<IdAndTypeKey, ObjectId>(IdAndTypeKey(hostId, ot), newId));
+  }
+
+  virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
+  {
+    // ignore non-children
+    if ((ot == simData::PLATFORM) || (ot == simData::NONE) || (ot == simData::ALL))
+      return;
+
+    auto hostId = source->entityHostId(removedId);
+    auto pair = hostToChildren_.equal_range(IdAndTypeKey(hostId, ot));
+
+    for (auto iter = pair.first; iter != pair.second; ++iter)
+    {
+      if (iter->second == removedId)
+      {
+        hostToChildren_.erase(iter);
+        return;
+      }
+    }
+
+    // Have a child with no parent
+    assert(false);
+  }
+
+  virtual void onScenarioDelete(DataStore* source) override
+  {
+    // Do not optimize, must individually remove entities for correct clean up
+  }
+
+private:
+  std::multimap<IdAndTypeKey, ObjectId>& hostToChildren_;
+};
+
+/** Maintains a cache of Original IDs */
+class MemoryDataStore::OriginalIdCache : public simData::DataStore::DefaultListener
+{
+public:
+  OriginalIdCache()
+  {
+  }
+
+  virtual ~OriginalIdCache()
+  {
+  }
+
+  void idListByOriginalId(IdList* ids, uint64_t originalId, simData::ObjectType type) const
+  {
+    if (ids == nullptr)
+      return;
+
+    auto range = originalIdToUniqueIds_.equal_range(originalId);
+    ids->reserve(ids->size() + std::distance(range.first, range.second));
+    for (auto rangeIt = range.first; rangeIt != range.second; ++rangeIt)
+    {
+      if ((rangeIt->second.type & type) != 0)
+        ids->emplace_back(rangeIt->second.id);
+    }
+  }
+
+  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  {
+    auto originalId = simData::DataStoreHelpers::originalIdFromId(newId, source);
+    uniqueIdToOriginalId_[newId] = originalId;
+    originalIdToUniqueIds_.insert(std::make_pair(originalId, Entry(newId, ot)));
+  }
+
+  virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
+  {
+    auto it = uniqueIdToOriginalId_.find(removedId);
+    if (it == uniqueIdToOriginalId_.end())
+      return;
+
+    auto range = originalIdToUniqueIds_.equal_range(it->second);
+
+    for (auto rangeIt = range.first; rangeIt != range.second; ++rangeIt)
+    {
+      if (rangeIt->second.id == removedId)
+      {
+        originalIdToUniqueIds_.erase(rangeIt);
+        break;
+      }
+    }
+
+    uniqueIdToOriginalId_.erase(it);
+  }
+
+  virtual void onPropertiesChange(simData::DataStore* source, simData::ObjectId id) override
+  {
+    auto it = uniqueIdToOriginalId_.find(id);
+    if (it == uniqueIdToOriginalId_.end())
+      return;
+
+    auto originalId = simData::DataStoreHelpers::originalIdFromId(id, source);
+    if (originalId == it->second)
+      return;
+
+    auto range = originalIdToUniqueIds_.equal_range(it->second);
+
+    for (auto rangeIt = range.first; rangeIt != range.second; ++rangeIt)
+    {
+      if (rangeIt->second.id == id)
+      {
+        it->second = originalId;
+        auto entry = rangeIt->second;
+        originalIdToUniqueIds_.erase(rangeIt);
+        originalIdToUniqueIds_.insert(std::make_pair(it->second, entry));
+        return;
+      }
+    }
+
+    // data structures out of sync
+    assert(false);
+  }
+
+  virtual void onScenarioDelete(DataStore* source) override
+  {
+    uniqueIdToOriginalId_.clear();
+    originalIdToUniqueIds_.clear();
+  }
+
+private:
+  std::map<ObjectId, uint64_t> uniqueIdToOriginalId_;
+
+  struct Entry
+  {
+    ObjectId id = 0;
+    ObjectType type = simData::NONE;
+    Entry(ObjectId inId, ObjectType inType)
+      : id(inId),
+        type(inType)
+    {}
+  };
+
+  std::multimap<uint64_t, Entry> originalIdToUniqueIds_;
+};
+
+//----------------------------------------------------------------------------
+
 /** Adapts NewRowDataListener to MemoryDataStore's newUpdatesListener_ */
 class NewRowDataToNewUpdatesAdapter : public MemoryTable::TableManager::NewRowDataListener
 {
@@ -276,8 +485,11 @@ public:
 
     // Add back all listeners
     for (ListenerList::const_iterator iter = listeners_.begin(); iter != listeners_.end(); ++iter)
-      ds.addListener(*iter);
-
+    {
+      // Do not copy the internal one
+      if (dynamic_cast<CompositeDataStoreListener*>((*iter).get()) == nullptr)
+        ds.addListener(*iter);
+    }
     for (ScenarioListenerList::const_iterator iter2 = scenarioListeners_.begin(); iter2 != scenarioListeners_.end(); ++iter2)
       ds.addScenarioListener(*iter2);
 
@@ -331,6 +543,7 @@ MemoryDataStore::MemoryDataStore()
   boundClock_(nullptr),
   entityNameCache_(new EntityNameCache())
 {
+  initCompositeListener_();
   dataLimitsProvider_ = new DataStoreLimits(*this);
   dataTableManager_ = new MemoryTable::TableManager(dataLimitsProvider_);
   newRowDataListener_.reset(new NewRowDataToNewUpdatesAdapter(*this));
@@ -352,6 +565,7 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
   boundClock_(nullptr),
   entityNameCache_(new EntityNameCache())
 {
+  initCompositeListener_();
   dataLimitsProvider_ = new DataStoreLimits(*this);
   dataTableManager_ = new MemoryTable::TableManager(dataLimitsProvider_);
   newRowDataListener_.reset(new NewRowDataToNewUpdatesAdapter(*this));
@@ -362,7 +576,7 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
 ///destructor
 MemoryDataStore::~MemoryDataStore()
 {
-  clear(true);
+  clearMemory_();
   delete categoryNameManager_;
   categoryNameManager_ = nullptr;
   delete dataTableManager_;
@@ -373,14 +587,25 @@ MemoryDataStore::~MemoryDataStore()
   entityNameCache_ = nullptr;
 }
 
-void MemoryDataStore::clear(bool invokeCallback)
+void MemoryDataStore::initCompositeListener_()
 {
-  if (invokeCallback)
-  {
-    for (ListenerList::const_iterator i = listeners_.begin(); i != listeners_.end(); ++i)
-      (**i).onScenarioDelete(this);
-  }
+  auto local = std::make_shared<CompositeDataStoreListener>();
+  local->add(std::make_shared<HostChildCache>(hostToChildren_));
+  originalIdCache_ = std::make_shared<OriginalIdCache>();
+  local->add(originalIdCache_);
+  addListener(local);
+}
 
+void MemoryDataStore::clear()
+{
+  for (ListenerList::const_iterator i = listeners_.begin(); i != listeners_.end(); ++i)
+    (**i).onScenarioDelete(this);
+
+  clearMemory_();
+}
+
+void MemoryDataStore::clearMemory_()
+{
   deleteEntries_<Platforms>(&platforms_);
   deleteEntries_<Beams>(&beams_);
   deleteEntries_<Gates>(&gates_);
@@ -879,10 +1104,10 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
 
   if ((flushFields & FLUSH_GENERIC_DATA) != 0)
   {
-    auto it = genericData_.find(id);
+    const auto it = genericData_.find(id);
     if (it != genericData_.end())
     {
-      if ((startTime <= 0.0) & (endTime == std::numeric_limits<double>::max()))
+      if ((startTime <= 0.0) && (endTime == std::numeric_limits<double>::max()))
         it->second->flush();
       else
         it->second->flush(startTime, endTime);
@@ -970,6 +1195,45 @@ simData::PlatformPrefs MemoryDataStore::defaultPlatformPrefs() const
   return defaultPlatformPrefs_;
 }
 
+void MemoryDataStore::updateCategoryData_(double time, ListenerList& listeners)
+{
+  std::vector<simData::ObjectId> ids;
+
+#ifdef ENABLE_SIMDATA_MULTI_THREAD
+  std::mutex mutex;
+  std::for_each(std::execution::par, categoryData_.begin(), categoryData_.end(), [&](std::pair<const ObjectId, MemoryCategoryDataSlice*>& pair)
+#else
+  std::for_each(categoryData_.begin(), categoryData_.end(), [&](std::pair<const ObjectId, MemoryCategoryDataSlice*>& pair)
+#endif
+
+    {
+      // if something changed
+      if (pair.second->update(time))
+      {
+#ifdef ENABLE_SIMDATA_MULTI_THREAD
+        std::unique_lock lock(mutex);
+#endif
+        ids.push_back(pair.first);
+      }
+    }
+  );
+
+  for (auto id : ids)
+  {
+    // send notification
+    const simData::ObjectType ot = objectType(id);
+
+    for (ListenerList::const_iterator j = listeners.begin(); j != listeners.end(); ++j)
+    {
+      if (*j != nullptr)
+      {
+        (**j).onCategoryDataChange(this, id, ot);
+        checkForRemoval_(listeners);
+      }
+    }
+  }
+}
+
 ///Update internal data to show 'time' as current
 void MemoryDataStore::update(double time)
 {
@@ -985,26 +1249,8 @@ void MemoryDataStore::update(double time)
   // Need to handle recursion so make a local copy
   ListenerList localCopy = listeners_;
   justRemoved_.clear();
-  // for each category data slice
-  for (CategoryDataMap::const_iterator i = categoryData_.begin(); i != categoryData_.end(); ++i)
-  {
-    // if something changed
-    if (i->second->update(time))
-    {
-      // send notification
-      const simData::ObjectType ot = objectType(i->first);
 
-      for (ListenerList::const_iterator j = localCopy.begin(); j != localCopy.end(); ++j)
-      {
-        if (*j != nullptr)
-        {
-          (**j).onCategoryDataChange(this, i->first, ot);
-          checkForRemoval_(localCopy);
-        }
-      }
-    }
-  }
-
+  updateCategoryData_(time, localCopy);
   updateLasers_(time);
   updateProjectors_(time);
   updateLobGroups_(time);
@@ -1106,7 +1352,7 @@ int MemoryDataStore::flush(ObjectId id, FlushScope scope, FlushFields fields, do
       GenericDataMap::const_iterator it = genericData_.find(0);
       if (it != genericData_.end())
       {
-        if ((startTime <= 0.0) & (endTime == std::numeric_limits<double>::max()))
+        if ((startTime <= 0.0) && (endTime == std::numeric_limits<double>::max()))
           it->second->flush();
         else
           it->second->flush(startTime, endTime);
@@ -1187,8 +1433,36 @@ void MemoryDataStore::applyDataLimiting_(ObjectId id)
     catIter->second->limitByPrefs(*prefs);
 }
 
+///Retrieves the number of objects of 'type' contained by the DataStore
+size_t MemoryDataStore::idCount(simData::ObjectType type) const
+{
+  size_t count = 0;
+  if (type & PLATFORM)
+    count += platforms_.size();
+
+  if (type & BEAM)
+    count += beams_.size();
+
+  if (type & GATE)
+    count += gates_.size();
+
+  if (type & LASER)
+    count += lasers_.size();
+
+  if (type & PROJECTOR)
+    count += projectors_.size();
+
+  if (type & LOB_GROUP)
+    count += lobGroups_.size();
+
+  if (type & CUSTOM_RENDERING)
+    count += customRenderings_.size();
+
+  return count;
+}
+
 ///Retrieve a list of IDs for objects contained by the DataStore
-void MemoryDataStore::idList(IdList *ids, simData::ObjectType type) const
+void MemoryDataStore::idList(IdList* ids, simData::ObjectType type) const
 {
   if (type & PLATFORM)
   {
@@ -1265,131 +1539,58 @@ void MemoryDataStore::idListByName(const std::string& name, IdList* ids, simData
     ids->push_back((*it)->id());
 }
 
-namespace
-{
-  /**
-  * Template helper function to map original ID to unique ID
-  * @param T Expected to be an associative container with an entity pointer as the value
-  * @param entityList Associative container of entities
-  * @param ids Container to hold the IDs that match up to the given original ID
-  * @param originalId Entities in the list with the given originalId are added to ids
-  */
-  template <typename T>
-  void idsByOriginalId(const T &entityList, DataStore::IdList *ids, uint64_t originalId)
-  {
-    for (typename T::const_iterator iter = entityList.begin(); iter != entityList.end(); ++iter)
-    {
-      if (iter->second->properties()->originalid() == originalId)
-        ids->push_back(iter->second->properties()->id());
-    }
-  }
-}
 
 /// Retrieve a list of IDs for objects with the given original id
 void MemoryDataStore::idListByOriginalId(IdList *ids, uint64_t originalId, simData::ObjectType type) const
 {
-  // Retrieve entities with matching original ID
-  if (type & PLATFORM)
-    idsByOriginalId(platforms_, ids, originalId);
-  if (type & BEAM)
-    idsByOriginalId(beams_, ids, originalId);
-  if (type & GATE)
-    idsByOriginalId(gates_, ids, originalId);
-  if (type & LASER)
-    idsByOriginalId(lasers_, ids, originalId);
-  if (type & PROJECTOR)
-    idsByOriginalId(projectors_, ids, originalId);
-  if (type & LOB_GROUP)
-    idsByOriginalId(lobGroups_, ids, originalId);
-  if (type & CUSTOM_RENDERING)
-    idsByOriginalId(customRenderings_, ids, originalId);
+  if (originalIdCache_ == nullptr)
+    return;
+
+  originalIdCache_->idListByOriginalId(ids, originalId, type);
 }
 
 ///Retrieve a list of IDs for all beams associated with a platform
 void MemoryDataStore::beamIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  // inefficient for extracting beam ids for a platform host
-  // A more efficient method (speed-wise, not memory-wise) is to keep a map of
-  // beam ids keyed by host id
-  for (Beams::const_iterator iter = beams_.begin(); iter != beams_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::BEAM, ids);
 }
 
 ///Retrieve a list of IDs for all gates associated with a beam
 void MemoryDataStore::gateIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  // inefficient for extracting gate ids for a beam host
-  // A more efficient method (speed-wise, not memory-wise) is to keep a map of
-  // gate ids keyed by host id
-  for (Gates::const_iterator iter = gates_.begin(); iter != gates_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::GATE, ids);
 }
 
 ///Retrieve a list of IDs for all lasers associated with a platform
 void MemoryDataStore::laserIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  // inefficient for extracting laser ids for a platform host
-  // A more efficient method (speed-wise, not memory-wise) is to keep a map of
-  // laser ids keyed by host id
-  for (Lasers::const_iterator iter = lasers_.begin(); iter != lasers_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::LASER, ids);
 }
 
 ///Retrieve a list of IDs for all projectors associated with a platform
 void MemoryDataStore::projectorIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  // inefficient for extracting projector ids for a platform host
-  // A more efficient method (speed-wise, not memory-wise) is to keep a map of
-  // projector ids keyed by host id
-  for (Projectors::const_iterator iter = projectors_.begin(); iter != projectors_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::PROJECTOR, ids);
 }
 
 ///Retrieve a list of IDs for all lobGroups associated with a platform
 void MemoryDataStore::lobGroupIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  // inefficient for extracting lobGroup ids for a platform host
-  // A more efficient method (speed-wise, not memory-wise) is to keep a map of
-  // lobGroup ids keyed by host id
-  for (LobGroups::const_iterator iter = lobGroups_.begin(); iter != lobGroups_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::LOB_GROUP, ids);
 }
 
 ///Retrieve a list of IDs for all customs associated with a platform
 void MemoryDataStore::customRenderingIdListForHost(ObjectId hostid, IdList *ids) const
 {
-  for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
-  {
-    if (iter->second->properties()->hostid() == hostid)
-    {
-      ids->push_back(iter->first);
-    }
-  }
+  idListForHost_(hostid, simData::CUSTOM_RENDERING, ids);
+}
+
+///Adds the children of hostid of type inType to the ids list
+void MemoryDataStore::idListForHost_(ObjectId hostid, simData::ObjectType inType, IdList* ids) const
+{
+  auto pair = hostToChildren_.equal_range(IdAndTypeKey(hostid, inType));
+  for (auto iter = pair.first; iter != pair.second; ++iter)
+    ids->push_back(iter->second);
 }
 
 ///Retrieves the ObjectType for a particular ID
@@ -2453,43 +2654,46 @@ const CategoryDataSlice* MemoryDataStore::categoryDataSlice(ObjectId id) const
 
 int MemoryDataStore::modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier)
 {
-  switch (objectType(id))
-  {
-  case simData::PLATFORM:
+  if (objectType(id) == simData::PLATFORM)
   {
     PlatformEntry *entry = getEntry<PlatformEntry, Platforms>(id, &platforms_);
-    if (entry == nullptr)
-      return 1;
-    PlatformCommandSlice* commands = entry->commands();
-    commands->modify(modifier);
-    hasChanged_ = true;
-    break;
+    if (entry)
+    {
+      entry->commands()->modify(modifier);
+      hasChanged_ = true;
+      return 0;
+    }
   }
-  default:
-    break;
-  }
+  return 1;
+}
 
+int MemoryDataStore::modifyProjectorCommandSlice(ObjectId id, VisitableDataSlice<ProjectorCommand>::Modifier* modifier)
+{
+  if (objectType(id) == simData::PROJECTOR)
+  {
+    ProjectorEntry* entry = getEntry<ProjectorEntry, Projectors>(id, &projectors_);
+    if (entry)
+    {
+      entry->commands()->modify(modifier);
+      hasChanged_ = true;
+      return 0;
+    }
+  }
   return 1;
 }
 
 int MemoryDataStore::modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier)
 {
-  switch (objectType(id))
-  {
-  case simData::CUSTOM_RENDERING:
+  if (objectType(id) == simData::CUSTOM_RENDERING)
   {
     CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
-    if (entry == nullptr)
-      return 1;
-    CustomRenderingCommandSlice* commands = entry->commands();
-    commands->modify(modifier);
-    hasChanged_ = true;
-    break;
+    if (entry)
+    {
+      entry->commands()->modify(modifier);
+      hasChanged_ = true;
+      return 0;
+    }
   }
-  default:
-    break;
-  }
-
   return 1;
 }
 

@@ -364,7 +364,7 @@ simData::ObjectId addPlatform(simData::DataStore &dataStore)
 }
 
 /// Set fov to change every 10 seconds to test interpolation
-void varyProjectorFov(simData::ObjectId projectorId, simData::DataStore& dataStore)
+void varyProjectorFov(simData::ObjectId projectorId, simData::DataStore& dataStore, bool vertical, bool horizontal)
 {
   simData::DataStore::Transaction txn;
   simData::ProjectorUpdate* update;
@@ -373,9 +373,11 @@ void varyProjectorFov(simData::ObjectId projectorId, simData::DataStore& dataSto
   {
     update = dataStore.addProjectorUpdate(projectorId, &txn);
     // Switch field of view every 10 seconds
-    double fov = (i % 20 == 0) ? 20.0 : 100.0;
+    double varyFov = (i % 20 == 0) ? 20.0 : 100.0;
+    double staticFov = 50.0;
     update->set_time(i);
-    update->set_fov(fov * simCore::DEG2RAD);
+    update->set_fov((vertical ? varyFov : staticFov) * simCore::DEG2RAD);
+    update->set_hfov((horizontal ? varyFov : staticFov) * simCore::DEG2RAD);
     txn.complete(&update);
   }
 }
@@ -384,7 +386,8 @@ simData::ObjectId addProjector(simVis::ScenarioManager* scenario,
                                simData::ObjectId        hostId,
                                simData::DataStore&      dataStore,
                                const std::string&       imageURL,
-                               bool                     varyFov)
+                               bool                     varyVerical,
+                               bool                     varyHorizontal)
 {
   simData::DataStore::Transaction txn;
   simData::ProjectorProperties* projProps = dataStore.addProjector(&txn);
@@ -399,15 +402,7 @@ simData::ObjectId addProjector(simVis::ScenarioManager* scenario,
   prefs->set_doublesided(true);
   txn.complete(&prefs);
 
-  if (varyFov)
-  {
-    varyProjectorFov(id, dataStore);
-  }
-  else
-  {
-    simData::ProjectorUpdate* update = dataStore.addProjectorUpdate(id, &txn);
-    txn.complete(&update);
-  }
+  varyProjectorFov(id, dataStore, varyVerical, varyHorizontal);
 
   return id;
 }
@@ -518,17 +513,17 @@ int main(int argc, char **argv)
   /// add in platforms and their respective projectors
   platformId_0 = addPlatform(dataStore);
   osg::ref_ptr<simVis::EntityNode> vehicle_0 = scenario->find(platformId_0);
-  projectorId_0 = addProjector(scenario.get(), vehicle_0->getId(), dataStore, imageURL, false);
+  projectorId_0 = addProjector(scenario.get(), vehicle_0->getId(), dataStore, imageURL, false, false);
 
   platformId_1 = addPlatform(dataStore);
   osg::ref_ptr<simVis::EntityNode> vehicle_1 = scenario->find(platformId_1);
-  projectorId_1 = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL, true);
+  projectorId_1 = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL, true, false);
 
   // add a gate to use it as a projection surface:
   const simData::ObjectId gateId = addGate(platformId_1, dataStore);
 
   // a second projector on the gate, to show that multiple projectors can project on the same node:
-  projectorId_1b = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL2, false);
+  projectorId_1b = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL2, false, true);
   setAcceptedProjectors(dataStore, gateId, { projectorId_1, projectorId_1b });
 
   /// platform to use as a target to test projecting on to a platform
@@ -538,11 +533,11 @@ int main(int argc, char **argv)
 
   /// platform that shines on Hawaii
   platformId_3 = addPlatform(dataStore);
-  const simData::ObjectId projectorId_3 = addProjector(scenario.get(), platformId_3, dataStore, imageURL, false);
+  const simData::ObjectId projectorId_3 = addProjector(scenario.get(), platformId_3, dataStore, imageURL, false, false);
 
   /// platform that looks at the side of a mountain to test the shadowmap
   platformId_4 = addPlatform(dataStore);
-  projectorId_4 = addProjector(scenario.get(), platformId_4, dataStore, imageURL, false);
+  projectorId_4 = addProjector(scenario.get(), platformId_4, dataStore, imageURL, false, false);
 
   /// connect them and add some additional settings
   configurePrefs(platformId_0, 2.0, scenario.get());

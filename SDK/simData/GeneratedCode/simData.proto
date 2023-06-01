@@ -216,6 +216,8 @@ enum CircleHilightShape {
   CH_SQUARE = 3;
   /// Square outline with line sides cut off, looks like reticle; no animation
   CH_SQUARE_RETICLE = 4;
+  /// Coffin shaped, appropriate for e.g. kill/rebirth functionality
+  CH_COFFIN = 5;
 };
 
 /// Algorithm selection for Dynamic Scale
@@ -1374,10 +1376,15 @@ message ProjectorPrefs {
   /// Determine if we should interpolate FOV
   optional bool interpolateProjectorFov = 5 [default = true];
 
-  /// Override the field of view display if true, using overrideFovValue and ignoring projector updates
+  /// Override the field of view Y (vertical FOV) value display if true, using overrideFovValue and ignoring projector updates
   optional bool overrideFov = 6 [default = false];
-  /// Field of view for projector in radians, if overrideFov is true (default is ~10 degrees)
+  /// Field of view for projector Y (vertical FOV) value in radians, if overrideFov is true (default is ~10 degrees)
   optional double overrideFovAngle = 7 [default = 0.174533];
+
+  /// Override the field of view X (horizontal FOV) value display if true, using overrideFovValue and ignoring projector updates
+  optional bool overrideHFov = 11 [default = false];
+  /// Field of view for projector X (horizontal FOV) value in radians, if overrideFov is true (default is ~10 degrees)
+  optional double overrideHFovAngle = 12 [default = 0.174533];
 
   /// Determine if the projector should use shadow mapping
   optional bool shadowMapping = 8 [default = false];
@@ -1390,8 +1397,11 @@ message ProjectorPrefs {
 /// common update to projector data
 message ProjectorUpdate {
   optional double time = 1;
-  /// Projector field of view: radians
+  
+  /// Projector vertical field of view: radians
   optional double fov = 2;
+  /// Projector hovizontal field of view: radians; <= 0 means to calculate from aspect ratio
+  optional double hFov = 3 [default = -1];
 };
 
 /// timed update to projector prefs; commands override prefs

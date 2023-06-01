@@ -59,10 +59,8 @@
   #ifndef NOMINMAX
     #define NOMINMAX
   #endif
-  #include <windows.h>
-  #include "inttypes.h"
-#else
-  #include <inttypes.h>
 #endif
+
+#include <stdint.h>
 
 #endif /* SIMCORE_COMMON_COMMON_H */

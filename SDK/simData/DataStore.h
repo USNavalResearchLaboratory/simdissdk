@@ -402,12 +402,8 @@ public: // methods
   /** Removes a range of data from startTime up to but not including the endTime */
   virtual int flush(ObjectId id, FlushScope scope, FlushFields fields, double startTime, double endTime) = 0;
 
-  /**
-  * clear out the data store of all scenario specific data, including all entities and category data names.
-  * Invoke onScenarioDelete() unless the argument invokeCallback is false. This is useful if you are going
-  * to clear() manually prior to destroying the data store, to avoid double callbacks.
-  */
-  virtual void clear(bool invokeCallback = true) = 0;
+  /** clear out the data store of all scenario specific data, including all entities and category data names. */
+  virtual void clear() = 0;
 
   /**@name Interpolation
    *@{
@@ -436,8 +432,11 @@ public: // methods
   /**@name ID Lists
    * @{
    */
+  /// Retrieves the number of objects of 'type'
+  virtual size_t idCount(simData::ObjectType type = simData::ALL) const = 0;
+
   /// Retrieve a list of IDs for objects of 'type'
-  virtual void idList(IdList *ids, simData::ObjectType type = simData::ALL) const = 0;
+  virtual void idList(IdList* ids, simData::ObjectType type = simData::ALL) const = 0;
 
   /// Retrieve a list of IDs for objects of 'type' with the given name. Does not respect alias.
   virtual void idListByName(const std::string& name, IdList* ids, simData::ObjectType type = simData::ALL) const = 0;
@@ -634,6 +633,14 @@ public: // methods
    * @return 0 on success
    */
   virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) = 0;
+
+  /**
+   * Modify commands for a given projector
+   * @param id Projector that needs commands modified
+   * @param modifier The object to modify the commands
+   * @return 0 on success
+   */
+  virtual int modifyProjectorCommandSlice(ObjectId id, VisitableDataSlice<ProjectorCommand>::Modifier* modifier) = 0;
 
   /**
    * Modify commands for a given custom rendering entity

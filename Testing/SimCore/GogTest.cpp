@@ -65,9 +65,9 @@ bool comparePositions(const simCore::Vec3& pos1, const simCore::Vec3& pos2)
 bool comparePositionVectors(const std::vector<simCore::Vec3>& pos1, const std::vector<simCore::Vec3>& pos2)
 {
   size_t found = 0;
-  for (simCore::Vec3 position : pos1)
+  for (const simCore::Vec3& position : pos1)
   {
-    for (simCore::Vec3 position2 : pos2)
+    for (const simCore::Vec3& position2 : pos2)
     {
       if (comparePositions(position, position2))
         found++;
@@ -120,13 +120,19 @@ int testGeneralSyntax()
     rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::LINE);
   shapes.clear();
 
-  // test shapes with nested start still creates shape
+  // test shapes with nested start: does not create shape
+  // standard is: anything inside start/end block must be correct
   std::stringstream nestedStartShape;
   nestedStartShape << "start\ncircle\ncenterll 1 1\nstart\nend\n";
   parser.parse(nestedStartShape, "", shapes);
+  rv += SDK_ASSERT(shapes.empty());
+  shapes.clear();
+
+  // this passes; parser can find a valid start/end block
+  std::stringstream nestedStartShape2;
+  nestedStartShape2 << "start\nstart\ncircle\ncenterll 1 1\nend\n";
+  parser.parse(nestedStartShape2, "", shapes);
   rv += SDK_ASSERT(!shapes.empty());
-  if (!shapes.empty())
-    rv += SDK_ASSERT(shapes.front()->shapeType() == simCore::GOG::ShapeType::CIRCLE);
   shapes.clear();
 
   // test leading end statement still creates shape
@@ -2140,7 +2146,7 @@ int testTimeStrings()
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
-    auto shape = shapes.front();
+    const auto& shape = shapes.front();
     rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
     rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
     rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
@@ -2155,7 +2161,7 @@ int testTimeStrings()
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
-    auto shape = shapes.front();
+    const auto& shape = shapes.front();
     rv += SDK_ASSERT(shape->getStartTime(stamp) == 0);
     rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 0));
     rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
@@ -2170,7 +2176,7 @@ int testTimeStrings()
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
-    auto shape = shapes.front();
+    const auto& shape = shapes.front();
     rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
     rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
     rv += SDK_ASSERT(shape->getEndTime(stamp) == 0);
@@ -2185,7 +2191,7 @@ int testTimeStrings()
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
-    auto shape = shapes.front();
+    const auto& shape = shapes.front();
     rv += SDK_ASSERT(shape->getStartTime(stamp) == 0);
     rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 0));
     rv += SDK_ASSERT(shape->getEndTime(stamp) == 0);
@@ -2200,7 +2206,7 @@ int testTimeStrings()
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
-    auto shape = shapes.front();
+    const auto& shape = shapes.front();
     rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
     rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
     rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
@@ -2215,7 +2221,7 @@ int testTimeStrings()
   rv += SDK_ASSERT(shapes.size() == 1);
   if (!shapes.empty())
   {
-    auto shape = shapes.front();
+    const auto& shape = shapes.front();
     rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
     rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
     rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);

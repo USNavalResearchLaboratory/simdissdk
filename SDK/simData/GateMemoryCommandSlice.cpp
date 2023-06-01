@@ -60,7 +60,7 @@ void GateMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
   if ((!lastCommand || time >= lastCommand->time()) && (earliestInsert_ > lastUpdateTime_))
   {
     // time moved forward: execute all commands from lastUpdateTime_ to new current time
-    hasChanged_ = advance_(lastUpdateTime_, time);
+    hasChanged_ = advance_(prefs, lastUpdateTime_, time);
 
     // Check for repeated scalars in the command, forcing complete replacement instead of add-value
     conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
@@ -79,7 +79,7 @@ void GateMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
     prefs->mutable_commonprefs()->set_datadraw(false);
 
     // advance time forward, execute all commands from 0.0 (use -1.0 since we need a time before 0.0) to new current time
-    advance_(-1.0, time);
+    advance_(prefs, -1.0, time);
     conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
     hasChanged_ = true;
 

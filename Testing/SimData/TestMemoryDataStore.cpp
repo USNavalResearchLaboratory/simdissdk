@@ -1373,6 +1373,7 @@ int testScenarioDeleteCallback()
   ds->addListener(testListenShared);
 
   rv += SDK_ASSERT(testListen->deleteCount() == 0);
+  ds->clear();
   delete testHelper;
   rv += SDK_ASSERT(testListen->deleteCount() == 1);
 
@@ -1536,6 +1537,224 @@ int testUpdateToNonCurrentTime()
   return rv;
 }
 
+int testOriginalId()
+{
+  int rv = 0;
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore* ds = testHelper.dataStore();
+
+  // Empty should return nothing
+  simData::DataStore::IdList ids;
+  ds->idListByOriginalId(&ids, 1, simData::ALL);
+  rv += SDK_ASSERT(ids.empty());
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.empty());
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::BEAM);
+  rv += SDK_ASSERT(ids.empty());
+
+  // insert platform
+  testHelper.addPlatform(1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::BEAM);
+  rv += SDK_ASSERT(ids.empty());
+
+  // search for original id that does not exist
+  ids.clear();
+  ds->idListByOriginalId(&ids, 0, simData::ALL);
+  rv += SDK_ASSERT(ids.empty());
+  ids.clear();
+  ds->idListByOriginalId(&ids, 0, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.empty());
+  ids.clear();
+  ds->idListByOriginalId(&ids, 0, simData::BEAM);
+  rv += SDK_ASSERT(ids.empty());
+
+  // insert another platform with same original id
+  auto platformId = testHelper.addPlatform(1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::BEAM);
+  rv += SDK_ASSERT(ids.empty());
+
+  // add beam with same original id
+  auto beamId = testHelper.addBeam(platformId, 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 3);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 1);
+
+  // add beam with a different original id
+  testHelper.addBeam(platformId, 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 3);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 1);
+
+  // add platform with a different original id
+  testHelper.addPlatform(3);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 3);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 1);
+
+  // remove beam
+  ds->removeEntity(beamId);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+
+  // remove platform
+  ds->removeEntity(platformId);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 1);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+
+
+  // Change the original id of 3 to a 1
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 1);
+  auto id = ids.front();
+
+  simData::DataStore::Transaction trans;
+  auto prop = ds->mutable_platformProperties(id, &trans);
+  prop->set_originalid(1);
+  trans.complete(&prop);
+
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 3, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 2, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::ALL);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::PLATFORM);
+  rv += SDK_ASSERT(ids.size() == 2);
+  ids.clear();
+  ds->idListByOriginalId(&ids, 1, simData::BEAM);
+  rv += SDK_ASSERT(ids.size() == 0);
+
+  return rv;
+}
+
 int TestMemoryDataStore(int argc, char* argv[])
 {
   simCore::checkVersionThrow();
@@ -1555,6 +1774,7 @@ int TestMemoryDataStore(int argc, char* argv[])
     rv += testCategoryData_change();
     rv += testScenarioDeleteCallback();
     rv += testUpdateToNonCurrentTime();
+    rv += testOriginalId();
     return rv;
   }
   catch (MemDataStoreAssertException& e)

@@ -107,7 +107,7 @@ public:
     : manager_(manager)
   {}
 
-  virtual void onLayerAdded(osgEarth::Layer *layer, unsigned int index)
+  virtual void onLayerAdded(osgEarth::Layer *layer, unsigned int index) override
   {
     // Can't reorder layers in the middle of an insert, so queue it instead
     manager_.needReorderProjectorLayers_ = true;

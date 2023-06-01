@@ -64,10 +64,12 @@ class SDKQT_EXPORT FileSelectorWidget : public QWidget
   Q_PROPERTY(QString defaultPath READ defaultPath WRITE setDefaultPath);
   /** Sets/gets the iconBeforeText in Qt Designer */
   Q_PROPERTY(bool iconBeforeText READ iconBeforeText WRITE setIconBeforeText);
+  /** Sets/gets the field for user-editable text in Qt Designer */
+  Q_PROPERTY(bool readOnlyLineEdit READ readOnlyLineEdit WRITE setReadOnlyLineEdit);
 
 public:
   /** Constructor */
-  FileSelectorWidget(QWidget* parent=nullptr);
+  explicit FileSelectorWidget(QWidget* parent=nullptr);
   virtual ~FileSelectorWidget();
 
   /** Declare options for the file selector */
@@ -175,6 +177,11 @@ public:
   /** Gets the custom filter */
   QString customFileFilter() const;
 
+  /** Changes whether the line edit is user-editable or disabled (default). */
+  void setReadOnlyLineEdit(bool readOnlyLineEdit);
+  /** Indicates whether the line edit is user-editable or disabled (default). */
+  bool readOnlyLineEdit() const;
+
   /** Retrieve currently set filename */
   QString filename() const;
 
@@ -204,29 +211,29 @@ private:
   /** Changes the filename, optionally emitting the fileSelected() signal if needed */
   void setFilename_(const QString& filename, bool canEmitFileSelected);
 
-  Ui_FileSelectorWidget* ui_;
+  Ui_FileSelectorWidget* ui_ = nullptr;
   /** location for saving state information */
   QString registryKey_;
   /** Default path string for the registry key (possibly empty) */
   QString defaultPath_;
   /** The optional label to the left */
-  QLabel* labelWidget_;
+  QLabel* labelWidget_ = nullptr;
   /** True means the label is included */
-  bool includeLabel_;
+  bool includeLabel_ = false;
   /** The Optional text to the left of the text field for the file name */
   QString label_;
   /** The title for the file browser */
   QString browserTitle_;
   /** Load or Save  */
-  FileSelectorWidget::FileOption flags_;
+  FileSelectorWidget::FileOption flags_ = FileLoad;
   /** The file extension */
-  FileSelectorWidget::FilterOptions filterOption_;
+  FileSelectorWidget::FilterOptions filterOption_ = SIMDIS_ASI_FILE_PATTERNS;
   /** Custom filter to use if filterOption_ is set to CUSTOM_USERDEFINED_FILTER */
   QString customFileFilter_;
   /** Indicates if icon is placed before the text widgets */
-  bool iconBeforeText_;
+  bool iconBeforeText_ = false;
   /** The valid state of the control as dictated by a caller */
-  bool isValid_;
+  bool isValid_ = true;
 
   /** Cached value of the filename */
   QString filename_;

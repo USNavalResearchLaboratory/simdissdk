@@ -1,7 +1,7 @@
 # Setup PROTOBUF library
 # Setting the PROTOBUF_DIR environment variable will allow use of a custom built library
 
-set(PROTOBUF_SUBDIR 3.14.0)
+set(PROTOBUF_SUBDIR 3.21.12)
 
 # Setup search paths
 initialize_ENV(PROTOBUF_DIR)

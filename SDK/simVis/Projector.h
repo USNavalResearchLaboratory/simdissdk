@@ -115,7 +115,7 @@ public:
   /// get preferences
   const simData::ProjectorPrefs& getPrefs() const;
 
-  /// get field of view in degrees
+  /// get vertical field of view in degrees
   double getVFOV() const;
 
   /// Return texture
@@ -173,8 +173,8 @@ public:
   virtual void traverse(osg::NodeVisitor& nv) override;
 
   /// Override from MapNodeObserver
-  void setMapNode(osgEarth::MapNode*) override;
-  osgEarth::MapNode* getMapNode() override;
+  virtual void setMapNode(osgEarth::MapNode*) override;
+  virtual osgEarth::MapNode* getMapNode() override;
 
 public: // EntityNode interface
   /**
@@ -207,7 +207,7 @@ public: // EntityNode interface
   /// Returns the legend text based on the label content callback, update and preference
   virtual std::string legendText() const override;
 
-  /** This entity type is, at this time, unpickable. */
+  /** Retrieve the object index tag for picking this projector. */
   virtual unsigned int objectIndexTag() const override;
 
   /** @copydoc EntityNode::getPosition() */
@@ -257,11 +257,6 @@ private:
   /** Copy constructor, not implemented or available. */
   ProjectorNode(const ProjectorNode&);
 
-  void getMatrices_(
-    osg::Matrixd& out_projection,
-    osg::Matrixd& out_locator,
-    osg::Matrixd& out_view) const;
-
   void init_();
 
   /// Read video file
@@ -275,7 +270,16 @@ private:
   void updateLabel_(const simData::ProjectorPrefs& prefs);
   /// Update override color
   void updateOverrideColor_(const simData::ProjectorPrefs& prefs);
+  /// Calculate the vertical FOV (deg) and aspect ratio
+  int calculatePerspectiveComponents_(double& vFovDeg, double& aspectRatio) const;
 
+  /// returns true if the user changes a preference that requires the projector manager to update the rendering state
+  bool isStateDirty_() const;
+  /// clears the dirty flag
+  void resetStateDirty_();
+
+  /// get horizontal field of view in degrees; returns -1 if unset, which means that aspect ratio should be used
+  double getHFOVDegrees_() const;
 
   simData::ProjectorProperties  lastProps_;
   simData::ProjectorPrefs       lastPrefs_;
@@ -285,8 +289,10 @@ private:
   osg::ref_ptr<LocatorCallback> locatorCallback_; ///< notifies when projector host (& origin) has moved
   osg::ref_ptr<LocatorNode>     projectorLocatorNode_; ///< locator node that tracks the projector/ellipsoid intersection
   osg::ref_ptr<EntityLabelNode> label_;
-  bool                          hasLastUpdate_;
-  bool                          hasLastPrefs_;
+  unsigned int                  objectIndexTag_ = 0;
+  bool                          hasLastUpdate_ = false;
+  bool                          hasLastPrefs_ = false;
+  mutable bool                  stateDirty_ = false;
 
   osg::Matrixd texGenMatrix_;
   osg::ref_ptr<osg::Texture2D> texture_;
@@ -301,7 +307,7 @@ private:
   // Playlist node that holds the video images that will be read into
   // the texture; loaded from "osgDB::readNodeFile".
   osg::ref_ptr<osg::Referenced> imageProvider_;
-  osg::MatrixTransform* graphics_;
+  osg::ref_ptr<osg::MatrixTransform> graphics_;
   osg::ref_ptr<osg::Uniform> projectorActive_;
   osg::ref_ptr<osg::Uniform> projectorAlpha_;
   osg::ref_ptr<osg::Uniform> texProjPosUniform_;
@@ -318,11 +324,7 @@ private:
 
   std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator_;
 
-  /// returns true if the user changes a preference that requires
-  /// the projector manager to update the rendering state
-  mutable bool stateDirty_;
-  bool isStateDirty_() const;
-  void resetStateDirty_();
+
 
   friend class ProjectorManager;
 };

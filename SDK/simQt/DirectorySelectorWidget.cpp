@@ -21,6 +21,7 @@
  *
  */
 #include <cassert>
+#include <QDesktopServices>
 #include <QLabel>
 #include "simCore/String/FilePatterns.h"
 #include "simQt/FileDialog.h"
@@ -127,10 +128,38 @@ QString DirectorySelectorWidget::browserTitle() const
   return browserTitle_;
 }
 
-
 QString DirectorySelectorWidget::directory() const
 {
   return ui_->directoryText->text();
+}
+
+void DirectorySelectorWidget::setShowOpenDirectoryButton(bool show)
+{
+  if (showOpenDirectoryButton_ == show)
+    return;
+
+  showOpenDirectoryButton_ = show;
+
+  if (showOpenDirectoryButton_)
+  {
+    assert(openDirectoryButton_ == nullptr); // Button should be NULL
+    openDirectoryButton_ = new QPushButton;
+    openDirectoryButton_->setIcon(QIcon(":/simQt/images/Folder 1 Forward.png"));
+    ui_->horizontalLayout->addWidget(openDirectoryButton_);
+    connect(openDirectoryButton_, SIGNAL(clicked(bool)), this, SLOT(openDirectory_()));
+  }
+  else
+  {
+    assert(openDirectoryButton_ != nullptr); // Button shouldn't be NULL
+    ui_->horizontalLayout->removeWidget(openDirectoryButton_);
+    delete openDirectoryButton_;
+    openDirectoryButton_ = nullptr;
+  }
+}
+
+bool DirectorySelectorWidget::showOpenDirectoryButton() const
+{
+  return showOpenDirectoryButton_;
 }
 
 void DirectorySelectorWidget::loadButton_()
@@ -177,6 +206,11 @@ void DirectorySelectorWidget::editingFinished_()
 void DirectorySelectorWidget::textEdited_()
 {
   ui_->directoryText->setStyleSheet("QLineEdit {color: white; background: palette(highlight); }");
+}
+
+void DirectorySelectorWidget::openDirectory_()
+{
+  QDesktopServices::openUrl(QUrl::fromLocalFile(ui_->directoryText->text()));
 }
 
 

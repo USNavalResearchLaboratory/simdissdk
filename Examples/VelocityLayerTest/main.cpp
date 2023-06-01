@@ -343,7 +343,7 @@ public:
       }
 
       // Gradient options
-      auto setGradient = [=](const simVis::GradientShader::ColorMap& colors) {
+      auto setGradient = [this](const simVis::GradientShader::ColorMap& colors) {
         simVis::GradientShader newGrad;
         newGrad.setDiscrete(layer_->getGradient().isDiscrete());
         newGrad.setColorMap(colors);

@@ -874,10 +874,10 @@ void ColorGradientWidget::updateMinMaxUserValues_()
 {
   ui_->minValueLabel->setText(QString::number(minUserValue_) + valueSuffix_);
   ui_->maxValueLabel->setText(QString::number(maxUserValue_) + valueSuffix_);
-  auto toUser = [=](float pct) -> float {
+  auto toUser = [this](float pct) -> float {
     return static_cast<float>(simCore::linearInterpolate(minUserValue_, maxUserValue_, 0.f, pct, 1.f));
   };
-  auto fromUser = [=](float user) -> float {
+  auto fromUser = [this](float user) -> float {
     return static_cast<float>(simCore::getFactor(minUserValue_, user, maxUserValue_));
   };
 

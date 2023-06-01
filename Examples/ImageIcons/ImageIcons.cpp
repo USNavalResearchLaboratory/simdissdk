@@ -168,6 +168,10 @@ struct ControlPanel : public simExamples::SimExamplesGui
         case simData::CH_SQUARE:
           prefs->set_circlehilightshape(simData::CH_SQUARE_RETICLE);
           break;
+        case simData::CH_SQUARE_RETICLE:
+          prefs->set_circlehilightshape(simData::CH_COFFIN);
+          break;
+        case simData::CH_COFFIN:
         default:
           prefs->set_circlehilightshape(simData::CH_PULSING_CIRCLE);
           break;
@@ -315,6 +319,10 @@ struct MenuHandler : public osgGA::GUIEventHandler
         case simData::CH_SQUARE:
           prefs->set_circlehilightshape(simData::CH_SQUARE_RETICLE);
           break;
+        case simData::CH_SQUARE_RETICLE:
+          prefs->set_circlehilightshape(simData::CH_COFFIN);
+          break;
+        case simData::CH_COFFIN:
         default:
           prefs->set_circlehilightshape(simData::CH_PULSING_CIRCLE);
           break;

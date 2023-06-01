@@ -86,11 +86,13 @@ namespace
   /// Some updates can require a rebuild too
   bool changeRequiresRebuild(const simData::BeamUpdate* a, const simData::BeamUpdate* b)
   {
+    if (a == nullptr || b == nullptr)
+      return false;
+    if (a->range() == 0. || b->range() == 0.)
+      return true;
 #ifdef BEAM_IN_PLACE_UPDATES
     return false;
 #else
-    if (a == nullptr || b == nullptr)
-      return false;
     return PB_FIELD_CHANGED(a, b, range);
 #endif
   }
@@ -668,8 +670,6 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
 
   // if we don't have new prefs, we will use the previous prefs
   const simData::BeamPrefs* activePrefs = newPrefs ? newPrefs : &lastPrefsApplied_;
-  // if we don't have new update, we will use the previous update
-  const simData::BeamUpdate* activeUpdate = newUpdate ? newUpdate : &lastUpdateApplied_;
 
   // if datadraw is off, we do not need to do any processing
   if (activePrefs->commonprefs().datadraw() == false)
@@ -682,78 +682,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   force = force || !hasLastUpdate_ || !hasLastPrefs_ ||
     (newPrefs && PB_SUBFIELD_CHANGED(&lastPrefsApplied_, newPrefs, commonprefs, datadraw));
 
-  if (activePrefs->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
-  {
-    force = force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawtype));
-
-    // beam visual is drawn by Antenna
-    // redraw if necessary, then update range and other prefs as necessary
-
-    // setPrefs will perform the antenna redraw as required, and its return indicates whether a redraw occurred
-    const bool refreshRequiresNewNode = (force || newPrefs) && antenna_->setPrefs(*activePrefs);
-
-    if (force || (newUpdate && PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, range)))
-      antenna_->setRange(static_cast<float>(simCore::sdkMax(1.0, activeUpdate->range())));
-
-    // force && refreshRequiresNewNode - antenna was just redrawn and needs to be added as child
-    // !force && refreshRequiresNewNode - antenna was just redrawn and needs to be added as child (prefs change)
-    // force && !refreshRequiresNewNode - antenna was not redrawn, but needs to be added as child (just became active)
-    if (force || refreshRequiresNewNode)
-    {
-      // remove any old (non-antenna) beam volume
-      if (beamVolume_)
-      {
-        beamLocatorNode_->removeChild(beamVolume_);
-        beamVolume_ = nullptr;
-      }
-      beamLocatorNode_->addChild(antenna_);
-      dirtyBound();
-    }
-  }
-  else
-  {
-    // beam visual is drawn by SphericalVolume
-
-    // gain calcs can be affected by prefs changes, even if not displaying antpattern
-    if (force || newPrefs)
-      antenna_->setPrefs(*activePrefs);
-
-    const bool refreshRequiresNewNode = force ||
-      changeRequiresRebuild(&lastPrefsApplied_, newPrefs) ||
-      changeRequiresRebuild(&lastUpdateApplied_, newUpdate);
-
-    // if new geometry is required, build it:
-    if (!beamVolume_ || refreshRequiresNewNode)
-    {
-      // do not nullptr antenna, it needs to persist to provide gain calcs
-      beamLocatorNode_->removeChild(antenna_);
-
-      if (beamVolume_)
-      {
-        beamLocatorNode_->removeChild(beamVolume_);
-        beamVolume_ = nullptr;
-      }
-
-      beamVolume_ = new BeamVolume(*activePrefs, *activeUpdate);
-      beamLocatorNode_->addChild(beamVolume_);
-      dirtyBound();
-    }
-    else
-    {
-      if (newPrefs)
-      {
-        // !hasLastPrefs_ should force execution of refreshRequiresNewNode branch; if assert fails examine refreshRequiresNewNode assignment logic
-        assert(hasLastPrefs_);
-        beamVolume_->performInPlacePrefChanges(&lastPrefsApplied_, newPrefs);
-      }
-      if (newUpdate)
-      {
-        // !hasLastUpdate should force execution of refreshRequiresNewNode branch; if assert fails examine refreshRequiresNewNode assignment logic
-        assert(hasLastUpdate_);
-        beamVolume_->performInPlaceUpdates(&lastUpdateApplied_, newUpdate);
-      }
-    }
-  }
+  manageBeamVisualization_(newUpdate, newPrefs, force);
 
   // BeamOnOffCmd turns active pref on and off
   // we exit early at top if datadraw is off; if assert fails, check for changes to the early exit
@@ -836,6 +765,105 @@ void BeamNode::updateLocator_(const simData::BeamUpdate* newUpdate, const simDat
   // something changed, and locators must be sync'd - since beamOriginLocator_ is parent, its notification will update all children
   beamOriginLocator_->endUpdate();
   dirtyBound();
+}
+
+void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, const simData::BeamPrefs* newPrefs, bool force)
+{
+  if ((!newUpdate && !hasLastUpdate_) || (!newPrefs && !hasLastPrefs_))
+  {
+    // caller must guarantee this
+    assert(0);
+    return;
+  }
+
+  // if we don't have new prefs, we will use the previous prefs
+  const simData::BeamPrefs& activePrefs = newPrefs ? *newPrefs : lastPrefsApplied_;
+  // if we don't have new update, we will use the previous update
+  const simData::BeamUpdate& activeUpdate = newUpdate ? *newUpdate : lastUpdateApplied_;
+
+
+  if (activePrefs.drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
+  {
+    force = force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawtype));
+    if (force)
+    {
+      // remove any old (non-antenna) beam volume
+      if (beamVolume_)
+      {
+        beamLocatorNode_->removeChild(beamVolume_);
+        beamVolume_ = nullptr;
+      }
+      // ensure that antenna pattern is in the scene graph; note that antenna_ is never deleted; it is needed to support gain calcs.
+      beamLocatorNode_->removeChild(antenna_);
+      beamLocatorNode_->addChild(antenna_);
+    }
+    // beam visual is drawn by Antenna
+    // redraw if necessary, then update range and other prefs as necessary
+
+    // setPrefs will perform the antenna redraw as required, and its return indicates whether a redraw occurred
+    const bool refreshRequiresNewNode = (force || newPrefs) && antenna_->setPrefs(activePrefs);
+
+    if (force || (newUpdate && PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, range)))
+    {
+      antenna_->setRange(static_cast<float>(simCore::sdkMax(1.0, activeUpdate.range())));
+      dirtyBound();
+    }
+    else if (refreshRequiresNewNode)
+    {
+      dirtyBound();
+    }
+    return;
+  }
+
+  // beam visual is drawn by SphericalVolume
+
+  // gain calcs can be affected by prefs changes, even if not displaying antenna pattern
+  if (force || newPrefs)
+    antenna_->setPrefs(activePrefs);
+
+  const bool requiresNewNode =
+    force ||
+    !beamVolume_ ||
+    !hasLastPrefs_ || changeRequiresRebuild(&lastPrefsApplied_, newPrefs) ||
+    !hasLastUpdate_ || changeRequiresRebuild(&lastUpdateApplied_, newUpdate);
+
+  // if new geometry is required, build it:
+  if (requiresNewNode)
+  {
+    // do not nullptr antenna, it needs to persist to provide gain calcs
+    beamLocatorNode_->removeChild(antenna_);
+    if (beamVolume_)
+    {
+      beamLocatorNode_->removeChild(beamVolume_);
+      beamVolume_ = nullptr;
+    }
+
+    // don't create a volume when range is 0
+    if (activeUpdate.range() > 0.)
+    {
+      beamVolume_ = new BeamVolume(activePrefs, activeUpdate);
+      beamLocatorNode_->addChild(beamVolume_);
+    }
+    dirtyBound();
+  }
+  else if (beamVolume_)
+  {
+    // caller must guarantee this
+    assert(newPrefs || newUpdate);
+    if (newPrefs)
+    {
+      // !hasLastPrefs_ should force execution of requiresNewNode branch; if assert fails examine requiresNewNode logic
+      assert(hasLastPrefs_);
+      beamVolume_->performInPlacePrefChanges(&lastPrefsApplied_, newPrefs);
+    }
+    if (newUpdate)
+    {
+      // !hasLastUpdate should force execution of requiresNewNode branch; if assert fails examine requiresNewNode logic
+      assert(hasLastUpdate_);
+      beamVolume_->performInPlaceUpdates(&lastUpdateApplied_, newUpdate);
+    }
+    dirtyBound();
+  }
 }
 
 const simData::BeamUpdate* BeamNode::getLastUpdateFromDS() const

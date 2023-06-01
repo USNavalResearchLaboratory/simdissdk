@@ -350,6 +350,13 @@ public:
   virtual ObjectId ownerId() const = 0;
 
   /**
+   * If the table has no null values, the routine will return the number of rows in the table.
+   * If the table has null values the routine will return the number of rows in the largest sub-table.
+   * @return Number of rows in the largest sub-table.
+   */
+  virtual size_t maxSubTableRow() const = 0;
+
+  /**
    * Returns the total number of columns in this data table.
    * @return Number of columns in the table.
    */

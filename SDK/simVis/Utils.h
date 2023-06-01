@@ -293,6 +293,16 @@ namespace simVis
    */
   SDKVIS_EXPORT void fixStatsHandlerGl2BlockyText(osgViewer::StatsHandler* statsHandler);
 
+  /**
+   * Calculate the intersection point of line defined by start/end points and earth surface
+   * @param lat  latitude in radians at which to calculate
+   * @param ecefStart  starting point
+   * @param ecefEnd  ending point
+   * @param earthIntersection  calculated intersection point
+   * @return true if an intersection point was calculated
+   */
+  bool calculateEarthIntersection(double lat, const osg::Vec3d& ecefStart, const osg::Vec3d& ecefEnd, osg::Vec3d& earthIntersection);
+
   /// Math helper functions
   struct SDKVIS_EXPORT Math
   {

@@ -420,8 +420,11 @@ public:
       float oldColor[4] = { app_.color[0], app_.color[1], app_.color[2], app_.color[3] };
       ImGuiColorEditFlags flags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_NoOptions;
       ImGui::ColorEdit4("##color", &app_.color[0], flags);
-      if (app_.color != oldColor)
-        needUpdate = true;
+      for (size_t k = 0; k < 4; ++k)
+      {
+        if (app_.color[k] != oldColor[k])
+          needUpdate = true;
+      }
 
       bool useOverrideColor = app_.useOverrideColor;
       IMGUI_ADD_ROW(ImGui::Checkbox, "Use Override Color", &app_.useOverrideColor);
@@ -431,8 +434,11 @@ public:
       ImGui::TableNextColumn(); ImGui::Text("Override Color"); ImGui::TableNextColumn();
       float oldOverrideColor[4] = { app_.overrideColor[0], app_.overrideColor[1], app_.overrideColor[2], app_.overrideColor[3] };
       ImGui::ColorEdit4("##overrideColor", &app_.overrideColor[0], flags);
-      if (app_.color != oldOverrideColor)
-        needUpdate = true;
+      for (size_t k = 0; k < 4; ++k)
+      {
+        if (app_.color[k] != oldOverrideColor[k])
+          needUpdate = true;
+      }
 
       int maxPoints = app_.maxPoints;
       IMGUI_ADD_ROW(ImGui::SliderInt, "Max Points", &app_.maxPoints, -1, 512, "%d", ImGuiSliderFlags_AlwaysClamp);

@@ -98,10 +98,10 @@ ButtonActions::ButtonActions(QWidget *parent)
   play_->setIcon(playIcon_);
   // set default shortcuts
   stepDecrease_->setShortcut(QKeySequence(Qt::Key_Minus));
-  playReverse_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_D));
+  playReverse_->setShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_D));
   stepForward_->setShortcut(QKeySequence(Qt::Key_Space));
   stepIncrease_->setShortcut(QKeySequence(Qt::Key_Equal));
-  realTime_->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_R));
+  realTime_->setShortcut(QKeySequence(static_cast<int>(Qt::SHIFT) + Qt::Key_R));
   startStop_->setShortcut(QKeySequence(Qt::Key_P));
   // set tooltips
   stepDecrease_->setToolTip(formatTooltip(tr("Decrease Rate"), tr("Slow down the rate of playback.")));

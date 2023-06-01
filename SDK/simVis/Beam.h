@@ -290,8 +290,25 @@ namespace simVis
     void apply_(
       const simData::BeamUpdate*     update,
       const simData::BeamPrefs*      prefs,
-      bool                           force =false);
+      bool                           force = false);
 
+    /**
+    * Manages creation/replacement of the beam visualization based on the passed in prefs and update
+    * @param update  beam update
+    * @param prefs  beam prefs
+    * @param force  if true, force the code to regenerate the visual (instead of checking for changes that might require it)
+    */
+    void manageBeamVisualization_(
+      const simData::BeamUpdate*     update,
+      const simData::BeamPrefs*      prefs,
+      bool                           force);
+
+    /**
+    * Manages updating the beam locator based on the passed in prefs and update
+    * @param update  beam update
+    * @param prefs  beam prefs
+    * @param force  if true, force the code to set the locator (instead of checking for changes that might require it)
+    */
     void updateLocator_(
       const simData::BeamUpdate*     update,
       const simData::BeamPrefs*      prefs,

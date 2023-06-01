@@ -376,3 +376,13 @@
   fun:*google*protobuf*MessageFactory*InternalRegisterGeneratedFile*
   ...
 }
+
+{
+   SIM-15268 protobuf leak in every executable
+   Memcheck:Leak
+   ...
+   fun:*google*protobuf*internal*ShutdownData*
+   fun:*google*protobuf*internal*OnShutdownRun*
+   fun:*google*protobuf*internal*InitProtobufDefaultsSlow*
+   ...
+}

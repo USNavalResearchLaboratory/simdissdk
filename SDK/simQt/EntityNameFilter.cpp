@@ -54,6 +54,9 @@ bool EntityNameFilter::acceptEntity(simData::ObjectId id) const
   if (model_ == nullptr)
     return false;
 
+  if ((regExp_ == nullptr) || regExp_->pattern().empty())
+    return true;
+
   return acceptIndex_(model_->index(id));
 }
 

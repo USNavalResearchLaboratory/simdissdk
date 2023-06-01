@@ -72,10 +72,10 @@ public:
 public: // MapNodeObserver
 
   /** Gets the map node */
-  osgEarth::MapNode* getMapNode() { return mapNode_.get(); }
+  virtual osgEarth::MapNode* getMapNode() override { return mapNode_.get(); }
 
   /** Sets the map node */
-  void setMapNode(osgEarth::MapNode* mapNode);
+  virtual void setMapNode(osgEarth::MapNode* mapNode) override;
 
 public: // osg::Node
 

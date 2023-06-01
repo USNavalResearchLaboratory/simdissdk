@@ -71,6 +71,14 @@ namespace simQt {
     /** Returns the number of entities that match the given type(s) */
     virtual int countEntityTypes(simData::ObjectType type) const = 0;
 
+  Q_SIGNALS:
+    /** Model is about to make extensive changes, the view may want to suppend updates */
+    void beginExtendedChanges();
+    /** Model finished making extensive changes, the view may want to refresh and start processing changes */
+    void endExtendedChanges();
+    /** Category data has changed and the model requests the filters be applied */
+    void requestApplyFilters();
+
   public Q_SLOTS:
     /** Swaps the view to the hierarchy tree */
     virtual void setToTreeView() = 0;

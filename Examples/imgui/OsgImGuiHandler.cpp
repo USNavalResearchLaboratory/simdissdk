@@ -37,13 +37,21 @@
 #undef NOMINMAX
 #endif
 
+#if OSGEARTH_SOVERSION >= 148
+ // Fix 3.4.0 bugs with namespace in osgEarth/ImGui/AnnotationsGUI
+#include "osgEarth/AnnotationData"
+using AnnotationData = osgEarth::AnnotationData;
+using EarthManipulator = osgEarth::EarthManipulator;
+
+#include "osgEarth/ImGui/AnnotationsGUI"
+#endif
+
 #include "osgEarth/ImGui/LayersGUI"
 #include "osgEarth/ImGui/NetworkMonitorGUI"
 #include "osgEarth/ImGui/RenderingGUI"
 #include "osgEarth/ImGui/SceneGraphGUI"
 #include "osgEarth/ImGui/SystemGUI"
 #include "osgEarth/ImGui/TerrainGUI"
-#include "osgEarth/ImGui/TerrainEditGUI"
 #include "osgEarth/ImGui/TextureInspectorGUI"
 #include "osgEarth/ImGui/ViewpointsGUI"
 #include "simNotify/Notify.h"
@@ -117,6 +125,9 @@ OsgImGuiHandler::OsgImGuiHandler()
   firstDraw_(true),
   autoAdjustProjectionMatrix_(true)
 {
+#if OSGEARTH_SOVERSION >= 148
+  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::AnnotationsGUI>(new osgEarth::GUI::AnnotationsGUI));
+#endif
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::CameraGUI>(new osgEarth::GUI::CameraGUI));
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::EnvironmentGUI>(new osgEarth::GUI::EnvironmentGUI));
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::LayersGUI>(new osgEarth::GUI::LayersGUI));
@@ -126,7 +137,6 @@ OsgImGuiHandler::OsgImGuiHandler()
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::SceneGraphGUI>(new osgEarth::GUI::SceneGraphGUI));
   // Not including ShaderGUI as it expects command line arguments. Can be added later if needed
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::SystemGUI>(new osgEarth::GUI::SystemGUI));
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TerrainEditGUI>(new osgEarth::GUI::TerrainEditGUI));
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TerrainGUI>(new osgEarth::GUI::TerrainGUI));
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TextureInspectorGUI>(new osgEarth::GUI::TextureInspectorGUI));
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::ViewpointsGUI>(new osgEarth::GUI::ViewpointsGUI));

@@ -20,6 +20,7 @@ set(PROJ_HEADERS
     FileSelectorWidgetPlugin.h
     FontWidgetPlugin.h
     GanttChartViewPlugin.h
+    KeySequenceEditPlugin.h
     SearchLineEditPlugin.h
     TimeButtonsPlugin.h
     TimeWidgetPlugin.h
@@ -41,6 +42,7 @@ set(PROJ_SOURCES
     FileSelectorWidgetPlugin.cpp
     FontWidgetPlugin.cpp
     GanttChartViewPlugin.cpp
+    KeySequenceEditPlugin.cpp
     SearchLineEditPlugin.cpp
     TimeButtonsPlugin.cpp
     TimeWidgetPlugin.cpp

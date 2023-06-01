@@ -670,12 +670,19 @@ void ScenarioManager::removeEntity(simData::ObjectId id)
 
     // remove from the hoster table
     hosterTable_.erase(id);
-    // if entity was hosted by another entity, remove the link to this entity from other entity
-    for (auto it = hosterTable_.begin(); it != hosterTable_.end();)
+
+    simData::ObjectId hostId;
+    if (record->getEntityNode()->getHostId(hostId))
     {
-      auto erase = it++;
-      if (erase->second == id)
-        hosterTable_.erase(erase);
+      const auto& range = hosterTable_.equal_range(hostId);
+      for (auto it = range.first; it != range.second; ++it)
+      {
+        if (it->second == id)
+        {
+          hosterTable_.erase(it);
+          break;
+        }
+      }
     }
 
     // remove it from the entities list
