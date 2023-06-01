@@ -21,6 +21,7 @@
  *
  */
 #include <cassert>
+#include <optional>
 #include "simData/DataStore.h"
 #include "simData/DataStoreHelpers.h"
 #include "simUtil/IdMapper.h"
@@ -144,45 +145,69 @@ void DataStoreIdMapper::clearMappings()
 
 uint64_t DataStoreIdMapper::resolve_(const EntityIdData& fromIdData)
 {
-  // Get the entity type -- either platform or all-but-platforms
-  const bool isPlatform = fromIdData.type != simData::NONE ? (fromIdData.type == simData::PLATFORM) : (fromIdData.id == fromIdData.hostPlatformId);
-  simData::ObjectType entityTypeFilter = simData::ALL;
-  if (fromIdData.type != simData::NONE)
-    entityTypeFilter = fromIdData.type;
-  else if (isPlatform)
-    entityTypeFilter = simData::PLATFORM;
-  else
-    entityTypeFilter = static_cast<simData::ObjectType>(entityTypeFilter ^ simData::PLATFORM);
+  if (fromIdData.originalId != 0)
+  {
+    // Get the entity type -- either platform or all-but-platforms
+    const bool isPlatform = fromIdData.type != simData::NONE ? (fromIdData.type == simData::PLATFORM) : (fromIdData.id == fromIdData.hostPlatformId);
+    simData::ObjectType entityTypeFilter = simData::ALL;
+    if (fromIdData.type != simData::NONE)
+      entityTypeFilter = fromIdData.type;
+    else if (isPlatform)
+      entityTypeFilter = simData::PLATFORM;
+    else
+      entityTypeFilter = static_cast<simData::ObjectType>(entityTypeFilter ^ simData::PLATFORM);
 
-  // Find original IDs matching this list
-  simData::DataStore::IdList ids;
-  dataStore_.idListByOriginalId(&ids, fromIdData.originalId, entityTypeFilter);
+    // Find original IDs matching this list
+    simData::DataStore::IdList ids;
+    dataStore_.idListByOriginalId(&ids, fromIdData.originalId, entityTypeFilter);
 
-  // If it's an empty list, we return; server has an ID we don't have
-  if (ids.empty())
-    return 0;
-  // If it's a list of size 1, then we return; presume exact match
-  if (ids.size() == 1)
-    return ids[0];
+    // If it's an empty list, we return; server has an ID we don't have
+    if (ids.empty())
+      return 0;
+    // If it's a list of size 1, then we return; presume exact match
+    if (ids.size() == 1)
+      return ids[0];
 
-  // Try to narrow down by host ID
-  if (!isPlatform && (fromIdData.hostPlatformId != 0))
-    filterToHostPlatform_(map(fromIdData.hostPlatformId), ids);
-  // Try to return results
-  if (ids.empty())
-    return 0;
-  if (ids.size() == 1)
-    return ids[0];
+    // Try to narrow down by host ID
+    if (!isPlatform && (fromIdData.hostPlatformId != 0))
+      filterToHostPlatform_(map(fromIdData.hostPlatformId), ids);
+    // Try to return results
+    if (ids.empty())
+      return 0;
+    if (ids.size() == 1)
+      return ids[0];
+  }
 
   // Else we narrow it down by name.  Note that name is the most unreliable method for ID
   // matching, because in live scenarios (e.g. ReadSCORE with Legend Server) the names can
   // easily change at runtime, through automatic means (Legend Server) or manual means
   // (operator applying legend updates manually).  Because of this, we only use name as a
   // discriminator on a set of matched IDs only, and not as a primary matching parameter.
+  simData::DataStore::IdList ids;
   filterToName_(fromIdData.entityName, ids);
   if (ids.size() == 1)
     return ids[0];
-  // Not found
+  if (ids.empty())
+    return 0;
+
+  // Too many matched by name, try again to use the original id to uniquely identify an entity
+  std::optional<simData::ObjectId> possibleEntity;
+  for (auto id : ids)
+  {
+    if (fromIdData.originalId == simData::DataStoreHelpers::originalIdFromId(id, &dataStore_))
+    {
+      // More than one match, return no match
+      if (possibleEntity.has_value())
+        return 0;
+      possibleEntity = id;
+    }
+  }
+
+  // Only one match, return it
+  if (possibleEntity.has_value())
+    return *possibleEntity;
+
+  // no match
   return 0;
 }
 
