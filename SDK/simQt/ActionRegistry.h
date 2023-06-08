@@ -173,9 +173,9 @@ public:
   /** Saves to a data file, returning 0 on success and non-zero on failure. */
   int serialize(const QString& settingsFile, const QString& groupName="KeyBindings") const;
   /** Restore from a QSettings, returning 0 on success and non-zero on error */
-  int deserialize(QSettings& settings, const QString& groupName="KeyBindings");
+  int deserialize(QSettings& settings, const QString& groupName="KeyBindings", bool clearExisting = false);
   /** Loads the file provided, returning 0 on success and non-zero on error */
-  int deserialize(const QString& settingsFile, const QString& groupName="KeyBindings");
+  int deserialize(const QString& settingsFile, const QString& groupName="KeyBindings", bool clearExisting = false);
 
 Q_SIGNALS:
   /** notice that a new action has been registered */
