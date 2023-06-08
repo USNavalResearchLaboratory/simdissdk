@@ -59,9 +59,6 @@ public:
   /** Name of shader that is responsible for entity fragment effects. */
   std::string fragmentEffect() const;
 
-  /** Name of fragment shader for glowing highlight */
-  std::string glowHighlightFragment() const;
-
   /** Name of vertex shader for overhead mode */
   std::string overheadModeVertex() const;
 

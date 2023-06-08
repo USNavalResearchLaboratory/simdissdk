@@ -19,7 +19,6 @@ set(SHADER_FILES
     DisableDepthOnAlpha.frag.glsl
     FragmentEffect.glsl
     Flashing.frag.glsl
-    GlowHighlight.frag.glsl
     LineDrawable.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl
@@ -80,7 +79,6 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}GeoFence.h
     ${VIS_INC}Gl3Utils.h
     ${VIS_INC}GlDebugMessage.h
-    ${VIS_INC}GlowHighlight.h
     ${VIS_INC}GradientShader.h
     ${VIS_INC}Headless.h
     ${VIS_INC}InsetViewEventHandler.h
@@ -246,7 +244,6 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Gate.cpp
     ${VIS_SRC}GeoFence.cpp
     ${VIS_INC}GlDebugMessage.cpp
-    ${VIS_SRC}GlowHighlight.cpp
     ${VIS_SRC}GradientShader.cpp
     ${VIS_SRC}Headless.cpp
     ${VIS_SRC}InsetViewEventHandler.cpp

@@ -6,6 +6,8 @@
 uniform float osg_FrameTime;
 uniform bool simvis_flashing_enable;
 
+// This is used by LOBs with SIMDIS_Flash generic data
+
 // Returns alpha to use in order to flash every period seconds (1/hertz)
 float simvis_flashAlpha(float period)
 {
