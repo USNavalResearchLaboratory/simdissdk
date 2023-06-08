@@ -31,6 +31,7 @@
 #include "simData/DataTypes.h"
 #include "simVis/BillboardAutoTransform.h"
 #include "simVis/Constants.h"
+#include "simVis/FragmentEffect.h"
 #include "simVis/OverrideColor.h"
 #include "simVis/Registry.h"
 #include "simVis/Types.h"
@@ -90,6 +91,7 @@ public:
         cullFace_ = osg::CullFace::BACK;
     }
     brightness_ = prefs.brightness();
+    fragmentEffect_ = prefs.fragmenteffect();
   }
 
   /** Retrieves the icon field; useful to avoid a double findModelFile(). */
@@ -109,7 +111,7 @@ public:
     auto asTuple = [](const MergeSettings& rhs) {
       return std::tie(rhs.platPositionOffset_, rhs.orientationOffset_,
         rhs.icon_, rhs.iconAlignment_, rhs.overrideColor_, rhs.noDepthIcons_,
-        rhs.useCullFace_, rhs.cullFace_, rhs.brightness_, rhs.combineMode_);
+        rhs.useCullFace_, rhs.cullFace_, rhs.brightness_, rhs.combineMode_, rhs.fragmentEffect_);
     };
     return asTuple(*this) < asTuple(rhs);
   }
@@ -118,13 +120,14 @@ private:
   osg::Vec3d platPositionOffset_;
   osg::Vec3d orientationOffset_;
   std::string icon_;
-  simData::TextAlignment iconAlignment_;
+  simData::TextAlignment iconAlignment_ = simData::ALIGN_CENTER_CENTER;
   osg::Vec4f overrideColor_;
   simData::OverrideColorCombineMode combineMode_ = simData::MULTIPLY_COLOR;
   bool noDepthIcons_ = true;
   bool useCullFace_ = false;
   osg::CullFace::Mode cullFace_ = osg::CullFace::FRONT_AND_BACK;
   int brightness_ = 36;
+  simData::FragmentEffect fragmentEffect_ = simData::FE_NONE;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -280,6 +283,9 @@ public:
     const float brightnessMagnitude = prefs.brightness() * BRIGHTNESS_TO_AMBIENT;
     auto* brightnessUniform = new osg::Uniform(LIGHT0_AMBIENT_COLOR.c_str(), osg::Vec4f(brightnessMagnitude, brightnessMagnitude, brightnessMagnitude, 1.f));
     stateSet->addUniform(brightnessUniform);
+
+    // fragment effect is a simple uniform
+    FragmentEffect::set(*stateSet, prefs.fragmenteffect());
   }
 
   const MergeSettings& mergeSettings() const
@@ -461,7 +467,8 @@ bool PlatformIconFactory::hasRelevantChanges(const simData::PlatformPrefs& oldPr
     PB_SUBFIELD_CHANGED(&oldPrefs, &newPrefs, commonprefs, includeinlegend) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, nodepthicons) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, usecullface) ||
-    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, cullface);
+    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, cullface) ||
+    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, fragmenteffect);
 }
 
 void PlatformIconFactory::setEnabled(bool enabled)

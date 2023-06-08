@@ -42,6 +42,7 @@
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
 #include "simVis/CustomRendering.h"
+#include "simVis/FragmentEffect.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
@@ -514,6 +515,7 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   AlphaTest::installShaderProgram(stateSet);
   BeamPulse::installShaderProgram(stateSet);
   DisableDepthOnAlpha::installShaderProgram(stateSet);
+  FragmentEffect::installShaderProgram(*stateSet);
   LobGroupNode::installShaderProgram(stateSet);
   OverrideColor::installShaderProgram(stateSet);
   PolygonStipple::installShaderProgram(stateSet);

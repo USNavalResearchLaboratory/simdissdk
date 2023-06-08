@@ -36,6 +36,7 @@ Shaders::Shaders()
   add(beamPulseFragment(), @BeamPulse.frag.glsl@);
   add(disableDepthOnAlphaFragment(), @DisableDepthOnAlpha.frag.glsl@);
   add(flashingFragment(), @Flashing.frag.glsl@);
+  add(fragmentEffect(), @FragmentEffect.glsl@);
   add(glowHighlightFragment(), @GlowHighlight.frag.glsl@);
   add(overheadModeVertex(), @OverheadMode.vert.glsl@);
   add(overrideColorFragment(), @OverrideColor.frag.glsl@);
@@ -192,6 +193,11 @@ std::string Shaders::setClipVertex() const
 std::string Shaders::flashingFragment() const
 {
   return "Flashing.frag.glsl";
+}
+
+std::string Shaders::fragmentEffect() const
+{
+  return "FragmentEffect.glsl";
 }
 
 std::string Shaders::pickerVertex() const

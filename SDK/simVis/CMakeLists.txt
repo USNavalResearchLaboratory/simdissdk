@@ -17,6 +17,7 @@ set(SHADER_FILES
     BeamPulse.vert.glsl
     BeamPulse.frag.glsl
     DisableDepthOnAlpha.frag.glsl
+    FragmentEffect.glsl
     Flashing.frag.glsl
     GlowHighlight.frag.glsl
     LineDrawable.glsl
@@ -91,6 +92,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}LocatorNode.h
     ${VIS_INC}Measurement.h
     ${VIS_INC}ModelCache.h
+    ${VIS_INC}FragmentEffect.h
     ${VIS_INC}ModKeyHandler.h
     ${VIS_INC}NavigationModes.h
     ${VIS_INC}ObjectSelectionHandler.h
@@ -256,6 +258,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}LocatorNode.cpp
     ${VIS_SRC}Measurement.cpp
     ${VIS_SRC}ModelCache.cpp
+    ${VIS_SRC}FragmentEffect.cpp
     ${VIS_SRC}ModKeyHandler.cpp
     ${VIS_SRC}NavigationModes.cpp
     ${VIS_SRC}ObjectSelectionHandler.cpp

@@ -41,6 +41,7 @@
 #include "simVis/Constants.h"
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/EntityLabel.h"
+#include "simVis/FragmentEffect.h"
 #include "simVis/ModelCache.h"
 #include "simVis/Locator.h"
 #include "simVis/OverrideColor.h"
@@ -984,6 +985,16 @@ void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
   }
 }
 
+void PlatformModelNode::updateFragmentEffect_(const simData::PlatformPrefs& prefs)
+{
+  if (!model_.valid())
+    return;
+  if (lastPrefsValid_ &&
+    !PB_FIELD_CHANGED(&lastPrefs_, &prefs, fragmenteffect))
+    return;
+  simVis::FragmentEffect::set(*offsetXform_->getOrCreateStateSet(), prefs.fragmenteffect());
+}
+
 void PlatformModelNode::updateDofTransform_(const simData::PlatformPrefs& prefs, bool force) const
 {
   // Don't need to apply to image models
@@ -1026,6 +1037,7 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateLighting_(prefs, false);
   updateOverrideColor_(prefs);
   updateAlphaVolume_(prefs);
+  updateFragmentEffect_(prefs);
   updateDofTransform_(prefs, false);
 
   // Note that the brightness calculation is low cost, but setting brightness uniform is not necessarily low-cost, so we do check PB_FIELD_CHANGED

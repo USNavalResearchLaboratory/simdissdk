@@ -406,6 +406,19 @@ enum TextAlignment {
   ALIGN_RIGHT_BOTTOM = 8;
 };
 
+/// Fragment shader effects applied to 3-D graphics in 2-D space
+enum FragmentEffect {
+  FE_NONE = 0;
+  FE_FORWARD_STRIPE = 1;
+  FE_BACKWARD_STRIPE = 2;
+  FE_HORIZONTAL_STRIPE = 3;
+  FE_VERTICAL_STRIPE = 4;
+  FE_CHECKERBOARD = 5;
+  FE_DIAMOND = 6;
+  FE_GLOW = 7;
+  FE_FLASH = 8;
+};
+
 /// preferences which all labels share
 message LabelPrefs {
   /// Toggles display of the label
@@ -737,8 +750,12 @@ message PlatformPrefs {
 
   /// 2D or 3D model file location
   optional string icon = 2;
+
   /// Model draw mode for wireframe, points, or solid models
   optional ModelDrawMode drawMode = 3 [default = MDM_SOLID];
+  /// Shader effect to apply to graphics
+  optional FragmentEffect fragmentEffect = 77 [default = FE_NONE];
+
   /// Flag indicating how to draw 2D icons in 3D space; only applies to image icons
   optional IconRotation rotateIcons = 4 [default = IR_2D_YAW];
   /// Turns off the depth buffer for drawing 2D icons; can address flickering with surface icons
