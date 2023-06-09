@@ -29,7 +29,7 @@ namespace simVis
 {
 
 /** Name of the uniform to edit when changing the fragment effect */
-inline const std::string FRAGEFFECT_UNIFORM = "svfe_effect";
+static const std::string FRAGEFFECT_UNIFORM = "svfe_effect";
 
 void FragmentEffect::set(osg::StateSet& stateSet, simData::FragmentEffect effect)
 {
