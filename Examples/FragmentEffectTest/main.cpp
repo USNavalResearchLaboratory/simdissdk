@@ -47,7 +47,7 @@
 
 //----------------------------------------------------------------------------
 
-inline const char* EFFECT_NAMES[] = {
+static const char* EFFECT_NAMES[] = {
   "None",
   "Forward Stripe",
   "Backward Stripe",
