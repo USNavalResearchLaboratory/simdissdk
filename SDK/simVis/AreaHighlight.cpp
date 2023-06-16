@@ -415,6 +415,16 @@ void LineDrawableHighlightNode::setRadius(float radius)
   billboard_->setScale(osg::Vec3f(radius, radius, radius));
 }
 
+void LineDrawableHighlightNode::setAutoRotate(bool autoRotate)
+{
+  autoRotate_ = autoRotate;
+  if (autoRotate_ && billboard_->getAutoRotateMode() != osg::AutoTransform::ROTATE_TO_SCREEN)
+    billboard_->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
+  else if (!autoRotate_ && billboard_->getAutoRotateMode() != osg::AutoTransform::NO_ROTATION)
+    billboard_->setAutoRotateMode(osg::AutoTransform::NO_ROTATION);
+}
+
+
 // --------------------------------------------------------------------------
 
 CompositeHighlightNode::CompositeHighlightNode(simData::CircleHilightShape shape)
@@ -430,7 +440,8 @@ CompositeHighlightNode::CompositeHighlightNode(const CompositeHighlightNode& rhs
  : HighlightNode(rhs, copyOp),
    shape_(rhs.shape_),
    rgba_(rhs.rgba_),
-   radius_(rhs.radius_)
+   radius_(rhs.radius_),
+   autoRotate_(rhs.autoRotate_)
 {
   setShape(shape_);
 }
@@ -501,6 +512,7 @@ void CompositeHighlightNode::setShape(simData::CircleHilightShape shape)
   if (!child_.valid())
     return;
   addChild(child_.get());
+  child_->setAutoRotate(autoRotate_);
   child_->setRadius(radius_);
   child_->setColor(rgba_);
 }
@@ -521,6 +533,15 @@ void CompositeHighlightNode::setRadius(float radius)
   radius_ = radius;
   if (child_.valid())
     child_->setRadius(radius_);
+}
+
+void CompositeHighlightNode::setAutoRotate(bool autoRotate)
+{
+  if (autoRotate_ == autoRotate)
+    return;
+  autoRotate_ = autoRotate;
+  if (child_.valid())
+    child_->setAutoRotate(autoRotate);
 }
 
 } //namespace simVis

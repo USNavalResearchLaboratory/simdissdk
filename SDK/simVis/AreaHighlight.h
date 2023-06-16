@@ -54,6 +54,8 @@ public:
   virtual void setColor(const osg::Vec4f& rgba) = 0;
   /** Changes the radius of the highlight in meters */
   virtual void setRadius(float radius) = 0;
+  /** Set the shape to rotate to screen */
+  virtual void setAutoRotate(bool autoRotate) = 0;
 
   // From osg::Node:
   virtual const char* libraryName() const { return "simVis"; }
@@ -76,6 +78,7 @@ public:
   // From HighlightNode:
   virtual void setColor(const osg::Vec4f& rgba);
   virtual void setRadius(float radius);
+  virtual void setAutoRotate(bool autoRotate) {}
 
 protected:
   /// osg::Referenced-derived
@@ -112,6 +115,7 @@ public:
   // From HighlightNode:
   virtual void setColor(const osg::Vec4f& rgba);
   virtual void setRadius(float radius);
+  virtual void setAutoRotate(bool autoRotate);
 
 protected:
   /// osg::Referenced-derived
@@ -125,6 +129,7 @@ private:
 
   osg::ref_ptr<osg::AutoTransform> billboard_;
   std::vector<osg::ref_ptr<osgEarth::LineDrawable> > lines_;
+  bool autoRotate_ = true;
 };
 
 /// Choose between different highlight nodes based on an enum
@@ -142,6 +147,7 @@ public:
   // From HighlightNode:
   virtual void setColor(const osg::Vec4f& rgba);
   virtual void setRadius(float radius);
+  virtual void setAutoRotate(bool autoRotate);
 
 protected:
   /// osg::Referenced-derived
@@ -152,6 +158,7 @@ private:
   simData::CircleHilightShape shape_;
   osg::Vec4f rgba_;
   float radius_;
+  bool autoRotate_ = false;
 };
 
 } // namespace simVis

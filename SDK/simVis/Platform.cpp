@@ -990,43 +990,116 @@ void PlatformNode::updateOrRemoveEphemerisVector_(bool prefsDraw, const simData:
 
 void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData::PlatformPrefs& prefs)
 {
+  bool followOri = prefs.hilightfolloworientation();
   if (prefsDraw && prefs.drawcirclehilight())
   {
     if (!highlight_.valid())
     {
       highlight_ = new CompositeHighlightNode(prefs.circlehilightshape());
       highlight_->addUpdateCallback(new SetCircleRadiusCallback(this));
-
+      highlight_->setAutoRotate(!followOri);
       // set the owner of highlight_
-      if (prefs.circlehilightsize() == 0.0)
-        scaledInertialTransform_->addChild(highlight_.get());
+      if (followOri)
+      {
+        // add directly to model if following orientation
+        if (prefs.circlehilightsize() == 0.0)
+          model_->addScaledChild(highlight_.get());
+        else
+          model_->addFixedScaledChild(highlight_.get());
+      }
       else
       {
-        fixedScaledInertialTransform_ = new PlatformInertialTransform;
-        fixedScaledInertialTransform_->setLocator(getLocator());
-        model_->addFixedScaledChild(fixedScaledInertialTransform_.get());
-        fixedScaledInertialTransform_->addChild(highlight_.get());
+        // add to inertial transforms if not following orientation
+        if (prefs.circlehilightsize() == 0.0)
+          scaledInertialTransform_->addChild(highlight_.get());
+        else
+        {
+          fixedScaledInertialTransform_ = new PlatformInertialTransform;
+          fixedScaledInertialTransform_->setLocator(getLocator());
+          model_->addFixedScaledChild(fixedScaledInertialTransform_.get());
+          fixedScaledInertialTransform_->addChild(highlight_.get());
+        }
       }
     }
-    else
+    else if (lastPrefsValid_)
     {
       // See if the owner of highlight needs to switch
-      if ((prefs.circlehilightsize() == 0.0) && fixedScaledInertialTransform_.valid())
+      if (PB_FIELD_CHANGED((&lastPrefs_), (&prefs), hilightfolloworientation))
       {
-        model_->removeFixedScaledChild(fixedScaledInertialTransform_.get());
-        fixedScaledInertialTransform_ = nullptr;
-        scaledInertialTransform_->addChild(highlight_.get());
+        // change owner if follow orientation was toggled
+        if (followOri)
+        {
+          // remove from inertial transforms
+          if (fixedScaledInertialTransform_.valid())
+          {
+            fixedScaledInertialTransform_->removeChild(highlight_.get());
+            fixedScaledInertialTransform_ = nullptr;
+          }
+          else
+            scaledInertialTransform_->removeChild(highlight_.get());
+
+          // add to model
+          if (prefs.circlehilightsize() == 0.0)
+            model_->addScaledChild(highlight_.get());
+          else
+            model_->addFixedScaledChild(highlight_.get());
+        }
+        else
+        {
+          // remove from model
+          if (prefs.circlehilightsize() == 0.0)
+            model_->removeScaledChild(highlight_.get());
+          else
+            model_->removeFixedScaledChild(highlight_.get());
+
+          // add to inertial transform
+          if (prefs.circlehilightsize() == 0.0)
+            scaledInertialTransform_->addChild(highlight_.get());
+          else
+          {
+            fixedScaledInertialTransform_ = new PlatformInertialTransform;
+            fixedScaledInertialTransform_->setLocator(getLocator());
+            model_->addFixedScaledChild(fixedScaledInertialTransform_.get());
+            fixedScaledInertialTransform_->addChild(highlight_.get());
+          }
+        }
       }
-      else if ((prefs.circlehilightsize() != 0.0) && !fixedScaledInertialTransform_.valid())
+      else if (PB_FIELD_CHANGED((&lastPrefs_), (&prefs), circlehilightsize))
       {
-        scaledInertialTransform_->removeChild(highlight_.get());
+        // change owner if size changed between 0 and non-zero
+        if (followOri)
+        {
+          if (prefs.circlehilightsize() == 0.0 && lastPrefs_.circlehilightsize() != 0.0)
+          {
+            model_->removeFixedScaledChild(highlight_.get());
+            model_->addScaledChild(highlight_.get());
+          }
+          else if (prefs.circlehilightsize() != 0.0 && lastPrefs_.circlehilightsize() == 0.0)
+          {
+            model_->removeScaledChild(highlight_.get());
+            model_->addFixedScaledChild(highlight_.get());
+          }
+        }
+        else
+        {
+          if ((prefs.circlehilightsize() == 0.0) && fixedScaledInertialTransform_.valid())
+          {
+            model_->removeFixedScaledChild(fixedScaledInertialTransform_.get());
+            fixedScaledInertialTransform_ = nullptr;
+            scaledInertialTransform_->addChild(highlight_.get());
+          }
+          else if ((prefs.circlehilightsize() != 0.0) && !fixedScaledInertialTransform_.valid())
+          {
+            scaledInertialTransform_->removeChild(highlight_.get());
 
-        fixedScaledInertialTransform_ = new PlatformInertialTransform;
-        fixedScaledInertialTransform_->setLocator(getLocator());
-        model_->addFixedScaledChild(fixedScaledInertialTransform_.get());
-        fixedScaledInertialTransform_->addChild(highlight_.get());
+            fixedScaledInertialTransform_ = new PlatformInertialTransform;
+            fixedScaledInertialTransform_->setLocator(getLocator());
+            model_->addFixedScaledChild(fixedScaledInertialTransform_.get());
+            fixedScaledInertialTransform_->addChild(highlight_.get());
+          }
+        }
       }
-
+      highlight_->setAutoRotate(!followOri);
       highlight_->setShape(prefs.circlehilightshape());
     }
 
@@ -1037,15 +1110,24 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
   }
   else if (highlight_.valid()) // remove if present
   {
-    if (fixedScaledInertialTransform_.valid())
+    if (followOri)
     {
-      fixedScaledInertialTransform_->removeChild(highlight_.get());
-      model_->removeFixedScaledChild(fixedScaledInertialTransform_.get());
-      fixedScaledInertialTransform_ = nullptr;
+      if (prefs.circlehilightsize() == 0.0)
+        model_->removeScaledChild(highlight_.get());
+      else
+        model_->removeFixedScaledChild(highlight_.get());
     }
     else
-      scaledInertialTransform_->removeChild(highlight_.get());
-
+    {
+      if (fixedScaledInertialTransform_.valid())
+      {
+        fixedScaledInertialTransform_->removeChild(highlight_.get());
+        model_->removeFixedScaledChild(fixedScaledInertialTransform_.get());
+        fixedScaledInertialTransform_ = nullptr;
+      }
+      else
+        scaledInertialTransform_->removeChild(highlight_.get());
+    }
     highlight_ = nullptr;
   }
 }
