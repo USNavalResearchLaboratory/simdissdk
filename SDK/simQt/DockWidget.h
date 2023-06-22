@@ -336,9 +336,9 @@ private:
   /** Returns the current path for simQt::Settings, or QSettings if simQt::Settings is unavailable */
   QString path_() const;
 
-  // Install an event filter to capture drag events on the tab button when this widget is docked over or under other dock widgets
+  /** Install an event filter to capture drag events on the tab button when this widget is docked over or under other dock widgets */
   void installTabEventFilter_(QTabBar* tabBar);
-  // Uninstall the event filter capturing drag events on tab buttons
+  /** Uninstall the event filter capturing drag events on tab buttons */
   void uninstallTabEventFilter_();
 
   QToolButton* restoreButton_;

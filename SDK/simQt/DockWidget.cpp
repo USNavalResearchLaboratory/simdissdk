@@ -206,102 +206,102 @@ public:
 
   bool eventFilter(QObject* object, QEvent* event)
   {
-    if (object == tabBar_)
+    if (object != tabBar_)
+      return false;
+
+    if (event->type() == QEvent::DragEnter)
     {
-      if (event->type() == QEvent::DragEnter)
+      QDragEnterEvent* dragEvt = dynamic_cast<QDragEnterEvent*>(event);
+      if (!dragEvt)
+        return false;
+
+      // Don't interfere with moving the dock widget between tabs
+      if (dragEvt->dropAction() == Qt::MoveAction)
+        return false;
+
+      bool evtConsumed = false;
+      int tabIndex = tabBar_->tabAt(dragEvt->pos());
+      QString tabName = tabBar_->tabText(tabIndex);
+
+      if (tabIndex < 0)
       {
-        QDragEnterEvent* dragEvt = dynamic_cast<QDragEnterEvent*>(event);
-        if (!dragEvt)
-          return false;
-
-        // Don't interfere with moving the dock widget between tabs
-        if (dragEvt->dropAction() == Qt::MoveAction)
-          return false;
-
-        bool evtConsumed = false;
-        int tabIndex = tabBar_->tabAt(dragEvt->pos());
-        QString tabName = tabBar_->tabText(tabIndex);
-
-        if (tabIndex < 0)
+        // Drags over empty portions of the tab bar should be ignored
+        dragEvt->setDropAction(Qt::IgnoreAction);
+      }
+      else if (tabName == dockWidget_.windowTitle())
+      {
+        // Set the event ignored, but only to determine if the dock widget can accept it. The event is accepted later anyway
+        dragEvt->ignore();
+        dockWidget_.dragEnterEvent(dragEvt);
+        if (dragEvt->isAccepted())
         {
-          // Drags over empty portions of the tab bar should be ignored
+          evtConsumed = true;
+        }
+        else
+        {
+          // Drop action needs to be set to ignore so that the drag image correctly shows a block icon to show it can't currently be dropped
           dragEvt->setDropAction(Qt::IgnoreAction);
         }
-        else if (tabName == dockWidget_.windowTitle())
-        {
-          // Set the event ignored, but only to determine if the dock widget can accept it. The event is accepted later anyway
-          dragEvt->ignore();
-          dockWidget_.dragEnterEvent(dragEvt);
-          if (dragEvt->isAccepted())
-          {
-            evtConsumed = true;
-          }
-          else
-          {
-            // Drop action needs to be set to ignore so that the drag image correctly shows a block icon to show it can't currently be dropped
-            dragEvt->setDropAction(Qt::IgnoreAction);
-          }
-        }
-
-        // Drag enter event needs to be accepted in order to receive drag move events later
-        dragEvt->accept();
-
-        prevTab_ = tabName;
-        return evtConsumed;
       }
 
-      else if (event->type() == QEvent::DragMove)
+      // Drag enter event needs to be accepted in order to receive drag move events later
+      dragEvt->accept();
+
+      prevTab_ = tabName;
+      return evtConsumed;
+    }
+
+    else if (event->type() == QEvent::DragMove)
+    {
+      // Most of the time only drag enter matters. Here, because the events are on a tab bar,
+      // we need to listen to moves in case the drag moves from one tab to another
+      QDragMoveEvent* dragEvt = dynamic_cast<QDragMoveEvent*>(event);
+      if (!dragEvt)
+        return false;
+
+      // Don't interfere with moving the dock widget between tabs
+      if (dragEvt->dropAction() == Qt::MoveAction)
+        return false;
+
+      QString thisTitle = dockWidget_.windowTitle();
+      int mouseIndex = tabBar_->tabAt(dragEvt->pos());
+      QString mouseTitle = tabBar_->tabText(mouseIndex);
+
+      // Nothing to do if the mouse isn't over this widget's tab or the move remained over the same tab
+      if (prevTab_ == thisTitle || mouseTitle != thisTitle)
       {
-        // Most of the time only drag enter matters. Here, because the events are on a tab bar,
-        // we need to listen to moves in case the drag moves from one tab to another
-        QDragMoveEvent* dragEvt = dynamic_cast<QDragMoveEvent*>(event);
-        if (!dragEvt)
-          return false;
-
-        // Don't interfere with moving the dock widget between tabs
-        if (dragEvt->dropAction() == Qt::MoveAction)
-          return false;
-
-        QString thisTitle = dockWidget_.windowTitle();
-        int mouseIndex = tabBar_->tabAt(dragEvt->pos());
-        QString mouseTitle = tabBar_->tabText(mouseIndex);
-
-        // Nothing to do if the mouse isn't over this widget's tab or the move remained over the same tab
-        if (prevTab_ == thisTitle || mouseTitle != thisTitle)
-        {
-          prevTab_ = mouseTitle;
-          if (mouseIndex < 0)
-            dragEvt->setDropAction(Qt::IgnoreAction);
-          return false;
-        }
-
-        // Construct a drag enter event from the drag move and pass it to our dock widget
-        QDragEnterEvent simulatedEvent(dragEvt->pos(), dragEvt->possibleActions(), dragEvt->mimeData(), dragEvt->mouseButtons(), dragEvt->keyboardModifiers());
-        simulatedEvent.ignore();
-        dockWidget_.dragEnterEvent(&simulatedEvent);
-
         prevTab_ = mouseTitle;
-        dragEvt->setAccepted(simulatedEvent.isAccepted());
-        return simulatedEvent.isAccepted();
+        if (mouseIndex < 0)
+          dragEvt->setDropAction(Qt::IgnoreAction);
+        return false;
       }
-      else if (event->type() == QEvent::DragLeave)
-      {
-        prevTab_ = "";
-      }
-      else if (event->type() == QEvent::Drop)
-      {
-        QDropEvent* dropEvt = dynamic_cast<QDropEvent*>(event);
-        if (!dropEvt || tabBar_->tabText(tabBar_->tabAt(dropEvt->pos())) != dockWidget_.windowTitle())
-          return false;
 
-        // Don't interfere with moving the dock widget between tabs
-        if (dropEvt->dropAction() == Qt::MoveAction)
-          return false;
+      // Construct a drag enter event from the drag move and pass it to our dock widget
+      QDragEnterEvent simulatedEvent(dragEvt->pos(), dragEvt->possibleActions(), dragEvt->mimeData(), dragEvt->mouseButtons(), dragEvt->keyboardModifiers());
+      simulatedEvent.ignore();
+      dockWidget_.dragEnterEvent(&simulatedEvent);
 
-        dockWidget_.dropEvent(dropEvt);
-        prevTab_ = "";
-        return dropEvt->isAccepted();
-      }
+      prevTab_ = mouseTitle;
+      dragEvt->setAccepted(simulatedEvent.isAccepted());
+      return simulatedEvent.isAccepted();
+    }
+    else if (event->type() == QEvent::DragLeave)
+    {
+      prevTab_ = "";
+    }
+    else if (event->type() == QEvent::Drop)
+    {
+      QDropEvent* dropEvt = dynamic_cast<QDropEvent*>(event);
+      if (!dropEvt || tabBar_->tabText(tabBar_->tabAt(dropEvt->pos())) != dockWidget_.windowTitle())
+        return false;
+
+      // Don't interfere with moving the dock widget between tabs
+      if (dropEvt->dropAction() == Qt::MoveAction)
+        return false;
+
+      dockWidget_.dropEvent(dropEvt);
+      prevTab_ = "";
+      return dropEvt->isAccepted();
     }
 
     return false;
@@ -316,7 +316,7 @@ public:
 
 private:
   DockWidget& dockWidget_;
-  QTabBar* tabBar_;
+  QTabBar* tabBar_ = nullptr;
   QString prevTab_;
 };
 
