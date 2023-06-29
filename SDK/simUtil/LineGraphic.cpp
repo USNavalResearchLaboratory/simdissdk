@@ -120,6 +120,7 @@ void LineGraphic::set(const simCore::Vec3& originLLA, const simCore::Vec3& desti
     {
       // Turn off label if no text provided
       label_->setNodeMask(simVis::DISPLAY_MASK_NONE);
+      label_->setText("");
     }
     else
     {
@@ -155,7 +156,7 @@ bool LineGraphic::isDrawn() const
 void LineGraphic::setDraw(bool draw)
 {
   animatedLine_->setNodeMask(draw ? displayMask_ : simVis::DISPLAY_MASK_NONE);
-  label_->setNodeMask(draw ? displayMask_ : simVis::DISPLAY_MASK_NONE);
+  label_->setNodeMask((draw && !label_->text().empty()) ? displayMask_ : simVis::DISPLAY_MASK_NONE);
 }
 
 void LineGraphic::setDisplayMask(int displayMask)
