@@ -994,8 +994,8 @@ void PlatformNode::updateOrRemoveEphemerisVector_(bool prefsDraw, const simData:
 
 void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData::PlatformPrefs& prefs)
 {
-  // TODO: pulsing circle should never rotate with platform SIM-15467
-  bool rotateWithPlatform = prefs.hilightfolloworientation();
+  // pulsing circle shape never rotates with platform
+  const bool rotateWithPlatform = prefs.hilightfolloworientation() && prefs.circlehilightshape() != simData::CH_PULSING_CIRCLE;
   if (prefsDraw && prefs.drawcirclehilight())
   {
     if (!highlight_.valid())
@@ -1028,8 +1028,9 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
     }
     else if (lastPrefsValid_)
     {
+      const bool lastRotateWithPlatform = lastPrefs_.hilightfolloworientation() && lastPrefs_.circlehilightshape() != simData::CH_PULSING_CIRCLE;
       // See if the owner of highlight needs to switch
-      if (PB_FIELD_CHANGED((&lastPrefs_), (&prefs), hilightfolloworientation))
+      if (rotateWithPlatform != lastRotateWithPlatform)
       {
         // change owner if rotate was toggled
         if (rotateWithPlatform)
