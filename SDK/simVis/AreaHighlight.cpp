@@ -21,7 +21,6 @@
  *
  */
 #include <cassert>
-#include "osg/AutoTransform"
 #include "osg/BlendFunc"
 #include "osg/Depth"
 #include "osg/Geometry"
@@ -265,10 +264,13 @@ void LineDrawableHighlightNode::init_()
   stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
 
   // Billboard the shape
-  billboard_ = new osg::AutoTransform();
+  billboard_ = new simVis::BillboardAutoTransform();
   billboard_->setName("Line Drawable Billboard");
   billboard_->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
+  billboard_->setRotateInScreenSpace(true);
   billboard_->setAutoScaleToScreen(false);
+  billboard_->setRotation(osg::Quat());
+
   addChild(billboard_.get());
 
   // Need some shape to start
@@ -417,13 +419,23 @@ void LineDrawableHighlightNode::setRadius(float radius)
 
 void LineDrawableHighlightNode::setAutoRotate(bool autoRotate)
 {
+  if (autoRotate_ == autoRotate)
+    return;
   autoRotate_ = autoRotate;
   if (autoRotate_ && billboard_->getAutoRotateMode() != osg::AutoTransform::ROTATE_TO_SCREEN)
     billboard_->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
   else if (!autoRotate_ && billboard_->getAutoRotateMode() != osg::AutoTransform::NO_ROTATION)
     billboard_->setAutoRotateMode(osg::AutoTransform::NO_ROTATION);
+  // update screen space rotation if auto rotate changed
+  billboard_->setScreenSpaceRotation(autoRotate_ ? 0. : rotateRad_);
 }
 
+void LineDrawableHighlightNode::setScreenRotation(float rotateRad)
+{
+  rotateRad_ = rotateRad;
+  if (!autoRotate_)
+    billboard_->setScreenSpaceRotation(rotateRad_);
+}
 
 // --------------------------------------------------------------------------
 
@@ -515,6 +527,7 @@ void CompositeHighlightNode::setShape(simData::CircleHilightShape shape)
   child_->setAutoRotate(autoRotate_);
   child_->setRadius(radius_);
   child_->setColor(rgba_);
+  child_->setScreenRotation(rotateRad_);
 }
 
 void CompositeHighlightNode::setColor(const osg::Vec4f& rgba)
@@ -542,6 +555,13 @@ void CompositeHighlightNode::setAutoRotate(bool autoRotate)
   autoRotate_ = autoRotate;
   if (child_.valid())
     child_->setAutoRotate(autoRotate);
+}
+
+void CompositeHighlightNode::setScreenRotation(float yawRad)
+{
+  rotateRad_ = yawRad;
+  if (child_.valid())
+    child_->setScreenRotation(rotateRad_);
 }
 
 } //namespace simVis

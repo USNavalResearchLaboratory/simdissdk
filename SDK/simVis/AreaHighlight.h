@@ -29,9 +29,9 @@
 #include "osg/Vec4f"
 #include "simCore/Common/Common.h"
 #include "simData/DataStore.h"
+#include "simVis/BillboardAutoTransform.h"
 
 namespace osg {
-  class AutoTransform;
   class Uniform;
 }
 namespace osgEarth {
@@ -54,8 +54,10 @@ public:
   virtual void setColor(const osg::Vec4f& rgba) = 0;
   /** Changes the radius of the highlight in meters */
   virtual void setRadius(float radius) = 0;
-  /** Set the shape to rotate to screen */
+  /** Set the shape to always face the screen  */
   virtual void setAutoRotate(bool autoRotate) = 0;
+  /** Set the shape's rotation in screen space, in radians; only used if auto rotate is false */
+  virtual void setScreenRotation(float rotateRad) = 0;
 
   // From osg::Node:
   virtual const char* libraryName() const { return "simVis"; }
@@ -79,6 +81,7 @@ public:
   virtual void setColor(const osg::Vec4f& rgba);
   virtual void setRadius(float radius);
   virtual void setAutoRotate(bool autoRotate) {}
+  virtual void setScreenRotation(float yawRad) {}
 
 protected:
   /// osg::Referenced-derived
@@ -116,6 +119,7 @@ public:
   virtual void setColor(const osg::Vec4f& rgba);
   virtual void setRadius(float radius);
   virtual void setAutoRotate(bool autoRotate);
+  virtual void setScreenRotation(float rotateRad);
 
 protected:
   /// osg::Referenced-derived
@@ -127,9 +131,10 @@ private:
   /// Reset the number of lines, clear them, and set the mode
   void resetLines_(size_t newLineCount, int glMode);
 
-  osg::ref_ptr<osg::AutoTransform> billboard_;
+  osg::ref_ptr<simVis::BillboardAutoTransform> billboard_;
   std::vector<osg::ref_ptr<osgEarth::LineDrawable> > lines_;
   bool autoRotate_ = true;
+  float rotateRad_ = 0.;
 };
 
 /// Choose between different highlight nodes based on an enum
@@ -148,6 +153,7 @@ public:
   virtual void setColor(const osg::Vec4f& rgba);
   virtual void setRadius(float radius);
   virtual void setAutoRotate(bool autoRotate);
+  virtual void setScreenRotation(float rotateRad);
 
 protected:
   /// osg::Referenced-derived
@@ -158,7 +164,8 @@ private:
   simData::CircleHilightShape shape_;
   osg::Vec4f rgba_;
   float radius_;
-  bool autoRotate_ = false;
+  bool autoRotate_ = true;
+  float rotateRad_ = 0.;
 };
 
 } // namespace simVis
