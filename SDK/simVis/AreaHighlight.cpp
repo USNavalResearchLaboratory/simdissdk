@@ -422,10 +422,7 @@ void LineDrawableHighlightNode::setAutoRotate(bool autoRotate)
   if (autoRotate_ == autoRotate)
     return;
   autoRotate_ = autoRotate;
-  if (autoRotate_ && billboard_->getAutoRotateMode() != osg::AutoTransform::ROTATE_TO_SCREEN)
-    billboard_->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
-  else if (!autoRotate_ && billboard_->getAutoRotateMode() != osg::AutoTransform::NO_ROTATION)
-    billboard_->setAutoRotateMode(osg::AutoTransform::NO_ROTATION);
+    billboard_->setAutoRotateMode(autoRotate ? osg::AutoTransform::ROTATE_TO_SCREEN : osg::AutoTransform::NO_ROTATION);
   // update screen space rotation if auto rotate changed
   billboard_->setScreenSpaceRotation(autoRotate_ ? 0. : rotateRad_);
 }
