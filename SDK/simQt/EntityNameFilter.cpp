@@ -92,6 +92,11 @@ void EntityNameFilter::bindToWidget(EntityFilterLineEdit* widget)
   widget_ = widget;
   if (widget_ == nullptr)
     return;
+
+  // sync the widget to the current regExp
+  ScopedSignalBlocker block(*widget_);
+  widget_->configure(QString::fromStdString(regExp_->pattern()), static_cast<Qt::CaseSensitivity>(regExp_->caseSensitivity()), static_cast<QRegExp::PatternSyntax>(regExp_->patternSyntax()));
+
   connect(widget_, SIGNAL(changed(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)), this, SLOT(setRegExpAttributes_(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)));
 }
 
