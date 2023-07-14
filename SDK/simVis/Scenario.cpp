@@ -520,6 +520,7 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   OverrideColor::installShaderProgram(stateSet);
   PolygonStipple::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
+  stateSet->getOrCreateUniform(SCENE_RENDER_STAGE_UNIFORM, osg::Uniform::INT)->set(SCENE_RENDER_STAGE_GLOBAL);
 
   scenarioEciLocator_ = new Locator();
 }

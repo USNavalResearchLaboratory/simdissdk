@@ -482,6 +482,8 @@ void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
     else
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
 
+    modelStateSet->getOrCreateUniform(SCENE_RENDER_STAGE_UNIFORM, osg::Uniform::INT)->set(SCENE_RENDER_STAGE_PLATFORM_MODEL);
+
     // re-add to the parent groups
     offsetXform_->addChild(model_.get());
     alphaVolumeGroup_->addChild(model_.get());
