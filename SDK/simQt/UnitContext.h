@@ -117,23 +117,23 @@ public Q_SLOTS:
   virtual void setDatumConvert(simCore::DatumConvertPtr convert);
 
 private:
-  simCore::TimeFormat timeFormat_;
-  unsigned int timePrecision_;
-  simCore::GeodeticFormat geodeticFormat_;
-  unsigned int geodeticPrecision_;
-  simCore::Units distanceUnits_;
-  unsigned int distancePrecision_;
-  simCore::Units altitudeUnits_;
-  unsigned int altitudePrecision_;
-  simCore::Units angleUnits_;
-  unsigned int anglePrecision_;
-  simCore::Units speedUnits_;
-  unsigned int speedPrecision_;
-  unsigned int genericPrecision_;
-  simCore::CoordinateSystem coordinateSystem_;
-  simCore::MagneticVariance magneticVariance_;
-  simCore::VerticalDatum verticalDatum_;
-  int referenceYear_;
+  simCore::TimeFormat timeFormat_ = simCore::TIMEFORMAT_MONTHDAY;
+  unsigned int timePrecision_ = 1u;
+  simCore::GeodeticFormat geodeticFormat_ = simCore::FMT_DEGREES_MINUTES;
+  unsigned int geodeticPrecision_ = 6u;
+  simCore::Units distanceUnits_ = simCore::Units::METERS;
+  unsigned int distancePrecision_ = 3u;
+  simCore::Units altitudeUnits_ = simCore::Units::METERS;
+  unsigned int altitudePrecision_ = 3u;
+  simCore::Units angleUnits_ = simCore::Units::DEGREES;
+  unsigned int anglePrecision_ = 3u;
+  simCore::Units speedUnits_ = simCore::Units::METERS_PER_SECOND;
+  unsigned int speedPrecision_ = 3u;
+  unsigned int genericPrecision_ = 3u;
+  simCore::CoordinateSystem coordinateSystem_ = simCore::COORD_SYS_LLA;
+  simCore::MagneticVariance magneticVariance_ = simCore::MAGVAR_TRUE;
+  simCore::VerticalDatum verticalDatum_ = simCore::VERTDATUM_WGS84;
+  int referenceYear_ = 1970;
   simCore::DatumConvertPtr datumConvert_;
 };
 
