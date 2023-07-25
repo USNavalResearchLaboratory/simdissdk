@@ -685,4 +685,56 @@ void NgtsNavigationMode::initPerspective_()
   bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON, 0, RotateOptions());
 }
 
+// ==========================================================================
+
+JdsNavigationMode::JdsNavigationMode(simVis::View* view, bool enableOverhead, bool watchMode)
+{
+  init_(view, enableOverhead, watchMode);
+}
+
+JdsNavigationMode::~JdsNavigationMode()
+{
+  if (view_.valid() && boxZoom_.valid())
+    view_->removeEventHandler(boxZoom_);
+}
+
+void JdsNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watchMode)
+{
+  view_ = view;
+  const bool canRotate = !watchMode && !enableOverhead;
+  const bool canZoom = !watchMode;
+
+  // Middle mouse
+  bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON);
+
+  // left mouse + shift => box zoom (done with an external event handler)
+  if (canZoom && view_.valid())
+  {
+    EarthManipulator::ActionOptions boxZoomOpts;
+    boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
+    boxZoomOpts.add(EarthManipulator::OPTION_DURATION, 1.0);
+    boxZoom_ = new BoxZoomMouseHandler(boxZoomOpts);
+    // can't use alt + click, since that is stolen by some linux systems for window dragging
+    boxZoom_->setModKeyMask(osgGA::GUIEventAdapter::MODKEY_SHIFT);
+    view_->addEventHandler(boxZoom_);
+  }
+
+  if (canZoom)
+  {
+    // Scroll wheel
+    NavigationMode::FixedZoomOptions wheelDurationScale;
+    wheelDurationScale.add(EarthManipulator::OPTION_SCALE_Y, 0.4);
+    wheelDurationScale.add(EarthManipulator::OPTION_DURATION, 0.2);
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, 0, wheelDurationScale);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, 0, wheelDurationScale);
+  }
+
+  // Set min/max bounds
+  if (enableOverhead)
+    setMinMaxPitch(-90, -90);
+  else
+    setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
+  bindMultiTouch_(canZoom, canRotate);
+}
+
 }
