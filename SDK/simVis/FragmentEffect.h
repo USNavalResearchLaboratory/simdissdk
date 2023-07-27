@@ -24,6 +24,7 @@
 #define SIMVIS_FRAGMENTEFFECT_H
 
 #include "osg/Referenced"
+#include "osg/Vec4f"
 #include "simCore/Common/Common.h"
 #include "simData/DataTypes.h"
 
@@ -41,7 +42,7 @@ class SDKVIS_EXPORT FragmentEffect : public osg::Referenced
 {
 public:
   /** Changes the fragment effect value on the given state set. Must have called installShader() on a node at/above this level in scene. */
-  static void set(osg::StateSet& stateSet, simData::FragmentEffect effect);
+  static void set(osg::StateSet& stateSet, simData::FragmentEffect effect, const osg::Vec4f& color);
 
   /** Installs the shader program and sets the defaults on the given state set. This can be done at a high level in the scene. */
   static void installShaderProgram(osg::StateSet& stateSet);

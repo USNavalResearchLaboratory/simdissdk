@@ -30,10 +30,13 @@ namespace simVis
 
 /** Name of the uniform to edit when changing the fragment effect */
 static const std::string FRAGEFFECT_UNIFORM = "svfe_effect";
+/** Name of uniform for the color associated with the effect */
+static const std::string FRAGCOLOR_UNIFORM = "svfe_color";
 
-void FragmentEffect::set(osg::StateSet& stateSet, simData::FragmentEffect effect)
+void FragmentEffect::set(osg::StateSet& stateSet, simData::FragmentEffect effect, const osg::Vec4f& color)
 {
   stateSet.getOrCreateUniform(FRAGEFFECT_UNIFORM, osg::Uniform::INT)->set(effect);
+  stateSet.getOrCreateUniform(FRAGCOLOR_UNIFORM, osg::Uniform::FLOAT_VEC4)->set(color);
 }
 
 void FragmentEffect::installShaderProgram(osg::StateSet& stateSet)
@@ -42,8 +45,8 @@ void FragmentEffect::installShaderProgram(osg::StateSet& stateSet)
   simVis::Shaders shaders;
   shaders.load(vp, shaders.fragmentEffect());
 
-  // Set a default value of off
-  FragmentEffect::set(stateSet, simData::FE_NONE);
+  // Set a default value of off and white, matching protobuf settings
+  FragmentEffect::set(stateSet, simData::FE_NONE, osg::Vec4f(1.f, 1.f, 1.f, 1.f));
 }
 
 }

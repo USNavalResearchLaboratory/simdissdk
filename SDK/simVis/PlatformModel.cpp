@@ -992,9 +992,11 @@ void PlatformModelNode::updateFragmentEffect_(const simData::PlatformPrefs& pref
   if (!model_.valid())
     return;
   if (lastPrefsValid_ &&
-    !PB_FIELD_CHANGED(&lastPrefs_, &prefs, fragmenteffect))
+    !PB_FIELD_CHANGED(&lastPrefs_, &prefs, fragmenteffect) &&
+    !PB_FIELD_CHANGED(&lastPrefs_, &prefs, fragmenteffectcolor))
     return;
-  simVis::FragmentEffect::set(*offsetXform_->getOrCreateStateSet(), prefs.fragmenteffect());
+  const simVis::Color frColor(prefs.fragmenteffectcolor(), simVis::Color::RGBA);
+  simVis::FragmentEffect::set(*offsetXform_->getOrCreateStateSet(), prefs.fragmenteffect(), frColor);
 }
 
 void PlatformModelNode::updateDofTransform_(const simData::PlatformPrefs& prefs, bool force) const

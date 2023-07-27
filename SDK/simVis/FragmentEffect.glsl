@@ -27,48 +27,114 @@ const vec4 SVFE_GLOW_COLOR = vec4(1.0, 1.0, 1.0, 1.0);
 const float SVFE_FLASH_VISIBLE = 0.6;
 const float SVFE_FLASH_HIDDEN = SVFE_FLASH_VISIBLE;
 
-// Input effect
+// Input effect and color
 uniform int svfe_effect;
+uniform vec4 svfe_color;
 
 // OSG built-in for frame time
 uniform float osg_FrameTime;
 
-void sim_frageffect_fs(inout vec4 color)
+void svfe_forward_stripe(inout vec4 color)
 {
-  if (svfe_effect == SVFE_NONE) {
-    return;
-  } else if (svfe_effect == SVFE_FORWARD_STRIPE) {
-    if (mod(gl_FragCoord.x * 0.5 - gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
-      discard;
-  } else if (svfe_effect == SVFE_BACKWARD_STRIPE) {
-    if (mod(gl_FragCoord.x * 0.5 + gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
-      discard;
-  } else if (svfe_effect == SVFE_HORIZONTAL_STRIPE) {
-    if (mod(gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
-      discard;
-  } else if (svfe_effect == SVFE_VERTICAL_STRIPE) {
-    if (mod(gl_FragCoord.x, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
-      discard;
-  } else if (svfe_effect == SVFE_CHECKERBOARD) {
-    if (mod(gl_FragCoord.x, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX || mod(gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
-      discard;
-  } else if (svfe_effect == SVFE_DIAMOND) {
-    // Combine forward and backward stripe
-    if (mod(gl_FragCoord.x * 0.5 - gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX ||
-      mod(gl_FragCoord.x * 0.5 + gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
-      discard;
-  } else if (svfe_effect == SVFE_GLOW) {
-    float glowPct = sin(osg_FrameTime * SVFE_GLOW_PERIOD);
-    // 0.2 increases the base color from black to white; increase this to make the cycles
-    //   seem brighter in contrast to the black on the low end
-    // 0.4 increases the amplitude of color range; increase this to make the colors vary
-    //   more wildly (both towards white and towards black), or lower it to make the
-    //   blink seem more muted, closer to the original color
-    color.rgb += 0.2 + 0.4 * glowPct;
-    color *= SVFE_GLOW_COLOR;
-  } else if (svfe_effect == SVFE_FLASH) {
-    float flashPeriod = mod(osg_FrameTime, SVFE_FLASH_VISIBLE + SVFE_FLASH_HIDDEN);
-    if (flashPeriod > SVFE_FLASH_VISIBLE)
+  if (mod(gl_FragCoord.x * 0.5 - gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  {
+    color = vec4(svfe_color.rgb, svfe_color.a * color.a);
+    if (color.a <= 0.0)
       discard;
   }
+}
+
+void svfe_backward_stripe(inout vec4 color)
+{
+  if (mod(gl_FragCoord.x * 0.5 + gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  {
+    color = vec4(svfe_color.rgb, svfe_color.a * color.a);
+    if (color.a <= 0.0)
+      discard;
+  }
+}
+
+void svfe_horizontal_stripe(inout vec4 color)
+{
+  if (mod(gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  {
+    color = vec4(svfe_color.rgb, svfe_color.a * color.a);
+    if (color.a <= 0.0)
+      discard;
+  }
+}
+
+void svfe_vertical_stripe(inout vec4 color)
+{
+  if (mod(gl_FragCoord.x, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  {
+    color = vec4(svfe_color.rgb, svfe_color.a * color.a);
+    if (color.a <= 0.0)
+      discard;
+  }
+}
+
+void svfe_checkerboard(inout vec4 color)
+{
+  if (mod(gl_FragCoord.x, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX || mod(gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  {
+    color = vec4(svfe_color.rgb, svfe_color.a * color.a);
+    if (color.a <= 0.0)
+      discard;
+  }
+}
+
+void svfe_diamond(inout vec4 color)
+{
+  // Combine forward and backward stripe
+  if (mod(gl_FragCoord.x * 0.5 - gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX ||
+      mod(gl_FragCoord.x * 0.5 + gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  {
+    color = vec4(svfe_color.rgb, svfe_color.a * color.a);
+    if (color.a <= 0.0)
+      discard;
+  }
+}
+
+void svfe_glow(inout vec4 color)
+{
+  float glowPct = sin(osg_FrameTime * SVFE_GLOW_PERIOD);
+  // 0.2 increases the base color from black to white; increase this to make the cycles
+  //   seem brighter in contrast to the black on the low end
+  // 0.4 increases the amplitude of color range; increase this to make the colors vary
+  //   more wildly (both towards white and towards black), or lower it to make the
+  //   blink seem more muted, closer to the original color
+  color.rgb += 0.2 + 0.4 * glowPct;
+
+  // Do not apply user color here. Multiplication of user color could result in unusable
+  // colors that mimic override color. Instead consider adding color values.
+}
+
+void svfe_flash(inout vec4 color)
+{
+  float flashPeriod = mod(osg_FrameTime, SVFE_FLASH_VISIBLE + SVFE_FLASH_HIDDEN);
+  if (flashPeriod > SVFE_FLASH_VISIBLE)
+    discard;
+}
+
+void sim_frageffect_fs(inout vec4 color)
+{
+  if (svfe_effect == SVFE_NONE)
+    return;
+  else if (svfe_effect == SVFE_FORWARD_STRIPE)
+    svfe_forward_stripe(color);
+  else if (svfe_effect == SVFE_BACKWARD_STRIPE)
+    svfe_backward_stripe(color);
+  else if (svfe_effect == SVFE_HORIZONTAL_STRIPE)
+    svfe_horizontal_stripe(color);
+  else if (svfe_effect == SVFE_VERTICAL_STRIPE)
+    svfe_vertical_stripe(color);
+  else if (svfe_effect == SVFE_CHECKERBOARD)
+    svfe_checkerboard(color);
+  else if (svfe_effect == SVFE_DIAMOND)
+    svfe_diamond(color);
+  else if (svfe_effect == SVFE_GLOW)
+    svfe_glow(color);
+  else if (svfe_effect == SVFE_FLASH)
+    svfe_flash(color);
 }
