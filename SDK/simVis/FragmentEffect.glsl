@@ -1,7 +1,7 @@
 #version $GLSL_VERSION_STR
 
 #pragma vp_entryPoint sim_frageffect_fs
-#pragma vp_location fragment_coloring
+#pragma vp_location fragment_lighting
 #pragma vp_order 4.0
 
 // Local copy of simData constants to determine which mode to use
