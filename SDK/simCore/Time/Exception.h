@@ -29,24 +29,28 @@
 namespace simCore
 {
   /** @brief Handles time input/output errors */
-  class TimeException : public simCore::Exception
+  class TimeException : public std::exception
   {
   public:
     int id;                   /**< TimeException identifier. */
     std::string description;  /**< TimeException description. */
+
     /// TimeException constructor
     /** Creates time exception handle.
     * @param[in ] ident An integer containing the exception identifier.
     * @param[in ] desc A string containing the description of the exception.
     */
     TimeException(int ident, const std::string& desc)
-      : simCore::Exception("", desc, 0)
+      : id(ident),
+      description(desc)
     {
-      addName_();
-      id = ident;
-      description = desc;
     }
     virtual ~TimeException() throw() {}
+
+    virtual const char* what() const noexcept
+    {
+      return description.c_str();
+    }
   };
 } // simCore namespace
 
