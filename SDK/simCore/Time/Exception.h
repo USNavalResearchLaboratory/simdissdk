@@ -24,7 +24,6 @@
 #define SIMCORE_TIME_EXCEPTION_H
 
 #include <string>
-#include "simCore/Common/Exception.h"
 
 namespace simCore
 {

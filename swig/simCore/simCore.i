@@ -4,6 +4,7 @@
 
 %{
 
+#include "simCore/Common/Exception.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Coordinate.h"

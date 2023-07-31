@@ -27,6 +27,7 @@
 
 #include "simCore/Calc/Math.h"
 #include "simCore/Time/Exception.h"
+#include "simCore/Time/String.h"
 #include "simCore/Time/Utils.h"
 #include "simQt/SegmentedTexts.h"
 
