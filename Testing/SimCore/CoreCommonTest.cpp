@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <cmath>
 #include <stdexcept>
+#include "simCore/Common/Exception.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/SDKAssert.h"
 
@@ -69,8 +70,7 @@ int testVersion()
 int testException()
 {
   int rv = 0;
-  // Create 3 classes of exceptions: simCore one, STD one, and Unknown one
-  SIMCORE_EXCEPTION(simCoreException);
+  // Create 2 classes of exceptions: STD one, and Unknown one
   class StdException : public std::logic_error
   {
   public:
@@ -82,18 +82,8 @@ int testException()
     UnknownException() {}
   };
   // Throw each exception using the SAFETRYBEGIN/SAFETRYEND syntax (use SAFETRYCATCH to macro this)
-  SAFETRYCATCH(throw SIMCORE_MAKE_EXCEPTION(simCoreException, "Purposefully thrown"), "and successfully caught");
   SAFETRYCATCH(throw StdException("Purposefully thrown"), "and successfully caught");
   SAFETRYCATCH(throw UnknownException(), "and successfully caught");
-
-  // Test various features of the new exception class
-  simCoreException ex("File.cpp", "Reason", 100);
-  std::string what = ex.what();
-  rv += SDK_ASSERT(what.find("Reason") != std::string::npos);
-  rv += SDK_ASSERT(what.find("at line 100") != std::string::npos);
-  rv += SDK_ASSERT(what.find("File.cpp") != std::string::npos);
-  rv += SDK_ASSERT(ex.rawWhat() == "Reason");
-  rv += SDK_ASSERT(ex.line() == 100);
 
   return rv;
 }

@@ -31,6 +31,7 @@
 
 #include "simCore/Common/Version.h"
 #include "simCore/Time/ClockImpl.h"
+#include "simCore/Time/Utils.h"
 
 // the simulator provides time/space data for our platform
 #include "simUtil/PlatformSimulator.h"

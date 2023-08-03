@@ -20,7 +20,9 @@
  * disclose, or release this software.
  *
  */
+#include <iostream>
 #include <QApplication>
+#include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simQt/ConsoleDataModel.h"
 #include "simQt/ConsoleChannel.h"

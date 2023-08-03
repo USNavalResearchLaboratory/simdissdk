@@ -131,16 +131,6 @@ namespace simCore
 
   };
 
-#define SIMCORE_EXCEPTION(A) \
-  class A : public simCore::Exception \
-  { \
-  public: \
-  A (const char *file, const char *reason, int line=0) : simCore::Exception(file, reason, line) { addName_(); } \
-  A (const std::string& file, const std::string &reason, int line=0) : simCore::Exception(file, reason, line) { addName_(); } \
-  };
-
-#define SIMCORE_MAKE_EXCEPTION(C, REASON) C( "<" + std::string( __FILE__) + ">", REASON, __LINE__)
-
 #define SAFETRYBEGIN try \
   {
 #define SAFETRYEND(exceptionText) } \
@@ -159,16 +149,6 @@ namespace simCore
 #define SAFETRYCATCH(function, exceptionText) SAFETRYBEGIN; \
   function; \
   SAFETRYEND(exceptionText)
-
-  // use like:
-  //
-  // SIMCORE_EXCEPTION(InternalError)
-  // if (some condition)
-  //  throw(SIMCORE_MAKE_EXCEPTION(InternalError, "ErrorString")
-  // ...
-  // catch(InternalError &e)
-  // e.what() = "InternalError : <FILE> ErrorString
-
 
 } // namespace simCore
 

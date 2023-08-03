@@ -24,6 +24,7 @@
 /**
  * Very simple utility to read and display Platform tracks from an ASI file
  */
+#include "simNotify/Notify.h"
 #include "simData/MemoryDataStore.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
@@ -35,6 +36,7 @@
 #include "simCore/Time/Clock.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Time/String.h"
+#include "simCore/Time/Utils.h"
 #include "simVis/Platform.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"

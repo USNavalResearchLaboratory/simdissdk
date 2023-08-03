@@ -21,6 +21,7 @@
  *
  */
 #include "osgDB/ReadFile"
+#include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simData/MemoryDataStore.h"
