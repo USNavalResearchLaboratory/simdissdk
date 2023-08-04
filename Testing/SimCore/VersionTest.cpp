@@ -21,8 +21,8 @@
  *
  */
 #include <iostream>
+#include <stdexcept>
 #include "simCore/Common/SDKAssert.h"
-#include "simCore/Common/Exception.h"
 #include "simCore/Common/Version.h"
 
 int VersionTest(int argc, char* argv[])
@@ -34,7 +34,7 @@ int VersionTest(int argc, char* argv[])
   {
     simCore::checkVersionThrow();
   }
-  catch (const simCore::Exception&)
+  catch (const std::runtime_error&)
   {
     rv += 1;
     std::cerr << "VersionTest failed.  Compiled against version "

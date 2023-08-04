@@ -48,15 +48,15 @@ namespace simCore
     * @param[in ] reason A string providing additional information about the error.
     * @param[in ] line Line number on which the exception was thrown.
     */
-    Exception(const std::string& file="", const std::string &reason="None", int line=0)
+    Exception(const std::string& file = "", const std::string& reason = "None", int line = 0)
       : std::exception(),
-        err_(reason),
-        rawReason_(reason),
-        line_(line)
+      err_(reason),
+      rawReason_(reason),
+      line_(line)
     {
       time_ = simCore::getSystemTime();
       std::ostringstream str;
-      str << file << reason << " at line " <<line;
+      str << file << reason << " at line " << line;
       reason_ = str.str();
     }
 
@@ -73,7 +73,7 @@ namespace simCore
     * Get the string representing the type of error.
     * @return type of error on which the exception was thrown.
     */
-    virtual const char *what() const throw()
+    virtual const char* what() const throw()
     {
       return err_.c_str();
     }
@@ -103,18 +103,6 @@ namespace simCore
       return time_;
     }
 
-    /**
-    * Get the time stamp in ordinal string format of when the
-    * exception was thrown.
-    * @param time seconds since Jan 1 1970 that the exception occurred
-    * @return ordinal formatted time stamp when exception was thrown
-    */
-    static std::string timeStamp(double time)
-    {
-      simCore::OrdinalTimeFormatter ordinalFormatter;
-      return ordinalFormatter.toString(simCore::TimeStamp(1970, time), 1970, 2);
-    }
-
   protected:
     std::string reason_;    ///< A string providing additional information about the error.
     std::string err_;       ///< String representing the type of error
@@ -134,17 +122,15 @@ namespace simCore
 #define SAFETRYBEGIN try \
   {
 #define SAFETRYEND(exceptionText) } \
-  catch (simCore::Exception const& ex) \
-  { \
-  SIM_ERROR << "\n< SIMCORE EXC > " << simCore::Exception::timeStamp(ex.time()) << " The following exception was raised " << exceptionText << ":\n\t " << ex.what() << " (" << ex.line() << ")" << std::endl; \
-  } \
   catch (std::exception const& ex) \
   { \
-  SIM_ERROR << "\n< STD EXC > " << simCore::Exception::timeStamp(simCore::getSystemTime()) << " The following std exception was raised " << exceptionText << ":\n\t " << ex.what() << std::endl; \
+  simCore::OrdinalTimeFormatter ordinalFormatter; \
+  SIM_ERROR << "\n< STD EXC > " << ordinalFormatter.toString(simCore::TimeStamp(1970, simCore::getSystemTime()), 1970, 2) << " The following std exception was raised " << exceptionText << ":\n\t " << ex.what() << std::endl; \
   } \
   catch (...) \
   { \
-  SIM_ERROR << "\n< UNKNOWN EXC > " << simCore::Exception::timeStamp(simCore::getSystemTime()) << " An unexpected exception was raised " << exceptionText << "." << std::endl; \
+  simCore::OrdinalTimeFormatter ordinalFormatter; \
+  SIM_ERROR << "\n< UNKNOWN EXC > " << ordinalFormatter.toString(simCore::TimeStamp(1970, simCore::getSystemTime()), 1970, 2) << " An unexpected exception was raised " << exceptionText << "." << std::endl; \
   }
 #define SAFETRYCATCH(function, exceptionText) SAFETRYBEGIN; \
   function; \
