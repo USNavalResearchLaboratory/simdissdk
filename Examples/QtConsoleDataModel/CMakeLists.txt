@@ -19,6 +19,9 @@ vsi_qt_wrap_ui(MY_UI Console.ui)
 
 add_executable(example_qtconsoledatamodel ${PROJECT_FILES} ${MY_WIDGETS_MOC} ${MY_UI})
 target_link_libraries(example_qtconsoledatamodel PRIVATE simQt simCore)
+if(NOT WIN32)
+    target_link_libraries(example_qtconsoledatamodel PRIVATE -pthread)
+endif()
 target_include_directories(example_qtconsoledatamodel PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_qtconsoledatamodel PROPERTIES
     FOLDER "Examples"
