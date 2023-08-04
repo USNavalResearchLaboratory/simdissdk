@@ -476,11 +476,7 @@ function(vsi_install_export TARGET VERSION COMPATIBILITY)
     if(UNIX AND TARGET_TYPE STREQUAL "SHARED_LIBRARY")
         vsi_set_rpath(${TARGET} ${INSTALLSETTINGS_SHARED_LIBRARY_DIR})
     endif()
-
-    # CMake prior to 3.19 did not support VERSION as whitelisted property on INTERFACE targets
-    if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY" OR NOT CMAKE_VERSION VERSION_LESS "3.19")
-        set_target_properties(${TARGET} PROPERTIES VERSION "${VERSION}")
-    endif()
+    set_target_properties(${TARGET} PROPERTIES VERSION "${VERSION}")
 
     # Create the ConfigVersion.cmake file for the target
     include(CMakePackageConfigHelpers)

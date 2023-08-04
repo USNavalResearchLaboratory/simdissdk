@@ -237,14 +237,12 @@ if(ENABLE_UNIT_TESTING)
 endif()
 
 # SWIG module requires Python3.  FindPython3.cmake is first distributed in CMake 3.12
-if(NOT CMAKE_VERSION VERSION_LESS "3.12")
-    option(BUILD_SDK_SWIG "Build SIMDIS SDK SWIG module" OFF)
-    if(BUILD_SDK_SWIG)
-        # Include SWIG for Python simCore module
-        include(ImportSWIG)
-        find_package(Python3 COMPONENTS Development Interpreter)
-        add_subdirectory(swig)
-    endif()
+option(BUILD_SDK_SWIG "Build SIMDIS SDK SWIG module" OFF)
+if(BUILD_SDK_SWIG)
+    # Include SWIG for Python simCore module
+    include(ImportSWIG)
+    find_package(Python3 COMPONENTS Development Interpreter)
+    add_subdirectory(swig)
 endif()
 
 # Add documentation files
