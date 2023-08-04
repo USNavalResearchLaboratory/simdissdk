@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.0)
+# MSVC 2022 support in 3.20
+cmake_minimum_required(VERSION 3.20)
 
 # Disable in-source builds and avoid writing to source directories directly
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)

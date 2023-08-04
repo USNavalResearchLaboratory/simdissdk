@@ -11,8 +11,8 @@ elseif(MSVC)
     add_definitions(-Zc:__cplusplus)
 endif()
 
-# CMake 3.1 is required for CMAKE_CXX_STANDARD
-cmake_minimum_required(VERSION 3.1)
+# MSVC 2022 support in 3.20
+cmake_minimum_required(VERSION 3.20)
 
 # Use C++20, but permit decay to older versions (i.e. 20 is not a hard requirement)
 set(CMAKE_CXX_STANDARD 20)
