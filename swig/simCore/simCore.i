@@ -1,6 +1,6 @@
 %module(directors="1") simCore
 
-// Add a date here to trigger forced regeneration: 8/4/2023
+// Add a date here to trigger forced regeneration: 8/7/2023
 
 %feature("autodoc", "3");
 
