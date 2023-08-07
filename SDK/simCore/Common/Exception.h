@@ -37,7 +37,7 @@
 
 namespace simCore
 {
-#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /// General exception class with error reporting.
   class Exception : public std::exception
   {
