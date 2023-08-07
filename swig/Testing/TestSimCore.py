@@ -23,14 +23,6 @@ import simCore
 # simCore/Common
 
 #############################
-# Exception.h
-e = simCore.Exception("ExceptionFromPython", "Test exception successfully generated. Ignore Error.", 37)
-assert(e is not None)
-assert(e.rawWhat() == "Test exception successfully generated. Ignore Error.")
-assert(e.line() == 37)
-e = None
-
-#############################
 # Time.h
 # Wrapper function that sleeps for a second and takes no args, so that it can be passed through python's timeit() function easily.
 # Sleeping for more than a second, as function occasionally executes in slightly less than a tenth of a second if given 100 ms as a parameter.
