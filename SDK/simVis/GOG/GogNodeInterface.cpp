@@ -343,7 +343,7 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
     anno->getOutlineThickness(thickness);
     anno->getOutlineColor(outlineColor);
     setTextOutline(LoaderUtils::convertToOsgColor(outlineColor), LoaderUtils::convertToVisOutlineThickness(thickness));
-    double priority = 0.;
+    double priority = -1.;
     anno->getPriority(priority);
     setDeclutterPriority(static_cast<int>(priority));
   }

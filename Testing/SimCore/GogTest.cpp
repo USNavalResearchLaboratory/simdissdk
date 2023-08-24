@@ -907,7 +907,7 @@ int testAnnotation()
       rv += SDK_ASSERT(iconFile.empty());
       double priority = 0.;
       rv += SDK_ASSERT(anno->getPriority(priority) != 0);
-      rv += SDK_ASSERT(priority == 100.);
+      rv += SDK_ASSERT(priority == -1.);
     }
   }
   shapes.clear();

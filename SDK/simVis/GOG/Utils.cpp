@@ -46,7 +46,7 @@ using namespace osgEarth;
 
 namespace {
 /// Same default priority as the simData.commonPrefs.labelPrefs.priority value
-static const float DEFAULT_LABEL_PRIORITY = 100.f;
+static const float DEFAULT_LABEL_PRIORITY = -1.f;
 }
 
 //------------------------------------------------------------------------
