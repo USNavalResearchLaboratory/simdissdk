@@ -1361,7 +1361,8 @@ message CustomRenderingPrefs {
   optional bool centerAxis = 8 [default = false];
   /// If true, show a lighted shape.  Not all renderers support this field
   optional bool showLighted = 9 [default = false];
-
+  /// if true, depth testing is active
+  optional bool depthTest = 10 [default = true];
 };
 
 /// common update to Custom Rendering data
@@ -1427,7 +1428,7 @@ message ProjectorPrefs {
 /// common update to projector data
 message ProjectorUpdate {
   optional double time = 1;
-  
+
   /// Projector vertical field of view: radians
   optional double fov = 2;
   /// Projector hovizontal field of view: radians; <= 0 means to calculate from aspect ratio
