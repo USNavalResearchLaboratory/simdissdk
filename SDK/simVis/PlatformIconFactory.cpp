@@ -441,6 +441,10 @@ bool PlatformIconFactory::canApply_(const simData::PlatformPrefs& prefs) const
   if (prefs.drawbodyaxis() || prefs.drawinertialaxis() || prefs.drawsunvec() || prefs.drawmoonvec())
     return false;
 
+  // No rcs (scaled inertial transform)
+  if (prefs.draw3drcs() || prefs.drawrcs())
+    return false;
+
   // Need to turn off fast draw if in legend so that the icon displays correctly in legend
   if (prefs.commonprefs().includeinlegend())
     return false;
@@ -473,7 +477,9 @@ bool PlatformIconFactory::hasRelevantChanges(const simData::PlatformPrefs& oldPr
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, usecullface) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, cullface) ||
     PB_FIELD_CHANGED(&oldPrefs, &newPrefs, fragmenteffect) ||
-    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, fragmenteffectcolor);
+    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, fragmenteffectcolor) ||
+    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, drawrcs) ||
+    PB_FIELD_CHANGED(&oldPrefs, &newPrefs, draw3drcs);
 }
 
 void PlatformIconFactory::setEnabled(bool enabled)
