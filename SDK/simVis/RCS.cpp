@@ -126,6 +126,14 @@ void RCSNode::setRcs(simCore::RadarCrossSectionPtr newRcs)
     rebuild();
 }
 
+void RCSNode::setScale(float scale)
+{
+  if (scale_ == scale)
+    return;
+  scale_ = scale;
+  rebuild();
+}
+
 void RCSNode::rebuild()
 {
   loadedOK_ = (rcsData_ != nullptr) ? true : false;
