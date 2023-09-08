@@ -26,6 +26,7 @@
  * Test app for the various features of the Track History feature.
  */
 
+#include "simNotify/Notify.h"
 /// the simulator provides time/space data for our platform
 #include "simUtil/PlatformSimulator.h"
 #include "simData/DataTable.h"

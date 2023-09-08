@@ -21,7 +21,6 @@
  *
  */
 #include <cassert>
-#include "osg/AutoTransform"
 #include "osg/BlendFunc"
 #include "osg/Depth"
 #include "osg/Geometry"
@@ -265,10 +264,13 @@ void LineDrawableHighlightNode::init_()
   stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
 
   // Billboard the shape
-  billboard_ = new osg::AutoTransform();
+  billboard_ = new simVis::BillboardAutoTransform();
   billboard_->setName("Line Drawable Billboard");
   billboard_->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
+  billboard_->setRotateInScreenSpace(true);
   billboard_->setAutoScaleToScreen(false);
+  billboard_->setRotation(osg::Quat());
+
   addChild(billboard_.get());
 
   // Need some shape to start
@@ -415,6 +417,23 @@ void LineDrawableHighlightNode::setRadius(float radius)
   billboard_->setScale(osg::Vec3f(radius, radius, radius));
 }
 
+void LineDrawableHighlightNode::setAutoRotate(bool autoRotate)
+{
+  if (autoRotate_ == autoRotate)
+    return;
+  autoRotate_ = autoRotate;
+    billboard_->setAutoRotateMode(autoRotate ? osg::AutoTransform::ROTATE_TO_SCREEN : osg::AutoTransform::NO_ROTATION);
+  // update screen space rotation if auto rotate changed
+  billboard_->setScreenSpaceRotation(autoRotate_ ? 0. : rotateRad_);
+}
+
+void LineDrawableHighlightNode::setScreenRotation(float rotateRad)
+{
+  rotateRad_ = rotateRad;
+  if (!autoRotate_)
+    billboard_->setScreenSpaceRotation(rotateRad_);
+}
+
 // --------------------------------------------------------------------------
 
 CompositeHighlightNode::CompositeHighlightNode(simData::CircleHilightShape shape)
@@ -430,7 +449,8 @@ CompositeHighlightNode::CompositeHighlightNode(const CompositeHighlightNode& rhs
  : HighlightNode(rhs, copyOp),
    shape_(rhs.shape_),
    rgba_(rhs.rgba_),
-   radius_(rhs.radius_)
+   radius_(rhs.radius_),
+   autoRotate_(rhs.autoRotate_)
 {
   setShape(shape_);
 }
@@ -501,8 +521,10 @@ void CompositeHighlightNode::setShape(simData::CircleHilightShape shape)
   if (!child_.valid())
     return;
   addChild(child_.get());
+  child_->setAutoRotate(autoRotate_);
   child_->setRadius(radius_);
   child_->setColor(rgba_);
+  child_->setScreenRotation(rotateRad_);
 }
 
 void CompositeHighlightNode::setColor(const osg::Vec4f& rgba)
@@ -521,6 +543,22 @@ void CompositeHighlightNode::setRadius(float radius)
   radius_ = radius;
   if (child_.valid())
     child_->setRadius(radius_);
+}
+
+void CompositeHighlightNode::setAutoRotate(bool autoRotate)
+{
+  if (autoRotate_ == autoRotate)
+    return;
+  autoRotate_ = autoRotate;
+  if (child_.valid())
+    child_->setAutoRotate(autoRotate);
+}
+
+void CompositeHighlightNode::setScreenRotation(float yawRad)
+{
+  rotateRad_ = yawRad;
+  if (child_.valid())
+    child_->setScreenRotation(rotateRad_);
 }
 
 } //namespace simVis

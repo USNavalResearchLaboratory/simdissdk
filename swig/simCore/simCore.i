@@ -1,9 +1,12 @@
 %module(directors="1") simCore
 
+// Add a date here to trigger forced regeneration: 8/7/2023
+
 %feature("autodoc", "3");
 
 %{
 
+#include "simCore/Common/Exception.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Coordinate.h"

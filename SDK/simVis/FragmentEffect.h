@@ -20,37 +20,34 @@
  * disclose, or release this software.
  *
  */
-#ifndef SIMCORE_TIME_EXCEPTION_H
-#define SIMCORE_TIME_EXCEPTION_H
+#ifndef SIMVIS_FRAGMENTEFFECT_H
+#define SIMVIS_FRAGMENTEFFECT_H
 
-#include <string>
+#include "osg/Referenced"
+#include "osg/Vec4f"
+#include "simCore/Common/Common.h"
+#include "simData/DataTypes.h"
 
-namespace simCore
+namespace osg { class StateSet; }
+
+namespace simVis
 {
-  /** @brief Handles time input/output errors */
-  class TimeException : public std::exception
-  {
-  public:
-    int id;                   /**< TimeException identifier. */
-    std::string description;  /**< TimeException description. */
 
-    /// TimeException constructor
-    /** Creates time exception handle.
-    * @param[in ] ident An integer containing the exception identifier.
-    * @param[in ] desc A string containing the description of the exception.
-    */
-    TimeException(int ident, const std::string& desc)
-      : id(ident),
-      description(desc)
-    {
-    }
-    virtual ~TimeException() throw() {}
+/**
+ * Applies various shader effects, typically fragment-related. These are defined in FragmentEffect.glsl
+ * and can potentially be customized by end users if desired. This is the implementation behind the
+ * commonPrefs.fragmentEffect value.
+ */
+class SDKVIS_EXPORT FragmentEffect : public osg::Referenced
+{
+public:
+  /** Changes the fragment effect value on the given state set. Must have called installShader() on a node at/above this level in scene. */
+  static void set(osg::StateSet& stateSet, simData::FragmentEffect effect, const osg::Vec4f& color);
 
-    virtual const char* what() const noexcept
-    {
-      return description.c_str();
-    }
-  };
-} // simCore namespace
+  /** Installs the shader program and sets the defaults on the given state set. This can be done at a high level in the scene. */
+  static void installShaderProgram(osg::StateSet& stateSet);
+};
 
-#endif  /* SIMCORE_TIME_EXCEPTION_H */
+}
+
+#endif /* SIMVIS_FRAGMENTEFFECT_H */

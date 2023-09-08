@@ -1278,7 +1278,7 @@ void Annotation::setImageFile(const std::string& imageFile)
 
 int Annotation::getPriority(double& priority) const
 {
-  priority = priority_.value_or(100.);
+  priority = priority_.value_or(-1.);
   return (priority_.has_value() ? 0 : 1);
 }
 

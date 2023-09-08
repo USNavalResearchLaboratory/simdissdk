@@ -343,7 +343,7 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
     anno->getOutlineThickness(thickness);
     anno->getOutlineColor(outlineColor);
     setTextOutline(LoaderUtils::convertToOsgColor(outlineColor), LoaderUtils::convertToVisOutlineThickness(thickness));
-    double priority = 0.;
+    double priority = -1.;
     anno->getPriority(priority);
     setDeclutterPriority(static_cast<int>(priority));
   }
@@ -1080,6 +1080,12 @@ int GogNodeInterface::setDrawState(bool draw)
   osgNode_->setNodeMask(mask);
   if (shape_)
     shape_->setDrawn(draw);
+
+  // if setting visible with an altitude mode, may need to adjust altitude with updated terrain elevation
+  AltitudeMode altMode = ALTITUDE_NONE;
+  if (draw && getAltitudeMode(altMode) == 0 && altMode != ALTITUDE_NONE)
+    adjustAltitude_();
+
   fireDrawChanged_();
   return 0;
 }

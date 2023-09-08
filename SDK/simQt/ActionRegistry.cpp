@@ -227,7 +227,7 @@ public:
   }
 
   /** Deserializes from a QSettings into an ActionRegistry (note const not possible due to begin/endGroup) */
-  static int deserializeFrom(ActionRegistry& reg, QSettings& settings, const QString& groupName)
+  static int deserializeFrom(ActionRegistry& reg, QSettings& settings, const QString& groupName, bool clearExisting)
   {
     if (settings.status() != QSettings::NoError)
       return 1;
@@ -238,7 +238,10 @@ public:
     for (auto it = allKeys.begin(); it != allKeys.end(); ++it)
       data.insert(*it, settings.value(*it).value<HotKeys>());
     settings.endGroup();
+
     // Restore it
+    if (clearExisting)
+      return MementoImpl::restoreDestructive_(reg, data);
     return MementoImpl::restoreNonDestructive_(reg, data);
   }
 
@@ -799,20 +802,20 @@ int ActionRegistry::serialize(const QString& filename, const QString& groupName)
   return serialize(settings, groupName);
 }
 
-int ActionRegistry::deserialize(QSettings& settings, const QString &groupName)
+int ActionRegistry::deserialize(QSettings& settings, const QString &groupName, bool clearExisting)
 {
   if (settings.status() != QSettings::NoError)
     return 1;
-  return MementoImpl::deserializeFrom(*this, settings, groupName);
+  return MementoImpl::deserializeFrom(*this, settings, groupName, clearExisting);
 }
 
-int ActionRegistry::deserialize(const QString& filename, const QString &groupName)
+int ActionRegistry::deserialize(const QString& filename, const QString &groupName, bool clearExisting)
 {
   QFileInfo fi(filename);
   if (!fi.isFile())
     return 1;
   QSettings settings(filename, QSettings::IniFormat);
-  return deserialize(settings, groupName);
+  return deserialize(settings, groupName, clearExisting);
 }
 
 QList<QKeySequence> ActionRegistry::makeUnique_(const QList<QKeySequence>& keys) const

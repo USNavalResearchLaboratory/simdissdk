@@ -20,21 +20,11 @@
  * disclose, or release this software.
  *
  */
-#include "simCore/Common/Exception.h"
+#include <stdexcept>
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/DatumConvert.h"
 
 namespace simCore {
-
-class DatumConvertException : public simCore::Exception
-{
-public:
-  DatumConvertException(const std::string& name, const std::string& desc)
-    : simCore::Exception(name, desc, 0)
-  {
-    addName_();
-  }
-};
 
 MagneticDatumConvert::MagneticDatumConvert()
   : wmm_(new WorldMagneticModel)
@@ -88,7 +78,7 @@ double MagneticDatumConvert::convertVerticalDatum(const Vec3& lla, const TimeSta
 
   // Does not support MSL, throw exception in that case
   if (inputDatum == VERTDATUM_MSL || outputDatum == VERTDATUM_MSL)
-    throw simCore::DatumConvertException("MagneticDatumConvert: ", "MSL is not supported");
+    throw std::invalid_argument("MagneticDatumConvert: MSL is not supported");
 
   // Datum conversions not supported for earth centered systems
   if (coordSystem == COORD_SYS_ECEF || coordSystem == COORD_SYS_ECI)

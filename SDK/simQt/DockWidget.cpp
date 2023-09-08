@@ -193,6 +193,135 @@ private:
 
 ///////////////////////////////////////////////////////////////
 
+class DockWidget::TabDragDropEventFilter : public QObject
+{
+public:
+  TabDragDropEventFilter(DockWidget& dockWidget, QTabBar* tabBar)
+    : QObject(tabBar),
+      dockWidget_(dockWidget),
+      tabBar_(tabBar)
+  {
+    tabBar_->installEventFilter(this);
+  }
+
+  bool eventFilter(QObject* object, QEvent* event)
+  {
+    if (object != tabBar_)
+      return false;
+
+    if (event->type() == QEvent::DragEnter)
+    {
+      QDragEnterEvent* dragEvt = dynamic_cast<QDragEnterEvent*>(event);
+      if (!dragEvt)
+        return false;
+
+      // Don't interfere with moving the dock widget between tabs
+      if (dragEvt->dropAction() == Qt::MoveAction)
+        return false;
+
+      bool evtConsumed = false;
+      int tabIndex = tabBar_->tabAt(dragEvt->pos());
+      QString tabName = tabBar_->tabText(tabIndex);
+
+      if (tabIndex < 0)
+      {
+        // Drags over empty portions of the tab bar should be ignored
+        dragEvt->setDropAction(Qt::IgnoreAction);
+      }
+      else if (tabName == dockWidget_.windowTitle())
+      {
+        // Set the event ignored, but only to determine if the dock widget can accept it. The event is accepted later anyway
+        dragEvt->ignore();
+        dockWidget_.dragEnterEvent(dragEvt);
+        if (dragEvt->isAccepted())
+        {
+          evtConsumed = true;
+        }
+        else
+        {
+          // Drop action needs to be set to ignore so that the drag image correctly shows a block icon to show it can't currently be dropped
+          dragEvt->setDropAction(Qt::IgnoreAction);
+        }
+      }
+
+      // Drag enter event needs to be accepted in order to receive drag move events later
+      dragEvt->accept();
+
+      prevTab_ = tabName;
+      return evtConsumed;
+    }
+
+    else if (event->type() == QEvent::DragMove)
+    {
+      // Most of the time only drag enter matters. Here, because the events are on a tab bar,
+      // we need to listen to moves in case the drag moves from one tab to another
+      QDragMoveEvent* dragEvt = dynamic_cast<QDragMoveEvent*>(event);
+      if (!dragEvt)
+        return false;
+
+      // Don't interfere with moving the dock widget between tabs
+      if (dragEvt->dropAction() == Qt::MoveAction)
+        return false;
+
+      QString thisTitle = dockWidget_.windowTitle();
+      int mouseIndex = tabBar_->tabAt(dragEvt->pos());
+      QString mouseTitle = tabBar_->tabText(mouseIndex);
+
+      // Nothing to do if the mouse isn't over this widget's tab or the move remained over the same tab
+      if (prevTab_ == thisTitle || mouseTitle != thisTitle)
+      {
+        prevTab_ = mouseTitle;
+        if (mouseIndex < 0)
+          dragEvt->setDropAction(Qt::IgnoreAction);
+        return false;
+      }
+
+      // Construct a drag enter event from the drag move and pass it to our dock widget
+      QDragEnterEvent simulatedEvent(dragEvt->pos(), dragEvt->possibleActions(), dragEvt->mimeData(), dragEvt->mouseButtons(), dragEvt->keyboardModifiers());
+      simulatedEvent.ignore();
+      dockWidget_.dragEnterEvent(&simulatedEvent);
+
+      prevTab_ = mouseTitle;
+      dragEvt->setAccepted(simulatedEvent.isAccepted());
+      return simulatedEvent.isAccepted();
+    }
+    else if (event->type() == QEvent::DragLeave)
+    {
+      prevTab_ = "";
+    }
+    else if (event->type() == QEvent::Drop)
+    {
+      QDropEvent* dropEvt = dynamic_cast<QDropEvent*>(event);
+      if (!dropEvt || tabBar_->tabText(tabBar_->tabAt(dropEvt->pos())) != dockWidget_.windowTitle())
+        return false;
+
+      // Don't interfere with moving the dock widget between tabs
+      if (dropEvt->dropAction() == Qt::MoveAction)
+        return false;
+
+      dockWidget_.dropEvent(dropEvt);
+      prevTab_ = "";
+      return dropEvt->isAccepted();
+    }
+
+    return false;
+  }
+
+  void uninstall()
+  {
+    // This is safe because tabBar_ is the parent of the filter. If the tab bar had been deleted
+    // before now, the filter would not still exist
+    tabBar_->removeEventFilter(this);
+  }
+
+private:
+  DockWidget& dockWidget_;
+  QTabBar* tabBar_ = nullptr;
+  QString prevTab_;
+};
+
+///////////////////////////////////////////////////////////////
+
 DockWidget::DockWidget(QWidget* parent, Qt::WindowFlags flags)
   : QDockWidget(parent, flags),
     globalSettings_(nullptr),
@@ -240,6 +369,8 @@ DockWidget::~DockWidget()
 
   // Disconnect is required to avoid focus change from triggering updates to color
   disconnect(QApplication::instance(), SIGNAL(focusChanged(QWidget*, QWidget*)), this, SLOT(changeTitleColorsFromFocusChange_(QWidget*, QWidget*)));
+
+  uninstallTabEventFilter_();
 
   delete noTitleBar_;
   noTitleBar_ = nullptr;
@@ -630,6 +761,9 @@ void DockWidget::fixTabIcon_()
   // This title matches ours, set the tab icon
   tabBar->setTabIcon(index, widget()->windowIcon());
 
+  tabBar->setAcceptDrops(true);
+  installTabEventFilter_(tabBar);
+
   // Here is a special case, the initial tabification, we are making the other widget become tabified as well
   // need to set their tab icon, since there is no other way to alert them they are becoming tabified
   if (tabifiedWidgets.size() == 1)
@@ -640,6 +774,7 @@ void DockWidget::fixTabIcon_()
     DockWidget* firstTab = dynamic_cast<DockWidget*>(tabifiedWidgets[0]);
     if (firstTab != nullptr && firstTab->windowTitle() == tabBar->tabText(newIndex))
     {
+      firstTab->installTabEventFilter_(tabBar);
       tabBar->setTabIcon(newIndex, firstTab->widget()->windowIcon());
     }
   }
@@ -1185,6 +1320,25 @@ void DockWidget::applyGlobalSettings_()
   borderThickness_ = new simQt::BoundIntegerSetting(this, *globalSettings_, DOCK_BORDER_THICKNESS, DOCK_BORDER_METADATA);
   connect(borderThickness_, SIGNAL(valueChanged(int)), this, SLOT(setBorderThickness_(int)));
   setBorderThickness_(borderThickness_->value());
+}
+
+void DockWidget::installTabEventFilter_(QTabBar* tabBar)
+{
+  // Only 1 event filter needs to exist at once, but there could be stale filters from old tab bars if the dock widget
+  // is being moved between tabs. Uninstall old filters first if necessary
+  uninstallTabEventFilter_();
+
+  // Filter installs itself on creation
+  tabDragFilter_ = new TabDragDropEventFilter(*this, tabBar);
+}
+
+void DockWidget::uninstallTabEventFilter_()
+{
+  if (tabDragFilter_.isNull())
+    return;
+
+  tabDragFilter_->uninstall();
+  tabDragFilter_ = nullptr;
 }
 
 }

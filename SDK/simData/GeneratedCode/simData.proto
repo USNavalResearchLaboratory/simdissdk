@@ -406,6 +406,28 @@ enum TextAlignment {
   ALIGN_RIGHT_BOTTOM = 8;
 };
 
+/// Fragment shader effects applied to 3-D graphics in 2-D screen space.
+enum FragmentEffect {
+  /// No fragment effect on icon (default).
+  FE_NONE = 0;
+  /// Forward striping, like forward slash. Fragment color replaces existing value.
+  FE_FORWARD_STRIPE = 1;
+  /// Backward striping, like backslash. Fragment color replaces existing value.
+  FE_BACKWARD_STRIPE = 2;
+  /// Horizontal striping along the X axis. Fragment color replaces existing value.
+  FE_HORIZONTAL_STRIPE = 3;
+  /// Vertical striping along the Y axis. Fragment color replaces existing value.
+  FE_VERTICAL_STRIPE = 4;
+  /// Combination of horizontal and vertical striping. Fragment color replaces existing value.
+  FE_CHECKERBOARD = 5;
+  /// Combination of forward and backward striping. Fragment color replaces existing value.
+  FE_DIAMOND = 6;
+  /// Icon color changes gradually in a glow. Fragment color is unused.
+  FE_GLOW = 7;
+  /// Icon blinks on and off. Fragment color is unused.
+  FE_FLASH = 8;
+};
+
 /// preferences which all labels share
 message LabelPrefs {
   /// Toggles display of the label
@@ -737,8 +759,14 @@ message PlatformPrefs {
 
   /// 2D or 3D model file location
   optional string icon = 2;
+
   /// Model draw mode for wireframe, points, or solid models
   optional ModelDrawMode drawMode = 3 [default = MDM_SOLID];
+  /// Shader effect to apply to graphics
+  optional FragmentEffect fragmentEffect = 77 [default = FE_NONE];
+  /// Color associated with the fragment effect
+  optional fixed32 fragmentEffectColor = 79 [default = 0xFFFFFFFF];
+
   /// Flag indicating how to draw 2D icons in 3D space; only applies to image icons
   optional IconRotation rotateIcons = 4 [default = IR_2D_YAW];
   /// Turns off the depth buffer for drawing 2D icons; can address flickering with surface icons
@@ -831,6 +859,8 @@ message PlatformPrefs {
   optional CircleHilightShape circleHilightShape = 71 [default = CH_PULSING_CIRCLE];
   /// Shape size in meters; 0 means use icon size
   optional double circleHilightSize = 75 [default = 0.0];
+  /// Highlight shape will follow platform's yaw
+  optional bool hilightFollowYaw = 78 [default = false];
 
   /// Position values are interpolated between data points
   optional bool interpolatePos = 37 [default = true];
@@ -1331,7 +1361,8 @@ message CustomRenderingPrefs {
   optional bool centerAxis = 8 [default = false];
   /// If true, show a lighted shape.  Not all renderers support this field
   optional bool showLighted = 9 [default = false];
-
+  /// if true, depth testing is active
+  optional bool depthTest = 10 [default = true];
 };
 
 /// common update to Custom Rendering data
@@ -1397,7 +1428,7 @@ message ProjectorPrefs {
 /// common update to projector data
 message ProjectorUpdate {
   optional double time = 1;
-  
+
   /// Projector vertical field of view: radians
   optional double fov = 2;
   /// Projector hovizontal field of view: radians; <= 0 means to calculate from aspect ratio

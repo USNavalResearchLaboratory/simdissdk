@@ -120,6 +120,9 @@ int CategoryNameManager::addCategoryName(const std::string &name)
 ///@return new id that was assigned
 int CategoryNameManager::addCategoryValue(int nameInt, const std::string &value)
 {
+  if (value.empty() || value == NO_CATEGORY_VALUE_AT_TIME_STR)
+    return NO_CATEGORY_VALUE_AT_TIME;
+
   // 1. get an id for the value
   int valueInt = getOrCreateStringId_(value);
 

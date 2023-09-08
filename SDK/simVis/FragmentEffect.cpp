@@ -20,37 +20,33 @@
  * disclose, or release this software.
  *
  */
-#ifndef SIMCORE_TIME_EXCEPTION_H
-#define SIMCORE_TIME_EXCEPTION_H
+#include "osg/StateSet"
+#include "osgEarth/VirtualProgram"
+#include "simVis/Shaders.h"
+#include "simVis/FragmentEffect.h"
 
-#include <string>
-
-namespace simCore
+namespace simVis
 {
-  /** @brief Handles time input/output errors */
-  class TimeException : public std::exception
-  {
-  public:
-    int id;                   /**< TimeException identifier. */
-    std::string description;  /**< TimeException description. */
 
-    /// TimeException constructor
-    /** Creates time exception handle.
-    * @param[in ] ident An integer containing the exception identifier.
-    * @param[in ] desc A string containing the description of the exception.
-    */
-    TimeException(int ident, const std::string& desc)
-      : id(ident),
-      description(desc)
-    {
-    }
-    virtual ~TimeException() throw() {}
+/** Name of the uniform to edit when changing the fragment effect */
+static const std::string FRAGEFFECT_UNIFORM = "svfe_effect";
+/** Name of uniform for the color associated with the effect */
+static const std::string FRAGCOLOR_UNIFORM = "svfe_color";
 
-    virtual const char* what() const noexcept
-    {
-      return description.c_str();
-    }
-  };
-} // simCore namespace
+void FragmentEffect::set(osg::StateSet& stateSet, simData::FragmentEffect effect, const osg::Vec4f& color)
+{
+  stateSet.getOrCreateUniform(FRAGEFFECT_UNIFORM, osg::Uniform::INT)->set(effect);
+  stateSet.getOrCreateUniform(FRAGCOLOR_UNIFORM, osg::Uniform::FLOAT_VEC4)->set(color);
+}
 
-#endif  /* SIMCORE_TIME_EXCEPTION_H */
+void FragmentEffect::installShaderProgram(osg::StateSet& stateSet)
+{
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(&stateSet);
+  simVis::Shaders shaders;
+  shaders.load(vp, shaders.fragmentEffect());
+
+  // Set a default value of off and white, matching protobuf settings
+  FragmentEffect::set(stateSet, simData::FE_NONE, osg::Vec4f(1.f, 1.f, 1.f, 1.f));
+}
+
+}

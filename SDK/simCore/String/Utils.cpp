@@ -86,12 +86,26 @@ bool hasEnv(const std::string& val)
 /// Expands all known environment variable names in the given string
 std::string expandEnv(const std::string& val)
 {
+  const std::string parenStartStr("$(");
+  const std::string braceStartStr("${");
+
   std::string rv = val;
   std::string value = val;
-  size_t start = value.find("$(");
+  size_t parenStart = value.find(parenStartStr);
+  size_t braceStart = value.find(braceStartStr);
+  size_t start = parenStart;
+  std::string startStr = parenStartStr;
+  std::string endStr = ")";
+  if (braceStart < parenStart)
+  {
+    start = braceStart;
+    startStr = braceStartStr;
+    endStr = "}";
+  }
+
   while (start != std::string::npos)
   {
-    size_t end = value.find(")", start);
+    size_t end = value.find(endStr, start);
     if (end == std::string::npos)
       return rv; // not found
 
@@ -116,14 +130,25 @@ std::string expandEnv(const std::string& val)
     }
     else
     {
-      rv += "$(" + middlePart + ")";
+      rv += startStr + middlePart + endStr;
       // Search starting from after the current $ to avoid circular loop
       searchFrom = start + 1;
     }
     rv += endPart;
     // check remainder for additional envs to expand
     value = rv;
-    start = value.find("$(", searchFrom);
+
+    parenStart = value.find(parenStartStr, searchFrom);
+    braceStart = value.find(braceStartStr, searchFrom);
+    start = parenStart;
+    startStr = parenStartStr;
+    endStr = ")";
+    if (braceStart < parenStart)
+    {
+      start = braceStart;
+      startStr = braceStartStr;
+      endStr = "}";
+    }
   }
 
   return rv;

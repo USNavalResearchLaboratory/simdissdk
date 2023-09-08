@@ -24,6 +24,7 @@
 #define SIMQT_DOCKWIDGET_HH
 
 #include <QDockWidget>
+#include <QPointer>
 #include <QRect>
 #include "simCore/Common/Export.h"
 #include "simQt/SettingsGroup.h"
@@ -335,6 +336,11 @@ private:
   /** Returns the current path for simQt::Settings, or QSettings if simQt::Settings is unavailable */
   QString path_() const;
 
+  /** Install an event filter to capture drag events on the tab button when this widget is docked over or under other dock widgets */
+  void installTabEventFilter_(QTabBar* tabBar);
+  /** Uninstall the event filter capturing drag events on tab buttons */
+  void uninstallTabEventFilter_();
+
   QToolButton* restoreButton_;
   QToolButton* maximizeButton_;
   QToolButton* dockButton_;
@@ -355,6 +361,10 @@ private:
 
   /** Class that caches original icon and provides monochromatic icons matching title color */
   class MonochromeIcon;
+
+  /** Event filter to listen for drag n drop events when the dock widget is tabbed */
+  class TabDragDropEventFilter;
+
   /** Stores the restore icon */
   MonochromeIcon* restoreIcon_;
   /** Stores the maximize icon */
@@ -398,6 +408,8 @@ private:
 
   /** Setting to update border thickess */
   simQt::BoundIntegerSetting* borderThickness_;
+
+  QPointer<TabDragDropEventFilter> tabDragFilter_;
 };
 
 }

@@ -23,6 +23,7 @@
 #ifndef SIMNOTIFY_NOTIFY_H
 #define SIMNOTIFY_NOTIFY_H
 
+#include <sstream>
 #include "simCore/Common/Common.h"
 #include "simNotify/NotifyHandler.h"
 #include "simNotify/NotifySeverity.h"
@@ -100,7 +101,7 @@ namespace simNotify
   * Retrieve the current notification level.  The notification level specifies which
   * messages to suppress and which to display, based on the notify severity value
   * associated with a message.  Messages with associated notify severity values equal
-  * to or higher than the the current notification level in the notify severity hierarchy
+  * to or higher than the current notification level in the notify severity hierarchy
   * are displayed.  Messages with associated notify severity values that are lower
   * than the current notification level in the notify severity hierarchy are suppressed.
   *
@@ -278,7 +279,102 @@ namespace simNotify
    */
   SDKNOTIFY_EXPORT void installNotifyContext(NotifyContext* const context);
 
-#define SIM_NOTIFY(level) if (simNotify::isNotifyEnabled(level)) simNotify::notify(level) ///< Notification macro with level specification
+/**
+ * Class that instantiates to wrap SIM_WARN, SIM_ALWAYS, etc. so that user strings
+ * can be sent to the notifier. This class is expected to be used with the SIM_WARN
+ * family of macros to instantiate an object that on destruction sends the output
+ * into the appropriate notification handler.
+ *
+ * This class was written to handle a problem where returning a simNotify::NotifyHandler
+ * directly is both inefficient (due to per-"chunk" locking), and prone to multi-threaded
+ * crossover of separate chunks. In other words, something like:
+ *
+ * <code>
+ * simNotify::notifyHandler(simNotify::NOTIFY_WARN) << "Chunk1" << "Chunk2\n";
+ * </code>
+ *
+ * ... could interleave output because the two different chunks are output at
+ * different times. This class solves that problem by combining chunks into one
+ * output sent to the notify handler.
+ */
+class SingleUseNotifySink
+{
+public:
+  explicit SingleUseNotifySink(simNotify::NotifySeverity severity)
+  : severity_(severity),
+    enabled_(simNotify::isNotifyEnabled(severity_))
+  {
+  }
+
+  // Move constructor is required but g++ 4.8 does not correctly support move constructor on stringstream
+#if defined(__GNUC__) && defined(__GNUC_MINOR__) && (__GNUC__ == 4) && (__GNUC_MINOR__ <= 8)
+  SingleUseNotifySink(SingleUseNotifySink&& n)
+    : severity_(n.severity_)  // default construct stringstream
+  {
+  }
+#else
+  SingleUseNotifySink(SingleUseNotifySink&& n) = default;
+#endif
+  SingleUseNotifySink& operator=(const SingleUseNotifySink& rhs) = delete;
+  SingleUseNotifySink& operator=(SingleUseNotifySink&& rhs) = delete;
+
+  /** Print the text with severity */
+  virtual ~SingleUseNotifySink()
+  {
+    if (enabled_)
+      simNotify::notify(severity_).notify(buffer_.str());
+  }
+
+  /** Cache the input values in the stringstream */
+  template<typename T>
+  SingleUseNotifySink& operator <<(const T& val)
+  {
+    if (enabled_)
+      buffer_ << val;
+    return *this;
+  }
+
+  /** EOL stream */
+  typedef std::ostream& (NotifyHandlerEndlFunction)(std::ostream&);
+
+  /**
+  * @brief Operator for writing EOL to a stream.
+  *
+  * Operator to write an EOL value to a stream.  Works with std::endl.
+  */
+  SingleUseNotifySink& operator<<(NotifyHandlerEndlFunction& endl)
+  {
+    if (enabled_)
+      endl(buffer_);
+    return *this;
+  }
+
+  /** Stream manipulator */
+  typedef std::ios_base& (NotifyHandlerManipFunction)(std::ios_base&);
+
+  /**
+  * @brief Operator for manipulating a stream.
+  *
+  * Operator to manipulate stream output.  Works with std::ios_base
+  * derived manipulators such as hex, dec, oct, fixed, scientific, and
+  * setprecision
+  */
+  SingleUseNotifySink& operator<<(NotifyHandlerManipFunction& manip)
+  {
+    if (enabled_)
+      manip(buffer_);
+    return *this;
+  }
+
+private:
+  simNotify::NotifySeverity severity_ = simNotify::NOTIFY_INFO;
+  std::stringstream buffer_;
+
+  /** Keep track of enabled state to avoid potentially costly stream operations. */
+  bool enabled_ = true;
+};
+
+#define SIM_NOTIFY(level) simNotify::SingleUseNotifySink(level)   ///< Notification macro with level specification
 #define SIM_ALWAYS SIM_NOTIFY(simNotify::NOTIFY_ALWAYS)     ///< Notification macro using NOTIFY_ALWAYS
 #define SIM_FATAL SIM_NOTIFY(simNotify::NOTIFY_FATAL)       ///< Notification macro using NOTIFY_FATAL
 #define SIM_ERROR SIM_NOTIFY(simNotify::NOTIFY_ERROR)       ///< Notification macro using NOTIFY_ERROR

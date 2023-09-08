@@ -292,7 +292,7 @@ SDKCORE_EXPORT bool hasEnv(const std::string& val);
 
 /**
  * Expands all environment variables found inside the original string.  Respects
- * environment variables in the format $(ENV)
+ * environment variables in the format $(ENV) or ${ENV}
  * @param[in ] val Input value to expand environment variables
  * @return Updated string with environment variables expanded
  */

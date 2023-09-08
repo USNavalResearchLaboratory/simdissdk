@@ -25,6 +25,7 @@
  * Tests the Platform Azim/Elev View Tool.
  */
 
+#include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Angle.h"

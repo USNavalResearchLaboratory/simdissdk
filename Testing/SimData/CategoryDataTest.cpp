@@ -1463,6 +1463,87 @@ int testCaseInsensitivity()
   return rv;
 }
 
+
+int testNoValue()
+{
+  int rv = 0;
+
+  simUtil::DataStoreTestHelper dsHelper;
+
+  simData::CategoryFilter filter(dsHelper.dataStore());
+  simQt::RegExpFilterFactoryImpl reFactory;
+
+  // test empty string and 'No Value' string
+  {
+    uint64_t id = dsHelper.addPlatform();
+    dsHelper.addCategoryData(id, "key1", "value", 10.);
+    dsHelper.addCategoryData(id, "key1", "", 20.); // empty string will be treated as No Value
+    dsHelper.addCategoryData(id, "key1", "value", 30.);
+    dsHelper.addCategoryData(id, "key1", "No Value", 40.); // using special keyword No Value
+
+    // No Value false
+    filter.deserialize("key1(1)~No Value(0)~value(1)", reFactory);
+    dsHelper.dataStore()->update(10.);
+    // should still match since key1=value at time 10
+    rv += SDK_ASSERT(filter.match(*dsHelper.dataStore(), id));
+    dsHelper.dataStore()->update(20.);
+    const simData::CategoryDataSlice* cdslice = dsHelper.dataStore()->categoryDataSlice(id);
+    // empty string value should convert to 'No Value' in the data store
+    rv += SDK_ASSERT(cdslice->current().peekNext()->value() == "No Value");
+    // should no longer match, since No Value is false, and empty string should be treated as key1=No Value
+    rv += SDK_ASSERT(!filter.match(*dsHelper.dataStore(), id));
+    dsHelper.dataStore()->update(30.);
+    // should match again, since value is valid again
+    rv += SDK_ASSERT(filter.match(*dsHelper.dataStore(), id));
+    dsHelper.dataStore()->update(40.);
+    // should no longer match, since No Value is false, and key1=No Value
+    rv += SDK_ASSERT(!filter.match(*dsHelper.dataStore(), id));
+
+    // No Value true, and value is now false
+    filter.deserialize("key1(1)~No Value(1)~value(0)", reFactory);
+    dsHelper.dataStore()->update(10.);
+    // should not match since key1=value at time 10
+    rv += SDK_ASSERT(!filter.match(*dsHelper.dataStore(), id));
+    dsHelper.dataStore()->update(20.);
+    // string value should be the reserved 'No Value'
+    rv += SDK_ASSERT(cdslice->current().peekNext()->value() == "No Value");
+    // should match now, since key1=No Value now
+    rv += SDK_ASSERT(filter.match(*dsHelper.dataStore(), id));
+    dsHelper.dataStore()->update(30.);
+    // should not match, since value is not valid
+    rv += SDK_ASSERT(!filter.match(*dsHelper.dataStore(), id));
+    dsHelper.dataStore()->update(40.);
+    // should match, since No Value is true, and key1=No Value
+    rv += SDK_ASSERT(filter.match(*dsHelper.dataStore(), id));
+  }
+
+  // test where 'No Value' is the first category data item
+  {
+    uint64_t id2 = dsHelper.addPlatform();
+    dsHelper.addCategoryData(id2, "key1", "", 10.);
+    dsHelper.addCategoryData(id2, "key1", "value", 20.);
+    filter.deserialize("key1(1)~No Value(1)~value(0)", reFactory);
+
+    dsHelper.dataStore()->update(1.);
+    const simData::CategoryDataSlice* cdslice2 = dsHelper.dataStore()->categoryDataSlice(id2);
+    // no data at current time
+    rv += SDK_ASSERT(!cdslice2->current().hasNext());
+    // should match, since there is no value before 10.
+    rv += SDK_ASSERT(filter.match(*dsHelper.dataStore(), id2));
+    dsHelper.dataStore()->update(10.);
+    // category data value string should be 'No Value'
+    rv += SDK_ASSERT(cdslice2->current().peekNext()->value() == "No Value");
+    // should match, since the value at 10. is 'No Value'
+    rv += SDK_ASSERT(filter.match(*dsHelper.dataStore(), id2));
+    dsHelper.dataStore()->update(20.);
+    // category data value string should now be 'value'
+    rv += SDK_ASSERT(cdslice2->current().peekNext()->value() == "value");
+    // should not match, since the category value is unchecked in the filter
+    rv += SDK_ASSERT(!filter.match(*dsHelper.dataStore(), id2));
+  }
+  return rv;
+}
+
 }
 
 int CategoryDataTest(int argc, char *argv[])
@@ -1485,6 +1566,7 @@ int CategoryDataTest(int argc, char *argv[])
   rv += testSimplify();
   rv += testRegExpSimplify();
   rv += testCaseInsensitivity();
+  rv += testNoValue();
 
   return rv;
 }

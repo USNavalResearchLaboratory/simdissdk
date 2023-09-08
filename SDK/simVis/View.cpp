@@ -1428,6 +1428,7 @@ void View::setNavigationMode(const NavMode& mode)
   // Retain some settings across mouse modes
   const bool arcTransitions = manip->getSettings()->getArcViewpointTransitions();
   const bool terrainAvoidance = manip->getSettings()->getTerrainAvoidanceEnabled();
+  const double terrainAvoidDist = manip->getSettings()->getTerrainAvoidanceMinimumDistance();
 
   if (mode == NAVMODE_ROTATEPAN)
     manip->applySettings(new RotatePanNavigationMode(this, overheadEnabled_, watchEnabled_));
@@ -1443,11 +1444,14 @@ void View::setNavigationMode(const NavMode& mode)
     manip->applySettings(new BuilderNavigationMode(overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_NGTS)
     manip->applySettings(new NgtsNavigationMode(this, overheadEnabled_, watchEnabled_));
+  else if (mode == NAVMODE_JDS)
+    manip->applySettings(new JdsNavigationMode(this, overheadEnabled_, watchEnabled_));
 
   // Restore the retained settings
   manip->getSettings()->setArcViewpointTransitions(arcTransitions);
   // Restore the collision avoidance flag
   manip->getSettings()->setTerrainAvoidanceEnabled(terrainAvoidance);
+  manip->getSettings()->setTerrainAvoidanceMinimumDistance(terrainAvoidDist);
   // set minimum camera to focal point distance
   manip->getSettings()->setMinMaxDistance(MINIMUM_FOCAL_POINT_DISTANCE, manip->getSettings()->getMaxDistance());
 

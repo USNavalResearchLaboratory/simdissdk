@@ -174,6 +174,18 @@ namespace simVis
   /** Platforms and some HUD elements are placed into a traversal order bin */
   static const std::string BIN_TRAVERSAL_ORDER_SIMSDK = "TraversalOrderBin";
 
+  /**
+   * Uniform name for the current scene rendering stage. This uniform is initialized high
+   * in the scene graph, and can be set to unique values on lower nodes so that shaders can
+   * be aware what part of the scene is being rendered while the shader is running. For
+   * an example, look at PlatformModel.
+   */
+  static const std::string SCENE_RENDER_STAGE_UNIFORM = "sceneRenderStage";
+  /** Global scene is rendering */
+  static const int SCENE_RENDER_STAGE_GLOBAL = 0;
+  /** Scene is rendering a platform model */
+  static const int SCENE_RENDER_STAGE_PLATFORM_MODEL = 1001;
+
 } // namespace simVis
 
 #endif // SIMVIS_CONSTANTS_H

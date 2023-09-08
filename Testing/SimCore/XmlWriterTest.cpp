@@ -21,6 +21,7 @@
  *
  */
 #include <iostream>
+#include <sstream>
 #include <limits>
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Version.h"

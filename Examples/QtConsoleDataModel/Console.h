@@ -54,6 +54,11 @@ private:
   /** Populates the contents of the minimum severity combo box */
   void populateMinSeverity_();
 
+  /** Responds to threaded-flood button, creating three threads and flooding notify. */
+  void threeThreadFlood_();
+  /** Single function called from thread in order to flood notifications from threads. */
+  void floodOneChannel_(simNotify::NotifySeverity severity, const QString& fmt);
+
   Ui_Console* ui_;
   QTimer floodTimer_;
 };

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>782</width>
-    <height>280</height>
+    <height>376</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -175,6 +175,22 @@
         </item>
         <item row="3" column="1">
          <widget class="QComboBox" name="minSeverityCombo"/>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_3">
+       <property name="title">
+        <string>Threaded Flood</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QPushButton" name="generateThreadedFloodButton">
+          <property name="text">
+           <string>Generate Threaded Flood</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

@@ -25,6 +25,7 @@
  * Demonstrates basic use of the simQt::ViewManagerDataModel class with a Qt UI.
  */
 
+#include <cassert>
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"

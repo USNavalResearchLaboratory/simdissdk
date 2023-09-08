@@ -36,7 +36,7 @@ Shaders::Shaders()
   add(beamPulseFragment(), @BeamPulse.frag.glsl@);
   add(disableDepthOnAlphaFragment(), @DisableDepthOnAlpha.frag.glsl@);
   add(flashingFragment(), @Flashing.frag.glsl@);
-  add(glowHighlightFragment(), @GlowHighlight.frag.glsl@);
+  add(fragmentEffect(), @FragmentEffect.glsl@);
   add(overheadModeVertex(), @OverheadMode.vert.glsl@);
   add(overrideColorFragment(), @OverrideColor.frag.glsl@);
   add(pickerVertex(), @Picker.vert.glsl@);
@@ -134,11 +134,6 @@ std::string Shaders::overheadModeVertex() const
   return "OverheadMode.vert.glsl";
 }
 
-std::string Shaders::glowHighlightFragment() const
-{
-  return "GlowHighlight.frag.glsl";
-}
-
 std::string Shaders::planetariumTexture() const
 {
   return "PlanetariumTexture.glsl";
@@ -192,6 +187,11 @@ std::string Shaders::setClipVertex() const
 std::string Shaders::flashingFragment() const
 {
   return "Flashing.frag.glsl";
+}
+
+std::string Shaders::fragmentEffect() const
+{
+  return "FragmentEffect.glsl";
 }
 
 std::string Shaders::pickerVertex() const

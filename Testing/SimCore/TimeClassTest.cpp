@@ -970,10 +970,12 @@ namespace
     rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3 + 0.123456));
     rv += SDK_ASSERT(simCore::areEqual(ts.referenceYear(), 2012));
 
-    // Test failure
-    rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.f", "%m/%d/%Y %H:%M:%S") == 1);
-    rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.1f", "%m/%d/%Y %H:%M:%S") == 1);
-    rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.f1", "%m/%d/%Y %H:%M:%S") == 1);
+    // Allow trailing extra characters
+    rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.1f", "%m/%d/%Y %H:%M:%S") == 0);
+    rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.1 UTC", "%m/%d/%Y %H:%M:%S") == 0);
+    rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.f", "%m/%d/%Y %H:%M:%S") == 0);
+    rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.f1", "%m/%d/%Y %H:%M:%S") == 0);
+    rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.1.1", "%m/%d/%Y %H:%M:%S") == 0);
 
     return rv;
   }

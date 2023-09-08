@@ -2,12 +2,6 @@ if(NOT SWIG_FOUND OR NOT TARGET Python3::Python)
     return()
 endif()
 
-# Avoid making SWIG targets with older CMake, to avoid extra complications
-if("${CMAKE_VERSION}" VERSION_LESS 3.13)
-    message(STATUS "Skipping SIMDIS SDK SWIG module, CMake 3.13 or newer required.")
-    return()
-endif()
-
 # UseSWIG relies on UseSWIG_TARGET_NAME_PREFERENCE variable to specify explicit preference for target names.
 # Setting this to NEW causes Plug-in API modules to not create targets of expected names.
 if(POLICY CMP0078)

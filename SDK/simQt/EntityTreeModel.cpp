@@ -484,7 +484,7 @@ void EntityTreeModel::commitAllDelayed_()
 
     commitDelayedRemoval_();
     commitDelayedAdd_();
-    delayedRenames_.clear();
+    commitDelayedNameChanged_();
     delayedCategoryDataChanges_ = false;
 
     Q_EMIT endExtendedChanges();
@@ -494,11 +494,8 @@ void EntityTreeModel::commitAllDelayed_()
   if (delayedCategoryDataChanges_)
   {
     // emit something
-    delayedRenames_.clear();
     delayedCategoryDataChanges_ = false;
-
     Q_EMIT requestApplyFilters();
-    return;
   }
 
   commitDelayedNameChanged_();

@@ -550,13 +550,12 @@ int TimeStampStr::strptime(TimeStamp& timeStamp, const std::string& timeStr, con
 
   // MSVC doesn't respect %f in format string, so process remainder of time string
   remainder = simCore::StringUtils::trim(remainder);
-  if (!remainder.empty() && (remainder != "."))  // skip number like "12."
+  if (!remainder.empty())
   {
     // Remainder might look like ".17482"
-    double decimalSeconds = 0.;
-    if (!simCore::isValidNumber(remainder, decimalSeconds))
-      return 1;
-    timeStamp += decimalSeconds;
+    double decimalSeconds = atof(remainder.c_str());
+    if (decimalSeconds != 0.0)
+      timeStamp += decimalSeconds;
   }
 
   return 0;

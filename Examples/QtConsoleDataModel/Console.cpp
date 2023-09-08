@@ -21,7 +21,10 @@
  *
  */
 #include <cstdlib>
+#include <thread>
+#include <vector>
 #include "simNotify/Notify.h"
+#include "simCore/Time/Utils.h"
 #include "simQt/MonospaceItemDelegate.h"
 #include "simQt/ConsoleDataModel.h"
 #include "ui_Console.h"
@@ -66,6 +69,8 @@ Console::Console(simQt::ConsoleDataModel& dataModel, QWidget* parent)
   setFloodRate_(ui_->floodRateSpin->value());
   connect(ui_->floodTestingCheck, SIGNAL(toggled(bool)), this, SLOT(toggleFloodTimer_(bool)));
   connect(&floodTimer_, SIGNAL(timeout()), this, SLOT(generateEntries_()));
+
+  connect(ui_->generateThreadedFloodButton, &QPushButton::clicked, this, &Console::threeThreadFlood_);
 }
 
 Console::~Console()
@@ -137,4 +142,27 @@ void Console::populateMinSeverity_()
     ui_->minSeverityCombo->addItem(QString::fromStdString(simNotify::severityToString(static_cast<simNotify::NotifySeverity>(k))));
   }
   ui_->minSeverityCombo->setCurrentIndex(simNotify::NOTIFY_INFO);
+}
+
+void Console::threeThreadFlood_()
+{
+  // Generate three threads, that each push many messages into the notify system
+  std::vector<std::thread> threads;
+  for (int k = 0; k < 3; ++k)
+  {
+    threads.emplace_back(std::thread(
+      &Console::floodOneChannel_, this, simNotify::NOTIFY_WARN, tr("Thread %1").arg(k + 1)
+    ));
+  }
+  for (auto& thread : threads)
+    thread.join();
+}
+
+void Console::floodOneChannel_(simNotify::NotifySeverity severity, const QString& fmt)
+{
+  // Print 120 messages, each with different chunking
+  for (int k = 0; k < 120; ++k)
+  {
+    SIM_NOTIFY(severity) << "Hello from " << fmt.toStdString() << ", this is loop " << k << "." << std::endl;
+  }
 }

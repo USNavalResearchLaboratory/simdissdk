@@ -27,24 +27,7 @@
 namespace simQt {
 
 UnitContextAdapter::UnitContextAdapter(QObject* parent)
-  : UnitContext(parent),
-    timeFormat_(simCore::TIMEFORMAT_ORDINAL),
-    timePrecision_(3),
-    geodeticFormat_(simCore::FMT_DEGREES_MINUTES),
-    geodeticPrecision_(6),
-    distanceUnits_(simCore::Units::METERS),
-    distancePrecision_(3),
-    altitudeUnits_(simCore::Units::METERS),
-    altitudePrecision_(3),
-    angleUnits_(simCore::Units::DEGREES),
-    anglePrecision_(3),
-    speedUnits_(simCore::Units::METERS_PER_SECOND),
-    speedPrecision_(3),
-    genericPrecision_(3),
-    coordinateSystem_(simCore::COORD_SYS_LLA),
-    magneticVariance_(simCore::MAGVAR_TRUE),
-    verticalDatum_(simCore::VERTDATUM_WGS84),
-    referenceYear_(1970)
+  : UnitContext(parent)
 {
 }
 

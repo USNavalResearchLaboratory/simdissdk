@@ -12,11 +12,7 @@
 #   VARIABLE - variable to store the result to
 
 macro(TEST_PARALLEL_FOREACH VARIABLE)
-    if(CMAKE_VERSION VERSION_LESS 3.8)
-        # CXX_STANDARD is not supported on try_compile()
-        set(HAVE_${VARIABLE} FALSE CACHE INTERNAL "Whether TEST_PARALLEL_FOREACH succeeded" FORCE)
-        set(${VARIABLE} 0 CACHE INTERNAL "Result of TEST_PARALLEL_FOREACH" FORCE)
-    elseif(NOT DEFINED HAVE_${VARIABLE})
+    if(NOT DEFINED HAVE_${VARIABLE})
 
         # Tell the user what is happening
         message(STATUS "Check if the system supports std::for_each with execution policy")

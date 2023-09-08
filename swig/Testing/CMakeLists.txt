@@ -3,8 +3,8 @@ if(NOT ENABLE_CDASH_PROJECTS AND NOT ENABLE_UNIT_TESTING)
     return()
 endif()
 
-# FindPython3.cmake was added in 3.12 and is better than PythonInterp
-cmake_minimum_required(VERSION 3.12)
+# MSVC 2022 support in 3.20
+cmake_minimum_required(VERSION 3.20)
 
 if(WIN32)
     # Windows has been picky about which versions can be mixed

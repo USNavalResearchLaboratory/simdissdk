@@ -114,7 +114,7 @@ private:
 class SDKVIS_EXPORT RCSNode : public osg::Group
 {
 public:
-  RCSNode(); // Locator* locator );
+  RCSNode();
 
   ///@return true if the node loaded properly
   bool isValid() const { return loadedOK_; }
@@ -123,7 +123,7 @@ public:
   /**@name set properties
    *@{
    */
-  void setScale(float scale) { scale_ = scale; }
+  void setScale(float scale);
 
   void setPrefs(const simData::PlatformPrefs& prefs);
   void setRcs(simCore::RadarCrossSectionPtr newRcs);

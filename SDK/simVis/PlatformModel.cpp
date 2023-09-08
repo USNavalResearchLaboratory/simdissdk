@@ -41,6 +41,7 @@
 #include "simVis/Constants.h"
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/EntityLabel.h"
+#include "simVis/FragmentEffect.h"
 #include "simVis/ModelCache.h"
 #include "simVis/Locator.h"
 #include "simVis/OverrideColor.h"
@@ -480,6 +481,8 @@ void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_TWO_PASS_ALPHA, osg::StateSet::OVERRIDE_RENDERBIN_DETAILS);
     else
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
+
+    modelStateSet->getOrCreateUniform(SCENE_RENDER_STAGE_UNIFORM, osg::Uniform::INT)->set(SCENE_RENDER_STAGE_PLATFORM_MODEL);
 
     // re-add to the parent groups
     offsetXform_->addChild(model_.get());
@@ -984,6 +987,18 @@ void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
   }
 }
 
+void PlatformModelNode::updateFragmentEffect_(const simData::PlatformPrefs& prefs)
+{
+  if (!model_.valid())
+    return;
+  if (lastPrefsValid_ &&
+    !PB_FIELD_CHANGED(&lastPrefs_, &prefs, fragmenteffect) &&
+    !PB_FIELD_CHANGED(&lastPrefs_, &prefs, fragmenteffectcolor))
+    return;
+  const simVis::Color frColor(prefs.fragmenteffectcolor(), simVis::Color::RGBA);
+  simVis::FragmentEffect::set(*offsetXform_->getOrCreateStateSet(), prefs.fragmenteffect(), frColor);
+}
+
 void PlatformModelNode::updateDofTransform_(const simData::PlatformPrefs& prefs, bool force) const
 {
   // Don't need to apply to image models
@@ -1026,6 +1041,7 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateLighting_(prefs, false);
   updateOverrideColor_(prefs);
   updateAlphaVolume_(prefs);
+  updateFragmentEffect_(prefs);
   updateDofTransform_(prefs, false);
 
   // Note that the brightness calculation is low cost, but setting brightness uniform is not necessarily low-cost, so we do check PB_FIELD_CHANGED
