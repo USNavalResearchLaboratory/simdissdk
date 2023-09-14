@@ -38,7 +38,7 @@ QFileDialog::Options FileDialog::getFileDialogDefaultOptions()
   // If not defined, or if it's defined as "1", then use the native dialog.  There are some applications,
   // e.g. ones that use certain types of COM from SIMDIS Plug-ins, that may need to force Native Dialogs off.
   if (!getenv("SDK_NATIVE_FILE_DIALOG") || (strcmp(getenv("SDK_NATIVE_FILE_DIALOG"), "1") == 0))
-    return 0;
+    return QFileDialog::Options();
 #endif
   // On Linux, always avoid the native dialog due to event loop problems with FOX in SIMDIS 10
   return QFileDialog::DontUseNativeDialog;
@@ -72,7 +72,11 @@ void FileDialog::setRegistryDir(const QString& registryDir, const QString& path,
 QString FileDialog::foxToQtFilter(const QString& foxFilter)
 {
   // Need to replace newlines with two semicolons, so split the string
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
   QStringList eachLine = foxFilter.split("\n", QString::SkipEmptyParts);
+#else
+  QStringList eachLine = foxFilter.split("\n", Qt::SkipEmptyParts);
+#endif
   // Replaces the commas in (*.xml,*.txt) with whitespace (*.xml *.txt)
   eachLine.replaceInStrings(", ", " "); // (*.xml, *.txt) [note the space after the comma]
   eachLine.replaceInStrings(",", " "); // (*.xml,*.txt)
@@ -98,7 +102,11 @@ QString FileDialog::saveFile(QWidget* owner, const QString& caption, const QStri
     QString ext = QString::fromStdString(simCore::getExtension(directory.toStdString()));
     if (!ext.isEmpty())
     {
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
       QStringList eachLine = filter.split("\n", QString::SkipEmptyParts);
+#else
+      QStringList eachLine = filter.split("\n", Qt::SkipEmptyParts);
+#endif
       QString match = "(*" + ext + ")";
       for (auto it = eachLine.begin(); it != eachLine.end(); ++it)
       {

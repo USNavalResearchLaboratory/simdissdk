@@ -75,7 +75,7 @@ public:
    * @return Name of file selected by user for saving
    */
   static QString saveFile(QWidget* owner=nullptr, const QString& caption="", const QString& registryDir="",
-    const QString& filter="All Files (*)", QString* selectedFilter=nullptr, QFileDialog::Options options=0);
+    const QString& filter="All Files (*)", QString* selectedFilter=nullptr, QFileDialog::Options options=QFileDialog::Options());
 
   /**
    * Displays a dialog box suitable for loading a single file
@@ -88,7 +88,7 @@ public:
    * @return Name of file selected by user for loading
    */
   static QString loadFile(QWidget* owner=nullptr, const QString& caption="", const QString& registryDir="",
-    const QString& filter="All Files (*)", QString* selectedFilter=nullptr, QFileDialog::Options options=0);
+    const QString& filter="All Files (*)", QString* selectedFilter=nullptr, QFileDialog::Options options=QFileDialog::Options());
 
   /**
    * Displays a dialog box suitable for loading a multiple files
@@ -101,7 +101,7 @@ public:
    * @return Names of files selected by user for loading
    */
   static QStringList loadFiles(QWidget* owner=nullptr, const QString& caption="", const QString& registryDir="",
-    const QString& filter="All Files (*)", QString* selectedFilter=nullptr, QFileDialog::Options options=0);
+    const QString& filter="All Files (*)", QString* selectedFilter=nullptr, QFileDialog::Options options=QFileDialog::Options());
 
   /**
    * Displays a dialog box suitable for browsing for a directory
@@ -112,7 +112,7 @@ public:
    * @return Name of directory selected by user
    */
   static QString findDirectory(QWidget* owner=nullptr, const QString& caption="", const QString& registryDir="",
-    QFileDialog::Options options=0);
+    QFileDialog::Options options=QFileDialog::Options());
 
 
   /**

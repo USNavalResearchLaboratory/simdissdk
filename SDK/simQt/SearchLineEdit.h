@@ -78,6 +78,7 @@ private:
   QWidgetAction* iconAction_;
   bool iconEnabled_;
   QProxyStyle* proxyStyle_;
+  mutable QPixmap pixmap_;
 };
 
 }

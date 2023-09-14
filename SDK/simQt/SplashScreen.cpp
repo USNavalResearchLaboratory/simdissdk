@@ -50,7 +50,11 @@ SplashScreen::SplashScreen(const QPixmap& pixmap)
 
 /// Constructor with a parent
 SplashScreen::SplashScreen(QWidget* parent, const QPixmap& pixmap)
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
   : QSplashScreen(parent, pixmap),
+#else
+  : QSplashScreen(parent ? parent->screen() : nullptr, pixmap),
+#endif
     color_(NAVY_BLUE),
     textAlign_(BOTTOM_CENTER),
     destructing_(false)

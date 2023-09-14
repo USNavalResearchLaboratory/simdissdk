@@ -73,7 +73,11 @@ private:
       return;
 
     // Segment out by newline, then add to the console
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     QStringList lines = buffer_.split('\n', QString::KeepEmptyParts);
+#else
+    QStringList lines = buffer_.split('\n', Qt::KeepEmptyParts);
+#endif
     for (int k = 0; k < lines.count() - 1; ++k)
     {
       channel_->addText(severity_, lines[k]);
