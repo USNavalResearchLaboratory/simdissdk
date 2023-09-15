@@ -62,8 +62,7 @@ bool SortFilterProxyModel::lessThan(const QModelIndex& left, const QModelIndex& 
 #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
       return leftVariant < rightVariant;
 #else
-      // TODO: This is protected on Linux, public on MSVC, in 5.9 and 5.15
-      return leftVariant.compare(rightVariant) < 0;
+      return leftVariant.toString() < rightVariant.toString();
 #endif
     }
 
@@ -77,8 +76,7 @@ bool SortFilterProxyModel::lessThan(const QModelIndex& left, const QModelIndex& 
 #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
   return leftVariant < rightVariant;
 #else
-  // TODO: This is protected on Linux, public on MSVC, in 5.9 and 5.15
-  return leftVariant.compare(rightVariant) < 0;
+  return leftVariant.toString() < rightVariant.toString();
 #endif
 }
 
