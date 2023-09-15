@@ -96,22 +96,6 @@ SearchLineEdit::~SearchLineEdit()
   proxyStyle_ = nullptr;
 }
 
-const QPixmap* SearchLineEdit::searchPixmap() const
-{
-  QLabel* label = dynamic_cast<QLabel*>(iconAction_->defaultWidget());
-  // The QWidgetAction should only have QLabel
-  assert(label);
-  if (!label)
-    return nullptr;
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-  return label->pixmap();
-#else
-  pixmap_ = label->pixmap(Qt::ReturnByValue);
-  return &pixmap_;
-#endif
-}
-
 int SearchLineEdit::searchDelayInterval() const
 {
   return searchTimer_->interval();
