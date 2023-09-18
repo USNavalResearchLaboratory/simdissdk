@@ -24,8 +24,9 @@
 #include <windows.h>
 #endif
 
-#include <QCoreApplication>
 #include <QCloseEvent>
+#include <QGuiApplication>
+#include <QScreen>
 #include "simQt/SplashScreen.h"
 
 namespace simQt {
@@ -46,6 +47,11 @@ SplashScreen::SplashScreen(const QPixmap& pixmap)
 {
   setStyleSheet(FONT_SIZE_12);
   addToWindowsTaskbar_();
+
+  // On Linux, Qt 5.15, we need to recenter the mouse screen to avoid showing on leftmost
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+  recenterOnPrimaryScreen_();
+#endif
 }
 
 /// Constructor with a parent
@@ -61,6 +67,12 @@ SplashScreen::SplashScreen(QWidget* parent, const QPixmap& pixmap)
 {
   setStyleSheet(FONT_SIZE_12);
   addToWindowsTaskbar_();
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+  // On Linux, Qt 5.15, we need to recenter the mouse screen to avoid showing on leftmost
+  if (parent == nullptr)
+    recenterOnPrimaryScreen_();
+#endif
 }
 
 SplashScreen::~SplashScreen()
@@ -118,6 +130,19 @@ void SplashScreen::showMessage(const QString& message)
 {
   QSplashScreen::showMessage(message, textAlign_, color_);
   QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+}
+
+void SplashScreen::moveToScreen(const QScreen& screen)
+{
+  const QPoint& centerPos = screen.availableGeometry().center();
+  move(centerPos - rect().center());
+}
+
+void SplashScreen::recenterOnPrimaryScreen_()
+{
+  const QScreen* screen = QGuiApplication::primaryScreen();
+  if (screen)
+    moveToScreen(*screen);
 }
 
 }

@@ -26,6 +26,8 @@
 #include "simCore/Common/Export.h"
 #include <QSplashScreen>
 
+class QScreen;
+
 namespace simQt {
 
 /**
@@ -41,9 +43,12 @@ class SDKQT_EXPORT SplashScreen : public QSplashScreen
 {
   Q_OBJECT;
 public:
-  SplashScreen(const QPixmap& pixmap=QPixmap());
-  SplashScreen(QWidget* parent, const QPixmap& pixmap=QPixmap());
+  explicit SplashScreen(const QPixmap& pixmap=QPixmap());
+  explicit SplashScreen(QWidget* parent, const QPixmap& pixmap=QPixmap());
   virtual ~SplashScreen();
+
+  /** Moves to another screen */
+  void moveToScreen(const QScreen& screen);
 
   /** Color of the text to show in the splash screen */
   QColor textColor() const;
@@ -64,6 +69,8 @@ public Q_SLOTS:
 private:
   /** Adds the taskbar icon back, on Windows (which doesn't show a taskbar entry by default) */
   void addToWindowsTaskbar_();
+  /** Recenters the splash screen on the system's primary screen, which is an issue in Qt 5.15+ */
+  void recenterOnPrimaryScreen_();
 
   QColor color_;
   int textAlign_;
