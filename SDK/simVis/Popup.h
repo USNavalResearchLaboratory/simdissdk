@@ -106,9 +106,6 @@ public:
   /// Sets the maximum width of the title and content
   void setMaxWidth(int widthPx);
 
-  /// Sets to show popup in the lower right corner of the view
-  SDK_DEPRECATE(void setShowInCorner(bool showInCorner),
-    "Use setPopupLocation instead.");
   /// Define the location to display the popup
   void setPopupLocation(PopupLocation location);
 
@@ -231,9 +228,6 @@ public:
   /// Sets whether to display for a limited time once shown, or keep showing until some other state change affects visibility
   void setLimitVisibility(bool limit);
 
-  /// Sets to show popup in the lower right corner of the view
-  SDK_DEPRECATE(void setShowInCorner(bool showInCorner),
-    "Use setPopupLocation instead.");
   /// Define the location to display the popup
   void setPopupLocation(PopupLocation location);
 

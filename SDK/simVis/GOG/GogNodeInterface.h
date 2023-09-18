@@ -556,28 +556,6 @@ private:
 typedef std::shared_ptr<GogNodeInterface> GogNodeInterfacePtr;
 
 /**
- * Implementation of GogNodeInterface for AnnotationNodes, which are a base class of all GOG node types.
- * Used when less generic GogNodeInterface can't be found for a given osg node
- * @deprecated This class has been deprecated.  Use one of the other GogNodeInterface implementations instead.
- */
-class SDKVIS_EXPORT AnnotationNodeInterface : public GogNodeInterface
-{
-public:
-  SDK_DEPRECATE(AnnotationNodeInterface(osgEarth::AnnotationNode* annotationNode, const simVis::GOG::GogMetaData& metaData), "Use one of the other GogNodeInterface implementations instead.");
-  virtual ~AnnotationNodeInterface();
-  virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = nullptr) const;
-
-protected:
-  virtual void adjustAltitude_();
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
-  virtual void setStyle_(const osgEarth::Style& style);
-  virtual void applyOrientationOffsets_();
-
-private:
-  osg::observer_ptr<osgEarth::AnnotationNode> annotationNode_;
-};
-
-/**
 * Implementation of GogNodeInterface for FeatureNodes, which represent absolute line type Overlays
 */
 class SDKVIS_EXPORT FeatureNodeInterface : public GogNodeInterface

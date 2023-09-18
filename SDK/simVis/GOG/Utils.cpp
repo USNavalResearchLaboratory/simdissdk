@@ -30,6 +30,7 @@
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/GOG/GogUtils.h"
+#include "simCore/GOG/Parser.h"
 #include "simCore/String/Angle.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
@@ -37,9 +38,9 @@
 #include "simVis/Constants.h"
 #include "simVis/Locator.h"
 #include "simVis/Registry.h"
+#include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/GOG/ParsedShape.h"
-#include "simVis/GOG/Parser.h"
 #include "simVis/GOG/Utils.h"
 
 using namespace osgEarth;
@@ -255,14 +256,51 @@ void Utils::configureStyleForClipping(Style& style)
   style.getOrCreate<RenderSymbol>()->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
 }
 
-std::string Utils::decodeAnnotation(const std::string& anno)
-{
-  return simCore::GOG::GogUtils::decodeAnnotation(anno);
-}
-
 osg::ref_ptr<osg::Image> Utils::readRefImage(const std::string& addr)
 {
   return osgDB::readRefImageFile(simCore::GOG::GogUtils::processUrl(addr));
+}
+
+std::string Utils::getKeywordFromShape(GogShape shape)
+{
+  switch (shape)
+  {
+  case GOG_ANNOTATION:
+    return "annotation";
+  case GOG_CIRCLE:
+    return "circle";
+  case GOG_ELLIPSE:
+    return "ellipse";
+  case GOG_ELLIPSOID:
+    return "ellipsoid";
+  case GOG_ARC:
+    return "arc";
+  case GOG_CYLINDER:
+    return "cylinder";
+  case GOG_HEMISPHERE:
+    return "hemisphere";
+  case GOG_SPHERE:
+    return "sphere";
+  case GOG_POINTS:
+    return "points";
+  case GOG_LINE:
+    return "line";
+  case GOG_POLYGON:
+    return "polygon";
+  case GOG_LINESEGS:
+    return "linesegs";
+  case GOG_LATLONALTBOX:
+    return "latlonaltbox";
+  case GOG_CONE:
+    return "cone";
+  case GOG_IMAGEOVERLAY:
+    return "imageoverlay";
+  case GOG_ORBIT:
+    return "orbit";
+  case GOG_UNKNOWN:
+    return "";
+  }
+  return "";
 }
 
 //------------------------------------------------------------------------
@@ -480,7 +518,7 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
   // name.
   name_ = parsedShape.stringValue(GOG_3D_NAME);
   if (name_.empty())
-    name_ = simVis::GOG::Parser::getKeywordFromShape(shape);
+    name_ = simVis::GOG::Utils::getKeywordFromShape(shape);
 
   // Note, tools like Klocwork might point to uninitialized variables at the end of this
   // function, such as refPointLLA_, geoInterp_, and style_. This is an incorrect finding

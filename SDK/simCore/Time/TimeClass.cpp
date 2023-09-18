@@ -413,11 +413,6 @@ void TimeStamp::getTimeComponents(unsigned int& day, unsigned int& hour, unsigne
 
 //------------------------------------------------------------------------
 
-int TimeStamp::strptime(const std::string& timeStr, const std::string& format, std::string* remainder)
-{
-  return TimeStampStr().strptime(*this, timeStr, format, remainder);
-}
-
 /**
  * MSVC strftime() and put_time() both execute the invalid parameter handler in cases
  * of invalid parameters. In debug mode, this may also assert. The default implementation
@@ -454,11 +449,6 @@ private:
   _invalid_parameter_handler oldHandler_;
 #endif
 };
-
-std::string TimeStamp::strftime(const std::string& format) const
-{
-  return TimeStampStr().strftime(*this, format);
-}
 
 //------------------------------------------------------------------------------------------
 

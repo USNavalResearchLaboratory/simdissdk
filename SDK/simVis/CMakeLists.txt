@@ -192,7 +192,6 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/ErrorHandler.h
     ${VIS_INC}GOG/GOGNode.h
     ${VIS_INC}GOG/GogNodeInterface.h
-    ${VIS_INC}GOG/GOGRegistry.h
     ${VIS_INC}GOG/Hemisphere.h
     ${VIS_INC}GOG/HostedLocalGeometryNode.h
     ${VIS_INC}GOG/ImageOverlay.h
@@ -203,7 +202,6 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/LoaderUtils.h
     ${VIS_INC}GOG/Orbit.h
     ${VIS_INC}GOG/ParsedShape.h
-    ${VIS_INC}GOG/Parser.h
     ${VIS_INC}GOG/Points.h
     ${VIS_INC}GOG/Polygon.h
     ${VIS_INC}GOG/Sphere.h
@@ -342,7 +340,6 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/Ellipsoid.cpp
     ${VIS_SRC}GOG/GOGNode.cpp
     ${VIS_SRC}GOG/GogNodeInterface.cpp
-    ${VIS_SRC}GOG/GOGRegistry.cpp
     ${VIS_SRC}GOG/Hemisphere.cpp
     ${VIS_SRC}GOG/ImageOverlay.cpp
     ${VIS_SRC}GOG/LatLonAltBox.cpp
@@ -352,7 +349,6 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/LoaderUtils.cpp
     ${VIS_SRC}GOG/Orbit.cpp
     ${VIS_SRC}GOG/ParsedShape.cpp
-    ${VIS_SRC}GOG/Parser.cpp
     ${VIS_SRC}GOG/Points.cpp
     ${VIS_SRC}GOG/Polygon.cpp
     ${VIS_SRC}GOG/Sphere.cpp

@@ -391,44 +391,6 @@ namespace simCore
     */
     void getTimeComponents(unsigned int& day, unsigned int& hour, unsigned int& min, unsigned int& sec) const;
 
-    /// Functional equivalent of C function strptime(). See std::get_time() for format specifications.
-    /**
-     * Reads a user-provided time string, using a user-provided formatting string, returning
-     * 0 on success and non-zero on error. Intended to match ::strptime() functionality.
-     * Optionally returns the string remainder on success. Notably, this cannot process
-     * milliseconds values. This function is dependent on correct implementation of strptime()
-     * on Linux and std::get_time() on MSVC. Implementation errors in these functions will
-     * cascade into this function.
-     * @param timeStr User time string value
-     * @param format Formatting string, such as "%m/%d/%Y %H:%M:%S". The format values are
-     *   identical to those in std::get_time().
-     * @param remainder After parsing the string, this will be the remaining content, copied
-     *   from the original string. This is useful for processing trailing milliseconds. On
-     *   failure, this is the same as the input parameter timeStr.
-     * @return 0 on success, and TimeStamp is set to the time string provided. Non-zero
-     *   on error, such as invalid format string or inability to read values. On failure,
-     *   the time stamp is not changed. On success, the time stamp is updated to value read.
-     */
-    SDK_DEPRECATE(int strptime(const std::string& timeStr, const std::string& format, std::string* remainder),
-      "Use TimeStampStr class instead");
-
-    /// Functional equivalent of C function strftime(). See std::put_time() for format specifications.
-    /**
-     * Reads a developer-provided format string, and prints the values of the TimeStamp according
-     * to that format string. Intended to match ::strftime() functionality. This function is
-     * dependent on correction implementation of std:put_time(), and implementation errors in that
-     * function will cascade into this function. Note that underlying library implementation will
-     * impact results, and format strings from strftime() are not necessarily the same as format
-     * strings accepted by strptime().
-     * Invalid format strings may assert in debug mode.
-     * @param format Formatting string, such as "%m/%d/%Y %H:%M:%S". The format values are
-     *   identical to those in std::pet_time().
-     * @return String value representing the time. On error, this may be empty string, or it may
-     *   be a partially converted output string, depending on underlying system implementation.
-     */
-    SDK_DEPRECATE(std::string strftime(const std::string& format) const,
-      "Use TimeStampStr class instead");
-
   protected:
 
     int referenceYear_;            /**< Reference Gregorian calendar year, such as 1970, 2000, etc.  Must be >= 1970 */

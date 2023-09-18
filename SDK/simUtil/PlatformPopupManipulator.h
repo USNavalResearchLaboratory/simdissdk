@@ -65,9 +65,6 @@ public:
   bool isEnabled() const;
   /// remove the current pop up, if any
   void clear();
-  /// set whether to show popup in the lower right corner of the view
-  SDK_DEPRECATE(void setShowInCorner(bool showInCorner),
-    "Use setPopupLocation instead.");
   /// define the location to display the popup
   void setPopupLocation(simVis::PopupLocation location);
 
