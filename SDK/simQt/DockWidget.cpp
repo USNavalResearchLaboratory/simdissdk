@@ -1241,7 +1241,22 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
     if (features().testFlag(DockWidgetFloatable) || globalNoDocking)
     {
       setFloating(true);
-      restoreGeometry(geometryBytes);
+      if (!restoreGeometry(geometryBytes))
+      {
+        // Qt on Linux RHEL8+ (esp Wayland) with multi-screen has problems with positioning widgets such
+        // that the dock widget defaults to (0,0) global instead of near the parent window. This attempts to
+        // fix the position so that it stays on the same screen as the main window in these cases. Attempt to
+        // fix SIM-16068 and SIMDIS-3901. This happens on Qt 5.9 and 5.15 both.
+        QWidget* parentWidget = dynamic_cast<QWidget*>(parent());
+        if (!parentWidget)
+          parentWidget = mainWindow_;
+        if (parentWidget && parentWidget->isVisible())
+        {
+          const auto& centerPos = parentWidget->mapToGlobal(parentWidget->rect().center());
+          move(centerPos);
+        }
+      }
+
     }
     else
     {
