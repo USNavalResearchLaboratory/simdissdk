@@ -26,8 +26,8 @@
 #include <QAction>
 #include <QPainter>
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QMainWindow>
+#include <QScreen>
 #include <QTabBar>
 #include <QToolButton>
 #include <QLabel>
@@ -38,6 +38,10 @@
 #include "simQt/BoundSettings.h"
 #include "simQt/QtFormatting.h"
 #include "simQt/DockWidget.h"
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include <QDesktopWidget>
+#endif
 
 namespace simQt {
 
@@ -665,8 +669,14 @@ void DockWidget::maximize_()
   normalGeometry_ = geometry();
 
   // Set the window dimensions manually to maximize the available geometry
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
   QDesktopWidget dw;
   setGeometry(dw.availableGeometry(this));
+#else
+  auto* currentScreen = screen();
+  if (currentScreen)
+    setGeometry(currentScreen->availableGeometry());
+#endif
 
   // Finally update the state of the enable/disable/visibility
   updateTitleBar_();
@@ -961,8 +971,13 @@ QAction* DockWidget::isDockableAction() const
 
 bool DockWidget::isMaximized_() const
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
   QDesktopWidget dw;
   return geometry() == dw.availableGeometry(this);
+#else
+  auto* currentScreen = screen();
+  return currentScreen && geometry() == currentScreen->availableGeometry();
+#endif
 }
 
 bool DockWidget::searchEnabled() const
