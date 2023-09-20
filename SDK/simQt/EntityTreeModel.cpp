@@ -792,7 +792,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     }
     break;
 
-  case Qt::TextColorRole:
+  case Qt::ForegroundRole:
     if (index.column() == 0)
     {
       // If the user asked for alias, but it is empty use gray color for the displayed name
