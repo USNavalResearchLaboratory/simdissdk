@@ -10,7 +10,7 @@
 
 # Initialize QT5_MODULES
 if(NOT DEFINED QT5_MODULES)
-    set(QT5_MODULES Concurrent Designer Network OpenGL Multimedia MultimediaWidgets Svg Test UiPlugin Xml)
+    set(QT5_MODULES Concurrent Designer Network OpenGL Multimedia MultimediaWidgets PrintSupport Svg Test UiPlugin Xml)
 endif()
 # Initialize QT5_PLUGINS
 if(NOT DEFINED QT5_PLUGINS)
@@ -24,6 +24,9 @@ endif()
 # so that we can configure a good guess at the CMAKE_PREFIX_PATH required.
 # If your Qt is somewhere else, configure CMAKE_PREFIX_PATH appropriately.
 set(EXPECTED_QT5_VERSION 5.9.8)
+if(DEFINED ENV{EXPECTED_QT5_VERSION_DIR})
+    set(EXPECTED_QT5_VERSION $ENV{EXPECTED_QT5_VERSION_DIR})
+endif()
 
 # VSI installs to a win64_vc-#.# subdirectory under c:/QtSDK.  By default, Qt is in /usr/local/Qt-* on both systems
 set(DEFAULT_QT_LOCATION "c:/QtSDK/${BUILD_SYSTEM_CANONICAL_NAME}/${EXPECTED_QT5_VERSION}")
