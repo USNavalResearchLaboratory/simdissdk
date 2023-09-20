@@ -326,6 +326,56 @@ private:
 
 ///////////////////////////////////////////////////////////////
 
+inline
+void recenterTo(simQt::DockWidget& dockWidget, const QWidget* parentWidget)
+{
+  if (parentWidget && parentWidget->isVisible())
+  {
+    const auto& centerPos = parentWidget->mapToGlobal(parentWidget->rect().center());
+    dockWidget.move(centerPos - dockWidget.rect().center());
+  }
+}
+
+inline
+bool pointOnScreen(const QPoint& point)
+{
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+  const auto& screens = QGuiApplication::screens();
+  for (const auto& screen : screens)
+  {
+    if (screen->availableGeometry().contains(point))
+      return true;
+  }
+  return false;
+#else
+  return QGuiApplication::screenAt(point);
+#endif
+}
+
+inline
+void ensureVisible(simQt::DockWidget& dockWidget, const QWidget* parentWidget)
+{
+  // Docked widgets will always be visible
+  if (!dockWidget.isFloating())
+    return;
+
+  // Dock widgets should always have a title; the no-title display is 1x1
+  auto* title = dockWidget.titleBarWidget();
+  if (!title)
+    return; // unexpected
+
+  const auto& titlePos = title->mapToGlobal(title->pos());
+  const QRect titleRect(titlePos, title->size());
+  // Each corner of the title should be on the screen
+  if (pointOnScreen(titleRect.topLeft()) && pointOnScreen(titleRect.topRight()) &&
+    pointOnScreen(titleRect.bottomLeft()) && pointOnScreen(titleRect.bottomRight()))
+    return;
+
+  recenterTo(dockWidget, parentWidget);
+}
+
+///////////////////////////////////////////////////////////////
+
 DockWidget::DockWidget(QWidget* parent, Qt::WindowFlags flags)
   : QDockWidget(parent, flags),
     globalSettings_(nullptr),
@@ -1186,12 +1236,19 @@ void DockWidget::showEvent(QShowEvent* evt)
     return;
   setFocus();
   activateWindow();  // Covers highlighting when floating
+
+  // Make sure the dock widget is visible. Recenter it if needed
+  QWidget* parentWidget = dynamic_cast<QWidget*>(parent());
+  if (!parentWidget)
+    parentWidget = mainWindow_;
+  ensureVisible(*this, parentWidget);
 }
 
 void DockWidget::show()
 {
   // The following may or may not call showEvent() based on current state
   QDockWidget::show();
+
   // Only set focus if our title bar widget is used
   if (extraFeatures_.testFlag(DockNoTitleStylingHint) || titleBarWidget() == noTitleBar_)
     return;
@@ -1265,11 +1322,7 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
         QWidget* parentWidget = dynamic_cast<QWidget*>(parent());
         if (!parentWidget)
           parentWidget = mainWindow_;
-        if (parentWidget && parentWidget->isVisible())
-        {
-          const auto& centerPos = parentWidget->mapToGlobal(parentWidget->rect().center());
-          move(centerPos);
-        }
+        recenterTo(*this, parentWidget);
       }
 
     }
