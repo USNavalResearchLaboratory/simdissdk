@@ -23,7 +23,7 @@ endif()
 # Figure out the expected version and expected folder based on VSI layout,
 # so that we can configure a good guess at the CMAKE_PREFIX_PATH required.
 # If your Qt is somewhere else, configure CMAKE_PREFIX_PATH appropriately.
-set(EXPECTED_QT5_VERSION 5.9.8)
+set(EXPECTED_QT5_VERSION 5.15)
 if(DEFINED ENV{EXPECTED_QT5_VERSION_DIR})
     set(EXPECTED_QT5_VERSION $ENV{EXPECTED_QT5_VERSION_DIR})
 endif()
