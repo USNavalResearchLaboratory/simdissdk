@@ -283,7 +283,7 @@ int validatePlatform(simData::DataStore* ds, simData::ObjectId id, uint64_t tabl
   rv += SDK_ASSERT(genericDataEntries(ds, id) == static_cast<size_t>(genericData));
   rv += SDK_ASSERT(dataTableEntries(ds, id) == dataTable);
 
-  return 0;
+  return rv;
 }
 
 int testFields()
@@ -702,7 +702,7 @@ simData::ObjectId makePlatformUpdateSeries(simUtil::DataStoreTestHelper& testHel
 class ValidatePlatformUpdate : public simData::VisitableDataSlice<simData::PlatformUpdate>::Visitor
 {
 public:
-  ValidatePlatformUpdate(const std::vector<double>& times)
+  explicit ValidatePlatformUpdate(const std::vector<double>& times)
     : times_(times),
     index_(0),
     errors_(0)
@@ -767,7 +767,7 @@ simData::ObjectId makePlatformCommandSeries(simUtil::DataStoreTestHelper& testHe
 class ValidatePlatformCommand : public simData::VisitableDataSlice<simData::PlatformCommand>::Visitor
 {
 public:
-  ValidatePlatformCommand(const std::vector<double>& times)
+  explicit ValidatePlatformCommand(const std::vector<double>& times)
     : times_(times),
     index_(0),
     errors_(0)
@@ -920,7 +920,7 @@ simData::ObjectId makeLobUpdateSeries(simUtil::DataStoreTestHelper& testHelper)
 class ValidateLobUpdate : public simData::VisitableDataSlice<simData::LobGroupUpdate>::Visitor
 {
 public:
-  ValidateLobUpdate(const std::vector<double>& times)
+  explicit ValidateLobUpdate(const std::vector<double>& times)
     : times_(times),
     index_(0),
     errors_(0)
@@ -1034,7 +1034,7 @@ struct TimeValuePair
 class ValidateGenericData : public simData::VisitableDataSlice<simData::GenericData>::Visitor
 {
 public:
-  ValidateGenericData(const std::vector<TimeValuePair>& pairs)
+  explicit ValidateGenericData(const std::vector<TimeValuePair>& pairs)
     : pairs_(pairs),
       index_(0),
       errors_(0)
@@ -1149,7 +1149,7 @@ simData::ObjectId makeCategoryDataSeries(simUtil::DataStoreTestHelper& helper)
 class ValidateCategoryData : public simData::CategoryDataSlice::Visitor
 {
 public:
-  ValidateCategoryData(const std::vector<TimeValuePair>& pairs)
+  explicit ValidateCategoryData(const std::vector<TimeValuePair>& pairs)
     : pairs_(pairs),
       index_(0),
       errors_(0)
@@ -1251,7 +1251,7 @@ uint64_t makeDataTableSeries(simUtil::DataStoreTestHelper& helper)
 class ValidateDataTable : public simData::DataTable::RowVisitor
 {
 public:
-  ValidateDataTable(const std::vector<TimeValuePair>& pairs)
+  explicit ValidateDataTable(const std::vector<TimeValuePair>& pairs)
     : pairs_(pairs),
       index_(0),
       errors_(0)
