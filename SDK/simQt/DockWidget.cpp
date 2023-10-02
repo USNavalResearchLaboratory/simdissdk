@@ -329,6 +329,14 @@ private:
 inline
 void recenterTo(simQt::DockWidget& dockWidget, const QWidget* parentWidget)
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+  // older versions just have to hope parent is in a good location
+  if (parentWidget && parentWidget->isVisible())
+  {
+    const auto& centerPos = parentWidget->mapToGlobal(parentWidget->rect().center());
+    dockWidget.move(centerPos - dockWidget.rect().center());
+  }
+#else
   const auto& screenGeometry = parentWidget->screen()->availableGeometry();
   bool posFound = false;
   QPoint newPos;
@@ -354,6 +362,7 @@ void recenterTo(simQt::DockWidget& dockWidget, const QWidget* parentWidget)
     newPos.setY(screenGeometry.height() - 30);
 
   dockWidget.move(newPos);
+#endif
 }
 
 inline
