@@ -329,11 +329,31 @@ private:
 inline
 void recenterTo(simQt::DockWidget& dockWidget, const QWidget* parentWidget)
 {
+  const auto& screenGeometry = parentWidget->screen()->availableGeometry();
+  bool posFound = false;
+  QPoint newPos;
   if (parentWidget && parentWidget->isVisible())
   {
+    // make sure the parent center is visible in the current screen geometry
     const auto& centerPos = parentWidget->mapToGlobal(parentWidget->rect().center());
-    dockWidget.move(centerPos - dockWidget.rect().center());
+    if (screenGeometry.contains(centerPos))
+    {
+      newPos = centerPos - dockWidget.rect().center();
+      posFound = true;
+    }
   }
+  // could not center on parent, just center on the parent's screen
+  if (!posFound)
+    newPos = screenGeometry.center() - dockWidget.rect().center();
+
+  // make sure top of widget is below top of screen
+  if (newPos.y() < 0)
+    newPos.setY(0);
+  // add padding for bottom check to ensure titlebar is visible if below bottom of screen
+  if (newPos.y() > screenGeometry.height() - 30)
+    newPos.setY(screenGeometry.height() - 30);
+
+  dockWidget.move(newPos);
 }
 
 inline
