@@ -52,6 +52,7 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}FileUtilities.h
     ${SIMQT_INC}MonospaceItemDelegate.h
     ${SIMQT_INC}QtFormatting.h
+    ${SIMQT_INC}QtUtils.h    
     ${SIMQT_INC}ResourceInitializer.h
     ${SIMQT_INC}ScopedSignalBlocker.h
     ${SIMQT_INC}Settings.h
@@ -163,6 +164,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}MonospaceItemDelegate.cpp
     ${SIMQT_SRC}MruList.cpp
     ${SIMQT_SRC}PersistentFileLogger.cpp
+    ${SIMQT_SRC}QtUtils.cpp
     ${SIMQT_SRC}ResourceInitializer.cpp
     ${SIMQT_SRC}SearchLineEdit.cpp
     ${SIMQT_SRC}SegmentedSpinBox.cpp

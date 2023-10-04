@@ -38,6 +38,7 @@
 #include "simQt/SearchLineEdit.h"
 #include "simQt/BoundSettings.h"
 #include "simQt/QtFormatting.h"
+#include "simQt/QtUtils.h"
 #include "simQt/DockWidget.h"
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
@@ -328,42 +329,6 @@ private:
 ///////////////////////////////////////////////////////////////
 
 inline
-void recenterTo(simQt::DockWidget& dockWidget, const QWidget* parentWidget)
-{
-#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
-  const auto& screenGeometry = QApplication::desktop()->availableGeometry(parentWidget);
-#else
-  const auto& screenGeometry = parentWidget->screen()->availableGeometry();
-#endif
-
-  bool posFound = false;
-  QPoint newPos;
-  if (parentWidget && parentWidget->isVisible())
-  {
-    // make sure the parent center is visible in the current screen geometry
-    const auto& centerPos = parentWidget->mapToGlobal(parentWidget->rect().center());
-    if (screenGeometry.contains(centerPos))
-    {
-      newPos = centerPos - dockWidget.rect().center();
-      posFound = true;
-    }
-  }
-  // could not center on parent, just center on the parent's screen
-  if (!posFound)
-    newPos = screenGeometry.center() - dockWidget.rect().center();
-
-  // make sure top of widget is below top of screen
-  if (newPos.y() < screenGeometry.top())
-    newPos.setY(screenGeometry.top());
-
-  // add padding for bottom check to ensure titlebar is visible if below bottom of screen
-  if (newPos.y() > screenGeometry.bottom() - 30)
-    newPos.setY(screenGeometry.bottom() - 30);
-
-  dockWidget.move(newPos);
-}
-
-inline
 bool pointOnScreen(const QPoint& point)
 {
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
@@ -398,7 +363,7 @@ void ensureVisible(simQt::DockWidget& dockWidget, const QWidget* parentWidget)
     pointOnScreen(titleRect.bottomLeft()) && pointOnScreen(titleRect.bottomRight()))
     return;
 
-  recenterTo(dockWidget, parentWidget);
+  QtUtils::centerWidgetOnParent(dockWidget, parentWidget);
 }
 
 ///////////////////////////////////////////////////////////////
@@ -1349,7 +1314,7 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
         QWidget* parentWidget = dynamic_cast<QWidget*>(parent());
         if (!parentWidget)
           parentWidget = mainWindow_;
-        recenterTo(*this, parentWidget);
+        QtUtils::centerWidgetOnParent(*this, parentWidget);
       }
 
     }
