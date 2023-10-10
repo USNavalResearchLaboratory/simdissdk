@@ -69,7 +69,6 @@ endif()
 
 # Include base macros required by other macros
 include(BuildSystemVariables)
-include(EnableNewCxxFeatures)
 include(HelperFunctions)
 include(CheckOSGEarthMethodExists)
 

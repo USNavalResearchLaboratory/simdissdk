@@ -50,12 +50,8 @@
 # Destination specifically for SIMDIS extensions.  The path is relative under the
 # ``INSTALLSETTINGS_SHARED_LIBRARY_DIR`` path.
 
-# Form the HW-OS (amd64-nt, x86-nt, amd64-linux, etc)
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(_HW amd64)
-else()
-    set(_HW x86)
-endif()
+# Form the HW-OS (amd64-nt, amd64-linux, etc)
+set(_HW amd64)
 if(WIN32)
     set(_OS nt)
 else()

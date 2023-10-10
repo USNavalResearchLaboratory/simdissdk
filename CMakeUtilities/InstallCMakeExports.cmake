@@ -112,7 +112,6 @@ configure_file(CMakeUtilities/ImportSIMDIS_SDK.cmake.in
 )
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
-        CMakeModules/EnableNewCxxFeatures.cmake
     DESTINATION share/ExternalSdkProject/CMakeModules/
     COMPONENT Exports
 )

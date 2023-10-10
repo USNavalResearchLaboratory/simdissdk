@@ -4,8 +4,6 @@ cmake_minimum_required(VERSION 3.20)
 # Create a new project
 project(ExternalSDKExamples)
 
-# Configure flags for newer CXX standard and the pre-CXX11 ABI for RHEL7 compatibility
-include(CMakeModules/EnableNewCxxFeatures.cmake)
 # Use an external script to load the SIMDIS SDK targets
 include(CMakeModules/ImportSIMDIS_SDK.cmake)
 
