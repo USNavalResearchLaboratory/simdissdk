@@ -92,6 +92,9 @@ foreach(SDK_LIB IN LISTS SDK_LIBS)
     endif()
 endforeach()
 
+# SIM-16180 - can't determine if Filesystem is a target, install FindFilesystem.cmake just in case.
+install(FILES CMakeImport/FindFilesystem.cmake DESTINATION ${SDK_LIB_CMAKE_PATH} COMPONENT Exports)
+
 # Get the absolute path out for use in the configured CMake file ImportSIMDIS_SDK.cmake
 set(SDK_LIB_CMAKE_FULLPATH "${CMAKE_INSTALL_PREFIX}/${SDK_LIB_CMAKE_PATH}")
 
