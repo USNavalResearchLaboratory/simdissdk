@@ -1315,6 +1315,8 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
         // if restoreGeometry failed, use the default size if it is valid
         if (!defaultSize_.isEmpty())
           resize(defaultSize_);
+        else // otherwise, resize to the sizeHint, in case the initial resize hasn't happened yet
+          resize(sizeHint());
 
         // Qt on Linux RHEL8+ (esp Wayland) with multi-screen has problems with positioning widgets such
         // that the dock widget defaults to (0,0) global instead of near the parent window. This attempts to
