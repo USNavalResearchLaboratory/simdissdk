@@ -26,6 +26,7 @@
 #include <QDockWidget>
 #include <QPointer>
 #include <QRect>
+#include <QSize>
 #include "simCore/Common/Export.h"
 #include "simQt/SettingsGroup.h"
 
@@ -143,6 +144,13 @@ public:
    * @param widget The widget that the dock widget will display
    */
   void setWidget(QWidget* widget);
+
+  /*
+   * Set a default size for the widget, which serves as a backup if there is no size defined in settings.
+   * Must be called before setWidget to take effect.
+   * @param defaultSize to define the dock widget's size
+   */
+  void setDefaultSize(const QSize& defaultSize);
 
   /**
   * Get the dockable state of the dock widget, if false, docking is disabled. This will always
@@ -410,6 +418,9 @@ private:
   simQt::BoundIntegerSetting* borderThickness_;
 
   QPointer<TabDragDropEventFilter> tabDragFilter_;
+
+  /** Default size, fallback if no stored setting size exists */
+  QSize defaultSize_;
 };
 
 }

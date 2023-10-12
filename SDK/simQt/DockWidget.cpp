@@ -881,6 +881,11 @@ void DockWidget::closeEvent(QCloseEvent* event)
   Q_EMIT(closedGui());
 }
 
+void DockWidget::setDefaultSize(const QSize& defaultSize)
+{
+  defaultSize_ = defaultSize;
+}
+
 void DockWidget::setWidget(QWidget* widget)
 {
   // Deal with settings -- restore the is-dockable setting
@@ -1307,6 +1312,10 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
       setFloating(true);
       if (!restoreGeometry(geometryBytes))
       {
+        // if restoreGeometry failed, use the default size if it is valid
+        if (!defaultSize_.isEmpty())
+          resize(defaultSize_);
+
         // Qt on Linux RHEL8+ (esp Wayland) with multi-screen has problems with positioning widgets such
         // that the dock widget defaults to (0,0) global instead of near the parent window. This attempts to
         // fix the position so that it stays on the same screen as the main window in these cases. Attempt to
