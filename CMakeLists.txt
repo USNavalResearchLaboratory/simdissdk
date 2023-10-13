@@ -67,8 +67,8 @@ else()
     set_property(GLOBAL PROPERTY USE_FOLDERS FALSE)
 endif()
 
-# Build as close to CXX20 as possible
-set(CMAKE_CXX_STANDARD 20)
+# Build as close to C++23 as possible. It's fine if compiler does not support this version yet.
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Include base macros required by other macros

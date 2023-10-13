@@ -7,12 +7,22 @@ set(SIMDIS_SDK_REVISION_VERSION 0)
 set(SIMDIS_SDK_SOVERSION 20)
 set(SIMDIS_SDK_VERSION_STRING ${SIMDIS_SDK_MAJOR_VERSION}.${SIMDIS_SDK_MINOR_VERSION}.${SIMDIS_SDK_REVISION_VERSION} CACHE INTERNAL "SIMDIS SDK Version String" FORCE)
 
+# Give users a reasonable error message for minimum CXX version (C++17)
+set(SIMDIS_SDK_MINIMUM_CXX_VERSION 17)
+if(NOT "cxx_std_${SIMDIS_SDK_MINIMUM_CXX_VERSION}" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+    message(FATAL_ERROR "Minimum C++ version not met (C++${SIMDIS_SDK_MINIMUM_CXX_VERSION}).\nThis compiler is unable to build the SIMDIS SDK.")
+endif()
+
 # Applies version data to static and shared library targets
 macro(ApplySDKVersion TARGET)
     set_target_properties(${TARGET} PROPERTIES
         VERSION ${SIMDIS_SDK_VERSION_STRING}
         SOVERSION ${SIMDIS_SDK_SOVERSION}
     )
+
+    # SIMDIS SDK requires a minimum C++ standard to compile
+    target_compile_features(${TARGET} PUBLIC cxx_std_${SIMDIS_SDK_MINIMUM_CXX_VERSION})
+
     # Apply a prefix of the SOVERSION on Windows platform to the DLL names
     if(WIN32)
         # Do not apply to static libraries
