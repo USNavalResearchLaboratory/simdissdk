@@ -86,8 +86,8 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 
     # Present option to build with CXX11 ABI or not, ONLY to users where it matters
     if(SUPPORTS_CXX11_ABI AND CMAKE_COMPILER_IS_GNUCXX)
-        # Allow environment variable to override default behavior, which is OFF
-        set(_DEFAULT_CXX11_ABI OFF)
+        # Allow environment variable to override default behavior, which is ON, if supported
+        set(_DEFAULT_CXX11_ABI ON)
         if(DEFINED ENV{ENABLE_CXX11_ABI})
             set(_DEFAULT_CXX11_ABI $ENV{ENABLE_CXX11_ABI})
         endif()
