@@ -128,9 +128,10 @@ cmake_push_check_state()
 set(CMAKE_REQUIRED_QUIET ${Filesystem_FIND_QUIETLY})
 
 # All of our tests required C++17 or later
-if(NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 17)
-    set(CMAKE_CXX_STANDARD 17)
+if(DEFINED CMAKE_CXX_STANDARD)
+    set(FS_CXX_STANDARD ${CMAKE_CXX_STANDARD})
 endif()
+set(CMAKE_CXX_STANDARD 17)
 
 # Normalize and check the component list we were given
 set(want_components ${Filesystem_FIND_COMPONENTS})
@@ -244,6 +245,12 @@ mark_as_advanced(CXX_FILESYSTEM_HAVE_FS CXX_FILESYSTEM_HEADER CXX_FILESYSTEM_NAM
 
 if(Filesystem_FIND_REQUIRED AND NOT Filesystem_FOUND)
     message(FATAL_ERROR "Cannot Compile simple program using std::filesystem")
+endif()
+
+if(DEFINED FS_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD ${FS_CXX_STANDARD})
+else()
+    unset(CMAKE_CXX_STANDARD)
 endif()
 
 cmake_policy(POP)

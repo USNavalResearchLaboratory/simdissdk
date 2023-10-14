@@ -21,19 +21,15 @@
  *
  */
 #include <cassert>
+#include <filesystem>
 #include <QDir>
 #include <QCoreApplication>
 #include "simQt/FileUtilities.h"
-
-#ifdef HAVE_STD_FILESYSTEM
-#include <filesystem>
-#endif
 
 namespace simQt {
 
 bool FileUtilities::isPathWritable(const QString& absoluteFilePath)
 {
-#ifdef HAVE_STD_FILESYSTEM
   // This is equivalent to "mkdir -p absoluteFilePath". Using this covers
   // an edge case where the input path looks like "c:/path/to/a/dir". With
   // this call, this works. Without this create_directories() call,
@@ -44,7 +40,6 @@ bool FileUtilities::isPathWritable(const QString& absoluteFilePath)
   std::filesystem::create_directories(absoluteFilePath.toStdString(), fsError);
   // ignore fsError, falling back to non-filesystem behavior, which likely
   // will cause us to return false.
-#endif
 
   // This will create the absolute file path, but only if "{absoluteFilePath}/.." exists
   const QDir testDir(absoluteFilePath);
