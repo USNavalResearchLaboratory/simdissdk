@@ -26,6 +26,7 @@
 #include <vector>
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/CoordinateSystem.h"
+#include "simCore/Calc/Vec3.h"
 
 namespace simCore
 {
