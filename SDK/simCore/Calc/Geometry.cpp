@@ -20,10 +20,10 @@
  * disclose, or release this software.
  *
  */
-#include "simCore/Calc/Geometry.h"
-#include "simCore/Calc/CoordinateSystem.h"
+#include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/CoordinateConverter.h"
-#include "simNotify/Notify.h"
+#include "simCore/Calc/Geometry.h"
+#include "simCore/Calc/Math.h"
 
 #undef  LC
 #define LC "[simCore::Plane] "
@@ -38,8 +38,6 @@ Plane::Plane(const Vec3& p1, const Vec3& p2, const Vec3& p3)
   v3Subtract(p3, p2, b);
   v3Cross(a, b, w);
   v3Norm(w, normal);
-
-  //Vec3 normal = (p2-p1).cross(p3-p2).normalized();
 
   v_[0] = normal[0];
   v_[1] = normal[1];
@@ -65,13 +63,11 @@ double Plane::distance(const Vec3& p) const
 
 Polytope::Polytope()
 {
-  //nop
 }
 
 Polytope::Polytope(const Polytope& rhs) :
 planes_(rhs.planes_)
 {
-  //nop
 }
 
 void Polytope::addPlane(const Plane& plane)
@@ -87,7 +83,7 @@ bool Polytope::contains(const Vec3& p) const
   {
     const Plane& plane = *i;
     double dist = plane.distance(p);
-    if (dist+epsilon < 0.0)
+    if (dist + epsilon < 0.0)
       return false;
   }
   return true;
@@ -103,17 +99,16 @@ void Polytope::clear()
 #undef  LC
 #define LC "[simCore::GeoFence] "
 
-GeoFence::GeoFence() : valid_(false)
+GeoFence::GeoFence()
+  : valid_(false)
 {
-  //nop
 }
 
-GeoFence::GeoFence(const GeoFence& rhs) :
-points_(rhs.points_),
-tope_(rhs.tope_),
-valid_(rhs.valid_)
+GeoFence::GeoFence(const GeoFence& rhs)
+  : points_(rhs.points_),
+  tope_(rhs.tope_),
+  valid_(rhs.valid_)
 {
-  //nop
 }
 
 GeoFence::GeoFence(const Vec3String& points, const CoordinateSystem& cs)
@@ -129,9 +124,7 @@ void GeoFence::set(const Vec3String& points, const CoordinateSystem& cs)
 
   // We want ECEF. Convert the input to ECEF if necessary.
   if (cs == COORD_SYS_ECEF)
-  {
     points_ = points;
-  }
   else
   {
     CoordinateConverter conv;
@@ -164,23 +157,19 @@ void GeoFence::set(const Vec3String& points, const CoordinateSystem& cs)
 
 bool GeoFence::contains(const Vec3& ecef) const
 {
-    return tope_.contains(ecef);
+  return tope_.contains(ecef);
 }
 
 bool GeoFence::contains(const Coordinate& input) const
 {
-    if (input.coordinateSystem() == COORD_SYS_ECEF)
-    {
-        return contains(input.position());
-    }
-    else
-    {
-        // convert to ECEF and try again.
-        CoordinateConverter conv;
-        Coordinate output;
-        conv.convert(input, output, COORD_SYS_ECEF);
-        return contains(output);
-    }
+  if (input.coordinateSystem() == COORD_SYS_ECEF)
+    return contains(input.position());
+
+  // convert to ECEF and try again.
+  CoordinateConverter conv;
+  Coordinate output;
+  conv.convert(input, output, COORD_SYS_ECEF);
+  return contains(output);
 }
 
 bool GeoFence::verifyConvexity_(const Vec3String& v) const
@@ -188,9 +177,7 @@ bool GeoFence::verifyConvexity_(const Vec3String& v) const
   for (unsigned int i = 0; i < v.size(); ++i)
   {
     if (!contains(v[i]))
-    {
       return false;
-    }
   }
   return true;
 }
