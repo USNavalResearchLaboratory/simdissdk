@@ -25,7 +25,8 @@
 #include <limits>
 #include "osg/Depth"
 #include "osg/PolygonOffset"
-#include "osgDB/ReadFile"
+#include "osgDB/FileUtils"
+#include "osgDB/WriteFile"
 #include "osgEarth/AltitudeSymbol"
 #include "osgEarth/FeatureNode"
 #include "osgEarth/GeoPositionNode"
@@ -85,7 +86,7 @@ namespace {
     if (useLocalOffset)
     {
       centerPoint = node->getLocalOffset();
-    // if the offsets are 0, just pass back the position
+      // if the offsets are 0, just pass back the position
       if (centerPoint == osg::Vec3d(0.0, 0.0, 0.0))
       {
         position = refPosition.vec3d();
@@ -129,7 +130,7 @@ namespace {
     shape.getPitchOffset(pitchOffset);
     osg::Quat pitch(pitchOffset, osg::Vec3(1, 0, 0));
     double rollOffset = 0.;
-      shape.getRollOffset(rollOffset);
+    shape.getRollOffset(rollOffset);
     osg::Quat roll(rollOffset, osg::Vec3(0, 1, 0));
     node->setLocalRotation(roll * pitch * yaw);
   }
@@ -1403,6 +1404,11 @@ unsigned int GogNodeInterface::objectIndexTag() const
   return objectIndexTag_;
 }
 
+void GogNodeInterface::setSaveDir(const std::string& dirPath)
+{
+  saveDirPath_ = simCore::sanitizeFilename(simCore::expandEnv(dirPath));
+}
+
 void GogNodeInterface::fireDrawChanged_() const
 {
   for (std::vector<GogNodeListenerPtr>::const_iterator iter = listeners_.begin(); iter != listeners_.end(); ++iter)
@@ -1460,6 +1466,52 @@ void GogNodeInterface::initializeFromGeoPositionNode_(const osgEarth::GeoPositio
     altitude_ = node.getPosition().alt();
   else // otherwise, use the attitude transform position
     altitude_ = node.getPositionAttitudeTransform()->getPosition().z();
+}
+
+std::string GogNodeInterface::saveImageToFile_(const osg::Image* image, const std::string& imageFile, const std::string& saveDirPath) const
+{
+  // if the file already exists, nothing to do
+  std::string filename = simCore::GOG::GogUtils::processUrl(imageFile);
+  if (osgDB::fileExists(filename))
+    return "";
+
+  // verify image exists
+  if (!image)
+  {
+    assert(0); // Dev error, should not pass in an invalid image
+    return "";
+  }
+
+  // Normalization required before passing in
+  assert(filename.find('\\') == std::string::npos);
+
+  // the icon file does not exist, need to create it
+  size_t idx = filename.find_last_of("/");
+  if (++idx < filename.size())
+    filename = filename.substr(idx);
+  if (!saveDirPath.empty())
+    filename = saveDirPath + "/" + filename;
+  filename = simCore::GOG::GogUtils::processUrl(filename);
+
+  // writeImageFile may throw an exception if osg can't handle the image
+  try {
+    if (!osgDB::writeImageFile(*image, filename))
+    {
+      SIM_WARN << "Failed to create icon file " << filename << " for GOG\n";
+      return "";
+    }
+    SIM_INFO << "Created new icon file " << filename << " for GOG\n";
+    return filename;
+  }
+  catch (const std::exception& e)
+  {
+    SIM_ERROR << "Caught EXCEPTION trying to create image file " << filename << " : " << e.what() << "\n";
+  }
+  catch (...)
+  {
+    SIM_ERROR << "Caught UNKNOWN EXCEPTION trying create image file " << filename << "\n";
+  }
+  return "";
 }
 
 bool GogNodeInterface::hasValidAltitudeMode() const
@@ -2188,6 +2240,37 @@ void LabelNodeInterface::setTextOutline(const osg::Vec4f& outlineColor, simData:
   }
 }
 
+void LabelNodeInterface::serializeToStream(std::ostream& gogOutputStream)
+{
+  // if not a placenode with image file or if no shape set, fall back to default implementation
+  const osgEarth::PlaceNode* placeNode = dynamic_cast<osgEarth::PlaceNode*>(labelNode_.get());
+  if (!placeNode || !shape_)
+  {
+    GogNodeInterface::serializeToStream(gogOutputStream);
+    return;
+  }
+
+  const simCore::GOG::Annotation* annoShape = dynamic_cast<simCore::GOG::Annotation*>(shape_.get());
+  if (!annoShape)
+  {
+    assert(0); // Dev error, should not have generated a LabelNodeInterface from another shape type
+    return;
+  }
+  std::string imageFile;
+  annoShape->getImageFile(imageFile);
+  const std::string& filename = saveImageToFile_(placeNode->getIconImage(), imageFile, saveDirPath_);
+
+  if (!filename.empty())
+  {
+    // need to serialize with the new icon filename; don't update the local shape since this only applies to output
+    simCore::GOG::Annotation newShape(*annoShape);
+    newShape.setImageFile(filename);
+    newShape.serializeToStream(gogOutputStream);
+    return;
+  }
+  shape_->serializeToStream(gogOutputStream);
+}
+
 void LabelNodeInterface::adjustAltitude_()
 {
   if (labelNode_.valid())
@@ -2631,6 +2714,33 @@ int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint*
   position = osg::Vec3d(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, llaCoord.alt());
 
   return 0;
+}
+
+void ImageOverlayInterface::serializeToStream(std::ostream& gogOutputStream)
+{
+  if (!shape_)
+  {
+    GogNodeInterface::serializeToStream(gogOutputStream);
+    return;
+  }
+  const simCore::GOG::ImageOverlay* imageShape = dynamic_cast<simCore::GOG::ImageOverlay*>(shape_.get());
+  if (!imageShape)
+  {
+    assert(0); // Dev error, should not have generated an ImageOverlayInterface from another shape type
+    return;
+  }
+
+  std::string filename = saveImageToFile_(imageNode_->getImage(), imageShape->imageFile(), saveDirPath_);
+  if (!filename.empty())
+  {
+    // need to serialize with the new icon filename; don't update the local shape since this only applies to output
+    simCore::GOG::ImageOverlay newShape(*imageShape);
+    newShape.setImageFile(filename);
+    newShape.serializeToStream(gogOutputStream);
+    return;
+  }
+
+  shape_->serializeToStream(gogOutputStream);
 }
 
 void ImageOverlayInterface::setOpacity(float opacity)
