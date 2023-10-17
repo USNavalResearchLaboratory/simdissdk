@@ -135,6 +135,19 @@ set(CORE_STRING_SOURCES
 source_group(Headers\\String FILES ${CORE_STRING_HEADERS})
 source_group("Source Files\\String" FILES ${CORE_STRING_SOURCES})
 
+# ----- simCore/System --------------------------------------------------------
+
+set(CORE_SYSTEM_INC System/)
+set(CORE_SYSTEM_SRC System/)
+set(CORE_SYSTEM_HEADERS
+    ${CORE_SYSTEM_INC}Utils.h
+)
+set(CORE_SYSTEM_SOURCES
+    ${CORE_SYSTEM_SRC}Utils.cpp
+)
+source_group(Headers\\System FILES ${CORE_SYSTEM_HEADERS})
+source_group("Source Files\\System" FILES ${CORE_SYSTEM_SOURCES})
+
 # ----- simCore/Time --------------------------------------------------------
 
 set(CORE_TIME_INC Time/)
@@ -199,6 +212,7 @@ set(CORE_PROJECT_FILES
     ${CORE_TIME_HEADERS} ${CORE_TIME_SOURCES}
     ${CORE_STRING_HEADERS} ${CORE_STRING_SOURCES}
     ${CORE_GOG_HEADERS} ${CORE_GOG_SOURCES}
+    ${CORE_SYSTEM_HEADERS} ${CORE_SYSTEM_SOURCES}
 )
 
 # Create the Version.h file
@@ -259,4 +273,6 @@ if(INSTALL_HEADERS)
         DESTINATION include/simCore/Time)
     install(FILES ${CORE_GOG_HEADERS}
         DESTINATION include/simCore/GOG)
+    install(FILES ${CORE_SYSTEM_HEADERS}
+        DESTINATION include/simCore/System)
 endif()
