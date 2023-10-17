@@ -2242,9 +2242,9 @@ void LabelNodeInterface::setTextOutline(const osg::Vec4f& outlineColor, simData:
 
 void LabelNodeInterface::serializeToStream(std::ostream& gogOutputStream)
 {
-  // if not a placenode with image file or if no shape set, fall back to default implementation
+  // if no save dir specified, not a placenode with image file, or if no shape set, fall back to default implementation
   const osgEarth::PlaceNode* placeNode = dynamic_cast<osgEarth::PlaceNode*>(labelNode_.get());
-  if (!placeNode || !shape_)
+  if (saveDirPath_.empty() || !placeNode || !shape_)
   {
     GogNodeInterface::serializeToStream(gogOutputStream);
     return;
@@ -2718,7 +2718,8 @@ int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint*
 
 void ImageOverlayInterface::serializeToStream(std::ostream& gogOutputStream)
 {
-  if (!shape_)
+  // if no save dir specified or if no shape set, fall back to default implementation
+  if (saveDirPath_.empty() || !shape_)
   {
     GogNodeInterface::serializeToStream(gogOutputStream);
     return;
