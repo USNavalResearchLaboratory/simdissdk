@@ -15,6 +15,7 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
     CoreCommonTest.cpp
     CsvReaderTest.cpp
     EMTest.cpp
+    FileTest.cpp
     GarsTest.cpp
     GeoFenceTest.cpp
     GogTest.cpp
@@ -89,6 +90,7 @@ add_test(NAME MagneticVarianceTest COMMAND SimCoreTests MagneticVarianceTest)
 add_test(NAME CsvReaderTest COMMAND SimCoreTests CsvReaderTest)
 add_test(NAME SimCoreGogTest COMMAND SimCoreTests GogTest)
 add_test(NAME XmlWriterTest COMMAND SimCoreTests XmlWriterTest)
+add_test(NAME SimCoreFileTest COMMAND SimCoreTests FileTest)
 
 # Try to locate the correct file for the RCS test...
 set(FILE_LOCATIONS

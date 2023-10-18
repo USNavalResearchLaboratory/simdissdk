@@ -140,9 +140,11 @@ source_group("Source Files\\String" FILES ${CORE_STRING_SOURCES})
 set(CORE_SYSTEM_INC System/)
 set(CORE_SYSTEM_SRC System/)
 set(CORE_SYSTEM_HEADERS
+    ${CORE_SYSTEM_INC}File.h
     ${CORE_SYSTEM_INC}Utils.h
 )
 set(CORE_SYSTEM_SOURCES
+    ${CORE_SYSTEM_SRC}File.cpp
     ${CORE_SYSTEM_SRC}Utils.cpp
 )
 source_group(Headers\\System FILES ${CORE_SYSTEM_HEADERS})
@@ -240,6 +242,15 @@ if(SIMCORE_SHARED)
     target_compile_definitions(simCore PRIVATE simCore_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simCore PUBLIC simCore_LIB_EXPORT_STATIC)
+endif()
+
+# Part of simCore relies on std::filesystem
+find_package(Filesystem QUIET)
+if(TARGET std::filesystem)
+    get_target_property(STDFS_ILL std::filesystem INTERFACE_LINK_LIBRARIES)
+    if(STDFS_ILL)
+        target_link_libraries(simCore PRIVATE ${STDFS_ILL})
+    endif()
 endif()
 
 # Determine whether time.h includes timespec
