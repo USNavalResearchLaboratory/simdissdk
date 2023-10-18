@@ -67,6 +67,38 @@ private:
  */
 SDKCORE_EXPORT std::string pathJoin(const std::vector<std::string>& pathSegments);
 
+/**
+ * Creates the directory provided in path. This may be relative or absolute as per
+ * rules of std::filesystem::create_directory/create_directories. This method will
+ * create only a single directory unless makeParents is true, which is equivalent
+ * to using `mkdir -p path` on a UNIX command line.
+ * @param path Directory to create, relative or absolute.
+ * @param makeParents If true, create all parents of path that do not currently
+ *   exist similar to `mkdir -p`. If false, the default, then parents of the given
+ *   path are not created and this method will fail.
+ * @return 0 on success, non-zero on error. Already-existing directory is an error.
+ */
+SDKCORE_EXPORT int mkdir(const std::string& path, bool makeParents = false);
+
+/**
+ * Removes the file or directory specified by path, which is permanently deleted.
+ * If path is a directory that is non-empty, this method will fail unless recursive
+ * is true. For files, recursive parameter makes no difference.
+ * @param path File or directory to remove
+ * @param recursive If true and path is a directory, also remove the entire contents
+ *   of the path.
+ * @return 0 on success, non-zero on error. Non-existing path is an error.
+ */
+SDKCORE_EXPORT int remove(const std::string& path, bool recursive = false);
+
+/**
+ * Removes the file or directory, placing it in the recycling bin on Windows. On
+ * Linux, the file is permanently removed using simCore::remove(), recursively.
+ * @param path File or directory to recycle
+ * @return 0 on success, non-zero on error. Non-existing path is an error.
+ */
+SDKCORE_EXPORT int recycle(const std::string& path);
+
 }
 
 #endif /* SIMCORE_SYSTEM_FILE_H */

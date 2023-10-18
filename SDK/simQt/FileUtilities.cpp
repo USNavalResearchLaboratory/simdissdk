@@ -21,9 +21,9 @@
  *
  */
 #include <cassert>
-#include <filesystem>
 #include <QDir>
 #include <QCoreApplication>
+#include "simCore/System/File.h"
 #include "simQt/FileUtilities.h"
 
 namespace simQt {
@@ -36,9 +36,8 @@ bool FileUtilities::isPathWritable(const QString& absoluteFilePath)
   // isPathWritable() will fail if "c:/path" exists but "to/a/dir" does not.
   // For isPathWritable() to succeed without this, "c:/path/to/a" must
   // exist. This allows for the path to create multiple directories.
-  std::error_code fsError;
-  std::filesystem::create_directories(absoluteFilePath.toStdString(), fsError);
-  // ignore fsError, falling back to non-filesystem behavior, which likely
+  simCore::mkdir(absoluteFilePath.toStdString(), true);
+  // ignore return value, falling back to default behavior below, which likely
   // will cause us to return false.
 
   // This will create the absolute file path, but only if "{absoluteFilePath}/.." exists

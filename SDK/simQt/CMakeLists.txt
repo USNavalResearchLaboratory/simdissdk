@@ -334,15 +334,6 @@ if(TARGET simVis)
     target_link_libraries(simQt PRIVATE VSI::GL)
 endif()
 
-# Part of simQt relies on std::filesystem
-find_package(Filesystem QUIET)
-if(TARGET std::filesystem)
-    get_target_property(STDFS_ILL std::filesystem INTERFACE_LINK_LIBRARIES)
-    if(STDFS_ILL)
-        target_link_libraries(simQt PRIVATE ${STDFS_ILL})
-    endif()
-endif()
-
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
 target_link_libraries(simQt PUBLIC simCore simNotify)
 if(TARGET OSGQT)

@@ -20,9 +20,11 @@
  * disclose, or release this software.
  *
  */
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include "simCore/Common/SDKAssert.h"
+#include "simCore/Common/ScopeGuard.h"
 #include "simCore/System/File.h"
 
 namespace {
@@ -128,6 +130,92 @@ int testPathJoin()
   return rv;
 }
 
+int testMkdirAndRemove()
+{
+  int rv = 0;
+
+  std::error_code unused;
+  const std::string& systemTemp = std::filesystem::temp_directory_path(unused).string();
+  // Create an empty testing directory; all our files go in here as a clean test. First,
+  // make sure the directory is empty, removing it if it exists
+  const std::string& tmpDir = simCore::pathJoin({ systemTemp, "testMkdirTmp" });
+  if (simCore::FileInfo(tmpDir).exists())
+    rv += SDK_ASSERT(simCore::remove(tmpDir, true) == 0);
+
+  // Create the temporary directory and delete it when we fall out of scope
+  rv += SDK_ASSERT(!simCore::FileInfo(tmpDir).exists());
+  rv += SDK_ASSERT(simCore::mkdir(tmpDir) == 0);
+  const simCore::ScopeGuard rmOurTemp([tmpDir]() { simCore::remove(tmpDir, true); });
+  rv += SDK_ASSERT(simCore::FileInfo(tmpDir).exists());
+  rv += SDK_ASSERT(simCore::FileInfo(tmpDir).isDirectory());
+
+  // Start real testing. First make sure that recursive flag works
+  rv += SDK_ASSERT(simCore::mkdir(simCore::pathJoin({ tmpDir, "a/b/c" })) != 0);
+  rv += SDK_ASSERT(simCore::mkdir(simCore::pathJoin({ tmpDir, "c" })) == 0);
+
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "a/b/c" })).exists());
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c" })).exists());
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c" })).isDirectory());
+
+  // First without make-parents
+  rv += SDK_ASSERT(simCore::mkdir(simCore::pathJoin({ tmpDir, "a/b/c" })) != 0);
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "a/b/c" })).exists());
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "a/b/c" })).isDirectory());
+
+  // Now with make-parents
+  rv += SDK_ASSERT(simCore::mkdir(simCore::pathJoin({ tmpDir, "a/b/c" }), true) == 0);
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "a/b/c" })).exists());
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "a/b/c" })).isDirectory());
+
+  // Test that when we remove b, recursive flag matters
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "a/b" })).isDirectory());
+  rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "a/b" })) != 0);
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "a/b" })).isDirectory());
+  rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "a/b" }), true) == 0);
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "a/b" })).isDirectory());
+
+  // "a" is empty, remove it
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "a" })).isDirectory());
+  rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "a" })) == 0);
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "a" })).isDirectory());
+
+  // Test non-existing remove (a does not exist)
+  rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "a" })) != 0);
+  rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "a" }), true) != 0);
+
+  // Test files
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c" })).isDirectory());
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f1" })).exists());
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f2" })).exists());
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f3" })).exists());
+
+  const auto touch = [](const std::string& filename) { std::ofstream ofs(filename, std::ios::app); };
+  touch(simCore::pathJoin({ tmpDir, "c/f1" }));
+  touch(simCore::pathJoin({ tmpDir, "c/f2" }));
+  touch(simCore::pathJoin({ tmpDir, "c/f3" }));
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f1" })).isRegularFile());
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f2" })).isRegularFile());
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f3" })).isRegularFile());
+
+  rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "c/f1" })) == 0);
+  // Can't remove more than once
+  rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "c/f1" })) != 0);
+  rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "c/f1" }), true) != 0);
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f1" })).exists());
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f2" })).isRegularFile());
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f3" })).isRegularFile());
+
+  rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "c/f2" }), true) == 0);
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f2" })).exists());
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f3" })).isRegularFile());
+
+  // Recursive remove on parent dir should also get rid of the remaining file
+  rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "c" }), true) == 0);
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f3" })).isRegularFile());
+
+  return rv;
+}
+
 }
 
 int FileTest(int argc, char* argv[])
@@ -136,6 +224,8 @@ int FileTest(int argc, char* argv[])
 
   rv += SDK_ASSERT(testFileInfo() == 0);
   rv += SDK_ASSERT(testPathJoin() == 0);
+  rv += SDK_ASSERT(testMkdirAndRemove() == 0);
+  // recycle() is intentionally not tested to avoid cluttering recycling bin
 
   std::cout << "simCore FileTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
 

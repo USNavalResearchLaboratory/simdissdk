@@ -42,7 +42,8 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
 )
 
 add_executable(SimCoreTests ${SimCoreTestFiles})
-target_link_libraries(SimCoreTests PRIVATE simCore)
+find_package(Filesystem QUIET)
+target_link_libraries(SimCoreTests PRIVATE simCore std::filesystem)
 # If simUtil is built, then add it as a dependency for UnitsFormatter test and add a -D define
 if(TARGET simUtil)
     target_link_libraries(SimCoreTests PRIVATE simUtil)

@@ -23,6 +23,11 @@
 #include <filesystem>
 #include "simCore/System/File.h"
 
+#ifdef WIN32
+#include <windows.h>
+#include <shellapi.h>
+#endif
+
 namespace simCore {
 
 FileInfo::FileInfo(const std::string& path)
@@ -47,6 +52,8 @@ bool FileInfo::isDirectory() const
   std::error_code unused;
   return std::filesystem::is_directory(path_, unused);
 }
+
+///////////////////////////////////////////////////////////////
 
 std::string pathJoin(const std::string& path1, const std::string& path2)
 {
@@ -87,5 +94,42 @@ std::string pathJoin(const std::vector<std::string>& pathSegments)
   return rv;
 }
 
+int mkdir(const std::string& path, bool makeParents)
+{
+  std::error_code unused;
+  if (makeParents)
+    return std::filesystem::create_directories(path, unused) ? 0 : 1;
+  return std::filesystem::create_directory(path, unused) ? 0 : 1;
+}
+
+int remove(const std::string& path, bool recursive)
+{
+  std::error_code unused;
+  if (recursive)
+  {
+    const auto rv = std::filesystem::remove_all(path, unused);
+    if (rv == 0 || rv == static_cast<std::uintmax_t>(-1))
+      return 1;
+    return 0;
+  }
+  return std::filesystem::remove(path, unused) ? 0 : 1;
+}
+
+int recycle(const std::string& path)
+{
+#ifdef WIN32
+  // Based off code from http://www.codeproject.com/KB/shell/SHFileOperation_Demo.aspx
+  SHFILEOPSTRUCT SHFileOp;
+  ZeroMemory(&SHFileOp, sizeof(SHFILEOPSTRUCT));
+  SHFileOp.hwnd = NULL;
+  SHFileOp.wFunc = FO_DELETE;
+
+  SHFileOp.pFrom = path.c_str();
+  SHFileOp.fFlags = FOF_ALLOWUNDO | FOF_NOERRORUI | FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOCONFIRMMKDIR;
+  return SHFileOperation(&SHFileOp);
+#else
+  return simCore::remove(path);
+#endif
+}
 
 }
