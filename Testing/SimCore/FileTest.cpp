@@ -27,6 +27,10 @@
 #include "simCore/Common/ScopeGuard.h"
 #include "simCore/System/File.h"
 
+#ifndef WIN32
+#include <unistd.h>
+#endif
+
 namespace {
 
 int testFileInfo()
@@ -38,7 +42,7 @@ int testFileInfo()
   std::ifstream ifs(thisCppFile);
   if (!ifs)
   {
-    std::cerr << "Unable to run testFileInfo(), cpp file does not exist.\n"
+    std::cerr << "Unable to run testFileInfo(), CPP file does not exist.\n"
       << "This test application is non-portable.\n";
     return 0;
   }
@@ -130,6 +134,12 @@ int testPathJoin()
   return rv;
 }
 
+void touchFile(const std::string& filename)
+{
+  std::ofstream ofs(filename, std::ios::app | std::ios::binary);
+  ofs.close();
+}
+
 int testMkdirAndRemove()
 {
   int rv = 0;
@@ -189,10 +199,9 @@ int testMkdirAndRemove()
   rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f2" })).exists());
   rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f3" })).exists());
 
-  const auto touch = [](const std::string& filename) { std::ofstream ofs(filename, std::ios::app); };
-  touch(simCore::pathJoin({ tmpDir, "c/f1" }));
-  touch(simCore::pathJoin({ tmpDir, "c/f2" }));
-  touch(simCore::pathJoin({ tmpDir, "c/f3" }));
+  touchFile(simCore::pathJoin({ tmpDir, "c/f1" }));
+  touchFile(simCore::pathJoin({ tmpDir, "c/f2" }));
+  touchFile(simCore::pathJoin({ tmpDir, "c/f3" }));
   rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f1" })).isRegularFile());
   rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f2" })).isRegularFile());
   rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f3" })).isRegularFile());
@@ -216,6 +225,53 @@ int testMkdirAndRemove()
   return rv;
 }
 
+int testWritable()
+{
+  int rv = 0;
+
+  std::error_code unused;
+  const std::string& systemTemp = std::filesystem::temp_directory_path(unused).string();
+  // Create an empty testing directory; all our files go in here as a clean test. First,
+  // make sure the directory is empty, removing it if it exists
+  const std::string& tmpDir = simCore::pathJoin({ systemTemp, "testWritable" });
+  if (simCore::FileInfo(tmpDir).exists())
+    rv += SDK_ASSERT(simCore::remove(tmpDir, true) == 0);
+
+  // Create the directory and make sure it's in a reasonable state
+  rv += SDK_ASSERT(simCore::mkdir(tmpDir) == 0);
+  const simCore::ScopeGuard rmOurTemp([tmpDir]() { simCore::remove(tmpDir, true); });
+  rv += SDK_ASSERT(simCore::FileInfo(tmpDir).exists());
+  rv += SDK_ASSERT(simCore::FileInfo(tmpDir).isDirectory());
+
+  // Should be writable
+  rv += SDK_ASSERT(simCore::isDirectoryWritable(tmpDir));
+  // Directory that does not exist should not be writable.
+  rv += SDK_ASSERT(!simCore::isDirectoryWritable(simCore::pathJoin({ tmpDir, "doesNotExist" })));
+
+  // If a file is there, then it shouldn't be writable
+  touchFile(simCore::pathJoin({ tmpDir, "file" }));
+  rv += SDK_ASSERT(!simCore::isDirectoryWritable(simCore::pathJoin({ tmpDir, "file" })));
+
+  // Create a subdirectory and make sure it's writable
+  const std::string& subdir = simCore::pathJoin({ tmpDir, "dir" });
+  simCore::mkdir(subdir);
+  rv += SDK_ASSERT(simCore::isDirectoryWritable(subdir));
+
+  // Set the directory to not-writable, then retest; this only works on Linux
+  // because Windows ACL overrides the chmod here. Linux also fails if root.
+#ifndef WIN32
+  if (geteuid() != 0)
+  {
+    std::filesystem::permissions(subdir, std::filesystem::perms::none, unused);
+    rv += SDK_ASSERT(!simCore::isDirectoryWritable(subdir));
+    std::filesystem::permissions(subdir, std::filesystem::perms::all, unused);
+    rv += SDK_ASSERT(simCore::isDirectoryWritable(subdir));
+  }
+#endif
+
+  return rv;
+}
+
 }
 
 int FileTest(int argc, char* argv[])
@@ -226,6 +282,7 @@ int FileTest(int argc, char* argv[])
   rv += SDK_ASSERT(testPathJoin() == 0);
   rv += SDK_ASSERT(testMkdirAndRemove() == 0);
   // recycle() is intentionally not tested to avoid cluttering recycling bin
+  rv += SDK_ASSERT(testWritable() == 0);
 
   std::cout << "simCore FileTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
 

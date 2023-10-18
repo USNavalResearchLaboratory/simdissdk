@@ -125,6 +125,9 @@ namespace simCore
   /** Double precision complex number */
   typedef std::complex<double> Complex;
 
+  /** Initialize the system pseudo-random number generator with the system clock. */
+  SDKCORE_EXPORT void initializeRandomSeedWithTime();
+
   /**
   * @brief Common source for all portable random number objects
   *

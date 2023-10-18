@@ -40,14 +40,7 @@ bool FileUtilities::isPathWritable(const QString& absoluteFilePath)
   // ignore return value, falling back to default behavior below, which likely
   // will cause us to return false.
 
-  // This will create the absolute file path, but only if "{absoluteFilePath}/.." exists
-  const QDir testDir(absoluteFilePath);
-  if (testDir.mkpath("testWritable"))
-  {
-    testDir.rmdir("testWritable");
-    return true;
-  }
-  return false;
+  return simCore::isDirectoryWritable(absoluteFilePath.toStdString());
 }
 
 

@@ -99,6 +99,17 @@ SDKCORE_EXPORT int remove(const std::string& path, bool recursive = false);
  */
 SDKCORE_EXPORT int recycle(const std::string& path);
 
+/**
+ * Returns true if the directory exists AND it is writable. The only sure-fire way to
+ * determine if a directory is writable is to attempt to write to it, which this
+ * method will do (and subsequently clean up). This method returns false if the given
+ * directory does not exist.
+ * @param dir Directory to test, must exist.
+ * @return True if the directory can be written to, false otherwise. If dir does not
+ *   exist then false is returned.
+ */
+SDKCORE_EXPORT bool isDirectoryWritable(const std::string& dir);
+
 }
 
 #endif /* SIMCORE_SYSTEM_FILE_H */

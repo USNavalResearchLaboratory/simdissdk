@@ -20,7 +20,9 @@
  * disclose, or release this software.
  *
  */
+#include <cstdlib>
 #include <filesystem>
+#include "simCore/Common/ScopeGuard.h"
 #include "simCore/System/File.h"
 
 #ifdef WIN32
@@ -130,6 +132,33 @@ int recycle(const std::string& path)
 #else
   return simCore::remove(path);
 #endif
+}
+
+bool isDirectoryWritable(const std::string& dir)
+{
+  if (!simCore::FileInfo(dir).isDirectory())
+    return false;
+
+  // Loop multiple times to try to get unique directory name
+  int numTries = 3;
+  while (--numTries >= 0)
+  {
+    // Skip directories that already exist (however unlikely that is). Though seemingly unlikely,
+    // this can happen if two applications test writable directories on initialization, e.g.
+    // when setting up SIMDIS_HOME path.
+    const std::string& candidateName = simCore::pathJoin(dir, "testWrite" + std::to_string(rand()));
+    if (simCore::FileInfo(candidateName).exists())
+      continue;
+
+    // Remove the directory when scope falls. Recurse not required because we create nothing in it
+    const simCore::ScopeGuard rmDir([candidateName]() { simCore::remove(candidateName); });
+    // Create directory to test writable, rather than a file, in an attempt to reduce
+    // false remove errors with virus scanners.
+    if (simCore::mkdir(candidateName) != 0)
+      return false;
+    return simCore::FileInfo(candidateName).isDirectory();
+  }
+  return false;
 }
 
 }
