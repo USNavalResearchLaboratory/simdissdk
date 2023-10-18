@@ -48,4 +48,44 @@ bool FileInfo::isDirectory() const
   return std::filesystem::is_directory(path_, unused);
 }
 
+std::string pathJoin(const std::string& path1, const std::string& path2)
+{
+  return pathJoin({ path1, path2 });
+}
+
+std::string pathJoin(const std::vector<std::string>& pathSegments)
+{
+  // Windows permits forward and backward slash separators. Linux only supports forward slash.
+  constexpr auto isSeparator = [](char value) constexpr {
+    return value == '/'
+#ifdef WIN32
+      || value == '\\'  // Not a path separator on Linux
+#endif
+      ; };
+
+  std::string rv;
+  for (const auto& segment : pathSegments)
+  {
+    // Ignore empty segments, but follow Python's path join behavior in appending separator if non-empty
+    if (segment.empty())
+    {
+      if (!rv.empty() && !isSeparator(rv.back()))
+        rv += simCore::PATH_SEPARATOR;
+      continue;
+    }
+
+    if (!rv.empty())
+    {
+      // Follow Python's path join behavior by clearing input if new segment is absolute
+      if (isSeparator(segment.front()))
+        rv.clear();
+      else if (!isSeparator(rv.back()))
+        rv += simCore::PATH_SEPARATOR;
+    }
+    rv += segment;
+  }
+  return rv;
+}
+
+
 }

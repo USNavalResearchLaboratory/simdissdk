@@ -60,6 +60,74 @@ int testFileInfo()
   return rv;
 }
 
+int testPathJoin()
+{
+  int rv = 0;
+
+  // Single directory returns
+  const std::string PS = simCore::PATH_SEPARATOR;
+  rv += SDK_ASSERT(simCore::pathJoin({}) == "");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a" }) == "a");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "" }) == ("a" + PS));
+  rv += SDK_ASSERT(simCore::pathJoin({ "", "a" }) == "a");
+  rv += SDK_ASSERT(simCore::pathJoin({ "", "" }) == "");
+  rv += SDK_ASSERT(simCore::pathJoin({ "", "", "a" }) == "a");
+
+  // Typical non-empty non-slashed input
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "", "a"}) == ("a" + PS + "a"));
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "b" }) == ("a" + PS + "b"));
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "b", "c" }) == ("a" + PS + "b" + PS + "c"));
+  rv += SDK_ASSERT(simCore::pathJoin({ "", "b", "c" }) == ("b" + PS + "c"));
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "b", ""}) == ("a" + PS + "b" + PS));
+
+  // First token ends with slashes
+  rv += SDK_ASSERT(simCore::pathJoin({ "a/", "" }) == "a/");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a/", "b" }) == "a/b");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a/", "", "b" }) == "a/b");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a//", "b" }) == "a//b");
+
+  // Starts with slash
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "/b" }) == "/b");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "/", "b" }) == "/b");
+
+  // Multiple directories in one call
+  rv += SDK_ASSERT(simCore::pathJoin({ "a/b", "c/d/" }) == ("a/b" + PS + "c/d/"));
+  rv += SDK_ASSERT(simCore::pathJoin({ "/a/b", "c/d/" }) == ("/a/b" + PS + "c/d/"));
+  rv += SDK_ASSERT(simCore::pathJoin({ "/a/b/", "c/d/" }) == "/a/b/c/d/");
+  rv += SDK_ASSERT(simCore::pathJoin({ "/a/b", "/c/d/" }) == "/c/d/");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a/b", "/c/d/" }) == "/c/d/");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a/b", "///c/d/" }) == "///c/d/");
+
+  // This test differs from Python on Windows, which returns R"(\\\b)"); Linux returns
+  // what is shown below.
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "//", "/b" }) == "/b");
+
+  // Windows allows backslash as a separator, but Linux does not, so different tests
+  // with different outcomes.s
+#ifdef WIN32
+  rv += SDK_ASSERT(simCore::pathJoin({ "a\\", "b" }) == R"(a\b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a\\", "\\b" }) == R"(\b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "\\b" }) == R"(\b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a//\\", "b" }) == R"(a//\b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "\\", "b" }) == R"(\b)");
+  // This test differs from Python, which returns R"(\\\b)")
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "\\\\", "\\b" }) == R"(\b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "\\\\a", "b" }) == R"(\\a\b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a\\", "" }) == R"(a\)");
+#else
+  rv += SDK_ASSERT(simCore::pathJoin({ "a\\", "b" }) == R"(a\/b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a\\", "\\b" }) == R"(a\/\b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "\\b" }) == R"(a/\b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a//\\", "b" }) == R"(a//\/b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "\\", "b" }) == R"(a/\/b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a", "\\\\", "\\b" }) == R"(a/\\/\b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "\\\\a", "b" }) == R"(\\a/b)");
+  rv += SDK_ASSERT(simCore::pathJoin({ "a\\", "" }) == R"(a\/)");
+#endif
+
+  return rv;
+}
+
 }
 
 int FileTest(int argc, char* argv[])
@@ -67,6 +135,7 @@ int FileTest(int argc, char* argv[])
   int rv = 0;
 
   rv += SDK_ASSERT(testFileInfo() == 0);
+  rv += SDK_ASSERT(testPathJoin() == 0);
 
   std::cout << "simCore FileTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
 

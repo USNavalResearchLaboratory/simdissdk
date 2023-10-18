@@ -56,6 +56,17 @@ private:
   std::string path_;
 };
 
+/**
+ * Multi-value path concatenation. Ignores empty parts. Adds PATH_SEPARATOR as needed
+ * between segments. Like Python's os.path.join(), this routine will truncate the
+ * results when a segment starts with a slash for absolute path. For example,
+ * `simCore::pathJoin({"a", "/b"})` returns `/b`. Note that this routine may insert
+ * OS-specific path separators and respects all OS-appropriate path separators, but
+ * will not replace existing path separators with native separators; for that, refer
+ * to simCore::toNativeSeparators().
+ */
+SDKCORE_EXPORT std::string pathJoin(const std::vector<std::string>& pathSegments);
+
 }
 
 #endif /* SIMCORE_SYSTEM_FILE_H */
