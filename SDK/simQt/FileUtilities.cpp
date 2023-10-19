@@ -30,19 +30,8 @@ namespace simQt {
 
 bool FileUtilities::isPathWritable(const QString& absoluteFilePath)
 {
-  // This is equivalent to "mkdir -p absoluteFilePath". Using this covers
-  // an edge case where the input path looks like "c:/path/to/a/dir". With
-  // this call, this works. Without this create_directories() call,
-  // isPathWritable() will fail if "c:/path" exists but "to/a/dir" does not.
-  // For isPathWritable() to succeed without this, "c:/path/to/a" must
-  // exist. This allows for the path to create multiple directories.
-  simCore::mkdir(absoluteFilePath.toStdString(), true);
-  // ignore return value, falling back to default behavior below, which likely
-  // will cause us to return false.
-
   return simCore::isDirectoryWritable(absoluteFilePath.toStdString());
 }
-
 
 int FileUtilities::createHomePath(const QString& relativeFilePath, bool roaming, QString& absolutePath)
 {
@@ -77,8 +66,11 @@ int FileUtilities::createHomePath(const QString& relativeFilePath, bool roaming,
     orgName = "SIMDIS SDK";
   absolutePath += "/" + orgName + "/" + relativeFilePath;
 
+  // Need to create the path to succeed
+  simCore::mkdir(absolutePath.toStdString(), true);
+
   // If we're roaming and can't write, then fall back to non-roaming position
-  if (!FileUtilities::isPathWritable(absolutePath))
+  if (!simCore::isDirectoryWritable(absolutePath.toStdString()))
   {
 #ifdef WIN32
     if (roaming)
