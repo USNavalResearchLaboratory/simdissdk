@@ -206,6 +206,35 @@ int testMkdirAndRemove()
   rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f2" })).isRegularFile());
   rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f3" })).isRegularFile());
 
+  // Test equivalence
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f1" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "c/f1" })));
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f1" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "c/f2" })));
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f1" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "c/../f1" })));
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f1" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "c/../c/f1" })));
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f1" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "c" })));
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c/f1" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "c/../c" })));
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "c/../c" })));
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "c" })));
+  rv += SDK_ASSERT(simCore::FileInfo(simCore::pathJoin({ tmpDir, "c" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "c/" })));
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "c/f1" })));
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "c" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "d" })));
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "e" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "d" })));
+  // Though the same path, neither one exists, and therefore cannot be equivalent
+  rv += SDK_ASSERT(!simCore::FileInfo(simCore::pathJoin({ tmpDir, "e" }))
+    .isEquivalent(simCore::pathJoin({ tmpDir, "e" })));
+
   rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "c/f1" })) == 0);
   // Can't remove more than once
   rv += SDK_ASSERT(simCore::remove(simCore::pathJoin({ tmpDir, "c/f1" })) != 0);

@@ -52,6 +52,9 @@ public:
   /** True if the path exists and refers to a directory. */
   bool isDirectory() const;
 
+  /** True if the given path is equivalent (same file or directory and file status is the same) */
+  bool isEquivalent(const std::string& toPath) const;
+
 private:
   std::string path_;
 };
@@ -109,6 +112,19 @@ SDKCORE_EXPORT int recycle(const std::string& path);
  *   exist then false is returned.
  */
 SDKCORE_EXPORT bool isDirectoryWritable(const std::string& dir);
+
+/**
+ * Retrieves the user's application data directory. On Windows this is typically %APPDATA%.
+ * On Linux, this is typically $HOME/.config. If roaming is set to false, Windows will
+ * return the application data directory for local use, typically %LOCALAPPDATA%. Linux
+ * does not respect the roaming flag.
+ *
+ * This is a generic folder that contains data for all application. Typically to save
+ * application data, you will want to use at least one level of hierarchy.
+ * @param roaming If true, return roaming location for Windows; if false, local.
+ * @return User's application data directory.
+ */
+SDKCORE_EXPORT std::string userApplicationDataDirectory(bool roaming);
 
 }
 

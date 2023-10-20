@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include "simCore/Common/ScopeGuard.h"
+#include "simCore/String/Utils.h"
 #include "simCore/System/File.h"
 
 #ifdef WIN32
@@ -53,6 +54,12 @@ bool FileInfo::isDirectory() const
 {
   std::error_code unused;
   return std::filesystem::is_directory(path_, unused);
+}
+
+bool FileInfo::isEquivalent(const std::string& toPath) const
+{
+  std::error_code unused;
+  return std::filesystem::equivalent(path_, toPath, unused);
 }
 
 ///////////////////////////////////////////////////////////////
@@ -159,6 +166,15 @@ bool isDirectoryWritable(const std::string& dir)
     return simCore::FileInfo(candidateName).isDirectory();
   }
   return false;
+}
+
+std::string userApplicationDataDirectory(bool roaming)
+{
+#ifdef WIN32
+  return simCore::getEnvVar(roaming ? "APPDATA" : "LOCALAPPDATA");
+#else
+  return simCore::pathJoin(simCore::getEnvVar("HOME"), ".config");
+#endif
 }
 
 }
