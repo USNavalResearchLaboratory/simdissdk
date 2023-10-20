@@ -23,6 +23,7 @@
 #include <cassert>
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
+#include "osgEarth/Version"
 #include "simNotify/Notify.h"
 #include "simCore/Time/Utils.h"
 #include "simVis/LayerRefreshCallback.h"

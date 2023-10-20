@@ -27,6 +27,7 @@
 #include "osgEarth/MapNode"
 #include "osgEarth/MapNodeObserver"
 #include "osgEarth/TerrainEngineNode"
+#include "osgEarth/Version"
 #include "simVis/ElevationQueryProxy.h"
 #include "simUtil/MousePositionManipulator.h"
 

@@ -27,7 +27,7 @@
 #include "imgui_impl_opengl3.h"
 #include "BaseGui.h"
 #include "OsgImGuiHandler.h"
-#include "osgEarth/BuildConfig.h"
+#include "osgEarth/Version"
 #include "osgEarth/ShaderLoader"
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/ImGui/CameraGUI"

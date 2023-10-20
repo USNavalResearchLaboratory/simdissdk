@@ -23,6 +23,7 @@
 #include "osgEarth/MapNodeObserver"
 #include "osgEarth/ElevationPool"
 #include "osgEarth/ElevationQuery"
+#include "osgEarth/Version"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/ElevationQueryProxy.h"
 

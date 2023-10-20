@@ -21,6 +21,7 @@
  *
  */
 #include "osgEarth/Horizon"
+#include "osgEarth/Version"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simVis/Entity.h"
 #include "simVis/View.h"
