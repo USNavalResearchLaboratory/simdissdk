@@ -177,4 +177,17 @@ std::string userApplicationDataDirectory(bool roaming)
 #endif
 }
 
+std::vector<std::string> filesMissingFromPath(const std::string& path, const std::vector<std::string>& expectedRelativeFiles)
+{
+  std::vector<std::string> rv;
+  for (const auto& relative : expectedRelativeFiles)
+  {
+    const auto& absolute = simCore::pathJoin({ path, relative });
+    const simCore::FileInfo fi(absolute);
+    if (!fi.exists() || fi.isDirectory())
+      rv.push_back(relative);
+  }
+  return rv;
+}
+
 }

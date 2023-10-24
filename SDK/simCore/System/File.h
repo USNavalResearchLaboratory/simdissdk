@@ -126,6 +126,18 @@ SDKCORE_EXPORT bool isDirectoryWritable(const std::string& dir);
  */
 SDKCORE_EXPORT std::string userApplicationDataDirectory(bool roaming);
 
+/**
+ * Returns a list of all relative files that, given a base path, are not found under
+ * that path. This is particularly useful for accepting user input for a directory and
+ * determining whether that directory contains files in subdirectories in a clean way.
+ * For example, this is used in determining whether SIMDIS_DIR is properly set.
+ * @param path Base path to test.
+ * @param expectedRelativeFiles Relative filenames, relative to path, that are tested.
+ * @return Entries in expectedRelativeFiles that do not exist relative to path. May be
+ *   empty if all paths exist.
+ */
+SDKCORE_EXPORT std::vector<std::string> filesMissingFromPath(const std::string& path, const std::vector<std::string>& expectedRelativeFiles);
+
 }
 
 #endif /* SIMCORE_SYSTEM_FILE_H */

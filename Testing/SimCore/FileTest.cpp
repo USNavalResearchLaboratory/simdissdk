@@ -301,6 +301,49 @@ int testWritable()
   return rv;
 }
 
+int testFilesMissingFromPath()
+{
+  int rv = 0;
+
+  // Create top level testing directory
+  std::error_code unused;
+  const std::string& systemTemp = std::filesystem::temp_directory_path(unused).string();
+  const std::string& tmpDir = simCore::pathJoin({ systemTemp, "testFilesMissingFromPath" });
+  simCore::remove(tmpDir, true);
+  rv += SDK_ASSERT(simCore::mkdir(tmpDir) == 0);
+  const simCore::ScopeGuard rmOurTemp([tmpDir]() { simCore::remove(tmpDir, true); });
+
+  // Create some subdirectories and files
+  rv += SDK_ASSERT(simCore::mkdir(simCore::pathJoin({ tmpDir, "a/b/c" }), true) == 0);
+  rv += SDK_ASSERT(simCore::mkdir(simCore::pathJoin({ tmpDir, "d/e/f" }), true) == 0);
+  touchFile(simCore::pathJoin({ tmpDir, "a", "a" }));
+  touchFile(simCore::pathJoin({ tmpDir, "a/b/c", "abc" }));
+  touchFile(simCore::pathJoin({ tmpDir, "d/e", "de" }));
+  touchFile(simCore::pathJoin({ tmpDir, "d/e", "de2" }));
+
+  // Empty list is noop empty return
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir, {}).empty());
+
+  // Test single existing files
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir, { "a/a" }).empty());
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir, { "a/b/c/abc" }).empty());
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir, { "d/e/de" }).empty());
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir, { "d/e/de2" }).empty());
+
+  // Directories should fail
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir, { "a" }).size() == 1);
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir, { "a", "d" }).size() == 2);
+  // Missing files should fail
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir, { "a/b" }).size() == 1);
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir, { "a/a", "a/b" }).size() == 1);
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir, { "doesnotexist" }).size() == 1);
+
+  // Use a different path and change relative subdirectories
+  rv += SDK_ASSERT(simCore::filesMissingFromPath(tmpDir + "/a", {"a", "b"}).size() == 1);
+
+  return rv;
+}
+
 }
 
 int FileTest(int argc, char* argv[])
@@ -312,6 +355,7 @@ int FileTest(int argc, char* argv[])
   rv += SDK_ASSERT(testMkdirAndRemove() == 0);
   // recycle() is intentionally not tested to avoid cluttering recycling bin
   rv += SDK_ASSERT(testWritable() == 0);
+  rv += SDK_ASSERT(testFilesMissingFromPath() == 0);
 
   std::cout << "simCore FileTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
 
