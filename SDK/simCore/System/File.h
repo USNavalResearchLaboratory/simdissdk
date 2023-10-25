@@ -24,6 +24,7 @@
 #define SIMCORE_SYSTEM_FILE_H
 
 #include <string>
+#include <tuple>
 #include <vector>
 #include "simCore/Common/Export.h"
 
@@ -69,6 +70,27 @@ private:
  * to simCore::toNativeSeparators().
  */
 SDKCORE_EXPORT std::string pathJoin(const std::vector<std::string>& pathSegments);
+
+/**
+ * Splits a path into the last component and the remainder of the first component,
+ * i.e. [head, tail]. Tail will never contain a slash, and if head ends in a slash
+ * then tail will be empty. If input path has no slash, then head will be empty and
+ * path returned in tail. In all cases, pathJoin() on the individual components
+ * returned will return an equivalent path.
+ *
+ * For example:
+ *   `const auto& [head, tail] = simCore::pathSplit("/usr/include/test.h");`
+ *
+ * Returns:
+ *   `head == "/usr/include";`
+ *   `tail == "test.h";`
+ *
+ * @param path Path to split.
+ * @return Tuple representing the [head, tail]. Head is the "remainder" part of the
+ *   path after the tail has been stripped. It will only end in a slash in the case
+ *   where it refers to the root. The tail will never include a slash.
+ */
+SDKCORE_EXPORT std::tuple<std::string, std::string> pathSplit(const std::string& path);
 
 /**
  * Creates the directory provided in path. This may be relative or absolute as per

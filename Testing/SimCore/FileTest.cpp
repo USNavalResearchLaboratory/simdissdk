@@ -71,7 +71,7 @@ int testPathJoin()
   int rv = 0;
 
   // Single directory returns
-  const std::string PS = simCore::PATH_SEPARATOR;
+  const std::string& PS = simCore::PATH_SEPARATOR;
   rv += SDK_ASSERT(simCore::pathJoin({}) == "");
   rv += SDK_ASSERT(simCore::pathJoin({ "a" }) == "a");
   rv += SDK_ASSERT(simCore::pathJoin({ "a", "" }) == ("a" + PS));
@@ -129,6 +129,75 @@ int testPathJoin()
   rv += SDK_ASSERT(simCore::pathJoin({ "a", "\\\\", "\\b" }) == R"(a/\\/\b)");
   rv += SDK_ASSERT(simCore::pathJoin({ "\\\\a", "b" }) == R"(\\a/b)");
   rv += SDK_ASSERT(simCore::pathJoin({ "a\\", "" }) == R"(a\/)");
+#endif
+
+  return rv;
+}
+
+int testPathSplit()
+{
+  int rv = 0;
+
+  /** Helper function that returns the joined string of a split path */
+  const auto splitJoin = [](const std::string& path) -> std::string {
+    const auto& [split1, split2] = simCore::pathSplit(path);
+    return simCore::pathJoin({ split1, split2 });
+    };
+  const std::string& PS = simCore::PATH_SEPARATOR;
+
+  rv += SDK_ASSERT(simCore::pathSplit("a/b") == std::make_tuple("a", "b"));
+  rv += SDK_ASSERT(splitJoin("a/b") == "a" + PS + "b");
+  rv += SDK_ASSERT(simCore::pathSplit("a/b/c") == std::make_tuple("a/b", "c"));
+  rv += SDK_ASSERT(splitJoin("a/b/c") == "a/b" + PS + "c");
+  rv += SDK_ASSERT(simCore::pathSplit("a") == std::make_tuple("", "a"));
+  rv += SDK_ASSERT(splitJoin("a") == "a");
+  rv += SDK_ASSERT(simCore::pathSplit("") == std::make_tuple("", ""));
+  rv += SDK_ASSERT(splitJoin("") == "");
+
+  // Multiple slashes
+  rv += SDK_ASSERT(simCore::pathSplit("a/b///c") == std::make_tuple("a/b", "c"));
+  rv += SDK_ASSERT(splitJoin("a/b///c") == "a/b" + PS + "c");
+  rv += SDK_ASSERT(simCore::pathSplit("a//b///c") == std::make_tuple("a//b", "c"));
+  rv += SDK_ASSERT(splitJoin("a//b///c") == "a//b" + PS + "c");
+  rv += SDK_ASSERT(simCore::pathSplit("a//b/c") == std::make_tuple("a//b", "c"));
+  rv += SDK_ASSERT(splitJoin("a//b/c") == "a//b" + PS + "c");
+
+  // Starting slash
+  rv += SDK_ASSERT(simCore::pathSplit("/") == std::make_tuple("/", ""));
+  rv += SDK_ASSERT(splitJoin("/") == "/");
+  rv += SDK_ASSERT(simCore::pathSplit("////") == std::make_tuple("////", ""));
+  rv += SDK_ASSERT(splitJoin("////") == "////");
+  rv += SDK_ASSERT(simCore::pathSplit("/abc") == std::make_tuple("/", "abc"));
+  rv += SDK_ASSERT(splitJoin("/abc") == "/abc");
+  rv += SDK_ASSERT(simCore::pathSplit("////abc") == std::make_tuple("////", "abc"));
+  rv += SDK_ASSERT(splitJoin("////abc") == "////abc");
+
+  // Trailing slash
+  rv += SDK_ASSERT(simCore::pathSplit("/ab/c/") == std::make_tuple("/ab/c", ""));
+  rv += SDK_ASSERT(splitJoin("/ab/c/") == "/ab/c" + PS);
+  rv += SDK_ASSERT(simCore::pathSplit("/ab/c///") == std::make_tuple("/ab/c", ""));
+  rv += SDK_ASSERT(splitJoin("/ab/c///") == "/ab/c" + PS);
+
+  // Windows allows backslash as a separator, but Linux does not, so different tests
+  // with different outcomes.s
+#ifdef WIN32
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a\b)") == std::make_tuple("a", "b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a\\b)") == std::make_tuple("a", "b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a/\b)") == std::make_tuple("a", "b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a\/\/\b)") == std::make_tuple("a", "b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(\\a\b)") == std::make_tuple(R"(\\a)", "b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(\\a/b)") == std::make_tuple(R"(\\a)", "b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a\)") == std::make_tuple("a", ""));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a\\/\\)") == std::make_tuple("a", ""));
+#else
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a\b)") == std::make_tuple("", "a\\b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a\\b)") == std::make_tuple("", "a\\\\b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a/\b)") == std::make_tuple("a", "\\b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a\/\/\b)") == std::make_tuple("a\\/\\", "\\b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(\\a\b)") == std::make_tuple("", R"(\\a\b)"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(\\a/b)") == std::make_tuple(R"(\\a)", "b"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a\)") == std::make_tuple("", "a\\"));
+  rv += SDK_ASSERT(simCore::pathSplit(R"(a\\/\\)") == std::make_tuple(R"(a\\)", R"(\\)"));
 #endif
 
   return rv;
@@ -352,6 +421,7 @@ int FileTest(int argc, char* argv[])
 
   rv += SDK_ASSERT(testFileInfo() == 0);
   rv += SDK_ASSERT(testPathJoin() == 0);
+  rv += SDK_ASSERT(testPathSplit() == 0);
   rv += SDK_ASSERT(testMkdirAndRemove() == 0);
   // recycle() is intentionally not tested to avoid cluttering recycling bin
   rv += SDK_ASSERT(testWritable() == 0);

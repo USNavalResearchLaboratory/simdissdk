@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include <cstdlib>
 #include <filesystem>
 #include "simCore/Common/ScopeGuard.h"
@@ -101,6 +102,36 @@ std::string pathJoin(const std::vector<std::string>& pathSegments)
     rv += segment;
   }
   return rv;
+}
+
+std::tuple<std::string, std::string> pathSplit(const std::string& path)
+{
+  static const std::string VALID_PATH_SEP =
+#ifdef WIN32
+    "/\\";
+#else
+    "/";
+#endif
+
+  const auto pathLastSlash = path.find_last_of(VALID_PATH_SEP);
+  // No path separator, return incoming path as the tail
+  if (pathLastSlash == std::string::npos)
+    return { "", path };
+
+  // At this point, tail is correct, and head may or may not contain trailing slashes
+  const std::string& tail = path.substr(pathLastSlash + 1);
+  const std::string& head = path.substr(0, pathLastSlash + 1);
+
+  // Strip trailing slashes
+  const auto headLastNonSlash = head.find_last_not_of(VALID_PATH_SEP);
+  // If it's all slashes, then return head and tail
+  if (headLastNonSlash == std::string::npos)
+    return { head, tail };
+
+  // Last character should have been a slash. We know there's a non-slash at this
+  // point, so there's at least 2 characters left (slash and null).
+  assert(headLastNonSlash + 2 <= head.size());
+  return { head.substr(0, headLastNonSlash + 1), tail };
 }
 
 int mkdir(const std::string& path, bool makeParents)
