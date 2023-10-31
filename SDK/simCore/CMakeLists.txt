@@ -238,6 +238,7 @@ target_include_directories(simCore PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(simCore PUBLIC simNotify)
+
 if(SIMCORE_SHARED)
     target_compile_definitions(simCore PRIVATE simCore_LIB_EXPORT_SHARED)
 else()
@@ -258,6 +259,13 @@ include(TestTimespec)
 test_timespec(SDK_TIMESPEC)
 if(SDK_TIMESPEC)
     target_compile_definitions(simCore PUBLIC DEFINED_TIMESPEC_T)
+endif()
+
+# simCore TimeStampStr needs to know the yday offset
+include(TestYDayOffset)
+GET_YDAY_OFFSET(NEED_YDAY_OFFSET_MINUS1)
+if(NEED_YDAY_OFFSET_MINUS1)
+    target_compile_definitions(simCore PRIVATE NEED_YDAY_OFFSET_MINUS1)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)

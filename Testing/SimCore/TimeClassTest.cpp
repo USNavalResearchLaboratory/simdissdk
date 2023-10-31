@@ -843,6 +843,33 @@ namespace
     rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.f1", "%m/%d/%Y %H:%M:%S") == 0);
     rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.1.1", "%m/%d/%Y %H:%M:%S") == 0);
 
+    // Test year day %j, which may demonstrate unreliable behavior depending on the system
+    rv += SDK_ASSERT(tss.strptime(ts, "002", "%j") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400));
+    rv += SDK_ASSERT(tss.strptime(ts, "1", "%j") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 0));
+    rv += SDK_ASSERT(tss.strptime(ts, "3", "%j") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 * 2));
+    rv += SDK_ASSERT(tss.strptime(ts, "365", "%j") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 * 364));
+    // note that 366 is only valid in a leap year, if year is not specified, system may not accept 366 depending on currrent year
+    rv += SDK_ASSERT(tss.strptime(ts, "366 2004", "%j %Y") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 * 365));
+
+    // Test invalid strings with %j
+    rv += SDK_ASSERT(tss.strptime(ts, "0", "%j") == 1);
+    rv += SDK_ASSERT(tss.strptime(ts, "-1", "%j") == 1);
+    rv += SDK_ASSERT(tss.strptime(ts, "Joe", "%j") == 1);
+    rv += SDK_ASSERT(tss.strptime(ts, "367", "%j") == 1);
+
+    // Test Month Day Year format
+    rv += SDK_ASSERT(tss.strptime(ts, "Jan 2 2012 1:02:03.123456", "%b %d %Y %H:%M:%S") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3 + 0.123456));
+
+    // Test Ordinal format
+    rv += SDK_ASSERT(tss.strptime(ts, "2 2012 1:02:03.123456", "%j %Y %H:%M:%S") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3 + 0.123456));
+
     return rv;
   }
 
