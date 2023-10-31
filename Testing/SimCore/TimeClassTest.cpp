@@ -870,6 +870,10 @@ namespace
     rv += SDK_ASSERT(tss.strptime(ts, "2 2012 1:02:03.123456", "%j %Y %H:%M:%S") == 0);
     rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3 + 0.123456));
 
+    // Test ISO 8601 format
+    rv += SDK_ASSERT(tss.strptime(ts, "2012-1-02T01:02:03.123456Z", "%Y-%m-%dT%H:%M:%S") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3 + 0.123456));
+
     return rv;
   }
 
