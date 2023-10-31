@@ -171,9 +171,9 @@ std::string getExecutableFilename()
 
 #ifndef WIN32
   // On Linux, use /proc/self/exe (stackoverflow.com/questions/7051844)
-  size_t count = readlink(PROCESS_EXE_PATH.c_str(), realPath, sizeof(realPath) - 1);
+  const size_t count = readlink(PROCESS_EXE_PATH.c_str(), realPath, sizeof(realPath) - 1);
 #else
-  DWORD count = GetModuleFileName(nullptr, realPath, sizeof(realPath) - 1);
+  const DWORD count = GetModuleFileName(nullptr, realPath, static_cast<DWORD>(sizeof(realPath) - 1));
 #endif
 
   // Terminate and assign to return value
