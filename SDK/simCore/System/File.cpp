@@ -138,7 +138,13 @@ int mkdir(const std::string& path, bool makeParents)
 {
   std::error_code unused;
   if (makeParents)
-    return std::filesystem::create_directories(path, unused) ? 0 : 1;
+  {
+    const int rv = std::filesystem::create_directories(path, unused) ? 0 : 1;
+    if (rv == 0) // success
+      return 0;
+    // Still a success if the directory now exists
+    return simCore::FileInfo(path).isDirectory() ? 0 : 1;
+  }
   return std::filesystem::create_directory(path, unused) ? 0 : 1;
 }
 

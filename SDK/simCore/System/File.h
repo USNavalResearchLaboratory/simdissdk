@@ -101,7 +101,8 @@ SDKCORE_EXPORT std::tuple<std::string, std::string> pathSplit(const std::string&
  * @param makeParents If true, create all parents of path that do not currently
  *   exist similar to `mkdir -p`. If false, the default, then parents of the given
  *   path are not created and this method will fail.
- * @return 0 on success, non-zero on error. Already-existing directory is an error.
+ * @return 0 on success, non-zero on error. Already-existing directory is an error
+ *   unless makeParents is true, just like UNIX `mkdir -p`.
  */
 SDKCORE_EXPORT int mkdir(const std::string& path, bool makeParents = false);
 
