@@ -158,10 +158,16 @@ osgEarth::Util::ElevationQuery* ElevationQueryProxy::q() const
 bool ElevationQueryProxy::getPendingElevation(double& out_elevation, double* out_actualResolution)
 {
   // if result hasn't returned yet, return early
+#if OSGEARTH_SOVERSION >= 149
+  if (!data_->elevationResult_.available())
+#else
   if (!data_->elevationResult_.isAvailable())
+#endif
     return false;
 
-#if OSGEARTH_SOVERSION > 100
+#if OSGEARTH_SOVERSION >= 149
+  const osgEarth::ElevationSample& sample = data_->elevationResult_.value();
+#elif OSGEARTH_SOVERSION > 100
   const osgEarth::ElevationSample& sample = data_->elevationResult_.get();
 #else
   osg::ref_ptr<osgEarth::RefElevationSample> samplePtr = data_->elevationResult_.release();
