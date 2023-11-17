@@ -50,6 +50,10 @@ mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
 
+if(MSVC)
+    target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+endif()
+
 # Set up the version numbers
 set(QT_VERSION ${Qt5Widgets_VERSION_STRING})
 string(REPLACE "." ";" QT_VERSION_LIST ${QT_VERSION})
