@@ -67,9 +67,12 @@ else()
     set_property(GLOBAL PROPERTY USE_FOLDERS FALSE)
 endif()
 
+# Build as close to C++23 as possible. It's fine if compiler does not support this version yet.
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Include base macros required by other macros
 include(BuildSystemVariables)
-include(EnableNewCxxFeatures)
 include(HelperFunctions)
 include(CheckOSGEarthMethodExists)
 
@@ -89,6 +92,8 @@ add_definitions(-D${ARCH})
 if(WIN32)
     if(MSVC)
         add_definitions(-DWIN32_LEAN_AND_MEAN -DNOMINMAX -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
+        # Fix __cplusplus on MSVC 2015+ (https://devblogs.microsoft.com/cppblog/msvc-now-correctly-reports-__cplusplus/)
+        add_definitions(-Zc:__cplusplus)
 
         option(ENABLE_STATIC_ANALYSIS "Enable Visual Studio's static analyzer" OFF)
         if(ENABLE_STATIC_ANALYSIS)

@@ -21,6 +21,7 @@
  *
  */
 #include <cassert>
+#include <QAction>
 #include <QColorDialog>
 #include <QGroupBox>
 #include <QMessageBox>

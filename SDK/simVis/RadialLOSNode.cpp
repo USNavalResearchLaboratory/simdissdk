@@ -24,6 +24,7 @@
 #include "osg/Depth"
 #include "osgEarth/DrapeableNode"
 #include "osgEarth/Terrain"
+#include "osgEarth/Version"
 #include "simNotify/Notify.h"
 #include "simVis/Constants.h"
 #include "simVis/Utils.h"

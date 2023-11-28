@@ -473,14 +473,19 @@ void GanttChartView::mousePressEvent(QMouseEvent* event)
 void GanttChartView::wheelEvent(QWheelEvent * event)
 {
   // event->delta returns distance rotated in eighths of a degree
-  double numDegrees = event->delta() / 8;
+  double numDegrees = event->angleDelta().y() / 8;
   // Qt documentation reports that most mice wheels use steps of 15 degrees: http://doc.qt.io/qt-4.8/qwheelevent.html#delta
   double numSteps = numDegrees / 15;
 
   // scale_ > 0 enforced in updateEndpoints(), zoom_ >= enforced in setZoom()
   assert(scale_ > 0 && zoom_ >= 1);
 
-  double timeAtCursor = firstBegin_ + (horizontalScrollBar()->value() + event->pos().x()) / (scale_ * zoom_);
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+  const auto posX = event->pos().x();
+#else
+  const auto posX = event->position().x();
+#endif
+  double timeAtCursor = firstBegin_ + (horizontalScrollBar()->value() + posX) / (scale_ * zoom_);
   if (numSteps < 0)
   {
     for (int i = 0; i > numSteps; i--)
@@ -503,7 +508,7 @@ void GanttChartView::wheelEvent(QWheelEvent * event)
   updateGeometries_();
 
   // Keep the point under the cursor as close to the cursor as possible
-  horizontalScrollBar()->setValue(((timeAtCursor - firstBegin_) * (scale_ * zoom_)) - event->pos().x());
+  horizontalScrollBar()->setValue(((timeAtCursor - firstBegin_) * (scale_ * zoom_)) - posX);
 
   viewport()->update();
 }

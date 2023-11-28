@@ -427,6 +427,12 @@ public:
   /** Retrieve the object index tag for picking GOGs. */
   unsigned int objectIndexTag() const;
 
+  /**
+  * Set the save directory path, for use when serializeing GOG to a file location. Call this before serializeToStream.
+  * @param dirPath directory path where GOG file is being written, can be full or partial path
+  */
+  void setSaveDir(const std::string& dirPath);
+
 protected: // methods
 
   /**
@@ -485,6 +491,14 @@ protected: // methods
   /** Helper method for initializing hasMapNode_ and altitude_ from the specified GeoPosition node. */
   void initializeFromGeoPositionNode_(const osgEarth::GeoPositionNode& node);
 
+  /**
+  * Save the specified image to a file, if it is valid and the specified imageFile doesn't already exist.
+  * @param image to save to file
+  * @param imageFile current filename attached to the image, may reference an existing image file
+  * @param saveDirPath directory path to save new file
+  * @return filename of saved file if new file was created, empty string if no file saved */
+  std::string saveImageToFile_(const osg::Image* image, const std::string& imageFile, const std::string& saveDirPath) const;
+
   /** Apply current orientation offsets to the node's local rotation, if applicable */
   virtual void applyOrientationOffsets_() = 0;
 
@@ -507,6 +521,7 @@ protected: // data
   double altOffset_; ///< cache the altitude offset, in meters
   AltitudeMode altMode_; ///< cache the altitude mode
   bool hasMapNode_; ///< indicates if this shape has a map node
+  std::string saveDirPath_; ///< Directory path location when saving a GOG file
 
 private:
 
@@ -554,28 +569,6 @@ private:
 
 /// Shared ptr wrapper for the GogNodeInterface object
 typedef std::shared_ptr<GogNodeInterface> GogNodeInterfacePtr;
-
-/**
- * Implementation of GogNodeInterface for AnnotationNodes, which are a base class of all GOG node types.
- * Used when less generic GogNodeInterface can't be found for a given osg node
- * @deprecated This class has been deprecated.  Use one of the other GogNodeInterface implementations instead.
- */
-class SDKVIS_EXPORT AnnotationNodeInterface : public GogNodeInterface
-{
-public:
-  SDK_DEPRECATE(AnnotationNodeInterface(osgEarth::AnnotationNode* annotationNode, const simVis::GOG::GogMetaData& metaData), "Use one of the other GogNodeInterface implementations instead.");
-  virtual ~AnnotationNodeInterface();
-  virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = nullptr) const;
-
-protected:
-  virtual void adjustAltitude_();
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
-  virtual void setStyle_(const osgEarth::Style& style);
-  virtual void applyOrientationOffsets_();
-
-private:
-  osg::observer_ptr<osgEarth::AnnotationNode> annotationNode_;
-};
 
 /**
 * Implementation of GogNodeInterface for FeatureNodes, which represent absolute line type Overlays
@@ -653,6 +646,8 @@ public:
   virtual void setTextOutline(const osg::Vec4f& outlineColor, simData::TextOutline outlineThickness);
   virtual void setDeclutterPriority(int priority);
   virtual void applyOrientationOffsets_();
+  /** Override serialize, since image file may need to be created */
+  virtual void serializeToStream(std::ostream& gogOutputStream) override;
 
 protected:
   virtual void adjustAltitude_();
@@ -771,7 +766,8 @@ public:
   ImageOverlayInterface(osgEarth::ImageOverlay* imageNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~ImageOverlayInterface() {}
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = nullptr) const;
-
+  /** Override serialize, since image file may need to be created */
+  virtual void serializeToStream(std::ostream& gogOutputStream) override;
   /** Override opacity, since the override color approach doesn't work */
   virtual void setOpacity(float opacity) override;
 

@@ -10,7 +10,7 @@
 
 # Initialize QT5_MODULES
 if(NOT DEFINED QT5_MODULES)
-    set(QT5_MODULES Concurrent Designer Network OpenGL Multimedia MultimediaWidgets Svg Test UiPlugin Xml)
+    set(QT5_MODULES Concurrent Designer Network OpenGL Multimedia MultimediaWidgets PrintSupport Svg Test UiPlugin Xml)
 endif()
 # Initialize QT5_PLUGINS
 if(NOT DEFINED QT5_PLUGINS)
@@ -23,7 +23,10 @@ endif()
 # Figure out the expected version and expected folder based on VSI layout,
 # so that we can configure a good guess at the CMAKE_PREFIX_PATH required.
 # If your Qt is somewhere else, configure CMAKE_PREFIX_PATH appropriately.
-set(EXPECTED_QT5_VERSION 5.9.8)
+set(EXPECTED_QT5_VERSION 5.15)
+if(DEFINED ENV{EXPECTED_QT5_VERSION_DIR})
+    set(EXPECTED_QT5_VERSION $ENV{EXPECTED_QT5_VERSION_DIR})
+endif()
 
 # VSI installs to a win64_vc-#.# subdirectory under c:/QtSDK.  By default, Qt is in /usr/local/Qt-* on both systems
 set(DEFAULT_QT_LOCATION "c:/QtSDK/${BUILD_SYSTEM_CANONICAL_NAME}/${EXPECTED_QT5_VERSION}")
@@ -46,6 +49,10 @@ set(EXPECTED_QT5_VERSION "${Qt5Widgets_VERSION_STRING}")
 mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
+
+if(MSVC)
+    target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+endif()
 
 # Set up the version numbers
 set(QT_VERSION ${Qt5Widgets_VERSION_STRING})
@@ -98,8 +105,15 @@ macro(install_qtplugins dir)
             DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
             OPTIONAL
             COMPONENT ThirdPartyLibs
+            CONFIGURATIONS Release RelWithDebInfo
             FILES_MATCHING PATTERN *.dll
             PATTERN *d.dll EXCLUDE)
+        INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
+            DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
+            OPTIONAL
+            COMPONENT ThirdPartyLibs
+            CONFIGURATIONS Debug
+            FILES_MATCHING PATTERN *d.dll)
     else()
         # Note that Qt requires the Linux shared objects in the executable's subdirectory (e.g. bin)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}

@@ -237,16 +237,6 @@ void EntityPopup::setMaxWidth(int widthPx)
   contentLabel_->setMaximumWidth(widthF);
 }
 
-void EntityPopup::setShowInCorner(bool showInCorner)
-{
-  PopupLocation location = (showInCorner ? simVis::PopupLocation::LOWER_RIGHT : simVis::PopupLocation::OVER_ENTITY);
-  if (location_ == location)
-    return;
-  // Note: changing to display over entity will require mouse movement to correctly position
-  if (location_ != simVis::PopupLocation::OVER_ENTITY)
-    positionInCorner_();
-}
-
 void EntityPopup::setPopupLocation(PopupLocation location)
 {
   if (location_ == location)
@@ -432,12 +422,6 @@ void PopupHandler::setContentCallback(PopupContentCallback* cb)
 void PopupHandler::setLimitVisibility(bool limit)
 {
   limitVisibility_ = limit;
-}
-
-void PopupHandler::setShowInCorner(bool showInCorner)
-{
-  location_ = (showInCorner ? simVis::PopupLocation::LOWER_RIGHT : simVis::PopupLocation::OVER_ENTITY);
-  popup_->setPopupLocation(location_);
 }
 
 void PopupHandler::setPopupLocation(PopupLocation location)

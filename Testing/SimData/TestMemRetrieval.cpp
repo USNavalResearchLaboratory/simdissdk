@@ -20,26 +20,25 @@
  * disclose, or release this software.
  *
  */
-#include <iostream>
+#include <cstddef>
 #include <float.h>
+#include <iostream>
 #include <limits>
-#include "simCore/Time/Utils.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Version.h"
+#include "simCore/Time/Utils.h"
 #include "simData/LinearInterpolator.h"
 #include "simUtil/DataStoreTestHelper.h"
-
-using namespace std;
 
 namespace
 {
 
-const size_t NUM_PLATS = 100;
-const size_t NUM_POINTS = 100;
-const size_t NUM_COMMANDS = 6;
-const size_t NUM_GD_POINTS = 1+2+3+4+5+6; // 21 -- SUM(1..6)
-const std::string ICON_NAME = "unit_sphere";
-const double DELTA = 0.000001;
+static const size_t NUM_PLATS = 100;
+static const size_t NUM_DATA_POINTS = 100;
+static const size_t NUM_COMMANDS = 6;
+static const size_t NUM_GD_POINTS = 1+2+3+4+5+6; // 21 -- SUM(1..6)
+static const std::string ICON_NAME = "unit_sphere";
+static const double DELTA = 0.000001;
 
 
 std::string expectedValue(const std::string& text, uint64_t id)
@@ -130,7 +129,7 @@ void addPlatform(simUtil::DataStoreTestHelper& testHelper, bool inOrder)
   // Add a few data points
   if (inOrder)
   {
-    for (size_t k = 0; k < NUM_POINTS; ++k)
+    for (size_t k = 0; k < NUM_DATA_POINTS; ++k)
       testHelper.addPlatformUpdate(static_cast<double>(k), id);
 
     for (size_t k = 0; k < NUM_COMMANDS; ++k)
@@ -142,7 +141,7 @@ void addPlatform(simUtil::DataStoreTestHelper& testHelper, bool inOrder)
   }
   else
   {
-    for (size_t k = NUM_POINTS; k > 0; --k)
+    for (size_t k = NUM_DATA_POINTS; k > 0; --k)
       testHelper.addPlatformUpdate(static_cast<double>(k-1), id);
 
     for (size_t k = NUM_COMMANDS; k > 0; --k)
@@ -200,8 +199,8 @@ int sanityCheck(simData::DataStore* dataStore)
     rv += SDK_ASSERT(prefs->icon() == ICON_NAME);
   }
   // Validate the data for various IDs
-  assert(NUM_POINTS % 2 == 0); // Note: Need even number of points for time update checks
-  double timeValue = NUM_POINTS / 2;
+  assert(NUM_DATA_POINTS % 2 == 0); // Note: Need even number of points for time update checks
+  double timeValue = NUM_DATA_POINTS / 2;
   dataStore->update(timeValue);
   const simData::PlatformUpdateSlice* slice = dataStore->platformUpdateSlice(1);
   rv += SDK_ASSERT(slice != nullptr);
@@ -220,7 +219,7 @@ int sanityCheck(simData::DataStore* dataStore)
   if (bounds.first != nullptr && bounds.second != nullptr)
   {
     rv += SDK_ASSERT(bounds.first->time() == 0);
-    rv += SDK_ASSERT(bounds.second->time() == NUM_POINTS - 1);
+    rv += SDK_ASSERT(bounds.second->time() == NUM_DATA_POINTS - 1);
   }
   // Iterate through points, validating values; note this might change depending on implementation
   TestVisit testVisit;
@@ -279,7 +278,7 @@ int updateIterateTest(simData::DataStore* dataStore)
   rv += SDK_ASSERT(copy.hasPrevious());
   rv += SDK_ASSERT(!copy.hasNext());
   rv += SDK_ASSERT(copy.peekPrevious() != nullptr);
-  rv += SDK_ASSERT(copy.peekPrevious()->time() == NUM_POINTS - 1);
+  rv += SDK_ASSERT(copy.peekPrevious()->time() == NUM_DATA_POINTS - 1);
   copy.toFront();
   // Validate copy constructor
   int numSeen = 0;
@@ -295,7 +294,7 @@ int updateIterateTest(simData::DataStore* dataStore)
     rv += SDK_ASSERT(update->time() == numSeen);
     numSeen++;
   }
-  rv += SDK_ASSERT(static_cast<size_t>(numSeen) == NUM_POINTS);
+  rv += SDK_ASSERT(static_cast<size_t>(numSeen) == NUM_DATA_POINTS);
   // Iterate backwards, using the copy from earlier
   copy.toBack();
   rv += SDK_ASSERT(!copy.hasNext());
@@ -314,8 +313,8 @@ int updateIterateTest(simData::DataStore* dataStore)
   rv += SDK_ASSERT(0 == upperLowerTest(slice, 0.5, 1.0, 1.0));
   rv += SDK_ASSERT(0 == upperLowerTest(slice, 1.0, 1.0, 2.0));
   rv += SDK_ASSERT(0 == upperLowerTest(slice, -1.0, 0.0, 0.0));
-  rv += SDK_ASSERT(0 == upperLowerTest(slice, NUM_POINTS - 1.0, NUM_POINTS - 1, -1));
-  rv += SDK_ASSERT(0 == upperLowerTest(slice, NUM_POINTS + 0.0, -1, -1));
+  rv += SDK_ASSERT(0 == upperLowerTest(slice, NUM_DATA_POINTS - 1.0, NUM_DATA_POINTS - 1, -1));
+  rv += SDK_ASSERT(0 == upperLowerTest(slice, NUM_DATA_POINTS + 0.0, -1, -1));
 
   return rv;
 }
@@ -631,11 +630,11 @@ int timeBoundsCheck(simData::DataStore* dataStore)
 {
   int rv = 0;
   rv += SDK_ASSERT(dataStore->timeBounds(0).first == 0);
-  rv += SDK_ASSERT(dataStore->timeBounds(0).second == NUM_POINTS - 1);
+  rv += SDK_ASSERT(dataStore->timeBounds(0).second == NUM_DATA_POINTS - 1);
   rv += SDK_ASSERT(dataStore->timeBounds(1).first == 0);
-  rv += SDK_ASSERT(dataStore->timeBounds(1).second == NUM_POINTS - 1);
+  rv += SDK_ASSERT(dataStore->timeBounds(1).second == NUM_DATA_POINTS - 1);
   rv += SDK_ASSERT(dataStore->timeBounds(NUM_PLATS).first == 0);
-  rv += SDK_ASSERT(dataStore->timeBounds(NUM_PLATS).second == NUM_POINTS - 1);
+  rv += SDK_ASSERT(dataStore->timeBounds(NUM_PLATS).second == NUM_DATA_POINTS - 1);
   return rv;
 }
 
@@ -712,14 +711,14 @@ int interpolateTest(simData::DataStore* dataStore)
   // Now we test the actual interpolation through update()
 
   rv += SDK_ASSERT(interpTester(dataStore, 1, 0) == 0);
-  rv += SDK_ASSERT(interpTester(dataStore, 1, NUM_POINTS - 1) == 0);
+  rv += SDK_ASSERT(interpTester(dataStore, 1, NUM_DATA_POINTS - 1) == 0);
   rv += SDK_ASSERT(interpTester(dataStore, 1, 5.5) == 0);
   rv += SDK_ASSERT(interpTester(dataStore, 1, 50) == 0);
   rv += SDK_ASSERT(interpTester(dataStore, 1, 50.5) == 0);
   // Try the same tests with interpolation off
   rv += SDK_ASSERT(false == dataStore->enableInterpolation(false));
   rv += SDK_ASSERT(interpTester(dataStore, 1, 0) == 0);
-  rv += SDK_ASSERT(interpTester(dataStore, 1, NUM_POINTS - 1) == 0);
+  rv += SDK_ASSERT(interpTester(dataStore, 1, NUM_DATA_POINTS - 1) == 0);
   rv += SDK_ASSERT(interpTester(dataStore, 1, 5.5) == 0);
   rv += SDK_ASSERT(interpTester(dataStore, 1, 50) == 0);
   rv += SDK_ASSERT(interpTester(dataStore, 1, 50.5) == 0);
@@ -769,11 +768,11 @@ int timeNextPreviousCheck(simData::DataStore* dataStore)
   rv += testTimeBefore(slice, 5.5, 5);
   rv += testTimeBefore(slice, 5, 4);
   rv += testTimeBefore(slice, 0, std::numeric_limits<double>::max());
-  rv += testTimeBefore(slice, NUM_POINTS + 900, NUM_POINTS - 1);
-  rv += testTimeBefore(slice, NUM_POINTS - 1, NUM_POINTS - 2);
+  rv += testTimeBefore(slice, NUM_DATA_POINTS + 900, NUM_DATA_POINTS - 1);
+  rv += testTimeBefore(slice, NUM_DATA_POINTS - 1, NUM_DATA_POINTS - 2);
   rv += testTimeAfter(slice, 5.5, 6);
   rv += testTimeAfter(slice, 6, 7);
-  rv += testTimeAfter(slice, NUM_POINTS - 1, -std::numeric_limits<double>::max());
+  rv += testTimeAfter(slice, NUM_DATA_POINTS - 1, -std::numeric_limits<double>::max());
   rv += testTimeAfter(slice, -100, 0);
   rv += testTimeAfter(slice, 0, 1);
   return rv;
@@ -908,7 +907,7 @@ int commandCheck(simData::DataStore* dataStore)
 
 int dataLimitCheck(simData::DataStore* dataStore)
 {
-  // assumes there are NUM_POINTS with times 0 to NUM_POINTS-1
+  // assumes there are NUM_DATA_POINTS with times 0 to NUM_DATA_POINTS-1
   int rv = 0;
   simData::DataStore::Transaction t;
   const uint64_t id = 1;
@@ -917,13 +916,13 @@ int dataLimitCheck(simData::DataStore* dataStore)
   simData::PlatformPrefs* prefs = dataStore->mutable_platformPrefs(id, &t);
   // drop first point using time
   const size_t numItems = dataStore->platformUpdateSlice(id)->numItems();
-  prefs->mutable_commonprefs()->set_datalimittime(NUM_POINTS-1);
+  prefs->mutable_commonprefs()->set_datalimittime(NUM_DATA_POINTS-1);
   t.commit();
   rv += SDK_ASSERT(dataStore->platformUpdateSlice(id)->numItems() == numItems - 1);
 
   // drop second point using points
   prefs = dataStore->mutable_platformPrefs(id, &t);
-  prefs->mutable_commonprefs()->set_datalimitpoints(NUM_POINTS-2);
+  prefs->mutable_commonprefs()->set_datalimitpoints(NUM_DATA_POINTS-2);
   t.commit();
 
   rv += SDK_ASSERT(dataStore->platformUpdateSlice(id)->numItems() == numItems - 2);
@@ -933,7 +932,7 @@ int dataLimitCheck(simData::DataStore* dataStore)
 
   // try a no-op
   prefs = dataStore->mutable_platformPrefs(id, &t);
-  prefs->mutable_commonprefs()->set_datalimitpoints(NUM_POINTS-1);
+  prefs->mutable_commonprefs()->set_datalimitpoints(NUM_DATA_POINTS-1);
   t.commit();
 
   rv += SDK_ASSERT(dataStore->platformUpdateSlice(id)->numItems() == numItems - 2);
@@ -964,7 +963,7 @@ int testDataStoreRetrieval(bool inOrder)
       addPlatform(testHelper, inOrder);
   }
   double elapsed = simCore::systemTimeToSecsBgnYr() - t;
-  cout << "Time to add " << NUM_PLATS << " platforms with " << NUM_POINTS << " points: " << elapsed << endl;
+  std::cout << "Time to add " << NUM_PLATS << " platforms with " << NUM_DATA_POINTS << " points: " << elapsed << std::endl;
 
   rv += SDK_ASSERT(0 == sanityCheck(dataStore));
   rv += SDK_ASSERT(0 == iterateTest(dataStore));
@@ -988,9 +987,9 @@ int TestMemRetrieval(int argc, char* argv[])
 {
   simCore::checkVersionThrow();
   int rv1 = testDataStoreRetrieval(true);
-  cout << "TestMemRetrieval (Fwd): " << (rv1 == 0 ? "PASSED" : "FAILED") << endl;
+  std::cout << "TestMemRetrieval (Fwd): " << (rv1 == 0 ? "PASSED" : "FAILED") << std::endl;
   int rv2 = testDataStoreRetrieval(false);
-  cout << "TestMemRetrieval (Rev): " << (rv2 == 0 ? "PASSED" : "FAILED") << endl;
+  std::cout << "TestMemRetrieval (Rev): " << (rv2 == 0 ? "PASSED" : "FAILED") << std::endl;
   return rv1 + rv2;
 }
 

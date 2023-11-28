@@ -91,7 +91,7 @@ void DirectorySelectorWidget::setIncludeLabel(bool value)
     }
     ui_->horizontalLayout->insertWidget(0, labelWidget_);
   }
-  else
+  else if (labelWidget_)
   {
     ui_->horizontalLayout->removeWidget(labelWidget_);
     delete labelWidget_;
@@ -151,7 +151,8 @@ void DirectorySelectorWidget::setShowOpenDirectoryButton(bool show)
   else
   {
     assert(openDirectoryButton_ != nullptr); // Button shouldn't be NULL
-    ui_->horizontalLayout->removeWidget(openDirectoryButton_);
+    if (openDirectoryButton_)
+      ui_->horizontalLayout->removeWidget(openDirectoryButton_);
     delete openDirectoryButton_;
     openDirectoryButton_ = nullptr;
   }

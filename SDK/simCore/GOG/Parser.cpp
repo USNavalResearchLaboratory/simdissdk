@@ -924,7 +924,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
         anno->setOutlineColor(color);
     }
     if (parsed.hasValue(ShapeParameter::IMAGE))
-      anno->setImageFile(parsed.stringValue(ShapeParameter::IMAGE));
+      anno->setImageFile(simCore::sanitizeFilename(simCore::expandEnv(parsed.stringValue(ShapeParameter::IMAGE))));
     if (parsed.hasValue(ShapeParameter::PRIORITY))
     {
       double priority = 0.;
@@ -1194,7 +1194,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
 
       if (validValues == 4)
       {
-        imageOverlay->setImageFile(parsed.stringValue(ShapeParameter::IMAGE));
+        imageOverlay->setImageFile(simCore::sanitizeFilename(simCore::expandEnv(parsed.stringValue(ShapeParameter::IMAGE))));
         if (parsed.hasValue(ShapeParameter::LLABOX_ROT))
         {
           double rotation = 0.;

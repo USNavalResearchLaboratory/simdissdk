@@ -35,7 +35,6 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}SettingsModel.h
     ${SIMQT_INC}SettingsProxyModel.h
     ${SIMQT_INC}SliderTimeWidgetBinding.h
-    ${SIMQT_SRC}SortFilterProxyModel.h
     ${SIMQT_INC}SplashScreen.h
     ${SIMQT_INC}StartupLayoutTask.h
     ${SIMQT_INC}StdStreamConsoleChannel.h
@@ -53,6 +52,7 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}FileUtilities.h
     ${SIMQT_INC}MonospaceItemDelegate.h
     ${SIMQT_INC}QtFormatting.h
+    ${SIMQT_INC}QtUtils.h    
     ${SIMQT_INC}ResourceInitializer.h
     ${SIMQT_INC}ScopedSignalBlocker.h
     ${SIMQT_INC}Settings.h
@@ -164,6 +164,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}MonospaceItemDelegate.cpp
     ${SIMQT_SRC}MruList.cpp
     ${SIMQT_SRC}PersistentFileLogger.cpp
+    ${SIMQT_SRC}QtUtils.cpp
     ${SIMQT_SRC}ResourceInitializer.cpp
     ${SIMQT_SRC}SearchLineEdit.cpp
     ${SIMQT_SRC}SegmentedSpinBox.cpp
@@ -174,7 +175,6 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}SettingsModel.cpp
     ${SIMQT_SRC}SettingsProxyModel.cpp
     ${SIMQT_SRC}SliderTimeWidgetBinding.cpp
-    ${SIMQT_SRC}SortFilterProxyModel.cpp
     ${SIMQT_SRC}SplashScreen.cpp
     ${SIMQT_SRC}StartupLayoutManager.cpp
     ${SIMQT_SRC}StartupLayoutTask.cpp
@@ -332,13 +332,6 @@ if(TARGET simVis)
 
     # Gl3FormatGuesser depends on OpenGL libraries
     target_link_libraries(simQt PRIVATE VSI::GL)
-endif()
-
-# Part of simQt relies on std::filesystem
-find_package(Filesystem QUIET)
-if(TARGET std::filesystem)
-    target_link_libraries(simQt PRIVATE std::filesystem)
-    target_compile_definitions(simQt PRIVATE HAVE_STD_FILESYSTEM)
 endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget

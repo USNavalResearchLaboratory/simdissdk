@@ -22,12 +22,13 @@
  */
 #ifndef SIMVIS_PROJECTOR_H
 #define SIMVIS_PROJECTOR_H
+
 #include <memory>
+#include "osgEarth/MapNodeObserver"
+#include "osgEarth/Version"
 #include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-
-#include "osgEarth/MapNodeObserver"
 
 namespace osg { class Texture2D; }
 

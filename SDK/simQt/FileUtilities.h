@@ -33,11 +33,11 @@ class SDKQT_EXPORT FileUtilities
 {
 public:
   /**
-  * Tests the write permissions of fully specified file path
-  * and creates the path if it is writable
-  * @param absoluteFilePath the file path to test/create
+  * Tests the write permissions of fully specified file path; must exist.
+  * @param absoluteFilePath the file path to test
   * @return true if file path is writable, false if file path not writable
   */
+  [[deprecated("Use simCore::isPathWritable() instead")]]
   static bool isPathWritable(const QString& absoluteFilePath);
 
   /**

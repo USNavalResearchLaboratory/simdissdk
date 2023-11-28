@@ -119,15 +119,14 @@ void FileSelectorWidget::setIncludeLabel(bool value)
   if (value == true)
   {
     if (labelWidget_ == nullptr)
-    {
       labelWidget_ = new QLabel(label_);
-    }
+
     if (iconBeforeText_)
       ui_->horizontalLayout->addWidget(labelWidget_);
     else
       ui_->horizontalLayout->insertWidget(0, labelWidget_);
   }
-  else
+  else if (labelWidget_)
   {
     ui_->horizontalLayout->removeWidget(labelWidget_);
     delete labelWidget_;

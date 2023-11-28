@@ -413,11 +413,6 @@ void TimeStamp::getTimeComponents(unsigned int& day, unsigned int& hour, unsigne
 
 //------------------------------------------------------------------------
 
-int TimeStamp::strptime(const std::string& timeStr, const std::string& format, std::string* remainder)
-{
-  return TimeStampStr().strptime(*this, timeStr, format, remainder);
-}
-
 /**
  * MSVC strftime() and put_time() both execute the invalid parameter handler in cases
  * of invalid parameters. In debug mode, this may also assert. The default implementation
@@ -454,11 +449,6 @@ private:
   _invalid_parameter_handler oldHandler_;
 #endif
 };
-
-std::string TimeStamp::strftime(const std::string& format) const
-{
-  return TimeStampStr().strftime(*this, format);
-}
 
 //------------------------------------------------------------------------------------------
 
@@ -514,6 +504,12 @@ int TimeStampStr::strptime(TimeStamp& timeStamp, const std::string& timeStr, con
     // Make sane values for year, mday, and mon, before calling mktime()
     tm.tm_year = simCore::sdkMax(70, tm.tm_year);
     tm.tm_mday = simCore::sdkMax(tm.tm_mday, 1);
+    // %j behavior can be system dependent, some systems parse tm_yday in the range [0-365] while others use range [1-366]
+#ifdef NEED_YDAY_OFFSET_MINUS1
+    assert(NEED_YDAY_OFFSET_MINUS1 == 1); // system should have defined offset as 1 if it needs to be applied
+    if (format.find("%j") != std::string::npos)
+      tm.tm_yday -= 1;
+#endif
     if (tm.tm_yday > 0 && tm.tm_mday == 1 && tm.tm_mon == 0)
       simCore::getMonthAndDayOfMonth(tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_yday);
 

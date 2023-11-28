@@ -20,9 +20,23 @@
  * disclose, or release this software.
  *
  */
+#include <chrono>
+#include <cstdlib>
+#include <limits>
 #include "simCore/Calc/Random.h"
 
 namespace simCore {
+
+void initializeRandomSeedWithTime()
+{
+  const auto& sinceEpoch = std::chrono::system_clock::now().time_since_epoch();
+  const auto& microseconds = std::chrono::duration_cast<std::chrono::microseconds>(sinceEpoch).count();
+  // Fit from possible 64 bit to 32 bit by modulus
+  const unsigned int modulated = static_cast<unsigned int>(microseconds % std::numeric_limits<unsigned int>::max());
+
+  // Method borrowed from http://stackoverflow.com/questions/7343833, updated for chrono
+  ::srand(modulated);
+}
 
 //=======================================================================
 //

@@ -734,140 +734,6 @@ namespace
     return rv;
   }
 
-  int testStrptime()
-  {
-    int rv = 0;
-    simCore::TimeStamp ts;
-    std::string remain;
-
-    // Test individual components
-    rv += SDK_ASSERT(ts.strptime("10", "%d", &remain) == 0);
-    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 9 * 86400));
-    rv += SDK_ASSERT(remain.empty());
-
-    // %y on Linux systems demonstrated different behavior than MSVC 2022. For example,
-    // "10" was parsed as 2010 (110) on Windows, but only 10 (1910) on Linux
-
-    rv += SDK_ASSERT(ts.strptime("2010", "%Y", &remain) == 0);
-    rv += SDK_ASSERT(simCore::areEqual(ts.referenceYear(), 2010));
-    rv += SDK_ASSERT(remain.empty());
-
-    rv += SDK_ASSERT(ts.strptime("2", "%m", &remain) == 0);
-    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 * 31));
-    rv += SDK_ASSERT(remain.empty());
-
-    rv += SDK_ASSERT(ts.strptime("10", "%H", &remain) == 0);
-    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 36000));
-    rv += SDK_ASSERT(remain.empty());
-
-    rv += SDK_ASSERT(ts.strptime("10", "%M", &remain) == 0);
-    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 600));
-    rv += SDK_ASSERT(remain.empty());
-
-    rv += SDK_ASSERT(ts.strptime("10", "%S", &remain) == 0);
-    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 10));
-    rv += SDK_ASSERT(remain.empty());
-
-    // Test some combined times/dates
-    rv += SDK_ASSERT(ts.strptime("1:02:03", "%H:%M:%S", &remain) == 0);
-    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 3600 + 120 + 3));
-    rv += SDK_ASSERT(remain.empty());
-
-    rv += SDK_ASSERT(ts.strptime("1/2/2012 1:02:03", "%m/%d/%Y %H:%M:%S", &remain) == 0);
-    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3));
-    rv += SDK_ASSERT(simCore::areEqual(ts.referenceYear(), 2012));
-    rv += SDK_ASSERT(remain.empty());
-
-    // Testing demonstrated errors in either C++ documentation or MSVC 2022
-    // implementation with %j. %j is "day of year as decimal range 001-366",
-    // so 001 is January 1. This is tm_yday of 0. %j indicates this is
-    // tm_yday of 1, which is wrong.
-
-    // Test failing content:
-    // Letters for a number
-    rv += SDK_ASSERT(ts.strptime("abc", "%S", &remain) != 0);
-    // Missing tokens (:) and not enough digits
-    rv += SDK_ASSERT(ts.strptime("1 2", "&H:%M:%S", &remain) != 0);
-    // Out of bounds values
-    rv += SDK_ASSERT(ts.strptime("1:2:63", "%H:%M:%S", &remain) != 0);
-    // Invalid format string
-    rv += SDK_ASSERT(ts.strptime("1:2:3", "&H:%M:%S", &remain) != 0);
-    rv += SDK_ASSERT(ts.strptime("1", "%f", &remain) != 0);
-
-    // Successes with trailing characters
-    rv += SDK_ASSERT(ts.strptime("15.f", "%S", &remain) == 0);
-    rv += SDK_ASSERT(remain == ".f");
-    rv += SDK_ASSERT(ts.strptime("1/2/2012 1:02:03.5", "%m/%d/%Y %H:%M:%S", &remain) == 0);
-    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3));
-    rv += SDK_ASSERT(simCore::areEqual(ts.referenceYear(), 2012));
-    rv += SDK_ASSERT(remain == ".5");
-
-    return rv;
-  }
-
-  int testStrftime()
-  {
-    int rv = 0;
-
-    // January 3, 14:52:17.8
-    const simCore::TimeStamp jan4_14_52_17(2022, 86400 * 3 + 3600 * 14 + 60 * 52 + 17.8);
-
-    // Test individual components: Year
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%Y") == "2022");
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%y") == "22");
-
-    // Month (%b and %B are locale-dependent and may fail on some systems)
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%b") == "Jan");
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%B") == "January");
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%m") == "01");
-
-    // Day of month
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%j") == "004");
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%d") == "04");
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%e") == " 4");
-
-    // H/M/S
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%H") == "14");
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%I") == "02");
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%M") == "52");
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%S") == "17");
-    // Note, no millisecond representation
-
-    // Attempt to "flood" output string. This is white box testing, since we know that
-    // the C implementation can have a format string significantly smaller than the output
-    // and the C function doesn't tell you exactly how big to make the buffer.
-    std::string manyJan;
-    std::string formatStr;
-    for (int k = 0; k < 1500; ++k)
-    {
-      formatStr += "%B";
-      manyJan += "January";
-    }
-    rv += SDK_ASSERT(jan4_14_52_17.strftime(formatStr) == manyJan);
-
-    // Percentage encoded
-    rv += SDK_ASSERT(jan4_14_52_17.strftime("%%") == "%");
-
-    // Bounds checking
-    rv += SDK_ASSERT(simCore::MIN_TIME_STAMP.strftime("%m/%d/%Y %H:%M:%S") == "01/01/1970 00:00:00");
-    rv += SDK_ASSERT(simCore::MAX_TIME_STAMP.strftime("%m/%d/%Y %H:%M:%S") == "12/31/2200 23:59:59");
-    rv += SDK_ASSERT(simCore::INFINITE_TIME_STAMP.strftime("%m/%d/%Y %H:%M:%S") == "");
-
-#if !defined(_MSC_VER) || defined(NDEBUG)
-    // Invalid specifier. This asserts in MSVC code (even with invalid handler),
-    // so do not test this in debug mode. The return value on MSVC is empty string
-    // because it cannot process the input. On Linux, the input string is returned.
-    // Therefore we permit either empty string or input string here in failure.
-#ifdef _MSC_VER
-    std::cout << "Invalid argument being passed in, exception that follows is normal:\n";
-#endif
-    const std::string& failResult = jan4_14_52_17.strftime("%3");
-    rv += SDK_ASSERT(failResult == "" || failResult == " %3" || failResult == "3" || failResult == "%3");
-#endif
-
-    return rv;
-  }
-
   int testTimeStampStrStrptime()
   {
     int rv = 0;
@@ -977,6 +843,37 @@ namespace
     rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.f1", "%m/%d/%Y %H:%M:%S") == 0);
     rv += SDK_ASSERT(tss.strptime(ts, "1/2/2012 1:02:03.1.1", "%m/%d/%Y %H:%M:%S") == 0);
 
+    // Test year day %j, which may demonstrate unreliable behavior depending on the system
+    rv += SDK_ASSERT(tss.strptime(ts, "002", "%j") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400));
+    rv += SDK_ASSERT(tss.strptime(ts, "1", "%j") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 0));
+    rv += SDK_ASSERT(tss.strptime(ts, "3", "%j") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 * 2));
+    rv += SDK_ASSERT(tss.strptime(ts, "365", "%j") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 * 364));
+    // note that 366 is only valid in a leap year, if year is not specified, system may not accept 366 depending on currrent year
+    rv += SDK_ASSERT(tss.strptime(ts, "366 2004", "%j %Y") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 * 365));
+
+    // Test invalid strings with %j
+    rv += SDK_ASSERT(tss.strptime(ts, "0", "%j") == 1);
+    rv += SDK_ASSERT(tss.strptime(ts, "-1", "%j") == 1);
+    rv += SDK_ASSERT(tss.strptime(ts, "Joe", "%j") == 1);
+    rv += SDK_ASSERT(tss.strptime(ts, "367", "%j") == 1);
+
+    // Test Month Day Year format
+    rv += SDK_ASSERT(tss.strptime(ts, "Jan 2 2012 1:02:03.123456", "%b %d %Y %H:%M:%S") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3 + 0.123456));
+
+    // Test Ordinal format
+    rv += SDK_ASSERT(tss.strptime(ts, "2 2012 1:02:03.123456", "%j %Y %H:%M:%S") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3 + 0.123456));
+
+    // Test ISO 8601 format
+    rv += SDK_ASSERT(tss.strptime(ts, "2012-1-02T01:02:03.123456Z", "%Y-%m-%dT%H:%M:%S") == 0);
+    rv += SDK_ASSERT(simCore::areEqual(ts.secondsSinceRefYear(), 86400 + 3600 + 120 + 3 + 0.123456));
+
     return rv;
   }
 
@@ -1025,9 +922,9 @@ namespace
     rv += SDK_ASSERT(tss.strftime(jan4_14_52_17, "%%") == "%");
 
     // Bounds checking
-    rv += SDK_ASSERT(simCore::MIN_TIME_STAMP.strftime("%m/%d/%Y %H:%M:%S") == "01/01/1970 00:00:00");
-    rv += SDK_ASSERT(simCore::MAX_TIME_STAMP.strftime("%m/%d/%Y %H:%M:%S") == "12/31/2200 23:59:59");
-    rv += SDK_ASSERT(simCore::INFINITE_TIME_STAMP.strftime("%m/%d/%Y %H:%M:%S") == "");
+    rv += SDK_ASSERT(tss.strftime(simCore::MIN_TIME_STAMP, "%m/%d/%Y %H:%M:%S") == "01/01/1970 00:00:00");
+    rv += SDK_ASSERT(tss.strftime(simCore::MAX_TIME_STAMP, "%m/%d/%Y %H:%M:%S") == "12/31/2200 23:59:59");
+    rv += SDK_ASSERT(tss.strftime(simCore::INFINITE_TIME_STAMP, "%m/%d/%Y %H:%M:%S") == "");
 
 #if !defined(_MSC_VER) || defined(NDEBUG)
     // Invalid specifier. This asserts in MSVC code (even with invalid handler),
@@ -1059,8 +956,6 @@ int TimeClassTest(int argc, char* argv[])
   rv += testNegativeSeconds();
   rv += testPositiveSeconds();
   rv += testTimeStampComparison();
-  rv += testStrptime();
-  rv += testStrftime();
   rv += testTimeStampStrStrptime();
   rv += testTimeStampStrStrftime();
 

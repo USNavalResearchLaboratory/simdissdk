@@ -28,6 +28,7 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QMainWindow>
+#include <QScreen>
 #include <QTabBar>
 #include <QToolButton>
 #include <QLabel>
@@ -37,7 +38,12 @@
 #include "simQt/SearchLineEdit.h"
 #include "simQt/BoundSettings.h"
 #include "simQt/QtFormatting.h"
+#include "simQt/QtUtils.h"
 #include "simQt/DockWidget.h"
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include <QDesktopWidget>
+#endif
 
 namespace simQt {
 
@@ -45,6 +51,8 @@ namespace simQt {
 static const QString DOCKABLE_SETTING = "DockWidgetDockable";
 /** QSettings key for geometry, to restore geometry before main window manages the dock widget */
 static const QString DOCK_WIDGET_GEOMETRY = "DockWidgetGeometry";
+/** QSettings key for un-maximized geometry, so the widget can restore to the last known un-maximized state if it is maximized */
+static const QString DOCK_WIDGET_UNMAX_GEOMETRY = "DockWidgetUnmaximizedGeometry";
 /** Meta data for the dockable persistent setting */
 static const simQt::Settings::MetaData DOCKABLE_METADATA = simQt::Settings::MetaData::makeBoolean(
   true, QObject::tr("Toggles whether the window can be docked into the main window or not"),
@@ -134,7 +142,7 @@ private:
 class DockWidget::DoubleClickFrame : public QFrame
 {
 public:
-  explicit DoubleClickFrame(DockWidget& dockWidget, QWidget* parent=nullptr, Qt::WindowFlags flags=0)
+  explicit DoubleClickFrame(DockWidget& dockWidget, QWidget* parent=nullptr, Qt::WindowFlags flags=Qt::WindowFlags())
     : QFrame(parent, flags),
       dockWidget_(dockWidget)
   {
@@ -172,7 +180,7 @@ private:
 class DockWidget::DoubleClickIcon : public QLabel
 {
 public:
-  DoubleClickIcon(DockWidget& dockWidget, QWidget* parent = nullptr, Qt::WindowFlags flags = 0)
+  DoubleClickIcon(DockWidget& dockWidget, QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags())
     : QLabel(parent, flags),
     dockWidget_(dockWidget)
   {
@@ -319,6 +327,46 @@ private:
   QTabBar* tabBar_ = nullptr;
   QString prevTab_;
 };
+
+///////////////////////////////////////////////////////////////
+
+inline
+bool pointOnScreen(const QPoint& point)
+{
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+  const auto& screens = QGuiApplication::screens();
+  for (const auto& screen : screens)
+  {
+    if (screen->availableGeometry().contains(point))
+      return true;
+  }
+  return false;
+#else
+  return QGuiApplication::screenAt(point);
+#endif
+}
+
+inline
+void ensureVisible(simQt::DockWidget& dockWidget, const QWidget* parentWidget)
+{
+  // Docked widgets will always be visible
+  if (!dockWidget.isFloating())
+    return;
+
+  // Dock widgets should always have a title; the no-title display is 1x1
+  auto* title = dockWidget.titleBarWidget();
+  if (!title)
+    return; // unexpected
+
+  const auto& titlePos = title->mapToGlobal(title->pos());
+  const QRect titleRect(titlePos, title->size());
+  // Each corner of the title should be on the screen
+  if (pointOnScreen(titleRect.topLeft()) && pointOnScreen(titleRect.topRight()) &&
+    pointOnScreen(titleRect.bottomLeft()) && pointOnScreen(titleRect.bottomRight()))
+    return;
+
+  QtUtils::centerWidgetOnParent(dockWidget, parentWidget);
+}
 
 ///////////////////////////////////////////////////////////////
 
@@ -665,8 +713,14 @@ void DockWidget::maximize_()
   normalGeometry_ = geometry();
 
   // Set the window dimensions manually to maximize the available geometry
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
   QDesktopWidget dw;
   setGeometry(dw.availableGeometry(this));
+#else
+  auto* currentScreen = screen();
+  if (currentScreen)
+    setGeometry(currentScreen->availableGeometry());
+#endif
 
   // Finally update the state of the enable/disable/visibility
   updateTitleBar_();
@@ -829,6 +883,11 @@ void DockWidget::closeEvent(QCloseEvent* event)
   Q_EMIT(closedGui());
 }
 
+void DockWidget::setDefaultSize(const QSize& defaultSize)
+{
+  defaultSize_ = defaultSize;
+}
+
 void DockWidget::setWidget(QWidget* widget)
 {
   // Deal with settings -- restore the is-dockable setting
@@ -961,8 +1020,13 @@ QAction* DockWidget::isDockableAction() const
 
 bool DockWidget::isMaximized_() const
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
   QDesktopWidget dw;
   return geometry() == dw.availableGeometry(this);
+#else
+  auto* currentScreen = screen();
+  return currentScreen && geometry() == currentScreen->availableGeometry();
+#endif
 }
 
 bool DockWidget::searchEnabled() const
@@ -1171,12 +1235,19 @@ void DockWidget::showEvent(QShowEvent* evt)
     return;
   setFocus();
   activateWindow();  // Covers highlighting when floating
+
+  // Make sure the dock widget is visible. Recenter it if needed
+  QWidget* parentWidget = dynamic_cast<QWidget*>(parent());
+  if (!parentWidget)
+    parentWidget = mainWindow_;
+  ensureVisible(*this, parentWidget);
 }
 
 void DockWidget::show()
 {
   // The following may or may not call showEvent() based on current state
   QDockWidget::show();
+
   // Only set focus if our title bar widget is used
   if (extraFeatures_.testFlag(DockNoTitleStylingHint) || titleBarWidget() == noTitleBar_)
     return;
@@ -1203,18 +1274,30 @@ void DockWidget::loadSettings_()
 
   // Pull out the default geometry
   QVariant widgetGeometry;
+  QVariant normalGeometry;
   if (settings_)
+  {
     widgetGeometry = settings_->value(path_() + DOCK_WIDGET_GEOMETRY, simQt::Settings::MetaData(simQt::Settings::SIZE, QVariant(), "", simQt::Settings::PRIVATE));
+    normalGeometry = settings_->value(path_() + DOCK_WIDGET_UNMAX_GEOMETRY, simQt::Settings::MetaData(simQt::Settings::SIZE, QVariant(), "", simQt::Settings::PRIVATE));
+  }
   else
   {
     QSettings settings;
     widgetGeometry = settings.value(path_() + DOCK_WIDGET_GEOMETRY);
+    normalGeometry = settings.value(path_() + DOCK_WIDGET_UNMAX_GEOMETRY);
   }
 
   // Initialize the bound setting for disable-all-docking
   applyGlobalSettings_();
 
-  normalGeometry_ = geometry();
+  // initialize normal geometry to the setting if it's valid
+  if (normalGeometry.isValid())
+    normalGeometry_ = normalGeometry.toRect();
+
+  // if the normal geometry isn't valid, just use current geometry
+  if (!normalGeometry_.isValid())
+    normalGeometry_ = geometry();
+
   restoreFloating_(widgetGeometry.toByteArray());
 }
 
@@ -1241,7 +1324,24 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
     if (features().testFlag(DockWidgetFloatable) || globalNoDocking)
     {
       setFloating(true);
-      restoreGeometry(geometryBytes);
+      if (!restoreGeometry(geometryBytes))
+      {
+        // if restoreGeometry failed, use the default size if it is valid
+        if (!defaultSize_.isEmpty())
+          resize(defaultSize_);
+        else // otherwise, resize to the sizeHint, in case the initial resize hasn't happened yet
+          resize(sizeHint());
+
+        // Qt on Linux RHEL8+ (esp Wayland) with multi-screen has problems with positioning widgets such
+        // that the dock widget defaults to (0,0) global instead of near the parent window. This attempts to
+        // fix the position so that it stays on the same screen as the main window in these cases. Attempt to
+        // fix SIM-16068 and SIMDIS-3901. This happens on Qt 5.9 and 5.15 both.
+        QWidget* parentWidget = dynamic_cast<QWidget*>(parent());
+        if (!parentWidget)
+          parentWidget = mainWindow_;
+        QtUtils::centerWidgetOnParent(*this, parentWidget);
+      }
+
     }
     else
     {
@@ -1274,12 +1374,14 @@ void DockWidget::saveSettings_()
     settings_->saveWidget(QDockWidget::widget());
     settings_->setValue(path_() + DOCKABLE_SETTING, dockableAction_->isChecked(), DOCKABLE_METADATA);
     settings_->setValue(path_() + DOCK_WIDGET_GEOMETRY, saveGeometry(), simQt::Settings::MetaData(simQt::Settings::SIZE, QVariant(), "", simQt::Settings::PRIVATE));
+    settings_->setValue(path_() + DOCK_WIDGET_UNMAX_GEOMETRY, normalGeometry_, simQt::Settings::MetaData(simQt::Settings::SIZE, QVariant(), "", simQt::Settings::PRIVATE));
   }
   else
   {
     // Save geometry since we can't save the widget (no settings_ pointer)
     QSettings settings;
     settings.setValue(path_() + DOCK_WIDGET_GEOMETRY, saveGeometry());
+    settings.setValue(path_() + DOCK_WIDGET_UNMAX_GEOMETRY, normalGeometry_);
   }
 }
 

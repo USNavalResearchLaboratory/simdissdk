@@ -366,19 +366,19 @@ class Platforms : public Entity
 public:
   explicit Platforms(simUtil::DataStoreTestHelper& helper) : Entity(helper) {};
   virtual ~Platforms() {}
-  virtual void addEntity(uint64_t id)
+  virtual void addEntity(uint64_t id) override
   {
     helper_.addPlatform();
   }
 
-  virtual void addDataLimit(uint64_t id)
+  virtual void addDataLimit(uint64_t id) override
   {
     simData::PlatformPrefs prefs;
     setLimits_(prefs.mutable_commonprefs());
     helper_.updatePlatformPrefs(prefs, id);
   }
 
-  virtual void addColor(uint64_t id, double time)
+  virtual void addColor(uint64_t id, double time) override
   {
     simData::PlatformCommand cmd;
     cmd.set_time(time);
@@ -386,7 +386,7 @@ public:
     helper_.addPlatformCommand(cmd, id);
   }
 
-  virtual void addUpdate(uint64_t id, double time)
+  virtual void addUpdate(uint64_t id, double time) override
   {
     helper_.addPlatformUpdate(time, id);
   };
@@ -399,19 +399,19 @@ public:
   explicit Beams(simUtil::DataStoreTestHelper& helper) : Entity(helper) {};
   virtual ~Beams() {}
 
-  virtual void addEntity(uint64_t id)
+  virtual void addEntity(uint64_t id) override
   {
     helper_.addBeam(id);
   }
 
-  virtual void addDataLimit(uint64_t id)
+  virtual void addDataLimit(uint64_t id) override
   {
     simData::BeamPrefs prefs;
     setLimits_(prefs.mutable_commonprefs());
     helper_.updateBeamPrefs(prefs, id);
   }
 
-  virtual void addColor(uint64_t id, double time)
+  virtual void addColor(uint64_t id, double time) override
   {
     simData::BeamCommand cmd;
     cmd.set_time(time);
@@ -419,7 +419,7 @@ public:
     helper_.addBeamCommand(cmd, id);
   }
 
-  virtual void addUpdate(uint64_t id, double time)
+  virtual void addUpdate(uint64_t id, double time) override
   {
     helper_.addBeamUpdate(time, id);
   };
@@ -432,19 +432,19 @@ public:
   explicit Gates(simUtil::DataStoreTestHelper& helper) : Entity(helper) {};
   virtual ~Gates() {}
 
-  virtual void addEntity(uint64_t id)
+  virtual void addEntity(uint64_t id) override
   {
     helper_.addGate(id);
   }
 
-  virtual void addDataLimit(uint64_t id)
+  virtual void addDataLimit(uint64_t id) override
   {
     simData::GatePrefs prefs;
     setLimits_(prefs.mutable_commonprefs());
     helper_.updateGatePrefs(prefs, id);
   }
 
-  virtual void addColor(uint64_t id, double time)
+  virtual void addColor(uint64_t id, double time) override
   {
     simData::GateCommand cmd;
     cmd.set_time(time);
@@ -452,7 +452,7 @@ public:
     helper_.addGateCommand(cmd, id);
   }
 
-  virtual void addUpdate(uint64_t id, double time)
+  virtual void addUpdate(uint64_t id, double time) override
   {
     helper_.addGateUpdate(time, id);
   };
@@ -465,19 +465,19 @@ public:
   explicit Lasers(simUtil::DataStoreTestHelper& helper) : Entity(helper) {};
   virtual ~Lasers() {}
 
-  virtual void addEntity(uint64_t id)
+  virtual void addEntity(uint64_t id) override
   {
     helper_.addLaser(id);
   }
 
-  virtual void addDataLimit(uint64_t id)
+  virtual void addDataLimit(uint64_t id) override
   {
     simData::LaserPrefs prefs;
     setLimits_(prefs.mutable_commonprefs());
     helper_.updateLaserPrefs(prefs, id);
   }
 
-  virtual void addColor(uint64_t id, double time)
+  virtual void addColor(uint64_t id, double time) override
   {
     simData::LaserCommand cmd;
     cmd.set_time(time);
@@ -485,7 +485,7 @@ public:
     helper_.addLaserCommand(cmd, id);
   }
 
-  virtual void addUpdate(uint64_t id, double time)
+  virtual void addUpdate(uint64_t id, double time) override
   {
     helper_.addLaserUpdate(time, id);
   };
@@ -498,19 +498,19 @@ public:
   explicit LobGroups(simUtil::DataStoreTestHelper& helper) : Entity(helper) {};
   virtual ~LobGroups() {}
 
-  virtual void addEntity(uint64_t id)
+  virtual void addEntity(uint64_t id) override
   {
     helper_.addLOB(id);
   }
 
-  virtual void addDataLimit(uint64_t id)
+  virtual void addDataLimit(uint64_t id) override
   {
     simData::LobGroupPrefs prefs;
     setLimits_(prefs.mutable_commonprefs());
     helper_.updateLOBPrefs(prefs, id);
   }
 
-  virtual void addColor(uint64_t id, double time)
+  virtual void addColor(uint64_t id, double time) override
   {
     simData::LobGroupCommand cmd;
     cmd.set_time(time);
@@ -518,7 +518,7 @@ public:
     helper_.addLOBCommand(cmd, id);
   }
 
-  virtual void addUpdate(uint64_t id, double time)
+  virtual void addUpdate(uint64_t id, double time) override
   {
     helper_.addLOBUpdate(time, id);
   };
@@ -535,7 +535,7 @@ struct Entities
      lobGroups(new LobGroups(helper))
   {
   }
-  ~Entities()
+  virtual ~Entities()
   {
     delete lobGroups;
     delete lasers;
@@ -543,16 +543,16 @@ struct Entities
     delete beams;
     delete platforms;
   }
+  Entities(const Entities& rhs) = delete;
+  Entities(Entities&& rhs) = delete;
+  Entities& operator=(const Entities& rhs) = delete;
+  Entities& operator=(Entities&& rhs) = delete;
 
   Platforms* platforms;
   Beams* beams;
   Gates* gates;
   Lasers* lasers;
   LobGroups* lobGroups;
-
-private:
-  /** Not implemented */
-  Entities(const Entities& noCopyConstructor);
 };
 
 /// Helper for the top level options
@@ -848,11 +848,11 @@ int parseCommandLine(int argc, char** argv, std::string& fileName, TopLevelOptio
 
   for (int i = 1; i < argc; i++)
   {
-    std::string inputValue = std::string(argv[i]);
-    if (inputValue == "--testCD")
+    const std::string& testValue = std::string(argv[i]);
+    if (testValue == "--testCD")
       options.testCD = true;
     else
-      fileName = inputValue;
+      fileName = testValue;
   }
 
   if (fileName.empty())

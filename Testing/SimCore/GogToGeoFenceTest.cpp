@@ -22,8 +22,10 @@
  */
 
 #include <iostream>
+#include <sstream>
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/GogToGeoFence.h"
 
 namespace

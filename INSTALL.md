@@ -15,11 +15,11 @@ Operating systems officially supported by the SIMDIS SDK:
 
 * Windows 10
 * Red Hat Enterprise Linux 7
+* Red Hat Enterprise Linux 8
 
 Compilers officially supported by the SIMDIS SDK:
 
 * Windows compilers:
-  - Microsoft Visual C++ 2019 (VC-14.2)
   - Microsoft Visual C++ 2022 (VC-14.3)
 * Linux compilers:
   - GCC, minimum 8.3
@@ -29,11 +29,19 @@ to the CMake configuration.  This is only a list of the systems that we internal
 are able to support.  We are glad to accept pull requests supporting new
 compilers.
 
-C++-11 support is be mandatory for SIMDIS SDK compilers starting as of
-September 2019, after the 1.11 release.  This eliminated support for
+C++-17 support is be mandatory for SIMDIS SDK compilers starting as of
+September 2023, after the 1.19 release.  This eliminated support for
 GCC 4.4.  RHEL 7 users can continue to build the SIMDIS SDK by using the
 devtoolset package from the RHEL SCL, in order to use an ABI-compatible
 compiler with newer language support.
+
+RHEL 8 and newer users should be aware of their GCC ABI. While RHEL 7 users are
+locked in to the cxx-03 ABI by their OS, RHEL 8 users can build in either the cxx-03
+or cxx-11 ABI. This option creates a different binary compatibility, and is
+controlled by the `ENABLE_CXX11_ABI` CMake flag, which in turn sets the appropriate
+value for compile flag `_GLIBCXX_USE_CXX11_ABI`. For more information on the dual
+ABI, refer to the
+[appropriate GCC documentation](https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html).
 
 
 Third Party Dependencies

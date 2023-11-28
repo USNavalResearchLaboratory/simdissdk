@@ -231,7 +231,11 @@ void UnitsComboBox::addUnitsItem_(QComboBox& comboBox, const simCore::Units& uni
   unitVar.setValue(units);
 
   // Capitalize the first letter of each word
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
   QStringList parts = QString::fromStdString(units.name()).split(' ', QString::SkipEmptyParts);
+#else
+  QStringList parts = QString::fromStdString(units.name()).split(' ', Qt::SkipEmptyParts);
+#endif
   for (int k = 0; k < parts.size(); ++k)
     parts[k][0] = parts[k][0].toUpper();
 

@@ -1447,7 +1447,7 @@ QVariant MapDataModel::data(const QModelIndex &index, int role) const
       }
     }
 
-  case Qt::TextColorRole:
+  case Qt::ForegroundRole:
     return item->color();
   }
 

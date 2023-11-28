@@ -23,6 +23,7 @@
 #include "osgDB/FileUtils"
 #include "osgEarth/Cube"
 #include "osgEarth/ImageToHeightFieldConverter"
+#include "osgEarth/Version"
 #include "simCore/Calc/Math.h"
 #include "simCore/Time/TimeClass.h"
 #include "simVis/DBOptions.h"

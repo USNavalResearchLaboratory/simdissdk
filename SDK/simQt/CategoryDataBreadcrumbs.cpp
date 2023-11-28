@@ -25,6 +25,7 @@
 #include <QListWidget>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QVBoxLayout>
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/DataStore.h"

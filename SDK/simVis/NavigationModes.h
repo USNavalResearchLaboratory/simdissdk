@@ -424,42 +424,6 @@ class View;
     void initPerspective_();
   };
 
-  /**
-  * JdsNavigationMode provides a similar navigation mode to Joint Debriefing Subsystem (JDS).
-  * Pass an instance of JdsNavigationMode to EarthManipulator::applySettings in order to enable
-  * this navigation mode.<p>
-  * The mappings are:
-  * <ul>
-  * <li>Middle mouse button: pan</li>
-  * <li>Scroll wheel: zoom</li>
-  * <li>Left mouse button + shift: box zoom</li>
-  * </ul>
-  */
-  class SDKVIS_EXPORT JdsNavigationMode : public NavigationMode
-  {
-  public:
-    /**
-    * Initialize the JDS navigation mode.
-    * @param view Inset associated with nav mode, used for box zoom key
-    * @param enableOverhead true to create the navigation mode with
-    * overhead enabled, false to create with perspective mode
-    * @param watchMode if true, no rotate actions will be applied, as
-    * rotation is disabled in watchMode
-    */
-    JdsNavigationMode(simVis::View* view, bool enableOverhead, bool watchMode);
-
-  protected:
-    /// osg::Referenced-derived
-    virtual ~JdsNavigationMode();
-
-  private:
-    /** Initializes the bindings given the parameters. */
-    void init_(simVis::View* view, bool enableOverhead, bool watchMode);
-
-    osg::observer_ptr<View> view_;
-    osg::ref_ptr<BoxZoomMouseHandler> boxZoom_;
-  };
-
 }
 
 #endif // SIMVIS_UI_NAVIGATION_MODES

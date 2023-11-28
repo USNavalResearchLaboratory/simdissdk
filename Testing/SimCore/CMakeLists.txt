@@ -15,6 +15,7 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
     CoreCommonTest.cpp
     CsvReaderTest.cpp
     EMTest.cpp
+    FileTest.cpp
     GarsTest.cpp
     GeoFenceTest.cpp
     GogTest.cpp
@@ -41,7 +42,8 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
 )
 
 add_executable(SimCoreTests ${SimCoreTestFiles})
-target_link_libraries(SimCoreTests PRIVATE simCore)
+find_package(Filesystem QUIET)
+target_link_libraries(SimCoreTests PRIVATE simCore std::filesystem)
 # If simUtil is built, then add it as a dependency for UnitsFormatter test and add a -D define
 if(TARGET simUtil)
     target_link_libraries(SimCoreTests PRIVATE simUtil)
@@ -89,6 +91,7 @@ add_test(NAME MagneticVarianceTest COMMAND SimCoreTests MagneticVarianceTest)
 add_test(NAME CsvReaderTest COMMAND SimCoreTests CsvReaderTest)
 add_test(NAME SimCoreGogTest COMMAND SimCoreTests GogTest)
 add_test(NAME XmlWriterTest COMMAND SimCoreTests XmlWriterTest)
+add_test(NAME SimCoreFileTest COMMAND SimCoreTests FileTest)
 
 # Try to locate the correct file for the RCS test...
 set(FILE_LOCATIONS

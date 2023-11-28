@@ -135,6 +135,21 @@ set(CORE_STRING_SOURCES
 source_group(Headers\\String FILES ${CORE_STRING_HEADERS})
 source_group("Source Files\\String" FILES ${CORE_STRING_SOURCES})
 
+# ----- simCore/System --------------------------------------------------------
+
+set(CORE_SYSTEM_INC System/)
+set(CORE_SYSTEM_SRC System/)
+set(CORE_SYSTEM_HEADERS
+    ${CORE_SYSTEM_INC}File.h
+    ${CORE_SYSTEM_INC}Utils.h
+)
+set(CORE_SYSTEM_SOURCES
+    ${CORE_SYSTEM_SRC}File.cpp
+    ${CORE_SYSTEM_SRC}Utils.cpp
+)
+source_group(Headers\\System FILES ${CORE_SYSTEM_HEADERS})
+source_group("Source Files\\System" FILES ${CORE_SYSTEM_SOURCES})
+
 # ----- simCore/Time --------------------------------------------------------
 
 set(CORE_TIME_INC Time/)
@@ -199,6 +214,7 @@ set(CORE_PROJECT_FILES
     ${CORE_TIME_HEADERS} ${CORE_TIME_SOURCES}
     ${CORE_STRING_HEADERS} ${CORE_STRING_SOURCES}
     ${CORE_GOG_HEADERS} ${CORE_GOG_SOURCES}
+    ${CORE_SYSTEM_HEADERS} ${CORE_SYSTEM_SOURCES}
 )
 
 # Create the Version.h file
@@ -222,10 +238,20 @@ target_include_directories(simCore PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(simCore PUBLIC simNotify)
+
 if(SIMCORE_SHARED)
     target_compile_definitions(simCore PRIVATE simCore_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simCore PUBLIC simCore_LIB_EXPORT_STATIC)
+endif()
+
+# Part of simCore relies on std::filesystem
+find_package(Filesystem QUIET)
+if(TARGET std::filesystem)
+    get_target_property(STDFS_ILL std::filesystem INTERFACE_LINK_LIBRARIES)
+    if(STDFS_ILL)
+        target_link_libraries(simCore PRIVATE ${STDFS_ILL})
+    endif()
 endif()
 
 # Determine whether time.h includes timespec
@@ -233,6 +259,13 @@ include(TestTimespec)
 test_timespec(SDK_TIMESPEC)
 if(SDK_TIMESPEC)
     target_compile_definitions(simCore PUBLIC DEFINED_TIMESPEC_T)
+endif()
+
+# simCore TimeStampStr needs to know the yday offset
+include(TestYDayOffset)
+GET_YDAY_OFFSET(NEED_YDAY_OFFSET_MINUS1)
+if(NEED_YDAY_OFFSET_MINUS1)
+    target_compile_definitions(simCore PRIVATE NEED_YDAY_OFFSET_MINUS1)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
@@ -259,4 +292,6 @@ if(INSTALL_HEADERS)
         DESTINATION include/simCore/Time)
     install(FILES ${CORE_GOG_HEADERS}
         DESTINATION include/simCore/GOG)
+    install(FILES ${CORE_SYSTEM_HEADERS}
+        DESTINATION include/simCore/System)
 endif()

@@ -50,8 +50,6 @@ public:
   explicit SearchLineEdit(QWidget* parent = nullptr);
   virtual ~SearchLineEdit();
 
-  /** Image for search.  @see QLabel::pixmap() */
-  const QPixmap* searchPixmap() const;
   /** Interval (milliseconds) after editing before sending signal searchRequested() */
   int searchDelayInterval() const;
   /** True if the search icon should be shown, false otherwise */
