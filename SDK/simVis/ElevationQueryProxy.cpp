@@ -206,6 +206,12 @@ bool ElevationQueryProxy::getElevationFromPool_(const osgEarth::GeoPoint& point,
       lastElevation_ = sample.elevation().as(osgEarth::Units::METERS);
       lastResolution_ = sample.resolution().getValue();
     }
+    else
+    {
+      // No data; need to fail
+      lastElevation_ = NO_DATA_VALUE;
+      lastResolution_ = 0;
+    }
   }
   else // (!blocking)
   {
