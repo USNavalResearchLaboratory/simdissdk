@@ -670,7 +670,7 @@ private:
   /// Updates all the CustomRenderings
   void updateCustomRenderings_(double time);
   /// Updates all category data
-  void updateCategoryData_(double time, ListenerList& listeners);
+  void updateCategoryData_(double time, std::vector<simData::ObjectId>& ids);
   /// Flushes an entity based on the given scope, fields and time ranges
   void flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields, double startTime, double endTime);
   /// Flushes an entity's data tables

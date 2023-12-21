@@ -22,12 +22,11 @@
  */
 #include <algorithm>
 #include <cassert>
-#ifdef ENABLE_SIMDATA_MULTI_THREAD
-#include <execution>
-#endif
+#include <future>
 #include <float.h>
 #include <functional>
 #include <limits>
+#include <optional>
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Time/Clock.h"
@@ -1195,43 +1194,15 @@ simData::PlatformPrefs MemoryDataStore::defaultPlatformPrefs() const
   return defaultPlatformPrefs_;
 }
 
-void MemoryDataStore::updateCategoryData_(double time, ListenerList& listeners)
+void MemoryDataStore::updateCategoryData_(double time, std::vector<simData::ObjectId>& ids)
 {
-  std::vector<simData::ObjectId> ids;
-
-#ifdef ENABLE_SIMDATA_MULTI_THREAD
-  std::mutex mutex;
-  std::for_each(std::execution::par, categoryData_.begin(), categoryData_.end(), [&](std::pair<const ObjectId, MemoryCategoryDataSlice*>& pair)
-#else
   std::for_each(categoryData_.begin(), categoryData_.end(), [&](std::pair<const ObjectId, MemoryCategoryDataSlice*>& pair)
-#endif
-
     {
       // if something changed
       if (pair.second->update(time))
-      {
-#ifdef ENABLE_SIMDATA_MULTI_THREAD
-        std::unique_lock lock(mutex);
-#endif
         ids.push_back(pair.first);
-      }
-    }
+     }
   );
-
-  for (auto id : ids)
-  {
-    // send notification
-    const simData::ObjectType ot = objectType(id);
-
-    for (ListenerList::const_iterator j = listeners.begin(); j != listeners.end(); ++j)
-    {
-      if (*j != nullptr)
-      {
-        (**j).onCategoryDataChange(this, id, ot);
-        checkForRemoval_(listeners);
-      }
-    }
-  }
 }
 
 ///Update internal data to show 'time' as current
@@ -1240,21 +1211,45 @@ void MemoryDataStore::update(double time)
   if (!hasChanged_ && time == lastUpdateTime_)
     return;
 
+  std::optional<std::future<void>> genericFuture;
+  if (!genericData_.empty())
+    genericFuture = std::async(&simData::updateSparseSlices<simData::MemoryDataStore::GenericDataMap>, std::ref(genericData_), time);
+
+  std::vector<simData::ObjectId> ids;
+  std::optional<std::future<void>> categoryFuture;
+  if (!categoryData_.empty())
+    categoryFuture = std::async(&MemoryDataStore::updateCategoryData_, this, time, std::ref(ids));
+
   updatePlatforms_(time);
   updateBeams_(time);
   updateGates_(time);
-
-  updateSparseSlices(genericData_, time);
-
-  // Need to handle recursion so make a local copy
-  ListenerList localCopy = listeners_;
-  justRemoved_.clear();
-
-  updateCategoryData_(time, localCopy);
   updateLasers_(time);
   updateProjectors_(time);
   updateLobGroups_(time);
   updateCustomRenderings_(time);
+
+  if (genericFuture.has_value())
+    genericFuture->wait();
+  if (categoryFuture.has_value())
+    categoryFuture->wait();
+
+  // Need to handle recursion so make a local copy
+  ListenerList localCopy = listeners_;
+  justRemoved_.clear();
+  for (auto id : ids)
+  {
+    // send notification
+    const simData::ObjectType ot = objectType(id);
+
+    for (ListenerList::const_iterator j = localCopy.begin(); j != localCopy.end(); ++j)
+    {
+      if (*j != nullptr)
+      {
+        (**j).onCategoryDataChange(this, id, ot);
+        checkForRemoval_(localCopy);
+      }
+    }
+  }
 
   // After all the slice updates, set the new update time and notify observers
   lastUpdateTime_ = time;
