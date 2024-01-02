@@ -1211,12 +1211,12 @@ void MemoryDataStore::update(double time)
   if (!hasChanged_ && time == lastUpdateTime_)
     return;
 
-  std::optional<std::future<void>> genericFuture;
+  std::future<void> genericFuture;
   if (!genericData_.empty())
     genericFuture = std::async(&simData::updateSparseSlices<simData::MemoryDataStore::GenericDataMap>, std::ref(genericData_), time);
 
   std::vector<simData::ObjectId> ids;
-  std::optional<std::future<void>> categoryFuture;
+  std::future<void> categoryFuture;
   if (!categoryData_.empty())
     categoryFuture = std::async(&MemoryDataStore::updateCategoryData_, this, time, std::ref(ids));
 
@@ -1228,10 +1228,10 @@ void MemoryDataStore::update(double time)
   updateLobGroups_(time);
   updateCustomRenderings_(time);
 
-  if (genericFuture.has_value())
-    genericFuture->wait();
-  if (categoryFuture.has_value())
-    categoryFuture->wait();
+  if (genericFuture.valid())
+    genericFuture.wait();
+  if (categoryFuture.valid())
+    categoryFuture.wait();
 
   // Need to handle recursion so make a local copy
   ListenerList localCopy = listeners_;
