@@ -2,7 +2,7 @@
 # Setting the GDAL_DIR environment variable will allow use of a custom built library
 
 set(LIBRARYNAME GDAL)
-set(${LIBRARYNAME}_VERSION 3.4.3)
+set(${LIBRARYNAME}_VERSION 3.8.2)
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 
 # Setup search paths based off GDAL_ROOT
@@ -13,6 +13,7 @@ find_path(${LIBRARYNAME}_ROOT
         $ENV{${LIBRARYNAME}_DIR}
         $ENV{${LIBRARYNAME}_ROOT}
         ${THIRD_DIR}/GDAL/${${LIBRARYNAME}_VERSION}
+        ${THIRD_DIR}/GDAL/3.4.3
         ${THIRD_DIR}/GDAL
     NO_DEFAULT_PATH
 )
@@ -85,12 +86,17 @@ vsi_install_target(${LIBRARYNAME} ${${LIBRARYNAME}_INSTALL_COMPONENT})
 ############################################################
 
 # Install GDAL plugins
-set(GDAL_PLUGINS_SUBDIR lib)
-if(WIN32)
-    set(GDAL_PLUGINS_SUBDIR bin)
-endif()
-if(IS_DIRECTORY "${${LIBRARYNAME}_ROOT}/${GDAL_PLUGINS_SUBDIR}/gdalplugins")
-    install(DIRECTORY "${${LIBRARYNAME}_ROOT}/${GDAL_PLUGINS_SUBDIR}/gdalplugins/"
+set(PLUGIN_DIRS
+    ${${LIBRARYNAME}_ROOT}/lib
+    ${${LIBRARYNAME}_ROOT}/lib64
+    ${${LIBRARYNAME}_ROOT}/bin
+)
+find_path(INSTALLSOURCE_GDAL_PLUGINS_DIR gdalplugins ${PLUGIN_DIRS} NO_DEFAULT_PATH)
+if(NOT INSTALLSOURCE_GDAL_PLUGINS_DIR)
+    mark_as_advanced(CLEAR INSTALLSOURCE_GDAL_PLUGINS_DIR)
+else()
+    mark_as_advanced(FORCE INSTALLSOURCE_GDAL_PLUGINS_DIR)
+    install(DIRECTORY "${INSTALLSOURCE_GDAL_PLUGINS_DIR}/gdalplugins/"
         DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}/gdalplugins
         COMPONENT ThirdPartyLibs)
 endif()
