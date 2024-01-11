@@ -428,7 +428,7 @@ void MemoryDataSlice<T>::insert(T *data)
       iter = std::lower_bound(updates_.begin(), updates_.end(), data, UpdateComp<T>());
       if ((*iter)->time() == data->time())
       {
-        // NULL the current ptr, if we are replacing the update it aliases; current will become valid upon update
+        // null the current ptr, if we are replacing the update it aliases; current will become valid upon update
         if (current_ == *iter)
           setCurrent(nullptr);
 

@@ -435,7 +435,7 @@ TableStatus DataColumn::interpolate(double& value, double time, const Interpolat
   if (!rv.isSuccess())
     return rv;
 
-  // Either interpolate linearly if interpolator is NULL, or use custom interpolation
+  // Either interpolate linearly if interpolator is null, or use custom interpolation
   if (interpolator)
     value = interpolator->interpolate(this, lowValue, highValue, before.time(), time, atOrAfter.time());
   else

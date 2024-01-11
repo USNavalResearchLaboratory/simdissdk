@@ -195,7 +195,7 @@ public:
   /**
    * Retrieve the bounds used to compute the interpolated value
    * The bounds are represented as a std::pair containing const pointers
-   * If the value is not interpolated, the values in the pair could be NULL
+   * If the value is not interpolated, the values in the pair could be null
    */
   virtual typename DataSlice<T>::Bounds interpolationBounds() const;
 
@@ -284,7 +284,7 @@ protected:
   T currentInterpolated_;
   /// specifies if the interpolated cache value is valid
   bool interpolated_;
-  /// specifies the interpolation bounds; the bounds will be NULL if no interpolation is specified
+  /// specifies the interpolation bounds; the bounds will be nullptr if no interpolation is specified
   typename DataSlice<T>::Bounds bounds_;
   /// Used to optimize updates by looking at data near the last update
   typename MemorySliceHelper::SafeDequeIterator<T*> fastUpdate_;

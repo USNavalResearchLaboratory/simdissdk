@@ -779,7 +779,7 @@ void MemoryDataStore::updateTargetBeam_(ObjectId id, BeamEntry* beam, double tim
 
   // simVis::Beam will calculate the RAE whenever it gets a non-nullptr update with hasChanged flag set
 
-  // update only when there is a time change or this is a NULL->non-NULL transition
+  // update only when there is a time change or this is a null->non-null transition
   if (beam->updates()->current() == nullptr || update->time() != time)
   {
     update->set_time(time);

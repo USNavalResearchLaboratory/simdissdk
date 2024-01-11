@@ -385,7 +385,7 @@ void BeamNode::setPrefs(const simData::BeamPrefs& prefs)
   // validate localgrid prefs changes that might provide user notifications
   localGrid_->validatePrefs(prefs.commonprefs().localgrid());
 
-  // if this is a target beam, and there is a change in target id, NULL our target reference (will be set on update)
+  // if this is a target beam, and there is a change in target id, null our target reference (will be set on update)
   if (lastProps_.type() == simData::BeamProperties_BeamType_TARGET &&
     (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefsApplied_, &prefs, targetid)))
   {
@@ -613,14 +613,14 @@ int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
   // this should only be called for target beams; if assert fails, check caller
   assert(lastProps_.type() == simData::BeamProperties_BeamType_TARGET);
 
-  // we should only receive non-nullptr updates for target beams which have valid target ids; if assert fails check MemoryDataStore processing
+  // we should only receive non-null updates for target beams which have valid target ids; if assert fails check MemoryDataStore processing
   assert(lastPrefsApplied_.targetid() > 0);
 
   // update our target reference, for new target, or after a prefs change in target ids occur
   if (target_ == nullptr || !target_.valid())
   {
     target_ = nodeGetter_(lastPrefsApplied_.targetid());
-    // we should only receive an non-nullptr update when target is valid; if assert fails check MemoryDataStore processing
+    // we should only receive an non-null update when target is valid; if assert fails check MemoryDataStore processing
     assert(target_.valid());
 
     if (!target_.valid())
@@ -830,7 +830,7 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
   // if new geometry is required, build it:
   if (requiresNewNode)
   {
-    // do not nullptr antenna, it needs to persist to provide gain calcs
+    // do not null antenna, it needs to persist to provide gain calcs
     beamLocatorNode_->removeChild(antenna_);
     if (beamVolume_)
     {

@@ -1398,7 +1398,7 @@ void Parser::parseOutlined_(const ParsedShape& parsed, OutlinedShape* shape) con
 {
   if (!shape)
   {
-    assert(0); // should not be called with NULL
+    assert(0); // should not be called with null
     return;
   }
   if (parsed.hasValue(ShapeParameter::OUTLINE))
@@ -1409,7 +1409,7 @@ void Parser::parseFillable_(const ParsedShape& parsed, const std::string& name, 
 {
   if (!shape)
   {
-    assert(0); // should not be called with NULL
+    assert(0); // should not be called with null
     return;
   }
   parseOutlined_(parsed, shape);
@@ -1474,7 +1474,7 @@ int Parser::parsePointBased_(const ParsedShape& parsed, bool relative, const std
 {
   if (!shape)
   {
-    assert(0); // should not be called with NULL
+    assert(0); // should not be called with null
     return 1;
   }
   std::string shapeTypeName = GogShape::shapeTypeToString(shape->shapeType());
@@ -1518,7 +1518,7 @@ void Parser::parsePointBasedOptional_(const ParsedShape& parsed, const std::stri
 {
   if (!shape)
   {
-    assert(0); // should not be called with NULL
+    assert(0); // should not be called with null
     return;
   }
   parseFillable_(parsed, name, shape);
@@ -1545,7 +1545,7 @@ void Parser::parseCircularOptional_(const ParsedShape& parsed, bool relative, co
 {
   if (!shape)
   {
-    assert(0); // should not be called with NULL
+    assert(0); // should not be called with null
     return;
   }
   parseFillable_(parsed, name, shape);
@@ -1571,7 +1571,7 @@ void Parser::parseCircularHeightOptional_(const ParsedShape& parsed, const std::
 {
   if (!shape)
   {
-    assert(0); // should not be called with NULL
+    assert(0); // should not be called with null
     return;
   }
   if (!parsed.hasValue(ShapeParameter::HEIGHT))
@@ -1586,7 +1586,7 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
 {
   if (!shape)
   {
-    assert(0); // should not be called with NULL
+    assert(0); // should not be called with null
     return;
   }
   bool hasAngleStart = false;

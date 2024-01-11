@@ -81,7 +81,7 @@ public:
 
   /** Sets a provider that will give a unit given a max range of the scale.  Useful for changing units when zooming. */
   void setUnitsProvider(UnitsProvider* unitsProvider);
-  /** Retrieves the currently configured units provider.  This is never NULL. */
+  /** Retrieves the currently configured units provider.  This is never null. */
   UnitsProvider* unitsProvider() const;
 
   /** If true, then less text is displayed */

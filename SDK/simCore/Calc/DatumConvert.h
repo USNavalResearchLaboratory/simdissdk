@@ -84,7 +84,7 @@ typedef std::shared_ptr<DatumConvert> DatumConvertPtr;
 /**
  * Datum convert that can convert between magnetic data, and user/WGS84 vertical data.
  * EGM96 conversion is not supported by this implementation.  This can be used as a
- * NULL-object implementation of the DatumConvert implementation.
+ * Null Object implementation of the DatumConvert implementation.
  */
 class SDKCORE_EXPORT MagneticDatumConvert : public DatumConvert
 {

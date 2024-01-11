@@ -116,7 +116,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
     SAFETRYEND((std::string("legacy SIMDIS 9 .txt processing of file ") + configFile));
   }
 
-  // NULL check on the node pointer
+  // null check on the node pointer
   if (!mapNode.valid())
   {
     if (!quiet)
@@ -158,7 +158,7 @@ osgEarth::Map* DbConfigurationFile::loadLegacyConfigFile(const std::string& file
   if (configFilename.find("/") != std::string::npos)
     sdTerrainDirStr = configFilename.substr(0, configFilename.rfind("/") + 1);
 
-  // Configure a nullptr map at first
+  // Configure a null map at first
   osgEarth::Map* map = nullptr;
 
   // set up names for the loaded layers

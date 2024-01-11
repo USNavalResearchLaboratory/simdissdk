@@ -167,7 +167,7 @@ int recycle(const std::string& path)
   // Based off code from http://www.codeproject.com/KB/shell/SHFileOperation_Demo.aspx
   SHFILEOPSTRUCT SHFileOp;
   ZeroMemory(&SHFileOp, sizeof(SHFILEOPSTRUCT));
-  SHFileOp.hwnd = NULL;
+  SHFileOp.hwnd = nullptr;
   SHFileOp.wFunc = FO_DELETE;
 
   SHFileOp.pFrom = path.c_str();
