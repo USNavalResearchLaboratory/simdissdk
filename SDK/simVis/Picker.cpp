@@ -38,6 +38,38 @@
 #include "simVis/Utils.h"
 #include "simVis/Picker.h"
 
+namespace {
+
+  // Order of picked entities only matters for the first item. For the rest, just confirm they have all the same picked items
+  bool areEquivalentPicks(const std::vector<simVis::Picker::PickedEntity>& lhs, const std::vector<simVis::Picker::PickedEntity>& rhs)
+  {
+    if (lhs.size() != rhs.size())
+      return false;
+
+    if (lhs.empty() && rhs.empty())
+      return true;
+
+    if (lhs.front() != rhs.front())
+      return false;
+
+    // The easy checks are done. From here, verify that both vectors contain all the same pointers
+    std::set<osg::Referenced*> lhsPointers;
+    std::set<osg::Referenced*> rhsPointers;
+    for (const auto& pick : lhs)
+    {
+      if (pick.picked.get())
+        lhsPointers.insert(pick.picked.get());
+    }
+    for (const auto& pick : rhs)
+    {
+      if (pick.picked.get())
+        rhsPointers.insert(pick.picked.get());
+    }
+
+    return lhsPointers == rhsPointers;
+  }
+}
+
 namespace simVis {
 
 // Defines the picked entity for the vertex shader
@@ -138,8 +170,7 @@ void PickerHighlightShader::setShaderPrefix(const std::string& shaderPrefix)
 /////////////////////////////////////////////////////////////////
 
 Picker::Picker(osg::StateSet* stateSet)
-  : pickedId_(0),
-    shaderValues_(new PickerHighlightShader(stateSet))
+  : shaderValues_(new PickerHighlightShader(stateSet))
 {
 }
 
@@ -159,23 +190,68 @@ void Picker::removeCallback(Callback* callback)
 
 void Picker::setPicked_(unsigned int pickedId, osg::Referenced* picked)
 {
-  if (pickedId == pickedId_ && picked_ == picked)
+  // Return early if the picked entity is already the only entity picked
+  if (pickedEntities_.size() == 1 && pickedId == pickedEntities_.front().id && picked == pickedEntities_.front().picked)
     return;
-  shaderValues_->setId(pickedId);
-  pickedId_ = pickedId;
-  picked_ = picked;
+
+  std::vector<PickedEntity> newPicked;
+  if (pickedId == 0 && picked == nullptr)
+  {
+    // Nothing was picked and nothing is being picked. No need to do anything
+    if (pickedEntities_.size() == 0)
+      return;
+
+    // Don't insert anything into newPicked. Instead, call setPicked_ with an empty vector to clear selection
+  }
+  else
+  {
+    newPicked.push_back({pickedId, picked});
+  }
+
+  setPicked_(newPicked);
+}
+
+void Picker::setPicked_(const std::vector<PickedEntity>& picked)
+{
+  // Selection hasn't changed, return early
+  if (areEquivalentPicks(picked, pickedEntities_))
+    return;
+
+  // Find the first non-0 ID to highlight
+  unsigned int firstId = 0;
+  osg::Referenced* firstRef = nullptr;
+  if (picked.empty())
+  {
+    shaderValues_->setId(0);
+  }
+  else
+  {
+    // Shader currently only supports a single ID. Shade the first ID in the vector
+    shaderValues_->setId(picked.front().id);
+    firstId = picked.front().id;
+    firstRef = picked.front().picked.get();
+  }
+
+  pickedEntities_ = picked;
   for (auto i = callbacks_.begin(); i != callbacks_.end(); ++i)
-    (*i)->pickChanged(pickedId, picked);
+  {
+    (*i)->pickChanged(firstId, firstRef);
+    (*i)->pickChanged(pickedEntities_);
+  }
 }
 
 unsigned int Picker::pickedId() const
 {
-  return pickedId_;
+  if (pickedEntities_.empty())
+    return 0;
+  return pickedEntities_.front().id;
 }
 
 osg::Referenced* Picker::picked() const
 {
-  return picked_.get();
+  if (pickedEntities_.empty())
+    return nullptr;
+  return pickedEntities_.front().picked.get();
 }
 
 osg::Node* Picker::pickedNode() const
@@ -272,21 +348,27 @@ void IntersectPicker::pickThisFrame_()
   pickedThisFrame_ = true;
   // Intersect picker should only pick on Platforms and Platform Models
   unsigned int acceptMask = DEFAULT_PICK_MASK;
-  simVis::EntityNode* pickedEntity = nullptr;
+  std::vector<simVis::EntityNode*> pickedEntities;
+  std::vector<PickedEntity> pickedVec;
   if (lastMouseView_.valid())
-    pickedEntity = scenario_->find(lastMouseView_.get(), mx_, my_, acceptMask);
-  if (pickedEntity == nullptr)
+    pickedEntities = scenario_->findAll(lastMouseView_.get(), mx_, my_, acceptMask);
+  if (pickedEntities.empty())
   {
-    setPicked_(0, nullptr);
+    setPicked_(pickedVec);
     return;
   }
 
-  // Find a child of the node that has a tag
-  simVis::PlatformNode* platform = dynamic_cast<simVis::PlatformNode*>(pickedEntity);
-  if (platform)
-    setPicked_(platform->getModel()->objectIndexTag(), pickedEntity);
-  else
-    setPicked_(0, pickedEntity);
+  for (auto entity : pickedEntities)
+  {
+    // Find a child of the node that has a tag
+    simVis::PlatformNode* platform = dynamic_cast<simVis::PlatformNode*>(entity);
+    if (platform)
+      pickedVec.push_back({ platform->getModel()->objectIndexTag(), entity });
+    else
+      pickedVec.push_back({0, entity});
+  }
+
+  setPicked_(pickedVec);
 }
 
 /////////////////////////////////////////////////////////////////

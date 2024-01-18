@@ -1108,7 +1108,7 @@ private:
 
 }
 
-EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMask) const
+osg::ref_ptr<osgUtil::LineSegmentIntersector> ScenarioManager::findHelper_(osg::View* _view, float x, float y, int typeMask) const
 {
   View* view = dynamic_cast<View*>(_view);
   if (!view)
@@ -1189,6 +1189,13 @@ EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMa
     cam->accept(setOverheadMode);
   }
 
+  return lsi;
+}
+
+EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMask) const
+{
+  osg::ref_ptr<osgUtil::LineSegmentIntersector> lsi = findHelper_(_view, x, y, typeMask);
+
   if (lsi->containsIntersections())
   {
     for (osgUtil::LineSegmentIntersector::Intersections::iterator i = lsi->getIntersections().begin();
@@ -1205,6 +1212,30 @@ EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMa
   }
 
   return nullptr;
+}
+
+std::vector<EntityNode*> ScenarioManager::findAll(osg::View* _view, float x, float y, int typeMask) const
+{
+  osg::ref_ptr<osgUtil::LineSegmentIntersector> lsi = findHelper_(_view, x, y, typeMask);
+  std::vector<EntityNode*> rv;
+
+
+  if (lsi->containsIntersections())
+  {
+    for (osgUtil::LineSegmentIntersector::Intersections::iterator i = lsi->getIntersections().begin();
+      i != lsi->getIntersections().end();
+      ++i)
+    {
+      const osg::NodePath& path = i->nodePath;
+      for (osg::NodePath::const_reverse_iterator p = path.rbegin(); p != path.rend(); ++p)
+      {
+        if (dynamic_cast<EntityNode*>(*p))
+          rv.push_back(static_cast<EntityNode*>(*p));
+      }
+    }
+  }
+
+  return rv;
 }
 
 void ScenarioManager::addTool(ScenarioTool* tool)
