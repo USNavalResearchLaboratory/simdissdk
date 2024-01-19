@@ -90,6 +90,10 @@ public:
     {
       return id == rhs.id && picked.get() == rhs.picked.get();
     }
+    bool operator!=(const PickedEntity& rhs) const
+    {
+      return !operator==(rhs);
+    }
   };
 
   /** Retrieves the ID of the picked entity, as per osgEarth Registry's object index. 0 when none. */
