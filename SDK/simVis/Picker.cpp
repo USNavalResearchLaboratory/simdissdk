@@ -191,7 +191,7 @@ void Picker::removeCallback(Callback* callback)
 void Picker::setPicked_(unsigned int pickedId, osg::Referenced* picked)
 {
   // Return early if the picked entity is already the only entity picked
-  if (pickedEntities_.size() == 1 && pickedId == pickedEntities_.front().id && picked == pickedEntities_.front().picked)
+  if (pickedEntities_.size() == 1 && pickedId == pickedEntities_.front().id && picked == pickedEntities_.front().picked.get())
     return;
 
   std::vector<PickedEntity> newPicked;
