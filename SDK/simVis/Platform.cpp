@@ -613,7 +613,8 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
     // need to update lastUpdate_ and lastUpdateTime_ before calling updateLocator which will reference them and expect them to be up to date
     lastUpdate_ = current;
     lastUpdateTime_ = current.time();
-    updateLocator_(current);
+    if (lastPrefs_.commonprefs().draw() || (lastPrefs_.drawoffbehavior() == simData::PlatformPrefs::DEFAULT_BEHAVIOR))
+      updateLocator_(current);
 
     // update only if entity should be visible
     if (lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw())
@@ -677,8 +678,8 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
 
 bool PlatformNode::isActive_(const simData::PlatformPrefs& prefs) const
 {
-  // the valid_ flag indicates that the platform node has data at current scenario time, but this can be manually overridden by the datadraw flag
-  return valid_ && lastPrefs_.commonprefs().datadraw();
+  // the valid_ flag indicates that the platform node has data at current scenario time, but this can be manually overridden by the datadraw flag or drawoffbehavior enum
+  return valid_ && lastPrefs_.commonprefs().datadraw() && (lastPrefs_.commonprefs().draw() || (lastPrefs_.drawoffbehavior() == simData::PlatformPrefs::DEFAULT_BEHAVIOR));
 }
 
 void PlatformNode::setInvalid_()

@@ -35,7 +35,7 @@ namespace
 {
 
 /// handle notifications from the data store which include more information than the simple Observer
-class MyListener : public simData::DataStore::Listener
+class MyListener : public simData::DataStore::DefaultListener
 {
 public:
   explicit MyListener(simVis::ScenarioManager *parent)
@@ -68,12 +68,6 @@ public:
       scenarioManager_->removeEntity(removedId);
   }
 
-  /// entity with the given id and type has been removed
-  virtual void onPostRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
-  {
-    // no-op
-  }
-
   /// prefs for the given entity have been changed
   virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id)
   {
@@ -92,11 +86,6 @@ public:
     }
   }
 
-  /// properties for the given entity have been changed
-  virtual void onPropertiesChange(simData::DataStore *source, simData::ObjectId id)
-  {
-  }
-
   /// current time has been changed
   virtual void onChange(simData::DataStore *source)
   {
@@ -104,29 +93,11 @@ public:
       scenarioManager_->update(source);
   }
 
-  /// something has changed in the entity category data
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
-  {
-    // category data has no effect on visualization
-  }
-
-  /// entity name has changed
-  virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId)
-  {
-    // already handled by the prefs change notification
-  }
-
   /// entity's data was flushed, 0 means entire scenario was flushed
   virtual void onFlush(simData::DataStore *source, simData::ObjectId flushedId)
   {
     if (scenarioManager_.valid())
       scenarioManager_->flush(flushedId);
-  }
-
-  /// The scenario is about to be deleted
-  virtual void onScenarioDelete(simData::DataStore* source)
-  {
-    // no-op
   }
 
 private: // methods

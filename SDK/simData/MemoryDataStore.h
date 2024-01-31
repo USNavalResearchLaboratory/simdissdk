@@ -203,14 +203,24 @@ public:
   virtual const CommonPrefs *commonPrefs(ObjectId id, Transaction* transaction) const;
   virtual const CustomRenderingPrefs *customRenderingPrefs(ObjectId id, Transaction *transaction) const;
 
-  virtual PlatformPrefs *mutable_platformPrefs(ObjectId id, Transaction *transaction);
-  virtual BeamPrefs *mutable_beamPrefs(ObjectId id, Transaction *transaction);
-  virtual GatePrefs *mutable_gatePrefs(ObjectId id, Transaction *transaction);
-  virtual LaserPrefs *mutable_laserPrefs(ObjectId id, Transaction *transaction);
-  virtual ProjectorPrefs *mutable_projectorPrefs(ObjectId id, Transaction *transaction);
-  virtual LobGroupPrefs *mutable_lobGroupPrefs(ObjectId id, Transaction *transaction);
-  virtual CustomRenderingPrefs *mutable_customRenderingPrefs(ObjectId id, Transaction *transaction);
-  virtual CommonPrefs *mutable_commonPrefs(ObjectId id, Transaction* transaction);
+  /**
+   * The mutable_* routines have two modes of operation, one for external users and one for internal users.  External users should
+   * always set the results argument to nullptr.  The mutable_* routines will generate a callback(s) in the commit() routine if the
+   * preference changed and if the name changed.  As always, the routine must be called from the main thread.   An internal user can
+   * set the results argument that will disable the callback(s) and return if preference has changed due to the commit() routine.
+   * This allows an internal user to use worker threads to update preferences and accumulate the results for eventual callbacks in
+   * the main thread.  The design of the code made it not practical to hide the argument from the public interface.  External users
+   * should always set results to nullptr.
+   */
+
+  virtual PlatformPrefs *mutable_platformPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  virtual BeamPrefs *mutable_beamPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  virtual GatePrefs *mutable_gatePrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;;
+  virtual LaserPrefs *mutable_laserPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;;
+  virtual ProjectorPrefs *mutable_projectorPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;;
+  virtual LobGroupPrefs *mutable_lobGroupPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  virtual CustomRenderingPrefs *mutable_customRenderingPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  virtual CommonPrefs *mutable_commonPrefs(ObjectId id, Transaction* transaction) override;
   ///@}
 
   /**@name Add a platform, beam, gate, laser, projector, or lobGroup
@@ -429,12 +439,13 @@ private:
   };
 
   /// Perform transactions that modify preferences
-  /// Notification of changes are sent to observers on transaction release
+  /// Notification of changes are sent to observers on transaction release if the results argument is a nullptr.
+  /// If the results argument is defined the observers are not called and results argument is set to the outcome of the commit.
   template<typename T>
   class MutableSettingsTransactionImpl : public TransactionImpl
   {
   public:
-    MutableSettingsTransactionImpl(ObjectId id, T *settings, MemoryDataStore *store, ListenerList *observers);
+    MutableSettingsTransactionImpl(ObjectId id, T *settings, MemoryDataStore *store, ListenerList *observers, CommitResult* results = nullptr);
 
     /// Retrieve the settings object to be modified during the transaction
     T *settings() { return modifiedSettings_; }
@@ -457,10 +468,11 @@ private:
     bool nameChange_;                             ///< Determine if a name change has occurred
     std::string oldName_;                         ///< Old entity name
     std::string newName_;                         ///< New entity name
-    T *currentSettings_;                          ///< Pointer to current settings object stored by DataStore; Will not be modified until the transaction is committed
-    T *modifiedSettings_;                         ///< The mutable settings object provided to the transaction initiator for modification
-    MemoryDataStore *store_;
-    ListenerList *observers_;
+    T *currentSettings_ = nullptr;                ///< Pointer to current settings object stored by DataStore; Will not be modified until the transaction is committed
+    T *modifiedSettings_ = nullptr;               ///< The mutable settings object provided to the transaction initiator for modification
+    MemoryDataStore *store_ = nullptr;            ///< Memory data store
+    ListenerList *observers_ = nullptr;           ///< Observers to call if the results argument is a nullptr
+    CommitResult* results_ = nullptr;            ///< If not a nullptr, the outcome of the commit and the observers are not called
   };
 
   /// Perform transactions that modify properties
@@ -639,14 +651,17 @@ private:
   };
 
 private:
+  /// Invokes the appropriate callbacks for the given entities
+  void invokePreferenceChangeCallback_(const std::map<simData::ObjectId, CommitResult>& results, ListenerList& localCopy);
+
   /// Clean up memory
   void clearMemory_();
   /// Updates all the platforms
-  void updatePlatforms_(double time);
+  void updatePlatforms_(double time, std::map<simData::ObjectId, CommitResult>& results);
   /// Updates a target beam
   void updateTargetBeam_(ObjectId id, BeamEntry* beam, double time);
   /// Updates all the beams
-  void updateBeams_(double time);
+  void updateBeams_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
   /// Gets the beam that corresponds to specified gate
   BeamEntry* getBeamForGate_(google::protobuf::uint64 gateID);
   /// Updates a target gate
@@ -660,15 +675,15 @@ private:
   bool gateUsesBeamBeamwidth_(GateEntry* gate) const;
 
   /// Updates all the gates
-  void updateGates_(double time);
+  void updateGates_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
   /// Updates all the lasers
-  void updateLasers_(double time);
+  void updateLasers_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
   /// Updates all the projectors
-  void updateProjectors_(double time);
+  void updateProjectors_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
   /// Updates all the LobGroups
-  void updateLobGroups_(double time);
+  void updateLobGroups_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
   /// Updates all the CustomRenderings
-  void updateCustomRenderings_(double time);
+  void updateCustomRenderings_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
   /// Updates all category data
   void updateCategoryData_(double time, std::vector<simData::ObjectId>& ids);
   /// Flushes an entity based on the given scope, fields and time ranges

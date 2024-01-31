@@ -952,6 +952,20 @@ message PlatformPrefs {
 
   /// Toggles whether the platform data should be interpreted as Earth-Fixed or Inertial
   optional bool eciDataMode = 73 [default = false];
+
+  /**
+   * Controls how to interpret commonPrefs.draw when set to false. When commonPrefs.draw is
+   * set to false the default behavior is to not draw the platform, but to continue drawing
+   * the platform's children and continue displaying the platform in the entity list. if
+   * drawOffBehavior is set to OMIT_CHILDREN_AND_VIS_UPDATE both the platform and the platform's
+   * children are not displayed, and omit the platform and its children from the entity list.
+   */
+  enum DrawOffBehavior {
+    DEFAULT_BEHAVIOR = 0;  ///< Hide the platform, but continue displaying the platform's children
+    OMIT_CHILDREN_AND_VIS_UPDATE = 1;  ///< Hide the platform and the platform's children
+  };
+
+  optional DrawOffBehavior drawOffBehavior = 80 [default = DEFAULT_BEHAVIOR];
 };
 
 /// timed update to platform prefs; commands override prefs

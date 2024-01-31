@@ -27,13 +27,13 @@
 #include "simData/DataTypes.h"
 #include "simData/DataSlice.h"
 #include "simData/DataSliceUpdaters.h"
+#include "simData/DataStore.h"
 #include "simData/Interpolator.h"
 #include "simData/ObjectId.h"
 #include "simData/UpdateComp.h"
 
 namespace simData
 {
-class DataStore;
 
 namespace MemorySliceHelper
 {
@@ -354,8 +354,9 @@ public:
    * @param ds DataStore reference
    * @param id DataStore id
    * @param time
+   * @param results Returns the results of the update
    */
-  virtual void update(DataStore *ds, ObjectId id, double time);
+  virtual void update(DataStore *ds, ObjectId id, double time, DataStore::CommitResult& results);
 
   /// reduce the data store to only have points within the given 'timeWindow'
   /// @param timeWindow amount of time to keep in window (negative for no limit)
@@ -471,8 +472,9 @@ public:
   * @param ds DataStore reference
   * @param id DataStore id
   * @param time the time up to (and including) which to execute commands
+  * @param results Returns the results of the update
   */
-  virtual void update(DataStore *ds, ObjectId id, double time);
+  virtual void update(DataStore *ds, ObjectId id, double time, DataStore::CommitResult& results);
 };
 
 /**
@@ -489,8 +491,9 @@ public:
   * @param ds DataStore reference
   * @param id DataStore id
   * @param time the time up to (and including) which to execute commands
+  * @param results Returns the results of the update
   */
-  virtual void update(DataStore *ds, ObjectId id, double time);
+  virtual void update(DataStore*ds, ObjectId id, double time, DataStore::CommitResult& results);
 };
 
 /**

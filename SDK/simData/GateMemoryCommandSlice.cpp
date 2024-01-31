@@ -27,7 +27,7 @@
 namespace simData
 {
 
-void GateMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
+void GateMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time, DataStore::CommitResult& results)
 {
   clearChanged();
   if (updates_.empty())
@@ -38,7 +38,7 @@ void GateMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
 
   // process all command updates in one prefs transaction
   DataStore::Transaction t;
-  GatePrefs* prefs = ds->mutable_gatePrefs(id, &t);
+  GatePrefs* prefs = ds->mutable_gatePrefs(id, &t, &results);
   if (!prefs)
     return;
 
