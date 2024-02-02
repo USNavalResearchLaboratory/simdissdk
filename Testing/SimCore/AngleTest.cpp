@@ -62,6 +62,10 @@ int testCombinations(const std::string& token, double degreeVal)
   rv += testOne(token + " s", -degreeVal);
   rv += testOne(token + " e",  degreeVal);
   rv += testOne(token + " w", -degreeVal);
+  rv += testOne("N " + token, degreeVal);
+  rv += testOne("S " + token, -degreeVal);
+  rv += testOne("E " + token, degreeVal);
+  rv += testOne("W " + token, -degreeVal);
 
   return rv;
 }
