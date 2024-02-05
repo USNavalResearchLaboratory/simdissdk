@@ -531,9 +531,9 @@ int WorldMagneticModel::GeoMag::calculateVariance(const simCore::Vec3& lla, int 
   {
     if (!tooLateWarned_)
     {
+      tooLateWarned_ = true;
       SIM_ERROR << "calculateVariance encountered a date (" << ordinalDay << " " << refYear << ") which is more than 5 years beyond the last available WMM (" <<
         epochYear_ << "). Proceeding with date clamped to: 00 " << maxYear << std::endl;
-      tooLateWarned_ = true;
     }
     // Calculation extends to 5 years beyond the epoch date, so set day to zero and cap the year
     refYear = maxYear;
