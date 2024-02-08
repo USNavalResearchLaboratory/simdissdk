@@ -46,7 +46,10 @@ using EarthManipulator = osgEarth::EarthManipulator;
 #include "osgEarth/ImGui/AnnotationsGUI"
 #endif
 
+#if 0
 #include "osgEarth/ImGui/LayersGUI"
+#endif
+
 #include "osgEarth/ImGui/NetworkMonitorGUI"
 #include "osgEarth/ImGui/RenderingGUI"
 #include "osgEarth/ImGui/SceneGraphGUI"
@@ -130,7 +133,10 @@ OsgImGuiHandler::OsgImGuiHandler()
 #endif
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::CameraGUI>(new osgEarth::GUI::CameraGUI));
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::EnvironmentGUI>(new osgEarth::GUI::EnvironmentGUI));
+#if 0
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::LayersGUI>(new osgEarth::GUI::LayersGUI));
+#endif
+
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::NetworkMonitorGUI>(new osgEarth::GUI::NetworkMonitorGUI));
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::NVGLInspectorGUI>(new osgEarth::GUI::NVGLInspectorGUI));
   menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::RenderingGUI>(new osgEarth::GUI::RenderingGUI));
