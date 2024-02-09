@@ -34,7 +34,7 @@ namespace simCore
   {
   public:
     /// Default constructor gives {0,0,0}
-    Vec3() { zero(); }
+    Vec3() { }
 
     /**
     * Value constructor
@@ -59,10 +59,15 @@ namespace simCore
       set(v[0], v[1], v[2]);
     }
 
-    /// Allow pass by value
-    Vec3(const Vec3 &value) { set(value); }
-    /// Allow assignment
-    Vec3& operator=(const Vec3 &value) { set(value); return *this; }
+    /**@name Copy and move operators and assignment
+    * @{
+    */
+    Vec3(const Vec3& rhs) = default;
+    Vec3(Vec3&& rhs) = default;
+    Vec3& operator=(const Vec3& rhs) = default;
+    Vec3& operator=(Vec3&& rhs) = default;
+    ///@}
+
     /// Equality
     bool operator==(const Vec3 &value) const
     {
@@ -82,7 +87,7 @@ namespace simCore
     * @{
     */
     /// Behave like an array
-    double  operator[](size_t index) const
+    double operator[](size_t index) const
     {
       assert(index < 3);
       if (index > 2)
@@ -166,7 +171,7 @@ namespace simCore
     ///@}
 
   private:
-    double v[3];
+    double v[3] = { 0., 0., 0. };
   };
 
 } // namespace simCore
