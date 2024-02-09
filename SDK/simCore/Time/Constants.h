@@ -28,20 +28,20 @@
 namespace simCore
 {
   // Constants for various time representations
-  static const int SECPERMIN = 60;       /**< # of seconds per minute */
-  static const int SECPERHOUR = 3600;    /**< # of seconds per hour */
-  static const int SECPERDAY = 86400;    /**< # of seconds per day */
-  static const int MINPERHOUR = 60;      /**< # of minutes per hour */
-  static const int HOURPERDAY = 24;      /**< # of hours per day */
-  static const int MONPERYEAR = 12;      /**< # of months per year */
+  inline constexpr int SECPERMIN = 60;       /**< # of seconds per minute */
+  inline constexpr int SECPERHOUR = 3600;    /**< # of seconds per hour */
+  inline constexpr int SECPERDAY = 86400;    /**< # of seconds per day */
+  inline constexpr int MINPERHOUR = 60;      /**< # of minutes per hour */
+  inline constexpr int HOURPERDAY = 24;      /**< # of hours per day */
+  inline constexpr int MONPERYEAR = 12;      /**< # of months per year */
 
   // Astronomical time constants
-  static const double JULIAN_DATE_J1900 = 2415021.0; /**<  Julian date of the standard epoch of J1900.0 */
-  static const double JULIAN_DATE_J1970 = 2440588.0; /**<  Julian date of the standard epoch of J1970.0 */
-  static const double JULIAN_DATE_J2000 = 2451545.0; /**<  Julian date of the standard epoch of J2000.0 */
+  inline constexpr double JULIAN_DATE_J1900 = 2415021.0; /**<  Julian date of the standard epoch of J1900.0 */
+  inline constexpr double JULIAN_DATE_J1970 = 2440588.0; /**<  Julian date of the standard epoch of J1970.0 */
+  inline constexpr double JULIAN_DATE_J2000 = 2451545.0; /**<  Julian date of the standard epoch of J2000.0 */
 
   /** Number of days per month, in normal years [0], and in leap years [1] */
-  static const unsigned int DAYS_IN_MONTHS[2][13] =
+  inline constexpr unsigned int DAYS_IN_MONTHS[2][13] =
   {
     /* 0, jan feb mar apr may jun jul aug sep oct nov dec */
     /* number of days per month for non-leap years */
@@ -51,7 +51,7 @@ namespace simCore
   };
 
   /** Cumulative number of days per year at the end of each month, in normal years [0], and in leap years [1] */
-  static const unsigned int DAYS_IN_YEAR[2][14] =
+  inline constexpr unsigned int DAYS_IN_YEAR[2][14] =
   {
     /* empty, 0, jan feb mar apr may jun jul aug sep oct nov dec */
     /* summation of days per month for non-leap years */
