@@ -133,12 +133,6 @@ namespace
 
 namespace
 {
-  /// multiplies a vec3 by a scalar value
-  simCore::Vec3 operator * (const simCore::Vec3& i, double scalar)
-  {
-    return simCore::Vec3(i.x()*scalar, i.y()*scalar, i.z()*scalar);
-  }
-
   /// styles a feature
   void styleAnnotation(osgEarth::Style& style, bool valid)
   {
