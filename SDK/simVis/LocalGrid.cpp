@@ -946,7 +946,7 @@ int LocalGridNode::processSpeedParams_(const simData::LocalGridPrefs& prefs, dou
   if (prefs.speedring().useplatformspeed())
   {
     // force rebuild if speed rings are displayed, using platform speed, and host velocity changed
-    speedMS = simCore::v3Length(hostPlatformLocator->getCoordinate().velocity());
+    speedMS = hostPlatformLocator->getCoordinate().velocity().length();
     if (!simCore::areEqual(hostSpeedMS_, speedMS, 0.01))
     {
       hostSpeedMS_ = speedMS;

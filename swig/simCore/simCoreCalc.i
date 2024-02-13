@@ -20,8 +20,6 @@
 // Handling output parameter for toScientific() from simCore/calc/Math.cpp
 %apply int* OUTPUT { int* exp };
 
-// v3Scale() needs a custom wrapper for proper return value
-%rename("wrap_v3Scale") simCore::v3Scale;
 %include "simCore/Calc/Math.h"
 
 %rename("wrap_convert") simCore::CoordinateConverter::convert;
@@ -156,10 +154,6 @@ CoordinateConverter.convert = CoordConvert_convert
 
 // Various Python overrides
 %pythoncode %{
-def v3Scale(scalar, inVec):
-  outVec = Vec3()
-  wrap_v3Scale(scalar, inVec, outVec)
-  return outVec
 def tangentPlane2Sphere(llaVec, tpVec):
   sphereVec = Vec3()
   sphereTpOrigin = Vec3()

@@ -79,8 +79,7 @@ void calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &t
     Coordinate fromPos;
     coordConv->convert(cvTo, fromPos, COORD_SYS_ENU);
     coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
-    Vec3 ENUDelta;
-    v3Subtract(toPos.position(), fromPos.position(), ENUDelta);
+    Vec3 ENUDelta = toPos.position() - fromPos.position();
     calculateRelAng(ENUDelta, fromOriLla, azim, elev, cmp);
   }
   else
@@ -124,7 +123,7 @@ void calculateAbsAzEl(const Vec3 &fromLla, const Vec3 &toLla, double *azim, doub
     Coordinate fromPos;
     coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
     coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
-    v3Subtract(toPos.position(), fromPos.position(), ENUDelta);
+    ENUDelta = toPos.position() - fromPos.position();
   }
   else if (model == PERFECT_SPHERE)
   {
@@ -357,15 +356,13 @@ double calculateClosingVelocity(const Vec3 &fromLla, const Vec3 &toLla, const Ea
   if (convertLocations(fromState, toState, model, &cc, fromPos, toPos))
   {
     // create a unit position vector
-    Vec3 unitPosVec;
-    v3Subtract(toPos.position(), fromPos.position(), unitPosVec);
+    Vec3 unitPosVec = toPos.position() - fromPos.position();
     simCore::v3Unit(unitPosVec);
 
     // closing velocity will be the difference of the velocity
     // vectors dotted with the normalized position difference.
-    simCore::Vec3 diff;
-    v3Subtract(fromPos.velocity(), toPos.velocity(), diff);
-    return v3Dot(diff, unitPosVec);
+    simCore::Vec3 diff = fromPos.velocity() - toPos.velocity();
+    return diff.dot(unitPosVec);
   }
 
   SIM_ERROR << "calculateClosingVelocity, unable to perform calculation: " << __LINE__ << std::endl;
@@ -412,7 +409,7 @@ double calculateRangeRate(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec
 
   double bearing = 0;
   calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, nullptr, nullptr, model, &cc);
-  return v3Length(fromVel) * cos(fromOriLla[0] - bearing) - (v3Length(toVel) * cos(toOriLla[0] - bearing));
+  return fromVel.length() * cos(fromOriLla[0] - bearing) - (toVel.length() * cos(toOriLla[0] - bearing));
 }
 
 /// Calculates the bearing rate in rad/sec between two entities
@@ -434,8 +431,8 @@ double calculateBearingRate(const Vec3 &fromLla, const Vec3 &fromOriLla, const V
   calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, nullptr, nullptr, model, &cc);
 
   const double range = calculateGroundDist(fromLla, toLla, model, &cc);
-  const double tspd  = v3Length(toVel);
-  const double ospd  = v3Length(fromVel);
+  const double tspd  = toVel.length();
+  const double ospd  = fromVel.length();
 
   return (tspd * sin(toOriLla[0]) - ospd * sin(fromOriLla[0])) *
     cos(bearing) - (tspd * cos(toOriLla[0]) - ospd * cos(fromOriLla[0])) *
@@ -464,15 +461,13 @@ double calculateAspectAngle(const Vec3 &fromLla, const Vec3 &toLla, const Vec3 &
   CoordinateConverter::convertGeodeticPosToEcef(fromLla, fromPosECEF);
   Vec3 toPosECEF;
   CoordinateConverter::convertGeodeticPosToEcef(toLla, toPosECEF);
-  Vec3 losECEF;
-  v3Subtract(toPosECEF, fromPosECEF, losECEF);
+  Vec3 losECEF = toPosECEF - fromPosECEF;
 
   // normalize prior to computing aspect angle
-  Vec3 losNOM;
-  v3Norm(losECEF, losNOM);
+  Vec3 losNOM = losECEF.normalize();
 
   // Compute aspect angle, relative to the 'to' entity
-  double cosAspectAng = -(v3Dot(losNOM, bodyUnitVecX));
+  double cosAspectAng = -losNOM.dot(bodyUnitVecX);
   return simCore::inverseCosine(cosAspectAng);
 }
 
@@ -964,7 +959,7 @@ void sphere2TangentPlane(const Vec3& llaVec, const Vec3& sphereVec, Vec3& tpVec,
   }
 
   // get the delta spherical XYZ from the tangent plane to the given sphereVec point
-  v3Subtract(sphereVec, tempSphereXYZ, tempSphereXYZ);
+  tempSphereXYZ = sphereVec - tempSphereXYZ;
 
   // figure out the the X-East tangent plane values if the tangent plane
   // was at Lat = 0, Lon = 0
@@ -1015,7 +1010,7 @@ void tangentPlane2Sphere(const Vec3 &llaVec, const Vec3 &tpVec, Vec3& sphereVec,
   }
 
   // get the delta spherical XYZ from the tangent plane to the given sphereVec point
-  v3Add(sphereVec, tempSphereXYZ, sphereVec);
+  sphereVec += tempSphereXYZ;
 }
 
 /**
@@ -1194,9 +1189,8 @@ void calculateVelFromGeodeticPos(const Vec3 &currPos, const Vec3 &prevPos, const
   Coordinate pnt2;
   cc.convert(Coordinate(COORD_SYS_LLA, prevPos), pnt2, COORD_SYS_XEAST);
 
-  Vec3 posDiff;
-  v3Subtract(pnt1.position(), pnt2.position(), posDiff);
-  v3Scale(1.0/deltaTime, posDiff, velVec);
+  Vec3 posDiff = pnt1.position() - pnt2.position();
+  velVec = posDiff * (1.0 / deltaTime);
 }
 
 /// Calculates an ENU geodetic velocity vector based on dp/dt, and flight path angle orientation from velocity
@@ -1227,33 +1221,30 @@ bool calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, const doub
   case COORD_SYS_XEAST:
   case COORD_SYS_ENU:
     {
-      Vec3 posDiff;
-      v3Subtract(currPos, prevPos, posDiff);
-      v3Scale(1.0/deltaTime, posDiff, velVec);
+      Vec3 posDiff = currPos - prevPos;
+      velVec = posDiff * (1.0 / deltaTime);
     }
     break;
 
   case COORD_SYS_NED:
     {
-      Vec3 posDiff;
       Vec3 enu1;
       Vec3 enu2;
       CoordinateConverter::swapNedEnu(currPos, enu1);
       CoordinateConverter::swapNedEnu(prevPos, enu2);
-      v3Subtract(enu1, enu2, posDiff);
-      v3Scale(1.0/deltaTime, posDiff, velVec);
+      Vec3 posDiff = enu1 - enu2;
+      velVec = posDiff * (1.0 / deltaTime);
     }
     break;
 
   case COORD_SYS_NWU:
     {
-      Vec3 posDiff;
-      Vec3 enu1;
       Vec3 enu2;
+      Vec3 enu1;
       CoordinateConverter::convertNwuToEnu(currPos, enu1);
       CoordinateConverter::convertNwuToEnu(prevPos, enu2);
-      v3Subtract(enu1, enu2, posDiff);
-      v3Scale(1.0/deltaTime, posDiff, velVec);
+      Vec3 posDiff = enu1 - enu2;
+      velVec = posDiff * (1.0 / deltaTime);
     }
     break;
 
@@ -1363,8 +1354,7 @@ void calculateGeodeticOffsetPos(const simCore::Vec3& llaBgnPos, const simCore::V
   simCore::CoordinateConverter::convertGeodeticPosToEcef(llaBgnPos, originGeo);
 
   // compute offset, then convert geocentric back to geodetic
-  simCore::Vec3 offsetGeo;
-  simCore::v3Add(originGeo, geoOffVec, offsetGeo);
+  simCore::Vec3 offsetGeo = originGeo + geoOffVec;
   simCore::CoordinateConverter::convertEcefToGeodeticPos(offsetGeo, offsetLla);
 }
 
@@ -1465,7 +1455,7 @@ void calculateVelocity(const double speed, const double heading, const double pi
  */
 void calculateAoaSideslipTotalAoa(const Vec3& enuVel, const Vec3& ypr, const bool useRoll, double* aoa, double* ss, double* totalAoa)
 {
-  if (v3Length(enuVel) == 0.0)
+  if (enuVel.length() == 0.0)
   {
     if (aoa) *aoa = 0.0;
     if (ss) *ss = 0.0;
@@ -1522,7 +1512,7 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   // ------------------------------------------------
   // gets the length (along the line segment pointing vector)
   // to the location of the line segment's "closest point"
-  const double actualLength = simCore::v3Length(pointingVector);
+  const double actualLength = pointingVector.length();
 
   // prevent divide by zero
   if (simCore::areEqual(actualLength, 0.0))
@@ -1535,13 +1525,13 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   }
   else
   {
-    length = simCore::v3Length(enuDelta) * cos(angle);
+    length = enuDelta.length() * cos(angle);
     if (length > actualLength)
       length = actualLength;
   }
 
   // calculate the projection of the reference direction along the line segment direction vector
-  simCore::v3Scale(length/actualLength, pointingVector, closestPnt);
+  closestPnt = pointingVector * (length / actualLength);
 
   // convert closest point on line segment to a LLA value
   cvOut.clear();
@@ -1550,9 +1540,8 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   tempFromECEF.convert(cvIn, cvOut, simCore::COORD_SYS_LLA);
   closestLLa = cvOut.position();
 
-  simCore::Vec3 delta;
-  simCore::v3Subtract(toPnt, closestPnt, delta);
-  return simCore::v3Length(delta);
+  simCore::Vec3 delta = toPnt - closestPnt;
+  return delta.length();
 }
 
 bool positionInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& positionLLA,

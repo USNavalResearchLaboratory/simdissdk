@@ -172,7 +172,7 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   double scale;
   if (prefs.velvecusestaticlength())
   {
-    simCore::v3Norm(lla.velocity(), velocity);
+    velocity = lla.velocity().normalize();
     const osgEarth::Units sizeUnits = simVis::convertUnitsToOsgEarth(prefs.velvecstaticlenunits());
     scale = sizeUnits.convertTo(osgEarth::Units::METERS, prefs.velvecstaticlen());
   }
@@ -188,7 +188,7 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
       scale *= 3600.0;
   }
 
-  simCore::v3Scale(scale, velocity, velocity);
+  velocity *= scale;
 
   // draw velocity vector
   geom->allocate(2);

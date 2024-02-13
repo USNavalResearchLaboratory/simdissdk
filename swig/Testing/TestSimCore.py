@@ -136,7 +136,7 @@ assert(simCore.isFinite(v))
 v2 = simCore.Vec3(1, 2, 3)
 assert(v2 is not None)
 assert(simCore.v3Distance(v, v2) == math.sqrt(26))
-v2 = simCore.v3Scale(2, v)
+v2 = v * 2
 assert(v2.x() == 12)
 assert(v2.y() == 4)
 assert(v2.z() == 8)

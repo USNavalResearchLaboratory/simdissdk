@@ -97,7 +97,7 @@ public:
   {
     bool autoClamp = false;
     if (prefs.clamporientationatlowvelocity())
-      autoClamp = simCore::v3Length(llaCoord.velocity()) < 0.001;
+      autoClamp = llaCoord.velocity().length() < 0.001;
 
     if (!prefs.useclampyaw() && !prefs.useclamppitch() && !prefs.useclamproll() && !autoClamp)
       return PlatformTspiFilterManager::POINT_UNCHANGED;

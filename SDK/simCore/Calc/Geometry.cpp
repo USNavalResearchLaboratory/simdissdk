@@ -32,17 +32,15 @@ namespace simCore {
 
 Plane::Plane(const Vec3& p1, const Vec3& p2, const Vec3& p3)
 {
-  Vec3 normal;
-  Vec3 a, b, w;
-  v3Subtract(p2, p1, a);
-  v3Subtract(p3, p2, b);
-  v3Cross(a, b, w);
-  v3Norm(w, normal);
+  Vec3 a = p2 - p1;
+  Vec3 b = p3 - p2;
+  Vec3 w = a.cross(b);
+  Vec3 normal = w.normalize();
 
   v_[0] = normal[0];
   v_[1] = normal[1];
   v_[2] = normal[2];
-  v_[3] = -v3Dot(p1, normal);
+  v_[3] = -p1.dot(normal);
 }
 
 Plane::Plane(const Plane& rhs)
