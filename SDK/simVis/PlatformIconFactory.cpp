@@ -260,8 +260,10 @@ public:
       {
         if (prefs.overridecolorcombinemode() == simData::REPLACE_COLOR)
           overrideColor_->setCombineMode(OverrideColor::REPLACE_COLOR);
-        else
+        else if (prefs.overridecolorcombinemode() == simData::MULTIPLY_COLOR)
           overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
+        else
+          overrideColor_->setCombineMode(OverrideColor::INTENSITY_GRADIENT);
       }
     }
 

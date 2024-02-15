@@ -262,6 +262,8 @@ enum OverrideColorCombineMode {
   MULTIPLY_COLOR = 0;
   /// Replace the incoming color with the override color; good for flat items
   REPLACE_COLOR = 1;
+  /// Apply color by copying the previous color intensity and replacing with this one, retaining shading better than REPLACE_COLOR
+  INTENSITY_GRADIENT = 2;
 };
 
 /// Coordinate system definition for scenario and platforms
