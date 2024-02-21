@@ -1188,6 +1188,9 @@ int GogTest(int argc, char* argv[])
   google::protobuf::ShutdownProtobufLibrary();
   // Need to destroy simVis Registry for valgrind testing
   simVis::Registry::destroy();
+  // Need to destroy GDAL, even with the atexit(), to avoid a race condition. It appears
+  // safe to destroy it more than once.
+  GDALDestroy();
 
   return rv;
 }
