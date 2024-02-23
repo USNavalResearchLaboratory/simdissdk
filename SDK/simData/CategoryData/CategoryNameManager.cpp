@@ -44,6 +44,11 @@ CategoryNameManager::CategoryNameManager()
 {
 }
 
+bool CategoryNameManager::isCaseSensitive() const
+{
+  return caseSensitive_;
+}
+
 int CategoryNameManager::setCaseSensitive(bool caseSensitive)
 {
   if (!map_.empty())

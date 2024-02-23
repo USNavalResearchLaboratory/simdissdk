@@ -209,14 +209,19 @@ public: // methods
   virtual const ProjectorPrefs*         projectorPrefs(ObjectId id, Transaction *transaction) const {return dataStore_->projectorPrefs(id, transaction);}
   virtual const  LobGroupPrefs*          lobGroupPrefs(ObjectId id, Transaction *transaction) const {return dataStore_->lobGroupPrefs(id, transaction);}
   virtual const    CommonPrefs*            commonPrefs(ObjectId id, Transaction* transaction) const {return dataStore_->commonPrefs(id, transaction);}
-  virtual        PlatformPrefs*  mutable_platformPrefs(ObjectId id, Transaction *transaction) {return dataStore_->mutable_platformPrefs(id, transaction);}
-  virtual            BeamPrefs*      mutable_beamPrefs(ObjectId id, Transaction *transaction) {return dataStore_->mutable_beamPrefs(id, transaction);}
-  virtual            GatePrefs*      mutable_gatePrefs(ObjectId id, Transaction *transaction) {return dataStore_->mutable_gatePrefs(id, transaction);}
-  virtual           LaserPrefs*     mutable_laserPrefs(ObjectId id, Transaction *transaction) {return dataStore_->mutable_laserPrefs(id, transaction);}
-  virtual       ProjectorPrefs* mutable_projectorPrefs(ObjectId id, Transaction *transaction) {return dataStore_->mutable_projectorPrefs(id, transaction);}
-  virtual        LobGroupPrefs*  mutable_lobGroupPrefs(ObjectId id, Transaction *transaction) { return dataStore_->mutable_lobGroupPrefs(id, transaction); }
+
+  /**
+   * The mutable_* routines have two modes of operation, one for external users and one for internal users.  External users should always set the results argument
+   * to nullptr.  Since this interface is for external users, the results argument is ignored and always treated as nullptr.
+   */
+  virtual        PlatformPrefs*  mutable_platformPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override {return dataStore_->mutable_platformPrefs(id, transaction, nullptr);}
+  virtual            BeamPrefs*      mutable_beamPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override {return dataStore_->mutable_beamPrefs(id, transaction, nullptr);}
+  virtual            GatePrefs*      mutable_gatePrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override {return dataStore_->mutable_gatePrefs(id, transaction, nullptr);}
+  virtual           LaserPrefs*     mutable_laserPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override {return dataStore_->mutable_laserPrefs(id, transaction, nullptr);}
+  virtual       ProjectorPrefs* mutable_projectorPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override {return dataStore_->mutable_projectorPrefs(id, transaction, nullptr);}
+  virtual        LobGroupPrefs*  mutable_lobGroupPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override { return dataStore_->mutable_lobGroupPrefs(id, transaction, nullptr); }
   virtual const CustomRenderingPrefs* customRenderingPrefs(ObjectId id, Transaction *transaction) const { return dataStore_->customRenderingPrefs(id, transaction); }
-  virtual       CustomRenderingPrefs* mutable_customRenderingPrefs(ObjectId id, Transaction *transaction) { return dataStore_->mutable_customRenderingPrefs(id, transaction); }
+  virtual       CustomRenderingPrefs* mutable_customRenderingPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override { return dataStore_->mutable_customRenderingPrefs(id, transaction, nullptr); }
   virtual          CommonPrefs*    mutable_commonPrefs(ObjectId id, Transaction* transaction) { return dataStore_->mutable_commonPrefs(id, transaction); }
   ///@}
 

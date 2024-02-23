@@ -606,9 +606,8 @@ void AnimatedLineNode::drawSlantLine_(const simCore::MultiFrameCoordinate& start
   secondHalf_.line2->clear();
 
   // Calculate the length of the vector
-  simCore::Vec3 delta;
-  simCore::v3Subtract(endPoint.ecefCoordinate().position(), startPoint.ecefCoordinate().position(), delta);
-  const double length = simCore::v3Length(delta);
+  simCore::Vec3 delta = endPoint.ecefCoordinate().position() - startPoint.ecefCoordinate().position();
+  const double length = delta.length();
 
   // Calculate the number of segments
   const double segmentLength = simCore::sdkMin(length, MAX_SEGMENT_LENGTH);

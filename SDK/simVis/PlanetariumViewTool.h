@@ -287,7 +287,7 @@ private:
     bool useGradient_;
     /** Whether to limit data in history */
     bool limitingData_;
-    /** Gradient for history points. Used when useGradient_ is true. NULL until first needed */
+    /** Gradient for history points. Used when useGradient_ is true. nullptr until first needed */
     osg::ref_ptr<osg::TransferFunction1D> gradientFunction_;
     /** Cached time of the first data point for the associated beam */
     double firstTime_;

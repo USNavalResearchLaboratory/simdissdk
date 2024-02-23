@@ -49,6 +49,23 @@ v.scale(2)
 assert(v.x() == 6)
 assert(v.y() == 2)
 assert(v.z() == 4)
+v.set(1, 2, 3)
+assert(v + simCore.Vec3(1, 2, 3) == simCore.Vec3(2, 4, 6))
+v += simCore.Vec3(1, 1, 1)
+assert(v == simCore.Vec3(2, 3, 4))
+assert(v - simCore.Vec3(1, 1, 1) == simCore.Vec3(1, 2, 3))
+v -= simCore.Vec3(1, 1, 1)
+assert(v == simCore.Vec3(1, 2, 3))
+assert(v * 2 == simCore.Vec3(2, 4, 6))
+v *= 2
+assert(v / 2 == simCore.Vec3(1, 2, 3))
+v /= 2
+assert(v == simCore.Vec3(1, 2, 3))
+assert(-v == simCore.Vec3(-1, -2, -3))
+assert(v.dot(v) == 14)
+assert(v.cross(simCore.Vec3(1, 5, 7)) == simCore.Vec3(-1, -4, 3))
+assert(simCore.Vec3(3, 0, 4).length() == 5)
+assert(simCore.Vec3(0, 3, 0).normalize() == simCore.Vec3(0, 1, 0))
 
 #############################
 # Angle.h
@@ -79,6 +96,7 @@ assert(coordSystem == simCore.COORD_SYS_NED)
 #############################
 # Coordinate.h
 coordinateOne = simCore.Coordinate()
+v = simCore.Vec3(6, 2, 4)
 coordinateTwo = simCore.Coordinate(simCore.COORD_SYS_LLA, v)
 assert(coordinateOne is not None)
 assert(coordinateTwo is not None)
@@ -118,7 +136,7 @@ assert(simCore.isFinite(v))
 v2 = simCore.Vec3(1, 2, 3)
 assert(v2 is not None)
 assert(simCore.v3Distance(v, v2) == math.sqrt(26))
-v2 = simCore.v3Scale(2, v)
+v2 = v * 2
 assert(v2.x() == 12)
 assert(v2.y() == 4)
 assert(v2.z() == 8)

@@ -443,7 +443,7 @@ float RCSLUT::calcTableRCS_(float freq, double azim, double elev, PolarityType p
     lastPolarity_ = pol;
   }
 
-  // either both tables are NULL, or both are non-NULL
+  // either both tables are null, or both are non-null
   assert((rcstabLo == nullptr && rcstabHi == nullptr) || (rcstabLo && rcstabHi));
 
   if (rcstabLo == nullptr && rcstabHi == nullptr)

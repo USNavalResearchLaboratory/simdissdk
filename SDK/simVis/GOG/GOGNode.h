@@ -86,7 +86,7 @@ namespace simVis { namespace GOG
     osgEarth::optional<osgEarth::GeoPoint> refPoint_;
     /** Error reporting */
     std::shared_ptr<ErrorHandler> errorHandler_;
-    /** Possibly NULL pointer to the shared Units Registry */
+    /** Possibly nullptr pointer to the shared Units Registry */
     const simCore::UnitsRegistry* unitsRegistry_;
 
     GOGContext()

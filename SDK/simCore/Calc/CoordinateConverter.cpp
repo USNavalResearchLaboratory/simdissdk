@@ -1265,8 +1265,7 @@ int CoordinateConverter::convertXEastToEcef_(const Coordinate &tpCoord, Coordina
   d3MTv3Mult(rotationMatrixENU_, tpCoord.position(), pos);
 
   // apply translation to earth center origin
-  Vec3 ecefPos;
-  v3Add(pos, tangentPlaneTranslation_, ecefPos);
+  Vec3 ecefPos = pos + tangentPlaneTranslation_;
   ecefCoord.setPosition(ecefPos);
 
   if (tpCoord.hasVelocity())
@@ -1328,9 +1327,8 @@ int CoordinateConverter::convertEcefToXEast_(const Coordinate &ecefCoord, Coordi
   // set coordinate system and ECI time, clear any other existing data from output coordinate
   tpCoord.clear(COORD_SYS_XEAST, ecefCoord.elapsedEciTime());
 
-  Vec3 pos;
   // apply translation to tangent plane origin
-  v3Subtract(ecefCoord.position(), tangentPlaneTranslation_, pos);
+  Vec3 pos = ecefCoord.position() - tangentPlaneTranslation_;
 
   // rotate to X-East
   Vec3 tpPos;

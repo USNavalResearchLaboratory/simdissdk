@@ -40,7 +40,7 @@ namespace simNotify
     /// The default notification handler
     NotifyHandlerPtr defaultNotifyHandler_(new StandardNotifyHandler());
 
-    /// NULL object for notify handlers
+    /// null object for notify handlers
     NotifyHandlerPtr nullNotifyHandler_(new NullNotifyHandler());
 
     /// This is the last item in the 0 based list of enumerations; possible problem keeping this in sync with the enum

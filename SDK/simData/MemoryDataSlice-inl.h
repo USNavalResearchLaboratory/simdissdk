@@ -428,7 +428,7 @@ void MemoryDataSlice<T>::insert(T *data)
       iter = std::lower_bound(updates_.begin(), updates_.end(), data, UpdateComp<T>());
       if ((*iter)->time() == data->time())
       {
-        // NULL the current ptr, if we are replacing the update it aliases; current will become valid upon update
+        // null the current ptr, if we are replacing the update it aliases; current will become valid upon update
         if (current_ == *iter)
           setCurrent(nullptr);
 
@@ -636,44 +636,44 @@ void MemoryCommandSlice<CommandType, PrefType>::clearChanged()
 }
 
 namespace {
-  void getPreference(DataStore *ds, ObjectId id, PlatformPrefs** prefs, DataStore::Transaction* t)
+  void getPreference(DataStore *ds, ObjectId id, PlatformPrefs** prefs, DataStore::Transaction* t, DataStore::CommitResult* results)
   {
-    *prefs = ds->mutable_platformPrefs(id, t);
+    *prefs = ds->mutable_platformPrefs(id, t, results);
   }
 
-  void getPreference(DataStore *ds, ObjectId id, BeamPrefs** prefs, DataStore::Transaction* t)
+  void getPreference(DataStore *ds, ObjectId id, BeamPrefs** prefs, DataStore::Transaction* t, DataStore::CommitResult* results)
   {
-    *prefs = ds->mutable_beamPrefs(id, t);
+    *prefs = ds->mutable_beamPrefs(id, t, results);
   }
 
-  void getPreference(DataStore *ds, ObjectId id, GatePrefs** prefs, DataStore::Transaction* t)
+  void getPreference(DataStore *ds, ObjectId id, GatePrefs** prefs, DataStore::Transaction* t, DataStore::CommitResult* results)
   {
-    *prefs = ds->mutable_gatePrefs(id, t);
+    *prefs = ds->mutable_gatePrefs(id, t, results);
   }
 
-  void getPreference(DataStore *ds, ObjectId id, LaserPrefs** prefs, DataStore::Transaction* t)
+  void getPreference(DataStore *ds, ObjectId id, LaserPrefs** prefs, DataStore::Transaction* t, DataStore::CommitResult* results)
   {
-    *prefs = ds->mutable_laserPrefs(id, t);
+    *prefs = ds->mutable_laserPrefs(id, t, results);
   }
 
-  void getPreference(DataStore *ds, ObjectId id, LobGroupPrefs** prefs, DataStore::Transaction* t)
+  void getPreference(DataStore *ds, ObjectId id, LobGroupPrefs** prefs, DataStore::Transaction* t, DataStore::CommitResult* results)
   {
-    *prefs = ds->mutable_lobGroupPrefs(id, t);
+    *prefs = ds->mutable_lobGroupPrefs(id, t, results);
   }
 
-  void getPreference(DataStore *ds, ObjectId id, ProjectorPrefs** prefs, DataStore::Transaction* t)
+  void getPreference(DataStore *ds, ObjectId id, ProjectorPrefs** prefs, DataStore::Transaction* t, DataStore::CommitResult* results)
   {
-    *prefs = ds->mutable_projectorPrefs(id, t);
+    *prefs = ds->mutable_projectorPrefs(id, t, results);
   }
 
-  void getPreference(DataStore *ds, ObjectId id, CustomRenderingPrefs** prefs, DataStore::Transaction* t)
+  void getPreference(DataStore *ds, ObjectId id, CustomRenderingPrefs** prefs, DataStore::Transaction* t, DataStore::CommitResult* results)
   {
-    *prefs = ds->mutable_customRenderingPrefs(id, t);
+    *prefs = ds->mutable_customRenderingPrefs(id, t, results);
   }
 }
 
 template<class CommandType, class PrefType>
-void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId id, double time)
+void MemoryCommandSlice<CommandType, PrefType>::update(DataStore* ds, ObjectId id, double time, DataStore::CommitResult& results)
 {
   clearChanged();
 
@@ -686,7 +686,7 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
   // process all command updates in one prefs transaction
   DataStore::Transaction t;
   PrefType* prefs = nullptr;
-  simData::getPreference(ds, id, &prefs, &t);
+  simData::getPreference(ds, id, &prefs, &t, &results);
   if (prefs == nullptr)
     return;
 

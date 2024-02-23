@@ -128,9 +128,9 @@ protected:
    * Update the enabled state of the widget and handle the conflict font state. This method
    * is typically called by derived classes in their destructors.
    * @param[in] widget  pointer to the widget being updated
-   * @param[in] label  pointer to the label to update. If NULL, widget's font is updated instead.
+   * @param[in] label  pointer to the label to update. If nullptr, widget's font is updated instead.
    * @param[in] hasValues  enabled state to set on the widget and label. See description of hasValues in applyValues() docs
-   * @param[in] conflict  if true, conflict font (italics) is set on the label (or widget, if label is NULL). Clears italic font if false.
+   * @param[in] conflict  if true, conflict font (italics) is set on the label (or widget, if label is nullptr). Clears italic font if false.
    */
   void updateEnabled_(QWidget* widget, QLabel* label, bool hasValues, bool conflict) const
   {

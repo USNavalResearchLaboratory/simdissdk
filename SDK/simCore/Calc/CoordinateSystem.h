@@ -62,20 +62,20 @@ namespace simCore
   };
 
   //---WGS-84 constants from NIMA TR8350.2, amendment 1, 3 Jan 2000
-  const double WGS_A   = 6378137.0;                 ///< Semi-major axis of the earth (m)
-  const double WGS_E   = 0.081819190842622;         ///< Earth eccentricity of ellipsoid
-  const double WGS_ESQ = 0.00669437999014;          ///< Ellipsoid eccentricity squared: E^2, also calculable as (A2-B2)/A2
-  const double WGS_F = 1.0/298.257223563;           ///< Earth flattening constant
-  const double WGS_B = WGS_A * (1.0 - WGS_F);       ///< (m) Semi-minor axis of the earth: (1.0 - F)*A
-  const double WGS_A2 = WGS_A * WGS_A;              ///< (m^2) Semi-major axis squared: A*A
-  const double WGS_B2 = WGS_B * WGS_B;              ///< (m^2) Semi-minor axis squared: B*B
-  const double WGS_EP2 = (WGS_A2 - WGS_B2)/WGS_B2;  ///<  E'^2 = (A2-B2)/B2
-  const double WGS_ESQC = 1.0 - WGS_ESQ;            ///<  1.0 - ESQ
+  inline constexpr double WGS_A   = 6378137.0;                 ///< Semi-major axis of the earth (m)
+  inline constexpr double WGS_E   = 0.081819190842622;         ///< Earth eccentricity of ellipsoid
+  inline constexpr double WGS_ESQ = 0.00669437999014;          ///< Ellipsoid eccentricity squared: E^2, also calculable as (A2-B2)/A2
+  inline constexpr double WGS_F = 1.0/298.257223563;           ///< Earth flattening constant
+  inline constexpr double WGS_B = WGS_A * (1.0 - WGS_F);       ///< (m) Semi-minor axis of the earth: (1.0 - F)*A
+  inline constexpr double WGS_A2 = WGS_A * WGS_A;              ///< (m^2) Semi-major axis squared: A*A
+  inline constexpr double WGS_B2 = WGS_B * WGS_B;              ///< (m^2) Semi-minor axis squared: B*B
+  inline constexpr double WGS_EP2 = (WGS_A2 - WGS_B2)/WGS_B2;  ///<  E'^2 = (A2-B2)/B2
+  inline constexpr double WGS_ESQC = 1.0 - WGS_ESQ;            ///<  1.0 - ESQ
 
   //---Earth related constants
-  const double EARTH_RADIUS = WGS_A;                    ///< (m) Spherical earth radius
-  const double EARTH_ROTATION_RATE = 7292115.1467e-11;  ///< (rad/sec) Earth's rotation rate: International Astronomical Union (IAU) GRS 67
-  const double LATLON_ERR_TOL_DOUBLE = 1.0e-10;         ///< floating point error tolerance for geodetic angle conversions
+  inline constexpr double EARTH_RADIUS = WGS_A;                    ///< (m) Spherical earth radius
+  inline constexpr double EARTH_ROTATION_RATE = 7292115.1467e-11;  ///< (rad/sec) Earth's rotation rate: International Astronomical Union (IAU) GRS 67
+  inline constexpr double LATLON_ERR_TOL_DOUBLE = 1.0e-10;         ///< floating point error tolerance for geodetic angle conversions
 
   /**
    * Given a coordinate system, returns an appropriate string constant.

@@ -22,12 +22,11 @@
  */
 #include <algorithm>
 #include <cassert>
-#ifdef ENABLE_SIMDATA_MULTI_THREAD
-#include <execution>
-#endif
+#include <future>
 #include <float.h>
 #include <functional>
 #include <limits>
+#include <optional>
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Time/Clock.h"
@@ -690,7 +689,7 @@ Interpolator* MemoryDataStore::interpolator() const
   return (interpolationEnabled_) ? interpolator_ : nullptr;
 }
 
-void MemoryDataStore::updatePlatforms_(double time)
+void MemoryDataStore::updatePlatforms_(double time, std::map<simData::ObjectId, CommitResult>& allResults)
 {
   // determine if we are in "file mode"
   // treat file mode as the default if no clock has been bound
@@ -700,7 +699,10 @@ void MemoryDataStore::updatePlatforms_(double time)
   {
     PlatformEntry* platform = iter->second;
     // apply commands
-    platform->commands()->update(this, iter->first, time);
+    CommitResult results = CommitResult::NO_CHANGE;
+    platform->commands()->update(this, iter->first, time, results);
+    if (results != CommitResult::NO_CHANGE)
+      allResults[iter->first] = results;
 
     if (!platform->preferences()->commonprefs().datadraw())
     {
@@ -780,7 +782,7 @@ void MemoryDataStore::updateTargetBeam_(ObjectId id, BeamEntry* beam, double tim
 
   // simVis::Beam will calculate the RAE whenever it gets a non-nullptr update with hasChanged flag set
 
-  // update only when there is a time change or this is a NULL->non-NULL transition
+  // update only when there is a time change or this is a null->non-null transition
   if (beam->updates()->current() == nullptr || update->time() != time)
   {
     update->set_time(time);
@@ -795,13 +797,16 @@ void MemoryDataStore::updateTargetBeam_(ObjectId id, BeamEntry* beam, double tim
     beam->updates()->clearChanged();
 }
 
-void MemoryDataStore::updateBeams_(double time)
+void MemoryDataStore::updateBeams_(double time, std::map<simData::ObjectId, CommitResult>& allResults)
 {
   for (Beams::iterator iter = beams_.begin(); iter != beams_.end(); ++iter)
   {
     BeamEntry* beamEntry = iter->second;
     // apply commands
-    beamEntry->commands()->update(this, iter->first, time);
+    CommitResult results = CommitResult::NO_CHANGE;
+    beamEntry->commands()->update(this, iter->first, time, results);
+    if (results != CommitResult::NO_CHANGE)
+      allResults[iter->first] = results;
 
     // until we have datadraw, send nullptr; once we have datadraw, we'll immediately update with valid data
     if (!beamEntry->preferences()->commonprefs().datadraw())
@@ -923,13 +928,16 @@ bool MemoryDataStore::gateUsesBeamBeamwidth_(GateEntry* gate) const
     (currentUpdate->height() <= 0.0 || currentUpdate->width() <= 0.0));
 }
 
-void MemoryDataStore::updateGates_(double time)
+void MemoryDataStore::updateGates_(double time, std::map<simData::ObjectId, CommitResult>& allResults)
 {
   for (Gates::iterator iter = gates_.begin(); iter != gates_.end(); ++iter)
   {
     GateEntry* gateEntry = iter->second;
     // apply commands
-    gateEntry->commands()->update(this, iter->first, time);
+    CommitResult results = CommitResult::NO_CHANGE;
+    gateEntry->commands()->update(this, iter->first, time, results);
+    if (results != CommitResult::NO_CHANGE)
+      allResults[iter->first] = results;
 
     // until we have datadraw, send nullptr; once we have datadraw, we'll immediately update with valid data
     if (!gateEntry->preferences()->commonprefs().datadraw())
@@ -956,13 +964,16 @@ void MemoryDataStore::updateGates_(double time)
   }
 }
 
-void MemoryDataStore::updateLasers_(double time)
+void MemoryDataStore::updateLasers_(double time, std::map<simData::ObjectId, CommitResult>& allResults)
 {
   for (Lasers::iterator iter = lasers_.begin(); iter != lasers_.end(); ++iter)
   {
     LaserEntry* laserEntry = iter->second;
     // apply commands
-    laserEntry->commands()->update(this, iter->first, time);
+    CommitResult results = CommitResult::NO_CHANGE;
+    laserEntry->commands()->update(this, iter->first, time, results);
+    if (results != CommitResult::NO_CHANGE)
+      allResults[iter->first] = results;
 
     // until we have datadraw, send nullptr; once we have datadraw, we'll immediately update with valid data
     if (!laserEntry->preferences()->commonprefs().datadraw())
@@ -975,13 +986,16 @@ void MemoryDataStore::updateLasers_(double time)
   }
 }
 
-void MemoryDataStore::updateProjectors_(double time)
+void MemoryDataStore::updateProjectors_(double time, std::map<simData::ObjectId, CommitResult>& allResults)
 {
   for (Projectors::iterator iter = projectors_.begin(); iter != projectors_.end(); ++iter)
   {
     ProjectorEntry* projectorEntry = iter->second;
     // apply commands
-    projectorEntry->commands()->update(this, iter->first, time);
+    CommitResult results = CommitResult::NO_CHANGE;
+    projectorEntry->commands()->update(this, iter->first, time, results);
+    if (results != CommitResult::NO_CHANGE)
+      allResults[iter->first] = results;
 
     if (isInterpolationEnabled() && projectorEntry->preferences()->interpolateprojectorfov())
       projectorEntry->updates()->update(time, interpolator_);
@@ -990,13 +1004,16 @@ void MemoryDataStore::updateProjectors_(double time)
   }
 }
 
-void MemoryDataStore::updateLobGroups_(double time)
+void MemoryDataStore::updateLobGroups_(double time, std::map<simData::ObjectId, CommitResult>& allResults)
 {
   //for each entry
   for (LobGroups::iterator iter = lobGroups_.begin(); iter != lobGroups_.end(); ++iter)
   {
     // apply commands
-    iter->second->commands()->update(this, iter->first, time);
+    CommitResult results = CommitResult::NO_CHANGE;
+    iter->second->commands()->update(this, iter->first, time, results);
+    if (results != CommitResult::NO_CHANGE)
+      allResults[iter->first] = results;
 
     // check for changes in maxdatapoints or maxdataseconds prefs, memoryDataSlice processes these.
     {
@@ -1014,13 +1031,16 @@ void MemoryDataStore::updateLobGroups_(double time)
   }
 }
 
-void MemoryDataStore::updateCustomRenderings_(double time)
+void MemoryDataStore::updateCustomRenderings_(double time, std::map<simData::ObjectId, CommitResult>& allResults)
 {
   //for each entry
   for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
   {
     // apply commands
-    iter->second->commands()->update(this, iter->first, time);
+    CommitResult results = CommitResult::NO_CHANGE;
+    iter->second->commands()->update(this, iter->first, time, results);
+    if (results != CommitResult::NO_CHANGE)
+      allResults[iter->first] = results;
   }
 }
 
@@ -1195,43 +1215,15 @@ simData::PlatformPrefs MemoryDataStore::defaultPlatformPrefs() const
   return defaultPlatformPrefs_;
 }
 
-void MemoryDataStore::updateCategoryData_(double time, ListenerList& listeners)
+void MemoryDataStore::updateCategoryData_(double time, std::vector<simData::ObjectId>& ids)
 {
-  std::vector<simData::ObjectId> ids;
-
-#ifdef ENABLE_SIMDATA_MULTI_THREAD
-  std::mutex mutex;
-  std::for_each(std::execution::par, categoryData_.begin(), categoryData_.end(), [&](std::pair<const ObjectId, MemoryCategoryDataSlice*>& pair)
-#else
   std::for_each(categoryData_.begin(), categoryData_.end(), [&](std::pair<const ObjectId, MemoryCategoryDataSlice*>& pair)
-#endif
-
     {
       // if something changed
       if (pair.second->update(time))
-      {
-#ifdef ENABLE_SIMDATA_MULTI_THREAD
-        std::unique_lock lock(mutex);
-#endif
         ids.push_back(pair.first);
-      }
-    }
+     }
   );
-
-  for (auto id : ids)
-  {
-    // send notification
-    const simData::ObjectType ot = objectType(id);
-
-    for (ListenerList::const_iterator j = listeners.begin(); j != listeners.end(); ++j)
-    {
-      if (*j != nullptr)
-      {
-        (**j).onCategoryDataChange(this, id, ot);
-        checkForRemoval_(listeners);
-      }
-    }
-  }
 }
 
 ///Update internal data to show 'time' as current
@@ -1240,21 +1232,66 @@ void MemoryDataStore::update(double time)
   if (!hasChanged_ && time == lastUpdateTime_)
     return;
 
-  updatePlatforms_(time);
-  updateBeams_(time);
-  updateGates_(time);
+  std::future<void> platformFuture;
+  std::map<simData::ObjectId, CommitResult> platformResults;
+  if (!platforms_.empty())
+    platformFuture = std::async(&MemoryDataStore::updatePlatforms_, this, time, std::ref(platformResults));
 
-  updateSparseSlices(genericData_, time);
+  std::future<void> genericFuture;
+  if (!genericData_.empty())
+    genericFuture = std::async(&simData::updateSparseSlices<simData::MemoryDataStore::GenericDataMap>, std::ref(genericData_), time);
+
+  std::vector<simData::ObjectId> ids;
+  std::future<void> categoryFuture;
+  if (!categoryData_.empty())
+    categoryFuture = std::async(&MemoryDataStore::updateCategoryData_, this, time, std::ref(ids));
+
+  std::future<void> crFuture;
+  std::map<simData::ObjectId, CommitResult> crResults;
+  if (!customRenderings_.empty())
+    crFuture = std::async(&MemoryDataStore::updateCustomRenderings_, this, time, std::ref(crResults));
+
+  // Beams and gate are dependent on platforms so wait for platforms to finish before processing beams and gates
+  if (platformFuture.valid())
+    platformFuture.wait();
+
+  // The rest is usually small, so just do in th main thread
+  std::map<simData::ObjectId, CommitResult> results;
+  updateBeams_(time, results);
+  updateGates_(time, results);
+  updateLasers_(time, results);
+  updateProjectors_(time, results);
+  updateLobGroups_(time, results);
+
+  if (genericFuture.valid())
+    genericFuture.wait();
+  if (categoryFuture.valid())
+    categoryFuture.wait();
+  if (crFuture.valid())
+    crFuture.wait();
 
   // Need to handle recursion so make a local copy
   ListenerList localCopy = listeners_;
   justRemoved_.clear();
 
-  updateCategoryData_(time, localCopy);
-  updateLasers_(time);
-  updateProjectors_(time);
-  updateLobGroups_(time);
-  updateCustomRenderings_(time);
+  invokePreferenceChangeCallback_(platformResults, localCopy);
+  invokePreferenceChangeCallback_(crResults, localCopy);
+  invokePreferenceChangeCallback_(results, localCopy);
+
+  for (auto id : ids)
+  {
+    // send notification
+    const simData::ObjectType ot = objectType(id);
+
+    for (ListenerList::const_iterator j = localCopy.begin(); j != localCopy.end(); ++j)
+    {
+      if (*j != nullptr)
+      {
+        (**j).onCategoryDataChange(this, id, ot);
+        checkForRemoval_(localCopy);
+      }
+    }
+  }
 
   // After all the slice updates, set the new update time and notify observers
   lastUpdateTime_ = time;
@@ -1266,6 +1303,26 @@ void MemoryDataStore::update(double time)
     {
       (**i).onChange(this);
       checkForRemoval_(localCopy);
+    }
+  }
+}
+
+void MemoryDataStore::invokePreferenceChangeCallback_(const std::map<simData::ObjectId, CommitResult>& results, ListenerList& localCopy)
+{
+  for (const auto& [id, result] : results)
+  {
+    for (const auto& localListener : localCopy)
+    {
+      if (localListener == nullptr)
+        continue;
+
+      localListener->onPrefsChange(this, id);
+      checkForRemoval_(localCopy);
+      if (result == CommitResult::NAME_CHANGED)
+      {
+        localListener->onNameChange(this, id);
+        checkForRemoval_(localCopy);
+      }
     }
   }
 }
@@ -2056,14 +2113,14 @@ const PlatformPrefs* MemoryDataStore::platformPrefs(ObjectId id, Transaction *tr
   return entry ? entry->preferences() : nullptr;
 }
 
-PlatformPrefs* MemoryDataStore::mutable_platformPrefs(ObjectId id, Transaction *transaction)
+PlatformPrefs* MemoryDataStore::mutable_platformPrefs(ObjectId id, Transaction* transaction, CommitResult* results)
 {
   assert(transaction);
-  PlatformEntry *entry = getEntry<PlatformEntry, Platforms>(id, &platforms_);
+  PlatformEntry* entry = getEntry<PlatformEntry, Platforms>(id, &platforms_);
   if (entry)
   {
-    MutableSettingsTransactionImpl<PlatformPrefs> *impl =
-      new MutableSettingsTransactionImpl<PlatformPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_);
+    MutableSettingsTransactionImpl<PlatformPrefs>* impl =
+      new MutableSettingsTransactionImpl<PlatformPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_, results);
     *transaction = Transaction(impl);
     return impl->settings();
   }
@@ -2078,14 +2135,14 @@ const BeamPrefs* MemoryDataStore::beamPrefs(ObjectId id, Transaction *transactio
   return entry ? entry->preferences() : nullptr;
 }
 
-BeamPrefs* MemoryDataStore::mutable_beamPrefs(ObjectId id, Transaction *transaction)
+BeamPrefs* MemoryDataStore::mutable_beamPrefs(ObjectId id, Transaction* transaction, CommitResult* results)
 {
   assert(transaction);
   BeamEntry *entry = getEntry<BeamEntry, Beams>(id, &beams_);
   if (entry)
   {
     MutableSettingsTransactionImpl<BeamPrefs> *impl =
-      new MutableSettingsTransactionImpl<BeamPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_);
+      new MutableSettingsTransactionImpl<BeamPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_, results);
     *transaction = Transaction(impl);
     return impl->settings();
   }
@@ -2100,14 +2157,14 @@ const GatePrefs* MemoryDataStore::gatePrefs(ObjectId id, Transaction *transactio
   return entry ? entry->preferences() : nullptr;
 }
 
-GatePrefs* MemoryDataStore::mutable_gatePrefs(ObjectId id, Transaction *transaction)
+GatePrefs* MemoryDataStore::mutable_gatePrefs(ObjectId id, Transaction* transaction, CommitResult* results)
 {
   assert(transaction);
   GateEntry *entry = getEntry<GateEntry, Gates>(id, &gates_);
   if (entry)
   {
     MutableSettingsTransactionImpl<GatePrefs> *impl =
-      new MutableSettingsTransactionImpl<GatePrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_);
+      new MutableSettingsTransactionImpl<GatePrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_, results);
     *transaction = Transaction(impl);
     return impl->settings();
   }
@@ -2122,14 +2179,14 @@ const LaserPrefs* MemoryDataStore::laserPrefs(ObjectId id, Transaction *transact
   return entry ? entry->preferences() : nullptr;
 }
 
-LaserPrefs* MemoryDataStore::mutable_laserPrefs(ObjectId id, Transaction *transaction)
+LaserPrefs* MemoryDataStore::mutable_laserPrefs(ObjectId id, Transaction *transaction, CommitResult* results)
 {
   assert(transaction);
   LaserEntry *entry = getEntry<LaserEntry, Lasers>(id, &lasers_);
   if (entry)
   {
     MutableSettingsTransactionImpl<LaserPrefs> *impl =
-      new MutableSettingsTransactionImpl<LaserPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_);
+      new MutableSettingsTransactionImpl<LaserPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_, results);
     *transaction = Transaction(impl);
     return impl->settings();
   }
@@ -2144,14 +2201,14 @@ const ProjectorPrefs* MemoryDataStore::projectorPrefs(ObjectId id, Transaction *
   return entry ? entry->preferences() : nullptr;
 }
 
-ProjectorPrefs* MemoryDataStore:: mutable_projectorPrefs(ObjectId id, Transaction *transaction)
+ProjectorPrefs* MemoryDataStore:: mutable_projectorPrefs(ObjectId id, Transaction *transaction, CommitResult* results)
 {
   assert(transaction);
   ProjectorEntry *entry = getEntry<ProjectorEntry, Projectors, NullTransactionImpl>(id, &projectors_, transaction);
   if (entry)
   {
     MutableSettingsTransactionImpl<ProjectorPrefs> *impl =
-      new MutableSettingsTransactionImpl<ProjectorPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_);
+      new MutableSettingsTransactionImpl<ProjectorPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_, results);
     *transaction = Transaction(impl);
     return impl->settings();
   }
@@ -2166,14 +2223,14 @@ const LobGroupPrefs* MemoryDataStore::lobGroupPrefs(ObjectId id, Transaction *tr
   return entry ? entry->preferences() : nullptr;
 }
 
-LobGroupPrefs* MemoryDataStore::mutable_lobGroupPrefs(ObjectId id, Transaction *transaction)
+LobGroupPrefs* MemoryDataStore::mutable_lobGroupPrefs(ObjectId id, Transaction *transaction, CommitResult* results)
 {
   assert(transaction);
   LobGroupEntry *entry = getEntry<LobGroupEntry, LobGroups>(id, &lobGroups_);
   if (entry)
   {
     MutableSettingsTransactionImpl<LobGroupPrefs> *impl =
-      new MutableSettingsTransactionImpl<LobGroupPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_);
+      new MutableSettingsTransactionImpl<LobGroupPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_, results);
     *transaction = Transaction(impl);
     return impl->settings();
   }
@@ -2188,14 +2245,14 @@ const CustomRenderingPrefs* MemoryDataStore::customRenderingPrefs(ObjectId id, T
   return entry ? entry->preferences() : nullptr;
 }
 
-CustomRenderingPrefs* MemoryDataStore::mutable_customRenderingPrefs(ObjectId id, Transaction *transaction)
+CustomRenderingPrefs* MemoryDataStore::mutable_customRenderingPrefs(ObjectId id, Transaction *transaction, CommitResult* results)
 {
   assert(transaction);
   CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
   if (entry)
   {
     MutableSettingsTransactionImpl<CustomRenderingPrefs> *impl =
-      new MutableSettingsTransactionImpl<CustomRenderingPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_);
+      new MutableSettingsTransactionImpl<CustomRenderingPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_, results);
     *transaction = Transaction(impl);
     return impl->settings();
   }
@@ -2714,7 +2771,8 @@ namespace
 
 void MemoryDataStore::addListener(ListenerPtr callback)
 {
-  listeners_.push_back(callback);
+  auto it = std::find_if(listeners_.begin(), listeners_.end(), [&callback](const ListenerPtr& ptr) { return callback->weight() < ptr->weight(); });
+  listeners_.insert(it, callback);
 }
 
 void MemoryDataStore::removeListener(ListenerPtr callback)
@@ -2816,18 +2874,21 @@ void MemoryDataStore::dataLimit_(std::map<ObjectId, EntryMapType* >& entryMap, O
 
 //----------------------------------------------------------------------------
 template<typename T>
-MemoryDataStore::MutableSettingsTransactionImpl<T>::MutableSettingsTransactionImpl(ObjectId id, T *settings, MemoryDataStore *store, ListenerList *observers)
+MemoryDataStore::MutableSettingsTransactionImpl<T>::MutableSettingsTransactionImpl(ObjectId id, T *settings, MemoryDataStore *store, ListenerList *observers, CommitResult* results)
 : id_(id),
   committed_(false),
   notified_(false),
   nameChange_(false),
   currentSettings_(settings),
   store_(store),
-  observers_(observers)
+  observers_(observers),
+  results_(results)
 {
   // create a copy of currentSettings_ for the user to experiment with
   modifiedSettings_ = currentSettings_->New();
   modifiedSettings_->CopyFrom(*currentSettings_);
+  if (results_)
+    *results_ = CommitResult::NO_CHANGE;
 }
 
 template<typename T>
@@ -2873,20 +2934,30 @@ void MemoryDataStore::MutableSettingsTransactionImpl<T>::release()
     if (nameChange_ && (oldName_ != newName_))
       store_->entityNameCache_->nameChange(newName_, oldName_, id_);
 
-    // Need to handle recursion so make a local copy
-    ListenerList localCopy = *observers_;
-    store_->justRemoved_.clear();
-    // Raise notifications for settings changes after internal data structures are updated
-    for (ListenerList::const_iterator i = localCopy.begin(); i != localCopy.end(); ++i)
+    if (results_)
     {
-      if (*i != nullptr)
+      if (nameChange_)
+        *results_ = CommitResult::NAME_CHANGED;
+      else
+        *results_ = CommitResult::PREFERENCE_CHANGED;
+    }
+    else
+    {
+      // Need to handle recursion so make a local copy
+      ListenerList localCopy = *observers_;
+      store_->justRemoved_.clear();
+      // Raise notifications for settings changes after internal data structures are updated
+      for (ListenerList::const_iterator i = localCopy.begin(); i != localCopy.end(); ++i)
       {
-        (*i)->onPrefsChange(store_, id_);
-        store_->checkForRemoval_(localCopy);
-        if ((*i != nullptr) && (nameChange_))
+        if (*i != nullptr)
         {
-          (*i)->onNameChange(store_, id_);
+          (*i)->onPrefsChange(store_, id_);
           store_->checkForRemoval_(localCopy);
+          if ((*i != nullptr) && (nameChange_))
+          {
+            (*i)->onNameChange(store_, id_);
+            store_->checkForRemoval_(localCopy);
+          }
         }
       }
     }

@@ -180,8 +180,8 @@ private:
   void setTextStyle_(bool valid);
 
   Ui_EntityLineEdit* composite_; ///< The actual user interface
-  simQt::EntityTreeModel* entityTreeModel_;  ///< Will not be set in QtDesigner so always NULL check
-  simData::DataStore::ListenerPtr dataListenerPtr_; ///< Will not be set in QtDesigner so always NULL check
+  simQt::EntityTreeModel* entityTreeModel_;  ///< Will not be set in QtDesigner so always nullptr check
+  simData::DataStore::ListenerPtr dataListenerPtr_; ///< Will not be set in QtDesigner so always nullptr check
   EntityDialog* entityDialog_;  ///< The Entity Tree Composite Dialog
   uint64_t uniqueId_;  ///< The Unique ID of the entity, can be zero if current name is not valid
   uint64_t unavailableId_;  ///< The unique ID of an unavailable entity ID, set to zero to clear

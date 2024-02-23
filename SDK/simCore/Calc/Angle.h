@@ -31,9 +31,9 @@
 namespace simCore
 {
   ///Radian to degree conversion factor
-  static const double RAD2DEG = 180.0 / M_PI;
+  inline constexpr double RAD2DEG = 180.0 / M_PI;
   ///Degree to radian conversion factor
-  static const double DEG2RAD = M_PI / 180.0;
+  inline constexpr double DEG2RAD = M_PI / 180.0;
 
   //--------------------------------------------------------------------------
   //---general functions

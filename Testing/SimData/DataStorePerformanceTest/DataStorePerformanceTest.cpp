@@ -327,7 +327,7 @@ protected:
   size_t downSample_;  // Live mode calculates the max rate to handle all data rates, so need to down sample to get the correct rate for this entity
   size_t numTables_; // Number of data tables to create
   size_t tableNumColumns_; // Number of columns per data table
-  TableSparsity tableSparsity_; // Number of NULLs to include in the data table rows
+  TableSparsity tableSparsity_; // Number of nulls to include in the data table rows
   simData::VariableType tableVariableType_; // Table variable type for underlying storage
 
   void setLimits_(simData::CommonPrefs* prefs) const

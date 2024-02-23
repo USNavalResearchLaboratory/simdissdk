@@ -63,7 +63,7 @@ LUT1ProfileDataProvider::LUT1ProfileDataProvider(simCore::LUT::LUT1<short> *lut,
   assert(lut);
   if (lut == nullptr)
   {
-    SIM_ERROR << "Attempting to assign a NULL LUT to the LUT1ProfileDataProvider" << std::endl;
+    SIM_ERROR << "Attempting to assign a null LUT to the LUT1ProfileDataProvider" << std::endl;
   }
   lut_ = lut;
 }
@@ -75,7 +75,7 @@ LUT1ProfileDataProvider::LUT1ProfileDataProvider(simCore::LUT::LUT1<short> *lut,
   assert(lut);
   if (lut == nullptr)
   {
-    SIM_ERROR << "Attempting to assign a NULL LUT to the LUT1ProfileDataProvider" << std::endl;
+    SIM_ERROR << "Attempting to assign a null LUT to the LUT1ProfileDataProvider" << std::endl;
   }
   lut_ = lut;
   setType_(type);

@@ -153,6 +153,9 @@ public:
   public: // methods
     virtual ~Listener() {}
 
+    /// Controls the order that listeners are invoked; higher numbers are invoked later
+    virtual int weight() const = 0;
+
     /// new entity has been added, with the given id and type
     virtual void onAddEntity(DataStore *source, ObjectId newId, simData::ObjectType ot) = 0;
 
@@ -190,6 +193,9 @@ public:
   {
   public: // methods
     virtual ~DefaultListener() {}
+
+    /// Controls the order that listeners are invoked; higher numbers are invoked later
+    virtual int weight() const { return 0; }
 
     /// new entity has been added, with the given id and type
     virtual void onAddEntity(DataStore *source, ObjectId newId, simData::ObjectType ot) {}
@@ -510,14 +516,33 @@ public: // methods
   virtual const ProjectorPrefs*         projectorPrefs(ObjectId id, Transaction *transaction) const = 0;
   virtual const  LobGroupPrefs*          lobGroupPrefs(ObjectId id, Transaction *transaction) const = 0;
   virtual const    CommonPrefs*            commonPrefs(ObjectId id, Transaction* transaction) const = 0;
-  virtual        PlatformPrefs*  mutable_platformPrefs(ObjectId id, Transaction *transaction) = 0;
-  virtual            BeamPrefs*      mutable_beamPrefs(ObjectId id, Transaction *transaction) = 0;
-  virtual            GatePrefs*      mutable_gatePrefs(ObjectId id, Transaction *transaction) = 0;
-  virtual           LaserPrefs*     mutable_laserPrefs(ObjectId id, Transaction *transaction) = 0;
-  virtual       ProjectorPrefs* mutable_projectorPrefs(ObjectId id, Transaction *transaction) = 0;
-  virtual        LobGroupPrefs*  mutable_lobGroupPrefs(ObjectId id, Transaction *transaction) = 0;
+
+  /** Results of a preference commit */
+  enum class CommitResult
+  {
+    NO_CHANGE, ///< The commit resulted in no changes
+    PREFERENCE_CHANGED, ///< The commit resulted in a preference changes
+    NAME_CHANGED ///< The commit resulted in a name change, which implies a PREFERENCE_CHANGED
+  };
+
+  /**
+   * The mutable_* routines have two modes of operation, one for external users and one for internal users.  External users should
+   * always set the results argument to nullptr.  The mutable_* routines will generate a callback(s) in the commit() routine if the
+   * preference changed and if the name changed.  As always, the routine must be called from the main thread.   An internal user can
+   * set the results argument that will disable the callback(s) and return if preference has changed due to the commit() routine.
+   * This allows an internal user to use worker threads to update preferences and accumulate the results for eventual callbacks in
+   * the main thread.  The design of the code made it not practical to hide the argument from the public interface.  External users
+   * should always set results to nullptr.
+   */
+
+  virtual        PlatformPrefs*  mutable_platformPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) = 0;
+  virtual            BeamPrefs*      mutable_beamPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) = 0;
+  virtual            GatePrefs*      mutable_gatePrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) = 0;
+  virtual           LaserPrefs*     mutable_laserPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) = 0;
+  virtual       ProjectorPrefs* mutable_projectorPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) = 0;
+  virtual        LobGroupPrefs*  mutable_lobGroupPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) = 0;
   virtual const CustomRenderingPrefs* customRenderingPrefs(ObjectId id, Transaction *transaction) const = 0;
-  virtual       CustomRenderingPrefs* mutable_customRenderingPrefs(ObjectId id, Transaction *transaction) = 0;
+  virtual       CustomRenderingPrefs* mutable_customRenderingPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) = 0;
   virtual          CommonPrefs*    mutable_commonPrefs(ObjectId id, Transaction* transaction) = 0;
   ///@}
 

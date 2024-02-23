@@ -140,7 +140,7 @@ void EntityFilterLineEdit::revalidate_()
     if (!valid_)
     {
       QPalette pal;
-      pal.setColor(QPalette::Text, QColor(145,0,0,255));
+      pal.setColor(QPalette::Text, QColor(255,0,0,255));
       setPalette(pal);
     }
     else

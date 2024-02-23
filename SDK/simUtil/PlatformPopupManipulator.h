@@ -68,7 +68,7 @@ public:
   /// define the location to display the popup
   void setPopupLocation(simVis::PopupLocation location);
 
-  /// Retrieve the non-NULL pointer to the popup handler
+  /// Retrieve the non-null pointer to the popup handler
   simVis::PopupHandler* popupHandler() const;
 
 public: // MouseManipulator interface

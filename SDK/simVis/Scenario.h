@@ -32,6 +32,7 @@
 #include "osg/View"
 #include "osgEarth/CullingUtils"
 #include "osgEarth/Revisioning"
+#include "osgUtil/LineSegmentIntersector"
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/Types.h"
 #include "simVis/RFProp/RFPropagationManager.h"
@@ -274,6 +275,16 @@ public:
   }
 
   /**
+  * Find an entity by intersecting the scene under the provided mouse coordinates.
+  * @param view     View within to search
+  * @param x        X mouse coordinate
+  * @param y        Y mouse coordinate
+  * @param typeMask Traversal mask of node type to find, or ~0 to find anything
+  * @return         Entity node, or nullptr if nothing was hit
+  */
+  std::vector<EntityNode*> findAll(osg::View* view, float x, float y, int typeMask = ~0) const;
+
+  /**
   * Flush the entity data of the specified entity.  0 indicates flush all entities
   * @param[in ] flushedId
   */
@@ -390,6 +401,9 @@ protected:
   class SetRefYearCullCallback;
   class SimpleEntityGraph;
   class SurfaceClamping;
+
+  /** Helper method used when finding an entity or entities at a specific screen coordinate */
+  osg::ref_ptr<osgUtil::LineSegmentIntersector> findHelper_(osg::View* view, float x, float y, int typeMask) const;
 
   /** Provides capability to process platform TSPI points */
   PlatformTspiFilterManager*   platformTspiFilterManager_;

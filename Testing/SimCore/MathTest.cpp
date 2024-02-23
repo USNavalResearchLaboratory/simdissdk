@@ -457,7 +457,7 @@ int runV3SphtoRec()
     simCore::v3SphtoRec(simCore::Vec3(input[i]), output);
     rv += SDK_ASSERT(simCore::v3AreEqual(output, simCore::Vec3(expected[i])));
     // verify that the expected values make sense
-    rv += SDK_ASSERT(simCore::areEqual(input[i][0], simCore::v3Length(output)));
+    rv += SDK_ASSERT(simCore::areEqual(input[i][0], output.length()));
   }
 
   std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;

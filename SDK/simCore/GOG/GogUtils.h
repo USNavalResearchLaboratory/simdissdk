@@ -38,7 +38,7 @@ namespace GOG
 class ParsedShape;
 
 /// Recommended GOG serialization precision (number of total digits, not decimal places)
-static constexpr int GOG_PRECISION = 12;
+inline constexpr int GOG_PRECISION = 12;
 
 /** Generic reusable GOG-related methods */
 class SDKCORE_EXPORT GogUtils

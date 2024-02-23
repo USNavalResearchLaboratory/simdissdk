@@ -27,13 +27,13 @@
 #include "simData/DataTypes.h"
 #include "simData/DataSlice.h"
 #include "simData/DataSliceUpdaters.h"
+#include "simData/DataStore.h"
 #include "simData/Interpolator.h"
 #include "simData/ObjectId.h"
 #include "simData/UpdateComp.h"
 
 namespace simData
 {
-class DataStore;
 
 namespace MemorySliceHelper
 {
@@ -195,7 +195,7 @@ public:
   /**
    * Retrieve the bounds used to compute the interpolated value
    * The bounds are represented as a std::pair containing const pointers
-   * If the value is not interpolated, the values in the pair could be NULL
+   * If the value is not interpolated, the values in the pair could be null
    */
   virtual typename DataSlice<T>::Bounds interpolationBounds() const;
 
@@ -284,7 +284,7 @@ protected:
   T currentInterpolated_;
   /// specifies if the interpolated cache value is valid
   bool interpolated_;
-  /// specifies the interpolation bounds; the bounds will be NULL if no interpolation is specified
+  /// specifies the interpolation bounds; the bounds will be nullptr if no interpolation is specified
   typename DataSlice<T>::Bounds bounds_;
   /// Used to optimize updates by looking at data near the last update
   typename MemorySliceHelper::SafeDequeIterator<T*> fastUpdate_;
@@ -354,8 +354,9 @@ public:
    * @param ds DataStore reference
    * @param id DataStore id
    * @param time
+   * @param results Returns the results of the update
    */
-  virtual void update(DataStore *ds, ObjectId id, double time);
+  virtual void update(DataStore *ds, ObjectId id, double time, DataStore::CommitResult& results);
 
   /// reduce the data store to only have points within the given 'timeWindow'
   /// @param timeWindow amount of time to keep in window (negative for no limit)
@@ -471,8 +472,9 @@ public:
   * @param ds DataStore reference
   * @param id DataStore id
   * @param time the time up to (and including) which to execute commands
+  * @param results Returns the results of the update
   */
-  virtual void update(DataStore *ds, ObjectId id, double time);
+  virtual void update(DataStore *ds, ObjectId id, double time, DataStore::CommitResult& results);
 };
 
 /**
@@ -489,8 +491,9 @@ public:
   * @param ds DataStore reference
   * @param id DataStore id
   * @param time the time up to (and including) which to execute commands
+  * @param results Returns the results of the update
   */
-  virtual void update(DataStore *ds, ObjectId id, double time);
+  virtual void update(DataStore*ds, ObjectId id, double time, DataStore::CommitResult& results);
 };
 
 /**

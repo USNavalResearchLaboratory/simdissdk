@@ -161,16 +161,6 @@ else()
     target_compile_definitions(simData PUBLIC simData_LIB_EXPORT_STATIC)
 endif()
 
-# Allow for the use of multiple threads with std::for_each
-include(TestParallelForEach)
-TEST_PARALLEL_FOREACH(HAVE_FOREACH)
-if(HAVE_FOREACH)
-    option(ENABLE_SIMDATA_MULTI_THREAD  "Use multiple threads when updating the data store." ON)
-    if(ENABLE_SIMDATA_MULTI_THREAD)
-        target_compile_definitions(simData PRIVATE ENABLE_SIMDATA_MULTI_THREAD)
-    endif()
-endif()
-
 if(WIN32)
     target_compile_options(simData PRIVATE -bigobj)
 endif()

@@ -279,7 +279,7 @@ public:
 #endif
 
   /** Update the label when new items are picked */
-  virtual void pickChanged(unsigned int pickedId, osg::Referenced* picked)
+  virtual void pickChanged(unsigned int pickedId, osg::Referenced* picked) override
   {
     osg::Node* node = dynamic_cast<osg::Node*>(picked);
     simVis::EntityNode* entity = osgEarth::findFirstParentOfType<simVis::EntityNode>(node);
@@ -302,6 +302,12 @@ public:
     {
       setText_(NO_PICK);
     }
+  }
+
+  /** Empty function to satisfy interface. If we wanted to get all entities under mouse instead of the best match, we would use this signature */
+  virtual void pickChanged(const std::vector<simVis::Picker::PickedEntity>& picked) override
+  {
+    // noop
   }
 
 private:

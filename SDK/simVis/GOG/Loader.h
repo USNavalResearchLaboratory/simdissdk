@@ -82,7 +82,7 @@ public:
   void loadShape(const std::string& gogShapeBlock, const std::string& filename, size_t shapeNumber, bool attached, GogNodeVector& output) const;
 
 private:
-  /// build a GOG node object from the specified GogShape; can return NULL if failed to build the node
+  /// build a GOG node object from the specified GogShape; can return nullptr if failed to build the node
   GogNodeInterfacePtr buildGogNode_(simCore::GOG::GogShapePtr gog, const std::string& filename, bool attached) const;
 
   /// Parser for converting the input stream into simCore::GOG::GogShape objects

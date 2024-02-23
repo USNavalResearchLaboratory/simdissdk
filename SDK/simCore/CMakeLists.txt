@@ -140,10 +140,12 @@ source_group("Source Files\\String" FILES ${CORE_STRING_SOURCES})
 set(CORE_SYSTEM_INC System/)
 set(CORE_SYSTEM_SRC System/)
 set(CORE_SYSTEM_HEADERS
+    ${CORE_SYSTEM_INC}DescriptorStringCapture.h
     ${CORE_SYSTEM_INC}File.h
     ${CORE_SYSTEM_INC}Utils.h
 )
 set(CORE_SYSTEM_SOURCES
+    ${CORE_SYSTEM_SRC}DescriptorStringCapture.cpp
     ${CORE_SYSTEM_SRC}File.cpp
     ${CORE_SYSTEM_SRC}Utils.cpp
 )

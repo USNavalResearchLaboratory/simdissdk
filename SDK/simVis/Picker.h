@@ -80,10 +80,26 @@ private:
 class SDKVIS_EXPORT Picker : public osg::Referenced
 {
 public:
+  struct PickedEntity
+  {
+  public:
+    unsigned int id = 0;
+    osg::observer_ptr<osg::Referenced> picked;
+
+    bool operator==(const PickedEntity& rhs) const
+    {
+      return id == rhs.id && picked.get() == rhs.picked.get();
+    }
+    bool operator!=(const PickedEntity& rhs) const
+    {
+      return !operator==(rhs);
+    }
+  };
+
   /** Retrieves the ID of the picked entity, as per osgEarth Registry's object index. 0 when none. */
   unsigned int pickedId() const;
 
-  /** Object that corresponds to the picked ID. */
+  /** Object that corresponds to the first picked ID. */
   virtual osg::Referenced* picked() const;
 
   /** Attempts to convert picked() into an osg::Node. */
@@ -97,8 +113,10 @@ public:
   class Callback : public osg::Referenced
   {
   public:
-    /** Picked object has changed. */
+    /** First picked object has changed. */
     virtual void pickChanged(unsigned int pickedId, osg::Referenced* picked) = 0;
+    /** List of picked objects has changed. */
+    virtual void pickChanged(const std::vector<PickedEntity>& picked) = 0;
 
   protected:
     virtual ~Callback() {}
@@ -115,14 +133,15 @@ protected:
   /** Derived from osg::Referenced */
   virtual ~Picker();
 
-  /** Fires off all pick callbacks. */
+  /** Packages the single entity into a vector and calls the other setPicked_ */
   void setPicked_(unsigned int pickedId, osg::Referenced* picked);
+  /** Fires off all pick callbacks. */
+  void setPicked_(const std::vector<PickedEntity>& picked);
 
 private:
-  /** Last osgEarth::ObjectId that was picked. */
-  unsigned int pickedId_;
-  /** osg::Referenced from the Registry's object index that corresponds to pickedId_. */
-  osg::observer_ptr<osg::Referenced> picked_;
+  /** Vector of osgEarth::ObjectId and corresponding osg::Referenced that were picked during the last pick */
+  std::vector<PickedEntity> pickedEntities_;
+
   /** Allows us to change the picked ID on the scenario manager */
   osg::ref_ptr<PickerHighlightShader> shaderValues_;
 

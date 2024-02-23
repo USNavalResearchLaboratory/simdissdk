@@ -40,6 +40,7 @@ static const double MAXIMUM_PITCH = 85.0; // Cut off the angle a little early to
 NavigationMode::NavigationMode()
 {
   // configure common settings.
+  setZoomToMouse(true);
 
   // actions that will break a tether.
   getBreakTetherActions().push_back(EarthManipulator::ACTION_GOTO);

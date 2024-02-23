@@ -326,7 +326,7 @@ TableStatus SubTable::addColumn(const std::string& columnName, TableColumnId col
                                        VariableType storageType, UnitType unitType, TableColumn** newCol)
 {
   if (!empty())
-    return TableStatus::Error("Attempting to add column to a non-empty subtable, violates NULL-less state.");
+    return TableStatus::Error("Attempting to add column to a non-empty subtable, violates null-less state.");
   DataColumn* newColumn = new DataColumn(timeContainer_, columnName, tableId_, columnId, storageType, unitType);
   columns_.push_back(newColumn);
   if (newCol != nullptr) *newCol = newColumn;

@@ -65,6 +65,9 @@ public:
 
   CategoryNameManager();
 
+  /** Return the case-sensitive state of the manager. */
+  bool isCaseSensitive() const;
+
   /**
    * By default the category manager is case sensitive; call this routine with false to make category manager case insensitive.
    * This routine should only be called once and should be called immediately after the constructor.

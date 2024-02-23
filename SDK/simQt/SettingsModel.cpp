@@ -1085,7 +1085,7 @@ void SettingsModel::resetDefaults(const QString& name)
     resetDefaults_(rootNode);
   else
   {
-    SIM_ERROR << "rootNode is NULL, cannot reset defaults for a NULL node\n";
+    SIM_ERROR << "rootNode is null, cannot reset defaults for a null node\n";
     assert(0);
   }
 }

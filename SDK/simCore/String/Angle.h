@@ -77,9 +77,9 @@ namespace simCore
    *   is applied, and either positiveDir and negativeDir are appended, OR a "-" sign is appended if negativeDir is 0.
    * @param precision Decimal precision to be used in formatting the value.
    * @param degSymbol Symbol to use when formatting output in DMD, DMS, or DD output
-   * @param positiveDir Character to append for positive angles, only when allNumerics==false.  Set this to 0 (\0 or NULL)
+   * @param positiveDir Character to append for positive angles, only when allNumerics==false.  Set this to 0 (\0 or null)
    *   to not append anything for positive directions.
-   * @param positiveDir Character to append for negative angles, only when allNumerics==false.  Set this to 0 (\0 or NULL)
+   * @param positiveDir Character to append for negative angles, only when allNumerics==false.  Set this to 0 (\0 or null)
    *   to not append anything for negative directions, in which case a negative sign is prepended.
    * @param allowRollover If true, allows angle returns that go over 360. If false, angle returns in simCore::FMT_DEGREES
    *   will be clamped to 0 if they exceed 360.

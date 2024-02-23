@@ -210,7 +210,7 @@ private:
 int dataTableEntries(simData::DataStore* ds, uint64_t tableId)
 {
   auto table = ds->dataTableManager().getTable(tableId);
-  if (table == NULL)
+  if (table == nullptr)
     return -1;
 
   DataTableCounter counter;

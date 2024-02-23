@@ -147,12 +147,15 @@ void DynamicSelectionPicker::pickThisFrame_()
   double mouseRangeSquaredPx = 0.;
   pickToVector_(nodes, PickBehavior::Closest, mouseRangeSquaredPx);
 
-  simVis::EntityNode* picked = nullptr;
+  std::vector<PickedEntity> newPicked;
+  const auto& savePicked = [&](simVis::EntityNode* node) {newPicked.push_back({ node ? node->objectIndexTag() : 0, node }); };
   if (nodes.size() == 1)
-    picked = nodes.front().get();
-  else if (!nodes.empty())
   {
-    // Need to deconflict to pick best selection. We know:
+    savePicked(nodes[0].get());
+  }
+  else if (nodes.size() > 1)
+  {
+    // Need to deconflict to put the best selection first. We know:
     // * 0th item is going to be earliest created entity.
     // * Platforms must be created before attachments.
     // * Attachments to platforms (beams, lasers, LOBs, etc.) are most likely to be the colocated entity.
@@ -162,12 +165,25 @@ void DynamicSelectionPicker::pickThisFrame_()
     // mouse is from the center.
     const double mouseRangePx = sqrt(mouseRangeSquaredPx);
     const double platformAdvantagePx = platformAdvantagePct_ * maximumValidRange_;
-    picked = (mouseRangePx < platformAdvantagePx) ? nodes[0].get() : nodes[1].get();
+    if (mouseRangePx < platformAdvantagePx)
+    {
+      savePicked(nodes[0].get());
+      savePicked(nodes[1].get());
+    }
+    else
+    {
+      savePicked(nodes[1].get());
+      savePicked(nodes[0].get());
+    }
+  }
+  // The entity that's first in the order is significant, but the rest of the ordering is less so.
+  // Add the rest of the picked entities in the existing order
+  for (size_t i = 2; i < nodes.size(); ++i)
+  {
+    savePicked(nodes[i].get());
   }
 
-  // Set the picked entity
-  const unsigned int objectIndexTag = picked ? picked->objectIndexTag() : 0;
-  setPicked_(objectIndexTag, picked);
+  setPicked_(newPicked);
 }
 
 void DynamicSelectionPicker::pickToVector_(simVis::EntityVector& nodes, PickBehavior behavior, double& mouseRangeSquaredPx) const

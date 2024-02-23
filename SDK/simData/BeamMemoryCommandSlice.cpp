@@ -27,7 +27,7 @@
 namespace simData
 {
 
-void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
+void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time, DataStore::CommitResult& results)
 {
   clearChanged();
   if (updates_.empty())
@@ -38,7 +38,7 @@ void BeamMemoryCommandSlice::update(DataStore *ds, ObjectId id, double time)
 
   // process all command updates in one prefs transaction
   DataStore::Transaction t;
-  BeamPrefs* prefs = ds->mutable_beamPrefs(id, &t);
+  BeamPrefs* prefs = ds->mutable_beamPrefs(id, &t, &results);
   if (!prefs)
     return;
 

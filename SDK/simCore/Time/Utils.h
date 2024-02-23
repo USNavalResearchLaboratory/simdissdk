@@ -120,25 +120,25 @@ namespace simCore
   /**
   * A list of handled time exception types.  Used to identify the exception
   */
-  static const int TIME_STRING_NOT_VALID              = 1; /**< Input time string is not valid. */
-  static const int JULIANDAY_NOT_VALID                = 2; /**< Input Julian day is not valid. */
-  static const int DAY_STRING_NOT_VALID               = 3; /**< Input day string is not valid. */
-  static const int MONTH_NOT_VALID                    = 4; /**< Input month is not valid. */
-  static const int MONTHDAY_NOT_VALID                 = 5; /**< Input month day is not valid. */
-  static const int HOURS_NOT_VALID                    = 6; /**< Input hours is not valid. */
-  static const int YEAR_NOT_VALID                     = 7; /**< Input year is not valid. */
-  static const int WEEKDAY_NOT_VALID                  = 8; /**< Input weekday is not valid. */
-  static const int TOO_MANY_VALUES                    = 9; /**< Too many values input. */
-  static const int REFERENCE_YEAR_NOT_VALID           = 10; /**< Input reference year is not valid. */
-  static const int SECONDS_SINCE_EPOCHTIME_NOT_VALID  = 11; /**< Input seconds since epoch time is not valid. */
-  static const int STRING_FORMAT_NOT_VALID            = 12; /**< Input string format is not valid. */
-  static const int YEARDAY_NOT_VALID                  = 13; /**< Input year day is not valid. */
-  static const int MINUTES_NOT_VALID                  = 14; /**< Input minutes is not valid. */
-  static const int SECONDS_NOT_VALID                  = 15; /**< Input seconds is not valid. */
-  static const int DELTAT_NOT_VALID                   = 16; /**< Input Julian date is not valid. */
-  static const int GPS_WEEK_NOT_VALID                 = 17; /**< Input GPS week not valid. */
-  static const int GPS_EPOCH_NOT_VALID                = 18; /**< Input GPS epoch not valid. */
-  static const int UTC_NOT_VALID_FOR_GPS              = 19; /**< Input UTC not valid for GPS */
+  inline constexpr int TIME_STRING_NOT_VALID              = 1; /**< Input time string is not valid. */
+  inline constexpr int JULIANDAY_NOT_VALID                = 2; /**< Input Julian day is not valid. */
+  inline constexpr int DAY_STRING_NOT_VALID               = 3; /**< Input day string is not valid. */
+  inline constexpr int MONTH_NOT_VALID                    = 4; /**< Input month is not valid. */
+  inline constexpr int MONTHDAY_NOT_VALID                 = 5; /**< Input month day is not valid. */
+  inline constexpr int HOURS_NOT_VALID                    = 6; /**< Input hours is not valid. */
+  inline constexpr int YEAR_NOT_VALID                     = 7; /**< Input year is not valid. */
+  inline constexpr int WEEKDAY_NOT_VALID                  = 8; /**< Input weekday is not valid. */
+  inline constexpr int TOO_MANY_VALUES                    = 9; /**< Too many values input. */
+  inline constexpr int REFERENCE_YEAR_NOT_VALID           = 10; /**< Input reference year is not valid. */
+  inline constexpr int SECONDS_SINCE_EPOCHTIME_NOT_VALID  = 11; /**< Input seconds since epoch time is not valid. */
+  inline constexpr int STRING_FORMAT_NOT_VALID            = 12; /**< Input string format is not valid. */
+  inline constexpr int YEARDAY_NOT_VALID                  = 13; /**< Input year day is not valid. */
+  inline constexpr int MINUTES_NOT_VALID                  = 14; /**< Input minutes is not valid. */
+  inline constexpr int SECONDS_NOT_VALID                  = 15; /**< Input seconds is not valid. */
+  inline constexpr int DELTAT_NOT_VALID                   = 16; /**< Input Julian date is not valid. */
+  inline constexpr int GPS_WEEK_NOT_VALID                 = 17; /**< Input GPS week not valid. */
+  inline constexpr int GPS_EPOCH_NOT_VALID                = 18; /**< Input GPS epoch not valid. */
+  inline constexpr int UTC_NOT_VALID_FOR_GPS              = 19; /**< Input UTC not valid for GPS */
   //@}
 
   /**

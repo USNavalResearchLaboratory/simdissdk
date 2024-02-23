@@ -28,6 +28,7 @@
 #include <cassert>
 #include <limits>
 
+#include "simCore/Common/Common.h"
 #include "simCore/Common/Export.h"
 #include "simCore/Calc/MathConstants.h"
 #include "simCore/Calc/Vec3.h"
@@ -247,8 +248,7 @@ namespace simCore
   */
   inline double v3Distance(const Vec3 &u, const Vec3 &v)
   {
-    // use sqrt of sum of squares of deltas
-    return sqrt(square(u[0] - v[0]) + square(u[1] - v[1]) + square(u[2] - v[2]));
+    return (u - v).length();
   }
 
   /**
@@ -256,9 +256,10 @@ namespace simCore
   * @param[in ] u vector to consider
   * @return length (Euclidean norm or magnitude) of the vector
   */
+  SDK_DEPRECATE(double v3Length(const Vec3& u), "Use Vec3.length() instead.");
   inline double v3Length(const Vec3 &u)
   {
-    return sqrt(square(u[0]) + square(u[1]) + square(u[2]));
+    return u.length();
   }
 
   /**
@@ -267,9 +268,10 @@ namespace simCore
   * @param[in ] u starting vector
   * @param[out] v output
   */
+  SDK_DEPRECATE(void v3Scale(double s, const Vec3& u, Vec3& v), "Use Vec3.operator*() instead.");
   inline void v3Scale(double s, const Vec3 &u, Vec3 &v)
   {
-    v.set(s * u[0], s * u[1], s * u[2]);
+    v = u * s;
   }
 
   /**
@@ -280,11 +282,9 @@ namespace simCore
   */
   inline double v3Unit(Vec3 &u)
   {
-    double t = v3Length(u);
-    if (t > 0.0)
-    {
-      v3Scale(1.0/t, u, u);
-    }
+    const double t = u.length();
+    if (t > 0.)
+      u /= t;
     return t;
   }
 
@@ -294,22 +294,10 @@ namespace simCore
   * @param[out] v output vector to contain normal of u
   * @param[in ] t Comparison tolerance for a zero value
   */
-  inline void v3Norm(const Vec3 &u, Vec3 &v, double t=1.0e-9)
+  SDK_DEPRECATE(void v3Norm(const Vec3& u, Vec3& v, double t = 1.0e-9), "Use Vec3.normalize() instead.");
+  inline void v3Norm(const Vec3 &u, Vec3 &v, double t)
   {
-    double len = v3Length(u);
-    // prevent divide by zero
-    if (len > 0.0)
-    {
-      v3Scale(1.0/len, u, v);
-      // if very small values are detected, set to zero
-      if (fabs(v.x()) < t) v.setX(0);
-      if (fabs(v.y()) < t) v.setY(0);
-      if (fabs(v.z()) < t) v.setZ(0);
-    }
-    else
-    {
-      v.zero();
-    }
+    v = u.normalize(t);
   }
 
   /**
@@ -318,9 +306,10 @@ namespace simCore
   * @param[in ] v second vector
   * @param[out] w output
   */
+  SDK_DEPRECATE(void v3Add(const Vec3& u, const Vec3& v, Vec3& w), "Use Vec3.operator+() instead.");
   inline void v3Add(const Vec3 &u, const Vec3 &v, Vec3 &w)
   {
-    w.set(u[0] + v[0], u[1] + v[1], u[2] + v[2]);
+    w = u + v;
   }
 
   /**
@@ -329,9 +318,10 @@ namespace simCore
   * @param[in ] v subtracted from u
   * @param[out] w output
   */
+  SDK_DEPRECATE(void v3Subtract(const Vec3& u, const Vec3& v, Vec3& w), "Use Vec3.operator-() instead.");
   inline void v3Subtract(const Vec3 &u, const Vec3 &v, Vec3 &w)
   {
-    w.set(u[0] - v[0], u[1] - v[1], u[2] - v[2]);
+    w = u - v;
   }
 
   /**
@@ -339,9 +329,10 @@ namespace simCore
   * @param[in ] u first vector
   * @param[in ] v second vector
   */
+  SDK_DEPRECATE(double v3Dot(const Vec3& u, const Vec3& v), "Use Vec3.dot() instead.");
   inline double v3Dot(const Vec3 &u, const Vec3 &v)
   {
-    return u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+    return u.dot(v);
   }
 
   /**
@@ -350,11 +341,10 @@ namespace simCore
   * @param[in ] v second vector
   * @param[out] w output
   */
+  SDK_DEPRECATE(void v3Cross(const Vec3& u, const Vec3& v, Vec3& w), "Use Vec3.cross() instead.");
   inline void v3Cross(const Vec3 &u, const Vec3 &v, Vec3& w)
   {
-    w.set(u[1]*v[2] - u[2]*v[1],
-          u[2]*v[0] - u[0]*v[2],
-          u[0]*v[1] - u[1]*v[0]);
+    w = u.cross(v);
   }
 
   /**
@@ -362,9 +352,10 @@ namespace simCore
   * @param[in ] u input vector
   * @param[out] w output
   */
+  SDK_DEPRECATE(void v3Negate(const Vec3& u, Vec3& w), "Use Vec3.operator-() instead.");
   inline void v3Negate(const Vec3 &u, Vec3& w)
   {
-    w.set(-u[0], -u[1], -u[2]);
+    w = -u;
   }
 
   /**

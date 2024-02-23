@@ -30,18 +30,18 @@ namespace simCore
 {
   ///Various speed of light constants
   ///http://physics.nist.gov/cgi-bin/cuu/Value?c|search_for=speed+of+light+vacuum
-  static const double LIGHT_SPEED_VACUUM = 2.99792458e8;  /**< (m/s) in vacuum */
+  inline constexpr double LIGHT_SPEED_VACUUM = 2.99792458e8;  /**< (m/s) in vacuum */
   ///c/n  via index of refraction of air n=1.0003:  CRC Handbook of Chemistry and Physics
-  static const double LIGHT_SPEED_AIR = 299702547.23582925122463261021693;      /**< (m/s) in air */
+  inline constexpr double LIGHT_SPEED_AIR = 299702547.23582925122463261021693;      /**< (m/s) in air */
   ///Radar range equation constant: (4 * M_PI) ^ 3
-  static const double RRE_CONSTANT = 1984.40170753918820;
+  inline constexpr double RRE_CONSTANT = 1984.40170753918820;
 
   /// Default peak power setting for RCS and Antenna patterns (W)
-  static const float DEFAULT_PEAK_POWER = 2000;   // W
+  inline constexpr float DEFAULT_PEAK_POWER = 2000;   // W
   /// Default frequency setting for RCS and Antenna patterns (MHz)
-  static const float DEFAULT_FREQUENCY = 7000;    // MHz
+  inline constexpr float DEFAULT_FREQUENCY = 7000;    // MHz
   /// Default antenna gain setting for RCS and Antenna patterns (dB)
-  static const float DEFAULT_ANTENNA_GAIN = 20;   // dB
+  inline constexpr float DEFAULT_ANTENNA_GAIN = 20;   // dB
 
   ///Enumeration of possible polarization types
   enum PolarityType
