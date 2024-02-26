@@ -59,7 +59,6 @@ static std::string s_help =
   "2 : activate 'Overhead' navigation mode \n"
   "3 : activate 'GIS' navigation mode \n"
   "h : toggle between click-to-focus and hover-to-focus \n"
-  "l : toggle sky lighting \n"
   "tab : cycle focus (in click-to-focus mode only) \n";
 
 static ui::Control* createHelp()
@@ -128,7 +127,6 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::Text("2 : activate 'Overhead' navigation mode");
     ImGui::Text("3 : active 'GIS' navigation mode");
     ImGui::Text("h : toggle between click-to-focus and hover-to-focus");
-    ImGui::Text("l : toggle sky lighting");
     ImGui::Text("tab : cycle focus (in click-to-focus mode only)");
 
     if (io.InputQueueCharacters.size() > 0)
@@ -184,17 +182,6 @@ struct ControlPanel : public simExamples::SimExamplesGui
           SIM_NOTICE << LC << "Switched to hover-to-focus mode." << std::endl;
         }
         insetViewHandler_->setFocusActions(mask);
-        break;
-      }
-      case 'l':
-      {
-        osgEarth::SkyNode* sky = viewer_->getSceneManager()->getSkyNode();
-        if (sky)
-        {
-          osg::StateAttribute::OverrideValue ov = sky->getLighting();
-          ov = (ov & osg::StateAttribute::ON) ? osg::StateAttribute::OFF : osg::StateAttribute::ON;
-          sky->setLighting(ov);
-        }
         break;
       }
       }
