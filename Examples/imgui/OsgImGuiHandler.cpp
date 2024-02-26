@@ -53,7 +53,20 @@ using EarthManipulator = osgEarth::EarthManipulator;
 #include "osgEarth/ImGui/NetworkMonitorGUI"
 #include "osgEarth/ImGui/RenderingGUI"
 #include "osgEarth/ImGui/SceneGraphGUI"
+
+// SetItemTooltip() is not in ImGui 18204 shipped with SIMDIS SDK, but is
+// used in osgEarth/ImGui/SystemGUI using ImGui 19013; it was added in 18964.
+#if IMGUI_VERSION_NUM < 18964
+// Replace SetItemTooltip() with a function that evaluates to a noop
+#define SetItemTooltip(x) GetCurrentContext()
+#endif
+
 #include "osgEarth/ImGui/SystemGUI"
+
+#if IMGUI_VERSION_NUM < 18964
+#undef SetItemTooltip
+#endif
+
 #include "osgEarth/ImGui/TerrainGUI"
 #include "osgEarth/ImGui/TextureInspectorGUI"
 #include "osgEarth/ImGui/ViewpointsGUI"
