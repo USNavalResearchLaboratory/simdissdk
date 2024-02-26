@@ -207,11 +207,18 @@ void WeightedMenuManager::insertBefore_(QWidget* widget, int weight, QAction* ac
   // Insert the action before other actions
   QAction* beforeAct = actionByIndex_(widget, std::distance(weights.begin(), insertBefore));
 
+  const int numChildren = widget->actions().count();
+
   // Add the action to the menu or tool bar
   if (action == nullptr)
     insertSeparator_(widget, beforeAct);
   else
     widget->insertAction(beforeAct, action);
+
+  // Do not update weights if action was not added.
+  // Only known failure is if action already exists.
+  if (numChildren == widget->actions().count())
+    return;
 
   // Add the new weight to the previous text
   if (debugMenuWeights_ && action != nullptr)
