@@ -104,7 +104,7 @@ MainWindow::MainWindow()
   setupSimulatedPlatform_();
 
   // create buttons to control time
-  QDialog *buttonDialog = new QDialog;
+  QDialog *buttonDialog = new QDialog(this);
   simQt::TimeButtons *timeButtons = new simQt::TimeButtons(buttonDialog);
   simQt::ButtonActions *timeButtonActions = new simQt::ButtonActions(buttonDialog);
   timeButtonActions->setClockManager(clock_);
