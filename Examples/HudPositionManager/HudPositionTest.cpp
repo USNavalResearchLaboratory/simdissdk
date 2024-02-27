@@ -510,7 +510,7 @@ int main(int argc, char** argv)
   // Demonstrate the view-drawing service.  This is used to create new inset views with the mouse.
   simVis::View* mainView = viewer->getMainView();
   // set an initial viewpoint
-  mainView->lookAt(45, 0, 0, 0, -89, 12e6);
+  mainView->lookAt(45, 0, 0, 0, -89, 7e6);
 
   // Create a "Super HUD" on top of all other views and insets
   simVis::View* superHUD = new simVis::View();
