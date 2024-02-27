@@ -76,7 +76,7 @@ static std::string s_help =
   "c : Cycle classification string and color\n"
   "e : Toggle HUD Editor mode\n"
   "r : Reset all to default positions\n"
-  "w : Toggle Wind Vane on Compass\n"
+  "W : Toggle Wind Vane on Compass\n"
   "z : Cycle wind angle and speed values\n"
   ;
 
@@ -114,7 +114,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::Text("c : Cycle classification string and color");
     ImGui::Text("e : Toggle HUD Editor mode");
     ImGui::Text("r : Reset all to default positions");
-    ImGui::Text("w : Toggle Wind Vane on Compass");
+    ImGui::Text("W : Toggle Wind Vane on Compass");
     ImGui::Text("z : Cycle wind angle and speed values");
 
     auto& io = ImGui::GetIO();
@@ -175,7 +175,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
       case 'r':
         hudEditor_.resetAllPositions();
         break;
-      case 'w':
+      case 'W':
         if (compass_.valid())
           compass_->setWindVaneVisible(!compass_->isWindVaneVisible());
         break;
@@ -331,7 +331,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
       handled = true;
       break;
 
-    case 'w':
+    case 'W':
       if (compass_.valid())
       {
         compass_->setWindVaneVisible(!compass_->isWindVaneVisible());
