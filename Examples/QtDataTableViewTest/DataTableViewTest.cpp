@@ -174,7 +174,7 @@ namespace DataTableViewTest
     //ui_->tableViewTest->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
     //ui_->tableViewTest->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
     //ui_->DataTableTreeView->header()->setResizeMode(QHeaderView::ResizeToContents);
-    // now set the data store for out DataTableComboBox
+    // now set the data store for our DataTableComboBox
     ui_->DataTableComboBox->setProviders(ds);
   }
 
@@ -198,6 +198,7 @@ namespace DataTableViewTest
     if (items.empty())
       return;
     testHelper_->addDataTable(items[0], ui_->TableSizeSpinBox->value());
+    fillDataTableWidget_(ui_->DataTableComboBox->currentSelection());
   }
 
   void MainWindow::tableSelected_(simData::DataTable* table)
@@ -224,6 +225,7 @@ namespace DataTableViewTest
 
     row.setTime(ui_->RowTimeSpinBox->value());
     table->addRow(row);
+    fillDataTableWidget_(ui_->DataTableComboBox->currentSelection());
   }
 
   void MainWindow::addColumn_()
@@ -237,6 +239,7 @@ namespace DataTableViewTest
     os << "New Col " << colCount;
     simData::TableColumn* column;
     table->addColumn(os.str(), simData::VT_UINT64, 0, &column);
+    fillDataTableWidget_(ui_->DataTableComboBox->currentSelection());
   }
 
   void MainWindow::removeTable_()
