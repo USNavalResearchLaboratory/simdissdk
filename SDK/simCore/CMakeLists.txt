@@ -142,11 +142,13 @@ set(CORE_SYSTEM_SRC System/)
 set(CORE_SYSTEM_HEADERS
     ${CORE_SYSTEM_INC}DescriptorStringCapture.h
     ${CORE_SYSTEM_INC}File.h
+    ${CORE_SYSTEM_INC}ShellWindow.h
     ${CORE_SYSTEM_INC}Utils.h
 )
 set(CORE_SYSTEM_SOURCES
     ${CORE_SYSTEM_SRC}DescriptorStringCapture.cpp
     ${CORE_SYSTEM_SRC}File.cpp
+    ${CORE_SYSTEM_INC}ShellWindow.cpp
     ${CORE_SYSTEM_SRC}Utils.cpp
 )
 source_group(Headers\\System FILES ${CORE_SYSTEM_HEADERS})
