@@ -23,11 +23,13 @@
 #ifndef SIMCORE_SYSTEM_SHELLWINDOW_H
 #define SIMCORE_SYSTEM_SHELLWINDOW_H
 
+#include "simCore/Common/Export.h"
+
 namespace simCore
 {
 
 /** Convenience class to give easy access to Windows API functions */
-class ShellWindow
+class SDKCORE_EXPORT ShellWindow
 {
 public:
   /** Returns true when the executable was started from a command shell window */
