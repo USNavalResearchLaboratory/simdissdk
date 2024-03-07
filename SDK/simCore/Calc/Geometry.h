@@ -30,155 +30,156 @@
 
 namespace simCore
 {
-  class Coordinate;
 
-  /// Vector of simCore::Vec3
-  typedef std::vector<Vec3> Vec3String;
+class Coordinate;
 
-  /// Geometric plane in 3D space.
-  class SDKCORE_EXPORT Plane
-  {
-  public:
-    /**
-     * Construct a new 3D plane from 3 points. The plane's normal vector will
-     * be (p2-p1) X (p3-p2), where X denotes a the cross product. A point on the
-     * same side of the plane as the positive normal vector is considered to be
-     * "above" or "inside" the plane and will yield a positive "distance" from
-     * the plane's surface.
-     *
-     * @param[in ] p1 First point
-     * @param[in ] p2 Second point
-     * @param[in ] p3 Third point
-     */
-    Plane(const Vec3& p1, const Vec3& p2, const Vec3& p3);
+/// Vector of simCore::Vec3
+typedef std::vector<Vec3> Vec3String;
 
-    /// copy ctor
-    Plane(const Plane& rhs);
+/// Geometric plane in 3D space.
+class SDKCORE_EXPORT Plane
+{
+public:
+  /**
+   * Construct a new 3D plane from 3 points. The plane's normal vector will
+   * be (p2-p1) X (p3-p2), where X denotes a the cross product. A point on the
+   * same side of the plane as the positive normal vector is considered to be
+   * "above" or "inside" the plane and will yield a positive "distance" from
+   * the plane's surface.
+   *
+   * @param[in ] p1 First point
+   * @param[in ] p2 Second point
+   * @param[in ] p3 Third point
+   */
+  Plane(const Vec3& p1, const Vec3& p2, const Vec3& p3);
 
-    /// dtor
-    virtual ~Plane() { }
+  /// copy ctor
+  Plane(const Plane& rhs);
 
-    /**
-     * Shortest distance from a point to the plane. A positive number means
-     * the point is "above" or "inside" the plane; zero means the point lies exactly
-     * on the plane; negative means the point is "below" or "outside" the plane.
-     * @param[in ] point Point to test.
-     */
-    double distance(const Vec3& point) const;
+  /// dtor
+  virtual ~Plane() { }
 
-  protected:
-    /** Vector representing the plane */
-    double v_[4];
-  };
+  /**
+   * Shortest distance from a point to the plane. A positive number means
+   * the point is "above" or "inside" the plane; zero means the point lies exactly
+   * on the plane; negative means the point is "below" or "outside" the plane.
+   * @param[in ] point Point to test.
+   * @return Distance between point and plane
+   */
+  double distance(const Vec3& point) const;
 
-  /// Collection of 3D planes acting as a (possibly open) convex bounding volume.
-  /// The polytope is said to "contain" a point if that point lies "above"
-  /// all planes comprising the polytope. An empty polytope (zero planes)
-  /// contains all points.
-  class SDKCORE_EXPORT Polytope
-  {
-  public:
-    /** Construct a new empty polytope */
-    Polytope();
+protected:
+  /** Vector representing the plane */
+  double v_[4] = { 0., 0., 0., 0. };
+};
 
-    /// copy ctor
-    Polytope(const Polytope& rhs);
+/// Collection of 3D planes acting as a (possibly open) convex bounding volume.
+/// The polytope is said to "contain" a point if that point lies "above"
+/// all planes comprising the polytope. An empty polytope (zero planes)
+/// contains all points.
+class SDKCORE_EXPORT Polytope
+{
+public:
+  /** Construct a new empty polytope */
+  Polytope();
 
-    /// dtor
-    virtual ~Polytope() { }
+  /// copy ctor
+  Polytope(const Polytope& rhs);
 
-    /**
-     * Adds a bounding plane to the polytope. The "inside" of the plane
-     * is the side with the positive normal vector.
-     * @param[in ] plane Bounding plane to add
-     */
-    void addPlane(const Plane& plane);
+  /// dtor
+  virtual ~Polytope() { }
 
-    /**
-     * True is the point is bounded by the polytope. An empty polytope (no
-     * planes) contains all points. A point is contained if it falls on the
-     * positive-normal side of all planes.
-     * @param[in ] point Point to test.
-     */
-    bool contains(const Vec3& point) const;
+  /**
+   * Adds a bounding plane to the polytope. The "inside" of the plane
+   * is the side with the positive normal vector.
+   * @param[in ] plane Bounding plane to add
+   */
+  void addPlane(const Plane& plane);
 
-    /** Resets the polytope by removing all planes. */
-    void clear();
+  /**
+   * True is the point is bounded by the polytope. An empty polytope (no
+   * planes) contains all points. A point is contained if it falls on the
+   * positive-normal side of all planes.
+   * @param[in ] point Point to test.
+   */
+  bool contains(const Vec3& point) const;
 
-  protected:
-    /** Vector of all planes that, together, represent the polytope */
-    std::vector<Plane> planes_;
-  };
+  /** Resets the polytope by removing all planes. */
+  void clear();
 
-  /// Geographic, convex bounding region formed from a line string boundary.
-  /// Each pair of points forms a segment of the fence. If the last point in the
-  /// line string is the same as the first, the fence will bound a closed region.
-  /// A valid polygon must have its vertices specified in CCW order.
-  class SDKCORE_EXPORT GeoFence
-  {
-  public:
-    /**
-     * Constructs an empty fence. An empty fence contains everything.
-     */
-    GeoFence();
+protected:
+  /** Vector of all planes that, together, represent the polytope */
+  std::vector<Plane> planes_;
+};
 
-    /// copy ctor
-    GeoFence(const GeoFence& rhs);
+/// Geographic, convex bounding region formed from a line string boundary.
+/// Each pair of points forms a segment of the fence. If the last point in the
+/// line string is the same as the first, the fence will bound a closed region.
+/// A valid polygon must have its vertices specified in CCW order.
+class SDKCORE_EXPORT GeoFence
+{
+public:
+  /**
+   * Constructs an empty fence. An empty fence contains everything.
+   */
+  GeoFence();
 
-    /**
-     * Construct a new geofence with the bounding coordinates.
-     *
-     * @param[in ] points Bounding points (i.e. "fence posts"). The fence will be
-     *                    "open" unless you repeat the start point as the end point.
-     *                    Each segment (consecutive point pairs) must be less than
-     *                    180 degrees apart, otherwise the fence will be invalid.
-     *                    The closed fence must be convex.
-     * @param[in ] cs     Coordinate system of [points], must be LLA or ECEF.
-     */
-    GeoFence(const Vec3String& points, const CoordinateSystem& cs);
+  /// copy ctor
+  GeoFence(const GeoFence& rhs);
 
-    /**
-     * Sets the boundary points of the fence.
-     *
-     * @param[in ] points Bounding points (i.e. "fence posts"). The fence will be
-     *                    "open" unless you repeat the start point as the end point.
-     *                    Each segment (consecutive point pairs) must be less than
-     *                    180 degrees apart, otherwise the fence will be invalid.
-     *                    The closed fence must be convex.
-     * @param[in ] cs     Coordinate system of [points], must be LLA or ECEF.
-     */
-    void set(const Vec3String& points, const CoordinateSystem& cs);
+  /**
+   * Construct a new geofence with the bounding coordinates.
+   *
+   * @param[in ] points Bounding points (i.e. "fence posts"). The fence will be
+   *                    "open" unless you repeat the start point as the end point.
+   *                    Each segment (consecutive point pairs) must be less than
+   *                    180 degrees apart, otherwise the fence will be invalid.
+   *                    The closed fence must be convex.
+   * @param[in ] cs     Coordinate system of [points], must be LLA or ECEF.
+   */
+  GeoFence(const std::vector<simCore::Vec3>& points, const CoordinateSystem& cs);
 
-    /** True if the fence is valid (forms a convex region, with at least 3 vertices) */
-    bool valid() const { return valid_; }
+  /**
+   * Sets the boundary points of the fence.
+   *
+   * @param[in ] points Bounding points (i.e. "fence posts"). The fence will be
+   *                    "open" unless you repeat the start point as the end point.
+   *                    Each segment (consecutive point pairs) must be less than
+   *                    180 degrees apart, otherwise the fence will be invalid.
+   *                    The closed fence must be convex.
+   * @param[in ] cs     Coordinate system of [points], must be LLA or ECEF.
+   */
+  void set(const std::vector<simCore::Vec3>& points, const CoordinateSystem& cs);
 
-    /**
-     * True if the point is on the inside of the fence.
-     * @param[in ] ecef Point to test; must be ECEF.
-     */
-    bool contains(const Vec3& ecef) const;
+  /** True if the fence is valid (forms a convex region, with at least 3 vertices) */
+  bool valid() const { return valid_; }
 
-    /**
-     * True if the fence contains the coordinate.
-     * @param[in ] coord Coord to test; must be LLA or ECEF, otherwise the method will return false
-     */
-    bool contains(const Coordinate& coord) const;
+  /**
+   * True if the point is on the inside of the fence.
+   * @param[in ] ecef Point to test; must be ECEF.
+   */
+  bool contains(const Vec3& ecef) const;
 
-    /** dtor */
-    virtual ~GeoFence() { }
+  /**
+   * True if the fence contains the coordinate.
+   * @param[in ] coord Coord to test; must be LLA or ECEF, otherwise the method will return false
+   */
+  bool contains(const Coordinate& coord) const;
 
-  protected:
+  /** dtor */
+  virtual ~GeoFence() { }
 
-    /** data points in the fence */
-    Vec3String points_;
-    /** Polytope representing the fence shape */
-    Polytope tope_;
-    /** True when the shape is valid */
-    bool valid_;
+private:
+  /** data points in the fence */
+  std::vector<simCore::Vec3> points_;
+  /** Polytope representing the fence shape */
+  Polytope tope_;
+  /** True when the shape is valid */
+  bool valid_;
 
-    /// call this after set
-    bool verifyConvexity_(const Vec3String& v) const;
-  };
+  /// call this after set
+  bool verifyConvexity_(const std::vector<simCore::Vec3>& v) const;
+};
 
 } // namespace simCore
 
