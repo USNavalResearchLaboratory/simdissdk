@@ -221,6 +221,21 @@ assert(p.distance(v4) is not None)
 poly = simCore.Polytope()
 assert(poly is not None)
 assert(poly.contains(v4) is not None)
+tri = simCore.Triangle()
+tri.a = v1
+tri.b.set(0, 4, 10)
+tri.c.set(0, -4, 10)
+ray = simCore.Ray()
+ray.origin.set(-1000, 0, 5)
+ray.direction.set(1, 0, 0)
+results = simCore.rayIntersectsTriangle(ray, tri, True)
+assert(results.intersects)
+assert(abs(results.t - 1000.) < 0.001)
+assert(results.u is not None)
+assert(results.v is not None)
+
+#############################
+# GeoFence.h
 fence = simCore.GeoFence()
 assert(fence is not None)
 assert(fence.valid() is not None)

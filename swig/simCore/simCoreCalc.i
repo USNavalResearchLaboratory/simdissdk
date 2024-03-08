@@ -1,4 +1,4 @@
-// Add a date here to trigger forced regeneration: 02/09/2024
+// Add a date here to trigger forced regeneration: 03/08/2024
 %ignore simCore::Vec3::Vec3(Vec3&&);
 %ignore simCore::Vec3::operator=;
 %ignore simCore::Vec3::operator[];

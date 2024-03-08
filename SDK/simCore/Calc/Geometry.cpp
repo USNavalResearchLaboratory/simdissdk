@@ -20,8 +20,9 @@
  * disclose, or release this software.
  *
  */
-#include "simCore/Calc/Geometry.h"
+#include <limits>
 #include "simCore/Calc/Math.h"
+#include "simCore/Calc/Geometry.h"
 
 namespace simCore {
 
@@ -82,6 +83,62 @@ bool Polytope::contains(const Vec3& p) const
 void Polytope::clear()
 {
   planes_.clear();
+}
+
+//------------------------------------------------------------------------
+
+IntersectResultsRT rayIntersectsTriangle(const Ray& ray, const Triangle& triangle, bool inclusiveEdges)
+{
+  constexpr double epsilon = std::numeric_limits<double>::epsilon();
+
+  IntersectResultsRT rv;
+
+  // Adapted from:
+  // https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+  const simCore::Vec3& edge1 = triangle.b - triangle.a;
+  const simCore::Vec3& edge2 = triangle.c - triangle.a;
+  const simCore::Vec3& rayCrossEdge2 = ray.direction.cross(edge2);
+
+  const double det = edge1.dot(rayCrossEdge2);
+  if (simCore::isBetween(det, -epsilon, epsilon))
+    return rv; // ray is parallel to triangle
+
+  const double inverseDet = 1.0 / det;
+  const simCore::Vec3& rayOriginRelocated = ray.origin - triangle.a;
+  const double u = rayOriginRelocated.dot(rayCrossEdge2) * inverseDet;
+  // Fail if the horizontal barycentric coordinate is outside the triangle
+  if (inclusiveEdges)
+  {
+    if (u < 0. || u > 1.)
+      return rv;
+  }
+  else
+  {
+    if (u <= 0. || u >= 1.)
+      return rv;
+  }
+
+  const simCore::Vec3& rayCrossEdge1 = rayOriginRelocated.cross(edge1);
+  const double v = ray.direction.dot(rayCrossEdge1) * inverseDet;
+  // Fail if the vertical barycentric coordinate is outside the triangle
+  if (inclusiveEdges)
+  {
+    if (v < 0. || u + v > 1.)
+      return rv;
+  }
+  else
+  {
+    if (v <= 0. || u + v >= 1.)
+      return rv;
+  }
+
+  // Compute t to figure out where intersection is
+  const double t = edge2.dot(rayCrossEdge1) * inverseDet;
+  rv.u = u;
+  rv.v = v;
+  rv.t = t;
+  rv.intersects = t > epsilon;
+  return rv;
 }
 
 }

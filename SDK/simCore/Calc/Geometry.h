@@ -33,6 +33,21 @@ namespace simCore
 /// Vector of simCore::Vec3
 typedef std::vector<Vec3> Vec3String;
 
+/** A triangle is defined by three points in space. */
+struct Triangle
+{
+  simCore::Vec3 a;
+  simCore::Vec3 b;
+  simCore::Vec3 c;
+};
+
+/** A ray is defined by a 3-D origin and an orientation. */
+struct Ray
+{
+  simCore::Vec3 origin;
+  simCore::Vec3 direction;
+};
+
 /// Geometric plane in 3D space.
 class SDKCORE_EXPORT Plane
 {
@@ -108,6 +123,38 @@ private:
   /** Vector of all planes that, together, represent the polytope */
   std::vector<Plane> planes_;
 };
+
+/** Results of an intersection test between a ray and triangle */
+struct IntersectResultsRT
+{
+  // Barycentric coordinates of the intersection in the triangle
+  double u = 0.;
+  double v = 0.;
+
+  /** Intersection point is ray.origin + t * ray.direction */
+  double t = 0.;
+
+  /** True when the ray intersects the triangle. */
+  bool intersects = false;
+};
+
+/**
+ * Performs an intersection test of a ray against a triangle. Returns whether
+ * the ray intersects, the (u,v) of the intersection on the triangle, and the
+ * distance "t" along the ray where the triangle intersects. Winding of the
+ * triangle makes no difference. By default, this function returns a true
+ * intersection when the ray obliquely intersects with the exact edge of the
+ * triangle. The `inclusiveEdge` value can change that behavior.
+ * @param ray Describes the ray (origin and direction) to test against triangle.
+ * @param triangle Describes the 3-D triangle shape to test against ray.
+ * @param inclusiveEdges If true, a ray obliquely hitting the exact edge of the
+ *   triangle returns a hit on the triangle. If false, it does not. This is
+ *   helpful to try to distinguish between hits and misses e.g. on the corner
+ *   of a shape making up a hull.
+ * @return Intersection results, including barycentric coordinate of the hit if
+ *   an intersection occurred, and the distance along the ray for the intersection.
+ */
+SDKCORE_EXPORT IntersectResultsRT rayIntersectsTriangle(const Ray& ray, const Triangle& triangle, bool inclusiveEdges);
 
 } // namespace simCore
 
