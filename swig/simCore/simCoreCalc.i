@@ -58,6 +58,7 @@ CoordinateConverter.convert = CoordConvert_convert
 %include "simCore/Calc/Gars.h"
 
 %include "simCore/Calc/Geometry.h"
+%include "simCore/Calc/GeoFence.h"
 %include "simCore/Calc/Interpolation.h"
 
 // simCore::WorldMagneticModel::calculateMagneticVariance()
