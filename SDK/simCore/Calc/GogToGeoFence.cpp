@@ -25,12 +25,12 @@
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateSystem.h"
-#include "simCore/Calc/GogToGeoFence.h"
 #include "simCore/Calc/Units.h"
 #include "simCore/GOG/Parser.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/ValidNumber.h"
+#include "simCore/Calc/GogToGeoFence.h"
 
 namespace simCore
 {

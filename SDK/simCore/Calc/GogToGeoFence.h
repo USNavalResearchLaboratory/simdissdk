@@ -27,7 +27,7 @@
 #include <memory>
 #include <vector>
 #include "simCore/Common/Common.h"
-#include "simCore/Calc/Geometry.h"
+#include "simCore/Calc/GeoFence.h"
 
 namespace simCore
 {

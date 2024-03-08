@@ -28,7 +28,7 @@
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Angle.h"
-#include "simCore/Calc/Geometry.h"
+#include "simCore/Calc/GeoFence.h"
 #include "simVis/Constants.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"

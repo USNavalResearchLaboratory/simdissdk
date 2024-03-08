@@ -24,8 +24,8 @@
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Coordinate.h"
+#include "simCore/Calc/GeoFence.h"
 #include "simCore/Calc/Math.h"
-#include "simCore/Calc/Geometry.h"
 
 namespace {
 

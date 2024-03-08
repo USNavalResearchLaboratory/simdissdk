@@ -32,6 +32,7 @@ set(CORE_CALC_HEADERS
     ${CORE_CALC_INC}DatumConvert.h
     ${CORE_CALC_INC}Gars.h
     ${CORE_CALC_INC}Geometry.h
+    ${CORE_CALC_INC}GeoFence.h
     ${CORE_CALC_INC}GogToGeoFence.h
     ${CORE_CALC_INC}Interpolation.h
     ${CORE_CALC_INC}MagneticVariance.h
@@ -56,6 +57,7 @@ set(CORE_CALC_SOURCES
     ${CORE_CALC_SRC}DatumConvert.cpp
     ${CORE_CALC_SRC}Gars.cpp
     ${CORE_CALC_SRC}Geometry.cpp
+    ${CORE_CALC_SRC}GeoFence.cpp
     ${CORE_CALC_SRC}GogToGeoFence.cpp
     ${CORE_CALC_SRC}Interpolation.cpp
     ${CORE_CALC_SRC}MagneticVariance.cpp
