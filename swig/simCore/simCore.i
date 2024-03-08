@@ -27,6 +27,7 @@
 #include "simCore/Calc/DatumConvert.h"
 #include "simCore/Calc/Gars.h"
 #include "simCore/Calc/Geometry.h"
+#include "simCore/Calc/GeoFence.h"
 #include "simCore/Calc/GogToGeoFence.h"
 #include "simCore/Calc/Interpolation.h"
 #include "simCore/Calc/MagneticVariance.h"
