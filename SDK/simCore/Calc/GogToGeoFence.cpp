@@ -82,7 +82,10 @@ int GogToGeoFence::parse(std::istream& is, const std::string& gogFileName)
         continue;
       }
       const Vec3String& coordinates = line->points();
-      if (coordinates[0] != coordinates[coordinates.size() - 1])
+      // Geo-Fence doesn't require a closed shape, but we only consider closed lines for geo-fences
+      // so that we do not mistake an actual line for a fence. Must have at least 4 points: first
+      // and last point match, with a total of 3 unique points.
+      if (coordinates[0] != coordinates[coordinates.size() - 1] || coordinates.size() < 4)
       {
         SIM_ERROR << "Fence \"" << name  << "\" is not closed. The first and last coordinates must be the same. This line shape will not act as an exclusion zone.\n";
         continue;
@@ -99,16 +102,9 @@ int GogToGeoFence::parse(std::istream& is, const std::string& gogFileName)
         assert(0);
         continue;
       }
+      // Coordinates do not need to be closed
       const Vec3String& coordinates = poly->points();
-      // easy if the coordindates vector is closed
-      if (coordinates[0] == coordinates[coordinates.size() - 1])
-        rv = generateGeoFence_(name, coordinates);
-      else
-      {
-        Vec3String coordinates_copy = poly->points();
-        coordinates_copy.push_back(coordinates_copy[0]);
-        rv = generateGeoFence_(name, coordinates_copy);
-      }
+      rv = generateGeoFence_(name, coordinates);
     }
 
     if (rv == 0)

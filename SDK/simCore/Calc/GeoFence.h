@@ -34,73 +34,88 @@ namespace simCore
 
 class Coordinate;
 
-/// Geographic, convex bounding region formed from a line string boundary.
-/// Each pair of points forms a segment of the fence. If the last point in the
-/// line string is the same as the first, the fence will bound a closed region.
-/// A valid polygon must have its vertices specified in CCW order.
+/**
+ * Representation of a geo-fence in ECEF format. The geo-fence is defined by three or
+ * more ECEF points. The fence works by doing a 3-D version of the ray casting algorithm.
+ * To create a fence, the software uses a similar approach to simCore::GeoFence and
+ * simCore::Polytope. It drives lines from each point from that point to the center of
+ * the earth. Two successive points and (0,0,0) form a triangle. The entire series of
+ * points together form a closed hull shape, almost like a coffee filter.
+ *
+ * The algorithm casts rays from the point towards up to six predetermined points, using
+ * the even/odd intersection rules to determine whether the ray originates in the given
+ * shape. Edges of the fence are extruded up slightly to account for tests of points
+ * above the earth surface. Winding of the fence makes no difference.
+ */
 class SDKCORE_EXPORT GeoFence
 {
 public:
-  /**
-   * Constructs an empty fence. An empty fence contains everything.
-   */
+  /** Initializes an empty fence. */
   GeoFence();
-
-  /// copy ctor
-  GeoFence(const GeoFence& rhs);
-
-  /**
-   * Construct a new geofence with the bounding coordinates.
-   *
-   * @param[in ] points Bounding points (i.e. "fence posts"). The fence will be
-   *                    "open" unless you repeat the start point as the end point.
-   *                    Each segment (consecutive point pairs) must be less than
-   *                    180 degrees apart, otherwise the fence will be invalid.
-   *                    The closed fence must be convex.
-   * @param[in ] cs     Coordinate system of [points], must be LLA or ECEF.
-   */
-  GeoFence(const std::vector<simCore::Vec3>& points, const CoordinateSystem& cs);
+  /** Initializes the fence with the given points in given coordinate system. */
+  GeoFence(const std::vector<simCore::Vec3>& pts, simCore::CoordinateSystem coordSys);
 
   /**
-   * Sets the boundary points of the fence.
-   *
-   * @param[in ] points Bounding points (i.e. "fence posts"). The fence will be
-   *                    "open" unless you repeat the start point as the end point.
-   *                    Each segment (consecutive point pairs) must be less than
-   *                    180 degrees apart, otherwise the fence will be invalid.
-   *                    The closed fence must be convex.
-   * @param[in ] cs     Coordinate system of [points], must be LLA or ECEF.
+   * Initializes the fence with the given geographic data points; will convert to ECEF as needed.
+   * Winding of the fence makes no difference.
+   * @param pts Points in a given coordinate system, such as ECEF.
+   * @param coordSys Coordinate system; simCore::COORD_SYS_ECEF is most efficient, simCore::COORD_SYS_LLA also permitted.
    */
-  void set(const std::vector<simCore::Vec3>& points, const CoordinateSystem& cs);
+  void set(const std::vector<simCore::Vec3>& pts, simCore::CoordinateSystem coordSys);
 
-  /** True if the fence is valid (forms a convex region, with at least 3 vertices) */
-  bool valid() const { return valid_; }
+  /** Returns true if the given coordinate is inside the fence; accepts LLA and ECEF points */
+  bool contains(const simCore::Coordinate& coord) const;
 
-  /**
-   * True if the point is on the inside of the fence.
-   * @param[in ] ecef Point to test; must be ECEF.
-   */
-  bool contains(const Vec3& ecef) const;
+  /** Returns true if the given ECEF XYZ is inside the fence. */
+  bool contains(const simCore::Vec3& ecef) const;
+  /** Returns true if the given ECEF XYZ is inside the fence, returning the rays tested e.g. for demo/testing purposes */
+  bool contains(const simCore::Vec3& ecef, std::vector<Ray>& rays) const;
 
-  /**
-   * True if the fence contains the coordinate.
-   * @param[in ] coord Coord to test; must be LLA or ECEF, otherwise the method will return false
-   */
-  bool contains(const Coordinate& coord) const;
+  /** Returns all triangles that represent the hull or "coffee filter" shape */
+  std::vector<Triangle> triangles() const;
+  /** Returns all the ECEF points representing the fence */
+  std::vector<simCore::Vec3> points() const;
 
-  /** dtor */
-  virtual ~GeoFence() { }
+  /** Returns true if the fence is valid. Valid fences have 3 or more points. */
+  bool valid() const;
 
 private:
-  /** data points in the fence */
-  std::vector<simCore::Vec3> points_;
-  /** Polytope representing the fence shape */
-  Polytope tope_;
-  /** True when the shape is valid */
-  bool valid_;
+  /** Sets the points in ECEF coordinates */
+  void setPointsEcef_(const std::vector<simCore::Vec3>& ptsEcef);
 
-  /// call this after set
-  bool verifyConvexity_(const std::vector<simCore::Vec3>& v) const;
+  /**
+   * Given a series of connected points, construct a polytope hull made of triangles
+   * such that each connected point of the fence forms the top of a given triangle in
+   * the return vector, with the third point being (0,0,0). This creates a hull made
+   * out of triangles that can be used for ray casting tests. Visually, this looks
+   * like a cone with (points.size() - 1) flat sides.
+   */
+  std::vector<Triangle> calculatePolytopeHull_(const std::vector<simCore::Vec3>& pts) const;
+
+  /**
+   * Given a ray and series of triangles, returns the number of triangles that the
+   * ray intersects.
+   */
+  int countIntersections_(const Ray& ray, const std::vector<Triangle>& triangles) const;
+
+  /**
+   * Returns true if the given ray intersects the configured triangles vector. Note that
+   * this function can return a false positive or false negative in extreme edge cases,
+   * where the ray directly and precisely intersects with a corner, either from the
+   * inside or outside of the shape.
+   * @param ray Testing ray against the internal triangles hull.
+   * @return true if the ray tests to originate inside the shape, false if the ray originates outside.
+   */
+  bool rayOriginatesInShape_(const Ray& ray) const;
+
+  /** Calculates the backface plane given all the data points */
+  simCore::Plane calculateBackfacePlane_(const std::vector<simCore::Vec3>& pts) const;
+
+  std::vector<simCore::Vec3> points_;
+  std::vector<Triangle> triangles_;
+
+  /** The plane helps detect/reject erroneous intersections through the earth. */
+  simCore::Plane backfacePlane_;
 };
 
 } // namespace simCore
