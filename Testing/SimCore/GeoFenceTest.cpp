@@ -85,6 +85,94 @@ int testTriangleIntersect()
   return rv;
 }
 
+int testPlane()
+{
+  int rv = 0;
+
+  // Plane that intersects origin and normal is facing up Z axis
+  const simCore::Plane xyPlane({ 0, 0, 1. }, 0.);
+  std::optional<double> t;
+
+  // On plane, pointing up
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., 0. }, .direction { 0., 0., 1.} }, xyPlane);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, 0.));
+  // under plane, pointing up
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., -1. }, .direction { 0., 0., 1.} }, xyPlane);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, 1.));
+  // above plane, pointing up
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., 1. }, .direction { 0., 0., 1.} }, xyPlane);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, -1.));
+
+  // under plane, pointing down
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., -1. }, .direction { 0., 0., -1.} }, xyPlane);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, -1.));
+  // above plane, pointing down
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., 1. }, .direction { 0., 0., -1.} }, xyPlane);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, 1.));
+
+  // above plane, pointing horizontal and not intersecting
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., 1. }, .direction { 0., 1., 0.} }, xyPlane);
+  rv += SDK_ASSERT(!t.has_value());
+  // below plane, pointing horizontal and not intersecting
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., -1. }, .direction { 0., 1., 0.} }, xyPlane);
+  rv += SDK_ASSERT(!t.has_value());
+  // on plane; every point intersects the plane
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., -0. }, .direction { 0., 1., 0.} }, xyPlane);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, 0.));
+
+  // Confirm ray normal scaling impacts results properly
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., 1. }, .direction { 0., 0., -2.} }, xyPlane);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, 0.5));
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., 1. }, .direction { 0., 0., -0.5} }, xyPlane);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, 2.));
+
+  // Confirm plane normal scaling has no impact since it's just a direction
+  const simCore::Plane xyPlane2({ 0, 0, 3. }, 0.);
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., 1. }, .direction { 0., 0., -1.} }, xyPlane2);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, 1.0));
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., 1. }, .direction { 0., 0., -2.} }, xyPlane2);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, 0.5));
+
+  // Move the XY plane up a few points and try to shoot a ray into it, so it doesn't intersect origin
+  const simCore::Plane xyPlaneAt8({ 0, 0, 1. }, 8.);
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., 0. }, .direction { 0., 0., 1.} }, xyPlaneAt8);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, 8.));
+
+  // Same test, but with a scaled normal on the plane
+  const simCore::Plane xyPlaneAt8_2({ 0, 0, 2. }, 4.);
+  t = simCore::rayIntersectsPlane({ .origin { -100.0, 2., 0. }, .direction { 0., 0., 1.} }, xyPlaneAt8_2);
+  rv += SDK_ASSERT(t.has_value());
+  rv += SDK_ASSERT(simCore::areEqual(*t, 8.));
+
+  // Test distances
+  rv += SDK_ASSERT(simCore::areEqual(xyPlane.distance({ 0, 0, 0 }), 0.));
+  rv += SDK_ASSERT(simCore::areEqual(xyPlane.distance({ 10., 0, 0 }), 0.));
+  rv += SDK_ASSERT(simCore::areEqual(xyPlane.distance({ 10., 10., 0 }), 0.));
+  rv += SDK_ASSERT(simCore::areEqual(xyPlane.distance({ 10., 10., 10. }), 10.));
+  rv += SDK_ASSERT(simCore::areEqual(xyPlane.distance({ 10., 10., -10. }), -10.));
+
+  // Flip the normal on the plane
+  const simCore::Plane xyPlane3({ 0., 0., -1 }, 0.);
+  rv += SDK_ASSERT(simCore::areEqual(xyPlane3.distance({ 0, 0, 0 }), 0.));
+  rv += SDK_ASSERT(simCore::areEqual(xyPlane3.distance({ 10., 0, 0 }), 0.));
+  rv += SDK_ASSERT(simCore::areEqual(xyPlane3.distance({ 10., 10., 0 }), 0.));
+  rv += SDK_ASSERT(simCore::areEqual(xyPlane3.distance({ 10., 10., 10. }), -10.));
+  rv += SDK_ASSERT(simCore::areEqual(xyPlane3.distance({ 10., 10., -10. }), 10.));
+
+  return rv;
+}
+
 int testGeoFence2DPolygon()
 {
   int rv = 0;
@@ -584,6 +672,8 @@ int testGeoFilter2DPolygonNPole()
 int GeoFenceTest(int argc, char* argv[])
 {
   int rv = 0;
+  rv += testTriangleIntersect();
+  rv += testPlane();
   rv += testGeoFence2DPolygon();
   rv += testGeoFilter2DPolygonZeroDeg();
   rv += testGeoFilter2DPolygonDateline();

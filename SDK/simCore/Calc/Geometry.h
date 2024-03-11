@@ -23,6 +23,7 @@
 #ifndef SIMCORE_CALC_GEOMETRY_H
 #define SIMCORE_CALC_GEOMETRY_H
 
+#include <optional>
 #include <vector>
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Vec3.h"
@@ -48,10 +49,17 @@ struct Ray
   simCore::Vec3 direction;
 };
 
-/// Geometric plane in 3D space.
+/**
+ * Geometric plane in 3D space. Planes are defined by the formula:
+ *   ax + by + cz + d = 0
+ * The plane is defined by values a, b, c, and d.
+ */
 class SDKCORE_EXPORT Plane
 {
 public:
+  /** Construct a plane with a normal (0,0,1) with d of 0 (i.e. the X/Y plane intersecting origin) */
+  Plane();
+
   /**
    * Construct a new 3D plane from 3 points. The plane's normal vector will
    * be (p2-p1) X (p3-p2), where X denotes a the cross product. A point on the
@@ -65,11 +73,16 @@ public:
    */
   Plane(const Vec3& p1, const Vec3& p2, const Vec3& p3);
 
-  /// copy ctor
-  Plane(const Plane& rhs);
-
-  /// dtor
-  virtual ~Plane() { }
+  /**
+   * Construct a new 3D plane from an orientation vector and distance. This is
+   * equivalent to providing the plane formula, where abc.x = a, abc.y = b,
+   * abc.z = c, and d = d, where the plane is defined as:
+   *   ax + by + cz + d = 0
+   * @param abc Plane formula values a, b, and c, in the formula above. Represents
+   *   the plane's normal vector.
+   * @param d Distance or d value in the formula above
+   */
+  Plane(const Vec3& abc, double d);
 
   /**
    * Shortest distance from a point to the plane. A positive number means
@@ -80,8 +93,13 @@ public:
    */
   double distance(const Vec3& point) const;
 
+  /** Returns the unit vector, or normalized orientation of plane (plane's normal vector); (a,b,c) */
+  simCore::Vec3 normal() const;
+  /** Returns the distance from 0,0,0 to the closest point on plane's surface */
+  double d() const;
+
 private:
-  /** Vector representing the plane */
+  /** Vector representing the plane. Elements 0 1 2 represent a,b,c and are normalized. */
   double v_[4] = { 0., 0., 0., 0. };
 };
 
@@ -155,6 +173,23 @@ struct IntersectResultsRT
  *   an intersection occurred, and the distance along the ray for the intersection.
  */
 SDKCORE_EXPORT IntersectResultsRT rayIntersectsTriangle(const Ray& ray, const Triangle& triangle, bool inclusiveEdges);
+
+/**
+ * Returns the intersection point along the ray where it intersects the plane. If the
+ * ray does not intersect the plane due to it being on a parallel plane, this returns
+ * an empty optional. Otherwise it returns a scale that is applied to the ray as to
+ * where it intersects the plane. A negative value means the ray points away from the
+ * plane, a positive value indicates the ray points into the plane, and a 0 values
+ * indicates the ray starts on the plane. The intersection point can be determined
+ * by calculating ray.origin + ray.direction * t, where we return the value t.
+ * @param ray Arbitrary ray in 3D space
+ * @param plane Arbitrary plane in 3D space
+ * @return "t" value such that ray.origin + ray.direction * t intersects the plane.
+ *   0 or positive value indicates intersection. Negative value indicates the
+ *   intersection occurs behind the ray's origin (in wrong direction). Empty value
+ *   indicates the ray is parallel to the plane.
+ */
+SDKCORE_EXPORT std::optional<double> rayIntersectsPlane(const simCore::Ray& ray, const simCore::Plane& plane);
 
 } // namespace simCore
 

@@ -1,10 +1,10 @@
-// Add a date here to trigger forced regeneration: 03/08/2024
 %ignore simCore::Vec3::Vec3(Vec3&&);
 %ignore simCore::Vec3::operator=;
 %ignore simCore::Vec3::operator[];
 %ignore simCore::Coordinate::operator=;
 %ignore simCore::CoordinateConverter::operator=;
 %ignore simCore::SquareMatrix::operator=;
+%ignore simCore::rayIntersectsPlane;
 
 ////////////////////////////////////////////////
 // simCore/Calc
@@ -209,4 +209,19 @@ def getClosestPoint(startLla, endLla, toLla):
   closestLla = Vec3()
   dist = wrap_getClosestPoint(startLla, endLla, toLla, closestLla)
   return dist, closestLla
+%}
+
+%inline %{
+double rayIntersectsPlaneWrapped(const simCore::Ray& ray, const simCore::Plane& plane, bool& OUTPUT)
+{
+  const auto& dOpt = simCore::rayIntersectsPlane(ray, plane);
+  OUTPUT = dOpt.has_value();
+  return dOpt.value_or(0.);
+}
+%}
+
+%pythoncode %{
+def rayIntersectsPlane(ray, plane):
+  value, valid = rayIntersectsPlaneWrapped(ray, plane)
+  return value if valid else None
 %}

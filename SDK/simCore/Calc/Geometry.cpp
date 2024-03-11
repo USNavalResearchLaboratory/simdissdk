@@ -26,6 +26,11 @@
 
 namespace simCore {
 
+Plane::Plane()
+  : Plane({ 0., 0., 1.}, 0.)
+{
+}
+
 Plane::Plane(const Vec3& p1, const Vec3& p2, const Vec3& p3)
 {
   Vec3 a = p2 - p1;
@@ -39,16 +44,39 @@ Plane::Plane(const Vec3& p1, const Vec3& p2, const Vec3& p3)
   v_[3] = -p1.dot(normal);
 }
 
-Plane::Plane(const Plane& rhs)
+Plane::Plane(const Vec3& abc, double d)
 {
-  for (int i = 0; i < 4; ++i)
-    v_[i] = rhs.v_[i];
+  v_[3] = d;
+
+  const auto& length = abc.length();
+  // Zero length means the plane has no orientation and distance formula will return
+  // unexpected (to the user) results (always "d")
+  if (length != 0.)
+  {
+    const auto& norm = abc / length;
+    for (size_t i = 0; i < 3; ++i)
+      v_[i] = norm[i];
+
+    // Since we normalized the vector, we need to inversely scale the distance too
+    v_[3] *= length;
+  }
 }
 
 double Plane::distance(const Vec3& p) const
 {
   return v_[0]*p.x() + v_[1]*p.y() + v_[2]*p.z() + v_[3];
 }
+
+simCore::Vec3 Plane::normal() const
+{
+  return simCore::Vec3(v_[0], v_[1], v_[2]);
+}
+
+double Plane::d() const
+{
+  return v_[3];
+}
+
 
 //------------------------------------------------------------------------
 
@@ -139,6 +167,27 @@ IntersectResultsRT rayIntersectsTriangle(const Ray& ray, const Triangle& triangl
   rv.t = t;
   rv.intersects = t > epsilon;
   return rv;
+}
+
+std::optional<double> rayIntersectsPlane(const simCore::Ray& ray, const simCore::Plane& plane)
+{
+  // Adapted from:
+  // https://stackoverflow.com/questions/7168484/3d-line-segment-and-plane-intersection
+
+  const auto& normal = plane.normal();
+  const double normalDotRay = normal.dot(ray.direction);
+  // Check for 0, which is no intersection, ray is parallel to plane
+  if (normalDotRay == 0.)
+  {
+    // Does the ray originate on the plane? If so every point intersects
+    if (plane.distance(ray.origin) == 0)
+      return 0.;
+    return {};
+  }
+
+  const simCore::Vec3 pointOnPlane(normal * plane.d());
+  const double d = normal.dot(pointOnPlane);
+  return (d - normal.dot(ray.origin)) / normalDotRay;
 }
 
 }
