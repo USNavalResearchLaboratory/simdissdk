@@ -151,10 +151,16 @@ void BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs, const simData::B
     sv.color_ = simVis::Color(prefs.commonprefs().color(), simVis::Color::RGBA);
 
   sv.blendingEnabled_ = prefs.blended();
-  sv.lightingEnabled_ = prefs.shaded();
+  if (prefs.drawtype() != simData::BeamPrefs_DrawType_LINE)
+    sv.lightingEnabled_ = prefs.shaded();
+  else
+    sv.lightingEnabled_ = false;
 
-  // draw as pyramid when hbw > 180
-  sv.shape_ = (prefs.rendercone() && sv.hfov_deg_ <= 180.) ? simVis::SVData::SHAPE_CONE : simVis::SVData::SHAPE_PYRAMID;
+  sv.shape_ = simVis::SVData::SHAPE_PYRAMID;
+  if (prefs.drawtype() == simData::BeamPrefs_DrawType_LINE)
+    sv.shape_ = simVis::SVData::SHAPE_LINE;
+  else if (prefs.rendercone() && sv.hfov_deg_ <= 180.)
+    sv.shape_ = simVis::SVData::SHAPE_CONE;
 
   // if drawing as a pyramid, coneRes_ is not used, but wallRes_ is used
   sv.coneRes_ = prefs.coneresolution();
@@ -207,8 +213,8 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
       SVFactory::updateColor(this, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
     }
   }
-  if (PB_FIELD_CHANGED(a, b, shaded))
-    SVFactory::updateLighting(this, b->shaded());
+  if ((PB_FIELD_CHANGED(a, b, shaded)) || (PB_FIELD_CHANGED(a, b, drawtype)))
+    SVFactory::updateLighting(this, (b->drawtype() == simData::BeamPrefs_DrawType_LINE) ? false : b->shaded());
   if (PB_FIELD_CHANGED(a, b, blended))
   {
     // if blended, use BIN_BEAM & TPA, otherwise use BIN_OPAQUE_BEAM & BIN_GLOBAL_SIMSDK

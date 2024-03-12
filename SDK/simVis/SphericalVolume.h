@@ -53,7 +53,8 @@ struct SVData
   enum Shape
   {
     SHAPE_PYRAMID, ///< four sided base
-    SHAPE_CONE     ///<   circular base
+    SHAPE_CONE,    ///< circular base
+    SHAPE_LINE     ///< line
   };
 
   /// how will the volume be drawn
@@ -164,6 +165,8 @@ public:
 private:
   /// Create an sv cone using specified data & direction, as a child geometry of the specified geode
   static void createCone_(osg::Geode* geode, const SVData &data, const osg::Vec3& direction);
+  /// Create a line using specified data & direction, as a child geometry of the specified geode
+  static void createLine_(osg::Geode* geode, const SVData& data, const osg::Vec3& direction);
   /// Calculate the y value that will make a unit vector from specified x and z
   static float calcYValue_(double x, double z);
   static void processWireframe_(SphericalVolume* sv, int drawMode);
