@@ -133,7 +133,7 @@ bool GeoFence::contains(const simCore::Vec3& ecef, std::vector<Ray>& raysTested)
   const auto& onSurface = ecefNormalized * simCore::WGS_A;
 
   // Test a ray against the plane first. If it intersects, then we do not contain
-  const simCore::Ray planeRay{ .origin = onSurface, .direction = -ecefNormalized };
+  const simCore::Ray planeRay{ onSurface, -ecefNormalized };
   const auto& backfaceIsect = simCore::rayIntersectsPlane(planeRay, backfacePlane_);
   if (backfaceIsect.value_or(1.) >= 0.)
   {
@@ -149,7 +149,7 @@ bool GeoFence::contains(const simCore::Vec3& ecef, std::vector<Ray>& raysTested)
     // to avoid edge cases where points are very high or very low relative to earth surface,
     // which will create odd issues with intersection rays cast outside expected range.
 
-    const simCore::Ray ray{ .origin = onSurface, .direction = (targetPoint - onSurface).normalize() };
+    const simCore::Ray ray{ onSurface, (targetPoint - onSurface).normalize() };
     raysTested.push_back(ray);
     if (rayOriginatesInShape_(ray))
       ++numInside;
