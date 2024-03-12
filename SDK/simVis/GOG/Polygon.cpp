@@ -66,7 +66,6 @@ GogNodeInterface* simVis::GOG::Polygon::deserialize(const ParsedShape& parsedSha
     if (p.hasAbsoluteGeometry())
     {
       Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
-      feature->setName("GOG Polygon Feature");
       if (p.geoInterp_.isSet())
         feature->geoInterp() = p.geoInterp_.value();
       FeatureNode* featureNode = new FeatureNode(feature);
@@ -116,7 +115,6 @@ GogNodeInterface* Polygon::createPolygon(const simCore::GOG::Polygon& polygon, b
       polygon.getVerticalDatum(vdatum);
       osgEarth::SpatialReference* srs = LoaderUtils::getSrs(vdatum);
       Feature* feature = new Feature(geom, srs, style);
-      feature->setName("GOG Polygon Feature");
       FeatureNode* featureNode = new FeatureNode(feature);
       featureNode->setMapNode(mapNode);
       featureNode->setName("GOG Polygon");

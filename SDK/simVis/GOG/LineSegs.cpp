@@ -72,7 +72,6 @@ GogNodeInterface* LineSegs::deserialize(const ParsedShape& parsedShape,
     if (p.hasAbsoluteGeometry())
     {
       Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
-      feature->setName("GOG LineSegs Feature");
       FeatureNode* featureNode = new FeatureNode(feature);
       featureNode->setMapNode(mapNode);
       rv = new FeatureNodeInterface(featureNode, metaData);
@@ -145,7 +144,6 @@ GogNodeInterface* LineSegs::createLineSegs(const simCore::GOG::LineSegs& lineSeg
       lineSegs.getVerticalDatum(vdatum);
       osgEarth::SpatialReference* srs = LoaderUtils::getSrs(vdatum);
       Feature* feature = new Feature(multiGeom, srs, style);
-      feature->setName("GOG LineSegs Feature");
       FeatureNode* featureNode = new FeatureNode(feature);
       featureNode->setMapNode(mapNode);
       featureNode->setName("GOG LineSegs");

@@ -86,7 +86,6 @@ GogNodeInterface* Points::createPoints(const simCore::GOG::Points& points, bool 
       points.getVerticalDatum(vdatum);
       osgEarth::SpatialReference* srs = LoaderUtils::getSrs(vdatum);
       Feature* feature = new Feature(geom, srs, style);
-      feature->setName("GOG Points Feature");
 
       FeatureNode* featureNode = new FeatureNode(feature);
       featureNode->setMapNode(mapNode);
@@ -148,7 +147,6 @@ GogNodeInterface* Points::deserializeImpl_(const ParsedShape& parsedShape,
     if (p.hasAbsoluteGeometry())
     {
       Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
-      feature->setName("GOG Points Feature");
       if (p.geoInterp_.isSet())
         feature->geoInterp() = p.geoInterp_.value();
       FeatureNode* featureNode = new FeatureNode(feature);

@@ -68,7 +68,6 @@ GogNodeInterface* Line::deserialize(const ParsedShape& parsedShape,
     if (p.hasAbsoluteGeometry())
     {
       Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
-      feature->setName("GOG Line Feature");
       if (p.geoInterp_.isSet())
       {
         feature->geoInterp() = p.geoInterp_.value();
@@ -122,7 +121,6 @@ GogNodeInterface* Line::createLine(const simCore::GOG::Line& line, bool attached
       line.getVerticalDatum(vdatum);
       osg::ref_ptr<osgEarth::SpatialReference> srs = LoaderUtils::getSrs(vdatum);
       Feature* feature = new Feature(geom, srs.get(), style);
-      feature->setName("GOG Line Feature");
       FeatureNode* node = new FeatureNode(feature);
       node->setMapNode(mapNode);
       rv = new FeatureNodeInterface(node, metaData);
