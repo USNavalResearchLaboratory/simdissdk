@@ -53,7 +53,7 @@ macro(GET_YDAY_OFFSET VARIABLE)
             message(STATUS "Check if time parse %j needs an offset for tm_yday - no")
         else()
             set(${VARIABLE} ${HAVE_${VARIABLE}} CACHE INTERNAL "Result of GET_YDAY_OFFSET" FORCE)
-            message(STATUS "Check if time parse %j needs an offset for tm_yday - yes, ${${VARIABLE}}")
+            message(STATUS "Check if time parse %j needs an offset for tm_yday - yes")
         endif()
 
     endif()
