@@ -191,6 +191,28 @@ SDKCORE_EXPORT IntersectResultsRT rayIntersectsTriangle(const Ray& ray, const Tr
  */
 SDKCORE_EXPORT std::optional<double> rayIntersectsPlane(const simCore::Ray& ray, const simCore::Plane& plane);
 
+/**
+ * Reflects a pointing vector about a normal.
+ * @param vec Input direction vector containing the pointing direction. Note the direction vector
+ *   need not be normalized, but will scale the resulting reflection.
+ * @param normal Surface normal about which to reflect the vec. This is expected to be normalized,
+ *   but if not the results will be invalid.
+ * @return Reflected direction vector
+ */
+SDKCORE_EXPORT simCore::Vec3 reflectVector(const simCore::Vec3& vec, const simCore::Vec3& normal);
+
+/**
+ * Reflects a ray against the normal, generating a new ray with the new orientation
+ * and provided intersection point for the new ray's origin.
+ * @param ray Input ray to reflect; note the direction vector need not be normalized but
+ *   will scale the resulting ray's direction.
+ * @param atPoint Surface intersection point, serves as origin of the return ray.
+ * @param normal Surface normal at the intersection point, used to calculate reflection angle.
+ *   This is expected to be normalized, but if not the results will be invalid.
+ * @return Ray reflected about the normal originating at the given point.
+ */
+SDKCORE_EXPORT simCore::Ray reflectRay(const simCore::Ray& ray, const simCore::Vec3& atPoint, const simCore::Vec3& normal);
+
 } // namespace simCore
 
 #endif /* SIMCORE_CALC_GEOMETRY_H */

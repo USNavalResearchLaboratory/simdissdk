@@ -190,4 +190,14 @@ std::optional<double> rayIntersectsPlane(const simCore::Ray& ray, const simCore:
   return (d - normal.dot(ray.origin)) / normalDotRay;
 }
 
+simCore::Vec3 reflectVector(const simCore::Vec3& vec, const simCore::Vec3& normal)
+{
+  return vec - (normal * 2.0 * vec.dot(normal));
+}
+
+simCore::Ray reflectRay(const simCore::Ray& ray, const simCore::Vec3& atPoint, const simCore::Vec3& normal)
+{
+  return Ray{ atPoint, reflectVector(ray.direction, normal) };
+}
+
 }

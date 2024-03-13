@@ -171,6 +171,79 @@ int testPlane()
   return rv;
 }
 
+int testReflectRay()
+{
+  // Implicitly tests reflect vector too
+  int rv = 0;
+
+  simCore::Ray ray;
+
+  // Surface at 0,0,0, with varying normals. Ray points straight down.
+  const simCore::Ray rayDown{ { 0, 100, 0 }, { 0, -1, 0 } };
+  const simCore::Vec3 origin{ 0, 0, 0 };
+  // First test fires down at a flat surface, expecting it to come back up
+  ray = simCore::reflectRay(rayDown, origin, { 0, 1, 0 });
+  rv += SDK_ASSERT(ray.origin == origin);
+  rv += SDK_ASSERT(ray.direction == simCore::Vec3(0, 1, 0));
+
+  ray = simCore::reflectRay(rayDown, { 2, 3, 4 }, {0, 1, 0});
+  rv += SDK_ASSERT(ray.origin == simCore::Vec3(2, 3, 4));
+  rv += SDK_ASSERT(ray.direction == simCore::Vec3(0, 1, 0));
+
+  ray = simCore::reflectRay(rayDown, origin - simCore::Vec3( 0, 3, 0), {0, 1, 0});
+  rv += SDK_ASSERT(ray.origin == simCore::Vec3(0, -3, 0));
+  rv += SDK_ASSERT(ray.direction == simCore::Vec3(0, 1, 0));
+
+  // Now start to change the reflection angle by adjusting the normal:
+
+  // Inverted normal points down. We bounce off the "back" of the flat surface
+  ray = simCore::reflectRay(rayDown, origin, { 0, -1, 0 });
+  rv += SDK_ASSERT(ray.origin == origin);
+  rv += SDK_ASSERT(ray.direction == simCore::Vec3(0, 1, 0));
+
+  // 45 degree normal, positive into the X direction. Take the surface and tilt right
+  ray = simCore::reflectRay(rayDown, origin, simCore::Vec3(1, 1, 0).normalize());
+  rv += SDK_ASSERT(ray.origin == origin);
+  // Because it's a 45 degree angle, the ray should reflect 90 degrees over and be positive on the X axis
+  rv += SDK_ASSERT(simCore::v3AreEqual(ray.direction, simCore::Vec3(1, 0, 0)));
+
+  // Reverse that angle normal and make sure results are the same
+  ray = simCore::reflectRay(rayDown, origin, -simCore::Vec3(1, 1, 0).normalize());
+  rv += SDK_ASSERT(ray.origin == origin);
+  rv += SDK_ASSERT(simCore::v3AreEqual(ray.direction, simCore::Vec3(1, 0, 0)));
+
+  // Tilt left, should go down X axis negative
+  ray = simCore::reflectRay(rayDown, origin, simCore::Vec3(-1, 1, 0).normalize());
+  rv += SDK_ASSERT(ray.origin == origin);
+  rv += SDK_ASSERT(simCore::v3AreEqual(ray.direction, simCore::Vec3(-1, 0, 0)));
+
+  // Test with non-unit normals
+  ray = simCore::reflectRay(rayDown, origin, { 0, 8, 0 });
+  rv += SDK_ASSERT(ray.origin == origin);
+  // The surface normal is not normalized, so the result is garbage and not (0,1,0)
+  rv += SDK_ASSERT(ray.direction != simCore::Vec3(0, 1, 0));
+
+  const simCore::Ray rayDown3{ { 0, 100, 0}, {0, -3, 0 } };
+  ray = simCore::reflectRay(rayDown3, origin, { 0, 1, 0 });
+  rv += SDK_ASSERT(ray.origin == origin);
+  // The surface normal is OK but ray direction is scaled; it reflects back at scale
+  rv += SDK_ASSERT(ray.direction == simCore::Vec3(0, 3, 0));
+
+  // Same test, but onto the right-slanted surface
+  ray = simCore::reflectRay(rayDown3, origin, simCore::Vec3(1, 1, 0).normalize());
+  rv += SDK_ASSERT(ray.origin == origin);
+  // Because it's a 45 degree angle, the ray should reflect 90 degrees over and be positive on the X axis
+  rv += SDK_ASSERT(simCore::v3AreEqual(ray.direction, simCore::Vec3(3, 0, 0)));
+
+  // Test against a surface that is parallel to the ray, with its normal pointed down the X axis
+  ray = simCore::reflectRay(rayDown, origin, { -1, 0, 0 });
+  rv += SDK_ASSERT(ray.origin == origin);
+  // No change in the ray's direction, it does not intersect at all and keeps going through
+  rv += SDK_ASSERT(ray.direction == simCore::Vec3(0, -1, 0));
+
+  return rv;
+}
+
 }
 
 int GeometryTest(int argc, char* argv[])
@@ -178,6 +251,7 @@ int GeometryTest(int argc, char* argv[])
   int rv = 0;
   rv += SDK_ASSERT(testTriangleIntersect() == 0);
   rv += SDK_ASSERT(testPlane() == 0);
+  rv += SDK_ASSERT(testReflectRay() == 0);
 
   std::cout << "GeometryTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
   return rv;
