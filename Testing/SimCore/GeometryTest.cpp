@@ -244,6 +244,94 @@ int testReflectRay()
   return rv;
 }
 
+int testSphere()
+{
+  int rv = 0;
+
+  const simCore::Ray rayDown{ { 0, 100, 0 }, { 0, -1, 0 } };
+
+  std::optional<double> val;
+
+  // Ray pointing down into unit sphere
+  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere());
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 99.));
+
+  // Ray pointing down to sphere at origin, but radius of 2
+  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere{ simCore::Vec3(), 2. });
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 98.));
+
+  // Move the unit sphere 1 "down", so intersection is now at origin
+  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere{ simCore::Vec3(0, -1, 0), 1. });
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 100.));
+
+  // Move unit sphere 1 "right", so it barely grazes the left side of sphere, hitting tangent
+  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere{ simCore::Vec3(1.0, 0, 0), 1. });
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 100.));
+
+  // Same as before, but sphere moves SLIGHTLY more so the ray misses
+  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere{ simCore::Vec3(1.00001, 0, 0), 1. });
+  rv += SDK_ASSERT(!val.has_value());
+
+  // Make sure ray pointing in other direction misses
+  val = simCore::rayIntersectsSphere(simCore::Ray{ { 0, 100, 0 }, { 0, 1, 0 } }, simCore::Sphere());
+  rv += SDK_ASSERT(!val.has_value());
+
+  // Ray direction not unit length
+  val = simCore::rayIntersectsSphere(simCore::Ray{ { 0, 100, 0 }, { 0, -20, 0 } }, simCore::Sphere{ simCore::Vec3(0, -1, 0), 1. });
+  // Would typically be 100.0, but ray direction vector is scaled to a length of 20, which
+  // throws off the calculations. You'd think naively the answer might be 5, but it's not.
+  rv += SDK_ASSERT(val.has_value() && !simCore::areEqual(*val, 5.));
+
+  // Test inside the sphere:
+  const simCore::Ray rayInside({ 0, 0, 0 }, { 0, -1, 0 });
+
+  // Ray pointing down in unit sphere
+  val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere());
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 1.));
+
+  // Scale up the sphere to radius of 2
+  val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere{ simCore::Vec3(), 2. });
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 2.));
+
+  // Move the unit sphere 1 "down", so intersection is now at ray origin AND
+  // at -2, but we only test the first intersection.
+  val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere{ simCore::Vec3(0, 1, 0), 1. });
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 0.));
+
+  // Move the unit sphere 1 "up", so intersection is now at ray origin
+  val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere{ simCore::Vec3(0, 1, 0), 1. });
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 0.));
+
+  // Test that a ray "through" a 0 radius sphere still hits at origin
+  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere(simCore::Vec3(), 0.));
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 100.));
+
+  // Ray starting on 0 radius sphere hits at origin
+  val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere(simCore::Vec3(), 0.));
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 0.));
+
+  // Test that a ray through a negative radius hits as normal
+  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere(simCore::Vec3(), -1.));
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 99.));
+
+  // Ray inside the negative size radius sphere hits as normal
+  val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere(simCore::Vec3(), -1.));
+  rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 1.));
+
+  // Comparison test against https://www.geogebra.org/m/uxv5kfum visualizer; independently verify
+  {
+    simCore::Ray ray{ { -0.19, 1.82, 1.0 }, simCore::Vec3(-2.0, 1.31, 0.48).normalize() };
+    val = simCore::rayIntersectsSphere(ray,
+      simCore::Sphere{ { -7.04, 5.16, 2.0}, 1.5 });
+    // Comparison values (6.57 and (-5.58, 5.35, 2.3) extracted from website values
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 6.57, 0.01));
+    const auto& intersectPoint = ray.origin + ray.direction * (*val);
+    rv += SDK_ASSERT(simCore::v3AreEqual(intersectPoint, simCore::Vec3(-5.58, 5.35, 2.3), 0.01));
+  }
+
+  return rv;
+}
+
 }
 
 int GeometryTest(int argc, char* argv[])
@@ -252,6 +340,7 @@ int GeometryTest(int argc, char* argv[])
   rv += SDK_ASSERT(testTriangleIntersect() == 0);
   rv += SDK_ASSERT(testPlane() == 0);
   rv += SDK_ASSERT(testReflectRay() == 0);
+  rv += SDK_ASSERT(testSphere() == 0);
 
   std::cout << "GeometryTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
   return rv;

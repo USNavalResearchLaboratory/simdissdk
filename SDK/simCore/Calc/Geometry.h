@@ -49,6 +49,13 @@ struct Ray
   simCore::Vec3 direction;
 };
 
+/** Defines a mathematical sphere. It initializes as a unit sphere with a radius of 1. */
+struct Sphere
+{
+  simCore::Vec3 center;
+  double radius = 1.;
+};
+
 /**
  * Geometric plane in 3D space. Planes are defined by the formula:
  *   ax + by + cz + d = 0
@@ -190,6 +197,23 @@ SDKCORE_EXPORT IntersectResultsRT rayIntersectsTriangle(const Ray& ray, const Tr
  *   indicates the ray is parallel to the plane.
  */
 SDKCORE_EXPORT std::optional<double> rayIntersectsPlane(const simCore::Ray& ray, const simCore::Plane& plane);
+
+/**
+ * Returns the distance along the ray where it intersects with the sphere. If the ray does
+ * not intersect the sphere, this returns an empty optional. The origin is a valid intersection
+ * point and would return 0. The ray may originate inside, outside, or on the sphere. A ray
+ * that originates inside the sphere will return an intersection. A ray that originates on the
+ * sphere will return a 0. A ray that originations outside the sphere will return an
+ * intersection only if the ray passes through the sphere and the sphere is in front of the ray.
+ * That is, the ray must point towards the sphere. The ray's direction must be of unit length.
+ * @param ray Arbitrary ray in 3D space to test. The direction must be of unit length.
+ * @param sphere Arbitrary sphere in 3D space to test.
+ * @return Empty value if the ray does not intersect the sphere, else positive or zero value
+ *   indicating the distance along the ray that the intersection occurs. This value is only
+ *   trustworthy if the ray.direction is of unit length, which this function will not forcibly
+ *   do, due to performance reasons.
+ */
+SDKCORE_EXPORT std::optional<double> rayIntersectsSphere(const simCore::Ray& ray, const simCore::Sphere& sphere);
 
 /**
  * Reflects a pointing vector about a normal.

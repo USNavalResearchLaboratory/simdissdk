@@ -190,6 +190,37 @@ std::optional<double> rayIntersectsPlane(const simCore::Ray& ray, const simCore:
   return (d - normal.dot(ray.origin)) / normalDotRay;
 }
 
+std::optional<double> rayIntersectsSphere(const simCore::Ray& ray, const simCore::Sphere& sphere)
+{
+  // Construct vector from ray origin to the sphere center, and get length
+  const simCore::Vec3 l = sphere.center - ray.origin;
+  const double lNormSquared = l.dot(l);
+
+  // Component of l onto ray. Since the ray direction is unit length, the component
+  // is the distance along the ray to the closest point to the sphere (perp.)
+  const double s = l.dot(ray.direction);
+  const double radiusSquared = sphere.radius * sphere.radius;
+  if (s < 0. && lNormSquared > radiusSquared)
+  {
+    // Sphere center behind ray origin AND ray origin is outside sphere
+    return {};
+  }
+
+  // Calculate the distance squared, from closest point along the ray (perpendicular)
+  // to the sphere center (i.e. applying Pythagorean logic)
+  const double distanceSquared = lNormSquared - (s * s);
+  // Does ray pass outside the sphere?
+  if (distanceSquared > radiusSquared)
+    return {};
+
+  const double q = sqrt(radiusSquared - distanceSquared);
+  // If true, ray origin is outside sphere, nearest intersection is at value t = s - q
+  if ((lNormSquared - radiusSquared) > std::numeric_limits<double>::epsilon())
+    return s - q;
+  // Ray origin is inside sphere
+  return s + q;
+}
+
 simCore::Vec3 reflectVector(const simCore::Vec3& vec, const simCore::Vec3& normal)
 {
   return vec - (normal * 2.0 * vec.dot(normal));
