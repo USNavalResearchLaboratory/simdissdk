@@ -283,7 +283,7 @@ int testSphere()
   rv += SDK_ASSERT(val.has_value() && !simCore::areEqual(*val, 5.));
 
   // Test inside the sphere:
-  const simCore::Ray rayInside({ 0, 0, 0 }, { 0, -1, 0 });
+  const simCore::Ray rayInside{ { 0, 0, 0 }, { 0, -1, 0 } };
 
   // Ray pointing down in unit sphere
   val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere());
@@ -303,19 +303,19 @@ int testSphere()
   rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 0.));
 
   // Test that a ray "through" a 0 radius sphere still hits at origin
-  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere(simCore::Vec3(), 0.));
+  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere{ simCore::Vec3(), 0. });
   rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 100.));
 
   // Ray starting on 0 radius sphere hits at origin
-  val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere(simCore::Vec3(), 0.));
+  val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere{ simCore::Vec3(), 0. });
   rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 0.));
 
   // Test that a ray through a negative radius hits as normal
-  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere(simCore::Vec3(), -1.));
+  val = simCore::rayIntersectsSphere(rayDown, simCore::Sphere{ simCore::Vec3(), -1. });
   rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 99.));
 
   // Ray inside the negative size radius sphere hits as normal
-  val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere(simCore::Vec3(), -1.));
+  val = simCore::rayIntersectsSphere(rayInside, simCore::Sphere{ simCore::Vec3(), -1. });
   rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 1.));
 
   // Comparison test against https://www.geogebra.org/m/uxv5kfum visualizer; independently verify
