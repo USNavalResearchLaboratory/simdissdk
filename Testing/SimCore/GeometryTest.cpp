@@ -22,6 +22,7 @@
  */
 #include <iostream>
 #include "simCore/Common/SDKAssert.h"
+#include "simCore/Calc/CoordinateSystem.h"
 #include "simCore/Calc/Geometry.h"
 #include "simCore/Calc/Math.h"
 
@@ -332,6 +333,158 @@ int testSphere()
   return rv;
 }
 
+int testEllipsoid()
+{
+  int rv = 0;
+
+  const simCore::Ray rayDown{ { 0, 100, 0 }, { 0, -1, 0 } };
+  const simCore::Vec3 vOne(1., 1., 1.);
+
+  std::optional<double> val;
+
+  { // Start with basic tests very similar to Sphere, using a spherical ellipsoid
+    // Ray pointing down into unit sphere
+    val = simCore::rayIntersectsEllipsoid(rayDown, simCore::Ellipsoid());
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 99.));
+
+    // Ray pointing down to sphere at origin, but radius of 2
+    val = simCore::rayIntersectsEllipsoid(rayDown, simCore::Ellipsoid{ simCore::Vec3(), vOne * 2. });
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 98.));
+
+    // Move the unit sphere 1 "down", so intersection is now at origin
+    val = simCore::rayIntersectsEllipsoid(rayDown, simCore::Ellipsoid{ simCore::Vec3(0, -1, 0), vOne });
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 100.));
+
+    // Move unit sphere 1 "right", so it barely grazes the left side of sphere, hitting tangent
+    val = simCore::rayIntersectsEllipsoid(rayDown, simCore::Ellipsoid{ simCore::Vec3(1.0, 0, 0), vOne });
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 100.));
+
+    // Same as before, but sphere moves SLIGHTLY more so the ray misses
+    val = simCore::rayIntersectsEllipsoid(rayDown, simCore::Ellipsoid{ simCore::Vec3(1.00001, 0, 0), vOne });
+    rv += SDK_ASSERT(!val.has_value());
+
+    // Make sure ray pointing in other direction misses
+    val = simCore::rayIntersectsEllipsoid(simCore::Ray{ { 0, 100, 0 }, { 0, 1, 0 } }, simCore::Ellipsoid());
+    rv += SDK_ASSERT(!val.has_value());
+
+    // Ray direction not unit length
+    val = simCore::rayIntersectsEllipsoid(simCore::Ray{ { 0, 100, 0 }, { 0, -20, 0 } }, simCore::Ellipsoid{ simCore::Vec3(0, -1, 0), vOne });
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 5.));
+
+    // Test inside the sphere:
+    const simCore::Ray rayInside{ { 0, 0, 0 }, { 0, -1, 0 } };
+
+    // Ray pointing down in unit sphere
+    val = simCore::rayIntersectsEllipsoid(rayInside, simCore::Ellipsoid());
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 1.));
+
+    // Scale up the sphere to radius of 2
+    val = simCore::rayIntersectsEllipsoid(rayInside, simCore::Ellipsoid{ simCore::Vec3(), vOne * 2 });
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 2.));
+
+    // Move the unit sphere 1 "down", so intersection is now at ray origin AND
+    // at -2, but we only test the first intersection.
+    val = simCore::rayIntersectsEllipsoid(rayInside, simCore::Ellipsoid{ simCore::Vec3(0, 1, 0), vOne });
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 0.));
+
+    // Move the unit sphere 1 "up", so intersection is now at ray origin
+    val = simCore::rayIntersectsEllipsoid(rayInside, simCore::Ellipsoid{ simCore::Vec3(0, 1, 0), vOne });
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 0.));
+
+    // Test that a ray "through" a 0 radius sphere still hits at origin
+    val = simCore::rayIntersectsEllipsoid(rayDown, simCore::Ellipsoid{ simCore::Vec3(), simCore::Vec3() });
+    rv += SDK_ASSERT(!val.has_value());
+
+    // Ray starting on 0 radius sphere hits at origin
+    val = simCore::rayIntersectsEllipsoid(rayInside, simCore::Ellipsoid{ simCore::Vec3(), simCore::Vec3() });
+    rv += SDK_ASSERT(!val.has_value());
+
+    // Test that a ray through a negative radius hits as normal
+    val = simCore::rayIntersectsEllipsoid(rayDown, simCore::Ellipsoid{ simCore::Vec3(), -vOne });
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 99.));
+
+    // Ray inside the negative size radius sphere hits as normal
+    val = simCore::rayIntersectsEllipsoid(rayInside, simCore::Ellipsoid{ simCore::Vec3(), -vOne });
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 1.));
+  }
+
+  // Comparison test against https://www.geogebra.org/m/uxv5kfum visualizer; independently verify
+  {
+    simCore::Ray ray{ { -0.19, 1.82, 1.0 }, simCore::Vec3(-2.0, 1.31, 0.48).normalize() };
+    val = simCore::rayIntersectsEllipsoid(ray,
+      simCore::Ellipsoid{ { -7.04, 5.16, 2.0}, vOne * 1.5 });
+    // Comparison values (6.57 and (-5.58, 5.35, 2.3) extracted from website values
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, 6.57, 0.01));
+    const auto& intersectPoint = ray.origin + ray.direction * (*val);
+    rv += SDK_ASSERT(simCore::v3AreEqual(intersectPoint, simCore::Vec3(-5.58, 5.35, 2.3), 0.01));
+  }
+
+  // More complex case with WGS-84 ellipsoid and intersections near a major city
+  {
+    // Area near DC, 38.9072 N, 77.0369 W, 0.0 m
+    const simCore::Vec3 dcEcef{ 1099033.55, 4774463.87, 4070086.94 };
+    //const simCore::Vec3 dcEcef{ 1099033.56, 4774463.95, 4070087.01 };
+    const simCore::Ellipsoid ecef{ {}, { simCore::WGS_A, simCore::WGS_A, simCore::WGS_B} };
+
+    // Form a ray from the center of earth, pointing right at DC
+    const simCore::Ray rayCtoDc{ {}, dcEcef.normalize() };
+    val = simCore::rayIntersectsEllipsoid(rayCtoDc, ecef);
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, dcEcef.length(), 0.01));
+
+    // Form another ray from above the earth, pointing towards DC; position arbitrary but outside ellipsoid
+    const simCore::Vec3& spaceRayOffset{ 1000., 3000., 8000. };
+    const simCore::Vec3& spaceRayOrigin = dcEcef + spaceRayOffset;
+    const simCore::Ray spaceRay{ spaceRayOrigin, (dcEcef - spaceRayOrigin).normalize() };
+    val = simCore::rayIntersectsEllipsoid(spaceRay, ecef);
+    rv += SDK_ASSERT(val.has_value() && simCore::areEqual(*val, spaceRayOffset.length(), 0.01));
+  }
+
+  return rv;
+}
+
+int testQuadricSurface()
+{
+  // Test various quadric surface intersections
+  int rv = 0;
+
+  // testEllipsoid() already tests this code against ellipsoidal values. This routine
+  // is intended to catch other edge cases.
+  {
+    // Create a contrived case to hit the divide-by-zero case in the quadric solver
+    simCore::QuadricSurface q;
+    // Start with a hyperbola
+    q.a = 1;
+    q.b = -1;
+    q.k = 1;
+    const simCore::Ray ray{ {}, {1,1,0} };
+
+    // aq == 0 and bq == 0
+    auto tt = simCore::rayIntersectsQuadricSurface(ray, q);
+    rv += SDK_ASSERT(tt.empty());
+
+    // Shrinks the hyperbola a bit in the y dimension, moving left a bit
+    // in the x dimension. Never intersects:
+    // aq == 0 and (-cq / bq) is negative (behind ray)
+    q.g = 1;
+    tt = simCore::rayIntersectsQuadricSurface(ray, q);
+    rv += SDK_ASSERT(tt.empty());
+
+    // aq == 0 and (-cq / bq) is positive (in front of ray), intersects at
+    // (1/sqrt(2)) in x/y, at ray length 1.0. This is a hyperbola shifted
+    // up and right slightly.
+    q.g = -1;
+    tt = simCore::rayIntersectsQuadricSurface(ray, q);
+    rv += SDK_ASSERT(tt.size() == 1 && tt[0] == 1.);
+
+    // Repeat, with a longer ray direction, should shrink result
+    const simCore::Ray ray2{ {}, { 2, 2, 0} };
+    tt = simCore::rayIntersectsQuadricSurface(ray2, q);
+    rv += SDK_ASSERT(tt.size() == 1 && tt[0] == 0.5);
+  }
+
+  return rv;
+}
+
 }
 
 int GeometryTest(int argc, char* argv[])
@@ -341,8 +494,9 @@ int GeometryTest(int argc, char* argv[])
   rv += SDK_ASSERT(testPlane() == 0);
   rv += SDK_ASSERT(testReflectRay() == 0);
   rv += SDK_ASSERT(testSphere() == 0);
+  rv += SDK_ASSERT(testEllipsoid() == 0);
+  rv += SDK_ASSERT(testQuadricSurface() == 0);
 
   std::cout << "GeometryTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
   return rv;
 }
-

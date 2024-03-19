@@ -57,6 +57,21 @@ struct Sphere
 };
 
 /**
+ * Defines a simple ellipsoid, as a set of radius values in X Y and Z dimension.
+ * This uses the general equation for an ellipsoid, which is:
+ *
+ *   x^2 / a^2 + y^2 / b^2 + z^2 / c^2 = 1
+ *
+ * The scale value represents the a, b, and c values in this equation.
+ */
+struct Ellipsoid
+{
+  simCore::Vec3 center;
+  /** Scale relative to a unit sphere. This is equivalent to the radius values in each dimension. */
+  simCore::Vec3 scale = simCore::Vec3(1., 1., 1.);
+};
+
+/**
  * Geometric plane in 3D space. Planes are defined by the formula:
  *   ax + by + cz + d = 0
  * The plane is defined by values a, b, c, and d.
@@ -164,6 +179,38 @@ struct IntersectResultsRT
 };
 
 /**
+ * Generic description of a quadric surface, three dimensional surfaces with traces
+ * composed of conic sections. Every quadric surface can be expressed by the formula:
+ *
+ * a*x^2 + b*y^2 + c*z^2 + d*x*y + e*x*z + f*y*z + g*x + h*y + j*z + k = 0
+ *
+ * In most quadrics, most values are 0.
+ */
+struct QuadricSurface
+{
+  double a = 0.; ///< Factor for x^2
+  double b = 0.; ///< Factor for y^2
+  double c = 0.; ///< Factor for z^2
+  double d = 0.; ///< Factor for x*y
+  double e = 0.; ///< Factor for x*z
+  double f = 0.; ///< Factor for y*z
+  double g = 0.; ///< Factor for x
+  double h = 0.; ///< Factor for y
+  double j = 0.; ///< Factor for z
+  double k = 0.; ///< Constant factor
+};
+
+/**
+ * Solves a Quadric Surface equation with a ray returning 0, 1, or 2 intersections. Note
+ * that some shapes (e.g. sphere) have faster implementations; this is a generic solution.
+ * @param ray Intersection ray to test; the direction need not be of unit length.
+ * @param q Quadric surface definition
+ * @return Intersection points along the ray such that (ray.origin + t * ray.direction) is
+ *   an intersection. This might be 0, 1, or 2 points.
+ */
+SDKCORE_EXPORT std::vector<double> rayIntersectsQuadricSurface(const Ray& ray, const QuadricSurface& q);
+
+/**
  * Performs an intersection test of a ray against a triangle. Returns whether
  * the ray intersects, the (u,v) of the intersection on the triangle, and the
  * distance "t" along the ray where the triangle intersects. Winding of the
@@ -203,7 +250,7 @@ SDKCORE_EXPORT std::optional<double> rayIntersectsPlane(const simCore::Ray& ray,
  * not intersect the sphere, this returns an empty optional. The origin is a valid intersection
  * point and would return 0. The ray may originate inside, outside, or on the sphere. A ray
  * that originates inside the sphere will return an intersection. A ray that originates on the
- * sphere will return a 0. A ray that originations outside the sphere will return an
+ * sphere will return a 0. A ray that originates outside the sphere will return an
  * intersection only if the ray passes through the sphere and the sphere is in front of the ray.
  * That is, the ray must point towards the sphere. The ray's direction must be of unit length.
  * @param ray Arbitrary ray in 3D space to test. The direction must be of unit length.
@@ -214,6 +261,20 @@ SDKCORE_EXPORT std::optional<double> rayIntersectsPlane(const simCore::Ray& ray,
  *   do, due to performance reasons.
  */
 SDKCORE_EXPORT std::optional<double> rayIntersectsSphere(const simCore::Ray& ray, const simCore::Sphere& sphere);
+
+/**
+ * Returns the distance along the ray where it intersects with the ellipsoid. If the ray does
+ * not intersect the ellipsoid, this returns an empty optional. The origin is a valid intersection
+ * point and would return 0. The ray may originate inside, outside, or on the ellipsoid. A ray
+ * that originates inside the ellipsoid will return an intersection. A ray that originates on the
+ * ellipsoid will return a 0. A ray that originates outside the ellipsoid will return an
+ * intersection only if the ray passes through the ellipsoid and the ellipsoid is in front of the ray.
+ * That is, the ray must point towards the ellipsoid.
+ * @param ray Arbitrary ray in 3D space to test. The direction need not be of unit length.
+ * @param ellipsoid Arbitrary ellipsoid in 3D space to test
+ * @return Empty value if the ray does not intersect the ellipsoid, else a positive or zero value.
+ */
+SDKCORE_EXPORT std::optional<double> rayIntersectsEllipsoid(const simCore::Ray& ray, const simCore::Ellipsoid& ellipsoid);
 
 /**
  * Reflects a pointing vector about a normal.

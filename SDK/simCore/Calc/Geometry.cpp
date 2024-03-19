@@ -221,6 +221,42 @@ std::optional<double> rayIntersectsSphere(const simCore::Ray& ray, const simCore
   return s + q;
 }
 
+/** Helper function to return an invert of the incoming vector (1 / value) */
+inline
+simCore::Vec3 v3Invert(const simCore::Vec3& in)
+{
+  return { 1. / in.x(), 1. / in.y(), 1. / in.z() };
+}
+
+/** Returns a vector where the x, y, and z components are equal input vector components multiplied. */
+inline
+simCore::Vec3 v3ComponentMultiply(const simCore::Vec3& a, const simCore::Vec3& b)
+{
+  return { a.x() * b.x(), a.y() * b.y(), a.z() * b.z() };
+}
+
+std::optional<double> rayIntersectsEllipsoid(const simCore::Ray& ray, const simCore::Ellipsoid& ellipsoid)
+{
+  // Avoid divide by zero
+  if (ellipsoid.scale.x() == 0. || ellipsoid.scale.y() == 0. || ellipsoid.scale.z() == 0.)
+    return {};
+
+  QuadricSurface q;
+  q.a = 1. / (ellipsoid.scale.x() * ellipsoid.scale.x());
+  q.b = 1. / (ellipsoid.scale.y() * ellipsoid.scale.y());
+  q.c = 1. / (ellipsoid.scale.z() * ellipsoid.scale.z());
+  q.k = -1.;
+
+  // Translate the ray to the center
+  const simCore::Ray trRay{ ray.origin - ellipsoid.center, ray.direction };
+  // Solve the quadric
+  const auto& ts = simCore::rayIntersectsQuadricSurface(trRay, q);
+  // Project the ray
+  if (ts.empty())
+    return {};
+  return ts[0];
+}
+
 simCore::Vec3 reflectVector(const simCore::Vec3& vec, const simCore::Vec3& normal)
 {
   return vec - (normal * 2.0 * vec.dot(normal));
@@ -229,6 +265,75 @@ simCore::Vec3 reflectVector(const simCore::Vec3& vec, const simCore::Vec3& norma
 simCore::Ray reflectRay(const simCore::Ray& ray, const simCore::Vec3& atPoint, const simCore::Vec3& normal)
 {
   return Ray{ atPoint, reflectVector(ray.direction, normal) };
+}
+
+std::vector<double> rayIntersectsQuadricSurface(const Ray& ray, const QuadricSurface& q)
+{
+  // Sourced from several places, ultimately using: http://www.bmsc.washington.edu/people/merritt/graphics/quadrics.html
+  // a*x^2 + b*y^2 + c*z^2 + d*x*y + e*x*z + f*y*z + g*x + h*y + j*z + k = 0
+  const auto& dir = ray.direction;
+  const auto& o = ray.origin;
+
+  // Expand the quadric formula using the ray equation (origin + direction). Solve
+  // for T, leading to two solutions that can be solved with quadratic formula
+  const double aq = q.a * dir.x() * dir.x()
+    + q.b * dir.y() * dir.y()
+    + q.c * dir.z() * dir.z()
+    + q.d * dir.x() * dir.y()
+    + q.e * dir.x() * dir.z()
+    + q.f * dir.y() * dir.z();
+  const double bq = 2 * q.a * o.x() * dir.x()
+    + 2 * q.b * o.y() * dir.y()
+    + 2 * q.c * o.z() * dir.z()
+    + q.d * (o.x() * dir.y() + o.y() * dir.x())
+    + q.e * (o.x() * dir.z() + o.z() * dir.x())
+    + q.f * (o.y() * dir.z() + dir.y() * o.z())
+    + q.g * dir.x()
+    + q.h * dir.y()
+    + q.j * dir.z();
+  const double cq = q.a * o.x() * o.x()
+    + q.b * o.y() * o.y()
+    + q.c * o.z() * o.z()
+    + q.d * o.x() * o.y()
+    + q.e * o.x() * o.z()
+    + q.f * o.y() * o.z()
+    + q.g * o.x()
+    + q.h * o.y()
+    + q.j * o.z()
+    + q.k;
+
+  // We now have two solutions, as per quadratic formula, such that:
+  //    aq * t^2 + bq * t + cq == 0
+
+  // Avoid divide-by-zero, if Aq is 0 then return -cq / bq
+  if (aq == 0.)
+  {
+    if (bq == 0.)
+      return {};
+    const double rv = -cq / bq;
+    if (rv < 0)
+      return {};
+    return { rv };
+  }
+
+  // Check discriminant of quadratic formula, if less than 0 no intersection
+  const double discrim = bq * bq - 4 * aq * cq;
+  if (discrim < 0.)
+    return {};
+  const double sqrtDiscrim = std::sqrt(discrim);
+
+  double t0 = (-bq - sqrtDiscrim) / (2 * aq);
+  double t1 = (-bq + sqrtDiscrim) / (2 * aq);
+  // Sort them from closest to farthest for easy parsing on return
+  if (t0 > t1)
+    std::swap(t0, t1);
+
+  // Return 0, 1, or 2 values based on whether the ray is in front
+  if (t1 < 0.)
+    return {};
+  if (t0 < 0.)
+    return { t1 };
+  return { t0, t1 };
 }
 
 }
