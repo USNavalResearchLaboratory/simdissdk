@@ -36,6 +36,7 @@ namespace simVis
 {
   class AntennaNode;
   class BeamPulse;
+  class BeamCenterLine;
   class EntityLabelNode;
   class LocalGridNode;
   class Locator;
@@ -359,6 +360,7 @@ namespace simVis
     bool                    hasLastPrefs_;
 
     osg::ref_ptr<BeamVolume>  beamVolume_;
+    osg::ref_ptr<BeamCenterLine> beamCenterLine_;
     osg::ref_ptr<LocalGridNode> localGrid_;
     osg::ref_ptr<AntennaNode> antenna_;
     osg::observer_ptr<const EntityNode> host_;

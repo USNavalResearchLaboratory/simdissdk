@@ -20,8 +20,9 @@
  * disclose, or release this software.
  *
  */
-#include "osg/MatrixTransform"
+#include "osg/Group"
 #include "osgEarth/Horizon"
+#include "osgEarth/LineDrawable"
 #include "osgEarth/ObjectIndex"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
@@ -157,6 +158,9 @@ void BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs, const simData::B
     sv.lightingEnabled_ = false;
 
   sv.shape_ = simVis::SVData::SHAPE_PYRAMID;
+  // now implemented by BeamCenterLine class below
+  // manageBeamVisualization_ should guarantee this assertion
+  assert(prefs.drawtype() != simData::BeamPrefs_DrawType_LINE);
   if (prefs.drawtype() == simData::BeamPrefs_DrawType_LINE)
     sv.shape_ = simVis::SVData::SHAPE_LINE;
   else if (prefs.rendercone() && sv.hfov_deg_ <= 180.)
@@ -253,6 +257,76 @@ void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simDa
     SVFactory::updateFarRange(this, b->range());
   }
 #endif
+}
+
+// --------------------------------------------------------------------------
+
+class BeamCenterLine : public osg::Group
+{
+public:
+  /** Constructor */
+  BeamCenterLine();
+  BeamCenterLine(const BeamCenterLine& rhs) = delete;
+  BeamCenterLine& operator=(const BeamCenterLine& rhs) = delete;
+  /** Return the proper library name */
+  virtual const char* libraryName() const override  { return "simVis"; }
+  /** Return the class name */
+  virtual const char* className() const override  { return "BeamCenterLine"; }
+
+  /// update the beam line for range and color from update and prefs
+  void update(const simData::BeamUpdate& update, const simData::BeamPrefs& activePrefs);
+  /// set the linewidth of the beamline
+  void setLineWidth(float lineWidth);
+  /// set the color of the beamline
+  void setColor(const simVis::Color& x);
+
+protected:
+  /** Protected destructor due to deriving from osg::Referenced. */
+  virtual ~BeamCenterLine() {}
+
+private:
+  osg::ref_ptr <osgEarth::LineDrawable> line_;
+  double rangeM_ = 1.0;
+};
+
+BeamCenterLine::BeamCenterLine()
+{
+  setName("Beam Center Line");
+  line_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  line_->setName("simVis::BeamCenterLine");
+  line_->allocate(2);
+  line_->setVertex(0, osg::Vec3());
+  line_->setVertex(1, osg::Y_AXIS);
+  line_->setColor(simVis::Color::Fuchsia);
+  line_->setLineWidth(2.0);
+  line_->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_BEAM, BIN_GLOBAL_SIMSDK);
+  addChild(line_);
+}
+
+void BeamCenterLine::update(const simData::BeamUpdate& update, const simData::BeamPrefs& activePrefs)
+{
+  const double rangeM = update.range();
+  if (rangeM_ != rangeM)
+  {
+    line_->setVertex(1, osg::Y_AXIS * rangeM);
+    rangeM_ = rangeM;
+  }
+  if (activePrefs.commonprefs().useoverridecolor())
+    setColor(simVis::Color(activePrefs.commonprefs().overridecolor(), simVis::Color::RGBA));
+  else
+    setColor(simVis::Color(activePrefs.commonprefs().color(), simVis::Color::RGBA));
+}
+
+void BeamCenterLine::setLineWidth(float lineWidth)
+{
+  if (lineWidth != line_->getLineWidth())
+    line_->setLineWidth(lineWidth);
+}
+
+void BeamCenterLine::setColor(const simVis::Color& x)
+{
+  if (x != line_->getColor())
+    line_->setColor(x);
 }
 
 // --------------------------------------------------------------------------
@@ -790,6 +864,7 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
 
   if (activePrefs.drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
   {
+    // beam visual is drawn by antenna pattern impl.
     force = force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawtype));
     if (force)
     {
@@ -798,6 +873,11 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
       {
         beamLocatorNode_->removeChild(beamVolume_);
         beamVolume_ = nullptr;
+      }
+      if (beamCenterLine_)
+      {
+        beamLocatorNode_->removeChild(beamCenterLine_);
+        beamCenterLine_ = nullptr;
       }
       // ensure that antenna pattern is in the scene graph; note that antenna_ is never deleted; it is needed to support gain calcs.
       beamLocatorNode_->removeChild(antenna_);
@@ -821,12 +901,43 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
     return;
   }
 
-  // beam visual is drawn by SphericalVolume
-
-  // gain calcs can be affected by prefs changes, even if not displaying antenna pattern
+  // not displaying antenna pattern, but need to update antenna as gain calcs can be affected by prefs changes
   if (force || newPrefs)
     antenna_->setPrefs(activePrefs);
 
+  if (activePrefs.drawtype() == simData::BeamPrefs_DrawType_LINE)
+  {
+    // beam visual is drawn as a simple line
+    // clean up if we switched draw type
+    force = force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawtype));
+    if (force)
+    {
+      // remove any old (non-antenna) beam volume
+      if (beamVolume_)
+      {
+        beamLocatorNode_->removeChild(beamVolume_);
+        beamVolume_ = nullptr;
+      }
+      if (beamCenterLine_)
+      {
+        beamLocatorNode_->removeChild(beamCenterLine_);
+        beamCenterLine_ = nullptr;
+      }
+      // remove any antenna pattern from the scene graph; note that antenna_ is never deleted; it is needed to support gain calcs.
+      beamLocatorNode_->removeChild(antenna_);
+
+      beamCenterLine_ = new BeamCenterLine();
+      beamLocatorNode_->addChild(beamCenterLine_);
+    }
+    // above code should guarantee that there is a non-null beamCenterLine_
+    assert(beamCenterLine_);
+    if (beamCenterLine_)
+      beamCenterLine_->update(activeUpdate, activePrefs);
+
+    return;
+  }
+
+  // beam visual is drawn by SphericalVolume: cone or pyramid
   const bool requiresNewNode =
     force ||
     !beamVolume_ ||
@@ -843,7 +954,11 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
       beamLocatorNode_->removeChild(beamVolume_);
       beamVolume_ = nullptr;
     }
-
+    if (beamCenterLine_)
+    {
+      beamLocatorNode_->removeChild(beamCenterLine_);
+      beamCenterLine_ = nullptr;
+    }
     // don't create a volume when range is 0
     if (activeUpdate.range() > 0.)
     {
