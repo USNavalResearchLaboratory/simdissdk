@@ -30,7 +30,6 @@
 #include <vector>
 #include "osgEarth/Controls"
 #include "osgEarth/LabelNode"
-#include "osgEarth/MouseCoordsTool"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/optional"
 #include "osgEarth/PlaceNode"

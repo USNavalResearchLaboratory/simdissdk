@@ -27,7 +27,7 @@
 
 namespace simUtil {
 
-static const osgEarth::Units OSGEARTH_NONE;
+static const osgEarth::UnitsType OSGEARTH_NONE;
 
 /**
  * Helper class to UnitTypeConverter that stores the mappings from each
@@ -42,7 +42,7 @@ public:
   }
 
   /** Adds a mapping. */
-  void add(const osgEarth::Units& osg, const simCore::Units& core, int data)
+  void add(const osgEarth::UnitsType& osg, const simCore::Units& core, int data)
   {
     // No way to add new families in osgEarth, so we can't test getType()
     const bool osgValid = !osg.getName().empty();
@@ -78,7 +78,7 @@ public:
   }
 
   /** Retrieve the simCore units */
-  const simCore::Units& toCore(const osgEarth::Units& osg) const
+  const simCore::Units& toCore(const osgEarth::UnitsType& osg) const
   {
     auto i = osgEarthToCore_.find(osg.getName());
     if (i == osgEarthToCore_.end())
@@ -96,7 +96,7 @@ public:
   }
 
   /** Retrieve the simData units */
-  int toData(const osgEarth::Units& osg) const
+  int toData(const osgEarth::UnitsType& osg) const
   {
     auto i = osgEarthToData_.find(osg.getName());
     if (i == osgEarthToData_.end())
@@ -114,7 +114,7 @@ public:
   }
 
   /** Retrieve the osgEarth units */
-  const osgEarth::Units& toOsgEarth(const simCore::Units& core) const
+  const osgEarth::UnitsType& toOsgEarth(const simCore::Units& core) const
   {
     auto i = coreToOsgEarth_.find(core.name());
     if (i == coreToOsgEarth_.end())
@@ -123,7 +123,7 @@ public:
   }
 
   /** Retrieve the osgEarth units */
-  const osgEarth::Units& toOsgEarth(int data) const
+  const osgEarth::UnitsType& toOsgEarth(int data) const
   {
     auto i = dataToOsgEarth_.find(data);
     if (i == dataToOsgEarth_.end())
@@ -146,9 +146,9 @@ private:
   std::map<std::string, int> osgEarthToData_;
   std::map<std::string, int> coreToData_;
 
-  std::map<std::string, osgEarth::Units> coreToOsgEarth_;
-  std::map<int, osgEarth::Units> dataToOsgEarth_;
-  const osgEarth::Units osgEarthInvalid_;
+  std::map<std::string, osgEarth::UnitsType> coreToOsgEarth_;
+  std::map<int, osgEarth::UnitsType> dataToOsgEarth_;
+  const osgEarth::UnitsType osgEarthInvalid_;
   const simCore::Units simCoreInvalid_;
 };
 
@@ -265,37 +265,37 @@ UnitTypeConverter::~UnitTypeConverter()
 {
 }
 
-const osgEarth::Units& UnitTypeConverter::toOsgEarth(const simCore::Units& core) const
+const osgEarth::UnitsType& UnitTypeConverter::toOsgEarth(const simCore::Units& core) const
 {
   return helper_->toOsgEarth(core);
 }
 
-const osgEarth::Units& UnitTypeConverter::toOsgEarth(simData::ElapsedTimeFormat data) const
+const osgEarth::UnitsType& UnitTypeConverter::toOsgEarth(simData::ElapsedTimeFormat data) const
 {
   return helper_->toOsgEarth(data);
 }
 
-const osgEarth::Units& UnitTypeConverter::toOsgEarth(simData::AngleUnits data) const
+const osgEarth::UnitsType& UnitTypeConverter::toOsgEarth(simData::AngleUnits data) const
 {
   return helper_->toOsgEarth(data);
 }
 
-const osgEarth::Units& UnitTypeConverter::toOsgEarth(simData::DistanceUnits data) const
+const osgEarth::UnitsType& UnitTypeConverter::toOsgEarth(simData::DistanceUnits data) const
 {
   return helper_->toOsgEarth(data);
 }
 
-const osgEarth::Units& UnitTypeConverter::toOsgEarth(simData::SpeedUnits data) const
+const osgEarth::UnitsType& UnitTypeConverter::toOsgEarth(simData::SpeedUnits data) const
 {
   return helper_->toOsgEarth(data);
 }
 
-const osgEarth::Units& UnitTypeConverter::toOsgEarthFromData(int data) const
+const osgEarth::UnitsType& UnitTypeConverter::toOsgEarthFromData(int data) const
 {
   return helper_->toOsgEarth(data);
 }
 
-const simCore::Units& UnitTypeConverter::toCore(const osgEarth::Units& osg) const
+const simCore::Units& UnitTypeConverter::toCore(const osgEarth::UnitsType& osg) const
 {
   return helper_->toCore(osg);
 }
@@ -325,7 +325,7 @@ const simCore::Units& UnitTypeConverter::toCoreFromData(int data) const
   return helper_->toCore(data);
 }
 
-int UnitTypeConverter::toData(const osgEarth::Units& osg) const
+int UnitTypeConverter::toData(const osgEarth::UnitsType& osg) const
 {
   return helper_->toData(osg);
 }
@@ -340,12 +340,12 @@ bool UnitTypeConverter::isRegistered(const simCore::Units& units) const
   return helper_->isRegistered(units);
 }
 
-void UnitTypeConverter::addMapping(const osgEarth::Units& osg, const simCore::Units& core, int data)
+void UnitTypeConverter::addMapping(const osgEarth::UnitsType& osg, const simCore::Units& core, int data)
 {
   helper_->add(osg, core, data);
 }
 
-void UnitTypeConverter::addMapping(const osgEarth::Units& osg, const simCore::Units& core)
+void UnitTypeConverter::addMapping(const osgEarth::UnitsType& osg, const simCore::Units& core)
 {
   addMapping(osg, core, 0);
 }
@@ -355,7 +355,7 @@ void UnitTypeConverter::addMapping(const simCore::Units& core, int data)
   addMapping(OSGEARTH_NONE, core, data);
 }
 
-void UnitTypeConverter::addMapping(const osgEarth::Units& osg, int data)
+void UnitTypeConverter::addMapping(const osgEarth::UnitsType& osg, int data)
 {
   addMapping(osg, simCore::Units::UNITLESS, data);
 }
