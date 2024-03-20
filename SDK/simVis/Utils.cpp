@@ -389,7 +389,7 @@ bool isImageFile(const std::string& location)
   return false;
 }
 
-osgEarth::Units convertUnitsToOsgEarth(const simData::DistanceUnits& input)
+osgEarth::UnitsType convertUnitsToOsgEarth(const simData::DistanceUnits& input)
 {
     return
         input == simData::UNITS_CENTIMETERS    ? osgEarth::Units::CENTIMETERS :
@@ -405,10 +405,10 @@ osgEarth::Units convertUnitsToOsgEarth(const simData::DistanceUnits& input)
         input == simData::UNITS_MILLIMETERS    ? osgEarth::Units::MILLIMETERS :
         input == simData::UNITS_NAUTICAL_MILES ? osgEarth::Units::NAUTICAL_MILES :
         input == simData::UNITS_YARDS          ? osgEarth::Units::YARDS :
-        osgEarth::Units(); // invalid
+        osgEarth::UnitsType(); // invalid
 }
 
-osgEarth::Units convertUnitsToOsgEarth(const simData::SpeedUnits& input)
+osgEarth::UnitsType convertUnitsToOsgEarth(const simData::SpeedUnits& input)
 {
     return
         input == simData::UNITS_METERS_PER_SECOND     ? osgEarth::Units::METERS_PER_SECOND :
@@ -419,7 +419,7 @@ osgEarth::Units convertUnitsToOsgEarth(const simData::SpeedUnits& input)
         input == simData::UNITS_KILOMETERS_PER_SECOND ? osgEarth::Units::KILOMETERS_PER_SECOND :
         input == simData::UNITS_DATAMILES_PER_HOUR    ? osgEarth::Units::DATA_MILES_PER_HOUR :
         input == simData::UNITS_YARDS_PER_SECOND      ? osgEarth::Units::YARDS_PER_SECOND :
-        osgEarth::Units(); // invalid
+        osgEarth::UnitsType(); // invalid
 }
 
 void iconAlignmentToOffsets(simData::TextAlignment align, const osg::Vec2f& iconDims, osg::Vec2f& outOffsets)

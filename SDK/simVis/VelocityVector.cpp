@@ -173,7 +173,7 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   if (prefs.velvecusestaticlength())
   {
     velocity = lla.velocity().normalize();
-    const osgEarth::Units sizeUnits = simVis::convertUnitsToOsgEarth(prefs.velvecstaticlenunits());
+    const osgEarth::UnitsType sizeUnits = simVis::convertUnitsToOsgEarth(prefs.velvecstaticlenunits());
     scale = sizeUnits.convertTo(osgEarth::Units::METERS, prefs.velvecstaticlen());
   }
   else

@@ -130,7 +130,7 @@ int testFromOsgEarth()
 int testFromData()
 {
   int rv = 0;
-  const osgEarth::Units OSGEARTH_NONE;
+  const osgEarth::UnitsType OSGEARTH_NONE;
   simUtil::UnitTypeConverter conv;
 
   // time to osgEarth
@@ -219,7 +219,7 @@ int testFromData()
 int testFromCore()
 {
   int rv = 0;
-  const osgEarth::Units OSGEARTH_NONE;
+  const osgEarth::UnitsType OSGEARTH_NONE;
   simUtil::UnitTypeConverter conv;
 
   // Distance to osgEarth
@@ -326,7 +326,7 @@ int testAddMapping()
   simUtil::UnitTypeConverter conv;
   const simCore::Units coreDbsm("dBsm", "dBsm", 1.0, "dBsm");
   const simCore::Units corePercent("percent", "%", 1.0, "percent");
-  const osgEarth::Units OSGEARTH_NONE;
+  const osgEarth::UnitsType OSGEARTH_NONE;
 
   // Should not recognize the unit ahead of time
   rv += SDK_ASSERT(!conv.isRegistered(coreDbsm));
