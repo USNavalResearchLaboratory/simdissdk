@@ -24,10 +24,19 @@
 #define SIMUTIL_UNITTYPECONVERTER_H
 
 #include <memory>
+#include "osgEarth/Version"
 #include "simCore/Common/Common.h"
 #include "simData/DataTypes.h"
 
+#if OSGEARTH_SOVERSION >= 151
 namespace osgEarth { class UnitsType; }
+#else
+namespace osgEarth {
+  class Units;
+  using UnitsType = Units;
+}
+#endif
+
 namespace simCore { class Units; }
 
 namespace simUtil {

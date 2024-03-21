@@ -45,10 +45,17 @@
 #include "osgEarth/Color"
 #include "osgEarth/GeoData"
 #include "osgEarth/MapNode"
-#include "osgEarth/SpatialReference"
-#include "osgEarth/Units"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderFactory"
+#include "osgEarth/SpatialReference"
+#include "osgEarth/Units"
+#include "osgEarth/Version"
+
+#if OSGEARTH_SOVERSION >= 151
+namespace osgEarth { class UnitsType; }
+#else
+namespace osgEarth { using UnitsType = Units; }
+#endif
 
 // MACROS to test for changes in protobuf properties.
 
