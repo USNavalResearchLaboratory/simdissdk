@@ -48,8 +48,7 @@ class SDKDATA_EXPORT MemoryDataStore : public DataStore
 public:
   MemoryDataStore();
   explicit MemoryDataStore(const ScenarioProperties &properties);
-  MemoryDataStore(const MemoryDataStore& rhs) = delete;
-  MemoryDataStore& operator=(const MemoryDataStore& rhs) = delete;
+  SDK_DISABLE_COPY(MemoryDataStore);
 
   virtual ~MemoryDataStore();
 

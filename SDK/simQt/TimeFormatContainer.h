@@ -48,8 +48,7 @@ class SDKQT_EXPORT TimeFormatContainer : public QObject
 public:
   /// constructor
   TimeFormatContainer(simCore::TimeFormat timeFormat, const QString& name);
-  TimeFormatContainer(const TimeFormatContainer&) = delete;
-  TimeFormatContainer& operator=(const TimeFormatContainer&) = delete;
+  SDK_DISABLE_COPY(TimeFormatContainer);
   virtual ~TimeFormatContainer();
 
   ///@return the enumeration of the time format

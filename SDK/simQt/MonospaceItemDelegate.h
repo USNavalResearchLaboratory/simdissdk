@@ -35,8 +35,7 @@ class SDKQT_EXPORT MonospaceItemDelegate : public QStyledItemDelegate
 public:
   /** Allocates a single monospace font to use in drawing */
   MonospaceItemDelegate(QObject* parent = nullptr);
-  MonospaceItemDelegate(const MonospaceItemDelegate&) = delete;
-  MonospaceItemDelegate& operator=(const MonospaceItemDelegate&) = delete;
+  SDK_DISABLE_COPY(MonospaceItemDelegate);
   /** Deletes the font dynamic memory */
   virtual ~MonospaceItemDelegate();
 

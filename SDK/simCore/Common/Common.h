@@ -51,6 +51,20 @@
 #define SDK_DEPRECATE(METHOD, TEXT) SDK_DEPRECATED_PRE(TEXT) METHOD SDK_DEPRECATED_POST(TEXT)
 
 
+/** Disable copy constructor and copy assignment, on class "K" */
+#define SDK_DISABLE_COPY(K) \
+  K(const K&) = delete; \
+  K& operator=(const K&) = delete;
+/** Disable move constructor and move assignment, on class "K" */
+#define SDK_DISABLE_MOVE(K) \
+  K(K&&) = delete; \
+  K& operator=(K&&) = delete;
+/** Disable copy and move constructor, and copy and move assignment, on class "K" */
+#define SDK_DISABLE_COPY_MOVE(K) \
+  SDK_DISABLE_COPY(K) \
+  SDK_DISABLE_MOVE(K)
+
+
 #ifdef WIN32
   #ifndef WIN32_LEAN_AND_MEAN
     #define WIN32_LEAN_AND_MEAN

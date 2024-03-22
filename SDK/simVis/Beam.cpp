@@ -266,8 +266,7 @@ class BeamCenterLine : public osg::Group
 public:
   /** Constructor */
   BeamCenterLine();
-  BeamCenterLine(const BeamCenterLine& rhs) = delete;
-  BeamCenterLine& operator=(const BeamCenterLine& rhs) = delete;
+  SDK_DISABLE_COPY(BeamCenterLine);
   /** Return the proper library name */
   virtual const char* libraryName() const override  { return "simVis"; }
   /** Return the class name */

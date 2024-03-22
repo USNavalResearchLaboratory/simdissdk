@@ -101,8 +101,7 @@ class SDKCORE_EXPORT RowReader
 {
 public:
   explicit RowReader(simCore::CsvReader& reader);
-  RowReader(const RowReader& rhs) = delete;
-  RowReader& operator=(const RowReader& rhs) = delete;
+  SDK_DISABLE_COPY(RowReader);
 
   /** Returns true if readHeader/readRow failed, or if there is no CSV reader  (end of file) */
   bool eof() const;
