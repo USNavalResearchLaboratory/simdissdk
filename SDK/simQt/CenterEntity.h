@@ -25,7 +25,9 @@
 #define SIMQT_CENTERENTITY_H
 
 #include <memory>
+#include <tuple>
 #include <QObject>
+#include <QString>
 
 #include "osg/observer_ptr"
 #include "simCore/Common/Common.h"
@@ -121,28 +123,28 @@ private Q_SLOTS:
 
 private:
   /** Returns the closest TSPI time to the given time if the platform is active and has TSPI points.  Returns -1.0 on error. */
-  double getPlatformNearestTime_(double time, uint64_t id) const;
+  std::tuple<double, QString> getPlatformNearestTime_(double time, uint64_t id) const;
   /** Returns the closest draw data time to the given time if the custom rendering is active.  Returns -1.0 on error. */
-  double getCustomRenderingNearestTime_(double time, uint64_t id) const;
+  std::tuple<double, QString> getCustomRenderingNearestTime_(double time, uint64_t id) const;
   /** The valid time at or before the search time; returns -1.0 on error */
   double getCustomRenderingEarlierTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const;
   /** The valid time at or after the search time; returns -1.0 on error */
   double getCustomRenderingLaterTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const;
   /** Returns the closest RAE time to the given time if the beam is active.  Returns -1.0 on error. */
-  double getBeamNearestTime_(double time, uint64_t id) const;
+  std::tuple<double, QString> getBeamNearestTime_(double time, uint64_t id) const;
   /** Returns the closest RAE time to the given time if the gate is active.  Returns -1.0 on error. */
-  double getGateNearestTime_(double time, uint64_t id) const;
+  std::tuple<double, QString> getGateNearestTime_(double time, uint64_t id) const;
   /** Returns the closest RAE time to the given time if the laser is active.  Returns -1.0 on error. */
-  double getLaserNearestTime_(double time, uint64_t id) const;
+  std::tuple<double, QString> getLaserNearestTime_(double time, uint64_t id) const;
   /** Returns the closest RAE time to the given time if the LOB is active.  Returns -1.0 on error. */
-  double getLobGroupNearestTime_(double time, uint64_t id) const;
+  std::tuple<double, QString> getLobGroupNearestTime_(double time, uint64_t id) const;
   /** Returns the closest FOV time to the given time if the projector is active.  Returns -1.0 on error. */
-  double getProjectorNearestTime_(double time, uint64_t id) const;
+  std::tuple<double, QString> getProjectorNearestTime_(double time, uint64_t id) const;
   /** Target beams need different processing so they get their own routine. Returns -1.0 on error. */
-  double getNearestTargetTime_(double searchTime, uint64_t id) const;
+  std::tuple<double, QString>  getNearestTargetTime_(double searchTime, uint64_t id) const;
   /** Returns the closest time in update with data draw on */
   template<typename CommandSlice, typename UpdateSlice>
-  double getNearestDrawTime_(double time, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const;
+  std::tuple<double, QString> getNearestDrawTime_(double time, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const;
   /** Returns the time closest to searchTime;  returns INVALID if both earlierTime and laterTime are invalid */
   double getNearestTime_(double searchTime, double earlierTime, double laterTime) const;
 
@@ -155,7 +157,7 @@ private:
   int getEntityDrawState_(const CommandSlice* commands, std::map<double, bool>& drawState) const;
 
   /** Gets the time range of id as limited by its data and the life span of its host; returns 0 on success. */
-  int getHostTimeRange_(uint64_t id, double& beginTime, double& endTime) const;
+  std::tuple<int, QString> getHostTimeRange_(uint64_t id, double& beginTime, double& endTime) const;
   /** Gets the time range of id as limited by its data, if static returns the time span of the scenario; returns 0 on success. */
   int getPlatformTimeRange_(uint64_t id, double& beginTime, double& endTime) const;
   /** Gets the time range based on the beam's targets */

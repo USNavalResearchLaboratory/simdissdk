@@ -153,6 +153,7 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
 {
   // Clear out any previous center on inactive platform
   newTime_ = INVALID_TIME;
+  QString reason = tr("Inactive entity selected");
 
   QList<uint64_t> ids = tree_.selectedItems();
   if (ids.empty())
@@ -167,7 +168,7 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
     auto node = centerEntity_.getViewCenterableNode(*it);
     if ((node == nullptr) || (node->isActive() && !node->isVisible()))
     {
-      tree_.setUseCenterAction(false, tr("Inactive entity selected"));
+      tree_.setUseCenterAction(false, reason);
       return;
     }
 
@@ -177,14 +178,14 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
       // If more than one entity is selected don't try to find a time where all are active
       if (ids.size() != 1)
       {
-        tree_.setUseCenterAction(false, tr("Inactive entity selected"));
+        tree_.setUseCenterAction(false, reason);
         return;
       }
 
       // Make sure time controls are enabled and that the scenario is in file mode
       if ((dataStore_.getBoundClock() == nullptr) || dataStore_.getBoundClock()->controlsDisabled() || dataStore_.getBoundClock()->isLiveMode())
       {
-        tree_.setUseCenterAction(false, tr("Inactive entity selected"));
+        tree_.setUseCenterAction(false, reason);
         return;
       }
 
@@ -193,25 +194,25 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
       switch (dataStore_.objectType(id))
       {
       case simData::PLATFORM:
-        newTime_ = getPlatformNearestTime_(time, id);
+        std::tie(newTime_, reason) = getPlatformNearestTime_(time, id);
         break;
       case simData::CUSTOM_RENDERING:
-        newTime_ = getCustomRenderingNearestTime_(time, id);
+        std::tie(newTime_, reason) = getCustomRenderingNearestTime_(time, id);
         break;
       case simData::BEAM:
-        newTime_ = getBeamNearestTime_(time, id);
+        std::tie(newTime_, reason) = getBeamNearestTime_(time, id);
         break;
       case simData::GATE:
-        newTime_ = getGateNearestTime_(time, id);
+        std::tie(newTime_, reason) = getGateNearestTime_(time, id);
         break;
       case simData::LASER:
-        newTime_ = getLaserNearestTime_(time, id);
+        std::tie(newTime_, reason) = getLaserNearestTime_(time, id);
         break;
       case simData::LOB_GROUP:
-        newTime_ = getLobGroupNearestTime_(time, id);
+        std::tie(newTime_, reason) = getLobGroupNearestTime_(time, id);
         break;
       case simData::PROJECTOR:
-        newTime_ = getProjectorNearestTime_(time, id);
+        std::tie(newTime_, reason) = getProjectorNearestTime_(time, id);
         break;
       case simData::NONE:
       case simData::ALL:
@@ -220,7 +221,7 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
 
       if (newTime_ == INVALID_TIME)
       {
-        tree_.setUseCenterAction(false, tr("Inactive entity selected"));
+        tree_.setUseCenterAction(false, reason);
         return;
       }
     }
@@ -247,51 +248,57 @@ void BindCenterEntityToEntityTreeComposite::centerOnEntity_(uint64_t id)
   centerEntity_.centerOnEntity(id, true);
 }
 
-double BindCenterEntityToEntityTreeComposite::getPlatformNearestTime_(double time, uint64_t id) const
+std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getPlatformNearestTime_(double time, uint64_t id) const
 {
   // First check the visible flag
   simData::DataStore::Transaction trans;
   auto pref = dataStore_.platformPrefs(id, &trans);
-  if ((pref == nullptr) || !pref->commonprefs().draw() || !pref->commonprefs().datadraw())
-    return INVALID_TIME;
+  if (pref == nullptr)
+    return { INVALID_TIME, tr("Invalid platform") };
+  if (!pref->commonprefs().draw())
+    return { INVALID_TIME, tr("Draw flag off") };
+  if (!pref->commonprefs().datadraw())
+    return { INVALID_TIME, tr("Data draw flag off") };
   trans.release(&pref);
 
   // Next check data points
   auto slice = dataStore_.platformUpdateSlice(id);
   if ((slice == nullptr) || (slice->numItems() == 0))
-    return INVALID_TIME;
+    return { INVALID_TIME, tr("No TSPI points") };
 
   auto iter = slice->upper_bound(time);
 
   // Since there is a check above for at least one point, previous or next must be set
 
   if (iter.peekNext() == nullptr)
-    return iter.peekPrevious()->time();
+    return { iter.peekPrevious()->time(), QString() };
 
   if (iter.peekPrevious() == nullptr)
-    return iter.peekNext()->time();
+    return { iter.peekNext()->time(), QString() };
 
   const double nextDelta = iter.peekNext()->time() - time;
   const double previousDelta = time - iter.peekPrevious()->time();
 
-  return nextDelta < previousDelta ? iter.peekNext()->time() : iter.peekPrevious()->time();
+  return { nextDelta < previousDelta ? iter.peekNext()->time() : iter.peekPrevious()->time(), QString() };
 }
 
-double BindCenterEntityToEntityTreeComposite::getCustomRenderingNearestTime_(double time, uint64_t id) const
+std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getCustomRenderingNearestTime_(double time, uint64_t id) const
 {
   // First check the visible flag
   simData::DataStore::Transaction trans;
   auto pref = dataStore_.customRenderingPrefs(id, &trans);
   if ((pref == nullptr) || !pref->commonprefs().draw())
-    return INVALID_TIME;
+    return { INVALID_TIME, tr("Custom rendering hidden") };
   trans.release(&pref);
 
   auto commands = dataStore_.customRenderingCommandSlice(id);
   if ((commands == nullptr) || (commands->numItems() == 0))
-    return INVALID_TIME;
+    return { INVALID_TIME, tr("Custom rendering lacks data draw") };
 
   double crEarlierTime = getCustomRenderingEarlierTime_(time, commands);
   double crLaterTime = getCustomRenderingLaterTime_(time, commands);
+  if ((crEarlierTime == INVALID_TIME) || (crLaterTime == INVALID_TIME))
+    return { INVALID_TIME, tr("Custom rendering lacks data draw") };
 
   // The custom rendering is limited by its host, if any
   auto property = dataStore_.customRenderingProperties(id, &trans);
@@ -303,11 +310,12 @@ double BindCenterEntityToEntityTreeComposite::getCustomRenderingNearestTime_(dou
   if (hostId != 0)
   {
     // adjust crEarlierTime and crLaterTime as necessary
-    if (getHostTimeRange_(hostId, crEarlierTime, crLaterTime) != 0)
-      return INVALID_TIME;
+    auto [rv, reason] = getHostTimeRange_(hostId, crEarlierTime, crLaterTime);
+    if (rv != 0)
+      return { INVALID_TIME, reason };
   }
 
-  return getNearestTime_(time, crEarlierTime, crLaterTime);
+  return { getNearestTime_(time, crEarlierTime, crLaterTime), QString() };
 }
 
 double BindCenterEntityToEntityTreeComposite::getCustomRenderingEarlierTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const
@@ -358,46 +366,47 @@ double BindCenterEntityToEntityTreeComposite::getCustomRenderingLaterTime_(doubl
   return INVALID_TIME;
 }
 
-double BindCenterEntityToEntityTreeComposite::getBeamNearestTime_(double time, uint64_t id) const
+std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getBeamNearestTime_(double time, uint64_t id) const
 {
   if (isTargetBeam_(id))
     return getNearestTargetTime_(time, id);
   return getNearestDrawTime_(time, id, dataStore_.beamCommandSlice(id), dataStore_.beamUpdateSlice(id));
 }
 
-double BindCenterEntityToEntityTreeComposite::getGateNearestTime_(double time, uint64_t id) const
+std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getGateNearestTime_(double time, uint64_t id) const
 {
   return getNearestDrawTime_(time, id, dataStore_.gateCommandSlice(id), dataStore_.gateUpdateSlice(id));
 }
 
-double BindCenterEntityToEntityTreeComposite::getLaserNearestTime_(double time, uint64_t id) const
+std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getLaserNearestTime_(double time, uint64_t id) const
 {
   return getNearestDrawTime_(time, id, dataStore_.laserCommandSlice(id), dataStore_.laserUpdateSlice(id));
 }
 
-double BindCenterEntityToEntityTreeComposite::getLobGroupNearestTime_(double time, uint64_t id) const
+std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getLobGroupNearestTime_(double time, uint64_t id) const
 {
   return getNearestDrawTime_(time, id, dataStore_.lobGroupCommandSlice(id), dataStore_.lobGroupUpdateSlice(id));
 }
 
-double BindCenterEntityToEntityTreeComposite::getProjectorNearestTime_(double time, uint64_t id) const
+std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getProjectorNearestTime_(double time, uint64_t id) const
 {
   return getNearestDrawTime_(time, id, dataStore_.projectorCommandSlice(id), dataStore_.projectorUpdateSlice(id));
 }
 
 template<typename CommandSlice, typename UpdateSlice>
-double BindCenterEntityToEntityTreeComposite::getNearestDrawTime_(double searchTime, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const
+std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getNearestDrawTime_(double searchTime, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const
 {
   // Calculate the time range as limited by the host
   double hostBeginTime;
   double hostEndTime;
-  if (getHostTimeRange_(id, hostBeginTime, hostEndTime) != 0)
-    return INVALID_TIME;
+  auto [rv, reason] = getHostTimeRange_(id, hostBeginTime, hostEndTime);
+  if (rv != 0)
+    return { INVALID_TIME, reason };
 
   // Find the times when the host is on/off
   std::map<double, bool> hostDrawState;
   if (getHostDrawState_(id, hostDrawState) != 0)
-    return INVALID_TIME;
+    return { INVALID_TIME, tr("No beam draw state") };  // Limiting the reason to beam is correct, it is the only use case that will fail.
 
   // Find the times when the entity is on/off
   std::map<double, bool> drawState;
@@ -405,12 +414,12 @@ double BindCenterEntityToEntityTreeComposite::getNearestDrawTime_(double searchT
   const bool defaultOn = ((dataStore_.objectType(id) == simData::LOB_GROUP) || (dataStore_.objectType(id) == simData::PROJECTOR));
   if (defaultOn)
     drawState[0.0] = true;
-  if ((getEntityDrawState_(commands, drawState) != 0) && !defaultOn)
-    return INVALID_TIME;
+  if (((getEntityDrawState_(commands, drawState) != 0) && !defaultOn) || drawState.empty())
+    return { INVALID_TIME, tr("No draw state") };
 
   // Next check data points
   if ((updates == nullptr) || (updates->numItems() == 0))
-    return INVALID_TIME;
+    return { INVALID_TIME , tr("No data points") };
 
   double earlierTime = INVALID_TIME;
   double laterTime = INVALID_TIME;
@@ -441,7 +450,10 @@ double BindCenterEntityToEntityTreeComposite::getNearestDrawTime_(double searchT
     }
   }
 
-  return getNearestTime_(searchTime, earlierTime, laterTime);
+  if ((earlierTime == INVALID_TIME) && (laterTime == INVALID_TIME))
+    return { INVALID_TIME, tr("Lack of entity data when draw state is true for both the entity and the host") };
+
+  return { getNearestTime_(searchTime, earlierTime, laterTime), QString() };
 }
 
 double BindCenterEntityToEntityTreeComposite::getNearestTime_(double searchTime, double earlierTime, double laterTime) const
@@ -461,27 +473,28 @@ double BindCenterEntityToEntityTreeComposite::getNearestTime_(double searchTime,
   return nextDelta < previousDelta ? laterTime : earlierTime;
 }
 
-double BindCenterEntityToEntityTreeComposite::getNearestTargetTime_(double searchTime, uint64_t id) const
+std::tuple<double, QString>  BindCenterEntityToEntityTreeComposite::getNearestTargetTime_(double searchTime, uint64_t id) const
 {
   // Calculate the time range as limited by the host
   double hostBeginTime;
   double hostEndTime;
-  if (getHostTimeRange_(id, hostBeginTime, hostEndTime) != 0)
-    return INVALID_TIME;
+  auto [rv, reason] = getHostTimeRange_(id, hostBeginTime, hostEndTime);
+  if (rv != 0)
+    return { INVALID_TIME, reason };
 
   // Find the times when the host is on/off
   std::map<double, bool> hostDrawState;
   if (getHostDrawState_(id, hostDrawState) != 0)
-    return INVALID_TIME;
+    return { INVALID_TIME, tr("Lack of draw state for host platform") };
 
   auto commands = dataStore_.beamCommandSlice(id);
   if ((commands == nullptr) || (commands->numItems() == 0))
-    return INVALID_TIME;
+    return { INVALID_TIME, tr("Lack of draw state") };
 
   // Find the times when the entity is on/off
   std::map<double, bool> drawState;
-  if (getEntityDrawState_(commands, drawState) != 0)
-    return INVALID_TIME;
+  if ((getEntityDrawState_(commands, drawState) != 0) || drawState.empty())
+    return { INVALID_TIME, tr("Lack of draw state") };
 
   // Next check the targets
   double earlierTime = INVALID_TIME;
@@ -521,7 +534,10 @@ double BindCenterEntityToEntityTreeComposite::getNearestTargetTime_(double searc
     }
   }
 
-  return getNearestTime_(searchTime, earlierTime, laterTime);
+  if ((earlierTime == INVALID_TIME) && (laterTime == INVALID_TIME))
+    return { INVALID_TIME, tr("Lack of a target when draw state is true for both the beam and the host platform") };
+
+  return { getNearestTime_(searchTime, earlierTime, laterTime), QString() };
 }
 
 bool BindCenterEntityToEntityTreeComposite::isActive_(double time, const std::map<double, bool>& drawState) const
@@ -542,7 +558,7 @@ bool BindCenterEntityToEntityTreeComposite::inHostedTimeRange_(double time, doub
   return ((time >= beginTime) && (time <= endTime));
 }
 
-int BindCenterEntityToEntityTreeComposite::getHostTimeRange_(uint64_t id, double& beginTime, double& endTime) const
+std::tuple<int, QString> BindCenterEntityToEntityTreeComposite::getHostTimeRange_(uint64_t id, double& beginTime, double& endTime) const
 {
   beginTime = -std::numeric_limits<double>::max();
   endTime = std::numeric_limits<double>::max();
@@ -557,7 +573,7 @@ int BindCenterEntityToEntityTreeComposite::getHostTimeRange_(uint64_t id, double
       double begin;
       double end;
       if (getPlatformTimeRange_(id, begin, end) != 0)
-        return 1;
+        return { 1, tr("Host platform lacks TSPI points") };
       // might need to truncate children
       if (begin > beginTime)
         beginTime = begin;
@@ -571,12 +587,12 @@ int BindCenterEntityToEntityTreeComposite::getHostTimeRange_(uint64_t id, double
       if (isTargetBeam_(id))
       {
         if (getTargetTimeRange_(id, begin, end) != 0)
-          return 1;
+          return { 1, tr("Target beam lacks target") };
       }
       else
       {
         if (getTimeRange_(id, begin, end, dataStore_.beamUpdateSlice(id)) != 0)
-          return 1;
+          return { 1, tr("Beam lacks RAE data") };
       }
       // might need to truncate children (gates and projectors)
       if (begin > beginTime)
@@ -588,34 +604,34 @@ int BindCenterEntityToEntityTreeComposite::getHostTimeRange_(uint64_t id, double
     else if (type == simData::GATE)
     {
       if (getTimeRange_(id, beginTime, endTime, dataStore_.gateUpdateSlice(id)) != 0)
-        return 1;
+        return { 1, tr("Gate lacks RAE Data") };
     }
     else if (type == simData::LASER)
     {
       if (getTimeRange_(id, beginTime, endTime, dataStore_.laserUpdateSlice(id)) != 0)
-        return 1;
+        return { 1, tr("Laser lacks orientation data") };
     }
     else if (type == simData::LOB_GROUP)
     {
       if (getTimeRange_(id, beginTime, endTime, dataStore_.lobGroupUpdateSlice(id)) != 0)
-        return 1;
+        return { 1, tr("LOB lacks data") };
     }
     else if (type == simData::PROJECTOR)
     {
       if (getTimeRange_(id, beginTime, endTime, dataStore_.projectorUpdateSlice(id)) != 0)
-        return 1;
+        return { 1, tr("Projector lacks data") };
     }
     else if (type == simData::CUSTOM_RENDERING)
     {
       // Dev error, already handled by other routines
       assert(false);
-      return 1;
+      return { 1, tr("Internal error") };
     }
 
     id = dataStore_.entityHostId(id);
   } while (id != 0);
 
-  return 0;
+  return { 0, QString() };
 }
 
 int BindCenterEntityToEntityTreeComposite::getHostDrawState_(uint64_t id, std::map<double, bool>& hostDrawState) const
