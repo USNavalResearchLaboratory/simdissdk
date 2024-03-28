@@ -570,8 +570,8 @@ std::tuple<int, QString> BindCenterEntityToEntityTreeComposite::getHostTimeRange
     auto type = dataStore_.objectType(id);
     if (type == simData::PLATFORM)
     {
-      double begin;
-      double end;
+      double begin = 0.;
+      double end = 0.;
       if (getPlatformTimeRange_(id, begin, end) != 0)
         return { 1, tr("Host platform lacks TSPI points") };
       // might need to truncate children
@@ -582,8 +582,8 @@ std::tuple<int, QString> BindCenterEntityToEntityTreeComposite::getHostTimeRange
     }
     else if (type == simData::BEAM)
     {
-      double begin;
-      double end;
+      double begin = 0.;
+      double end = 0.;
       if (isTargetBeam_(id))
       {
         if (getTargetTimeRange_(id, begin, end) != 0)
