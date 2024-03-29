@@ -977,6 +977,27 @@ bool DockWidget::allDockingDisabled() const
   return (disableAllDocking_ != nullptr && disableAllDocking_->value());
 }
 
+void DockWidget::restoreDefaultLayout()
+{
+  // remove geometry from saved settings
+  if (settings_)
+  {
+    settings_->setValue(path_() + DOCK_WIDGET_GEOMETRY, QVariant());
+    settings_->setValue(path_() + DOCK_WIDGET_UNMAX_GEOMETRY, QVariant());
+  }
+  else
+  {
+    QSettings settings;
+    settings.setValue(path_() + DOCK_WIDGET_GEOMETRY, QVariant());
+    settings.setValue(path_() + DOCK_WIDGET_UNMAX_GEOMETRY, QVariant());
+  }
+  // remove main window temporarily to restore a default state in loadSettings_()
+  auto mainWindow = mainWindow_;
+  mainWindow_ = nullptr;
+  loadSettings_();
+  mainWindow_ = mainWindow;
+}
+
 void DockWidget::verifyDockState_(bool floating)
 {
   // there are cases where Qt will dock this widget despite the allowedAreas, e.g. restoreState or double clicking on title bar
@@ -1309,10 +1330,7 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
     // Must be floatable, because we can't dock without it
     assert(features().testFlag(DockWidgetFloatable));
     if (features().testFlag(DockWidgetFloatable))
-    {
-      setFloating(true);
-      restoreGeometry(geometryBytes);
-    }
+      setFloatingGeometry_(geometryBytes);
     return;
   }
 
@@ -1322,27 +1340,7 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
     const bool globalNoDocking = (disableAllDocking_ != nullptr && disableAllDocking_->value());
     // Restoration failed; new window.  Respect the features() flag to pop up or dock.
     if (features().testFlag(DockWidgetFloatable) || globalNoDocking)
-    {
-      setFloating(true);
-      if (!restoreGeometry(geometryBytes))
-      {
-        // if restoreGeometry failed, use the default size if it is valid
-        if (!defaultSize_.isEmpty())
-          resize(defaultSize_);
-        else // otherwise, resize to the sizeHint, in case the initial resize hasn't happened yet
-          resize(sizeHint());
-
-        // Qt on Linux RHEL8+ (esp Wayland) with multi-screen has problems with positioning widgets such
-        // that the dock widget defaults to (0,0) global instead of near the parent window. This attempts to
-        // fix the position so that it stays on the same screen as the main window in these cases. Attempt to
-        // fix SIM-16068 and SIMDIS-3901. This happens on Qt 5.9 and 5.15 both.
-        QWidget* parentWidget = dynamic_cast<QWidget*>(parent());
-        if (!parentWidget)
-          parentWidget = mainWindow_;
-        QtUtils::centerWidgetOnParent(*this, parentWidget);
-      }
-
-    }
+      setFloatingGeometry_(geometryBytes);
     else
     {
       // Need to dock into a place, because floatable is disabled
@@ -1392,6 +1390,28 @@ QString DockWidget::path_() const
     return combined + "/";
   // Handle the "no simQt::Settings" case
   return QString("Private/%1/%2/").arg(windowTitle(), combined);
+}
+
+void DockWidget::setFloatingGeometry_(const QByteArray& geometryBytes)
+{
+  setFloating(true);
+  if (!restoreGeometry(geometryBytes))
+  {
+    // if restoreGeometry failed, use the default size if it is valid
+    if (!defaultSize_.isEmpty())
+      resize(defaultSize_);
+    else // otherwise, resize to the sizeHint, in case the initial resize hasn't happened yet
+      resize(sizeHint());
+
+    // Qt on Linux RHEL8+ (esp Wayland) with multi-screen has problems with positioning widgets such
+    // that the dock widget defaults to (0,0) global instead of near the parent window. This attempts to
+    // fix the position so that it stays on the same screen as the main window in these cases. Attempt to
+    // fix SIM-16068 and SIMDIS-3901. This happens on Qt 5.9 and 5.15 both.
+    QWidget* parentWidget = dynamic_cast<QWidget*>(parent());
+    if (!parentWidget)
+      parentWidget = mainWindow_;
+    QtUtils::centerWidgetOnParent(*this, parentWidget);
+  }
 }
 
 void DockWidget::setGlobalNotDockableFlag_(bool disallowDocking)
