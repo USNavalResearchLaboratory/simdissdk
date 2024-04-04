@@ -1090,60 +1090,6 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
   }
 }
 
-void SVFactory::createLine_(osg::Geode* geode, const SVData& d, const osg::Vec3& direction)
-{
-  osg::Geometry* geom = new osg::Geometry();
-  geode->addDrawable(geom);
-  geom->setName("simVis::SphericalVolume::line");
-  geom->setUseVertexBufferObjects(true);
-  geom->setUseDisplayList(false);
-  geom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
-
-  // metadata (for fast in-place updates)
-  SVMetaContainer* metaContainer = new SVMetaContainer();
-  geom->setUserData(metaContainer);
-  std::vector<SVMeta>* m = &metaContainer->vertMeta_;
-  m->resize(2);
-  metaContainer->nearRange_ = d.nearRange_;
-  metaContainer->farRange_ = d.farRange_;
-  metaContainer->horizontalAngleRad_ = 0.0f;
-  metaContainer->verticalAngleRad_ = 0.0f;;
-  metaContainer->hasNearFace_ = false;
-
-  // quaternion that will "point" the volume along our direction vector
-  metaContainer->dirQ_.makeRotate(osg::Y_AXIS, direction);
-  const osg::Quat& dirQ = metaContainer->dirQ_;
-
-  const int numVerts = 2;
-  // create the vertices
-  osg::Vec3Array* v = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, numVerts);
-  geom->setVertexArray(v);
-
-  // and the normals
-  osg::Vec3Array* n = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, numVerts);
-  geom->setNormalArray(n);
-
-  (*v)[0] = dirQ * osg::Vec3(0.0f, 0.0f, 0.0f);
-  (*n)[0] = dirQ * osg::Y_AXIS;
-  (*m)[0] = SVMeta(USAGE_CONENEAR, 0.0f, 0.0f, osg::Y_AXIS, 0.0f);
-
-  (*v)[1] = dirQ * osg::Vec3(0.0f, d.farRange_, 0.0f);
-  (*n)[1] = dirQ * osg::Y_AXIS;
-  (*m)[1] = SVMeta(USAGE_CONEFAR, 0.0f, 0.0f, osg::Y_AXIS, 1.0f);
-
-  // and the color array
-  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-  geom->setColorArray(c);
-  (*c)[0] = d.color_;
-
-  v->dirty();
-  n->dirty();
-  c->dirty();
-
-  geom->addPrimitiveSet(new osg::DrawArrays(GL_LINES, 0, 2));
-  geom->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
-}
-
 // A SphericalVolume is a MatrixTransform that parents up to two geode/groups.
 // The first contains the primary geometry; that geometry will always exist, but in some cases will have no primitives.
 // That second in the MatrixTransform (if it exists) contains the opaque elements of the sv:
@@ -1169,13 +1115,6 @@ void SVFactory::createNode(SphericalVolume& sv, const SVData& d, const osg::Vec3
   if (d.shape_ == SVData::SHAPE_PYRAMID)
   {
     svPyramidFactory(sv, d, dir);
-  }
-  else if (d.shape_ == SVData::SHAPE_LINE)
-  {
-    osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-    geode->setName("Line Geode");
-    sv.addChild(geode.get());
-    createLine_(geode.get(), d, dir);
   }
   else
   {
@@ -1280,7 +1219,6 @@ void SVFactory::updateLighting(SphericalVolume* sv, bool lighting)
     assert(0);
     return;
   }
-
   osg::StateSet* stateSet = geom->getOrCreateStateSet();
   simVis::setLighting(stateSet, lighting ?
     osg::StateAttribute::ON  | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE :
