@@ -288,7 +288,7 @@ BeamCenterLine::BeamCenterLine()
   line_->setVertex(0, osg::Vec3());
   line_->setVertex(1, osg::Y_AXIS);
   line_->setColor(simVis::Color::Fuchsia);
-  line_->setLineWidth(2.0);
+  line_->setLineWidth(3.0);
   line_->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_BEAM, BIN_GLOBAL_SIMSDK);
   addChild(line_);
 }
@@ -305,6 +305,11 @@ void BeamCenterLine::update(const simData::BeamUpdate& update, const simData::Be
     setColor(simVis::Color(activePrefs.commonprefs().overridecolor(), simVis::Color::RGBA));
   else
     setColor(simVis::Color(activePrefs.commonprefs().color(), simVis::Color::RGBA));
+
+  // it may be that OFF should be: osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE
+  line_->getOrCreateStateSet()->setMode(GL_BLEND, activePrefs.blended() ?
+    osg::StateAttribute::ON :
+    osg::StateAttribute::OFF);
 }
 
 void BeamCenterLine::setLineWidth(float lineWidth)
