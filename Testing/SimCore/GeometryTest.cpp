@@ -485,6 +485,118 @@ int testQuadricSurface()
   return rv;
 }
 
+int testEllipsoidNormals()
+{
+  int rv = 0;
+
+  // First, test with a sphere, which will have easily confirmed normals
+  simCore::Ellipsoid sphere0;
+  sphere0.scale.set(3., 3., 3.);
+  // Test each of the axis-aligned edges
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    simCore::Vec3{ 3., 0., 0. }), simCore::Vec3{ 1., 0., 0. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    simCore::Vec3{ -3., 0., 0. }), simCore::Vec3{ -1., 0., 0. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    simCore::Vec3{ 0., 3., 0. }), simCore::Vec3{ 0., 1., 0. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    simCore::Vec3{ 0., -3., 0. }), simCore::Vec3{ 0., -1., 0. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    simCore::Vec3{ 0., 0., 3. }), simCore::Vec3{ 0., 0., 1. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    simCore::Vec3{ 0., 0., -3. }), simCore::Vec3{ 0., 0., -1. }));
+
+  // Test a point that isn't on the sphere at all
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    simCore::Vec3{ 2., 0., 0. }), simCore::Vec3{ 1., 0., 0. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    simCore::Vec3{ 4., 0., 0. }), simCore::Vec3{ 1., 0., 0. }));
+
+  // Test another place on the sphere
+  const simCore::Vec3 vNorm1 = simCore::Vec3(12., 3., 4.).normalize();
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    vNorm1 * 3.), vNorm1));
+  // Demonstrate that even if it's not on the sphere we're getting the normal of the center-to-point intersect
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    vNorm1 * 2.), vNorm1));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere0,
+    vNorm1 * 11.), vNorm1));
+
+  // Test with a sphere offset from center
+  simCore::Ellipsoid sphere123;
+  sphere123.scale.set(3., 3., 3.);
+  sphere123.center.set(1., 2., 3.);
+  // farthest east (+X) point on the sphere, at center of its Y/Z axis; normal should point right
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(sphere123,
+    simCore::Vec3{ 4., 2., 3. }), simCore::Vec3{ 1., 0., 0. }));
+
+  // Edge test the 0 scale case
+  simCore::Ellipsoid zeroScale;
+  zeroScale.scale.set(3., 0., 3.);
+  zeroScale.center.set(1., 2., 3.);
+  // Expecting to get back the distance to center, normalized, which is equivalent to if
+  // this actually was a sphere in this case.
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(zeroScale,
+    simCore::Vec3{ 4., 2., 3. }), simCore::Vec3{ 1., 0., 0. }));
+
+  // Test with elongated ellipsoid
+  simCore::Ellipsoid elongated;
+  elongated.scale.set(100., 100., 1.);
+  // Test each of the axis-aligned edges
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(elongated,
+    simCore::Vec3{ 100., 0., 0. }), simCore::Vec3{ 1., 0., 0. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(elongated,
+    simCore::Vec3{ -100., 0., 0. }), simCore::Vec3{ -1., 0., 0. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(elongated,
+    simCore::Vec3{ 0., 100., 0. }), simCore::Vec3{ 0., 1., 0. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(elongated,
+    simCore::Vec3{ 0., -100., 0. }), simCore::Vec3{ 0., -1., 0. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(elongated,
+    simCore::Vec3{ 0., 0., 1. }), simCore::Vec3{ 0., 0., 1. }));
+  rv += SDK_ASSERT(simCore::v3AreEqual(simCore::ellipsoidNormalAtIntersection(elongated,
+    simCore::Vec3{ 0., 0., -1. }), simCore::Vec3{ 0., 0., -1. }));
+
+  // Now test along the top edge. Start by defining a function that can return the
+  // appropriate Z value, given an X and assuming Y=0. Note, no error checking, the
+  // range for this is [-100,100].
+  const auto zForX = [=](double x) { return sqrt(1 - x * x / (elongated.scale.x() * elongated.scale.x())); };
+
+  // Step 10 units along the positive X axis, across the surface of the elongated ellipsoid.
+  // This will start with a normal pointing straight up, as we're at the top. It will end
+  // with a normal pointing straight "east" along X axis. The transition from normals is very
+  // slow at first due to the eccentricity of the ellipsoid, and rapidly falls off as you get
+  // closer to the far +X edge. An interesting phenomenon based on the ellipsoid is that the
+  // normal's X coordinate is 1/100 of the input X coordinate. This set of tests is where the
+  // ellipsoid normal will deviate from the spherical normal.
+  simCore::Vec3 norm;
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 0., 0., zForX(0.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0., 0., 1. }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 10., 0., zForX(10.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0.1, 0., 0.994987 }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 20., 0., zForX(20.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0.2, 0., 0.979796 }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 30., 0., zForX(30.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0.3, 0., 0.953939 }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 40., 0., zForX(40.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0.4, 0., 0.916515 }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 50., 0., zForX(50.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0.5, 0., 0.866025 }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 60., 0., zForX(60.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0.6, 0., 0.8 }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 70., 0., zForX(70.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0.7, 0., 0.714143 }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 80., 0., zForX(80.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0.8, 0., 0.6 }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 90., 0., zForX(90.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0.9, 0., 0.43589 }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 99., 0., zForX(99.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 0.99, 0., 0.141067 }));
+  norm = simCore::ellipsoidNormalAtIntersection(elongated, simCore::Vec3{ 100., 0., zForX(100.) });
+  rv += SDK_ASSERT(simCore::v3AreEqual(norm, simCore::Vec3{ 1., 0., 0. }));
+
+  return rv;
+}
+
 }
 
 int GeometryTest(int argc, char* argv[])
@@ -496,6 +608,7 @@ int GeometryTest(int argc, char* argv[])
   rv += SDK_ASSERT(testSphere() == 0);
   rv += SDK_ASSERT(testEllipsoid() == 0);
   rv += SDK_ASSERT(testQuadricSurface() == 0);
+  rv += SDK_ASSERT(testEllipsoidNormals() == 0);
 
   std::cout << "GeometryTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
   return rv;

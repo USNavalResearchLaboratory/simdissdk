@@ -336,4 +336,23 @@ std::vector<double> rayIntersectsQuadricSurface(const Ray& ray, const QuadricSur
   return { t0, t1 };
 }
 
+simCore::Vec3 ellipsoidNormalAtIntersection(const simCore::Ellipsoid& ellipsoid, const simCore::Vec3& isectPt)
+{
+  // Work about (0,0,0) as a center
+  const auto& translated = isectPt - ellipsoid.center;
+
+  // Avoid divide by zero, returning spherical normal (which is better than some hard-coded normal)
+  if (ellipsoid.scale.x() == 0. || ellipsoid.scale.y() == 0. || ellipsoid.scale.z() == 0.)
+    return translated.normalize();
+
+  // https://math.stackexchange.com/questions/1927334: Use a smooth function to calculate
+  // the ellipsoid's normal as (2*x/a, 2*y/b, 2*z/c), based on our Ellipsoid definition.
+  const simCore::Vec3 normal{
+    2. * translated.x() / ellipsoid.scale.x(),
+    2. * translated.y() / ellipsoid.scale.y(),
+    2. * translated.z() / ellipsoid.scale.z()
+  };
+  return normal.normalize();
+}
+
 }

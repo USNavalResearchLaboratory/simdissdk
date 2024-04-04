@@ -298,6 +298,14 @@ SDKCORE_EXPORT simCore::Vec3 reflectVector(const simCore::Vec3& vec, const simCo
  */
 SDKCORE_EXPORT simCore::Ray reflectRay(const simCore::Ray& ray, const simCore::Vec3& atPoint, const simCore::Vec3& normal);
 
+/**
+ * Calculates the normal of the ellipsoid at a given intersection point.
+ * @param ellipsoid Ellipsoid to test.
+ * @param isectPt Intersection point on the ellipsoid surface.
+ * @return Normal of the surface at the intersection point.
+ */
+SDKCORE_EXPORT simCore::Vec3 ellipsoidNormalAtIntersection(const simCore::Ellipsoid& ellipsoid, const simCore::Vec3& isectPt);
+
 } // namespace simCore
 
 #endif /* SIMCORE_CALC_GEOMETRY_H */
