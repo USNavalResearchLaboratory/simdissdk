@@ -386,3 +386,13 @@
    fun:*google*protobuf*internal*InitProtobufDefaultsSlow*
    ...
 }
+{
+   glib leaks on el8
+   Memcheck:Leak
+   fun:*alloc
+   ...
+   obj:/usr/lib64/libglib-2.0.so.0.5600.4
+   ...
+   fun:_dl_init
+   ...
+}
