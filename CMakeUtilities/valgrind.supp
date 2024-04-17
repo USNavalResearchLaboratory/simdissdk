@@ -386,13 +386,39 @@
    fun:*google*protobuf*internal*InitProtobufDefaultsSlow*
    ...
 }
+
 {
    glib leaks on el8
    Memcheck:Leak
    fun:*alloc
    ...
-   obj:/usr/lib64/libglib-2.0.so.0.5600.4
+   obj:/usr/lib64/libglib-2.0.so*
    ...
    fun:_dl_init
+   ...
+}
+
+{
+   el8 glib leaks
+   Memcheck:Leak
+   ...
+   fun:g_*
+   ...
+   obj:/usr/lib*/libg*.so*
+   ...
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib*/ld-2*
+   ...
+}
+
+{
+   osgEarth suppress adding to the symbol registry 
+   Memcheck:Leak
+   ...
+   fun:*osgEarth*Util*SymbolRegistry*add*SymbolFactory*
+   fun:_GLOBAL__sub_I_*.cpp
+   ...
+   obj:/usr/lib64/ld-2.28.so
    ...
 }
