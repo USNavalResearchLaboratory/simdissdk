@@ -413,12 +413,64 @@
 }
 
 {
-   osgEarth suppress adding to the symbol registry 
+   osgEarth suppress adding to registry 
    Memcheck:Leak
    ...
-   fun:*osgEarth*Util*SymbolRegistry*add*SymbolFactory*
+   fun:*osgEarth*Util*Registry*add*Factory*
    fun:_GLOBAL__sub_I_*.cpp
    ...
-   obj:/usr/lib64/ld-2.28.so
+   obj:/usr/lib*/ld-2*
+   ...
+}
+
+{
+   osgEarth suppressed for Globals on startup
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_GLOBAL__sub_I_*Symbol.cpp
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib*/ld-2*
+   ...
+}
+
+{
+   osgEarth suppressed for Globals on startup
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_GLOBAL__sub_I_*Filter.cpp
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib*/ld-2*
+   ...
+}
+
+{
+   osgEarth suppressed for Globals on startup
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_GLOBAL__sub_I_*Skins.cpp
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib*/ld-2*
+   ...
+}
+
+{
+   osgEarth suppressed for Globals on startup
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_GLOBAL__sub_I_HTTPClient.cpp
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib*/ld-2*
    ...
 }
