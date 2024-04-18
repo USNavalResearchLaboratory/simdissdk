@@ -427,7 +427,7 @@ private:
 //----------------------------------------------------------------------------
 
 /** Adapts NewRowDataListener to MemoryDataStore's newUpdatesListener_ */
-class NewRowDataToNewUpdatesAdapter : public MemoryTable::TableManager::NewRowDataListener
+class MemoryDataStore::NewRowDataToNewUpdatesAdapter : public MemoryTable::TableManager::NewRowDataListener
 {
 public:
   explicit NewRowDataToNewUpdatesAdapter(simData::MemoryDataStore& dataStore)
@@ -437,7 +437,8 @@ public:
 
   virtual void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime)
   {
-    dataStore_.newUpdatesListener().onNewRowData(&dataStore_, table, id, dataTime);
+    for (const auto& listenerPtr : dataStore_.newUpdatesListeners_)
+      listenerPtr->onNewRowData(&dataStore_, table, id, dataTime);
   }
 
 private:
@@ -456,7 +457,7 @@ public:
       interpolationEnabled_(ds.interpolationEnabled_),
       listeners_(ds.listeners_),
       scenarioListeners_(ds.scenarioListeners_),
-      newUpdatesListener_(ds.newUpdatesListener_),
+      newUpdatesListeners_(ds.newUpdatesListeners_),
       boundClock_(ds.boundClock_)
   {
     // fill in everything
@@ -492,7 +493,8 @@ public:
     for (ScenarioListenerList::const_iterator iter2 = scenarioListeners_.begin(); iter2 != scenarioListeners_.end(); ++iter2)
       ds.addScenarioListener(*iter2);
 
-    ds.setNewUpdatesListener(newUpdatesListener_);
+    for (auto listener : newUpdatesListeners_)
+      ds.addNewUpdatesListener(listener);
 
     for (std::vector<DataTableManager::ManagerObserverPtr>::const_iterator iter = dtObservers_.begin(); iter != dtObservers_.end(); ++iter)
       ds.dataTableManager().addObserver(*iter);
@@ -510,7 +512,7 @@ private: // data
 
   DataStore::ListenerList listeners_;
   DataStore::ScenarioListenerList scenarioListeners_;
-  DataStore::NewUpdatesListenerPtr newUpdatesListener_;
+  std::vector<DataStore::NewUpdatesListenerPtr> newUpdatesListeners_;
   std::vector<DataTableManager::ManagerObserverPtr> dtObservers_;
   std::vector<CategoryNameManager::ListenerPtr> catListeners_;
 
@@ -534,7 +536,6 @@ MemoryDataStore::MemoryDataStore()
   hasChanged_(false),
   interpolationEnabled_(false),
   interpolator_(nullptr),
-  newUpdatesListener_(new DefaultNewUpdatesListener),
   dataLimiting_(false),
   categoryNameManager_(new CategoryNameManager),
   dataLimitsProvider_(nullptr),
@@ -556,7 +557,6 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
   hasChanged_(false),
   interpolationEnabled_(false),
   interpolator_(nullptr),
-  newUpdatesListener_(new DefaultNewUpdatesListener),
   dataLimiting_(false),
   categoryNameManager_(new CategoryNameManager),
   dataLimitsProvider_(nullptr),
@@ -1440,7 +1440,8 @@ int MemoryDataStore::flush(ObjectId id, FlushScope scope, FlushFields fields, do
     }
   }
   // Send out notification to the new-updates listener
-  newUpdatesListener_->onFlush(this, id);
+  for (const auto& listenerPtr : newUpdatesListeners_)
+    listenerPtr->onFlush(this, id);
 
   return 0;
 }
@@ -2815,27 +2816,29 @@ void MemoryDataStore::removeScenarioListener(ScenarioListenerPtr callback)
     scenarioListeners_.erase(i);
 }
 
-void MemoryDataStore::setNewUpdatesListener(NewUpdatesListenerPtr callback)
+void MemoryDataStore::addNewUpdatesListener(NewUpdatesListenerPtr callback)
 {
-  std::shared_ptr<MemoryTable::TableManager::NewRowDataListener> newRowListener;
+  if (!callback)
+    return;
 
-  // If clearing out the updates listener, then also clear out the memory table's listener for performance
-  if (callback == nullptr)
-    newUpdatesListener_.reset(new DefaultNewUpdatesListener);
-  else
-  {
-    // Set the updates listener, and tie in updates from the table manager too.
-    newUpdatesListener_ = callback;
-    newRowListener = newRowDataListener_;
-  }
-
-  // Update table manager with whatever updater was picked
-  static_cast<MemoryTable::TableManager*>(dataTableManager_)->setNewRowDataListener(newRowListener);
+  newUpdatesListeners_.push_back(callback);
+  // Update table manager if going from empty to non-empty, so it starts sending us updates
+  if (newUpdatesListeners_.size() == 1)
+    static_cast<MemoryTable::TableManager*>(dataTableManager_)->setNewRowDataListener(newRowDataListener_);
 }
 
-DataStore::NewUpdatesListener& MemoryDataStore::newUpdatesListener() const
+void MemoryDataStore::removeNewUpdatesListener(NewUpdatesListenerPtr callback)
 {
-  return *newUpdatesListener_;
+  if (!callback)
+    return;
+  auto iter = std::find(newUpdatesListeners_.begin(), newUpdatesListeners_.end(), callback);
+  if (iter == newUpdatesListeners_.end())
+    return;
+  newUpdatesListeners_.erase(iter);
+
+  // If clearing out the updates listener, then also clear out the memory table's listener for performance
+  if (newUpdatesListeners_.empty())
+    static_cast<MemoryTable::TableManager*>(dataTableManager_)->setNewRowDataListener({});
 }
 
 CategoryNameManager& MemoryDataStore::categoryNameManager() const
@@ -3192,7 +3195,8 @@ void MemoryDataStore::NewUpdateTransactionImpl<T, SliceType>::commit()
     if (isEntityUpdate_)
     {
       // Notify the data store's new-update callback
-      dataStore_->newUpdatesListener().onEntityUpdate(dataStore_, id_, updateTime);
+      for (const auto& listenerPtr : dataStore_->newUpdatesListeners_)
+        listenerPtr->onEntityUpdate(dataStore_, id_, updateTime);
     }
   }
 }

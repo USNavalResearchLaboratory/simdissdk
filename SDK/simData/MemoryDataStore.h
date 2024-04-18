@@ -35,7 +35,6 @@ namespace simData {
 class EntityNameCache;
 class GenericDataSlice;
 class MemoryCategoryDataSlice;
-class NewRowDataToNewUpdatesAdapter;
 namespace MemoryTable { class DataLimitsProvider; }
 
 /** @brief Implementation of DataStore using plain memory
@@ -335,10 +334,9 @@ public:
   /**@name NewUpdatesListener
   * @{
   */
-  /// Sets a listener for when entity updates are added; use nullptr to remove.
-  virtual void setNewUpdatesListener(NewUpdatesListenerPtr callback) override;
-  /// Retrieves the listener for new updates (internal)
-  NewUpdatesListener& newUpdatesListener() const;
+  /// Add or remove a listener for when entity updates are added
+  virtual void addNewUpdatesListener(NewUpdatesListenerPtr callback) override;
+  virtual void removeNewUpdatesListener(NewUpdatesListenerPtr callback) override;
   ///@}
 
   /**@name Get a handle to the CategoryNameManager
@@ -361,6 +359,8 @@ protected:
   ///@}
 
 private:
+  class NewRowDataToNewUpdatesAdapter;
+
   /// delete all entries in a map
   template <typename EntryMapType>
   void deleteEntries_(EntryMapType *entries);
@@ -766,8 +766,8 @@ private:
   ListenerList listeners_;
   /// Observers to receive notifications when things change
   ScenarioListenerList scenarioListeners_;
-  /// Observer for new updates
-  NewUpdatesListenerPtr newUpdatesListener_;
+  /// Observers for new updates
+  std::vector<NewUpdatesListenerPtr> newUpdatesListeners_;
   /// Flag indicating if data limiting is set
   bool dataLimiting_;
   /// The CategoryNameManager coordinates string/int values

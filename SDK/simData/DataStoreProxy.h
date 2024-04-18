@@ -349,8 +349,9 @@ public: // methods
   /**@name NewUpdatesListener
   * @{
   */
-  /// Sets a listener for when entity updates are added; use nullptr to remove.
-  virtual void setNewUpdatesListener(NewUpdatesListenerPtr callback) override;
+  /// Add or remove a listener for when entity updates are added
+  virtual void addNewUpdatesListener(NewUpdatesListenerPtr callback) override;
+  virtual void removeNewUpdatesListener(NewUpdatesListenerPtr callback) override;
   ///@}
 
   /**@name Get a handle to the CategoryNameManager

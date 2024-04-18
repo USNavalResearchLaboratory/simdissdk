@@ -95,9 +95,14 @@ void DataStoreProxy::removeScenarioListener(DataStore::ScenarioListenerPtr callb
   dataStore_->removeScenarioListener(callback);
 }
 
-void DataStoreProxy::setNewUpdatesListener(DataStore::NewUpdatesListenerPtr callback)
+void DataStoreProxy::addNewUpdatesListener(DataStore::NewUpdatesListenerPtr callback)
 {
-  dataStore_->setNewUpdatesListener(callback);
+  dataStore_->addNewUpdatesListener(callback);
+}
+
+void DataStoreProxy::removeNewUpdatesListener(DataStore::NewUpdatesListenerPtr callback)
+{
+  dataStore_->removeNewUpdatesListener(callback);
 }
 
 void DataStoreProxy::bindToClock(simCore::Clock* clock)
