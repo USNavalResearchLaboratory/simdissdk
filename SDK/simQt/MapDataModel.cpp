@@ -240,67 +240,67 @@ public:
   }
 
   /** @copydoc  MapDataModel::Item::name */
-  virtual QString name() const
+  virtual QString name() const override
   {
     return QObject::tr("Map");
   }
 
   /** @copydoc  MapDataModel::Item::color */
-  virtual QVariant color() const
+  virtual QVariant color() const override
   {
     return QVariant();
   }
 
   /** @copydoc  MapDataModel::Item::layerTypeRole */
-  virtual MapDataModel::MapChildren layerTypeRole() const
+  virtual MapDataModel::MapChildren layerTypeRole() const override
   {
     return MapDataModel::CHILD_NONE;
   }
 
   /** @copydoc  MapDataModel::Item::layerPtr */
-  virtual QVariant layerPtr() const
+  virtual QVariant layerPtr() const override
   {
     return QVariant();
   }
 
   /** @copydoc  MapDataModel::Item::flags */
-  virtual Qt::ItemFlags flags() const
+  virtual Qt::ItemFlags flags() const override
   {
     return Qt::ItemIsEnabled;
   }
 
   /** @copydoc  MapDataModel::Item::parent */
-  virtual Item* parent() const
+  virtual Item* parent() const override
   {
     return parent_;
   }
 
   /** @copydoc  MapDataModel::Item::rowCount */
-  virtual int rowCount() const
+  virtual int rowCount() const override
   {
     return children_.count();
   }
 
   /** @copydoc  MapDataModel::Item::childAt */
-  virtual Item* childAt(int row)
+  virtual Item* childAt(int row) override
   {
     return children_.value(row);
   }
 
   /** @copydoc  MapDataModel::Item::rowOfChild */
-  virtual int rowOfChild(Item *c) const
+  virtual int rowOfChild(Item *c) const override
   {
     return children_.indexOf(c);
   }
 
   /** @copydoc  MapDataModel::Item::insertChild */
-  virtual void insertChild(Item *c, int position)
+  virtual void insertChild(Item *c, int position) override
   {
     children_.insert(position, c);
   }
 
   /** @copydoc  MapDataModel::Item::removeChild */
-  virtual void removeChild(Item *c)
+  virtual void removeChild(Item *c) override
   {
     assert(false); // should not remove top level groups
   }
@@ -331,68 +331,68 @@ public:
   }
 
   /** @copydoc  MapDataModel::Item::name */
-  virtual QString name() const
+  virtual QString name() const override
   {
     return name_;
   }
 
   /** @copydoc  MapDataModel::Item::color */
-  virtual QVariant color() const
+  virtual QVariant color() const override
   {
     return QVariant();
   }
 
   /** @copydoc  MapDataModel::Item::layerTypeRole */
-  virtual MapDataModel::MapChildren layerTypeRole() const
+  virtual MapDataModel::MapChildren layerTypeRole() const override
   {
     return MapDataModel::CHILD_NONE;
   }
 
   /** @copydoc  MapDataModel::Item::layerPtr */
-  virtual QVariant layerPtr() const
+  virtual QVariant layerPtr() const override
   {
     return QVariant();
   }
 
   /** @copydoc  MapDataModel::Item::flags */
-  virtual Qt::ItemFlags flags() const
+  virtual Qt::ItemFlags flags() const override
   {
     // not selectable
     return Qt::ItemIsEnabled;
   }
 
   /** @copydoc  MapDataModel::Item::parent */
-  virtual MapDataModel::Item* parent() const
+  virtual MapDataModel::Item* parent() const override
   {
     return parent_;
   }
 
   /** @copydoc  MapDataModel::Item::rowCount */
-  virtual int rowCount() const
+  virtual int rowCount() const override
   {
     return children_.count();
   }
 
   /** @copydoc  MapDataModel::Item::childAt */
-  virtual Item* childAt(int row)
+  virtual Item* childAt(int row) override
   {
     return children_.value(row);
   }
 
   /** @copydoc  MapDataModel::Item::rowOfChild */
-  virtual int rowOfChild(Item *c) const
+  virtual int rowOfChild(Item *c) const override
   {
     return children_.indexOf(c);
   }
 
   /** @copydoc  MapDataModel::Item::insertChild */
-  virtual void insertChild(Item *c, int position)
+  virtual void insertChild(Item *c, int position) override
   {
     children_.insert(position, c);
   }
 
   /** @copydoc  MapDataModel::Item::removeChild */
-  virtual void removeChild(Item *c)
+  virtual void removeChild(Item *c) override
   {
     children_.removeOne(c);
   }
@@ -436,44 +436,44 @@ public:
   }
 
   /** @copydoc  MapDataModel::Item::flags */
-  Qt::ItemFlags flags() const
+  virtual Qt::ItemFlags flags() const override
   {
     return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
   }
 
   /** @copydoc  MapDataModel::Item::parent */
-  virtual MapDataModel::Item* parent() const
+  virtual MapDataModel::Item* parent() const override
   {
     return parent_;
   }
 
   /** @copydoc  MapDataModel::Item::rowCount */
-  virtual int rowCount() const
+  virtual int rowCount() const override
   {
     // no children
     return 0;
   }
 
   /** @copydoc  MapDataModel::Item::childAt */
-  virtual Item* childAt(int row)
+  virtual Item* childAt(int row) override
   {
     return nullptr;
   }
 
   /** @copydoc  MapDataModel::Item::rowOfChild */
-  virtual int rowOfChild(Item *c) const
+  virtual int rowOfChild(Item *c) const override
   {
     return -1;
   }
 
   /** @copydoc  MapDataModel::Item::flags */
-  virtual void insertChild(Item *c, int position)
+  virtual void insertChild(Item *c, int position) override
   {
     assert(false); // no children
   }
 
   /** @copydoc  MapDataModel::Item::removeChild */
-  virtual void removeChild(Item *c)
+  virtual void removeChild(Item *c) override
   {
     assert(false); // no children
   }
@@ -493,7 +493,7 @@ public:
   {
   }
 
-  virtual QString name() const
+  virtual QString name() const override
   {
     if (layer_.valid())
       return QString::fromStdString(layer_->getName());
@@ -501,19 +501,19 @@ public:
   }
 
   /** @copydoc  MapDataModel::Item::color */
-  virtual QVariant color() const
+  virtual QVariant color() const override
   {
     if (layer_.valid() && isStatusOk(layer_->getStatus()))
       return QVariant();
     return QColor(Qt::gray);
   }
 
-  virtual MapDataModel::MapChildren layerTypeRole() const
+  virtual MapDataModel::MapChildren layerTypeRole() const override
   {
     return MapDataModel::CHILD_IMAGE;
   }
 
-  virtual QVariant layerPtr() const
+  virtual QVariant layerPtr() const override
   {
     return QVariant::fromValue<void*>(layer_.get());
   }
@@ -533,7 +533,7 @@ public:
   {
   }
 
-  virtual QString name() const
+  virtual QString name() const override
   {
     if (layer_.valid())
       return QString::fromStdString(layer_->getName());
@@ -541,19 +541,19 @@ public:
   }
 
   /** @copydoc  MapDataModel::Item::color */
-  virtual QVariant color() const
+  virtual QVariant color() const override
   {
     if (layer_.valid() && isStatusOk(layer_->getStatus()))
       return QVariant();
     return QColor(Qt::gray);
   }
 
-  virtual MapDataModel::MapChildren layerTypeRole() const
+  virtual MapDataModel::MapChildren layerTypeRole() const override
   {
     return MapDataModel::CHILD_ELEVATION;
   }
 
-  virtual QVariant layerPtr() const
+  virtual QVariant layerPtr() const override
   {
     return QVariant::fromValue<void*>(layer_.get());
   }
@@ -573,7 +573,7 @@ public:
   {
   }
 
-  virtual QString name() const
+  virtual QString name() const override
   {
     if (layer_.valid())
       return QString::fromStdString(layer_->getName());
@@ -581,19 +581,19 @@ public:
   }
 
   /** @copydoc  MapDataModel::Item::color */
-  virtual QVariant color() const
+  virtual QVariant color() const override
   {
     if (layer_.valid() && isStatusOk(layer_->getStatus()))
       return QVariant();
     return QColor(Qt::gray);
   }
 
-  virtual MapDataModel::MapChildren layerTypeRole() const
+  virtual MapDataModel::MapChildren layerTypeRole() const override
   {
     return MapDataModel::CHILD_FEATURE;
   }
 
-  virtual QVariant layerPtr() const
+  virtual QVariant layerPtr() const override
   {
     return QVariant::fromValue<void*>(layer_.get());
   }
@@ -614,25 +614,25 @@ public:
   {
   }
 
-  virtual QString name() const
+  virtual QString name() const override
   {
     return QString::fromStdString(layer_->getName());
   }
 
   /** @copydoc  MapDataModel::Item::color */
-  virtual QVariant color() const
+  virtual QVariant color() const override
   {
     if (!layer_.valid() || !isStatusOk(layer_->getStatus()))
       return QColor(Qt::gray);
     return QVariant();
   }
 
-  virtual MapDataModel::MapChildren layerTypeRole() const
+  virtual MapDataModel::MapChildren layerTypeRole() const override
   {
     return MapDataModel::CHILD_VELOCITY;
   }
 
-  virtual QVariant layerPtr() const
+  virtual QVariant layerPtr() const override
   {
     return QVariant::fromValue<void*>(layer_.get());
   }
@@ -653,7 +653,7 @@ public:
   {
   }
 
-  virtual QString name() const
+  virtual QString name() const override
   {
     if (layer_.valid())
       return QString::fromStdString(layer_->getName());
@@ -661,19 +661,19 @@ public:
   }
 
   /** @copydoc  MapDataModel::Item::color */
-  virtual QVariant color() const
+  virtual QVariant color() const override
   {
     if (layer_.valid() && isStatusOk(layer_->getStatus()))
       return QVariant();
     return QColor(Qt::gray);
   }
 
-  virtual MapDataModel::MapChildren layerTypeRole() const
+  virtual MapDataModel::MapChildren layerTypeRole() const override
   {
     return MapDataModel::CHILD_OTHER;
   }
 
-  virtual QVariant layerPtr() const
+  virtual QVariant layerPtr() const override
   {
     return QVariant::fromValue<void*>(layer_.get());
   }
@@ -696,7 +696,7 @@ public:
   }
 
   /* Layer Added */
-  virtual void onLayerAdded(osgEarth::Layer* layer, unsigned int index)
+  virtual void onLayerAdded(osgEarth::Layer* layer, unsigned int index) override
   {
 #ifdef HAVE_SIMUTIL
     // Need to test Velocity Layer first since it is-a ImageLayer
@@ -762,7 +762,7 @@ public:
     }
   }
 
-  virtual void onLayerMoved(osgEarth::Layer* layer, unsigned int oldIndex, unsigned int newIndex)
+  virtual void onLayerMoved(osgEarth::Layer* layer, unsigned int oldIndex, unsigned int newIndex) override
   {
 #ifdef HAVE_SIMUTIL
     // Need to test Velocity Particle Layer first since it is-a ImageLayer
@@ -804,7 +804,7 @@ public:
   }
 
   /** Layer Removed */
-  virtual void onLayerRemoved(osgEarth::Layer* layer, unsigned int index)
+  virtual void onLayerRemoved(osgEarth::Layer* layer, unsigned int index) override
   {
 #ifdef HAVE_SIMUTIL
     // Need to test Velocity Particle Layer first since it is-a ImageLayer
