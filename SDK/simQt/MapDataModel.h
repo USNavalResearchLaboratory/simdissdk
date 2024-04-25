@@ -23,6 +23,7 @@
 #ifndef SIMQT_MAPDATAMODEL_H
 #define SIMQT_MAPDATAMODEL_H
 
+#include <map>
 #include <QAbstractItemModel>
 #include <QIcon>
 #include <QList>
@@ -31,6 +32,7 @@
 #include "osgEarth/ImageLayer"
 #include "osgEarth/ElevationLayer"
 #include "osgEarth/FeatureModelLayer"
+#include "osgEarth/Version"
 #include "simCore/Common/Export.h"
 
 namespace osgEarth {
@@ -228,6 +230,14 @@ private: // methods
   /** Retrieves the QVariant for LAYER_MAP_INDEX_ROLE for a layer.  Gives a global index on layer. */
   QVariant layerMapIndex_(osgEarth::Layer* layer) const;
 
+  /** Fires correct visibility change signal based on layer provided */
+  void fireVisibilityChange_(const osgEarth::Layer* layer);
+  /** Fires correct opacity change signal based on layer provided */
+  void fireOpacityChange_(const osgEarth::Layer* layer);
+
+  /** Registers the layer callbacks (visibility, opacity) for the layer */
+  void registerLayerCallbacks_(osgEarth::VisibleLayer& layer);
+
   class MapListener;
   class ImageLayerListener;
   class ElevationLayerListener;
@@ -248,11 +258,16 @@ private: // methods
   /** Icon for other layer */
   QIcon otherIcon_;
 
+#if OSGEARTH_SOVERSION >= 152
+  std::map<const osgEarth::VisibleLayer*, osgEarth::UID> visibilityCallbacks_;
+  std::map<const osgEarth::VisibleLayer*, osgEarth::UID> opacityCallbacks_;
+#else
   /** Maps of terrain layer callbacks */
   QMap<osgEarth::ImageLayer*, osg::ref_ptr<osgEarth::TileLayerCallback> > imageCallbacks_;
   QMap<osgEarth::ElevationLayer*, osg::ref_ptr<osgEarth::TileLayerCallback> > elevationCallbacks_;
   QMap<osgEarth::FeatureModelLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > featureCallbacks_;
   QMap<osgEarth::VisibleLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > otherCallbacks_;
+#endif
 
   /** Weak pointer back to the map */
   osg::observer_ptr<osgEarth::Map> map_;

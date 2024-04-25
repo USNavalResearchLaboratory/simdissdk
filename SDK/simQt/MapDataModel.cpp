@@ -811,8 +811,13 @@ public:
     simUtil::VelocityParticleLayer* velocityLayer = dynamic_cast<simUtil::VelocityParticleLayer*>(layer);
     if (velocityLayer)
     {
+#if OSGEARTH_SOVERSION >= 152
+      dataModel_.visibilityCallbacks_.erase(velocityLayer);
+      dataModel_.opacityCallbacks_.erase(velocityLayer);
+#else
       // We use image layer callbacks because it is an image layer
       dataModel_.imageCallbacks_.remove(velocityLayer);
+#endif
       removeLayer_(dataModel_.velocityGroup_(), velocityLayer);
       return;
     }
@@ -821,7 +826,12 @@ public:
     osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
     if (imageLayer)
     {
+#if OSGEARTH_SOVERSION >= 152
+      dataModel_.visibilityCallbacks_.erase(imageLayer);
+      dataModel_.opacityCallbacks_.erase(imageLayer);
+#else
       dataModel_.imageCallbacks_.remove(imageLayer);
+#endif
       removeLayer_(dataModel_.imageGroup_(), imageLayer);
       return;
     }
@@ -829,7 +839,12 @@ public:
     osgEarth::ElevationLayer* elevationLayer = dynamic_cast<osgEarth::ElevationLayer*>(layer);
     if (elevationLayer)
     {
+#if OSGEARTH_SOVERSION >= 152
+      dataModel_.visibilityCallbacks_.erase(elevationLayer);
+      dataModel_.opacityCallbacks_.erase(elevationLayer);
+#else
       dataModel_.elevationCallbacks_.remove(elevationLayer);
+#endif
       removeLayer_(dataModel_.elevationGroup_(), elevationLayer);
       return;
     }
@@ -837,7 +852,12 @@ public:
     osgEarth::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::FeatureModelLayer*>(layer);
     if (modelLayer)
     {
+#if OSGEARTH_SOVERSION >= 152
+      dataModel_.visibilityCallbacks_.erase(velocityLayer);
+      dataModel_.opacityCallbacks_.erase(modelLayer);
+#else
       dataModel_.featureCallbacks_.remove(modelLayer);
+#endif
       removeLayer_(dataModel_.featureGroup_(), modelLayer);
       return;
     }
@@ -845,7 +865,12 @@ public:
     osgEarth::VisibleLayer* visibleLayer = dynamic_cast<osgEarth::VisibleLayer*>(layer);
     if (visibleLayer)
     {
+#if OSGEARTH_SOVERSION >= 152
+      dataModel_.visibilityCallbacks_.erase(visibleLayer);
+      dataModel_.opacityCallbacks_.erase(visibleLayer);
+#else
       dataModel_.otherCallbacks_.remove(visibleLayer);
+#endif
       removeLayer_(dataModel_.otherGroup_(), visibleLayer);
       return;
     }
@@ -912,6 +937,7 @@ private:
   MapDataModel &dataModel_;
 };
 
+#if OSGEARTH_SOVERSION < 152
 /** Watch for image layer changes */
 class MapDataModel::ImageLayerListener : public osgEarth::TileLayerCallback
 {
@@ -1029,6 +1055,7 @@ public:
 private:
   MapDataModel& dataModel_;
 };
+#endif
 
 //----------------------------------------------------------------------------
 MapDataModel::MapDataModel(QObject* parent)
@@ -1080,6 +1107,33 @@ void MapDataModel::bindTo(osgEarth::Map* map)
 
 void MapDataModel::removeAllCallbacks_(osgEarth::Map* map)
 {
+#if OSGEARTH_SOVERSION >= 152
+  if (!map)
+  {
+    // Assertion failure means that we were out of sync with map; not a one-to-one with callback-to-layer
+    assert(visibilityCallbacks_.empty() && opacityCallbacks_.empty());
+    return;
+  }
+
+  osgEarth::VisibleLayerVector visibleLayers;
+  map->getLayers(visibleLayers);
+
+  // Remove all visibility and opacity callbacks
+  for (const auto& visibleLayerPtr : visibleLayers)
+  {
+    auto vIter = visibilityCallbacks_.find(visibleLayerPtr.get());
+    if (vIter != visibilityCallbacks_.end())
+      visibleLayerPtr->onVisibleChanged.remove(vIter->second);
+
+    auto oIter = opacityCallbacks_.find(visibleLayerPtr.get());
+    if (oIter != opacityCallbacks_.end())
+      visibleLayerPtr->onOpacityChanged.remove(oIter->second);
+  }
+  visibilityCallbacks_.clear();
+  opacityCallbacks_.clear();
+
+#else
+
   if (!map)
   {
     // Assertion failure means that we were out of sync with map; not a one-to-one with callback-to-layer
@@ -1092,7 +1146,8 @@ void MapDataModel::removeAllCallbacks_(osgEarth::Map* map)
   MapReindexer::getLayers(map, imageLayers);
   for (osgEarth::ImageLayerVector::const_iterator iter = imageLayers.begin(); iter != imageLayers.end(); ++iter)
   {
-    if (imageCallbacks_.contains(iter->get()))
+    osgEarth::ImageLayer* imageLayer = iter->get();
+    if (imageCallbacks_.contains(imageLayer))
     {
       osgEarth::TileLayer* tileLayer = iter->get();
       tileLayer->removeCallback(imageCallbacks_.find(iter->get())->get());
@@ -1155,6 +1210,7 @@ void MapDataModel::removeAllCallbacks_(osgEarth::Map* map)
   // Assertion failure means that we were out of sync with map; not a one-to-one with callback-to-layer
   assert(otherCallbacks_.size() == static_cast<int>(otherLayers.size()));
   otherCallbacks_.clear();
+#endif
 
   // Remove the map callback itself
   map->removeMapCallback(mapListener_.get());
@@ -1172,9 +1228,13 @@ void MapDataModel::fillModel_(osgEarth::Map *map)
   for (osgEarth::ImageLayerVector::const_reverse_iterator iter = imageLayers.rbegin(); iter != imageLayers.rend(); ++iter)
   {
     imageGroup_()->insertChild(new ImageLayerItem(imageGroup_(), iter->get()), 0);
+#if OSGEARTH_SOVERSION >= 152
+    registerLayerCallbacks_(*iter->get());
+#else
     osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ImageLayerListener(*this);
     imageCallbacks_[iter->get()] = cb.get();
     static_cast<osgEarth::TileLayer*>(*iter)->addCallback(cb.get());
+#endif
   }
 
   osgEarth::ElevationLayerVector elevationLayers;
@@ -1183,9 +1243,13 @@ void MapDataModel::fillModel_(osgEarth::Map *map)
   for (osgEarth::ElevationLayerVector::const_reverse_iterator iter = elevationLayers.rbegin(); iter != elevationLayers.rend(); ++iter)
   {
     elevationGroup_()->insertChild(new ElevationLayerItem(elevationGroup_(), iter->get()), 0);
+#if OSGEARTH_SOVERSION >= 152
+    registerLayerCallbacks_(*iter->get());
+#else
     osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ElevationLayerListener(*this);
     elevationCallbacks_[iter->get()] = cb.get();
     static_cast<osgEarth::TileLayer*>(*iter)->addCallback(cb.get());
+#endif
   }
 
   FeatureModelLayerVector featureLayers;
@@ -1194,9 +1258,13 @@ void MapDataModel::fillModel_(osgEarth::Map *map)
   for (FeatureModelLayerVector::const_reverse_iterator iter = featureLayers.rbegin(); iter != featureLayers.rend(); ++iter)
   {
     featureGroup_()->insertChild(new FeatureModelLayerItem(featureGroup_(), iter->get()), 0);
+#if OSGEARTH_SOVERSION >= 152
+    registerLayerCallbacks_(*iter->get());
+#else
     osg::ref_ptr<osgEarth::VisibleLayerCallback> cb = new FeatureModelLayerListener(*this);
     featureCallbacks_[iter->get()] = cb.get();
     (*iter)->addCallback(cb.get());
+#endif
   }
 
 #ifdef HAVE_SIMUTIL
@@ -1206,10 +1274,14 @@ void MapDataModel::fillModel_(osgEarth::Map *map)
   for (VelocityParticleLayerVector::const_reverse_iterator iter = velocityLayers.rbegin(); iter != velocityLayers.rend(); ++iter)
   {
     velocityGroup_()->insertChild(new VelocityParticleLayerItem(velocityGroup_(), iter->get()), 0);
+#if OSGEARTH_SOVERSION >= 152
+    registerLayerCallbacks_(*iter->get());
+#else
     // Velocity layers are image layers, so use an image layer listener
     osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ImageLayerListener(*this);
     imageCallbacks_[iter->get()] = cb.get();
     static_cast<osgEarth::TileLayer*>(*iter)->addCallback(cb.get());
+#endif
   }
 #endif
 
@@ -1219,9 +1291,13 @@ void MapDataModel::fillModel_(osgEarth::Map *map)
   for (osgEarth::VisibleLayerVector::const_reverse_iterator iter = otherLayers.rbegin(); iter != otherLayers.rend(); ++iter)
   {
     otherGroup_()->insertChild(new OtherLayerItem(otherGroup_(), iter->get()), 0);
+#if OSGEARTH_SOVERSION >= 152
+    registerLayerCallbacks_(*iter->get());
+#else
     osg::ref_ptr<osgEarth::VisibleLayerCallback> cb = new OtherLayerListener(*this);
     otherCallbacks_[iter->get()] = cb.get();
     (*iter)->addCallback(cb.get());
+#endif
   }
 }
 
@@ -1269,9 +1345,13 @@ void MapDataModel::addImageLayer_(osgEarth::ImageLayer *layer, unsigned int inde
   imageGroup_()->insertChild(new ImageLayerItem(imageGroup_(), layer), index);
   endInsertRows();
 
+#if OSGEARTH_SOVERSION >= 152
+  registerLayerCallbacks_(*layer);
+#else
   osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ImageLayerListener(*this);
   imageCallbacks_[layer] = cb.get();
   static_cast<osgEarth::TileLayer*>(layer)->addCallback(cb.get());
+#endif
   Q_EMIT imageLayerAdded(layer);
 }
 
@@ -1283,9 +1363,13 @@ void MapDataModel::addElevationLayer_(osgEarth::ElevationLayer *layer, unsigned 
   elevationGroup_()->insertChild(new ElevationLayerItem(elevationGroup_(), layer), index);
   endInsertRows();
 
+#if OSGEARTH_SOVERSION >= 152
+  registerLayerCallbacks_(*layer);
+#else
   osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ElevationLayerListener(*this);
   elevationCallbacks_[layer] = cb.get();
   static_cast<osgEarth::TileLayer*>(layer)->addCallback(cb.get());
+#endif
   Q_EMIT elevationLayerAdded(layer);
 }
 
@@ -1297,9 +1381,13 @@ void MapDataModel::addFeatureLayer_(osgEarth::FeatureModelLayer *layer, unsigned
   featureGroup_()->insertChild(new FeatureModelLayerItem(featureGroup_(), layer), index);
   endInsertRows();
 
+#if OSGEARTH_SOVERSION >= 152
+  registerLayerCallbacks_(*layer);
+#else
   osg::ref_ptr<osgEarth::VisibleLayerCallback> cb = new FeatureModelLayerListener(*this);
   featureCallbacks_[layer] = cb.get();
   layer->addCallback(cb.get());
+#endif
   Q_EMIT featureLayerAdded(layer);
 }
 
@@ -1312,9 +1400,13 @@ void MapDataModel::addVelocityLayer_(simUtil::VelocityParticleLayer* layer, unsi
   velocityGroup_()->insertChild(new VelocityParticleLayerItem(velocityGroup_(), layer), index);
   endInsertRows();
 
+#if OSGEARTH_SOVERSION >= 152
+  registerLayerCallbacks_(*layer);
+#else
   osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ImageLayerListener(*this);
   imageCallbacks_[layer] = cb.get();
   static_cast<osgEarth::TileLayer*>(layer)->addCallback(cb.get());
+#endif
   Q_EMIT velocityLayerAdded(layer);
 #endif
 }
@@ -1327,9 +1419,13 @@ void MapDataModel::addOtherLayer_(osgEarth::VisibleLayer *layer, unsigned int in
   otherGroup_()->insertChild(new OtherLayerItem(otherGroup_(), layer), index);
   endInsertRows();
 
+#if OSGEARTH_SOVERSION >= 152
+  registerLayerCallbacks_(*layer);
+#else
   osg::ref_ptr<osgEarth::VisibleLayerCallback> cb = new OtherLayerListener(*this);
   otherCallbacks_[layer] = cb.get();
   layer->addCallback(cb.get());
+#endif
   Q_EMIT otherLayerAdded(layer);
 }
 
@@ -1543,6 +1639,116 @@ QVariant MapDataModel::layerMapIndex_(osgEarth::Layer* layer) const
   if (index != MapReindexer::INVALID_INDEX)
     return index;
   return QVariant();
+}
+
+void MapDataModel::registerLayerCallbacks_(osgEarth::VisibleLayer& layer)
+{
+#if OSGEARTH_SOVERSION >= 152
+  const auto visibilityUid = layer.onVisibleChanged([this](const osgEarth::VisibleLayer* layer) {
+    fireVisibilityChange_(layer);
+    });
+  // Failure here implies that we have a double add
+  assert(visibilityCallbacks_.find(&layer) == visibilityCallbacks_.end());
+  // Failure here implies osgEarth is reusing UIDs
+  assert(std::find_if(visibilityCallbacks_.begin(), visibilityCallbacks_.end(),
+    [visibilityUid](const auto& p) { return p.second == visibilityUid; })
+    == visibilityCallbacks_.end());
+  visibilityCallbacks_[&layer] = visibilityUid;
+
+  const auto opacityUid = layer.onOpacityChanged([this](const osgEarth::VisibleLayer* layer) {
+    fireOpacityChange_(layer);
+    });
+  // Failure here implies that we have a double add
+  assert(opacityCallbacks_.find(&layer) == opacityCallbacks_.end());
+  // Failure here implies osgEarth is reusing UIDs
+  assert(std::find_if(opacityCallbacks_.begin(), opacityCallbacks_.end(),
+    [opacityUid](const auto& p) { return p.second == opacityUid; })
+    == opacityCallbacks_.end());
+  opacityCallbacks_[&layer] = opacityUid;
+#else
+  // Not supported
+  assert(0);
+#endif
+}
+
+void MapDataModel::fireVisibilityChange_(const osgEarth::Layer* layer)
+{
+  const auto* featureModel = dynamic_cast<const osgEarth::FeatureModelLayer*>(layer);
+  if (featureModel)
+  {
+    Q_EMIT featureLayerVisibleChanged(const_cast<osgEarth::FeatureModelLayer*>(featureModel));
+    return;
+  }
+
+  const auto* elevation = dynamic_cast<const osgEarth::ElevationLayer*>(layer);
+  if (elevation)
+  {
+    Q_EMIT elevationLayerVisibleChanged(const_cast<osgEarth::ElevationLayer*>(elevation));
+    return;
+  }
+
+  const auto* image = dynamic_cast<const osgEarth::ImageLayer*>(layer);
+  if (image)
+  {
+#ifdef HAVE_SIMUTIL
+    const auto* velocity = dynamic_cast<const simUtil::VelocityParticleLayer*>(image);
+    if (velocity)
+    {
+      Q_EMIT velocityLayerVisibleChanged(const_cast<simUtil::VelocityParticleLayer*>(velocity));
+      return;
+    }
+#endif
+    Q_EMIT imageLayerVisibleChanged(const_cast<osgEarth::ImageLayer*>(image));
+    return;
+  }
+
+  const auto* visibleLayer = dynamic_cast<const osgEarth::VisibleLayer*>(layer);
+  // We only add callbacks to visible layers. If this fails, either osgEarth is sending us null,
+  // or we're getting unexpected failures in dynamic_cast (RTTI?), or a new edge case was added
+  // to the code and not accounted for here.
+  assert(visibleLayer);
+  if (visibleLayer) [[likely]]
+    Q_EMIT otherLayerVisibleChanged(const_cast<osgEarth::VisibleLayer*>(visibleLayer));
+}
+
+void MapDataModel::fireOpacityChange_(const osgEarth::Layer* layer)
+{
+  const auto* featureModel = dynamic_cast<const osgEarth::FeatureModelLayer*>(layer);
+  if (featureModel)
+  {
+    Q_EMIT featureLayerOpacityChanged(const_cast<osgEarth::FeatureModelLayer*>(featureModel));
+    return;
+  }
+
+  const auto* elevation = dynamic_cast<const osgEarth::ElevationLayer*>(layer);
+  if (elevation)
+  {
+    // Elevation layers get the callback, but we do not support a signal
+    return;
+  }
+
+  const auto* image = dynamic_cast<const osgEarth::ImageLayer*>(layer);
+  if (image)
+  {
+#ifdef HAVE_SIMUTIL
+    const auto* velocity = dynamic_cast<const simUtil::VelocityParticleLayer*>(image);
+    if (velocity)
+    {
+      Q_EMIT velocityLayerOpacityChanged(const_cast<simUtil::VelocityParticleLayer*>(velocity));
+      return;
+    }
+#endif
+    Q_EMIT imageLayerOpacityChanged(const_cast<osgEarth::ImageLayer*>(image));
+    return;
+  }
+
+  const auto* visibleLayer = dynamic_cast<const osgEarth::VisibleLayer*>(layer);
+  // We only add callbacks to visible layers. If this fails, either osgEarth is sending us null,
+  // or we're getting unexpected failures in dynamic_cast (RTTI?), or a new edge case was added
+  // to the code and not accounted for here.
+  assert(visibleLayer);
+  if (visibleLayer) [[likely]]
+    Q_EMIT otherLayerOpacityChanged(const_cast<osgEarth::VisibleLayer*>(visibleLayer));
 }
 
 }
