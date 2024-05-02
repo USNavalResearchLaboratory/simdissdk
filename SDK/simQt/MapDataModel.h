@@ -259,8 +259,8 @@ private: // methods
   QIcon otherIcon_;
 
 #if OSGEARTH_SOVERSION >= 152
-  std::map<const osgEarth::VisibleLayer*, osgEarth::UID> visibilityCallbacks_;
-  std::map<const osgEarth::VisibleLayer*, osgEarth::UID> opacityCallbacks_;
+  std::map<const osgEarth::VisibleLayer*, int> visibilityCallbacks_;
+  std::map<const osgEarth::VisibleLayer*, int> opacityCallbacks_;
 #else
   /** Maps of terrain layer callbacks */
   QMap<osgEarth::ImageLayer*, osg::ref_ptr<osgEarth::TileLayerCallback> > imageCallbacks_;

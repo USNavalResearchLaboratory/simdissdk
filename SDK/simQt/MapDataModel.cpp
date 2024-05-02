@@ -1649,10 +1649,7 @@ void MapDataModel::registerLayerCallbacks_(osgEarth::VisibleLayer& layer)
     });
   // Failure here implies that we have a double add
   assert(visibilityCallbacks_.find(&layer) == visibilityCallbacks_.end());
-  // Failure here implies osgEarth is reusing UIDs
-  assert(std::find_if(visibilityCallbacks_.begin(), visibilityCallbacks_.end(),
-    [visibilityUid](const auto& p) { return p.second == visibilityUid; })
-    == visibilityCallbacks_.end());
+  // Note that the visibilityUid is layer-specific; that is, two layers might have the same callback UID value
   visibilityCallbacks_[&layer] = visibilityUid;
 
   const auto opacityUid = layer.onOpacityChanged([this](const osgEarth::VisibleLayer* layer) {
@@ -1660,10 +1657,7 @@ void MapDataModel::registerLayerCallbacks_(osgEarth::VisibleLayer& layer)
     });
   // Failure here implies that we have a double add
   assert(opacityCallbacks_.find(&layer) == opacityCallbacks_.end());
-  // Failure here implies osgEarth is reusing UIDs
-  assert(std::find_if(opacityCallbacks_.begin(), opacityCallbacks_.end(),
-    [opacityUid](const auto& p) { return p.second == opacityUid; })
-    == opacityCallbacks_.end());
+  // Note that the opacityUid is layer-specific; that is, two layers might have the same callback UID value
   opacityCallbacks_[&layer] = opacityUid;
 #else
   // Not supported
