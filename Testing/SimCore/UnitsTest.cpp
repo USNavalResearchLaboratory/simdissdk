@@ -538,12 +538,12 @@ int testSpeedConvert()
 
   // At this point, presume a-to-b and b-to-a is fully tested; just test one side
   rv += SDK_ASSERT(simCore::areEqual(Units::METERS_PER_SECOND.convertTo(Units::MILES_PER_HOUR, 1.5), 3.35540466));
-  rv += SDK_ASSERT(simCore::areEqual(Units::KILOMETERS_PER_HOUR.convertTo(Units::METERS_PER_SECOND, 1.5), 0.416667));
-  rv += SDK_ASSERT(simCore::areEqual(Units::KNOTS.convertTo(Units::METERS_PER_SECOND, 1.5), 0.771667));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KILOMETERS_PER_HOUR.convertTo(Units::METERS_PER_SECOND, 1.5), 0.4166667));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KNOTS.convertTo(Units::METERS_PER_SECOND, 1.5), 0.7716667));
   rv += SDK_ASSERT(simCore::areEqual(Units::MILES_PER_HOUR.convertTo(Units::METERS_PER_SECOND, 1.5), 0.67056));
   rv += SDK_ASSERT(simCore::areEqual(Units::FEET_PER_SECOND.convertTo(Units::METERS_PER_SECOND, 1.5), 0.4572));
   rv += SDK_ASSERT(simCore::areEqual(Units::KILOMETERS_PER_SECOND.convertTo(Units::METERS_PER_SECOND, 1.5), 1500.0));
-  rv += SDK_ASSERT(simCore::areEqual(Units::DATA_MILES_PER_HOUR.convertTo(Units::METERS_PER_SECOND, 1.5), 0.76196607));
+  rv += SDK_ASSERT(simCore::areEqual(Units::DATA_MILES_PER_HOUR.convertTo(Units::METERS_PER_SECOND, 1.5), 0.762));
   rv += SDK_ASSERT(simCore::areEqual(Units::YARDS_PER_SECOND.convertTo(Units::METERS_PER_SECOND, 1.5), 1.3716));
 
   return rv;

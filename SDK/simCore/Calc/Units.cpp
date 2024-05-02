@@ -75,13 +75,13 @@ const Units Units::KILOFEET("kilofeet", "kf", 304.79999, simCore::LENGTH_FAMILY)
 const Units Units::DATA_MILES("data miles", "dm", 1828.800164446, simCore::LENGTH_FAMILY);
 
 const Units Units::METERS_PER_SECOND("meters per second", "m/sec", 1.0, simCore::SPEED_FAMILY);
-const Units Units::KILOMETERS_PER_HOUR("kilometers per hour", "km/hr", 0.27777778, simCore::SPEED_FAMILY);
-const Units Units::KNOTS("knots", "kts", 0.51444444, simCore::SPEED_FAMILY);
-const Units Units::MILES_PER_HOUR("miles per hour", "mph", 0.44703997, simCore::SPEED_FAMILY);
-const Units Units::FEET_PER_SECOND("feet per second", "ft/sec", 0.3047999, simCore::SPEED_FAMILY);
-const Units Units::KILOMETERS_PER_SECOND("kilometers per second", "km/sec", 1e3, simCore::SPEED_FAMILY);
-const Units Units::DATA_MILES_PER_HOUR("data miles per hour", "dm/hr", 0.50797738, simCore::SPEED_FAMILY);
-const Units Units::YARDS_PER_SECOND("yards per second", "yd/sec", 0.91439997, simCore::SPEED_FAMILY);
+const Units Units::KILOMETERS_PER_HOUR("kilometers per hour", "km/hr", Units::KILOMETERS.convertTo(Units::METERS, 1.0) / SECPERHOUR, simCore::SPEED_FAMILY);
+const Units Units::KNOTS("knots", "kts", Units::NAUTICAL_MILES.convertTo(Units::METERS, 1.0) / SECPERHOUR, simCore::SPEED_FAMILY);
+const Units Units::MILES_PER_HOUR("miles per hour", "mph", Units::MILES.convertTo(Units::METERS, 1.0) / SECPERHOUR, simCore::SPEED_FAMILY);
+const Units Units::FEET_PER_SECOND("feet per second", "ft/sec", Units::FEET.convertTo(Units::METERS, 1.0), simCore::SPEED_FAMILY);
+const Units Units::KILOMETERS_PER_SECOND("kilometers per second", "km/sec", Units::KILOMETERS.convertTo(Units::METERS, 1.0), simCore::SPEED_FAMILY);
+const Units Units::DATA_MILES_PER_HOUR("data miles per hour", "dm/hr", Units::DATA_MILES.convertTo(Units::METERS, 1.0) / SECPERHOUR, simCore::SPEED_FAMILY);
+const Units Units::YARDS_PER_SECOND("yards per second", "yd/sec", Units::YARDS.convertTo(Units::METERS, 1.0), simCore::SPEED_FAMILY);
 
 const Units Units::METERS_PER_SECOND_SQUARED("meters per second squared", "m/(s^2)", 1.0, simCore::ACCELERATION_FAMILY);
 const Units Units::KILOMETERS_PER_SECOND_SQUARED("kilometers per second squared", "km/(s^2)", 1e3, simCore::ACCELERATION_FAMILY);
