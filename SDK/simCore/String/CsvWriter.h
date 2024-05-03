@@ -24,14 +24,14 @@
 #define SIMCORE_CSVWRITER_H
 
 #include <iostream>
-#include <span>
 #include <string>
 #include <vector>
+#include "simCore/Common/Common.h"
 
 namespace simCore {
 
 /** Responsible for writing out string vectors as CSV content */
-class CsvWriter
+class SDKCORE_EXPORT CsvWriter
 {
 public:
   /**
