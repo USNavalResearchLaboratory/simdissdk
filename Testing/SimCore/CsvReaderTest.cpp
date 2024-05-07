@@ -316,6 +316,128 @@ int testLotsOfQuotes()
   return rv;
 }
 
+int testNullQuotes1()
+{
+  // Case with must-be-user-generated file, where quotes are not doubled or embedded
+  std::istringstream is(R"(file,with " the,quote",embedded)");
+  simCore::CsvReader reader(is);
+  reader.setQuoteChar('\0');
+  std::vector<std::string> tokens;
+
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 4);
+  rv += SDK_ASSERT(tokens[0] == R"(file)");
+  rv += SDK_ASSERT(tokens[1] == R"(with " the)");
+  rv += SDK_ASSERT(tokens[2] == R"(quote")");
+  rv += SDK_ASSERT(tokens[3] == R"(embedded)");
+  return rv;
+}
+
+int testNullQuotes2()
+{
+  // Case with properly quoted file
+  std::istringstream is(R"("token1","token""two",tok""en3,"token4")");
+  simCore::CsvReader reader(is);
+  reader.setQuoteChar('\0');
+  std::vector<std::string> tokens;
+
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 4);
+  rv += SDK_ASSERT(tokens[0] == R"("token1")");
+  rv += SDK_ASSERT(tokens[1] == R"("token""two")");
+  rv += SDK_ASSERT(tokens[2] == R"(tok""en3)");
+  rv += SDK_ASSERT(tokens[3] == R"("token4")");
+  return rv;
+}
+
+int testQuotesInMiddle1()
+{
+  // Degenerate use case, from operator entry. This should match Excel behavior
+  std::istringstream is(R"(file,with " the,quote",embedded)");
+  simCore::CsvReader reader(is);
+  std::vector<std::string> tokens;
+
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 4);
+  rv += SDK_ASSERT(tokens[0] == R"(file)");
+  rv += SDK_ASSERT(tokens[1] == R"(with " the)");
+  rv += SDK_ASSERT(tokens[2] == R"(quote")");
+  rv += SDK_ASSERT(tokens[3] == R"(embedded)");
+  return rv;
+}
+
+int testQuotesInMiddle2()
+{
+  // Degenerate use case, from operator entry. This should match Excel behavior
+  std::istringstream is(R"("token1","token""two",tok""en3,"token4")");
+  simCore::CsvReader reader(is);
+  std::vector<std::string> tokens;
+
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 4);
+  rv += SDK_ASSERT(tokens[0] == R"(token1)");
+  rv += SDK_ASSERT(tokens[1] == R"(token"two)");
+  rv += SDK_ASSERT(tokens[2] == R"(tok""en3)"); // note double quotes
+  rv += SDK_ASSERT(tokens[3] == R"(token4)");
+  return rv;
+}
+
+int testQuotesInMiddle3()
+{
+  // Degenerate use case, from operator entry. This should match Excel behavior
+  std::istringstream is(R"(a, "b", "dog, cat", food,"dog, cat", food)");
+  simCore::CsvReader reader(is);
+  std::vector<std::string> tokens;
+
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 7);
+  rv += SDK_ASSERT(tokens[0] == R"(a)");
+  rv += SDK_ASSERT(tokens[1] == R"( "b")");
+  rv += SDK_ASSERT(tokens[2] == R"( "dog)");
+  rv += SDK_ASSERT(tokens[3] == R"( cat")");
+  rv += SDK_ASSERT(tokens[4] == R"( food)");
+  rv += SDK_ASSERT(tokens[5] == R"(dog, cat)");
+  rv += SDK_ASSERT(tokens[6] == R"( food)");
+  return rv;
+}
+
+int testQuotesInMiddle4()
+{
+  // Degenerate use case, from operator entry. This should match Excel behavior
+  std::istringstream is(R"(a,"quote " ends early,c)");
+  simCore::CsvReader reader(is);
+  std::vector<std::string> tokens;
+
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 3);
+  rv += SDK_ASSERT(tokens[0] == R"(a)");
+  rv += SDK_ASSERT(tokens[1] == R"(quote  ends early)");
+  rv += SDK_ASSERT(tokens[2] == R"(c)");
+  return rv;
+}
+
+int testQuotesInMiddle5()
+{
+  // Degenerate use case, from operator entry. This should match Excel behavior
+  std::istringstream is(R"(a,"quoted "" token" "that ends",c)");
+  simCore::CsvReader reader(is);
+  std::vector<std::string> tokens;
+
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 3);
+  rv += SDK_ASSERT(tokens[0] == R"(a)");
+  rv += SDK_ASSERT(tokens[1] == R"(quoted " token "that ends")");
+  rv += SDK_ASSERT(tokens[2] == R"(c)");
+  return rv;
+}
+
 }
 
 int CsvReaderTest(int argc, char *argv[])
@@ -332,6 +454,13 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testQuotedComment() == 0);
   rv += SDK_ASSERT(testSymmetricWhitespace() == 0);
   rv += SDK_ASSERT(testLotsOfQuotes() == 0);
+  rv += SDK_ASSERT(testNullQuotes1() == 0);
+  rv += SDK_ASSERT(testNullQuotes2() == 0);
+  rv += SDK_ASSERT(testQuotesInMiddle1() == 0);
+  rv += SDK_ASSERT(testQuotesInMiddle2() == 0);
+  rv += SDK_ASSERT(testQuotesInMiddle3() == 0);
+  rv += SDK_ASSERT(testQuotesInMiddle4() == 0);
+  rv += SDK_ASSERT(testQuotesInMiddle5() == 0);
 
   return rv;
 }

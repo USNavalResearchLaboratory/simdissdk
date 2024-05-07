@@ -106,12 +106,17 @@ int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
   std::string currentToken;
   bool insideQuote = false;
   bool started = false;
+  bool wholeTokenQuoted = false;
 
   while (ch.has_value())
   {
     // Special processing if inside quote
     if (insideQuote)
     {
+      // No way to do special quote tokenization unless the token is quoted. If it's not
+      // quoted, then we just treat quote like any other character.
+      assert(wholeTokenQuoted);
+
       started = true;
       if (*ch == quote_)
         insideQuote = false;
@@ -121,18 +126,38 @@ int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
       continue;
     }
 
+    // Whole-token quoting can be stopped, with the close of the quote. This catches cases like:
+    //   a,"quote " ends early,c
+    // Where token[1] should be "quote  ends early"
+    if (wholeTokenQuoted && *ch != quote_)
+      wholeTokenQuoted = false;
+
     if (*ch == quote_)
     {
-      insideQuote = true;
-      // Handle double quote inside
-      if (started)
-        currentToken += std::string(1, quote_);
+      if (currentToken.empty())
+        wholeTokenQuoted = true;
+
+      if (wholeTokenQuoted)
+      {
+        insideQuote = true;
+        // Handle double quote inside
+        if (started)
+          currentToken += std::string(1, quote_);
+      }
+      else
+      {
+        // Quote is inside the string, like in the second token of:
+        //    a, quote " here, c
+        // So we just append the quote
+        currentToken.append(1, *ch);
+      }
     }
     else if (*ch == delimiter_)
     {
       tokens.push_back(currentToken);
       currentToken.clear();
       started = false;
+      wholeTokenQuoted = false;
     }
     else if (*ch == '\r')
     {
