@@ -68,7 +68,7 @@ int testCsvReadLine()
 
   // Test stream with empty lines
   stream.clear();
-  stream.str("one,two\n   \nthree,four,five\n  \nsix,seven");
+  stream.str("one,two\n\nthree,four,five\n\nsix,seven");
   rv += SDK_ASSERT(reader.readLine(tokens) == 0);
   rv += SDK_ASSERT(tokens.size() == 2);
   rv += SDK_ASSERT(tokens[0] == "one");
@@ -106,7 +106,7 @@ int testCsvReadLineTrimmed()
 {
   int rv = 0;
 
-  // Same leading and trailing whitespace test cases from testCsvReadLine(), but using readLineTrimmed
+  // Same leading and trailing whitespace test cases from testCsvreadLine1(), but using readLineTrimmed
   std::istringstream stream("one  , two,thr  ee\n four ,   five,six");
 
   simCore::CsvReader reader(stream);
@@ -174,7 +174,7 @@ int testCsvLineNumber()
 {
   int rv = 0;
 
-  std::istringstream stream("#col 1, col 2, col3\none,two\n \n \nthree,four,five\nsix,seven");
+  std::istringstream stream("#col 1, col 2, col3\none,two\n\n\nthree,four,five\nsix,seven");
 
   simCore::CsvReader reader(stream);
   std::vector<std::string> tokens;
@@ -197,7 +197,7 @@ int testReadEmptyLines()
 {
   int rv = 0;
 
-  std::istringstream stream(" \n#col 1, col 2, col3\none,two\n \nthree,four,five\n \nsix,seven");
+  std::istringstream stream("\n#col 1, col 2, col3\none,two\n\nthree,four,five\n\nsix,seven");
 
   simCore::CsvReader reader(stream);
   std::vector<std::string> tokens;
@@ -224,28 +224,95 @@ int testReadEmptyLines()
   return rv;
 }
 
-// Cursory testing of quote-handling. TokenizerTest tests the related simCore functions
-int testReadQuotes()
+int testDelimiterInToken()
 {
-  int rv = 0;
+  // This is 4 tokens:
+  //   a,,b
+  //   ,
+  //   empty
+  //   ,c,
+  std::istringstream is(R"("a,,b",",",,",c,")");
 
-  std::istringstream stream("aa,bb'b\"b',cc'c'c\"c\",dd'ddd,d',e\"ee");
+  simCore::CsvReader reader(is);
 
-  simCore::CsvReader ignoreQuotes(stream);
-  ignoreQuotes.setParseQuotes(false);
   std::vector<std::string> tokens;
 
-  rv += SDK_ASSERT(ignoreQuotes.readLine(tokens) == 0);
-  rv += SDK_ASSERT(tokens.size() == 6); // [aa, bb'b"b', cc'c'c"c", dd'ddd, d', e"ee]
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 4);
+  rv += SDK_ASSERT(tokens[0] == "a,,b");
+  rv += SDK_ASSERT(tokens[1] == ",");
+  rv += SDK_ASSERT(tokens[2].empty());
+  rv += SDK_ASSERT(tokens[3] == ",c,");
+  return rv;
+}
 
-  // Reset the stream and clear eof flags
-  stream.str("aa,bb'b\"b',cc'c'c\"c\",dd'ddd,d',e\"ee");
-  stream.clear();
+int testEmptyLineInQuotedToken()
+{
+  // This is 3 tokens:
+  //   a
+  //   \nb\n\nb\n
+  //   c
+  std::istringstream is("a,\"\nb\n\nb\n\",c");
+  simCore::CsvReader reader(is);
+  std::vector<std::string> tokens;
 
-  simCore::CsvReader parseQuotes(stream);
-  rv += SDK_ASSERT(parseQuotes.readLine(tokens) == 0);
-  rv += SDK_ASSERT(tokens.size() == 5); // [aa, bb'b"b', cc'c'c"c", dd'ddd,d', e"ee]
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 3);
+  rv += SDK_ASSERT(tokens[0] == "a");
+  rv += SDK_ASSERT(tokens[1] == "\nb\n\nb\n");
+  rv += SDK_ASSERT(tokens[2] == "c");
+  return rv;
+}
 
+int testQuotedComment()
+{
+  // This is 2 tokens:
+  //   a#
+  //   b
+  std::istringstream is(R"("a#",b#,c)");
+  simCore::CsvReader reader(is);
+  std::vector<std::string> tokens;
+
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 2);
+  rv += SDK_ASSERT(tokens[0] == "a#");
+  rv += SDK_ASSERT(tokens[1] == "b");
+  return rv;
+}
+
+int testSymmetricWhitespace()
+{
+  std::istringstream is(" a a,b\tb,   ,d\t ");
+  simCore::CsvReader reader(is);
+  std::vector<std::string> tokens;
+
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 4);
+  rv += SDK_ASSERT(tokens[0] == " a a");
+  rv += SDK_ASSERT(tokens[1] == "b\tb");
+  rv += SDK_ASSERT(tokens[2] == "   ");
+  rv += SDK_ASSERT(tokens[3] == "d\t ");
+  return rv;
+}
+
+int testLotsOfQuotes()
+{
+  std::istringstream is(R"("""","b""b","c""""""cc""""",,"'"",""")");
+  simCore::CsvReader reader(is);
+  std::vector<std::string> tokens;
+
+  int rv = 0;
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 5);
+  rv += SDK_ASSERT(tokens[0] == R"(")");
+  rv += SDK_ASSERT(tokens[1] == R"(b"b)");
+  rv += SDK_ASSERT(tokens[2] == R"(c"""cc"")");
+  rv += SDK_ASSERT(tokens[3].empty());
+  rv += SDK_ASSERT(tokens[4] == R"('",")");
   return rv;
 }
 
@@ -260,7 +327,11 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testCsvWithComments() == 0);
   rv += SDK_ASSERT(testCsvLineNumber() == 0);
   rv += SDK_ASSERT(testReadEmptyLines() == 0);
-  rv += SDK_ASSERT(testReadQuotes() == 0);
+  rv += SDK_ASSERT(testDelimiterInToken() == 0);
+  rv += SDK_ASSERT(testEmptyLineInQuotedToken() == 0);
+  rv += SDK_ASSERT(testQuotedComment() == 0);
+  rv += SDK_ASSERT(testSymmetricWhitespace() == 0);
+  rv += SDK_ASSERT(testLotsOfQuotes() == 0);
 
   return rv;
 }

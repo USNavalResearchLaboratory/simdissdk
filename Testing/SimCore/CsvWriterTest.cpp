@@ -75,19 +75,17 @@ int testWhitespaceTabs()
 {
   int rv = 0;
   const auto& v1 = std::vector<std::string>{ " a a", "b\tb", "   ", "d\t "};
-  // TODO: SIM-17007 causes this to fail in CSV Reader
-  rv += SDK_ASSERT(testVector(v1, " a a,b\tb,   ,d\t \n", false) == 0);
+  rv += SDK_ASSERT(testVector(v1, " a a,b\tb,   ,d\t \n", true) == 0);
   return rv;
 }
 
 int testMultiline()
 {
   int rv = 0;
-  // TODO SIM-17008: CSV Reader does not handle newlines correctly
   const auto& v1 = std::vector<std::string>{ "a", "b\nMulti-\nLine test in middle", "c" };
-  rv += SDK_ASSERT(testVector(v1, "a,\"b\nMulti-\nLine test in middle\",c\n", false) == 0);
+  rv += SDK_ASSERT(testVector(v1, "a,\"b\nMulti-\nLine test in middle\",c\n", true) == 0);
   const auto& v2 = std::vector<std::string>{ "a", "b", "\nMulti-\nLine test at the end" };
-  rv += SDK_ASSERT(testVector(v2, "a,b,\"\nMulti-\nLine test at the end\"\n", false) == 0);
+  rv += SDK_ASSERT(testVector(v2, "a,b,\"\nMulti-\nLine test at the end\"\n", true) == 0);
   return rv;
 }
 
@@ -95,8 +93,7 @@ int testCommas()
 {
   int rv = 0;
   const auto& v1 = std::vector<std::string>{ "a,,b", ",", "", ",c," };
-  // TODO SIM-17010: CSV Reader testing is false because it doesn't handle tokens in quotes
-  rv += SDK_ASSERT(testVector(v1, R"("a,,b",",",,",c,")" + std::string("\n"), false) == 0);
+  rv += SDK_ASSERT(testVector(v1, R"("a,,b",",",,",c,")" + std::string("\n"), true) == 0);
   return rv;
 }
 
@@ -104,8 +101,7 @@ int testQuotes()
 {
   int rv = 0;
   const auto& v1 = std::vector<std::string>{ "\"", "b\"b", "c\"\"\"cc\"\"", "", "'\",\""};
-  // TODO SIM-17013: Internal quote tokens are not handled properly in CSV Reader
-  rv += SDK_ASSERT(testVector(v1, R"("""","b""b","c""""""cc""""",,"'"",""")" + std::string("\n"), false) == 0);
+  rv += SDK_ASSERT(testVector(v1, R"("""","b""b","c""""""cc""""",,"'"",""")" + std::string("\n"), true) == 0);
 
   // Repeat test, but with double quotes enabled. Don't bother reading from CSV
   // because even Excel doesn't handle escaped quotes like this.

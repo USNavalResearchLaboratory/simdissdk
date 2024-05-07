@@ -20,6 +20,8 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
+#include <cassert>
 #include "simCore/String/Format.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Utils.h"
@@ -28,12 +30,8 @@
 namespace simCore
 {
 
-CsvReader::CsvReader(std::istream& stream, const std::string& delimiters)
-  : stream_(stream),
-  delimiters_(delimiters),
-  parseQuotes_(true),
-  commentChar_('#'),
-  lineNumber_(0)
+CsvReader::CsvReader(std::istream& stream)
+  : stream_(stream)
 {
 }
 
@@ -46,40 +44,121 @@ size_t CsvReader::lineNumber() const
   return lineNumber_;
 }
 
-void CsvReader::setParseQuotes(bool parseQuotes)
-{
-  parseQuotes_ = parseQuotes;
-}
-
 void CsvReader::setCommentChar(char commentChar)
 {
   commentChar_ = commentChar;
 }
 
+void CsvReader::setDelimiterChar(char delim)
+{
+  delimiter_ = delim;
+}
+
+void CsvReader::setQuoteChar(char quote)
+{
+  quote_ = quote;
+}
+
+std::optional<char> CsvReader::readNext_()
+{
+  if (!stream_)
+    return {};
+  char ch = '\0';
+  if (!stream_.read(&ch, 1))
+    return {};
+  return ch;
+}
+
 int CsvReader::readLine(std::vector<std::string>& tokens, bool skipEmptyLines)
 {
-  tokens.clear();
-  std::string line;
-  while (simCore::getStrippedLine(stream_, line))
-  {
-    lineNumber_++;
+  if (skipEmptyLines)
+    return readLineSkippingEmptyLines_(tokens);
+  return readLineImpl_(tokens);
+}
 
-    if (line.empty())
-    {
-      if (skipEmptyLines)
-        continue;
-      // Not skipping empty lines, return successfully with empty tokens vector
+int CsvReader::readLineSkippingEmptyLines_(std::vector<std::string>& tokens)
+{
+  while (readLineImpl_(tokens) == 0)
+  {
+    // Return success only if the line is non-empty
+    if (tokens.size() > 0)
       return 0;
+  }
+  // readLineImpl_() returned non-zero, so we do too
+  return 1;
+}
+
+int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
+{
+  tokens.clear();
+
+  // Algorithm adapted from https://stackoverflow.com/questions/843997
+
+  auto ch = readNext_();
+  // Skip linefeed characters
+  while (ch.has_value() && ch == '\r')
+    ch = readNext_();
+  // Invalid read, done
+  if (!ch.has_value())
+    return 1;
+  ++lineNumber_;
+
+  std::string currentToken;
+  bool insideQuote = false;
+  bool started = false;
+
+  while (ch.has_value())
+  {
+    // Special processing if inside quote
+    if (insideQuote)
+    {
+      started = true;
+      if (*ch == quote_)
+        insideQuote = false;
+      else
+        currentToken.append(1, *ch);
+      ch = readNext_();
+      continue;
     }
 
-    // Ignore comments
-    if (line[0] == commentChar_)
-      continue;
-
-    getTokens_(tokens, line);
-    return 0;
+    if (*ch == quote_)
+    {
+      insideQuote = true;
+      // Handle double quote inside
+      if (started)
+        currentToken += std::string(1, quote_);
+    }
+    else if (*ch == delimiter_)
+    {
+      tokens.push_back(currentToken);
+      currentToken.clear();
+      started = false;
+    }
+    else if (*ch == '\r')
+    {
+      // noop
+    }
+    else if (*ch == '\n')
+    {
+      // end of line, break out of loop
+      break;
+    }
+    else if (*ch == commentChar_)
+    {
+      // Treat like end of line, and read until end of line
+      while (ch.has_value() && *ch != '\n')
+        ch = readNext_();
+      break;
+    }
+    else // save character
+      currentToken.append(1, *ch);
+    ch = readNext_();
   }
-  return 1;
+
+  // Only save empty token, if ending in a delimiter (i.e. tokens is non-empty)
+  if (!currentToken.empty() || !tokens.empty())
+    tokens.push_back(currentToken);
+  return 0;
 }
 
 int CsvReader::readLineTrimmed(std::vector<std::string>& tokens, bool skipEmptyLines)
@@ -89,33 +168,9 @@ int CsvReader::readLineTrimmed(std::vector<std::string>& tokens, bool skipEmptyL
     return rv;
 
   // Remove leading and trailing whitespace from all tokens
-  for (size_t i = 0; i < tokens.size(); ++i)
-  {
-    const std::string tok = tokens[i];
-    if (tok.empty())
-      continue;
-    tokens[i] = simCore::StringUtils::trim(tok);
-  }
+  std::transform(tokens.cbegin(), tokens.cend(), tokens.begin(), [](const std::string& str) {
+    return simCore::StringUtils::trim(str); });
   return 0;
-}
-
-void CsvReader::getTokens_(std::vector<std::string>& tokens, const std::string& line) const
-{
-  auto delimPos = line.find_first_of(delimiters_);
-  if (delimPos == std::string::npos)
-  {
-    tokens.push_back(line);
-    return;
-  }
-
-  auto quotePos = line.find_first_of("'\"");
-  if (!parseQuotes_ || (quotePos == std::string::npos))
-  {
-    simCore::stringTokenizer(tokens, line, delimiters_, true, false);
-    return;
-  }
-
-  simCore::escapeTokenize(tokens, line, true, delimiters_, false, true, false);
 }
 
 /////////////////////////////////////////////////////////////////
@@ -125,8 +180,6 @@ RowReader::RowReader(simCore::CsvReader& reader)
 {
   // We care about comments for headers
   reader_.setCommentChar('\0');
-  // SIM-14469, don't parse quotes
-  reader_.setParseQuotes(false);
 }
 
 bool RowReader::eof() const
