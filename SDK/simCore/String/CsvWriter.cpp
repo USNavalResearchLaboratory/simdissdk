@@ -30,17 +30,17 @@ CsvWriter::CsvWriter(std::ostream& os)
 {
 }
 
-void CsvWriter::setDelimiter(char delim)
+void CsvWriter::setDelimiterChar(char delim)
 {
   delimiter_ = delim;
 }
 
-void CsvWriter::setEscapeCharacter(char escape)
+void CsvWriter::setEscapeChar(char escape)
 {
   escape_ = escape;
 }
 
-void CsvWriter::setQuoteCharacter(char quote)
+void CsvWriter::setQuoteChar(char quote)
 {
   quote_ = quote;
 }

@@ -113,7 +113,7 @@ int testQuotes()
   rv += SDK_ASSERT(ss.str() == expected2);
 
   // Change the escape token to something else
-  writer.setEscapeCharacter('+');
+  writer.setEscapeChar('+');
   ss.str("");
   writer.write(v1);
   rv += SDK_ASSERT(ss.str() == R"("+"","b+"b","c+"+"+"cc+"+"",,"'+",+"")" + std::string("\n"));
@@ -143,34 +143,34 @@ int testDelimiterAndQuote()
 
   // Random unused character for delimiter
   ss.str("");
-  writer.setDelimiter('x');
+  writer.setDelimiterChar('x');
   writer.write(v1);
   rv += SDK_ASSERT(ss.str() == "axb bxc\n");
 
   // Alpha character for delim -- tests from here below are a bit wild but stress the system
   ss.str("");
-  writer.setDelimiter('a');
+  writer.setDelimiterChar('a');
   writer.write(v1);
   rv += SDK_ASSERT(ss.str() == "\"a\"ab bac\n");
 
   // Same, but change quote token
   ss.str("");
-  writer.setDelimiter('a');
-  writer.setQuoteCharacter('x');
+  writer.setDelimiterChar('a');
+  writer.setQuoteChar('x');
   writer.write(v1);
   rv += SDK_ASSERT(ss.str() == "xaxab bac\n");
 
   // Same, but change quote token to a used character
   ss.str("");
-  writer.setDelimiter('a');
-  writer.setQuoteCharacter(' ');
+  writer.setDelimiterChar('a');
+  writer.setQuoteChar(' ');
   writer.write(v1);
   rv += SDK_ASSERT(ss.str() == " a a b  b ac\n");
 
   // Reset quote token and use a different character for delimiter
   ss.str("");
-  writer.setDelimiter(' ');
-  writer.setQuoteCharacter('\"');
+  writer.setDelimiterChar(' ');
+  writer.setQuoteChar('\"');
   writer.write(v1);
   rv += SDK_ASSERT(ss.str() == "a \"b b\" c\n");
 

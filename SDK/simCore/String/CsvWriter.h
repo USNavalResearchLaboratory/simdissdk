@@ -41,7 +41,7 @@ public:
   explicit CsvWriter(std::ostream& os);
 
   /** Changes the delimiter between tokens. Typically ',' */
-  void setDelimiter(char delim);
+  void setDelimiterChar(char delim);
 
   /**
    * Sets the quote character, for fields containing special characters or newlines. This
@@ -49,7 +49,7 @@ public:
    * present in the token. This defaults to '"'.
    * @param quote Character for quoting tokens
    */
-  void setQuoteCharacter(char quote);
+  void setQuoteChar(char quote);
 
   /**
    * Sets the escape character to escape the quote character when double-quote is false. This
@@ -58,7 +58,7 @@ public:
    * is on, escape characters inside tokens are left as-is since there is no escaping.
    * @param escape Character to prepend for escaping quote (and itself), only if double-quote off
    */
-  void setEscapeCharacter(char escape);
+  void setEscapeChar(char escape);
 
   /**
    * If true, double internal quote characters. If false, escape internal quote characters.
