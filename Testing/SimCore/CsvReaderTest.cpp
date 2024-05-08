@@ -438,6 +438,47 @@ int testQuotesInMiddle5()
   return rv;
 }
 
+int testReadTrimmedSkipEmpty()
+{
+  std::vector<std::string> tokens;
+  int rv = 0;
+
+  { // First test with skip-empty-lines off
+    std::istringstream is("\n\nsimple,line\n \nthree\n");
+    simCore::CsvReader reader(is);
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.empty());
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.empty());
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(tokens[0] == "simple");
+    rv += SDK_ASSERT(tokens[1] == "line");
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.empty());
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 1);
+    rv += SDK_ASSERT(tokens[0] == "three");
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) != 0);
+    rv += SDK_ASSERT(tokens.empty());
+  }
+
+  { // Next, test with skip-empty-lines on
+    std::istringstream is("\n\nsimple,line\n \nthree\n");
+    simCore::CsvReader reader(is);
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, true) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(tokens[0] == "simple");
+    rv += SDK_ASSERT(tokens[1] == "line");
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, true) == 0);
+    rv += SDK_ASSERT(tokens.size() == 1);
+    rv += SDK_ASSERT(tokens[0] == "three");
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) != 0);
+
+  }
+  return rv;
+}
+
 }
 
 int CsvReaderTest(int argc, char *argv[])
@@ -461,6 +502,7 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testQuotesInMiddle3() == 0);
   rv += SDK_ASSERT(testQuotesInMiddle4() == 0);
   rv += SDK_ASSERT(testQuotesInMiddle5() == 0);
+  rv += SDK_ASSERT(testReadTrimmedSkipEmpty() == 0);
 
   return rv;
 }

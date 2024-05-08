@@ -188,13 +188,23 @@ int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
 
 int CsvReader::readLineTrimmed(std::vector<std::string>& tokens, bool skipEmptyLines)
 {
-  const int rv = readLine(tokens, skipEmptyLines);
-  if (rv != 0)
-    return rv;
+  while (1)
+  {
+    const int rv = readLine(tokens, skipEmptyLines);
+    if (rv != 0)
+      return rv;
 
-  // Remove leading and trailing whitespace from all tokens
-  std::transform(tokens.cbegin(), tokens.cend(), tokens.begin(), [](const std::string& str) {
-    return simCore::StringUtils::trim(str); });
+    // Remove leading and trailing whitespace from all tokens
+    std::transform(tokens.cbegin(), tokens.cend(), tokens.begin(), [](const std::string& str) {
+      return simCore::StringUtils::trim(str); });
+
+    // If there is only one token and it's empty, we need to clear the token
+    if (tokens.size() == 1 && tokens[0].empty())
+      tokens.clear();
+    // If we skip empty lines, and this was an empty line, then we keep going
+    if (!skipEmptyLines || !tokens.empty())
+      break;
+  }
   return 0;
 }
 
