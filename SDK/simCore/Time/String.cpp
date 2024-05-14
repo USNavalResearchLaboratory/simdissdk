@@ -227,7 +227,7 @@ int HoursTimeFormatter::fromString(const std::string& timeString, simCore::Secon
       simCore::isValidNumber(vec[1], min) &&
       simCore::isValidNumber(vec[2], sec))
     {
-      seconds = hours * SECPERHOUR + min * MINPERHOUR + sec;
+      seconds = hours * SECPERHOUR + min * SECPERMIN + sec;
       return 0;
     }
   }

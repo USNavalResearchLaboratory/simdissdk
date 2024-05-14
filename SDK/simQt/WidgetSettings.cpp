@@ -38,6 +38,8 @@ namespace simQt
 
 static const QString& COLUMN_WIDTHS = "/Column Widths";
 static const QString& SPLITTER_DATA = "/Splitter Data";
+static const QString& SORT_COLUMN = "/Sort Column";
+static const QString& SORT_ORDER = "/Sort Order";
 
 void WidgetSettings::saveWidget(simQt::Settings& settings, QWidget* widget)
 {
@@ -102,6 +104,9 @@ int WidgetSettings::saveQTreeView_(simQt::Settings& settings, const QString& pat
 
       settings.setValue(path + COLUMN_WIDTHS, sizes, simQt::Settings::MetaData::makeInteger(QVariant(), "", simQt::Settings::PRIVATE, 0));
     }
+
+    settings.setValue(path + SORT_COLUMN, view->header()->sortIndicatorSection());
+    settings.setValue(path + SORT_ORDER, static_cast<int>(view->header()->sortIndicatorOrder()));
   }
 
   return 0;
@@ -273,6 +278,13 @@ int WidgetSettings::loadQTreeView_(simQt::Settings& settings, const QString& pat
       QList<QVariant> sizes = settings.value(path + COLUMN_WIDTHS).toList();
       for (int ii = 0; ii < modelColumns && ii < sizes.size(); ++ii)
         view->setColumnWidth(ii, sizes[ii].toInt());
+    }
+
+    if (settings.contains(path + SORT_COLUMN) && settings.contains(path + SORT_ORDER))
+    {
+      const int sortColumn = settings.value(path + SORT_COLUMN).toInt();
+      const int sortOrder = settings.value(path + SORT_ORDER).toInt();
+      view->sortByColumn(sortColumn, static_cast<Qt::SortOrder>(sortOrder));
     }
   }
 
