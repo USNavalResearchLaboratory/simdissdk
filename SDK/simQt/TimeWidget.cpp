@@ -52,6 +52,7 @@ TimeWidget::TimeWidget(QWidget* parent)
   addContainer_(new HoursContainer(this), SLOT(setHours_()));
   addContainer_(new MonthContainer(this), SLOT(setMonth_()));
   addContainer_(new OrdinalContainer(this), SLOT(setOrdinal_()));
+  addContainer_(new Iso8601Container(this), SLOT(setIso8601_()));
 
   // Make this one the default format
   currentContainer_ = containers_.back();
@@ -296,6 +297,11 @@ void TimeWidget::setOrdinal_()
 void TimeWidget::setMonth_()
 {
   setTimeFormat(simCore::TIMEFORMAT_MONTHDAY);
+}
+
+void TimeWidget::setIso8601_()
+{
+  setTimeFormat(simCore::TIMEFORMAT_ISO8601);
 }
 
 void TimeWidget::setColorCode_()

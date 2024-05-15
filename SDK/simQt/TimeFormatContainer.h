@@ -354,6 +354,54 @@ protected:
   SegmentedSpinBox* widget_; ///< The widget to display the hours
 };
 
+/// Implements the ISO-8601 format
+class SDKQT_EXPORT Iso8601Container : public TimeFormatContainer
+{
+public:
+  /// constructor
+  Iso8601Container(QWidget* parent = nullptr);
+  virtual ~Iso8601Container();
+
+  ///@return the underlying widget
+  virtual QWidget* widget();
+  ///@return true if this has focus
+  virtual bool hasFocus() const;
+  ///@return current time
+  virtual simCore::TimeStamp timeStamp() const;
+  ///@return current time as text
+  virtual QString timeText() const;
+  /// set current time
+  virtual void setTimeStamp(const simCore::TimeStamp& value);
+  /// set begin/end time range
+  virtual void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end);
+  /// Returns which time limits are enforced
+  virtual void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const;
+  /// Sets which time limits to enforced
+  virtual void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd);
+
+  ///@return the state of "change color on error"
+  virtual bool colorCode() const;
+  /// set "change color on error"
+  virtual void setColorCode(bool value);
+  /// Set the number of digits after the decimal point
+  virtual void setPrecision(unsigned int digits);
+  /// get the number of digits after the decimal point
+  virtual unsigned int precision();
+
+  /// Set the time zone to use when displaying text
+  virtual void setTimeZone(simCore::TimeZone zone);
+  /// Get the time zone to use when displaying text
+  virtual simCore::TimeZone timeZone() const;
+
+  /// Disable tool tip since it can interfere with editing the time
+  virtual void disableToolTip();
+  /// Returns the text for a tool tip
+  virtual QString toolTipText() const;
+
+protected:
+  SegmentedSpinBox* widget_; ///< The widget to display the ordinal time
+};
+
 } // namespace
 
 #endif

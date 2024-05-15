@@ -310,7 +310,6 @@ void OrdinalContainer::setTimeRange(int scenarioReferenceYear, const simCore::Ti
   widget_->setTimeRange(scenarioReferenceYear, start, end);
 }
 
-
 void OrdinalContainer::getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const
 {
   widget_->getEnforceLimits(limitBeforeStart, limitAfterEnd);
@@ -555,6 +554,102 @@ void HoursContainer::disableToolTip()
 QString HoursContainer::toolTipText() const
 {
   return simQt::formatTooltip(tr("Time"), tr("Set the time in hours since beginning of reference year.") + USAGE_STR);
+}
+
+Iso8601Container::Iso8601Container(QWidget* parent)
+  : TimeFormatContainer(simCore::TIMEFORMAT_ISO8601, "ISO-8601")
+{
+  widget_ = new SegmentedSpinBox(parent);
+  widget_->setToolTip(toolTipText());
+
+  widget_->setLine(new Iso8601Texts());
+  connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
+  connect(widget_, SIGNAL(customContextMenuRequested(const QPoint&)), this, SIGNAL(customContextMenuRequested(const QPoint&)));
+}
+
+Iso8601Container::~Iso8601Container()
+{
+}
+
+QWidget* Iso8601Container::widget()
+{
+  return widget_;
+}
+
+bool Iso8601Container::hasFocus() const
+{
+  return widget_->hasFocus();
+}
+
+simCore::TimeStamp Iso8601Container::timeStamp() const
+{
+  return widget_->timeStamp();
+}
+
+QString Iso8601Container::timeText() const
+{
+  return widget_->text();
+}
+
+void Iso8601Container::setTimeStamp(const simCore::TimeStamp& value)
+{
+  widget_->setTimeStamp(value);
+}
+
+void Iso8601Container::setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end)
+{
+  widget_->setTimeRange(scenarioReferenceYear, start, end);
+}
+
+void Iso8601Container::getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const
+{
+  widget_->getEnforceLimits(limitBeforeStart, limitAfterEnd);
+}
+
+void Iso8601Container::setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd)
+{
+  widget_->setEnforceLimits(limitBeforeStart, limitAfterEnd);
+}
+
+bool Iso8601Container::colorCode() const
+{
+  return widget_->colorCode();
+}
+
+void Iso8601Container::setColorCode(bool value)
+{
+  return widget_->setColorCode(value);
+}
+
+void Iso8601Container::setPrecision(unsigned int digits)
+{
+  widget_->line()->setPrecision(digits);
+}
+
+unsigned int Iso8601Container::precision()
+{
+  return widget_->line()->precision();
+}
+
+void Iso8601Container::setTimeZone(simCore::TimeZone zone)
+{
+  widget_->line()->setTimeZone(zone);
+}
+
+simCore::TimeZone Iso8601Container::timeZone() const
+{
+  return widget_->line()->timeZone();
+}
+
+void Iso8601Container::disableToolTip()
+{
+  widget_->setToolTip("");
+}
+
+QString Iso8601Container::toolTipText() const
+{
+  return simQt::formatTooltip(tr("Time"), tr("Set the time in ISO-8601 format.") + USAGE_STR);
 }
 
 }

@@ -468,10 +468,11 @@ static const unsigned int MAX_PRECISION = 6;
   }
 
   //--------------------------------------------------------------------------
-  MonthText::MonthText(SegmentedTexts* parentLine)
+  MonthText::MonthText(SegmentedTexts* parentLine, bool intMode)
   : SegmentedText(true),
     line_(parentLine),
-    currentMonth_(0)
+    currentMonth_(0),
+    intMode_(intMode)
   {
   }
 
@@ -489,7 +490,7 @@ static const unsigned int MAX_PRECISION = 6;
 
   size_t MonthText::numberOfCharacters() const
   {
-    return ABBR_LENGTH;
+    return intMode_ ? 2 : ABBR_LENGTH;
   }
 
   size_t MonthText::spaceLeft() const
@@ -538,6 +539,11 @@ static const unsigned int MAX_PRECISION = 6;
 
   QString MonthText::text() const
   {
+    if (intMode_)
+    {
+      // currentMonth_ is 0-indexed, add 1 for visual representation
+      return QString("%1").arg(currentMonth_ + 1, 2, 10, QChar('0'));
+    }
     return simCore::MonthDayTimeFormatter::monthIntToString(currentMonth_).c_str();
   }
 
@@ -545,13 +551,50 @@ static const unsigned int MAX_PRECISION = 6;
   {
     const size_t endLocation = validateText(line, startLocation, state);
     if (state != QValidator::Invalid)
-      currentMonth_ = simCore::MonthDayTimeFormatter::monthStringToInt(line.toStdString().substr(startLocation, ABBR_LENGTH));
+    {
+      if (intMode_)
+      {
+        // currentMonth_ is 0-indexed, subtract 1 from visual representation
+        currentMonth_ = line.mid(static_cast<int>(startLocation), static_cast<int>(endLocation - startLocation)).toInt() - 1;
+      }
+      else
+        currentMonth_ = simCore::MonthDayTimeFormatter::monthStringToInt(line.toStdString().substr(startLocation, ABBR_LENGTH));
+    }
 
     return endLocation;
   }
 
   size_t MonthText::validateText(const QString& line, size_t startLocation, QValidator::State& state) const
   {
+    if (intMode_)
+    {
+      // adapted version of NumberText::validateText()
+      int count = static_cast<int>(startLocation);
+
+      if (count >= line.size())
+      {
+        state = QValidator::Invalid;
+        return static_cast<size_t>(count);
+      }
+
+      while ((count < line.size()) && (line[count] >= '0') && (line[count] <= '9') && ((static_cast<size_t>(count) - startLocation) < 2))
+        count++;
+
+      if (count != static_cast<int>(startLocation))
+      {
+        QString part = line.mid(static_cast<int>(startLocation), static_cast<int>(count - startLocation));
+        int value = part.toInt();
+        if (simCore::isBetween(value, 1, 12))
+          state = QValidator::Acceptable;
+        else
+          state = QValidator::Invalid;
+      }
+      else
+        state = QValidator::Invalid;
+
+      return static_cast<size_t>(count);
+    }
+
     // check if the text is a valid month name
     if (simCore::MonthDayTimeFormatter::monthStringToInt(line.toStdString().substr(startLocation, ABBR_LENGTH)) == -1)
     {
@@ -1122,6 +1165,156 @@ static const unsigned int MAX_PRECISION = 6;
   simCore::TimeZone MonthDayYearTexts::timeZone() const
   {
     return zone_;
+  }
+
+  //--------------------------------------------------------------------------
+  Iso8601Texts::Iso8601Texts()
+    : SegmentedTexts(),
+    zone_(simCore::TIMEZONE_UTC)
+  {
+    makeSegments_();
+  }
+
+  Iso8601Texts::~Iso8601Texts()
+  {
+  }
+
+  simCore::TimeStamp Iso8601Texts::timeStamp() const
+  {
+    const int yearDay = simCore::getYearDay(months_->intValue(), days_->value(), years_->value());
+    const int64_t secondsIntoYear = yearDay * simCore::SECPERDAY + hours_->value() * simCore::SECPERHOUR + minutes_->value() * simCore::SECPERMIN + seconds_->value();
+
+    const int fraction = (fraction_ == nullptr) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
+    simCore::TimeStamp stamp(years_->value(), simCore::Seconds(secondsIntoYear, fraction));
+
+    if (zone_ == simCore::TIMEZONE_LOCAL)
+    {
+      // Define a UTC datetime with the timestamp
+      const tm& timeComponents = simCore::getTimeStruct(stamp);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      // Change it to local time so that Qt figures out the local time offset from UTC time
+      dateTime.setTimeSpec(Qt::LocalTime);
+      stamp -= simCore::Seconds(dateTime.offsetFromUtc(), 0);
+    }
+    return stamp;
+  }
+
+  void Iso8601Texts::setTimeStamp(const simCore::TimeStamp& value)
+  {
+    if (!inRange_(value, limitBeforeStart_, limitAfterEnd_))
+      return;
+
+    simCore::TimeStamp stamp = value;
+    if (zone_ == simCore::TIMEZONE_LOCAL)
+    {
+      // Define a UTC datetime with the timestamp
+      const tm& timeComponents = simCore::getTimeStruct(value);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      // Change it to local time so that Qt figures out the local time offset from UTC time
+      dateTime.setTimeSpec(Qt::LocalTime);
+      stamp += simCore::Seconds(dateTime.offsetFromUtc(), 0);
+    }
+
+    // rounding the seconds can increase the refyear, need to reset the timestamp with rounded time to ensure no artifacts.
+    stamp.setTime(stamp.referenceYear(), stamp.secondsSinceRefYear().rounded(precision_));
+    unsigned int dayOfYear = 0; // [0,365] 365 possible in leap year
+    unsigned int hour = 0; // hours since midnight (0..23)
+    unsigned int min = 0;
+    unsigned int sec = 0;
+    stamp.getTimeComponents(dayOfYear, hour, min, sec);
+
+    int month = 0; // 0 to 11
+    int dayInMonth = 0; // 1 to 31
+    simCore::getMonthAndDayOfMonth(month, dayInMonth, stamp.referenceYear(), dayOfYear);
+
+    years_->setValue(stamp.referenceYear());
+    months_->setIntValue(month);
+    days_->setValue(dayInMonth);
+    hours_->setValue(static_cast<int>(hour));
+    minutes_->setValue(static_cast<int>(min));
+    seconds_->setValue(static_cast<int>(sec));
+    if (fraction_ != nullptr)
+      fraction_->setValue(fractionToField_(stamp.secondsSinceRefYear()));
+  }
+
+  void Iso8601Texts::valueEdited()
+  {
+    Q_EMIT timeEdited(timeStamp());
+  }
+
+  void Iso8601Texts::valueChanged()
+  {
+    Q_EMIT timeChanged(timeStamp());
+  }
+
+  QValidator::State Iso8601Texts::validateText(const QString& text) const
+  {
+    QValidator::State lastState = SegmentedTexts::validateText(text);
+    if (lastState == QValidator::Acceptable)
+    {
+      Iso8601Texts temp;
+      temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
+      temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
+      temp.setTimeZone(zone_);
+      temp.setText(text);
+      if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
+        return QValidator::Intermediate;
+    }
+
+    return lastState;
+  }
+
+  void Iso8601Texts::setTimeZone(simCore::TimeZone zone)
+  {
+    if (zone_ == zone)
+      return;
+
+    // Timestamp() is no longer correct after this line.  If timestamp must stay consistent after this call, caller must save it and restore it after calling
+    zone_ = zone;
+  }
+
+  simCore::TimeZone Iso8601Texts::timeZone() const
+  {
+    return zone_;
+  }
+
+  void Iso8601Texts::makeSegments_()
+  {
+    clearParts();
+
+    // YYYY-MM-DDTHH:MM:SS.sssZ, with optional [.sss]
+
+    // If the user increments the year the code will add 365*24*60*60 seconds to the current value.
+    // If the time change crosses Feb 29th, the year will change by one but the day of year will also
+    // change by one.   I do not think it is worth fixing.
+    years_ = new NumberText(this, 1970, 2046, 4, false, 365.0 * 24.0 * 60.0 * 60.0, false);
+    months_ = new MonthText(this, true);
+    days_ = new NumberText(this, 1, 31, 2, false, 24.0 * 60.0 * 60, false);
+    hours_ = new NumberText(this, 0, 23, 2, true, 60.0 * 60.0, false);
+    minutes_ = new NumberText(this, 0, 59, 2, true, 60.0, false);
+    seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
+    if (precision_ != 0)
+      fraction_ = createFactionOfSeconds_(precision_);
+    else
+      fraction_ = nullptr;
+
+    addPart(years_);
+    addPart(new SeparatorText("-", false));
+    addPart(months_);
+    addPart(new SeparatorText("-", false));
+    addPart(days_);
+    addPart(new SeparatorText("T", false));
+    addPart(hours_);
+    addPart(new SeparatorText(":", false));
+    addPart(minutes_);
+    addPart(new SeparatorText(":", false));
+    addPart(seconds_);
+    if (fraction_ != nullptr)
+    {
+      addPart(new SeparatorText(".", true));
+      addPart(fraction_);
+    }
+    addPart(new SeparatorText("Z", false));
   }
 }
 

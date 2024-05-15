@@ -125,6 +125,8 @@ int SegmentedTextsTest(int argc, char* argv[])
   rv += testPrecision(ord);
   simQt::MonthDayYearTexts mon;
   rv += testPrecision(mon);
+  simQt::Iso8601Texts iso8601;
+  rv += testPrecision(iso8601);
 
   return rv;
 }

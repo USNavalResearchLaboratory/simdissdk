@@ -136,6 +136,7 @@ protected Q_SLOTS:
   void setHours_(); ///< set time format to hours
   void setOrdinal_(); ///< set time format to ordinal
   void setMonth_(); ///< set time format to month
+  void setIso8601_(); ///< set time format to ISO-8601
   void setColorCode_(); ///< toggle the color code setting
   void copyToClipboard_(); ///< copy time to the global clipboard
 
