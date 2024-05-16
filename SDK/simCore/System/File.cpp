@@ -72,18 +72,23 @@ std::string FileInfo::path() const
 {
 #ifdef WIN32
   // On Windows, convert all backslashes to forward slashes for consistency
-  const auto& reslashed = simCore::StringUtils::substitute(path_, "\\", "/", true);
+  auto reslashed = simCore::StringUtils::substitute(path_, "\\", "/", true);
+  // Need to start search after 0th char to avoid UNC path issues
+  auto pos = reslashed.find("//", 1);
 #else
   // But on Linux, keep backslashes, they are legal characters
-  const auto& reslashed = path_;
+  auto reslashed = path_;
+  auto pos = reslashed.find("//");
 #endif
 
-  // Remove duplicate slashes to prevent cases like "/tmp//foo//bar" from having extra slashes
-  std::string deduplicate = simCore::StringUtils::substitute(reslashed, "//", "/", true);
-  // Cover cases where you have "/tmp///foo/bar", where substitute() only covers one
-  while (deduplicate.find("//") != std::string::npos)
-    deduplicate = simCore::StringUtils::substitute(deduplicate, "//", "/", true);
-  const auto& [path, name] = simCore::pathSplit(deduplicate);
+  // Remove unnecessary duplicate slashes
+  while (pos != std::string::npos)
+  {
+    reslashed.erase(pos, 1);
+    pos = reslashed.find("//", pos);
+  }
+
+  const auto& [path, name] = simCore::pathSplit(reslashed);
 
   // Catch cases like "foo" which should return "."
   if (path.empty() && !name.empty())
@@ -93,6 +98,10 @@ std::string FileInfo::path() const
   // Catch cases like "c:/foo" where the slash is relevant to root path
   if (path.size() == 2 && path[1] == ':')
     return path + "/"; // always forward slashes
+
+  // Catch edge case on Windows where path is "//" with no host
+  if (path == "//")
+    return "/";
 #endif
 
   return path;
