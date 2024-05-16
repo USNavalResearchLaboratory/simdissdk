@@ -132,6 +132,7 @@ set(CORE_STRING_SOURCES
     ${CORE_STRING_SRC}TextFormatter.cpp
     ${CORE_STRING_SRC}TextReplacer.cpp
     ${CORE_STRING_SRC}UnitContextFormatter.cpp
+    ${CORE_STRING_SRC}UtfUtils.cpp
     ${CORE_STRING_SRC}Utils.cpp
     ${CORE_STRING_SRC}ValidNumber.cpp
     ${CORE_STRING_SRC}XmlWriter.cpp

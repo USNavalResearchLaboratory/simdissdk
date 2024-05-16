@@ -23,7 +23,9 @@
 #ifndef SIMCORE_STRING_UTFUTILS_H
 #define SIMCORE_STRING_UTFUTILS_H
 
+#include <istream>
 #include <string>
+#include "simCore/Common/Export.h"
 
 // MSVC 2015+ required for wide string versions
 #if (defined(_MSC_VER) && _MSC_VER >= 1900)
@@ -72,5 +74,16 @@ inline std::string streamFixUtf8(const std::string& utf8)
 }
 
 #endif
+
+namespace simCore {
+
+/**
+ * Skips past a UTF-8 BOM, presumed to be called at start of file. Use this method on an input
+ * stream that you suspect might be encoded in UTF-8 with a UTF-8 byte order mark.
+ * @return 0 on successful skip. 1 if the value is not present. Non-zero does not mean error.
+ */
+SDKCORE_EXPORT int skipUtf8ByteOrderMark(std::istream& is);
+
+}
 
 #endif /* SIMCORE_STRING_UTFUTILS_H */
