@@ -56,6 +56,11 @@ public:
   /** True if the given path is equivalent (same file or directory and file status is the same) */
   bool isEquivalent(const std::string& toPath) const;
 
+  /** Returns the name portion of the filename, e.g. "foo.bar" given "/tmp/foo.bar" */
+  std::string fileName() const;
+  /** Returns the directory portion of the filename, e.g. "/tmp" given "/tmp/foo.bar" or given "/tmp/" */
+  std::string path() const;
+
 private:
   std::string path_;
 };

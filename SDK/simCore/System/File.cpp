@@ -63,6 +63,41 @@ bool FileInfo::isEquivalent(const std::string& toPath) const
   return std::filesystem::equivalent(path_, toPath, unused);
 }
 
+std::string FileInfo::fileName() const
+{
+  return std::get<1>(simCore::pathSplit(path_));
+}
+
+std::string FileInfo::path() const
+{
+#ifdef WIN32
+  // On Windows, convert all backslashes to forward slashes for consistency
+  const auto& reslashed = simCore::StringUtils::substitute(path_, "\\", "/", true);
+#else
+  // But on Linux, keep backslashes, they are legal characters
+  const auto& reslashed = path_;
+#endif
+
+  // Remove duplicate slashes to prevent cases like "/tmp//foo//bar" from having extra slashes
+  std::string deduplicate = simCore::StringUtils::substitute(reslashed, "//", "/", true);
+  // Cover cases where you have "/tmp///foo/bar", where substitute() only covers one
+  while (deduplicate.find("//") != std::string::npos)
+    deduplicate = simCore::StringUtils::substitute(deduplicate, "//", "/", true);
+  const auto& [path, name] = simCore::pathSplit(deduplicate);
+
+  // Catch cases like "foo" which should return "."
+  if (path.empty() && !name.empty())
+    return ".";
+
+#ifdef WIN32
+  // Catch cases like "c:/foo" where the slash is relevant to root path
+  if (path.size() == 2 && path[1] == ':')
+    return path + "/"; // always forward slashes
+#endif
+
+  return path;
+}
+
 ///////////////////////////////////////////////////////////////
 
 std::string pathJoin(const std::string& path1, const std::string& path2)
