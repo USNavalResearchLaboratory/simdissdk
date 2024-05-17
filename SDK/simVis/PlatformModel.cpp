@@ -222,6 +222,11 @@ osg::Node* PlatformModelNode::offsetNode() const
   return offsetXform_.get();
 }
 
+osg::Node* PlatformModelNode::modelNode() const
+{
+  return model_.get();
+}
+
 unsigned int PlatformModelNode::objectIndexTag() const
 {
   return objectIndexTag_;

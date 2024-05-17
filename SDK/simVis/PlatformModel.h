@@ -123,6 +123,8 @@ public:
 
   /** Retrieves the offsetXform node */
   osg::Node* offsetNode() const;
+  /** Retrieves the currently set model node. This is typically under the offsetNode() */
+  osg::Node* modelNode() const;
 
   /** Retrieves the platform's tag ID in the registry object index, for picking. */
   unsigned int objectIndexTag() const;
