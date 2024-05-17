@@ -1299,6 +1299,22 @@ void ScenarioManager::notifyToolsOfFlush_(simData::ObjectId flushedId)
     scenarioToolRefPtr->onFlush(*this, flushedId);
 }
 
+/**
+ * Functor (for use with ViewVisitor) that notifies a view that it needs to
+ * redraw the scene because something has changed; from osgEarth's legacy NodeUtils.
+ * Usage: ViewVisitor<RequestRedraw> vis; node->accept(vis);
+ */
+struct RequestRedraw
+{
+  void operator()(osg::View* view)
+  {
+    osgGA::GUIActionAdapter* aa = dynamic_cast<osgGA::GUIActionAdapter*>(view);
+    if (aa)
+      aa->requestRedraw();
+  }
+};
+
+
 void ScenarioManager::update(simData::DataStore* ds, bool force)
 {
   // update the base eci locator rotation
@@ -1362,7 +1378,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
   {
     SAFETRYBEGIN;
     // "dirty" the scene graph
-    osgEarth::ViewVisitor<osgEarth::RequestRedraw> visitor;
+    osgEarth::ViewVisitor<RequestRedraw> visitor;
     this->accept(visitor);
     SAFETRYEND("requesting redraw on scenario");
   }

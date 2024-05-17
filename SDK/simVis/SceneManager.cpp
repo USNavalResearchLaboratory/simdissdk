@@ -443,16 +443,16 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
 void SceneManager::updateModelLayers_(const osgEarth::Map& newMap, osgEarth::Map* currentMap)
 {
   // first, remove all current model layers
-  osgEarth::ModelLayerVector currentLayers;
+  std::vector<osg::ref_ptr<osgEarth::ModelLayer>> currentLayers;
   currentMap->getLayers(currentLayers);
-  for (osgEarth::ModelLayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
-    currentMap->removeLayer(iter->get());
+  for (const auto& modelPtr : currentLayers)
+    currentMap->removeLayer(modelPtr.get());
 
   // now add the new model layers
-  osgEarth::ModelLayerVector newLayers;
+  std::vector<osg::ref_ptr<osgEarth::ModelLayer>> newLayers;
   newMap.getLayers(newLayers);
-  for (osgEarth::ModelLayerVector::const_iterator iter = newLayers.begin(); iter != newLayers.end(); ++iter)
-    currentMap->addLayer(iter->get());
+  for (const auto& modelPtr : newLayers)
+    currentMap->addLayer(modelPtr.get());
 }
 
 void SceneManager::applyImageLayerDisplaySettings_(const osgEarth::ImageLayer& sourceLayer, osgEarth::ImageLayer* destLayer) const
