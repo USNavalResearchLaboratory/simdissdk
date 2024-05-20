@@ -105,8 +105,11 @@ int WidgetSettings::saveQTreeView_(simQt::Settings& settings, const QString& pat
       settings.setValue(path + COLUMN_WIDTHS, sizes, simQt::Settings::MetaData::makeInteger(QVariant(), "", simQt::Settings::PRIVATE, 0));
     }
 
-    settings.setValue(path + SORT_COLUMN, view->header()->sortIndicatorSection());
-    settings.setValue(path + SORT_ORDER, static_cast<int>(view->header()->sortIndicatorOrder()));
+    if (view->isSortingEnabled())
+    {
+      settings.setValue(path + SORT_COLUMN, view->header()->sortIndicatorSection());
+      settings.setValue(path + SORT_ORDER, static_cast<int>(view->header()->sortIndicatorOrder()));
+    }
   }
 
   return 0;
@@ -280,7 +283,7 @@ int WidgetSettings::loadQTreeView_(simQt::Settings& settings, const QString& pat
         view->setColumnWidth(ii, sizes[ii].toInt());
     }
 
-    if (settings.contains(path + SORT_COLUMN) && settings.contains(path + SORT_ORDER))
+    if (view->isSortingEnabled() && settings.contains(path + SORT_COLUMN) && settings.contains(path + SORT_ORDER))
     {
       const int sortColumn = settings.value(path + SORT_COLUMN).toInt();
       const int sortOrder = settings.value(path + SORT_ORDER).toInt();
