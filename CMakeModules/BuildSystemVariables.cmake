@@ -55,7 +55,7 @@ set(BUILD_HWOS "${BUILD_SYSTEM_ARCH}-${OS_TYPE}")
 # Get compiler info
 if(MSVC)
     # VS 2022 is 14.3
-    set(BUILD_COMPILER_VERSION_MINOR "14")
+    set(BUILD_COMPILER_VERSION_MAJOR "14")
     set(BUILD_COMPILER_VERSION_MINOR "3")
     # Put them together to form something like 9.0, 10.0, 7.1, etc.
     set(BUILD_COMPILER_VERSION "${BUILD_COMPILER_VERSION_MAJOR}.${BUILD_COMPILER_VERSION_MINOR}")
