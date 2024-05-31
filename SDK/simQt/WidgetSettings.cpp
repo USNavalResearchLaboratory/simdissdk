@@ -21,14 +21,16 @@
  *
  */
 #include <cassert>
+#include <QColumnView>
+#include <QDialog>
+#include <QGuiApplication>
+#include <QHeaderView>
+#include <QMainWindow>
+#include <QScreen>
 #include <QString>
 #include <QSplitter>
-#include <QTreeView>
-#include <QColumnView>
 #include <QTableView>
-#include <QDialog>
-#include <QMainWindow>
-#include <QHeaderView>
+#include <QTreeView>
 #include "simNotify/Notify.h"
 #include "simQt/Settings.h"
 #include "simQt/WidgetSettings.h"
@@ -361,7 +363,25 @@ int WidgetSettings::loadQDialog_(simQt::Settings& settings, const QString& path,
   if (settings.contains(path + "/Position"))
   {
     point = settings.value(path + "/Position").toPoint();
-    dialog->move(point);
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    // Only call move() if the point is valid in the available screen geometry. This covers
+    // use cases where position USED to be valid, but is no longer available (screen removed, etc)
+    const auto& screens = QGuiApplication::screens();
+    bool validPoint = false;
+    for (const auto* screen : screens)
+    {
+      if (screen && screen->availableGeometry().contains(point))
+      {
+        validPoint = true;
+        break;
+      }
+    }
+    if (validPoint)
+#endif
+    {
+      dialog->move(point);
+    }
   }
 
   QSize size;
