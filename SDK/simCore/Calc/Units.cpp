@@ -61,18 +61,18 @@ const Units Units::MIL("angular mil", "mil", 9.8174770424681038701957605727484e-
 
 const Units Units::METERS("meters", "m", 1.0, simCore::LENGTH_FAMILY);
 const Units Units::KILOMETERS("kilometers", "km", 1e3, simCore::LENGTH_FAMILY);
-const Units Units::YARDS("yards", "yd", 0.91439997, simCore::LENGTH_FAMILY);
+const Units Units::YARDS("yards", "yd", 0.9144, simCore::LENGTH_FAMILY);
 const Units Units::MILES("miles", "mi", 1609.344, simCore::LENGTH_FAMILY);
-const Units Units::FEET("feet", "ft", 0.30479999, simCore::LENGTH_FAMILY);
-const Units Units::INCHES("inches", "in", 0.025399999, simCore::LENGTH_FAMILY);
+const Units Units::FEET("feet", "ft", 0.3048, simCore::LENGTH_FAMILY);
+const Units Units::INCHES("inches", "in", 0.0254, simCore::LENGTH_FAMILY);
 const Units Units::NAUTICAL_MILES("nautical miles", "nm", 1852.0, simCore::LENGTH_FAMILY);
 const Units Units::CENTIMETERS("centimeters", "cm", 1e-2, simCore::LENGTH_FAMILY);
 const Units Units::MILLIMETERS("millimeters", "mm", 1e-3, simCore::LENGTH_FAMILY);
-const Units Units::KILOYARDS("kiloyards", "kyd", 914.399998610, simCore::LENGTH_FAMILY);
-const Units Units::FATHOMS("fathoms", "fm", 1.82879994, simCore::LENGTH_FAMILY);
-const Units Units::KILOFEET("kilofeet", "kf", 304.79999, simCore::LENGTH_FAMILY);
+const Units Units::KILOYARDS("kiloyards", "kyd", 914.4, simCore::LENGTH_FAMILY);
+const Units Units::FATHOMS("fathoms", "fm", 1.8288, simCore::LENGTH_FAMILY);
+const Units Units::KILOFEET("kilofeet", "kf", 304.8, simCore::LENGTH_FAMILY);
 // Distance used in radar related subjects, equal to 6000 feet
-const Units Units::DATA_MILES("data miles", "dm", 1828.800164446, simCore::LENGTH_FAMILY);
+const Units Units::DATA_MILES("data miles", "dm", 1828.8, simCore::LENGTH_FAMILY);
 
 const Units Units::METERS_PER_SECOND("meters per second", "m/sec", 1.0, simCore::SPEED_FAMILY);
 const Units Units::KILOMETERS_PER_HOUR("kilometers per hour", "km/hr", Units::KILOMETERS.convertTo(Units::METERS, 1.0) / SECPERHOUR, simCore::SPEED_FAMILY);
@@ -85,10 +85,10 @@ const Units Units::YARDS_PER_SECOND("yards per second", "yd/sec", Units::YARDS.c
 
 const Units Units::METERS_PER_SECOND_SQUARED("meters per second squared", "m/(s^2)", 1.0, simCore::ACCELERATION_FAMILY);
 const Units Units::KILOMETERS_PER_SECOND_SQUARED("kilometers per second squared", "km/(s^2)", 1e3, simCore::ACCELERATION_FAMILY);
-const Units Units::YARDS_PER_SECOND_SQUARED("yards per second squared", "yd/(s^2)", 0.91439997, simCore::ACCELERATION_FAMILY);
+const Units Units::YARDS_PER_SECOND_SQUARED("yards per second squared", "yd/(s^2)", 0.9144, simCore::ACCELERATION_FAMILY);
 const Units Units::MILES_PER_SECOND_SQUARED("miles per second squared", "sm/(s^2)", 1609.344, simCore::ACCELERATION_FAMILY);
-const Units Units::FEET_PER_SECOND_SQUARED("feet per second squared", "ft/(s^2)", 0.30479999, simCore::ACCELERATION_FAMILY);
-const Units Units::INCHES_PER_SECOND_SQUARED("inches per second squared", "in/(s^2)", 0.025399999, simCore::ACCELERATION_FAMILY);
+const Units Units::FEET_PER_SECOND_SQUARED("feet per second squared", "ft/(s^2)", 0.3048, simCore::ACCELERATION_FAMILY);
+const Units Units::INCHES_PER_SECOND_SQUARED("inches per second squared", "in/(s^2)", 0.0254, simCore::ACCELERATION_FAMILY);
 const Units Units::NAUTICAL_MILES_PER_SECOND_SQUARED("knots per second", "nm/(s^2)", 1852.0, simCore::ACCELERATION_FAMILY);
 
 const Units Units::CELSIUS("celsius", "C", 1.0, simCore::TEMPERATURE_FAMILY);

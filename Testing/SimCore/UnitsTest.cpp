@@ -519,15 +519,15 @@ int testLengthConvert()
   rv += SDK_ASSERT(simCore::areEqual(Units::KILOMETERS.convertTo(Units::METERS, 1.5), 1500.0));
   rv += SDK_ASSERT(simCore::areEqual(Units::YARDS.convertTo(Units::METERS, 1.5), 1.3716));
   rv += SDK_ASSERT(simCore::areEqual(Units::MILES.convertTo(Units::METERS, 1.5), 2414.016));
-  rv += SDK_ASSERT(simCore::areEqual(Units::FEET.convertTo(Units::METERS, 1.5), 0.457199984));
+  rv += SDK_ASSERT(simCore::areEqual(Units::FEET.convertTo(Units::METERS, 1.5), 0.4572));
   rv += SDK_ASSERT(simCore::areEqual(Units::INCHES.convertTo(Units::METERS, 1.5), 0.0381));
   rv += SDK_ASSERT(simCore::areEqual(Units::NAUTICAL_MILES.convertTo(Units::METERS, 1.5), 2778.0));
   rv += SDK_ASSERT(simCore::areEqual(Units::CENTIMETERS.convertTo(Units::METERS, 1.5), 0.015));
   rv += SDK_ASSERT(simCore::areEqual(Units::MILLIMETERS.convertTo(Units::METERS, 1.5), 0.0015));
-  rv += SDK_ASSERT(simCore::areEqual(Units::KILOYARDS.convertTo(Units::METERS, 1.5), 1371.599998));
-  rv += SDK_ASSERT(simCore::areEqual(Units::DATA_MILES.convertTo(Units::METERS, 1.5), 2743.2002466));
-  rv += SDK_ASSERT(simCore::areEqual(Units::FATHOMS.convertTo(Units::METERS, 1.5), 2.74319991));
-  rv += SDK_ASSERT(simCore::areEqual(Units::KILOFEET.convertTo(Units::METERS, 1.5), 457.199984));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KILOYARDS.convertTo(Units::METERS, 1.5), 1371.6));
+  rv += SDK_ASSERT(simCore::areEqual(Units::DATA_MILES.convertTo(Units::METERS, 1.5), 2743.2));
+  rv += SDK_ASSERT(simCore::areEqual(Units::FATHOMS.convertTo(Units::METERS, 1.5), 2.7432));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KILOFEET.convertTo(Units::METERS, 1.5), 457.2));
 
   return rv;
 }
@@ -620,7 +620,7 @@ int testPressureConvert()
   rv += SDK_ASSERT(simCore::areEqual(Units::BAR.convertTo(Units::MILLIBAR, 1.5), 1500));
   rv += SDK_ASSERT(simCore::areEqual(Units::POUNDS_PER_SQUARE_INCH.convertTo(Units::BAR, 1.5), 0.103421));
   rv += SDK_ASSERT(simCore::areEqual(Units::ATMOSPHERE.convertTo(Units::BAR, 1.5), 1.519871));
-  rv += SDK_ASSERT(simCore::areEqual(Units::TORR.convertTo(Units::BAR, 1.5), 0.00199984));
+  rv += SDK_ASSERT(simCore::areEqual(Units::TORR.convertTo(Units::BAR, 1.5), 0.002));
   rv += SDK_ASSERT(simCore::areEqual(Units::PASCALS.convertTo(Units::BAR, 1.5), 1.5e-5));
   rv += SDK_ASSERT(simCore::areEqual(Units::KILOPASCAL.convertTo(Units::BAR, 1.5), 0.015));
   rv += SDK_ASSERT(simCore::areEqual(Units::MEGAPASCAL.convertTo(Units::BAR, 1.5), 15));

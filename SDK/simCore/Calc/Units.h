@@ -252,10 +252,10 @@ public:
     double offset, double toBase, const std::string& family);
 
 private:
-  std::string name_;
-  std::string abbrev_;
-  double toBaseOffset_;
-  double toBase_;
+  std::string name_ = "Invalid";
+  std::string abbrev_ = "inv";
+  double toBaseOffset_ = 0.;
+  double toBase_ = 1.;
   std::string family_;
 };
 
