@@ -4,6 +4,11 @@
 
 // Do not include deprecated methods in the SWIG output; defined to noop
 #define SDK_DEPRECATE(function, deprecationMessage)
+// Disable copy/move macros, SWIG does not understand
+#define SDK_DISABLE_COPY(k)
+#define SDK_DISABLE_MOVE(k)
+#define SDK_DISABLE_COPY_MOVE(k)
+
 %ignore simCore::v3Length;
 %ignore simCore::v3Scale;
 %ignore simCore::v3Norm;
