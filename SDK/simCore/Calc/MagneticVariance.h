@@ -23,7 +23,7 @@
 #ifndef SIMCORE_CALC_MAGNETICVARIANCE_H
 #define SIMCORE_CALC_MAGNETICVARIANCE_H
 
-#include "simCore/Common/Export.h"
+#include "simCore/Common/Common.h"
 
 namespace simCore {
 
@@ -46,6 +46,8 @@ public:
   WorldMagneticModel();
   /** Private destructor */
   virtual ~WorldMagneticModel();
+
+  SDK_DISABLE_COPY_MOVE(WorldMagneticModel);
 
   /**
    * Calculates the magnetic variance at the given lat/lon and time.
@@ -86,7 +88,7 @@ public:
 
 private:
   class GeoMag;
-  GeoMag* geomag_;
+  GeoMag* geomag_ = nullptr;
 };
 
 }
