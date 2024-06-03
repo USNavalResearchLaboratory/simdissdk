@@ -30,8 +30,68 @@
 namespace simCore
 {
 
+/**
+ * Internal wrapper for std::istream, to buffer reads so that we can read whole lines
+ * from the stream for our buffer, rather than reading one character at a time. On
+ * at least MSVC, the std::istream::read() of 1 byte is quite slow and this buffering
+ * drastically improves performance.
+ */
+class CsvReader::BufferedReader
+{
+public:
+  explicit BufferedReader(std::istream& is)
+    : stream_(is)
+  {
+  }
+
+  /** Mirror for std::istream::good() that considers buffer validity */
+  bool good() const
+  {
+    // If stream is good, we can keep reading. If there are bytes still
+    // in the buffer, we also can keep reading.
+    return stream_.good() || bufferPos_ < buffer_.size();
+  }
+
+  /** Returns false on stream error; reads a single character */
+  bool read(char* ch)
+  {
+    size_t bufferSize = buffer_.size();
+    if (bufferPos_ >= bufferSize)
+    {
+      // Read next line
+      bufferPos_ = 0;
+      // Break early on getline failure
+      if (!std::getline(stream_, buffer_))
+        return false;
+      // Append a newline for the reader; strip the CRLF for it if it's present, else append
+      if (!buffer_.empty() && buffer_[buffer_.size() - 1] == '\r')
+        buffer_[buffer_.size() - 1] = '\n';
+      else
+        buffer_.append(1, '\n');
+      bufferSize = buffer_.size();
+
+    }
+    // Not possible here to have bufferPos_ past buffer size
+    assert(bufferPos_ < bufferSize);
+
+    *ch = buffer_[bufferPos_];
+    ++bufferPos_;
+    return true;
+  }
+
+private:
+  std::istream& stream_;
+
+  /** Buffer, which is only ever empty on construction, or error. */
+  std::string buffer_;
+  /** Position in the buffer for next byte to read. */
+  size_t bufferPos_ = 0;
+};
+
+////////////////////////////////////////////////////////
+
 CsvReader::CsvReader(std::istream& stream)
-  : stream_(stream)
+  : buffer_(std::make_unique<BufferedReader>(stream))
 {
 }
 
@@ -61,10 +121,10 @@ void CsvReader::setQuoteChar(char quote)
 
 std::optional<char> CsvReader::readNext_()
 {
-  if (!stream_)
+  if (!buffer_->good())
     return {};
   char ch = '\0';
-  if (!stream_.read(&ch, 1))
+  if (!buffer_->read(&ch))
     return {};
   return ch;
 }

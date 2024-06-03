@@ -25,6 +25,7 @@
 
 #include <istream>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -89,6 +90,8 @@ public:
   int readLineTrimmed(std::vector<std::string>& tokens, bool skipEmptyLines = true);
 
 private:
+  class BufferedReader;
+
   /** Consumes a single character from the input stream, returning empty on EOF/invalid */
   std::optional<char> readNext_();
   /**
@@ -106,12 +109,12 @@ private:
   /** Wrapper around readLineImpl_() that will run readLineImpl_() multiple times, to skip empty lines */
   int readLineSkippingEmptyLines_(std::vector<std::string>& tokens);
 
-  std::istream& stream_;
   char commentChar_ = '#';
   char delimiter_ = ',';
   char escape_ = '\\';
   char quote_ = '"';
   size_t lineNumber_ = 0;
+  std::unique_ptr<BufferedReader> buffer_;
 };
 
 /** Convenience interface into a CsvReader that can read headers and reference fields by header name */
