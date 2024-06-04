@@ -52,6 +52,12 @@ public:
     return stream_.good() || bufferPos_ < buffer_.size();
   }
 
+  /** Returns position within the current line of the next character to be read */
+  size_t bufferPosition() const
+  {
+    return bufferPos_;
+  }
+
   /** Returns false on stream error; reads a single character */
   bool read(char* ch)
   {
@@ -119,6 +125,10 @@ void CsvReader::setQuoteChar(char quote)
   quote_ = quote;
 }
 
+void CsvReader::setAllowMidlineComments(bool allow)
+{
+  allowMidlineComments_ = allow;
+}
 std::optional<char> CsvReader::readNext_()
 {
   if (!buffer_->good())
@@ -151,7 +161,6 @@ int CsvReader::readLineSkippingEmptyLines_(std::vector<std::string>& tokens)
 int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
 {
   tokens.clear();
-
   // Algorithm adapted from https://stackoverflow.com/questions/843997
 
   auto ch = readNext_();
@@ -164,9 +173,12 @@ int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
   ++lineNumber_;
 
   std::string currentToken;
-  bool insideQuote = false;
-  bool started = false;
+  // Whether the entire current token is enclosed in quotes. Set true if first char is a quote, set false when encountering any character after closing the quote
   bool wholeTokenQuoted = false;
+  // Whether current character processing is in a quoted string. Only possible if token started with a quote (wholeTokenQuoted == true)
+  bool insideQuote = false;
+  // Whether a character has been read after the initial quote. Ensures that in cases of internal quotes "Test"" the extra quote character is added back to the current token
+  bool started = false;
 
   while (ch.has_value())
   {
@@ -230,6 +242,14 @@ int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
     }
     else if (*ch == commentChar_)
     {
+      // If we encounter a commentChar_ mid-line and don't allow comments, then add it to token and move on
+      if (buffer_->bufferPosition() > 1 && !allowMidlineComments_)
+      {
+        currentToken.append(1, *ch);
+        ch = readNext_();
+        continue;
+      }
+
       // Treat like end of line, and read until end of line
       while (ch.has_value() && *ch != '\n')
         ch = readNext_();

@@ -474,8 +474,50 @@ int testReadTrimmedSkipEmpty()
     rv += SDK_ASSERT(tokens.size() == 1);
     rv += SDK_ASSERT(tokens[0] == "three");
     rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) != 0);
-
   }
+  return rv;
+}
+
+int testCommentsInMiddle()
+{
+  std::vector<std::string> tokens;
+  int rv = 0;
+
+  { // First test with mid-line comments enabled
+    std::istringstream is("#CommentLine,PostComment\nNo Comment Line,Second Token\nComment#Mid-Line,PostComment\n");
+    simCore::CsvReader reader(is);
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.empty());
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 1);
+    rv += SDK_ASSERT(tokens[0] == "Comment");
+  }
+
+  { // Test that, even when enabled, comments are ignored mid-quote
+    std::istringstream is("\"Quoted#CommentLine\",PostComment\n");
+    simCore::CsvReader reader(is);
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(tokens[0] == "Quoted#CommentLine"); // The quote characters themselves are removed by tokenization
+    rv += SDK_ASSERT(tokens[1] == "PostComment");
+  }
+
+  { // Test with mid-line comments disabled
+    std::istringstream is("#CommentLine,PostComment\nNo Comment Line,Second Token\nComment#Mid-Line,PostComment\n");
+    simCore::CsvReader reader(is);
+    reader.setAllowMidlineComments(false);
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.empty());
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(reader.readLineTrimmed(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(tokens[0] == "Comment#Mid-Line");
+    rv += SDK_ASSERT(tokens[1] == "PostComment");
+  }
+
   return rv;
 }
 
@@ -503,6 +545,7 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testQuotesInMiddle4() == 0);
   rv += SDK_ASSERT(testQuotesInMiddle5() == 0);
   rv += SDK_ASSERT(testReadTrimmedSkipEmpty() == 0);
+  rv += SDK_ASSERT(testCommentsInMiddle() == 0);
 
   return rv;
 }
