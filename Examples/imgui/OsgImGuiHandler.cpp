@@ -53,20 +53,7 @@ using EarthManipulator = osgEarth::EarthManipulator;
 #include "osgEarth/ImGui/NetworkMonitorGUI"
 #include "osgEarth/ImGui/RenderingGUI"
 #include "osgEarth/ImGui/SceneGraphGUI"
-
-// SetItemTooltip() is not in ImGui 18204 shipped with SIMDIS SDK, but is
-// used in osgEarth/ImGui/SystemGUI using ImGui 19013; it was added in 18964.
-#if IMGUI_VERSION_NUM < 18964
-// Replace SetItemTooltip() with a function that evaluates to a noop
-#define SetItemTooltip(x) GetCurrentContext()
-#endif
-
 #include "osgEarth/ImGui/SystemGUI"
-
-#if IMGUI_VERSION_NUM < 18964
-#undef SetItemTooltip
-#endif
-
 #include "osgEarth/ImGui/TerrainGUI"
 #include "osgEarth/ImGui/TextureInspectorGUI"
 #include "osgEarth/ImGui/ViewpointsGUI"
@@ -134,8 +121,6 @@ private:
 
 OsgImGuiHandler::OsgImGuiHandler()
   : time_(0.0f),
-  mousePressed_{false},
-  mouseWheel_(0.0f),
   initialized_(false),
   firstFrame_(true),
   firstDraw_(true),
@@ -173,51 +158,63 @@ void OsgImGuiHandler::add(::GUI::BaseGui* gui)
   deprecatedGuis_.push_back(std::unique_ptr<::GUI::BaseGui>(gui));
 }
 
-/**
- * Important Note: Dear ImGui expects the control Keys indices not to be
- * greater than 511. It actually uses an array of 512 elements. However,
- * OSG has indices greater than that. So here I do a conversion for special
- * keys between ImGui and OSG.
- */
-static int ConvertFromOSGKey(int key)
+static ImGuiKey convertKey(int c)
 {
-  using KEY = osgGA::GUIEventAdapter::KeySymbol;
+  // If you are holding CTRL, OSG remaps A-Z to 1-26. Undo that.
+  if (c >= 1 && c <= 26)
+    return static_cast<ImGuiKey>(static_cast<int>(ImGuiKey_A) + c - 1);
 
-  switch (key)
+  if (c >= osgGA::GUIEventAdapter::KEY_0 && c <= osgGA::GUIEventAdapter::KEY_9)
+    return static_cast<ImGuiKey>(static_cast<int>(ImGuiKey_0) + c - osgGA::GUIEventAdapter::KEY_0);
+
+  if (c >= osgGA::GUIEventAdapter::KEY_A && c <= osgGA::GUIEventAdapter::KEY_Z)
+    return static_cast<ImGuiKey>(static_cast<int>(ImGuiKey_A) + c - osgGA::GUIEventAdapter::KEY_A);
+
+  switch (c)
   {
-    case KEY::KEY_Tab:
-        return ImGuiKey_Tab;
-    case KEY::KEY_Left:
-        return ImGuiKey_LeftArrow;
-    case KEY::KEY_Right:
-        return ImGuiKey_RightArrow;
-    case KEY::KEY_Up:
-        return ImGuiKey_UpArrow;
-    case KEY::KEY_Down:
-        return ImGuiKey_DownArrow;
-    case KEY::KEY_Page_Up:
-        return ImGuiKey_PageUp;
-    case KEY::KEY_Page_Down:
-        return ImGuiKey_PageDown;
-    case KEY::KEY_Home:
-        return ImGuiKey_Home;
-    case KEY::KEY_End:
-        return ImGuiKey_End;
-    case KEY::KEY_Delete:
-        return ImGuiKey_Delete;
-    case KEY::KEY_BackSpace:
-        return ImGuiKey_Backspace;
-    case KEY::KEY_Return:
-        return ImGuiKey_Enter;
-    case KEY::KEY_Escape:
-        return ImGuiKey_Escape;
-    case 22:
-        return osgGA::GUIEventAdapter::KeySymbol::KEY_V;
-    case 3:
-        return osgGA::GUIEventAdapter::KeySymbol::KEY_C;
-    default: // Not found
-        return key;
+  case osgGA::GUIEventAdapter::KEY_Tab:
+    return ImGuiKey_Tab;
+  case osgGA::GUIEventAdapter::KEY_Left:
+    return ImGuiKey_LeftArrow;
+  case osgGA::GUIEventAdapter::KEY_Right:
+    return ImGuiKey_RightArrow;
+  case osgGA::GUIEventAdapter::KEY_Up:
+    return ImGuiKey_UpArrow;
+  case osgGA::GUIEventAdapter::KEY_Down:
+    return ImGuiKey_DownArrow;
+  case osgGA::GUIEventAdapter::KEY_Page_Up:
+    return ImGuiKey_PageUp;
+  case osgGA::GUIEventAdapter::KEY_Page_Down:
+    return ImGuiKey_PageDown;
+  case osgGA::GUIEventAdapter::KEY_Home:
+    return ImGuiKey_Home;
+  case osgGA::GUIEventAdapter::KEY_End:
+    return ImGuiKey_End;
+  case osgGA::GUIEventAdapter::KEY_Delete:
+    return ImGuiKey_Delete;
+  case osgGA::GUIEventAdapter::KEY_BackSpace:
+    return ImGuiKey_Backspace;
+  case osgGA::GUIEventAdapter::KEY_Return:
+    return ImGuiKey_Enter;
+  case osgGA::GUIEventAdapter::KEY_Escape:
+    return ImGuiKey_Escape;
+  case osgGA::GUIEventAdapter::KEY_Space:
+    return ImGuiKey_Space;
   }
+
+  return ImGuiKey_None;
+}
+
+static ImGuiButtonFlags convertMouseButton(int m)
+{
+  ImGuiButtonFlags flags = 0;
+  if (m & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
+    flags |= ImGuiMouseButton_Left;
+  if (m & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
+    flags |= ImGuiMouseButton_Right;
+  if (m & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON)
+    flags |= ImGuiMouseButton_Middle;
+  return flags;
 }
 
 ImFont* OsgImGuiHandler::getDefaultFont() const
@@ -244,27 +241,6 @@ void OsgImGuiHandler::init_()
 {
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
-
-  // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
-  io.KeyMap[ImGuiKey_Tab] = ImGuiKey_Tab;
-  io.KeyMap[ImGuiKey_LeftArrow] = ImGuiKey_LeftArrow;
-  io.KeyMap[ImGuiKey_RightArrow] = ImGuiKey_RightArrow;
-  io.KeyMap[ImGuiKey_UpArrow] = ImGuiKey_UpArrow;
-  io.KeyMap[ImGuiKey_DownArrow] = ImGuiKey_DownArrow;
-  io.KeyMap[ImGuiKey_PageUp] = ImGuiKey_PageUp;
-  io.KeyMap[ImGuiKey_PageDown] = ImGuiKey_PageDown;
-  io.KeyMap[ImGuiKey_Home] = ImGuiKey_Home;
-  io.KeyMap[ImGuiKey_End] = ImGuiKey_End;
-  io.KeyMap[ImGuiKey_Delete] = ImGuiKey_Delete;
-  io.KeyMap[ImGuiKey_Backspace] = ImGuiKey_Backspace;
-  io.KeyMap[ImGuiKey_Enter] = ImGuiKey_Enter;
-  io.KeyMap[ImGuiKey_Escape] = ImGuiKey_Escape;
-  io.KeyMap[ImGuiKey_A] = osgGA::GUIEventAdapter::KeySymbol::KEY_A;
-  io.KeyMap[ImGuiKey_C] = osgGA::GUIEventAdapter::KeySymbol::KEY_C;
-  io.KeyMap[ImGuiKey_V] = osgGA::GUIEventAdapter::KeySymbol::KEY_V;
-  io.KeyMap[ImGuiKey_X] = osgGA::GUIEventAdapter::KeySymbol::KEY_X;
-  io.KeyMap[ImGuiKey_Y] = osgGA::GUIEventAdapter::KeySymbol::KEY_Y;
-  io.KeyMap[ImGuiKey_Z] = osgGA::GUIEventAdapter::KeySymbol::KEY_Z;
 
   ImGui_ImplOpenGL3_Init();
 
@@ -305,19 +281,6 @@ void OsgImGuiHandler::newFrame_(osg::RenderInfo& renderInfo)
   double currentTime = renderInfo.getView()->getFrameStamp()->getSimulationTime();
   io.DeltaTime = currentTime - time_ + 0.0000001;
   time_ = currentTime;
-
-  for (int i = 0; i < 3; i++)
-  {
-    io.MouseDown[i] = mousePressed_[i];
-  }
-
-  for (int i = 0; i < 3; i++)
-  {
-    io.MouseDoubleClicked[i] = mouseDoubleClicked_[i];
-  }
-
-  io.MouseWheel = mouseWheel_;
-  mouseWheel_ = 0.0f;
 
   ImGui::NewFrame();
 }
@@ -409,8 +372,6 @@ bool OsgImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
   }
 
   ImGuiIO& io = ImGui::GetIO();
-  const bool wantCaptureMouse = io.WantCaptureMouse;
-  const bool wantCaptureKeyboard = io.WantCaptureKeyboard;
 
   switch (ea.getEventType())
   {
@@ -420,70 +381,54 @@ bool OsgImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
     const bool isKeyDown = ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN;
     const int c = ea.getKey();
 
-    // Always update the mod key status.
-    io.KeyCtrl = ea.getModKeyMask() & osgGA::GUIEventAdapter::MODKEY_CTRL;
-    io.KeyShift = ea.getModKeyMask() & osgGA::GUIEventAdapter::MODKEY_SHIFT;
-    io.KeyAlt = ea.getModKeyMask() & osgGA::GUIEventAdapter::MODKEY_ALT;
-    io.KeySuper = ea.getModKeyMask() & osgGA::GUIEventAdapter::MODKEY_SUPER;
+    // Always update the mod key status
+    io.AddKeyEvent(ImGuiMod_Ctrl, (ea.getModKeyMask() & ea.MODKEY_CTRL) != 0);
+    io.AddKeyEvent(ImGuiMod_Shift, (ea.getModKeyMask() & ea.MODKEY_SHIFT) != 0);
+    io.AddKeyEvent(ImGuiMod_Alt, (ea.getModKeyMask() & ea.MODKEY_ALT) != 0);
+    io.AddKeyEvent(ImGuiMod_Super, (ea.getModKeyMask() & ea.MODKEY_SUPER) != 0);
 
-    const int imgui_key = ConvertFromOSGKey(c);
-    if (imgui_key > 0 && imgui_key < 512)
-    {
-      //assert((imgui_key >= 0 && imgui_key < 512) && "ImGui KeysMap is an array of 512");
-      io.KeysDown[imgui_key] = isKeyDown;
-    }
+    // ImGuiIo::AddKeyEvent() requires a "translated" key input,
+    // so manually translate the OSG int key to ImGuiKey
+    const ImGuiKey imguiKey = convertKey(c);
+    io.AddKeyEvent(imguiKey, isKeyDown);
 
-    // Not sure this < 512 is correct here....
-    if (isKeyDown && imgui_key >= 32 && imgui_key < 512)
-    {
+    // Send any raw ASCII characters to ImGui as input
+    if (isKeyDown) // TODO: Numpad keys don't translate correctly, need manual translation
       io.AddInputCharacter(static_cast<unsigned int>(c));
+
+    return io.WantCaptureKeyboard;
+  }
+  case (osgGA::GUIEventAdapter::PUSH):
+  {
+    if (io.WantCaptureMouse)
+    {
+      auto imguiButton = convertMouseButton(ea.getButtonMask());
+      io.AddMousePosEvent(ea.getX(), io.DisplaySize.y - ea.getY());
+      io.AddMouseButtonEvent(imguiButton, true); // true = push
     }
+    return io.WantCaptureMouse;
+  }
+  case (osgGA::GUIEventAdapter::RELEASE):
+  {
+    if (io.WantCaptureMouse)
+      io.AddMousePosEvent(ea.getX(), io.DisplaySize.y - ea.getY());
 
-    return wantCaptureKeyboard;
-  }
-  case osgGA::GUIEventAdapter::RELEASE:
-  {
-    io.MousePos = ImVec2(ea.getX(), io.DisplaySize.y - ea.getY());
-    mousePressed_[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
-    mousePressed_[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
-    mousePressed_[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
+    const ImGuiButtonFlags imguiButton = convertMouseButton(ea.getButtonMask());
+    io.AddMouseButtonEvent(imguiButton, false); // false = release
 
-    mouseDoubleClicked_[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
-    mouseDoubleClicked_[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
-    mouseDoubleClicked_[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
-    return wantCaptureMouse;
+    return io.WantCaptureMouse;
   }
-  case osgGA::GUIEventAdapter::PUSH:
+  case (osgGA::GUIEventAdapter::DRAG):
+  case (osgGA::GUIEventAdapter::MOVE):
   {
-    io.MousePos = ImVec2(ea.getX(), io.DisplaySize.y - ea.getY());
-    mousePressed_[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
-    mousePressed_[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
-    mousePressed_[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
-    return wantCaptureMouse;
+    io.AddMousePosEvent(ea.getX(), io.DisplaySize.y - ea.getY());
+    return io.WantCaptureMouse;
   }
-  case osgGA::GUIEventAdapter::DOUBLECLICK:
+  case (osgGA::GUIEventAdapter::SCROLL):
   {
-    io.MousePos = ImVec2(ea.getX(), io.DisplaySize.y - ea.getY());
-    // Need to set mousePressed_ flags in addition to mouseDoubleClicked_ flags to satisfy
-    // double click requirements of some ImGui elements like ImGui::TreeNodeEx
-    mousePressed_[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
-    mousePressed_[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
-    mousePressed_[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
-    mouseDoubleClicked_[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
-    mouseDoubleClicked_[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
-    mouseDoubleClicked_[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
-    return wantCaptureMouse;
-  }
-  case osgGA::GUIEventAdapter::DRAG:
-  case osgGA::GUIEventAdapter::MOVE:
-  {
-    io.MousePos = ImVec2(ea.getX(), io.DisplaySize.y - ea.getY());
-    return wantCaptureMouse;
-  }
-  case osgGA::GUIEventAdapter::SCROLL:
-  {
-    mouseWheel_ = ea.getScrollingMotion() == osgGA::GUIEventAdapter::SCROLL_UP ? 1.0 : -1.0;
-    return wantCaptureMouse;
+    auto scrolling = ea.getScrollingMotion() == osgGA::GUIEventAdapter::SCROLL_UP ? 1.0 : -1.0;
+    io.AddMouseWheelEvent(0.0, io.MouseWheel += scrolling);
+    return io.WantCaptureMouse;
   }
   default:
     break;

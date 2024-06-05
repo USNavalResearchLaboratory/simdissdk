@@ -26,6 +26,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "osgEarth/ImGui/ImGui"
+#include <functional>
 #include <string>
 
 struct ImFont;
@@ -52,7 +53,15 @@ protected:
   /** Pop the large font off of the font stack. Reverts to using the default font. */
   void popLargeFont_();
 
+  using KeyFunc = std::function<void()>;
+
+  /** Handle keys pressed. Calls functions added by addKeyFunc_() if its associated key is pressed. */
+  void handlePressedKeys_();
+  /** Add a key function. When the key is pressed, the function will be called. */
+  void addKeyFunc_(ImGuiKey key, const KeyFunc& func);
+
   bool firstDraw_;
+  std::map<ImGuiKey, KeyFunc> keyFuncs_;
 
 private:
   ImFont* defaultFont_;

@@ -103,9 +103,6 @@ private:
   void render_(osg::RenderInfo& renderInfo);
 
   double time_;
-  bool mousePressed_[3];
-  bool mouseDoubleClicked_[3];
-  float mouseWheel_;
   bool initialized_;
   bool firstFrame_;
   bool firstDraw_;

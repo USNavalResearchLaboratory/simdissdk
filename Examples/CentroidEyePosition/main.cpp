@@ -102,6 +102,20 @@ struct ControlPanel : public simExamples::SimExamplesGui
     : simExamples::SimExamplesGui("Centroid Eye Position Example"),
     app_(app)
   {
+    addKeyFunc_(ImGuiKey_C, [this]() // Center on centroid node
+      {
+        auto vp = app_.mainView->getViewpoint();
+        vp.setNode(app_.centroidNode.get());
+        app_.mainView->setViewpoint(vp);
+      }
+    );
+    addKeyFunc_(ImGuiKey_O, [this]() { app_.mainView->enableOverheadMode(!app_.mainView->isOverheadEnabled()); }); // Toggle overhead mode
+    addKeyFunc_(ImGuiKey_1, [this]() { toggleTrackNode_(1); });
+    addKeyFunc_(ImGuiKey_2, [this]() { toggleTrackNode_(2); });
+    addKeyFunc_(ImGuiKey_3, [this]() { toggleTrackNode_(3); });
+    addKeyFunc_(ImGuiKey_4, [this]() { toggleTrackNode_(4); });
+    addKeyFunc_(ImGuiKey_5, [this]() { toggleTrackNode_(5); });
+    addKeyFunc_(ImGuiKey_6, [this]() { toggleTrackNode_(6); });
   }
 
   void draw(osg::RenderInfo& ri) override
@@ -132,41 +146,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::Text("5: Toggle tracking of Platform 5");
     ImGui::Text("6: Toggle tracking of Platform 6");
 
-    if (io.InputQueueCharacters.size() > 0)
-    {
-      switch (io.InputQueueCharacters.front())
-      {
-      case 'c': // Center on centroid node
-      {
-        auto vp = app_.mainView->getViewpoint();
-        vp.setNode(app_.centroidNode.get());
-        app_.mainView->setViewpoint(vp);
-        break;
-      }
-
-      case 'o': // Toggle overhead mode
-        app_.mainView->enableOverheadMode(!app_.mainView->isOverheadEnabled());
-        break;
-      case '1':
-        toggleTrackNode_(1);
-        break;
-      case '2':
-        toggleTrackNode_(2);
-        break;
-      case '3':
-        toggleTrackNode_(3);
-        break;
-      case '4':
-        toggleTrackNode_(4);
-        break;
-      case '5':
-        toggleTrackNode_(5);
-        break;
-      case '6':
-        toggleTrackNode_(6);
-        break;
-      }
-    }
+    handlePressedKeys_();
 
     ImGui::End();
   }

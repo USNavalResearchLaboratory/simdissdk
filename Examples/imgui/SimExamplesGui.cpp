@@ -78,4 +78,18 @@ void SimExamplesGui::popLargeFont_()
   }
 }
 
+void SimExamplesGui::handlePressedKeys_()
+{
+  for (const auto& [key, func] : keyFuncs_)
+  {
+    if (ImGui::IsKeyPressed(key))
+      func();
+  }
+}
+
+void SimExamplesGui::addKeyFunc_(ImGuiKey key, const KeyFunc& func)
+{
+  keyFuncs_[key] = func;
+}
+
 }
