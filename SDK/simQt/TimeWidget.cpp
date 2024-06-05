@@ -145,6 +145,12 @@ void TimeWidget::setColorCodeText(bool value)
     (*it)->setColorCode(value);
 }
 
+void TimeWidget::setProcessEnterKey(bool process)
+{
+  for (auto it = containers_.begin(); it != containers_.end(); ++it)
+    (*it)->setProcessEnterKey(process);
+}
+
 simCore::TimeStamp TimeWidget::timeStamp() const
 {
   return currentContainer_->timeStamp();

@@ -69,6 +69,9 @@ public:
   /** set the "change font color on error" setting */
   void setColorCodeText(bool value);
 
+  /** If true process an Enter key to focus to the next child */
+  void setProcessEnterKey(bool process);
+
   /** Get the current time */
   simCore::TimeStamp timeStamp() const;
   /** Set the current time */

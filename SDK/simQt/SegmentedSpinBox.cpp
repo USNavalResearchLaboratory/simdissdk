@@ -196,6 +196,11 @@ private:
     completeLine_->setEnforceLimits(limitBeforeStart, limitAfterEnd);
   }
 
+  void SegmentedSpinBox::setProcessEnterKey(bool process)
+  {
+    processEnterKey_ = process;
+  }
+
   void SegmentedSpinBox::setLine(SegmentedTexts* line)
   {
     delete completeLine_;
@@ -252,7 +257,7 @@ private:
           return true;
         }
       }
-      else if ((ke->key() == Qt::Key_Enter) || (ke->key() == Qt::Key_Return))
+      else if (processEnterKey_ && ((ke->key() == Qt::Key_Enter) || (ke->key() == Qt::Key_Return)))
       {
         // User says they are done, so force an focusOutEvent
         this->focusNextChild();
