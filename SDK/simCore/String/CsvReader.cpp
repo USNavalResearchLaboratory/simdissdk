@@ -129,6 +129,7 @@ void CsvReader::setAllowMidlineComments(bool allow)
 {
   allowMidlineComments_ = allow;
 }
+
 std::optional<char> CsvReader::readNext_()
 {
   if (!buffer_->good())
@@ -170,7 +171,9 @@ int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
   // Invalid read, done
   if (!ch.has_value())
     return 1;
-  ++lineNumber_;
+  lineNumber_ += linesFoundInRead_;
+  // reset lines found in read now that new read is starting
+  linesFoundInRead_ = 1;
 
   std::string currentToken;
   // Whether the entire current token is enclosed in quotes. Set true if first char is a quote, set false when encountering any character after closing the quote
@@ -188,6 +191,9 @@ int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
       // No way to do special quote tokenization unless the token is quoted. If it's not
       // quoted, then we just treat quote like any other character.
       assert(wholeTokenQuoted);
+      // keep line number updated correctly
+      if (*ch == '\n')
+        ++linesFoundInRead_;
 
       started = true;
       if (*ch == quote_)

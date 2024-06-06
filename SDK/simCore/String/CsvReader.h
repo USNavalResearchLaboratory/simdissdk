@@ -122,6 +122,7 @@ private:
   char quote_ = '"';
   bool allowMidlineComments_ = true;
   size_t lineNumber_ = 0;
+  size_t linesFoundInRead_ = 1;
   std::unique_ptr<BufferedReader> buffer_;
 };
 

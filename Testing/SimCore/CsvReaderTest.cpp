@@ -521,6 +521,45 @@ int testCommentsInMiddle()
   return rv;
 }
 
+int testMultiLineNumber()
+{
+  std::vector<std::string> tokens;
+  int rv = 0;
+
+  // test that line number is captured correctly when parsing a quote that spans multiple lines
+  {
+    std::istringstream is("\"open quote\n\",end quote\nnextline");
+    simCore::CsvReader reader(is);
+    rv += SDK_ASSERT(reader.readLine(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(tokens[0] == "open quote\n");
+    rv += SDK_ASSERT(tokens[1] == "end quote");
+    // this is first line in the file, which was the starting line for the read
+    rv += SDK_ASSERT(reader.lineNumber() == 1);
+    rv += SDK_ASSERT(reader.readLine(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 1);
+    rv += SDK_ASSERT(tokens[0] == "nextline");
+    // this is 3rd line in the file, since previous read handled 2 lines within the quotes
+    rv += SDK_ASSERT(reader.lineNumber() == 3);
+  }
+
+  {
+    std::istringstream is("\"\n\nfirst line\n\"\nfourth line");
+    simCore::CsvReader reader(is);
+    rv += SDK_ASSERT(reader.readLine(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 1);
+    rv += SDK_ASSERT(tokens[0] == "\n\nfirst line\n");
+    // this is first line in the file, which was the starting line for the read
+    rv += SDK_ASSERT(reader.lineNumber() == 1);
+    rv += SDK_ASSERT(reader.readLine(tokens, false) == 0);
+    rv += SDK_ASSERT(tokens.size() == 1);
+    rv += SDK_ASSERT(tokens[0] == "fourth line");
+    // this is the 5th lnie in the file, since the previous read handled 4 lines in the quotes
+    rv += SDK_ASSERT(reader.lineNumber() == 5);
+  }
+  return rv;
+}
+
 }
 
 int CsvReaderTest(int argc, char *argv[])
@@ -546,6 +585,7 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testQuotesInMiddle5() == 0);
   rv += SDK_ASSERT(testReadTrimmedSkipEmpty() == 0);
   rv += SDK_ASSERT(testCommentsInMiddle() == 0);
+  rv += SDK_ASSERT(testMultiLineNumber() == 0);
 
   return rv;
 }
