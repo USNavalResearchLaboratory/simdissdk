@@ -379,7 +379,7 @@ bool OsgImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
   case osgGA::GUIEventAdapter::KEYUP:
   {
     const bool isKeyDown = ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN;
-    const int c = ea.getKey();
+    int c = ea.getKey();
 
     // Always update the mod key status
     io.AddKeyEvent(ImGuiMod_Ctrl, (ea.getModKeyMask() & ea.MODKEY_CTRL) != 0);
@@ -393,8 +393,13 @@ bool OsgImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
     io.AddKeyEvent(imguiKey, isKeyDown);
 
     // Send any raw ASCII characters to ImGui as input
-    if (isKeyDown) // TODO: Numpad keys don't translate correctly, need manual translation
+    if (isKeyDown)
+    {
+      // Convert keypad numbers to their normal ASCII equivalents before sending
+      if (c >= osgGA::GUIEventAdapter::KEY_KP_0 && c <= osgGA::GUIEventAdapter::KEY_KP_9)
+        c = osgGA::GUIEventAdapter::KEY_0 + c - osgGA::GUIEventAdapter::KEY_KP_0;
       io.AddInputCharacter(static_cast<unsigned int>(c));
+    }
 
     return io.WantCaptureKeyboard;
   }
