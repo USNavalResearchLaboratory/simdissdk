@@ -131,9 +131,6 @@ struct ControlPanel : public simExamples::SimExamplesGui
     }
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
-
-    auto& io = ImGui::GetIO();
-
     ImGui::TextColored(ImVec4(0.f, 1.f, 0.f, 1.f), "Green labels are tracked, while");
     ImGui::Text("white labels are not tracked");
     ImGui::Text("c : Center camera on centroid");
@@ -145,10 +142,8 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::Text("4: Toggle tracking of Platform 4");
     ImGui::Text("5: Toggle tracking of Platform 5");
     ImGui::Text("6: Toggle tracking of Platform 6");
-
-    handlePressedKeys_();
-
     ImGui::End();
+    handlePressedKeys_();
   }
 
 private:

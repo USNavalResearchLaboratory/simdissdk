@@ -103,40 +103,8 @@ struct ControlPanel : public simExamples::SimExamplesGui
     insetViewHandler_(insetViewHandler),
     createHandler_(createHandler)
   {
-  }
-
-  void draw(osg::RenderInfo& ri) override
-  {
-    if (!isVisible())
-      return;
-
-    if (firstDraw_)
-    {
-      ImGui::SetNextWindowPos(ImVec2(5, 25));
-      firstDraw_ = false;
-    }
-    ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
-
-    auto& io = ImGui::GetIO();
-
-    ImGui::Text("i : toggles the mode for creating a new inset");
-    ImGui::Text("v : toggle visibility of all insets");
-    ImGui::Text("r : remove all insets");
-    ImGui::Text("1 : activate 'Perspective' navigation mode");
-    ImGui::Text("2 : activate 'Overhead' navigation mode");
-    ImGui::Text("3 : active 'GIS' navigation mode");
-    ImGui::Text("h : toggle between click-to-focus and hover-to-focus");
-    ImGui::Text("tab : cycle focus (in click-to-focus mode only)");
-
-    if (io.InputQueueCharacters.size() > 0)
-    {
-      switch (io.InputQueueCharacters.front())
-      {
-      case 'i':
-        createHandler_->setEnabled(!createHandler_->isEnabled());
-        break;
-      case 'v':
+    addKeyFunc_(ImGuiKey_I, [this]() { createHandler_->setEnabled(!createHandler_->isEnabled()); });
+    addKeyFunc_(ImGuiKey_V, [this]()
       {
         simVis::View* main = viewer_->getMainView();
         for (unsigned i = 0; i < main->getNumInsets(); ++i)
@@ -144,9 +112,8 @@ struct ControlPanel : public simExamples::SimExamplesGui
           simVis::View* inset = main->getInset(i);
           inset->setVisible(!inset->isVisible());
         }
-        break;
-      }
-      case 'r':
+      });
+    addKeyFunc_(ImGuiKey_R, [this]()
       {
         simVis::View::Insets insets;
         viewer_->getMainView()->getInsets(insets);
@@ -154,20 +121,19 @@ struct ControlPanel : public simExamples::SimExamplesGui
           viewer_->getMainView()->removeInset(insets[i].get());
 
         SIM_NOTICE << LC << "Removed all insets." << std::endl;
-        break;
-      }
-      case '1':
+      });
+    addKeyFunc_(ImGuiKey_1, [this]()
+      {
         viewer_->getMainView()->enableOverheadMode(false);
         viewer_->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
-        break;
-      case '2':
+      });
+    addKeyFunc_(ImGuiKey_2, [this]()
+      {
         viewer_->getMainView()->enableOverheadMode(true);
         viewer_->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
-        break;
-      case '3':
-        viewer_->setNavigationMode(simVis::NAVMODE_GIS);
-        break;
-      case 'h':
+      });
+    addKeyFunc_(ImGuiKey_3, [this]() { viewer_->setNavigationMode(simVis::NAVMODE_GIS); });
+    addKeyFunc_(ImGuiKey_H, [this]()
       {
         int mask = insetViewHandler_->getFocusActions();
         bool hover = (mask & simVis::InsetViewEventHandler::ACTION_HOVER) != 0;
@@ -182,12 +148,31 @@ struct ControlPanel : public simExamples::SimExamplesGui
           SIM_NOTICE << LC << "Switched to hover-to-focus mode." << std::endl;
         }
         insetViewHandler_->setFocusActions(mask);
-        break;
-      }
-      }
-    }
+      });
+  }
 
+  void draw(osg::RenderInfo& ri) override
+  {
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text("i : toggles the mode for creating a new inset");
+    ImGui::Text("v : toggle visibility of all insets");
+    ImGui::Text("r : remove all insets");
+    ImGui::Text("1 : activate 'Perspective' navigation mode");
+    ImGui::Text("2 : activate 'Overhead' navigation mode");
+    ImGui::Text("3 : active 'GIS' navigation mode");
+    ImGui::Text("h : toggle between click-to-focus and hover-to-focus");
+    ImGui::Text("tab : cycle focus (in click-to-focus mode only)");
     ImGui::End();
+    handlePressedKeys_();
   }
 
 private:

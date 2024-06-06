@@ -89,63 +89,14 @@ struct ControlPanel : public simExamples::SimExamplesGui
     hudEditor_(hudEditor),
     dataStore_(dataStore)
   {
-  }
-
-  void draw(osg::RenderInfo& ri) override
-  {
-    if (!isVisible())
-      return;
-
-    if (firstDraw_)
-    {
-      ImGui::SetNextWindowPos(ImVec2(5, 25));
-      firstDraw_ = false;
-    }
-    ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
-
-    ImGui::Text("1 : Move 'Demo Text' to the mouse position");
-    ImGui::Text("2 : Move 'Map Scale' to the mouse position");
-    ImGui::Text("3 : Move 'Status Text' to mouse position");
-    ImGui::Text("4 : Move 'Top Classification' to mouse position");
-    ImGui::Text("5 : Move 'Bottom Classification' to mouse position");
-    ImGui::Text("6 : Move 'Compass' to mouse position");
-    ImGui::Text("7 : Move 'Legend' to mouse position");
-    ImGui::Text("c : Cycle classification string and color");
-    ImGui::Text("e : Toggle HUD Editor mode");
-    ImGui::Text("r : Reset all to default positions");
-    ImGui::Text("W : Toggle Wind Vane on Compass");
-    ImGui::Text("z : Cycle wind angle and speed values");
-
-    auto& io = ImGui::GetIO();
-    auto mouse = io.MousePos;
-
-    if (io.InputQueueCharacters.size() > 0)
-    {
-      switch (io.InputQueueCharacters.front())
-      {
-      case '1':
-        moveWindowToMouse_(KEY_DEMO_TEXT);
-        break;
-      case '2':
-        moveWindowToMouse_(KEY_MAP_SCALE);
-        break;
-      case '3':
-        moveWindowToMouse_(KEY_STATUS_TEXT);
-        break;
-      case '4':
-        moveWindowToMouse_(KEY_CLASSIFICATION_TOP);
-        break;
-      case '5':
-        moveWindowToMouse_(KEY_CLASSIFICATION_BOTTOM);
-        break;
-      case '6':
-        moveWindowToMouse_(KEY_COMPASS);
-        break;
-      case '7':
-        moveWindowToMouse_(KEY_LEGEND);
-        break;
-      case 'c':
+    addKeyFunc_(ImGuiKey_1, [this]() { moveWindowToMouse_(KEY_DEMO_TEXT); });
+    addKeyFunc_(ImGuiKey_2, [this]() { moveWindowToMouse_(KEY_MAP_SCALE); });
+    addKeyFunc_(ImGuiKey_3, [this]() { moveWindowToMouse_(KEY_STATUS_TEXT); });
+    addKeyFunc_(ImGuiKey_4, [this]() { moveWindowToMouse_(KEY_CLASSIFICATION_TOP); });
+    addKeyFunc_(ImGuiKey_5, [this]() { moveWindowToMouse_(KEY_CLASSIFICATION_BOTTOM); });
+    addKeyFunc_(ImGuiKey_6, [this]() { moveWindowToMouse_(KEY_COMPASS); });
+    addKeyFunc_(ImGuiKey_7, [this]() { moveWindowToMouse_(KEY_LEGEND); });
+    addKeyFunc_(ImGuiKey_C, [this]()
       {
         // Cycle through a few different classification strings
         classificationCycle_ = ((classificationCycle_ + 1) % 3);
@@ -167,19 +118,11 @@ struct ControlPanel : public simExamples::SimExamplesGui
           break;
         }
         txn.complete(&props);
-        break;
-      }
-      case 'e':
-        hudEditor_.setVisible(!hudEditor_.isVisible());
-        break;
-      case 'r':
-        hudEditor_.resetAllPositions();
-        break;
-      case 'W':
-        if (compass_.valid())
-          compass_->setWindVaneVisible(!compass_->isWindVaneVisible());
-        break;
-      case 'z':
+      });
+    addKeyFunc_(ImGuiKey_E, [this]() { hudEditor_.setVisible(!hudEditor_.isVisible()); });
+    addKeyFunc_(ImGuiKey_R, [this]() { hudEditor_.resetAllPositions(); });
+    addKeyFunc_(ImGuiKey_W, [this]() { if (compass_.valid()) compass_->setWindVaneVisible(!compass_->isWindVaneVisible()); });
+    addKeyFunc_(ImGuiKey_Z, [this]()
       {
         // Cycle through a few different wind settings
         windCycle_ = ((windCycle_ + 1) % 3);
@@ -201,12 +144,36 @@ struct ControlPanel : public simExamples::SimExamplesGui
           break;
         }
         txn.complete(&props);
-        break;
-      }
-      }
-    }
+      });
+  }
 
+  void draw(osg::RenderInfo& ri) override
+  {
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text("1 : Move 'Demo Text' to the mouse position");
+    ImGui::Text("2 : Move 'Map Scale' to the mouse position");
+    ImGui::Text("3 : Move 'Status Text' to mouse position");
+    ImGui::Text("4 : Move 'Top Classification' to mouse position");
+    ImGui::Text("5 : Move 'Bottom Classification' to mouse position");
+    ImGui::Text("6 : Move 'Compass' to mouse position");
+    ImGui::Text("7 : Move 'Legend' to mouse position");
+    ImGui::Text("c : Cycle classification string and color");
+    ImGui::Text("e : Toggle HUD Editor mode");
+    ImGui::Text("r : Reset all to default positions");
+    ImGui::Text("W : Toggle Wind Vane on Compass");
+    ImGui::Text("z : Cycle wind angle and speed values");
     ImGui::End();
+
+    handlePressedKeys_();
   }
 
   void setCompass(simVis::CompassNode* compass)

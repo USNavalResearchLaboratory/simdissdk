@@ -135,6 +135,44 @@ struct ControlPanel : public simExamples::SimExamplesGui
     latLonElevListener_ = new LatLonElevationListener(llaLabel_);
     mouseDispatcher_->setViewManager(nullptr);
     setUpMouseManip_(viewer_.get());
+
+    addKeyFunc_(ImGuiKey_R, [this]()
+      {
+      });
+
+    addKeyFunc_(ImGuiKey_R, [this]()
+      {
+        simVis::View::Insets insets;
+        viewer_->getMainView()->getInsets(insets);
+        for (simVis::View::Insets::const_iterator i = insets.begin(); i != insets.end(); ++i)
+          viewer_->getMainView()->removeInset(i->get());
+        SIM_NOTICE << "Removed all insets..." << std::endl;
+      });
+    addKeyFunc_(ImGuiKey_I, [this]() { handler_->setEnabled(!handler_->isEnabled()); });
+    addKeyFunc_(ImGuiKey_1, [this]()
+      {
+        mouseManip_->removeListener(latLonElevListener_);
+        earthFileIndex = (earthFileIndex + 1) % earthFiles.size();
+        earthFileLoader::loadEarthFile(earthFiles[earthFileIndex], viewer_.get(), false);
+        setUpMouseManip_(viewer_.get());
+      });
+    addKeyFunc_(ImGuiKey_2, [this]()
+      {
+        mouseManip_->removeListener(latLonElevListener_);
+        earthFileIndex = (earthFileIndex + 1) % earthFiles.size();
+        earthFileLoader::loadEarthFile(earthFiles[earthFileIndex], viewer_.get(), true);
+        setUpMouseManip_(viewer_.get());
+      });
+    addKeyFunc_(ImGuiKey_E, [this]()
+      {
+        // always remove listener
+        mouseManip_->removeListener(latLonElevListener_);
+        showLatLonElevation_ = !showLatLonElevation_;
+        // if showing elevation, add the elevation mouse listener
+        if (showLatLonElevation_)
+          mouseManip_->addListener(latLonElevListener_, true);
+        latLonElevListener_->showLatLonElevation(showLatLonElevation_);
+      });
   }
 
   void draw(osg::RenderInfo& ri) override
@@ -156,58 +194,11 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::Text("i : toggle add-inset mouse mode");
     ImGui::Text("r : remove all insets");
 
-    auto& io = ImGui::GetIO();
-    auto mouse = io.MousePos;
-
-    if (io.InputQueueCharacters.size() > 0)
-    {
-      switch (io.InputQueueCharacters.front())
-      {
-      case 'r': // REMOVE ALL INSETS.
-      {
-        simVis::View::Insets insets;
-        viewer_->getMainView()->getInsets(insets);
-        for (simVis::View::Insets::const_iterator i = insets.begin(); i != insets.end(); ++i)
-          viewer_->getMainView()->removeInset(i->get());
-        SIM_NOTICE << "Removed all insets..." << std::endl;
-        break;
-      }
-
-      case 'i': // TOGGLE INSERT INSET MODE
-        handler_->setEnabled(!handler_->isEnabled());
-        break;
-
-      case 'l': // LOAD EARTH FILE
-      case '1':
-        mouseManip_->removeListener(latLonElevListener_);
-        earthFileIndex = (earthFileIndex + 1) % earthFiles.size();
-        earthFileLoader::loadEarthFile(earthFiles[earthFileIndex], viewer_.get(), false);
-        setUpMouseManip_(viewer_.get());
-        break;
-
-      case '2': // LOAD EARTH FILE, MAP ONLY
-        mouseManip_->removeListener(latLonElevListener_);
-        earthFileIndex = (earthFileIndex + 1) % earthFiles.size();
-        earthFileLoader::loadEarthFile(earthFiles[earthFileIndex], viewer_.get(), true);
-        setUpMouseManip_(viewer_.get());
-        break;
-
-      case 'e': // TOGGLE SHOW LAT/LON/ELEVATION
-        // always remove listener
-        mouseManip_->removeListener(latLonElevListener_);
-        showLatLonElevation_ = !showLatLonElevation_;
-        // if showing elevation, add the elevation mouse listener
-        if (showLatLonElevation_)
-          mouseManip_->addListener(latLonElevListener_, true);
-        latLonElevListener_->showLatLonElevation(showLatLonElevation_);
-        break;
-      }
-    }
-
     if (!llaLabel_.empty())
       ImGui::Text(llaLabel_.c_str());
 
     ImGui::End();
+    handlePressedKeys_();
   }
 
 

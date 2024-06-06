@@ -88,6 +88,8 @@ public:
     view_(view),
     scenario_(scenario)
   {
+    addKeyFunc_(ImGuiKey_C, [this]() { view_->tetherCamera(scenario_->find(platformId_)); });
+    addKeyFunc_(ImGuiKey_G, [this]() { view_->tetherCamera(scenario_->find(gateId_)); });
     update_();
   }
 
@@ -236,23 +238,9 @@ public:
     if (needUpdate)
       update_();
 
-    auto io = ImGui::GetIO();
-    if (io.InputQueueCharacters.size() > 0)
-    {
-      switch (io.InputQueueCharacters.front())
-      {
-      case 'c':
-      case 'C':
-        view_->tetherCamera(scenario_->find(platformId_));
-        break;
-      case 'g':
-      case 'G':
-        view_->tetherCamera(scenario_->find(gateId_));
-        break;
-      }
-    }
-
     ImGui::End();
+
+    handlePressedKeys_();
   }
 
 private:
