@@ -26,6 +26,7 @@
 #include <QMenu>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QSignalBlocker>
 #include <QSignalMapper>
 #include <QClipboard>
 #include "simQt/AbstractEntityTreeModel.h"
@@ -35,7 +36,6 @@
 #include "simQt/EntityTreeWidget.h"
 #include "simQt/QtFormatting.h"
 #include "simQt/ResourceInitializer.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/SettingsGroup.h"
 #include "simQt/WidgetSettings.h"
 #include "ui_EntityTreeComposite.h"
@@ -425,7 +425,7 @@ void EntityTreeComposite::getFilterSettings(QMap<QString, QVariant>& settings) c
 
 void EntityTreeComposite::setFilterSettings(const QMap<QString, QVariant>& settings)
 {
-  simQt::ScopedSignalBlocker blockSignals(*this);
+  const QSignalBlocker blockSignals(*this);
   entityTreeWidget_->setFilterSettings(settings);
 }
 
@@ -512,7 +512,7 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
   // state, suppress signal since the widget will have already done the toggle
   {
     bool treeView = entityTreeWidget_->isTreeView();
-    simQt::ScopedSignalBlocker blockSignals(*toggleTreeViewAction_);
+    const QSignalBlocker blockSignals(*toggleTreeViewAction_);
     setTreeView_(treeView);
   }
 

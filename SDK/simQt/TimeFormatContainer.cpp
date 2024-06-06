@@ -22,7 +22,6 @@
  */
 #include <QAction>
 #include <QDateTimeEdit>
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/SegmentedSpinBox.h"
 #include "simQt/SegmentedTexts.h"
 #include "simQt/QtFormatting.h"

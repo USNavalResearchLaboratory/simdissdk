@@ -38,7 +38,6 @@
 #include "simQt/EntityTypeFilter.h"
 #include "simQt/QtFormatting.h"
 #include "simQt/ResourceInitializer.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/EntityLineEdit.h"
 #include "ui_EntityLineEdit.h"
 

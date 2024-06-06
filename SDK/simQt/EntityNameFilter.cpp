@@ -20,11 +20,10 @@
  * disclose, or release this software.
  *
  */
-
 #include <QRegExp>
+#include <QSignalBlocker>
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/EntityFilterLineEdit.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/RegExpImpl.h"
 #include "simQt/EntityNameFilter.h"
 
@@ -94,7 +93,7 @@ void EntityNameFilter::bindToWidget(EntityFilterLineEdit* widget)
     return;
 
   // sync the widget to the current regExp
-  ScopedSignalBlocker block(*widget_);
+  const QSignalBlocker block(*widget_);
   widget_->configure(QString::fromStdString(regExp_->pattern()), static_cast<Qt::CaseSensitivity>(regExp_->caseSensitivity()), static_cast<QRegExp::PatternSyntax>(regExp_->patternSyntax()));
 
   connect(widget_, SIGNAL(changed(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)), this, SLOT(setRegExpAttributes_(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)));
@@ -110,7 +109,7 @@ void EntityNameFilter::setRegExp(const QRegExp& regExp)
   // Update the GUI if it's valid
   if (widget_ != nullptr)
   {
-    ScopedSignalBlocker block(*widget_);
+    const QSignalBlocker block(*widget_);
     widget_->configure(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
   }
 

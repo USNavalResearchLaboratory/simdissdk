@@ -20,8 +20,8 @@
  * disclose, or release this software.
  *
  */
+#include <QSignalBlocker>
 #include "simQt/QtFormatting.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/TimeButtons.h"
 #include "ui_TimeButtons.h"
 
@@ -242,11 +242,11 @@ void ButtonActions::updateEnabledState_()
 
 void ButtonActions::updateCheckedState_()
 {
-  simQt::ScopedSignalBlocker blockPlayReverse(*playReverse_);
-  simQt::ScopedSignalBlocker blockPlayForward(*play_);
-  simQt::ScopedSignalBlocker blockStop(*stop_);
+  const QSignalBlocker blockPlayReverse(*playReverse_);
+  const QSignalBlocker blockPlayForward(*play_);
+  const QSignalBlocker blockStop(*stop_);
   // do not block toggleLoop_ signals
-  simQt::ScopedSignalBlocker blockRealTime(*realTime_);
+  const QSignalBlocker blockRealTime(*realTime_);
 
   // play, stop, and reverse are exclusive
   const simCore::TimeDirection d = (clock_ != nullptr) ? clock_->timeDirection() : simCore::STOP;
