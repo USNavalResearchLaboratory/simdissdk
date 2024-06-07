@@ -110,6 +110,11 @@ size_t CsvReader::lineNumber() const
   return lineNumber_;
 }
 
+std::string CsvReader::lineText() const
+{
+  return lineText_;
+}
+
 void CsvReader::setCommentChar(char commentChar)
 {
   commentChar_ = commentChar;
@@ -137,6 +142,8 @@ std::optional<char> CsvReader::readNext_()
   char ch = '\0';
   if (!buffer_->read(&ch))
     return {};
+
+  lineText_ += ch;
   return ch;
 }
 
@@ -161,6 +168,7 @@ int CsvReader::readLineSkippingEmptyLines_(std::vector<std::string>& tokens)
 
 int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
 {
+  lineText_.clear();
   tokens.clear();
   // Algorithm adapted from https://stackoverflow.com/questions/843997
 

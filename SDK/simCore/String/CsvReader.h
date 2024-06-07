@@ -54,6 +54,12 @@ public:
    */
   size_t lineNumber() const;
 
+ /**
+  * Gets the most recently read CSV line, maybe multiple text lines due to quoted carriage returns.
+  * @return the most recently read CSV line.
+  */
+  std::string lineText() const;
+
   /** Sets the char that denotes a comment line. Defaults to '#'. */
   void setCommentChar(char commentChar);
 
@@ -122,6 +128,7 @@ private:
   char quote_ = '"';
   bool allowMidlineComments_ = true;
   size_t lineNumber_ = 0;
+  std::string lineText_;
   size_t linesFoundInRead_ = 1;
   std::unique_ptr<BufferedReader> buffer_;
 };
