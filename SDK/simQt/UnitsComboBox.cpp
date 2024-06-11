@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -22,8 +22,8 @@
  */
 #include <cassert>
 #include <set>
+#include <QSignalBlocker>
 #include "simCore/String/Format.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/UnitsComboBox.h"
 
 namespace simQt {
@@ -296,7 +296,7 @@ void UnitsSelectorComboBox::setUnits(const simCore::Units& units)
     // Install a blocker so that signals don't go out for clearing, updating units,
     // or setting current value.  All of those signals are dealt with internally.
     // This prevents aliasing in a programmatic call to setUnits().
-    simQt::ScopedSignalBlocker blocker(*this);
+    const QSignalBlocker blocker(*this);
 
     // Reset the family
     if (units_.family() != units.family())

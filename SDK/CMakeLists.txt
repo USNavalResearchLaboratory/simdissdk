@@ -2,13 +2,13 @@ project(SIMDIS_SDK)
 
 # Configure various version fields
 set(SIMDIS_SDK_MAJOR_VERSION 1)
-set(SIMDIS_SDK_MINOR_VERSION 20)
+set(SIMDIS_SDK_MINOR_VERSION 21)
 set(SIMDIS_SDK_REVISION_VERSION 0)
-set(SIMDIS_SDK_SOVERSION 20)
+set(SIMDIS_SDK_SOVERSION 21)
 set(SIMDIS_SDK_VERSION_STRING ${SIMDIS_SDK_MAJOR_VERSION}.${SIMDIS_SDK_MINOR_VERSION}.${SIMDIS_SDK_REVISION_VERSION} CACHE INTERNAL "SIMDIS SDK Version String" FORCE)
 
-# Give users a reasonable error message for minimum CXX version (C++17)
-set(SIMDIS_SDK_MINIMUM_CXX_VERSION 17)
+# Give users a reasonable error message for minimum CXX version (C++20)
+set(SIMDIS_SDK_MINIMUM_CXX_VERSION 20)
 if(NOT "cxx_std_${SIMDIS_SDK_MINIMUM_CXX_VERSION}" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
     message(FATAL_ERROR "Minimum C++ version not met (C++${SIMDIS_SDK_MINIMUM_CXX_VERSION}).\nThis compiler is unable to build the SIMDIS SDK.")
 endif()

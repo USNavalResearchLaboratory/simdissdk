@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -101,7 +101,7 @@ int testEntityCollection()
 
   simData::DataStore* ds = helper.dataStore();
   std::shared_ptr<TimeCollector> timeCollector(new TimeCollector);
-  ds->setNewUpdatesListener(timeCollector);
+  ds->addNewUpdatesListener(timeCollector);
 
   simData::ObjectId plat1 = helper.addPlatform(1);
   simData::ObjectId plat2 = helper.addPlatform(2);
@@ -228,7 +228,7 @@ int testDataTableCollection()
   simUtil::DataStoreTestHelper helper;
   simData::DataStore* ds = helper.dataStore();
   std::shared_ptr<TimeCollector> timeCollector(new TimeCollector);
-  ds->setNewUpdatesListener(timeCollector);
+  ds->addNewUpdatesListener(timeCollector);
 
   // Create two platforms with initial data points
   simData::ObjectId plat1 = helper.addPlatform(1);
@@ -397,28 +397,21 @@ int testDataStoreProxy()
 
   // Make sure that when assigning a new scenario through data store proxy, the time collector lives on
   simData::MemoryDataStore* ds1 = new simData::MemoryDataStore;
-  const auto& ds1UpdatesListener = ds1->newUpdatesListener();
   simData::DataStoreProxy proxy(ds1);
   // Listener should not have changed
-  rv += SDK_ASSERT(&ds1->newUpdatesListener() == &ds1UpdatesListener);
 
   // Add a table and row to ds1 for later testing
   rv += SDK_ASSERT(addTableAndTime(proxy, 0, 1.5) == 0);
 
   // Migrate to a new datastore
   simData::MemoryDataStore* ds2 = new simData::MemoryDataStore;
-  const auto& ds2UpdatesListener = ds2->newUpdatesListener();
-  rv += SDK_ASSERT(&ds2->newUpdatesListener() == &ds2UpdatesListener);
   proxy.reset(ds2);
   ds1 = nullptr; // reset() will delete it
   // Listener should have changed
-  rv += SDK_ASSERT(&ds2->newUpdatesListener() == &ds1UpdatesListener);
-  rv += SDK_ASSERT(&ds2->newUpdatesListener() != &ds2UpdatesListener);
 
   // Now update it to a custom one we provide, Time Collector
   std::shared_ptr<TimeCollector> timeCollector(new TimeCollector);
-  proxy.setNewUpdatesListener(timeCollector);
-  rv += SDK_ASSERT(&ds2->newUpdatesListener() == timeCollector.get());
+  proxy.addNewUpdatesListener(timeCollector);
 
   // Should have no time collections on entity 0
   rv += SDK_ASSERT(timeCollector->getTimes(0).empty());
@@ -430,13 +423,9 @@ int testDataStoreProxy()
 
   // Reset a new proxy and our Time Collector should have carried over
   simData::MemoryDataStore* ds3 = new simData::MemoryDataStore;
-  const auto& ds3UpdatesListener = ds3->newUpdatesListener();
-  rv += SDK_ASSERT(&ds3->newUpdatesListener() == &ds3UpdatesListener);
   proxy.reset(ds3);
   ds2 = nullptr; // reset() will delete it
   // Listener should have changed
-  rv += SDK_ASSERT(&ds3->newUpdatesListener() == timeCollector.get());
-  rv += SDK_ASSERT(&ds3->newUpdatesListener() != &ds3UpdatesListener);
 
   // Make sure it counts times for new rows still after the proxy reset
   rv += SDK_ASSERT(timeCollector->getTimes(0).size() == 1);  // Because we never reset it
@@ -455,7 +444,7 @@ int testIgnoresCategoryData()
 
   simData::DataStore* ds = helper.dataStore();
   std::shared_ptr<TimeCollector> timeCollector(new TimeCollector);
-  ds->setNewUpdatesListener(timeCollector);
+  ds->addNewUpdatesListener(timeCollector);
 
   simData::ObjectId plat1 = helper.addPlatform(1);
   helper.addPlatformUpdate(1.0, plat1);

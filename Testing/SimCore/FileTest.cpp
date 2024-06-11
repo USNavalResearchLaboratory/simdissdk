@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -108,6 +108,10 @@ int testPathJoin()
   // what is shown below.
   rv += SDK_ASSERT(simCore::pathJoin({ "a", "//", "/b" }) == "/b");
 
+  // UNC paths should work with forward or back slashes on Windows
+  rv += SDK_ASSERT(simCore::pathJoin({ "//unc/path/dir", "file" }) == "//unc/path/dir" + PS + "file");
+  rv += SDK_ASSERT(simCore::pathJoin({ "\\\\unc\\path\\dir", "file" }) == "\\\\unc\\path\\dir" + PS + "file");
+
   // Windows allows backslash as a separator, but Linux does not, so different tests
   // with different outcomes.s
 #ifdef WIN32
@@ -178,8 +182,11 @@ int testPathSplit()
   rv += SDK_ASSERT(simCore::pathSplit("/ab/c///") == std::make_tuple("/ab/c", ""));
   rv += SDK_ASSERT(splitJoin("/ab/c///") == "/ab/c" + PS);
 
+  // UNC path testing with forward slash
+  rv += SDK_ASSERT(simCore::pathSplit("//host/path/file") == std::make_tuple("//host/path", "file"));
+
   // Windows allows backslash as a separator, but Linux does not, so different tests
-  // with different outcomes.s
+  // with different outcomes.
 #ifdef WIN32
   rv += SDK_ASSERT(simCore::pathSplit(R"(a\b)") == std::make_tuple("a", "b"));
   rv += SDK_ASSERT(simCore::pathSplit(R"(a\\b)") == std::make_tuple("a", "b"));
@@ -189,6 +196,9 @@ int testPathSplit()
   rv += SDK_ASSERT(simCore::pathSplit(R"(\\a/b)") == std::make_tuple(R"(\\a)", "b"));
   rv += SDK_ASSERT(simCore::pathSplit(R"(a\)") == std::make_tuple("a", ""));
   rv += SDK_ASSERT(simCore::pathSplit(R"(a\\/\\)") == std::make_tuple("a", ""));
+
+  // UNC Path testing
+  rv += SDK_ASSERT(simCore::pathSplit(R"(\\host\path\file)") == std::make_tuple(R"(\\host\path)", "file"));
 #else
   rv += SDK_ASSERT(simCore::pathSplit(R"(a\b)") == std::make_tuple("", "a\\b"));
   rv += SDK_ASSERT(simCore::pathSplit(R"(a\\b)") == std::make_tuple("", "a\\\\b"));
@@ -198,6 +208,9 @@ int testPathSplit()
   rv += SDK_ASSERT(simCore::pathSplit(R"(\\a/b)") == std::make_tuple(R"(\\a)", "b"));
   rv += SDK_ASSERT(simCore::pathSplit(R"(a\)") == std::make_tuple("", "a\\"));
   rv += SDK_ASSERT(simCore::pathSplit(R"(a\\/\\)") == std::make_tuple(R"(a\\)", R"(\\)"));
+
+  // UNC Path testing
+  rv += SDK_ASSERT(simCore::pathSplit(R"(\\host\path\file)") == std::make_tuple("", R"(\\host\path\file)"));
 #endif
 
   return rv;
@@ -413,6 +426,76 @@ int testFilesMissingFromPath()
   return rv;
 }
 
+int testFileInfoNamePath()
+{
+  int rv = 0;
+  rv += SDK_ASSERT(simCore::FileInfo("/tmp/foo.txt").fileName() == "foo.txt");
+  rv += SDK_ASSERT(simCore::FileInfo("/tmp/two/foo.txt").fileName() == "foo.txt");
+  rv += SDK_ASSERT(simCore::FileInfo("c:/tmp/foo.txt").fileName() == "foo.txt");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo.txt").fileName() == "foo.txt");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo.txt/baz").fileName() == "baz");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo").fileName() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("//foo").fileName() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo/").fileName() == "");
+  rv += SDK_ASSERT(simCore::FileInfo("foo").fileName() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/").fileName() == "");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar").fileName() == "bar");
+  rv += SDK_ASSERT(simCore::FileInfo("foo//bar").fileName() == "bar");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar/baz").fileName() == "baz");
+  rv += SDK_ASSERT(simCore::FileInfo("/").fileName() == "");
+  rv += SDK_ASSERT(simCore::FileInfo("").fileName() == "");
+  rv += SDK_ASSERT(simCore::FileInfo("/tmp///foo/bar").fileName() == "bar");
+
+
+#ifdef WIN32
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\foo.txt").fileName() == "foo.txt");
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\tmp\\foo.txt").fileName() == "foo.txt");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar\\baz").fileName() == "baz");
+  rv += SDK_ASSERT(simCore::FileInfo("foo\\bar\\baz").fileName() == "baz");
+  rv += SDK_ASSERT(simCore::FileInfo(R"(\\host\unc\path\file)").fileName() == "file");
+#else
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\foo.txt").fileName() == "c:\\foo.txt");
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\tmp\\foo.txt").fileName() == "c:\\tmp\\foo.txt");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar\\baz").fileName() == "bar\\baz");
+  rv += SDK_ASSERT(simCore::FileInfo("foo\\bar\\baz").fileName() == "foo\\bar\\baz");
+  rv += SDK_ASSERT(simCore::FileInfo(R"(\\host\unc\path\file)").fileName() == "\\\\host\\unc\\path\\file");
+#endif
+
+  rv += SDK_ASSERT(simCore::FileInfo("/tmp/foo.txt").path() == "/tmp");
+  rv += SDK_ASSERT(simCore::FileInfo("/tmp/two/foo.txt").path() == "/tmp/two");
+  rv += SDK_ASSERT(simCore::FileInfo("c:/tmp/foo.txt").path() == "c:/tmp");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo.txt").path() == "/");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo.txt/baz").path() == "/foo.txt");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo").path() == "/");
+  rv += SDK_ASSERT(simCore::FileInfo("//foo").path() == "/");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo/").path() == "/foo");
+  rv += SDK_ASSERT(simCore::FileInfo("foo").path() == ".");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/").path() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar").path() == "foo");
+  // Note, the below behavior differs from QFileInfo::path(), which returns "foo/"
+  rv += SDK_ASSERT(simCore::FileInfo("foo//bar").path() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar/baz").path() == "foo/bar");
+  rv += SDK_ASSERT(simCore::FileInfo("/").path() == "/");
+  rv += SDK_ASSERT(simCore::FileInfo("").path() == "");
+  rv += SDK_ASSERT(simCore::FileInfo("/tmp///foo/bar").path() == "/tmp/foo");
+
+#ifdef WIN32
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\foo.txt").path() == "c:/");
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\tmp\\foo.txt").path() == "c:/tmp");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar\\baz").path() == "foo/bar");
+  rv += SDK_ASSERT(simCore::FileInfo("foo\\bar\\baz").path() == "foo/bar");
+  rv += SDK_ASSERT(simCore::FileInfo(R"(\\host\unc\path\file)").path() == "//host/unc/path");
+#else
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\foo.txt").path() == ".");
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\tmp\\foo.txt").path() == ".");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar\\baz").path() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("foo\\bar\\baz").path() == ".");
+  rv += SDK_ASSERT(simCore::FileInfo(R"(\\host\unc\path\file)").path() == ".");
+#endif
+
+  return rv;
+}
+
 }
 
 int FileTest(int argc, char* argv[])
@@ -426,6 +509,7 @@ int FileTest(int argc, char* argv[])
   // recycle() is intentionally not tested to avoid cluttering recycling bin
   rv += SDK_ASSERT(testWritable() == 0);
   rv += SDK_ASSERT(testFilesMissingFromPath() == 0);
+  rv += SDK_ASSERT(testFileInfoNamePath() == 0);
 
   std::cout << "simCore FileTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
 

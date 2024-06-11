@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -182,7 +182,6 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
       style.remove<PolygonSymbol>();
 
     Feature* featureBottom = new Feature(linesBottom, p.srs_.get(), style);
-    featureBottom->setName("GOG LatLonAltBox Feature Bottom");
     osgEarth::FeatureNode* nodeBottom = new osgEarth::FeatureNode(featureBottom);
     nodeBottom->setName("GOG LatLonAltBox Bottom");
     nodeBottom->setMapNode(mapNode);
@@ -190,7 +189,6 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
     nodeBottom->getOrCreateStateSet()->setAttributeAndModes(new osg::FrontFace(osg::FrontFace::CLOCKWISE), osg::StateAttribute::ON);
 
     Feature* featureTop = new Feature(linesTop, p.srs_.get(), style);
-    featureTop->setName("GOG LatLonAltBox Feature Top");
     osgEarth::FeatureNode* nodeTop = new osgEarth::FeatureNode(featureTop);
     nodeTop->setName("GOG LatLonAltBox Top");
     nodeTop->setMapNode(mapNode);
@@ -325,7 +323,6 @@ GogNodeInterface* LatLonAltBox::createLatLonAltBox(const simCore::GOG::LatLonAlt
     style.remove<PolygonSymbol>();
 
   Feature* featureBottom = new Feature(linesBottom, srs, style);
-  featureBottom->setName("GOG LatLonAltBox Feature Bottom");
   osgEarth::FeatureNode* nodeBottom = new osgEarth::FeatureNode(featureBottom);
   nodeBottom->setName("GOG LatLonAltBox Bottom");
   nodeBottom->setMapNode(mapNode);
@@ -333,7 +330,6 @@ GogNodeInterface* LatLonAltBox::createLatLonAltBox(const simCore::GOG::LatLonAlt
   nodeBottom->getOrCreateStateSet()->setAttributeAndModes(new osg::FrontFace(osg::FrontFace::CLOCKWISE), osg::StateAttribute::ON);
 
   Feature* featureTop = new Feature(linesTop, srs, style);
-  featureTop->setName("GOG LatLonAltBox Feature Top");
   osgEarth::FeatureNode* nodeTop = new osgEarth::FeatureNode(featureTop);
   nodeTop->setName("GOG LatLonAltBox Top");
   nodeTop->setMapNode(mapNode);

@@ -14,17 +14,16 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
-
 #include <QRegExp>
+#include <QSignalBlocker>
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/EntityFilterLineEdit.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/RegExpImpl.h"
 #include "simQt/EntityNameFilter.h"
 
@@ -94,7 +93,7 @@ void EntityNameFilter::bindToWidget(EntityFilterLineEdit* widget)
     return;
 
   // sync the widget to the current regExp
-  ScopedSignalBlocker block(*widget_);
+  const QSignalBlocker block(*widget_);
   widget_->configure(QString::fromStdString(regExp_->pattern()), static_cast<Qt::CaseSensitivity>(regExp_->caseSensitivity()), static_cast<QRegExp::PatternSyntax>(regExp_->patternSyntax()));
 
   connect(widget_, SIGNAL(changed(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)), this, SLOT(setRegExpAttributes_(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)));
@@ -110,7 +109,7 @@ void EntityNameFilter::setRegExp(const QRegExp& regExp)
   // Update the GUI if it's valid
   if (widget_ != nullptr)
   {
-    ScopedSignalBlocker block(*widget_);
+    const QSignalBlocker block(*widget_);
     widget_->configure(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
   }
 

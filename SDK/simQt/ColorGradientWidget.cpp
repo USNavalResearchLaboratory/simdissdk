@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -27,6 +27,7 @@
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QSignalBlocker>
 #include <QToolTip>
 #include <QTreeView>
 #include "simCore/Calc/Interpolation.h"
@@ -35,7 +36,6 @@
 #include "simQt/ColorWidgetDelegate.h"
 #include "simQt/QtConversion.h"
 #include "simQt/QtFormatting.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/ColorGradientWidget.h"
 #include "ui_ColorGradientWidget.h"
 
@@ -851,7 +851,7 @@ void ColorGradientWidget::setValueSuffix(const QString& suffix)
   valueSuffix_ = suffix;
 
   // Block outgoing signals, preventing emitGradientChanged_() when labels update
-  simQt::ScopedSignalBlocker blockSignals(*this);
+  const QSignalBlocker blockSignals(*this);
 
   // Always show the value suffix in the display widget
   display_->setValueSuffix(valueSuffix_);
@@ -885,7 +885,7 @@ void ColorGradientWidget::updateMinMaxUserValues_()
   display_->setToUserValue(toUser);
 
   // Block outgoing signals, preventing emitGradientChanged_() when labels update
-  simQt::ScopedSignalBlocker blockSignals(*this);
+  const QSignalBlocker blockSignals(*this);
   model_->setFormatters(toUser, fromUser);
 }
 

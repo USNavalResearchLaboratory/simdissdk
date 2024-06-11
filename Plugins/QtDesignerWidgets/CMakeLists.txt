@@ -112,6 +112,10 @@ if(AUTOINSTALL_QTDESIGNER_WIDGETS)
     # After the build, copy the library over
     add_custom_command(TARGET simQtDesignerWidgets POST_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy $<TARGET_FILE:simQtDesignerWidgets> ${QT_DESIGNER_PLUGIN_DIR}
+        ARGS -E make_directory "${QT_DESIGNER_PLUGIN_DIR}/"
+        )
+    add_custom_command(TARGET simQtDesignerWidgets POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+        ARGS -E copy $<TARGET_FILE:simQtDesignerWidgets> "${QT_DESIGNER_PLUGIN_DIR}/"
         )
 endif()

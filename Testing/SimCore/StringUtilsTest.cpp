@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -27,9 +27,10 @@
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Version.h"
 #include "simCore/String/Format.h"
-#include "simCore/String/Utils.h"
-#include "simCore/String/Tokenizer.h"
 #include "simCore/String/TextReplacer.h"
+#include "simCore/String/Tokenizer.h"
+#include "simCore/String/Utils.h"
+#include "simCore/String/UtfUtils.h"
 
 using namespace std;
 
@@ -539,6 +540,82 @@ int testRemoveTrailingZeros()
   return rv;
 }
 
+int testSkipUtf8BomTest()
+{
+  int rv = 0;
+  const std::vector<unsigned char> UTF8_BOM = { 0xEF, 0xBB, 0xBF };
+
+  { // With empty stream
+    std::stringstream ss;
+    rv += SDK_ASSERT(simCore::skipUtf8ByteOrderMark(ss) != 0);
+  }
+
+  { // With skip
+    std::stringstream ss;
+    ss.write(reinterpret_cast<const char*>(&UTF8_BOM[0]), UTF8_BOM.size());
+    ss << "Test\n";
+    rv += SDK_ASSERT(simCore::skipUtf8ByteOrderMark(ss) == 0);
+    std::string input;
+    ss >> input;
+    rv += SDK_ASSERT(input == "Test");
+    rv += SDK_ASSERT(ss.good());
+  }
+
+  { // Without skip
+    std::stringstream ss;
+    ss.write(reinterpret_cast<const char*>(&UTF8_BOM[0]), UTF8_BOM.size());
+    ss << "Test\n";
+    std::string input;
+    ss >> input;
+    rv += SDK_ASSERT(input != "Test");
+    rv += SDK_ASSERT(ss.good());
+  }
+
+  { // With only BOM
+    std::stringstream ss;
+    ss.write(reinterpret_cast<const char*>(&UTF8_BOM[0]), UTF8_BOM.size());
+    rv += SDK_ASSERT(simCore::skipUtf8ByteOrderMark(ss) == 0);
+    std::string input;
+    ss >> input;
+    rv += SDK_ASSERT(input.empty());
+    rv += SDK_ASSERT(!ss.good());
+  }
+
+  { // With only one byte of BOM
+    std::stringstream ss;
+    ss.write(reinterpret_cast<const char*>(&UTF8_BOM[0]), 1);
+    ss << "Test\n";
+    rv += SDK_ASSERT(simCore::skipUtf8ByteOrderMark(ss) != 0);
+    std::string input;
+    ss >> input;
+    rv += SDK_ASSERT(input.find("Test") == 1);
+    rv += SDK_ASSERT(ss.good());
+  }
+
+  { // With only two bytes of BOM
+    std::stringstream ss;
+    ss.write(reinterpret_cast<const char*>(&UTF8_BOM[0]), 2);
+    ss << "Test\n";
+    rv += SDK_ASSERT(simCore::skipUtf8ByteOrderMark(ss) != 0);
+    std::string input;
+    ss >> input;
+    rv += SDK_ASSERT(input.find("Test") == 2);
+    rv += SDK_ASSERT(ss.good());
+  }
+
+  { // With no BOM
+    std::stringstream ss;
+    ss << "Test\n";
+    rv += SDK_ASSERT(simCore::skipUtf8ByteOrderMark(ss) != 0);
+    std::string input;
+    ss >> input;
+    rv += SDK_ASSERT(input == "Test");
+    rv += SDK_ASSERT(ss.good());
+  }
+
+  return rv;
+}
+
 }
 
 int StringUtilsTest(int argc, char* argv[])
@@ -565,6 +642,7 @@ int StringUtilsTest(int argc, char* argv[])
   rv += SDK_ASSERT(testTextReplacer() == 0);
 
   rv += SDK_ASSERT(testRemoveTrailingZeros() == 0);
+  rv += SDK_ASSERT(testSkipUtf8BomTest() == 0);
 
   std::cout << "simCore StringUtilsTest " << ((rv == 0) ? "passed" : "failed") << std::endl;
 

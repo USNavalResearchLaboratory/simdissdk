@@ -14,7 +14,6 @@ Supported Systems/Compilers
 Operating systems officially supported by the SIMDIS SDK:
 
 * Windows 10
-* Red Hat Enterprise Linux 7
 * Red Hat Enterprise Linux 8
 
 Compilers officially supported by the SIMDIS SDK:
@@ -22,26 +21,15 @@ Compilers officially supported by the SIMDIS SDK:
 * Windows compilers:
   - Microsoft Visual C++ 2022 (VC-14.3)
 * Linux compilers:
-  - GCC, minimum 8.3
+  - GCC, with CXX11 ABI
 
 Other compiler combinations may work, or could work with minimal improvements
 to the CMake configuration.  This is only a list of the systems that we internally
 are able to support.  We are glad to accept pull requests supporting new
 compilers.
 
-C++-17 support is be mandatory for SIMDIS SDK compilers starting as of
-September 2023, after the 1.19 release.  This eliminated support for
-GCC 4.4.  RHEL 7 users can continue to build the SIMDIS SDK by using the
-devtoolset package from the RHEL SCL, in order to use an ABI-compatible
-compiler with newer language support.
-
-RHEL 8 and newer users should be aware of their GCC ABI. While RHEL 7 users are
-locked in to the cxx-03 ABI by their OS, RHEL 8 users can build in either the cxx-03
-or cxx-11 ABI. This option creates a different binary compatibility, and is
-controlled by the `ENABLE_CXX11_ABI` CMake flag, which in turn sets the appropriate
-value for compile flag `_GLIBCXX_USE_CXX11_ABI`. For more information on the dual
-ABI, refer to the
-[appropriate GCC documentation](https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html).
+C++-20 support is mandatory for SIMDIS SDK compilers as of March 2024, after
+the 1.20 release.
 
 
 Third Party Dependencies
@@ -50,7 +38,7 @@ The SIMDIS SDK depends on the following third party libraries:
 
 - [GLEW 2.1+](http://glew.sourceforge.net/)
 - [OpenSceneGraph 3.6+](http://www.openscenegraph.org)
-- [osgEarth 3.2+](http://www.osgearth.org)
+- [osgEarth 3.5+](http://www.osgearth.org)
 - [protobuf 2.6+](http://code.google.com/p/protobuf)
 - [Python 3.6+](https://www.python.org/)
 - [Qt 5.5+](http://qt-project.org)
@@ -198,7 +186,8 @@ named:
   directory &lt;simdis-sdk-bin-dir&gt;/lib will need to be added to the
   system's library search path so that the system knows where to find the
   SIMDIS SDK shared libraries.  This can be done with RPATH, LD\_LIBRARY\_PATH,
-  or ldconfig.  Some notes on shared libraries can be found [here](http://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html)
+  or ldconfig.  Some notes on shared libraries can be found
+  [here](http://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html)
 
   **NOTE: Use of LD\_LIBRARY\_PATH is considered bad practice/dangerous.**
 

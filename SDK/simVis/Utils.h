@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -45,10 +45,17 @@
 #include "osgEarth/Color"
 #include "osgEarth/GeoData"
 #include "osgEarth/MapNode"
-#include "osgEarth/SpatialReference"
-#include "osgEarth/Units"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderFactory"
+#include "osgEarth/SpatialReference"
+#include "osgEarth/Units"
+#include "osgEarth/Version"
+
+#if OSGEARTH_SOVERSION >= 151
+namespace osgEarth { class UnitsType; }
+#else
+namespace osgEarth { using UnitsType = Units; }
+#endif
 
 // MACROS to test for changes in protobuf properties.
 
@@ -258,12 +265,12 @@ namespace simVis
   /**
    * Convert simData DistanceUnits to osgEarth::Units.
    */
-  SDKVIS_EXPORT osgEarth::Units convertUnitsToOsgEarth(const simData::DistanceUnits& input);
+  SDKVIS_EXPORT osgEarth::UnitsType convertUnitsToOsgEarth(const simData::DistanceUnits& input);
 
   /**
    * Convert simData SpeedUnits to osgEarth::Units.
    */
-  SDKVIS_EXPORT osgEarth::Units convertUnitsToOsgEarth(const simData::SpeedUnits& input);
+  SDKVIS_EXPORT osgEarth::UnitsType convertUnitsToOsgEarth(const simData::SpeedUnits& input);
 
   /** Given an icon alignment and image size, gives offsets from center. */
   SDKVIS_EXPORT void iconAlignmentToOffsets(simData::TextAlignment align, const osg::Vec2f& iconDims, osg::Vec2f& outOffsets);

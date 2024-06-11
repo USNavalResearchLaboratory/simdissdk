@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -103,9 +103,6 @@ private:
   void render_(osg::RenderInfo& renderInfo);
 
   double time_;
-  bool mousePressed_[3];
-  bool mouseDoubleClicked_[3];
-  float mouseWheel_;
   bool initialized_;
   bool firstFrame_;
   bool firstDraw_;

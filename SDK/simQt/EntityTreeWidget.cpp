@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -29,7 +29,6 @@
 #include <QTimer>
 #include "simNotify/Notify.h"
 #include "simCore/Time/Utils.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/EntityTreeWidget.h"
 #include "simQt/EntityProxyModel.h"
@@ -234,7 +233,7 @@ void EntityTreeWidget::keepVisible_()
 void EntityTreeWidget::clearSelection()
 {
   // Since the world is telling us to change the selection, we do not need to tell the world the selection has changed.
-  ScopedSignalBlocker blockSignals(*view_);
+  QSignalBlocker blockSignals(*view_);
   view_->clearSelection();
   selectionList_.clear();
   selectionSet_.clear();

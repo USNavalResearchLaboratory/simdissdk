@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -101,7 +101,17 @@ int SimdisRangeToolState::populateEntityState(const simVis::ScenarioManager& sce
   if ((node == nullptr) || (state == nullptr))
     return 1;
 
-  auto hostNode = dynamic_cast<const simVis::PlatformNode*>(scenario.getHostPlatform(node));
+  simData::ObjectId hostId;
+  // search for the host platform node
+  const simVis::EntityNode* platNode = node;
+  while (platNode->getHostId(hostId))
+  {
+    platNode = scenario.find(hostId);
+    if (platNode == nullptr)
+      return 1; // host doesn't exist, possible this is an orphaned node whose parent has already been removed
+  }
+
+  auto hostNode = dynamic_cast<const simVis::PlatformNode*>(platNode);
   if (hostNode == nullptr)
     return 1;
 

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -202,6 +202,9 @@ public:
   /** Returns true if all docking is disabled via settings */
   bool allDockingDisabled() const;
 
+  /** Restore layout geometry to default factory state */
+  void restoreDefaultLayout();
+
 public Q_SLOTS:
 
   /**
@@ -343,6 +346,8 @@ private:
   bool isChildWidget_(const QWidget* widget) const;
   /** Returns the current path for simQt::Settings, or QSettings if simQt::Settings is unavailable */
   QString path_() const;
+  /** Set floating with the specified geometry, falls back to a valid default if geometry is invalid  */
+  void setFloatingGeometry_(const QByteArray& geometryBytes);
 
   /** Install an event filter to capture drag events on the tab button when this widget is docked over or under other dock widgets */
   void installTabEventFilter_(QTabBar* tabBar);

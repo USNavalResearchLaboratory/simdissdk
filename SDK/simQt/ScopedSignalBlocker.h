@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -24,9 +24,12 @@
 #define SIMQT_SCOPEDSIGNALBLOCKER_H
 
 #include <QObject>
+#include "simCore/Common/Common.h"
 
 namespace simQt
 {
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 
 /**
  * Blocks signals to the specified object.  On destruction, restores the previously
@@ -46,7 +49,7 @@ class /* SDKQT_EXPORT */ ScopedSignalBlocker
 {
 public:
   /** Blocks signals coming from the specified object, as long as this instance is in scope. */
-  explicit ScopedSignalBlocker(QObject& obj, bool blockSignals=true)
+  SDK_DEPRECATE(explicit ScopedSignalBlocker(QObject& obj, bool blockSignals = true), "Deprecated, use QSignalBlocker instead.")
     : object_(obj)
   {
     blocked_ = object_.blockSignals(blockSignals);
@@ -64,6 +67,8 @@ private:
   /** Previous block state */
   bool blocked_;
 };
+
+#endif
 
 }
 

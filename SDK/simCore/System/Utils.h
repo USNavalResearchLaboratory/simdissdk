@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -74,7 +74,7 @@ struct InitializeEnvironmentConfig
   /** Set up Python3: PYTHONHOME, PYTHONPATH, PYTHONPYCACHEPREFIX */
   bool python3 = true;
   /** Python version string, used to combine to create the .ZIP and dynamic-load folders */
-  std::string python3Version = "3.11";
+  std::string python3Version = "3.12";
 
   /** Set SIMDIS_SDK_FILE_PATH to SIMDIS_DIR/data */
   bool simdisSdkFilePath = true;

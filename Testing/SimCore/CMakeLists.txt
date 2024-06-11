@@ -14,10 +14,12 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
     CoordConvertLibTest.cpp
     CoreCommonTest.cpp
     CsvReaderTest.cpp
+    CsvWriterTest.cpp
     EMTest.cpp
     FileTest.cpp
     GarsTest.cpp
     GeoFenceTest.cpp
+    GeometryTest.cpp
     GogTest.cpp
     GogToGeoFenceTest.cpp
     InterpolationTest.cpp
@@ -81,6 +83,7 @@ add_test(NAME CoreTimeStringTest COMMAND SimCoreTests TimeStringTest)
 add_test(NAME CoreTimeUtilsTest COMMAND SimCoreTests TimeUtilsTest)
 add_test(NAME CoreTimeJulianTest COMMAND SimCoreTests TimeJulianTest)
 add_test(NAME CoreGeoFenceTest COMMAND SimCoreTests GeoFenceTest)
+add_test(NAME CoreGeometryTest COMMAND SimCoreTests GeometryTest)
 add_test(NAME MultiFrameCoordTest COMMAND SimCoreTests MultiFrameCoordTest)
 add_test(NAME AngleTest COMMAND SimCoreTests AngleTest)
 add_test(NAME CoreUnitsTest COMMAND SimCoreTests UnitsTest)
@@ -89,6 +92,7 @@ add_test(NAME GogToGeoFenceTest COMMAND SimCoreTests GogToGeoFenceTest)
 add_test(NAME CalculateLibTest COMMAND SimCoreTests CalculateLibTest ${SimCore_UnitTests_SOURCE_DIR}/CalculateInput.txt)
 add_test(NAME MagneticVarianceTest COMMAND SimCoreTests MagneticVarianceTest)
 add_test(NAME CsvReaderTest COMMAND SimCoreTests CsvReaderTest)
+add_test(NAME CsvWriterTest COMMAND SimCoreTests CsvWriterTest)
 add_test(NAME SimCoreGogTest COMMAND SimCoreTests GogTest)
 add_test(NAME XmlWriterTest COMMAND SimCoreTests XmlWriterTest)
 add_test(NAME SimCoreFileTest COMMAND SimCoreTests FileTest)

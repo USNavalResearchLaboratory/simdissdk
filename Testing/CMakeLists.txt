@@ -1,5 +1,15 @@
 project(SIMDIS_SDK_Testing)
 
+if(NOT MSVC)
+    # Use --disable-new-dtags to help `make test` succeed, by using RPATH instead of RUNPATH
+    include(CheckLinkerFlag)
+    set(DISABLE_NEW_DTAGS "-Wl,--disable-new-dtags")
+    check_linker_flag(CXX "${DISABLE_NEW_DTAGS}" SUPPORTS_DISABLE_NEW_DTAGS)
+    if(SUPPORTS_DISABLE_NEW_DTAGS)
+        set(CMAKE_EXE_LINKER_FLAGS "${DISABLE_NEW_DTAGS} ${CMAKE_EXE_LINKER_FLAGS}")
+    endif()
+endif()
+
 add_subdirectory(SimNotify)
 add_subdirectory(SimCore)
 add_subdirectory(SimData)

@@ -1021,6 +1021,7 @@ message BeamPrefs {
     BEAM_3DB = 0;         ///< Beam drawn using 3 dB half power points
     ANTENNA_PATTERN = 1;  ///< Beam drawn using antenna pattern
     COVERAGE = 2;         ///< Beam drawn as a spherical slice (cap only)
+    LINE = 3;             ///< Beam drawn as a line
   };
 
   /// Describes the beam's antenna pattern settings

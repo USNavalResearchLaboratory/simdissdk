@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -252,10 +252,10 @@ public:
     double offset, double toBase, const std::string& family);
 
 private:
-  std::string name_;
-  std::string abbrev_;
-  double toBaseOffset_;
-  double toBase_;
+  std::string name_ = "Invalid";
+  std::string abbrev_ = "inv";
+  double toBaseOffset_ = 0.;
+  double toBase_ = 1.;
   std::string family_;
 };
 

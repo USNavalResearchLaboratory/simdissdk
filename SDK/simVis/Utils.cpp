@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -369,7 +369,7 @@ bool isImageFile(const std::string& location)
   if (!ext.empty())
   {
     // first check some known extensions (based on SIMDIS_MODEL_FILE_PATTERNS in simCore/String/FilePatterns.h)
-    if (ext == "3db" || ext == "opt" || ext == "ive" || ext == "flt" || ext == "3ds" || ext == "obj" || ext == "lwo" || ext == "dxf" || ext == "osg" || ext == "osga" || ext == "osgb")
+    if (ext == "3db" || ext == "opt" || ext == "ive" || ext == "flt" || ext == "3ds" || ext == "obj" || ext == "lwo" || ext == "dxf" || ext == "osg" || ext == "osga" || ext == "osgb" || ext == "gltf")
       return false;
 
     if (ext == "jpg" || ext == "png" || ext == "gif" || ext == "bmp" || ext == "tmd" || ext == "lst")
@@ -389,7 +389,7 @@ bool isImageFile(const std::string& location)
   return false;
 }
 
-osgEarth::Units convertUnitsToOsgEarth(const simData::DistanceUnits& input)
+osgEarth::UnitsType convertUnitsToOsgEarth(const simData::DistanceUnits& input)
 {
     return
         input == simData::UNITS_CENTIMETERS    ? osgEarth::Units::CENTIMETERS :
@@ -405,10 +405,10 @@ osgEarth::Units convertUnitsToOsgEarth(const simData::DistanceUnits& input)
         input == simData::UNITS_MILLIMETERS    ? osgEarth::Units::MILLIMETERS :
         input == simData::UNITS_NAUTICAL_MILES ? osgEarth::Units::NAUTICAL_MILES :
         input == simData::UNITS_YARDS          ? osgEarth::Units::YARDS :
-        osgEarth::Units(); // invalid
+        osgEarth::UnitsType(); // invalid
 }
 
-osgEarth::Units convertUnitsToOsgEarth(const simData::SpeedUnits& input)
+osgEarth::UnitsType convertUnitsToOsgEarth(const simData::SpeedUnits& input)
 {
     return
         input == simData::UNITS_METERS_PER_SECOND     ? osgEarth::Units::METERS_PER_SECOND :
@@ -419,7 +419,7 @@ osgEarth::Units convertUnitsToOsgEarth(const simData::SpeedUnits& input)
         input == simData::UNITS_KILOMETERS_PER_SECOND ? osgEarth::Units::KILOMETERS_PER_SECOND :
         input == simData::UNITS_DATAMILES_PER_HOUR    ? osgEarth::Units::DATA_MILES_PER_HOUR :
         input == simData::UNITS_YARDS_PER_SECOND      ? osgEarth::Units::YARDS_PER_SECOND :
-        osgEarth::Units(); // invalid
+        osgEarth::UnitsType(); // invalid
 }
 
 void iconAlignmentToOffsets(simData::TextAlignment align, const osg::Vec2f& iconDims, osg::Vec2f& outOffsets)

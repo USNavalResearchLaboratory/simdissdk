@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -134,6 +134,15 @@ struct ControlPanel : public simExamples::SimExamplesGui
     : simExamples::SimExamplesGui("GOG Attachments Example"),
     swChild_(static_cast<unsigned int>(~0))
   {
+    addKeyFunc_(ImGuiKey_G, [this]()
+      {
+        if (swChild_ != static_cast<unsigned>(~0))
+          s_attachments[swChild_]->setNodeMask(0);
+        if (++swChild_ == s_attachments.size())
+          swChild_ = 0;
+        s_attachments[swChild_]->setNodeMask(~0);
+        nowViewing_ = ("Now viewing: " + s_attachments[swChild_]->getName());
+      });
   }
 
   void draw(osg::RenderInfo& ri) override
@@ -148,29 +157,14 @@ struct ControlPanel : public simExamples::SimExamplesGui
     }
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
-
-    auto& io = ImGui::GetIO();
     ImGui::Text("g : cycle through the various GOG types");
-
-    if (io.InputQueueCharacters.size() > 0)
-    {
-      switch (io.InputQueueCharacters.front())
-      {
-      case 'g':
-        if (swChild_ != static_cast<unsigned>(~0))
-          s_attachments[swChild_]->setNodeMask(0);
-        if (++swChild_ == s_attachments.size())
-          swChild_ = 0;
-        s_attachments[swChild_]->setNodeMask(~0);
-        nowViewing_ = ("Now viewing: " + s_attachments[swChild_]->getName());
-        break;
-      }
-    }
 
     if (!nowViewing_.empty())
       ImGui::Text(nowViewing_.c_str());
 
     ImGui::End();
+
+    handlePressedKeys_();
   }
 
 private:

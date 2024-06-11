@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -157,6 +157,17 @@ struct TestPanel : public simExamples::SimExamplesGui
     : simExamples::SimExamplesGui("Simple Server SDK Example"),
     app_(app)
   {
+    addKeyFunc_(ImGuiKey_C, [this]() { app_.centerNext(); });
+    addKeyFunc_(ImGuiKey_D, [this]() { app_.toggleDynamicScale(); });
+    addKeyFunc_(ImGuiKey_N, [this]() { app_.toggleLabels(); });
+    addKeyFunc_(ImGuiKey_W, [this]() { app_.toggleCompass(); });
+    addKeyFunc_(ImGuiKey_L, [this]() { app_.toggleLogDb(); });
+    addKeyFunc_(ImGuiKey_O, [this]() { app_.cycleTimeFormat(); });
+    addKeyFunc_(ImGuiKey_Z, [this]() { app_.toggleCockpit(); });
+    addKeyFunc_(ImGuiKey_P, [this]() { app_.playPause(); });
+    addKeyFunc_(ImGuiKey_D, [this]() { app_.toggleTextDeclutter(); });
+    addKeyFunc_(ImGuiKey_T, [this]() { app_.toggleDeclutterTechnique(); });
+    addKeyFunc_(ImGuiKey_S, [this]() { app_.cycleCalloutLineStyle(); });
   }
 
   void draw(osg::RenderInfo& ri) override
@@ -186,49 +197,8 @@ struct TestPanel : public simExamples::SimExamplesGui
     ImGui::Text("T : Cycle callout line style");
     ImGui::Text("w : Toggle compass");
     ImGui::Text("z : Toggle cockpit mode (if centered)");
-
-    auto& io = ImGui::GetIO();
-    if (io.InputQueueCharacters.size() > 0)
-    {
-      switch (io.InputQueueCharacters.front())
-      {
-      case 'c': // lowercase
-        app_.centerNext();
-        break;
-      case 'd':
-        app_.toggleDynamicScale();
-        break;
-      case 'n':
-        app_.toggleLabels();
-        break;
-      case 'w':
-        app_.toggleCompass();
-        break;
-      case 'l':
-        app_.toggleLogDb();
-        break;
-      case 'o': // lowercase
-        app_.cycleTimeFormat();
-        break;
-      case 'z':
-        app_.toggleCockpit();
-        break;
-      case 'p':
-        app_.playPause();
-        break;
-      case 'D':
-        app_.toggleTextDeclutter();
-        break;
-      case 't':
-        app_.toggleDeclutterTechnique();
-        break;
-      case 'T':
-        app_.cycleCalloutLineStyle();
-        break;
-      }
-    }
-
     ImGui::End();
+    handlePressedKeys_();
   }
 
 private:

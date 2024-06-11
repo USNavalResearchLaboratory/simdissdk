@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -68,6 +68,9 @@ public:
   bool colorCodeText() const;
   /** set the "change font color on error" setting */
   void setColorCodeText(bool value);
+
+  /** If true process an Enter key to focus to the next child */
+  void setProcessEnterKey(bool process);
 
   /** Get the current time */
   simCore::TimeStamp timeStamp() const;
@@ -136,6 +139,7 @@ protected Q_SLOTS:
   void setHours_(); ///< set time format to hours
   void setOrdinal_(); ///< set time format to ordinal
   void setMonth_(); ///< set time format to month
+  void setIso8601_(); ///< set time format to ISO-8601
   void setColorCode_(); ///< toggle the color code setting
   void copyToClipboard_(); ///< copy time to the global clipboard
 

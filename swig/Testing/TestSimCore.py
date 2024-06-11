@@ -4,7 +4,7 @@ import os, sys, math, timeit
 if 'SIMDIS_DIR' in os.environ:
 	# For _module shared object:
 	if os.name == "nt":
-		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-nt/python3.11')
+		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-nt/python3.12')
 		try:
 			# Python 3.8 does not want to respect PATH for loading dependent DLLs.  It introduces
 			# a new method to attempt to fix the problem.  Try/except ignores errors in older Python.
@@ -14,7 +14,7 @@ if 'SIMDIS_DIR' in os.environ:
 			pass
 		pass
 	else:
-		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-linux/python3.11/lib-dynload')
+		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-linux/python3.12/lib-dynload')
 	# For module wrapper:
 	sys.path.append(os.environ['SIMDIS_DIR'] + '/bin/pythonScripts')
 
@@ -214,13 +214,42 @@ assert(rv is not None and gars is not None and err is not None)
 v1 = simCore.Vec3(0, 0, 0)
 v2 = simCore.Vec3(0, 0, 0)
 v3 = simCore.Vec3(0, 0, 0)
+p = simCore.Plane()
 p = simCore.Plane(v1, v2, v3)
-assert(p is not None)
+p = simCore.Plane(simCore.Vec3(0, 1., 0), 3.0)
+assert(p.d() == 3.0)
+assert(p.normal().x() == 0.0)
+assert(p.normal().y() == 1.0)
+assert(p.normal().z() == 0.0)
 v4 = simCore.Vec3(0, 0, 0)
 assert(p.distance(v4) is not None)
 poly = simCore.Polytope()
 assert(poly is not None)
 assert(poly.contains(v4) is not None)
+tri = simCore.Triangle()
+tri.a = v1
+tri.b.set(0, 4, 10)
+tri.c.set(0, -4, 10)
+ray = simCore.Ray()
+ray.origin.set(-1000, 0, 5)
+ray.direction.set(1, 0, 0)
+results = simCore.rayIntersectsTriangle(ray, tri, True)
+assert(results.intersects)
+assert(abs(results.t - 1000.) < 0.001)
+assert(results.u is not None)
+assert(results.v is not None)
+p = simCore.Plane()
+ray.origin.set(100, 100, 1.)
+ray.direction.set(0, 0, -1)
+results = simCore.rayIntersectsPlane(ray, p)
+assert(results is not None)
+assert(results == 1.0)
+ray.direction.set(1, 0, 0)
+results = simCore.rayIntersectsPlane(ray, p)
+assert(results is None) # parallel to plane
+
+#############################
+# GeoFence.h
 fence = simCore.GeoFence()
 assert(fence is not None)
 assert(fence.valid() is not None)
@@ -539,7 +568,7 @@ assert(simCore.StringUtils.substitute("Testing function", "t", "m") is not None)
 assert(simCore.StringUtils.addEscapeSlashes('"') == '\\\"')
 assert(simCore.StringUtils.removeEscapeSlashes('\\"') == '"')
 assert(simCore.StringUtils.trim('  test  ') == 'test')
-assert(simCore.toNativeSeparators("Users\person\Documents") is not None)
+assert(simCore.toNativeSeparators("Users\\person\\Documents") is not None)
 assert(simCore.sanitizeFilename("<Documents>") == "Documents")
 assert(simCore.hasEnv("var") is not None)
 

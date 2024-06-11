@@ -32,6 +32,7 @@ set(CORE_CALC_HEADERS
     ${CORE_CALC_INC}DatumConvert.h
     ${CORE_CALC_INC}Gars.h
     ${CORE_CALC_INC}Geometry.h
+    ${CORE_CALC_INC}GeoFence.h
     ${CORE_CALC_INC}GogToGeoFence.h
     ${CORE_CALC_INC}Interpolation.h
     ${CORE_CALC_INC}MagneticVariance.h
@@ -56,6 +57,7 @@ set(CORE_CALC_SOURCES
     ${CORE_CALC_SRC}DatumConvert.cpp
     ${CORE_CALC_SRC}Gars.cpp
     ${CORE_CALC_SRC}Geometry.cpp
+    ${CORE_CALC_SRC}GeoFence.cpp
     ${CORE_CALC_SRC}GogToGeoFence.cpp
     ${CORE_CALC_SRC}Interpolation.cpp
     ${CORE_CALC_SRC}MagneticVariance.cpp
@@ -109,6 +111,7 @@ set(CORE_STRING_HEADERS
     ${CORE_STRING_INC}Angle.h
     ${CORE_STRING_INC}Constants.h
     ${CORE_STRING_INC}CsvReader.h
+    ${CORE_STRING_INC}CsvWriter.h
     ${CORE_STRING_INC}FilePatterns.h
     ${CORE_STRING_INC}Tokenizer.h
     ${CORE_STRING_INC}Format.h
@@ -123,11 +126,13 @@ set(CORE_STRING_HEADERS
 set(CORE_STRING_SOURCES
     ${CORE_STRING_SRC}Angle.cpp
     ${CORE_STRING_SRC}CsvReader.cpp
+    ${CORE_STRING_SRC}CsvWriter.cpp
     ${CORE_STRING_SRC}Format.cpp
     ${CORE_STRING_SRC}Tokenizer.cpp
     ${CORE_STRING_SRC}TextFormatter.cpp
     ${CORE_STRING_SRC}TextReplacer.cpp
     ${CORE_STRING_SRC}UnitContextFormatter.cpp
+    ${CORE_STRING_SRC}UtfUtils.cpp
     ${CORE_STRING_SRC}Utils.cpp
     ${CORE_STRING_SRC}ValidNumber.cpp
     ${CORE_STRING_SRC}XmlWriter.cpp
@@ -142,11 +147,13 @@ set(CORE_SYSTEM_SRC System/)
 set(CORE_SYSTEM_HEADERS
     ${CORE_SYSTEM_INC}DescriptorStringCapture.h
     ${CORE_SYSTEM_INC}File.h
+    ${CORE_SYSTEM_INC}ShellWindow.h
     ${CORE_SYSTEM_INC}Utils.h
 )
 set(CORE_SYSTEM_SOURCES
     ${CORE_SYSTEM_SRC}DescriptorStringCapture.cpp
     ${CORE_SYSTEM_SRC}File.cpp
+    ${CORE_SYSTEM_INC}ShellWindow.cpp
     ${CORE_SYSTEM_SRC}Utils.cpp
 )
 source_group(Headers\\System FILES ${CORE_SYSTEM_HEADERS})

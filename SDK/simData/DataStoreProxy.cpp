@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -95,9 +95,14 @@ void DataStoreProxy::removeScenarioListener(DataStore::ScenarioListenerPtr callb
   dataStore_->removeScenarioListener(callback);
 }
 
-void DataStoreProxy::setNewUpdatesListener(DataStore::NewUpdatesListenerPtr callback)
+void DataStoreProxy::addNewUpdatesListener(DataStore::NewUpdatesListenerPtr callback)
 {
-  dataStore_->setNewUpdatesListener(callback);
+  dataStore_->addNewUpdatesListener(callback);
+}
+
+void DataStoreProxy::removeNewUpdatesListener(DataStore::NewUpdatesListenerPtr callback)
+{
+  dataStore_->removeNewUpdatesListener(callback);
 }
 
 void DataStoreProxy::bindToClock(simCore::Clock* clock)

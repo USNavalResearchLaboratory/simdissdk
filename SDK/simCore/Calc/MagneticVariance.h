@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -23,7 +23,7 @@
 #ifndef SIMCORE_CALC_MAGNETICVARIANCE_H
 #define SIMCORE_CALC_MAGNETICVARIANCE_H
 
-#include "simCore/Common/Export.h"
+#include "simCore/Common/Common.h"
 
 namespace simCore {
 
@@ -46,6 +46,8 @@ public:
   WorldMagneticModel();
   /** Private destructor */
   virtual ~WorldMagneticModel();
+
+  SDK_DISABLE_COPY_MOVE(WorldMagneticModel);
 
   /**
    * Calculates the magnetic variance at the given lat/lon and time.
@@ -86,7 +88,7 @@ public:
 
 private:
   class GeoMag;
-  GeoMag* geomag_;
+  GeoMag* geomag_ = nullptr;
 };
 
 }

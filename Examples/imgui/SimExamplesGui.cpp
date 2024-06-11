@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -76,6 +76,20 @@ void SimExamplesGui::popLargeFont_()
     ImGui::PopFont();
     largeFontPushed_ = false;
   }
+}
+
+void SimExamplesGui::handlePressedKeys_()
+{
+  for (const auto& [key, func] : keyFuncs_)
+  {
+    if (ImGui::IsKeyPressed(key))
+      func();
+  }
+}
+
+void SimExamplesGui::addKeyFunc_(ImGuiKey key, const KeyFunc& func)
+{
+  keyFuncs_[key] = func;
 }
 
 }

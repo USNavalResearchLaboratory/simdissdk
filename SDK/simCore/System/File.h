@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -55,6 +55,11 @@ public:
 
   /** True if the given path is equivalent (same file or directory and file status is the same) */
   bool isEquivalent(const std::string& toPath) const;
+
+  /** Returns the name portion of the filename, e.g. "foo.bar" given "/tmp/foo.bar" */
+  std::string fileName() const;
+  /** Returns the directory portion of the filename, e.g. "/tmp" given "/tmp/foo.bar" or given "/tmp/" */
+  std::string path() const;
 
 private:
   std::string path_;

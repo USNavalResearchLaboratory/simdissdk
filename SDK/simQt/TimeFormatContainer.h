@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -48,8 +48,7 @@ class SDKQT_EXPORT TimeFormatContainer : public QObject
 public:
   /// constructor
   TimeFormatContainer(simCore::TimeFormat timeFormat, const QString& name);
-  TimeFormatContainer(const TimeFormatContainer&) = delete;
-  TimeFormatContainer& operator=(const TimeFormatContainer&) = delete;
+  SDK_DISABLE_COPY(TimeFormatContainer);
   virtual ~TimeFormatContainer();
 
   ///@return the enumeration of the time format
@@ -84,6 +83,9 @@ public:
   virtual bool colorCode() const = 0;
   /// set the behavior of color change on error
   virtual void setColorCode(bool value) = 0;
+
+  /// If true process an Enter key to focus to the next child
+  virtual void setProcessEnterKey(bool process) = 0;
 
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits) = 0;
@@ -143,6 +145,8 @@ public:
   virtual bool colorCode() const;
   /// set "change color on error"
   virtual void setColorCode(bool value);
+  /// If true process an Enter key to focus to the next child
+  virtual void setProcessEnterKey(bool process);
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
@@ -191,6 +195,8 @@ public:
   virtual bool colorCode() const;
   /// set "change color on error"
   virtual void setColorCode(bool value);
+  /// If true process an Enter key to focus to the next child
+  virtual void setProcessEnterKey(bool process);
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
@@ -240,6 +246,8 @@ public:
   virtual bool colorCode() const;
   /// set "change color on error"
   virtual void setColorCode(bool value);
+  /// If true process an Enter key to focus to the next child
+  virtual void setProcessEnterKey(bool process);
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
@@ -288,6 +296,8 @@ public:
   virtual bool colorCode() const;
   /// set "change color on error"
   virtual void setColorCode(bool value);
+  /// If true process an Enter key to focus to the next child
+  virtual void setProcessEnterKey(bool process);
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
@@ -336,6 +346,8 @@ public:
   virtual bool colorCode() const;
   /// set "change color on error"
   virtual void setColorCode(bool value);
+  /// If true process an Enter key to focus to the next child
+  virtual void setProcessEnterKey(bool process);
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
@@ -353,6 +365,56 @@ public:
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the hours
+};
+
+/// Implements the ISO-8601 format
+class SDKQT_EXPORT Iso8601Container : public TimeFormatContainer
+{
+public:
+  /// constructor
+  Iso8601Container(QWidget* parent = nullptr);
+  virtual ~Iso8601Container();
+
+  ///@return the underlying widget
+  virtual QWidget* widget();
+  ///@return true if this has focus
+  virtual bool hasFocus() const;
+  ///@return current time
+  virtual simCore::TimeStamp timeStamp() const;
+  ///@return current time as text
+  virtual QString timeText() const;
+  /// set current time
+  virtual void setTimeStamp(const simCore::TimeStamp& value);
+  /// set begin/end time range
+  virtual void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end);
+  /// Returns which time limits are enforced
+  virtual void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const;
+  /// Sets which time limits to enforced
+  virtual void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd);
+
+  ///@return the state of "change color on error"
+  virtual bool colorCode() const;
+  /// set "change color on error"
+  virtual void setColorCode(bool value);
+  /// If true process an Enter key to focus to the next child
+  virtual void setProcessEnterKey(bool process);
+  /// Set the number of digits after the decimal point
+  virtual void setPrecision(unsigned int digits);
+  /// get the number of digits after the decimal point
+  virtual unsigned int precision();
+
+  /// Set the time zone to use when displaying text
+  virtual void setTimeZone(simCore::TimeZone zone);
+  /// Get the time zone to use when displaying text
+  virtual simCore::TimeZone timeZone() const;
+
+  /// Disable tool tip since it can interfere with editing the time
+  virtual void disableToolTip();
+  /// Returns the text for a tool tip
+  virtual QString toolTipText() const;
+
+protected:
+  SegmentedSpinBox* widget_; ///< The widget to display the ordinal time
 };
 
 } // namespace

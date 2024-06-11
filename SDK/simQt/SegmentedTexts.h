@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -140,12 +140,12 @@ protected:
   bool optional_;  ///< The segment is optional
 };
 
-/// An abbreviated month name ("Jan", "Feb", etc)
+/// An abbreviated month name ("Jan", "Feb", etc) or integer month representation
 class SDKQT_EXPORT MonthText : public SegmentedText
 {
 public:
-  /** Constructor */
-  MonthText(SegmentedTexts* parentLine);
+  /** Constructor. Set intMode to true to use in integer mode */
+  MonthText(SegmentedTexts* parentLine, bool intMode = false);
 
   /// current month setting (Jan is 0 to 11 Dec)
   int intValue() const;
@@ -171,6 +171,7 @@ private:
 
   SegmentedTexts* line_;  ///< Parent that contains all the segments
   int currentMonth_; ///< 0 is Jan
+  bool intMode_ = false;
 };
 
 /// Implements the base logic for a segmented line, Time is limited to year 2046
@@ -416,6 +417,37 @@ private:
   NumberText* fraction_;  // Displays the fraction
   simCore::TimeZone zone_;
 };
+
+//----------------------------------------------------------------------------
+/// Implements the ISO-8601 format, YYYY-MM-DDTHH:MM:SS.sssZ, with optional [.sss]
+class SDKQT_EXPORT Iso8601Texts : public SegmentedTexts
+{
+public:
+  Iso8601Texts();
+  virtual ~Iso8601Texts();
+
+  virtual simCore::TimeStamp timeStamp() const;
+  virtual void setTimeStamp(const simCore::TimeStamp& value);
+  virtual void valueEdited();
+  virtual void valueChanged();
+  virtual QValidator::State validateText(const QString& text) const;
+  virtual void setTimeZone(simCore::TimeZone zone);
+  virtual simCore::TimeZone timeZone() const;
+
+protected:
+  virtual void makeSegments_();
+
+private:
+  NumberText* years_;  // Displays the year
+  MonthText* months_;  // Displays the month
+  NumberText* days_;  // Displays the day of month
+  NumberText* hours_;  // Displays the hours
+  NumberText* minutes_; // Displays the minutes
+  NumberText* seconds_;  // Displays the seconds
+  NumberText* fraction_;  // Displays the fraction
+  simCore::TimeZone zone_;
+};
+
 }
 
 #endif

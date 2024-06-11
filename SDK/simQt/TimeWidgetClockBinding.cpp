@@ -14,17 +14,17 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
 #include <cassert>
+#include <QSignalBlocker>
 #include "simCore/Time/Clock.h"
 #include "simCore/Time/TimeClass.h"
 #include "simData/DataStore.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/TimeWidget.h"
 #include "simQt/TimeWidgetClockBinding.h"
 
@@ -241,7 +241,7 @@ void TimeWidgetClockBinding::updateWidgetBounds_(bool notifyTimeChange)
     if (!notifyTimeChange)
     {
       // Range is set before the clock time is set. On initialization, block signals so setting time range does not alter clock time
-      simQt::ScopedSignalBlocker blockSignals(*timeWidget_);
+      const QSignalBlocker blockSignals(*timeWidget_);
       timeWidget_->setTimeRange(refYear, clock_->startTime(ignoreUserTimeBounds_), endBound);
     }
     else

@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -35,8 +35,7 @@ class SDKQT_EXPORT MonospaceItemDelegate : public QStyledItemDelegate
 public:
   /** Allocates a single monospace font to use in drawing */
   MonospaceItemDelegate(QObject* parent = nullptr);
-  MonospaceItemDelegate(const MonospaceItemDelegate&) = delete;
-  MonospaceItemDelegate& operator=(const MonospaceItemDelegate&) = delete;
+  SDK_DISABLE_COPY(MonospaceItemDelegate);
   /** Deletes the font dynamic memory */
   virtual ~MonospaceItemDelegate();
 

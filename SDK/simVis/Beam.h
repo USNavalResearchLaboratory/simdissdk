@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -36,6 +36,7 @@ namespace simVis
 {
   class AntennaNode;
   class BeamPulse;
+  class BeamCenterLine;
   class EntityLabelNode;
   class LocalGridNode;
   class Locator;
@@ -359,6 +360,7 @@ namespace simVis
     bool                    hasLastPrefs_;
 
     osg::ref_ptr<BeamVolume>  beamVolume_;
+    osg::ref_ptr<BeamCenterLine> beamCenterLine_;
     osg::ref_ptr<LocalGridNode> localGrid_;
     osg::ref_ptr<AntennaNode> antenna_;
     osg::observer_ptr<const EntityNode> host_;

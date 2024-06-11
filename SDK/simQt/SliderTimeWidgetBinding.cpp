@@ -14,17 +14,16 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
-
 #include <cassert>
+#include <QSignalBlocker>
 #include <QSlider>
 #include "simCore/Time/TimeClass.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/TimeWidget.h"
 #include "simQt/SliderTimeWidgetBinding.h"
 
@@ -94,7 +93,7 @@ void SliderTimeWidgetBinding::setSliderValue_(const simCore::TimeStamp& time)
   int index = static_cast<int>(max * (currentTime - minTime) / (maxTime - minTime));
 
   // Block slider signals when setting slider value to prevent constantly changing time bounds (e.g. live mode) from causing drift
-  simQt::ScopedSignalBlocker blocker(*slider_);
+  const QSignalBlocker blocker(*slider_);
   slider_->setValue(index);
 }
 

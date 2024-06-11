@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -227,7 +227,7 @@ int HoursTimeFormatter::fromString(const std::string& timeString, simCore::Secon
       simCore::isValidNumber(vec[1], min) &&
       simCore::isValidNumber(vec[2], sec))
     {
-      seconds = hours * SECPERHOUR + min * MINPERHOUR + sec;
+      seconds = hours * SECPERHOUR + min * SECPERMIN + sec;
       return 0;
     }
   }

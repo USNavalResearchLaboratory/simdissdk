@@ -14,16 +14,16 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
 #include <cassert>
+#include <QSignalBlocker>
 #include <QSlider>
 #include "simCore/Time/Clock.h"
-#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/TimeSliderClockBinding.h"
 
 namespace simQt
@@ -140,7 +140,7 @@ void TimeSliderClockBinding::valueChanged_(int sliderPos)
   const double sliderSize = slider_->maximum() - slider_->minimum();
   const double newTime = ((sliderPos - slider_->minimum())/ sliderSize) * deltaTime + clock_->startTime().secondsSinceRefYear();
   // Block signals from the slider to prevent loopback
-  simQt::ScopedSignalBlocker blockSignals(*slider_);
+  const QSignalBlocker blockSignals(*slider_);
   clock_->setTime(simCore::TimeStamp(clock_->startTime().referenceYear(), newTime));
 }
 
@@ -178,7 +178,7 @@ void TimeSliderClockBinding::updateSliderTime_(const simCore::TimeStamp &t)
   // Calculate the percentage from 0.0 to 1.0 of time
   const double percentTime = (clock_->currentTime() - clock_->startTime()).Double() / deltaTime;
   // Block signals from the slider to prevent loopback
-  simQt::ScopedSignalBlocker blockSignals(*slider_);
+  const QSignalBlocker blockSignals(*slider_);
   slider_->setValue(static_cast<int>(percentTime * (slider_->maximum() - slider_->minimum()) + slider_->minimum()));
 }
 

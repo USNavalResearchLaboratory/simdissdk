@@ -14,21 +14,23 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
 #include <cassert>
+#include <QColumnView>
+#include <QDialog>
+#include <QGuiApplication>
+#include <QHeaderView>
+#include <QMainWindow>
+#include <QScreen>
 #include <QString>
 #include <QSplitter>
-#include <QTreeView>
-#include <QColumnView>
 #include <QTableView>
-#include <QDialog>
-#include <QMainWindow>
-#include <QHeaderView>
+#include <QTreeView>
 #include "simNotify/Notify.h"
 #include "simQt/Settings.h"
 #include "simQt/WidgetSettings.h"
@@ -38,6 +40,8 @@ namespace simQt
 
 static const QString& COLUMN_WIDTHS = "/Column Widths";
 static const QString& SPLITTER_DATA = "/Splitter Data";
+static const QString& SORT_COLUMN = "/Sort Column";
+static const QString& SORT_ORDER = "/Sort Order";
 
 void WidgetSettings::saveWidget(simQt::Settings& settings, QWidget* widget)
 {
@@ -101,6 +105,12 @@ int WidgetSettings::saveQTreeView_(simQt::Settings& settings, const QString& pat
         sizes.push_back(view->columnWidth(ii));
 
       settings.setValue(path + COLUMN_WIDTHS, sizes, simQt::Settings::MetaData::makeInteger(QVariant(), "", simQt::Settings::PRIVATE, 0));
+    }
+
+    if (view->isSortingEnabled())
+    {
+      settings.setValue(path + SORT_COLUMN, view->header()->sortIndicatorSection());
+      settings.setValue(path + SORT_ORDER, static_cast<int>(view->header()->sortIndicatorOrder()));
     }
   }
 
@@ -274,6 +284,13 @@ int WidgetSettings::loadQTreeView_(simQt::Settings& settings, const QString& pat
       for (int ii = 0; ii < modelColumns && ii < sizes.size(); ++ii)
         view->setColumnWidth(ii, sizes[ii].toInt());
     }
+
+    if (view->isSortingEnabled() && settings.contains(path + SORT_COLUMN) && settings.contains(path + SORT_ORDER))
+    {
+      const int sortColumn = settings.value(path + SORT_COLUMN).toInt();
+      const int sortOrder = settings.value(path + SORT_ORDER).toInt();
+      view->sortByColumn(sortColumn, static_cast<Qt::SortOrder>(sortOrder));
+    }
   }
 
   return 0;
@@ -346,7 +363,25 @@ int WidgetSettings::loadQDialog_(simQt::Settings& settings, const QString& path,
   if (settings.contains(path + "/Position"))
   {
     point = settings.value(path + "/Position").toPoint();
-    dialog->move(point);
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    // Only call move() if the point is valid in the available screen geometry. This covers
+    // use cases where position USED to be valid, but is no longer available (screen removed, etc)
+    const auto& screens = QGuiApplication::screens();
+    bool validPoint = false;
+    for (const auto* screen : screens)
+    {
+      if (screen && screen->availableGeometry().contains(point))
+      {
+        validPoint = true;
+        break;
+      }
+    }
+    if (validPoint)
+#endif
+    {
+      dialog->move(point);
+    }
   }
 
   QSize size;

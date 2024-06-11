@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -67,6 +67,9 @@ public:
   /// set time to wait between user editing time and applying new timestamp
   void setApplyInterval(int milliseconds);
 
+  /// If true process an Enter key to focus to the next child
+  void setProcessEnterKey(bool process);
+
   /// Set Segmented Line
   void setLine(SegmentedTexts* line);
   /// Get Segmented Line
@@ -99,21 +102,23 @@ private:
   /// Queue an application of a new timestamp in applyInterval_ seconds.  Used to prevent updates before user is finished inputting edits
   void queueApplyTimestamp_() const;
   /// The text to display in the spin box
-  SegmentedTexts* completeLine_;
+  SegmentedTexts* completeLine_ = nullptr;
   /// The time at the last edit
   simCore::TimeStamp lastEditedTime_;
   /// Flag to indicate if text color should change based on validation
-  bool colorCode_;
+  bool colorCode_ = true;
   /// event filter object
-  QObject* segmentedEventFilter_;
+  QObject* segmentedEventFilter_ = nullptr;
   /// The cache time from setTimeStamp()
   simCore::TimeStamp timeStamp_;
   /// The timeStamp_ in a string format to check for changes
   QString timeString_;
   /// Timer to manage applying new timestamp on user edit after appropriate interval
-  QTimer* timer_;
+  QTimer* timer_ = nullptr;
   /// Amount of time in milliseconds to wait between user editing time and applying new timestamp.  Default is one second.  Interval < 0 disables automatic updates from edits
-  int applyInterval_;
+  int applyInterval_ = 500;
+  /// If true process an Enter key to focus to the next child
+  bool processEnterKey_ = true;
 };
 
 }

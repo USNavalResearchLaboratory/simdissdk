@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -72,7 +72,6 @@ GogNodeInterface* LineSegs::deserialize(const ParsedShape& parsedShape,
     if (p.hasAbsoluteGeometry())
     {
       Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
-      feature->setName("GOG LineSegs Feature");
       FeatureNode* featureNode = new FeatureNode(feature);
       featureNode->setMapNode(mapNode);
       rv = new FeatureNodeInterface(featureNode, metaData);
@@ -145,7 +144,6 @@ GogNodeInterface* LineSegs::createLineSegs(const simCore::GOG::LineSegs& lineSeg
       lineSegs.getVerticalDatum(vdatum);
       osgEarth::SpatialReference* srs = LoaderUtils::getSrs(vdatum);
       Feature* feature = new Feature(multiGeom, srs, style);
-      feature->setName("GOG LineSegs Feature");
       FeatureNode* featureNode = new FeatureNode(feature);
       featureNode->setMapNode(mapNode);
       featureNode->setName("GOG LineSegs");

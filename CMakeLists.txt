@@ -146,7 +146,7 @@ configure_file("${PROJECT_SOURCE_DIR}/CMakeUtilities/NightlySubmit.cmake" "${PRO
 configure_file("${PROJECT_SOURCE_DIR}/CMakeUtilities/CTestCustom.cmake" "${PROJECT_BINARY_DIR}/CTestCustom.cmake")
 
 # Configure coverage if it exists
-if(${BUILD_COMPILER_NAME} STREQUAL "gcc" AND COVERAGE_COMMAND)
+if(UNIX AND COVERAGE_COMMAND)
     option(ENABLE_COVERAGE "Enable coverage testing through gcov" OFF)
     if(ENABLE_COVERAGE)
         unique_append_string(CMAKE_C_FLAGS_DEBUG "-fprofile-arcs -ftest-coverage")

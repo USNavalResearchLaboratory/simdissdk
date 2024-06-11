@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -49,6 +49,20 @@
  * that if you call it in your code, you get a warning in your compile log.
  */
 #define SDK_DEPRECATE(METHOD, TEXT) SDK_DEPRECATED_PRE(TEXT) METHOD SDK_DEPRECATED_POST(TEXT)
+
+
+/** Disable copy constructor and copy assignment, on class "K" */
+#define SDK_DISABLE_COPY(K) \
+  K(const K&) = delete; \
+  K& operator=(const K&) = delete;
+/** Disable move constructor and move assignment, on class "K" */
+#define SDK_DISABLE_MOVE(K) \
+  K(K&&) = delete; \
+  K& operator=(K&&) = delete;
+/** Disable copy and move constructor, and copy and move assignment, on class "K" */
+#define SDK_DISABLE_COPY_MOVE(K) \
+  SDK_DISABLE_COPY(K) \
+  SDK_DISABLE_MOVE(K)
 
 
 #ifdef WIN32

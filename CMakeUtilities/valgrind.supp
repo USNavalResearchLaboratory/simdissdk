@@ -386,3 +386,91 @@
    fun:*google*protobuf*internal*InitProtobufDefaultsSlow*
    ...
 }
+
+{
+   glib leaks on el8
+   Memcheck:Leak
+   fun:*alloc
+   ...
+   obj:/usr/lib64/libglib-2.0.so*
+   ...
+   fun:_dl_init
+   ...
+}
+
+{
+   el8 glib leaks
+   Memcheck:Leak
+   ...
+   fun:g_*
+   ...
+   obj:/usr/lib*/libg*.so*
+   ...
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib*/ld-2*
+   ...
+}
+
+{
+   osgEarth suppress adding to registry 
+   Memcheck:Leak
+   ...
+   fun:*osgEarth*Util*Registry*add*Factory*
+   fun:_GLOBAL__sub_I_*.cpp
+   ...
+   obj:/usr/lib*/ld-2*
+   ...
+}
+
+{
+   osgEarth suppressed for Globals on startup
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_GLOBAL__sub_I_*Symbol.cpp
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib*/ld-2*
+   ...
+}
+
+{
+   osgEarth suppressed for Globals on startup
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_GLOBAL__sub_I_*Filter.cpp
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib*/ld-2*
+   ...
+}
+
+{
+   osgEarth suppressed for Globals on startup
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_GLOBAL__sub_I_*Skins.cpp
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib*/ld-2*
+   ...
+}
+
+{
+   osgEarth suppressed for Globals on startup
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_GLOBAL__sub_I_HTTPClient.cpp
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib*/ld-2*
+   ...
+}

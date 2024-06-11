@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -52,6 +52,7 @@ TimeWidget::TimeWidget(QWidget* parent)
   addContainer_(new HoursContainer(this), SLOT(setHours_()));
   addContainer_(new MonthContainer(this), SLOT(setMonth_()));
   addContainer_(new OrdinalContainer(this), SLOT(setOrdinal_()));
+  addContainer_(new Iso8601Container(this), SLOT(setIso8601_()));
 
   // Make this one the default format
   currentContainer_ = containers_.back();
@@ -142,6 +143,12 @@ void TimeWidget::setColorCodeText(bool value)
 {
   for (auto it = containers_.begin(); it != containers_.end(); ++it)
     (*it)->setColorCode(value);
+}
+
+void TimeWidget::setProcessEnterKey(bool process)
+{
+  for (auto it = containers_.begin(); it != containers_.end(); ++it)
+    (*it)->setProcessEnterKey(process);
 }
 
 simCore::TimeStamp TimeWidget::timeStamp() const
@@ -296,6 +303,11 @@ void TimeWidget::setOrdinal_()
 void TimeWidget::setMonth_()
 {
   setTimeFormat(simCore::TIMEFORMAT_MONTHDAY);
+}
+
+void TimeWidget::setIso8601_()
+{
+  setTimeFormat(simCore::TIMEFORMAT_ISO8601);
 }
 
 void TimeWidget::setColorCode_()

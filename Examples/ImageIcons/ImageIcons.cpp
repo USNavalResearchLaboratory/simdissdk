@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -78,33 +78,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     dataStore_(dataStore),
     platId_(platId)
   {
-  }
-
-  void draw(osg::RenderInfo& ri) override
-  {
-    if (!isVisible())
-      return;
-
-    if (firstDraw_)
-    {
-      ImGui::SetNextWindowPos(ImVec2(5, 25));
-      firstDraw_ = false;
-    }
-    ImGui::SetNextWindowBgAlpha(.6f);
-    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
-
-    ImGui::Text("1 : cycle through rotation types");
-    ImGui::Text("2 : toggle highlight");
-    ImGui::Text("3 : cycle through highlight styles");
-
-    auto& io = ImGui::GetIO();
-    auto mouse = io.MousePos;
-
-    if (io.InputQueueCharacters.size() > 0)
-    {
-      switch (io.InputQueueCharacters.front())
-      {
-      case '1': // cycle rotate mode
+    addKeyFunc_(ImGuiKey_1, [this]()
       {
         // Cycle the value
         switch (s_iconRotation)
@@ -134,26 +108,22 @@ struct ControlPanel : public simExamples::SimExamplesGui
           prefs->set_rotateicons(s_iconRotation);
           txn.complete(&prefs);
         }
-
-        break;
-      }
-      case '2': // toggle circle highlight
+      });
+    addKeyFunc_(ImGuiKey_2, [this]()
       {
         simData::DataStore::Transaction txn;
         simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
         if (!prefs)
-          break;
+          return;
         prefs->set_drawcirclehilight(!prefs->drawcirclehilight());
         txn.complete(&prefs);
-        break;
-      }
-
-      case '3': // cycle circle highlight shape
+      });
+    addKeyFunc_(ImGuiKey_3, [this]()
       {
         simData::DataStore::Transaction txn;
         simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
         if (!prefs)
-          break;
+          return;
         switch (prefs->circlehilightshape())
         {
         case simData::CH_PULSING_CIRCLE:
@@ -177,16 +147,33 @@ struct ControlPanel : public simExamples::SimExamplesGui
           break;
         }
         txn.complete(&prefs);
-        break;
-      }
-      }
+      });
+  }
+
+  void draw(osg::RenderInfo& ri) override
+  {
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
     }
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+
+    ImGui::Text("1 : cycle through rotation types");
+    ImGui::Text("2 : toggle highlight");
+    ImGui::Text("3 : cycle through highlight styles");
 
     std::stringstream ss;
     ss << "Currently viewing: " << IconRotation_Name(s_iconRotation);
     ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), ss.str().c_str());
 
     ImGui::End();
+
+    handlePressedKeys_();
   }
 
 

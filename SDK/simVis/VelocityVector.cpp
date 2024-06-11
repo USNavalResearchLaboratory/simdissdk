@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -173,7 +173,7 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   if (prefs.velvecusestaticlength())
   {
     velocity = lla.velocity().normalize();
-    const osgEarth::Units sizeUnits = simVis::convertUnitsToOsgEarth(prefs.velvecstaticlenunits());
+    const osgEarth::UnitsType sizeUnits = simVis::convertUnitsToOsgEarth(prefs.velvecstaticlenunits());
     scale = sizeUnits.convertTo(osgEarth::Units::METERS, prefs.velvecstaticlen());
   }
   else

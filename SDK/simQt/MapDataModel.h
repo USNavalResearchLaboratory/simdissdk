@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -23,6 +23,7 @@
 #ifndef SIMQT_MAPDATAMODEL_H
 #define SIMQT_MAPDATAMODEL_H
 
+#include <map>
 #include <QAbstractItemModel>
 #include <QIcon>
 #include <QList>
@@ -31,6 +32,7 @@
 #include "osgEarth/ImageLayer"
 #include "osgEarth/ElevationLayer"
 #include "osgEarth/FeatureModelLayer"
+#include "osgEarth/Version"
 #include "simCore/Common/Export.h"
 
 namespace osgEarth {
@@ -114,19 +116,19 @@ public:
   QModelIndex layerIndex(const osgEarth::Layer* layer) const;
 
   ///@return the index for the given row and column
-  virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+  virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
   ///@return the index of the parent of the item given by index
-  virtual QModelIndex parent(const QModelIndex& child) const;
+  virtual QModelIndex parent(const QModelIndex& child) const override;
   ///@return the number of rows in the data
-  virtual int rowCount(const QModelIndex& parent = QModelIndex()) const;
+  virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
   ///@return number of columns needed to hold data
-  virtual int columnCount(const QModelIndex& parent = QModelIndex()) const;
+  virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override;
   ///@return data for given item
-  virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
+  virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
   ///@return the header data for given section
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+  virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
   ///@return the flags on the given item
-  virtual Qt::ItemFlags flags(const QModelIndex& index) const;
+  virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
 
   /// Map is the top level node; it has 4 children: Image, Elevation, Feature, and Other
   enum MapChildren
@@ -228,6 +230,14 @@ private: // methods
   /** Retrieves the QVariant for LAYER_MAP_INDEX_ROLE for a layer.  Gives a global index on layer. */
   QVariant layerMapIndex_(osgEarth::Layer* layer) const;
 
+  /** Fires correct visibility change signal based on layer provided */
+  void fireVisibilityChange_(const osgEarth::Layer* layer);
+  /** Fires correct opacity change signal based on layer provided */
+  void fireOpacityChange_(const osgEarth::Layer* layer);
+
+  /** Registers the layer callbacks (visibility, opacity) for the layer */
+  void registerLayerCallbacks_(osgEarth::VisibleLayer& layer);
+
   class MapListener;
   class ImageLayerListener;
   class ElevationLayerListener;
@@ -248,11 +258,16 @@ private: // methods
   /** Icon for other layer */
   QIcon otherIcon_;
 
+#if OSGEARTH_SOVERSION >= 152
+  std::map<const osgEarth::VisibleLayer*, int> visibilityCallbacks_;
+  std::map<const osgEarth::VisibleLayer*, int> opacityCallbacks_;
+#else
   /** Maps of terrain layer callbacks */
   QMap<osgEarth::ImageLayer*, osg::ref_ptr<osgEarth::TileLayerCallback> > imageCallbacks_;
   QMap<osgEarth::ElevationLayer*, osg::ref_ptr<osgEarth::TileLayerCallback> > elevationCallbacks_;
   QMap<osgEarth::FeatureModelLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > featureCallbacks_;
   QMap<osgEarth::VisibleLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > otherCallbacks_;
+#endif
 
   /** Weak pointer back to the map */
   osg::observer_ptr<osgEarth::Map> map_;

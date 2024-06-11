@@ -14,7 +14,7 @@
  *               Washington, D.C. 20375-5339
  *
  * License for source code is in accompanying LICENSE.txt file. If you did
- * not receive a LICENSE.txt with this code, email simdis@nrl.navy.mil.
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -316,9 +316,12 @@ int testGogSyntax()
   rv += SDK_ASSERT(g.parse(is) == 1);
   g.clear();
 
+  // This does not fail with invalid altitude. It previously failed in an earlier
+  // implementation because first and last point didn't match, but that is no longer
+  // a requirement.
   is.clear();
   is.str(invalidAltGog);
-  rv += SDK_ASSERT(g.parse(is) == 1);
+  rv += SDK_ASSERT(g.parse(is) == 0);
   g.clear();
 
   is.clear();
@@ -428,7 +431,8 @@ int testValidity()
   g.parse(is);
   g.getFences(fences);
 
-  rv += SDK_ASSERT(fences.empty());
+  // This failed in a previous implementation due to not supporting concave shapes.
+  rv += SDK_ASSERT(fences[0]->valid());
 
   g.clear();
   is.clear();
@@ -438,7 +442,8 @@ int testValidity()
   g.parse(is);
   g.getFences(fences);
 
-  rv += SDK_ASSERT(fences.empty());
+  // This failed in a previous implementation due to not supporting concave shapes.
+  rv += SDK_ASSERT(fences[0]->valid());
 
   return rv;
 }
