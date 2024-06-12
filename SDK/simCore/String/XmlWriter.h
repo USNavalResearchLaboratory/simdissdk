@@ -24,7 +24,7 @@
 #define SIMCORE_STRING_XMLWRITER_H
 
 #include <deque>
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include <vector>
 

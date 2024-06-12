@@ -25,7 +25,7 @@
 
 #include <cfloat>
 #include <complex>
-#include <iostream>
+#include <iosfwd>
 #include <map>
 #include <string>
 

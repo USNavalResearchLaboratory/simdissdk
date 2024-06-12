@@ -23,9 +23,7 @@
 #ifndef SIMCORE_TIME_TIMECLASS_H
 #define SIMCORE_TIME_TIMECLASS_H
 
-#include <iostream>
 #include <sstream>
-
 #include "simCore/Common/Common.h"
 #include "simCore/Time/Constants.h"
 

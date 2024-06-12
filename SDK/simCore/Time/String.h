@@ -23,11 +23,11 @@
 #ifndef SIMCORE_TIME_STRING_H
 #define SIMCORE_TIME_STRING_H
 
+#include <iosfwd>
 #include <map>
 #include <memory>
-#include <vector>
 #include <string>
-#include <iostream>
+#include <vector>
 #include "simCore/Common/Common.h"
 #include "simCore/Time/Constants.h"
 

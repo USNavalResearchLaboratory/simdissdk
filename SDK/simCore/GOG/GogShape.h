@@ -23,7 +23,7 @@
 #ifndef SIMCORE_GOG_GOGSHAPE_H
 #define SIMCORE_GOG_GOGSHAPE_H
 
-#include <iostream>
+#include <iosfwd>
 #include <memory>
 #include <string>
 #include <vector>

@@ -21,6 +21,7 @@
 *
 */
 #include <algorithm>
+#include <iostream>
 #include "simNotify/Notify.h"
 #include "simCore/String/XmlWriter.h"
 
