@@ -88,8 +88,8 @@ namespace simCore
     virtual simCore::TimeDirection timeDirection() const;
     virtual bool controlsDisabled() const;
     virtual bool isUserEditable() const;
-    virtual simCore::Optional<simCore::TimeStamp> userStartTime() const;
-    virtual simCore::Optional<simCore::TimeStamp> userEndTime() const;
+    virtual std::optional<simCore::TimeStamp> userStartTime() const;
+    virtual std::optional<simCore::TimeStamp> userEndTime() const;
 
     virtual void setMode(Clock::Mode mode);
     virtual void setMode(Clock::Mode mode, const simCore::TimeStamp& liveStartTime);
@@ -100,7 +100,7 @@ namespace simCore
     virtual void setEndTime(const simCore::TimeStamp& timeVal);
     virtual void setCanLoop(bool fl);
     virtual void setControlsDisabled(bool fl);
-    virtual int setUserTimeBounds(const simCore::Optional<simCore::TimeStamp>& start, const simCore::Optional<simCore::TimeStamp>& end);
+    virtual int setUserTimeBounds(const std::optional<simCore::TimeStamp>& start, const std::optional<simCore::TimeStamp>& end);
     ///@}
 
     /**@name controls
@@ -162,8 +162,8 @@ namespace simCore
     class ScopedUserEditableWatch;
 
     /// User provided time bounds
-    simCore::Optional<simCore::TimeStamp> userStartTime_;
-    simCore::Optional<simCore::TimeStamp> userEndTime_;
+    std::optional<simCore::TimeStamp> userStartTime_;
+    std::optional<simCore::TimeStamp> userEndTime_;
   };
 
   /**
@@ -219,8 +219,8 @@ namespace simCore
     virtual simCore::TimeDirection timeDirection() const;
     virtual bool controlsDisabled() const;
     virtual bool isUserEditable() const;
-    virtual simCore::Optional<simCore::TimeStamp> userStartTime() const;
-    virtual simCore::Optional<simCore::TimeStamp> userEndTime() const;
+    virtual std::optional<simCore::TimeStamp> userStartTime() const;
+    virtual std::optional<simCore::TimeStamp> userEndTime() const;
 
     virtual void setMode(Clock::Mode mode);
     virtual void setMode(Clock::Mode mode, const simCore::TimeStamp& liveStartTime);
@@ -231,7 +231,7 @@ namespace simCore
     virtual void setEndTime(const simCore::TimeStamp& timeVal);
     virtual void setCanLoop(bool fl);
     virtual void setControlsDisabled(bool fl);
-    virtual int setUserTimeBounds(const simCore::Optional<simCore::TimeStamp>& start, const simCore::Optional<simCore::TimeStamp>& end);
+    virtual int setUserTimeBounds(const std::optional<simCore::TimeStamp>& start, const std::optional<simCore::TimeStamp>& end);
     ///@}
 
     /**@name controls

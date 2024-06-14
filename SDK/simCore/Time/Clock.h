@@ -24,7 +24,7 @@
 #define SIMCORE_TIME_CLOCK_H
 
 #include <memory>
-#include "simCore/Common/Optional.h"
+#include <optional>
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/TimeClass.h"
 
@@ -97,9 +97,9 @@ public:
    */
   virtual bool isUserEditable() const = 0;
   /** Get the user-provided start time */
-  virtual simCore::Optional<simCore::TimeStamp> userStartTime() const = 0;
+  virtual std::optional<simCore::TimeStamp> userStartTime() const = 0;
   /** Get the user-provided end time */
-  virtual simCore::Optional<simCore::TimeStamp> userEndTime() const = 0;
+  virtual std::optional<simCore::TimeStamp> userEndTime() const = 0;
 
   /**
   * Note that for MODE_SIMULATION start time is set to the minimum time stamp, while end time is set to the
@@ -124,7 +124,7 @@ public:
    * @param end  End time (can be unset)
    * @return 0 on success, non-zero otherwise
    */
-  virtual int setUserTimeBounds(const simCore::Optional<simCore::TimeStamp>& start, const simCore::Optional<simCore::TimeStamp>& end) = 0;
+  virtual int setUserTimeBounds(const std::optional<simCore::TimeStamp>& start, const std::optional<simCore::TimeStamp>& end) = 0;
   ///@}
 
   /**@name controls
