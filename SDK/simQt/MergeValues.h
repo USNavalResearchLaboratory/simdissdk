@@ -23,6 +23,7 @@
 #ifndef SIMQT_MERGEVALUES_H
 #define SIMQT_MERGEVALUES_H
 
+#include <optional>
 #include <string>
 #include <QCheckBox>
 #include <QLabel>
@@ -95,7 +96,7 @@ public:
    * @param[in] value  The new value to apply
    * @param[in] hasValues  If false, then no-op. Useful when merging values
    *   programmatically in cases where values may not exist, such as when
-   *   using simCore::Optional.
+   *   using std::optional.
    */
   virtual void applyValue(T value, bool hasValues)
   {

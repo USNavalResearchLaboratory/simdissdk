@@ -21,10 +21,10 @@
  *
  */
 #include <iomanip>
+#include <optional>
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"
-#include "simCore/Common/Optional.h"
 #include "simCore/String/Angle.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Tokenizer.h"
@@ -140,7 +140,7 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
   ParsedShape current;
   std::string line;
   // reference origin settings within a start/end block
-  simCore::Optional<PositionStrings> refLla;
+  std::optional<PositionStrings> refLla;
 
   // track line number parsed for error reporting
   size_t lineNumber = 0;

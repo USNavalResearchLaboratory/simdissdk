@@ -99,12 +99,12 @@ public:
    * @param unitsRegistry supplies to-string conversion for units
    * @param units parsed output
    */
-  void parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, Optional<simCore::Units>& units);
+  void parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, simCore::Optional<simCore::Units>& units);
 
 private:
-  Optional<simCore::Units> altitudeUnits_; ///< Altitude units
-  Optional<simCore::Units> rangeUnits_; ///< Range units
-  Optional<simCore::Units> angleUnits_; ///< Angle units
+  simCore::Optional<simCore::Units> altitudeUnits_; ///< Altitude units
+  simCore::Optional<simCore::Units> rangeUnits_; ///< Range units
+  simCore::Optional<simCore::Units> angleUnits_; ///< Angle units
 };
 
 /**

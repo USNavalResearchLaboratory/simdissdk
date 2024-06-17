@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+
 #include "simCore/GOG/ParsedShape.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Utils.h"
@@ -112,7 +113,7 @@ void UnitsState::parse(const ParsedShape& parsedShape, const simCore::UnitsRegis
     parse(parsedShape.stringValue(ShapeParameter::RANGEUNITS), unitsRegistry, rangeUnits_);
 }
 
-void UnitsState::parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, Optional<simCore::Units>& units)
+void UnitsState::parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, simCore::Optional<simCore::Units>& units)
 {
   if (unitString == "secs")
     units = simCore::Units::SECONDS;

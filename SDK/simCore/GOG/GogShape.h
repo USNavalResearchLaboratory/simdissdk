@@ -25,6 +25,7 @@
 
 #include <iosfwd>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include "simCore/Calc/Vec3.h"
@@ -329,26 +330,26 @@ private:
   bool serializeName_; ///< Indicates if shape will serialize out its name as a separate line item using '3d name'
   size_t lineNumber_; ///< Location in original GOG file
 
-  Optional<std::string> name_; ///< Display name
-  Optional<bool> draw_; ///< Draw state
-  Optional<double> altitudeOffset_; ///< offset for altitude values, meters
-  Optional<bool> depthBuffer_; ///< Depth buffer active state
-  Optional<AltitudeMode> altitudeMode_; ///< Defines special behavior for altitude
-  Optional<double> extrudeHeight_; ///< Extrusion height if extruded, meters
-  Optional<simCore::Vec3> referencePosition_; ///< Reference position, only valid for relative shapes, lla radians
-  Optional<simCore::Vec3> scale_; ///< Scalar adjustments for the shape's xyz components
+  std::optional<std::string> name_; ///< Display name
+  std::optional<bool> draw_; ///< Draw state
+  std::optional<double> altitudeOffset_; ///< offset for altitude values, meters
+  std::optional<bool> depthBuffer_; ///< Depth buffer active state
+  std::optional<AltitudeMode> altitudeMode_; ///< Defines special behavior for altitude
+  std::optional<double> extrudeHeight_; ///< Extrusion height if extruded, meters
+  std::optional<simCore::Vec3> referencePosition_; ///< Reference position, only valid for relative shapes, lla radians
+  std::optional<simCore::Vec3> scale_; ///< Scalar adjustments for the shape's xyz components
 
-  Optional<bool> followYaw_; ///< Yaw component locked to a reference orientation
-  Optional<bool> followPitch_; ///< Pitch component locked to a reference orientation
-  Optional<bool> followRoll_; ///< Roll component locked to a reference orientation
-  Optional<double> yawOffset_; ///< Angle offset for yaw component, radians
-  Optional<double> pitchOffset_; ///< Angle offset for pitch component, radians
-  Optional<double> rollOffset_; ///< Angle offset for roll component, radians
+  std::optional<bool> followYaw_; ///< Yaw component locked to a reference orientation
+  std::optional<bool> followPitch_; ///< Pitch component locked to a reference orientation
+  std::optional<bool> followRoll_; ///< Roll component locked to a reference orientation
+  std::optional<double> yawOffset_; ///< Angle offset for yaw component, radians
+  std::optional<double> pitchOffset_; ///< Angle offset for pitch component, radians
+  std::optional<double> rollOffset_; ///< Angle offset for roll component, radians
 
-  Optional<simCore::TimeStamp> startTime_; ///< Time to start displaying shape
-  Optional<simCore::TimeStamp> endTime_; ///< Time to stop displaying shape
+  std::optional<simCore::TimeStamp> startTime_; ///< Time to start displaying shape
+  std::optional<simCore::TimeStamp> endTime_; ///< Time to stop displaying shape
 
-  Optional<std::string> verticalDatum_; ///< String that represents vertical datum, e.g. wgs84
+  std::optional<std::string> verticalDatum_; ///< String that represents vertical datum, e.g. wgs84
   std::vector<std::string> comments_; ///< Comment strings for the shape
 };
 
@@ -370,7 +371,7 @@ protected:
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
-  Optional<bool> outlined_; ///< outlined state of the shape
+  std::optional<bool> outlined_; ///< outlined state of the shape
 };
 
 /// Point shape implementation
@@ -409,8 +410,8 @@ protected:
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 public:
-  Optional<int> pointSize_; ///< pixels
-  Optional<Color> color_;
+  std::optional<int> pointSize_; ///< pixels
+  std::optional<Color> color_;
   std::vector<simCore::Vec3> points_; ///< lla radians if absolute, xyz meters if relative
 };
 
@@ -465,11 +466,11 @@ protected:
 
 private:
 
-  Optional<int> lineWidth_; ///< pixels
-  Optional<Color> lineColor_;
-  Optional<LineStyle> lineStyle_;
-  Optional<bool> filled_; ///< filled state of the shape
-  Optional<Color> fillColor_;
+  std::optional<int> lineWidth_; ///< pixels
+  std::optional<Color> lineColor_;
+  std::optional<LineStyle> lineStyle_;
+  std::optional<bool> filled_; ///< filled state of the shape
+  std::optional<Color> fillColor_;
 };
 
 /// Shape that is defined by point positions and supports tessellation
@@ -497,7 +498,7 @@ protected:
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
-  Optional<TessellationStyle> tessellation_; ///< defines calculation used for tessellation
+  std::optional<TessellationStyle> tessellation_; ///< defines calculation used for tessellation
   std::vector<simCore::Vec3> points_; ///< lla radians if absolute, xyz meters if relative
 };
 
@@ -554,8 +555,8 @@ protected:
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
-  Optional<simCore::Vec3> center_; ///< lla radians if absolute, xyz meters if relative
-  Optional<double> radius_; ///< meters
+  std::optional<simCore::Vec3> center_; ///< lla radians if absolute, xyz meters if relative
+  std::optional<double> radius_; ///< meters
 };
 
 /// Circle shape implementation
@@ -663,10 +664,10 @@ protected:
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
-  Optional<double> angleStart_; ///< radians
-  Optional<double> angleSweep_; ///< radians
-  Optional<double> majorAxis_; ///< meters
-  Optional<double> minorAxis_; ///< meters
+  std::optional<double> angleStart_; ///< radians
+  std::optional<double> angleSweep_; ///< radians
+  std::optional<double> majorAxis_; ///< meters
+  std::optional<double> minorAxis_; ///< meters
 };
 
 /// Arc shape implementation, supports elliptical arcs
@@ -689,7 +690,7 @@ private:
   /// Serialize the shape's specific implementation attributes to the stream
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
-  Optional<double> innerRadius_; ///< meters
+  std::optional<double> innerRadius_; ///< meters
 
 };
 
@@ -722,7 +723,7 @@ private:
   /// Serialize the shape's specific implementation attributes to the stream
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
-  Optional<double> height_; ///< meters
+  std::optional<double> height_; ///< meters
 };
 
 /// Shape that supports a height as well as center position and radius
@@ -743,7 +744,7 @@ protected:
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
 private:
-  Optional<double> height_; ///< meters
+  std::optional<double> height_; ///< meters
 };
 
 /// Cone shape implementation
@@ -783,8 +784,8 @@ private:
   /// Serialize the shape's specific implementation attributes to the stream
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
-  Optional<double> majorAxis_; ///< meters
-  Optional<double> minorAxis_; ///< meters
+  std::optional<double> majorAxis_; ///< meters
+  std::optional<double> minorAxis_; ///< meters
 };
 
 /// Annotation implementation, a text label that optionally includes an icon
@@ -869,14 +870,14 @@ private:
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
   std::string text_; ///< display text
-  Optional<simCore::Vec3> position_; ///< lla radians if absolute, xyz meters if relative
-  Optional<std::string> fontName_; ///< font filename
-  Optional<int> textSize_; ///< text point size
-  Optional<Color> textColor_;
-  Optional<Color> outlineColor_;
-  Optional<OutlineThickness> outlineThickness_; ///< thickness style of text outline
-  Optional<std::string> imageFile_; ///< image filename
-  Optional<double> priority_; ///< priority of the annotation text display
+  std::optional<simCore::Vec3> position_; ///< lla radians if absolute, xyz meters if relative
+  std::optional<std::string> fontName_; ///< font filename
+  std::optional<int> textSize_; ///< text point size
+  std::optional<Color> textColor_;
+  std::optional<Color> outlineColor_;
+  std::optional<OutlineThickness> outlineThickness_; ///< thickness style of text outline
+  std::optional<std::string> imageFile_; ///< image filename
+  std::optional<double> priority_; ///< priority of the annotation text display
 };
 
 /// A parallel 3D or 2D box
@@ -920,7 +921,7 @@ private:
   double east_; ///< east corner latitude, radians
   double west_; ///< west corner latitude, radians
   double altitude_; ///< altitude of the box bottom, meters
-  Optional<double> height_; ///< height of the box above the altitude, meters
+  std::optional<double> height_; ///< height of the box above the altitude, meters
 };
 
 /// Image overlay implementation, displays an image file within a specified bounding box
@@ -969,7 +970,7 @@ private:
   double west_; ///< west corner latitude, radians
   double rotation_; ///< rotation angle from true north, radians
   std::string imageFile_; ///< image file to display
-  simCore::Optional<double> opacity_; ///< 0.0 (transparent) to 1.0 (opaque)
+  std::optional<double> opacity_; ///< 0.0 (transparent) to 1.0 (opaque)
 };
 
 /// Define a shared ptr
