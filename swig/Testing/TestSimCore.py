@@ -2,21 +2,16 @@ import os, sys, math, timeit
 
 # Try to use SIMDIS_DIR to set up import paths
 if 'SIMDIS_DIR' in os.environ:
-	# For _module shared object:
-	if os.name == "nt":
-		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-nt/python3.12')
-		try:
-			# Python 3.8 does not want to respect PATH for loading dependent DLLs.  It introduces
-			# a new method to attempt to fix the problem.  Try/except ignores errors in older Python.
-			# Without this, the _simCore.pyd needs to go in the same place as simNotify/simCore.
-			os.add_dll_directory(os.environ['SIMDIS_DIR'] + '/bin/amd64-nt')
-		except:
-			pass
-		pass
-	else:
-		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-linux/python3.12/lib-dynload')
-	# For module wrapper:
-	sys.path.append(os.environ['SIMDIS_DIR'] + '/bin/pythonScripts')
+	SIMDIS_DIR = os.environ['SIMDIS_DIR']
+	# SIMDIS_DIR/bin/pythonScripts for module wrappers
+	sys.path.insert(0, os.path.join(SIMDIS_DIR, 'bin', 'pythonScripts'))
+	# SIMDIS_DIR/lib/amd64-nt/python#.## or SIMDIS_DIR/lib/amd64-linux/python#.##/lib-dynload for _module shared objects
+	base_lib = os.path.join(SIMDIS_DIR, 'lib', 'amd64-nt' if os.name == 'nt' else 'amd64-linux')
+	search_for = 'python' if os.name == 'nt' else 'lib-dynload'
+	for root_dir, dirs, files in os.walk(base_lib):
+		for dir_name in dirs:
+			if search_for in dir_name: sys.path.insert(0, os.path.join(root_dir, dir_name))
+	if os.name == "nt": os.add_dll_directory(os.path.join(os.environ['SIMDIS_DIR'], 'bin', 'amd64-nt')) # for SIMDIS SDK notify DLL
 
 import simCore
 
