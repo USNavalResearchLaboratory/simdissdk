@@ -60,7 +60,9 @@ UnitsState::UnitsState()
 
 const simCore::Units& UnitsState::altitudeUnits() const
 {
-  return altitudeUnits_.value_or(simCore::Units::FEET);
+  if (hasAltitudeUnits())
+    return altitudeUnits_.value();
+  return simCore::Units::FEET;
 }
 
 void UnitsState::setAltitudeUnits(const simCore::Units& units)
@@ -75,7 +77,9 @@ bool UnitsState::hasAltitudeUnits() const
 
 const simCore::Units& UnitsState::angleUnits() const
 {
-  return angleUnits_.value_or(simCore::Units::DEGREES);
+  if (hasAngleUnits())
+    return angleUnits_.value();
+  return simCore::Units::DEGREES;
 }
 
 void UnitsState::setAngleUnits(const simCore::Units& units)
@@ -90,7 +94,9 @@ bool UnitsState::hasAngleUnits() const
 
 const simCore::Units& UnitsState::rangeUnits() const
 {
-  return rangeUnits_.value_or(simCore::Units::YARDS);
+  if (hasRangeUnits())
+    return rangeUnits_.value();
+  return simCore::Units::YARDS;
 }
 
 void UnitsState::setRangeUnits(const simCore::Units& units)
@@ -113,7 +119,7 @@ void UnitsState::parse(const ParsedShape& parsedShape, const simCore::UnitsRegis
     parse(parsedShape.stringValue(ShapeParameter::RANGEUNITS), unitsRegistry, rangeUnits_);
 }
 
-void UnitsState::parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, simCore::Optional<simCore::Units>& units)
+void UnitsState::parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, std::optional<simCore::Units>& units)
 {
   if (unitString == "secs")
     units = simCore::Units::SECONDS;
