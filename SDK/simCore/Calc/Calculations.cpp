@@ -471,6 +471,28 @@ double calculateAspectAngle(const Vec3 &fromLla, const Vec3 &toLla, const Vec3 &
   return simCore::inverseCosine(cosAspectAng);
 }
 
+double calculateBearingAspectAngle(const Vec3& fromLla, const Vec3& toLla, double toYaw)
+{
+  double azim = 0.0;
+  calculateAbsAzEl(fromLla, toLla, &azim, nullptr, nullptr, simCore::WGS_84, nullptr);
+  double angle = simCore::angFixPI(toYaw - azim);
+  return angle;
+}
+
+std::string formatBearingAspectAngle(double aspectAngle)
+{
+  const double angle = simCore::angFixPI(aspectAngle);
+  if (simCore::areAnglesEqual(0.0, angle, 5.0 * simCore::DEG2RAD))
+    return "T";
+
+  if (simCore::areAnglesEqual(M_PI, angle, 5.0 * simCore::DEG2RAD))
+    return "H";
+
+  const std::string suffix = (angle > 0) ? "R" : "L";
+  const unsigned int twoDigits = static_cast<unsigned int>((std::abs(angle) * simCore::RAD2DEG + 5.0) / 10.0);
+  return std::to_string(twoDigits) + suffix;
+}
+
 /**
 * This function implements Sodano's direct solution algorithm to determine geodetic
 * longitude and latitude and back azimuth given a geodetic reference longitude

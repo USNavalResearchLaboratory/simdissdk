@@ -1,4 +1,220 @@
 #CommentsDenotedByPoundSymbols #TokensSeparatedByWhitespace
+
+
+#Test_"To"_and_"From"_on_top_of_each_other_with_"FROM"_always_pointing_north,_therefore_only_the_yaw_angle_matters
+
+#"To"_pointing_north
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.0 0.0 0.0 0.0
+0.0
+T
+
+#"To"_pointing_east
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.0 0.0 0.0 1.570796327 
+1.570796327 
+9R
+
+#"To"_pointing_south
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.0 0.0 0.0 3.14159265358979323846 
+3.14159265358979323846
+H
+
+#"To"_pointing_west
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.0 0.0 0.0 -1.570796327 
+-1.570796327 
+9L
+
+#"To"_pointing_170
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.0 0.0 0.0 3.036872898 
+3.036872898
+17R
+
+#"To"_pointing_-170
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.0 0.0 0.0 -3.036872898 
+-3.036872898
+17L
+
+
+#Move_the_"To"_platform_due_north,_so_again_only_the_yaw_matters
+
+#"To"_pointing_north
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.008726646 0.0 0.0 0.0
+0.0
+T
+
+#"To"_pointing_south
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.008726646 0.0 0.0 3.14159265358979323846 
+3.14159265358979323846
+H
+
+#"To"_pointing_170
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.008726646 0.0 0.0 3.036872898 
+3.036872898
+17R
+
+#"To"_pointing_-170
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.008726646 0.0 0.0 -3.036872898 
+-3.036872898
+17L
+
+
+#Move_the_"To"_platform_due_south,_so_again_only_the_yaw_matters_but_all_the_angles_are_mirrored_compared_to_north
+
+#"To"_pointing_north
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+-0.008726646 0.0 0.0 0.0
+3.14159265358979323846
+H
+
+#"To"_pointing_south
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+-0.008726646 0.0 0.0 3.14159265358979323846 
+0
+T
+
+#"To"_pointing_170
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+-0.008726646 0.0 0.0 3.036872898 
+-0.104719755
+1L
+
+#"To"_pointing_-170
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+-0.008726646 0.0 0.0 -3.036872898 
+0.104719755
+1R
+
+
+#Move_the_"To"_platform_due_east
+
+#"To"_pointing_north
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.00 0.008726646 0.0 0 
+-1.570796327
+9L
+
+#"To"_pointing_east
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.00 0.008726646 0.0 1.570796327 
+0
+T
+
+#"To"_pointing_south
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.00 0.008726646 0.0 3.14159265358979323846 
+1.570796327
+9R
+
+#"To"_pointing_west
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.00 0.008726646 0.0 -1.570796327 
+3.14159265358979323846 
+H
+
+
+#Move_the_"To"_platform_due_west
+
+#"To"_pointing_north
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.00 -0.008726646 0.0 0 
+1.570796327
+9R
+
+#"To"_pointing_east
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.00 -0.008726646 0.0 1.570796327 
+3.14159265358979323846 
+H
+
+#"To"_pointing_south
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.00 -0.008726646 0.0 3.14159265358979323846 
+-1.570796327
+9L
+
+#"To"_pointing_west
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.00 -0.008726646 0.0 -1.570796327 
+0
+T
+
+
+#Move_the_"To"_platform_north_east
+
+#"To"_pointing_north,_the_expected_result_not_-45_due_to_curvature_of_the_earth
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.008726646 0.008726646 0.0 0.0
+-0.78873754367140192
+5L
+
+#"To"_pointing_at_45_degrees,_the_expected_result_not_zero_due_to_curvature_of_the_earth
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.008726646 0.008726646 0.0 0.785398163
+-0.0033393806714019370
+T
+
+#"To"_pointing_east,_the_expected_result_not_45_due_to_curvature_of_the_earth
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.008726646 0.008726646 0.0 1.570796327
+0.78205878332859813
+4R
+
+#"To"_pointing_south,_the_expected_result_not_135_due_to_curvature_of_the_earth
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.008726646 0.008726646 0.0 3.14159265358979323846 
+2.3528551099183912
+13R
+
+#"To"_pointing_at_-135_degrees,_the_expected_result_not_180_due_to_curvature_of_the_earth
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.008726646 0.008726646 0.0 -2.35619449
+3.1382532735081843
+H
+
+#"To"_pointing_west,_the_expected_result_not_-135_due_to_curvature_of_the_earth
+BearingAspectAngleWGS84 0.0 0.0 0.0
+0.0 0.0 0.0
+0.008726646 0.008726646 0.0 -1.570796327
+-2.3595338706714020
+14L
+
+
 SlantWGS84 0.0 0.0 0.0
 -1.510 -2.7578684014 871.0 -1.132313619501204 0.84955592154 9.0
 3124784.7428872650489211082458496

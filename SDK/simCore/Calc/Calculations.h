@@ -223,6 +223,34 @@ namespace simCore
   */
   SDKCORE_EXPORT double calculateAspectAngle(const Vec3 &fromLla, const Vec3 &toLla, const Vec3 &toOriLla);
 
+  /**
+  * @brief Calculates the bearing aspect angle between two entities
+  *
+  * Defines aspect angle of target (toLla) from an origin (fromLla), considering the target's yaw. This provides a relative
+  * reference on the target's orientation relative to the origin's point of view. A return of 0.0 indicates the view from
+  * origin to target is observing the target's tail; +PI/2 is the target's right side, -PI/2 is target's left side, and
+  * PI is target's head or front. This is used by shooters to determine basically whether their target will see their
+  * incoming shot and will be able to effectively evade it.
+  *
+  * @see simCore::formatBearingAspectAngle() for standard formatting.
+  *
+  * @param[in ] fromLla Vector of latitude, longitude, and altitude that describes current position for the 'from' entity
+  * @param[in ] toLla Vector of latitude, longitude, and altitude that describes current position for the 'to' entity
+  * @param[in ] toYaw The yaw for the 'to' entity
+  * @return aspect angle in radians
+  */
+  SDKCORE_EXPORT double calculateBearingAspectAngle(const Vec3& fromLla, const Vec3& toLla, double toYaw);
+
+  /**
+  * @brief Returns a text string the bearing aspect angle
+  *
+  * Convert to degrees then divide by 10 and return a string with L or R based on + or -.  Example: 170 = 17R.
+  * Return H for 0 and T for 18
+  * @param[in ] toYaw The yaw for the 'to' entity, in radians from True North
+  * @return Text string representation of the bearing aspect angle
+  */
+  SDKCORE_EXPORT std::string formatBearingAspectAngle(double angleRadians);
+
   //////////////////////////////////////////////////////////////////////
   ////////////////// Helper functions for Calculation //////////////////
   //////////////////////////////////////////////////////////////////////
