@@ -571,7 +571,10 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
     }
     else if (tokens[0] == "filled")
     {
-      current.set(ShapeParameter::FILLED, "true");
+      if (tokens.size() >= 2)
+        current.set(ShapeParameter::FILLED, tokens[1]);
+      else
+        current.set(ShapeParameter::FILLED, "true");
     }
     else if (tokens[0] == "outline")
     {
