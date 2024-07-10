@@ -44,6 +44,7 @@ namespace simQt {
 
 const QString SETTING_NAME_FILTER = "/FilterSettings/";
 const QString FILTER_DIALOG_GEOMETRY = "/FilterDialogGeometry";
+const QString PINNED_CUSTOM_FILTER = "/PinnedCustomFilter";
 
 FilterDialog::FilterDialog(SettingsPtr settings, QWidget* parent)
   :QDialog(parent),
@@ -86,10 +87,12 @@ public:
     : loadAction_(new QAction(icon, tr("Load"), &button)),
       saveAction_(new QAction(QIcon(":simQt/images/Save.png"), tr("Save..."), &button)),
       clearAction_(new QAction(QIcon(":simQt/images/Delete.png"), tr("Clear"), &button)),
+      pinAction_(new QAction(QIcon(":simQt/images/Push Pin.png"), tr("Pin"), &button)),
       button_(button)
   {
     // No tooltip needed for clear because it's never a standalone button via setDefaultButton()
     saveAction_->setToolTip(simQt::formatTooltip(tr("Save"), tr("Saves the current filter configuration to a button.")));
+    pinAction_->setToolTip(simQt::formatTooltip(tr("Pin"), tr("Pins the current filter configuration to persist in the display.")));
     setLoadTextAndTooltips_("");
 
     // We start without a filter configuration, so default mode is "save"
@@ -97,6 +100,7 @@ public:
     button_.addAction(loadAction_);
     button_.addAction(saveAction_);
     button_.addAction(clearAction_);
+    button_.addAction(pinAction_);
   }
 
   QAction* loadAction() const
@@ -112,6 +116,11 @@ public:
   QAction* clearAction() const
   {
     return clearAction_;
+  }
+
+  QAction* pinAction() const
+  {
+    return pinAction_;
   }
 
   const FilterConfiguration& filterConfiguration() const
@@ -136,12 +145,14 @@ public:
     {
       loadAction_->setEnabled(false);
       clearAction_->setEnabled(false);
+      pinAction_->setEnabled(false);
       button_.setDefaultAction(saveAction_);
     }
     else
     {
       loadAction_->setEnabled(true);
       clearAction_->setEnabled(true);
+      pinAction_->setEnabled(true);
       button_.setDefaultAction(loadAction_);
     }
     filterConfig_ = filter;
@@ -170,6 +181,7 @@ private:
   QAction* loadAction_;
   QAction* saveAction_;
   QAction* clearAction_;
+  QAction* pinAction_;
   QToolButton& button_;
   FilterConfiguration filterConfig_;
 };
@@ -534,6 +546,10 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
   connect(saveMapper, SIGNAL(mapped(int)), this, SLOT(saveFilterConfig_(int)));
   QSignalMapper* clearMapper = new QSignalMapper(this);
   connect(clearMapper, SIGNAL(mapped(int)), this, SLOT(clearFilterConfig_(int)));
+  QSignalMapper* pinMapper = new QSignalMapper(this);
+  connect(pinMapper, SIGNAL(mapped(int)), this, SLOT(pinFilterConfig_(int)));
+
+  auto pinned = settings_->value(PINNED_CUSTOM_FILTER).toString();
   for (int k = 0; k < 4; ++k)
   {
     QToolButton* button = configButtonForIndex_(k);
@@ -550,6 +566,8 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
     connect(actions->saveAction(), SIGNAL(triggered()), saveMapper, SLOT(map()));
     clearMapper->setMapping(actions->clearAction(), k);
     connect(actions->clearAction(), SIGNAL(triggered()), clearMapper, SLOT(map()));
+    pinMapper->setMapping(actions->pinAction(), k);
+    connect(actions->pinAction(), SIGNAL(triggered()), pinMapper, SLOT(map()));
 
     // Initialize the button with the filter data from settings
     QVariant defaultValue;
@@ -557,6 +575,7 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
     Settings::MetaData metaData(Settings::VARIANT_MAP, defaultValue, "", Settings::PRIVATE);
     auto filter = qvariant_cast<FilterConfiguration>(settings_->value(actions->settingsKey(), metaData, observer_));
     actions->setFilterConfiguration(filter);
+    setPinnedText_(actions->pinAction(), pinned == actions->settingsKey());
 
     // Save the action for later
     buttonActions_.push_back(actions);
@@ -564,6 +583,7 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
 
   // Show buttons
   composite_->filterConfigWidget->setVisible(true);
+  applyPinnedFilterConfiguration();
 }
 
 void EntityTreeComposite::loadFilterConfig_(int index)
@@ -607,6 +627,27 @@ void EntityTreeComposite::clearFilterConfig_(int index)
     QVariant value;
     value.setValue(action->filterConfiguration());
     settings_->setValue(action->settingsKey(), value, observer_);
+  }
+}
+
+void EntityTreeComposite::pinFilterConfig_(int index)
+{
+  if (settings_ == nullptr)
+    return;
+
+  for (int i = 0; i < buttonActions_.size(); ++i)
+  {
+    ButtonActions* action = buttonActions_[i];
+    auto pinned = settings_->value(PINNED_CUSTOM_FILTER).toString();
+    if (i == index)
+    {
+      // toggle pinned setting
+      bool alreadyPinned = (pinned == action->settingsKey());
+      settings_->setValue(PINNED_CUSTOM_FILTER, alreadyPinned ? "" : action->settingsKey());
+      setPinnedText_(action->pinAction(), !alreadyPinned);
+    }
+    else // update text of other pin actions
+      setPinnedText_(action->pinAction(), false);
   }
 }
 
@@ -704,6 +745,40 @@ void EntityTreeComposite::setTreeView(bool useTreeView)
     return;
 
   setTreeView_(useTreeView);
+}
+
+void EntityTreeComposite::applyPinnedFilterConfiguration()
+{
+  if (settings_ == nullptr)
+    return;
+  Settings::MetaData pinMetaData(Settings::STRING, QVariant(), "", Settings::PRIVATE);
+  auto pinned = settings_->value(PINNED_CUSTOM_FILTER, pinMetaData).toString();
+  if (pinned.isEmpty())
+    return;
+  for (const auto& button : buttonActions_)
+  {
+    if (pinned == button->settingsKey())
+    {
+      entityTreeWidget_->setFilterSettings(button->filterConfiguration().configuration());
+      // call twice to ensure correct final state of category filters, since category name manager should now be updated from previous call to setFilterSettings
+      entityTreeWidget_->setFilterSettings(button->filterConfiguration().configuration());
+      break;
+    }
+  }
+}
+
+void EntityTreeComposite::setPinnedText_(QAction* action, bool pinned)
+{
+  if (pinned)
+  {
+    action->setText("Unpin");
+    action->setToolTip(simQt::formatTooltip(tr("Unpin"), tr("Unpin the filter configuration to stop persisting in the display.")));
+  }
+  else
+  {
+    action->setText("Pin");
+    action->setToolTip(simQt::formatTooltip(tr("Pin"), tr("Pin the filter configuration to persist in the display.")));
+  }
 }
 
 void EntityTreeComposite::onItemsChanged_(const QList<uint64_t>& ids)

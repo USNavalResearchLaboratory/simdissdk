@@ -149,6 +149,8 @@ public:
   void setUseCenterAction(bool use, const QString& reason = "");
   /** Toggle the tree/list view and update related UI component and action states if the tree view action is enabled */
   void setTreeView(bool useTreeView);
+  /** Apply the currently pinned filter configuration if there is one */
+  void applyPinnedFilterConfiguration();
 
   /** Class to store information about an Entity Tab Filter Configuration */
   class FilterConfiguration
@@ -243,6 +245,8 @@ private Q_SLOTS:
   void saveFilterConfig_(int index);
   /** Clears the filter configuration indicated by the index provided */
   void clearFilterConfig_(int index);
+  /** Pin the filter configuration indicated by the index provided to remain active across scenarios and restarts */
+  void pinFilterConfig_(int index);
   /** Make and display the right mouse click menu */
   void makeAndDisplayMenu_(const QPoint& pos);
   /** Update Collapse All, Expand All, and Toggle Tree View action enabled states */
@@ -256,6 +260,8 @@ private:
   QToolButton* configButtonForIndex_(int index) const;
   /** Retrieves the QIcon associated with the filter configuration index */
   QIcon configIconForIndex_(int index) const;
+  /** Set the text and tooltip for the specified pin action based on the specified pinned state */
+  void setPinnedText_(QAction* action, bool pinned);
 
   Ui_EntityTreeComposite* composite_;
   EntityTreeWidget* entityTreeWidget_;
