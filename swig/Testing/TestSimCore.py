@@ -383,6 +383,15 @@ assert(simCore.calculateHorizonDist(v1, simCore.GEOMETRIC_HORIZON, 1.06, 1.333) 
 assert(simCore.positionInGate(v1, v2, 1.0, 0.0, 1.0, 1.0, 1000.0, 3000.0, simCore.WGS_84, coordConverter) is not None)
 assert(simCore.laserInGate(v1, v2, 1.0, 0.0, 1.0, 1.0, 1000.0, 3000.0, 1.5, 1.5, 2000.0, simCore.WGS_84, coordConverter) is not None)
 assert(simCore.laserInGate(v1, v2, 1.0, 0.0, 1.0, 1.0, 1000.0, 3000.0, 1.5, 1.5, 2000.0, simCore.WGS_84, coordConverter, 100) is not None)
+#Verify calculateBearingAspectAngle and formatBearingAspectAngle
+p1 = simCore.Vec3(0.0, 0.0, 0.0)
+p2 = simCore.Vec3(0.008726646, 0.008726646, 0.0)
+angle = simCore.calculateBearingAspectAngle(p1, p2, 0.0);
+assert(simCore.areEqual(angle, -0.78873754367140192))
+assert(simCore.formatBearingAspectAngle(angle) == '5L')
+angle = simCore.calculateBearingAspectAngle(p1, p2, 0.785398163);
+assert(simCore.areEqual(angle, -0.0033393806714019370))
+assert(simCore.formatBearingAspectAngle(angle) == 'T')
 
 #############################
 # Random.h
