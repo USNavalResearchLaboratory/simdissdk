@@ -635,7 +635,7 @@ void EntityTreeComposite::pinFilterConfig_(int index)
   if (settings_ == nullptr)
     return;
 
-  for (int i = 0; i < buttonActions_.size(); ++i)
+  for (int i = 0; i < static_cast<int>(buttonActions_.size()); ++i)
   {
     ButtonActions* action = buttonActions_[i];
     auto pinned = settings_->value(PINNED_CUSTOM_FILTER).toString();
