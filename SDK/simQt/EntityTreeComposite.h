@@ -255,13 +255,14 @@ private Q_SLOTS:
 private:
   /** Watch for settings changes related to the buttons */
   class Observer;
+  class ButtonActions;
 
   /** Retrieves the QToolButton associated with the filter configuration index */
   QToolButton* configButtonForIndex_(int index) const;
   /** Retrieves the QIcon associated with the filter configuration index */
   QIcon configIconForIndex_(int index) const;
-  /** Set the text and tooltip for the specified pin action based on the specified pinned state */
-  void setPinnedText_(QAction* action, bool pinned);
+  /** Set the pin text and tooltip and update the button highlight for the specified actions based on the pinned state */
+  void setPinnedState_(ButtonActions& actions, bool pinned);
 
   Ui_EntityTreeComposite* composite_;
   EntityTreeWidget* entityTreeWidget_;
