@@ -20,14 +20,12 @@
  * disclose, or release this software.
  *
  */
-#include "imgui.h"
-#include "osgEarth/ImGui/ImGui"
 #include "SimExamplesGui.h"
 
 namespace simExamples {
 
 SimExamplesGui::SimExamplesGui(const std::string& name)
-  : osgEarth::GUI::BaseGUI(name.c_str()),
+  : OSGEARTH_GUI_BASE_CLASS(name.c_str()),
   firstDraw_(true),
   defaultFont_(nullptr),
   largeFont_(nullptr),

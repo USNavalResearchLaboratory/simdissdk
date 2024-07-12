@@ -25,9 +25,18 @@
 
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "osgEarth/ImGui/ImGui"
 #include <functional>
 #include <string>
+
+#include "osgEarth/BuildConfig"
+#ifdef OSGEARTH_HAVE_IMGUI_NODEKIT
+  #include "osgEarthImGui/ImGuiPanel"
+  #define OSGEARTH_GUI_BASE_CLASS osgEarth::ImGuiPanel
+#else
+  #include "osgEarth/ImGui/ImGui"
+  #define OSGEARTH_GUI_BASE_CLASS osgEarth::GUI::BaseGUI
+#endif
+
 
 struct ImFont;
 namespace osg { class RenderInfo; }
@@ -35,7 +44,7 @@ namespace osg { class RenderInfo; }
 namespace simExamples {
 
 /** Base class for an ImGui GUI window */
-class SimExamplesGui : public osgEarth::GUI::BaseGUI
+class SimExamplesGui : public OSGEARTH_GUI_BASE_CLASS
 {
 public:
   virtual ~SimExamplesGui();
