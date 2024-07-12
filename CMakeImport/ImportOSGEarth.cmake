@@ -76,6 +76,12 @@ elseif(EXISTS "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}/osgEarthTriton/TritonOptio
     list(APPEND SUBLIBRARY_NAMES Triton)
 endif()
 
+# osgEarthImGui added in osgEarth SOVERSION 159
+if(EXISTS "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}/osgEarthImGui/ImGuiPanel")
+    set(HAVE_OSGEARTH_IMGUI_NODEKIT TRUE)
+    list(APPEND SUBLIBRARY_NAMES ImGui)
+endif()
+
 # Internal macro to import osgEarth libraries.  NAME can be empty string, Util, Symbology, etc.
 macro(import_osgearth_lib NAMEVAL)
     if("${NAMEVAL}" STREQUAL "")

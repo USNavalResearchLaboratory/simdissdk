@@ -21,7 +21,6 @@
  *
  */
 #include "imgui.h"
-#include "osgEarth/ImGui/ImGui"
 #include "BaseGui.h"
 
 namespace GUI {
