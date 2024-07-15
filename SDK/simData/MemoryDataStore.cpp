@@ -716,12 +716,28 @@ void MemoryDataStore::updatePlatforms_(double time, std::map<simData::ObjectId, 
       const PlatformUpdateSlice* slice = platform->updates();
       const double firstTime = slice->firstTime();
       const bool staticPlatform = (firstTime == -1.0);
-      // do we need to expire a non-static platform?
-      if (!staticPlatform && (time < firstTime || time > slice->lastTime()))
+      // static platforms are never off
+      if (!staticPlatform)
       {
-        // platform is not valid/has expired
-        platform->updates()->setCurrent(nullptr);
-        continue;
+        // never show before first point
+        const bool beforeFirst = (time < firstTime);
+        if (beforeFirst)
+        {
+          // Platform is not valid/off
+          platform->updates()->setCurrent(nullptr);
+          continue;
+        }
+
+        // SIM-17032: single-point platforms are off until their first point, but on thereafter.
+        // multi-point platforms are on from their first point to their last point.
+        const bool singlePointPlatform = (slice->numItems() == 1);
+        const bool afterLast = (!singlePointPlatform && time > slice->lastTime());
+        if (afterLast)
+        {
+          // Platform is not valid/off
+          platform->updates()->setCurrent(nullptr);
+          continue;
+        }
       }
     }
 

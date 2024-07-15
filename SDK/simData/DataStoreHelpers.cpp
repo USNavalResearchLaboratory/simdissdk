@@ -397,11 +397,14 @@ namespace {
     // static platforms are always active
     if (slice->firstTime() == -1.0)
       return true;
-
-    if ((slice->firstTime() > atTime) || (slice->lastTime() < atTime))
+    // all other platforms are not active before their on-time
+    if (slice->firstTime() > atTime)
       return false;
-
-    return true;
+    // SIM-17032: single-point platforms are always active after their on time
+    if (slice->numItems() == 1)
+      return true;
+    // all other platforms are off after their last point
+    return (slice->lastTime() < atTime ? false : true);
   }
 
   /** Helper method to determine if a beam is active */
