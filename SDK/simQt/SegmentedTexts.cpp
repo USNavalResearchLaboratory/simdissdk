@@ -1253,6 +1253,7 @@ static const unsigned int MAX_PRECISION = 6;
     if (lastState == QValidator::Acceptable)
     {
       Iso8601Texts temp;
+      temp.setPrecision(precision_);
       temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setTimeZone(zone_);
