@@ -36,6 +36,7 @@
   #include "osgEarthImGui/EnvironmentGUI"
   using namespace osgEarth;
 #else
+  #include "osgEarth/ImGui/ImGui"
   #include "osgEarth/ImGui/CameraGUI"
   #include "osgEarth/ImGui/EnvironmentGUI"
   using namespace osgEarth::GUI;
@@ -46,10 +47,10 @@
 #endif
 
 #if OSGEARTH_SOVERSION >= 148
- // Fix 3.4.0 bugs with namespace in osgEarth/ImGui/AnnotationsGUI
-#include "osgEarth/AnnotationData"
-using AnnotationData = osgEarth::AnnotationData;
-using EarthManipulator = osgEarth::EarthManipulator;
+  // Fix 3.4.0 bugs with namespace in osgEarth/ImGui/AnnotationsGUI
+  #include "osgEarth/AnnotationData"
+  using AnnotationData = osgEarth::AnnotationData;
+  using EarthManipulator = osgEarth::EarthManipulator;
 
   #if OSGEARTH_SOVERSION >= 159
     #include "osgEarthImGui/AnnotationsGUI"
