@@ -295,12 +295,12 @@ namespace
   {
     explicit ControlPrefsNotification(ControlPrefsListener* listener) : listener_(listener) { }
 
-    virtual void onPrefsChange(simData::DataStore &ds, simData::ObjectId id)
+    virtual void onPrefsChange(simData::DataStore* ds, simData::ObjectId id) override
     {
-      if (ds.objectType(id) == simData::PLATFORM)
-        listener_->notifyPrefsChange(ds, id);
+      if (ds && ds->objectType(id) == simData::PLATFORM)
+        listener_->notifyPrefsChange(*ds, id);
     }
-    ControlPrefsListener* listener_;
+    ControlPrefsListener* listener_ = nullptr;
   };
 
   struct PlatformListControl : public VBox, public ControlPrefsListener
