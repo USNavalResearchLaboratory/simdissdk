@@ -132,7 +132,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), "The yellow areas are geo-fences.");
     ImGui::Text("Move mouse to test whether inside/outside");
     if (!app_.feedbackText.empty())
-      ImGui::Text(app_.feedbackText.c_str());
+      ImGui::Text("%s", app_.feedbackText.c_str());
 
     ImGui::End();
   }

@@ -128,16 +128,16 @@ struct ControlPanel : public simExamples::SimExamplesGui
     }
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text(s_rotate.c_str());
-    ImGui::Text(s_interpolate.c_str());
-    ImGui::Text(s_viewPlatformOne.c_str());
-    ImGui::Text(s_viewPlatformTwo.c_str());
-    ImGui::Text(s_viewPlatformThree.c_str());
-    ImGui::Text(s_viewPlatformFour.c_str());
-    ImGui::Text(s_viewPlatformFive.c_str());
-    ImGui::Text(s_togglePlatformFiveShadowMap.c_str());
-    ImGui::Text(s_togglePlatformFiveMaxDrawRange.c_str());
-    ImGui::Text(s_reloadMap.c_str());
+    ImGui::Text("%s", s_rotate.c_str());
+    ImGui::Text("%s", s_interpolate.c_str());
+    ImGui::Text("%s", s_viewPlatformOne.c_str());
+    ImGui::Text("%s", s_viewPlatformTwo.c_str());
+    ImGui::Text("%s", s_viewPlatformThree.c_str());
+    ImGui::Text("%s", s_viewPlatformFour.c_str());
+    ImGui::Text("%s", s_viewPlatformFive.c_str());
+    ImGui::Text("%s", s_togglePlatformFiveShadowMap.c_str());
+    ImGui::Text("%s", s_togglePlatformFiveMaxDrawRange.c_str());
+    ImGui::Text("%s", s_reloadMap.c_str());
     ImGui::End();
   }
 };

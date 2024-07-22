@@ -195,7 +195,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::Text("r : remove all insets");
 
     if (!llaLabel_.empty())
-      ImGui::Text(llaLabel_.c_str());
+      ImGui::Text("%s", llaLabel_.c_str());
 
     ImGui::End();
     handlePressedKeys_();

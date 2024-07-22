@@ -114,7 +114,7 @@ public:
       const simData::GateProperties* props = ds_.gateProperties(gateId_, &xaction);
       std::string type = (props->type() == simData::GateProperties_GateType_ABSOLUTE_POSITION ? "ABSOLUTE" : "BODY RELATIVE");
       xaction.complete(&props);
-      ImGui::TableNextColumn(); ImGui::Text("Type"); ImGui::TableNextColumn(); ImGui::Text(type.c_str());
+      ImGui::TableNextColumn(); ImGui::Text("Type"); ImGui::TableNextColumn(); ImGui::Text("%s", type.c_str());
 
       // Draw mode combo box
       ImGui::TableNextColumn(); ImGui::Text("Draw Mode"); ImGui::TableNextColumn();

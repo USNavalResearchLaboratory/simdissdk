@@ -162,7 +162,7 @@ public:
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::TextUnformatted(s_help.c_str());
     if (!text_.empty())
-      ImGui::TextColored(ImVec4(0.f, 1.f, 0.f, 1.f), text_.c_str());
+      ImGui::TextColored(ImVec4(0.f, 1.f, 0.f, 1.f), "%s", text_.c_str());
     ImGui::End();
   }
 

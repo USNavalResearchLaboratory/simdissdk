@@ -160,7 +160,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::Text("g : cycle through the various GOG types");
 
     if (!nowViewing_.empty())
-      ImGui::Text(nowViewing_.c_str());
+      ImGui::Text("%s", nowViewing_.c_str());
 
     ImGui::End();
 

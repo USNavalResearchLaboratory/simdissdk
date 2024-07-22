@@ -269,11 +269,11 @@ struct ControlPanel : public simExamples::SimExamplesGui
 
     std::stringstream ss;
     ss << "Dynamic Scale: " << (dynamicScaleOn_ ? "ON" : "OFF");
-    ImGui::Text(ss.str().c_str()); ss.str(""); ss.clear();
+    ImGui::Text("%s", ss.str().c_str()); ss.str(""); ss.clear();
 
     const simVis::View* focusedView = viewer_->getMainView()->getFocusManager()->getFocusedView();
     ss << std::fixed << std::setprecision(2) << "Camera Distance: " << focusedView->getViewpoint().range().value().getValue() << " m";
-    ImGui::Text(ss.str().c_str()); ss.str(""); ss.clear();
+    ImGui::Text("%s", ss.str().c_str()); ss.str(""); ss.clear();
 
     ss << "Centered: ";
     centeredPlat_ = getCenteredPlatformId(focusedView);
@@ -287,10 +287,10 @@ struct ControlPanel : public simExamples::SimExamplesGui
       if (prefs)
         ss << prefs->commonprefs().name();
     }
-    ImGui::Text(ss.str().c_str()); ss.str(""); ss.clear();
+    ImGui::Text("%s", ss.str().c_str()); ss.str(""); ss.clear();
 
     ss << "Focused View: " << focusedView->getName() << (focusedView->isOverheadEnabled() ? " OVERHEAD" : " PERSPECTIVE");
-    ImGui::Text(ss.str().c_str()); ss.str(""); ss.clear();
+    ImGui::Text("%s", ss.str().c_str()); ss.str(""); ss.clear();
 
     // Avoid showing the sentinel value for off-map
     if (latLonElevListener_->lat() == simUtil::MousePositionManipulator::INVALID_POSITION_VALUE)
@@ -305,7 +305,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
       if (showElevation_)
         ss << ", elev: " << latLonElevListener_->elev();
     }
-    ImGui::Text(ss.str().c_str());
+    ImGui::Text("%s", ss.str().c_str());
     ImGui::End();
     handlePressedKeys_();
   }

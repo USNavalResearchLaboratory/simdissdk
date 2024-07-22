@@ -919,7 +919,7 @@ public:
 
       ImGui::TableNextColumn();
       ImGui::TableNextColumn();
-      ImGui::Text(app_.nowTimeStr_.c_str());
+      ImGui::Text("%s", app_.nowTimeStr_.c_str());
 
       bool playing = app_.playing_;
       IMGUI_ADD_ROW(ImGui::Checkbox, "Playing", &app_.playing_);
