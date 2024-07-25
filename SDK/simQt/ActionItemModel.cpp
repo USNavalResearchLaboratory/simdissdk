@@ -88,7 +88,7 @@ public:
    *@{
    */
   virtual QString title() const { return name_; }
-  virtual QVariant text(int col) const { return (col == 0) ? QVariant(title()) : QVariant(); }
+  virtual QVariant text(int col) const { return (col == COL_ACTION) ? QVariant(title()) : QVariant(); }
   virtual QVariant decoration(int col) const { return QVariant(); }
   virtual Qt::ItemFlags flags(int col) const { return Qt::ItemIsEnabled; }
 
@@ -179,7 +179,7 @@ public:
   }
 
 private:
-  const ActionItemModel* model_;
+  const ActionItemModel* model_ = nullptr;
   QString name_;
   QList<TreeItem*> children_;
 };
@@ -200,22 +200,20 @@ public:
   virtual QString title() const { return action_->description(); }
   virtual QVariant text(int col) const
   {
-    if (col == 0)
+    if (col == COL_ACTION)
       return action_->description();
     QKeySequence key = action_->hotkeys()[col - 1];
     return key;
   }
   virtual QVariant decoration(int col) const
   {
-    if (col == 0 && action_->action() != nullptr)
-    {
+    if (col == COL_ACTION && action_->action() != nullptr)
       return action_->action()->icon();
-    }
     return QVariant();
   }
   virtual Qt::ItemFlags flags(int col) const
   {
-    if (col == 1 || col == 2)
+    if (col == COL_PRIMARY || col == COL_SECONDARY)
       return Qt::ItemIsEnabled | Qt::ItemIsEditable;
     return Qt::ItemIsEnabled;
   }
@@ -225,27 +223,27 @@ public:
   /// Like QAbstractItemModel::setData(), returns true on successful handle
   virtual bool setData(int col, const QVariant& value)
   {
+    if (col != COL_PRIMARY && col != COL_SECONDARY)
+      return false;
+
     const int keyNum = col - 1;
-    if (keyNum >= 0)
+    assert(keyNum == 0 || keyNum == 1); // Guaranteed by above ColumnIndex check
+    if (!value.isValid() || value.toString().isEmpty())
     {
-      if (!value.isValid() || value.toString().isEmpty())
-        action_->removeHotKey(keyNum);
-      else
-      {
-        QKeySequence key(value.toString());
-        if (key.isEmpty())
-          return false;
-        // Set up a new vector of keys
-        QList<QKeySequence> keys = action_->hotkeys();
-        if (keyNum < keys.size()) // Replace
-          keys.replace(keyNum, key);
-        else // Append
-          keys.push_back(key);
-        action_->setHotKeys(keys);
-      }
+      action_->removeHotKey(keyNum);
       return true;
     }
-    return false;
+    QKeySequence key(value.toString());
+    if (key.isEmpty())
+      return false;
+    // Set up a new vector of keys
+    QList<QKeySequence> keys = action_->hotkeys();
+    if (keyNum < keys.size()) // Replace
+      keys.replace(keyNum, key);
+    else // Append
+      keys.push_back(key);
+    action_->setHotKeys(keys);
+    return true;
   }
   ///@}
 
@@ -264,15 +262,14 @@ public:
   virtual TreeItem* find(const Action* action) const { return (action == action_) ? const_cast<ActionItem*>(this) : nullptr; }
 
 private:
-  ActionItemModel::GroupItem* parent_;
-  Action* action_;
+  ActionItemModel::GroupItem* parent_ = nullptr;
+  Action* action_ = nullptr;
 };
 
 //////////////////////////////////////////////////////////////////////
 ActionItemModel::ActionItemModel(QObject* parent)
   : QAbstractItemModel(parent),
-    registry_(nullptr),
-    readOnly_(false)
+    registry_(nullptr)
 {
 }
 
@@ -337,7 +334,7 @@ int ActionItemModel::rowCount(const QModelIndex &parent) const
 {
   if (parent.isValid())
   {
-    if (parent.column() != 0)
+    if (parent.column() != COL_ACTION)
       return 0;
     TreeItem* parentItem = static_cast<TreeItem*>(parent.internalPointer());
     return (parentItem == nullptr) ? 0 : parentItem->numChildren();
@@ -347,7 +344,7 @@ int ActionItemModel::rowCount(const QModelIndex &parent) const
 
 int ActionItemModel::columnCount(const QModelIndex &parent) const
 {
-  return 3;
+  return NUM_COLUMNS;
 }
 
 QVariant ActionItemModel::data(const QModelIndex &index, int role) const
@@ -378,13 +375,7 @@ Qt::ItemFlags ActionItemModel::flags(const QModelIndex& index) const
   {
     TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
     if (item != nullptr)
-    {
-      Qt::ItemFlags rv = item->flags(index.column());
-      // Remove the editable flag if needed
-      if (readOnly_)
-        rv &= ~Qt::ItemIsEditable;
-      return rv;
-    }
+      return item->flags(index.column());
     return Qt::ItemIsEnabled;
   }
   return Qt::NoItemFlags;
@@ -405,16 +396,19 @@ QVariant ActionItemModel::headerData(int section, Qt::Orientation orientation, i
 {
   if ((orientation == Qt::Horizontal) && (role == Qt::DisplayRole))
   {
-    if (section == 0)
-      return "Action";
-    if (section == 1)
-      return "Primary";
-    if (section == 2)
-      return "Secondary";
-
-    // A column was added and this section was not updated
-    assert(0);
-    return QVariant();
+    switch (section)
+    {
+    case COL_ACTION:
+      return tr("Action");
+    case COL_PRIMARY:
+      return tr("Primary");
+    case COL_SECONDARY:
+      return tr("Secondary");
+    case NUM_COLUMNS:
+      // A column was added and this section was not updated
+      assert(0);
+      return QVariant();
+    }
   }
 
   // Isn't the bar across the top -- fall back to whatever QAIM does
