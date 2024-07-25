@@ -740,7 +740,7 @@ int PointBasedShape::getTessellation(TessellationStyle& tessellation) const
   return (tessellation_.has_value() ? 0 : 1);
 }
 
-void PointBasedShape::setTesssellation(TessellationStyle tessellation)
+void PointBasedShape::setTessellation(TessellationStyle tessellation)
 {
   tessellation_ = tessellation;
 }

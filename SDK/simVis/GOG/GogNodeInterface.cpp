@@ -1913,7 +1913,7 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
 
   simCore::GOG::PointBasedShape* pointBased = dynamic_cast<simCore::GOG::PointBasedShape*>(shape_.get());
   if (pointBased)
-    pointBased->setTesssellation(LoaderUtils::convertToCoreTessellation(style));
+    pointBased->setTessellation(LoaderUtils::convertToCoreTessellation(style));
 }
 
 void FeatureNodeInterface::setAltitudeMode(AltitudeMode altMode)

@@ -1530,7 +1530,7 @@ void Parser::parsePointBasedOptional_(const ParsedShape& parsed, const std::stri
   TessellationStyle style = TessellationStyle::NONE;
   // set style to none if tessellate is set to false
   if (!parsed.boolValue(ShapeParameter::TESSELLATE, false))
-    shape->setTesssellation(style);
+    shape->setTessellation(style);
   else
   {
     // if tessellate is set, default to RHUMBLINE unless LINEPROJECTION specifies otherwise
@@ -1540,7 +1540,7 @@ void Parser::parsePointBasedOptional_(const ParsedShape& parsed, const std::stri
       if (parsed.stringValue(ShapeParameter::LINEPROJECTION) == "greatcircle")
         style = TessellationStyle::GREAT_CIRCLE;
     }
-    shape->setTesssellation(style);
+    shape->setTessellation(style);
   }
 }
 

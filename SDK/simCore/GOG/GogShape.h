@@ -498,7 +498,7 @@ public:
   */
   int getTessellation(TessellationStyle& tessellation) const;
   /// Set the shape's tessellation style
-  void setTesssellation(TessellationStyle tessellation);
+  void setTessellation(TessellationStyle tessellation);
 
 protected:
   explicit PointBasedShape(bool relative);
