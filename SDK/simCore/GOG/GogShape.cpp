@@ -26,6 +26,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
+#include "simCore/String/Utils.h"
 #include "simCore/Time/String.h"
 #include "simCore/GOG/GogShape.h"
 
@@ -64,7 +65,9 @@ int GogShape::getName(std::string& name) const
 
 void GogShape::setName(const std::string& gogName)
 {
-  name_ = gogName;
+  const std::string& cleanName = simCore::StringUtils::trim(gogName);
+  if (!cleanName.empty())
+    name_ = cleanName;
 }
 
 int GogShape::getIsDrawn(bool& draw) const
