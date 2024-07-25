@@ -144,6 +144,8 @@ public:
   bool isRelative() const;
   /// Set if shape is relative or absolute
   void setRelative(bool relative);
+  /// Returns true if the shape can be rotated
+  virtual bool canRotate() const = 0;
 
   /// Defines the shape type implementation
   virtual ShapeType shapeType() const = 0;
@@ -357,6 +359,9 @@ private:
 class SDKCORE_EXPORT OutlinedShape : public GogShape
 {
 public:
+  /// Always returns false
+  virtual bool canRotate() const override;
+
   /**
   * Get outlined state flag; if value is not set, default value is returned.
   * @return 0 if value was set, non-zero otherwise
@@ -477,6 +482,9 @@ private:
 class SDKCORE_EXPORT PointBasedShape : public FillableShape
 {
 public:
+  /// Returns true if the shape is relative; but Annotation will override and always return false
+  virtual bool canRotate() const override;
+
   /// Get the positions of points in the shape; in lla radians if absolute or xyz meters if relative
   const std::vector<simCore::Vec3>& points() const;
   /// Add a point position; in lla radians if absolute or xyz meters if relative
@@ -533,6 +541,9 @@ public:
 class SDKCORE_EXPORT CircularShape : public FillableShape
 {
 public:
+  /// Always returns true
+  virtual bool canRotate() const override;
+
   /**
   * Get the shape's center position in lla radians if absolute or xyz meters if relative; if value is not set, default value is returned.
   * @return 0 if value was set, non-zero otherwise
@@ -794,7 +805,9 @@ class SDKCORE_EXPORT Annotation : public GogShape
 public:
   explicit Annotation(bool relative);
 
-  virtual ShapeType shapeType() const;
+  /// Always returns false
+  virtual bool canRotate() const override;
+  virtual ShapeType shapeType() const override;
 
   /// Get the display text of the annotation
   std::string text() const;
@@ -930,6 +943,8 @@ class SDKCORE_EXPORT ImageOverlay : public GogShape
 public:
   ImageOverlay();
 
+  /// Always returns false
+  virtual bool canRotate() const override;
   virtual ShapeType shapeType() const;
 
   /// Box north corner latitude in radians

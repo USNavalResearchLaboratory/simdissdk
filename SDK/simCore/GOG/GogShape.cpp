@@ -528,6 +528,11 @@ OutlinedShape::OutlinedShape()
   : GogShape()
 {}
 
+bool OutlinedShape::canRotate() const
+{
+  return false;
+}
+
 int OutlinedShape::getIsOutlined(bool& outlined) const
 {
   outlined = outlined_.value_or(true);
@@ -706,6 +711,11 @@ PointBasedShape::PointBasedShape(bool relative)
   setRelative(relative);
 }
 
+bool PointBasedShape::canRotate() const
+{
+  return isRelative();
+}
+
 const std::vector<simCore::Vec3>& PointBasedShape::points() const
 {
   return points_;
@@ -819,6 +829,11 @@ int CircularShape::getRadius(double& radius) const
 void CircularShape::setRadius(double radiusMeters)
 {
   radius_ = radiusMeters;
+}
+
+bool CircularShape::canRotate() const
+{
+  return true;
 }
 
 void CircularShape::serializeToStream_(std::ostream& gogOutputStream) const
@@ -1184,6 +1199,12 @@ Annotation::Annotation(bool relative)
   setSerializeName_(false);
 }
 
+
+bool Annotation::canRotate() const
+{
+  return false;
+}
+
 ShapeType Annotation::shapeType() const
 {
   return ShapeType::ANNOTATION;
@@ -1436,6 +1457,11 @@ ImageOverlay::ImageOverlay()
 ShapeType ImageOverlay::shapeType() const
 {
   return ShapeType::IMAGEOVERLAY;
+}
+
+bool ImageOverlay::canRotate() const
+{
+  return false;
 }
 
 double ImageOverlay::north() const

@@ -356,7 +356,7 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   shape_ = shape;
 
   // set orientation offsets, only for relative shapes, after shape is defined
-  if (shape->isRelative())
+  if (shape_->canRotate())
   {
     double yawOffset = 0.;
     if (shape->getYawOffset(yawOffset) == 0)
@@ -616,7 +616,7 @@ void GogNodeInterface::setYawOffset(double offsetRad)
   if (!shape_)
     return;
   shape_->setYawOffset(offsetRad);
-  if (shape_->isRelative())
+  if (shape_->canRotate())
     applyOrientationOffsets_();
 }
 
@@ -625,7 +625,7 @@ void GogNodeInterface::setPitchOffset(double offsetRad)
   if (!shape_)
     return;
   shape_->setPitchOffset(offsetRad);
-  if (shape_->isRelative())
+  if (shape_->canRotate())
     applyOrientationOffsets_();
 }
 
@@ -634,7 +634,7 @@ void GogNodeInterface::setRollOffset(double offsetRad)
   if (!shape_)
     return;
   shape_->setRollOffset(offsetRad);
-  if (shape_->isRelative())
+  if (shape_->canRotate())
     applyOrientationOffsets_();
 }
 
@@ -2095,7 +2095,7 @@ void LocalGeometryNodeInterface::setStyle_(const osgEarth::Style& style)
 
 void LocalGeometryNodeInterface::applyOrientationOffsets_()
 {
-  if (!shapeObject() || !shapeObject()->isRelative())
+  if (!shapeObject() || !shapeObject()->canRotate())
     return;
   applyOrientationOffsetsToNode_(*shapeObject(), localNode_.get());
 }
