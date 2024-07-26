@@ -1199,9 +1199,19 @@ Annotation::Annotation(bool relative)
   setCanExtrude_(false);
   setCanFollow_(false);
   setRelative(relative);
-  setSerializeName_(false);
 }
 
+int Annotation::getName(std::string& name) const
+{
+  int rv = GogShape::getName(name);
+  // return text as name if no name was defined and text is valid, per legacy SIMDIS 9 behavior
+  if (rv != 0 && !text_.empty())
+  {
+    name = text_;
+    return 0;
+  }
+  return rv;
+}
 
 bool Annotation::canRotate() const
 {
@@ -1313,9 +1323,7 @@ void Annotation::setPriority(double priority)
 
 void Annotation::serializeToStream_(std::ostream& gogOutputStream) const
 {
-  std::string name;
-  getName(name);
-  gogOutputStream << shapeTypeToString(shapeType()) << " " << name << "\n";
+  gogOutputStream << shapeTypeToString(shapeType()) << " " << text() << "\n";
 
   if (position_.has_value())
   {

@@ -154,7 +154,7 @@ public:
   * Get user friendly display name of shape; if value is not set, default name is returned
   * @return 0 if value was set, non-zero otherwise
   */
-  int getName(std::string& name) const;
+  virtual int getName(std::string& name) const;
   /// Set user friendly display name of the shape
   void setName(const std::string& gogName);
 
@@ -808,6 +808,8 @@ public:
   /// Always returns false
   virtual bool canRotate() const override;
   virtual ShapeType shapeType() const override;
+  /// Return text as name value if it exists and no name is defined
+  virtual int getName(std::string& name) const override;
 
   /// Get the display text of the annotation
   std::string text() const;

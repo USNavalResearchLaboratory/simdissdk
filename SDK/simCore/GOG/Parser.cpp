@@ -285,7 +285,6 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         textToken = simCore::StringUtils::substitute(textToken, "_", " ");
         textToken = simCore::StringUtils::substitute(textToken, "\\n", "\n");
         current.set(ShapeParameter::TEXT, textToken);
-        current.set(ShapeParameter::NAME, textToken);
         invalidShape = false;  // Required to allow processing of valid annotations after an invalid annotation
       }
       else
