@@ -200,10 +200,20 @@ public:
   virtual QString title() const { return action_->description(); }
   virtual QVariant text(int col) const
   {
-    if (col == COL_ACTION)
+    switch (col)
+    {
+    case COL_ACTION:
       return action_->description();
-    QKeySequence key = action_->hotkeys()[col - 1];
-    return key;
+    case COL_PRIMARY:
+    case COL_SECONDARY:
+      return keySequenceForColumn_(col);
+    case COL_ALIASES:
+      return aliasesStr_;
+    case NUM_COLUMNS:
+      assert(0); // Should not be possible
+      break;
+    }
+    return QVariant();
   }
   virtual QVariant decoration(int col) const
   {
@@ -218,7 +228,7 @@ public:
     return Qt::ItemIsEnabled;
   }
   virtual int row() const { return parent()->indexOf(const_cast<ActionItem*>(this)); }
-  virtual int numColumns() const { return 1 + action_->hotkeys().size(); }
+  virtual int numColumns() const { return NUM_COLUMNS; }
 
   /// Like QAbstractItemModel::setData(), returns true on successful handle
   virtual bool setData(int col, const QVariant& value)
@@ -261,9 +271,51 @@ public:
   /// find an item corresponding to the given action
   virtual TreeItem* find(const Action* action) const { return (action == action_) ? const_cast<ActionItem*>(this) : nullptr; }
 
+  /** Add an alias to the Action Item */
+  void addAlias(const QString& newAlias)
+  {
+    aliases_.push_back(newAlias);
+    updateAliasStr_();
+  }
+
+  /** Set aliases on the Action Item */
+  void setAliases(const std::vector<QString>& aliases)
+  {
+    if (aliases == aliases_)
+      return;
+    aliases_ = aliases;
+    updateAliasStr_();
+  }
+
 private:
+  /** Get key sequence for column. Returns QVariant if unavailable */
+  QVariant keySequenceForColumn_(int col) const
+  {
+    const auto& keys = action_->hotkeys();
+    if (col == COL_PRIMARY && !keys.isEmpty())
+      return keys[0];
+    if (col == COL_SECONDARY && keys.size() > 1)
+      return keys[1];
+    return QVariant();
+  }
+
+  /** Update cached comma-delimited string of all aliases */
+  void updateAliasStr_()
+  {
+    aliasesStr_.clear();
+    for (const auto& alias : aliases_)
+    {
+      if (!aliasesStr_.isEmpty())
+        aliasesStr_.append(", ");
+      aliasesStr_.append(alias);
+    }
+  }
+
   ActionItemModel::GroupItem* parent_ = nullptr;
   Action* action_ = nullptr;
+
+  std::vector<QString> aliases_;
+  QString aliasesStr_;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -404,6 +456,8 @@ QVariant ActionItemModel::headerData(int section, Qt::Orientation orientation, i
       return tr("Primary");
     case COL_SECONDARY:
       return tr("Secondary");
+    case COL_ALIASES:
+      return tr("Aliases");
     case NUM_COLUMNS:
       // A column was added and this section was not updated
       assert(0);
@@ -419,18 +473,20 @@ void ActionItemModel::connect_(ActionRegistry* newRegistry)
 {
   if (newRegistry == nullptr)
     return;
-  connect(newRegistry, SIGNAL(actionAdded(simQt::Action*)), this, SLOT(actionAdded(simQt::Action*)));
-  connect(newRegistry, SIGNAL(actionRemoved(const simQt::Action*)), this, SLOT(actionRemoved(const simQt::Action*)));
-  connect(newRegistry, SIGNAL(hotKeysChanged(simQt::Action*)), this, SLOT(hotKeysChanged(simQt::Action*)));
+  connect(newRegistry, SIGNAL(actionAdded(simQt::Action*)), this, SLOT(addAction_(simQt::Action*)));
+  connect(newRegistry, SIGNAL(actionRemoved(const simQt::Action*)), this, SLOT(removeAction_(const simQt::Action*)));
+  connect(newRegistry, SIGNAL(hotKeysChanged(simQt::Action*)), this, SLOT(updateHotKeys_(simQt::Action*)));
+  connect(newRegistry, SIGNAL(aliasRegistered(QString, QString)), this, SLOT(assignAlias_(QString, QString)));
 }
 
 void ActionItemModel::disconnect_(ActionRegistry* oldRegistry)
 {
   if (oldRegistry == nullptr)
     return;
-  disconnect(oldRegistry, SIGNAL(actionAdded(simQt::Action*)), this, SLOT(actionAdded(simQt::Action*)));
-  disconnect(oldRegistry, SIGNAL(actionRemoved(const simQt::Action*)), this, SLOT(actionRemoved(const simQt::Action*)));
-  disconnect(oldRegistry, SIGNAL(hotKeysChanged(simQt::Action*)), this, SLOT(hotKeysChanged(simQt::Action*)));
+  disconnect(oldRegistry, SIGNAL(actionAdded(simQt::Action*)), this, SLOT(addAction_(simQt::Action*)));
+  disconnect(oldRegistry, SIGNAL(actionRemoved(const simQt::Action*)), this, SLOT(removeAction_(const simQt::Action*)));
+  disconnect(oldRegistry, SIGNAL(hotKeysChanged(simQt::Action*)), this, SLOT(updateHotKeys_(simQt::Action*)));
+  disconnect(oldRegistry, SIGNAL(aliasRegistered(QString, QString)), this, SLOT(assignAlias_(QString, QString)));
 }
 
 void ActionItemModel::createGroupedList_(QList<GroupItem*>& groups) const
@@ -451,12 +507,14 @@ void ActionItemModel::createGroupedList_(QList<GroupItem*>& groups) const
       GroupItem* newGroup = new GroupItem(this, action->group());
       sortedMap.insert(action->group(), newGroup);
       ActionItem* newAction = new ActionItem(newGroup, action);
+      newAction->setAliases(registry_->getAliasesForAction(action->description()));
       newGroup->appendChild(newAction);
     }
     else
     {
       // Append to existing set
       ActionItem* newAction = new ActionItem(*iter, action);
+      newAction->setAliases(registry_->getAliasesForAction(action->description()));
       (*iter)->appendChild(newAction);
     }
   }
@@ -469,7 +527,7 @@ void ActionItemModel::createGroupedList_(QList<GroupItem*>& groups) const
     groups.push_back(*it);
 }
 
-void ActionItemModel::actionAdded(Action* action)
+void ActionItemModel::addAction_(Action* action)
 {
   if (action == nullptr)
     return;
@@ -503,7 +561,7 @@ void ActionItemModel::actionAdded(Action* action)
   endInsertRows();
 }
 
-void ActionItemModel::actionRemoved(const Action* action)
+void ActionItemModel::removeAction_(const Action* action)
 {
   TreeItem* item = findAction_(action);
   if (item == nullptr || item->parent() == nullptr)
@@ -528,11 +586,27 @@ void ActionItemModel::actionRemoved(const Action* action)
   endRemoveRows();
 }
 
-void ActionItemModel::hotKeysChanged(Action* action)
+void ActionItemModel::updateHotKeys_(Action* action)
 {
   QModelIndex idx1 = indexOfAction_(action);
   if (idx1.isValid())
     Q_EMIT(dataChanged(idx1, createIndex(idx1.row(), 2, idx1.internalPointer())));
+}
+
+void ActionItemModel::assignAlias_(const QString& actionDesc, const QString& alias)
+{
+  simQt::Action* action = registry_->findAction(actionDesc);
+  if (action == nullptr)
+    return;
+
+  ActionItem* item = dynamic_cast<ActionItem*>(findAction_(action));
+  if (item == nullptr)
+    return;
+
+  item->addAlias(alias);
+  QModelIndex idx = indexOfAction_(action);
+  if (idx.isValid())
+    Q_EMIT(dataChanged(idx, createIndex(idx.row(), NUM_COLUMNS - 1, idx.internalPointer())));
 }
 
 ActionItemModel::GroupItem* ActionItemModel::findGroup_(const QString& name) const

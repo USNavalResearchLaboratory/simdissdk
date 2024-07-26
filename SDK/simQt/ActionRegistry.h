@@ -157,6 +157,9 @@ public:
   /** add a binding to the described action, will search aliases; returns 0 on success */
   int addHotKey(const QString& actionDesc, QKeySequence hotkey);
 
+  /** Get aliases associated with the given action description */
+  std::vector<QString> getAliasesForAction(const QString& actionDesc) const;
+
   /** Memento interface (narrow) for saving and restoring settings opaquely */
   class SettingsMemento
   {
@@ -186,6 +189,8 @@ Q_SIGNALS:
   void hotKeysChanged(simQt::Action* action);
   /** notice that a hot key has been removed from an action */
   void hotKeyLost(const simQt::Action* fromAction, const QKeySequence& hotkey);
+  /** notice that an alias has been registered for an action */
+  void aliasRegistered(const QString& actionDesc, const QString& alias);
 
 private:
   /** In debug mode, will validate all actions to ensure no sync loss between action registry and action */

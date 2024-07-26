@@ -53,6 +53,8 @@ public:
     COL_PRIMARY,
     /** Secondary hot key assignment */
     COL_SECONDARY,
+    /** Comma-delimited list of aliases*/
+    COL_ALIASES,
 
     /** Convenience entry for total number of columns */
     NUM_COLUMNS
@@ -76,9 +78,10 @@ Q_SIGNALS:
   void groupAdded(const QModelIndex& idx);
 
 private Q_SLOTS:
-  void actionAdded(simQt::Action* action);
-  void actionRemoved(const simQt::Action* action);
-  void hotKeysChanged(simQt::Action* action);
+  void addAction_(simQt::Action* action);
+  void removeAction_(const simQt::Action* action);
+  void updateHotKeys_(simQt::Action* action);
+  void assignAlias_(const QString& actionDesc, const QString& alias);
 
 private:
   /// Internal helper classes, used to organize actions into groups for tree display
