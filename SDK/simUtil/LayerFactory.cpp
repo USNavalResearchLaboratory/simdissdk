@@ -29,6 +29,7 @@
 #include "osgEarth/MapboxGLImageLayer"
 #include "osgEarth/MBTiles"
 #include "osgEarth/OGRFeatureSource"
+#include "osgEarth/Version"
 #include "simCore/Common/Exception.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
@@ -40,7 +41,9 @@
 #include "simVis/DBFormat.h"
 #endif
 
+#if OSGEARTH_SOVERSION >= 152
 #include "osgEarth/SimplifyFilter"
+#endif
 
 namespace simUtil {
 
@@ -304,6 +307,7 @@ void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::F
 
   osgEarth::OGRFeatureSource* ogr = new osgEarth::OGRFeatureSource();
 
+#if OSGEARTH_SOVERSION >= 152
   // Apply simplify tolerance only if it's been set by user
   if (simplifyTolerance_.has_value())
   {
@@ -311,6 +315,7 @@ void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::F
     so.tolerance() = *simplifyTolerance_;
     ogr->options().filters().push_back(so);
   }
+#endif
 
   ogr->setURL(url);
   ogr->open(); // not error-checking here; caller can do that at the layer level
