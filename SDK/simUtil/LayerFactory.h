@@ -24,6 +24,7 @@
 #define SIMUTIL_LAYERFACTORY_H
 
 #include <memory>
+#include <optional>
 #include <string>
 #include "osg/Vec4f"
 #include "simCore/Common/Common.h"
@@ -114,8 +115,17 @@ public:
   /** Changes the stipple pattern and factor for the next loaded layer. */
   void setStipple(unsigned short pattern, unsigned int factor);
 
+  /**
+   * Sets the simplify filter's tolerance. See osgEarth::SimplifyFilter for documentation.
+   * Unset by default. A decent value for global scale is 0.011. Using this can improve
+   * performance when rendering large shape files.
+   */
+  void setSimplifyTolerance(double tolerance);
+
 private:
   std::unique_ptr<osgEarth::Style> style_;
+
+  std::optional<double> simplifyTolerance_;
 };
 
 }

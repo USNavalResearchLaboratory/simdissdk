@@ -40,6 +40,8 @@
 #include "simVis/DBFormat.h"
 #endif
 
+#include "osgEarth/SimplifyFilter"
+
 namespace simUtil {
 
 /** Default cache time of one year */
@@ -301,6 +303,15 @@ void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::F
   layer->setStyleSheet(stylesheet);
 
   osgEarth::OGRFeatureSource* ogr = new osgEarth::OGRFeatureSource();
+
+  // Apply simplify tolerance only if it's been set by user
+  if (simplifyTolerance_.has_value())
+  {
+    osgEarth::SimplifyFilterOptions so;
+    so.tolerance() = *simplifyTolerance_;
+    ogr->options().filters().push_back(so);
+  }
+
   ogr->setURL(url);
   ogr->open(); // not error-checking here; caller can do that at the layer level
   layer->setFeatureSource(ogr);
@@ -326,6 +337,11 @@ void ShapeFileLayerFactory::setStipple(unsigned short pattern, unsigned int fact
   osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
   ls->stroke()->stipplePattern() = pattern;
   ls->stroke()->stippleFactor() = factor;
+}
+
+void ShapeFileLayerFactory::setSimplifyTolerance(double tolerance)
+{
+  simplifyTolerance_ = tolerance;
 }
 
 }

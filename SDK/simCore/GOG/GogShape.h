@@ -877,7 +877,7 @@ public:
   * @return 0 if value was set, non-zero otherwise
   */
   int getPriority(double& priority) const;
-  /// Set the text deconfliction prority value
+  /// Set the text deconfliction priority value
   void setPriority(double priority);
 
 private:
