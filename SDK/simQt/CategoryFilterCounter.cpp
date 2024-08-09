@@ -237,11 +237,26 @@ void AsyncCategoryCounter::asyncCountEntities()
   watcher->setFuture(QtConcurrent::run(counter_, &CategoryFilterCounter::testAllCategories));
 }
 
+void AsyncCategoryCounter::reset()
+{
+  retestPending_ = false;
+  dropNextResults_ = (counter_ != nullptr);
+  objectTypes_ = simData::ALL;
+  if (nextFilter_)
+    nextFilter_->clear();
+  lastResults_.allCategories.clear();
+}
+
 void AsyncCategoryCounter::emitResults_()
 {
   // This call happens in the main thread and is the "join" for the job
-  lastResults_ = counter_->results();
-  Q_EMIT resultsReady(lastResults_);
+  if (!dropNextResults_)
+  {
+    lastResults_ = counter_->results();
+    Q_EMIT resultsReady(lastResults_);
+  }
+  else
+    dropNextResults_ = false;
 
   // just set to nullptr, the deleteLater() for watcher will do the actual delete
   counter_ = nullptr;

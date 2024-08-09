@@ -1242,6 +1242,10 @@ void CategoryTreeModel::setSettings(Settings* settings, const QString& settingsK
 
 void CategoryTreeModel::clearTree_()
 {
+  // only reset if necessary
+  if ((categories_.size() == 0) && categoryIntToItem_.empty() && filter_->isEmpty())
+    return;
+
   beginResetModel();
   categories_.deleteAll();
   categoryIntToItem_.clear();

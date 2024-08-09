@@ -774,6 +774,7 @@ void CategoryFilterWidget::setShowEntityCount(bool fl)
     connect(counter_, SIGNAL(resultsReady(simQt::CategoryCountResults)), this, SLOT(processCategoryCounts(simQt::CategoryCountResults)));
     connect(treeModel_, SIGNAL(filterChanged(simData::CategoryFilter)), counter_, SLOT(setFilter(simData::CategoryFilter)));
     connect(treeModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), counter_, SLOT(asyncCountEntities()));
+    connect(treeModel_, &QAbstractItemModel::modelReset, counter_, &simQt::AsyncCategoryCounter::reset);
     counter_->setFilter(categoryFilter());
     counter_->setObjectTypes(counterObjectTypes_);
   }
