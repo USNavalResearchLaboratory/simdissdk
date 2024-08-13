@@ -252,6 +252,24 @@ void GateCentroid::setVisible(bool visible)
   geom_->setNodeMask(visible ? DISPLAY_MASK_GATE : DISPLAY_MASK_NONE);
 }
 
+void GateCentroid::setColor(const simData::GatePrefs* prefs)
+{
+  auto color = simVis::Color(prefs->centroidcolor(), simVis::Color::RGBA);
+
+  // if alpha only use the gate color adjusted by the alpha component
+  if ((color.r() == 0.0) && (color.g() == 0.0) && (color.b() == 0.0))
+  {
+    auto alpha = color.a();
+    color = (prefs->commonprefs().useoverridecolor()) ?
+      simVis::Color(prefs->commonprefs().overridecolor(), simVis::Color::RGBA) :
+      simVis::Color(prefs->commonprefs().color(), simVis::Color::RGBA);
+
+    color.a() = alpha;
+  }
+
+  geom_->setColor(color);
+}
+
 // perform an in-place update to an existing centroid
 void GateCentroid::update(const simData::GateUpdate& update)
 {
@@ -735,6 +753,7 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   // Fix the draw flag on the centroid - note that the logic here means that: if in fillpattern centroid, drawcentroid pref toggle does not hide it
   const bool drawCentroid = activePrefs->drawcentroid() || activePrefs->fillpattern() == simData::GatePrefs_FillPattern_CENTROID;
   centroid_->setVisible(drawCentroid);
+  centroid_->setColor(activePrefs);
 
   // centroid must be kept up-to-date, even if it is not shown, due to gate tethering/picking dependency on centroid
   // update the centroid for changes in size; locator takes care of centroid positioning

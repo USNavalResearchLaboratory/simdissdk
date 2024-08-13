@@ -1249,6 +1249,10 @@ message GatePrefs {
 
   /// Toggle drawing of the outline
   optional bool drawOutline = 11 [default = true];
+  
+  /// Color for the centroid
+  optional fixed32 centroidColor = 12 [default = 0xFFFFFFFF];
+
 };
 
 /// common update to gate data
