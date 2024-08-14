@@ -263,8 +263,9 @@ void GateCentroid::setColor(const simData::GatePrefs* prefs)
     color = (prefs->commonprefs().useoverridecolor()) ?
       simVis::Color(prefs->commonprefs().overridecolor(), simVis::Color::RGBA) :
       simVis::Color(prefs->commonprefs().color(), simVis::Color::RGBA);
-
-    color.a() = alpha;
+    // if all centroid color & alpha components are 0, centroid is exactly same color as gate
+    if (alpha != 0)
+      color.a() = alpha;
   }
 
   geom_->setColor(color);

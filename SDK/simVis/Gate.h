@@ -85,6 +85,7 @@ namespace simVis
      * Set the color for the centroid.
      * Use centroidColor if any of the color components are non-zero. If all the color components of centroidColor
      * are zero use the gate color, but replace the alpha component with the centroidColor alpha component.
+     * If all centroid color & alpha components are 0, centroid will have exactly same color as gate.
      */
     void setColor(const simData::GatePrefs* prefs);
 
