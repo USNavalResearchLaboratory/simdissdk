@@ -79,7 +79,7 @@ namespace simCore
    * @param degSymbol Symbol to use when formatting output in DMD, DMS, or DD output
    * @param positiveDir Character to append for positive angles, only when allNumerics==false.  Set this to 0 (\0 or null)
    *   to not append anything for positive directions.
-   * @param positiveDir Character to append for negative angles, only when allNumerics==false.  Set this to 0 (\0 or null)
+   * @param negativeDir Character to append for negative angles, only when allNumerics==false.  Set this to 0 (\0 or null)
    *   to not append anything for negative directions, in which case a negative sign is prepended.
    * @param allowRollover If true, allows angle returns that go over 360. If false, angle returns in simCore::FMT_DEGREES
    *   will be clamped to 0 if they exceed 360.
@@ -110,7 +110,7 @@ namespace simCore
    * @param format Geodetic output format.
    * @param allNumerics If false, then string will contain hemisphere, and the minutes symbol (') and
    *   and seconds symbol (") for DMD/DMS formats; additionally, values in western hemisphere will not
-   *   show a negative (-) sign, because the "S" is appended.  If true, then the return string will
+   *   show a negative (-) sign, because the "W" is appended.  If true, then the return string will
    *   omit the hemisphere, minutes symbol, seconds symbol, and will include a negative sign if in the
    *   western hemisphere.
    * @param precision Decimal precision to be used in formatting the value.
