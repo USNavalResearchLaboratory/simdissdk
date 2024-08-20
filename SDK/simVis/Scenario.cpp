@@ -229,7 +229,7 @@ int ScenarioManager::SimpleEntityGraph::addOrUpdate(EntityRecord* record)
       return 0;
 
     // custom rendering nodes hosted by platforms are attached to the scenegraph by their host; see ScenarioManager::addCustomRendering
-    simData::ObjectId hostId;
+    simData::ObjectId hostId = 0;
     if ((node->type() == simData::CUSTOM_RENDERING) && (node->getHostId(hostId) != 0) && dynamic_cast<CustomRenderingNode*>(node))
       return 0;
   }
@@ -674,7 +674,7 @@ void ScenarioManager::removeEntity(simData::ObjectId id)
     // remove from the hoster table
     hosterTable_.erase(id);
 
-    simData::ObjectId hostId;
+    simData::ObjectId hostId = 0;
     if (record->getEntityNode()->getHostId(hostId))
     {
       const auto& range = hosterTable_.equal_range(hostId);
@@ -1062,7 +1062,7 @@ const EntityNode* ScenarioManager::getHostPlatform(const EntityNode* entity) con
   if (entity == nullptr)
     return nullptr;
 
-  simData::ObjectId hostId;
+  simData::ObjectId hostId = 0;
   while (entity->getHostId(hostId))
   {
     entity = find(hostId);

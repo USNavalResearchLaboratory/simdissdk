@@ -38,7 +38,7 @@ bool validateValueNoCompare(const std::string& testString, bool expectedValid, T
 {
   bool rv = true; // Return value defaults to good
 
-  T val;
+  T val = {};
   bool wasValid = simCore::isValidNumber(testString, val, allowPlusSign);
 
   // The docs state that isValidNumber() sets the parameter to 0 on failure
@@ -64,7 +64,7 @@ template <typename T>
 bool validateValue(const std::string& testString, bool expectedValid, const T& conversion = 0, bool allowPlusSign = true)
 {
   // Make sure we could convert it properly
-  T val;
+  T val = {};
   bool rv = validateValueNoCompare<T>(testString, expectedValid, &val, allowPlusSign);
   if (rv)
   {
@@ -360,7 +360,7 @@ int testPermitPlus()
 {
   int rv = 0;
   {
-    uint8_t val;
+    uint8_t val = 0;
     rv += SDK_ASSERT(simCore::isValidNumber("+8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("8", val, true));
     rv += SDK_ASSERT(!simCore::isValidNumber("-8", val, true));
@@ -370,7 +370,7 @@ int testPermitPlus()
     rv += SDK_ASSERT(!simCore::isValidNumber("-8", val, false));
   }
   {
-    uint16_t val;
+    uint16_t val = 0;
     rv += SDK_ASSERT(simCore::isValidNumber("+8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("8", val, true));
     rv += SDK_ASSERT(!simCore::isValidNumber("-8", val, true));
@@ -380,7 +380,7 @@ int testPermitPlus()
     rv += SDK_ASSERT(!simCore::isValidNumber("-8", val, false));
   }
   {
-    uint32_t val;
+    uint32_t val = 0;
     rv += SDK_ASSERT(simCore::isValidNumber("+8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("8", val, true));
     rv += SDK_ASSERT(!simCore::isValidNumber("-8", val, true));
@@ -409,7 +409,7 @@ int testPermitPlus()
     rv += SDK_ASSERT(!simCore::isValidNumber("1.9.9", val));
   }
   {
-    uint64_t val;
+    uint64_t val = 0;
     rv += SDK_ASSERT(simCore::isValidNumber("+8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("8", val, true));
     rv += SDK_ASSERT(!simCore::isValidNumber("-8", val, true));
@@ -441,7 +441,7 @@ int testPermitPlus()
     rv += SDK_ASSERT(!simCore::isValidNumber("1.9.9", val));
   }
   {
-    int8_t val;
+    int8_t val = 0;
     rv += SDK_ASSERT(simCore::isValidNumber("+8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, true));
@@ -451,7 +451,7 @@ int testPermitPlus()
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, false));
   }
   {
-    int16_t val;
+    int16_t val = 0;
     rv += SDK_ASSERT(simCore::isValidNumber("+8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, true));
@@ -461,7 +461,7 @@ int testPermitPlus()
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, false));
   }
   {
-    int32_t val;
+    int32_t val = 0;
     rv += SDK_ASSERT(simCore::isValidNumber("+8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, true));
@@ -471,7 +471,7 @@ int testPermitPlus()
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, false));
   }
   {
-    int64_t val;
+    int64_t val = 0;
     rv += SDK_ASSERT(simCore::isValidNumber("+8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, true));
@@ -481,7 +481,7 @@ int testPermitPlus()
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, false));
   }
   {
-    float val;
+    float val = 0.f;
     rv += SDK_ASSERT(simCore::isValidNumber("+8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, true));
@@ -491,7 +491,7 @@ int testPermitPlus()
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, false));
   }
   {
-    double val;
+    double val = 0.;
     rv += SDK_ASSERT(simCore::isValidNumber("+8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("8", val, true));
     rv += SDK_ASSERT(simCore::isValidNumber("-8", val, true));
@@ -508,7 +508,7 @@ int testValidHexNumber()
   int rv = 0;
   {
     // Test a variety of values similar to what uint32_t accepts
-    uint32_t val;
+    uint32_t val = 0;
     rv += SDK_ASSERT(!simCore::isValidHexNumber("+8", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("8", val) && val == 0x8);
     rv += SDK_ASSERT(!simCore::isValidHexNumber("-8", val));
@@ -539,7 +539,7 @@ int testValidHexNumber()
 
   // Test variety of values that include hex numbers
   {
-    uint32_t val;
+    uint32_t val = 0;
     rv += SDK_ASSERT(simCore::isValidHexNumber("1abcd", val) && val == 0x1abcd);
     rv += SDK_ASSERT(simCore::isValidHexNumber("1aBCd", val) && val == 0x1abcd);
     rv += SDK_ASSERT(simCore::isValidHexNumber("0x1aAbCd", val) && val == 0x1aabcd);
@@ -573,7 +573,7 @@ int testValidHexNumber()
 
   // uint16_t testing
   {
-    uint16_t val;
+    uint16_t val = 0;
     rv += SDK_ASSERT(!simCore::isValidHexNumber("+8", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("8", val) && val == 0x8);
     rv += SDK_ASSERT(!simCore::isValidHexNumber("-8", val));
@@ -611,7 +611,7 @@ int testValidHexNumber()
 
   // uint8_t testing
   {
-    uint8_t val;
+    uint8_t val = 0;
     rv += SDK_ASSERT(!simCore::isValidHexNumber("+8", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("8", val) && val == 0x8);
     rv += SDK_ASSERT(!simCore::isValidHexNumber("-8", val));
@@ -649,7 +649,7 @@ int testValidHexNumber()
 
   // int32_t testing
   {
-    int32_t val;
+    int32_t val = 0;
     rv += SDK_ASSERT(!simCore::isValidHexNumber("+8", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("8", val) && val == 0x8);
     rv += SDK_ASSERT(!simCore::isValidHexNumber("-8", val));
@@ -688,7 +688,7 @@ int testValidHexNumber()
 
   // int16_t testing
   {
-    int16_t val;
+    int16_t val = 0;
     rv += SDK_ASSERT(!simCore::isValidHexNumber("+8", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("8", val) && val == 0x8);
     rv += SDK_ASSERT(!simCore::isValidHexNumber("-8", val));
@@ -727,7 +727,7 @@ int testValidHexNumber()
 
   // int8_t testing
   {
-    int8_t val;
+    int8_t val = 0;
     rv += SDK_ASSERT(!simCore::isValidHexNumber("+8", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("8", val) && val == 0x8);
     rv += SDK_ASSERT(!simCore::isValidHexNumber("-8", val));

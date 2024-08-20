@@ -1647,7 +1647,7 @@ void Parser::parseEllipticalOptional_(const ParsedShape& parsed, const std::stri
 int Parser::getColor_(const ParsedShape& parsed, ShapeParameter param, const std::string& shapeName, const std::string& fieldName, Color& color) const
 {
   std::string colorStr = parsed.stringValue(param);
-  uint32_t abgr;
+  uint32_t abgr = 0;
   // try hex formatted string
   if (!simCore::isValidHexNumber(colorStr, abgr))
   {
