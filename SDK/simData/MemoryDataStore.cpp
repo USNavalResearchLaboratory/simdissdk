@@ -713,31 +713,11 @@ void MemoryDataStore::updatePlatforms_(double time, std::map<simData::ObjectId, 
 
     if (fileMode)
     {
-      const PlatformUpdateSlice* slice = platform->updates();
-      const double firstTime = slice->firstTime();
-      const bool staticPlatform = (firstTime == -1.0);
-      // static platforms are never off
-      if (!staticPlatform)
+      if (!DataStoreHelpers::isFileModePlatformActive(platform->preferences()->lifespanmode(), *platform->updates(), time))
       {
-        // never show before first point
-        const bool beforeFirst = (time < firstTime);
-        if (beforeFirst)
-        {
-          // Platform is not valid/off
-          platform->updates()->setCurrent(nullptr);
-          continue;
-        }
-
-        // SIM-17032: single-point platforms are off until their first point, but on thereafter.
-        // multi-point platforms are on from their first point to their last point.
-        const bool singlePointPlatform = (slice->numItems() == 1);
-        const bool afterLast = (!singlePointPlatform && time > slice->lastTime());
-        if (afterLast)
-        {
-          // Platform is not valid/off
-          platform->updates()->setCurrent(nullptr);
-          continue;
-        }
+        // Platform is not valid/off
+        platform->updates()->setCurrent(nullptr);
+        continue;
       }
     }
 

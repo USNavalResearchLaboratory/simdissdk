@@ -394,17 +394,10 @@ namespace {
     if (slice == nullptr)
       return false;
 
-    // static platforms are always active
-    if (slice->firstTime() == -1.0)
-      return true;
-    // all other platforms are not active before their on-time
-    if (slice->firstTime() > atTime)
-      return false;
-    // SIM-17032: single-point platforms are always active after their on time
-    if (slice->numItems() == 1)
-      return true;
-    // all other platforms are off after their last point
-    return (slice->lastTime() < atTime ? false : true);
+    simData::DataStore::Transaction txn;
+    const simData::PlatformPrefs* pprefs = dataStore.platformPrefs(objectId, &txn);
+    const LifespanMode lifespan = (pprefs ? pprefs->lifespanmode() : LIFE_EXTEND_SINGLE_POINT);
+    return DataStoreHelpers::isFileModePlatformActive(lifespan, *slice, atTime);
   }
 
   /** Helper method to determine if a beam is active */
@@ -591,6 +584,37 @@ bool DataStoreHelpers::isEntityActive(const simData::DataStore& dataStore, simDa
     break;
   }
   return false;
+}
+
+bool DataStoreHelpers::isFileModePlatformActive(simData::LifespanMode lifespan, const simData::PlatformUpdateSlice& slice, double atTime)
+{
+  switch (lifespan)
+  {
+  case LIFE_FIRST_LAST_POINT:
+    // static platforms are always active
+    if (slice.firstTime() == -1.0)
+      return true;
+    if ((slice.firstTime() > atTime) || (slice.lastTime() < atTime))
+      return false;
+    return true;
+
+  case LIFE_EXTEND_SINGLE_POINT:
+    // static platforms are always active
+    if (slice.firstTime() == -1.0)
+      return true;
+    // all other platforms are not active before their on-time
+    if (slice.firstTime() > atTime)
+      return false;
+    // SIM-17032: single-point platforms are always active after their on time
+    if (slice.numItems() == 1)
+      return true;
+    // all other platforms are off after their last point
+    return (slice.lastTime() < atTime ? false : true);
+  }
+
+  // Unknown lifespan, fall back to extend-single-point default
+  assert(0);
+  return DataStoreHelpers::isFileModePlatformActive(LIFE_EXTEND_SINGLE_POINT, slice, atTime);
 }
 
 double DataStoreHelpers::getUserVerticalDatum(const simData::DataStore& dataStore, simData::ObjectId id)

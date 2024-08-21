@@ -266,6 +266,27 @@ enum OverrideColorCombineMode {
   INTENSITY_GRADIENT = 2;
 };
 
+/// Platform lifespan definition options for file mode
+enum LifespanMode {
+  /**
+   * Platform lifespan defined by the first and last point. Static entities exist at all times and are static.
+   * Single point platforms exist only at the instant in time of their single data point. This is the legacy
+   * SIMDIS behavior in file mode that has been used as the default until approximately 2024.
+   */
+  LIFE_FIRST_LAST_POINT = 0;
+
+  /**
+   * Platform lifespan defined by the first and last point. Static entities exist at all times and are static.
+   * Single point platforms start existing at the time of their data point, and exist until the end of the
+   * scenario, until removed, or until some preference rule turns them off. This is useful for data sources
+   * recorded in live mode, with a propensity of single point entities, where the data source does not
+   * correctly terminate the platform's lifespan with an ending point. This is intended to be a low-risk
+   * improvement to LIFE_FIRST_LAST_POINT for what typically otherwise might signal an error condition
+   * (having a platform with only one point existing only for one instant in time).
+   */
+  LIFE_EXTEND_SINGLE_POINT = 1;
+};
+
 /// Coordinate system definition for scenario and platforms
 message CoordinateFrame {
   /// Coordinate system flag.  SIMDIS SDK stores all data internally as ECEF; this is only descriptive for input/output
@@ -967,7 +988,10 @@ message PlatformPrefs {
     OMIT_CHILDREN_AND_VIS_UPDATE = 1;  ///< Hide the platform and the platform's children
   };
 
+  /// Behavior when commonPrefs.draw is false
   optional DrawOffBehavior drawOffBehavior = 80 [default = DEFAULT_BEHAVIOR];
+  /// Explains how platform TSPI data relates to calculated platform lifespan in file mode.
+  optional LifespanMode lifespanMode = 81 [default = LIFE_EXTEND_SINGLE_POINT];
 };
 
 /// timed update to platform prefs; commands override prefs

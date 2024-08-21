@@ -25,6 +25,7 @@
 
 #include <string>
 #include "simCore/Common/Common.h"
+#include "simData/DataSlice.h"
 #include "simData/DataTable.h"
 #include "simData/DataTypes.h"
 #include "simData/ObjectId.h"
@@ -78,6 +79,9 @@ public:
 
   /** Returns true if the entity is active, or false if inactive; e.g. for Super Form-like filtering. */
   static bool isEntityActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime);
+  /** Inspecting an individual platforms slice, determines whether it is active in file mode. Does not account for live mode. */
+  static bool isFileModePlatformActive(simData::LifespanMode lifespan, const simData::PlatformUpdateSlice& slice, double atTime);
+
   /** Returns the user vertical datum value, in meters, for the given entity. */
   static double getUserVerticalDatum(const simData::DataStore& dataStore, simData::ObjectId id);
 
