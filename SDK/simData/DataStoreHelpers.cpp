@@ -378,25 +378,29 @@ namespace {
   /** Helper method to determine if a platform is active */
   bool isPlatformActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime)
   {
-    if (dataStore.dataLimiting())
-    {
-      simData::DataStore::Transaction txn;
-      const simData::CommonPrefs* prefs = dataStore.commonPrefs(objectId, &txn);
-      if (prefs != nullptr)
-      {
-        return prefs->datadraw();
-      }
+    simData::DataStore::Transaction txn;
+    const simData::PlatformPrefs* prefs = dataStore.platformPrefs(objectId, &txn);
+    // No prefs? No platform; not active
+    if (!prefs)
+      return false;
+    const bool dataDraw = prefs->commonprefs().datadraw();
+    const LifespanMode lifespan = prefs->lifespanmode();
+    txn.complete(&prefs);
 
-      return true;
-    }
+    // Live mode: respect the data draw flag, ignore data points
+    if (dataStore.dataLimiting())
+      return dataDraw;
+
+    // File mode: If data draw is off, then the platform is not active, regardless of time.
+    // We do not search command history because data draw is not expected to be in commands
+    // list for platforms, and platforms are expected to only be on during time of validity,
+    // without breaks.
+    if (!dataDraw)
+      return false;
 
     const simData::PlatformUpdateSlice* slice = dataStore.platformUpdateSlice(objectId);
     if (slice == nullptr)
       return false;
-
-    simData::DataStore::Transaction txn;
-    const simData::PlatformPrefs* pprefs = dataStore.platformPrefs(objectId, &txn);
-    const LifespanMode lifespan = (pprefs ? pprefs->lifespanmode() : LIFE_EXTEND_SINGLE_POINT);
     return DataStoreHelpers::isFileModePlatformActive(lifespan, *slice, atTime);
   }
 
