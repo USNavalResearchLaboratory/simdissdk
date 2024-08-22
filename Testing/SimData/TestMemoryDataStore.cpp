@@ -28,12 +28,14 @@
 #include "simCore/Common/Version.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Common/Common.h"
+#include "simData/DataStoreHelpers.h"
 #include "simData/LinearInterpolator.h"
 #include "simData/MemoryDataStore.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simUtil/DataStoreTestHelper.h"
 
 namespace {
+
 class MemDataStoreAssertException : public std::exception
 {
 public:
@@ -100,7 +102,6 @@ protected:
   uint32_t remove_;
   uint32_t delete_;
 };
-}
 
 void testPlatform_insert()
 {
@@ -1712,7 +1713,6 @@ int testOriginalId()
   ds->idListByOriginalId(&ids, 1, simData::BEAM);
   rv += SDK_ASSERT(ids.size() == 0);
 
-
   // Change the original id of 3 to a 1
   ids.clear();
   ds->idListByOriginalId(&ids, 3, simData::ALL);
@@ -1755,6 +1755,231 @@ int testOriginalId()
   return rv;
 }
 
+int testDataStoreHelperPlatformLifespan()
+{
+  int rv = 0;
+
+  // Create three platform update slices: static point, one point, and two points at different times
+  simData::MemoryDataSlice<simData::PlatformUpdate> staticSlice;
+  {
+    simData::PlatformUpdate* update = new simData::PlatformUpdate;
+    update->set_time(-1.0);
+    update->setPosition({ 0., 0., 0. });
+    staticSlice.insert(update);
+  }
+
+  simData::MemoryDataSlice<simData::PlatformUpdate> twoSlice;
+  {
+    simData::PlatformUpdate* update = new simData::PlatformUpdate;
+    update->set_time(5.0);
+    update->setPosition({ 0., 0., 0. });
+    twoSlice.insert(update);
+    update = new simData::PlatformUpdate;
+    update->set_time(15.0);
+    update->setPosition({ 0., 0., 0. });
+    twoSlice.insert(update);
+  }
+
+  simData::MemoryDataSlice<simData::PlatformUpdate> oneSlice;
+  {
+    simData::PlatformUpdate* update = new simData::PlatformUpdate;
+    update->set_time(5.0);
+    update->setPosition({ 0., 0., 0. });
+    oneSlice.insert(update);
+  }
+
+  // Several test times: 4; 5; 10; 15; 20. Each with every slice type, with all lifespan options
+  auto& isFileModePlatformActive = simData::DataStoreHelpers::isFileModePlatformActive;
+
+  // Static slice, LIFE_FIRST_LAST_POINT (always active)
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, staticSlice, 4.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, staticSlice, 5.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, staticSlice, 10.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, staticSlice, 15.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, staticSlice, 20.0));
+
+  // Static slice, LIFE_EXTEND_SINGLE_POINT (no change)
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, staticSlice, 4.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, staticSlice, 5.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, staticSlice, 10.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, staticSlice, 15.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, staticSlice, 20.0));
+
+  // Two points slice, LIFE_FIRST_LAST_POINT (active between 5-15 inclusive)
+  rv += SDK_ASSERT(!isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, twoSlice, 4.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, twoSlice, 5.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, twoSlice, 10.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, twoSlice, 15.0));
+  rv += SDK_ASSERT(!isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, twoSlice, 20.0));
+
+  // Two points slice, LIFE_EXTEND_SINGLE_POINT (no change)
+  rv += SDK_ASSERT(!isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, twoSlice, 4.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, twoSlice, 5.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, twoSlice, 10.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, twoSlice, 15.0));
+  rv += SDK_ASSERT(!isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, twoSlice, 20.0));
+
+  // Single point slice, LIFE_FIRST_LAST_POINT (active only at 5)
+  rv += SDK_ASSERT(!isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, oneSlice, 4.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, oneSlice, 5.0));
+  rv += SDK_ASSERT(!isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, oneSlice, 10.0));
+  rv += SDK_ASSERT(!isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, oneSlice, 15.0));
+  rv += SDK_ASSERT(!isFileModePlatformActive(simData::LIFE_FIRST_LAST_POINT, oneSlice, 20.0));
+
+  // Single point slice, LIFE_EXTEND_SINGLE_POINT (active after 5)
+  rv += SDK_ASSERT(!isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, oneSlice, 4.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, oneSlice, 5.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, oneSlice, 10.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, oneSlice, 15.0));
+  rv += SDK_ASSERT(isFileModePlatformActive(simData::LIFE_EXTEND_SINGLE_POINT, oneSlice, 20.0));
+
+  return rv;
+}
+
+int testDataStorePlatformLifespan()
+{
+  // intended to be very similar to testDataStoreHelperPlatformLifespan() but looking instead
+  // at the memory data store's implementation of updatePlatforms_, testing live/file mode.
+  int rv = 0;
+
+  simData::PlatformPrefs prefs;
+  prefs.set_lifespanmode(simData::LIFE_FIRST_LAST_POINT);
+
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore& ds = *testHelper.dataStore();
+  ds.setDataLimiting(true); // enable live mode
+
+  const simData::ObjectId staticPlat = testHelper.addPlatform();
+  testHelper.addPlatformUpdate(-1.0, staticPlat);
+  testHelper.updatePlatformPrefs(prefs, staticPlat);
+
+  const simData::ObjectId twoPlatform = testHelper.addPlatform();
+  testHelper.addPlatformUpdate(5.0, twoPlatform);
+  testHelper.addPlatformUpdate(15.0, twoPlatform);
+  testHelper.updatePlatformPrefs(prefs, twoPlatform);
+
+  const simData::ObjectId onePlatform = testHelper.addPlatform();
+  testHelper.addPlatformUpdate(5.0, onePlatform);
+  testHelper.updatePlatformPrefs(prefs, onePlatform);
+
+  ds.update(4.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() == nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() == nullptr);
+  ds.update(5.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  ds.update(10.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  ds.update(15.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  ds.update(20.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+
+  // Swap to other lifespan, extend single point
+  prefs.set_lifespanmode(simData::LIFE_EXTEND_SINGLE_POINT);
+  testHelper.updatePlatformPrefs(prefs, staticPlat);
+  testHelper.updatePlatformPrefs(prefs, twoPlatform);
+  testHelper.updatePlatformPrefs(prefs, onePlatform);
+
+  // No change, since we're in live mode
+  ds.update(4.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() == nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() == nullptr);
+  ds.update(5.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  ds.update(10.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  ds.update(15.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  ds.update(20.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+
+  // Turn off live mode, swap to original legacy first/last mode
+  ds.setDataLimiting(false);
+  prefs.set_lifespanmode(simData::LIFE_FIRST_LAST_POINT);
+  testHelper.updatePlatformPrefs(prefs, staticPlat);
+  testHelper.updatePlatformPrefs(prefs, twoPlatform);
+  testHelper.updatePlatformPrefs(prefs, onePlatform);
+
+  ds.update(4.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() == nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() == nullptr);
+  ds.update(5.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  ds.update(10.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() == nullptr);
+  ds.update(15.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() == nullptr);
+  ds.update(20.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() == nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() == nullptr);
+
+  // Swap to other lifespan, extend single point
+  prefs.set_lifespanmode(simData::LIFE_EXTEND_SINGLE_POINT);
+  testHelper.updatePlatformPrefs(prefs, staticPlat);
+  testHelper.updatePlatformPrefs(prefs, twoPlatform);
+  testHelper.updatePlatformPrefs(prefs, onePlatform);
+
+  ds.update(4.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() == nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() == nullptr);
+  ds.update(5.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  ds.update(10.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  ds.update(15.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  ds.update(20.);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(staticPlat)->current() != nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(twoPlatform)->current() == nullptr);
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+
+  // Changing the preference back works, but doesn't change the result until next update of DS
+  prefs.set_lifespanmode(simData::LIFE_FIRST_LAST_POINT);
+  testHelper.updatePlatformPrefs(prefs, onePlatform);
+  // Same result as above
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() != nullptr);
+  // Update the data store, to get a new result
+  ds.update(ds.updateTime());
+  rv += SDK_ASSERT(ds.platformUpdateSlice(onePlatform)->current() == nullptr);
+
+  return rv;
+}
+
+}
+
 int TestMemoryDataStore(int argc, char* argv[])
 {
   simCore::checkVersionThrow();
@@ -1775,9 +2000,11 @@ int TestMemoryDataStore(int argc, char* argv[])
     rv += testScenarioDeleteCallback();
     rv += testUpdateToNonCurrentTime();
     rv += testOriginalId();
+    rv += testDataStoreHelperPlatformLifespan();
+    rv += testDataStorePlatformLifespan();
     return rv;
   }
-  catch (MemDataStoreAssertException& e)
+  catch (const MemDataStoreAssertException& e)
   {
     std::cout << e.what() << std::endl;
     return 1;
