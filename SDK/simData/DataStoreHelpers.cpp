@@ -590,35 +590,42 @@ bool DataStoreHelpers::isEntityActive(const simData::DataStore& dataStore, simDa
   return false;
 }
 
-bool DataStoreHelpers::isFileModePlatformActive(simData::LifespanMode lifespan, const simData::PlatformUpdateSlice& slice, double atTime)
+std::optional<std::pair<double, double>> DataStoreHelpers::getFileModePlatformTimeBounds(simData::LifespanMode lifespan, const simData::PlatformUpdateSlice& slice)
 {
+  // Empty slice is always empty return
+  if (slice.numItems() == 0)
+    return {};
+
   switch (lifespan)
   {
   case LIFE_FIRST_LAST_POINT:
-    // static platforms are always active
+    // static platforms are always active (lowest to max)
     if (slice.firstTime() == -1.0)
-      return true;
-    if ((slice.firstTime() > atTime) || (slice.lastTime() < atTime))
-      return false;
-    return true;
+      return std::make_pair(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
+    // Inclusive first to last time
+    return std::make_pair(slice.firstTime(), slice.lastTime());
 
   case LIFE_EXTEND_SINGLE_POINT:
-    // static platforms are always active
+    // static platforms are always active (lowest to max)
     if (slice.firstTime() == -1.0)
-      return true;
-    // all other platforms are not active before their on-time
-    if (slice.firstTime() > atTime)
-      return false;
-    // SIM-17032: single-point platforms are always active after their on time
-    if (slice.numItems() == 1)
-      return true;
-    // all other platforms are off after their last point
-    return (slice.lastTime() < atTime ? false : true);
+      return std::make_pair(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
+    // single point platforms are treated as static starting at firstTime
+    return std::make_pair(slice.firstTime(),
+      slice.numItems() == 1 ? std::numeric_limits<double>::max() : slice.lastTime());
   }
 
-  // Unknown lifespan, fall back to extend-single-point default
+  // Unexpected value, fall back to default of extending single point
   assert(0);
-  return DataStoreHelpers::isFileModePlatformActive(LIFE_EXTEND_SINGLE_POINT, slice, atTime);
+  return DataStoreHelpers::getFileModePlatformTimeBounds(LIFE_EXTEND_SINGLE_POINT, slice);
+}
+
+bool DataStoreHelpers::isFileModePlatformActive(simData::LifespanMode lifespan, const simData::PlatformUpdateSlice& slice, double atTime)
+{
+  const auto& boundsOpt = DataStoreHelpers::getFileModePlatformTimeBounds(lifespan, slice);
+  if (!boundsOpt.has_value())
+    return false;
+  // Note, because bounds are ordered, we do not use simCore::isBetween() (which can reorder them)
+  return atTime >= boundsOpt->first && atTime <= boundsOpt->second;
 }
 
 double DataStoreHelpers::getUserVerticalDatum(const simData::DataStore& dataStore, simData::ObjectId id)
