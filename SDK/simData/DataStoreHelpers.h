@@ -23,7 +23,9 @@
 #ifndef SIMDATA_DATASTOREHELPERS_H
 #define SIMDATA_DATASTOREHELPERS_H
 
+#include <optional>
 #include <string>
+#include <utility>
 #include "simCore/Common/Common.h"
 #include "simData/DataSlice.h"
 #include "simData/DataTable.h"
