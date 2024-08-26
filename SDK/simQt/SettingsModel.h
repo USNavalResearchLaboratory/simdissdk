@@ -141,6 +141,15 @@ public:
   /// Change the read-only flag; read-only settings cannot save(), but can saveSettingsFileAs()
   void setReadOnly(bool readOnly);
 
+  /**
+  * Set the saveOnlyActivated_ flag, which will filter out any loaded settings that were not activated when saving to a file.
+  * This ensures that any loaded settings not applicable to this SettingsModel instance are not written out the next time the settings file is saved.
+  * It requires that all settings that will be saved must be activated with a direct call to either setValue() or value(). A call to loadSettingsFile()
+  * will not activate settings, nor will changes that happen directly to the underlying QSettings.
+  * @param setOnlyActivated true if only activated settings should save to a file, false if all loaded settings should save to a file.
+  */
+  void setSaveOnlyActivated(bool saveOnlyActivated);
+
 Q_SIGNALS:
   /// Indicates that settings are about to be saved to a file
   void aboutToSaveSettingsFile(const QString& path);
@@ -212,7 +221,7 @@ private:
   void init_();
 
   /// Root item describes the top of the tree
-  TreeNode* rootNode_;
+  TreeNode* rootNode_ = nullptr;
   /// Stack of all undoable actions
   QList<UserEditCommand*> undoStack_;
   /// Stack of all re-doable actions
@@ -226,14 +235,18 @@ private:
   /// The filename from the setting provided in the constructor
   QString filename_;
   /// The format from the setting provided in the constructor
-  QSettings::Format format_;
+  QSettings::Format format_ = QSettings::InvalidFormat;
   /// Icon for non-leaf nodes
   QIcon folderIcon_;
   /// Icon for leaf nodes
   QIcon noIcon_;
 
   /// Indicates that save() should be a noop
-  bool readOnly_;
+  bool readOnly_ = false;
+  /// Indicates that only activated settings should be saved
+  bool saveOnlyActivated_ = false;
+  /// Indicates that settings are being loaded so they will not trigger as activated
+  bool loading_ = false;
 };
 
 }
