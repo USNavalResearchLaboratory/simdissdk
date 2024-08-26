@@ -1110,6 +1110,10 @@ namespace
     rv->setMaxAltitude(30000.0f);
     rv->setRenderBinNumber(simVis::BIN_OCEAN);
     rv->setOpacity(0.8f);
+#if OSGEARTH_SOVERSION >= 154
+    // render Triton on the ellipsoid (old default)
+    rv->setVerticalDatum("");
+#endif
     simVis::OverheadMode::configureOceanLayer(rv);
     return rv;
   }
