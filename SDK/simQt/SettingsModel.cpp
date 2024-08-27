@@ -22,10 +22,11 @@
  */
 #include <cassert>
 #include <deque>
+#include <QApplication>
+#include <QDir>
+#include <QFileIconProvider>
 #include <QSettings>
 #include <QStringList>
-#include <QFileIconProvider>
-#include <QApplication>
 #include "simNotify/Notify.h"
 
 #ifdef HAVE_SIMDATA
@@ -1018,16 +1019,25 @@ int SettingsModel::saveSettingsFileAs(const QString& path, bool onlyDeltas)
 
   Q_EMIT aboutToSaveSettingsFile(path);
 
-  // Do not overwrite default file.
+  // Create a settings file for output; attempt this prior to QFileInfo to prevent any possible race conditions
+  QSettings settings(path, QSettings::IniFormat);
+  if (!settings.isWritable())
+  {
+    SIM_ERROR << "Unable to open " << path.toStdString() << " for writing.\n";
+    return 1;
+  }
+
+  // Do not overwrite default file if we can detect they are the same filename
   const QFileInfo defaultFileInfo(fileName());
   const QFileInfo targetFileInfo(path);
   if (defaultFileInfo == targetFileInfo)
+  {
+    SIM_ERROR << "Unable to overwrite default file "
+      << QDir::toNativeSeparators(defaultFileInfo.absoluteFilePath()).toStdString()
+      << ". Please choose another filename.\n";
     return 1;
+  }
 
-  // Create a settings file for output
-  QSettings settings(path, QSettings::IniFormat);
-  if (!settings.isWritable())
-    return 1;
   // Start fresh
   settings.clear();
 
