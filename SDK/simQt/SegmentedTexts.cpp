@@ -1290,7 +1290,7 @@ static const unsigned int MAX_PRECISION = 6;
     // change by one.   I do not think it is worth fixing.
     years_ = new NumberText(this, 1970, 2046, 4, false, 365.0 * 24.0 * 60.0 * 60.0, false);
     months_ = new MonthText(this, true);
-    days_ = new NumberText(this, 1, 31, 2, false, 24.0 * 60.0 * 60, false);
+    days_ = new NumberText(this, 1, 31, 2, true, 24.0 * 60.0 * 60, false);
     hours_ = new NumberText(this, 0, 23, 2, true, 60.0 * 60.0, false);
     minutes_ = new NumberText(this, 0, 59, 2, true, 60.0, false);
     seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
