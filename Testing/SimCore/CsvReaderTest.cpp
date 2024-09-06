@@ -554,9 +554,74 @@ int testMultiLineNumber()
     rv += SDK_ASSERT(reader.readLine(tokens, false) == 0);
     rv += SDK_ASSERT(tokens.size() == 1);
     rv += SDK_ASSERT(tokens[0] == "fourth line");
-    // this is the 5th lnie in the file, since the previous read handled 4 lines in the quotes
+    // this is the 5th line in the file, since the previous read handled 4 lines in the quotes
     rv += SDK_ASSERT(reader.lineNumber() == 5);
   }
+  return rv;
+}
+
+int testLimitReadToSingleLine()
+{
+  std::vector<std::string> tokens;
+  int rv = 0;
+
+  {
+    /** With reads limited to a single line, an unbalanced quote should not go the next line */
+    std::istringstream is("One,\"Two\"\"\nThree");
+    simCore::CsvReader reader(is);
+    reader.setLimitReadToSingleLine(true);
+
+    rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(tokens[0] == "One");
+    rv += SDK_ASSERT(tokens[1] == "Two\"");
+    rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+    rv += SDK_ASSERT(tokens.size() == 1);
+    rv += SDK_ASSERT(tokens[0] == "Three");
+    rv += SDK_ASSERT(reader.readLine(tokens) != 0);
+  }
+
+  {
+    /** With reads limited to a single line, an unbalanced quote should not go the next line */
+    std::istringstream is("One,\"Two\nThree");
+    simCore::CsvReader reader(is);
+    reader.setLimitReadToSingleLine(true);
+
+    rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(tokens[0] == "One");
+    rv += SDK_ASSERT(tokens[1] == "Two");
+    rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+    rv += SDK_ASSERT(tokens.size() == 1);
+    rv += SDK_ASSERT(tokens[0] == "Three");
+    rv += SDK_ASSERT(reader.readLine(tokens) != 0);
+  }
+
+  {
+    /** With unlimited read (default), an unbalanced quote should go the next line */
+    std::istringstream is("One,\"Two\nThree");
+    simCore::CsvReader reader(is);
+
+    rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(tokens[0] == "One");
+    rv += SDK_ASSERT(tokens[1] == "Two\nThree\n");
+    rv += SDK_ASSERT(reader.readLine(tokens) != 0);
+  }
+
+  {
+    /** With unlimited read (explicitly set), an unbalanced quote should go the next line */
+    std::istringstream is("One,\"Two\nThree");
+    simCore::CsvReader reader(is);
+    reader.setLimitReadToSingleLine(false);
+
+    rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+    rv += SDK_ASSERT(tokens.size() == 2);
+    rv += SDK_ASSERT(tokens[0] == "One");
+    rv += SDK_ASSERT(tokens[1] == "Two\nThree\n");
+    rv += SDK_ASSERT(reader.readLine(tokens) != 0);
+  }
+
   return rv;
 }
 
@@ -586,6 +651,7 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testReadTrimmedSkipEmpty() == 0);
   rv += SDK_ASSERT(testCommentsInMiddle() == 0);
   rv += SDK_ASSERT(testMultiLineNumber() == 0);
+  rv += SDK_ASSERT(testLimitReadToSingleLine() == 0);
 
   return rv;
 }

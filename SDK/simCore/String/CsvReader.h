@@ -73,6 +73,13 @@ public:
   void setQuoteChar(char quote);
 
   /**
+   * By default quoted text can span multiple lines.  Some use cases treat the carriage return
+   * as a hard end. Limiting reads to a single line means unbalanced quotes will not read subsequent
+   * lines.  Default is off.
+   */
+  void setLimitReadToSingleLine(bool singleLine);
+
+  /**
    * Sets whether to allow a line to transition to a comment midway through reading.
    * If true, encountering a comment character in the middle of line will cause the rest of the line to be ignored.
    * If false, a comment character mid-line will be treated like any other character and added to the current token.
@@ -127,6 +134,7 @@ private:
   char escape_ = '\\';
   char quote_ = '"';
   bool allowMidlineComments_ = true;
+  bool limitToSingleLine_ = false;
   size_t lineNumber_ = 0;
   std::string lineText_;
   size_t linesFoundInRead_ = 1;

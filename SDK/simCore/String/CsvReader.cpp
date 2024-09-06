@@ -130,6 +130,11 @@ void CsvReader::setQuoteChar(char quote)
   quote_ = quote;
 }
 
+void CsvReader::setLimitReadToSingleLine(bool singleLine)
+{
+  limitToSingleLine_ = singleLine;
+}
+
 void CsvReader::setAllowMidlineComments(bool allow)
 {
   allowMidlineComments_ = allow;
@@ -199,9 +204,14 @@ int CsvReader::readLineImpl_(std::vector<std::string>& tokens)
       // No way to do special quote tokenization unless the token is quoted. If it's not
       // quoted, then we just treat quote like any other character.
       assert(wholeTokenQuoted);
-      // keep line number updated correctly
+
       if (*ch == '\n')
+      {
+        if (limitToSingleLine_)
+          break;
+        // keep line number updated correctly
         ++linesFoundInRead_;
+      }
 
       started = true;
       if (*ch == quote_)
