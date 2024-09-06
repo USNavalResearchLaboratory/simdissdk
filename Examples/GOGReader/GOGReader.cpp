@@ -468,8 +468,8 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
-    ImGui::Text(s_help.c_str());
-    ImGui::Text(handler_.statusText().c_str());
+    ImGui::Text("%s", s_help.c_str());
+    ImGui::Text("%s", handler_.statusText().c_str());
 
     float opacity = opacity_;
     ImGui::Text("Opacity: "); ImGui::SameLine();

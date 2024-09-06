@@ -691,9 +691,11 @@ Interpolator* MemoryDataStore::interpolator() const
 
 void MemoryDataStore::updatePlatforms_(double time, std::map<simData::ObjectId, CommitResult>& allResults)
 {
-  // determine if we are in "file mode"
-  // treat file mode as the default if no clock has been bound
-  const bool fileMode = (!boundClock_ || !boundClock_->isLiveMode());
+  // determine if we are in "file mode". Rely on the bound clock for this. If there is no
+  // clock binding available, fall back on "data limiting" flag which should only be on in live.
+  const bool fileMode = boundClock_
+    ? !boundClock_->isLiveMode()
+    : !dataLimiting();
 
   for (Platforms::const_iterator iter = platforms_.begin(); iter != platforms_.end(); ++iter)
   {
@@ -713,13 +715,9 @@ void MemoryDataStore::updatePlatforms_(double time, std::map<simData::ObjectId, 
 
     if (fileMode)
     {
-      const PlatformUpdateSlice* slice = platform->updates();
-      const double firstTime = slice->firstTime();
-      const bool staticPlatform = (firstTime == -1.0);
-      // do we need to expire a non-static platform?
-      if (!staticPlatform && (time < firstTime || time > slice->lastTime()))
+      if (!DataStoreHelpers::isFileModePlatformActive(platform->preferences()->lifespanmode(), *platform->updates(), time))
       {
-        // platform is not valid/has expired
+        // Platform is not valid/off
         platform->updates()->setCurrent(nullptr);
         continue;
       }

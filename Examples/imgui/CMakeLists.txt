@@ -29,6 +29,9 @@ add_library(ImGuiLib ${SOURCE_FILES})
 target_include_directories(ImGuiLib PUBLIC . )
 target_link_libraries(ImGuiLib PUBLIC VSI::GL GLEW OSGEARTH PRIVATE simVis simCore simNotify)
 target_compile_definitions(ImGuiLib PRIVATE IMGUI_IMPL_OPENGL_LOADER_GLEW)
+if(CMAKE_COMPILER_IS_GNUCXX)
+    target_compile_options(ImGuiLib PRIVATE -fno-strict-aliasing)
+endif()
 set_target_properties(ImGuiLib PROPERTIES
     FOLDER "ImGui Library"
     PROJECT_LABEL "ImGui"

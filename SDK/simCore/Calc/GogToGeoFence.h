@@ -23,7 +23,7 @@
 #ifndef SIMCORE_CALC_GOGTOGEOFENCE_H
 #define SIMCORE_CALC_GOGTOGEOFENCE_H
 
-#include <iostream>
+#include <iosfwd>
 #include <memory>
 #include <vector>
 #include "simCore/Common/Common.h"

@@ -361,7 +361,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
       ImGui::Text("2 : Toggle RTT 2 display");
     }
     ImGui::Text("Picked: "); ImGui::SameLine();
-    ImGui::TextColored(ImVec4(0.f, 1.f, 0.f, 1.f), app_.pickLabel.c_str());
+    ImGui::TextColored(ImVec4(0.f, 1.f, 0.f, 1.f), "%s", app_.pickLabel.c_str());
 
     ImGui::End();
   }

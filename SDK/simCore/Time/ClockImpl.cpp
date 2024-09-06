@@ -185,12 +185,12 @@ bool ClockImpl::isUserEditable() const
   return !(controlsDisabled() || endTime() == simCore::INFINITE_TIME_STAMP || isLiveMode_(mode()));
 }
 
-simCore::Optional<simCore::TimeStamp> ClockImpl::userStartTime() const
+std::optional<simCore::TimeStamp> ClockImpl::userStartTime() const
 {
   return userStartTime_;
 }
 
-simCore::Optional<simCore::TimeStamp> ClockImpl::userEndTime() const
+std::optional<simCore::TimeStamp> ClockImpl::userEndTime() const
 {
   return userEndTime_;
 }
@@ -201,7 +201,7 @@ void ClockImpl::setControlsDisabled(bool fl)
   disabled_ = fl;
 }
 
-int ClockImpl::setUserTimeBounds(const simCore::Optional<simCore::TimeStamp>& start, const simCore::Optional<simCore::TimeStamp>& end)
+int ClockImpl::setUserTimeBounds(const std::optional<simCore::TimeStamp>& start, const std::optional<simCore::TimeStamp>& end)
 {
   if (isLiveMode())
   {
@@ -1017,18 +1017,18 @@ bool VisualizationClock::isUserEditable() const
   return localClock_->isUserEditable();
 }
 
-simCore::Optional<simCore::TimeStamp> VisualizationClock::userStartTime() const
+std::optional<simCore::TimeStamp> VisualizationClock::userStartTime() const
 {
   if (lockToDataClock_)
     return dataClock_.userStartTime();
-  return simCore::Optional<simCore::TimeStamp>();
+  return std::optional<simCore::TimeStamp>();
 }
 
-simCore::Optional<simCore::TimeStamp> VisualizationClock::userEndTime() const
+std::optional<simCore::TimeStamp> VisualizationClock::userEndTime() const
 {
   if (lockToDataClock_)
     return dataClock_.userEndTime();
-  return simCore::Optional<simCore::TimeStamp>();
+  return std::optional<simCore::TimeStamp>();
 }
 
 void VisualizationClock::setMode(Clock::Mode mode)
@@ -1103,7 +1103,7 @@ void VisualizationClock::setControlsDisabled(bool fl)
     localClock_->setControlsDisabled(fl);
 }
 
-int VisualizationClock::setUserTimeBounds(const simCore::Optional<simCore::TimeStamp>& start, const simCore::Optional<simCore::TimeStamp>& end)
+int VisualizationClock::setUserTimeBounds(const std::optional<simCore::TimeStamp>& start, const std::optional<simCore::TimeStamp>& end)
 {
   if (lockToDataClock_)
     return dataClock_.setUserTimeBounds(start, end);

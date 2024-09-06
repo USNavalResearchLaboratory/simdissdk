@@ -127,6 +127,10 @@ void InstallOcean::install(simVis::SceneManager& scene)
     layer->setUseHeightMap(false);
     layer->setMaxAltitude(30000.0f);
     layer->setRenderBinNumber(simVis::BIN_OCEAN);
+#if OSGEARTH_SOVERSION >= 154
+    // render Triton on the ellipsoid (old default)
+    layer->setVerticalDatum("");
+#endif
 
     // Configure it to work in overhead mode
     simVis::OverheadMode::configureOceanLayer(layer.get());

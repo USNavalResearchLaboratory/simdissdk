@@ -21,7 +21,7 @@
  *
  */
 #include <cassert>
-#include "simCore/Common/Optional.h"
+#include <optional>
 #include "simData/DataStore.h"
 #include "simData/DataStoreHelpers.h"
 #include "simUtil/IdMapper.h"
@@ -191,7 +191,7 @@ uint64_t DataStoreIdMapper::resolve_(const EntityIdData& fromIdData)
     return 0;
 
   // Too many matched by name, try again to use the original id to uniquely identify an entity
-  simCore::Optional<simData::ObjectId> possibleEntity;
+  std::optional<simData::ObjectId> possibleEntity;
   for (auto id : ids)
   {
     if (fromIdData.originalId == simData::DataStoreHelpers::originalIdFromId(id, &dataStore_))

@@ -142,7 +142,7 @@ public:
 
       ImGui::TableNextColumn(); ImGui::Text("Clock:"); ImGui::TableNextColumn();
       if (!app_.timeLabel_.empty())
-        ImGui::Text(app_.timeLabel_.c_str());
+        ImGui::Text("%s", app_.timeLabel_.c_str());
 
       ImGui::EndTable();
     }

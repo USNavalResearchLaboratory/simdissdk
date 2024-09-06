@@ -932,9 +932,9 @@ int userTimeBoundsTest()
   clock.stepBackward();
   rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2016, 30.0));
 
-  simCore::Optional<simCore::TimeStamp> userStart;
+  std::optional<simCore::TimeStamp> userStart;
   userStart = simCore::TimeStamp(2016, 10);
-  simCore::Optional<simCore::TimeStamp> userEnd;
+  std::optional<simCore::TimeStamp> userEnd;
   userEnd = simCore::TimeStamp(2016, 20);
   rv += SDK_ASSERT(clock.setUserTimeBounds(userStart, userEnd) == 0);
 

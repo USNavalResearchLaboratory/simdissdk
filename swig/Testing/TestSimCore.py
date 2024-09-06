@@ -2,21 +2,16 @@ import os, sys, math, timeit
 
 # Try to use SIMDIS_DIR to set up import paths
 if 'SIMDIS_DIR' in os.environ:
-	# For _module shared object:
-	if os.name == "nt":
-		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-nt/python3.12')
-		try:
-			# Python 3.8 does not want to respect PATH for loading dependent DLLs.  It introduces
-			# a new method to attempt to fix the problem.  Try/except ignores errors in older Python.
-			# Without this, the _simCore.pyd needs to go in the same place as simNotify/simCore.
-			os.add_dll_directory(os.environ['SIMDIS_DIR'] + '/bin/amd64-nt')
-		except:
-			pass
-		pass
-	else:
-		sys.path.append(os.environ['SIMDIS_DIR'] + '/lib/amd64-linux/python3.12/lib-dynload')
-	# For module wrapper:
-	sys.path.append(os.environ['SIMDIS_DIR'] + '/bin/pythonScripts')
+	SIMDIS_DIR = os.environ['SIMDIS_DIR']
+	# SIMDIS_DIR/bin/pythonScripts for module wrappers
+	sys.path.insert(0, os.path.join(SIMDIS_DIR, 'bin', 'pythonScripts'))
+	# SIMDIS_DIR/lib/amd64-nt/python#.## or SIMDIS_DIR/lib/amd64-linux/python#.##/lib-dynload for _module shared objects
+	base_lib = os.path.join(SIMDIS_DIR, 'lib', 'amd64-nt' if os.name == 'nt' else 'amd64-linux')
+	search_for = 'python' if os.name == 'nt' else 'lib-dynload'
+	for root_dir, dirs, files in os.walk(base_lib):
+		for dir_name in dirs:
+			if search_for in dir_name: sys.path.insert(0, os.path.join(root_dir, dir_name))
+	if os.name == "nt": os.add_dll_directory(os.path.join(os.environ['SIMDIS_DIR'], 'bin', 'amd64-nt')) # for SIMDIS SDK notify DLL
 
 import simCore
 
@@ -388,6 +383,15 @@ assert(simCore.calculateHorizonDist(v1, simCore.GEOMETRIC_HORIZON, 1.06, 1.333) 
 assert(simCore.positionInGate(v1, v2, 1.0, 0.0, 1.0, 1.0, 1000.0, 3000.0, simCore.WGS_84, coordConverter) is not None)
 assert(simCore.laserInGate(v1, v2, 1.0, 0.0, 1.0, 1.0, 1000.0, 3000.0, 1.5, 1.5, 2000.0, simCore.WGS_84, coordConverter) is not None)
 assert(simCore.laserInGate(v1, v2, 1.0, 0.0, 1.0, 1.0, 1000.0, 3000.0, 1.5, 1.5, 2000.0, simCore.WGS_84, coordConverter, 100) is not None)
+#Verify calculateBearingAspectAngle and formatBearingAspectAngle
+p1 = simCore.Vec3(0.0, 0.0, 0.0)
+p2 = simCore.Vec3(0.008726646, 0.008726646, 0.0)
+angle = simCore.calculateBearingAspectAngle(p1, p2, 0.0);
+assert(simCore.areEqual(angle, -0.78873754367140192))
+assert(simCore.formatBearingAspectAngle(angle) == '5L')
+angle = simCore.calculateBearingAspectAngle(p1, p2, 0.785398163);
+assert(simCore.areEqual(angle, -0.0033393806714019370))
+assert(simCore.formatBearingAspectAngle(angle) == 'T')
 
 #############################
 # Random.h

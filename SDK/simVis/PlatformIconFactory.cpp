@@ -396,11 +396,19 @@ osg::Node* PlatformIconFactory::getOrCreate(const simData::PlatformPrefs& prefs)
       return iter->second.get();
   }
 
+  // Try to detect whether the given filename is possibly an image. We want to only process image
+  // files here, so that we can avoid breaking asynchronous loading for larger 3D models even when
+  // the icon fast draw is enabled.
+  auto* registry = simVis::Registry::instance();
+  const std::string& foundUri = registry->findModelFile(mergeSettings.icon());
+  if (!foundUri.empty() && !simVis::isImageFile(foundUri))
+    return nullptr;
+
   // Attempt to load the model node from registry; we can only optimize image icons in this way.
   // This call is not threaded, and does not go to the paging node in order to load the icon.
   // It loads in the main thread, and the returned model node is the actual node, not a proxy.
   bool isImage = false;
-  osg::ref_ptr<osg::Node> modelNode = simVis::Registry::instance()->getOrCreateIconModel(mergeSettings.icon(), &isImage);
+  osg::ref_ptr<osg::Node> modelNode = registry->getOrCreateIconModel(mergeSettings.icon(), &isImage);
   if (!isImage || !modelNode)
     return nullptr;
 

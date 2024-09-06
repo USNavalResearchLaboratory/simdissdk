@@ -269,7 +269,7 @@ public:
       {
         std::stringstream ss;
         ss << "P2P Result: " << app_.p2pResult;
-        ImGui::Text(ss.str().c_str());
+        ImGui::Text("%s", ss.str().c_str());
       }
 
       if (needUpdate)

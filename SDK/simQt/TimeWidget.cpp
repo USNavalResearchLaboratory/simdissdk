@@ -51,11 +51,11 @@ TimeWidget::TimeWidget(QWidget* parent)
   addContainer_(new MinutesContainer(this), SLOT(setMinutes_()));
   addContainer_(new HoursContainer(this), SLOT(setHours_()));
   addContainer_(new MonthContainer(this), SLOT(setMonth_()));
-  addContainer_(new OrdinalContainer(this), SLOT(setOrdinal_()));
+  currentContainer_ = new OrdinalContainer(this);
+  addContainer_(currentContainer_, SLOT(setOrdinal_()));
   addContainer_(new Iso8601Container(this), SLOT(setIso8601_()));
 
-  // Make this one the default format
-  currentContainer_ = containers_.back();
+  // Make sure the current container is visible
   currentContainer_->widget()->setHidden(false);
 
   // Setup the label and right mouse click menu to change formats

@@ -251,10 +251,10 @@ public:
       ImGui::Text("Timing"); ImGui::TableNextColumn(); ImGui::TableNextColumn();
       popLargeFont_();
 
-      ImGui::Text("Platform:"); ImGui::TableNextColumn(); ImGui::Text(app_.entityTimerStr.c_str()); ImGui::TableNextColumn();
-      ImGui::Text("Asynchronous:"); ImGui::TableNextColumn(); ImGui::Text(app_.asyncTimerStr.c_str()); ImGui::TableNextColumn();
-      ImGui::Text("Async Round-Trip:"); ImGui::TableNextColumn(); ImGui::Text(app_.asyncRoundTripStr.c_str()); ImGui::TableNextColumn();
-      ImGui::Text("Synchronous:"); ImGui::TableNextColumn(); ImGui::Text(app_.syncTimerStr.c_str()); ImGui::TableNextColumn();
+      ImGui::Text("Platform:"); ImGui::TableNextColumn(); ImGui::Text("%s", app_.entityTimerStr.c_str()); ImGui::TableNextColumn();
+      ImGui::Text("Asynchronous:"); ImGui::TableNextColumn(); ImGui::Text("%s", app_.asyncTimerStr.c_str()); ImGui::TableNextColumn();
+      ImGui::Text("Async Round-Trip:"); ImGui::TableNextColumn(); ImGui::Text("%s", app_.asyncRoundTripStr.c_str()); ImGui::TableNextColumn();
+      ImGui::Text("Synchronous:"); ImGui::TableNextColumn(); ImGui::Text("%s", app_.syncTimerStr.c_str()); ImGui::TableNextColumn();
 
       ImGui::EndTable();
     }

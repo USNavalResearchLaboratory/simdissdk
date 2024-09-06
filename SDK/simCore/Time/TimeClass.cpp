@@ -34,8 +34,8 @@
 #include "simCore/String/ValidNumber.h"
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/Exception.h"
-#include "simCore/Time/TimeClass.h"
 #include "simCore/Time/Utils.h"
+#include "simCore/Time/TimeClass.h"
 
 namespace simCore {
 

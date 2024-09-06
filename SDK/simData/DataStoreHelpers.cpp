@@ -378,30 +378,30 @@ namespace {
   /** Helper method to determine if a platform is active */
   bool isPlatformActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime)
   {
-    if (dataStore.dataLimiting())
-    {
-      simData::DataStore::Transaction txn;
-      const simData::CommonPrefs* prefs = dataStore.commonPrefs(objectId, &txn);
-      if (prefs != nullptr)
-      {
-        return prefs->datadraw();
-      }
+    simData::DataStore::Transaction txn;
+    const simData::PlatformPrefs* prefs = dataStore.platformPrefs(objectId, &txn);
+    // No prefs? No platform; not active
+    if (!prefs)
+      return false;
+    const bool dataDraw = prefs->commonprefs().datadraw();
+    const LifespanMode lifespan = prefs->lifespanmode();
+    txn.complete(&prefs);
 
-      return true;
-    }
+    // Live mode: respect the data draw flag, ignore data points
+    if (dataStore.dataLimiting())
+      return dataDraw;
+
+    // File mode: If data draw is off, then the platform is not active, regardless of time.
+    // We do not search command history because data draw is not expected to be in commands
+    // list for platforms, and platforms are expected to only be on during time of validity,
+    // without breaks.
+    if (!dataDraw)
+      return false;
 
     const simData::PlatformUpdateSlice* slice = dataStore.platformUpdateSlice(objectId);
     if (slice == nullptr)
       return false;
-
-    // static platforms are always active
-    if (slice->firstTime() == -1.0)
-      return true;
-
-    if ((slice->firstTime() > atTime) || (slice->lastTime() < atTime))
-      return false;
-
-    return true;
+    return DataStoreHelpers::isFileModePlatformActive(lifespan, *slice, atTime);
   }
 
   /** Helper method to determine if a beam is active */
@@ -588,6 +588,44 @@ bool DataStoreHelpers::isEntityActive(const simData::DataStore& dataStore, simDa
     break;
   }
   return false;
+}
+
+std::optional<std::pair<double, double>> DataStoreHelpers::getFileModePlatformTimeBounds(simData::LifespanMode lifespan, const simData::PlatformUpdateSlice& slice)
+{
+  // Empty slice is always empty return
+  if (slice.numItems() == 0)
+    return {};
+
+  switch (lifespan)
+  {
+  case LIFE_FIRST_LAST_POINT:
+    // static platforms are always active (lowest to max)
+    if (slice.firstTime() == -1.0)
+      return std::make_pair(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
+    // Inclusive first to last time
+    return std::make_pair(slice.firstTime(), slice.lastTime());
+
+  case LIFE_EXTEND_SINGLE_POINT:
+    // static platforms are always active (lowest to max)
+    if (slice.firstTime() == -1.0)
+      return std::make_pair(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
+    // single point platforms are treated as static starting at firstTime
+    return std::make_pair(slice.firstTime(),
+      slice.numItems() == 1 ? std::numeric_limits<double>::max() : slice.lastTime());
+  }
+
+  // Unexpected value, fall back to default of extending single point
+  assert(0);
+  return DataStoreHelpers::getFileModePlatformTimeBounds(LIFE_EXTEND_SINGLE_POINT, slice);
+}
+
+bool DataStoreHelpers::isFileModePlatformActive(simData::LifespanMode lifespan, const simData::PlatformUpdateSlice& slice, double atTime)
+{
+  const auto& boundsOpt = DataStoreHelpers::getFileModePlatformTimeBounds(lifespan, slice);
+  if (!boundsOpt.has_value())
+    return false;
+  // Note, because bounds are ordered, we do not use simCore::isBetween() (which can reorder them)
+  return atTime >= boundsOpt->first && atTime <= boundsOpt->second;
 }
 
 double DataStoreHelpers::getUserVerticalDatum(const simData::DataStore& dataStore, simData::ObjectId id)

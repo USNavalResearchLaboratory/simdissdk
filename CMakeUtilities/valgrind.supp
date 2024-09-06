@@ -463,14 +463,12 @@
 }
 
 {
-   osgEarth suppressed for Globals on startup
+   Ignore osgEarth globals in ref_ptr
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:_Znwm
-   fun:_GLOBAL__sub_I_HTTPClient.cpp
-   fun:call_init.part.0
-   fun:call_init
+   ...
+   fun:_GLOBAL__sub_*
+   ...
    fun:_dl_init
-   obj:/usr/lib*/ld-2*
    ...
 }

@@ -23,7 +23,7 @@
 #ifndef SIMCORE_CSVWRITER_H
 #define SIMCORE_CSVWRITER_H
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include <vector>
 #include "simCore/Common/Common.h"

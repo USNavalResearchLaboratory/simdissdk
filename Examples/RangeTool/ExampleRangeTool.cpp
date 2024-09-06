@@ -102,9 +102,9 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("1: cycle through line calculations");
-    ImGui::TextColored(yellow, lineCalcText.c_str());
+    ImGui::TextColored(yellow, "%s", lineCalcText.c_str());
     ImGui::Text("2: cycle through angle calculations");
-    ImGui::TextColored(yellow, angleCalcText.c_str());
+    ImGui::TextColored(yellow, "%s", angleCalcText.c_str());
     ImGui::Text("3: zoom in");
     ImGui::Text("4: rotate zoomed in view");
     ImGui::Text("5: reset to main view");

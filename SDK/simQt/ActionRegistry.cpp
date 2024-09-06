@@ -442,6 +442,7 @@ int ActionRegistry::registerAlias(const QString& actionDesc, const QString& alia
     return 1;
 
   aliases_[alias] = actionDesc;
+  Q_EMIT aliasRegistered(actionDesc, alias);
   return 0;
 }
 
@@ -667,6 +668,17 @@ int ActionRegistry::addHotKey(const QString& actionDesc, QKeySequence hotkey)
   // Internal consistency should be rock solid here
   assertActionsByKeyValid_();
   return 0;
+}
+
+std::vector<QString> ActionRegistry::getAliasesForAction(const QString& actionDesc) const
+{
+  std::vector<QString> rv;
+  for (auto iter = aliases_.begin(); iter != aliases_.end(); ++iter)
+  {
+    if (iter.value() == actionDesc)
+      rv.push_back(iter.key());
+  }
+  return rv;
 }
 
 int ActionRegistry::setHotKeys(Action* action, const QList<QKeySequence>& hotkeys)

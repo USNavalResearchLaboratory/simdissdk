@@ -23,7 +23,11 @@
 #ifndef SIMCORE_OPTIONAL_H
 #define SIMCORE_OPTIONAL_H
 
+#include "simCore/Common/Common.h"
+
 namespace simCore {
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 
 /**
  * Template class that represents an optional item that may or may not be set.
@@ -34,7 +38,7 @@ class Optional
 {
 public:
   /** Default initialization */
-  Optional()
+  SDK_DEPRECATE(Optional(), "Deprecated, use std::optional instead.")
     : value_(T()),
       isSet_(false)
   {
@@ -75,6 +79,8 @@ private:
   T value_;
   bool isSet_;
 };
+
+#endif
 
 }
 

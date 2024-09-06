@@ -79,7 +79,7 @@ namespace simCore
    * @param degSymbol Symbol to use when formatting output in DMD, DMS, or DD output
    * @param positiveDir Character to append for positive angles, only when allNumerics==false.  Set this to 0 (\0 or null)
    *   to not append anything for positive directions.
-   * @param positiveDir Character to append for negative angles, only when allNumerics==false.  Set this to 0 (\0 or null)
+   * @param negativeDir Character to append for negative angles, only when allNumerics==false.  Set this to 0 (\0 or null)
    *   to not append anything for negative directions, in which case a negative sign is prepended.
    * @param allowRollover If true, allows angle returns that go over 360. If false, angle returns in simCore::FMT_DEGREES
    *   will be clamped to 0 if they exceed 360.
@@ -92,33 +92,37 @@ namespace simCore
    * Formats a latitude value (in radians) into a string value according to the format specification.
    * @param latRadians Latitude value to print to string, in radians.
    * @param format Geodetic output format.
-   * @param allNumerics If false, then string will contain hemisphere, and the minutes symbol (') and
-   *   and seconds symbol (") for DMD/DMS formats; additionally, values in southern hemisphere will not
-   *   show a negative (-) sign, because the "S" is appended.  If true, then the return string will
-   *   omit the hemisphere, minutes symbol, seconds symbol, and will include a negative sign if in the
-   *   southern hemisphere.
+   * @param allNumerics If true, string omits positiveDir and negativeDir, and omits the degree, minute, and second
+   *   symbol between tokens for DMS/DMD/DD formats, using a "-" sign as needed.  If false, then DD/DMD/DMS formatting
+   *   is applied, and either positiveDir and negativeDir are appended, OR a "-" sign is appended if negativeDir is 0.
    * @param precision Decimal precision to be used in formatting the value.
    * @param degSymbol Symbol to use when formatting output in DMD, DMS, or DD output
+   * @param positiveDir Character to append for latitudes above the equator, only when allNumerics==false.  Set this to 0 (\0 or null)
+   *   to not append anything for positive directions.
+   * @param negativeDir Character to append for latitudes below the equator, only when allNumerics==false.  Set this to 0 (\0 or null)
+   *   to not append anything for negative directions, in which case a negative sign is prepended.
    * @return Latitude string formatted according to provided options.
    */
   SDKCORE_EXPORT std::string printLatitude(double latRadians, GeodeticFormat format, bool allNumerics,
-    size_t precision, simCore::DegreeSymbolFormat degSymbol);
+    size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir = 'N', char negativeDir = 'S');
 
   /**
    * Formats a longitude value (in radians) into a string value according to the format specification.
    * @param lonRadians Longitude value to print to string, in radians.
    * @param format Geodetic output format.
-   * @param allNumerics If false, then string will contain hemisphere, and the minutes symbol (') and
-   *   and seconds symbol (") for DMD/DMS formats; additionally, values in western hemisphere will not
-   *   show a negative (-) sign, because the "S" is appended.  If true, then the return string will
-   *   omit the hemisphere, minutes symbol, seconds symbol, and will include a negative sign if in the
-   *   western hemisphere.
+   * @param allNumerics If true, string omits positiveDir and negativeDir, and omits the degree, minute, and second
+   *   symbol between tokens for DMS/DMD/DD formats, using a "-" sign as needed.  If false, then DD/DMD/DMS formatting
+   *   is applied, and either positiveDir and negativeDir are appended, OR a "-" sign is appended if negativeDir is 0.
    * @param precision Decimal precision to be used in formatting the value.
    * @param degSymbol Symbol to use when formatting output in DMD, DMS, or DD output
+   * @param positiveDir Character to append for longitudes east of the meridian, only when allNumerics==false.  Set this to 0 (\0 or null)
+   *   to not append anything for positive directions.
+   * @param negativeDir Character to append for longitudes west of the meridian, only when allNumerics==false.  Set this to 0 (\0 or null)
+   *   to not append anything for negative directions, in which case a negative sign is prepended.
    * @return Latitude string formatted according to provided options.
    */
   SDKCORE_EXPORT std::string printLongitude(double lonRadians, GeodeticFormat format, bool allNumerics,
-    size_t precision, simCore::DegreeSymbolFormat degSymbol);
+    size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir = 'E', char negativeDir = 'W');
 
 } // namespace simCore
 

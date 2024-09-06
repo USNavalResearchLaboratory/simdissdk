@@ -57,18 +57,21 @@ public:
   /// Invoked when a new category is added
   virtual void onAddCategory(int categoryIndex)
   {
+    parent_->checksAutoUpdated_ = true;
     parent_->addCategoryName_(categoryIndex);
   }
 
   /// Invoked when a new value is added to a category
   virtual void onAddValue(int categoryIndex, int valueIndex)
   {
+    parent_->checksAutoUpdated_ = true;
     parent_->addCategoryValue_(categoryIndex, valueIndex);
   }
 
   /// Invoked when all data is cleared
   virtual void onClear()
   {
+    parent_->checksAutoUpdated_ = true;
     parent_->clear_();
   }
 
@@ -632,11 +635,18 @@ std::string CategoryFilter::serialize(bool simplify) const
 }
 
 ///@return false on fail
-bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmptyCategories, RegExpFilterFactory* regExpFactory)
+bool CategoryFilter::deserialize(const std::string& checksString, bool skipEmptyCategories, RegExpFilterFactory* regExpFactory)
+{
+  return deserialize_(checksString, skipEmptyCategories, regExpFactory, true);
+}
+
+///@return false on fail
+bool CategoryFilter::deserialize_(const std::string& checksString, bool skipEmptyCategories, RegExpFilterFactory* regExpFactory, bool recurseOnAutoUpdate)
 {
   if (dataStore_ == nullptr)
     return false;
 
+  checksAutoUpdated_ = false;
   categoryCheck_.clear();
   categoryRegExp_.clear();
 
@@ -781,8 +791,24 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
     }
   }
 
-  // True: success;  False: failure
-  return !hasErrors;
+  // if has errors, just return as is
+  if (hasErrors)
+  {
+    checksAutoUpdated_ = false;
+    return false;
+  }
+  // checks were auto updated while deserializing
+  else if (checksAutoUpdated_)
+  {
+    // reset auto update flag
+    checksAutoUpdated_ = false;
+    if (recurseOnAutoUpdate) // only recurse once to resolve checks state
+      return deserialize_(checksString, skipEmptyCategories, regExpFactory, false);
+    // not recursing any more, checks were auto updated in background a second time, so treat as an error
+    return false;
+  }
+  // no errors and checks were not auto updated, so return success
+  return true;
 }
 
 bool CategoryFilter::deserialize(const std::string &checksString, RegExpFilterFactory& regExpFactory)

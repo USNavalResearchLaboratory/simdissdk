@@ -316,6 +316,10 @@ int main(int argc, char** argv)
     layer->setUseHeightMap(false);
     layer->setMaxAltitude(30000.0f);
     layer->setRenderBinNumber(simVis::BIN_OCEAN);
+#if OSGEARTH_SOVERSION >= 154
+    // render Triton on the ellipsoid (old default)
+    layer->setVerticalDatum("");
+#endif
     scene->getMap()->addLayer(layer);
   }
   else

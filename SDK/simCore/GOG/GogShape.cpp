@@ -26,6 +26,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
+#include "simCore/String/Utils.h"
 #include "simCore/Time/String.h"
 #include "simCore/GOG/GogShape.h"
 
@@ -64,7 +65,9 @@ int GogShape::getName(std::string& name) const
 
 void GogShape::setName(const std::string& gogName)
 {
-  name_ = gogName;
+  const std::string& cleanName = simCore::StringUtils::trim(gogName);
+  if (!cleanName.empty())
+    name_ = cleanName;
 }
 
 int GogShape::getIsDrawn(bool& draw) const
@@ -528,6 +531,11 @@ OutlinedShape::OutlinedShape()
   : GogShape()
 {}
 
+bool OutlinedShape::canRotate() const
+{
+  return false;
+}
+
 int OutlinedShape::getIsOutlined(bool& outlined) const
 {
   outlined = outlined_.value_or(true);
@@ -706,6 +714,11 @@ PointBasedShape::PointBasedShape(bool relative)
   setRelative(relative);
 }
 
+bool PointBasedShape::canRotate() const
+{
+  return isRelative();
+}
+
 const std::vector<simCore::Vec3>& PointBasedShape::points() const
 {
   return points_;
@@ -727,7 +740,7 @@ int PointBasedShape::getTessellation(TessellationStyle& tessellation) const
   return (tessellation_.has_value() ? 0 : 1);
 }
 
-void PointBasedShape::setTesssellation(TessellationStyle tessellation)
+void PointBasedShape::setTessellation(TessellationStyle tessellation)
 {
   tessellation_ = tessellation;
 }
@@ -819,6 +832,11 @@ int CircularShape::getRadius(double& radius) const
 void CircularShape::setRadius(double radiusMeters)
 {
   radius_ = radiusMeters;
+}
+
+bool CircularShape::canRotate() const
+{
+  return true;
 }
 
 void CircularShape::serializeToStream_(std::ostream& gogOutputStream) const
@@ -1181,7 +1199,23 @@ Annotation::Annotation(bool relative)
   setCanExtrude_(false);
   setCanFollow_(false);
   setRelative(relative);
-  setSerializeName_(false);
+}
+
+int Annotation::getName(std::string& name) const
+{
+  int rv = GogShape::getName(name);
+  // return text as name if no name was defined and text is valid, per legacy SIMDIS 9 behavior
+  if (rv != 0 && !text_.empty())
+  {
+    name = text_;
+    return 0;
+  }
+  return rv;
+}
+
+bool Annotation::canRotate() const
+{
+  return false;
 }
 
 ShapeType Annotation::shapeType() const
@@ -1289,9 +1323,7 @@ void Annotation::setPriority(double priority)
 
 void Annotation::serializeToStream_(std::ostream& gogOutputStream) const
 {
-  std::string name;
-  getName(name);
-  gogOutputStream << shapeTypeToString(shapeType()) << " " << name << "\n";
+  gogOutputStream << shapeTypeToString(shapeType()) << " " << text() << "\n";
 
   if (position_.has_value())
   {
@@ -1436,6 +1468,11 @@ ImageOverlay::ImageOverlay()
 ShapeType ImageOverlay::shapeType() const
 {
   return ShapeType::IMAGEOVERLAY;
+}
+
+bool ImageOverlay::canRotate() const
+{
+  return false;
 }
 
 double ImageOverlay::north() const

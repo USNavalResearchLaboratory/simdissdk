@@ -24,9 +24,9 @@
 #define SIMDATA_PREFRULESMANAGER_H
 
 #include <deque>
-#include <vector>
+#include <iosfwd>
 #include <string>
-#include <iostream>
+#include <vector>
 
 #include "simCore/Common/Common.h"
 #include "simData/ObjectId.h"

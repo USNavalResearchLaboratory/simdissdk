@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <iostream>
 #include "simCore/String/Utils.h"
 #include "simCore/String/CsvWriter.h"
 

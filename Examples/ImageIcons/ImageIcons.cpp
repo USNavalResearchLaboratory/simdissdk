@@ -169,7 +169,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
 
     std::stringstream ss;
     ss << "Currently viewing: " << IconRotation_Name(s_iconRotation);
-    ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), ss.str().c_str());
+    ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), "%s", ss.str().c_str());
 
     ImGui::End();
 

@@ -1067,6 +1067,35 @@ int testAnnotation()
       rv += SDK_ASSERT(anno->text() == "label 1\nnext line");
   }
 
+  // test that name and text values set and serialize correctly
+  {
+    simCore::GOG::Annotation nameAnnotation(false);
+    nameAnnotation.setText("Text");
+    nameAnnotation.setPosition(simCore::Vec3());
+
+    // name should be the same as text if no name was set
+    std::string name;
+    rv += SDK_ASSERT(nameAnnotation.getName(name) == 0);
+    rv += SDK_ASSERT(name == "Text");
+
+    std::stringstream os;
+    nameAnnotation.serializeToStream(os);
+    std::string serialized = os.str();
+    rv += SDK_ASSERT(serialized.find("annotation Text") != std::string::npos);
+    // verify name is not serialized out when not set
+    rv += SDK_ASSERT(serialized.find("3d name") == std::string::npos);
+
+    nameAnnotation.setName("Name");
+    nameAnnotation.getName(name);
+    // now that name is set, verify it is returned
+    rv += SDK_ASSERT(name == "Name");
+    nameAnnotation.serializeToStream(os);
+    serialized = os.str();
+    // verify text is serialized out correctly when name is set
+    rv += SDK_ASSERT(serialized.find("annotation Text") != std::string::npos);
+    // verify name is serialized out when set
+    rv += SDK_ASSERT(serialized.find("3d name Name") != std::string::npos);
+  }
   return rv;
 }
 
@@ -1537,22 +1566,19 @@ int testSerialization()
 {
   int rv = 0;
 
-  // serialized items that match those in BASE_FIELDS (excluding name)
-  std::vector<std::string> baseItemsNoName;
-  baseItemsNoName.push_back("altitudeunits m\n");
-  baseItemsNoName.push_back("off\n");
-  baseItemsNoName.push_back("depthbuffer true\n");
-  baseItemsNoName.push_back("3d offsetalt 120\n");
-  baseItemsNoName.push_back("altitudemode relativetoground\n");
-  baseItemsNoName.push_back("scale 2 1.3 0.5\n");
-  baseItemsNoName.push_back("verticaldatum egm1984\n");
-  baseItemsNoName.push_back("starttime \"001 1970 00:00:00.00000\"");
-  baseItemsNoName.push_back("endtime \"001 1970 01:00:00.00000\"");
-  baseItemsNoName.push_back("start\n");
-  baseItemsNoName.push_back("end\n");
-
-  // all base items including the 3d name
-  std::vector<std::string> baseItems = baseItemsNoName;
+  // serialized items that match those in BASE_FIELDS
+  std::vector<std::string> baseItems;
+  baseItems.push_back("altitudeunits m\n");
+  baseItems.push_back("off\n");
+  baseItems.push_back("depthbuffer true\n");
+  baseItems.push_back("3d offsetalt 120\n");
+  baseItems.push_back("altitudemode relativetoground\n");
+  baseItems.push_back("scale 2 1.3 0.5\n");
+  baseItems.push_back("verticaldatum egm1984\n");
+  baseItems.push_back("starttime \"001 1970 00:00:00.00000\"");
+  baseItems.push_back("endtime \"001 1970 01:00:00.00000\"");
+  baseItems.push_back("start\n");
+  baseItems.push_back("end\n");
   baseItems.push_back("3d name my favorite shape\n");
 
   // follow items are in a separate list, since not all shapes support follow
@@ -1602,8 +1628,8 @@ int testSerialization()
   pointItems.push_back("pointsize 5\n");
   pointItems.push_back("linecolor hex 0xffc000c0\n");
 
-  // serialized items that match those in ANNOTATION_FIELDS + BASE_FIELDS (excluding the 3d name, which is part of the annotation shape type line)
-  std::vector<std::string> annotationItems = baseItemsNoName;
+  // serialized items that match those in ANNOTATION_FIELDS + BASE_FIELDS
+  std::vector<std::string> annotationItems = baseItems;
   annotationItems.push_back("annotation my favorite shape\n");
   annotationItems.push_back("fontname georgia.ttf\n");
   annotationItems.push_back("fontsize 24\n");

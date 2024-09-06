@@ -26,6 +26,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
+#include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
@@ -37,6 +38,17 @@ namespace {
 bool almostEqual(double value1, double value2, double epsilon=1e-4)
 {
   if (!simCore::areEqual(value1, value2, epsilon))
+  {
+    std::cerr << "FAILURE" << std::endl;
+    std::cerr << std::setprecision(16) << "    " << value1 << " != " << value2 << " delta: " << value1 - value2 << std::endl;
+    return false;
+  }
+  return true;
+}
+
+bool angleAlmostEqual(double value1, double value2, double epsilon = 1e-4)
+{
+  if (!simCore::areAnglesEqual(value1, value2, epsilon))
   {
     std::cerr << "FAILURE" << std::endl;
     std::cerr << std::setprecision(16) << "    " << value1 << " != " << value2 << " delta: " << value1 - value2 << std::endl;
@@ -255,6 +267,28 @@ int testCalculateAspectAngle(double *from, double *to, simCore::EarthModelCalcul
   return 1;
 }
 
+int testBearingAspectAngle(double* from, double* to, double results, const std::string& text)
+{
+  std::cerr << "calculateBearingAspectAngle +++++++++++++ ";
+
+  const double angle = simCore::calculateBearingAspectAngle(simCore::Vec3(from), simCore::Vec3(to), to[3]);
+  if (angleAlmostEqual(angle, results, 0.001))
+  {
+    if (text == simCore::formatBearingAspectAngle(angle))
+    {
+      std::cerr << "successful" << std::endl;
+      return 0;
+    }
+    else
+    {
+      std::cerr << "FAILURE" << std::endl;
+      std::cerr << std::setprecision(16) << "    " << text << " != " << simCore::formatBearingAspectAngle(angle) << std::endl;
+    }
+  }
+
+  return 1;
+}
+
 //===========================================================================
 int testPositionInGate(double *from, double *to, double *gate, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double* result)
 {
@@ -438,6 +472,15 @@ int readNextTest(std::istream& fd, bool& doneReading)
     fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5];
     fd >> result[0];
     rv += testCalculateAspectAngle(from, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 18, "BearingAspectAngle") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2];
+    fd >> to[0] >> to[1] >> to[2] >> to[3];
+    fd >> result[0];
+    std::string text;
+    fd >> text;
+    rv += testBearingAspectAngle(from, to, *result, text);
   }
   else if (test.compare(0, 8, "Altitude") == 0)
   {

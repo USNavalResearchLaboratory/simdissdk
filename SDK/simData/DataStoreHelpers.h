@@ -23,8 +23,11 @@
 #ifndef SIMDATA_DATASTOREHELPERS_H
 #define SIMDATA_DATASTOREHELPERS_H
 
+#include <optional>
 #include <string>
+#include <utility>
 #include "simCore/Common/Common.h"
+#include "simData/DataSlice.h"
 #include "simData/DataTable.h"
 #include "simData/DataTypes.h"
 #include "simData/ObjectId.h"
@@ -78,6 +81,11 @@ public:
 
   /** Returns true if the entity is active, or false if inactive; e.g. for Super Form-like filtering. */
   static bool isEntityActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime);
+  /** Returns time bounds for platform in file mode based on lifespan mode. Does not inspect data draw nor live mode. */
+  static std::optional<std::pair<double, double>> getFileModePlatformTimeBounds(simData::LifespanMode lifespan, const simData::PlatformUpdateSlice& slice);
+  /** Inspecting an individual platforms slice, determines whether it is active in file mode. Does not account for data draw nor live mode. */
+  static bool isFileModePlatformActive(simData::LifespanMode lifespan, const simData::PlatformUpdateSlice& slice, double atTime);
+
   /** Returns the user vertical datum value, in meters, for the given entity. */
   static double getUserVerticalDatum(const simData::DataStore& dataStore, simData::ObjectId id);
 

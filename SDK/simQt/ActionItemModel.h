@@ -42,14 +42,26 @@ class SDKQT_EXPORT ActionItemModel : public QAbstractItemModel
 {
   Q_OBJECT;
 public:
-  /// constructor
   explicit ActionItemModel(QObject* parent=nullptr);
   virtual ~ActionItemModel();
 
+  enum ColumnIndex
+  {
+    /** Action or group name */
+    COL_ACTION = 0,
+    /** Primary hot key assignment */
+    COL_PRIMARY,
+    /** Secondary hot key assignment */
+    COL_SECONDARY,
+    /** Comma-delimited list of aliases*/
+    COL_ALIASES,
+
+    /** Convenience entry for total number of columns */
+    NUM_COLUMNS
+  };
+
   /// Changes the registry that is represented in the item model
   void setRegistry(ActionRegistry* registry);
-  /// Sets whether the action hotkeys are editable are not (default: editable)
-  void setReadOnly(bool readOnly);
 
   // QAbstractItemModel overrides
   virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
@@ -66,9 +78,10 @@ Q_SIGNALS:
   void groupAdded(const QModelIndex& idx);
 
 private Q_SLOTS:
-  void actionAdded(simQt::Action* action);
-  void actionRemoved(const simQt::Action* action);
-  void hotKeysChanged(simQt::Action* action);
+  void addAction_(simQt::Action* action);
+  void removeAction_(const simQt::Action* action);
+  void updateHotKeys_(simQt::Action* action);
+  void assignAlias_(const QString& actionDesc, const QString& alias);
 
 private:
   /// Internal helper classes, used to organize actions into groups for tree display
@@ -91,11 +104,9 @@ private:
   QModelIndex indexOfAction_(Action* action) const;
 
   /// Pointer to the current action registry
-  ActionRegistry* registry_;
+  ActionRegistry* registry_ = nullptr;
   /// Actions in the registry, sorted by group name
   QList<GroupItem*> groups_;
-  /// Maintains read-only flag to control editing
-  bool readOnly_;
 };
 
 /** Delegate used for editing hotkeys in the ActionItemModel.  Uses the KeySequenceEdit

@@ -23,7 +23,7 @@
 #ifndef SIMCORE_GOG_PARSER_H
 #define SIMCORE_GOG_PARSER_H
 
-#include <iostream>
+#include <iosfwd>
 #include <map>
 #include <set>
 #include <string>

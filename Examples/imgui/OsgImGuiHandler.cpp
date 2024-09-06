@@ -30,33 +30,57 @@
 #include "osgEarth/Version"
 #include "osgEarth/ShaderLoader"
 #include "osgEarth/VirtualProgram"
-#include "osgEarth/ImGui/CameraGUI"
-#include "osgEarth/ImGui/EnvironmentGUI"
+
+#if OSGEARTH_SOVERSION >= 159
+  #include "osgEarthImGui/CameraGUI"
+  #include "osgEarthImGui/EnvironmentGUI"
+  using namespace osgEarth;
+#else
+  #include "osgEarth/ImGui/ImGui"
+  #include "osgEarth/ImGui/CameraGUI"
+  #include "osgEarth/ImGui/EnvironmentGUI"
+  using namespace osgEarth::GUI;
+#endif
 
 #if OSGEARTH_SOVERSION < 146
 #undef NOMINMAX
 #endif
 
 #if OSGEARTH_SOVERSION >= 148
- // Fix 3.4.0 bugs with namespace in osgEarth/ImGui/AnnotationsGUI
-#include "osgEarth/AnnotationData"
-using AnnotationData = osgEarth::AnnotationData;
-using EarthManipulator = osgEarth::EarthManipulator;
+  // Fix 3.4.0 bugs with namespace in osgEarth/ImGui/AnnotationsGUI
+  #include "osgEarth/AnnotationData"
+  using AnnotationData = osgEarth::AnnotationData;
+  using EarthManipulator = osgEarth::EarthManipulator;
 
-#include "osgEarth/ImGui/AnnotationsGUI"
+  #if OSGEARTH_SOVERSION >= 159
+    #include "osgEarthImGui/AnnotationsGUI"
+  #else
+    #include "osgEarth/ImGui/AnnotationsGUI"
+  #endif
 #endif
 
 #if 0
 #include "osgEarth/ImGui/LayersGUI"
 #endif
 
-#include "osgEarth/ImGui/NetworkMonitorGUI"
-#include "osgEarth/ImGui/RenderingGUI"
-#include "osgEarth/ImGui/SceneGraphGUI"
-#include "osgEarth/ImGui/SystemGUI"
-#include "osgEarth/ImGui/TerrainGUI"
-#include "osgEarth/ImGui/TextureInspectorGUI"
-#include "osgEarth/ImGui/ViewpointsGUI"
+#if OSGEARTH_SOVERSION >= 159
+  #include "osgEarthImGui/NetworkMonitorGUI"
+  #include "osgEarthImGui/RenderingGUI"
+  #include "osgEarthImGui/SceneGraphGUI"
+  #include "osgEarthImGui/SystemGUI"
+  #include "osgEarthImGui/TerrainGUI"
+  #include "osgEarthImGui/TextureInspectorGUI"
+  #include "osgEarthImGui/ViewpointsGUI"
+#else
+  #include "osgEarth/ImGui/NetworkMonitorGUI"
+  #include "osgEarth/ImGui/RenderingGUI"
+  #include "osgEarth/ImGui/SceneGraphGUI"
+  #include "osgEarth/ImGui/SystemGUI"
+  #include "osgEarth/ImGui/TerrainGUI"
+  #include "osgEarth/ImGui/TextureInspectorGUI"
+  #include "osgEarth/ImGui/ViewpointsGUI"
+#endif
+
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Interpolation.h"
 #include "simVis/Registry.h"
@@ -127,30 +151,38 @@ OsgImGuiHandler::OsgImGuiHandler()
   autoAdjustProjectionMatrix_(true)
 {
 #if OSGEARTH_SOVERSION >= 148
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::AnnotationsGUI>(new osgEarth::GUI::AnnotationsGUI));
+  menus_["Tools"].push_back(std::unique_ptr<AnnotationsGUI>(new AnnotationsGUI));
 #endif
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::CameraGUI>(new osgEarth::GUI::CameraGUI));
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::EnvironmentGUI>(new osgEarth::GUI::EnvironmentGUI));
+  menus_["Tools"].push_back(std::unique_ptr<CameraGUI>(new CameraGUI));
+  menus_["Tools"].push_back(std::unique_ptr<EnvironmentGUI>(new EnvironmentGUI));
 #if 0
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::LayersGUI>(new osgEarth::GUI::LayersGUI));
+  menus_["Tools"].push_back(std::unique_ptr<LayersGUI>(new LayersGUI));
 #endif
 
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::NetworkMonitorGUI>(new osgEarth::GUI::NetworkMonitorGUI));
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::NVGLInspectorGUI>(new osgEarth::GUI::NVGLInspectorGUI));
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::RenderingGUI>(new osgEarth::GUI::RenderingGUI));
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::SceneGraphGUI>(new osgEarth::GUI::SceneGraphGUI));
+  menus_["Tools"].push_back(std::unique_ptr<NetworkMonitorGUI>(new NetworkMonitorGUI));
+  menus_["Tools"].push_back(std::unique_ptr<NVGLInspectorGUI>(new NVGLInspectorGUI));
+  menus_["Tools"].push_back(std::unique_ptr<RenderingGUI>(new RenderingGUI));
+  menus_["Tools"].push_back(std::unique_ptr<SceneGraphGUI>(new SceneGraphGUI));
   // Not including ShaderGUI as it expects command line arguments. Can be added later if needed
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::SystemGUI>(new osgEarth::GUI::SystemGUI));
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TerrainGUI>(new osgEarth::GUI::TerrainGUI));
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::TextureInspectorGUI>(new osgEarth::GUI::TextureInspectorGUI));
-  menus_["Tools"].push_back(std::unique_ptr<osgEarth::GUI::ViewpointsGUI>(new osgEarth::GUI::ViewpointsGUI));
+  menus_["Tools"].push_back(std::unique_ptr<SystemGUI>(new SystemGUI));
+  menus_["Tools"].push_back(std::unique_ptr<TerrainGUI>(new TerrainGUI));
+  menus_["Tools"].push_back(std::unique_ptr<TextureInspectorGUI>(new TextureInspectorGUI));
+  menus_["Tools"].push_back(std::unique_ptr<ViewpointsGUI>(new ViewpointsGUI));
 }
 
+#if OSGEARTH_SOVERSION >= 159
+void OsgImGuiHandler::add(osgEarth::ImGuiPanel* gui)
+{
+  if (gui != nullptr)
+    menus_["User"].push_back(std::unique_ptr<ImGuiPanel>(gui));
+}
+#else
 void OsgImGuiHandler::add(osgEarth::GUI::BaseGUI* gui)
 {
   if (gui != nullptr)
     menus_["User"].push_back(std::unique_ptr<osgEarth::GUI::BaseGUI>(gui));
 }
+#endif
 
 void OsgImGuiHandler::add(::GUI::BaseGui* gui)
 {

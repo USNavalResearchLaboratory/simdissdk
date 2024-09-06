@@ -23,9 +23,9 @@
 #ifndef SIMCORE_GOG_GOGUTILS_H
 #define SIMCORE_GOG_GOGUTILS_H
 
+#include <optional>
 #include <string>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Optional.h"
 #include "simCore/Calc/Units.h"
 
 namespace simCore {
@@ -99,12 +99,12 @@ public:
    * @param unitsRegistry supplies to-string conversion for units
    * @param units parsed output
    */
-  void parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, Optional<simCore::Units>& units);
+  void parse(const std::string& unitString, const simCore::UnitsRegistry& unitsRegistry, std::optional<simCore::Units>& units);
 
 private:
-  Optional<simCore::Units> altitudeUnits_; ///< Altitude units
-  Optional<simCore::Units> rangeUnits_; ///< Range units
-  Optional<simCore::Units> angleUnits_; ///< Angle units
+  std::optional<simCore::Units> altitudeUnits_; ///< Altitude units
+  std::optional<simCore::Units> rangeUnits_; ///< Range units
+  std::optional<simCore::Units> angleUnits_; ///< Angle units
 };
 
 /**

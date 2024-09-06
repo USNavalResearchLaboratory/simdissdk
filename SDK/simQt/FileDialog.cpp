@@ -50,7 +50,7 @@ QString FileDialog::getRegistryDir(const QString& registryDir)
   {
     QSettings settings;
     // Prepend "private/" to the front of the setting name to prevent it from being visible to the user
-    return settings.value(PRIVATE_PREFIX + registryDir).toString();
+    return QString::fromStdString(simCore::expandEnv(settings.value(PRIVATE_PREFIX + registryDir).toString().toStdString()));
   }
   return "";
 }
@@ -60,7 +60,7 @@ void FileDialog::setRegistryDir(const QString& registryDir, const QString& path,
   if (registryDir.isEmpty())
     return;
   // Prepend "private/" to the front of the setting name to prevent it from being visible to the user
-  QString privateRegDir = PRIVATE_PREFIX + registryDir;
+  const QString privateRegDir = PRIVATE_PREFIX + registryDir;
   QSettings settings;
   if (overwrite || !settings.contains(privateRegDir))
   {
@@ -92,7 +92,7 @@ QString FileDialog::saveFile(QWidget* owner, const QString& caption, const QStri
     owner->activateWindow();
 #endif
 
-  QString directory = FileDialog::getRegistryDir(registryDir);
+  const QString directory = FileDialog::getRegistryDir(registryDir);
 
   // If the caller did not provide a selected filter, attempt to find a matching filter
   QString* localPointer = selectedFilter;
@@ -103,11 +103,11 @@ QString FileDialog::saveFile(QWidget* owner, const QString& caption, const QStri
     if (!ext.isEmpty())
     {
 #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-      QStringList eachLine = filter.split("\n", QString::SkipEmptyParts);
+      const QStringList eachLine = filter.split("\n", QString::SkipEmptyParts);
 #else
-      QStringList eachLine = filter.split("\n", Qt::SkipEmptyParts);
+      const QStringList eachLine = filter.split("\n", Qt::SkipEmptyParts);
 #endif
-      QString match = "(*" + ext + ")";
+      const QString match = "(*" + ext + ")";
       for (auto it = eachLine.begin(); it != eachLine.end(); ++it)
       {
         if ((*it).contains(match))
@@ -120,7 +120,7 @@ QString FileDialog::saveFile(QWidget* owner, const QString& caption, const QStri
     }
   }
 
-  QString file = QFileDialog::getSaveFileName(owner, caption, directory,
+  const QString file = QFileDialog::getSaveFileName(owner, caption, directory,
     FileDialog::foxToQtFilter(filter), localPointer, options | getFileDialogDefaultOptions());
   if (!file.isEmpty() && !registryDir.isEmpty())
   {
@@ -137,8 +137,8 @@ QString FileDialog::loadFile(QWidget* owner, const QString& caption, const QStri
   if (owner)
     owner->activateWindow();
 #endif
-  QString directory = FileDialog::getRegistryDir(registryDir);
-  QString file = QFileDialog::getOpenFileName(owner, caption, directory,
+  const QString directory = FileDialog::getRegistryDir(registryDir);
+  const QString file = QFileDialog::getOpenFileName(owner, caption, directory,
     FileDialog::foxToQtFilter(filter), selectedFilter, options | getFileDialogDefaultOptions());
   if (!file.isEmpty() && !registryDir.isEmpty())
   {
@@ -155,8 +155,8 @@ QStringList FileDialog::loadFiles(QWidget* owner, const QString& caption, const 
   if (owner)
     owner->activateWindow();
 #endif
-  QString directory = FileDialog::getRegistryDir(registryDir);
-  QStringList files = QFileDialog::getOpenFileNames(owner, caption, directory,
+  const QString directory = FileDialog::getRegistryDir(registryDir);
+  const QStringList files = QFileDialog::getOpenFileNames(owner, caption, directory,
     FileDialog::foxToQtFilter(filter), selectedFilter, options | getFileDialogDefaultOptions());
   if (!files.isEmpty() && !registryDir.isEmpty())
   {
@@ -173,8 +173,8 @@ QString FileDialog::findDirectory(QWidget* owner, const QString& caption, const 
   if (owner)
     owner->activateWindow();
 #endif
-  QString priorDirectory = FileDialog::getRegistryDir(registryDir);
-  QString directory = QFileDialog::getExistingDirectory(owner, caption, priorDirectory, options | getFileDialogDefaultOptions());
+  const QString priorDirectory = FileDialog::getRegistryDir(registryDir);
+  const QString directory = QFileDialog::getExistingDirectory(owner, caption, priorDirectory, options | getFileDialogDefaultOptions());
   if (!directory.isEmpty() && !registryDir.isEmpty())
   {
     FileDialog::setRegistryDir(registryDir, directory, true);

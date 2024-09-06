@@ -494,6 +494,24 @@ int testFilterSerialize()
     rv += SDK_ASSERT(filter.serialize(false) == iter->second);
   }
 
+  // test deserializing first instance of a category when filter is auto updating, SIM-17456
+  const std::string newValue = "NewName(1)~NewValue(1)";
+  {
+    simData::CategoryFilter autoFilter(&ds, true);
+    autoFilter.deserialize(newValue, false, &reFactory);
+    rv += SDK_ASSERT(autoFilter.serialize(false) == newValue);
+    autoFilter.deserialize(newValue, false, &reFactory);
+    rv += SDK_ASSERT(autoFilter.serialize(false) == newValue);
+  }
+  // verify behavior matches when not auto updating
+  {
+    simData::CategoryFilter normalFilter(&ds);
+    normalFilter.deserialize(newValue, false, &reFactory);
+    rv += SDK_ASSERT(normalFilter.serialize(false) == newValue);
+    normalFilter.deserialize(newValue, false, &reFactory);
+    rv += SDK_ASSERT(normalFilter.serialize(false) == newValue);
+  }
+
   return rv;
 }
 
