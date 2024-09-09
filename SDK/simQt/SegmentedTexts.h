@@ -266,14 +266,14 @@ protected:
   /// convert the field representation of the fraction to a # of ns
   int fractionFromField_(int fractionFieldValue, int precision) const;
 
-  simCore::TimeStamp start_;  ///< Start Time
-  simCore::TimeStamp end_;  ///< End time
+  simCore::TimeStamp start_ = simCore::MIN_TIME_STAMP;  ///< Start Time
+  simCore::TimeStamp end_ = simCore::MAX_TIME_STAMP;  ///< End time
   simCore::TimeStamp adjustedStart_;  ///< Start Time adjusted down by the precision
   simCore::TimeStamp adjustedEnd_;  ///< End time adjusted up by the precision
   std::optional<int> scenarioReferenceYear_;  ///< Scenario Reference Year
-  unsigned int precision_; ///< The number of digits after the decimal point, must be between 1 and 6
-  bool limitBeforeStart_; ///< If true times before the start time are rejected
-  bool limitAfterEnd_;  ///< If true times after the end time are rejected
+  unsigned int precision_ = 3; ///< The number of digits after the decimal point, must be between 1 and 6
+  bool limitBeforeStart_ = true; ///< If true times before the start time are rejected
+  bool limitAfterEnd_ = true;  ///< If true times after the end time are rejected
 
 private:
   /// Adjust the time range to account for the precision

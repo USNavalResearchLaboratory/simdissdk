@@ -36,10 +36,8 @@ namespace simQt {
 static const unsigned int MAX_PRECISION = 6;
 
   SegmentedTexts::SegmentedTexts()
-    : precision_(3),
-      limitBeforeStart_(true),
-      limitAfterEnd_(true)
   {
+    adjustTimeRange_();
   }
 
   SegmentedTexts::~SegmentedTexts()
