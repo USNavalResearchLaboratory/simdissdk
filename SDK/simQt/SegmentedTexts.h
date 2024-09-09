@@ -23,6 +23,7 @@
 #ifndef SIMQT_SEGMENTED_LINE_H
 #define SIMQT_SEGMENTED_LINE_H
 
+#include <optional>
 #include <QSpinBox>
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/TimeClass.h"
@@ -269,7 +270,7 @@ protected:
   simCore::TimeStamp end_;  ///< End time
   simCore::TimeStamp adjustedStart_;  ///< Start Time adjusted down by the precision
   simCore::TimeStamp adjustedEnd_;  ///< End time adjusted up by the precision
-  int scenarioReferenceYear_;  ///< Scenario Reference Year
+  std::optional<int> scenarioReferenceYear_;  ///< Scenario Reference Year
   unsigned int precision_; ///< The number of digits after the decimal point, must be between 1 and 6
   bool limitBeforeStart_; ///< If true times before the start time are rejected
   bool limitAfterEnd_;  ///< If true times after the end time are rejected
