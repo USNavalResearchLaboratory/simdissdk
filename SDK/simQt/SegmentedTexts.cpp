@@ -667,6 +667,7 @@ static const unsigned int MAX_PRECISION = 6;
       return lastState;
 
     SecondsTexts temp;
+    temp.setPrecision(precision());
     temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
     temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
     temp.setText(text);
@@ -752,6 +753,7 @@ static const unsigned int MAX_PRECISION = 6;
     if (lastState == QValidator::Acceptable)
     {
       MinutesTexts temp;
+      temp.setPrecision(precision());
       temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setText(text);
@@ -847,6 +849,7 @@ static const unsigned int MAX_PRECISION = 6;
     if (lastState == QValidator::Acceptable)
     {
       HoursTexts temp;
+      temp.setPrecision(precision());
       temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setText(text);
@@ -977,6 +980,7 @@ static const unsigned int MAX_PRECISION = 6;
     if (lastState == QValidator::Acceptable)
     {
       OrdinalTexts temp;
+      temp.setPrecision(precision());
       temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setTimeZone(zone_);
@@ -1142,6 +1146,7 @@ static const unsigned int MAX_PRECISION = 6;
     if (lastState == QValidator::Acceptable)
     {
       MonthDayYearTexts temp;
+      temp.setPrecision(precision());
       temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setTimeZone(zone_);

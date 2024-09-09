@@ -90,7 +90,7 @@ public:
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits) = 0;
   /// get the number of digits after the decimal point
-  virtual unsigned int precision() = 0;
+  virtual unsigned int precision() const = 0;
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone) = 0;
@@ -111,6 +111,11 @@ Q_SIGNALS:
   void customContextMenuRequested(const QPoint& point);
 
 protected:
+  /// Helper method for setting precision
+  void setPrecision_(unsigned int digits, SegmentedSpinBox* widget) const;
+  /// Helper method for setting time zone
+  void setTimeZone_(simCore::TimeZone zone, SegmentedSpinBox* widget) const;
+
   simCore::TimeFormat timeFormat_;  ///< Enumeration used to identify this widget
   QString name_;  ///< The name to display to the user
   QAction* action_;  ///< The action to invoke the switch
@@ -150,7 +155,7 @@ public:
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
-  virtual unsigned int precision();
+  virtual unsigned int precision() const;
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);
@@ -200,7 +205,7 @@ public:
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
-  virtual unsigned int precision();
+  virtual unsigned int precision() const;
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);
@@ -251,7 +256,7 @@ public:
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
-  virtual unsigned int precision();
+  virtual unsigned int precision() const;
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);
@@ -301,7 +306,7 @@ public:
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
-  virtual unsigned int precision();
+  virtual unsigned int precision() const;
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);
@@ -351,7 +356,7 @@ public:
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
-  virtual unsigned int precision();
+  virtual unsigned int precision() const;
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);
@@ -401,7 +406,7 @@ public:
   /// Set the number of digits after the decimal point
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
-  virtual unsigned int precision();
+  virtual unsigned int precision() const;
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);
