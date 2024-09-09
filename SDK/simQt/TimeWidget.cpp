@@ -240,14 +240,18 @@ void TimeWidget::setTimeFormat(simCore::TimeFormat newFormat)
   if (newFormat == simCore::TIMEFORMAT_DTG)
     newFormat = simCore::TIMEFORMAT_MONTHDAY;
 
+  // Return if no change
+  if (currentContainer_->timeFormat() == newFormat)
+    return;
+
   for (auto it = containers_.begin(); it != containers_.end(); ++it)
   {
     if ((*it)->timeFormat() == newFormat)
     {
       layout()->removeWidget(currentContainer_->widget());
       currentContainer_->widget()->setHidden(true);
-      // user might have changed the time before switching, so move time over to new widget
-      (*it)->setTimeStamp(currentContainer_->timeStamp());
+      // The times should be in sync
+      assert((*it)->timeStamp() == currentContainer_->timeStamp());
       currentContainer_ = *it;
       if (timeEnabled_)
       {
@@ -267,7 +271,7 @@ void TimeWidget::setPrecision(unsigned int digits)
   const simCore::TimeStamp& currentTime = currentContainer_->timeStamp();
   for (auto it = containers_.begin(); it != containers_.end(); ++it)
     (*it)->setPrecision(digits);
-  currentContainer_->setTimeStamp(currentTime);
+  setTimeStamp(currentTime);
 }
 
 void TimeWidget::setTimeZone(simCore::TimeZone zone)
@@ -277,7 +281,7 @@ void TimeWidget::setTimeZone(simCore::TimeZone zone)
   const simCore::TimeStamp& currentTime = currentContainer_->timeStamp();
   for (auto it = containers_.begin(); it != containers_.end(); ++it)
     (*it)->setTimeZone(zone);
-  currentContainer_->setTimeStamp(currentTime);
+  setTimeStamp(currentTime);
 }
 
 void TimeWidget::setSeconds_()
