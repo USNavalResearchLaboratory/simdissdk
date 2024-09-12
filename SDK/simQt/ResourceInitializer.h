@@ -37,8 +37,15 @@ namespace simQt
 class SDKQT_EXPORT ResourceInitializer
 {
 public:
-  /// Might need to be called after QApplication is constructed
+  /// Might need to be called after QApplication is constructed; automatically protected against multiple calls
   static void initialize();
+
+  /**
+   * Registers all meta types from simQt; called from initialize() and not protected against multiple calls.
+   * This is a subset of initialize(). This is useful for cases where a dynamic library overwrites the
+   * metadata registrations, then is unloaded, leading to stale memory in the Qt metatype registry.
+   */
+  static void registerMetaTypes();
 };
 
 }
