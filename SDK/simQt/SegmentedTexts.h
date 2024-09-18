@@ -266,6 +266,13 @@ protected:
   /// convert the field representation of the fraction to a # of ns
   int fractionFromField_(int fractionFieldValue, int precision) const;
 
+  /** Returns true if the day is valid for the given year/month pair
+   * param[in] year Four digit year
+   * param[in] month 0 to 11
+   * param[in] day 1 to 31
+   */
+  bool isValidMonthDay_(int year, int month, int day) const;
+
   simCore::TimeStamp start_ = simCore::MIN_TIME_STAMP;  ///< Start Time
   simCore::TimeStamp end_ = simCore::MAX_TIME_STAMP;  ///< End time
   simCore::TimeStamp adjustedStart_;  ///< Start Time adjusted down by the precision
@@ -405,6 +412,13 @@ public:
   virtual void setTimeZone(simCore::TimeZone zone);
   virtual simCore::TimeZone timeZone() const;
 
+  /** Returns four digit year */
+  int year() const;
+  /** Returns 0 to 11 */
+  int month() const;
+  /** Returns 1 to 31 */
+  int day() const;
+
 protected:
   virtual void makeSegments_();
 
@@ -434,6 +448,13 @@ public:
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setTimeZone(simCore::TimeZone zone);
   virtual simCore::TimeZone timeZone() const;
+
+  /** Returns four digit year */
+  int year() const;
+  /** Returns 0 to 11 */
+  int month() const;
+  /** Returns 1 to 31 */
+  int day() const;
 
 protected:
   virtual void makeSegments_();

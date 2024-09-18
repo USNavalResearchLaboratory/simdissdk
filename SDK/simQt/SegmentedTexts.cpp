@@ -209,6 +209,11 @@ static const unsigned int MAX_PRECISION = 6;
       setTimeStamp(*resetTime);
   }
 
+  bool SegmentedTexts::isValidMonthDay_(int year, int month, int day) const
+  {
+    return day <= simCore::daysPerMonth(year, month);
+  }
+
   void SegmentedTexts::adjustTimeRange_()
   {
     adjustedStart_ = start_;
@@ -1155,6 +1160,21 @@ static const unsigned int MAX_PRECISION = 6;
     Q_EMIT timeChanged(timeStamp());
   }
 
+  int MonthDayYearTexts::year() const
+  {
+    return years_->value();
+  }
+
+  int MonthDayYearTexts::month() const
+  {
+    return month_->intValue();
+  }
+
+  int MonthDayYearTexts::day() const
+  {
+    return days_->value();
+  }
+
   QValidator::State MonthDayYearTexts::validateText(const QString& text) const
   {
     QValidator::State lastState = SegmentedTexts::validateText(text);
@@ -1166,6 +1186,8 @@ static const unsigned int MAX_PRECISION = 6;
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setTimeZone(zone_);
       temp.setText(text);
+      if (!isValidMonthDay_(temp.year(), temp.month(), temp.day()))
+        return QValidator::Invalid;
       if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
         return QValidator::Intermediate;
     }
@@ -1278,6 +1300,8 @@ static const unsigned int MAX_PRECISION = 6;
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setTimeZone(zone_);
       temp.setText(text);
+      if (!isValidMonthDay_(temp.year(), temp.month(), temp.day()))
+        return QValidator::Invalid;
       if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
         return QValidator::Intermediate;
     }
@@ -1297,6 +1321,21 @@ static const unsigned int MAX_PRECISION = 6;
   simCore::TimeZone Iso8601Texts::timeZone() const
   {
     return zone_;
+  }
+
+  int Iso8601Texts::year() const
+  {
+    return years_->value();
+  }
+
+  int Iso8601Texts::month() const
+  {
+    return months_->intValue();
+  }
+
+  int Iso8601Texts::day() const
+  {
+    return days_->value();
   }
 
   void Iso8601Texts::makeSegments_()
