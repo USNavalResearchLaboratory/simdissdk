@@ -22,18 +22,20 @@
  */
 #include <iostream>
 #include <cassert>
-#include <QTimer>
 #include <QAction>
-#include <QPainter>
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QMainWindow>
-#include <QScreen>
-#include <QTabBar>
-#include <QToolButton>
-#include <QLabel>
+#include <QDir>
+#include <QFileInfo>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QLabel>
+#include <QMainWindow>
+#include <QPainter>
+#include <QScreen>
+#include <QTabBar>
+#include <QTimer>
+#include <QToolButton>
 #include "simNotify/Notify.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/BoundSettings.h"
@@ -330,6 +332,63 @@ private:
 
 ///////////////////////////////////////////////////////////////
 
+// Adapted from https://doc.qt.io/qt-5/qtwidgets-widgets-elidedlabel-example.html and
+// https://stackoverflow.com/questions/73684307
+class DockWidget::ElidedTitleLabel : public QFrame
+{
+public:
+  explicit ElidedTitleLabel(QWidget* parent = nullptr)
+    : QFrame(parent)
+  {
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    setMinimumSize(40, 6);
+  }
+
+  void setText(const QString& txt)
+  {
+    content_ = txt;
+    update();
+  }
+
+  void setElideMode(Qt::TextElideMode elideMode)
+  {
+    elideMode_ = elideMode;
+    update();
+  }
+
+  const QString& text() const
+  {
+    return content_;
+  }
+
+  QSize sizeHint() const override
+  {
+    const auto& margins = contentsMargins();
+    const QSize marginSize(margins.left() + margins.right(), margins.top() + margins.bottom());
+    const auto& metrics = fontMetrics();
+    return marginSize + QSize{ metrics.averageCharWidth() * 4, metrics.height() };
+  }
+
+protected:
+  virtual void paintEvent(QPaintEvent* evt) override
+  {
+    QFrame::paintEvent(evt);
+
+    QPainter painter(this);
+    const QFontMetrics& fontMetrics = painter.fontMetrics();
+
+    const auto& margins = contentsMargins();
+    const QString& elidedLine = fontMetrics.elidedText(content_, elideMode_, width() - margins.left() - margins.right());
+    painter.drawText(QPoint(margins.left(), fontMetrics.ascent() + margins.bottom()), elidedLine);
+  }
+
+private:
+  QString content_;
+  Qt::TextElideMode elideMode_ = Qt::ElideRight;
+};
+
+///////////////////////////////////////////////////////////////
+
 inline
 bool pointOnScreen(const QPoint& point)
 {
@@ -581,12 +640,13 @@ QWidget* DockWidget::createTitleBar_()
   titleBarIcon_->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
 
   // Set the title bar's caption
-  titleBarTitle_ = new QLabel();
+  titleBarTitle_ = new ElidedTitleLabel();
   titleBarTitle_->setObjectName("titleBarTitle");
-  titleBarTitle_->setText(windowTitle());
   titleBarTitle_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   // Note a padding of 0 pixels looks bad, especially on Ubuntu 14
   titleBarTitle_->setContentsMargins(4, 0, 0, 0);
+
+  updateTitleBarText_(); // Calls titleBarTitle_->setText() in a consistent manner
 
   // Create tool buttons for each button that might show on the GUI
   restoreButton_ = newToolButton_(restoreAction_);
@@ -686,7 +746,7 @@ void DockWidget::updateTitleBar_()
 
   // Make sure the pixmap and text are correct
   updateTitleBarIcon_();
-  titleBarTitle_->setText(windowTitle());
+  updateTitleBarText_(); // Calls titleBarTitle_->setText() in a consistent manner
 
   // Need to make sure icons are right colors too
   updateTitleBarColors_(haveFocus_);
@@ -859,7 +919,20 @@ void DockWidget::setTitleBarVisible(bool show)
 
 void DockWidget::updateTitleBarText_()
 {
-  titleBarTitle_->setText(windowTitle());
+  const QString& filePath = windowFilePath();
+  if (filePath.isEmpty())
+  {
+    titleBarTitle_->setText(windowTitle());
+    return;
+  }
+
+  // Form a string that includes the file path
+  const QFileInfo fi(filePath);
+  titleBarTitle_->setText(tr("%1   [%2]  %3")
+    .arg(windowTitle())
+    .arg(fi.fileName())
+    .arg(QDir::toNativeSeparators(fi.absolutePath()))
+  );
 }
 
 void DockWidget::updateTitleBarIcon_()
@@ -1273,6 +1346,12 @@ void DockWidget::show()
   if (extraFeatures_.testFlag(DockNoTitleStylingHint) || titleBarWidget() == noTitleBar_)
     return;
   setFocus();
+}
+
+void DockWidget::setWindowFilePath(const QString& path)
+{
+  QDockWidget::setWindowFilePath(path);
+  updateTitleBarText_();
 }
 
 void DockWidget::setGlobalSettings(Settings* globalSettings)
