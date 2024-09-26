@@ -180,6 +180,9 @@ public:
   /** Loads the file provided, returning 0 on success and non-zero on error */
   int deserialize(const QString& settingsFile, const QString& groupName="KeyBindings", bool clearExisting = false);
 
+  /** Remove the hot keys from all registered actions */
+  int removeAllHotkeys();
+
 Q_SIGNALS:
   /** notice that a new action has been registered */
   void actionAdded(simQt::Action* action);

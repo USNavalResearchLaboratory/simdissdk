@@ -830,6 +830,17 @@ int ActionRegistry::deserialize(const QString& filename, const QString &groupNam
   return deserialize(settings, groupName, clearExisting);
 }
 
+int ActionRegistry::removeAllHotkeys()
+{
+  int rv = 0;
+  QList<QKeySequence> emptyList;
+  for (auto iter = actionsByDesc_.begin(); iter != actionsByDesc_.end(); ++iter)
+  {
+    rv += setHotKeys(iter.value(), emptyList);
+  }
+  return rv;
+}
+
 QList<QKeySequence> ActionRegistry::makeUnique_(const QList<QKeySequence>& keys) const
 {
   QList<QKeySequence> rv;
