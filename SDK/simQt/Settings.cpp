@@ -85,6 +85,30 @@ Settings::MetaData& Settings::MetaData::addEnumeration(int key, const QString& v
   return *this;
 }
 
+QVariant Settings::MetaData::convertToInteralFormat(QVariant input) const
+{
+  if (type_ != COLOR)
+    return input;
+  // convert color value into QRgb if possible
+  if (QColor::isValidColor(input.toString()) && input.canConvert<QColor>())
+    return input.value<QColor>().rgba();
+  else if (input.canConvert<QRgb>())
+    return input.value<QRgb>();
+  return input;
+}
+
+QVariant Settings::MetaData::convertToSaveFormat(QVariant saveValue) const
+{
+  if (type_ != COLOR)
+    return saveValue;
+  // convert color value into QColor hex string if possible
+  if (QColor::isValidColor(saveValue.toString()) && saveValue.canConvert<QColor>())
+    return saveValue.value<QColor>().name(QColor::HexArgb);
+  else if (saveValue.canConvert<QRgb>())
+    return QColor::fromRgb(saveValue.value<QRgb>()).name(QColor::HexArgb);
+  return saveValue;
+}
+
 /** Factory method for meta data representing an integer value */
 Settings::MetaData Settings::MetaData::makeInteger(const QVariant& defaultValue, const QString& tooltip,
                                                    Settings::DataLevel inLevel, const QVariant& minValue,

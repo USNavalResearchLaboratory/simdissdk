@@ -155,7 +155,7 @@ public:
   void setDataValue(const QVariant& value)
   {
     assert(itemData_.size() > 1);
-    itemData_[1] = value;
+    itemData_[1] = metaData_.convertToInteralFormat(value);
     valueChanged_ = true;
   }
 
@@ -355,6 +355,18 @@ public:
     Qt::ItemFlags itemFlags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     flags_ << itemFlags; // refers to the name
 
+    if (itemData_.size() > 1)
+    {
+      // need to check to see if converting to save value will change the input value
+      if (!valueChanged_)
+      {
+        QVariant saveVal = metaData_.convertToSaveFormat(itemData_[1]);
+        if (itemData_[1] != saveVal) // save value will not be the same as the input, so mark as changed
+          valueChanged_ = true;
+      }
+      // convert value to the internal format now that meta data has been defined
+      itemData_[1] = metaData_.convertToInteralFormat(itemData_[1]);
+    }
     // Data element flags next
     switch (metaData_.type())
     {
@@ -514,8 +526,8 @@ private:
     if (node == nullptr)
       return;
     ValueAndMetaData value;
-    value.value = node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
     value.metaData = node->data(SettingsModel::MetaDataRole, TreeNode::COLUMN_VALUE);
+    value.value = node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
     if (!node->isRootItem() && value.value.isValid())
     {
       // Leaf item -- save data and return
@@ -1053,7 +1065,7 @@ void SettingsModel::storeNodes_(QSettings& settings, TreeNode* node, bool force)
   if (node == nullptr)
     return;
 
-  QVariant value = node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
+  QVariant value = node->metaData().convertToSaveFormat(node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE));
   // Only need to write out leaves
   if (!node->isRootItem() && (value != QVariant()) && (!saveOnlyActivated_ || node->isActivated()))
   {
@@ -1077,7 +1089,7 @@ void SettingsModel::storeNodesDeltas_(QSettings& settings, TreeNode* node) const
   if (node == nullptr)
     return;
 
-  QVariant value = node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
+  QVariant value = node->metaData().convertToSaveFormat(node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE));
   // Only need to write out leaves
   if (!node->isRootItem() && value.isValid() && (!saveOnlyActivated_ || node->isActivated()))
   {
