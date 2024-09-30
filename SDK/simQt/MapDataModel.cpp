@@ -853,7 +853,7 @@ public:
     if (modelLayer)
     {
 #if OSGEARTH_SOVERSION >= 152
-      dataModel_.visibilityCallbacks_.erase(velocityLayer);
+      dataModel_.visibilityCallbacks_.erase(modelLayer);
       dataModel_.opacityCallbacks_.erase(modelLayer);
 #else
       dataModel_.featureCallbacks_.remove(modelLayer);
