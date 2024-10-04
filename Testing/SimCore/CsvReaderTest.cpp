@@ -625,6 +625,84 @@ int testLimitReadToSingleLine()
   return rv;
 }
 
+int testRowReader()
+{
+  int rv = 0;
+
+  std::istringstream stream("H1, H2, H3\none,two,three\nfour,five,six\n1,2,3\n4.,5.,6.");
+  simCore::CsvReader csv(stream);
+  simCore::RowReader reader(csv);
+
+  rv += SDK_ASSERT(reader.readHeader() == 0);
+  rv += SDK_ASSERT(reader.headerTokens().size() == 3);
+  rv += SDK_ASSERT(reader.headerTokens()[0] == "H1");
+  rv += SDK_ASSERT(reader.headerTokens()[1] == "H2");
+  rv += SDK_ASSERT(reader.headerTokens()[2] == "H3");
+
+  rv += SDK_ASSERT(reader.headerIndex("H1") == 0);
+  rv += SDK_ASSERT(reader.headerIndex("H2") == 1);
+  rv += SDK_ASSERT(reader.headerIndex("H3") == 2);
+  rv += SDK_ASSERT(reader.headerIndex("H4") == -1);
+  rv += SDK_ASSERT(reader.header(0) == "H1");
+  rv += SDK_ASSERT(reader.header(1) == "H2");
+  rv += SDK_ASSERT(reader.header(2) == "H3");
+  rv += SDK_ASSERT(reader.header(4).empty());
+
+  rv += SDK_ASSERT(reader.readRow() == 0);
+  rv += SDK_ASSERT(!reader.eof());
+  rv += SDK_ASSERT(reader.rowTokens().size() == 3);
+  rv += SDK_ASSERT(reader.rowTokens()[0] == "one");
+  rv += SDK_ASSERT(reader.rowTokens()[1] == "two");
+  rv += SDK_ASSERT(reader.rowTokens()[2] == "three");
+  rv += SDK_ASSERT(reader[0] == "one");
+  rv += SDK_ASSERT(reader[1] == "two");
+  rv += SDK_ASSERT(reader[2] == "three");
+  rv += SDK_ASSERT(reader["H1"] == "one");
+  rv += SDK_ASSERT(reader["H2"] == "two");
+  rv += SDK_ASSERT(reader["H3"] == "three");
+
+  rv += SDK_ASSERT(reader.field(0) == "one");
+  rv += SDK_ASSERT(reader.field(1) == "two");
+  rv += SDK_ASSERT(reader.field(2) == "three");
+
+  rv += SDK_ASSERT(reader.readRow() == 0);
+  rv += SDK_ASSERT(!reader.eof());
+  rv += SDK_ASSERT(reader.rowTokens().size() == 3);
+  rv += SDK_ASSERT(reader.rowTokens()[0] == "four");
+  rv += SDK_ASSERT(reader.rowTokens()[1] == "five");
+  rv += SDK_ASSERT(reader.rowTokens()[2] == "six");
+
+  rv += SDK_ASSERT(reader.field("H1") == "four");
+  rv += SDK_ASSERT(reader.field("H2") == "five");
+  rv += SDK_ASSERT(reader.field("H3") == "six");
+  rv += SDK_ASSERT(reader.field("H4").empty());
+  rv += SDK_ASSERT(reader.field("H4", "missing") == "missing");
+
+  rv += SDK_ASSERT(reader.readRow() == 0);
+  rv += SDK_ASSERT(!reader.eof());
+  rv += SDK_ASSERT(reader.rowTokens().size() == 3);
+  rv += SDK_ASSERT(reader.fieldInt("H1") == 1);
+  rv += SDK_ASSERT(reader.fieldInt("H2") == 2);
+  rv += SDK_ASSERT(reader.fieldInt("H3") == 3);
+  rv += SDK_ASSERT(reader.fieldInt("H4") == 0);
+  rv += SDK_ASSERT(reader.fieldInt("H4", 4) == 4);
+
+  rv += SDK_ASSERT(reader.readRow() == 0);
+  rv += SDK_ASSERT(!reader.eof());
+  rv += SDK_ASSERT(reader.rowTokens().size() == 3);
+  rv += SDK_ASSERT(reader.fieldDouble("H1") == 4.);
+  rv += SDK_ASSERT(reader.fieldDouble("H2") == 5.);
+  rv += SDK_ASSERT(reader.fieldDouble("H3") == 6.);
+  rv += SDK_ASSERT(reader.fieldDouble("H4") == 0.);
+  rv += SDK_ASSERT(reader.fieldDouble("H4", 4.) == 4.);
+
+  rv += SDK_ASSERT(reader.readRow() != 0);
+  rv += SDK_ASSERT(reader.eof());
+  rv += SDK_ASSERT(reader.rowTokens().empty());
+
+  return rv;
+}
+
 }
 
 int CsvReaderTest(int argc, char *argv[])
@@ -652,6 +730,7 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testCommentsInMiddle() == 0);
   rv += SDK_ASSERT(testMultiLineNumber() == 0);
   rv += SDK_ASSERT(testLimitReadToSingleLine() == 0);
+  rv += SDK_ASSERT(testRowReader() == 0);
 
   return rv;
 }
