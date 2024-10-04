@@ -161,7 +161,7 @@ public:
   /** Gets the header name by index from last call to readHeader() */
   std::string header(size_t colIndex) const;
 
-  /** Retrieves the field index, given a header string. Returns -1 if not found. */
+  /** Retrieves the field index, given a header string. Key is case-insensitive. Returns -1 if not found. */
   int headerIndex(const std::string& key) const;
 
   /** Returns the tokens in vector format for most recently read header (empty if readHeaders() not called). */
@@ -172,16 +172,16 @@ public:
   /** Gets a field from the most recent readRow() call. */
   std::string field(size_t colIndex) const;
 
-  /** Returns the field from most recent readRow() from given column, identified by name */
+  /** Returns the field from most recent readRow() from given column, identified by key. Key is case-insensitive. */
   std::string field(const std::string& key, const std::string& defaultValue = "") const;
-  /** Returns the field from most recent readRow() from given column, identified by name (double version) */
+  /** Returns the field from most recent readRow() from given column, identified by key (double version). Key is case-insensitive. */
   double fieldDouble(const std::string& key, double defaultValue = 0.0) const;
-  /** Returns the field from most recent readRow() from given column, identified by name (int version) */
+  /** Returns the field from most recent readRow() from given column, identified by key (int version). Key is case-insensitive. */
   int fieldInt(const std::string& key, int defaultValue = 0) const;
 
   /** Convenience operator for accessing keys by index */
   std::string operator[](size_t colIndex) const;
-  /** Convenience operator for accessing keys by name */
+  /** Convenience operator for accessing keys by key. Key is case-insensitive. */
   std::string operator[](const std::string& key) const;
 
 private:
@@ -189,7 +189,11 @@ private:
   simCore::CsvReader& reader_;
   std::vector<std::string> row_;
 
+  /** Header keys read via readHeader(). Keys are stored as-is (not passed through simCore::lowerCase()) */
   std::vector<std::string> headers_;
+  /** Mirror of headers_ with all values lowercased via simCore::lowerCase(). Used for case-insensitivity */
+  std::vector<std::string> lowerHeaders_;
+  /** Maps header keys to key index. Keys are lowercased versions read via readHeader(). */
   std::map<std::string, size_t> headerMap_;
 
   bool eof_ = true;

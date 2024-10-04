@@ -648,6 +648,12 @@ int testRowReader()
   rv += SDK_ASSERT(reader.header(2) == "H3");
   rv += SDK_ASSERT(reader.header(4).empty());
 
+  // Repeat some tests verifying case-insensitivity
+  rv += SDK_ASSERT(reader.headerIndex("h1") == 0);
+  rv += SDK_ASSERT(reader.headerIndex("h2") == 1);
+  rv += SDK_ASSERT(reader.headerIndex("h3") == 2);
+  rv += SDK_ASSERT(reader.headerIndex("h4") == -1);
+
   rv += SDK_ASSERT(reader.readRow() == 0);
   rv += SDK_ASSERT(!reader.eof());
   rv += SDK_ASSERT(reader.rowTokens().size() == 3);
@@ -660,10 +666,21 @@ int testRowReader()
   rv += SDK_ASSERT(reader["H1"] == "one");
   rv += SDK_ASSERT(reader["H2"] == "two");
   rv += SDK_ASSERT(reader["H3"] == "three");
+  // Repeat some tests verifying case-insensitivity
+  rv += SDK_ASSERT(reader["h1"] == "one");
+  rv += SDK_ASSERT(reader["h2"] == "two");
+  rv += SDK_ASSERT(reader["h3"] == "three");
 
   rv += SDK_ASSERT(reader.field(0) == "one");
   rv += SDK_ASSERT(reader.field(1) == "two");
   rv += SDK_ASSERT(reader.field(2) == "three");
+  rv += SDK_ASSERT(reader.field("H1") == "one");
+  rv += SDK_ASSERT(reader.field("H2") == "two");
+  rv += SDK_ASSERT(reader.field("H3") == "three");
+  // Repeat some tests verifying case-insensitivity
+  rv += SDK_ASSERT(reader.field("h1") == "one");
+  rv += SDK_ASSERT(reader.field("h2") == "two");
+  rv += SDK_ASSERT(reader.field("h3") == "three");
 
   rv += SDK_ASSERT(reader.readRow() == 0);
   rv += SDK_ASSERT(!reader.eof());

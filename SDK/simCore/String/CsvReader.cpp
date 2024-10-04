@@ -336,7 +336,9 @@ int RowReader::readHeader()
   {
     // Note that we're trimming the values in-place, editing the header value in vector
     header = simCore::StringUtils::trim(header);
-    headerMap_[header] = index;
+    const std::string lower = simCore::lowerCase(header);
+    lowerHeaders_.push_back(lower);
+    headerMap_[lower] = index;
     ++index;
   }
   eof_ = (rv != 0);
@@ -364,7 +366,7 @@ std::string RowReader::header(size_t colIndex) const
 
 int RowReader::headerIndex(const std::string& key) const
 {
-  auto iter = headerMap_.find(key);
+  auto iter = headerMap_.find(simCore::lowerCase(key));
   return (iter == headerMap_.end()) ? -1 : static_cast<int>(iter->second);
 }
 
@@ -387,7 +389,7 @@ std::string RowReader::field(size_t colIndex) const
 
 std::string RowReader::field(const std::string& key, const std::string& defaultValue) const
 {
-  auto iter = headerMap_.find(key);
+  auto iter = headerMap_.find(simCore::lowerCase(key));
   if (iter == headerMap_.end())
     return defaultValue;
   if (iter->second < row_.size())
@@ -397,7 +399,7 @@ std::string RowReader::field(const std::string& key, const std::string& defaultV
 
 double RowReader::fieldDouble(const std::string& key, double defaultValue) const
 {
-  auto iter = headerMap_.find(key);
+  auto iter = headerMap_.find(simCore::lowerCase(key));
   if (iter == headerMap_.end())
     return defaultValue;
   if (iter->second < row_.size())
@@ -407,7 +409,7 @@ double RowReader::fieldDouble(const std::string& key, double defaultValue) const
 
 int RowReader::fieldInt(const std::string& key, int defaultValue) const
 {
-  auto iter = headerMap_.find(key);
+  auto iter = headerMap_.find(simCore::lowerCase(key));
   if (iter == headerMap_.end())
     return defaultValue;
   if (iter->second < row_.size())
