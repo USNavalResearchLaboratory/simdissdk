@@ -62,6 +62,18 @@ public:
 class PrefRulesManager
 {
 public:
+  /** Observer class to listen to the PrefRulesManager for removed rules. */
+  class RuleChangeObserver
+  {
+  public:
+    virtual ~RuleChangeObserver() {}
+    /** Passes rules about to be removed. The PrefRule pointers are still valid memory when this is called */
+    virtual void aboutToRemoveRules(const std::vector<PrefRule*>& rules) = 0;
+    /** Passes rules after they've been removed from the PrefRulesManager. The PrefRule pointers are no longer valid when this is called */
+    virtual void removedRules(const std::vector<PrefRule*>& rules) = 0;
+  };
+  /** Shared pointer to Rule Change Observer */
+  typedef std::shared_ptr<RuleChangeObserver> RuleChangeObserverPtr;
 
   virtual ~PrefRulesManager() {}
 
@@ -199,6 +211,18 @@ public:
   */
   virtual bool isEnforcingPrefs() const = 0;
 
+  /**
+  * Add a RuleChangeObserver to be notified of rule changes
+  * @param observer an observer to be added
+  */
+  virtual void addRuleObserver(RuleChangeObserverPtr observer) = 0;
+
+  /**
+  * Remove a RuleChangeObserver
+  * @param observer an observer to be removed
+  */
+  virtual void removeRuleObserver(RuleChangeObserverPtr observer) = 0;
+
 };
 
 /** Null object implementation for PrefRulesManager */
@@ -221,6 +245,8 @@ class NullPrefRulesManager : public simData::PrefRulesManager
   virtual bool rulesEnabled() const override { return true; }
   virtual void setEnforcePrefs(bool enforce) override { }
   virtual bool isEnforcingPrefs() const override { return true; }
+  virtual void addRuleObserver(RuleChangeObserverPtr observer) override {}
+  virtual void removeRuleObserver(RuleChangeObserverPtr observer) override {}
 };
 
 }
