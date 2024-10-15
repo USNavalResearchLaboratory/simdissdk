@@ -424,7 +424,8 @@ private:
   /** Setting to update border thickess */
   simQt::BoundIntegerSetting* borderThickness_ = nullptr;
 
-  QPointer<TabDragDropEventFilter> tabDragFilter_;
+  /** Event filter for tab bar when widget is tabbed */
+  TabDragDropEventFilter* tabDragFilter_ = nullptr;
 
   /** Default size, fallback if no stored setting size exists */
   QSize defaultSize_;

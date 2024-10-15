@@ -206,17 +206,23 @@ private:
 class DockWidget::TabDragDropEventFilter : public QObject
 {
 public:
-  TabDragDropEventFilter(DockWidget& dockWidget, QTabBar* tabBar)
-    : QObject(tabBar),
+  TabDragDropEventFilter(DockWidget& dockWidget)
+    : QObject(),
       dockWidget_(dockWidget),
-      tabBar_(tabBar)
+      tabBar_(nullptr)
   {
-    tabBar_->installEventFilter(this);
+  }
+
+  void setTabBar(QTabBar* tabBar)
+  {
+    tabBar_ = tabBar;
+    if (tabBar_)
+      tabBar_->installEventFilter(this);
   }
 
   bool eventFilter(QObject* object, QEvent* event)
   {
-    if (object != tabBar_)
+    if (object != tabBar_ || !tabBar_)
       return false;
 
     if (event->type() == QEvent::DragEnter)
@@ -317,11 +323,22 @@ public:
     return false;
   }
 
-  void uninstall()
+  void uninstall(QMainWindow* mainWindow)
   {
-    // This is safe because tabBar_ is the parent of the filter. If the tab bar had been deleted
-    // before now, the filter would not still exist
-    tabBar_->removeEventFilter(this);
+    // remove event filter from previous tab bar, if it still exists
+    if (mainWindow)
+    {
+      QList<QTabBar*> tabBars = mainWindow->findChildren<QTabBar*>();
+      for (auto tabBar : tabBars)
+      {
+        if (tabBar == tabBar_)
+        {
+          tabBar_->removeEventFilter(this);
+          break;
+        }
+      }
+    }
+    tabBar_ = nullptr;
   }
 
 private:
@@ -478,6 +495,8 @@ DockWidget::~DockWidget()
   disconnect(QApplication::instance(), SIGNAL(focusChanged(QWidget*, QWidget*)), this, SLOT(changeTitleColorsFromFocusChange_(QWidget*, QWidget*)));
 
   uninstallTabEventFilter_();
+  delete tabDragFilter_;
+  tabDragFilter_ = nullptr;
 
   delete noTitleBar_;
   noTitleBar_ = nullptr;
@@ -487,6 +506,10 @@ DockWidget::~DockWidget()
 
 void DockWidget::init_()
 {
+  // SIM-17647: the event filter cannot be a child of the tab bar, must persist for the life of the widget
+  // This is because after unloading plug-ins, the QTabBar might still reference the event filter after it has been destroyed
+  tabDragFilter_ = new TabDragDropEventFilter(*this);
+
   // default title bar text size to application text size
   titleBarPointSize_ = QApplication::font().pointSize();
   searchLineEdit_ = nullptr;
@@ -852,6 +875,8 @@ void DockWidget::closeWindow_()
 
 void DockWidget::fixTabIcon_()
 {
+  // always uninstall tab event filter in case widget went from tabbed to floating
+  uninstallTabEventFilter_();
   // Break out early if we're floating, or if there's no main window
   if (isFloating() || !mainWindow_)
     return;
@@ -1525,21 +1550,18 @@ void DockWidget::applyGlobalSettings_()
 
 void DockWidget::installTabEventFilter_(QTabBar* tabBar)
 {
-  // Only 1 event filter needs to exist at once, but there could be stale filters from old tab bars if the dock widget
+  // Only register with 1 tab bar, may still be registered with old tab bars if the dock widget
   // is being moved between tabs. Uninstall old filters first if necessary
   uninstallTabEventFilter_();
 
-  // Filter installs itself on creation
-  tabDragFilter_ = new TabDragDropEventFilter(*this, tabBar);
+  if (tabDragFilter_)
+    tabDragFilter_->setTabBar(tabBar);
 }
 
 void DockWidget::uninstallTabEventFilter_()
 {
-  if (tabDragFilter_.isNull())
-    return;
-
-  tabDragFilter_->uninstall();
-  tabDragFilter_ = nullptr;
+  if (tabDragFilter_)
+    tabDragFilter_->uninstall(mainWindow_);
 }
 
 }
