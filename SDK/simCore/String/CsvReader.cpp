@@ -336,8 +336,7 @@ int RowReader::readHeader()
   {
     // Note that we're trimming the values in-place, editing the header value in vector
     header = simCore::StringUtils::trim(header);
-    const std::string lower = simCore::lowerCase(header);
-    lowerHeaders_.push_back(lower);
+    const std::string& lower = simCore::lowerCase(header);
     headerMap_[lower] = index;
     ++index;
   }

@@ -191,8 +191,6 @@ private:
 
   /** Header keys read via readHeader(). Keys are stored as-is (not passed through simCore::lowerCase()) */
   std::vector<std::string> headers_;
-  /** Mirror of headers_ with all values lowercased via simCore::lowerCase(). Used for case-insensitivity */
-  std::vector<std::string> lowerHeaders_;
   /** Maps header keys to key index. Keys are lowercased versions read via readHeader(). */
   std::map<std::string, size_t> headerMap_;
 
