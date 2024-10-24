@@ -117,7 +117,7 @@ void MousePositionManipulator::setMapNode(osgEarth::MapNode* mapNode)
   mapNodePath_.clear();
 
   // If we don't have a valid map node, then try to gracefully deal with it
-  if (mapNode == nullptr)
+  if (!mapNode_.valid())
   {
     terrainEngineNode_ = nullptr;
     return;

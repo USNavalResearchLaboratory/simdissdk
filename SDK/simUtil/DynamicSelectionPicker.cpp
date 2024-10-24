@@ -132,6 +132,9 @@ void DynamicSelectionPicker::pickToVector(simVis::EntityVector& nodes, const osg
   nodes.clear();
   mouseXy_ = mouseXy;
 
+  if (!viewManager_.valid())
+    return;
+
   // Figure out the view under the mouse
   lastMouseView_ = viewManager_->getViewByMouseXy(mouseXy);
   if (!lastMouseView_.valid())
@@ -188,6 +191,13 @@ void DynamicSelectionPicker::pickThisFrame_()
 
 void DynamicSelectionPicker::pickToVector_(simVis::EntityVector& nodes, PickBehavior behavior, double& mouseRangeSquaredPx) const
 {
+  if (!lastMouseView_.valid() || !scenario_.valid())
+  {
+    // must be set before calling
+    assert(0);
+    return;
+  }
+
   // Create a calculator for screen coordinates
   simUtil::ScreenCoordinateCalculator calc;
   calc.updateMatrix(*lastMouseView_);

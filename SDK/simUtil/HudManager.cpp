@@ -530,22 +530,29 @@ HudManager::HudManager(osgViewer::View* view, osg::Group* parentNode)
     parentNode_(parentNode)
 {
   group_ = new osg::Group();
-  osg::StateSet* stateset = parentNode_->getOrCreateStateSet();
-  simVis::setLighting(stateset, osg::StateAttribute::OFF);
+  if (parentNode_.valid())
+  {
+    osg::StateSet* stateset = parentNode_->getOrCreateStateSet();
+    simVis::setLighting(stateset, osg::StateAttribute::OFF);
+  }
 
   const osg::Viewport* vp = view->getCamera()->getViewport();
   windowWidth_ = static_cast<int>(vp->width());
   windowHeight_ = static_cast<int>(vp->height());
 
   handler_ = new ResizeHandler(this);
-  view_->addEventHandler(handler_);
-  parentNode_->addChild(group_);
+  if (view_.valid())
+    view_->addEventHandler(handler_);
+  if (parentNode_.valid())
+    parentNode_->addChild(group_);
 }
 
 HudManager::~HudManager()
 {
-  parentNode_->removeChild(group_);
-  view_->removeEventHandler(handler_);
+  if (parentNode_.valid())
+    parentNode_->removeChild(group_);
+  if (view_.valid())
+    view_->removeEventHandler(handler_);
 }
 
 HudText* HudManager::createText(const std::string& text, double x, double y, bool percentage, Alignment hAlign, Alignment vAlign, const osg::Vec4& color, const std::string& font, double fontSize)

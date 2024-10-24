@@ -198,7 +198,7 @@ int ResizeViewManipulator::push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActi
   activeView_ = nullptr;
   osg::ref_ptr<simVis::View> view = static_cast<simVis::View*>(aa.asView());
   // Ignore events from nullptr views and the main view
-  if (view == nullptr || view == mainView_.get())
+  if (!view.valid() || view == mainView_.get())
     return 0;
 
   const osg::Vec2d mousePosition = osg::Vec2d(ea.getX(), ea.getY());
