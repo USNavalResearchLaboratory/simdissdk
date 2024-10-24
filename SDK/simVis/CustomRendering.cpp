@@ -39,9 +39,8 @@
 namespace simVis
 {
 
-CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const simData::CustomRenderingProperties& props, const EntityNode* host, int referenceYear)
+CustomRenderingNode::CustomRenderingNode(const simData::CustomRenderingProperties& props, const EntityNode* host, int referenceYear)
   : EntityNode(simData::CUSTOM_RENDERING, new Locator()),
-    scenario_(scenario),
     host_(host),
     lastProps_(props),
     hasLastPrefs_(false),
