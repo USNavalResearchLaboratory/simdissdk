@@ -616,7 +616,9 @@ public:
 
   virtual QString name() const override
   {
-    return QString::fromStdString(layer_->getName());
+    if (layer_.valid())
+      return QString::fromStdString(layer_->getName());
+    return "";
   }
 
   /** @copydoc  MapDataModel::Item::color */

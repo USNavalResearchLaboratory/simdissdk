@@ -357,7 +357,11 @@ QModelIndex ViewManagerDataModel::createIndex_(simVis::View* view) const
     return QModelIndex();
   // In flat mode we query the view manager directly
   if (!isHierarchical())
+  {
+    if (!viewManager_.valid())
+      return QModelIndex();
     return createIndex(viewManager_->getIndexOf(view), 0, view);
+  }
 
   simVis::View* parent = view->getHostView();
 
