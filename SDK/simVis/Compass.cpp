@@ -102,7 +102,8 @@ CompassFocusManagerAdapter::CompassFocusManagerAdapter(simVis::FocusManager* foc
    callback_(nullptr)
 {
   callback_ = new FocusCallback(this);
-  focusManager_->addCallback(callback_.get());
+  if (focusManager_.valid())
+    focusManager_->addCallback(callback_.get());
 }
 
 CompassFocusManagerAdapter::~CompassFocusManagerAdapter()

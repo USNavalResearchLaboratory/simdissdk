@@ -72,16 +72,25 @@ void OverrideColor::setCombineMode(CombineMode combineMode)
 
 void OverrideColor::setColor(osg::StateSet* stateset, const simVis::Color& color)
 {
+  if (!stateset)
+    return;
+
   stateset->getOrCreateUniform(OVERRIDECOLOR_UNIFORM, osg::Uniform::FLOAT_VEC4)->set(color);
 }
 
 void OverrideColor::setCombineMode(osg::StateSet* stateset, CombineMode combineMode)
 {
+  if (!stateset)
+    return;
+
   stateset->getOrCreateUniform(OVERRIDECOLOR_COMBINEMODE_UNIFORM, osg::Uniform::INT)->set(combineMode);
 }
 
 void OverrideColor::setDefaultValues_(osg::StateSet* stateSet)
 {
+  if (!stateSet)
+    return;
+
   stateSet
     ->getOrCreateUniform(OVERRIDECOLOR_COMBINEMODE_UNIFORM, osg::Uniform::INT)
     ->set(OFF);

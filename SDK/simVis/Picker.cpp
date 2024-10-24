@@ -350,7 +350,7 @@ void IntersectPicker::pickThisFrame_()
   unsigned int acceptMask = DEFAULT_PICK_MASK;
   std::vector<simVis::EntityNode*> pickedEntities;
   std::vector<PickedEntity> pickedVec;
-  if (lastMouseView_.valid())
+  if (lastMouseView_.valid() && scenario_.valid())
     pickedEntities = scenario_->findAll(lastMouseView_.get(), mx_, my_, acceptMask);
   if (pickedEntities.empty())
   {
