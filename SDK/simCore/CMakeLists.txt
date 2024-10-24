@@ -30,6 +30,7 @@ set(CORE_CALC_HEADERS
     ${CORE_CALC_INC}CoordinateConverter.h
     ${CORE_CALC_INC}CoordinateSystem.h
     ${CORE_CALC_INC}DatumConvert.h
+    ${CORE_CALC_INC}Dcm.h
     ${CORE_CALC_INC}Gars.h
     ${CORE_CALC_INC}Geometry.h
     ${CORE_CALC_INC}GeoFence.h
@@ -55,6 +56,7 @@ set(CORE_CALC_SOURCES
     ${CORE_CALC_SRC}CoordinateConverter.cpp
     ${CORE_CALC_SRC}CoordinateSystem.cpp
     ${CORE_CALC_SRC}DatumConvert.cpp
+    ${CORE_CALC_SRC}Dcm.cpp
     ${CORE_CALC_SRC}Gars.cpp
     ${CORE_CALC_SRC}Geometry.cpp
     ${CORE_CALC_SRC}GeoFence.cpp

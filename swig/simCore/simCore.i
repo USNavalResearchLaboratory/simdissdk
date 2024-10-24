@@ -30,6 +30,7 @@
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/CoordinateSystem.h"
 #include "simCore/Calc/DatumConvert.h"
+#include "simCore/Calc/Dcm.h"
 #include "simCore/Calc/Gars.h"
 #include "simCore/Calc/Geometry.h"
 #include "simCore/Calc/GeoFence.h"
