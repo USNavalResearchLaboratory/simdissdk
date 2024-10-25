@@ -143,12 +143,15 @@ struct ControlPanel : public simExamples::SimExamplesGui
     addKeyFunc_(ImGuiKey_R, [this]()
       {
         simVis::View::Insets insets;
-        viewer_->getMainView()->getInsets(insets);
-        for (simVis::View::Insets::const_iterator i = insets.begin(); i != insets.end(); ++i)
-          viewer_->getMainView()->removeInset(i->get());
+        if (viewer_.valid())
+        {
+          viewer_->getMainView()->getInsets(insets);
+          for (simVis::View::Insets::const_iterator i = insets.begin(); i != insets.end(); ++i)
+            viewer_->getMainView()->removeInset(i->get());
+        }
         SIM_NOTICE << "Removed all insets..." << std::endl;
       });
-    addKeyFunc_(ImGuiKey_I, [this]() { handler_->setEnabled(!handler_->isEnabled()); });
+    addKeyFunc_(ImGuiKey_I, [this]() { if (handler_.valid()) handler_->setEnabled(!handler_->isEnabled()); });
     addKeyFunc_(ImGuiKey_1, [this]()
       {
         mouseManip_->removeListener(latLonElevListener_);

@@ -192,48 +192,48 @@ public:
 
   void setGunPitch(double pitchDeg)
   {
-    if (gun_ != nullptr)
+    if (gun_.valid())
       gun_->updateCurrentHPR(osg::Vec3f(0.0f, simCore::DEG2RAD * pitchDeg, 0.0f));
   }
   float gunPitch() const
   {
-    if (gun_ != nullptr)
+    if (gun_.valid())
       return simCore::RAD2DEG * gun_->getCurrentHPR().y();
     return 0.0f;
   }
   float gunMinimumPitch() const
   {
-    if (gun_ != nullptr)
+    if (gun_.valid())
       return simCore::RAD2DEG * gun_->getMinHPR().y();
     return 0.0f;
   }
   float gunMaximumPitch() const
   {
-    if (gun_ != nullptr)
+    if (gun_.valid())
       return simCore::RAD2DEG * gun_->getMaxHPR().y();
     return 0.0f;
   }
 
   void setTurretYaw(double yawDeg)
   {
-    if (turret_ != nullptr)
+    if (turret_.valid())
       turret_->updateCurrentHPR(osg::Vec3f(simCore::DEG2RAD * yawDeg, 0.0f, 0.0f));
   }
   float turretYaw() const
   {
-    if (turret_ != nullptr)
+    if (turret_.valid())
       return simCore::RAD2DEG * turret_->getCurrentHPR().x();
     return 0.0f;
   }
   float turretMinimumYaw() const
   {
-    if (turret_ != nullptr)
+    if (turret_.valid())
       return simCore::RAD2DEG * turret_->getMinHPR().x();
     return 0.0f;
   }
   float turretMaximumYaw() const
   {
-    if (turret_ != nullptr)
+    if (turret_.valid())
       return simCore::RAD2DEG * turret_->getMaxHPR().x();
     return 0.0f;
   }

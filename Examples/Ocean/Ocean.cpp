@@ -113,7 +113,8 @@ public:
     srs_ = osgEarth::SpatialReference::get("wgs84");
     isect_ = new osgEarth::Triton::TritonIntersections();
     isect_->addLocalPoint(osg::Vec3d(0, 0, 0));
-    triton_->addIntersections(isect_.get());
+    if (triton_.valid())
+      triton_->addIntersections(isect_.get());
   }
 
   void setEnabled(bool enable)
@@ -209,11 +210,14 @@ struct MenuHandler : public osgGA::GUIEventHandler
       {
       case '0':
       {
-        osg::observer_ptr<simVis::PlatformNode> ship = scene_->getScenario()->find<simVis::PlatformNode>(s_shipId);
+        osg::observer_ptr<simVis::PlatformNode> ship = scene_.valid() ? scene_->getScenario()->find<simVis::PlatformNode>(s_shipId) : nullptr;
         if (ship != nullptr)
         {
-          viewer_->getMainView()->tetherCamera(ship.get());
-          viewer_->getMainView()->setFocalOffsets(0, -10.0, 20000.0, 2.5);
+          if (viewer_.valid())
+          {
+            viewer_->getMainView()->tetherCamera(ship.get());
+            viewer_->getMainView()->setFocalOffsets(0, -10.0, 20000.0, 2.5);
+          }
         }
         else
         {
@@ -222,7 +226,8 @@ struct MenuHandler : public osgGA::GUIEventHandler
         break;
       }
       case '1':
-        viewer_->getMainView()->tetherCamera(nullptr);
+        if (viewer_.valid())
+          viewer_->getMainView()->tetherCamera(nullptr);
         break;
 #ifndef HAVE_IMGUI
       case 'h':
@@ -231,9 +236,9 @@ struct MenuHandler : public osgGA::GUIEventHandler
         break;
 #endif
       case 'a':
-          viewer_->setLogarithmicDepthBufferEnabled(
-              !viewer_->isLogarithmicDepthBufferEnabled());
-          break;
+        if (viewer_.valid())
+          viewer_->setLogarithmicDepthBufferEnabled(!viewer_->isLogarithmicDepthBufferEnabled());
+        break;
       }
     }
     return handled;
@@ -585,10 +590,13 @@ namespace
       }
 
       // Overhead mode
-      bool overhead = view_->isOverheadEnabled();
-      IMGUI_ADD_ROW(ImGui::Checkbox, "Overhead Mode", &overhead);
-      if (view_->isOverheadEnabled() != overhead)
-        view_->enableOverheadMode(overhead);
+      if (view_.valid())
+      {
+        bool overhead = view_->isOverheadEnabled();
+        IMGUI_ADD_ROW(ImGui::Checkbox, "Overhead Mode", &overhead);
+        if (view_->isOverheadEnabled() != overhead)
+          view_->enableOverheadMode(overhead);
+      }
 
       if (useTriton_)
       {

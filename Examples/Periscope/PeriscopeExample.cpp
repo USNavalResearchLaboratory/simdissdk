@@ -336,12 +336,6 @@ int main(int argc, char** argv)
   sky->setDateTime(osgEarth::DateTime(2014, 4, 22, 16.5));
   scene->setSkyNode(sky.get());
 
-  // Set ambient light
-  //s_viewer->getMainView()->getLight()->setAmbient(osg::Vec4(0.6, 0.6, 0.6, 1.0));
-
-  // zoom to the starting AOI:
-  osg::observer_ptr<simVis::PlatformNode> shipNode = scene->getScenario()->find<simVis::PlatformNode>(s_shipId);
-
   // remove the default manipulator; we will set the camera manually
   viewer->getMainView()->setUpViewInWindow(20, 20, width, height, 0);
   viewer->getMainView()->setCameraManipulator(nullptr);
