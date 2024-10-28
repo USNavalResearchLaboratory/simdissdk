@@ -104,10 +104,11 @@ public:
 
     }
 
-    // Don't need to recalculate current layers unless a current layer was removed and there are other layers left in its group
+    // If the entire group was remove there is nothing to refresh or if the currently layer was not removed there is nothing to refresh
     if (removedGroup || groupIter->second->currentLayer != imageLayer)
       return;
-    // Reset current time to refresh current layer
+
+    // The current layer was removed and there are other layers in the group, so call setTime_ to refresh
     parent_.setTime_(parent_.currTime_);
   }
 
