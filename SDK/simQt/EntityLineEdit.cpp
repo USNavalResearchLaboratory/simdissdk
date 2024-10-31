@@ -24,7 +24,10 @@
 #include <QAbstractProxyModel>
 #include <QDialog>
 #include <QHeaderView>
+#include <QLabel>
+#include <QProxyStyle>
 #include <QVBoxLayout>
+#include <QWidgetAction>
 
 #include "simData/DataStoreHelpers.h"
 #include "simCore/Time/Clock.h"
@@ -196,6 +199,21 @@ protected:
 
 //--------------------------------------------------------------------------------------------------
 
+/** Custom ProxyStyle which prevents icons from being colored gray when disabled */
+class NoGrayStyle : public QProxyStyle
+{
+public:
+  virtual QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap& pixmap, const QStyleOption* option) const Q_DECL_OVERRIDE
+  {
+    if (iconMode == QIcon::Disabled || !baseStyle())
+      return pixmap;
+
+    return baseStyle()->generatedIconPixmap(iconMode, pixmap, option);
+  }
+};
+
+//--------------------------------------------------------------------------------------------------
+
 EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::ObjectType type)
 : QWidget(parent),
   composite_(nullptr),
@@ -227,6 +245,22 @@ EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTr
   setModel(entityTreeModel, type_);
   // Double clicking on an empty text field will display the Entity Dialog
   composite_->lineEdit->installEventFilter(this);
+
+  // Use icons to setup positive and negative feedback on the filter name
+  goodIcon_ = std::make_unique<QIcon>(":/TspiFilters/images/Check In.png");
+  badIcon_ = std::make_unique<QIcon>(":/TspiFilters/images/NotFound.png");
+  iconAction_ = new QWidgetAction(this);
+  iconLabel_ = new QLabel(this);
+  iconLabel_->setPixmap(goodIcon_->pixmap({ 12, 12 }));
+  // Label needs the custom Style so the icon doesn't turn gray
+  proxyStyle_ = new NoGrayStyle;
+  iconLabel_->setStyle(proxyStyle_);
+  iconAction_->setDefaultWidget(iconLabel_);
+  // Need to hide this action from possible ActionsContextMenus
+  iconAction_->setVisible(false);
+  composite_->lineEdit->addAction(iconAction_, QLineEdit::TrailingPosition);
+
+  setTextStyle_(valid_);
 }
 
 EntityLineEdit::~EntityLineEdit()
@@ -527,16 +561,30 @@ void EntityLineEdit::setTextStyle_(bool valid)
   // Do not short out, need to test needToVerify_ and unavailableId_ down below
   valid_ = valid;
 
-  if (needToVerify_)
+  if (needToVerify_ || composite_->lineEdit->text().isEmpty())
+  {
+    iconLabel_->setPixmap({});
     composite_->lineEdit->setStyleSheet(VALID_ENTITY);
+  }
   else if (!valid_)
+  {
+    iconLabel_->setPixmap(badIcon_->pixmap({ 12, 12 }));
+    iconLabel_->setToolTip("Currently invalid entity name.");
     composite_->lineEdit->setStyleSheet(INVALID_ENTITY);
+  }
   else if (uniqueId_ == unavailableId_)
+  {
+    iconLabel_->setPixmap(badIcon_->pixmap({ 12, 12 }));
+    iconLabel_->setToolTip("Selecting an unavailable entity.");
     composite_->lineEdit->setStyleSheet(INVALID_ENTITY);
+  }
   else
+  {
+    iconLabel_->setPixmap(goodIcon_->pixmap({ 12, 12 }));
+    iconLabel_->setToolTip("Currently valid entity name.");
     composite_->lineEdit->setStyleSheet(VALID_ENTITY);
+  }
 }
-
 
 //----------------------------------------------------------------------------------------------------------------
 
