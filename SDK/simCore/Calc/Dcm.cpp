@@ -36,6 +36,28 @@ Dcm::~Dcm()
 {
 }
 
+double Dcm::determinant() const
+{
+  return (get(0, 0) * (get(1, 1) * get(2, 2) - get(1, 2) * get(2, 1))) -
+    (get(0, 1) * (get(1, 0) * get(2, 2) - get(1, 2) * get(2, 0))) +
+    (get(0, 2) * (get(1, 0) * get(2, 1) - get(1, 1) * get(2, 0)));
+}
+
+bool Dcm::isValid(double t) const
+{
+  if (!simCore::areEqual(1.0, determinant(), t))
+    return false;
+  // make a copy
+  auto matrixTransposeMatrixProduct = *this;
+  // transpose it
+  matrixTransposeMatrixProduct.transpose();
+  // multiple the transpose and the original
+  matrixTransposeMatrixProduct.postMultiply(*this);
+  Dcm identity;
+  identity.makeIdentity();
+  return areEqual(matrixTransposeMatrixProduct, identity, t);
+}
+
 Vec3 Dcm::toEuler() const
 {
   // From Aircraft Control and Simulation 2nd Edition
@@ -127,6 +149,66 @@ void Dcm::fromEuler(const Vec3& ea)
   set(2, 0, cpsi * stheta * cphi + spsi * sphi);
   set(2, 1, spsi * stheta * cphi - cpsi * sphi);
   set(2, 2, ctheta * cphi);
+}
+
+std::array<double, 4> Dcm::toQ() const
+{
+  std::array<double, 4> quat = {0};
+  const double dcm00 = get(0, 0);
+  const double dcm11 = get(1, 1);
+  const double dcm22 = get(2, 2);
+  const double trace = dcm00 + dcm11 + dcm22;
+  if (trace > dcm00 && trace > dcm11 && trace > dcm22)
+  {
+    if (!(trace > 0.))
+    {
+      // for a valid DCM, (trace > 0) == (trace > dcm00 && trace > dcm11 && trace > dcm22); see https://motoq.github.io/doc/tnotes/dcmq.pdf
+      return quat;
+    }
+    quat[0] = sqrt(1.0 + (2.0 * trace) - trace) / 2.;
+    const double multiplicand = 1. / (4.0 * quat[0]);
+    quat[1] = (get(1, 2) - get(2, 1)) * multiplicand;
+    quat[2] = (get(2, 0) - get(0, 2)) * multiplicand;
+    quat[3] = (get(0, 1) - get(1, 0)) * multiplicand;
+  }
+  else if (dcm00 > dcm11 && dcm00 > dcm22)
+  {
+    // assertion follows from if and else if above
+    assert(dcm00 > trace && dcm00 > dcm11 && dcm00 > dcm22);
+    quat[1] = sqrt(1.0 + (2.0 * dcm00) - trace) / 2.;
+    const double multiplicand = 1. / (4.0 * quat[1]);
+    quat[0] = (get(1, 2) - get(2, 1)) * multiplicand;
+    quat[2] = (get(0, 1) + get(1, 0)) * multiplicand;
+    quat[3] = (get(2, 0) + get(0, 2)) * multiplicand;
+  }
+  else if (dcm11 > dcm22)
+  {
+    // assertion follows from if and else if and else if above
+    assert(dcm11 > dcm00 && dcm11 > trace && dcm11 > dcm22);
+    quat[2] = sqrt(1.0 + (2.0 * dcm11) - trace) / 2.;
+    const double multiplicand = 1. / (4.0 * quat[2]);
+    quat[0] = (get(2, 0) - get(0, 2)) * multiplicand;
+    quat[1] = (get(0, 1) + get(1, 0)) * multiplicand;
+    quat[3] = (get(1, 2) + get(2, 1)) * multiplicand;
+  }
+  else
+  {
+    // assertion follows from if and else if and else if and else above
+    assert(dcm22 > dcm00 && dcm22 > dcm11 && dcm22 > trace);
+    quat[3] = sqrt(1.0 + (2.0 * dcm22) - trace) / 2.;
+    const double multiplicand = 1. / (4.0 * quat[3]);
+    quat[0] = (get(0, 1) - get(1, 0)) * multiplicand;
+    quat[1] = (get(2, 0) + get(0, 2)) * multiplicand;
+    quat[2] = (get(1, 2) + get(2, 1)) * multiplicand;
+  }
+
+  // Quaternion Normalization
+  const double quatMag = sqrt((quat[0]*quat[0]) + (quat[1] * quat[1]) + (quat[2] * quat[2]) + (quat[3] * quat[3]));
+  quat[0] = quat[0] / quatMag;
+  quat[1] = quat[1] / quatMag;
+  quat[2] = quat[2] / quatMag;
+  quat[3] = quat[3] / quatMag;
+  return quat;
 }
 
 int Dcm::fromDQ(const double q[4])

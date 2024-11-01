@@ -297,6 +297,9 @@ static int d3QtoDcmtoEulerTest(const double input[4], const double expected[3])
   // DCM class requires reasonably precise normalization of a DQ
   simCore::dQNorm(input, outDQ);
   dcm.fromDQ(outDQ);
+  if (!dcm.isValid(2.0e-6))
+    return 1;
+
   const simCore::Vec3& outVec = dcm.toEuler();
   outVec.toD3(output);
   if (vectorsAreEqual(output, expected, 3, 2e-6))
@@ -313,12 +316,50 @@ int d3EulertoQTest(const double input[3], const double expected[4])
 {
   double output[4] = {0};
   simCore::d3EulertoQ(simCore::Vec3(input), output);
-  if (vectorsAreEqual(output, expected, 4))
+  // quaternion with negated components is equivalent (in 3d space, but there are reasons in quaternion space to be careful)
+  const double neg_output[4] = { -output[0], -output[1], -output[2], -output[3] };
+  if (vectorsAreEqual(output, expected, 4) || vectorsAreEqual(neg_output, expected, 4))
     return 0;
   std::cerr << " FAILURE - Input Euler: [" << std::setprecision(PRECISION) << input[0] << ", " << input[1] << ", " << input[2] << "]\n"
             << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] <<", " << expected[3] << "]\n"
             << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << ", " << output[3] << "]\n"
             << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << ", " << fabs(expected[3] - output[3]) <<"]\n";
+  return 1;
+}
+
+//===========================================================================
+int d3EulertoDCMtoQTest(const double input[3], const double expected[4])
+{
+  simCore::Dcm dcm;
+  dcm.fromEuler(simCore::Vec3(input));
+  if (!dcm.isValid(2.0e-6))
+    return 1;
+
+  // test that new Dcm class matches legacy Math code
+  double dcmArray[3][3] = { 0 };
+  simCore::d3EulertoDCM(simCore::Vec3(input), dcmArray);
+  for (int i = 0; i < 3; ++i)
+  {
+    if (dcm.get(i, 0) != dcmArray[i][0] || dcm.get(i, 1) != dcmArray[i][1] || dcm.get(i, 2) != dcmArray[i][2])
+      return 1;
+  }
+
+  double output[4] = { 0 };
+  const auto& quat = dcm.toQ();
+  output[0] = quat[0];
+  output[1] = quat[1];
+  output[2] = quat[2];
+  output[3] = quat[3];
+  // quaternion with negated components is equivalent (in 3d space, but there are reasons in quaternion space to be careful)
+  double neg_output[4] = { -output[0], -output[1], -output[2], -output[3] };
+  if (vectorsAreEqual(output, expected, 4))
+    return 0;
+  else if (vectorsAreEqual(neg_output, expected, 4))
+    return 0;
+  std::cerr << " FAILURE - Input Euler: [" << std::setprecision(PRECISION) << input[0] << ", " << input[1] << ", " << input[2] << "]\n"
+    << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] << ", " << expected[3] << "]\n"
+    << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << ", " << output[3] << "]\n"
+    << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << ", " << fabs(expected[3] - output[3]) << "]\n";
   return 1;
 }
 
@@ -336,7 +377,17 @@ int runD3QtoFromEulerTest()
                             {0.853553,  0.353553,  0.353553, -0.146447,   0, 45, 45},
                             {0.853553,  0.353553,  0.146447,  0.353553,  45,  0, 45},
                             {0.853553, -0.146447,  0.353553,  0.353553,  45, 45,  0},
-                            {0.844623,  0.191342,  0.461940,  0.191342,  45, 45, 45} };
+                            {0.844623,  0.191342,  0.461940,  0.191342,  45, 45, 45},
+                            // below examples from https://rdrr.io/cran/RSpincalc/man/Q2DCM.html
+                            {-0.1677489, -0.7369231, -0.3682588, 0.5414703,  1.1951868635398375 * simCore::RAD2DEG, 1.1721671736279249 * simCore::RAD2DEG, -2.7404412639686715 * simCore::RAD2DEG},
+                            {0.1677489, 0.7369231, 0.3682588, -0.5414703,  1.1951868635398375 * simCore::RAD2DEG, 1.1721671736279249 * simCore::RAD2DEG, -2.7404412639686715 * simCore::RAD2DEG}
+  };
+
+  // corresponding DCM for https://rdrr.io/cran/RSpincalc/man/Q2DCM.html
+  //double dcm[3][3] = {
+  //0.1423907, 0.3610947, -0.9215940,
+  //0.7244189, -0.6724915, -0.1515663,
+  //-0.6744939, -0.6460385, -0.3573404 };
 
   size_t testCaseCount = sizeof(testParams) / sizeof(testParams[0]);
 
@@ -360,6 +411,8 @@ int runD3QtoFromEulerTest()
   {
     double *val = testParams[ii];
     rv += SDK_ASSERT(d3EulertoQTest(val+4, val) == 0);
+    rv += SDK_ASSERT(d3EulertoDCMtoQTest(val + 4, val) == 0);
+
     if (ii == 4)
       val[4] = 360.0 * simCore::DEG2RAD;    // Band-aid fix; rounding errors shifts the value to other side zero
     rv += SDK_ASSERT(d3QtoEulerTest(val, val+4) == 0);
@@ -456,9 +509,12 @@ int runDcmtoFromEuler()
   dcm.set(2, 0, 0.251658);
   dcm.set(2, 1, 0.037041);
   dcm.set(2, 2, 0.967107);
+  rv += SDK_ASSERT(dcm.isValid(2.0e-6));
 
   simCore::Dcm dcmOutput;
   dcmOutput.fromEuler(ea);
+
+  rv += SDK_ASSERT(dcmOutput.isValid());
   rv += SDK_ASSERT(simCore::areEqual(dcmOutput, dcm));
 
   const simCore::Vec3& eaOutput = dcm.toEuler();
