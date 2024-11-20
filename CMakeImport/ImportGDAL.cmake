@@ -2,7 +2,7 @@
 # Setting the GDAL_DIR environment variable will allow use of a custom built library
 
 set(LIBRARYNAME GDAL)
-set(${LIBRARYNAME}_VERSION 3.9.2)
+set(${LIBRARYNAME}_VERSION 3.10.0)
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 if(BUILD_COMPILER STREQUAL "gcc-8.3")
     set(${LIBRARYNAME}_VERSION 3.8.2)
