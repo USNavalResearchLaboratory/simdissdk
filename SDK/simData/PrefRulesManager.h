@@ -25,6 +25,7 @@
 
 #include <deque>
 #include <iosfwd>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -62,12 +63,24 @@ public:
 class PrefRulesManager
 {
 public:
+  /** Observer class to listen to the PrefRulesManager for removed rules. */
+  class RuleChangeObserver
+  {
+  public:
+    virtual ~RuleChangeObserver() {}
+    /** Passes rules about to be removed. The PrefRule pointers are still valid memory when this is called */
+    virtual void aboutToRemoveRules(const std::vector<PrefRule*>& rules) = 0;
+    /** Passes rules after they've been removed from the PrefRulesManager. The PrefRule pointers are no longer valid when this is called */
+    virtual void removedRules(const std::vector<PrefRule*>& rules) = 0;
+  };
+  /** Shared pointer to Rule Change Observer */
+  typedef std::shared_ptr<RuleChangeObserver> RuleChangeObserverPtr;
 
   virtual ~PrefRulesManager() {}
 
   /**
   * Load the rules in the specified pref rule file, adding them to the currently loaded rules.  Rules are always
-  * force applied when added.
+  * force applied when added. Rules are always compressed when appended
   * @param ruleFile the pref rule file to load
   * @return 0 on success, non-zero on error
   */
@@ -97,10 +110,11 @@ public:
   * Load the rules in the specified pref rule files.  Rules are always force applied when added.
   * Note that the last file in the vector is the one saved to the scenario as the current pref rule file.
   * @param ruleFiles list of the pref rule files to load
-  * @param removeOldRules  if true, all rules will be removed and replaced with those in the ruleFiles param
+  * @param removeOldRules if true, all rules will be removed and replaced with those in the ruleFiles param
+  * @param compress if true, compress duplicate rules
   * @return 0 on success, non-zero on error
   */
-  virtual int loadRuleFiles(const std::vector<std::string>& ruleFiles, bool removeOldRules) = 0;
+  virtual int loadRuleFiles(const std::vector<std::string>& ruleFiles, bool removeOldRules, bool compress) = 0;
 
   /**
    * Remove all the preference rules
@@ -198,28 +212,42 @@ public:
   */
   virtual bool isEnforcingPrefs() const = 0;
 
+  /**
+  * Add a RuleChangeObserver to be notified of rule changes
+  * @param observer an observer to be added
+  */
+  virtual void addRuleObserver(RuleChangeObserverPtr observer) = 0;
+
+  /**
+  * Remove a RuleChangeObserver
+  * @param observer an observer to be removed
+  */
+  virtual void removeRuleObserver(RuleChangeObserverPtr observer) = 0;
+
 };
 
 /** Null object implementation for PrefRulesManager */
 class NullPrefRulesManager : public simData::PrefRulesManager
 {
-  virtual int appendRuleFile(const std::string& ) { return 1; }
-  virtual int loadRuleFiles(const std::vector<std::string>& , bool ) { return 1; }
-  virtual int removeAllRules() { return 1; }
-  virtual std::string serializeRules(const std::vector<simData::PrefRule*>& rules) { return ""; }
-  virtual int serializeRules(std::ostream& os) { return 1; }
-  virtual int deserializeRules(std::istream& rules) { return 1; }
-  virtual int addSerializedRule(std::vector<simData::PrefRule*>& rules, const std::string& serializedRule, int fileFormatVersion){ return 1; }
-  virtual void listRules(std::vector<simData::PrefRule*>& prefRules) { }
-  virtual int removeRule(simData::PrefRule* prefRule) { return 1; }
-  virtual int applyRules(bool force) { return 1; }
-  virtual int applyRules(uint64_t id) { return 1; }
-  virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, bool enforce) { }
-  virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack) const { return false; }
-  virtual void setRulesEnabled(bool state) { }
-  virtual bool rulesEnabled() const { return true; }
-  virtual void setEnforcePrefs(bool enforce) { }
-  virtual bool isEnforcingPrefs() const { return true; }
+  virtual int appendRuleFile(const std::string& ) override { return 1; }
+  virtual int loadRuleFiles(const std::vector<std::string>& , bool, bool ) override { return 1; }
+  virtual int removeAllRules() override { return 1; }
+  virtual std::string serializeRules(const std::vector<simData::PrefRule*>& rules) override { return ""; }
+  virtual int serializeRules(std::ostream& os) override { return 1; }
+  virtual int deserializeRules(std::istream& rules) override { return 1; }
+  virtual int addSerializedRule(std::vector<simData::PrefRule*>& rules, const std::string& serializedRule, int fileFormatVersion) override { return 1; }
+  virtual void listRules(std::vector<simData::PrefRule*>& prefRules) override { }
+  virtual int removeRule(simData::PrefRule* prefRule) override { return 1; }
+  virtual int applyRules(bool force) override { return 1; }
+  virtual int applyRules(uint64_t id) override { return 1; }
+  virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, bool enforce) override { }
+  virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack) const override { return false; }
+  virtual void setRulesEnabled(bool state) override { }
+  virtual bool rulesEnabled() const override { return true; }
+  virtual void setEnforcePrefs(bool enforce) override { }
+  virtual bool isEnforcingPrefs() const override { return true; }
+  virtual void addRuleObserver(RuleChangeObserverPtr observer) override {}
+  virtual void removeRuleObserver(RuleChangeObserverPtr observer) override {}
 };
 
 }

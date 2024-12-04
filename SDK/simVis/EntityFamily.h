@@ -87,7 +87,6 @@ public:
   bool isMember(simData::ObjectId id) const;
 
 private:
-  osg::observer_ptr<EntityNode>  host_;
   EntityObserverSet              entities_;
   ObjectIdSet                    entityIds_;
 };

@@ -882,7 +882,7 @@ CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRe
     host = find(props.hostid());
 
   // put the custom into our entity db:
-  auto node = new CustomRenderingNode(this, props, host, dataStore.referenceYear());
+  auto node = new CustomRenderingNode(props, host, dataStore.referenceYear());
   if (host)
   {
     // host will attach the cr to the scenegraph; ScenarioManager::SimpleEntityGraph::addOrUpdate will understand not to attach to scenario's group

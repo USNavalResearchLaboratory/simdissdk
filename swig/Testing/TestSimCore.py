@@ -422,6 +422,19 @@ assert(sm.data() is not None)
 assert(sm.add(simCore.SquareMatrix()) is not None)
 
 #############################
+# Dcm.h (is a SquareMatrix, so reusing SquareMatrix tests)
+dcm = simCore.Dcm()
+assert(dcm is not None)
+assert(dcm.makeIdentity() is not None)
+assert(dcm.transpose() is not None)
+assert(dcm.set(0, 0, 0) is not None)
+assert(dcm.get(0, 0) == 0)
+assert(dcm.data() is not None)
+assert(dcm.add(simCore.Dcm()) is not None)
+assert(dcm.toEuler() is not None)
+assert(dcm.fromDQ(simCore.DoubleArray(4)) is not None)
+
+#############################
 # Units.h
 assert(simCore.Units.UNITLESS is not None)
 assert(simCore.Units.MIL is not None)

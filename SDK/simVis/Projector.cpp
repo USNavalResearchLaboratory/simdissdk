@@ -1166,7 +1166,7 @@ int ProjectorNode::removeProjectionFromNode(osg::Node* entity)
     return 1;
 
   auto attachmentPoint = projectedNodes_.find(entity);
-  if (attachmentPoint == projectedNodes_.end())
+  if ((attachmentPoint == projectedNodes_.end()) || !attachmentPoint->second.valid())
     return 1;
 
   // Find the management callback:

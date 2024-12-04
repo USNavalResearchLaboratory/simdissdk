@@ -25,6 +25,7 @@
 
 #include "osg/observer_ptr"
 #include "simCore/Common/Common.h"
+#include "simData/DataTypes.h"
 #include "simVis/EntityFamily.h"
 #include "simVis/TargetDelegation.h"
 #include "simVis/Tool.h"

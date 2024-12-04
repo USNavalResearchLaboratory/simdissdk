@@ -36,11 +36,8 @@ namespace simQt {
 static const unsigned int MAX_PRECISION = 6;
 
   SegmentedTexts::SegmentedTexts()
-    : scenarioReferenceYear_(1970),
-      precision_(3),
-      limitBeforeStart_(true),
-      limitAfterEnd_(true)
   {
+    adjustTimeRange_();
   }
 
   SegmentedTexts::~SegmentedTexts()
@@ -197,10 +194,24 @@ static const unsigned int MAX_PRECISION = 6;
 
   void SegmentedTexts::setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end)
   {
-    scenarioReferenceYear_ = scenarioReferenceYear;
+    std::optional<simCore::TimeStamp> resetTime;
+    if (scenarioReferenceYear_.has_value() && (scenarioReferenceYear != scenarioReferenceYear_))
+      resetTime = timeStamp();
+    else
+      scenarioReferenceYear_ = scenarioReferenceYear;
+
     start_ = start;
     end_ = end;
     adjustTimeRange_();
+
+    // Forces a refresh for formats that do not display the year as part of the time, like the Second format.
+    if (resetTime)
+      setTimeStamp(*resetTime);
+  }
+
+  bool SegmentedTexts::isValidMonthDay_(int year, int month, int day) const
+  {
+    return day <= simCore::daysPerMonth(year, month);
   }
 
   void SegmentedTexts::adjustTimeRange_()
@@ -229,7 +240,7 @@ static const unsigned int MAX_PRECISION = 6;
 
   void SegmentedTexts::timeRange(int& scenarioReferenceYear, simCore::TimeStamp& start, simCore::TimeStamp& end)
   {
-    scenarioReferenceYear = scenarioReferenceYear_;
+    scenarioReferenceYear = scenarioReferenceYear_.value_or(1970);
     start = start_;
     end = end_;
   }
@@ -642,7 +653,7 @@ static const unsigned int MAX_PRECISION = 6;
     const int seconds = seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
     const int fraction = (fraction_ == nullptr) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
-    return simCore::TimeStamp(scenarioReferenceYear_, simCore::Seconds(seconds, fraction));
+    return simCore::TimeStamp(scenarioReferenceYear_.value_or(1970), simCore::Seconds(seconds, fraction));
   }
 
   void SecondsTexts::setTimeStamp(const simCore::TimeStamp& value)
@@ -650,11 +661,14 @@ static const unsigned int MAX_PRECISION = 6;
     if (!inRange_(value, limitBeforeStart_, limitAfterEnd_))
       return;
 
+    if (!scenarioReferenceYear_.has_value())
+      scenarioReferenceYear_ = value.referenceYear();
+
     // use TimeStamp to renormalize time after rounding
     const simCore::TimeStamp stamp(value.referenceYear(), value.secondsSinceRefYear().rounded(precision_));
 
     // SecondsTexts fields are always relative to scenarioReferenceYear_: they do not reset to 0 if year rolls over.
-    const simCore::Seconds& secondsSinceScenarioRefYear = stamp.secondsSinceRefYear(scenarioReferenceYear_);
+    const simCore::Seconds& secondsSinceScenarioRefYear = stamp.secondsSinceRefYear(scenarioReferenceYear_.value_or(1970));
     seconds_->setValue(static_cast<int>(secondsSinceScenarioRefYear.getSeconds()));
     if (fraction_ != nullptr)
       fraction_->setValue(fractionToField_(secondsSinceScenarioRefYear));
@@ -667,7 +681,8 @@ static const unsigned int MAX_PRECISION = 6;
       return lastState;
 
     SecondsTexts temp;
-    temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
+    temp.setPrecision(precision());
+    temp.setTimeRange(scenarioReferenceYear_.value_or(1970), simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
     temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
     temp.setText(text);
     if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
@@ -725,7 +740,7 @@ static const unsigned int MAX_PRECISION = 6;
     const int seconds = (minutes_->value() * 60) + seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
     const int fraction = (fraction_ == nullptr) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
-    return simCore::TimeStamp(scenarioReferenceYear_, simCore::Seconds(seconds, fraction));
+    return simCore::TimeStamp(scenarioReferenceYear_.value_or(1970), simCore::Seconds(seconds, fraction));
   }
 
   void MinutesTexts::setTimeStamp(const simCore::TimeStamp& value)
@@ -733,11 +748,14 @@ static const unsigned int MAX_PRECISION = 6;
     if (!inRange_(value, limitBeforeStart_, limitAfterEnd_))
       return;
 
+    if (!scenarioReferenceYear_.has_value())
+      scenarioReferenceYear_ = value.referenceYear();
+
     // use TimeStamp to renormalize time after rounding
     const simCore::TimeStamp stamp(value.referenceYear(), value.secondsSinceRefYear().rounded(precision_));
 
     // MinutesTexts fields are always relative to scenarioReferenceYear_: they do not reset to 0 if year rolls over.
-    const simCore::Seconds& secondsSinceScenarioRefYear = stamp.secondsSinceRefYear(scenarioReferenceYear_);
+    const simCore::Seconds& secondsSinceScenarioRefYear = stamp.secondsSinceRefYear(scenarioReferenceYear_.value_or(1970));
     const int64_t secondsSinceRefYear = secondsSinceScenarioRefYear.getSeconds();
     const int minutes = static_cast<int>(secondsSinceRefYear / simCore::SECPERMIN);
     minutes_->setValue(minutes);
@@ -752,7 +770,8 @@ static const unsigned int MAX_PRECISION = 6;
     if (lastState == QValidator::Acceptable)
     {
       MinutesTexts temp;
-      temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
+      temp.setPrecision(precision());
+      temp.setTimeRange(scenarioReferenceYear_.value_or(1970), simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setText(text);
       if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
@@ -815,7 +834,7 @@ static const unsigned int MAX_PRECISION = 6;
     const int64_t seconds = (((hours_->value() * 60) + minutes_->value()) * 60) + seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
     const int fraction = (fraction_ == nullptr) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
-    return simCore::TimeStamp(scenarioReferenceYear_, simCore::Seconds(seconds, fraction));
+    return simCore::TimeStamp(scenarioReferenceYear_.value_or(1970), simCore::Seconds(seconds, fraction));
   }
 
   void HoursTexts::setTimeStamp(const simCore::TimeStamp& value)
@@ -823,11 +842,14 @@ static const unsigned int MAX_PRECISION = 6;
     if (!inRange_(value, limitBeforeStart_, limitAfterEnd_))
       return;
 
+    if (!scenarioReferenceYear_.has_value())
+      scenarioReferenceYear_ = value.referenceYear();
+
     // use TimeStamp to renormalize time after rounding
     const simCore::TimeStamp stamp(value.referenceYear(), value.secondsSinceRefYear().rounded(precision_));
 
     // HoursTexts fields are always relative to scenarioReferenceYear_: they do not reset to 0 if year rolls over.
-    const simCore::Seconds& secondsSinceScenarioRefYear = stamp.secondsSinceRefYear(scenarioReferenceYear_);
+    const simCore::Seconds& secondsSinceScenarioRefYear = stamp.secondsSinceRefYear(scenarioReferenceYear_.value_or(1970));
     int64_t secondsSinceRefYear = secondsSinceScenarioRefYear.getSeconds();
     const int hours = static_cast<int>(secondsSinceRefYear / simCore::SECPERHOUR);
     secondsSinceRefYear -= (hours*simCore::SECPERHOUR);
@@ -847,7 +869,8 @@ static const unsigned int MAX_PRECISION = 6;
     if (lastState == QValidator::Acceptable)
     {
       HoursTexts temp;
-      temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
+      temp.setPrecision(precision());
+      temp.setTimeRange(scenarioReferenceYear_.value_or(1970), simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setText(text);
       if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
@@ -977,7 +1000,8 @@ static const unsigned int MAX_PRECISION = 6;
     if (lastState == QValidator::Acceptable)
     {
       OrdinalTexts temp;
-      temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
+      temp.setPrecision(precision());
+      temp.setTimeRange(1970, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setTimeZone(zone_);
       temp.setText(text);
@@ -1136,16 +1160,34 @@ static const unsigned int MAX_PRECISION = 6;
     Q_EMIT timeChanged(timeStamp());
   }
 
+  int MonthDayYearTexts::year() const
+  {
+    return years_->value();
+  }
+
+  int MonthDayYearTexts::month() const
+  {
+    return month_->intValue();
+  }
+
+  int MonthDayYearTexts::day() const
+  {
+    return days_->value();
+  }
+
   QValidator::State MonthDayYearTexts::validateText(const QString& text) const
   {
     QValidator::State lastState = SegmentedTexts::validateText(text);
     if (lastState == QValidator::Acceptable)
     {
       MonthDayYearTexts temp;
-      temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
+      temp.setPrecision(precision());
+      temp.setTimeRange(1970, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setTimeZone(zone_);
       temp.setText(text);
+      if (!isValidMonthDay_(temp.year(), temp.month(), temp.day()))
+        return QValidator::Invalid;
       if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
         return QValidator::Intermediate;
     }
@@ -1254,10 +1296,12 @@ static const unsigned int MAX_PRECISION = 6;
     {
       Iso8601Texts temp;
       temp.setPrecision(precision_);
-      temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
+      temp.setTimeRange(1970, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setTimeZone(zone_);
       temp.setText(text);
+      if (!isValidMonthDay_(temp.year(), temp.month(), temp.day()))
+        return QValidator::Invalid;
       if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
         return QValidator::Intermediate;
     }
@@ -1277,6 +1321,21 @@ static const unsigned int MAX_PRECISION = 6;
   simCore::TimeZone Iso8601Texts::timeZone() const
   {
     return zone_;
+  }
+
+  int Iso8601Texts::year() const
+  {
+    return years_->value();
+  }
+
+  int Iso8601Texts::month() const
+  {
+    return months_->intValue();
+  }
+
+  int Iso8601Texts::day() const
+  {
+    return days_->value();
   }
 
   void Iso8601Texts::makeSegments_()

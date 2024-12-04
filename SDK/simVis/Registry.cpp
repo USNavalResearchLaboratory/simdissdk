@@ -190,6 +190,7 @@ simVis::Registry::Registry()
   modelExtensions_.push_back("opt");
   modelExtensions_.push_back("ive");
   modelExtensions_.push_back("flt");
+  modelExtensions_.push_back("fbx");
 
   // these may be used for models, but are not model-specific formats
   modelExtensions_.push_back("png");

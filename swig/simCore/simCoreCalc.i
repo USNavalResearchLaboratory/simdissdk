@@ -129,6 +129,7 @@ CoordinateConverter.convert = CoordConvert_convert
 
 %include "simCore/Calc/Random.h"
 %include "simCore/Calc/SquareMatrix.h"
+%include "simCore/Calc/Dcm.h"
 
 %include "simCore/Calc/Units.h"
 %include "simCore/Calc/VerticalDatum.h"

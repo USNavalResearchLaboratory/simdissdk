@@ -202,6 +202,9 @@ void MainWindow::addView()
   // Add a new inset for each main view
   for (std::vector<osg::observer_ptr<simVis::View> >::iterator iter = mainViews_.begin(); iter != mainViews_.end(); ++iter)
   {
+    if (!iter->valid())
+      continue;
+
     osg::ref_ptr<simVis::View> inset = new simVis::View();
     // Get X and Y values between 0 and 0.9
     float x = (0.9f * rand()) / RAND_MAX;

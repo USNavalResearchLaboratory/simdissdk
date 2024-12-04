@@ -274,7 +274,7 @@ public:
 
   void draw(osg::RenderInfo& ri) override
   {
-    if (!isVisible())
+    if (!isVisible() || !layer_.valid())
       return;
 
     if (firstDraw_)

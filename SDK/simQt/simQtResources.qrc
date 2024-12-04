@@ -1,6 +1,7 @@
 <RCC>
   <qresource prefix="simQt">
     <file>images/Building Corporation.png</file>
+    <file>images/Check In.png</file>
     <file>images/Clean Up.png</file>
     <file>images/Close.png</file>
     <file>images/Collapse.png</file>
@@ -29,6 +30,7 @@
     <file>images/Navigation Blue Previous.png</file>
     <file>images/Navigation Blue Right.png</file>
     <file>images/Navigation Blue Stop.png</file>
+    <file>images/NotFound.png</file>
     <file>images/Push Pin.png</file>
     <file>images/Restore.png</file>
     <file>images/Save.png</file>

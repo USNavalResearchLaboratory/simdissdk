@@ -35,7 +35,11 @@
 #include "simQt/Settings.h"
 
 class QCloseEvent;
+class QIcon;
+class QLabel;
 class QModelIndex;
+class QProxyStyle;
+class QWidgetAction;
 class Ui_EntityLineEdit;
 
 namespace simCore { class Clock; }
@@ -194,6 +198,11 @@ private:
   EntityStateFilter::State state_; ///< Current state of filtering
   SettingsPtr settings_; ///< Pointer to global settings
   QPointer<CenterEntity> centerEntity_;  ///< Passed to the dialog for the centering feature
+  std::unique_ptr<QIcon> goodIcon_; ///< Icon to use when the entity name is valid
+  std::unique_ptr<QIcon> badIcon_; ///< Icon to use when the entity name is invalid
+  QLabel* iconLabel_ = nullptr; ///< Used to add the icon to the line edit
+  QWidgetAction* iconAction_ = nullptr; ///< Used to add the icon to the line edit
+  QProxyStyle* proxyStyle_ = nullptr; ///< Used to prevent the graying of the icon
 };
 
 /** Helper class to bind a EntityLineEdit object to Settings*/

@@ -47,21 +47,7 @@ void ResourceInitializer::initialize()
   if (!simQtRccInit)
   {
     qt_Initialize_simQt();
-
-    // Register meta types for use in QSettings
-    qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
-    qRegisterMetaTypeStreamOperators<QList<QKeySequence> >("QList<QKeySequence>");
-#ifdef HAVE_SIMDATA
-    qRegisterMetaTypeStreamOperators<simQt::EntityTreeComposite::FilterConfiguration>("simQt::EntityTreeComposite::FilterConfiguration");
-#endif
-
-    // Register meta type for thread safety in channels
-    qRegisterMetaType<simNotify::NotifySeverity>("simNotify::NotifySeverity");
-
-    // Register meta type for use as an argument in signals/slots
-#ifdef HAVE_SIMDATA
-    qRegisterMetaType<EntityStateFilter::State>("EntityStateFilter::State");
-#endif
+    ResourceInitializer::registerMetaTypes();
   }
   simQtRccInit = true;
   // If other resource files are added, it might be advantageous to
@@ -69,5 +55,22 @@ void ResourceInitializer::initialize()
   // could be used to initialize different resource sets.
 }
 
+void ResourceInitializer::registerMetaTypes()
+{
+  // Register meta types for use in QSettings
+  qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
+  qRegisterMetaTypeStreamOperators<QList<QKeySequence> >("QList<QKeySequence>");
+#ifdef HAVE_SIMDATA
+  qRegisterMetaTypeStreamOperators<simQt::EntityTreeComposite::FilterConfiguration>("simQt::EntityTreeComposite::FilterConfiguration");
+#endif
+
+  // Register meta type for thread safety in channels
+  qRegisterMetaType<simNotify::NotifySeverity>("simNotify::NotifySeverity");
+
+  // Register meta type for use as an argument in signals/slots
+#ifdef HAVE_SIMDATA
+  qRegisterMetaType<EntityStateFilter::State>("EntityStateFilter::State");
+#endif
 }
 
+}

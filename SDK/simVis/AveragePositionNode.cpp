@@ -86,7 +86,10 @@ int AveragePositionNode::getNumTrackedNodes() const
 void AveragePositionNode::getTrackedIds(std::vector<uint64_t>& ids) const
 {
   for (auto it = nodes_.begin(); it != nodes_.end(); ++it)
-    ids.push_back((*it)->getId());
+  {
+    if (it->valid())
+      ids.push_back((*it)->getId());
+  }
 }
 
 double AveragePositionNode::boundingSphereRadius() const
@@ -107,7 +110,7 @@ void AveragePositionNode::updateAveragePosition_()
   boundingSphere_.init();
 
   // Remove invalid nodes
-  nodes_.erase(std::remove(nodes_.begin(), nodes_.end(), osg::observer_ptr<EntityNode>()), nodes_.end());
+  nodes_.erase(std::remove_if(nodes_.begin(), nodes_.end(), [](const osg::observer_ptr<simVis::EntityNode>& ptr) { return !ptr.valid(); }), nodes_.end());
 
   // Expand bounding sphere by each tracked node's position
   for (auto it = nodes_.begin(); it != nodes_.end(); ++it)

@@ -103,7 +103,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     insetViewHandler_(insetViewHandler),
     createHandler_(createHandler)
   {
-    addKeyFunc_(ImGuiKey_I, [this]() { createHandler_->setEnabled(!createHandler_->isEnabled()); });
+    addKeyFunc_(ImGuiKey_I, [this]() { if (createHandler_.valid()) createHandler_->setEnabled(!createHandler_->isEnabled()); });
     addKeyFunc_(ImGuiKey_V, [this]()
       {
         simVis::View* main = viewer_->getMainView();
@@ -135,7 +135,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     addKeyFunc_(ImGuiKey_3, [this]() { viewer_->setNavigationMode(simVis::NAVMODE_GIS); });
     addKeyFunc_(ImGuiKey_H, [this]()
       {
-        int mask = insetViewHandler_->getFocusActions();
+        int mask = 0;
         bool hover = (mask & simVis::InsetViewEventHandler::ACTION_HOVER) != 0;
         if (hover)
         {
@@ -147,7 +147,8 @@ struct ControlPanel : public simExamples::SimExamplesGui
           mask = simVis::InsetViewEventHandler::ACTION_HOVER;
           SIM_NOTICE << LC << "Switched to hover-to-focus mode." << std::endl;
         }
-        insetViewHandler_->setFocusActions(mask);
+        if (insetViewHandler_.valid())
+          insetViewHandler_->setFocusActions(mask);
       });
   }
 

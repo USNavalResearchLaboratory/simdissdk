@@ -436,15 +436,19 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
+  if (view.valid())
+  {
 #else
-  view->addOverlayControl(createUI(app));
+  if (view.valid())
+  {
+    view->addOverlayControl(createUI(app));
 #endif
-  view->setLighting(false);
+    view->setLighting(false);
 
-  // zoom the camera
-  view->tetherCamera(platform.get());
-  view->setFocalOffsets(0, -45, 250000);
-
+    // zoom the camera
+    view->tetherCamera(platform.get());
+    view->setFocalOffsets(0, -45, 250000);
+  }
   // add some stock OSG handlers and go
   viewer->installDebugHandlers();
   return viewer->run();

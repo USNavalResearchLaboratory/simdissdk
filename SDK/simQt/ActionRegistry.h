@@ -180,6 +180,11 @@ public:
   /** Loads the file provided, returning 0 on success and non-zero on error */
   int deserialize(const QString& settingsFile, const QString& groupName="KeyBindings", bool clearExisting = false);
 
+  /** Remove the hot keys from all registered actions */
+  int removeAllHotkeys();
+  /** Reset all actions to the hot keys they were registered with */
+  void resetToDefaultHotkeys();
+
 Q_SIGNALS:
   /** notice that a new action has been registered */
   void actionAdded(simQt::Action* action);
@@ -204,6 +209,8 @@ private:
   QMap<QKeySequence, Action*> actionsByKey_;
   /// Sorted by alias
   QMap<QString, QString> aliases_;
+  /// Remember the hot key sequences provided when actions are registered
+  QMap<Action*, QList<QKeySequence> > defaultKeysByAction_;
 
   /// Maintains a list of hotkeys associated with a given action, by description
   struct UnknownAction

@@ -730,6 +730,63 @@ void MemoryDataStore::updatePlatforms_(double time, std::map<simData::ObjectId, 
   }
 }
 
+void MemoryDataStore::updatePlatformsOddEven_(bool odd, double time, std::map<simData::ObjectId, CommitResult>& allResults)
+{
+  if (platforms_.empty())
+    return;
+  // determine if we are in "file mode". Rely on the bound clock for this. If there is no
+  // clock binding available, fall back on "data limiting" flag which should only be on in live.
+  const bool fileMode = boundClock_
+    ? !boundClock_->isLiveMode()
+    : !dataLimiting();
+
+  Platforms::const_iterator iter = platforms_.cbegin();
+  if (odd)
+    ++iter;
+  for ( /* see iter initialization above */; iter != platforms_.cend(); ++iter)
+  {
+    PlatformEntry* platform = iter->second;
+    // apply commands
+    CommitResult results = CommitResult::NO_CHANGE;
+    platform->commands()->update(this, iter->first, time, results);
+    if (results != CommitResult::NO_CHANGE)
+      allResults[iter->first] = results;
+
+    if (!platform->preferences()->commonprefs().datadraw())
+    {
+      // until we have datadraw, send nullptr; once we have datadraw, we'll immediately update with valid data
+      platform->updates()->setCurrent(nullptr);
+      ++iter;
+      if (iter == platforms_.cend())
+        break;
+      continue;
+    }
+
+    if (fileMode)
+    {
+      if (!DataStoreHelpers::isFileModePlatformActive(platform->preferences()->lifespanmode(), *platform->updates(), time))
+      {
+        // Platform is not valid/off
+        platform->updates()->setCurrent(nullptr);
+        ++iter;
+        if (iter == platforms_.cend())
+          break;
+        continue;
+      }
+    }
+
+    if (isInterpolationEnabled() && platform->preferences()->interpolatepos())
+      platform->updates()->update(time, interpolator_);
+    else
+      platform->updates()->update(time);
+
+    ++iter;
+    if (iter == platforms_.end())
+      break;
+    // loop will iterate again immediately
+  }
+}
+
 void MemoryDataStore::updateTargetBeam_(ObjectId id, BeamEntry* beam, double time)
 {
   // Get the two platforms, if available
@@ -1230,10 +1287,23 @@ void MemoryDataStore::update(double time)
   if (!hasChanged_ && time == lastUpdateTime_)
     return;
 
-  std::future<void> platformFuture;
-  std::map<simData::ObjectId, CommitResult> platformResults;
+  std::vector<std::future<void> > platformFutures;
+  std::vector<std::map<simData::ObjectId, CommitResult> > platformResults;
   if (!platforms_.empty())
-    platformFuture = std::async(&MemoryDataStore::updatePlatforms_, this, time, std::ref(platformResults));
+  {
+    // async off tasks based on number of entities
+    const size_t numWorkers = (platforms_.size() > 9999) ? 2 : 1;
+    platformFutures.resize(numWorkers);
+    platformResults.resize(numWorkers);
+
+    if (numWorkers > 1)
+    {
+      platformFutures[0] = std::async(&MemoryDataStore::updatePlatformsOddEven_, this, false, time, std::ref(platformResults[0]));
+      platformFutures[1] = std::async(&MemoryDataStore::updatePlatformsOddEven_, this, true, time, std::ref(platformResults[1]));
+    }
+    else
+      platformFutures[0] = std::async(&MemoryDataStore::updatePlatforms_, this, time, std::ref(platformResults[0]));
+  }
 
   std::future<void> genericFuture;
   if (!genericData_.empty())
@@ -1249,17 +1319,23 @@ void MemoryDataStore::update(double time)
   if (!customRenderings_.empty())
     crFuture = std::async(&MemoryDataStore::updateCustomRenderings_, this, time, std::ref(crResults));
 
-  // Beams and gate are dependent on platforms so wait for platforms to finish before processing beams and gates
-  if (platformFuture.valid())
-    platformFuture.wait();
-
-  // The rest is usually small, so just do in th main thread
+  // to get max benefit of asynchronous tasks, want as many main thread tasks here as possible
   std::map<simData::ObjectId, CommitResult> results;
-  updateBeams_(time, results);
-  updateGates_(time, results);
   updateLasers_(time, results);
   updateProjectors_(time, results);
   updateLobGroups_(time, results);
+
+  // Beams and gate are dependent on platforms so wait for platforms to finish before processing beams and gates
+  for (const auto& platformFuture : platformFutures)
+  {
+    if (platformFuture.valid())
+      platformFuture.wait();
+  }
+
+  // The rest is usually small, so just do in the main thread
+  std::map<simData::ObjectId, CommitResult> beamGateResults;
+  updateBeams_(time, beamGateResults);
+  updateGates_(time, beamGateResults);
 
   if (genericFuture.valid())
     genericFuture.wait();
@@ -1271,9 +1347,10 @@ void MemoryDataStore::update(double time)
   // Need to handle recursion so make a local copy
   ListenerList localCopy = listeners_;
   justRemoved_.clear();
-
-  invokePreferenceChangeCallback_(platformResults, localCopy);
+  for (const auto& platformResult : platformResults)
+    invokePreferenceChangeCallback_(platformResult, localCopy);
   invokePreferenceChangeCallback_(crResults, localCopy);
+  invokePreferenceChangeCallback_(beamGateResults, localCopy);
   invokePreferenceChangeCallback_(results, localCopy);
 
   for (auto id : ids)

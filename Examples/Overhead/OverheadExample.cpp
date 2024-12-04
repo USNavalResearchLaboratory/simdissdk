@@ -161,7 +161,8 @@ struct ControlPanel : public simExamples::SimExamplesGui
     addKeyFunc_(ImGuiKey_I, [this]()
       {
         insertViewPortMode_ = !insertViewPortMode_;
-        handler_->setEnabled(insertViewPortMode_);
+        if (handler_.valid())
+          handler_->setEnabled(insertViewPortMode_);
       });
     addKeyFunc_(ImGuiKey_V, [this]()
       {

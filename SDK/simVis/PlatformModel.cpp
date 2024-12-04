@@ -880,7 +880,7 @@ void PlatformModelNode::updatePolygonMode_(const simData::PlatformPrefs& prefs)
 
   if (!offsetXform_.valid())
     return;
-  osg::observer_ptr<osg::StateSet> stateSet = offsetXform_->getStateSet();
+  osg::observer_ptr<osg::StateSet> stateSet = offsetXform_->getOrCreateStateSet();
 
   // Have default values for face/mode
   osg::PolygonMode::Face face = osg::PolygonMode::FRONT_AND_BACK;

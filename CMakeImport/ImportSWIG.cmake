@@ -1,7 +1,7 @@
 # Helper script for VSI to find SWIG executable.
 
 initialize_ENV(SWIG_DIR)
-set(SWIG_VERSION 4.2.1)
+set(SWIG_VERSION 4.3.0)
 find_program(SWIG_EXECUTABLE
     NAMES swig
     HINTS

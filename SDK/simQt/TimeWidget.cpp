@@ -203,10 +203,6 @@ void TimeWidget::setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd)
 
 void TimeWidget::showRightMouseClickMenu_(const QPoint &pos)
 {
-  // Put a check mark next to the current format
-  for (auto it = containers_.begin(); it != containers_.end(); ++it)
-    (*it)->action()->setChecked(currentContainer_->timeFormat() == (*it)->timeFormat());
-
   colorCodeAction_->setChecked(currentContainer_->colorCode());
 
   rightMouseClickMenu_->exec(title_->mapToGlobal(pos));
@@ -240,14 +236,18 @@ void TimeWidget::setTimeFormat(simCore::TimeFormat newFormat)
   if (newFormat == simCore::TIMEFORMAT_DTG)
     newFormat = simCore::TIMEFORMAT_MONTHDAY;
 
+  // Return if no change
+  if (currentContainer_->timeFormat() == newFormat)
+    return;
+
   for (auto it = containers_.begin(); it != containers_.end(); ++it)
   {
     if ((*it)->timeFormat() == newFormat)
     {
       layout()->removeWidget(currentContainer_->widget());
       currentContainer_->widget()->setHidden(true);
-      // user might have changed the time before switching, so move time over to new widget
-      (*it)->setTimeStamp(currentContainer_->timeStamp());
+      // The times should be in sync
+      assert((*it)->timeStamp() == currentContainer_->timeStamp());
       currentContainer_ = *it;
       if (timeEnabled_)
       {
@@ -263,21 +263,14 @@ void TimeWidget::setTimeFormat(simCore::TimeFormat newFormat)
 
 void TimeWidget::setPrecision(unsigned int digits)
 {
-  // save off the current time to force a redraw after setting the precision
-  const simCore::TimeStamp& currentTime = currentContainer_->timeStamp();
   for (auto it = containers_.begin(); it != containers_.end(); ++it)
     (*it)->setPrecision(digits);
-  currentContainer_->setTimeStamp(currentTime);
 }
 
 void TimeWidget::setTimeZone(simCore::TimeZone zone)
 {
-  // Some formats use time zone when calculating time stamp.
-  // Save off and reset to ensure time stays accurate and to force a redraw of the text
-  const simCore::TimeStamp& currentTime = currentContainer_->timeStamp();
   for (auto it = containers_.begin(); it != containers_.end(); ++it)
     (*it)->setTimeZone(zone);
-  currentContainer_->setTimeStamp(currentTime);
 }
 
 void TimeWidget::setSeconds_()

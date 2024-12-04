@@ -111,7 +111,7 @@ void EyePositionState::fillFromView_(simVis::View* view)
 {
   view_ = view;
 
-  if (view_ == nullptr)
+  if (!view_.valid())
   {
     tetherNode_ = nullptr;
     watchedNode_ = nullptr;
@@ -278,7 +278,7 @@ ViewpointMonitor::ViewpointMonitor(simVis::View* mainView)
   viewManagerObserver_ = new ViewManagerObserver(*this);
 
   // Initialize all the view eye position states
-  simVis::ViewManager* viewManager = mainView_->getViewManager();
+  simVis::ViewManager* viewManager = mainView_.valid() ? mainView_->getViewManager() : nullptr;
   if (viewManager != nullptr)
   {
     // Add an observer so we know when views are added or removed

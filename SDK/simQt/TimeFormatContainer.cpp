@@ -65,6 +65,25 @@ void TimeFormatContainer::setAction(QAction* action)
   action_ = action;
 }
 
+void TimeFormatContainer::setPrecision_(unsigned int digits, SegmentedSpinBox* widget) const
+{
+  if (digits == widget->line()->precision())
+    return;
+
+  const auto& utcTimeStamp = widget->timeStamp();
+  widget->line()->setPrecision(digits);
+  widget->setTimeStamp(utcTimeStamp);
+}
+
+void TimeFormatContainer::setTimeZone_(simCore::TimeZone zone, SegmentedSpinBox* widget) const
+{
+  if (zone == widget->line()->timeZone())
+    return;
+
+  const auto& utcTimeStamp = widget->timeStamp();
+  widget->line()->setTimeZone(zone);
+  widget->setTimeStamp(utcTimeStamp);
+}
 
 //----------------------------------------------------------------------------------------------
 SecondsContainer::SecondsContainer(QWidget* parent)
@@ -140,17 +159,17 @@ void SecondsContainer::setProcessEnterKey(bool process)
 
 void SecondsContainer::setPrecision(unsigned int digits)
 {
-  widget_->line()->setPrecision(digits);
+  setPrecision_(digits, widget_);
 }
 
-unsigned int SecondsContainer::precision()
+unsigned int SecondsContainer::precision() const
 {
   return widget_->line()->precision();
 }
 
 void SecondsContainer::setTimeZone(simCore::TimeZone zone)
 {
-  widget_->line()->setTimeZone(zone);
+  setTimeZone_(zone, widget_);
 }
 
 simCore::TimeZone SecondsContainer::timeZone() const
@@ -243,17 +262,17 @@ void MonthContainer::setProcessEnterKey(bool process)
 
 void MonthContainer::setPrecision(unsigned int digits)
 {
-  widget_->line()->setPrecision(digits);
+  setPrecision_(digits, widget_);
 }
 
-unsigned int MonthContainer::precision()
+unsigned int MonthContainer::precision() const
 {
   return widget_->line()->precision();
 }
 
 void MonthContainer::setTimeZone(simCore::TimeZone zone)
 {
-  widget_->line()->setTimeZone(zone);
+  setTimeZone_(zone, widget_);
 }
 
 simCore::TimeZone MonthContainer::timeZone() const
@@ -346,17 +365,17 @@ void OrdinalContainer::setProcessEnterKey(bool process)
 
 void OrdinalContainer::setPrecision(unsigned int digits)
 {
-  widget_->line()->setPrecision(digits);
+  setPrecision_(digits, widget_);
 }
 
-unsigned int OrdinalContainer::precision()
+unsigned int OrdinalContainer::precision() const
 {
   return widget_->line()->precision();
 }
 
 void OrdinalContainer::setTimeZone(simCore::TimeZone zone)
 {
-  widget_->line()->setTimeZone(zone);
+  setTimeZone_(zone, widget_);
 }
 
 simCore::TimeZone OrdinalContainer::timeZone() const
@@ -449,17 +468,17 @@ void MinutesContainer::setProcessEnterKey(bool process)
 
 void MinutesContainer::setPrecision(unsigned int digits)
 {
-  widget_->line()->setPrecision(digits);
+  setPrecision_(digits, widget_);
 }
 
-unsigned int MinutesContainer::precision()
+unsigned int MinutesContainer::precision() const
 {
   return widget_->line()->precision();
 }
 
 void MinutesContainer::setTimeZone(simCore::TimeZone zone)
 {
-  widget_->line()->setTimeZone(zone);
+  setTimeZone_(zone, widget_);
 }
 
 simCore::TimeZone MinutesContainer::timeZone() const
@@ -552,17 +571,17 @@ void HoursContainer::setProcessEnterKey(bool process)
 
 void HoursContainer::setPrecision(unsigned int digits)
 {
-  widget_->line()->setPrecision(digits);
+  setPrecision_(digits, widget_);
 }
 
-unsigned int HoursContainer::precision()
+unsigned int HoursContainer::precision() const
 {
   return widget_->line()->precision();
 }
 
 void HoursContainer::setTimeZone(simCore::TimeZone zone)
 {
-  widget_->line()->setTimeZone(zone);
+  setTimeZone_(zone, widget_);
 }
 
 simCore::TimeZone HoursContainer::timeZone() const
@@ -653,17 +672,17 @@ void Iso8601Container::setProcessEnterKey(bool process)
 
 void Iso8601Container::setPrecision(unsigned int digits)
 {
-  widget_->line()->setPrecision(digits);
+  setPrecision_(digits, widget_);
 }
 
-unsigned int Iso8601Container::precision()
+unsigned int Iso8601Container::precision() const
 {
   return widget_->line()->precision();
 }
 
 void Iso8601Container::setTimeZone(simCore::TimeZone zone)
 {
-  widget_->line()->setTimeZone(zone);
+  setTimeZone_(zone, widget_);
 }
 
 simCore::TimeZone Iso8601Container::timeZone() const

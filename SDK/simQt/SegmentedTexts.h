@@ -23,6 +23,7 @@
 #ifndef SIMQT_SEGMENTED_LINE_H
 #define SIMQT_SEGMENTED_LINE_H
 
+#include <optional>
 #include <QSpinBox>
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/TimeClass.h"
@@ -265,14 +266,21 @@ protected:
   /// convert the field representation of the fraction to a # of ns
   int fractionFromField_(int fractionFieldValue, int precision) const;
 
-  simCore::TimeStamp start_;  ///< Start Time
-  simCore::TimeStamp end_;  ///< End time
+  /** Returns true if the day is valid for the given year/month pair
+   * param[in] year Four digit year
+   * param[in] month 0 to 11
+   * param[in] day 1 to 31
+   */
+  bool isValidMonthDay_(int year, int month, int day) const;
+
+  simCore::TimeStamp start_ = simCore::MIN_TIME_STAMP;  ///< Start Time
+  simCore::TimeStamp end_ = simCore::MAX_TIME_STAMP;  ///< End time
   simCore::TimeStamp adjustedStart_;  ///< Start Time adjusted down by the precision
   simCore::TimeStamp adjustedEnd_;  ///< End time adjusted up by the precision
-  int scenarioReferenceYear_;  ///< Scenario Reference Year
-  unsigned int precision_; ///< The number of digits after the decimal point, must be between 1 and 6
-  bool limitBeforeStart_; ///< If true times before the start time are rejected
-  bool limitAfterEnd_;  ///< If true times after the end time are rejected
+  std::optional<int> scenarioReferenceYear_;  ///< Scenario Reference Year
+  unsigned int precision_ = 3; ///< The number of digits after the decimal point, must be between 1 and 6
+  bool limitBeforeStart_ = true; ///< If true times before the start time are rejected
+  bool limitAfterEnd_ = true;  ///< If true times after the end time are rejected
 
 private:
   /// Adjust the time range to account for the precision
@@ -404,6 +412,13 @@ public:
   virtual void setTimeZone(simCore::TimeZone zone);
   virtual simCore::TimeZone timeZone() const;
 
+  /** Returns four digit year */
+  int year() const;
+  /** Returns 0 to 11 */
+  int month() const;
+  /** Returns 1 to 31 */
+  int day() const;
+
 protected:
   virtual void makeSegments_();
 
@@ -433,6 +448,13 @@ public:
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setTimeZone(simCore::TimeZone zone);
   virtual simCore::TimeZone timeZone() const;
+
+  /** Returns four digit year */
+  int year() const;
+  /** Returns 0 to 11 */
+  int month() const;
+  /** Returns 1 to 31 */
+  int day() const;
 
 protected:
   virtual void makeSegments_();

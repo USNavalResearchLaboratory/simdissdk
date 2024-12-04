@@ -27,6 +27,8 @@
  * Demonstrates the asynchronous loading of 3D models.
  */
 
+#include <cassert>
+
 #include "osg/ProxyNode"
 #include "osg/ShapeDrawable"
 #include "osg/Sequence"
@@ -627,6 +629,8 @@ int main(int argc, char **argv)
 
   // Tether camera to platform
   osg::observer_ptr<simVis::EntityNode> obj1Node = scene->getScenario()->find(app.platId);
+  // The platform was just created so the node should exist
+  assert(obj1Node.valid());
   app.entityNode = obj1Node->getChild(0); // First child is the platform model node
   app.mainView = viewer->getMainView();
 

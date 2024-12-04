@@ -20,6 +20,8 @@
  * disclose, or release this software.
  *
  */
+
+#include <cassert>
 #include "osg/Depth"
 #include "osgText/Text"
 #include "osgEarth/LineDrawable"
@@ -134,6 +136,12 @@ void PlatformAzimElevViewTool::setGatePrefs(const simData::GatePrefs& prefs)
 
 void PlatformAzimElevViewTool::onInstall(const ScenarioManager& scenario)
 {
+  if (!host_.valid())
+  {
+    // Need a valid host
+    assert(0);
+  }
+
   // create a node to track the position of the host:
   root_ = new LocatorNode(new Locator(host_->getLocator(), Locator::COMP_POSITION));
   root_->addChild(grid_.get());
@@ -200,7 +208,8 @@ void PlatformAzimElevViewTool::onEntityRemove(const ScenarioManager& scenario, E
 void PlatformAzimElevViewTool::onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
 {
   // update the fence
-  fence_->setLocation(osg::Vec3d(0, 0, 0) * root_->getMatrix());
+  if (root_.valid())
+    fence_->setLocation(osg::Vec3d(0, 0, 0) * root_->getMatrix());
 
   // check any entity updates for positional changes
   for (EntityVector::const_iterator i = updates.begin(); i != updates.end(); ++i)
@@ -451,6 +460,13 @@ namespace
 void PlatformAzimElevViewTool::updateTargetGeometry(osg::MatrixTransform* mt, const osg::Vec3d& ecef)
 {
   static osg::Vec3d s_up(0, 0, 1);
+
+  if (!root_.valid())
+  {
+    // Need a valid root
+    assert(0);
+    return;
+  }
 
   // if the transform has no children, create the initial subgraph.
   if (mt->getNumChildren() == 0)

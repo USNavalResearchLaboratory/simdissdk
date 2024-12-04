@@ -20,6 +20,8 @@
  * disclose, or release this software.
  *
  */
+
+#include <cassert>
 #include "osg/Depth"
 #include "osg/BlendFunc"
 #include "osgUtil/CullVisitor"
@@ -209,6 +211,13 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
   // Check if this ProjectorNode already exists in the map and exit if so
   if (std::find(projectors_.begin(), projectors_.end(), proj) != projectors_.end())
     return;
+
+  if (!mapNode_.valid())
+  {
+    // Need a mapNode
+    assert(0);
+    return;
+  }
 
   projectors_.push_back(proj);
 

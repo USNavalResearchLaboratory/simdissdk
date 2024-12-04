@@ -51,11 +51,11 @@ public:
   virtual bool update(const simData::DataSliceBase* updateSlice, bool force = false)
   {
     // Break out if the node isn't currently valid
-    if (node_ == nullptr)
+    if (!node_)
       return false;
 
     // Create the geometry if it hasn't been created yet
-    if (transform_ == nullptr)
+    if (!transform_)
     {
       simVis::LocatorNode* locatorNode = node_->locatorNode();
       locatorNode->removeChildren(0, locatorNode->getNumChildren());

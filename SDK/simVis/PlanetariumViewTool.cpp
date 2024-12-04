@@ -21,6 +21,7 @@
  *
  */
 #include <algorithm>
+#include <cassert>
 #include "osg/Depth"
 #include "osg/CullFace"
 #include "osg/TransferFunction"
@@ -92,6 +93,13 @@ PlanetariumViewTool::BeamHistory::BeamHistory(simVis::BeamNode* beam, simData::D
   range_(range),
   lastUpdateTime_(-std::numeric_limits<double>::max())
 {
+  if (!beam_.valid())
+  {
+    // beam must be valid
+    assert(0);
+    return;
+  }
+
   beamUpdateSlice_ = ds.beamUpdateSlice(beam_->getId());
   if (!beamUpdateSlice_)
   {
@@ -270,6 +278,13 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
     return;
   }
 
+  if (!beam_.valid())
+  {
+    // beam must be valid
+    assert(0);
+    return;
+  }
+
   // starting point is: each point sets hbw, vbw & color to sentinel value;
   // only set to non-sentinel value if a command is found below
   // updateBeamHistory replaces sentinel with current pref if no command found
@@ -359,6 +374,13 @@ void PlanetariumViewTool::BeamHistory::addPointFromUpdate_(const simData::BeamPr
   bool hasCommandedHbw, bool hasCommandedVbw, const simVis::Color& color,
   const simData::BeamUpdate* update, double updateTime)
 {
+  if (!beam_.valid())
+  {
+    // beam must be valid
+    assert(0);
+    return;
+  }
+
   if (historyPoints_[updateTime].get())
   {
     // already have this point; but this should not happen
@@ -541,6 +563,9 @@ public:
         projectorNode->removeProjectionFromNode(parent_.root_.get());
     }
     projectorNodes_.clear();
+
+    if (!parent_.scenario_.valid())
+      return;
 
     // Try to re-add projection from nodes
     for (const auto& projectorId : projectorIds_)
@@ -870,6 +895,13 @@ double PlanetariumViewTool::getSectorHeight() const
 
 void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
 {
+  if (!host_.valid())
+  {
+    // host must be valid
+    assert(0);
+    return;
+  }
+
   root_ = new osg::Group;
   root_->setName("Planetarium Tool Root Node");
   root_->getOrCreateStateSet()->setRenderBinDetails(BIN_AZIM_ELEV_TOOL, BIN_GLOBAL_SIMSDK);
@@ -1019,6 +1051,9 @@ void PlanetariumViewTool::onFlush(const ScenarioManager& scenario, simData::Obje
     targets_->removeAll();
     return;
   }
+
+  if (!scenario_.valid())
+    return;
 
   const EntityNode* entity = scenario_->find(flushedId);
   if (dynamic_cast<const PlatformNode*>(entity))

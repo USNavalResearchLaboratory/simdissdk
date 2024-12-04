@@ -1574,12 +1574,15 @@ bool positionInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& posit
   const double range = simCore::calculateSlant(gateHostLLA, positionLLA, earthModel, &cc);
   if (range > minRangeM && range < maxRangeM)
   {
+    const double halfHeightRad = heightRad * 0.5;
+    if ((elevRad - halfHeightRad <= -M_PI_2) || (elevRad + halfHeightRad >= M_PI_2))
+      SIM_WARN << "simCore::positionInGate(): Gate has extents crossing either the 90 degree up or 90 degree down singularity, calculation results may be unreliable.";
     double az = 0.;
     double el = 0.;
     // gets the azimuth, elevation from the host platform to the position of interest
     simCore::calculateAbsAzEl(gateHostLLA, positionLLA, &az, &el, nullptr, earthModel, &cc);
     return simCore::areAnglesEqual(az, azimuthRad, widthRad / 2.0) &&
-      simCore::areAnglesEqual(el, elevRad, heightRad / 2.0);
+      simCore::areAnglesEqual(el, elevRad, halfHeightRad);
   }
   return false;
 }

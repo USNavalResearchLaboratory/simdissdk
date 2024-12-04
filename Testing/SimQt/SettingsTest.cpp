@@ -465,6 +465,67 @@ int testMementoSubgroup(simQt::Settings& settings)
   return rv;
 }
 
+// Colors are always stored in the SettingsModel as a QRgb, but should be stored in the QSettings as
+int testColors()
+{
+  int rv = 0;
+
+  // need a clean qSettings global
+  QSettings qSettings;
+  qSettings.clear();
+  simQt::SettingsModel settings(nullptr, qSettings);
+
+  // two strings that reqpresent cyan color in different formats
+  QString rgbString = "4278255615";
+  QString hexString = "#ff00ffff";
+
+  QString rgbSetting = "rgb";
+  QString hexSetting = "hex";
+
+  QColor colorVal(0, 255, 255, 255);
+
+  settings.setValue(rgbSetting, rgbString);
+  settings.setValue(hexSetting, hexString);
+
+  // setting colors with no meta data will always be treated as strings
+  rv += SDK_ASSERT(settings.value(rgbSetting).toString() == rgbString);
+  rv += SDK_ASSERT(settings.value(hexSetting).toString() == hexString);
+
+  simQt::Settings::MetaData colorMd = simQt::Settings::MetaData::makeColor(qRgba(0xff, 0xff, 0x00, 0xff), "color metadata", simQt::Settings::ADVANCED);
+  // defining meta data should set the setting type to COLOR
+  settings.value(rgbSetting, colorMd);
+  settings.value(hexSetting, colorMd);
+
+  // verify that both settings are stored as QRgb integer string
+  rv += SDK_ASSERT(settings.value(rgbSetting).toString() == rgbString);
+  rv += SDK_ASSERT(settings.value(hexSetting).toString() == rgbString);
+
+  // verify that converting to QColor from QRgba gets the right value
+  rv += SDK_ASSERT(QColor::fromRgba(settings.value(rgbSetting).toUInt()) == colorVal);
+  rv += SDK_ASSERT(QColor::fromRgba(settings.value(hexSetting).toUInt()) == colorVal);
+
+  // verify that converting directly to QColor does not work, indicating that internal value is not compatible with QColor
+  rv += SDK_ASSERT(settings.value(rgbSetting).value<QColor>() != colorVal);
+  rv += SDK_ASSERT(settings.value(hexSetting).value<QColor>() != colorVal);
+
+  // verify that the format is hex when saving to QSettings from SettingsModel
+  settings.save();
+  rv += SDK_ASSERT(qSettings.value(rgbSetting).toString() == hexString);
+  rv += SDK_ASSERT(qSettings.value(hexSetting).toString() == hexString);
+
+  // test values that don't change, loaded as rgb integer, to make sure they save out as hex
+  {
+    qSettings.clear();
+    qSettings.setValue(rgbSetting, rgbString);
+    simQt::SettingsModel otherModel(nullptr, qSettings);
+    // need to make sure to associate the correct meta data with the setting so it is identified as a color; note this does not change the setting value
+    otherModel.value(rgbSetting, colorMd);
+    otherModel.save();
+    rv += SDK_ASSERT(qSettings.value(rgbSetting).toString() == hexString);
+  }
+  return rv;
+}
+
 }
 
 int SettingsTest(int argc, char* argv[])
@@ -495,6 +556,8 @@ int SettingsTest(int argc, char* argv[])
   rv += testMemento(*settings);
   rv += testMemento(*group2);
   rv += testMementoSubgroup(*settings);
+
+  rv += testColors();
 
   return rv;
 }

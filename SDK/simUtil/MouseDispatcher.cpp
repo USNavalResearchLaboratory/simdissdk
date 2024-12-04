@@ -174,7 +174,7 @@ void MouseDispatcher::setViewManager(simVis::ViewManager* viewManager)
     viewObserver_ = new simVis::AddEventHandlerToViews(eventHandler_.get());
 
   // Remove all observers and GUI handlers
-  if (viewManager_ != nullptr)
+  if (viewManager_.valid())
   {
     viewManager_->removeCallback(viewObserver_.get());
     viewObserver_->removeFromViews(*viewManager_);
@@ -182,7 +182,7 @@ void MouseDispatcher::setViewManager(simVis::ViewManager* viewManager)
   viewManager_ = viewManager;
 
   // Add back in the observers and GUI handlers to the new view manager
-  if (viewManager_ != nullptr)
+  if (viewManager_.valid())
   {
     viewManager_->addCallback(viewObserver_.get());
     viewObserver_->addToViews(*viewManager_);

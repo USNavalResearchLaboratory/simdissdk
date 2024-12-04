@@ -155,7 +155,8 @@ CreateInsetEventHandler::CreateInsetEventHandler(simVis::View* host)
 {
   // add an (invisible) rubber band to the HUD.
   rubberBand_->setNodeMask(0);
-  host_->getOrCreateHUD()->addChild(rubberBand_.get());
+  if (host_.valid())
+    host_->getOrCreateHUD()->addChild(rubberBand_.get());
 }
 
 CreateInsetEventHandler::~CreateInsetEventHandler()
@@ -252,6 +253,9 @@ void CreateInsetEventHandler::completeNewInsetAction_(int mx, int my)
 {
   rubberBand_->setNodeMask(0);
 
+  if (!host_.valid())
+    return;
+
   int x = mx > newInsetX0_ ? newInsetX0_ : mx;
   int y = my > newInsetY0_ ? newInsetY0_ : my;
   int w = osg::absolute(mx - newInsetX0_);
@@ -260,8 +264,7 @@ void CreateInsetEventHandler::completeNewInsetAction_(int mx, int my)
   simVis::View* inset = new simVis::View();
   inset->setName(host_->getUniqueInsetName());
   inset->setSceneManager(getView()->getSceneManager());
-  if (host_.valid())
-    inset->applyManipulatorSettings(*host_);
+  inset->applyManipulatorSettings(*host_);
 
   const simVis::View::Extents& hostex = host_->getExtents();
   float xr = ((float)x - hostex.x_) / hostex.width_;
@@ -298,6 +301,9 @@ InsetViewEventHandler::InsetViewEventHandler(simVis::View* host)
   : focusActionsMask_(ACTION_HOVER),
     host_(host)
 {
+  if (!host_.valid())
+    return;
+
   // this callback will allow this object to listen to view events.
   focusDetector_ = new FocusDetector(host_->getFocusManager(), this);
   host_->addEventHandler(focusDetector_.get());

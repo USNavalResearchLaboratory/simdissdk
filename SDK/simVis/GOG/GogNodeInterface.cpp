@@ -1773,6 +1773,13 @@ int FeatureNodeInterface::getTessellation(TessellationStyle& tessellation) const
     tessellation = TESSELLATE_NONE;
     return 0;
   }
+
+  if (!featureNode_.valid())
+  {
+    tessellation = TESSELLATE_NONE;
+    return 0;
+  }
+
   switch (*(featureNode_->getFeature()->geoInterp()))
   {
   case osgEarth::GEOINTERP_RHUMB_LINE:
@@ -1833,6 +1840,9 @@ void FeatureNodeInterface::setExtrude(bool extrude)
 
 void FeatureNodeInterface::setTessellation(TessellationStyle style)
 {
+  if (!featureNode_.valid())
+    return;
+
   metaData_.setExplicitly(GOG_TESSELLATE_SET);
   metaData_.setExplicitly(GOG_LINE_PROJECTION_SET);
 
@@ -1965,6 +1975,9 @@ void FeatureNodeInterface::adjustAltitude_()
 
 void FeatureNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
 {
+  if (!featureNode_.valid())
+    return;
+
   osgEarth::Geometry* geometry = featureNode_->getFeature()->getGeometry();
   if (!geometry)
     return;
@@ -2078,6 +2091,9 @@ void LocalGeometryNodeInterface::adjustAltitude_()
 
 void LocalGeometryNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
 {
+  if (!localNode_.valid())
+    return;
+
   const osgEarth::Geometry* geometry = localNode_->getGeometry();
   if (geometry)
     Utils::serializeShapeGeometry(geometry, relativeShape, gogOutputStream);
@@ -2416,9 +2432,10 @@ ArcNodeInterface::ArcNodeInterface(osg::Group* groupNode, osgEarth::LocalGeometr
     fillNode_(fillNode)
 {
   if (shapeNode_.valid())
+  {
     initializeFromGeoPositionNode_(*shapeNode);
-
-  style_ = shapeNode_->getStyle();
+    style_ = shapeNode_->getStyle();
+  }
 
   initializeAltitudeSymbol_();
   initializeLineColor_();
@@ -2700,11 +2717,15 @@ ImageOverlayInterface::ImageOverlayInterface(osgEarth::ImageOverlay* imageNode, 
     imageNode_(imageNode)
 {
   // Turn off the color shader, since it doesn't work for image overlay
-  simVis::OverrideColor::setCombineMode(imageNode_->getOrCreateStateSet(), simVis::OverrideColor::OFF);
+  if (imageNode_.valid())
+    simVis::OverrideColor::setCombineMode(imageNode_->getOrCreateStateSet(), simVis::OverrideColor::OFF);
 }
 
 int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition) const
 {
+  if (!imageNode_.valid())
+    return 1;
+
   osg::Vec3d centerPoint = imageNode_->getBound().center();
 
   const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
@@ -2728,6 +2749,12 @@ void ImageOverlayInterface::serializeToStream(std::ostream& gogOutputStream)
   if (!imageShape)
   {
     assert(0); // Dev error, should not have generated an ImageOverlayInterface from another shape type
+    return;
+  }
+
+  if (!imageNode_.valid())
+  {
+    assert(0); // Dev error, image node should be valid
     return;
   }
 

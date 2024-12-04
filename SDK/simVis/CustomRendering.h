@@ -36,7 +36,6 @@ class EntityLabelNode;
 class LocalGridNode;
 class LocatorNode;
 class OverrideColor;
-class ScenarioManager;
 
 /**
   * Node for Custom Rendering
@@ -46,12 +45,11 @@ class SDKVIS_EXPORT CustomRenderingNode : public EntityNode
 public:
   /**
   * Construct a new node that displays a Custom.
-  * @param scenario ScenarioManager that is managing this custom
   * @param props Initial custom properties
   * @param host This custom's host entity
   * @param referenceYear The calculation for the Speed Rings Fixed Time preference needs the scenario reference year
   */
-  CustomRenderingNode(const ScenarioManager* scenario, const simData::CustomRenderingProperties& props,
+  CustomRenderingNode(const simData::CustomRenderingProperties& props,
     const simVis::EntityNode* host = nullptr, int referenceYear = 1970);
 
   /**
@@ -256,7 +254,6 @@ private:
   */
   void updateOverrideColor_(const simData::CustomRenderingPrefs& prefs);
 
-  osg::observer_ptr<const ScenarioManager> scenario_;
   osg::observer_ptr<const EntityNode> host_;
   osg::ref_ptr<LabelContentCallback> contentCallback_;
   osg::ref_ptr<UpdateCallback> updateCallback_;

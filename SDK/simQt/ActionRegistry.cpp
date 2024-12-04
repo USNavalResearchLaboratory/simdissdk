@@ -410,6 +410,9 @@ Action* ActionRegistry::registerAction(const QString &group, const QString &desc
   newAct = new Action(this, group, description, action);
   QList<QKeySequence> originalKeys = action->shortcuts();
 
+  // Remember the hot key sequences provided when actions are registered
+  defaultKeysByAction_[newAct] = originalKeys;
+
   // If the registry knows about the action, clear out the original keys because the end
   // user has already cleared them out before.  This means incoming keys will only default
   // on the first time the action is seen.
@@ -496,6 +499,7 @@ int ActionRegistry::removeAction(const QString& desc)
 
   // Remove from actions maps
   actionsByDesc_.remove(desc);
+  defaultKeysByAction_.remove(action);
 
   // Save the bindings in the unknown list.  Note that we cannot rely 100% on the
   // action->hotkeys() value because the end user needs access to the QAction directly
@@ -828,6 +832,25 @@ int ActionRegistry::deserialize(const QString& filename, const QString &groupNam
     return 1;
   QSettings settings(filename, QSettings::IniFormat);
   return deserialize(settings, groupName, clearExisting);
+}
+
+int ActionRegistry::removeAllHotkeys()
+{
+  int rv = 0;
+  QList<QKeySequence> emptyList;
+  for (auto iter = actionsByDesc_.begin(); iter != actionsByDesc_.end(); ++iter)
+  {
+    rv += setHotKeys(iter.value(), emptyList);
+  }
+  return rv;
+}
+
+void ActionRegistry::resetToDefaultHotkeys()
+{
+  for (auto iter = defaultKeysByAction_.begin(); iter != defaultKeysByAction_.end(); ++iter)
+  {
+    setHotKeys(iter.key(), iter.value());
+  }
 }
 
 QList<QKeySequence> ActionRegistry::makeUnique_(const QList<QKeySequence>& keys) const

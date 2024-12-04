@@ -25,6 +25,7 @@
 
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Dcm.h"
 #include "simCore/Calc/Math.h"
 
 namespace {
@@ -45,7 +46,7 @@ static bool vectorsAreEqual(const double* v, const double* u, const size_t size,
 //===========================================================================
 int testRint()
 {
-  std::cerr << "Testing simCore::rint ================================================= " << std::endl;
+  std::cerr << "Testing simCore::rint ================================================= \n";
   int rv = 0;
 
   rv += SDK_ASSERT(simCore::rint(-1.7) == -2.);
@@ -58,13 +59,13 @@ int testRint()
   rv += SDK_ASSERT(simCore::rint(1.7) == 2.);
   rv += SDK_ASSERT(simCore::rint(2.5) == 2.);
 
-  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
   return rv;
 }
 
 int testRound()
 {
-  std::cerr << "Testing simCore::round ================================================ " << std::endl;
+  std::cerr << "Testing simCore::round ================================================ \n";
   int rv = 0;
 
   rv += SDK_ASSERT(simCore::round(0.) == 0.);
@@ -79,13 +80,13 @@ int testRound()
   rv += SDK_ASSERT(simCore::round(2.5) == 3.);
   rv += SDK_ASSERT(simCore::round(-2.5) == -3.);
 
-  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
   return rv;
 }
 
 int testAreAngleEqual()
 {
-  std::cerr << "Testing simCore::areAnglesEqual ======================================= " << std::endl;
+  std::cerr << "Testing simCore::areAnglesEqual ======================================= \n";
   int rv = 0;
   double eps = 1e-6;
 
@@ -139,7 +140,7 @@ int testAreAngleEqual()
   rv += SDK_ASSERT(!simCore::areAnglesEqual(M_PI_4, M_PI_4+1.1*eps, eps));
   rv += SDK_ASSERT(!simCore::areAnglesEqual(M_PI_4, M_PI_4-1.1*eps, eps));
 
-  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
   return rv;
 }
 
@@ -150,10 +151,10 @@ int dQNormTest(const double input[4], const double expected[4])
   simCore::dQNorm(input, output);
   if (vectorsAreEqual(output, expected, 4))
     return 0;
-  std::cerr << " FAILURE - Input Quaternion: [" << std::setprecision(PRECISION) << input[0] << ", " << input[1] << ", " << input[2] << ", " << input[3] << "]" << std::endl
-            << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] << ", " << expected[3] << "]" << std::endl
-            << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << ", " << output[3] << "]" << std::endl
-            << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << ", " << fabs(expected[3] - output[3]) <<"]" << std::endl;
+  std::cerr << " FAILURE - Input Quaternion: [" << std::setprecision(PRECISION) << input[0] << ", " << input[1] << ", " << input[2] << ", " << input[3] << "]\n"
+            << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] << ", " << expected[3] << "]\n"
+            << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << ", " << output[3] << "]\n"
+            << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << ", " << fabs(expected[3] - output[3]) <<"]\n";
   return 1;
 }
 
@@ -161,7 +162,7 @@ int dQNormTest(const double input[4], const double expected[4])
 int runQuaternionNormalTest()
 {
   int rv = 0;
-  std::cerr << "Testing simCore::dQNorm =============================================== " << std::endl;
+  std::cerr << "Testing simCore::dQNorm =============================================== \n";
   // Expected outcomes are based values from Scientific Python 2.9.2 Quaternion.normalized() on 12/12/13
   // http://dirac.cnrs-orleans.fr/ScientificPython/
   // >>> import Scientific.Geometry.Quaternion
@@ -208,7 +209,7 @@ int runQuaternionNormalTest()
     rv += SDK_ASSERT(dQNormTest(val, val+4) == 0);
   }
 
-  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
 
   return rv;
 }
@@ -225,11 +226,11 @@ int dQMultTest(const double input1[4], const double input2[4], const double expe
   simCore::dQMult(q1, q2, output);
   if (vectorsAreEqual(output, expected, 4))
     return 0;
-  std::cerr << " FAILURE - Input Quaternion1: [" << std::setprecision(PRECISION) << q1[0] << ", " << q1[1] << ", " << q1[2] << ", " << q1[3] << "]" << std::endl
-            << "           Input Quaternion1: [" << q2[0] << ", " << q2[1] << ", " << q2[2] << ", " << q2[3] << "]" << std::endl
-            << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] << ", " << expected[3] << "]" << std::endl
-            << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << ", " << output[3] << "]" << std::endl
-            << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << ", " << fabs(expected[3] - output[3]) <<"]" << std::endl;
+  std::cerr << " FAILURE - Input Quaternion1: [" << std::setprecision(PRECISION) << q1[0] << ", " << q1[1] << ", " << q1[2] << ", " << q1[3] << "]\n"
+            << "           Input Quaternion1: [" << q2[0] << ", " << q2[1] << ", " << q2[2] << ", " << q2[3] << "]\n"
+            << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] << ", " << expected[3] << "]\n"
+            << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << ", " << output[3] << "]\n"
+            << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << ", " << fabs(expected[3] - output[3]) <<"]\n";
   return 1;
 }
 
@@ -237,7 +238,7 @@ int dQMultTest(const double input1[4], const double input2[4], const double expe
 int runQuaternionMultiplicationTest()
 {
   int rv = 0;
-  std::cerr << "Testing simCore::dQMult =============================================== " << std::endl;
+  std::cerr << "Testing simCore::dQMult =============================================== \n";
   // Expected outcomes are based values from Scientific Python 2.9.2 Quaternion multiplication on 12/12/13
   // http://dirac.cnrs-orleans.fr/ScientificPython/
   // >>> import Scientific.Geometry.Quaternion
@@ -265,7 +266,7 @@ int runQuaternionMultiplicationTest()
     rv += SDK_ASSERT(dQMultTest(val, val+4, val+8) == 0);
   }
 
-  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
 
   return rv;
 }
@@ -279,10 +280,34 @@ static int d3QtoEulerTest(const double input[4], const double expected[3])
   outVec.toD3(output);
   if (vectorsAreEqual(output, expected, 3, 2e-6))
     return 0;
-  std::cerr << " FAILURE - Input Quaternion: [" << std::setprecision(PRECISION) << input[0] << ", " << input[1] << ", " << input[2] << ", " << input[3] << "]" << std::endl
-            << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] << "]" << std::endl
-            << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << "]" << std::endl
-            << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << "]" << std::endl;
+  std::cerr << " FAILURE - Input Quaternion: [" << std::setprecision(PRECISION) << input[0] << ", " << input[1] << ", " << input[2] << ", " << input[3] << "]\n"
+            << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] << "]\n"
+            << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << "]\n"
+            << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << "]\n";
+  return 1;
+}
+
+
+//===========================================================================
+static int d3QtoDcmtoEulerTest(const double input[4], const double expected[3])
+{
+  double output[3] = { 0 };
+  simCore::Dcm dcm;
+  double outDQ[4];
+  // DCM class requires reasonably precise normalization of a DQ
+  simCore::dQNorm(input, outDQ);
+  dcm.fromDQ(outDQ);
+  if (!dcm.isValid(2.0e-6))
+    return 1;
+
+  const simCore::Vec3& outVec = dcm.toEuler();
+  outVec.toD3(output);
+  if (vectorsAreEqual(output, expected, 3, 2e-6))
+    return 0;
+  std::cerr << " FAILURE - Input Quaternion: [" << std::setprecision(PRECISION) << input[0] << ", " << input[1] << ", " << input[2] << ", " << input[3] << "]\n"
+    << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] << "]\n"
+    << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << "]\n"
+    << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << "]\n";
   return 1;
 }
 
@@ -291,12 +316,50 @@ int d3EulertoQTest(const double input[3], const double expected[4])
 {
   double output[4] = {0};
   simCore::d3EulertoQ(simCore::Vec3(input), output);
+  // quaternion with negated components is equivalent (in 3d space, but there are reasons in quaternion space to be careful)
+  const double neg_output[4] = { -output[0], -output[1], -output[2], -output[3] };
+  if (vectorsAreEqual(output, expected, 4) || vectorsAreEqual(neg_output, expected, 4))
+    return 0;
+  std::cerr << " FAILURE - Input Euler: [" << std::setprecision(PRECISION) << input[0] << ", " << input[1] << ", " << input[2] << "]\n"
+            << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] <<", " << expected[3] << "]\n"
+            << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << ", " << output[3] << "]\n"
+            << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << ", " << fabs(expected[3] - output[3]) <<"]\n";
+  return 1;
+}
+
+//===========================================================================
+int d3EulertoDCMtoQTest(const double input[3], const double expected[4])
+{
+  simCore::Dcm dcm;
+  dcm.fromEuler(simCore::Vec3(input));
+  if (!dcm.isValid(2.0e-6))
+    return 1;
+
+  // test that new Dcm class matches legacy Math code
+  double dcmArray[3][3] = { 0 };
+  simCore::d3EulertoDCM(simCore::Vec3(input), dcmArray);
+  for (int i = 0; i < 3; ++i)
+  {
+    if (dcm.get(i, 0) != dcmArray[i][0] || dcm.get(i, 1) != dcmArray[i][1] || dcm.get(i, 2) != dcmArray[i][2])
+      return 1;
+  }
+
+  double output[4] = { 0 };
+  const auto& quat = dcm.toQ();
+  output[0] = quat[0];
+  output[1] = quat[1];
+  output[2] = quat[2];
+  output[3] = quat[3];
+  // quaternion with negated components is equivalent (in 3d space, but there are reasons in quaternion space to be careful)
+  double neg_output[4] = { -output[0], -output[1], -output[2], -output[3] };
   if (vectorsAreEqual(output, expected, 4))
     return 0;
-  std::cerr << " FAILURE - Input Euler: [" << std::setprecision(PRECISION) << input[0] << ", " << input[1] << ", " << input[2] << "]" << std::endl
-            << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] <<", " << expected[3] << "]" << std::endl
-            << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << ", " << output[3] << "]" << std::endl
-            << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << ", " << fabs(expected[3] - output[3]) <<"]" << std::endl;
+  else if (vectorsAreEqual(neg_output, expected, 4))
+    return 0;
+  std::cerr << " FAILURE - Input Euler: [" << std::setprecision(PRECISION) << input[0] << ", " << input[1] << ", " << input[2] << "]\n"
+    << "           Expected: [" << expected[0] << ", " << expected[1] << ", " << expected[2] << ", " << expected[3] << "]\n"
+    << "           Actual:   [" << output[0] << ", " << output[1] << ", " << output[2] << ", " << output[3] << "]\n"
+    << "           Diff:     [" << fabs(expected[0] - output[0]) << ", " << fabs(expected[1] - output[1]) << ", " << fabs(expected[2] - output[2]) << ", " << fabs(expected[3] - output[3]) << "]\n";
   return 1;
 }
 
@@ -304,7 +367,7 @@ int d3EulertoQTest(const double input[3], const double expected[4])
 int runD3QtoFromEulerTest()
 {
   int rv = 0;
-  std::cerr << "Testing simCore: d3QtoEuler and d3EulertoQ ============================ " << std::endl;
+  std::cerr << "Testing simCore: d3QtoEuler, d3EulertoQ, Dcm::fromDQ and Dcm::toEuler  ============================ \n";
   // Expected outcomes were taken from MATLAB, Note, the values must be normalized
                              //{        ------Quaternion------        ,  -------Expected Angles (deg)------  }
   double testParams[][7] = {{1,         0,         0,         0,          0,  0,  0},
@@ -314,7 +377,17 @@ int runD3QtoFromEulerTest()
                             {0.853553,  0.353553,  0.353553, -0.146447,   0, 45, 45},
                             {0.853553,  0.353553,  0.146447,  0.353553,  45,  0, 45},
                             {0.853553, -0.146447,  0.353553,  0.353553,  45, 45,  0},
-                            {0.844623,  0.191342,  0.461940,  0.191342,  45, 45, 45} };
+                            {0.844623,  0.191342,  0.461940,  0.191342,  45, 45, 45},
+                            // below examples from https://rdrr.io/cran/RSpincalc/man/Q2DCM.html
+                            {-0.1677489, -0.7369231, -0.3682588, 0.5414703,  1.1951868635398375 * simCore::RAD2DEG, 1.1721671736279249 * simCore::RAD2DEG, -2.7404412639686715 * simCore::RAD2DEG},
+                            {0.1677489, 0.7369231, 0.3682588, -0.5414703,  1.1951868635398375 * simCore::RAD2DEG, 1.1721671736279249 * simCore::RAD2DEG, -2.7404412639686715 * simCore::RAD2DEG}
+  };
+
+  // corresponding DCM for https://rdrr.io/cran/RSpincalc/man/Q2DCM.html
+  //double dcm[3][3] = {
+  //0.1423907, 0.3610947, -0.9215940,
+  //0.7244189, -0.6724915, -0.1515663,
+  //-0.6744939, -0.6460385, -0.3573404 };
 
   size_t testCaseCount = sizeof(testParams) / sizeof(testParams[0]);
 
@@ -338,12 +411,14 @@ int runD3QtoFromEulerTest()
   {
     double *val = testParams[ii];
     rv += SDK_ASSERT(d3EulertoQTest(val+4, val) == 0);
+    rv += SDK_ASSERT(d3EulertoDCMtoQTest(val + 4, val) == 0);
+
     if (ii == 4)
       val[4] = 360.0 * simCore::DEG2RAD;    // Band-aid fix; rounding errors shifts the value to other side zero
     rv += SDK_ASSERT(d3QtoEulerTest(val, val+4) == 0);
+    rv += SDK_ASSERT(d3QtoDcmtoEulerTest(val, val+4) == 0);
   }
-
-  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
 
   return rv;
 }
@@ -352,7 +427,7 @@ int runD3MMmult()
 {
   int rv = 0;
 
-  std::cerr << "Testing simCore::d3MMmult ============================================= " << std::endl;
+  std::cerr << "Testing simCore::d3MMmult ============================================= \n";
 
   double mat1[][3] = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
   double mat2[][3] = {{0.1, 0.2, 0.3}, {0.4, 0.5, 0.6}, {0.7, 0.8, 0.9}};
@@ -365,7 +440,7 @@ int runD3MMmult()
     rv += SDK_ASSERT(vectorsAreEqual(output[ii], expected[ii], 3));
   }
 
-  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
 
   return rv;
 }
@@ -374,7 +449,7 @@ int runD3MMTmult()
 {
   int rv = 0;
 
-  std::cerr << "Testing simCore::d3MMTmult ============================================ " << std::endl;
+  std::cerr << "Testing simCore::d3MMTmult ============================================ \n";
 
   double mat1[][3] = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
   double mat2[][3] = {{0.1, 0.2, 0.3}, {0.4, 0.5, 0.6}, {0.7, 0.8, 0.9}};
@@ -387,7 +462,7 @@ int runD3MMTmult()
     rv += SDK_ASSERT(vectorsAreEqual(output[ii], expected[ii], 3));
   }
 
-  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
 
   return rv;
 }
@@ -396,7 +471,7 @@ int runD3DCMtoFromEuler()
 {
   int rv = 0;
 
-  std::cerr << "Testing simCore::d3EulertoDCM and d3DCMtoEuler ======================== " << std::endl;
+  std::cerr << "Testing simCore::d3EulertoDCM and d3DCMtoEuler ======================== \n";
   simCore::Vec3 ea(37.0 * simCore::DEG2RAD, 13.0 * simCore::DEG2RAD, 7.0 * simCore::DEG2RAD);
   double dcm[3][3] = {{ 0.778167, 0.586391, -0.224951}, // From MATLAB
                       {-0.575435, 0.809181,  0.118746},
@@ -412,7 +487,39 @@ int runD3DCMtoFromEuler()
 
   simCore::d3DCMtoEuler(dcm, eaOutput);
   rv += SDK_ASSERT(simCore::v3AreEqual(ea, eaOutput));
-  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
+
+  return rv;
+}
+
+int runDcmtoFromEuler()
+{
+  int rv = 0;
+
+  std::cerr << "Testing simCore::Dcm:: fromEuler and toEuler ======================== \n";
+  const simCore::Vec3 ea(37.0 * simCore::DEG2RAD, 13.0 * simCore::DEG2RAD, 7.0 * simCore::DEG2RAD);
+  // using same inputs as runD3DCMtoFromEuler above
+  simCore::Dcm dcm;
+  dcm.set(0, 0, 0.778167);
+  dcm.set(0, 1, 0.586391);
+  dcm.set(0, 2, -0.224951);
+  dcm.set(1, 0, -0.575435);
+  dcm.set(1, 1, 0.809181);
+  dcm.set(1, 2, 0.118746);
+  dcm.set(2, 0, 0.251658);
+  dcm.set(2, 1, 0.037041);
+  dcm.set(2, 2, 0.967107);
+  rv += SDK_ASSERT(dcm.isValid(2.0e-6));
+
+  simCore::Dcm dcmOutput;
+  dcmOutput.fromEuler(ea);
+
+  rv += SDK_ASSERT(dcmOutput.isValid());
+  rv += SDK_ASSERT(simCore::areEqual(dcmOutput, dcm));
+
+  const simCore::Vec3& eaOutput = dcm.toEuler();
+  rv += SDK_ASSERT(simCore::v3AreEqual(ea, eaOutput));
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
 
   return rv;
 }
@@ -421,7 +528,7 @@ int runV3SphtoRec()
 {
   int rv = 0;
 
-  std::cerr << "Testing simCore::v3SphtoRec =========================================== " << std::endl;
+  std::cerr << "Testing simCore::v3SphtoRec =========================================== \n";
   double input[][3] =    {{10.0,   0.0,  0.0},
                           {10.0,  45.0,  0.0},
                           {10.0,  90.0,  0.0},
@@ -460,7 +567,7 @@ int runV3SphtoRec()
     rv += SDK_ASSERT(simCore::areEqual(input[i][0], output.length()));
   }
 
-  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << std::endl;
+  std::cerr << ((rv == 0) ? "PASS" : "FAILED") << '\n';
 
   return rv;
 }
@@ -832,6 +939,7 @@ int MathTest(int argc, char* argv[])
   rv += runD3MMmult();
   rv += runD3MMTmult();
   rv += runD3DCMtoFromEuler();
+  rv += runDcmtoFromEuler();
   rv += runV3SphtoRec();
   rv += testToScientific();
   rv += testGuessStepSize();

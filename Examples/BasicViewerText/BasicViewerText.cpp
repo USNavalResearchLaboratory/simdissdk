@@ -133,7 +133,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
       case 'h': // TOGGLE BETWEEN HOVER-TO-FOCUS and CLICK-TO-FOCUS
       {
-        int mask = insetViewHandler_->getFocusActions();
+        int mask = 0;
         bool hover = (mask & simVis::InsetViewEventHandler::ACTION_HOVER) != 0;
         if (hover)
         {
@@ -145,13 +145,15 @@ struct MenuHandler : public osgGA::GUIEventHandler
           mask = simVis::InsetViewEventHandler::ACTION_HOVER;
           SIM_NOTICE << LC << "Switched to hover-to-focus mode." << std::endl;
         }
-        insetViewHandler_->setFocusActions(mask);
+        if (insetViewHandler_.valid())
+          insetViewHandler_->setFocusActions(mask);
         handled = true;
       }
       break;
 
       case 'i':
-        createHandler_->setEnabled(!createHandler_->isEnabled());
+        if (createHandler_.valid())
+          createHandler_->setEnabled(!createHandler_->isEnabled());
         break;
 
       case '1': // ACTIVATE PERSPECTIVE NAV MODE

@@ -655,6 +655,9 @@ private:
   void clearMemory_();
   /// Updates all the platforms
   void updatePlatforms_(double time, std::map<simData::ObjectId, CommitResult>& results);
+  /// Updates every other platform; oddeven dictates wich platform is the starting point
+  void updatePlatformsOddEven_(bool oddeven, double time, std::map<simData::ObjectId, CommitResult>& allResults);
+
   /// Updates a target beam
   void updateTargetBeam_(ObjectId id, BeamEntry* beam, double time);
   /// Updates all the beams
