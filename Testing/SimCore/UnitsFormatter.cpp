@@ -222,65 +222,73 @@ int testAltitudes(const simCore::TextFormatter* fmt, simCore::UnitContextAdapter
 {
   units->setAltitudeUnits(simCore::Units::METERS);
   units->setAltitudePrecision(1);
+  const auto oldVd = units->verticalDatum();
   int rv = 0;
 
-  rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_WGS84) == "0.0");
-  rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 10.0, simCore::VERTDATUM_USER) == "-10.0");
+  units->setVerticalDatum(simCore::VERTDATUM_WGS84);
+  rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 0.0) == "0.0");
+  units->setVerticalDatum(simCore::VERTDATUM_USER);
+  rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 10.0) == "-10.0");
   // The following test is useful if MSL is implemented in the SDK
   if (testMsl)
   {
     // Vertical Datum values as of 7/12/16, validated against:
     //  * http://earth-info.nga.mil/GandG/wgs84/gravitymod/egm96/intpt.html
     //  * http://geographiclib.sourceforge.net/cgi-bin/GeoidEval
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-17.2");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2008, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-17.2");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2007, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-17.2");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(1988, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-18.3");
+    units->setVerticalDatum(simCore::VERTDATUM_MSL);
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-17.2");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2008, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-17.2");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2007, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-17.2");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(1988, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-18.3");
 
     // Spot check 4 spots in EGM 1984
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1985, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-11.9");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1985, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-16.9");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1985, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-14.4");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1985, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "7.9");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1985, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-11.9");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1985, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-16.9");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1985, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-14.4");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1985, 0.0), simCore::COORD_SYS_LLA, 0.0) == "7.9");
 
     // Spot check 4 spots in EGM 1996
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1997, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-9.8");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1997, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-16.3");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1997, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-13.6");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1997, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "8.7");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1997, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-9.8");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1997, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-16.3");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1997, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-13.6");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(1997, 0.0), simCore::COORD_SYS_LLA, 0.0) == "8.7");
 
     // Spot check 4 spots in EGM 2008
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-10.9");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-16.6");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-13.7");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "8.5");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-10.9");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-16.6");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, 40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-13.7");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(-30 * simCore::DEG2RAD, -40 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0) == "8.5");
 
     // Spot check boundary conditions on EGM 2008
     units->setAltitudePrecision(2);
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.24 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-10.04");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.25 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-10.01");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.26 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-9.99");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.12 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-10.45");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.125 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-10.43");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.13 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-10.41");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.24 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-10.04");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.25 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-10.01");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.26 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-9.99");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.12 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-10.45");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.125 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-10.43");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(30 * simCore::DEG2RAD, 40.13 * simCore::DEG2RAD, 0.0), simCore::TimeStamp(2010, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-10.41");
     units->setAltitudePrecision(1);
   }
 
   units->setAltitudeUnits(simCore::Units::FEET);
-  rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_WGS84) == "0.0");
-  rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 10.0, simCore::VERTDATUM_USER) == "-32.8");
+  units->setVerticalDatum(simCore::VERTDATUM_WGS84);
+  rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 0.0) == "0.0");
+  units->setVerticalDatum(simCore::VERTDATUM_USER);
+  rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 10.0) == "-32.8");
   // The following test is useful if MSL is implemented in the SDK
   if (testMsl)
   {
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-56.5");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2008, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-56.5");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2007, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-56.3");
-    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(1988, 0.0), simCore::COORD_SYS_LLA, 0.0, simCore::VERTDATUM_MSL) == "-60.1");
+    units->setVerticalDatum(simCore::VERTDATUM_MSL);
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2013, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-56.5");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2008, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-56.5");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(2007, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-56.3");
+    rv += SDK_ASSERT(fmt->formatAltitude(simCore::Vec3(0.0, 0.0, 0.0), simCore::TimeStamp(1988, 0.0), simCore::COORD_SYS_LLA, 0.0) == "-60.1");
   }
 
   units->setAltitudeUnits(simCore::Units::METERS);
   rv += SDK_ASSERT(fmt->formatAltitude(0.0) == "0.0");
   rv += SDK_ASSERT(fmt->formatAltitude(10.0) == "10.0");
+  units->setVerticalDatum(oldVd);
 
   return rv;
 }
