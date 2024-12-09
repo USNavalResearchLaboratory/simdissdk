@@ -43,7 +43,6 @@ set(VALID_IMPLIBS)
 foreach(IMPORTED_LIBRARY_NAME IN LISTS IMPLIBS)
     # Avoid strings like 'EnTT::EnTT' in favor of 'EnTT_EnTT' for filename usage
     string(REPLACE "::" "_" IMPORTED_FILENAME "${IMPORTED_LIBRARY_NAME}")
-    message("${IMPORTED_LIBRARY_NAME} -> ${IMPORTED_FILENAME}")
 
     # Only create the file if the target exists
     if(TARGET ${IMPORTED_LIBRARY_NAME})
