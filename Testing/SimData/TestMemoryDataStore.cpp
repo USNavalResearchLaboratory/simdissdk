@@ -1411,7 +1411,7 @@ private:
  * flag are not externally visible so needed to step through the code to verify
  * correct operation.
  */
-int testUpdateToNonCurrentTime()
+int testUpdateToNonCurrentTime(simData::DataStore::InterpolatorState state)
 {
   int rv = 0;
 
@@ -1426,7 +1426,7 @@ int testUpdateToNonCurrentTime()
   // Add Interpolator
   simData::LinearInterpolator interpolator;
   ds->setInterpolator(&interpolator);
-  ds->enableInterpolation(true);
+  ds->enableInterpolation(state);
 
   std::shared_ptr<CategoryChangeListener> listener(new CategoryChangeListener);
   ds->addListener(listener);
@@ -1998,7 +1998,8 @@ int TestMemoryDataStore(int argc, char* argv[])
     rv += testCategoryData_update();
     rv += testCategoryData_change();
     rv += testScenarioDeleteCallback();
-    rv += testUpdateToNonCurrentTime();
+    rv += testUpdateToNonCurrentTime(simData::DataStore::InterpolatorState::EXTERNAL);
+    rv += testUpdateToNonCurrentTime(simData::DataStore::InterpolatorState::INTERNAL);
     rv += testOriginalId();
     rv += testDataStoreHelperPlatformLifespan();
     rv += testDataStorePlatformLifespan();

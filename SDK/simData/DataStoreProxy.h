@@ -128,6 +128,12 @@ public: // methods
   virtual Interpolator* interpolator() const override;
   ///@}
 
+  /// Sets the interpolation state; returns true if interpolation is enabled
+  virtual bool enableInterpolation(InterpolatorState state) override;
+
+  /// Returns the interpolation state
+  virtual InterpolatorState interpolatorState() const override;
+
   /**@name ID Lists
    * @{
    */

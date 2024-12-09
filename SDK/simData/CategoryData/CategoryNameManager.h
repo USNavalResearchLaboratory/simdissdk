@@ -23,9 +23,9 @@
 #ifndef SIMDATA_CATEGORY_NAME_MANAGER_H
 #define SIMDATA_CATEGORY_NAME_MANAGER_H
 
-#include <map>
 #include <memory>
 #include <vector>
+#include "entt/container/dense_map.hpp"
 #include "simData/CategoryData/CategoryData.h"
 
 namespace simData {
@@ -145,10 +145,10 @@ private:
   int nextInt_;
 
   /// all the values for a given category name
-  std::map<int, std::vector<int> > categoryStringInts_;
+  entt::dense_map<int, std::vector<int>> categoryStringInts_;
 
-  std::map<std::string, int> map_;
-  std::map<int, std::string> reverseMap_;
+  entt::dense_map<std::string, int> map_;
+  entt::dense_map<int, std::string> reverseMap_;
 
   std::vector<ListenerPtr> listeners_;
 };

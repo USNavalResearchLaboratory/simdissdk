@@ -222,6 +222,8 @@ include(ImportGLEW)
 set(PROTOBUF_DIR "" CACHE PATH "Protocol Buffers root directory")
 include(ImportProtobuf)
 
+# --- ENTT -----------------------------
+include(ImportEnTT)
 
 # --- SQLITE3 -----------------------------
 set(SQLITE3_DIR "" CACHE PATH "Sqlite3 root directory")

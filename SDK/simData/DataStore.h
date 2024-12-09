@@ -434,6 +434,20 @@ public: // methods
   virtual Interpolator* interpolator() const = 0;
   ///@}
 
+  /// Type and source of interpolation
+  enum class InterpolatorState
+  {
+    OFF, ///< No interpolation
+    EXTERNAL, ///< Uses externally provided interpolator
+    INTERNAL ///< Use internally provided interpolator that provides significant improvement in preformance for TSPI points
+  };
+
+  /// Sets the interpolation state; returns true if interpolation is enabled
+  virtual bool enableInterpolation(InterpolatorState state) = 0;
+
+  /// Returns the interpolation state
+  virtual InterpolatorState interpolatorState() const = 0;
+
   /**@name ID Lists
    * @{
    */

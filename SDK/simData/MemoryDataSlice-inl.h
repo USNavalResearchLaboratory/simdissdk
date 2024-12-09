@@ -255,6 +255,9 @@ void MemoryDataSlice<T>::flush(bool keepStatic)
   if (MemorySliceHelper::flush(updates_, keepStatic) == 0)
     current_ = nullptr;
   dirty_ = true;
+
+  if (notifierFn_)
+    notifierFn_();
 }
 
 template<typename T>
@@ -263,6 +266,9 @@ void MemoryDataSlice<T>::flush(double startTime, double endTime)
   if (MemorySliceHelper::flush(updates_, startTime, endTime) == 0)
     current_ = nullptr;
   dirty_ = true;
+
+  if (notifierFn_)
+    notifierFn_();
 }
 
 template<typename T>
@@ -395,6 +401,88 @@ void MemoryDataSlice<T>::update(double time)
 }
 
 template<typename T>
+void MemoryDataSlice<T>::update(double time, std::optional<double>& startTime, std::optional<double>& endTime)
+{
+  // start by marking as unchanged, new hasChanged status is outcome of this update
+  clearChanged();
+
+  // assume entire range then narrow down
+  startTime = 0;
+  endTime = std::numeric_limits<double>::max();
+
+  // early out when there are no changes to this slice
+  if (!dirty_ && (current_ != nullptr) && ((current_->time() == time) || (current_->time() == -1.0)))
+    return;
+
+  dirty_ = false;
+
+  interpolated_ = false;
+
+  if (updates_.empty())
+  {
+    setCurrent(nullptr);
+    return;
+  }
+
+  auto currentIt = std::lower_bound(updates_.begin(), updates_.end(), time, UpdateComp<T>());
+
+  if (currentIt == updates_.begin()) // At the start
+  {
+    if ((*currentIt)->time() == time)
+    {
+      // The first point matches the given time so the time range is from time to the time of the next point, if any
+      startTime = time;
+      auto next = currentIt;
+      ++next;
+      if (next != updates_.end())
+        endTime = (*next)->time();
+    }
+    else
+    {
+      // The first point is greater than the given time so the time range is from 0 to the time of the first point
+      endTime = updates_.front()->time();
+      currentIt = updates_.end();
+    }
+  }
+  else if (currentIt != updates_.end()) // In the middle
+  {
+    if ((*currentIt)->time() == time)
+    {
+      // The point matches the given time so the time range is from time to the time of the next point, if any
+      startTime = time;
+      auto next = currentIt;
+      ++next;
+      if (next != updates_.end())
+        endTime = (*next)->time();
+    }
+    else
+    {
+      // The point time is greater than the given time so the time range is the time of the points that straddle the time.
+      endTime = (*currentIt)->time();
+      --currentIt;
+       startTime = (*currentIt)->time();
+    }
+  }
+  else
+  {
+    // The given time is greater than all points to the time span is the last point to the end of time
+    startTime = updates_.back()->time();
+    --currentIt;
+  }
+
+  if (currentIt != updates_.end())
+    setCurrent(*currentIt);
+  else
+    setCurrent(nullptr);
+}
+
+template<typename T>
+void MemoryDataSlice<T>::installNotifier(const std::function<void()>& fn)
+{
+  notifierFn_ = fn;
+}
+
+template<typename T>
 void MemoryDataSlice<T>::update(double time, Interpolator *interpolator)
 {
   // start by marking as unchanged, new hasChanged status is outcome of this update
@@ -420,6 +508,9 @@ void MemoryDataSlice<T>::update(double time, Interpolator *interpolator)
 template<typename T>
 void MemoryDataSlice<T>::insert(T *data)
 {
+  if (notifierFn_)
+    notifierFn_();
+
   typename std::deque<T*>::iterator iter = updates_.end();
   if (!updates_.empty())
   {
@@ -450,7 +541,11 @@ void MemoryDataSlice<T>::limitByTime(double timeWindow)
   if (timeWindow >= 0)
   {
     if (MemorySliceHelper::limitByTime(updates_, lastTime() - timeWindow) == 0)
+    {
       fastUpdate_.invalidate();
+      if (notifierFn_)
+        notifierFn_();
+    }
   }
 }
 
@@ -458,7 +553,11 @@ template<typename T>
 void MemoryDataSlice<T>::limitByPoints(uint32_t limitPoints)
 {
   if (MemorySliceHelper::limitByPoints(updates_, limitPoints) == 0)
+  {
     fastUpdate_.invalidate();
+    if (notifierFn_)
+      notifierFn_();
+  }
 }
 
 template<typename T>
@@ -577,6 +676,9 @@ void MemoryCommandSlice<CommandType, PrefType>::modify(typename DataSlice<Comman
   // force a recalculation of commandPrefsCache_; less than optional solution
   // when necessary a future solution should reset the individual field
   reset_();
+
+  if (notifierFn_)
+    notifierFn_();
 }
 
 template<class CommandType, class PrefType>
@@ -584,6 +686,8 @@ void MemoryCommandSlice<CommandType, PrefType>::flush()
 {
   MemorySliceHelper::flush(updates_);
   earliestInsert_ = std::numeric_limits<double>::max();
+  if (notifierFn_)
+    notifierFn_();
 }
 
 template<class CommandType, class PrefType>
@@ -591,6 +695,8 @@ void MemoryCommandSlice<CommandType, PrefType>::flush(double startTime, double e
 {
   MemorySliceHelper::flush(updates_, startTime, endTime);
   earliestInsert_ = std::numeric_limits<double>::max();
+  if (notifierFn_)
+    notifierFn_();
 }
 
 template<class CommandType, class PrefType>
@@ -627,6 +733,9 @@ void MemoryCommandSlice<CommandType, PrefType>::insert(CommandType *data)
     // in this case, deque does not take ownership of the (committed) data item; we need to delete it.
     delete data;
   }
+
+  if (notifierFn_)
+    notifierFn_();
 }
 
 template<class CommandType, class PrefType>
@@ -725,16 +834,91 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore* ds, ObjectId i
 }
 
 template<class CommandType, class PrefType>
+void MemoryCommandSlice<CommandType, PrefType>::update(DataStore* ds, ObjectId id, double time, DataStore::CommitResult& results, std::optional<double>& startTime, std::optional<double>& endTime)
+{
+  clearChanged();
+
+  // Return if no updates to process
+  if (updates_.empty() || (time < updates_.front()->time()))
+  {
+    reset_();
+    startTime = -1.0;
+    if (updates_.empty())
+      endTime = std::numeric_limits<double>::max();
+    else
+      endTime = updates_.front()->time();
+
+    return;
+  }
+
+  // process all command updates in one prefs transaction
+  DataStore::Transaction t;
+  PrefType* prefs = nullptr;
+  simData::getPreference(ds, id, &prefs, &t, &results);
+  if (prefs == nullptr)
+    return;
+
+  const CommandType* lastCommand = current();
+  if ((!lastCommand || time >= lastCommand->time()) && (earliestInsert_ > lastUpdateTime_))
+  {
+    // time moved forward: execute all commands from lastUpdateTime_ to new current time
+    hasChanged_ = advance_(prefs, lastUpdateTime_, time, startTime, endTime);
+
+    // Check for repeated scalars in the command, forcing complete replacement instead of add-value
+    conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
+
+    // apply the current command state at every update, even if no change in command state occurred with this update; commands override prefs settings
+    prefs->MergeFrom(commandPrefsCache_);
+
+    t.complete(&prefs);
+  }
+  else
+  {
+    // time moved backwards: reset and execute all commands from start to new current time
+    // reset lastUpdateTime_
+    reset_();
+
+    // advance time forward, execute all commands from 0.0 (use -1.0 since we need a time before 0.0) to new current time
+    advance_(prefs, -1.0, time, startTime, endTime);
+    conditionalClearRepeatedFields_(prefs, &commandPrefsCache_);
+
+    hasChanged_ = true;
+
+    prefs->MergeFrom(commandPrefsCache_);
+    t.complete(&prefs);
+  }
+
+  // reset to no inserted commands
+  earliestInsert_ = std::numeric_limits<double>::max();
+}
+
+template<class CommandType, class PrefType>
+void MemoryCommandSlice<CommandType, PrefType>::installNotifier(const std::function<void()>& fn)
+{
+  notifierFn_ = fn;
+}
+
+template<class CommandType, class PrefType>
 void MemoryCommandSlice<CommandType, PrefType>::limitByTime(double timeWindow)
 {
   if (timeWindow >= 0)
-    MemorySliceHelper::limitByTime(updates_, lastTime() - timeWindow);
+  {
+    if (MemorySliceHelper::limitByTime(updates_, lastTime() - timeWindow) == 0)
+    {
+      if (notifierFn_)
+        notifierFn_();
+    }
+  }
 }
 
 template<class CommandType, class PrefType>
 void MemoryCommandSlice<CommandType, PrefType>::limitByPoints(uint32_t limitPoints)
 {
-  MemorySliceHelper::limitByPoints(updates_, limitPoints);
+  if (MemorySliceHelper::limitByPoints(updates_, limitPoints) == 0)
+  {
+    if (notifierFn_)
+      notifierFn_();
+  }
 }
 
 template<class CommandType, class PrefType>
@@ -801,6 +985,95 @@ bool MemoryCommandSlice<CommandType, PrefType>::advance_(PrefType* prefs, double
   // NOTE: this uses the request time as the upper bound, i.e. this finds the first value that is > than the requested time
   typename std::deque<CommandType*>::const_iterator i = std::upper_bound(updates_.begin(), updates_.end(), startTime, UpdateComp<CommandType>());
   typename std::deque<CommandType*>::const_iterator requested = std::upper_bound(updates_.begin(), updates_.end(), time, UpdateComp<CommandType>());
+
+  bool prefsWereUpdated = false;
+  for (; i != requested; ++i)
+  {
+    const CommandType* cmd = *i;
+    if (cmd->has_updateprefs())
+    {
+      if (cmd->isclearcommand())
+      {
+        // clear the command (fields that are set in updateprefs) from both prefs and commandPrefsCache_
+        clearCommand_(prefs, cmd->updateprefs());
+      }
+      else
+      {
+        // Check for repeated scalars in the command, forcing complete replacement instead of add-value
+        conditionalClearRepeatedFields_(&commandPrefsCache_, &cmd->updateprefs());
+        // execute the command
+        commandPrefsCache_.MergeFrom(cmd->updateprefs());
+      }
+      // a command was executed, which may or may not be an actual change in prefs.
+      prefsWereUpdated = true;
+      lastUpdateTime_ = cmd->time();
+    }
+  }
+  return prefsWereUpdated;
+}
+
+template<class CommandType, class PrefType>
+bool MemoryCommandSlice<CommandType, PrefType>::advance_(PrefType* prefs, double startTime, double time, std::optional<double>& startRangeTime, std::optional<double>& endRangeTime)
+{
+  // Should only be called if there is something to do
+  assert(!updates_.empty());
+
+  if (time < startTime)
+    return false;
+
+  // NOTE: this uses the request time as the upper bound, i.e. this finds the first value that is > than the requested time
+  typename std::deque<CommandType*>::const_iterator i = std::upper_bound(updates_.begin(), updates_.end(), startTime, UpdateComp<CommandType>());
+  typename std::deque<CommandType*>::const_iterator requested = std::upper_bound(updates_.begin(), updates_.end(), time, UpdateComp<CommandType>());
+
+  // assume entire range then narrow down
+  startRangeTime = -1;
+  endRangeTime = std::numeric_limits<double>::max();
+
+  if (requested == updates_.begin()) // At the start
+  {
+    if ((*requested)->time() == time)
+    {
+      // The first point matches the given time so the time range is from time to the time of the next point, if any
+      startRangeTime = time;
+      auto next = requested;
+      ++next;
+      if (next != updates_.end())
+        endRangeTime = (*next)->time();
+    }
+    else
+    {
+      // The first point is greater than the given time so the time range is from 0 to the time of the first point
+      endRangeTime = updates_.front()->time();
+      requested = updates_.end();
+    }
+  }
+  else if (requested != updates_.end()) // In the middle
+  {
+    if ((*requested)->time() == time)
+    {
+      // The point matches the given time so the time range is from time to the time of the next point, if any
+      startRangeTime = time;
+      auto next = requested;
+      ++next;
+      if (next != updates_.end())
+        endRangeTime = (*next)->time();
+    }
+    else
+    {
+      // The point time is greater than the given time so the time range is the time of the points that straddle the time.
+      endRangeTime = (*requested)->time();
+      auto prev = requested;
+      --prev;
+      startRangeTime = (*prev)->time();
+    }
+  }
+  else
+  {
+    // The given time is greater than all points to the time span is the last point to the end of time
+    auto prev = requested;
+    --prev;
+    startRangeTime = (*prev)->time();
+  }
 
   bool prefsWereUpdated = false;
   for (; i != requested; ++i)

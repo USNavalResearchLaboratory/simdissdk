@@ -75,6 +75,15 @@ Interpolator* DataStoreProxy::interpolator() const
   return isInterpolationEnabled() ? interpolator_ : nullptr;
 }
 
+bool DataStoreProxy::enableInterpolation(InterpolatorState state)
+{
+  return dataStore_->enableInterpolation(state);
+}
+DataStore::InterpolatorState DataStoreProxy::interpolatorState() const
+{
+  return dataStore_->interpolatorState();
+}
+
 void DataStoreProxy::addListener(DataStore::ListenerPtr callback)
 {
   dataStore_->addListener(callback);

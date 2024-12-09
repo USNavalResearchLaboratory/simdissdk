@@ -153,7 +153,7 @@ target_include_directories(simData PUBLIC
 )
 
 
-target_link_libraries(simData PUBLIC PROTOBUF simCore simNotify)
+target_link_libraries(simData PUBLIC PROTOBUF simCore simNotify EnTT::EnTT)
 add_dependencies(simData simData_protobuf_generation)
 if(SIMDATA_SHARED)
     target_compile_definitions(simData PRIVATE simData_LIB_EXPORT_SHARED)

@@ -23,8 +23,10 @@
 #ifndef SIMDATA_MEMORYGENERICDATASLICE_H
 #define SIMDATA_MEMORYGENERICDATASLICE_H
 
-#include <string>
 #include <deque>
+#include <functional>
+#include <string>
+
 #include "simCore/Common/Common.h"
 #include "simData/DataSlice.h"
 
@@ -65,6 +67,9 @@ public:
 
   /// Returns true if the generic data changes
   bool update(double time);
+
+  /// Calling update can be expensive so instead install a time get function that can be called only when needed
+  void setTimeGetter(const std::function<double()>& fn);
 
   /**
    * Insert data into the slice.
@@ -111,6 +116,9 @@ private:
 
   /// Used to detect changes requiring an update to current_
   mutable double lastTime_;
+
+  /// If set used to grab the current scenario time from the data store
+  std::function<double()> fn_;
 
   // All the generic data keyed by generic data key
   typedef std::map<std::string, Key*> GenericDataMap;

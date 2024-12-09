@@ -882,7 +882,7 @@ int testIsDuplicateValue()
 
     cdChangeCounter = 0;
     ds.update(21.0);
-    rv += SDK_ASSERT(id == cdChangeCounter);
+    rv += SDK_ASSERT(1 == cdChangeCounter);
 
     ds.removeListener(cdListener);
   }

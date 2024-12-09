@@ -86,7 +86,7 @@ std::string CategoryNameManager::fixString_(const std::string &str) const
 int CategoryNameManager::getOrCreateStringId_(const std::string &str)
 {
   std::string key = fixString_(str);
-  std::map<std::string, int>::const_iterator i = map_.find(key);
+  auto i = map_.find(key);
 
   if (i != map_.end())
     return i->second;
@@ -109,8 +109,8 @@ int CategoryNameManager::addCategoryName(const std::string &name)
 
   if (categoryStringInts_.find(catInt) == categoryStringInts_.end())
   {
-    // add the key "catInt" to the map
-    categoryStringInts_[catInt];
+    // add the key "catInt" to the map, the void cast is to suppress warning
+    (void) categoryStringInts_[catInt];
 
     for (std::vector<ListenerPtr>::const_iterator i = listeners_.begin(); i != listeners_.end(); ++i)
     {
@@ -132,7 +132,7 @@ int CategoryNameManager::addCategoryValue(int nameInt, const std::string &value)
   int valueInt = getOrCreateStringId_(value);
 
   // 2. add the value to the category list
-  std::map<int, std::vector<int> >::iterator i = categoryStringInts_.find(nameInt);
+  auto i = categoryStringInts_.find(nameInt);
   if (i != categoryStringInts_.end())
   {
     // check if the category already has the value
@@ -159,7 +159,7 @@ int CategoryNameManager::addCategoryValue(int nameInt, const std::string &value)
 
 void CategoryNameManager::removeCategory(int nameInt)
 {
-  std::map<int, std::vector<int> >::iterator i = categoryStringInts_.find(nameInt);
+  auto i = categoryStringInts_.find(nameInt);
   if (i != categoryStringInts_.end())
     categoryStringInts_.erase(i);
 
@@ -168,7 +168,7 @@ void CategoryNameManager::removeCategory(int nameInt)
 
 void CategoryNameManager::removeValue(int nameInt, int valueInt)
 {
-  std::map<int, std::vector<int> >::iterator i = categoryStringInts_.find(nameInt);
+  auto i = categoryStringInts_.find(nameInt);
   if (i != categoryStringInts_.end())
   {
     std::vector<int>& vecInt = i->second;
@@ -181,7 +181,7 @@ void CategoryNameManager::removeValue(int nameInt, int valueInt)
 // provide one mapping: string to int
 int CategoryNameManager::nameToInt(const std::string &name) const
 {
-  std::map<std::string, int>::const_iterator i = map_.find(fixString_(name));
+  auto i = map_.find(fixString_(name));
   if (i == map_.end())
     return CategoryNameManager::NO_CATEGORY_NAME; // category name not found
 
@@ -190,7 +190,7 @@ int CategoryNameManager::nameToInt(const std::string &name) const
 
 int CategoryNameManager::valueToInt(const std::string &value) const
 {
-  std::map<std::string, int>::const_iterator i = map_.find(fixString_(value));
+  auto i = map_.find(fixString_(value));
   if (i == map_.end())
     return CategoryNameManager::NO_CATEGORY_VALUE; // category value not found
 
@@ -200,7 +200,7 @@ int CategoryNameManager::valueToInt(const std::string &value) const
 // provide mapping: int to string
 std::string CategoryNameManager::nameIntToString(int nameInt) const
 {
-  std::map<int, std::string>::const_iterator i = reverseMap_.find(nameInt);
+  auto i = reverseMap_.find(nameInt);
   if (i == reverseMap_.end())
   {
     if (nameInt == CategoryNameManager::NO_CATEGORY_VALUE)
@@ -227,10 +227,10 @@ std::string CategoryNameManager::valueIntToString(int valueInt) const
 void CategoryNameManager::allCategoryNames(std::vector<std::string> &nameVec) const
 {
   // for each entry in the category string ints
-  for (std::map<int, std::vector<int> >::const_iterator i = categoryStringInts_.begin(); i != categoryStringInts_.end(); ++i)
+  for (auto i = categoryStringInts_.begin(); i != categoryStringInts_.end(); ++i)
   {
     // add the name (which we get from the reverse map, using the category id)
-    std::map<int, std::string>::const_iterator j = reverseMap_.find(i->first);
+    auto j = reverseMap_.find(i->first);
     if (j != reverseMap_.end())
       nameVec.push_back(j->second);
   }
@@ -239,7 +239,7 @@ void CategoryNameManager::allCategoryNames(std::vector<std::string> &nameVec) co
 void CategoryNameManager::allCategoryNameInts(std::vector<int> &nameIntVec) const
 {
   // for each entry in the category string ints
-  for (std::map<int, std::vector<int> >::const_iterator i = categoryStringInts_.begin(); i != categoryStringInts_.end(); ++i)
+  for (auto i = categoryStringInts_.begin(); i != categoryStringInts_.end(); ++i)
   {
     // add the name id
     nameIntVec.push_back(i->first);
@@ -250,14 +250,14 @@ void CategoryNameManager::allCategoryNameInts(std::vector<int> &nameIntVec) cons
 void CategoryNameManager::allValuesInCategory(int categoryInt, std::vector<std::string> &categoryValueVec) const
 {
   // find category in the category string ints
-  std::map<int, std::vector<int> >::const_iterator i = categoryStringInts_.find(categoryInt);
+  auto i = categoryStringInts_.find(categoryInt);
   if (i != categoryStringInts_.end())
   {
     //for each value in the category
-    for (std::vector<int>::const_iterator j = i->second.begin(); j != i->second.end(); ++j)
+    for (auto j = i->second.begin(); j != i->second.end(); ++j)
     {
       // add the string value (which we get from the reverse map, using the value id)
-      std::map<int, std::string>::const_iterator k = reverseMap_.find(*j);
+      auto k = reverseMap_.find(*j);
       if (k != reverseMap_.end())
         categoryValueVec.push_back(k->second);
     }
@@ -267,7 +267,7 @@ void CategoryNameManager::allValuesInCategory(int categoryInt, std::vector<std::
 void CategoryNameManager::allValueIntsInCategory(int categoryInt, std::vector<int> &categoryValueIntVec) const
 {
   // find category in the category string ints
-  std::map<int, std::vector<int> >::const_iterator i = categoryStringInts_.find(categoryInt);
+  auto i = categoryStringInts_.find(categoryInt);
   if (i != categoryStringInts_.end())
   {
     //for each value in the category

@@ -199,7 +199,7 @@ void testInterpolation_nearest()
   assertEquals(pslice->current()->x(), simCore::WGS_A + satelliteHeight + 20.0);
 }
 
-void testInterpolation_linear()
+void testInterpolation_linear(simData::DataStore::InterpolatorState state)
 {
   simUtil::DataStoreTestHelper testHelper;
   simData::DataStore* ds = testHelper.dataStore();
@@ -209,7 +209,7 @@ void testInterpolation_linear()
   // setup interpolation
   simData::LinearInterpolator interpolator;
   ds->setInterpolator(&interpolator);
-  ds->enableInterpolation(true);
+  ds->enableInterpolation(state);
 
   // insert platform
   uint64_t platId = testHelper.addPlatform();
@@ -424,7 +424,8 @@ int TestInterpolation(int argc, char* argv[])
   {
     testInterpolation_enable();
     testInterpolation_nearest();
-    testInterpolation_linear();
+    testInterpolation_linear(simData::DataStore::InterpolatorState::EXTERNAL);
+    testInterpolation_linear(simData::DataStore::InterpolatorState::INTERNAL);
     testInterpolation_linearAngle();
 
     return 0;
