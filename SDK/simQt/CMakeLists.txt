@@ -52,7 +52,7 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}FileUtilities.h
     ${SIMQT_INC}MonospaceItemDelegate.h
     ${SIMQT_INC}QtFormatting.h
-    ${SIMQT_INC}QtUtils.h    
+    ${SIMQT_INC}QtUtils.h
     ${SIMQT_INC}ResourceInitializer.h
     ${SIMQT_INC}ScopedSignalBlocker.h
     ${SIMQT_INC}Settings.h
