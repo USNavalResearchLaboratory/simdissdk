@@ -12,5 +12,5 @@ set(ENTT_ROOT_DIRS
 find_path(EnTT_ROOT NAME include/entt/entt.hpp PATHS ${ENTT_ROOT_DIRS} NO_DEFAULT_PATH)
 
 # Creates target EnTT::EnTT
-find_package(EnTT REQUIRED QUIET)
+find_package(EnTT QUIET)
 mark_as_advanced(EnTT_ROOT)

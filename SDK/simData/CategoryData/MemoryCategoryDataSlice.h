@@ -27,7 +27,9 @@
 #include <deque>
 #include <map>
 #include <optional>
+#ifdef HAVE_ENTT
 #include "entt/container/dense_map.hpp"
+#endif
 #include "simCore/Common/Common.h"
 #include "simData/DataTypes.h"
 #include "simData/CategoryData/CategoryData.h"
@@ -207,7 +209,11 @@ private:
 
   /// all the data for one entity (in an optimized data structure)
   // (it's a map from category name int to maps of time to category value ints)
+#ifdef HAVE_ENTT
   typedef entt::dense_map<int, TimeValueState> EntityData;
+#else
+  typedef std::map<int, TimeValueState> EntityData;
+#endif // HAVE_ENTT
 
 
 private: // methods

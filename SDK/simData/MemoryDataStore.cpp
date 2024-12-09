@@ -26,6 +26,9 @@
 #include <functional>
 #include <limits>
 #include <optional>
+#ifdef HAVE_ENTT
+#include "entt/container/dense_map.hpp"
+#endif
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
@@ -591,7 +594,11 @@ public:
   /// Update category slices to the give time and return the ids slices that changed due to the update
   void updateCategoryData_(double time, std::vector<simData::ObjectId>& ids)
   {
+#ifdef HAVE_ENTT
     for (const auto& [id, entry] : categoryCache_)
+#else
+    for (auto& [id, entry] : categoryCache_)
+#endif
     {
       if (entry.update(time))
         ids.push_back(id);
@@ -600,7 +607,11 @@ public:
 
   void updateCommands(double time, std::map<simData::ObjectId, CommitResult>& allResults)
   {
+#ifdef HAVE_ENTT
     for (const auto& [id, entry] : platformCommandCache_)
+#else
+    for (auto& [id, entry] : platformCommandCache_)
+#endif
     {
       auto results = entry.update(&mds_, id, time);
 
@@ -632,13 +643,21 @@ public:
 
     const bool fileMode = isFileMode_();
 
+#ifdef HAVE_ENTT
     for (const auto& [id, entry] : platformCache_)
+#else
+    for (auto& [id, entry] : platformCache_)
+#endif
       entry.update(&mds_, id, interpolateEnabled, fileMode, time);
   }
 
   void resetPlatforms()
   {
+#ifdef HAVE_ENTT
     for (const auto& [id, entry] : platformCache_)
+#else
+    for (auto& [id, entry] : platformCache_)
+#endif
       entry.reset();
   }
 
@@ -1275,7 +1294,11 @@ private:
   template <typename Cache>
   void updateCommands_(Cache& cache, double time, std::map<simData::ObjectId, CommitResult>& allResults) const
   {
+#ifdef HAVE_ENTT
     for (const auto& [id, entry] : cache)
+#else
+    for (auto& [id, entry] : cache)
+#endif
     {
       auto results = entry.update(&mds_, id, time);
 
@@ -1285,6 +1308,7 @@ private:
   }
 
   MemoryDataStore& mds_;
+#ifdef HAVE_ENTT
   entt::dense_map<simData::ObjectId, CategoryCache> categoryCache_;
   entt::dense_map<simData::ObjectId, PlatformCache> platformCache_;
   entt::dense_map<simData::ObjectId, CommandCache<MemoryCommandSlice<PlatformCommand, PlatformPrefs>>> platformCommandCache_;
@@ -1294,6 +1318,19 @@ private:
   entt::dense_map<simData::ObjectId, CommandCache<MemoryCommandSlice<LaserCommand, LaserPrefs>>> laserCommandCache_;
   entt::dense_map<simData::ObjectId, CommandCache<MemoryCommandSlice<LobGroupCommand, LobGroupPrefs>>> lobCommandCache_;
   entt::dense_map<simData::ObjectId, CommandCache<MemoryCommandSlice<ProjectorCommand, ProjectorPrefs>>> projectorCommandCache_;
+#else
+  std::map<simData::ObjectId, CategoryCache> categoryCache_;
+  std::map<simData::ObjectId, PlatformCache> platformCache_;
+  std::map<simData::ObjectId, CommandCache<MemoryCommandSlice<PlatformCommand, PlatformPrefs>>> platformCommandCache_;
+  std::map<simData::ObjectId, CommandCache<MemoryCommandSlice<CustomRenderingCommand, CustomRenderingPrefs>>> customRenderingCommandCache_;
+  std::map<simData::ObjectId, CommandCache<MemoryCommandSlice<BeamCommand, BeamPrefs>>> beamCommandCache_;
+  std::map<simData::ObjectId, CommandCache<MemoryCommandSlice<GateCommand, GatePrefs>>> gateCommandCache_;
+  std::map<simData::ObjectId, CommandCache<MemoryCommandSlice<LaserCommand, LaserPrefs>>> laserCommandCache_;
+  std::map<simData::ObjectId, CommandCache<MemoryCommandSlice<LobGroupCommand, LobGroupPrefs>>> lobCommandCache_;
+  std::map<simData::ObjectId, CommandCache<MemoryCommandSlice<ProjectorCommand, ProjectorPrefs>>> projectorCommandCache_;
+#endif
+
+
 };
 
 //----------------------------------------------------------------------------

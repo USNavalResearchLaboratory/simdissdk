@@ -153,12 +153,17 @@ target_include_directories(simData PUBLIC
 )
 
 
-target_link_libraries(simData PUBLIC PROTOBUF simCore simNotify EnTT::EnTT)
+target_link_libraries(simData PUBLIC PROTOBUF simCore simNotify)
 add_dependencies(simData simData_protobuf_generation)
 if(SIMDATA_SHARED)
     target_compile_definitions(simData PRIVATE simData_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simData PUBLIC simData_LIB_EXPORT_STATIC)
+endif()
+
+if(EnTT_FOUND)
+    target_compile_definitions(simData PUBLIC HAVE_ENTT)
+    target_link_libraries(simData PUBLIC EnTT::EnTT)
 endif()
 
 if(WIN32)
