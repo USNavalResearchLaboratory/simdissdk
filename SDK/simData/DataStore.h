@@ -664,6 +664,12 @@ public: // methods
   ///@}
 
   /**
+   * The function is called when the time range of the platform update changes
+   * @param id The unique ID of the platform to monitor
+   * @param fn The function to call when the time range changes
+   */
+  virtual void installSliceTimeRangeMonitor(ObjectId id, std::function<void(double startTime, double endTime)> fn) = 0;
+  /**
    * Modify commands for a given platform
    * Does not support modifying acceptsProjectors
    * @param id Platform that needs commands modified

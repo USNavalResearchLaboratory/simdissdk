@@ -591,6 +591,12 @@ public:
     projectorCommandCache_.clear();
   }
 
+  void installSliceTimeRangeMonitor(ObjectId id, std::function<void(double startTime, double endTime)> fn)
+  {
+    auto it = platformCache_.find(id);
+    if (it != platformCache_.end())
+      it->second.installSliceTimeRangeMonitor(fn);
+  }
   /// Update category slices to the give time and return the ids slices that changed due to the update
   void updateCategoryData_(double time, std::vector<simData::ObjectId>& ids)
   {
@@ -831,7 +837,8 @@ private:
         needToSetToNull_(std::move(other.needToSetToNull_)),
         lifeSpanMode_(std::move(other.lifeSpanMode_)),
         entry1_(std::move(other.entry1_)),
-        entry2_(std::move(other.entry2_))
+        entry2_(std::move(other.entry2_)),
+        timeRangeMonitorFn_(std::move(other.timeRangeMonitorFn_))
     {
       if (entry_)
         entry_->updates()->installNotifier([this] { reset(); });
@@ -852,6 +859,7 @@ private:
       lifeSpanMode_ = std::move(other.lifeSpanMode_);
       entry1_ = std::move(other.entry1_);
       entry2_ = std::move(other.entry2_);
+      timeRangeMonitorFn_ = std::move(other.timeRangeMonitorFn_);
 
       if (entry_)
         entry_->updates()->installNotifier([this] { reset(); });
@@ -875,6 +883,8 @@ private:
         sliceStartTime_ = entry_->updates()->firstTime();
         sliceEndTime_ = entry_->updates()->lastTime();
         sliceSize_ = entry_->updates()->numItems();
+        if (timeRangeMonitorFn_)
+          timeRangeMonitorFn_(*sliceStartTime_, *sliceEndTime_);
       }
 
       // Return early if not drawing
@@ -938,6 +948,8 @@ private:
       updateEndTime_.reset();
       sliceStartTime_.reset();
       sliceEndTime_.reset();
+      if (timeRangeMonitorFn_)
+        timeRangeMonitorFn_(std::numeric_limits<double>::max(), -std::numeric_limits<double>::max());
       sliceSize_ = 0;
       entry1_.reset();
       entry2_.reset();
@@ -969,6 +981,11 @@ private:
 
       if (resetTimes)
         reset();
+    }
+
+    void installSliceTimeRangeMonitor(std::function<void(double startTime, double endTime)> fn)
+    {
+      timeRangeMonitorFn_ = fn;
     }
 
   private:
@@ -1280,6 +1297,7 @@ private:
 
     std::optional<Entry> entry1_;
     std::optional<Entry> entry2_;
+    std::function<void(double startTime, double endTime)> timeRangeMonitorFn_;
   };
 
   /** Returns true if the memory data store is in file mode */
@@ -3521,6 +3539,11 @@ const GenericDataSlice* MemoryDataStore::genericDataSlice(ObjectId id) const
 const CategoryDataSlice* MemoryDataStore::categoryDataSlice(ObjectId id) const
 {
   return getEntry<CategoryDataSlice, CategoryDataMap>(id, &categoryData_);
+}
+
+void MemoryDataStore::installSliceTimeRangeMonitor(ObjectId id, std::function<void(double startTime, double endTime)> fn)
+{
+  sliceCacheObserver_->installSliceTimeRangeMonitor(id, fn);
 }
 
 int MemoryDataStore::modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier)

@@ -327,6 +327,9 @@ public: // methods
   virtual const CategoryDataSlice*     categoryDataSlice(ObjectId id) const override {return dataStore_->categoryDataSlice(id);}
   ///@}
 
+  /// @copydoc simData::DataStore::installSliceTimeRangeMonitor
+  virtual void installSliceTimeRangeMonitor(ObjectId id, std::function<void(double startTime, double endTime)> fn) override { dataStore_->installSliceTimeRangeMonitor(id, fn); }
+
   /// @copydoc simData::DataStore::modifyPlatformCommandSlice
   virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) override { return dataStore_->modifyPlatformCommandSlice(id, modifier); }
 
