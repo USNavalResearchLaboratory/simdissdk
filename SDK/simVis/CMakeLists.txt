@@ -451,8 +451,8 @@ target_link_libraries(simVis PUBLIC simData simCore simNotify
     ${OSG_ALL_LIBDEPENDENCIES} OSGEARTH)
 target_link_libraries(simVis PRIVATE VSI::GL)
 
-if(SQLITE3_FOUND)
-    target_link_libraries(simVis PRIVATE SQLITE3)
+if(TARGET SQLite::SQLite3)
+    target_link_libraries(simVis PRIVATE SQLite::SQLite3)
 endif()
 
 if(SIMVIS_SHARED)

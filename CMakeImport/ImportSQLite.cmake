@@ -80,3 +80,6 @@ if(SQLITE3_LIBRARY_DEBUG_NAME)
         IMPORTED_LOCATION_DEBUG "${SQLITE3_LIBRARY_DEBUG_NAME}"
     )
 endif()
+
+# EL7 backwards compatibility
+add_library(SQLite::SQLite3 ALIAS SQLITE3)
