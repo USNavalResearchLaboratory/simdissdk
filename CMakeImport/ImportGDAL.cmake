@@ -79,6 +79,9 @@ if(${LIBRARYNAME}_LIBRARY_DEBUG_NAME)
     )
 endif()
 
+# EL7 compatibility
+add_library(GDAL::GDAL ALIAS ${LIBRARYNAME})
+
 vsi_set_imported_locations_from_implibs(${LIBRARYNAME})
 # No need to continue if not doing installation
 if(DEFINED INSTALL_THIRDPARTY_LIBRARIES AND NOT INSTALL_THIRDPARTY_LIBRARIES)

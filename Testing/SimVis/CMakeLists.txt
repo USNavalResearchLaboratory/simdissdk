@@ -9,7 +9,7 @@ set(SV_TESTS
     LocatorTest.cpp
 )
 # Need gdal.h for GogTest
-if(GDAL_LIBRARY_INCLUDE_PATH)
+if(TARGET GDAL::GDAL)
     list(APPEND SV_TESTS GogTest.cpp)
 endif()
 
@@ -31,6 +31,6 @@ set_target_properties(SimVisTests PROPERTIES
 
 add_test(NAME LocatorTest COMMAND SimVisTests LocatorTest)
 add_test(NAME FontSizeTest COMMAND SimVisTests FontSizeTest)
-if(GDAL_LIBRARY_INCLUDE_PATH)
+if(TARGET GDAL::GDAL)
     add_test(NAME SimVisGogTest COMMAND SimVisTests GogTest)
 endif()
