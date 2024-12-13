@@ -44,3 +44,6 @@ if(GLEW_LIBRARY_DEBUG_NAME)
         IMPORTED_LOCATION_DEBUG "${GLEW_LIBRARY_DEBUG_NAME}"
     )
 endif()
+
+# Add library matching official name
+add_library(GLEW::GLEW ALIAS GLEW)
