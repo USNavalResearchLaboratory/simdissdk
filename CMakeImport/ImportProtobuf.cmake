@@ -103,6 +103,8 @@ if(NOT "${PROTOBUF_PROTOC}" MATCHES "-NOTFOUND")
     mark_as_advanced(PROTOBUF_PROTOC)
 endif()
 
+# EL7 support
+add_library(protobuf::libprotobuf ALIAS PROTOBUF)
 
 # Creates a target responsible for generating protobuf files from output of protoc.  Note that this
 # function is used instead of the find_package(Protobuf) function because of limitations in the package's

@@ -1,4 +1,4 @@
-if(NOT PROTOBUF_FOUND)
+if(NOT TARGET protobuf::libprotobuf)
     message(STATUS "Skipping simData because of missing PROTOBUF dependencies.")
     return()
 endif()
@@ -153,7 +153,7 @@ target_include_directories(simData PUBLIC
 )
 
 
-target_link_libraries(simData PUBLIC PROTOBUF simCore simNotify)
+target_link_libraries(simData PUBLIC protobuf::libprotobuf simCore simNotify)
 add_dependencies(simData simData_protobuf_generation)
 if(SIMDATA_SHARED)
     target_compile_definitions(simData PRIVATE simData_LIB_EXPORT_SHARED)

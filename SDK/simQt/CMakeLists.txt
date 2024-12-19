@@ -319,10 +319,9 @@ if(TARGET OSG)
     # QtConversion.h depends on OSG, but not simVis
     target_link_libraries(simQt PUBLIC OSG)
 endif()
-if(TARGET simData)
-    target_include_directories(simQt PUBLIC
-        $<BUILD_INTERFACE:${PROTOBUF_LIBRARY_INCLUDE_PATH}>
-    )
+if(TARGET simData AND TARGET protobuf::libprotobuf)
+    get_target_property(_PROTO_INC protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
+    target_include_directories(simQt PUBLIC "$<BUILD_INTERFACE:${_PROTO_INC}>")
 endif()
 if(TARGET simVis)
     target_include_directories(simQt PUBLIC
