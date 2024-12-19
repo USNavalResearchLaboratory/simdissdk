@@ -29,7 +29,7 @@ endif()
 
 vsi_install_target(example_simpleserver SDK_Examples)
 
-# Pass a variable to compiler if the Triton support is through the NodeKit interface
-if(OSGEARTH_TRITON_SUPPORT STREQUAL NODEKIT)
+# Link to Triton if available
+if(HAVE_OSGEARTH_TRITON)
     target_link_libraries(example_simpleserver PRIVATE OSGEARTH_TRITON)
 endif()

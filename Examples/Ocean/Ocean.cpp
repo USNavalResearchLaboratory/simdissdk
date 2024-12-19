@@ -67,12 +67,12 @@
 #include "OsgImGuiHandler.h"
 #endif
 
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
 #include "osgEarthTriton/TritonLayer"
 #include "simUtil/TritonSettings.h"
 #endif
 
-#ifdef HAVE_SILVERLINING_NODEKIT
+#ifdef HAVE_OSGEARTH_SILVERLINING
 #include "osgEarthSilverLining/SilverLiningNode"
 #include "simUtil/SilverLiningSettings.h"
 #endif
@@ -97,7 +97,7 @@ static simCore::Coordinate s_shipPosOri(simCore::COORD_SYS_LLA,
 static simData::ObjectId     s_shipId;
 
 
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
 // cull callback that adds buoyancy to a platform
 // using its offset transform - this is not really
 // appropriate in the long run since the offset xform
@@ -294,9 +294,9 @@ static char s_menu[] =
 "1 : untether camera\n"
 "h : toggle this menu\n";
 
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
 static osg::ref_ptr<simUtil::TritonSettingsAdapter> s_TritonSettings(new simUtil::TritonSettingsAdapter);
-#endif /* HAVE_TRITON_NODEKIT */
+#endif /* HAVE_OSGEARTH_TRITON */
 
 namespace
 {
@@ -392,7 +392,7 @@ namespace
     osg::observer_ptr<simVis::View> view_;
   };
 
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
   /** Toggler for the Triton buoyancy simulation */
   class ToggleBuoyancySimulation : public ControlEventHandler
   {
@@ -408,10 +408,10 @@ namespace
   private:
     osg::ref_ptr<PlatformBuoyancyCallback> _cb;
   };
-#endif /* HAVE_TRITON_NODEKIT */
+#endif /* HAVE_OSGEARTH_TRITON */
 #endif /* HAVE_IMGUI */
 
-#ifdef HAVE_SILVERLINING_NODEKIT
+#ifdef HAVE_OSGEARTH_SILVERLINING
   osg::ref_ptr<simUtil::SilverLiningSettingsAdapter> s_SlSettings = new simUtil::SilverLiningSettingsAdapter;
 
   /** Adds and removes clouds in the SL Callback code */
@@ -598,6 +598,7 @@ namespace
           view_->enableOverheadMode(overhead);
       }
 
+#ifdef HAVE_OSGEARTH_TRITON
       if (useTriton_)
       {
         ImGui::TableNextColumn();
@@ -662,7 +663,8 @@ namespace
         if (buoyancyCallback_->enabled() != platformBouyancy)
           buoyancyCallback_->setEnabled(platformBouyancy);
       }
-
+#endif /* HAVE_OSGEARTH_TRITON */
+#ifdef HAVE_OSGEARTH_SILVERLINING
       if (useSilverLining_)
       {
         ImGui::TableNextColumn();
@@ -808,7 +810,7 @@ namespace
         if (ImGui::Button("Apply"))
           s_SlSettings->conditionPreset()->set(static_cast<osgEarth::SilverLining::AtmosphericConditions::ConditionPresets>(currentPresetIdx));
       }
-
+#endif /* HAVE_OSGEARTH_SILVERLINING */
       ImGui::EndTable();
     }
 
@@ -876,7 +878,7 @@ namespace
     grid->setControl(0, row, new LabelControl("Overhead mode", TEXT_SIZE));
     grid->setControl(1, row, new CheckBoxControl(false, new ToggleOverheadMode(view)));
 
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
     if (isTriton)
     {
       // For Triton, we have several more settings...
@@ -962,9 +964,9 @@ namespace
       evtHandler = new ToggleBuoyancySimulation(buoyancyCallback);
       grid->setControl(1, row, new CheckBoxControl(false, evtHandler));
     }
-#endif /* HAVE_TRITON_NODEKIT */
+#endif /* HAVE_OSGEARTH_TRITON */
 
-#ifdef HAVE_SILVERLINING_NODEKIT
+#ifdef HAVE_OSGEARTH_SILVERLINING
     if (isSilverLining)
     {
       // For SilverLining, we have several more settings...
@@ -1070,7 +1072,7 @@ namespace
       button = condBoxes->addControl(new ButtonControl("Overcast", new simUtil::SetConditionPresetEventHandler(s_SlSettings->conditionPreset(), osgEarth::SilverLining::AtmosphericConditions::OVERCAST)));
       button->setFontSize(TEXT_SIZE);
     }
-#endif /* HAVE_SILVERLINING_NODEKIT */
+#endif /* HAVE_OSGEARTH_SILVERLINING */
 
     return b;
   }
@@ -1079,7 +1081,7 @@ namespace
   /** Factory for a sky node */
   SkyNode* makeSky(simVis::SceneManager* scene, bool useSilverLining, const std::string& slUser = "", const std::string& slLicense = "", const std::string& resourcePath = "")
   {
-#ifdef HAVE_SILVERLINING_NODEKIT
+#ifdef HAVE_OSGEARTH_SILVERLINING
     if (useSilverLining)
     {
       osgEarth::SilverLining::SilverLiningOptions skyOptions;
@@ -1104,10 +1106,10 @@ namespace
     }
 #else
     return SkyNode::create();
-#endif /* HAVE_SILVERLINING_NODEKIT */
+#endif /* HAVE_OSGEARTH_SILVERLINING */
   }
 
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
   osgEarth::Triton::TritonLayer* makeTriton(const std::string& tritonUser = "", const std::string& tritonLicense = "", const std::string& resourcePath = "")
   {
     osgEarth::Triton::TritonLayer* rv = new osgEarth::Triton::TritonLayer();
@@ -1176,7 +1178,7 @@ int main(int argc, char** argv)
   float bathymetryOffset = 0.0f;
   ap.read("--bathymetryoffset", bathymetryOffset);
 
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
   // Set a default level for Triton
   if (ap.read("--good")) // default
     s_TritonSettings->quality()->set(osgEarth::Triton::GOOD);
@@ -1184,7 +1186,7 @@ int main(int argc, char** argv)
     s_TritonSettings->quality()->set(osgEarth::Triton::BETTER);
   else if (ap.read("--best"))
     s_TritonSettings->quality()->set(osgEarth::Triton::BEST);
-#endif /* HAVE_TRITON_NODEKIT */
+#endif /* HAVE_OSGEARTH_TRITON */
 
   // Set up the search paths
   simExamples::configureSearchPaths();
@@ -1240,7 +1242,7 @@ int main(int argc, char** argv)
   osg::ref_ptr<osgEarth::VisibleLayer> tritonLayer;
   osg::ref_ptr<PlatformBuoyancyCallback> buoyancyCallback;
 
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
   if (useTriton)
   {
     osgEarth::Triton::TritonLayer* triton = makeTriton(tritonuser, tritonlicense, tritonpath);

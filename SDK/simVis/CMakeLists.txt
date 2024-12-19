@@ -362,13 +362,6 @@ else()
     set_source_files_properties(${VIS_SRC}GOG/Parser.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 endif()
 
-if(OSGEARTH_TRITON_SUPPORT STREQUAL NODEKIT)
-    set(HAVE_TRITON_NODEKIT 1)
-endif()
-if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
-    set(HAVE_SILVERLINING_NODEKIT 1)
-endif()
-
 # Detect the rename of osgEarth/ThreadingUtils to osgEarth/Threading
 if(EXISTS "${OSGEARTH_LIBRARY_INCLUDE_PATH}/osgEarth/Threading")
     set(HAVE_OSGEARTH_THREADING 1)

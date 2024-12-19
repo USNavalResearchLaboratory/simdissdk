@@ -22,11 +22,11 @@ endif()
 
 vsi_install_target(example_ocean SDK_Examples)
 
-# Pass a variable to compiler if the Triton support is through the NodeKit interface
-if(OSGEARTH_TRITON_SUPPORT STREQUAL NODEKIT)
+# Link to Triton if available
+if(HAVE_OSGEARTH_TRITON)
     target_link_libraries(example_ocean PRIVATE OSGEARTH_TRITON)
 endif()
-# Pass a variable to compiler if the SilverLining support is through the NodeKit interface
-if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
+# Link to SilverLining if available
+if(HAVE_OSGEARTH_SILVERLINING)
     target_link_libraries(example_ocean PRIVATE OSGEARTH_SILVERLINING)
 endif()

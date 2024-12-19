@@ -30,10 +30,9 @@
 #include "osgEarth/Ocean"
 #endif
 
-// Potentially defines HAVE_TRITON_NODEKIT, include first
 #include "simVis/osgEarthVersion.h"
 
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
 #include "osgEarthTriton/TritonLayer"
 #if OSGEARTH_VERSION_LESS_THAN(3,0,0)
 #include "osgEarthTriton/TritonOptions"
@@ -117,7 +116,7 @@ void InstallOcean::install(simVis::SceneManager& scene)
   }
 
   // Install the driver for the ocean
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
   if (type_ == TRITON)
   {
     osg::ref_ptr<osgEarth::Triton::TritonLayer> layer = new osgEarth::Triton::TritonLayer();
@@ -139,7 +138,7 @@ void InstallOcean::install(simVis::SceneManager& scene)
     scene.getMap()->addLayer(layer.get());
   }
   else // type_ == SIMPLE
-#endif
+#endif /* HAVE_OSGEARTH_TRITON */
   {
     osgEarth::SimpleOceanLayer* ocean = new osgEarth::SimpleOceanLayer();
     ocean->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_OCEAN, simVis::BIN_GLOBAL_SIMSDK);
