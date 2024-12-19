@@ -101,10 +101,19 @@ set_target_properties(PROTOBUF PROPERTIES
 find_program(PROTOBUF_PROTOC NAMES protoc HINTS ${BIN_DIRS})
 if(NOT "${PROTOBUF_PROTOC}" MATCHES "-NOTFOUND")
     mark_as_advanced(PROTOBUF_PROTOC)
+
+    if(NOT TARGET VSI::protoc)
+        add_executable(VSI::protoc IMPORTED)
+        set_target_properties(VSI::protoc PROPERTIES
+            IMPORTED_LOCATION "${PROTOBUF_PROTOC}")
+    endif()
 endif()
 
 # EL7 support
 add_library(protobuf::libprotobuf ALIAS PROTOBUF)
+if(TARGET VSI::protoc)
+    add_executable(protobuf::protoc ALIAS VSI::protoc)
+endif()
 
 # Creates a target responsible for generating protobuf files from output of protoc.  Note that this
 # function is used instead of the find_package(Protobuf) function because of limitations in the package's
@@ -146,14 +155,15 @@ function(VSI_PROTOBUF_GENERATE TARGET_NAME PROTO_DIR PROTO_FILES HDR_OUT SRC_OUT
 
         # Add in command line arguments if they exist
         if(PROTOBUF_PROTOC_ARGUMENTS)
-            set(_PROTO_COMMAND_LINE ${PROTOBUF_PROTOC} --cpp_out${EXPORT_TYPE} -I${PROTO_DIR} ${PROTOBUF_PROTOC_ARGUMENTS} ${_PROTO_IN_FILE})
+            set(_PROTO_COMMAND_LINE --cpp_out${EXPORT_TYPE} -I${PROTO_DIR} ${PROTOBUF_PROTOC_ARGUMENTS} ${_PROTO_IN_FILE})
         else()
-            set(_PROTO_COMMAND_LINE ${PROTOBUF_PROTOC} --cpp_out${EXPORT_TYPE} -I${PROTO_DIR} ${_PROTO_IN_FILE})
+            set(_PROTO_COMMAND_LINE --cpp_out${EXPORT_TYPE} -I${PROTO_DIR} ${_PROTO_IN_FILE})
         endif()
 
         # Define the command that creates the files
         add_custom_command(
-            COMMAND ${_PROTO_COMMAND_LINE}
+            COMMAND protobuf::protoc
+            ARGS ${_PROTO_COMMAND_LINE}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             DEPENDS ${_PROTO_IN_FILE}
             OUTPUT ${_PROTO_OUT_BASENAME}.pb.h ${_PROTO_OUT_BASENAME}.pb.cc
@@ -255,7 +265,7 @@ function(CREATE_PROTOBUF_LIBRARY LIB_TARGETNAME LIB_PROJECTNAME FOLDER PROJECT_L
     # Create the Protobuf Code Library
     add_library(${LIB_TARGETNAME} ${_PROTO_FILES_FULL_PATH} ${_PROTO_PB_H} ${_WRAPPERS_H} ${_WRAPPERS_CPP})
     add_dependencies(${LIB_TARGETNAME} ${LIB_TARGETNAME}_Generate)
-    target_link_libraries(${LIB_TARGETNAME} PUBLIC PROTOBUF)
+    target_link_libraries(${LIB_TARGETNAME} PUBLIC protobuf::libprotobuf)
     target_include_directories(${LIB_TARGETNAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${INSTALLSETTINGS_INCLUDE_DIR}>
