@@ -909,8 +909,8 @@ public:
 
     if (ImGui::BeginTable("Table", 2))
     {
-      float time = static_cast<float>(app_.lastTime_);
-      IMGUI_ADD_ROW(ImGui::SliderFloat, "Time", &time, static_cast<float>(app_.startTime_), static_cast<float>(app_.endTime_), "", ImGuiSliderFlags_AlwaysClamp);
+      double time = app_.lastTime_;
+      IMGUI_ADD_ROW(ImGui::SliderScalar, "Time", ImGuiDataType_Double, &time, &app_.startTime_, &app_.endTime_, "", ImGuiSliderFlags_AlwaysClamp);
       if (time != app_.lastTime_)
       {
         app_.lastTime_ = time;
