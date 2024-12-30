@@ -197,9 +197,8 @@ static const unsigned int MAX_PRECISION = 6;
     std::optional<simCore::TimeStamp> resetTime;
     if (scenarioReferenceYear_.has_value() && (scenarioReferenceYear != scenarioReferenceYear_))
       resetTime = timeStamp();
-    else
-      scenarioReferenceYear_ = scenarioReferenceYear;
 
+    scenarioReferenceYear_ = scenarioReferenceYear;
     start_ = start;
     end_ = end;
     adjustTimeRange_();
