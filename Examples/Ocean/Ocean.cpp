@@ -608,29 +608,37 @@ namespace
         ImGui::TableNextColumn();
 
         // Choppiness
-        float choppiness = static_cast<float>(s_TritonSettings->choppiness()->value());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Choppiness", &choppiness, 0.f, 3.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (choppiness != static_cast<float>(s_TritonSettings->choppiness()->value()))
+        double choppiness = s_TritonSettings->choppiness()->value();
+        const double minChop = 0.0;
+        const double maxChop = 3.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Choppiness", ImGuiDataType_Double, &choppiness, &minChop, &maxChop, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (choppiness != s_TritonSettings->choppiness()->value())
           s_TritonSettings->choppiness()->set(choppiness);
 
         // Note: simUtil::TritonSettingsAdapter's quality setter is a no-op, so don't provide the user a control for it
 
         // Wind direction
-        float direction = static_cast<float>(s_TritonSettings->seaState()->windDirection());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Wind Direction", &direction, -180.f, 180.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (direction != static_cast<float>(s_TritonSettings->seaState()->windDirection()))
+        double direction = s_TritonSettings->seaState()->windDirection();
+        const double minDir = -180.0;
+        const double maxDir = 180.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Wind Direction", ImGuiDataType_Double, &direction, &minDir, &maxDir, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (direction != s_TritonSettings->seaState()->windDirection())
           s_TritonSettings->seaState()->setWindDirection(direction);
 
         // Sea state
-        float seaState = static_cast<float>(s_TritonSettings->seaState()->seaState());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Sea State", &seaState, 0.f, 12.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (seaState != static_cast<float>(s_TritonSettings->seaState()->seaState()))
+        double seaState = s_TritonSettings->seaState()->seaState();
+        const double minSeaState = 0.0;
+        const double maxSeaState = 12.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Sea State", ImGuiDataType_Double, &seaState, &minSeaState, &maxSeaState, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (seaState != s_TritonSettings->seaState()->seaState())
           s_TritonSettings->seaState()->setSeaState(seaState);
 
         // Sun Intensity
-        float sunIntensity = static_cast<float>(s_TritonSettings->sunIntensity()->value());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Sun Intensity", &sunIntensity, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (sunIntensity != static_cast<float>(s_TritonSettings->sunIntensity()->value()))
+        double sunIntensity = s_TritonSettings->sunIntensity()->value();
+        const double minIntense = 0.0;
+        const double maxIntense = 1.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Sun Intensity", ImGuiDataType_Double, &sunIntensity, &minIntense, &maxIntense, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (sunIntensity != s_TritonSettings->sunIntensity()->value())
           s_TritonSettings->sunIntensity()->set(sunIntensity);
 
         // Spray
@@ -652,9 +660,11 @@ namespace
           s_TritonSettings->enableGodRays()->set(godRays);
 
         // God rays fade
-        float godRaysFade = static_cast<float>(s_TritonSettings->godRaysFade()->value());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "God Rays Fade", &godRaysFade, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (godRaysFade != static_cast<float>(s_TritonSettings->godRaysFade()->value()))
+        double godRaysFade = s_TritonSettings->godRaysFade()->value();
+        const double minFade = 0.0;
+        const double maxFade = 1.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "God Rays Fade", ImGuiDataType_Double, &godRaysFade, &minFade, &maxFade, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (godRaysFade != s_TritonSettings->godRaysFade()->value())
           s_TritonSettings->godRaysFade()->set(godRaysFade);
 
         // Platform Buoyancy
@@ -674,33 +684,43 @@ namespace
         ImGui::TableNextColumn();
 
         // Visibility
-        float visibility = static_cast<float>(s_SlSettings->visibility()->value());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Visibility", &visibility, 100.f, 100000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (visibility != static_cast<float>(s_SlSettings->visibility()->value()))
+        double visibility = s_SlSettings->visibility()->value();
+        const double minVis = 100.0;
+        const double maxVis = 100000.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Visibility", ImGuiDataType_Double, &visibility, &minVis, &maxVis, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (visibility != s_SlSettings->visibility()->value())
           s_SlSettings->visibility()->set(visibility);
 
         // Turbidity
-        float turbidity = static_cast<float>(s_SlSettings->turbidity()->value());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Turbidity", &turbidity, 1.8f, 8.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (turbidity != static_cast<float>(s_SlSettings->turbidity()->value()))
+        double turbidity = s_SlSettings->turbidity()->value();
+        const double minTurbidity = 1.8;
+        const double maxTurbidity = 8.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Turbidity", ImGuiDataType_Double,&turbidity, &minTurbidity, &maxTurbidity, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (turbidity != s_SlSettings->turbidity()->value())
           s_SlSettings->turbidity()->set(turbidity);
 
         // Light Pollution
-        float lightPollution = static_cast<float>(s_SlSettings->lightPollution()->value());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Light Pollution", &lightPollution, 0.f, 0.01f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        double lightPollution = s_SlSettings->lightPollution()->value();
+        const double minPollution = 0.0;
+        const double maxPollution = 0.01;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Light Pollution", ImGuiDataType_Double, &lightPollution, &minPollution, &maxPollution, "%.3f", ImGuiSliderFlags_AlwaysClamp);
         if (lightPollution != static_cast<float>(s_SlSettings->lightPollution()->value()))
           s_SlSettings->lightPollution()->set(lightPollution);
 
         // Rain
-        float rainRate = static_cast<float>(s_SlSettings->rainRate()->value());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Rain", &rainRate, 0.f, 30.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (rainRate != static_cast<float>(s_SlSettings->rainRate()->value()))
+        double rainRate = s_SlSettings->rainRate()->value();
+        const double minRain = 0.0;
+        const double maxRain = 30.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Rain", ImGuiDataType_Double, &rainRate, &minRain, &maxRain, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (rainRate != s_SlSettings->rainRate()->value())
           s_SlSettings->rainRate()->set(rainRate);
 
         // Snow
-        float snowRate = static_cast<float>(s_SlSettings->snowRate()->rate());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Snow", &snowRate, 0.f, 30.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (snowRate != static_cast<float>(s_SlSettings->snowRate()->rate()))
+        double snowRate = s_SlSettings->snowRate()->rate();
+        const double minSnow = 0.0;
+        const double maxSnow = 30.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Snow", ImGuiDataType_Double, &snowRate, &minSnow, &maxSnow, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (snowRate != s_SlSettings->snowRate()->rate())
           s_SlSettings->snowRate()->setRate(snowRate);
 
         // Wet Snow
@@ -710,8 +730,10 @@ namespace
           s_SlSettings->snowRate()->setWet(wetSnow);
 
         // Sleet
-        float sleetRate = static_cast<float>(s_SlSettings->sleetRate()->value());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Sleet", &sleetRate, 0.f, 30.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        double sleetRate = s_SlSettings->sleetRate()->value();
+        const double minSleet = 0.0;
+        const double maxSleet = 30.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Sleet", ImGuiDataType_Double, &sleetRate, &minSleet, &maxSleet, "%.3f", ImGuiSliderFlags_AlwaysClamp);
         if (sleetRate != static_cast<float>(s_SlSettings->sleetRate()->value()))
           s_SlSettings->sleetRate()->set(sleetRate);
 
@@ -722,21 +744,27 @@ namespace
           s_SlSettings->lensFlare()->set(lensFlare);
 
         // Gamma
-        float gamma = static_cast<float>(s_SlSettings->gamma()->value());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Gamma", &gamma, 0.f, 6.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (gamma != static_cast<float>(s_SlSettings->gamma()->value()))
+        double gamma = s_SlSettings->gamma()->value();
+        const double minGamma = 0.0;
+        const double maxGamma = 6.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Sleet", ImGuiDataType_Double, &gamma, &minGamma, &maxGamma, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (gamma != s_SlSettings->gamma()->value())
           s_SlSettings->gamma()->set(gamma);
 
         // Wind Speed
-        float windSpeed = static_cast<float>(s_SlSettings->wind()->speed());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Wind Speed", &windSpeed, 0.f, 75.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (windSpeed != static_cast<float>(s_SlSettings->wind()->speed()))
+        double windSpeed = s_SlSettings->wind()->speed();
+        const double minWindSpeed = 0.0;
+        const double maxWindSpeed = 75.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Wind Speed", ImGuiDataType_Double, &windSpeed, &minWindSpeed, &maxWindSpeed, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (windSpeed != s_SlSettings->wind()->speed())
           s_SlSettings->wind()->setSpeed(windSpeed);
 
         // Wind Direction
-        float windDirection = static_cast<float>(s_SlSettings->wind()->direction());
-        IMGUI_ADD_ROW(ImGui::SliderFloat, "Wind Direction", &windDirection, -180.f, 180.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        if (windDirection != static_cast<float>(s_SlSettings->wind()->direction()))
+        double windDirection = s_SlSettings->wind()->direction();
+        const double minWindDirection = -180.0;
+        const double maxWindDirection = 180.0;
+        IMGUI_ADD_ROW(ImGui::SliderScalar, "Wind Direction", ImGuiDataType_Double, &windDirection, &minWindDirection, &maxWindDirection, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (windDirection != s_SlSettings->wind()->direction())
           s_SlSettings->wind()->setDirection(windDirection);
 
         // Infrared
