@@ -149,9 +149,9 @@ int CategoryNameManager::addCategoryValue(int nameInt, const std::string &value)
     categoryStringInts_[nameInt].push_back(valueInt);
   }
 
-  for (std::vector<ListenerPtr>::const_iterator i = listeners_.begin(); i != listeners_.end(); ++i)
+  for (const auto& listenerPtr : listeners_)
   {
-    (*i)->onAddValue(nameInt, valueInt);
+    listenerPtr->onAddValue(nameInt, valueInt);
   }
 
   return valueInt;

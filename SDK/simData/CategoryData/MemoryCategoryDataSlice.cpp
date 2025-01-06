@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include "simCore/Calc/Math.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/CategoryData/MemoryCategoryDataSlice.h"
@@ -53,6 +54,8 @@ MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::
   // Validate lastPos_
   lastPos_ = checkPosition_(lastPos_);
 
+  // If entries_.empty() then lastPos_ is 0, so begin() + lastPos_ is valid
+  assert(lastPos_ == 0 || !entries_.empty());
   TimeValueIterator rv = upperBound_(entries_.begin(), entries_.begin() + lastPos_, entries_.end(), time);
 
   // Set the time range for future use
