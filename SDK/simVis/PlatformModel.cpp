@@ -517,6 +517,8 @@ void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
   updateOffsets_(lastPrefs_, true);
   updateBounds_();
   updateDofTransform_(lastPrefs_, true);
+
+  fireCallbacks_(Callback::MODEL_CHANGED);
 }
 
 void PlatformModelNode::setRotateToScreen(bool value)
