@@ -45,7 +45,7 @@ if(NOT Qt5Widgets_FOUND)
 endif()
 
 # SDK-146: Update EXPECTED_QT_VERSION based off the actual version string from Qt that was specified
-set(EXPECTED_QT5_VERSION "${Qt5Widgets_VERSION_STRING}")
+set(EXPECTED_QT5_VERSION "${Qt5Core_VERSION}")
 mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
@@ -54,14 +54,15 @@ if(MSVC)
     target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
 endif()
 
-# Set up the version numbers
-set(QT_VERSION ${Qt5Widgets_VERSION_STRING})
-string(REPLACE "." ";" QT_VERSION_LIST ${QT_VERSION})
-list(GET QT_VERSION_LIST 0 QT_VERSION_MAJOR)
-list(GET QT_VERSION_LIST 1 QT_VERSION_MINOR)
-list(GET QT_VERSION_LIST 2 QT_VERSION_PATCH)
+# Set up the version numbers, for legacy use
+set(QT_VERSION ${Qt5Core_VERSION})
+set(QT_VERSION_MAJOR ${Qt5Core_VERSION_MAJOR})
+set(QT_VERSION_MINOR ${Qt5Core_VERSION_MINOR})
+set(QT_VERSION_PATCH ${Qt5Core_VERSION_PATCH})
+set(QT_FOUND ${Qt5Core_FOUND})
+set(QT5_FOUND ${Qt5Core_FOUND})
 if(VERBOSE)
-    message(STATUS "Found Qt5 version: ${QT_VERSION}")
+    message(STATUS "Found Qt5 version: ${Qt5Core_VERSION}")
 endif()
 
 # sets up installation preferences for LIBNAME, i.e. Core; uses ARGN for component list
@@ -85,12 +86,12 @@ macro(INSTALL_QT5_LIB LIBNAME)
         endif()
     else()
         set(QT5_LIBRARY_DIR "${Qt5Widgets_DIR}/../..")
-        INSTALL(FILES ${QT5_LIBRARY_DIR}/libQt5${LIBNAME}.so.5
+        INSTALL(FILES ${QT5_LIBRARY_DIR}/libQt5${LIBNAME}.so.${Qt5Core_VERSION_MAJOR}
             DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
             CONFIGURATIONS Release
             COMPONENT ThirdPartyLibs
         )
-        INSTALL(FILES ${QT5_LIBRARY_DIR}/libQt5${LIBNAME}.so.${Qt5Widgets_VERSION_STRING}
+        INSTALL(FILES ${QT5_LIBRARY_DIR}/libQt5${LIBNAME}.so.${Qt5Core_VERSION}
             DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
             CONFIGURATIONS Release
             COMPONENT ThirdPartyLibs

@@ -42,7 +42,7 @@ if(SIM_HAVE_DB_SUPPORT)
     add_subdirectory(Overhead)
 endif()
 
-if(QT_FOUND)
+if(Qt5Core_FOUND)
     add_subdirectory(Qt)
     add_subdirectory(QtActionItemModelTest)
     add_subdirectory(QtCategoryFilterTest)

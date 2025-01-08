@@ -1,6 +1,6 @@
 # ----- simQt -----------------------------------------------------
 
-if(NOT QT_FOUND)
+if(NOT Qt5Core_FOUND)
     message(FATAL "Cannot configure simQt without Qt.")
 endif()
 
