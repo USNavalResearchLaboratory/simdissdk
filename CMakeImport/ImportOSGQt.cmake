@@ -4,7 +4,7 @@
 set(OSGQT_FOUND FALSE)
 
 # Cannot locate osgEarth without OSG due to requirement on knowing OSG version
-if(NOT OSG_FOUND OR NOT QT_FOUND)
+if(NOT OSG_FOUND OR NOT Qt5Core_FOUND)
     return()
 endif()
 

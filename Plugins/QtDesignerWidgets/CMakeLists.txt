@@ -2,6 +2,13 @@ if(NOT TARGET simQt OR NOT TARGET simData)
     return()
 endif()
 
+# Must have Qt Designer module to build
+find_package(Qt5Designer QUIET)
+if(NOT Qt5Designer_FOUND)
+    message(WARNING "Qt5Designer module not found, skipping Qt Designer plug-ins.")
+    return()
+endif()
+
 project(PLUGIN_SIMQT_DESIGNER_PLUGINS)
 
 # .h files
