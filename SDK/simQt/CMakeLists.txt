@@ -376,8 +376,12 @@ else()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    # Configure the simQtConfig.cmake file; its dependencies are dynamic
-    set(SIMQT_DEPENDS)
+    # Configure the simQtConfig.cmake file; its dependencies are dynamic; Qt first
+    set(SIMQT_DEPENDS "\nfind_dependency(Qt5Widgets)")
+    if(TARGET OSGQT)
+	    set(SIMQT_DEPENDS "${SIMQT_DEPENDS}\nfind_dependency(Qt5OpenGL)")
+    endif()
+    # SDK dependencies
     foreach(TGT IN ITEMS simNotify simCore simData simVis simUtil)
         if(TARGET ${TGT})
             set(SIMQT_DEPENDS "${SIMQT_DEPENDS}\nfind_dependency(${TGT})")
