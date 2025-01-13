@@ -4,6 +4,11 @@
 set(OLD_CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH "@SDK_LIB_CMAKE_FULLPATH@")
 
+# Set up the CMAKE_PREFIX_PATH based on directories active during the
+# build of SIMDIS SDK. This restricts the use of this file to own machine
+# only. Best practice is to let users specify this manually.
+list(APPEND CMAKE_PREFIX_PATH "@CMAKE_PREFIX_PATH@")
+
 # Locate the SIMDIS SDK configuration files from the install location
 find_package(SIMDIS_SDK)
 

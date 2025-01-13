@@ -2,10 +2,7 @@ if("$ENV{PEOPLE_DIR}" STREQUAL "")
     # Initialize empty values for the various _DIR parameters for end users without the 3rd party packs
     set(OSG_DIR "" CACHE PATH "OpenSceneGraph root directory")
     set(OSGEARTH_DIR "" CACHE PATH "osgEarth root directory")
-    set(PROTOBUF_DIR "" CACHE PATH "protobuf root directory")
-    set(SQLITE3_DIR "" CACHE PATH "SQLite root directory")
     set(MRSID_DIR "" CACHE PATH "MrSID root directory")
-    set(GDAL_DIR "" CACHE PATH "GDAL library directory")
     return()
 endif()
 

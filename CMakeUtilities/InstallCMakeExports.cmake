@@ -16,12 +16,15 @@ set(SDK_LIB_CMAKE_PATH ${INSTALLSETTINGS_LIBRARY_DIR}/cmake)
 
 # Gather a list of all possible imported libraries
 set(IMPLIBS)
-foreach(LIB IN ITEMS PROTOBUF OSGQT GDAL GEOS GEOS_C OSGEARTH EnTT::EnTT)
+foreach(LIB IN ITEMS OSGQT OSGEARTH)
     if(TARGET ${LIB})
         list(APPEND IMPLIBS ${LIB})
     endif()
 endforeach()
 list(APPEND IMPLIBS ${OSG_ALL_LIBDEPENDENCIES})
+
+# OSGEARTH library also depends on GDAL and GEOS libraries, which need find_dependency()
+set(OSGEARTH_EXTRA_DEPENDS GDAL GEOS)
 
 # Keep a list of all the properties that need to transfer from our imported
 # targets to the imported targets used in external projects
@@ -63,6 +66,15 @@ foreach(IMPORTED_LIBRARY_NAME IN LISTS IMPLIBS)
             set(LIB_STATIC_OR_SHARED INTERFACE)
         else()
             set(LIB_STATIC_OR_SHARED UNKNOWN)
+        endif()
+
+        # Some libraries require extra find_dependency() calls
+        set(EXTRA_DEPENDS)
+        if(DEFINED ${IMPORTED_FILENAME}_EXTRA_DEPENDS)
+            set(EXTRA_DEPENDS "    include(CMakeFindDependencyMacro)")
+            foreach(_DEPEND IN LISTS ${IMPORTED_FILENAME}_EXTRA_DEPENDS)
+                set(EXTRA_DEPENDS "${EXTRA_DEPENDS}\n    find_dependency(${_DEPEND})")
+            endforeach()
         endif()
 
         # Create and install the Import___.cmake for this library

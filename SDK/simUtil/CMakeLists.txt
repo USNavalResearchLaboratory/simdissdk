@@ -91,7 +91,7 @@ set(UTIL_SOURCES
     ${UTIL_SRC}ViewpointPositions.cpp
 )
 
-if(SIM_HAVE_DB_SUPPORT)
+if(TARGET SQLite::SQLite3)
     list(APPEND UTIL_HEADERS ${UTIL_INC}DbConfigurationFile.h)
     list(APPEND UTIL_SOURCES ${UTIL_SRC}DbConfigurationFile.cpp)
 endif()
@@ -166,7 +166,7 @@ endif()
 if(HAVE_OSGEARTH_SILVERLINING AND TARGET OSGEARTH_SILVERLINING)
     target_link_libraries(simUtil PRIVATE OSGEARTH_SILVERLINING)
 endif()
-if(SIM_HAVE_DB_SUPPORT)
+if(TARGET SQLite::SQLite3)
     target_compile_definitions(simUtil PRIVATE SIM_HAVE_DB_SUPPORT)
 endif()
 

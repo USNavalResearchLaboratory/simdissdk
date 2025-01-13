@@ -531,3 +531,66 @@ macro(vsi_require_target)
         endif()
     endforeach()
 endmacro()
+
+# vsi_add_third_prefix_path(LIBNAME VERSION1 VERSION2 ...)
+#
+# Given a library LIBNAME and one or more versions, this function will append the
+# third party library to the <CMAKE_PREFIX_PATH> only if the directory exists.
+# This relies on <THIRD_DIR> being defined, and searches for the library in the
+# directory <THIRD_DIR>/<LIBNAME>/<VERSION>. Multiple versions can be specified,
+# e.g. to support cases where different architectures support different versions
+# of a third party library. If the directory or version is not found, then
+# <CMAKE_PREFIX_PATH> is not modified. Only the first found version is applied.
+function(vsi_add_third_prefix_path LIBNAME)
+    foreach(_LIBVERSION IN ITEMS ${ARGN})
+        if(EXISTS "${THIRD_DIR}/${LIBNAME}/${_LIBVERSION}")
+            list(APPEND CMAKE_PREFIX_PATH "${THIRD_DIR}/${LIBNAME}/${_LIBVERSION}")
+            set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" PARENT_SCOPE)
+            return()
+        endif()
+    endforeach()
+    if(VERBOSE)
+        message(WARNING "Did not find appropriate prefix path for ${LIBNAME}, tested versions: ${ARGN}")
+    endif()
+endfunction()
+
+# vsi_add_qt_prefix_path(VERSION1 ...)
+#
+# Attempts to find valid installations of Qt based on VSI standards for Qt location, adding
+# located versions to the <CMAKE_PREFIX_PATH>. On Windows, Qt is typically found at
+# <c:/QtSDK/<BUILD_SYSTEM_CANONICAL_NAME>/VERSION> and on Linux, </usr/local/Qt-VERSION>. The
+# user can supply one or more versions of Qt. If found, the directory is appended to
+# <CMAKE_PREFIX_PATH> and the function returns. If not found, then a glob() is used to search
+# for valid Qt versions, and all are added to the CMAKE_PREFIX_PATH.
+function(vsi_add_qt_prefix_path)
+    # Define a base directory based on OS where we expect to find Qt libraries
+    if(WIN32)
+        set(_BASE_QT_PATH "c:/QtSDK/${BUILD_SYSTEM_CANONICAL_NAME}/")
+    else()
+        set(_BASE_QT_PATH "/usr/local/Qt-")
+    endif()
+    foreach(_LIBVERSION IN ITEMS ${ARGN})
+        if(EXISTS "${_BASE_QT_PATH}${_LIBVERSION}/include/QtCore")
+            list(APPEND CMAKE_PREFIX_PATH "${_BASE_QT_PATH}${_LIBVERSION}")
+            set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" PARENT_SCOPE)
+            message("Found ${_BASE_QT_PATH}${_LIBVERSION}")
+            return()
+        endif()
+    endforeach()
+
+    # Fall back on glob to look for other versions
+    file(GLOB _QT_DIRECTORIES "${_BASE_QT_PATH}*.*")
+    set(_FOUND_CANDIDATE OFF)
+    foreach(_QT_DIRECTORY IN LISTS _QT_DIRECTORIES)
+        if(EXISTS "${_QT_DIRECTORY}/include/QtCore")
+            list(APPEND CMAKE_PREFIX_PATH "${_QT_DIRECTORY}")
+            set(_FOUND_CANDIDATE ON)
+        endif()
+    endforeach()
+
+    if(_FOUND_CANDIDATE)
+        set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" PARENT_SCOPE)
+    elseif(VERBOSE)
+        message(WARNING "Did not find expected prefix path for Qt, tested versions: ${ARGN} at ${_BASE_QT_PATH}")
+    endif()
+endfunction()

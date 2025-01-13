@@ -131,12 +131,30 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 # Project Dependencies
 
-# Configure 3rd party search path
+# --- 3rd Party Search (Prefix) Path ------
 
 # Include specific defaults for building with public release environment (third party packs)
 include(PublicDefaults)
 # Include specific defaults for building with VSI environment
 include(VsiDefaults)
+
+# Define the default third party library versions that SIMDIS redistributes
+vsi_add_third_prefix_path(EnTT 3.14.0)
+vsi_add_third_prefix_path(GDAL 3.10.0 3.8.2)
+vsi_add_third_prefix_path(GEOS 3.11.0)
+if(NOT DEFINED GLEW_USE_STATIC_LIBS)
+    set(GLEW_USE_STATIC_LIBS TRUE)
+endif()
+vsi_add_third_prefix_path(GLEW 2.1.0)
+if(NOT DEFINED Protobuf_USE_STATIC_LIBS)
+    set(Protobuf_USE_STATIC_LIBS TRUE)
+endif()
+vsi_add_third_prefix_path(protobuf 3.21.12)
+vsi_add_third_prefix_path(SQLite 3.42.0)
+vsi_add_third_prefix_path(SWIG 4.3.0 4.2.1)
+vsi_add_qt_prefix_path(5.15.13)
+
+
 # Build Release mode by default on Linux, unless otherwise specified
 include(DefaultToReleaseBuildType)
 
@@ -181,19 +199,21 @@ include(CreateInstallProperties)
 include(ImportSocket)
 include(ImportOpenGL)
 
-# ---Qt------------------------------------
+# --- Qt ----------------------------------
 
 # Attempt to find Qt so we can build the Qt example(s).
-set(QT5_MODULES OpenGL)
-set(QT5_PLUGINS xcbglintegrations)
-include(ImportQt5)
+find_package(Qt5 COMPONENTS OpenGL Widgets)
+# Need to silence deprecation for MSVC 2022 and Qt5 to avoid build errors
+if(MSVC AND TARGET Qt5::Core AND Qt5Core_VERSION VERSION_LESS 5.15.17)
+    target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+endif()
 
 
 # --- OpenSceneGraph ----------------------
 
 # OSG requires GDAL, and VSI-distributed GDAL requires MrSID
 include(ImportMrSID)
-include(ImportGDAL)
+find_package(GDAL CONFIG)
 
 # import the package OSG and its companion OpenThreads
 include(ImportOpenThreads)
@@ -210,27 +230,27 @@ find_package(GLCORE)
 # --- osgEarth -----------------------------
 
 # VSI-distributed osgEarth requires GEOS
-include(ImportGEOS)
+find_package(GEOS)
+
 # allow the user to set OSGEARTH_DIR in CMAKE GUI and auto-populate all OSGEARTH libraries:
 set(OSGEARTH_DIR "" CACHE PATH "osgEarth root directory")
 include(ImportOSGEarth)
 
 # --- GLEW -----------------------------
-include(ImportGLEW)
+find_package(GLEW)
+if(TARGET GLEW::GLEW AND TARGET GLEW::glew_s AND WIN32)
+    target_compile_definitions(GLEW::GLEW INTERFACE GLEW_STATIC)
+endif()
 
 # --- Protocol Buffers -----------------------------
-set(PROTOBUF_DIR "" CACHE PATH "Protocol Buffers root directory")
-include(ImportProtobuf)
+find_package(Protobuf)
+include(CreateProtobufLibrary)
 
 # --- ENTT -----------------------------
-include(ImportEnTT)
+find_package(EnTT)
 
 # --- SQLITE3 -----------------------------
-set(SQLITE3_DIR "" CACHE PATH "Sqlite3 root directory")
-include(ImportSQLite)
-if (SQLITE3_FOUND)
-    set(SIM_HAVE_DB_SUPPORT 1)
-endif()
+find_package(SQLite3)
 
 # subprojects
 add_subdirectory(SDK)
@@ -243,11 +263,11 @@ if(ENABLE_UNIT_TESTING)
     add_subdirectory(Testing)
 endif()
 
-# SWIG module requires Python3.  FindPython3.cmake is first distributed in CMake 3.12
+# SWIG module requires Python3. FindPython3.cmake is first distributed in CMake 3.12
 option(BUILD_SDK_SWIG "Build SIMDIS SDK SWIG module" OFF)
 if(BUILD_SDK_SWIG)
     # Include SWIG for Python simCore module
-    include(ImportSWIG)
+    find_package(SWIG 4.0)
     find_package(Python3 COMPONENTS Development Interpreter)
     add_subdirectory(swig)
 endif()
@@ -257,6 +277,12 @@ add_subdirectory(Doc)
 
 # Configure the installs for CMake exports, e.g. for external projects
 include(InstallCMakeExports)
+# Configure the install() statements for third party libraries
+if(INSTALL_THIRDPARTY_LIBRARIES)
+    include(InstallData.3rd.GDAL)
+    include(InstallData.3rd.GEOS)
+    include(InstallData.3rd.Qt5)
+endif()
 
 # Install the documentation to the root of the install directory
 install(FILES INSTALL.md LICENSE.txt README.md DESTINATION .)

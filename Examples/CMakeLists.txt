@@ -36,7 +36,7 @@ add_subdirectory(SimpleServer)
 add_subdirectory(TimestampedLayer)
 add_subdirectory(VelocityLayerTest)
 
-if(SIM_HAVE_DB_SUPPORT)
+if(TARGET SQLite::SQLite3)
     add_subdirectory(DBReader)
     add_subdirectory(LoadEarthFile)
     add_subdirectory(Overhead)
