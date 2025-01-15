@@ -1801,29 +1801,37 @@ void MemoryDataStore::updateTargetGate_(GateEntry* gate, double time)
   if (currentUpdate == nullptr)
     return;
 
-  // update only when gate was off, there is a time change, or if we depend on beam for height/width
-  if (gateWasOff || lastUpdateTime != time || gateUsesBeamBeamwidth_(gate))
+  // target gates use the az/el from the simVis::Beam target beam calc; this is done in simVis::Gate.
+  // using the minrange/maxrange and centroid values from the currentUpdate that we are supplying here
+  // minrange/maxrange and centroid are expected to be specified as -/+ offsets from the target range
+  // az and el are ignored for target gate updates
+  update->set_time(time);
+  update->set_azimuth(0.0);
+  update->set_elevation(0.0);
+  update->set_minrange(currentUpdate->minrange());
+  update->set_maxrange(currentUpdate->maxrange());
+  // centroid is optional
+  if (currentUpdate->has_centroid())
+    update->set_centroid(currentUpdate->centroid());
+  else
+    update->clear_centroid();
+
+  if (gateUsesBeamBeamwidth_(gate))
   {
-    // target gates use the az/el from the simVis::Beam target beam calc; this is done in simVis::Gate.
-    // using the minrange/maxrange and centroid values from the currentUpdate that we are supplying here
-    // minrange/maxrange and centroid are expected to be specified as -/+ offsets from the target range
-    // az and el are ignored for target gate updates
-    update->set_time(time);
-    update->set_azimuth(0.0);
-    update->set_elevation(0.0);
-    update->set_minrange(currentUpdate->minrange());
-    update->set_maxrange(currentUpdate->maxrange());
-    // centroid is optional
-    if (currentUpdate->has_centroid())
-      update->set_centroid(currentUpdate->centroid());
-    else
-      update->clear_centroid();
-    gate->updates()->setCurrent(update);
-    // signal that this slice is updated, necessary for the time-change case and for using BeamBeamwidth case
-    gate->updates()->setChanged();
+    update->set_width(0.0);
+    update->set_height(0.0);
   }
   else
-    gate->updates()->clearChanged();
+  {
+    update->set_width(currentUpdate->width());
+    update->set_height(currentUpdate->height());
+  }
+
+  gate->updates()->setCurrent(update);
+
+  // signal that this slice is updated, necessary for the time-change case and for using BeamBeamwidth case
+  gate->updates()->setChanged();
+
 }
 
 bool MemoryDataStore::gateUsesBeamBeamwidth_(GateEntry* gate) const
