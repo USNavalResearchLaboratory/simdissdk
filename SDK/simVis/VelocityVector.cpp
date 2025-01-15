@@ -85,9 +85,9 @@ public:
   {
   }
 
-  virtual void apply(osg::Geometry& geometry)
+  virtual void apply(osg::Drawable& drawable)
   {
-    osgEarth::LineDrawable* line = dynamic_cast<osgEarth::LineDrawable*>(&geometry);
+    osgEarth::LineDrawable* line = dynamic_cast<osgEarth::LineDrawable*>(&drawable);
     if (line)
       line->setColor(color_);
   }
