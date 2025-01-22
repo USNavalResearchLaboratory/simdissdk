@@ -97,7 +97,7 @@ namespace simCore
   *
   */
 
-  /** Enumeration of supported local level frame (LLF) types.  A LLF represents a vehicle’s
+  /** Enumeration of supported local level frame (LLF) types.  A LLF represents a vehicle's
   * attitude, velocity and acceleration when on or near the surface of the Earth.  This
   * frame is also known as the local geodetic horizon or navigation frame.
   */
