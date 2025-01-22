@@ -311,7 +311,11 @@ void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::F
   // Apply simplify tolerance only if it's been set by user
   if (simplifyTolerance_.has_value())
   {
+#ifdef HAVE_OSGEARTH_SIMPLIFYFILTEROPTIONS
     osgEarth::SimplifyFilterOptions so;
+#else
+    osgEarth::SimplifyFilter::Options so;
+#endif
     so.tolerance() = *simplifyTolerance_;
     ogr->options().filters().push_back(so);
   }
