@@ -155,11 +155,6 @@ else()
     target_compile_definitions(simUtil PUBLIC simUtil_LIB_EXPORT_STATIC)
 endif()
 
-include(CheckOSGEarthMethodExists)
-check_osgearth_method_exists(HAVE_OSGEARTH_SIMPLIFYFILTEROPTIONS "osgEarth/SimplifyFilter" "SimplifyFilterOptions")
-if(HAVE_OSGEARTH_SIMPLIFYFILTEROPTIONS)
-    target_compile_definitions(simUtil PRIVATE HAVE_OSGEARTH_SIMPLIFYFILTEROPTIONS)
-endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     vsi_install_export(simUtil ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
