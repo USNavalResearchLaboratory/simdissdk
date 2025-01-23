@@ -1,6 +1,11 @@
 include(CMakeFindDependencyMacro)
-find_dependency(simNotify)
 find_dependency(simCore)
 find_dependency(simData)
 find_dependency(simVis)
+
+# The dependencies below are only required for static builds (private links)
+if(NOT @SIMUTIL_SHARED@)
+    find_dependency(OpenGL)
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/simUtilTargets.cmake")

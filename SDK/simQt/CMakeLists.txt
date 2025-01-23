@@ -1,11 +1,17 @@
 # ----- simQt -----------------------------------------------------
 
 if(NOT Qt5Core_FOUND)
-    message(FATAL "Cannot configure simQt without Qt.")
+    message(FATAL_ERROR "Cannot configure simQt without Qt.")
 endif()
 
 set(SIMQT_INC)
 set(SIMQT_SRC)
+
+# Variables used in the simQtConfig.cmake generation
+set(SIMQT_HAVE_SIMDATA OFF)
+set(SIMQT_HAVE_OSGQT OFF)
+set(SIMQT_HAVE_SIMVIS OFF)
+set(SIMQT_HAVE_SIMUTIL OFF)
 
 # .h files
 set(SIMQT_HEADERS_TO_MOC
@@ -65,6 +71,7 @@ set(SIMQT_HEADERS
 
 # Parts of simQt depend on simData
 if(TARGET simData)
+    set(SIMQT_HAVE_SIMDATA ON)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CategoryDataBreadcrumbs.h
         ${SIMQT_INC}CategoryFilterCounter.h
@@ -92,6 +99,7 @@ endif()
 
 # Parts of simQt depend on simVis
 if(TARGET simVis)
+    set(SIMQT_HAVE_SIMVIS ON)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CenterEntity.h
         ${SIMQT_INC}EntityLineEdit.h
@@ -106,6 +114,7 @@ if(TARGET simVis)
 
     # Parts of simQt depend on both simVis and osgQt
     if (TARGET OSGQT)
+        set(SIMQT_HAVE_OSGQT ON)
         list(APPEND SIMQT_HEADERS_TO_MOC
             ${SIMQT_INC}ViewWidget.h
         )
@@ -124,6 +133,10 @@ if(OSG_FOUND)
         ${SIMQT_INC}MergeValues.h
         ${SIMQT_INC}QtConversion.h
     )
+endif()
+
+if(TARGET simUtil)
+    set(SIMQT_HAVE_SIMUTIL ON)
 endif()
 
 # Parts of simQt depend on simUtil and simData
@@ -376,19 +389,8 @@ else()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    # Configure the simQtConfig.cmake file; its dependencies are dynamic; Qt first
-    set(SIMQT_DEPENDS "\nfind_dependency(Qt5Widgets)")
-    if(TARGET OSGQT)
-	    set(SIMQT_DEPENDS "${SIMQT_DEPENDS}\nfind_dependency(Qt5OpenGL)")
-    endif()
-    # SDK dependencies
-    foreach(TGT IN ITEMS simNotify simCore simData simVis simUtil)
-        if(TARGET ${TGT})
-            set(SIMQT_DEPENDS "${SIMQT_DEPENDS}\nfind_dependency(${TGT})")
-        endif()
-    endforeach()
+    # Configure the simQtConfig.cmake file; its dependencies are dynamic
     configure_file(simQtConfig.cmake.in simQtConfig.cmake @ONLY)
-
     vsi_install_export(simQt ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 

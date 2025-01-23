@@ -3,6 +3,9 @@ if(NOT TARGET protobuf::libprotobuf)
     return()
 endif()
 
+# Variables used in the simDataConfig.cmake generation
+set(SIMDATA_HAVE_ENTT OFF)
+
 # ----- simData --------------------------------------------------------
 
 set(DATA_INC)
@@ -164,6 +167,7 @@ endif()
 if(EnTT_FOUND)
     target_compile_definitions(simData PUBLIC HAVE_ENTT)
     target_link_libraries(simData PUBLIC EnTT::EnTT)
+    set(SIMDATA_HAVE_ENTT ON)
 endif()
 
 if(WIN32)
@@ -172,13 +176,6 @@ endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     # Configure the simDataConfig.cmake file; its dependencies are dynamic
-    set(SIMDATA_DEPENDS)
-    foreach(TGT IN ITEMS simNotify simCore Protobuf)
-        set(SIMDATA_DEPENDS "${SIMDATA_DEPENDS}\nfind_dependency(${TGT})")
-    endforeach()
-    if(TARGET EnTT::EnTT)
-        set(SIMDATA_DEPENDS "${SIMDATA_DEPENDS}\nfind_dependency(EnTT)")
-    endif()
     configure_file(simDataConfig.cmake.in simDataConfig.cmake @ONLY)
     vsi_install_export(simData ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()

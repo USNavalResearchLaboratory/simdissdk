@@ -1,0 +1,14 @@
+include(CMakeFindDependencyMacro)
+find_dependency(simNotify)
+find_dependency(simCore)
+find_dependency(simData)
+
+# The dependencies below are only required for static builds (private links)
+if(NOT @SIMVIS_SHARED@)
+    find_dependency(OpenGL)
+    if(@SIMVIS_HAVE_SQLITE@)
+        find_dependency(SQLite3)
+    endif()
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/simVisTargets.cmake")

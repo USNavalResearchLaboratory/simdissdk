@@ -573,7 +573,6 @@ function(vsi_add_qt_prefix_path)
         if(EXISTS "${_BASE_QT_PATH}${_LIBVERSION}/include/QtCore")
             list(APPEND CMAKE_PREFIX_PATH "${_BASE_QT_PATH}${_LIBVERSION}")
             set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" PARENT_SCOPE)
-            message("Found ${_BASE_QT_PATH}${_LIBVERSION}")
             return()
         endif()
     endforeach()
@@ -594,3 +593,91 @@ function(vsi_add_qt_prefix_path)
         message(WARNING "Did not find expected prefix path for Qt, tested versions: ${ARGN} at ${_BASE_QT_PATH}")
     endif()
 endfunction()
+
+# vsi_json_get_value_or_list(<out-var> <json-string> [<member|index> ...])
+#
+# Get the string or array value in `<json-string>` at the location given by the
+# list of `<member|index>` arguments. The `<out-var>` will be set to the
+# appropriate value based on data type:
+#
+#  - String: It is set to the single string value
+#  - Array: It is set to a CMake array of strings
+#  - Does-not-exist: The value is unset.
+function(vsi_json_get_value_or_list VAR JSON)
+    string(JSON _VER_TYPE ERROR_VARIABLE _NO_VAL TYPE "${JSON}" ${ARGN})
+    if(_NO_VAL)
+        unset(${VAR} PARENT_SCOPE)
+    elseif(_VER_TYPE STREQUAL "ARRAY")
+        # Figure out how many items to iterate
+        string(JSON _LEN LENGTH "${JSON}" ${ARGN})
+        math(EXPR _LEN "${_LEN}-1")
+        # Initialize output value, then loop appending to the output
+        set(_LIST)
+        foreach(i RANGE ${_LEN})
+            string(JSON _VALUE GET "${JSON}" ${ARGN} ${i})
+            list(APPEND _LIST ${_VALUE})
+        endforeach()
+        set(${VAR} ${_LIST} PARENT_SCOPE)
+    else()
+        string(JSON _VALUE GET "${JSON}" ${ARGN})
+        set(${VAR} ${_VALUE} PARENT_SCOPE)
+    endif()
+endfunction()
+
+# vsi_add_json_prefix_path(<json-string>)
+#
+# Accepts a JSON object string from the VsiPackages.json format that represents
+# a single library, and adds it to the `CMAKE_PREFIX_PATH` using the
+# `vsi_add_third_prefix_path()` function. CMake variables defined by the
+# Package JSON are also set in the parent scope.
+macro(vsi_add_json_prefix_path PACKAGE_JSON_OBJ)
+    # Get the package name
+    string(JSON _DIR ERROR_VARIABLE _NO_VAL GET "${PACKAGE_JSON_OBJ}" dir)
+    if(_NO_VAL)
+        string(JSON _DIR ERROR_VARIABLE _NO_VAL GET "${PACKAGE_JSON_OBJ}" name)
+    endif()
+
+    # Get the versions list
+    vsi_json_get_value_or_list(_VERSIONS "${PACKAGE_JSON_OBJ}" version)
+    if(_DIR STREQUAL "QT5")
+        vsi_add_qt_prefix_path(${_VERSIONS})
+    else()
+        vsi_add_third_prefix_path(${_DIR} ${_VERSIONS})
+    endif()
+
+    # Look for CMake variables to set
+    string(JSON _CMAKE_VARS ERROR_VARIABLE _NO_VAL GET "${PACKAGE_JSON_OBJ}" cmake_vars)
+    if(NOT _NO_VAL)
+        string(JSON _LEN LENGTH "${_CMAKE_VARS}")
+        math(EXPR _LEN "${_LEN}-1")
+        foreach(i RANGE ${_LEN})
+            string(JSON _VAR_NAME GET "${_CMAKE_VARS}" ${i} name)
+            string(JSON _VAR_VALUE GET "${_CMAKE_VARS}" ${i} value)
+            set(${_VAR_NAME} "${_VAR_VALUE}")
+            if(VERBOSE)
+                message(STATUS "Setting ${_VAR_NAME}: ${_VAR_VALUE}")
+            endif()
+        endforeach()
+    endif()
+endmacro()
+
+# vsi_process_packages_json(json-filename)
+#
+# Reads <json-filename> as a VSI Packages JSON file, adding all entries to
+# the `CMAKE_PREFIX_PATH` and setting variables defined in the file.
+macro(vsi_process_packages_json FILENAME)
+    # Read the JSON file.
+    file(READ "${FILENAME}" _VSI_PACKAGES_FILE)
+
+    string(JSON _VSI_PACKAGES_JSON GET "${_VSI_PACKAGES_FILE}" packages)
+    string(JSON _NUM_PACKAGES LENGTH "${_VSI_PACKAGES_JSON}")
+    math(EXPR _NUM_PACKAGES "${_NUM_PACKAGES}-1")
+
+    foreach(i RANGE ${_NUM_PACKAGES})
+        string(JSON _PACKAGE_JSON GET "${_VSI_PACKAGES_JSON}" ${i})
+        vsi_add_json_prefix_path(${_PACKAGE_JSON})
+    endforeach()
+    unset(_PACKAGE_JSON)
+    unset(_VSI_PACKAGES_JSON)
+    unset(_VSI_PACKAGES_FILE)
+endmacro()

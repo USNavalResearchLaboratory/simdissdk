@@ -61,7 +61,7 @@ if(MSVC)
     set(BUILD_COMPILER_VERSION "${BUILD_COMPILER_VERSION_MAJOR}.${BUILD_COMPILER_VERSION_MINOR}")
 else()
     # Get compiler name and version (gcc and gcc-compatible compilers)
-    exec_program(${CMAKE_C_COMPILER} ARGS --version OUTPUT_VARIABLE BUILD_COMPILER_VERSION)
+    execute_process(COMMAND ${CMAKE_C_COMPILER} --version OUTPUT_VARIABLE BUILD_COMPILER_VERSION)
     string(REGEX REPLACE ".*([0-9]\\.[0-9])\\.[0-9].*" "\\1" BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
     # Extract major and minor version numbers
     string(REGEX REPLACE "([0-9]+)\\.[0-9]+" "\\1" BUILD_COMPILER_MAJOR_VERSION ${BUILD_COMPILER_VERSION})

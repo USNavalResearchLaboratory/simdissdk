@@ -3,6 +3,9 @@ if(NOT TARGET simData OR NOT OSG_FOUND OR NOT OSGEARTH_FOUND)
     return()
 endif()
 
+# Variables used in the simVisConfig.cmake generation
+set(SIMVIS_HAVE_SQLITE OFF)
+
 # ----- simVis --------------------------------------------------------
 
 set(VIS_INC)
@@ -439,19 +442,18 @@ target_link_libraries(simVis PRIVATE OpenGL::GL)
 
 if(TARGET SQLite::SQLite3)
     target_link_libraries(simVis PRIVATE SQLite::SQLite3)
+    if(SDK_BIG_ENDIAN)
+        target_compile_definitions(simVis PRIVATE SIM_BIG_ENDIAN)
+    else()
+        target_compile_definitions(simVis PRIVATE SIM_LITTLE_ENDIAN)
+    endif()
+    set(SIMVIS_HAVE_SQLITE ON)
 endif()
 
 if(SIMVIS_SHARED)
     target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simVis PUBLIC simVis_LIB_EXPORT_STATIC)
-endif()
-if(TARGET SQLite::SQLite3)
-    if(SDK_BIG_ENDIAN)
-        target_compile_definitions(simVis PRIVATE SIM_BIG_ENDIAN)
-    else()
-        target_compile_definitions(simVis PRIVATE SIM_LITTLE_ENDIAN)
-    endif()
 endif()
 if(HAVE_EARTHMANIPULATOR_BINDTOUCHDRAG)
     target_compile_definitions(simVis PRIVATE HAVE_EARTHMANIPULATOR_BINDTOUCHDRAG)
@@ -465,6 +467,7 @@ if(HAVE_NONNULL_COMPARE)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
+    configure_file(simVisConfig.cmake.in simVisConfig.cmake @ONLY)
     vsi_install_export(simVis ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
