@@ -96,10 +96,6 @@ if(TARGET VSI::SOCKET)
     install(FILES CMakeImport/ImportSocket.cmake DESTINATION ${SDK_LIB_CMAKE_PATH} COMPONENT Exports)
     list(APPEND VALID_IMPLIBS Socket)
 endif()
-if(TARGET VSI::GL)
-    install(FILES CMakeImport/ImportOpenGL.cmake DESTINATION ${SDK_LIB_CMAKE_PATH} COMPONENT Exports)
-    list(APPEND VALID_IMPLIBS OpenGL)
-endif()
 
 # Detect the valid target names
 set(SDK_LIBS simNotify simCore simData simVis simUtil simQt)

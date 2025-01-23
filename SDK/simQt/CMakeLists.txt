@@ -330,7 +330,7 @@ if(TARGET simVis)
     )
 
     # Gl3FormatGuesser depends on OpenGL libraries
-    target_link_libraries(simQt PRIVATE VSI::GL)
+    target_link_libraries(simQt PRIVATE OpenGL::GL)
 endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget

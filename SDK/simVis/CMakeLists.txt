@@ -435,7 +435,7 @@ target_include_directories(simVis PUBLIC
 )
 target_link_libraries(simVis PUBLIC simData simCore simNotify
     ${OSG_ALL_LIBDEPENDENCIES} OSGEARTH)
-target_link_libraries(simVis PRIVATE VSI::GL)
+target_link_libraries(simVis PRIVATE OpenGL::GL)
 
 if(TARGET SQLite::SQLite3)
     target_link_libraries(simVis PRIVATE SQLite::SQLite3)

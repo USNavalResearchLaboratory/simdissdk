@@ -197,7 +197,7 @@ include(CreateInstallProperties)
 
 # --- System Libraries --------------------
 include(ImportSocket)
-include(ImportOpenGL)
+find_package(OpenGL)
 
 # --- Qt ----------------------------------
 

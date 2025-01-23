@@ -148,7 +148,7 @@ target_include_directories(simUtil PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(simUtil PUBLIC simVis simData simCore)
-target_link_libraries(simUtil PRIVATE VSI::GL)
+target_link_libraries(simUtil PRIVATE OpenGL::GL)
 if(SIMUTIL_SHARED)
     target_compile_definitions(simUtil PRIVATE simUtil_LIB_EXPORT_SHARED)
 else()
