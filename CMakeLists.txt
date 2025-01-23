@@ -137,23 +137,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 include(PublicDefaults)
 # Include specific defaults for building with VSI environment
 include(VsiDefaults)
-
-# Define the default third party library versions that SIMDIS redistributes
-vsi_add_third_prefix_path(EnTT 3.14.0)
-vsi_add_third_prefix_path(GDAL 3.10.0 3.8.2)
-vsi_add_third_prefix_path(GEOS 3.11.0)
-if(NOT DEFINED GLEW_USE_STATIC_LIBS)
-    set(GLEW_USE_STATIC_LIBS TRUE)
-endif()
-vsi_add_third_prefix_path(GLEW 2.1.0)
-if(NOT DEFINED Protobuf_USE_STATIC_LIBS)
-    set(Protobuf_USE_STATIC_LIBS TRUE)
-endif()
-vsi_add_third_prefix_path(protobuf 3.21.12)
-vsi_add_third_prefix_path(SQLite 3.42.0)
-vsi_add_third_prefix_path(SWIG 4.3.0 4.2.1)
-vsi_add_qt_prefix_path(5.15.13)
-
+vsi_process_packages_json(${CMAKE_SOURCE_DIR}/CMakeUtilities/VsiPackages.json)
 
 # Build Release mode by default on Linux, unless otherwise specified
 include(DefaultToReleaseBuildType)
@@ -196,7 +180,6 @@ include(CreateInstallProperties)
 
 
 # --- System Libraries --------------------
-include(ImportSocket)
 find_package(OpenGL)
 
 # --- Qt ----------------------------------
@@ -223,7 +206,6 @@ include(ImportOSGQt)
 ## Find and include the OpenGL core header
 # By default search for the GLCORE header in the OSG include path.  Non-default locations for the header
 # can be set through the GLCORE_GLCOREARB_HEADER CMake cache variable
-set(GLCORE_DIR ${OSG_LIBRARY_INCLUDE_PATH})
 find_package(GLCORE)
 
 

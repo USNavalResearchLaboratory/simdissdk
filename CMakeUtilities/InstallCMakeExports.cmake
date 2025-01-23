@@ -91,12 +91,6 @@ foreach(IMPORTED_LIBRARY_NAME IN LISTS IMPLIBS)
     endif()
 endforeach()
 
-# Add the extra VSI libraries for socket and GL
-if(TARGET VSI::SOCKET)
-    install(FILES CMakeImport/ImportSocket.cmake DESTINATION ${SDK_LIB_CMAKE_PATH} COMPONENT Exports)
-    list(APPEND VALID_IMPLIBS Socket)
-endif()
-
 # Detect the valid target names
 set(SDK_LIBS simNotify simCore simData simVis simUtil simQt)
 foreach(SDK_LIB IN LISTS SDK_LIBS)
