@@ -6,6 +6,8 @@ set(LIBRARYNAME OSG)
 
 # OpenThreads is stored under the OpenSceneGraph folder; it is required to find OpenThreads before OSG for OSG_VERSION
 set(OSG_VERSION 3.6.5)
+set(OpenSceneGraph_VERSION ${_OSG_VERSION})
+
 set(OSG_SUBDIR ${OSG_VERSION})
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 # Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true
@@ -106,6 +108,7 @@ if(OSG_VERSION_EXE)
     endif()
     if(NOT _OSG_VERSION STREQUAL "")
         set(OSG_VERSION ${_OSG_VERSION})
+        set(OpenSceneGraph_VERSION ${_OSG_VERSION})
     endif()
     unset(_OLD_LD_LIBRARY_PATH)
     unset(_OSG_VERSION)

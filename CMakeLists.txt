@@ -263,6 +263,7 @@ include(InstallCMakeExports)
 if(INSTALL_THIRDPARTY_LIBRARIES)
     include(InstallData.3rd.GDAL)
     include(InstallData.3rd.GEOS)
+    include(InstallData.3rd.osgEarth)
     include(InstallData.3rd.Qt5)
 endif()
 

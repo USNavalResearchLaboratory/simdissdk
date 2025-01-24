@@ -8,12 +8,6 @@ endif()
 
 set(LIBRARYNAME OSGEARTH)
 set(VSI_OSGEARTH_VERSION OSG-${OSG_VERSION})
-set(OSGEARTH_INSTALL_COMPONENT ThirdPartyLibs)
-# Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true
-set(OSGEARTH_SHOULD_INSTALL FALSE)
-if(NOT DEFINED INSTALL_THIRDPARTY_LIBRARIES OR INSTALL_THIRDPARTY_LIBRARIES)
-    set(OSGEARTH_SHOULD_INSTALL TRUE)
-endif()
 
 # Setup search paths
 initialize_ENV(${LIBRARYNAME}_DIR)
@@ -99,97 +93,12 @@ macro(import_osgearth_lib NAMEVAL)
             IMPORTED_IMPLIB_DEBUG "${${LIBRARYNAME}_LIBRARY_DEBUG_NAME}"
         )
     endif()
-    vsi_set_imported_locations_from_implibs(${LIBRARYNAME})
-    if(OSGEARTH_SHOULD_INSTALL)
-        vsi_install_target(${LIBRARYNAME} ${OSGEARTH_INSTALL_COMPONENT})
-    endif()
 endmacro()
 
 import_osgearth_lib("")
 foreach(SUBNAME ${SUBLIBRARY_NAMES})
     import_osgearth_lib(${SUBNAME})
 endforeach()
-
-# Plug-ins are found in lib, unless on Windows
-set(OS_PLUGIN_SUBDIR "lib${LIBDIRSUFFIX}")
-if(WIN32)
-    set(OS_PLUGIN_SUBDIR "bin")
-endif()
-set(OS_PLUGIN_SUBDIR "${OS_PLUGIN_SUBDIR}/osgPlugins-${OSG_VERSION}")
-
-# Install osgEarth plugins
-set(PLUGIN_DIRS
-    $ENV{OSGEARTH_DIR}
-    ${THIRD_DIR}/osgEarth/${VSI_OSGEARTH_VERSION}
-)
-
-# Find the plugin location
-find_path(OSGEARTH_PLUGIN_PATH
-    NAMES osgdb_earth.dll osgdb_earth.so
-    PATHS ${PLUGIN_DIRS}
-    PATH_SUFFIXES
-        bin/osgPlugins-${OSG_VERSION}
-        lib/osgPlugins-${OSG_VERSION}
-        lib64/osgPlugins-${OSG_VERSION}
-    NO_DEFAULT_PATH
-)
-find_path(OSGEARTH_PLUGIN_PATH NAMES osgdb_earth.dll osgdb_earth.so PATHS ${PLUGIN_DIRS} NO_DEFAULT_PATH)
-
-if(OSGEARTH_PLUGIN_PATH)
-    mark_as_advanced(FORCE OSGEARTH_PLUGIN_PATH)
-else()
-    mark_as_advanced(CLEAR OSGEARTH_PLUGIN_PATH)
-    message(WARNING "osgEarth Plug-in Path not found.  Will result in improper installation.")
-endif()
-
-# Put the plugin location in the library list for 32 to 64 but Linux conversion
-# so it is properly updated when a 32/64 bit configuration change is made
-list(APPEND LIBRARY_LIST "OSGEARTH_PLUGIN_PATH")
-
-# Select installation location
-if(WIN32)
-    set(OSGEARTH_PLUGIN_INSTALL_DIR ${INSTALLSETTINGS_RUNTIME_DIR})
-else()
-    set(OSGEARTH_PLUGIN_INSTALL_DIR ${INSTALLSETTINGS_LIBRARY_DIR})
-endif()
-
-# Determine which files to install based on Debug or Release Build Type
-if(WIN32)
-    set(DEBUG_INSTALL_PATTERN "osgdb_.+d\\.dll")
-    set(RELEASE_INSTALL_PATTERN "osgdb_.+[^d]\\.dll")
-else()
-    set(DEBUG_INSTALL_PATTERN "osgdb_.+d\\.so")
-    set(RELEASE_INSTALL_PATTERN "osgdb_.+[^d]\\.so")
-endif()
-
-# Set the full install path to the plugin directory
-set(OSGEARTH_PLUGIN_INSTALL_DIR ${OSGEARTH_PLUGIN_INSTALL_DIR}/osgPlugins-${OSG_VERSION})
-
-if(OSGEARTH_SHOULD_INSTALL)
-    # Note that "*billboard.*" is a release pattern, not debug
-    install(DIRECTORY ${OSGEARTH_PLUGIN_PATH}/
-        DESTINATION ${OSGEARTH_PLUGIN_INSTALL_DIR}
-        CONFIGURATIONS "Debug"
-        COMPONENT ${OSGEARTH_INSTALL_COMPONENT}
-        FILES_MATCHING
-            REGEX ${DEBUG_INSTALL_PATTERN}
-            PATTERN "*billboard.*" EXCLUDE)
-
-    # SIM-13848: Install release DLLs on Linux if debug not found
-    set(CONFIG "Release")
-    if(UNIX AND NOT EXISTS "${OSG_PLUGIN_PATH}/osgdb_rotd.so")
-        set(CONFIG)
-    endif()
-
-    # Note that "*billboard.*" is a release pattern and needs inclusion
-    install(DIRECTORY ${OSGEARTH_PLUGIN_PATH}/
-        DESTINATION ${OSGEARTH_PLUGIN_INSTALL_DIR}
-        CONFIGURATIONS ${CONFIG}
-        COMPONENT ${OSGEARTH_INSTALL_COMPONENT}
-        FILES_MATCHING
-            REGEX ${RELEASE_INSTALL_PATTERN}
-            PATTERN "*billboard.*")
-endif()
 
 # Create "normalized" targets based on osgEarth CMake install
 add_library(osgEarth::osgEarth ALIAS OSGEARTH)
