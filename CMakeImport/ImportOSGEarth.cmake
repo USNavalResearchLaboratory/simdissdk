@@ -190,3 +190,14 @@ if(OSGEARTH_SHOULD_INSTALL)
             REGEX ${RELEASE_INSTALL_PATTERN}
             PATTERN "*billboard.*")
 endif()
+
+# Create "normalized" targets based on osgEarth CMake install
+add_library(osgEarth::osgEarth ALIAS OSGEARTH)
+set(osgEarth_INCLUDE_DIR "${OSGEARTH_LIBRARY_INCLUDE_PATH}")
+set(osgEarth_FOUND TRUE)
+if(HAVE_OSGEARTH_SILVERLINING)
+    add_library(osgEarth::osgEarthSilverLining ALIAS OSGEARTH_SILVERLINING)
+endif()
+if(HAVE_OSGEARTH_TRITON)
+    add_library(osgEarth::osgEarthTriton ALIAS OSGEARTH_TRITON)
+endif()

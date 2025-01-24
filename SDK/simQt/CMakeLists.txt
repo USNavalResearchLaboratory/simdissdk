@@ -339,7 +339,7 @@ endif()
 if(TARGET simVis)
     target_include_directories(simQt PUBLIC
         $<BUILD_INTERFACE:${OSG_LIBRARY_INCLUDE_PATH}>
-        $<BUILD_INTERFACE:${OSGEARTH_LIBRARY_INCLUDE_PATH}>
+        $<BUILD_INTERFACE:${osgEarth_INCLUDE_DIR}>
     )
 
     # Gl3FormatGuesser depends on OpenGL libraries

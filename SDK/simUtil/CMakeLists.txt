@@ -100,13 +100,13 @@ set(UTIL_GENERATED_HEADERS)
 set(UTIL_GENERATED_SOURCES)
 
 # Append TritonSettings if we have the osgEarth Triton nodekit
-if(HAVE_OSGEARTH_TRITON AND TARGET OSGEARTH_TRITON)
+if(TARGET osgEarth::osgEarthTriton)
     list(APPEND UTIL_HEADERS ${UTIL_INC}TritonSettings.h)
     list(APPEND UTIL_SOURCES ${UTIL_SRC}TritonSettings.cpp)
 endif()
 
-# Append SilverLiningSettings if we have the osgEarth Triton nodekit
-if(HAVE_OSGEARTH_SILVERLINING AND TARGET OSGEARTH_SILVERLINING)
+# Append SilverLiningSettings if we have the osgEarth SilverLining nodekit
+if(TARGET osgEarth::osgEarthSilverLining)
     list(APPEND UTIL_HEADERS ${UTIL_INC}SilverLiningSettings.h)
     list(APPEND UTIL_SOURCES ${UTIL_SRC}SilverLiningSettings.cpp)
 endif()
@@ -161,11 +161,11 @@ if(INSTALL_SIMDIS_SDK_LIBRARIES)
     vsi_install_export(simUtil ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
-if(HAVE_OSGEARTH_TRITON AND TARGET OSGEARTH_TRITON)
-    target_link_libraries(simUtil PRIVATE OSGEARTH_TRITON)
+if(TARGET osgEarth::osgEarthTriton)
+    target_link_libraries(simUtil PRIVATE osgEarth::osgEarthTriton)
 endif()
-if(HAVE_OSGEARTH_SILVERLINING AND TARGET OSGEARTH_SILVERLINING)
-    target_link_libraries(simUtil PRIVATE OSGEARTH_SILVERLINING)
+if(TARGET osgEarth::osgEarthSilverLining)
+    target_link_libraries(simUtil PRIVATE osgEarth::osgEarthSilverLining)
 endif()
 if(TARGET SQLite::SQLite3)
     target_compile_definitions(simUtil PRIVATE SIM_HAVE_DB_SUPPORT)

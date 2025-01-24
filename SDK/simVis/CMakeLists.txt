@@ -1,4 +1,4 @@
-if(NOT TARGET simData OR NOT OSG_FOUND OR NOT OSGEARTH_FOUND)
+if(NOT TARGET simData OR NOT OSG_FOUND OR NOT TARGET osgEarth::osgEarth)
     message(STATUS "Skipping simVis because of missing dependencies.")
     return()
 endif()
@@ -433,7 +433,7 @@ target_include_directories(simVis PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(simVis PUBLIC simData simCore simNotify
-    ${OSG_ALL_LIBDEPENDENCIES} OSGEARTH)
+    ${OSG_ALL_LIBDEPENDENCIES} osgEarth::osgEarth)
 target_link_libraries(simVis PRIVATE OpenGL::GL)
 
 if(TARGET SQLite::SQLite3)
