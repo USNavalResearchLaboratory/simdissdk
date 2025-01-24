@@ -25,8 +25,10 @@ vsi_install_target(example_ocean SDK_Examples)
 # Link to Triton if available
 if(TARGET osgEarth::osgEarthTriton)
     target_link_libraries(example_ocean PRIVATE osgEarth::osgEarthTriton)
+    target_compile_definitions(example_ocean PRIVATE HAVE_OSGEARTH_TRITON)
 endif()
 # Link to SilverLining if available
 if(TARGET osgEarth::osgEarthSilverLining)
     target_link_libraries(example_ocean PRIVATE osgEarth::osgEarthSilverLining)
+    target_compile_definitions(example_ocean PRIVATE HAVE_OSGEARTH_SILVERLINING)
 endif()

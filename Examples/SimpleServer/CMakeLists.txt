@@ -32,4 +32,5 @@ vsi_install_target(example_simpleserver SDK_Examples)
 # Link to Triton if available
 if(TARGET osgEarth::osgEarthTriton)
     target_link_libraries(example_simpleserver PRIVATE osgEarth::osgEarthTriton)
+    target_compile_definitions(example_simpleserver PRIVATE HAVE_OSGEARTH_TRITON)
 endif()

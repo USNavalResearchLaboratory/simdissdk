@@ -19,8 +19,10 @@ vsi_install_target(example_periscope SDK_Examples)
 # Link to Triton and SilverLining if available
 if(TARGET osgEarth::osgEarthTriton)
     target_link_libraries(example_periscope PRIVATE osgEarth::osgEarthTriton)
+    target_compile_definitions(example_periscope PRIVATE HAVE_OSGEARTH_TRITON)
 endif()
 if (TARGET osgEarth::osgEarthSilverLining)
     target_link_libraries(example_periscope PRIVATE osgEarth::osgEarthSilverLining)
+    target_compile_definitions(example_ocean PRIVATE HAVE_OSGEARTH_SILVERLINING)
 endif()
 
