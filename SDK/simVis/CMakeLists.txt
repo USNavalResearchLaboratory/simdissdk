@@ -365,10 +365,6 @@ else()
     set_source_files_properties(${VIS_SRC}GOG/Parser.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 endif()
 
-# Detect the rename of osgEarth/ThreadingUtils to osgEarth/Threading
-if(EXISTS "${OSGEARTH_LIBRARY_INCLUDE_PATH}/osgEarth/Threading")
-    set(HAVE_OSGEARTH_THREADING 1)
-endif()
 # Detect EarthManipulator's bindTouchDrag() needed for better touch support
 include(CheckOSGEarthMethodExists)
 check_osgearth_method_exists(HAVE_EARTHMANIPULATOR_BINDTOUCHDRAG "osgEarth/EarthManipulator" "bindTouchDrag")

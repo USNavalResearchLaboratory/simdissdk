@@ -26,12 +26,7 @@
 #include "osgEarth/Version"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/ElevationQueryProxy.h"
-
-#ifdef HAVE_OSGEARTH_THREADING
 #include "osgEarth/Threading"
-#else
-#include "osgEarth/ThreadingUtils"
-#endif
 
 namespace
 {
@@ -63,11 +58,7 @@ namespace simVis
 struct ElevationQueryProxy::PrivateData
 {
  /// Future object that monitors the status of the elevation query result
-#if OSGEARTH_SOVERSION > 100
   osgEarth::Threading::Future<osgEarth::ElevationSample> elevationResult_;
-#else
-  osgEarth::Threading::Future<osgEarth::RefElevationSample> elevationResult_;
-#endif
 };
 
 /**
