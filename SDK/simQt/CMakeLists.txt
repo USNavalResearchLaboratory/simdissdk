@@ -126,6 +126,7 @@ endif()
 
 if(OSG_FOUND)
     list(APPEND SIMQT_HEADERS_TO_MOC
+        ${SIMQT_INC}ArticulationsEditorWidget.h
         ${SIMQT_INC}ColorGradientWidget.h
     )
     list(APPEND SIMQT_HEADERS
@@ -258,6 +259,7 @@ endif()
 
 if(OSG_FOUND)
     list(APPEND SIMQT_SOURCES
+        ${SIMQT_INC}ArticulationsEditorWidget.cpp
         ${SIMQT_SRC}ColorGradient.cpp
         ${SIMQT_SRC}ColorGradientWidget.cpp
         ${SIMQT_SRC}QtConversion.cpp
@@ -288,6 +290,7 @@ set(SIMQT_FORMS
 )
 if(OSG_FOUND)
     list(APPEND SIMQT_FORMS
+        ${SIMQT_INC}ArticulationsEditorWidget.ui
         ${SIMQT_INC}ColorGradientWidget.ui
     )
 endif()
