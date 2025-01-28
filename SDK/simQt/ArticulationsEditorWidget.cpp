@@ -20,19 +20,19 @@
  * disclose, or release this software.
  *
  */
-#include <QFileInfo>
-#include <QStandardItemModel>
-#include <QItemSelection>
 #include <QDoubleSpinBox>
+#include <QFileInfo>
+#include <QItemSelection>
+#include <QStandardItemModel>
 #include "osg/Sequence"
-#include "osgSim/MultiSwitch"
 #include "osgSim/DOFTransform"
+#include "osgSim/MultiSwitch"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "ui_ArticulationsEditorWidget.h"
 #include "ArticulationsEditorWidget.h"
 
-// So in can go into QVariant
+// Required to used ArticulationItem as a QVariant
 Q_DECLARE_METATYPE(simQt::ArticulationItem);
 
 namespace simQt {
@@ -71,14 +71,14 @@ ArticulationsEditorWidget::ArticulationsEditorWidget(QWidget* parent)
   connect(ui_->yScaleSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ArticulationsEditorWidget::setCurrentScaleY_);
   connect(ui_->zScaleSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ArticulationsEditorWidget::setCurrentScaleZ_);
 
-  // Add header to model.
+  // Add header to model
   itemModel_->setColumnCount(2);
   QStandardItem* item = new QStandardItem(tr("Name"));
   itemModel_->setHorizontalHeaderItem(0, item);
   item = new QStandardItem(tr("Value"));
   itemModel_->setHorizontalHeaderItem(1, item);
 
-  // Set stack widget invisible.
+  // Set stack widget invisible
   ui_->stackedWidget->setVisible(false);
 }
 
@@ -92,32 +92,32 @@ QString ArticulationsEditorWidget::articulationTypeToQString_(ArticulationType t
 {
   switch (type)
   {
-  case ARTICULATION_SEQUENCE:
+  case ArticulationType::SEQUENCE:
     return tr("Sequence");
-  case ARTICULATION_DOF_TRANSFORM:
+  case ArticulationType::DOF_TRANSFORM:
     return tr("DOF Transform");
-  case ARTICULATION_MULTI_SWITCH:
+  case ArticulationType::MULTI_SWITCH:
     return tr("MultiSwitch");
   }
 
-  // Should not get here, but return empty string anyway.
+  // Should not get here, but return empty string anyway
   assert(false);
   return QString();
 }
 
 void ArticulationsEditorWidget::displayArticulationInfo(const std::map<std::string, ArticulationItem>& articulationMap)
 {
-  // Display articulations in the treeview of the GUI. Start by clearing out model.
+  // Display articulations in the tree view of the GUI. Start by clearing out model
   itemModel_->removeRows(0, itemModel_->rowCount());
 
-  // If articulation map has articulation data, show them in the treeview.
+  // If articulation map has articulation data, show them in the tree view
   if (!articulationMap.empty())
   {
     ui_->stackedWidget->setVisible(true);
 
     for (ArticulationMap::const_iterator it = articulationMap.begin(); it != articulationMap.end(); ++it)
     {
-      // Set name for first column, type for second column.
+      // Set name for first column, type for second column
       QList<QStandardItem*> items;
       QString name = QString::fromStdString(it->first);
       QStandardItem* singleItem = new QStandardItem(name);
@@ -135,7 +135,7 @@ void ArticulationsEditorWidget::displayArticulationInfo(const std::map<std::stri
   }
   else
   {
-    // Set stack widget invisible since this model has no articulations.
+    // Set stack widget invisible since this model has no articulations
     ui_->stackedWidget->setVisible(false);
     activeNode_ = nullptr;
   }
@@ -145,8 +145,8 @@ void ArticulationsEditorWidget::updateSpinBox_(QDoubleSpinBox* box, double minVa
 {
   // For rotations and translations, check if minimum and maximum values are the same.  If so, disable box because the
   // model wasn't set for a range.  For scales, I decided to check if minimum value is set to 0 and maximum value is
-  // set to 1, which means the articulation wasn't bounded.
-  if ((minVal == maxVal) || (((type == DOF_SCALE_X) || (type == DOF_SCALE_Y) || (type == DOF_SCALE_Z)) &&
+  // set to 1, which means the articulation wasn't bounded
+  if ((minVal == maxVal) || (((type == DofType::SCALE_X) || (type == DofType::SCALE_Y) || (type == DofType::SCALE_Z)) &&
     simCore::areEqual(minVal, 0.0) && simCore::areEqual(maxVal, 1.0)))
   {
     box->setEnabled(false);
@@ -158,8 +158,8 @@ void ArticulationsEditorWidget::updateSpinBox_(QDoubleSpinBox* box, double minVa
     box->setMinimum(minVal);
     box->setMaximum(maxVal);
     box->setValue(currentVal);
-    // If the DOF is not a rotation, set spin box increment to a tenth of the total range for now.
-    if ((type != DOF_HEADING) && (type != DOF_PITCH) && (type != DOF_ROLL))
+    // If the DOF is not a rotation, set spin box increment to a tenth of the total range for now
+    if ((type != DofType::HEADING) && (type != DofType::PITCH) && (type != DofType::ROLL))
     {
       box->setSingleStep((maxVal - minVal) / 10.0);
     }
@@ -169,7 +169,7 @@ void ArticulationsEditorWidget::updateSpinBox_(QDoubleSpinBox* box, double minVa
 void ArticulationsEditorWidget::updateSlider_(QSlider* slider, double minVal, double maxVal, double currentVal)
 {
   // For rotations, check if minimum and maximum values are the same.  If so, disable slider because the
-  // model wasn't set for a range.
+  // model wasn't set for a range
   if (minVal == maxVal)
   {
     slider->setEnabled(false);
@@ -201,7 +201,7 @@ void ArticulationsEditorWidget::updateArticulationDetails_(const QItemSelection&
   ArticulationItem articulationItem = qData.value<ArticulationItem>();
 
   // If articulation is a sequence
-  if (articulationItem.articulationType_ == ARTICULATION_SEQUENCE)
+  if (articulationItem.articulationType_ == ArticulationType::SEQUENCE)
   {
     // Set stackedWidget page to sequence
     ui_->stackedWidget->setVisible(true);
@@ -228,10 +228,10 @@ void ArticulationsEditorWidget::updateArticulationDetails_(const QItemSelection&
 
     activeNode_ = articulationItem.articulationNode_;
   }
-  // Else if articulation is a degree-of-freedom transform.
-  else if (articulationItem.articulationType_ == ARTICULATION_DOF_TRANSFORM)
+  // Else if articulation is a degree-of-freedom transform
+  else if (articulationItem.articulationType_ == ArticulationType::DOF_TRANSFORM)
   {
-    // Set stackedWidget page to DOFTransform.
+    // Set stackedWidget page to DOFTransform
     ui_->stackedWidget->setVisible(true);
     ui_->stackedWidget->setCurrentIndex(1);
 
@@ -240,7 +240,7 @@ void ArticulationsEditorWidget::updateArticulationDetails_(const QItemSelection&
     osgSim::DOFTransform* dof = dynamic_cast<osgSim::DOFTransform*>(articulationItem.articulationNode_.get());
     if (dof)
     {
-      // Calculate minimum, maximum and current values for DOFTransform heading, pitch and roll.
+      // Calculate minimum, maximum and current values for DOFTransform heading, pitch and roll
       osg::Vec3 minHPR = dof->getMinHPR();
       osg::Vec3 maxHPR = dof->getMaxHPR();
       osg::Vec3 currentHPR = dof->getCurrentHPR();
@@ -254,9 +254,9 @@ void ArticulationsEditorWidget::updateArticulationDetails_(const QItemSelection&
       double maxRoll = maxHPR.z() * simCore::RAD2DEG;
       double currentRoll = currentHPR.z() * simCore::RAD2DEG;
       // Update spin boxes.
-      updateSpinBox_(ui_->headingSpin, minHeading, maxHeading, currentHeading, DOF_HEADING);
-      updateSpinBox_(ui_->pitchSpin, minPitch, maxPitch, currentPitch, DOF_PITCH);
-      updateSpinBox_(ui_->rollSpin, minRoll, maxRoll, currentRoll, DOF_ROLL);
+      updateSpinBox_(ui_->headingSpin, minHeading, maxHeading, currentHeading, DofType::HEADING);
+      updateSpinBox_(ui_->pitchSpin, minPitch, maxPitch, currentPitch, DofType::PITCH);
+      updateSpinBox_(ui_->rollSpin, minRoll, maxRoll, currentRoll, DofType::ROLL);
       // Update sliders.
       updateSlider_(ui_->headingSlider, simCore::rint(minHeading), simCore::rint(maxHeading), simCore::rint(currentHeading));
       updateSlider_(ui_->pitchSlider, simCore::rint(minPitch), simCore::rint(maxPitch), simCore::rint(currentPitch));
@@ -266,25 +266,25 @@ void ArticulationsEditorWidget::updateArticulationDetails_(const QItemSelection&
       osg::Vec3 minTranslate = dof->getMinTranslate();
       osg::Vec3 maxTranslate = dof->getMaxTranslate();
       osg::Vec3 currentTranslate = dof->getCurrentTranslate();
-      updateSpinBox_(ui_->xOffsetSpin, minTranslate.x(), maxTranslate.x(), currentTranslate.x(), DOF_TRANSLATE_X);
-      updateSpinBox_(ui_->yOffsetSpin, minTranslate.y(), maxTranslate.y(), currentTranslate.y(), DOF_TRANSLATE_Y);
-      updateSpinBox_(ui_->zOffsetSpin, minTranslate.z(), maxTranslate.z(), currentTranslate.z(), DOF_TRANSLATE_Z);
+      updateSpinBox_(ui_->xOffsetSpin, minTranslate.x(), maxTranslate.x(), currentTranslate.x(), DofType::TRANSLATE_X);
+      updateSpinBox_(ui_->yOffsetSpin, minTranslate.y(), maxTranslate.y(), currentTranslate.y(), DofType::TRANSLATE_Y);
+      updateSpinBox_(ui_->zOffsetSpin, minTranslate.z(), maxTranslate.z(), currentTranslate.z(), DofType::TRANSLATE_Z);
 
       // Set DOFTransform scaling for spin boxes.
       osg::Vec3 minScale = dof->getMinScale();
       osg::Vec3 maxScale = dof->getMaxScale();
       osg::Vec3 currentScale = dof->getCurrentScale();
-      updateSpinBox_(ui_->xScaleSpin, minScale.x(), maxScale.x(), currentScale.x(), DOF_SCALE_X);
-      updateSpinBox_(ui_->yScaleSpin, minScale.y(), maxScale.y(), currentScale.y(), DOF_SCALE_Y);
-      updateSpinBox_(ui_->zScaleSpin, minScale.z(), maxScale.z(), currentScale.z(), DOF_SCALE_Z);
+      updateSpinBox_(ui_->xScaleSpin, minScale.x(), maxScale.x(), currentScale.x(), DofType::SCALE_X);
+      updateSpinBox_(ui_->yScaleSpin, minScale.y(), maxScale.y(), currentScale.y(), DofType::SCALE_Y);
+      updateSpinBox_(ui_->zScaleSpin, minScale.z(), maxScale.z(), currentScale.z(), DofType::SCALE_Z);
     }
 
     activeNode_ = articulationItem.articulationNode_;
   }
-  // Else if articulation is a multiswitch.
-  else if (articulationItem.articulationType_ == ARTICULATION_MULTI_SWITCH)
+  // Else if articulation is a multiswitch
+  else if (articulationItem.articulationType_ == ArticulationType::MULTI_SWITCH)
   {
-    // Set stackedWidget page to multiswitch.
+    // Set stackedWidget page to multiswitch
     ui_->stackedWidget->setVisible(true);
     ui_->stackedWidget->setCurrentIndex(3);
 
@@ -320,81 +320,79 @@ void ArticulationsEditorWidget::updateSequence_(int state)
 {
   osg::Sequence* s = dynamic_cast<osg::Sequence*>(activeNode_.get());
   if (s)
-  {
     s->setMode((static_cast<Qt::CheckState>(state) == Qt::Checked) ? osg::Sequence::START : osg::Sequence::STOP);
-  }
 }
 
 void ArticulationsEditorWidget::setSpinBoxCurrentHeading_(double val)
 {
   ui_->headingSlider->setValue(static_cast<int>(val));
-  // Make sure to set value back to radians.
-  setDofTransformValue_(DOF_HEADING, val * simCore::DEG2RAD);
+  // Make sure to set value back to radians
+  setDofTransformValue_(DofType::HEADING, val * simCore::DEG2RAD);
 }
 
 void ArticulationsEditorWidget::setSliderCurrentHeading_(int val)
 {
   ui_->headingSpin->setValue(static_cast<double>(val));
-  // Make sure to set value back to radians.
-  setDofTransformValue_(DOF_HEADING, static_cast<double>(val * simCore::DEG2RAD));
+  // Make sure to set value back to radians
+  setDofTransformValue_(DofType::HEADING, static_cast<double>(val * simCore::DEG2RAD));
 }
 
 void ArticulationsEditorWidget::setSpinBoxCurrentPitch_(double val)
 {
   ui_->pitchSlider->setValue(static_cast<int>(val));
-  // Make sure to set value back to radians.
-  setDofTransformValue_(DOF_PITCH, val * simCore::DEG2RAD);
+  // Make sure to set value back to radians
+  setDofTransformValue_(DofType::PITCH, val * simCore::DEG2RAD);
 }
 
 void ArticulationsEditorWidget::setSliderCurrentPitch_(int val)
 {
   ui_->pitchSpin->setValue(static_cast<double>(val));
-  // Make sure to set value back to radians.
-  setDofTransformValue_(DOF_PITCH, static_cast<double>(val * simCore::DEG2RAD));
+  // Make sure to set value back to radians
+  setDofTransformValue_(DofType::PITCH, static_cast<double>(val * simCore::DEG2RAD));
 }
 
 void ArticulationsEditorWidget::setSpinBoxCurrentRoll_(double val)
 {
   ui_->rollSlider->setValue(static_cast<int>(val));
-  // Make sure to set value back to radians.
-  setDofTransformValue_(DOF_ROLL, val * simCore::DEG2RAD);
+  // Make sure to set value back to radians
+  setDofTransformValue_(DofType::ROLL, val * simCore::DEG2RAD);
 }
 
 void ArticulationsEditorWidget::setSliderCurrentRoll_(int val)
 {
   ui_->rollSpin->setValue(static_cast<double>(val));
-  // Make sure to set value back to radians.
-  setDofTransformValue_(DOF_ROLL, static_cast<double>(val * simCore::DEG2RAD));
+  // Make sure to set value back to radians
+  setDofTransformValue_(DofType::ROLL, static_cast<double>(val * simCore::DEG2RAD));
 }
 
 void ArticulationsEditorWidget::setCurrentTranslateX_(double val)
 {
-  setDofTransformValue_(DOF_TRANSLATE_X , val);
+  setDofTransformValue_(DofType::TRANSLATE_X , val);
 }
 
 void ArticulationsEditorWidget::setCurrentTranslateY_(double val)
 {
-  setDofTransformValue_(DOF_TRANSLATE_Y, val);
+  setDofTransformValue_(DofType::TRANSLATE_Y, val);
 }
 
 void ArticulationsEditorWidget::setCurrentTranslateZ_(double val)
 {
-  setDofTransformValue_(DOF_TRANSLATE_Z, val);
+  setDofTransformValue_(DofType::TRANSLATE_Z, val);
 }
 
 void ArticulationsEditorWidget::setCurrentScaleX_(double val)
 {
-  setDofTransformValue_(DOF_SCALE_X, val);
+  setDofTransformValue_(DofType::SCALE_X, val);
 }
 
 void ArticulationsEditorWidget::setCurrentScaleY_(double val)
 {
-  setDofTransformValue_(DOF_SCALE_Y, val);
+  setDofTransformValue_(DofType::SCALE_Y, val);
 }
 
 void ArticulationsEditorWidget::setCurrentScaleZ_(double val)
 {
-  setDofTransformValue_(DOF_SCALE_Z, val);
+  setDofTransformValue_(DofType::SCALE_Z, val);
 }
 
 void ArticulationsEditorWidget::setDofTransformValue_(DofType type, double val)
@@ -403,34 +401,34 @@ void ArticulationsEditorWidget::setDofTransformValue_(DofType type, double val)
   if (!dof)
     return;
 
-  // Set value based on type.
+  // Set value based on type
   switch (type)
   {
-  case DOF_HEADING:
+  case DofType::HEADING:
     dof->setCurrentHPR(osg::Vec3(val, dof->getCurrentHPR().y(), dof->getCurrentHPR().z()));
     break;
-  case DOF_PITCH:
+  case DofType::PITCH:
     dof->setCurrentHPR(osg::Vec3(dof->getCurrentHPR().x(), val, dof->getCurrentHPR().z()));
     break;
-  case DOF_ROLL:
+  case DofType::ROLL:
     dof->setCurrentHPR(osg::Vec3(dof->getCurrentHPR().x(), dof->getCurrentHPR().y(), val));
     break;
-  case DOF_TRANSLATE_X:
+  case DofType::TRANSLATE_X:
     dof->setCurrentTranslate(osg::Vec3(val, dof->getCurrentTranslate().y(), dof->getCurrentTranslate().z()));
     break;
-  case DOF_TRANSLATE_Y:
+  case DofType::TRANSLATE_Y:
     dof->setCurrentTranslate(osg::Vec3(dof->getCurrentTranslate().x(), val, dof->getCurrentTranslate().z()));
     break;
-  case DOF_TRANSLATE_Z:
+  case DofType::TRANSLATE_Z:
     dof->setCurrentTranslate(osg::Vec3(dof->getCurrentTranslate().x(), dof->getCurrentTranslate().y(), val));
     break;
-  case DOF_SCALE_X:
+  case DofType::SCALE_X:
     dof->setCurrentScale(osg::Vec3(val, dof->getCurrentScale().y(), dof->getCurrentScale().z()));
     break;
-  case DOF_SCALE_Y:
+  case DofType::SCALE_Y:
     dof->setCurrentScale(osg::Vec3(dof->getCurrentScale().x(), val, dof->getCurrentScale().z()));
     break;
-  case DOF_SCALE_Z:
+  case DofType::SCALE_Z:
     dof->setCurrentScale(osg::Vec3(dof->getCurrentScale().x(), dof->getCurrentScale().y(), val));
     break;
   }
@@ -452,16 +450,6 @@ void ArticulationsEditorWidget::resetArticulationsInfo_()
   itemModel_->removeRows(0, itemModel_->rowCount());
   ui_->stackedWidget->setVisible(false);
   activeNode_ = nullptr;
-}
-
-void ArticulationsEditorWidget::removeEntityArticulations_(uint64_t id)
-{
-  // If entity is the same as the one being displayed, reset articulation info being displayed and current id.
-  if (currentEntityId_ == id)
-  {
-    resetArticulationsInfo_();
-    currentEntityId_ = 0;
-  }
 }
 
 }

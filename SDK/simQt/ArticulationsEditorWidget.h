@@ -37,13 +37,15 @@ class Ui_ArticulationsEditorWidget;
 
 namespace simQt {
 
-enum ArticulationType
+/** Articulation type enumeration, describing possible articulation types on a model */
+enum class ArticulationType
 {
-  ARTICULATION_SEQUENCE,
-  ARTICULATION_DOF_TRANSFORM,
-  ARTICULATION_MULTI_SWITCH
+  SEQUENCE,
+  DOF_TRANSFORM,
+  MULTI_SWITCH
 };
 
+/** Matches an ArticulationType and an osg::Node pointer holding the articulation node */
 struct ArticulationItem
 {
   ArticulationType articulationType_;
@@ -55,97 +57,95 @@ using ArticulationMap = std::map<std::string, ArticulationItem>;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Articulations widget is the graphical editor for a model's articulations. */
+/** Articulations widget is the graphical editor for a model's articulations */
 class SDKQT_EXPORT ArticulationsEditorWidget : public QWidget
 {
   Q_OBJECT;
 public:
-  /** Instantiates a window that can be used for editing articulations. */
+  /** Instantiates a window that can be used for editing articulations */
   explicit ArticulationsEditorWidget(QWidget* parent = nullptr);
-  /** Clean up dynamic memory. */
+  /** Clean up dynamic memory */
   virtual ~ArticulationsEditorWidget();
 
-  /** Display articulation info for selected platform. */
+  /** Display articulation info for selected platform */
   void displayArticulationInfo(const std::map<std::string, ArticulationItem>& articulationMap);
 
 private Q_SLOTS:
-  /// Update articulation details to be shown in the stackedWidget.
+  /// Update articulation details to be shown in the stackedWidget
   void updateArticulationDetails_(const QItemSelection& selectedItems);
-  /// Update multiswitch articulation node.
+  /// Update multiswitch articulation node
   void updateMultiSwitch_(int multiSwitchId);
-  /// Update sequence articulation node.
+  /// Update sequence articulation node
   void updateSequence_(int state);
 
-  /// Update spin box heading for DOFTransform.
+  /// Update spin box heading for DOFTransform
   void setSpinBoxCurrentHeading_(double val);
-  /// Update slider heading for DOFTransform.
+  /// Update slider heading for DOFTransform
   void setSliderCurrentHeading_(int val);
-  /// Update spin box pitch for DOFTransform.
+  /// Update spin box pitch for DOFTransform
   void setSpinBoxCurrentPitch_(double val);
-  /// Update slider pitch for DOFTransform.
+  /// Update slider pitch for DOFTransform
   void setSliderCurrentPitch_(int val);
-  /// Update spin box roll for DOFTransform.
+  /// Update spin box roll for DOFTransform
   void setSpinBoxCurrentRoll_(double val);
-  /// Update slider roll for DOFTransform.
+  /// Update slider roll for DOFTransform
   void setSliderCurrentRoll_(int val);
-  /// Update translate x-value for DOFTransform.
+  /// Update translate x-value for DOFTransform
   void setCurrentTranslateX_(double val);
-  /// Update translate y-value for DOFTransform.
+  /// Update translate y-value for DOFTransform
   void setCurrentTranslateY_(double val);
-  /// Update translate z-value for DOFTransform.
+  /// Update translate z-value for DOFTransform
   void setCurrentTranslateZ_(double val);
-  /// Update scale x-value for DOFTransform.
+  /// Update scale x-value for DOFTransform
   void setCurrentScaleX_(double val);
-  /// Update scale y-value for DOFTransform.
+  /// Update scale y-value for DOFTransform
   void setCurrentScaleY_(double val);
-  /// Update scale z-value for DOFTransform.
+  /// Update scale z-value for DOFTransform
   void setCurrentScaleZ_(double val);
 
-  /// Reset entity articulation info from model and set stackedWidget to invisible.
+  /// Reset entity articulation info from model and set stackedWidget to invisible
   void resetArticulationsInfo_();
-  /// If entity whose articulation info is being displayed has been deleted, reset articulation info.
-  void removeEntityArticulations_(uint64_t id);
 
 private:
 
-  /// Enumeration to determine which articulation needs to be updated.
-  enum DofType
+  /// Enumeration to determine which articulation needs to be updated
+  enum class DofType
   {
-    DOF_HEADING,
-    DOF_PITCH,
-    DOF_ROLL,
-    DOF_TRANSLATE_X,
-    DOF_TRANSLATE_Y,
-    DOF_TRANSLATE_Z,
-    DOF_SCALE_X,
-    DOF_SCALE_Y,
-    DOF_SCALE_Z
+    HEADING,
+    PITCH,
+    ROLL,
+    TRANSLATE_X,
+    TRANSLATE_Y,
+    TRANSLATE_Z,
+    SCALE_X,
+    SCALE_Y,
+    SCALE_Z
   };
 
-  /** Convert articulation type to QString. */
+  /** Convert articulation type to QString */
   QString articulationTypeToQString_(ArticulationType type) const;
 
   /**
-   * Set minimum, maximum and current values for a given spin box.
-   * @param box Spin box to update.
-   * @param minVal Minimum value allowed for spin box.
-   * @param maxVal Maximum value allowed for spin box.
-   * @param currentVal Current value to be set for spin box.
-   * @param type Degree-of-freedom type.
+   * Set minimum, maximum, and current values for a given spin box
+   * @param box Spin box to update
+   * @param minVal Minimum value allowed for spin box
+   * @param maxVal Maximum value allowed for spin box
+   * @param currentVal Current value to be set for spin box
+   * @param type Degree-of-freedom type
    */
   void updateSpinBox_(QDoubleSpinBox* box, double minVal, double maxVal, double currentVal, DofType type) const;
 
   /**
-   * Set minimum, maximum and current values for a given slider.
-   * @param slider Slider to update.
-   * @param minVal Minimum value allowed for slider.
-   * @param maxVal Maximum value allowed for Slider
-   * @param currentVal Current value to be set for slider.
+   * Set minimum, maximum, and current values for a given slider
+   * @param slider Slider to update
+   * @param minVal Minimum value allowed for slider
+   * @param maxVal Maximum value allowed for slider
+   * @param currentVal Current value to be set for slider
    */
   void updateSlider_(QSlider* slider, double minVal, double maxVal, double currentVal);
 
   /**
-   * Update DOFTransform node value, changing only one degree-of-freedom at a time.
+   * Update DOFTransform node value, changing only one degree-of-freedom at a time
    * @param type Enumeration describing which DOFTransform articulation will be updated
    * @param val Value to set current articulation value to
    */
@@ -155,8 +155,6 @@ private:
   QStandardItemModel* itemModel_;
   /// Current articulated node being displayed
   osg::ref_ptr<osg::Node> activeNode_;
-  /// Current entity id being displayed
-  uint64_t currentEntityId_;
 };
 
 }
