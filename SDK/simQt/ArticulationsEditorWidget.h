@@ -27,6 +27,7 @@
 #include <QWidget>
 #include "osg/ref_ptr"
 #include "osg/Node"
+#include "simCore/Common/Export.h"
 
 class QStandardItemModel;
 class QItemSelection;
@@ -55,7 +56,7 @@ using ArticulationMap = std::map<std::string, ArticulationItem>;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Articulations widget is the graphical editor for a model's articulations. */
-class ArticulationsEditorWidget : public QWidget
+class SDKQT_EXPORT ArticulationsEditorWidget : public QWidget
 {
   Q_OBJECT;
 public:
