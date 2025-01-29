@@ -1,7 +1,8 @@
 # ----- simQt -----------------------------------------------------
 
 if(NOT Qt5Core_FOUND)
-    message(FATAL_ERROR "Cannot configure simQt without Qt.")
+    message(STATUS "Cannot configure simQt without Qt.")
+    return()
 endif()
 
 set(SIMQT_INC)
