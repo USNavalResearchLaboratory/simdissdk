@@ -44,6 +44,78 @@ enum
   DATA_ROLE,
 };
 
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+ArticulationsVisitor::ArticulationsVisitor()
+  : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN)
+{
+}
+
+/** Override the apply() method to traverse the node and subgraph */
+void ArticulationsVisitor::apply(osg::Node& node)
+{
+  visit_(dynamic_cast<osg::Sequence*>(&node));
+  visit_(dynamic_cast<osgSim::DOFTransform*>(&node));
+  visit_(dynamic_cast<osgSim::MultiSwitch*>(&node));
+  traverse(node);
+}
+
+/** Retrieve articulation info collected from the model. */
+const simQt::ArticulationMap& ArticulationsVisitor::getMap()
+{
+  return articulationMap_;
+}
+
+/** Stores sequence node name and type to map. */
+void ArticulationsVisitor::visit_(osg::Sequence* sequence)
+{
+  if (!sequence)
+    return;
+
+  // If articulation doesn't exist in the map, add it.
+  if (articulationMap_.find(sequence->getName()) == articulationMap_.end())
+  {
+    simQt::ArticulationItem item;
+    item.articulationType_ = simQt::ArticulationType::SEQUENCE;
+    item.articulationNode_ = sequence;
+    articulationMap_[sequence->getName()] = item;
+  }
+}
+
+/** Stores DOF transform node name and type to map. */
+void ArticulationsVisitor::visit_(osgSim::DOFTransform* dofTransform)
+{
+  if (!dofTransform)
+    return;
+
+  // If articulation doesn't exist in the map, add it.
+  if (articulationMap_.find(dofTransform->getName()) == articulationMap_.end())
+  {
+    simQt::ArticulationItem item;
+    item.articulationType_ = simQt::ArticulationType::DOF_TRANSFORM;
+    item.articulationNode_ = dofTransform;
+    articulationMap_[dofTransform->getName()] = item;
+  }
+}
+
+/** Stores multi-switch node name and type to map. */
+void ArticulationsVisitor::visit_(osgSim::MultiSwitch* multiSwitch)
+{
+  if (!multiSwitch)
+    return;
+
+  // If articulation doesn't exist in the map, add it.
+  if (articulationMap_.find(multiSwitch->getName()) == articulationMap_.end())
+  {
+    simQt::ArticulationItem item;
+    item.articulationType_ = simQt::ArticulationType::MULTI_SWITCH;
+    item.articulationNode_ = multiSwitch;
+    articulationMap_[multiSwitch->getName()] = item;
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 ArticulationsEditorWidget::ArticulationsEditorWidget(QWidget* parent)
   : QWidget(parent),
     ui_(new Ui_ArticulationsEditorWidget)

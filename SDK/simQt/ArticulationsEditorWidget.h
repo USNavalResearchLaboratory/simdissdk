@@ -27,6 +27,7 @@
 #include <QWidget>
 #include "osg/ref_ptr"
 #include "osg/Node"
+#include "osg/NodeVisitor"
 #include "simCore/Common/Export.h"
 
 class QStandardItemModel;
@@ -34,6 +35,12 @@ class QItemSelection;
 class QDoubleSpinBox;
 class QSlider;
 class Ui_ArticulationsEditorWidget;
+
+namespace osg { class Sequence; }
+namespace osgSim {
+  class DOFTransform;
+  class MultiSwitch;
+}
 
 namespace simQt {
 
@@ -54,6 +61,34 @@ struct ArticulationItem
 
 /// Map for storing articulation name and type
 using ArticulationMap = std::map<std::string, ArticulationItem>;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+class SDKQT_EXPORT ArticulationsVisitor : public osg::NodeVisitor
+{
+public:
+  ArticulationsVisitor();
+
+  /** Override the apply() method to traverse the node and subgraph */
+  virtual void apply(osg::Node& node);
+  /** Retrieve articulation info collected from the model. */
+  const simQt::ArticulationMap& getMap();
+
+protected:
+  /** Protect osg::Referenced-derived destructor */
+  virtual ~ArticulationsVisitor() {}
+
+private:
+  /** Stores sequence node name and type to map. */
+  void visit_(osg::Sequence* sequence);
+  /** Stores DOF transform node name and type to map. */
+  void visit_(osgSim::DOFTransform* dofTransform);
+  /** Stores multi-switch node name and type to map. */
+  void visit_(osgSim::MultiSwitch* multiSwitch);
+
+  /// Map for holding articulation name and type
+  simQt::ArticulationMap articulationMap_;
+};
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
