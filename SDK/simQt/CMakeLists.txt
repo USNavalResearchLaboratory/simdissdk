@@ -127,7 +127,6 @@ endif()
 
 if(OSG_FOUND)
     list(APPEND SIMQT_HEADERS_TO_MOC
-        ${SIMQT_INC}ArticulationsEditorWidget.h
         ${SIMQT_INC}ColorGradientWidget.h
     )
     list(APPEND SIMQT_HEADERS
@@ -135,6 +134,9 @@ if(OSG_FOUND)
         ${SIMQT_INC}MergeValues.h
         ${SIMQT_INC}QtConversion.h
     )
+endif()
+if(OSGSIM_FOUND)
+    list(APPEND SIMQT_HEADERS_TO_MOC ${SIMQT_INC}ArticulationsEditorWidget.h)
 endif()
 
 if(TARGET simUtil)
@@ -260,11 +262,13 @@ endif()
 
 if(OSG_FOUND)
     list(APPEND SIMQT_SOURCES
-        ${SIMQT_INC}ArticulationsEditorWidget.cpp
         ${SIMQT_SRC}ColorGradient.cpp
         ${SIMQT_SRC}ColorGradientWidget.cpp
         ${SIMQT_SRC}QtConversion.cpp
     )
+endif()
+if(OSGSIM_FOUND)
+    list(APPEND SIMQT_SOURCES ${SIMQT_SRC}ArticulationsEditorWidget.cpp)
 endif()
 
 # Parts of simQt depend on simUtil and simData
@@ -291,9 +295,11 @@ set(SIMQT_FORMS
 )
 if(OSG_FOUND)
     list(APPEND SIMQT_FORMS
-        ${SIMQT_INC}ArticulationsEditorWidget.ui
         ${SIMQT_INC}ColorGradientWidget.ui
     )
+endif()
+if(OSGSIM_FOUND)
+    list(APPEND SIMQT_FORMS ${SIMQT_INC}ArticulationsEditorWidget.ui)
 endif()
 
 set(SIMQT_RESOURCES
@@ -336,6 +342,10 @@ if(OSG_FOUND)
     # QtConversion.h depends on OSG, but not simVis
     target_link_libraries(simQt PUBLIC ${OSG_LIBRARIES})
     target_include_directories(simQt PUBLIC "$<BUILD_INTERFACE:${OSG_INCLUDE_DIR}>")
+endif()
+if(OSGSIM_FOUND)
+    target_link_libraries(simQt PRIVATE ${OSGSIM_LIBRARIES})
+    target_include_directories(simQt PRIVATE "$<BUILD_INTERFACE:${OSG_INCLUDE_DIR}>")
 endif()
 if(TARGET simData AND TARGET protobuf::libprotobuf)
     get_target_property(_PROTO_INC protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
