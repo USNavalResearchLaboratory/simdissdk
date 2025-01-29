@@ -1,9 +1,13 @@
+find_package(Protobuf QUIET)
+find_package(EnTT QUIET)
+
 if(NOT TARGET protobuf::libprotobuf)
     message(STATUS "Skipping simData because of missing PROTOBUF dependencies.")
     return()
 endif()
 
 # Variables used in the simDataConfig.cmake generation
+include(CreateProtobufLibrary)
 set(SIMDATA_HAVE_ENTT OFF)
 
 # ----- simData --------------------------------------------------------

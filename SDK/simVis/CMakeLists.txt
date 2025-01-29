@@ -1,4 +1,10 @@
-if(NOT TARGET simData OR NOT OSG_FOUND OR NOT TARGET osgEarth::osgEarth)
+if(NOT TARGET simData)
+    message(STATUS "Skipping simVis because of missing dependencies.")
+    return()
+endif()
+
+find_package(osgEarth QUIET)
+if(NOT TARGET osgEarth::osgEarth)
     message(STATUS "Skipping simVis because of missing dependencies.")
     return()
 endif()
@@ -432,9 +438,8 @@ target_include_directories(simVis PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(simVis PUBLIC simData simCore simNotify
-    ${OSG_ALL_LIBDEPENDENCIES} osgEarth::osgEarth)
-target_link_libraries(simVis PRIVATE OpenGL::GL)
+target_link_libraries(simVis PUBLIC simData simCore simNotify osgEarth::osgEarth)
+target_link_libraries(simVis PRIVATE OpenGL::GL ${OPENSCENEGRAPH_LIBRARIES})
 
 if(TARGET SQLite::SQLite3)
     target_link_libraries(simVis PRIVATE SQLite::SQLite3)

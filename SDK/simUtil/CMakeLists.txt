@@ -3,6 +3,9 @@ if(NOT TARGET simVis OR NOT TARGET simData)
     return()
 endif()
 
+set(SIMUTIL_HAVE_GDAL OFF)
+set(SIMUTIL_HAVE_SQLITE3 OFF)
+
 # ----- simUtil --------------------------------------------------------
 
 set(SHADER_FILES
@@ -20,7 +23,6 @@ set(UTIL_INC)
 set(UTIL_SRC)
 set(UTIL_HEADERS
     ${UTIL_SRC}DynamicSelectionPicker.h
-    ${UTIL_INC}Capabilities.h
     ${UTIL_INC}DataStoreTestHelper.h
     ${UTIL_INC}DatumConvert.h
     ${UTIL_INC}DefaultDataStoreValues.h
@@ -57,7 +59,6 @@ set(UTIL_HEADERS
 )
 set(UTIL_SOURCES
     ${UTIL_SRC}DynamicSelectionPicker.cpp
-    ${UTIL_SRC}Capabilities.cpp
     ${UTIL_SRC}DataStoreTestHelper.cpp
     ${UTIL_SRC}DatumConvert.cpp
     ${UTIL_SRC}DefaultDataStoreValues.cpp
@@ -94,6 +95,13 @@ set(UTIL_SOURCES
 if(TARGET SQLite::SQLite3)
     list(APPEND UTIL_HEADERS ${UTIL_INC}DbConfigurationFile.h)
     list(APPEND UTIL_SOURCES ${UTIL_SRC}DbConfigurationFile.cpp)
+    set(SIMUTIL_HAVE_SQLITE3 ON)
+endif()
+
+if(TARGET GDAL::GDAL AND TARGET OpenGL::GL)
+    list(APPEND UTIL_HEADERS ${UTIL_INC}Capabilities.h)
+    list(APPEND UTIL_SOURCES ${UTIL_SRC}Capabilities.cpp)
+    set(SIMUTIL_HAVE_GDAL ON)
 endif()
 
 set(UTIL_GENERATED_HEADERS)
@@ -148,18 +156,14 @@ target_include_directories(simUtil PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(simUtil PUBLIC simVis simData simCore)
-target_link_libraries(simUtil PRIVATE OpenGL::GL)
 if(SIMUTIL_SHARED)
     target_compile_definitions(simUtil PRIVATE simUtil_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simUtil PUBLIC simUtil_LIB_EXPORT_STATIC)
 endif()
 
-
-if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    configure_file(simUtilConfig.cmake.in simUtilConfig.cmake @ONLY)
-    vsi_install_export(simUtil ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
-endif()
+# Require linking to various osg libraries; these are already required by simVis, so mark required here
+target_link_libraries(simUtil PRIVATE ${OPENSCENEGRAPH_LIBRARIES})
 
 if(TARGET osgEarth::osgEarthTriton)
     target_link_libraries(simUtil PRIVATE osgEarth::osgEarthTriton)
@@ -169,6 +173,15 @@ if(TARGET osgEarth::osgEarthSilverLining)
 endif()
 if(TARGET SQLite::SQLite3)
     target_compile_definitions(simUtil PRIVATE SIM_HAVE_DB_SUPPORT)
+endif()
+if(TARGET GDAL::GDAL AND TARGET OpenGL::GL)
+    # Required by Capabilities.cpp
+    target_link_libraries(simUtil PRIVATE GDAL::GDAL OpenGL::GL)
+endif()
+
+if(INSTALL_SIMDIS_SDK_LIBRARIES)
+    configure_file(simUtilConfig.cmake.in simUtilConfig.cmake @ONLY)
+    vsi_install_export(simUtil ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
 if(INSTALL_SIMDIS_SDK_SHADERS)

@@ -113,7 +113,7 @@ if(TARGET simVis)
     )
 
     # Parts of simQt depend on both simVis and osgQt
-    if (TARGET OSGQT)
+    if(TARGET OSGQT)
         set(SIMQT_HAVE_OSGQT ON)
         list(APPEND SIMQT_HEADERS_TO_MOC
             ${SIMQT_INC}ViewWidget.h
@@ -241,7 +241,7 @@ if(TARGET simVis)
     )
 
     # Parts of simQt depend on both simVis and osgQt
-    if (TARGET OSGQT)
+    if(TARGET OSGQT)
         list(APPEND SIMQT_SOURCES
             ${SIMQT_SRC}Gl3FormatGuesser.cpp
             ${SIMQT_SRC}ViewWidget.cpp
@@ -331,9 +331,10 @@ target_include_directories(simQt
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
-if(TARGET OSG)
+if(OSG_FOUND)
     # QtConversion.h depends on OSG, but not simVis
-    target_link_libraries(simQt PUBLIC OSG)
+    target_link_libraries(simQt PUBLIC ${OSG_LIBRARIES})
+    target_include_directories(simQt PUBLIC "${OSG_INCLUDE_DIR}")
 endif()
 if(TARGET simData AND TARGET protobuf::libprotobuf)
     get_target_property(_PROTO_INC protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
@@ -344,15 +345,12 @@ if(TARGET simVis)
         $<BUILD_INTERFACE:${OSG_LIBRARY_INCLUDE_PATH}>
         $<BUILD_INTERFACE:${osgEarth_INCLUDE_DIR}>
     )
-
-    # Gl3FormatGuesser depends on OpenGL libraries
-    target_link_libraries(simQt PRIVATE OpenGL::GL)
 endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
 target_link_libraries(simQt PUBLIC simCore simNotify)
 if(TARGET OSGQT)
-    target_link_libraries(simQt PUBLIC OSGQT)
+    target_link_libraries(simQt PUBLIC OSGQT PRIVATE OpenGL::GL)
 endif()
 
 # Parts of simQt depend on simData's protobuf generated code
@@ -381,8 +379,6 @@ if(TARGET simVis)
         target_compile_definitions(simQt PRIVATE HAVE_SIMUTIL)
         target_link_libraries(simQt PRIVATE simUtil)
     endif()
-elseif(OSG_FOUND)
-    target_link_libraries(simQt PRIVATE OSG OPENTHREADS)
 endif()
 
 if(TARGET OSGQT)

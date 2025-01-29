@@ -1,4 +1,9 @@
-if(NOT TARGET GLEW::GLEW OR NOT TARGET simVis)
+if(NOT TARGET simVis)
+    return()
+endif()
+
+find_package(GLEW)
+if(NOT TARGET GLEW::GLEW OR NOT TARGET osgEarth::osgEarth OR NOT TARGET OpenGL::GL)
     return()
 endif()
 
@@ -26,7 +31,7 @@ set(SOURCE_FILES
 )
 
 add_library(ImGuiLib ${SOURCE_FILES})
-target_include_directories(ImGuiLib PUBLIC . )
+target_include_directories(ImGuiLib PUBLIC .)
 target_link_libraries(ImGuiLib PUBLIC OpenGL::GL GLEW::GLEW osgEarth::osgEarth PRIVATE simVis simCore simNotify)
 target_compile_definitions(ImGuiLib PRIVATE IMGUI_IMPL_OPENGL_LOADER_GLEW)
 if(CMAKE_COMPILER_IS_GNUCXX)

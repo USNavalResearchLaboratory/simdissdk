@@ -1,13 +1,24 @@
 include(CMakeFindDependencyMacro)
+
+# GLEW needs variable set
+if(NOT "x@GLEW_USE_STATIC_LIBS@" STREQUAL "x")
+    set(GLEW_USE_STATIC_LIBS ON)
+endif()
+
 find_dependency(simNotify)
 find_dependency(simCore)
 find_dependency(simData)
+find_dependency(osgEarth)
 
 # The dependencies below are only required for static builds (private links)
 if(NOT @SIMVIS_SHARED@)
     find_dependency(OpenGL)
     if(@SIMVIS_HAVE_SQLITE@)
-        find_dependency(SQLite3)
+        if(@SQLite3_VCPKG@)
+            find_dependency(unofficial-sqlite3 CONFIG)
+        else()
+            find_dependency(SQLite3)
+        endif()
     endif()
 endif()
 

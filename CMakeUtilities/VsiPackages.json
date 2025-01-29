@@ -33,6 +33,14 @@
       "version": "1.91.6"
     },
     {
+      "name": "MRSID",
+      "dir": "MrSID_DSDK",
+      "version": [
+         "9.5.5.5244",
+         "9.5.4.4709"
+      ]
+    },
+    {
       "name": "OSG",
       "dir": "OpenSceneGraph",
       "version": "3.6.5"

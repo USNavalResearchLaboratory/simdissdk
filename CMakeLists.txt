@@ -165,14 +165,6 @@ endif()
 
 # Setup third party dependencies
 
-
-# OSG: allow the user to set OSG_DIR in CMAKE GUI and auto-populate all the OSG libraries:
-set(OSG_DIR "" CACHE PATH "OpenSceneGraph root directory")
-if(NOT ENV{OSG_DIR} AND NOT ENV{OSGDIR} AND NOT ENV{OSG_ROOT})
-    set(ENV{OSG_DIR} ${OSG_DIR})
-endif()
-set(OSG_INCLUDE_DIR ${OSG_DIR}/include)
-
 # Prepopulate the installation runtime and library directory to override SIMDIS defaults
 set(INSTALLSETTINGS_RUNTIME_DIR "bin" CACHE STRING "Directory containing exectuables and DLLs; non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
 set(INSTALLSETTINGS_LIBRARY_DIR "lib" CACHE STRING "Directory containing shared object files (UNIX only); non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
@@ -180,59 +172,39 @@ include(CreateInstallProperties)
 
 
 # --- System Libraries --------------------
-find_package(OpenGL)
 
-# --- Qt ----------------------------------
+find_package(OpenGL QUIET)
+find_package(OpenSceneGraph COMPONENTS osgDB osgGA osgSim osgText osgUtil osgViewer QUIET)
+find_package(GDAL CONFIG)
+find_package(osgEarth)
 
-# Attempt to find Qt so we can build the Qt example(s).
+# Find SQLite for DB file support in simVis and simUtil
+find_package(SQLite3 QUIET)
+set(SQLite3_VCPKG OFF)
+if(NOT SQLite3_FOUND)
+    # Support vcpkg SQLite3 package/target name
+    find_package(unofficial-sqlite3 CONFIG QUIET)
+    if(unofficial-sqlite3_FOUND)
+        add_target(SQLite::SQLite3 ALIAS unofficial::sqlite3::sqlite3)
+        set(SQLite3_FOUND TRUE)
+        set(SQLite3_VCPKG ON)
+    endif()
+endif()
+
 find_package(Qt5 COMPONENTS OpenGL Widgets)
 # Need to silence deprecation for MSVC 2022 and Qt5 to avoid build errors
 if(MSVC AND TARGET Qt5::Core AND Qt5Core_VERSION VERSION_LESS 5.15.17)
     target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
 endif()
 
-
-# --- OpenSceneGraph ----------------------
-
-# OSG requires GDAL, and VSI-distributed GDAL requires MrSID
-include(ImportMrSID)
-find_package(GDAL CONFIG)
-
-# import the package OSG and its companion OpenThreads
-include(ImportOpenThreads)
-include(ImportOSG)
 include(ImportOSGQt)
 
-## Find and include the OpenGL core header
+# Find and include the OpenGL core header
 # By default search for the GLCORE header in the OSG include path.  Non-default locations for the header
 # can be set through the GLCORE_GLCOREARB_HEADER CMake cache variable
 find_package(GLCORE)
 
-
 # --- osgEarth -----------------------------
-
-# VSI-distributed osgEarth requires GEOS
-find_package(GEOS)
-
-# allow the user to set OSGEARTH_DIR in CMAKE GUI and auto-populate all OSGEARTH libraries:
-set(OSGEARTH_DIR "" CACHE PATH "osgEarth root directory")
-include(ImportOSGEarth)
-
-# --- GLEW -----------------------------
-find_package(GLEW)
-if(TARGET GLEW::GLEW AND TARGET GLEW::glew_s AND WIN32)
-    target_compile_definitions(GLEW::GLEW INTERFACE GLEW_STATIC)
-endif()
-
-# --- Protocol Buffers -----------------------------
-find_package(Protobuf)
-include(CreateProtobufLibrary)
-
-# --- ENTT -----------------------------
-find_package(EnTT)
-
-# --- SQLITE3 -----------------------------
-find_package(SQLite3)
 
 # subprojects
 add_subdirectory(SDK)
@@ -263,7 +235,10 @@ include(InstallCMakeExports)
 if(INSTALL_THIRDPARTY_LIBRARIES)
     include(InstallData.3rd.GDAL)
     include(InstallData.3rd.GEOS)
+    include(InstallData.3rd.MrSID)
+    include(InstallData.3rd.OSG)
     include(InstallData.3rd.osgEarth)
+    include(InstallData.3rd.osgQt)
     include(InstallData.3rd.Qt5)
 endif()
 

@@ -9,6 +9,7 @@ if(@SIMQT_HAVE_SIMDATA@)
 endif()
 if(@SIMQT_HAVE_OSGQT@)
     find_dependency(Qt5OpenGL)
+    include("${CMAKE_CURRENT_LIST_DIR}/../ImportOSGQt.cmake")
 endif()
 
 # The dependencies below are only required for static builds (private links)
