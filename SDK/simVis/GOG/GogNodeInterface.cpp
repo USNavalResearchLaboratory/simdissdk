@@ -1989,12 +1989,12 @@ void FeatureNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& 
   }
 
   // since we may have applied an altitude offset, get the original altitude values before serializing
-  osgEarth::Geometry originalGeometry = *geometry;
-  for (size_t i = 0; i < originalGeometry.size(); ++i)
+  osg::ref_ptr<osgEarth::Geometry> originalGeometry = geometry->clone();
+  for (size_t i = 0; i < originalGeometry->size(); ++i)
   {
-    originalGeometry[i].z() = originalAltitude_.at(i);
+    (*originalGeometry)[i].z() = originalAltitude_.at(i);
   }
-  Utils::serializeShapeGeometry(&originalGeometry, relativeShape, gogOutputStream);
+  Utils::serializeShapeGeometry(originalGeometry.get(), relativeShape, gogOutputStream);
 }
 
 void FeatureNodeInterface::markDirty()

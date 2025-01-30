@@ -53,7 +53,7 @@ GogNodeInterface* TextAnnotation::deserialize(
   // parse:
   const std::string text = simCore::GOG::GogUtils::decodeAnnotation(parsedShape.stringValue(GOG_TEXT));
 
-  p.parseGeometry<Geometry>(parsedShape);
+  p.parseGeometry<PointSet>(parsedShape);
   GogNodeInterface* rv = nullptr;
   osgEarth::GeoPositionNode* label = nullptr;
   if (parsedShape.hasValue(GOG_IMAGEFILE))

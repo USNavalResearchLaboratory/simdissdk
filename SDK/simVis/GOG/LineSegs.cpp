@@ -47,7 +47,7 @@ GogNodeInterface* LineSegs::deserialize(const ParsedShape& parsedShape,
                       const GogMetaData&       metaData,
                       osgEarth::MapNode*       mapNode)
 {
-  osg::ref_ptr<Geometry> temp = new Geometry();
+  osg::ref_ptr<Geometry> temp = new LineString();
   p.parseLineSegmentPoints(parsedShape, p.units_, temp.get(), p.geomIsLLA_);
 
   MultiGeometry* m = new MultiGeometry();
