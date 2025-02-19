@@ -657,6 +657,9 @@ private:
   };
 
 private:
+  /// Look for transitions from Live mode to File mode to force an update to hide expired platforms
+  class ClockModeMonitor;
+
   /// Invokes the appropriate callbacks for the given entities
   void invokePreferenceChangeCallback_(const std::map<simData::ObjectId, CommitResult>& results, ListenerList& localCopy);
 
@@ -796,6 +799,9 @@ private:
 
   /// Links together the TableManager::NewRowDataListener to our newUpdatesListener_
   std::shared_ptr<NewRowDataToNewUpdatesAdapter> newRowDataListener_;
+
+  /// Look for transitions from Live mode to File mode to force an update to hide expired platforms
+  std::shared_ptr<ClockModeMonitor> clockModeMonitor_;
 
 }; // End of class MemoryDataStore
 

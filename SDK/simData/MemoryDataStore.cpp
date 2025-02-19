@@ -217,6 +217,47 @@ private:
 
 //----------------------------------------------------------------------------
 
+/** Look for transitions from Live mode to File mode to force an update to hide expired platforms */
+class MemoryDataStore::ClockModeMonitor : public simCore::Clock::ModeChangeObserver
+{
+public:
+  explicit ClockModeMonitor(MemoryDataStore& parent)
+    : parent_(parent)
+  {
+  }
+
+  virtual void onModeChange(simCore::Clock::Mode newMode) override
+  {
+    // When switching to File mode force an update so that the lifespans of platforms are calculated
+    if ((newMode == simCore::Clock::MODE_STEP) || (newMode == simCore::Clock::MODE_REALTIME))
+      parent_.hasChanged_ = true;
+  }
+
+  virtual void onDirectionChange(simCore::TimeDirection newDirection) override
+  {
+  }
+
+  virtual void onScaleChange(double newValue) override
+  {
+  }
+
+  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override
+  {
+  }
+
+  virtual void onCanLoopChange(bool newVal) override
+  {
+  }
+
+  virtual void onUserEditableChanged(bool userCanEdit) override
+  {
+  }
+
+private:
+  MemoryDataStore& parent_;
+};
+
+
 /** Group multiple callbacks into one callback */
 class CompositeDataStoreListener : public simData::DataStore::DefaultListener
 {
@@ -1477,6 +1518,7 @@ MemoryDataStore::MemoryDataStore()
   auto data = new MemoryGenericDataSlice();
   data->setTimeGetter([this]() { return updateTime(); });
   genericData_[0] = data;
+  clockModeMonitor_ = std::make_unique<ClockModeMonitor>(*this);
 }
 
 ///construct with properties
@@ -1501,11 +1543,15 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
   auto data = new MemoryGenericDataSlice();
   data->setTimeGetter([this]() { return updateTime(); });
   genericData_[0] = data;
+  clockModeMonitor_ = std::make_shared<ClockModeMonitor>(*this);
 }
 
 ///destructor
 MemoryDataStore::~MemoryDataStore()
 {
+  if (boundClock_)
+    boundClock_->removeModeChangeCallback(clockModeMonitor_);
+
   clearMemory_();
   delete categoryNameManager_;
   categoryNameManager_ = nullptr;
@@ -2168,7 +2214,13 @@ void MemoryDataStore::invokePreferenceChangeCallback_(const std::map<simData::Ob
 
 void MemoryDataStore::bindToClock(simCore::Clock* clock)
 {
+  if (boundClock_)
+    boundClock_->removeModeChangeCallback(clockModeMonitor_);
+
   boundClock_ = clock;
+
+  if (boundClock_)
+    boundClock_->registerModeChangeCallback(clockModeMonitor_);
 }
 
 simCore::Clock* MemoryDataStore::getBoundClock() const
