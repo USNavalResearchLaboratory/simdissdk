@@ -23,8 +23,8 @@ macro(check_osgearth_method_exists VARIABLE FILENAME METHOD)
         if(NOT CMAKE_REQUIRED_QUIET)
             message(STATUS "Looking for ${METHOD}() in ${FILENAME}")
         endif()
-        if(EXISTS "${OSGEARTH_LIBRARY_INCLUDE_PATH}/${FILENAME}")
-            file(STRINGS "${OSGEARTH_LIBRARY_INCLUDE_PATH}/${FILENAME}"
+        if(EXISTS "${osgEarth_INCLUDE_DIR}/${FILENAME}")
+            file(STRINGS "${osgEarth_INCLUDE_DIR}/${FILENAME}"
                 _OUTPUT
                 REGEX "^.* ${METHOD} *\\("
             )

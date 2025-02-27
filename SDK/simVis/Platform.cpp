@@ -168,7 +168,6 @@ PlatformNode::PlatformNode(const simData::PlatformProperties& props,
   ds_(dataStore),
   platformTspiFilterManager_(manager),
   lastUpdateTime_(-std::numeric_limits<float>::max()),
-  firstHistoryTime_(std::numeric_limits<float>::max()),
   eciLocator_(eciLocator),
   expireModeGroupAttach_(expireModeGroupAttach),
   track_(nullptr),
@@ -271,6 +270,10 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   // if the platform is valid, update if this platform should be drawn
   if (valid_)
     setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_PLATFORM : simVis::DISPLAY_MASK_NONE);
+
+  callSign_ = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, true);
+  if (prefs.commonprefs().labelprefs().namelength() > 0)
+    callSign_ = callSign_.substr(0, prefs.commonprefs().labelprefs().namelength());
 
   // update our model prefs
   if (prefsDraw)
@@ -520,8 +523,6 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase);
   assert(updateSlice);
 
-  firstHistoryTime_ = (updateSlice->numItems() == 0) ? std::numeric_limits<float>::max() : updateSlice->firstTime();
-
   // apply the queued invalidate first, so the state can then be further arbitrated by any new data points
   if (queuedInvalidate_)
   {
@@ -544,12 +545,11 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   // this should only matter in file mode.
   if (!updateSlice->current() && (updateSlice->hasChanged() || updateSlice->isDirty()))
   {
-    const double firstTime = updateSlice->firstTime();
-    if (firstTime != std::numeric_limits<double>::max() && ds_.updateTime() < firstTime)
+    if (startTime_ != std::numeric_limits<double>::max() && ds_.updateTime() < startTime_)
     {
-      if (getLocator()->getTime() != firstTime)
+      if (getLocator()->getTime() != startTime_)
       {
-        const simData::PlatformUpdateSlice::Iterator platformIter = updateSlice->lower_bound(firstTime);
+        const simData::PlatformUpdateSlice::Iterator platformIter = updateSlice->lower_bound(startTime_);
         const simData::PlatformUpdate* platformUpdate = platformIter.peekNext();
         // we verified that the slice had a first time, so we must have a valid update at that time
         assert(platformUpdate);
@@ -559,12 +559,11 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
     }
     else
     {
-      const double lastTime = updateSlice->lastTime();
-      if (lastTime != -std::numeric_limits<double>::max() && ds_.updateTime() > lastTime)
+      if (endTime_ != -std::numeric_limits<double>::max() && ds_.updateTime() > endTime_)
       {
-        if (getLocator()->getTime() != lastTime)
+        if (getLocator()->getTime() != endTime_)
         {
-          const simData::PlatformUpdateSlice::Iterator platformIter = updateSlice->lower_bound(lastTime);
+          const simData::PlatformUpdateSlice::Iterator platformIter = updateSlice->lower_bound(endTime_);
           const simData::PlatformUpdate* platformUpdate = platformIter.peekNext();
           // we verified that the slice had a last time, so we must have a valid update at that time
           assert(platformUpdate);
@@ -581,8 +580,8 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   // Time can completely jump over the life span of the platform.
   // The method updateSlice->hasChanged() will indicate no change, but the code should not kick out early.
   const bool timeJumpOverLifeSpan = (timeChanged && (updateSlice->numItems() != 0) &&
-    (((lastUpdateTime_ <= updateSlice->firstTime()) && (ds_.updateTime() >= updateSlice->lastTime())) ||
-    ((ds_.updateTime() <= updateSlice->firstTime()) && (lastUpdateTime_ >= updateSlice->lastTime()))));
+    (((lastUpdateTime_ <= startTime_) && (ds_.updateTime() >= endTime_)) ||
+    ((ds_.updateTime() <= startTime_) && (lastUpdateTime_ >= endTime_))));
 
   if (!updateSlice->hasChanged() && !timeJumpOverLifeSpan && !force && !forceUpdateFromDataStore_)
   {
@@ -711,7 +710,7 @@ bool PlatformNode::showTrackTrail_(const simData::PlatformPrefs& prefs) const
 bool PlatformNode::showExpiredTrackHistory_(const simData::PlatformPrefs& prefs) const
 {
   const bool showHistory = prefs.has_trackprefs() && prefs.trackprefs().has_expiremode() && prefs.trackprefs().expiremode();
-  return showHistory && (ds_.updateTime() >= firstHistoryTime_);
+  return showHistory && (ds_.updateTime() >= startTime_);
 }
 
 bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
@@ -825,19 +824,18 @@ void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
   if (!valid_)
     return;
 
-  std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, true);
-  if (prefs.commonprefs().labelprefs().namelength() > 0)
-    label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
+  std::string label = callSign_;
 
-  std::string text;
   if (prefs.commonprefs().labelprefs().draw())
-    text = labelContentCallback().createString(prefs, *labelUpdate_(prefs), prefs.commonprefs().labelprefs().displayfields());
-
-  if (!text.empty())
   {
-    if (!label.empty())
-      label += "\n";
-    label += text;
+    std::string text = labelContentCallback().createString(prefs, *labelUpdate_(prefs), prefs.commonprefs().labelprefs().displayfields());
+
+    if (!text.empty())
+    {
+      if (!label.empty())
+        label += "\n";
+      label += text;
+    }
   }
 
   float zOffset = 0.0f;
@@ -1304,6 +1302,12 @@ unsigned int PlatformNode::objectIndexTag() const
 int PlatformNode::acceptProjectors(const std::vector<ProjectorNode*>& projectors)
 {
   return acceptProjectors_(model_->offsetNode(), projectors);
+}
+
+void PlatformNode::setTimeRange(double start, double end)
+{
+  startTime_ = start;
+  endTime_ = end;
 }
 
 }

@@ -23,6 +23,7 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
     GogTest.cpp
     GogToGeoFenceTest.cpp
     InterpolationTest.cpp
+    LutTest.cpp
     MagneticVarianceTest.cpp
     MathTest.cpp
     MgrsTest.cpp
@@ -78,6 +79,7 @@ add_test(NAME CoreGarsTest COMMAND SimCoreTests GarsTest)
 add_test(NAME CoreMgrsTest COMMAND SimCoreTests MgrsTest)
 add_test(NAME CoreTimeClassTest COMMAND SimCoreTests TimeClassTest)
 add_test(NAME CoreInterpolationTest COMMAND SimCoreTests InterpolationTest)
+add_test(NAME CoreLutTest COMMAND SimCoreTests LutTest)
 add_test(NAME CoreValidNumberTest COMMAND SimCoreTests ValidNumberTest)
 add_test(NAME CoreTimeStringTest COMMAND SimCoreTests TimeStringTest)
 add_test(NAME CoreTimeUtilsTest COMMAND SimCoreTests TimeUtilsTest)

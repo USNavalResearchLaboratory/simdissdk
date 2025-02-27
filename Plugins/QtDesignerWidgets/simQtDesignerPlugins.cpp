@@ -23,6 +23,7 @@
 #include <QtCore/QtPlugin>
 #include "ColorButtonPlugin.h"
 #ifdef HAVE_OSG
+#include "ArticulationsEditorWidgetPlugin.h"
 #include "ColorGradientWidgetPlugin.h"
 #endif
 #include "ColorWidgetPlugin.h"
@@ -54,6 +55,7 @@ simQtDesignerPlugins::simQtDesignerPlugins(QObject* parent) : QObject(parent)
   widgetFactories_.append(new CategoryFilterWidgetPlugin(this));
   widgetFactories_.append(new ColorButtonPlugin(this));
 #ifdef HAVE_OSG
+  widgetFactories_.append(new ArticulationsEditorWidgetPlugin(this));
   widgetFactories_.append(new ColorGradientWidgetPlugin(this));
 #endif
   widgetFactories_.append(new ColorWidgetPlugin(this));

@@ -1,0 +1,77 @@
+{
+  "packages": [
+    {
+      "name": "ENTT",
+      "dir": "EnTT",
+      "version": "3.14.0"
+    },
+    {
+      "name": "GDAL",
+      "version": [
+        "3.10.0",
+        "3.8.2"
+      ],
+      "depend": "GEOS"
+    },
+    {
+      "name": "GEOS",
+      "version": "3.11.0"
+    },
+    {
+      "name": "GLEW",
+      "version": "2.1.0",
+      "cmake_vars": [
+        {
+          "name": "GLEW_USE_STATIC_LIBS",
+          "value": "TRUE"
+        }
+      ]
+    },
+    {
+      "name": "MRSID",
+      "dir": "MrSID_DSDK",
+      "version": [
+         "9.5.5.5244",
+         "9.5.4.4709"
+      ]
+    },
+    {
+      "name": "OSG",
+      "dir": "OpenSceneGraph",
+      "version": "3.6.5"
+    },
+    {
+      "name": "OSGEARTH",
+      "dir": "osgEarth",
+      "version": "OSG-3.6.5",
+      "depend": "OSG"
+    },
+    {
+      "name": "PROTOBUF",
+      "dir": "protobuf",
+      "version": "3.21.12",
+      "cmake_vars": [
+        {
+          "name": "Protobuf_USE_STATIC_LIBS",
+          "value": "TRUE"
+        }
+      ]
+    },
+    {
+      "name": "QT5",
+      "version": "5.15"
+    },
+    {
+      "name": "SQLITE",
+      "dir": "SQLite",
+      "version": "3.42.0"
+    },
+    {
+      "name": "SWIG",
+      "version": [
+        "4.3.0",
+        "4.2.1"
+      ]
+    }
+  ]
+}

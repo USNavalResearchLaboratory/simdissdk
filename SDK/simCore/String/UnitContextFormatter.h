@@ -44,21 +44,21 @@ public:
   UnitContextFormatter(const UnitContext* unitsProvider);
   virtual ~UnitContextFormatter();
 
-  virtual std::string formatLatitude(double val, DegreeSymbolFormat format=DEG_SYM_NONE, bool allNumerics=false) const;
-  virtual std::string formatLongitude(double val, DegreeSymbolFormat format=DEG_SYM_NONE, bool allNumerics=false) const;
-  virtual std::string formatAngle(double val, AngleExtents angleFormat=ANGLEEXTENTS_ALL, DegreeSymbolFormat degreeFormat=DEG_SYM_NONE) const;
-  virtual std::string formatAzimuth(const Vec3& lla, const TimeStamp& timeStamp, double az, CoordinateSystem coordSystem, double offset, DegreeSymbolFormat degreeFormat=DEG_SYM_NONE) const;
-  virtual std::string formatDistance(double val) const;
-  virtual std::string formatAltitude(double alt) const;
-  virtual std::string formatAltitude(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem, double offset, VerticalDatum outputDatum) const;
-  virtual std::string formatSpeed(double val) const;
-  virtual std::string formatTime(double sec) const;
-  virtual std::string formatTime(const TimeStamp& timeStamp) const;
-  virtual std::string formatDouble(double val) const;
-  virtual std::string formatRGBA(unsigned short red, unsigned short green, unsigned short blue, unsigned short alpha) const;
+  virtual std::string formatLatitude(double val, DegreeSymbolFormat format=DEG_SYM_NONE, bool allNumerics=false) const override;
+  virtual std::string formatLongitude(double val, DegreeSymbolFormat format=DEG_SYM_NONE, bool allNumerics=false) const override;
+  virtual std::string formatAngle(double val, AngleExtents angleFormat=ANGLEEXTENTS_ALL, DegreeSymbolFormat degreeFormat=DEG_SYM_NONE) const override;
+  virtual std::string formatAzimuth(const Vec3& lla, const TimeStamp& timeStamp, double az, CoordinateSystem coordSystem, double offset, DegreeSymbolFormat degreeFormat=DEG_SYM_NONE) const override;
+  virtual std::string formatDistance(double val) const override;
+  virtual std::string formatAltitude(double alt) const override;
+  virtual std::string formatAltitude(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem, double offset) const override;
+  virtual std::string formatSpeed(double val) const override;
+  virtual std::string formatTime(double sec) const override;
+  virtual std::string formatTime(const TimeStamp& timeStamp) const override;
+  virtual std::string formatDouble(double val) const override;
+  virtual std::string formatRGBA(unsigned short red, unsigned short green, unsigned short blue, unsigned short alpha) const override;
 
-  virtual double rawAzimuth(const Vec3& lla, const TimeStamp& timeStamp, double az, CoordinateSystem coordSystem, double offset) const;
-  virtual double rawAltitude(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem, double offset, VerticalDatum outputDatum) const;
+  virtual double rawAzimuth(const Vec3& lla, const TimeStamp& timeStamp, double az, CoordinateSystem coordSystem, double offset) const override;
+  virtual double rawAltitude(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem, double offset) const override;
 
 private:
   /** Generic formatting of a double value with given precision */

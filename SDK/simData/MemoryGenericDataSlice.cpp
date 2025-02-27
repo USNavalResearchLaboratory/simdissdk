@@ -316,7 +316,7 @@ private:
   {
     double time;
     int index;
-    TimeIndex(double inTime = 0.0, int inIndex = 0)
+    explicit TimeIndex(double inTime = 0.0, int inIndex = 0)
       : time(inTime),
         index(inIndex)
     {}
@@ -334,7 +334,7 @@ private:
   {
     std::string value;
     int referenceCount;
-    ValueIndex(const std::string& inValue="", int inReferenceCount=0)
+    explicit ValueIndex(const std::string& inValue="", int inReferenceCount=0)
       : value(inValue),
         referenceCount(inReferenceCount)
     {}
@@ -476,6 +476,11 @@ bool MemoryGenericDataSlice::update(double time)
   return true;
 }
 
+void MemoryGenericDataSlice::setTimeGetter(const std::function<double()>& fn)
+{
+  fn_ = fn;
+}
+
 void MemoryGenericDataSlice::insert(GenericData* data, bool ignoreDuplicates)
 {
   // Should always pass data in
@@ -590,6 +595,9 @@ void MemoryGenericDataSlice::modify(Modifier* modifier)
 
 const GenericData* MemoryGenericDataSlice::current() const
 {
+  if (fn_)
+    current_.set_time(fn_());
+
   if (!hasChanged())
   {
     if (current_.time() == lastTime_)

@@ -718,6 +718,8 @@ PlatformNode* ScenarioManager::addPlatform(const simData::PlatformProperties& pr
     dataStore.referenceYear());
   node->getModel()->addCallback(new BeamNoseFixer(this));
 
+  dataStore.installSliceTimeRangeMonitor(node->getId(), [node](double start, double end) { node->setTimeRange(start, end); });
+
   // put it in the vis database.
   entities_[node->getId()] = new EntityRecord(
     node,

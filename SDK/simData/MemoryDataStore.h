@@ -120,6 +120,12 @@ public:
   virtual Interpolator* interpolator() const override;
   ///@}
 
+  /// Sets the interpolation state; returns true if interpolation is enabled
+  virtual bool enableInterpolation(InterpolatorState state) override;
+
+  /// Returns the interpolation state
+  virtual InterpolatorState interpolatorState() const override;
+
   /**@name ID Lists
    * @{
    */
@@ -305,6 +311,9 @@ public:
 
   virtual const CategoryDataSlice *categoryDataSlice(ObjectId id) const override;
   ///@}
+
+  /// @copydoc simData::DataStore::installSliceTimeRangeMonitor
+  virtual void installSliceTimeRangeMonitor(ObjectId id, std::function<void(double startTime, double endTime)> fn) override;
 
   /// @copydoc simData::DataStore::modifyPlatformCommandSlice
   virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) override;
@@ -648,20 +657,19 @@ private:
   };
 
 private:
+  /// Look for transitions from Live mode to File mode to force an update to hide expired platforms
+  class ClockModeMonitor;
+
   /// Invokes the appropriate callbacks for the given entities
   void invokePreferenceChangeCallback_(const std::map<simData::ObjectId, CommitResult>& results, ListenerList& localCopy);
 
   /// Clean up memory
   void clearMemory_();
-  /// Updates all the platforms
-  void updatePlatforms_(double time, std::map<simData::ObjectId, CommitResult>& results);
-  /// Updates every other platform; oddeven dictates wich platform is the starting point
-  void updatePlatformsOddEven_(bool oddeven, double time, std::map<simData::ObjectId, CommitResult>& allResults);
 
   /// Updates a target beam
   void updateTargetBeam_(ObjectId id, BeamEntry* beam, double time);
   /// Updates all the beams
-  void updateBeams_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
+  void updateBeams_(double time);
   /// Gets the beam that corresponds to specified gate
   BeamEntry* getBeamForGate_(google::protobuf::uint64 gateID);
   /// Updates a target gate
@@ -675,17 +683,13 @@ private:
   bool gateUsesBeamBeamwidth_(GateEntry* gate) const;
 
   /// Updates all the gates
-  void updateGates_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
+  void updateGates_(double time);
   /// Updates all the lasers
-  void updateLasers_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
+  void updateLasers_(double time);
   /// Updates all the projectors
-  void updateProjectors_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
+  void updateProjectors_(double time);
   /// Updates all the LobGroups
-  void updateLobGroups_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
-  /// Updates all the CustomRenderings
-  void updateCustomRenderings_(double time, std::map<simData::ObjectId, CommitResult>& allResults);
-  /// Updates all category data
-  void updateCategoryData_(double time, std::vector<simData::ObjectId>& ids);
+  void updateLobGroups_(double time);
   /// Flushes an entity based on the given scope, fields and time ranges
   void flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields, double startTime, double endTime);
   /// Flushes an entity's data tables
@@ -713,7 +717,7 @@ private:
   bool     hasChanged_; // has something changed since last update
 
   // interpolation
-  bool          interpolationEnabled_;
+  InterpolatorState interpolationEnabled_ = InterpolatorState::OFF;
   Interpolator *interpolator_;
 
   // all the data
@@ -732,6 +736,8 @@ private:
   class HostChildCache;
   /// To improve performance keep track of Original IDs
   class OriginalIdCache;
+  /// Improve performance by caching the slice state
+  class SliceCacheObserver;
 
   /// Key by host id and child type
   struct IdAndTypeKey {
@@ -788,8 +794,14 @@ private:
   /// Improve performance by caching the original Ids
   std::shared_ptr<OriginalIdCache> originalIdCache_;
 
+  /// Improve performance by caching the slice state
+  std::shared_ptr<SliceCacheObserver> sliceCacheObserver_;
+
   /// Links together the TableManager::NewRowDataListener to our newUpdatesListener_
   std::shared_ptr<NewRowDataToNewUpdatesAdapter> newRowDataListener_;
+
+  /// Look for transitions from Live mode to File mode to force an update to hide expired platforms
+  std::shared_ptr<ClockModeMonitor> clockModeMonitor_;
 
 }; // End of class MemoryDataStore
 

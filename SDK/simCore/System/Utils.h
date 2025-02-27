@@ -84,6 +84,8 @@ struct InitializeEnvironmentConfig
   bool simdisTerrain = true;
   /** Set GDAL_DATA, GDAL_DRIVER_PATH, and PROJ_LIB */
   bool gdal = true;
+  /** Set ROCKY_FILE_PATH, ROCKY_DEFAULT_FONT, and PROJ_LIB */
+  bool rocky = true;
 
   /** Set QT_PLUGIN_PATH, unset XDG_SESSION_TYPE */
   bool qt = true;

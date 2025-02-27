@@ -36,14 +36,15 @@ Third Party Dependencies
 ========================
 The SIMDIS SDK depends on the following third party libraries:
 
-- [GLEW 2.1+](http://glew.sourceforge.net/)
-- [OpenSceneGraph 3.6+](http://www.openscenegraph.org)
-- [osgEarth 3.5+](http://www.osgearth.org)
-- [protobuf 2.6+](http://code.google.com/p/protobuf)
-- [Python 3.6+](https://www.python.org/)
-- [Qt 5.5+](http://qt-project.org)
-- [SQLite 3.8+](http://www.sqlite.org)
-- [SWIG 4.0+](http://www.swig.org/)
+- [EnTT 3.14+](https://github.com/skypjack/entt)
+- [GLEW 2.1+](https://glew.sourceforge.net/)
+- [OpenSceneGraph 3.6+](https://www.openscenegraph.org)
+- [osgEarth 3.5+](https://www.osgearth.org)
+- [protobuf 2.6+](https://code.google.com/p/protobuf)
+- [Python 3.6+](https://www.python.org)
+- [Qt 5.5+](https://qt-project.org)
+- [SQLite 3.8+](https://www.sqlite.org)
+- [SWIG 4.0+](https://www.swig.org)
 
 
 While other versions may also work, we can only support the configurations

@@ -107,16 +107,16 @@ std::string UnitContextFormatter::formatAltitude(double alt) const
   return formatDouble_(newVal, unitsProvider_->altitudePrecision());
 }
 
-double UnitContextFormatter::rawAltitude(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem, double offset, VerticalDatum outputDatum) const
+double UnitContextFormatter::rawAltitude(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem, double offset) const
 {
   if (unitsProvider_->datumConvert() != nullptr)
-    return unitsProvider_->datumConvert()->convertVerticalDatum(lla, timeStamp, coordSystem, VERTDATUM_WGS84, outputDatum, offset);
+    return unitsProvider_->datumConvert()->convertVerticalDatum(lla, timeStamp, coordSystem, VERTDATUM_WGS84, unitsProvider_->verticalDatum(), offset);
   return lla.alt();
 }
 
-std::string UnitContextFormatter::formatAltitude(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem, double offset, VerticalDatum outputDatum) const
+std::string UnitContextFormatter::formatAltitude(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem, double offset) const
 {
-  return formatAltitude(rawAltitude(lla, timeStamp, coordSystem, offset, outputDatum));
+  return formatAltitude(rawAltitude(lla, timeStamp, coordSystem, offset));
 }
 
 std::string UnitContextFormatter::formatSpeed(double val) const

@@ -2,6 +2,13 @@ if(NOT TARGET simQt OR NOT TARGET simData)
     return()
 endif()
 
+# Must have Qt Designer module to build
+find_package(Qt5Designer QUIET)
+if(NOT Qt5Designer_FOUND)
+    message(WARNING "Qt5Designer module not found, skipping Qt Designer plug-ins.")
+    return()
+endif()
+
 project(PLUGIN_SIMQT_DESIGNER_PLUGINS)
 
 # .h files
@@ -51,8 +58,8 @@ set(PROJ_SOURCES
 )
 
 if(OSG_FOUND)
-    list(APPEND PROJ_HEADERS ColorGradientWidgetPlugin.h)
-    list(APPEND PROJ_SOURCES ColorGradientWidgetPlugin.cpp)
+    list(APPEND PROJ_HEADERS ArticulationsEditorWidgetPlugin.h ColorGradientWidgetPlugin.h)
+    list(APPEND PROJ_SOURCES ArticulationsEditorWidgetPlugin.cpp ColorGradientWidgetPlugin.cpp)
 endif()
 
 if(TARGET simVis)
@@ -69,18 +76,16 @@ set(PROJ_RESOURCES
 source_group(Qt FILES ${PROJ_RESOURCES})
 
 # Must explicitly add the include directories for Designer in Qt5
-if(QT5_FOUND)
-    if(Qt5UiPlugin_FOUND)
-        set(DESIGNER_LIBRARY UiPlugin)
-        get_target_property(Qt5UiPlugin_INCLUDE_DIRS Qt5::UiPlugin INTERFACE_INCLUDE_DIRECTORIES)
-        include_directories(${Qt5UiPlugin_INCLUDE_DIRS})
-    elseif(Qt5Designer_FOUND)
-        set(DESIGNER_LIBRARY Designer)
-        include_directories(${Qt5Designer_INCLUDE_DIRS})
-    else()
-        message(STATUS "Qt5 found, but Qt5UiPlugin package not found.  Skipping QtDesigner Plugin.")
-        return()
-    endif()
+if(Qt5UiPlugin_FOUND)
+    set(DESIGNER_LIBRARY UiPlugin)
+    get_target_property(Qt5UiPlugin_INCLUDE_DIRS Qt5::UiPlugin INTERFACE_INCLUDE_DIRECTORIES)
+    include_directories(${Qt5UiPlugin_INCLUDE_DIRS})
+elseif(Qt5Designer_FOUND)
+    set(DESIGNER_LIBRARY Designer)
+    include_directories(${Qt5Designer_INCLUDE_DIRS})
+else()
+    message(STATUS "Qt5 found, but Qt5UiPlugin package not found.  Skipping QtDesigner Plugin.")
+    return()
 endif()
 
 VSI_QT_ADD_RESOURCES(Q_RESOURCES ${PROJ_RESOURCES})
@@ -112,10 +117,10 @@ if(AUTOINSTALL_QTDESIGNER_WIDGETS)
     # After the build, copy the library over
     add_custom_command(TARGET simQtDesignerWidgets POST_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E make_directory "${QT_DESIGNER_PLUGIN_DIR}/"
+        ARGS -E make_directory "${_qt5Core_install_prefix}/plugins/designer/"
         )
     add_custom_command(TARGET simQtDesignerWidgets POST_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy $<TARGET_FILE:simQtDesignerWidgets> "${QT_DESIGNER_PLUGIN_DIR}/"
+        ARGS -E copy $<TARGET_FILE:simQtDesignerWidgets> "${_qt5Core_install_prefix}/plugins/designer/"
         )
 endif()

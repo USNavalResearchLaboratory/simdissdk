@@ -46,19 +46,13 @@ public:
   }
 
   /// time has been changed
-  virtual void onSetTime(const simCore::TimeStamp &t, bool isJump)
+  virtual void onSetTime(const simCore::TimeStamp &t, bool isJump) override
   {
     dataStore_.update(t.secondsSinceRefYear());
   }
 
-  /// time has looped
-  virtual void onTimeLoop()
-  {
-  }
-
-  virtual void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime)
-  {
-  }
+  virtual void onTimeLoop() override {}
+  virtual void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime) override {}
 
 protected:
   simData::DataStore &dataStore_;
@@ -104,16 +98,22 @@ MainWindow::MainWindow()
   setupSimulatedPlatform_();
 
   // create buttons to control time
-  QDialog *buttonDialog = new QDialog(this);
-  simQt::TimeButtons *timeButtons = new simQt::TimeButtons(buttonDialog);
-  simQt::ButtonActions *timeButtonActions = new simQt::ButtonActions(buttonDialog);
+  QDialog* buttonDialog = new QDialog(this);
+  buttonDialog->setWindowTitle("Qt Time Buttons SDK Example");
+  buttonDialog->setWindowFlag(Qt::WindowContextHelpButtonHint, false);
+  simQt::TimeButtons* timeButtons = new simQt::TimeButtons(buttonDialog);
+  simQt::ButtonActions* timeButtonActions = new simQt::ButtonActions(buttonDialog);
   timeButtonActions->setClockManager(clock_);
   timeButtons->bindToActions(timeButtonActions);
   buttonDialog->show();
 
   // timer to drive updates
-  connect(&updateTimer_, SIGNAL(timeout()), this, SLOT(notifyFrameUpdate_()));
+  connect(&updateTimer_, &QTimer::timeout, this, &MainWindow::notifyFrameUpdate_);
   updateTimer_.start(33); // 33 ms -> 30 Hz
+
+  resize(800, 600);
+  setWindowTitle("Qt Time Buttons SDK Example");
+  view->lookAt(51.5072, 0.1276, 6500000, 0, -90, 0);
 }
 
 void MainWindow::notifyFrameUpdate_()
@@ -141,7 +141,6 @@ simData::ObjectId MainWindow::addPlatform_(simData::DataStore &dataStore)
 
   // done
   transaction.complete(&newProps);
-
 
   // configure some basic prefs
   simData::PlatformPrefs *prefs = dataStore.mutable_platformPrefs(result, &transaction);

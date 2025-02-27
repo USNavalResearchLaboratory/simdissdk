@@ -24,8 +24,12 @@
 #define SIMDATA_MEMORY_CATEGORY_DATASLICE_H
 
 #include <algorithm>
-#include <map>
 #include <deque>
+#include <map>
+#include <optional>
+#ifdef HAVE_ENTT
+#include "entt/container/dense_map.hpp"
+#endif
 #include "simCore/Common/Common.h"
 #include "simData/DataTypes.h"
 #include "simData/CategoryData/CategoryData.h"
@@ -68,6 +72,18 @@ public:
 
   ///@return true if the category data changes
   virtual bool update(double time);
+
+  /**
+   * Returns true if the category data changes.  Also returns the time span of the category state for the given time
+   * @param time Scenario time for the category data
+   * @param startTime The start time of the time range that has the same category state as time
+   * @param endTime The end time of the time range that has the same category state as time
+   * @return true if the category data changes
+  */
+  bool update(double time, std::optional<double>& startTime, std::optional<double>& endTime);
+
+  /// A function that is called every time the list is modified
+  void installNotifier(const std::function<void()>& fn);
 
   /// apply the data limits indicated by 'prefs'
   virtual void limitByPrefs(const CommonPrefs &prefs);
@@ -131,12 +147,12 @@ public:
   typedef std::deque<TimeValuePair>::iterator TimeValueIterator; ///< iterator for above
 
 private:
-  // A wrapper around a deque, providing optimized access for common-case conditions in Memory Data Store.
+  // A wrapper around a vector, providing optimized access for common-case conditions in Memory Data Store.
   class TimeValues
   {
   public:
-    TimeValues();
-    ~TimeValues();
+    TimeValues() = default;
+    ~TimeValues() = default;
 
     // Same meaning as the STL meanings, just done faster via variable pos_
     TimeValueIterator begin() const;
@@ -149,26 +165,31 @@ private:
     /// Returns the number of data entries in the data container
     size_t size() const;
 
-    /// Limit category data by points
-    void limitByPoints(uint32_t limitPoints);
-    /// Limit category data by time
-    void limitByTime(double timeLimit);
+    /// Limit category data by points; return 1 if entries removed
+    int limitByPoints(uint32_t limitPoints);
+    /// Limit category data by time; return 1 if entries removed
+    int limitByTime(double timeLimit);
     /// Remove all data in the slice
     void completeFlush();
     /// Remove points in the given time range; up to but not including endTime
     void flush(double startTime, double endTime);
 
   private:
-    // Verifies pos before using
+    /// Verifies pos before using
     size_t checkPosition_(size_t pos) const;
 
     // Same meaning as the STL meanings, just done faster via variable pos_
     TimeValueIterator upperBound_(TimeValueIterator begin, TimeValueIterator current, TimeValueIterator end, double time) const;
     TimeValueIterator find_(TimeValueIterator start, TimeValueIterator current, TimeValueIterator end, double time) const;
 
-    const static size_t FastSearchWidth = 3; // Number of entries to check linearly before switching to a binary search
-    mutable TimeValuesEntries entries_;  // The actual category data
-    mutable size_t lastPos_;  // the last location referenced so use as the start location when searching
+    /// Invalid the time range around lastPos_ to force a new seach
+    void invalidateLastPosTime_() const;
+
+    const static size_t FastSearchWidth = 3; ///< Number of entries to check linearly before switching to a binary search
+    mutable size_t lastPos_ = 0;  // the last location referenced so use as the start location when searching
+    mutable std::optional<double> timeRangeStart_;  ///< The time of the point at or before lastPos_;
+    mutable std::optional<double> timeRangeEnd_; ///< The time of the point after lastPos_
+    mutable TimeValuesEntries entries_;  ///< The actual category data
   };
 
   /// A time to indicate no available category data
@@ -188,7 +209,11 @@ private:
 
   /// all the data for one entity (in an optimized data structure)
   // (it's a map from category name int to maps of time to category value ints)
+#ifdef HAVE_ENTT
+  typedef entt::dense_map<int, TimeValueState> EntityData;
+#else
   typedef std::map<int, TimeValueState> EntityData;
+#endif // HAVE_ENTT
 
 
 private: // methods
@@ -215,6 +240,7 @@ private: // data
   double lastUpdateTime_;
   CategoryNameManager* categoryNameManager_;
   size_t sliceSize_;
+  std::function<void()> notifierFn_;
 };
 
 } // namespace

@@ -286,11 +286,19 @@ void simExamples::configureSearchPaths()
       "vehicles",
       ""  // Placeholder last item
     };
-    // Iterate over the folders, adding them all to the search path
+    // Iterate over the folders, adding them all to the search path (legacy)
     for (size_t k = 0; !simdisDirModelFolders[k].empty(); ++k)
       pathList.push_back(dataDir + PATH_SEP + "models" + PATH_SEP + simdisDirModelFolders[k]);
+    // Iterate over the folders, adding them all to the search path (public)
+    for (size_t k = 0; !simdisDirModelFolders[k].empty(); ++k)
+      pathList.push_back(dataDir + PATH_SEP + "models" + PATH_SEP + "public" + PATH_SEP + simdisDirModelFolders[k]);
+    // Iterate over the folders, adding them all to the search path (restricted)
+    for (size_t k = 0; !simdisDirModelFolders[k].empty(); ++k)
+      pathList.push_back(dataDir + PATH_SEP + "models" + PATH_SEP + "restricted" + PATH_SEP + simdisDirModelFolders[k]);
     // Add textures directory to the search path
     pathList.push_back(dataDir + PATH_SEP + "textures" + PATH_SEP + "models");
+    pathList.push_back(dataDir + PATH_SEP + "textures" + PATH_SEP + "models" + PATH_SEP + "public");
+    pathList.push_back(dataDir + PATH_SEP + "textures" + PATH_SEP + "models" + PATH_SEP + "restricted");
   }
   // Save model path
   simVis::FilePathList modelPathList(pathList.begin(), pathList.end());
@@ -306,6 +314,8 @@ void simExamples::configureSearchPaths()
     // SIMDIS model textures
     pathList.push_back(SIMDIS_DIR + PATH_SEP + "data" + PATH_SEP + "textures" + PATH_SEP + "modelsFull");
     pathList.push_back(SIMDIS_DIR + PATH_SEP + "data" + PATH_SEP + "textures" + PATH_SEP + "models");
+    pathList.push_back(SIMDIS_DIR + PATH_SEP + "data" + PATH_SEP + "textures" + PATH_SEP + "models" + PATH_SEP + "public");
+    pathList.push_back(SIMDIS_DIR + PATH_SEP + "data" + PATH_SEP + "textures" + PATH_SEP + "models" + PATH_SEP + "restricted");
     // SIMDIS textures
     pathList.push_back(SIMDIS_DIR + PATH_SEP + "data" + PATH_SEP + "textures" + PATH_SEP + "app");
     // osgText looks under data directory for fonts/fontname.ttf -- add data for data/fonts folder

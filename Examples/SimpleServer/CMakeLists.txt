@@ -22,14 +22,15 @@ set_target_properties(example_simpleserver PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Simple Server"
 )
-if (TARGET ImGuiLib)
+if(TARGET ImGuiLib)
     target_link_libraries(example_simpleserver PRIVATE ImGuiLib)
     target_compile_definitions(example_simpleserver PRIVATE HAVE_IMGUI)
 endif()
 
 vsi_install_target(example_simpleserver SDK_Examples)
 
-# Pass a variable to compiler if the Triton support is through the NodeKit interface
-if(OSGEARTH_TRITON_SUPPORT STREQUAL NODEKIT)
-    target_link_libraries(example_simpleserver PRIVATE OSGEARTH_TRITON)
+# Link to Triton if available
+if(TARGET osgEarth::osgEarthTriton)
+    target_link_libraries(example_simpleserver PRIVATE osgEarth::osgEarthTriton)
+    target_compile_definitions(example_simpleserver PRIVATE HAVE_OSGEARTH_TRITON)
 endif()

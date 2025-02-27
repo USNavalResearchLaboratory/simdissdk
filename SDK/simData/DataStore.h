@@ -434,6 +434,20 @@ public: // methods
   virtual Interpolator* interpolator() const = 0;
   ///@}
 
+  /// Type and source of interpolation
+  enum class InterpolatorState
+  {
+    OFF, ///< No interpolation
+    EXTERNAL, ///< Uses externally provided interpolator
+    INTERNAL ///< Use internally provided interpolator that provides significant improvement in preformance for TSPI points
+  };
+
+  /// Sets the interpolation state; returns true if interpolation is enabled
+  virtual bool enableInterpolation(InterpolatorState state) = 0;
+
+  /// Returns the interpolation state
+  virtual InterpolatorState interpolatorState() const = 0;
+
   /**@name ID Lists
    * @{
    */
@@ -649,6 +663,12 @@ public: // methods
   virtual const CategoryDataSlice*     categoryDataSlice(ObjectId id) const = 0;
   ///@}
 
+  /**
+   * The function is called when the time range of the platform update changes
+   * @param id The unique ID of the platform to monitor
+   * @param fn The function to call when the time range changes
+   */
+  virtual void installSliceTimeRangeMonitor(ObjectId id, std::function<void(double startTime, double endTime)> fn) = 0;
   /**
    * Modify commands for a given platform
    * Does not support modifying acceptsProjectors

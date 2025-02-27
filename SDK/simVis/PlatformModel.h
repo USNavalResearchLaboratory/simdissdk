@@ -56,6 +56,8 @@ public:
     {
       /** Platform bounds changed. */
       BOUNDS_CHANGED,
+      /** Platform model node has finished changing, announced after async model loader finishes, will fire after BOUNDS_CHANGED */
+      MODEL_CHANGED
     };
 
     /// Provide this method to receive an event

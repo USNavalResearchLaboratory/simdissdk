@@ -3,6 +3,9 @@ if(NOT TARGET simVis OR NOT TARGET simData)
     return()
 endif()
 
+set(SIMUTIL_HAVE_GDAL OFF)
+set(SIMUTIL_HAVE_SQLITE3 OFF)
+
 # ----- simUtil --------------------------------------------------------
 
 set(SHADER_FILES
@@ -20,7 +23,6 @@ set(UTIL_INC)
 set(UTIL_SRC)
 set(UTIL_HEADERS
     ${UTIL_SRC}DynamicSelectionPicker.h
-    ${UTIL_INC}Capabilities.h
     ${UTIL_INC}DataStoreTestHelper.h
     ${UTIL_INC}DatumConvert.h
     ${UTIL_INC}DefaultDataStoreValues.h
@@ -57,7 +59,6 @@ set(UTIL_HEADERS
 )
 set(UTIL_SOURCES
     ${UTIL_SRC}DynamicSelectionPicker.cpp
-    ${UTIL_SRC}Capabilities.cpp
     ${UTIL_SRC}DataStoreTestHelper.cpp
     ${UTIL_SRC}DatumConvert.cpp
     ${UTIL_SRC}DefaultDataStoreValues.cpp
@@ -91,22 +92,29 @@ set(UTIL_SOURCES
     ${UTIL_SRC}ViewpointPositions.cpp
 )
 
-if(SIM_HAVE_DB_SUPPORT)
+if(TARGET SQLite::SQLite3)
     list(APPEND UTIL_HEADERS ${UTIL_INC}DbConfigurationFile.h)
     list(APPEND UTIL_SOURCES ${UTIL_SRC}DbConfigurationFile.cpp)
+    set(SIMUTIL_HAVE_SQLITE3 ON)
+endif()
+
+if(TARGET GDAL::GDAL AND TARGET OpenGL::GL)
+    list(APPEND UTIL_HEADERS ${UTIL_INC}Capabilities.h)
+    list(APPEND UTIL_SOURCES ${UTIL_SRC}Capabilities.cpp)
+    set(SIMUTIL_HAVE_GDAL ON)
 endif()
 
 set(UTIL_GENERATED_HEADERS)
 set(UTIL_GENERATED_SOURCES)
 
 # Append TritonSettings if we have the osgEarth Triton nodekit
-if(OSGEARTH_TRITON_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_TRITON)
+if(TARGET osgEarth::osgEarthTriton)
     list(APPEND UTIL_HEADERS ${UTIL_INC}TritonSettings.h)
     list(APPEND UTIL_SOURCES ${UTIL_SRC}TritonSettings.cpp)
 endif()
 
-# Append SilverLiningSettings if we have the osgEarth Triton nodekit
-if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_SILVERLINING)
+# Append SilverLiningSettings if we have the osgEarth SilverLining nodekit
+if(TARGET osgEarth::osgEarthSilverLining)
     list(APPEND UTIL_HEADERS ${UTIL_INC}SilverLiningSettings.h)
     list(APPEND UTIL_SOURCES ${UTIL_SRC}SilverLiningSettings.cpp)
 endif()
@@ -148,26 +156,32 @@ target_include_directories(simUtil PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(simUtil PUBLIC simVis simData simCore)
-target_link_libraries(simUtil PRIVATE VSI::GL)
 if(SIMUTIL_SHARED)
     target_compile_definitions(simUtil PRIVATE simUtil_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simUtil PUBLIC simUtil_LIB_EXPORT_STATIC)
 endif()
 
+# Require linking to various osg libraries; these are already required by simVis, so mark required here
+target_link_libraries(simUtil PRIVATE ${OPENSCENEGRAPH_LIBRARIES})
+
+if(TARGET osgEarth::osgEarthTriton)
+    target_link_libraries(simUtil PRIVATE osgEarth::osgEarthTriton)
+endif()
+if(TARGET osgEarth::osgEarthSilverLining)
+    target_link_libraries(simUtil PRIVATE osgEarth::osgEarthSilverLining)
+endif()
+if(TARGET SQLite::SQLite3)
+    target_compile_definitions(simUtil PRIVATE SIM_HAVE_DB_SUPPORT)
+endif()
+if(TARGET GDAL::GDAL AND TARGET OpenGL::GL)
+    # Required by Capabilities.cpp
+    target_link_libraries(simUtil PRIVATE GDAL::GDAL OpenGL::GL)
+endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
+    configure_file(simUtilConfig.cmake.in simUtilConfig.cmake @ONLY)
     vsi_install_export(simUtil ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
-endif()
-
-if(OSGEARTH_TRITON_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_TRITON)
-    target_link_libraries(simUtil PRIVATE OSGEARTH_TRITON)
-endif()
-if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_SILVERLINING)
-    target_link_libraries(simUtil PRIVATE OSGEARTH_SILVERLINING)
-endif()
-if(SIM_HAVE_DB_SUPPORT)
-    target_compile_definitions(simUtil PRIVATE SIM_HAVE_DB_SUPPORT)
 endif()
 
 if(INSTALL_SIMDIS_SDK_SHADERS)

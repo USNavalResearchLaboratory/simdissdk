@@ -1,7 +1,14 @@
-if(NOT PROTOBUF_FOUND)
+find_package(Protobuf QUIET)
+find_package(EnTT QUIET)
+
+if(NOT TARGET protobuf::libprotobuf)
     message(STATUS "Skipping simData because of missing PROTOBUF dependencies.")
     return()
 endif()
+
+# Variables used in the simDataConfig.cmake generation
+include(CreateProtobufLibrary)
+set(SIMDATA_HAVE_ENTT OFF)
 
 # ----- simData --------------------------------------------------------
 
@@ -153,7 +160,7 @@ target_include_directories(simData PUBLIC
 )
 
 
-target_link_libraries(simData PUBLIC PROTOBUF simCore simNotify)
+target_link_libraries(simData PUBLIC protobuf::libprotobuf simCore simNotify)
 add_dependencies(simData simData_protobuf_generation)
 if(SIMDATA_SHARED)
     target_compile_definitions(simData PRIVATE simData_LIB_EXPORT_SHARED)
@@ -161,11 +168,19 @@ else()
     target_compile_definitions(simData PUBLIC simData_LIB_EXPORT_STATIC)
 endif()
 
+if(EnTT_FOUND)
+    target_compile_definitions(simData PUBLIC HAVE_ENTT)
+    target_link_libraries(simData PUBLIC EnTT::EnTT)
+    set(SIMDATA_HAVE_ENTT ON)
+endif()
+
 if(WIN32)
     target_compile_options(simData PRIVATE -bigobj)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
+    # Configure the simDataConfig.cmake file; its dependencies are dynamic
+    configure_file(simDataConfig.cmake.in simDataConfig.cmake @ONLY)
     vsi_install_export(simData ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 

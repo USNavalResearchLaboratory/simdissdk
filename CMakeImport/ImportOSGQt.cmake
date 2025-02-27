@@ -1,18 +1,21 @@
 # Setup osgQt library
 # Setting the OSGQT_DIR environment variable will allow use of a custom built library
 
+if(TARGET OSGQT)
+    return()
+endif()
+
 set(OSGQT_FOUND FALSE)
 
-# Cannot locate osgEarth without OSG due to requirement on knowing OSG version
-if(NOT OSG_FOUND OR NOT QT_FOUND)
+# Cannot locate osgQt without OSG due to requirement on knowing OSG version
+if(NOT OPENSCENEGRAPH_FOUND OR NOT Qt5Core_FOUND)
     return()
 endif()
 
 set(LIBRARYNAME OSGQT)
 
 # OpenThreads is stored under the OpenSceneGraph folder
-set(${LIBRARYNAME}_VERSION ${OSG_VERSION})
-set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
+set(${LIBRARYNAME}_VERSION ${OPENSCENEGRAPH_VERSION})
 
 # Setup search paths
 initialize_ENV(OSG_DIR)
@@ -37,8 +40,8 @@ set(LIB_DIRS
 
 find_path(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH NAME osgQt/Export PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
 # Newer versions of osgQt include the Qt version number in output name
-find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgQt${QT_VERSION_MAJOR}d osgQtd PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
-find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgQt${QT_VERSION_MAJOR} osgQt PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgQt${Qt5Core_VERSION_MAJOR}d osgQtd PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgQt${Qt5Core_VERSION_MAJOR} osgQt PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
 
 ############################################################
 ########## Imported 3rd party library boilerplate ##########
@@ -91,10 +94,4 @@ if(WIN32)
     endif()
 else()
     vsi_set_imported_locations_from_implibs(${LIBRARYNAME})
-endif()
-
-
-# Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true
-if(NOT DEFINED INSTALL_THIRDPARTY_LIBRARIES OR INSTALL_THIRDPARTY_LIBRARIES)
-    vsi_install_target(${LIBRARYNAME} ${${LIBRARYNAME}_INSTALL_COMPONENT})
 endif()

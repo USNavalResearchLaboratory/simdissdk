@@ -1,109 +1,3 @@
-# Setup PROTOBUF library
-# Setting the PROTOBUF_DIR environment variable will allow use of a custom built library
-
-set(PROTOBUF_SUBDIR 3.21.12)
-
-# Setup search paths
-initialize_ENV(PROTOBUF_DIR)
-set(INCLUDE_DIRS 
-    $ENV{PROTOBUF_DIR}/include
-    ${THIRD_DIR}/protobuf/${PROTOBUF_SUBDIR}/include
-    ${THIRD_DIR}/protobuf-${PROTOBUF_SUBDIR}/include
-)
-
-set(LIB_DIRS 
-    $ENV{PROTOBUF_DIR}/lib
-    ${THIRD_DIR}/protobuf/${PROTOBUF_SUBDIR}/lib
-    ${THIRD_DIR}/protobuf-${PROTOBUF_SUBDIR}/lib
-)
-
-set(BIN_DIRS 
-    $ENV{PROTOBUF_DIR}/bin
-    ${THIRD_DIR}/protobuf/${PROTOBUF_SUBDIR}/bin
-    ${THIRD_DIR}/protobuf-${PROTOBUF_SUBDIR}/bin
-)
-
-find_path(PROTOBUF_LIBRARY_INCLUDE_PATH NAME google/protobuf/descriptor.h PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
-find_library(PROTOBUF_LIBRARY_DEBUG_NAME
-    NAMES protobuf_d libprotobuf_d protobufd libprotobufd
-    HINTS ${LIB_DIRS}
-    NO_DEFAULT_PATH
-)
-find_library(PROTOBUF_LIBRARY_RELEASE_NAME
-    NAMES protobuf libprotobuf
-    PATHS ${LIB_DIRS}
-    NO_DEFAULT_PATH
-)
-
-# Determine whether we found the library correctly
-if(NOT PROTOBUF_LIBRARY_RELEASE_NAME)
-    set(PROTOBUF_FOUND FALSE)
-    mark_as_advanced(CLEAR PROTOBUF_LIBRARY_INCLUDE_PATH PROTOBUF_LIBRARY_DEBUG_NAME PROTOBUF_LIBRARY_RELEASE_NAME)
-    return()
-endif()
-# Fall back on release library explicitly, only on Windows
-if(WIN32 AND NOT PROTOBUF_LIBRARY_DEBUG_NAME)
-    set(PROTOBUF_LIBRARY_DEBUG_NAME "${PROTOBUF_LIBRARY_RELEASE_NAME}" CACHE STRING "Path to a library" FORCE)
-endif()
-
-mark_as_advanced(FORCE PROTOBUF_LIBRARY_INCLUDE_PATH PROTOBUF_LIBRARY_DEBUG_NAME PROTOBUF_LIBRARY_RELEASE_NAME)
-set(PROTOBUF_FOUND TRUE)
-
-set(PROTOBUF_LIBS)
-if(UNIX)
-    set(PROTOBUF_LIBS -pthread)
-endif()
-
-# Detect whether protobuf is a shared library
-set(PROTO_IS_SHARED OFF)
-if(WIN32)
-    string(REGEX REPLACE "(.*)\\.lib$" "\\1.dll" LOCATION_RELEASE "${PROTOBUF_LIBRARY_RELEASE_NAME}")
-    string(REGEX REPLACE "/lib(|64)/" "/bin/" LOCATION_RELEASE "${LOCATION_RELEASE}")
-    if(EXISTS "${LOCATION_RELEASE}")
-        set(PROTO_IS_SHARED ON)
-    endif()
-endif()
-
-
-# Set the release path, include path, and link libraries.  Deal with shared vs static differences
-if(PROTO_IS_SHARED)
-    add_library(PROTOBUF SHARED IMPORTED)
-    set_target_properties(PROTOBUF PROPERTIES
-        IMPORTED_IMPLIB "${PROTOBUF_LIBRARY_RELEASE_NAME}"
-        INTERFACE_COMPILE_DEFINITIONS "PROTOBUF_USE_DLLS"
-    )
-    if(PROTOBUF_LIBRARY_DEBUG_NAME)
-        set_target_properties(PROTOBUF PROPERTIES
-            IMPORTED_IMPLIB_DEBUG "${PROTOBUF_LIBRARY_DEBUG_NAME}"
-        )
-    endif()
-    vsi_set_imported_locations_from_implibs(PROTOBUF)
-    if(NOT DEFINED INSTALL_THIRDPARTY_LIBRARIES OR INSTALL_THIRDPARTY_LIBRARIES)
-        vsi_install_target(PROTOBUF ThirdPartyLibs)
-    endif()
-else()
-    add_library(PROTOBUF STATIC IMPORTED)
-    set_target_properties(PROTOBUF PROPERTIES
-        IMPORTED_LOCATION "${PROTOBUF_LIBRARY_RELEASE_NAME}"
-    )
-    if(PROTOBUF_LIBRARY_DEBUG_NAME)
-        set_target_properties(PROTOBUF PROPERTIES
-            IMPORTED_LOCATION_DEBUG "${PROTOBUF_LIBRARY_DEBUG_NAME}"
-        )
-    endif()
-endif()
-set_target_properties(PROTOBUF PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${PROTOBUF_LIBRARY_INCLUDE_PATH}"
-    INTERFACE_LINK_LIBRARIES "${PROTOBUF_LIBS}"
-)
-
-
-find_program(PROTOBUF_PROTOC NAMES protoc HINTS ${BIN_DIRS})
-if(NOT "${PROTOBUF_PROTOC}" MATCHES "-NOTFOUND")
-    mark_as_advanced(PROTOBUF_PROTOC)
-endif()
-
-
 # Creates a target responsible for generating protobuf files from output of protoc.  Note that this
 # function is used instead of the find_package(Protobuf) function because of limitations in the package's
 # output (it can only write to build directory, doesn't seem able to specify DLL exports).
@@ -120,8 +14,8 @@ endif()
 # @param SRC_OUT Output source files to include in your project
 # @param EXPORT_TYPE Type of cpp_out, e.g. "=dllexport_decl=SDKDATA_EXPORT:." or simply "=."
 function(VSI_PROTOBUF_GENERATE TARGET_NAME PROTO_DIR PROTO_FILES HDR_OUT SRC_OUT EXPORT_TYPE)
-    if("${PROTOBUF_PROTOC}" MATCHES "-NOTFOUND")
-        message(FATAL_ERROR "Unable to find PROTOBUF_PROTOC, which is required for simData.")
+    if(NOT TARGET protobuf::protoc)
+        message(FATAL_ERROR "Unable to find protobuf::protoc compiler, which is required for simData.")
     endif()
 
     if(NOT EXPORT_TYPE)
@@ -144,14 +38,15 @@ function(VSI_PROTOBUF_GENERATE TARGET_NAME PROTO_DIR PROTO_FILES HDR_OUT SRC_OUT
 
         # Add in command line arguments if they exist
         if(PROTOBUF_PROTOC_ARGUMENTS)
-            set(_PROTO_COMMAND_LINE ${PROTOBUF_PROTOC} --cpp_out${EXPORT_TYPE} -I${PROTO_DIR} ${PROTOBUF_PROTOC_ARGUMENTS} ${_PROTO_IN_FILE})
+            set(_PROTO_COMMAND_LINE --cpp_out${EXPORT_TYPE} -I${PROTO_DIR} ${PROTOBUF_PROTOC_ARGUMENTS} ${_PROTO_IN_FILE})
         else()
-            set(_PROTO_COMMAND_LINE ${PROTOBUF_PROTOC} --cpp_out${EXPORT_TYPE} -I${PROTO_DIR} ${_PROTO_IN_FILE})
+            set(_PROTO_COMMAND_LINE --cpp_out${EXPORT_TYPE} -I${PROTO_DIR} ${_PROTO_IN_FILE})
         endif()
 
         # Define the command that creates the files
         add_custom_command(
-            COMMAND ${_PROTO_COMMAND_LINE}
+            COMMAND protobuf::protoc
+            ARGS ${_PROTO_COMMAND_LINE}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             DEPENDS ${_PROTO_IN_FILE}
             OUTPUT ${_PROTO_OUT_BASENAME}.pb.h ${_PROTO_OUT_BASENAME}.pb.cc
@@ -253,7 +148,7 @@ function(CREATE_PROTOBUF_LIBRARY LIB_TARGETNAME LIB_PROJECTNAME FOLDER PROJECT_L
     # Create the Protobuf Code Library
     add_library(${LIB_TARGETNAME} ${_PROTO_FILES_FULL_PATH} ${_PROTO_PB_H} ${_WRAPPERS_H} ${_WRAPPERS_CPP})
     add_dependencies(${LIB_TARGETNAME} ${LIB_TARGETNAME}_Generate)
-    target_link_libraries(${LIB_TARGETNAME} PUBLIC PROTOBUF)
+    target_link_libraries(${LIB_TARGETNAME} PUBLIC protobuf::libprotobuf)
     target_include_directories(${LIB_TARGETNAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${INSTALLSETTINGS_INCLUDE_DIR}>

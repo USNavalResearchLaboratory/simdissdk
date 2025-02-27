@@ -128,6 +128,12 @@ public: // methods
   virtual Interpolator* interpolator() const override;
   ///@}
 
+  /// Sets the interpolation state; returns true if interpolation is enabled
+  virtual bool enableInterpolation(InterpolatorState state) override;
+
+  /// Returns the interpolation state
+  virtual InterpolatorState interpolatorState() const override;
+
   /**@name ID Lists
    * @{
    */
@@ -320,6 +326,9 @@ public: // methods
   virtual const GenericDataSlice*      genericDataSlice(ObjectId id) const override {return dataStore_->genericDataSlice(id);}
   virtual const CategoryDataSlice*     categoryDataSlice(ObjectId id) const override {return dataStore_->categoryDataSlice(id);}
   ///@}
+
+  /// @copydoc simData::DataStore::installSliceTimeRangeMonitor
+  virtual void installSliceTimeRangeMonitor(ObjectId id, std::function<void(double startTime, double endTime)> fn) override { dataStore_->installSliceTimeRangeMonitor(id, fn); }
 
   /// @copydoc simData::DataStore::modifyPlatformCommandSlice
   virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) override { return dataStore_->modifyPlatformCommandSlice(id, modifier); }

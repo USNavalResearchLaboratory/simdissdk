@@ -16,12 +16,15 @@ set(SDK_LIB_CMAKE_PATH ${INSTALLSETTINGS_LIBRARY_DIR}/cmake)
 
 # Gather a list of all possible imported libraries
 set(IMPLIBS)
-foreach(LIB IN ITEMS PROTOBUF OSGQT GDAL GEOS GEOS_C OSGEARTH)
+foreach(LIB IN ITEMS OSGQT OSGEARTH)
     if(TARGET ${LIB})
         list(APPEND IMPLIBS ${LIB})
     endif()
 endforeach()
 list(APPEND IMPLIBS ${OSG_ALL_LIBDEPENDENCIES})
+
+# OSGEARTH library also depends on GDAL and GEOS libraries, which need find_dependency()
+set(OSGEARTH_EXTRA_DEPENDS GDAL GEOS)
 
 # Keep a list of all the properties that need to transfer from our imported
 # targets to the imported targets used in external projects
@@ -41,6 +44,9 @@ set(ALL_PROPS
 set(VALID_IMPLIBS)
 # Loop over all possible imported libs and create Import___.cmake files for each
 foreach(IMPORTED_LIBRARY_NAME IN LISTS IMPLIBS)
+    # Avoid strings like 'EnTT::EnTT' in favor of 'EnTT_EnTT' for filename usage
+    string(REPLACE "::" "_" IMPORTED_FILENAME "${IMPORTED_LIBRARY_NAME}")
+
     # Only create the file if the target exists
     if(TARGET ${IMPORTED_LIBRARY_NAME})
         # Pull out each property of interest into a variable used by configure_file
@@ -56,33 +62,34 @@ foreach(IMPORTED_LIBRARY_NAME IN LISTS IMPLIBS)
             set(LIB_STATIC_OR_SHARED STATIC)
         elseif("${LIB_TYPE}" STREQUAL "SHARED_LIBRARY")
             set(LIB_STATIC_OR_SHARED SHARED)
+        elseif("${LIB_TYPE}" STREQUAL "INTERFACE_LIBRARY")
+            set(LIB_STATIC_OR_SHARED INTERFACE)
         else()
             set(LIB_STATIC_OR_SHARED UNKNOWN)
         endif()
 
+        # Some libraries require extra find_dependency() calls
+        set(EXTRA_DEPENDS)
+        if(DEFINED ${IMPORTED_FILENAME}_EXTRA_DEPENDS)
+            set(EXTRA_DEPENDS "    include(CMakeFindDependencyMacro)")
+            foreach(_DEPEND IN LISTS ${IMPORTED_FILENAME}_EXTRA_DEPENDS)
+                set(EXTRA_DEPENDS "${EXTRA_DEPENDS}\n    find_dependency(${_DEPEND})")
+            endforeach()
+        endif()
+
         # Create and install the Import___.cmake for this library
         configure_file(CMakeUtilities/ImportedExport.cmake.in
-            ${CMAKE_CURRENT_BINARY_DIR}/cmake/Import${IMPORTED_LIBRARY_NAME}.cmake
+            ${CMAKE_CURRENT_BINARY_DIR}/cmake/Import${IMPORTED_FILENAME}.cmake
         )
-        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/Import${IMPORTED_LIBRARY_NAME}.cmake
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/Import${IMPORTED_FILENAME}.cmake
             DESTINATION ${SDK_LIB_CMAKE_PATH}
             COMPONENT Exports
         )
 
         # Save in a list so we can include them later in FindSIMDIS_SDK.cmake's configure_file
-        list(APPEND VALID_IMPLIBS ${IMPORTED_LIBRARY_NAME})
+        list(APPEND VALID_IMPLIBS ${IMPORTED_FILENAME})
     endif()
 endforeach()
-
-# Add the extra VSI libraries for socket and GL
-if(TARGET VSI::SOCKET)
-    install(FILES CMakeImport/ImportSocket.cmake DESTINATION ${SDK_LIB_CMAKE_PATH} COMPONENT Exports)
-    list(APPEND VALID_IMPLIBS Socket)
-endif()
-if(TARGET VSI::GL)
-    install(FILES CMakeImport/ImportOpenGL.cmake DESTINATION ${SDK_LIB_CMAKE_PATH} COMPONENT Exports)
-    list(APPEND VALID_IMPLIBS OpenGL)
-endif()
 
 # Detect the valid target names
 set(SDK_LIBS simNotify simCore simData simVis simUtil simQt)

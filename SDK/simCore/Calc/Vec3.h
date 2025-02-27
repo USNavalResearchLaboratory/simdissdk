@@ -64,10 +64,10 @@ public:
   /**@name Copy and move operators and assignment
    * @{
    */
-  Vec3(const Vec3& rhs) = default;
-  Vec3(Vec3&& rhs) = default;
-  Vec3& operator=(const Vec3& rhs) = default;
-  Vec3& operator=(Vec3&& rhs) = default;
+  Vec3(const Vec3& rhs) noexcept = default;
+  Vec3(Vec3&& rhs) noexcept = default;
+  Vec3& operator=(const Vec3& rhs) noexcept = default;
+  Vec3& operator=(Vec3&& rhs) noexcept = default;
   ///@}
 
   /// Equality

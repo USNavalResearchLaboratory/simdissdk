@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include "simCore/Calc/Math.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/CategoryData/MemoryCategoryDataSlice.h"
@@ -29,15 +30,6 @@ namespace simData
 
 namespace {
   const double DEFAULT_TIME = -1.0;
-}
-
-MemoryCategoryDataSlice::TimeValues::TimeValues()
-  : lastPos_(0)
-{
-}
-
-MemoryCategoryDataSlice::TimeValues::~TimeValues()
-{
 }
 
 /* Gets the start of the deque */
@@ -55,8 +47,47 @@ MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::
 /** Gets the upper bound from the deque */
 MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::upper_bound(double time) const
 {
+  // If the time is in the time range then lastPos_ is the correct index for the upper_bound iterator
+  if ((time >= timeRangeStart_.value_or(std::numeric_limits<double>::max())) && (time < timeRangeEnd_.value_or(std::numeric_limits<double>::lowest())))
+    return entries_.begin() + lastPos_;
+
+  // Validate lastPos_
   lastPos_ = checkPosition_(lastPos_);
+
+  // If entries_.empty() then lastPos_ is 0, so begin() + lastPos_ is valid
+  assert(lastPos_ == 0 || !entries_.empty());
   TimeValueIterator rv = upperBound_(entries_.begin(), entries_.begin() + lastPos_, entries_.end(), time);
+
+  // Set the time range for future use
+  if (rv == entries_.begin())
+  {
+    if (entries_.empty())
+      invalidateLastPosTime_();
+    else
+    {
+      timeRangeStart_ = 0;
+      timeRangeEnd_ = entries_.front().time;
+    }
+  }
+  else if (rv == entries_.end())
+  {
+    if (entries_.empty())
+      invalidateLastPosTime_();
+    else
+    {
+      timeRangeStart_ = entries_.back().time;
+      timeRangeEnd_ = std::numeric_limits<double>::max();
+    }
+  }
+  else
+  {
+    auto previous = rv;
+    --previous;
+    timeRangeStart_ = previous->time;
+    timeRangeEnd_ = rv->time;
+  }
+
+  // Set lastPos_ for future use
   lastPos_ = rv - entries_.begin();
   return rv;
 }
@@ -64,6 +95,8 @@ MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::
 /** Finds data from the deque */
 MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::find(double time) const
 {
+  invalidateLastPosTime_();
+
   lastPos_ = checkPosition_(lastPos_);
   TimeValueIterator rv = find_(entries_.begin(), entries_.begin() + lastPos_, entries_.end(), time);
   lastPos_ = rv - entries_.begin();
@@ -74,6 +107,7 @@ MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::
 void MemoryCategoryDataSlice::TimeValues::erase(TimeValueIterator it)
 {
   entries_.erase(it);
+  invalidateLastPosTime_();
 }
 
 /** Retrieves size of the entries */
@@ -90,6 +124,7 @@ void MemoryCategoryDataSlice::TimeValues::insert(double time, int value)
   if (entries_.empty())
   {
     entries_.push_back(TimeValuePair(time, value));
+    invalidateLastPosTime_();
     return;
   }
 
@@ -97,6 +132,7 @@ void MemoryCategoryDataSlice::TimeValues::insert(double time, int value)
   if (entries_.back().time < time)
   {
     entries_.push_back(TimeValuePair(time, value));
+    invalidateLastPosTime_();
     return;
   }
 
@@ -104,7 +140,8 @@ void MemoryCategoryDataSlice::TimeValues::insert(double time, int value)
   TimeValueIterator it = upper_bound(time);
   if (it == entries_.begin())
   {
-    entries_.push_front(TimeValuePair(time, value));
+    entries_.insert(entries_.begin(), TimeValuePair(time, value));
+    invalidateLastPosTime_();
     return;
   }
 
@@ -117,15 +154,18 @@ void MemoryCategoryDataSlice::TimeValues::insert(double time, int value)
   }
 
   entries_.insert(it, TimeValuePair(time, value));
+  invalidateLastPosTime_();
 }
 
-void MemoryCategoryDataSlice::TimeValues::limitByPoints(uint32_t limitPoints)
+int MemoryCategoryDataSlice::TimeValues::limitByPoints(uint32_t limitPoints)
 {
   // The zero case should already be handled
   assert(limitPoints);
 
   if (entries_.size() <= limitPoints)
-    return;
+    return 0;
+
+  invalidateLastPosTime_();
 
   bool reinsertOldTime = false;
   int oldValue = 0;
@@ -141,19 +181,22 @@ void MemoryCategoryDataSlice::TimeValues::limitByPoints(uint32_t limitPoints)
   {
     // Break out early if only removing the -1 time
     if (numToRemove == 1)
-      return;
+      return 0;
   }
 
   entries_.erase(entries_.begin(), entries_.begin() + numToRemove);
 
   // Re-add the -1 time value
   if (reinsertOldTime)
-    entries_.push_front(TimeValuePair(DEFAULT_TIME, oldValue));
+    entries_.insert(entries_.begin(), TimeValuePair(DEFAULT_TIME, oldValue));
+
+  return 1;
 }
 
 void MemoryCategoryDataSlice::TimeValues::completeFlush()
 {
   entries_.clear();
+  invalidateLastPosTime_();
 }
 
 void MemoryCategoryDataSlice::TimeValues::flush(double startTime, double endTime)
@@ -166,15 +209,16 @@ void MemoryCategoryDataSlice::TimeValues::flush(double startTime, double endTime
   auto end = std::lower_bound(start, entries_.end(), TimeValuePair(endTime, 0));
 
   entries_.erase(start, end);
+  invalidateLastPosTime_();
 }
 
-void MemoryCategoryDataSlice::TimeValues::limitByTime(double timeLimit)
+int MemoryCategoryDataSlice::TimeValues::limitByTime(double timeLimit)
 {
   // The zero case should already be handle
   assert(timeLimit > 0.0);
 
   if (entries_.size() < 2)
-    return;
+    return 0;
 
   bool reinsertOldTime = false;
   int oldValue = 0;
@@ -183,8 +227,10 @@ void MemoryCategoryDataSlice::TimeValues::limitByTime(double timeLimit)
     oldValue = entries_.front().value;
     reinsertOldTime = true;
     if (entries_.size() < 3)
-      return;
+      return 0;
   }
+
+  invalidateLastPosTime_();
 
   double lastTime = entries_.rbegin()->time;
   double limitPointsBeforeTime = lastTime - simCore::sdkMax(0.0, static_cast<double>(timeLimit));
@@ -207,7 +253,9 @@ void MemoryCategoryDataSlice::TimeValues::limitByTime(double timeLimit)
 
   // Re-add the -1 time value
   if (reinsertOldTime)
-    entries_.push_front(TimeValuePair(DEFAULT_TIME, oldValue));
+    entries_.insert(entries_.begin(), TimeValuePair(DEFAULT_TIME, oldValue));
+
+  return 1;
 }
 
 /** Returns a validated position */
@@ -228,34 +276,49 @@ size_t MemoryCategoryDataSlice::TimeValues::checkPosition_(size_t pos) const
  */
 MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::upperBound_(TimeValueIterator begin, TimeValueIterator current, TimeValueIterator end, double time) const
 {
-  if (current != end)
-  {
-    if (current->time <= time)
-    {
-      for (size_t ii = 0; ii < FastSearchWidth && current != end; ii++, ++current)
-      {
-        if (current->time > time)
-        {
-          return current;
-        }
-      }
+  // Current not set so do a full search
+  if (current == end)
+    return std::upper_bound(begin, end, TimeValuePair(time, 0));
 
-      if (current == end)
-        return end;
-    }
-    else
+  if (current->time <= time)
+  {
+    // Need to search forward
+    for (size_t ii = 0; ii < FastSearchWidth && current != end; ii++, ++current)
     {
+      if (current->time > time)
+        return current;
+    }
+
+    // Walked off the end, so can just return
+    if (current == end)
+      return end;
+  }
+  else
+  {
+    // Need to search backwards if not at the beginning
+    if (current != begin)
+    {
+      // Need to take at least one step, so take it now before entering the loop
+      auto lastCurrent = current;
+      --current;
       for (size_t ii = 0; ii < FastSearchWidth && current != begin; ii++, --current)
       {
         if (current->time <= time)
-        {
-          ++current;
-          return current;
-        }
+          return lastCurrent;
+        lastCurrent = current;
       }
+    }
+
+    // Cannot backup anymore so either begin is the answer or begin + 1 is the answer
+    if (current == begin)
+    {
+      if (current->time <= time)
+        ++current;
+      return current;
     }
   }
 
+  // The correct answer is outside the FastSearchWidth search so do a complete search
   return std::upper_bound(begin, end, TimeValuePair(time, 0));
 }
 
@@ -302,6 +365,12 @@ MemoryCategoryDataSlice::TimeValueIterator MemoryCategoryDataSlice::TimeValues::
     return current;
 
   return end;
+}
+
+void MemoryCategoryDataSlice::TimeValues::invalidateLastPosTime_() const
+{
+  timeRangeStart_.reset();
+  timeRangeEnd_.reset();
 }
 
 //----------------------------------------------------------------------------
@@ -621,6 +690,75 @@ bool MemoryCategoryDataSlice::update(double time)
   return ret;
 }
 
+bool MemoryCategoryDataSlice::update(double time, std::optional<double>& startTime, std::optional<double>& endTime)
+{
+  // there is no one place which has "the current category data" that we need to update
+  // (data is produced on demand).
+  // Thus, we could simply update the lastUpdateTime_ and return.
+  // However, for notifications, we need to look for data which has changed
+
+  // do not exit early - all category data must be updated for time before returning
+  bool ret = false; // we will return true if anything has changed
+
+  // assume entire range then narrow down
+  startTime = 0;
+  endTime = std::numeric_limits<double>::max();
+
+  //for each category
+  for (auto it = data_.begin(); it != data_.end(); ++it)
+  {
+    TimeValueState& timeState = it->second;
+    if (timeState.data.size() == 0)
+      continue;
+
+    // look for value beyond update time
+    TimeValueIterator j = timeState.data.upper_bound(time);
+    if (j == timeState.data.begin())
+    {
+      if ((j->time != -1) && (j->time < endTime))
+        endTime = j->time;
+
+      if (timeState.lastUpdateTime != NO_CATEGORY_DATA)
+      {
+        timeState.lastUpdateTime = NO_CATEGORY_DATA;
+        ret = true; // Went from category data to no category data so something has changed
+      }
+      continue;
+    }
+
+    if ((j != timeState.data.end()) && (j->time != -1) && (j->time < endTime))
+      endTime = j->time;
+
+    --j;
+
+    if ((j->time != -1) && (j->time > startTime))
+      startTime = j->time;
+
+    if (!simCore::areEqual(j->time, timeState.lastUpdateTime))
+    {
+      if (timeState.lastUpdateTime == NO_CATEGORY_DATA)
+        ret = true;  // Went from no category data to category data so something changed
+
+      timeState.lastUpdateTime = j->time;
+    }
+
+    // Just because the time changed does not mean the value actually changed, check the value
+    if (j->value != timeState.lastValue)
+    {
+      timeState.lastValue = j->value;
+      ret = true; // something has changed
+    }
+  }
+
+  lastUpdateTime_ = time;
+  return ret;
+}
+
+void MemoryCategoryDataSlice::installNotifier(const std::function<void()>& fn)
+{
+  notifierFn_ = fn;
+}
+
 /// receive all the category data in the data slice
 void MemoryCategoryDataSlice::visit(Visitor *visitor) const
 {
@@ -667,6 +805,10 @@ bool MemoryCategoryDataSlice::removePoint(double time, int catNameInt, int value
   // Assertion failure means we're about to overflow; our count is out of sync
   assert(sliceSize_ > 0);
   sliceSize_--;
+
+  if (notifierFn_)
+    notifierFn_();
+
   return true;
 }
 
@@ -688,6 +830,9 @@ void MemoryCategoryDataSlice::insert(CategoryData *data)
   }
 
   delete data;
+
+  if (notifierFn_)
+    notifierFn_();
 }
 
 void MemoryCategoryDataSlice::limitByPoints_(uint32_t limitPoints)
@@ -697,11 +842,15 @@ void MemoryCategoryDataSlice::limitByPoints_(uint32_t limitPoints)
     return;
 
   sliceSize_ = 0;
+  int removed = 0;
   for (EntityData::iterator i = data_.begin(); i != data_.end(); ++i)
   {
-    i->second.data.limitByPoints(limitPoints);
+    removed += i->second.data.limitByPoints(limitPoints);
     sliceSize_ += i->second.data.size();
   }
+
+  if ((removed != 0) && notifierFn_)
+    notifierFn_();
 }
 
 void MemoryCategoryDataSlice::limitByTime_(double timeLimit)
@@ -710,11 +859,15 @@ void MemoryCategoryDataSlice::limitByTime_(double timeLimit)
     return; // nothing to do
 
   sliceSize_ = 0;
+  int removed = 0;
   for (EntityData::iterator i = data_.begin(); i != data_.end(); ++i)
   {
-    i->second.data.limitByTime(timeLimit);
+    removed += i->second.data.limitByTime(timeLimit);
     sliceSize_ += i->second.data.size();
   }
+
+  if ((removed != 0) && notifierFn_)
+    notifierFn_();
 }
 
 /// apply the data limits indicated by 'prefs'
@@ -735,6 +888,9 @@ void MemoryCategoryDataSlice::completeFlush()
   sliceSize_ = 0;
   for (EntityData::iterator i = data_.begin(); i != data_.end(); ++i)
     i->second.data.completeFlush();
+
+  if (notifierFn_)
+    notifierFn_();
 }
 
 void MemoryCategoryDataSlice::flush(double startTime, double endTime)
@@ -745,6 +901,9 @@ void MemoryCategoryDataSlice::flush(double startTime, double endTime)
     i->second.data.flush(startTime, endTime);
     sliceSize_ += i->second.data.size();
   }
+
+  if (notifierFn_)
+    notifierFn_();
 }
 
 std::unique_ptr<CategoryDataSlice::IteratorImpl> MemoryCategoryDataSlice::iterator_() const

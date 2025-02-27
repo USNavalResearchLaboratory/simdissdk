@@ -47,11 +47,11 @@
 #include "osgEarth/SimpleOceanLayer"
 #include "osgEarth/Version"
 
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
 #include "osgEarthTriton/TritonLayer"
 #endif
 
-#ifdef HAVE_SILVERLINING_NODEKIT
+#ifdef HAVE_OSGEARTH_SILVERLINING
 #include "osgEarthSilverLining/SilverLiningNode"
 #endif
 
@@ -207,7 +207,7 @@ namespace
   /** Factory for a sky node */
   osgEarth::SkyNode* makeSky(osgEarth::MapNode* mapNode, bool useSilverLining, const std::string& slUser="", const std::string& slLicense="", const std::string& resourcePath="")
   {
-#ifdef HAVE_SILVERLINING_NODEKIT
+#ifdef HAVE_OSGEARTH_SILVERLINING
     if (useSilverLining)
     {
       osgEarth::SilverLining::SilverLiningOptions sl;
@@ -306,7 +306,7 @@ int main(int argc, char** argv)
   s_shipId = createShip(dataStore);
 
   // add an ocean surface to the scene.
-#ifdef HAVE_TRITON_NODEKIT
+#ifdef HAVE_OSGEARTH_TRITON
   if (useTriton)
   {
     osgEarth::Triton::TritonLayer* layer = new osgEarth::Triton::TritonLayer();

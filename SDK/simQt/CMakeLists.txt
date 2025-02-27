@@ -1,11 +1,18 @@
 # ----- simQt -----------------------------------------------------
 
-if(NOT QT_FOUND)
-    message(FATAL "Cannot configure simQt without Qt.")
+if(NOT Qt5Core_FOUND)
+    message(STATUS "Cannot configure simQt without Qt.")
+    return()
 endif()
 
 set(SIMQT_INC)
 set(SIMQT_SRC)
+
+# Variables used in the simQtConfig.cmake generation
+set(SIMQT_HAVE_SIMDATA OFF)
+set(SIMQT_HAVE_OSGQT OFF)
+set(SIMQT_HAVE_SIMVIS OFF)
+set(SIMQT_HAVE_SIMUTIL OFF)
 
 # .h files
 set(SIMQT_HEADERS_TO_MOC
@@ -52,7 +59,7 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}FileUtilities.h
     ${SIMQT_INC}MonospaceItemDelegate.h
     ${SIMQT_INC}QtFormatting.h
-    ${SIMQT_INC}QtUtils.h    
+    ${SIMQT_INC}QtUtils.h
     ${SIMQT_INC}ResourceInitializer.h
     ${SIMQT_INC}ScopedSignalBlocker.h
     ${SIMQT_INC}Settings.h
@@ -65,6 +72,7 @@ set(SIMQT_HEADERS
 
 # Parts of simQt depend on simData
 if(TARGET simData)
+    set(SIMQT_HAVE_SIMDATA ON)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CategoryDataBreadcrumbs.h
         ${SIMQT_INC}CategoryFilterCounter.h
@@ -92,6 +100,7 @@ endif()
 
 # Parts of simQt depend on simVis
 if(TARGET simVis)
+    set(SIMQT_HAVE_SIMVIS ON)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CenterEntity.h
         ${SIMQT_INC}EntityLineEdit.h
@@ -105,7 +114,8 @@ if(TARGET simVis)
     )
 
     # Parts of simQt depend on both simVis and osgQt
-    if (TARGET OSGQT)
+    if(TARGET OSGQT)
+        set(SIMQT_HAVE_OSGQT ON)
         list(APPEND SIMQT_HEADERS_TO_MOC
             ${SIMQT_INC}ViewWidget.h
         )
@@ -124,6 +134,13 @@ if(OSG_FOUND)
         ${SIMQT_INC}MergeValues.h
         ${SIMQT_INC}QtConversion.h
     )
+endif()
+if(OSGSIM_FOUND)
+    list(APPEND SIMQT_HEADERS_TO_MOC ${SIMQT_INC}ArticulationsEditorWidget.h)
+endif()
+
+if(TARGET simUtil)
+    set(SIMQT_HAVE_SIMUTIL ON)
 endif()
 
 # Parts of simQt depend on simUtil and simData
@@ -227,7 +244,7 @@ if(TARGET simVis)
     )
 
     # Parts of simQt depend on both simVis and osgQt
-    if (TARGET OSGQT)
+    if(TARGET OSGQT)
         list(APPEND SIMQT_SOURCES
             ${SIMQT_SRC}Gl3FormatGuesser.cpp
             ${SIMQT_SRC}ViewWidget.cpp
@@ -249,6 +266,9 @@ if(OSG_FOUND)
         ${SIMQT_SRC}ColorGradientWidget.cpp
         ${SIMQT_SRC}QtConversion.cpp
     )
+endif()
+if(OSGSIM_FOUND)
+    list(APPEND SIMQT_SOURCES ${SIMQT_SRC}ArticulationsEditorWidget.cpp)
 endif()
 
 # Parts of simQt depend on simUtil and simData
@@ -277,6 +297,9 @@ if(OSG_FOUND)
     list(APPEND SIMQT_FORMS
         ${SIMQT_INC}ColorGradientWidget.ui
     )
+endif()
+if(OSGSIM_FOUND)
+    list(APPEND SIMQT_FORMS ${SIMQT_INC}ArticulationsEditorWidget.ui)
 endif()
 
 set(SIMQT_RESOURCES
@@ -315,29 +338,30 @@ target_include_directories(simQt
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
-if(TARGET OSG)
+if(OSG_FOUND)
     # QtConversion.h depends on OSG, but not simVis
-    target_link_libraries(simQt PUBLIC OSG)
+    target_link_libraries(simQt PUBLIC ${OSG_LIBRARIES})
+    target_include_directories(simQt PUBLIC "$<BUILD_INTERFACE:${OSG_INCLUDE_DIR}>")
 endif()
-if(TARGET simData)
-    target_include_directories(simQt PUBLIC
-        $<BUILD_INTERFACE:${PROTOBUF_LIBRARY_INCLUDE_PATH}>
-    )
+if(OSGSIM_FOUND)
+    target_link_libraries(simQt PRIVATE ${OSGSIM_LIBRARIES})
+    target_include_directories(simQt PRIVATE "$<BUILD_INTERFACE:${OSG_INCLUDE_DIR}>")
+endif()
+if(TARGET simData AND TARGET protobuf::libprotobuf)
+    get_target_property(_PROTO_INC protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
+    target_include_directories(simQt PUBLIC "$<BUILD_INTERFACE:${_PROTO_INC}>")
 endif()
 if(TARGET simVis)
     target_include_directories(simQt PUBLIC
         $<BUILD_INTERFACE:${OSG_LIBRARY_INCLUDE_PATH}>
-        $<BUILD_INTERFACE:${OSGEARTH_LIBRARY_INCLUDE_PATH}>
+        $<BUILD_INTERFACE:${osgEarth_INCLUDE_DIR}>
     )
-
-    # Gl3FormatGuesser depends on OpenGL libraries
-    target_link_libraries(simQt PRIVATE VSI::GL)
 endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
 target_link_libraries(simQt PUBLIC simCore simNotify)
 if(TARGET OSGQT)
-    target_link_libraries(simQt PUBLIC OSGQT)
+    target_link_libraries(simQt PUBLIC OSGQT PRIVATE OpenGL::GL)
 endif()
 
 # Parts of simQt depend on simData's protobuf generated code
@@ -366,8 +390,6 @@ if(TARGET simVis)
         target_compile_definitions(simQt PRIVATE HAVE_SIMUTIL)
         target_link_libraries(simQt PRIVATE simUtil)
     endif()
-elseif(OSG_FOUND)
-    target_link_libraries(simQt PRIVATE OSG OPENTHREADS)
 endif()
 
 if(TARGET OSGQT)
@@ -378,14 +400,7 @@ endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     # Configure the simQtConfig.cmake file; its dependencies are dynamic
-    set(SIMQT_DEPENDS)
-    foreach(TGT IN ITEMS simNotify simCore simData simVis simUtil)
-        if(TARGET ${TGT})
-            set(SIMQT_DEPENDS "${SIMQT_DEPENDS}\nfind_dependency(${TGT})")
-        endif()
-    endforeach()
     configure_file(simQtConfig.cmake.in simQtConfig.cmake @ONLY)
-
     vsi_install_export(simQt ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 

@@ -434,7 +434,10 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
     if (lineCache_->hasTime(time))
     {
       ++index;
-      continue;
+      if (index < numLines)
+        continue;
+      // Continue processing so that the LOB locator node and xform_ get updated with the last LOB position and orientation.
+      // This covers the use case when time is stepping backwards.
     }
 
     // prepare to add this line to the cache - process the host platform position once for all endpoints
@@ -483,7 +486,7 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
     }
 
     // process endpoints for all lines at same time; all share same host platform position just calc'd
-    for (; index < update.datapoints_size() && update.datapoints(index).time() == time; ++index)
+    for (; index < numLines && update.datapoints(index).time() == time; ++index)
     {
       // calculate end point based on update point RAE
       const simData::LobGroupUpdatePoint &curP = update.datapoints(index);
@@ -521,10 +524,10 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
       addChild(line);
     }
 
-    // set the local grid for platform's position and az/el of the last of the lobs
+    // set the local grid for LOB's position and az/el of the last of the lobs
     if (index == numLines)
     {
-      const simData::LobGroupUpdatePoint &curP = update.datapoints(update.datapoints_size()-1);
+      const simData::LobGroupUpdatePoint &curP = update.datapoints(numLines-1);
       simCore::Vec3 lobAngles(curP.azimuth(), curP.elevation(), 0.0);
       if (lastProps_.azelrelativetohostori())
       {
@@ -615,7 +618,7 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
       hasLastUpdate_ = false;
     }
   }
-  // Whether updateSlice changed or not, label content may have changed, and for active beams we need to update
+  // Whether updateSlice changed or not, label content may have changed, and for active LOB we need to update
   if (isActive())
     updateLabel_(lastPrefs_);
 

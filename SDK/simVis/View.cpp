@@ -1415,6 +1415,9 @@ void View::setViewpoint(const simVis::Viewpoint& vp, double transitionTime_s)
       if (vp.name().isSet())
         watchViewpoint_.name() = vp.name();
     }
+    // Disable auto duration so that our configured transition time is respected. osgEarth::EarthManipulator::Settings has this default to true,
+    // and regularly resets settings on various calls. Simplest way to make sure this value is off is to turn it off before transitioning viewpoints.
+    manip->getSettings()->setAutoViewpointDurationEnabled(false);
     manip->setViewpoint(vp, transitionTime_s);
   }
 }

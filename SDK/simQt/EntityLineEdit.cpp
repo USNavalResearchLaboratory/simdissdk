@@ -269,6 +269,8 @@ EntityLineEdit::~EntityLineEdit()
     entityTreeModel_->dataStore()->removeListener(dataListenerPtr_);
   closeEntityDialog();
   delete composite_;
+  delete iconLabel_;
+  delete proxyStyle_;
 }
 
 void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::ObjectType type, simCore::Clock* clock)

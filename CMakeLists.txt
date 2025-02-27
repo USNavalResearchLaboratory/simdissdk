@@ -131,12 +131,14 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 # Project Dependencies
 
-# Configure 3rd party search path
+# --- 3rd Party Search (Prefix) Path ------
 
 # Include specific defaults for building with public release environment (third party packs)
 include(PublicDefaults)
 # Include specific defaults for building with VSI environment
 include(VsiDefaults)
+vsi_process_packages_json(${CMAKE_SOURCE_DIR}/CMakeUtilities/VsiPackages.json)
+
 # Build Release mode by default on Linux, unless otherwise specified
 include(DefaultToReleaseBuildType)
 
@@ -163,14 +165,6 @@ endif()
 
 # Setup third party dependencies
 
-
-# OSG: allow the user to set OSG_DIR in CMAKE GUI and auto-populate all the OSG libraries:
-set(OSG_DIR "" CACHE PATH "OpenSceneGraph root directory")
-if(NOT ENV{OSG_DIR} AND NOT ENV{OSGDIR} AND NOT ENV{OSG_ROOT})
-    set(ENV{OSG_DIR} ${OSG_DIR})
-endif()
-set(OSG_INCLUDE_DIR ${OSG_DIR}/include)
-
 # Prepopulate the installation runtime and library directory to override SIMDIS defaults
 set(INSTALLSETTINGS_RUNTIME_DIR "bin" CACHE STRING "Directory containing exectuables and DLLs; non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
 set(INSTALLSETTINGS_LIBRARY_DIR "lib" CACHE STRING "Directory containing shared object files (UNIX only); non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
@@ -178,57 +172,39 @@ include(CreateInstallProperties)
 
 
 # --- System Libraries --------------------
-include(ImportSocket)
-include(ImportOpenGL)
 
-# ---Qt------------------------------------
+find_package(OpenGL QUIET)
+find_package(OpenSceneGraph COMPONENTS osgDB osgGA osgSim osgText osgUtil osgViewer QUIET)
+find_package(GDAL CONFIG)
+find_package(osgEarth)
 
-# Attempt to find Qt so we can build the Qt example(s).
-set(QT5_MODULES Designer OpenGL UiPlugin)
-set(QT5_PLUGINS xcbglintegrations)
-include(ImportQt5)
+# Find SQLite for DB file support in simVis and simUtil
+find_package(SQLite3 QUIET)
+set(SQLite3_VCPKG OFF)
+if(NOT SQLite3_FOUND)
+    # Support vcpkg SQLite3 package/target name
+    find_package(unofficial-sqlite3 CONFIG QUIET)
+    if(unofficial-sqlite3_FOUND)
+        add_target(SQLite::SQLite3 ALIAS unofficial::sqlite3::sqlite3)
+        set(SQLite3_FOUND TRUE)
+        set(SQLite3_VCPKG ON)
+    endif()
+endif()
 
+find_package(Qt5 COMPONENTS OpenGL Widgets)
+# Need to silence deprecation for MSVC 2022 and Qt5 to avoid build errors
+if(MSVC AND TARGET Qt5::Core AND Qt5Core_VERSION VERSION_LESS 5.15.17)
+    target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+endif()
 
-# --- OpenSceneGraph ----------------------
-
-# OSG requires GDAL, and VSI-distributed GDAL requires MrSID
-include(ImportMrSID)
-include(ImportGDAL)
-
-# import the package OSG and its companion OpenThreads
-include(ImportOpenThreads)
-include(ImportOSG)
 include(ImportOSGQt)
 
-## Find and include the OpenGL core header
+# Find and include the OpenGL core header
 # By default search for the GLCORE header in the OSG include path.  Non-default locations for the header
 # can be set through the GLCORE_GLCOREARB_HEADER CMake cache variable
-set(GLCORE_DIR ${OSG_LIBRARY_INCLUDE_PATH})
 find_package(GLCORE)
 
-
 # --- osgEarth -----------------------------
-
-# VSI-distributed osgEarth requires GEOS
-include(ImportGEOS)
-# allow the user to set OSGEARTH_DIR in CMAKE GUI and auto-populate all OSGEARTH libraries:
-set(OSGEARTH_DIR "" CACHE PATH "osgEarth root directory")
-include(ImportOSGEarth)
-
-# --- GLEW -----------------------------
-include(ImportGLEW)
-
-# --- Protocol Buffers -----------------------------
-set(PROTOBUF_DIR "" CACHE PATH "Protocol Buffers root directory")
-include(ImportProtobuf)
-
-
-# --- SQLITE3 -----------------------------
-set(SQLITE3_DIR "" CACHE PATH "Sqlite3 root directory")
-include(ImportSQLite)
-if (SQLITE3_FOUND)
-    set(SIM_HAVE_DB_SUPPORT 1)
-endif()
 
 # subprojects
 add_subdirectory(SDK)
@@ -241,11 +217,11 @@ if(ENABLE_UNIT_TESTING)
     add_subdirectory(Testing)
 endif()
 
-# SWIG module requires Python3.  FindPython3.cmake is first distributed in CMake 3.12
+# SWIG module requires Python3. FindPython3.cmake is first distributed in CMake 3.12
 option(BUILD_SDK_SWIG "Build SIMDIS SDK SWIG module" OFF)
 if(BUILD_SDK_SWIG)
     # Include SWIG for Python simCore module
-    include(ImportSWIG)
+    find_package(SWIG 4.0)
     find_package(Python3 COMPONENTS Development Interpreter)
     add_subdirectory(swig)
 endif()
@@ -255,6 +231,16 @@ add_subdirectory(Doc)
 
 # Configure the installs for CMake exports, e.g. for external projects
 include(InstallCMakeExports)
+# Configure the install() statements for third party libraries
+if(INSTALL_THIRDPARTY_LIBRARIES)
+    include(InstallData.3rd.GDAL)
+    include(InstallData.3rd.GEOS)
+    include(InstallData.3rd.MrSID)
+    include(InstallData.3rd.OSG)
+    include(InstallData.3rd.osgEarth)
+    include(InstallData.3rd.osgQt)
+    include(InstallData.3rd.Qt5)
+endif()
 
 # Install the documentation to the root of the install directory
 install(FILES INSTALL.md LICENSE.txt README.md DESTINATION .)
