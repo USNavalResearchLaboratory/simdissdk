@@ -108,7 +108,7 @@ void InstallOcean::install(simVis::SceneManager& scene)
     return;
 
   // Install the bathymetry offset
-  if (bathymetryOffset_ != 0.0)
+  if (bathymetryOffset_ != 0.0 && scene.getMapNode()->getTerrainEngine())
   {
     simVis::BathymetryGenerator* bathGen = new simVis::BathymetryGenerator();
     bathGen->setOffset(-bathymetryOffset_);

@@ -1250,6 +1250,13 @@ int main(int argc, char** argv)
   viewer->setMap(map.get());
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
+  if (!scene->getMapNode() || !scene->getMapNode()->getTerrainEngine())
+  {
+    // this example can't even limp along without a terrain engine.
+    SIM_ERROR << "Ocean example cannot continue with no terrain engine.\n";
+    return 1;
+  }
+
   // the data store houses the entity data model:
   simData::MemoryDataStore dataStore;
   simVis::ScenarioDataStoreAdapter adapter(&dataStore, scene->getScenario());
@@ -1289,7 +1296,7 @@ int main(int argc, char** argv)
   }
 
   // if we're using Triton, install a module to "sink" the MSL=0 terrain down, creating makeshift bathymetry
-  if (bathymetryOffset != 0.0f)
+  if (bathymetryOffset != 0.0f && scene->getMapNode()->getTerrainEngine())
   {
     SIM_NOTICE << "Bathymetry offset = " << -bathymetryOffset << "\n";
     simVis::BathymetryGenerator* bgen = new simVis::BathymetryGenerator();
