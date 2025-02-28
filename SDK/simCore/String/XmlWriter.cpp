@@ -21,8 +21,11 @@
 *
 */
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/String/XmlWriter.h"
 
 namespace
@@ -209,6 +212,18 @@ void XmlWriter::writeTag(const std::string& tag, double data, const std::string&
 {
   writeTagStart_(comment, tag, attr);
   os_ << ">" << data << "</" << namespace_ << tag << ">\n";
+}
+
+void XmlWriter::writeTag(const std::string& tag, double data, unsigned int precision, const std::string& comment, const std::string& attr)
+{
+  precision = simCore::sdkMin(precision, static_cast<unsigned int>(std::numeric_limits<double>::digits10));
+
+  // use a local std::stringstream so as not to pollute os_
+  std::stringstream ss;
+  ss << std::fixed << std::setprecision(precision) << data;
+
+  writeTagStart_(comment, tag, attr);
+  os_ << ">" << ss.str() << "</" << namespace_ << tag << ">\n";
 }
 
 void XmlWriter::writeRawTag(const std::string& tag, const std::string& data, const std::string& comment, const std::string& attr)

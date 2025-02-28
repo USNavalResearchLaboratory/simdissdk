@@ -404,6 +404,36 @@ int testUtf8ErrorsInXmlWriter()
   return rv;
 }
 
+int testOneDouble(const std::string& tag, double input, unsigned int precision, const std::string& expected)
+{
+  std::stringstream ss;
+  simCore::XmlWriter writer(ss);
+  writer.writeTag(tag, input, precision);
+  std::string actual = ss.str();
+  return SDK_ASSERT(actual == expected);
+}
+
+int testWriteTagDouble()
+{
+  int rv = 0;
+
+  double value = 1.23456789;
+
+  rv += SDK_ASSERT(0 == testOneDouble("Text", value, 0, "<Text>1</Text>\n"));
+  rv += SDK_ASSERT(0 == testOneDouble("Text", value, 1, "<Text>1.2</Text>\n"));
+  rv += SDK_ASSERT(0 == testOneDouble("Text", value, 2, "<Text>1.23</Text>\n"));
+  /** Rounds, not truncates */
+  rv += SDK_ASSERT(0 == testOneDouble("Text", value, 3, "<Text>1.235</Text>\n"));
+  rv += SDK_ASSERT(0 == testOneDouble("Text", value, 4, "<Text>1.2346</Text>\n"));
+  rv += SDK_ASSERT(0 == testOneDouble("Text", value, 5, "<Text>1.23457</Text>\n"));
+  rv += SDK_ASSERT(0 == testOneDouble("Text", value, 6, "<Text>1.234568</Text>\n"));
+  rv += SDK_ASSERT(0 == testOneDouble("Text", value, 7, "<Text>1.2345679</Text>\n"));
+  rv += SDK_ASSERT(0 == testOneDouble("Text", value, 8, "<Text>1.23456789</Text>\n"));
+  rv += SDK_ASSERT(0 == testOneDouble("Text", value, 9, "<Text>1.234567890</Text>\n"));
+
+  return rv;
+}
+
 }
 
 int XmlWriterTest(int argc, char* argv[])
@@ -414,6 +444,7 @@ int XmlWriterTest(int argc, char* argv[])
   rv += SDK_ASSERT(0 == testWriteTag());
   rv += SDK_ASSERT(0 == testXmlWriter());
   rv += SDK_ASSERT(0 == testUtf8ErrorsInXmlWriter());
+  rv += SDK_ASSERT(0 == testWriteTagDouble());
   std::cout << "simCore simCore::XmlWriterTest " << ((rv == 0) ? "passed" : "failed") << std::endl;
 
   return rv;
