@@ -640,7 +640,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       {
         ts->halo()->color() = textOptions.outlineColor_;
         ts->haloOffset() = simVis::outlineThickness(static_cast<simData::TextOutline>(textOptions.outlineType_));
-        ts->halo()->width() = simVis::outlineThickness(static_cast<simData::TextOutline>(textOptions.outlineType_));
+        ts->halo()->width() = osgEarth::Distance(simVis::outlineThickness(static_cast<simData::TextOutline>(textOptions.outlineType_)), osgEarth::Units::PIXELS);
         ts->haloBackdropType() = osgText::Text::OUTLINE;
       }
       else

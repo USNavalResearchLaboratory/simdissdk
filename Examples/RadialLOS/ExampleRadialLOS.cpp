@@ -396,7 +396,7 @@ private:
     osgEarth::Style style;
     osg::ref_ptr<osgEarth::LineSymbol> line = style.getOrCreate<osgEarth::LineSymbol>();
     line->stroke()->color() = simVis::Color::Yellow;
-    line->stroke()->width() = 5.0f;
+    line->stroke()->width() = osgEarth::Distance(5.0f, osgEarth::Units::PIXELS);
     osg::ref_ptr<osgEarth::AltitudeSymbol> alt = style.getOrCreate<osgEarth::AltitudeSymbol>();
     alt->clamping() = osgEarth::AltitudeSymbol::CLAMP_TO_TERRAIN;
     alt->technique() = osgEarth::AltitudeSymbol::TECHNIQUE_SCENE;

@@ -939,9 +939,9 @@ int GogNodeInterface::getLineState(bool& outlineState, osg::Vec4f& color, Utils:
     return 0;
 
   const osgEarth::LineSymbol* linePtr = style_.getSymbol<osgEarth::LineSymbol>();
-  lineWidth = static_cast<int>(*(linePtr->stroke()->width()));
+  lineWidth = static_cast<int>(linePtr->stroke()->width()->literal().getValue());
   // now figure out line style based on the stipple value
-  unsigned short stipple = *(linePtr->stroke()->stipple());
+  unsigned short stipple = *(linePtr->stroke()->stipplePattern());
   lineStyle = Utils::getLineStyleFromStipple(stipple);
   return 0;
 }
@@ -1319,7 +1319,7 @@ void GogNodeInterface::setLineStyle(Utils::LineStyle style)
   // use some default values to represent various draw styles
   unsigned short lineStyle = Utils::getStippleFromLineStyle(style);
   osgEarth::LineSymbol* lineSymbol = style_.getOrCreate<osgEarth::LineSymbol>();
-  lineSymbol->stroke()->stipple() = lineStyle;
+  lineSymbol->stroke()->stipplePattern() = lineStyle;
   setStyle_(style_);
 
   simCore::GOG::FillableShape* fillable = dynamic_cast<simCore::GOG::FillableShape*>(shape_.get());
@@ -1336,7 +1336,7 @@ void GogNodeInterface::setLineWidth(int lineWidth)
   metaData_.setExplicitly(GOG_LINE_WIDTH_SET);
 
   osgEarth::LineSymbol* lineSymbol = style_.getOrCreate<osgEarth::LineSymbol>();
-  lineSymbol->stroke()->width() = static_cast<float>(lineWidth);
+  lineSymbol->stroke()->width() = osgEarth::Distance(static_cast<float>(lineWidth), osgEarth::Units::PIXELS);
   setStyle_(style_);
 
   simCore::GOG::FillableShape* fillable = dynamic_cast<simCore::GOG::FillableShape*>(shape_.get());
