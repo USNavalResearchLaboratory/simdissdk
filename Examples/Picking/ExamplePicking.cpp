@@ -244,7 +244,7 @@ public:
     auto lineSymbol = style.getOrCreateSymbol<osgEarth::LineSymbol>();
     // Change some line aspects to indicate we picked correctly
     lineSymbol->stroke()->color() = randomColor();
-    lineSymbol->stroke()->width() = randomBetween(1.0, 7.0);
+    lineSymbol->stroke()->width() = osgEarth::Distance(randomBetween(1.0, 7.0), osgEarth::Units::PIXELS);
     anno->setStyle(style);
     return true;
   }
