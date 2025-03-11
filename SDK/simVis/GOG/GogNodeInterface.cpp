@@ -42,6 +42,7 @@
 #include "osgEarth/Style"
 #include "osgEarth/TextSymbol"
 #include "osgEarth/Units"
+#include "osgEarth/Version"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
@@ -939,9 +940,14 @@ int GogNodeInterface::getLineState(bool& outlineState, osg::Vec4f& color, Utils:
     return 0;
 
   const osgEarth::LineSymbol* linePtr = style_.getSymbol<osgEarth::LineSymbol>();
+#if OSGEARTH_SOVERSION < 169
+  lineWidth = static_cast<int>(*(linePtr->stroke()->width()));
+  unsigned short stipple = *(linePtr->stroke()->stipple());
+#else
   lineWidth = static_cast<int>(linePtr->stroke()->width()->literal().getValue());
-  // now figure out line style based on the stipple value
   unsigned short stipple = *(linePtr->stroke()->stipplePattern());
+#endif
+  // now figure out line style based on the stipple value
   lineStyle = Utils::getLineStyleFromStipple(stipple);
   return 0;
 }
@@ -1319,7 +1325,11 @@ void GogNodeInterface::setLineStyle(Utils::LineStyle style)
   // use some default values to represent various draw styles
   unsigned short lineStyle = Utils::getStippleFromLineStyle(style);
   osgEarth::LineSymbol* lineSymbol = style_.getOrCreate<osgEarth::LineSymbol>();
+#if OSGEARTH_SOVERSION < 169
+  lineSymbol->stroke()->stipple() = lineStyle;
+#else
   lineSymbol->stroke()->stipplePattern() = lineStyle;
+#endif
   setStyle_(style_);
 
   simCore::GOG::FillableShape* fillable = dynamic_cast<simCore::GOG::FillableShape*>(shape_.get());
@@ -1336,7 +1346,11 @@ void GogNodeInterface::setLineWidth(int lineWidth)
   metaData_.setExplicitly(GOG_LINE_WIDTH_SET);
 
   osgEarth::LineSymbol* lineSymbol = style_.getOrCreate<osgEarth::LineSymbol>();
+#if OSGEARTH_SOVERSION < 169
+  lineSymbol->stroke()->width() = static_cast<float>(lineWidth);
+#else
   lineSymbol->stroke()->width() = osgEarth::Distance(static_cast<float>(lineWidth), osgEarth::Units::PIXELS);
+#endif
   setStyle_(style_);
 
   simCore::GOG::FillableShape* fillable = dynamic_cast<simCore::GOG::FillableShape*>(shape_.get());

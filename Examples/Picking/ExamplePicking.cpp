@@ -30,6 +30,7 @@
 #include "osgEarth/NodeUtils"
 #include "osgEarth/ObjectIndex"
 #include "osgEarth/Registry"
+#include "osgEarth/Version"
 #include "simNotify/Notify.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Common/Version.h"
@@ -244,7 +245,11 @@ public:
     auto lineSymbol = style.getOrCreateSymbol<osgEarth::LineSymbol>();
     // Change some line aspects to indicate we picked correctly
     lineSymbol->stroke()->color() = randomColor();
+#if OSGEARTH_SOVERSION < 169
+    lineSymbol->stroke()->width() = randomBetween(1.0, 7.0);
+#else
     lineSymbol->stroke()->width() = osgEarth::Distance(randomBetween(1.0, 7.0), osgEarth::Units::PIXELS);
+#endif
     anno->setStyle(style);
     return true;
   }

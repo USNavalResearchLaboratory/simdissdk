@@ -41,6 +41,7 @@
 #include "osgEarth/FeatureNode"
 #include "osgEarth/Geometry"
 #include "osgEarth/LineDrawable"
+#include "osgEarth/Version"
 
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
@@ -172,7 +173,11 @@ void styleAnnotation(osgEarth::Style& style, const simVis::Color& fillColor, boo
   namespace sym = osgEarth;
   style.getOrCreate<sym::PolygonSymbol>()->fill()->color() = simVis::Color(fillColor, 0.5f);
   style.getOrCreate<sym::LineSymbol>()->stroke()->color() = simVis::Color::White;
+#if OSGEARTH_SOVERSION < 169
+  style.getOrCreate<sym::LineSymbol>()->stroke()->width() = 2.f;
+#else
   style.getOrCreate<sym::LineSymbol>()->stroke()->width() = osgEarth::Distance(2.f, osgEarth::Units::PIXELS);
+#endif
   style.getOrCreate<sym::LineSymbol>()->tessellationSize()->set(100, osgEarth::Units::KILOMETERS);
   style.getOrCreate<sym::AltitudeSymbol>()->verticalOffset() = 10000;
   style.getOrCreate<sym::RenderSymbol>()->backfaceCulling() = false;
