@@ -177,14 +177,14 @@ public:
       }
 
       // Cap Resolution
-      float capRes = capRes_;
-      IMGUI_ADD_ROW(ImGui::SliderFloat, "Cap Res.", &capRes_, 1.f, 20.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      int capRes = capRes_;
+      IMGUI_ADD_ROW(ImGui::SliderInt, "Cap Res.", &capRes_, 1, 20, "%d", ImGuiSliderFlags_AlwaysClamp);
       if (capRes != capRes_)
         needUpdate = true;
 
       // Cone Resolution
-      float coneRes = coneRes_;
-      IMGUI_ADD_ROW(ImGui::SliderFloat, "Cone Res.", &coneRes_, 4.f, 40.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+      int coneRes = coneRes_;
+      IMGUI_ADD_ROW(ImGui::SliderInt, "Cone Res.", &coneRes_, 4, 40, "%d", ImGuiSliderFlags_AlwaysClamp);
       if (coneRes != coneRes_)
         needUpdate = true;
 
@@ -250,8 +250,8 @@ private:
     prefs->set_shaded(shaded_);
     prefs->set_blended(blended_);
     prefs->set_rendercone(renderCone_);
-    prefs->set_capresolution(capRes_);
-    prefs->set_coneresolution(coneRes_);
+    prefs->set_capresolution(static_cast<unsigned int>(capRes_));
+    prefs->set_coneresolution(static_cast<unsigned int>(coneRes_));
     prefs->set_animate(animate_);
     prefs->set_pulserate(0.1);
     prefs->set_pulsestipple(0xfff0);
@@ -285,8 +285,8 @@ private:
   float vertSize_ = 45.f;
   float azimuth_ = 0.f;
   float elevation_ = 0.f;
-  float capRes_ = 15.f;
-  float coneRes_ = 30.f;
+  int capRes_ = 15;
+  int coneRes_ = 30;
   bool useOffset_ = false;
   bool shaded_ = false;
   bool blended_ = true;
