@@ -347,10 +347,6 @@ if(OSGSIM_FOUND)
     target_link_libraries(simQt PRIVATE ${OSGSIM_LIBRARIES})
     target_include_directories(simQt PRIVATE "$<BUILD_INTERFACE:${OSG_INCLUDE_DIR}>")
 endif()
-if(TARGET simData AND TARGET protobuf::libprotobuf)
-    get_target_property(_PROTO_INC protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
-    target_include_directories(simQt PUBLIC "$<BUILD_INTERFACE:${_PROTO_INC}>")
-endif()
 if(TARGET simVis)
     target_include_directories(simQt PUBLIC
         $<BUILD_INTERFACE:${OSG_LIBRARY_INCLUDE_PATH}>
@@ -365,8 +361,8 @@ if(TARGET OSGQT)
 endif()
 
 # Parts of simQt depend on simData's protobuf generated code
-if(TARGET simData)
-    add_dependencies(simQt simData_protobuf_generation)
+if(TARGET simDataProto)
+    target_link_libraries(simQt PRIVATE simDataProto)
 endif()
 
 if(UNIX)

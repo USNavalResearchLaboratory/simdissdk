@@ -7,7 +7,6 @@ if(NOT TARGET protobuf::libprotobuf)
 endif()
 
 # Variables used in the simDataConfig.cmake generation
-include(CreateProtobufLibrary)
 set(SIMDATA_HAVE_ENTT OFF)
 
 # ----- simData --------------------------------------------------------
@@ -125,14 +124,6 @@ source_group(Headers\\GeneratedCode
         ${DATA_GENERATED_SOURCES}
 )
 
-
-# Generate the .pb.cc and .pb.h file from protobuf
-vsi_protobuf_generate(simData_protobuf_generation "${CMAKE_CURRENT_SOURCE_DIR}/GeneratedCode" "simData.proto"
-    SIMDATA_PROTO_H SIMDATA_PROTO_CC =dllexport_decl=SDKDATA_EXPORT:.)
-set_target_properties(simData_protobuf_generation PROPERTIES
-    FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "simData Protobuf Generation")
-
 # ----------------------------------------------------------------------
 
 set(DATA_PROJECT_FILES
@@ -145,6 +136,18 @@ set(STATIC_OR_SHARED STATIC)
 if(SIMDATA_SHARED)
     set(STATIC_OR_SHARED SHARED)
 endif()
+
+include(AddProtoLibrary)
+add_proto_library(simDataProto STATIC
+    simData
+    NO_HEADER
+    PROTO_DIR GeneratedCode
+    EXPORT_MACRO SIMDATAPROTO_EXPORT
+)
+set_target_properties(simDataProto PROPERTIES
+    FOLDER "SIMDIS SDK"
+    PROJECT_LABEL "simData Protobuf Library"
+)
 
 add_library(simData ${STATIC_OR_SHARED} ${DATA_PROJECT_FILES})
 set_target_properties(simData PROPERTIES
@@ -159,9 +162,7 @@ target_include_directories(simData PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-
-target_link_libraries(simData PUBLIC protobuf::libprotobuf simCore simNotify)
-add_dependencies(simData simData_protobuf_generation)
+target_link_libraries(simData PUBLIC protobuf::libprotobuf simCore simNotify simDataProto)
 if(SIMDATA_SHARED)
     target_compile_definitions(simData PRIVATE simData_LIB_EXPORT_SHARED)
 else()
@@ -179,6 +180,7 @@ if(WIN32)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
+    vsi_install_export(simDataProto ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
     # Configure the simDataConfig.cmake file; its dependencies are dynamic
     configure_file(simDataConfig.cmake.in simDataConfig.cmake @ONLY)
     vsi_install_export(simData ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
