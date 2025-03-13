@@ -135,7 +135,7 @@ function(add_proto_library TARGETNAME)
         # Generate a warning-free wrapper header in the output directory
         if(NOT arg_NO_HEADER)
             set(_HDR_OUT ${_PROTO_OUT_DIR}/${_FILE_PREFIX}.h)
-            configure_file(${CMAKE_SOURCE_DIR}/CMakeImport/ProtobufFileWrapper.h.in ${_HDR_OUT} @ONLY)
+            configure_file(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ProtobufFileWrapper.h.in ${_HDR_OUT} @ONLY)
             set_property(SOURCE ${_HDR_OUT} PROPERTY OBJECT_DEPENDS ${_PROTO_OUT_DIR}/${PROTO_FILE_PREFIX}.pb.h)
             list(APPEND _HDR_FILES ${_HDR_OUT})
         endif()
