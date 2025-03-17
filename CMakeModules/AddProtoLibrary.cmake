@@ -16,6 +16,7 @@ This is intended to replace the older CreateProtobufLibrary code.s
       <target-name>
       [STATIC|SHARED]
       [LITE]
+      [APPEND_PATH]
       [PROTO_DIR <dir>]
       [EXPORT_MACRO <macro>]
       [PROTOC_OUT_DIR <dir>]
@@ -39,6 +40,11 @@ This is intended to replace the older CreateProtobufLibrary code.s
 
   ``LITE``
     Link against the libprotobuf-lite library. Only valid for ``STATIC``
+
+  ``APPEND_PATH``
+    Pass-throguh to ``protobuf-generate``: A flag that causes the base path of all proto
+    schema files to be added to ``IMPORT_DIRS``. This may be useful when the proto files
+    are in subdirectories relative to the loaded CMakeLists.txt file.
 
   ``NO_HEADER``
     Do not generate the warning-free headers. By default, all headers are generated.
@@ -77,7 +83,7 @@ function(add_proto_library TARGETNAME)
         find_package(Protobuf REQUIRED)
     endif()
 
-    set(_options SHARED STATIC LITE NO_HEADER)
+    set(_options SHARED STATIC LITE NO_HEADER APPEND_PATH)
     set(_singleargs PROTO_DIR EXPORT_MACRO PROTO_OUT_DIR HDR_CODE_BLOCK)
     set(_multiargs PROTOC_OPTIONS IMPORT_DIRS)
     cmake_parse_arguments(arg "${_options}" "${_singleargs}" "${_multiargs}" ${ARGN})
@@ -92,6 +98,11 @@ function(add_proto_library TARGETNAME)
         TARGET ${TARGETNAME}
         LANGUAGE cpp
     )
+
+    # APPEND_PATH is a pass-through
+    if(arg_APPEND_PATH)
+        list(APPEND _GEN_ARGS APPEND_PATH)
+    endif()
 
     # Determine if static or shared; default to static
     set(_LIB_TYPE STATIC)

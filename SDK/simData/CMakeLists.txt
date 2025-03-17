@@ -141,6 +141,7 @@ include(AddProtoLibrary)
 add_proto_library(simDataProto STATIC
     simData
     NO_HEADER
+    APPEND_PATH
     PROTO_DIR GeneratedCode
     EXPORT_MACRO SIMDATAPROTO_EXPORT
 )
