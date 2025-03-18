@@ -131,14 +131,15 @@ set(DATA_PROJECT_FILES
     ${MEMORYTABLE_HEADERS} ${MEMORYTABLE_SOURCES} ${CATEGORY_DATA_HEADERS} ${CATEGORY_DATA_SOURCES} ${MESSAGEVISITOR_HEADERS} ${MESSAGEVISITOR_SOURCES}
 )
 
-# Fix the library for static or shared
+# Fix the library for static or shared (simDataProto). Default to shared if not defined,
+# because protobuf libraries can have problems on Windows when linked statically (SIM-18053).
 set(STATIC_OR_SHARED STATIC)
-if(SIMDATA_SHARED)
+if(SIMDATAPROTO_SHARED OR NOT DEFINED SIMDATAPROTO_SHARED)
     set(STATIC_OR_SHARED SHARED)
 endif()
 
 include(AddProtoLibrary)
-add_proto_library(simDataProto STATIC
+add_proto_library(simDataProto ${STATIC_OR_SHARED}
     simData
     NO_HEADER
     APPEND_PATH
@@ -149,6 +150,13 @@ set_target_properties(simDataProto PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "simData Protobuf Library"
 )
+ApplySDKVersion(simDataProto)
+
+# Fix the library for static or shared (simData)
+set(STATIC_OR_SHARED STATIC)
+if(SIMDATA_SHARED)
+    set(STATIC_OR_SHARED SHARED)
+endif()
 
 add_library(simData ${STATIC_OR_SHARED} ${DATA_PROJECT_FILES})
 set_target_properties(simData PROPERTIES
