@@ -1,5 +1,11 @@
-find_package(Protobuf QUIET)
-find_package(EnTT QUIET)
+if(NOT Protobuf_FOUND)
+    # CONFIG mode needs 22+ to work well with protobuf_generate
+    find_package(Protobuf 5.22 CONFIG QUIET)
+    if(NOT Protobuf_FOUND)
+        find_package(Protobuf QUIET)
+    endif()
+endif()
+find_package(EnTT CONFIG QUIET)
 
 if(NOT TARGET protobuf::libprotobuf)
     message(STATUS "Skipping simData because of missing PROTOBUF dependencies.")

@@ -3,7 +3,6 @@ include(CMakeFindDependencyMacro)
 find_dependency(simNotify)
 find_dependency(simCore)
 find_dependency(simDataProto)
-find_dependency(Protobuf)
 
 if(@SIMDATA_HAVE_ENTT@)
     find_dependency(EnTT CONFIG)
