@@ -240,6 +240,7 @@ if(INSTALL_THIRDPARTY_LIBRARIES)
     include(InstallData.3rd.OSG)
     include(InstallData.3rd.osgEarth)
     include(InstallData.3rd.osgQt)
+    include(InstallData.3rd.Protobuf)
     include(InstallData.3rd.Qt5)
 endif()
 

@@ -64,3 +64,6 @@ set_target_properties(ImGuiLib PROPERTIES
     FOLDER "ImGui Library"
     PROJECT_LABEL "ImGui"
 )
+
+find_package(Threads)
+target_link_libraries(ImGuiLib PRIVATE Threads::Threads)
