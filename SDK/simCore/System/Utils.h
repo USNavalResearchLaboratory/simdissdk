@@ -102,6 +102,9 @@ struct InitializeEnvironmentConfig
  */
 SDKCORE_EXPORT int initializeSimdisEnvironmentVariables(const InitializeEnvironmentConfig& config);
 
+/** Initializes the SIMDIS environment variables using the default configuration. Convenience wrapper. */
+SDKCORE_EXPORT int initializeSimdisEnvironmentVariables();
+
 } // namespace simCore
 
 #endif /* SIMCORE_SYSTEM_UTILS_H */
