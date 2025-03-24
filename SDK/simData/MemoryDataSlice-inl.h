@@ -275,7 +275,8 @@ template<typename T>
 typename DataSlice<T>::Iterator MemoryDataSlice<T>::lower_bound(double timeValue) const
 {
   VectorIterator<T>* rv = new VectorIterator<T>(&updates_);
-  typename std::deque<T*>::const_iterator iter =  computeLowerBound<typename std::deque<T*>::const_iterator, T>(updates_.begin(), fastUpdate_.get(), updates_.end(), timeValue);
+  typename std::deque<T*>::iterator iter =  computeLowerBound<typename std::deque<T*>::iterator, T>(updates_.begin(), fastUpdate_.get(), updates_.end(), timeValue);
+  fastUpdate_ = MemorySliceHelper::SafeDequeIterator<T*>(&updates_, iter);
   rv->set(iter - updates_.begin());
   return typename DataSlice<T>::Iterator(rv);
 }
@@ -284,7 +285,8 @@ template<typename T>
 typename DataSlice<T>::Iterator MemoryDataSlice<T>::upper_bound(double timeValue) const
 {
   VectorIterator<T>* rv = new VectorIterator<T>(&updates_);
-  typename std::deque<T*>::const_iterator iter = computeUpperBound<typename std::deque<T*>::const_iterator, T>(updates_.begin(), fastUpdate_.get(), updates_.end(), timeValue);
+  typename std::deque<T*>::iterator iter = computeUpperBound<typename std::deque<T*>::iterator, T>(updates_.begin(), fastUpdate_.get(), updates_.end(), timeValue);
+  fastUpdate_ = MemorySliceHelper::SafeDequeIterator<T*>(&updates_, iter);
   rv->set(iter - updates_.begin());
   return typename DataSlice<T>::Iterator(rv);
 }
