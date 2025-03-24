@@ -969,17 +969,17 @@ private:
 
       needToSetToNull_ = true;
 
-      if (interpolateState == InterpolatorState::INTERNAL)
-        update_(time);
-      else if (interpolateState == InterpolatorState::EXTERNAL)
-        entry_->updates()->update(time, ds->interpolator());
-      else
+      if (!isInterpolated)
       {
         entry_->updates()->update(time, updateStartTime_, updateEndTime_);
         // update returns the extended time which might need to be truncated back to the original slice end time
         if (fileMode && !isExtendedPlatform() && (updateEndTime_ > sliceEndTime_))
           updateEndTime_ = sliceEndTime_;
       }
+      else if (interpolateState == InterpolatorState::INTERNAL)
+        update_(time);
+      else
+        entry_->updates()->update(time, ds->interpolator());
     }
 
     /** Called when the slice is modified so that the next call to update will not kick out early */

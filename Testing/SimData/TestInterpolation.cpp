@@ -415,6 +415,91 @@ void testInterpolation_linearAngle()
   assertEquals(lslice->isInterpolated(), false);
 }
 
+int testNoInterpolationForIndividualPlatform()
+{
+  int rv = 0;
+
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore* ds = testHelper.dataStore();
+  simData::PlatformPrefs objprefs;
+
+  // setup interpolation
+  simData::LinearInterpolator interpolator;
+  ds->setInterpolator(&interpolator);
+  ds->enableInterpolation(true);
+  assertTrue(ds->isInterpolationEnabled() == true);
+
+  // insert platform
+  uint64_t platId = testHelper.addPlatform();
+
+  // turn off interpolation for an individual platform
+  simData::PlatformPrefs prefs;
+  prefs.set_interpolatepos(false);
+  testHelper.updatePlatformPrefs(prefs, platId);
+
+  // insert data points
+  {
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = ds->addPlatformUpdate(platId, &t);
+    u->set_time(0.0);
+    u->set_x(simCore::WGS_A + 10.0);
+    u->set_y(11.0);
+    u->set_z(0.0);
+    t.commit();
+  }
+
+  {
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = ds->addPlatformUpdate(platId, &t);
+    u->set_time(100.0);
+    u->set_x(simCore::WGS_A + 10.0);
+    u->set_y(11.0);
+    u->set_z(100.0);
+    t.commit();
+  }
+
+  const auto* slice = ds->platformUpdateSlice(platId);
+  assertTrue(slice != nullptr);
+
+  // Should be the first point
+  ds->update(0.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 0.0);
+
+  // Should be the first point
+  ds->update(50.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 0.0);
+
+  // Should be second point
+  ds->update(100.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 100.0);
+
+  // Should be the first point
+  ds->update(50.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 0.0);
+
+  // Should be the first point
+  ds->update(0.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 0.0);
+
+  // Should be second point
+  ds->update(100.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 100.0);
+
+  return rv;
+}
+
 }
 
 int TestInterpolation(int argc, char* argv[])
@@ -427,6 +512,7 @@ int TestInterpolation(int argc, char* argv[])
     testInterpolation_linear(simData::DataStore::InterpolatorState::EXTERNAL);
     testInterpolation_linear(simData::DataStore::InterpolatorState::INTERNAL);
     testInterpolation_linearAngle();
+    testNoInterpolationForIndividualPlatform();
 
     return 0;
   }
