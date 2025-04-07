@@ -3,8 +3,8 @@ if(NOT ENABLE_CDASH_PROJECTS AND NOT ENABLE_UNIT_TESTING)
     return()
 endif()
 
-# MSVC 2022 support in 3.20
-cmake_minimum_required(VERSION 3.20)
+# MSVC 2022 support in 3.21
+cmake_minimum_required(VERSION 3.21)
 
 if(WIN32)
     # Windows has been picky about which versions can be mixed
