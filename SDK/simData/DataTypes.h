@@ -61,24 +61,14 @@ namespace simData
   class SDKDATA_EXPORT PlatformUpdate
   {
   public:
-    PlatformUpdate();
-    // Do NOT make virtual, since it will consume memory space
-    ~PlatformUpdate() {};
-
     /// copy over this with 'from'
-    void CopyFrom(const PlatformUpdate& from);
-
-    /// copy-constructor
-    PlatformUpdate(const PlatformUpdate& from) { CopyFrom(from); }
-
-    /// assignment operator
-    inline PlatformUpdate& operator=(const PlatformUpdate& from) { CopyFrom(from);  return *this; }
+    void CopyFrom(const PlatformUpdate& from) { if (&from == this) return; *this = from; };
 
     /**@name accessors -------------------------------------------------------
      *@{
      */
     inline bool has_time() const { return time_ != std::numeric_limits<double>::max(); }
-    inline void clear_time() {time_ = std::numeric_limits<double>::max();}
+    inline void clear_time() { time_ = std::numeric_limits<double>::max(); }
     inline double time() const { return time_; }
     inline void set_time(double value) { time_ = value; }
 
@@ -86,19 +76,19 @@ namespace simData
     inline void position(simCore::Vec3& vec) const { vec.setX(x_); vec.setY(y_); vec.setZ(z_); }
     inline void setPosition(const simCore::Vec3& vec) { x_ = vec.x(); y_ = vec.y(); z_ = vec.z(); }
 
-    inline bool has_x() const { return x_ != std::numeric_limits<double>::max();}
+    inline bool has_x() const { return x_ != std::numeric_limits<double>::max(); }
     inline void clear_x() { x_ = std::numeric_limits<double>::max(); }
     inline double x() const { return x_; }
     inline void set_x(double value) { x_ = value; }
 
-    inline bool has_y() const {return y_ != std::numeric_limits<double>::max();}
+    inline bool has_y() const { return y_ != std::numeric_limits<double>::max(); }
     inline void clear_y() { y_ = std::numeric_limits<double>::max(); }
     inline double y() const { return y_; }
     inline void set_y(double value) { y_ = value; }
 
-    inline bool has_z() const {return z_ != std::numeric_limits<double>::max();}
+    inline bool has_z() const { return z_ != std::numeric_limits<double>::max(); }
     inline void clear_z() { z_ = std::numeric_limits<double>::max(); }
-    inline double z() const {return z_;}
+    inline double z() const { return z_; }
     inline void set_z(double value) { z_ = value; }
 
     inline bool has_orientation() const { return has_psi() && has_theta() && has_phi(); }
@@ -107,12 +97,12 @@ namespace simData
 
     inline bool has_psi() const { return psi_ != std::numeric_limits<float>::max(); }
     inline void clear_psi() { psi_ = std::numeric_limits<float>::max(); }
-    inline double psi() const {return psi_;}
+    inline double psi() const { return psi_; }
     inline void set_psi(double value) { psi_ = static_cast<float>(value); }
 
     inline bool has_theta() const { return theta_ != std::numeric_limits<float>::max(); }
     inline void clear_theta() { theta_ = std::numeric_limits<float>::max(); }
-    inline double theta() const {return theta_;}
+    inline double theta() const { return theta_; }
     inline void set_theta(double value) { theta_ = static_cast<float>(value); }
 
     inline bool has_phi() const { return phi_ != std::numeric_limits<float>::max(); }
@@ -142,23 +132,23 @@ namespace simData
 
   private:
     /// Seconds since the reference year
-    double time_;
+    double time_ = std::numeric_limits<double>::max();
 
     /// Position is in ECEF coordinates, meters
-    double x_;
-    double y_;
-    double z_;
+    double x_ = std::numeric_limits<double>::max();
+    double y_ = std::numeric_limits<double>::max();
+    double z_ = std::numeric_limits<double>::max();
 
     /// The following are declared as floats to save space
     /// Alignment of a body in 3D space, angles in radians; earth centric
-    float psi_;
-    float theta_;
-    float phi_;
+    float psi_ = std::numeric_limits<float>::max();
+    float theta_ = std::numeric_limits<float>::max();
+    float phi_ = std::numeric_limits<float>::max();
 
     /// 3D vector for velocity, m/s
-    float vx_;
-    float vy_;
-    float vz_;
+    float vx_ = std::numeric_limits<float>::max();
+    float vy_ = std::numeric_limits<float>::max();
+    float vz_ = std::numeric_limits<float>::max();
   };
 
   /// compare for inequality (required for protobuf utils)
