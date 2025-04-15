@@ -671,7 +671,15 @@ void BeamNode::applyUpdateOverrides_(bool force)
     simData::BeamUpdate accumulated(lastUpdateFromDS_);
     for (std::map<std::string, simData::BeamUpdate>::const_iterator i = updateOverrides_.begin(); i != updateOverrides_.end(); ++i)
     {
-      accumulated.MergeFrom(i->second);
+      const auto& u = i->second;
+      if (u.has_time())
+        accumulated.set_time(u.time());
+      if (u.has_range())
+        accumulated.set_range(u.range());
+      if (u.has_azimuth())
+        accumulated.set_azimuth(u.azimuth());
+      if (u.has_elevation())
+        accumulated.set_elevation(u.elevation());
     }
     apply_(&accumulated, nullptr, force);
     lastUpdateApplied_ = accumulated;

@@ -4,14 +4,15 @@ package simData;
 /**
  * simData.proto Defines the underlying data format for SIMDIS SDK's simData module.
  *
- * Entity types include platforms, beams, gates, lasers, projectors, and line of bearing (LOB) group.  Entities are
- * generally broken up into 4 components:
+ * Entity types include platforms, beams, gates, lasers, projectors, line of bearing (LOB) group, and Custom Rendering
+ * Entities are generally broken up into 3 components:
  *
- *   Updates - A single data point, possibly with a high data rate
  *   Properties - Settings for an entity, such as ID that are mostly unchanging
  *   Preferences - Changeable settings for an entity, including Superform-like settings;
  *                 can be time stamped by using Commands
  *   Commands - A time stamp and a (likely) sparse list of preferences to apply at the time
+ *
+ * Updates are now defined in DataTypes.h
  *
  * Colors are encoded in fixed32, which is more efficient than uint32 when the MSB values are
  * likely to be set.  Colors are defined as 0xRRGGBBAA, with the MSB as part of the red component.
@@ -1174,18 +1175,6 @@ message BeamPrefs {
   optional uint32 pulseStipple = 36 [default = 0x0F0F];
 };
 
-/// common update to beam data
-message BeamUpdate {
-  /// Seconds since scenario reference year for the data posit time
-  optional double time = 1;
-  /// Range in meters from the platform origin
-  optional double range = 2;
-  /// Azimuth; relative to north for linear beams, or relative to platform orientation for body beams; radians
-  optional double azimuth = 3;
-  /// Elevation; relative to horizon for linear beams, or relative to platform orientation for body beams; radians
-  optional double elevation = 4;
-};
-
 /// timed update to beam prefs; commands override prefs
 message BeamCommand {
   /// The time at which the command should be executed
@@ -1273,30 +1262,10 @@ message GatePrefs {
 
   /// Toggle drawing of the outline
   optional bool drawOutline = 11 [default = true];
-  
+
   /// Color for the centroid
   optional fixed32 centroidColor = 12 [default = 0xFFFFFFFF];
 
-};
-
-/// common update to gate data
-message GateUpdate {
-  /// Seconds since scenario reference year for the data posit time
-  optional double time = 1;
-  /// Azimuth; relative to north for linear gates, or relative to platform orientation for body gates; radians
-  optional double azimuth = 2;
-  /// Elevation; relative to horizon for linear gates, or relative to platform orientation for body gates; radians
-  optional double elevation = 3;
-  /// Full width of the gate in radians
-  optional double width = 4;
-  /// Full height of the gate in radians
-  optional double height = 5;
-  /// Range in meters from the platform origin to start of gate
-  optional double minRange = 6;
-  /// Range in meters from the platform origin to end of gate
-  optional double maxRange = 7;
-  /// Range in meters from the platform origin to centroid; often the middle of start and end
-  optional double centroid = 8;
 };
 
 /// timed update to gate prefs; commands override prefs
@@ -1339,13 +1308,6 @@ message LaserPrefs {
   optional double maxRange = 3 [default = 1000000.0];
   /// Width of the laser in pixels on the screen
   optional int32 laserWidth = 4 [default = 1];
-};
-
-/// common update to laser data
-message LaserUpdate {
-  optional double time = 1;
-  /// Note that the orientation is affected by the LaserProperties azElRelativeToHostOri flag
-  optional BodyOrientation orientation = 2;
 };
 
 /// timed update to laser prefs; commands override prefs
@@ -1410,11 +1372,6 @@ message CustomRenderingPrefs {
   optional bool depthTest = 10 [default = true];
 };
 
-/// common update to Custom Rendering data
-message CustomRenderingUpdate {
-  optional double time = 1;
-};
-
 /// timed update to Custom Rendering prefs; commands override prefs
 message CustomRenderingCommand {
   /// The time at which the command should be executed
@@ -1468,16 +1425,6 @@ message ProjectorPrefs {
   optional float maxDrawRange = 9 [default = 0.0];
   /// Whether to project on backfacing geometry as well as front
   optional bool doubleSided = 10 [default = false];
-};
-
-/// common update to projector data
-message ProjectorUpdate {
-  optional double time = 1;
-
-  /// Projector vertical field of view: radians
-  optional double fov = 2;
-  /// Projector hovizontal field of view: radians; <= 0 means to calculate from aspect ratio
-  optional double hFov = 3 [default = -1];
 };
 
 /// timed update to projector prefs; commands override prefs
@@ -1541,28 +1488,6 @@ message LobGroupPrefs {
 
   /// Line bending preference
   optional AnimatedLineBend bending = 13 [default = ALB_AUTO];
-};
-
-/// update data point for line of bearing (LOB) group
-message LobGroupUpdatePoint {
-  /// time of the data point
-  optional double time = 1;
-  /// Range in meters from the host platform origin
-  optional double range = 2;
-  /// Azimuth; radians
-  optional double azimuth = 3;
-  /// Elevation; radians
-  optional double elevation = 4;
-};
-
-/**
- common update to line of bearing (LOB) group data, holds a list of LobGroupUpdatePoints.
- Note that when points are inserted, the time of the points inserted must match the time of the update.
-*/
-message LobGroupUpdate {
-  /// time of the update
-  optional double time = 1;
-  repeated LobGroupUpdatePoint dataPoints = 2;
 };
 
 /// timed update to line of bearing (LOB) group prefs; commands override prefs

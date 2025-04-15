@@ -257,9 +257,9 @@ void DataStoreTestHelper::addLaserUpdate(double time, uint64_t id)
   simData::LaserUpdate *u = dataStore_->addLaserUpdate(id, &t);
   SDK_ASSERT(u != nullptr);
   u->set_time(time);
-  u->mutable_orientation()->set_yaw(0.0 + time);
-  u->mutable_orientation()->set_pitch(1.0 + time);
-  u->mutable_orientation()->set_roll(2.0 + time);
+  u->set_yaw(0.0 + time);
+  u->set_pitch(1.0 + time);
+  u->set_roll(2.0 + time);
   t.commit();
 }
 
@@ -269,16 +269,18 @@ void DataStoreTestHelper::addLOBUpdate(double time, uint64_t id)
   simData::LobGroupUpdate *u = dataStore_->addLobGroupUpdate(id, &t);
   SDK_ASSERT(u != nullptr);
   u->set_time(time);
-  simData::LobGroupUpdatePoint *up = u->mutable_datapoints()->Add();
-  up->set_time(time);
-  up->set_azimuth(1.0 + time);
-  up->set_elevation(10.0 + time);
-  up->set_range(1000.0);
-  simData::LobGroupUpdatePoint *up2 = u->mutable_datapoints()->Add();
-  up2->set_time(time);
-  up2->set_azimuth(20.0 + time);
-  up2->set_elevation(5.0 + time);
-  up2->set_range(1000.0);
+  simData::LobGroupUpdatePoint up;
+  up.set_time(time);
+  up.set_azimuth(1.0 + time);
+  up.set_elevation(10.0 + time);
+  up.set_range(1000.0);
+  u->mutable_datapoints()->push_back(up);
+  simData::LobGroupUpdatePoint up2;
+  up2.set_time(time);
+  up2.set_azimuth(20.0 + time);
+  up2.set_elevation(5.0 + time);
+  up2.set_range(1000.0);
+  u->mutable_datapoints()->push_back(up2);
   t.commit();
 }
 

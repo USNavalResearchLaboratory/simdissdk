@@ -83,10 +83,11 @@ void LobGroupMemoryDataSlice::update(double time)
   for (; useIter != curTimeIter; ++useIter)
   {
     // copy all points from each update record to the new current update
-    for (int pointIndex = 0; pointIndex < (*useIter)->datapoints().size(); pointIndex++)
+    for (int pointIndex = 0; pointIndex < static_cast<int>((*useIter)->datapoints().size()); pointIndex++)
     {
-      LobGroupUpdatePoint* newPoint = currentUpdate->add_datapoints();
-      newPoint->CopyFrom((*useIter)->datapoints(pointIndex));
+      LobGroupUpdatePoint newPoint;
+      newPoint.CopyFrom((*useIter)->datapoints()[pointIndex]);
+      currentUpdate->mutable_datapoints()->push_back(newPoint);
     }
   }
 
@@ -128,21 +129,17 @@ void LobGroupMemoryDataSlice::flush(double startTime, double endTime)
 void LobGroupMemoryDataSlice::insert(LobGroupUpdate *data)
 {
   // first, ensure that all data points have the time of the LobGroupUpdate they are associated with
-  for (int pointIndex = 0; pointIndex < data->datapoints().size(); pointIndex++)
+  for (int pointIndex = 0; pointIndex < static_cast<int>(data->datapoints().size()); pointIndex++)
   {
-    data->mutable_datapoints()->Mutable(pointIndex)->set_time(data->time());
+    (*data->mutable_datapoints())[pointIndex].set_time(data->time());
   }
 
   std::deque<LobGroupUpdate*>::iterator iter = std::lower_bound(updates_.begin(), updates_.end(), data, UpdateComp<LobGroupUpdate>());
   if (iter != updates_.end() && (*iter)->time() == data->time())
   {
     // add to update record with same time
-    for (int pointIndex = 0; pointIndex < data->datapoints().size(); pointIndex++)
-    {
-      LobGroupUpdatePoint* newPoint = (*iter)->add_datapoints();
-      newPoint->CopyFrom(data->datapoints(pointIndex));
-      data->mutable_datapoints()->RemoveLast();
-    }
+    for (int pointIndex = 0; pointIndex < static_cast<int>(data->datapoints().size()); pointIndex++)
+      (*iter)->mutable_datapoints()->push_back(data->datapoints()[pointIndex]);
     // done with data, since we added its points to an existing update record
     delete data;
   }

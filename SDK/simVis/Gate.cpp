@@ -644,7 +644,23 @@ void GateNode::applyUpdateOverrides_(bool force)
     simData::GateUpdate accumulated(lastUpdateFromDS_);
     for (std::map<std::string, simData::GateUpdate>::iterator i = updateOverrides_.begin(); i != updateOverrides_.end(); ++i)
     {
-      accumulated.MergeFrom(i->second);
+      const auto& over = i->second;
+      if (over.has_time())
+        accumulated.set_time(over.time());
+      if (over.has_azimuth())
+        accumulated.set_azimuth(over.azimuth());
+      if (over.has_elevation())
+        accumulated.set_elevation(over.elevation());
+      if (over.has_height())
+        accumulated.set_height(over.height());
+      if (over.has_width())
+        accumulated.set_width(over.width());
+      if (over.has_minrange())
+        accumulated.set_minrange(over.minrange());
+      if (over.has_maxrange())
+        accumulated.set_maxrange(over.maxrange());
+      if (over.has_centroid())
+        accumulated.set_centroid(over.centroid());
     }
     apply_(&accumulated, nullptr, force);
     lastUpdateApplied_ = accumulated;

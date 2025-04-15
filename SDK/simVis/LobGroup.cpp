@@ -30,6 +30,7 @@
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/MultiFrameCoordinate.h"
 #include "simData/DataTable.h"
+#include "simData/DataTypes.h"
 #include "simData/LinearInterpolator.h"
 #include "simVis/AnimatedLine.h"
 #include "simVis/EntityLabel.h"
@@ -330,7 +331,7 @@ void LobGroupNode::setPrefs(const simData::LobGroupPrefs &prefs)
     const simData::LobGroupUpdateSlice *updateSlice = ds_.lobGroupUpdateSlice(lastProps_.id());
     if (updateSlice)
     {
-      const simData::LobGroupUpdate *currentUpdate = ds_.lobGroupUpdateSlice(lastProps_.id())->current();
+      const simData::LobGroupUpdate *currentUpdate = updateSlice->current();
       if (currentUpdate)
         updateCache_(*currentUpdate, prefs);
     }
@@ -422,15 +423,15 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
   }
 
   // prune the cache, since the data max values may adjust how much data is shown
-  const double firstTime = update.datapoints(0).time();
-  const double lastTime = update.datapoints(numLines-1).time();
+  const double firstTime = update.datapoints()[0].time();
+  const double lastTime = update.datapoints()[numLines-1].time();
   lineCache_->pruneCache(this, firstTime, lastTime);
 
   simData::Interpolator* li = ds_.interpolator();
   for (int index = 0; index < numLines;) // Incremented in the for loop below
   {
     // handle all lines with this time (if time is not already in the cache)
-    const double time = update.datapoints(index).time();
+    const double time = update.datapoints()[index].time();
     if (lineCache_->hasTime(time))
     {
       ++index;
@@ -486,10 +487,10 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
     }
 
     // process endpoints for all lines at same time; all share same host platform position just calc'd
-    for (; index < numLines && update.datapoints(index).time() == time; ++index)
+    for (; index < numLines && update.datapoints()[index].time() == time; ++index)
     {
       // calculate end point based on update point RAE
-      const simData::LobGroupUpdatePoint &curP = update.datapoints(index);
+      const simData::LobGroupUpdatePoint &curP = update.datapoints()[index];
 
       // find the point relative to the start
       simCore::Vec3 endPoint;
@@ -527,7 +528,7 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
     // set the local grid for LOB's position and az/el of the last of the lobs
     if (index == numLines)
     {
-      const simData::LobGroupUpdatePoint &curP = update.datapoints(numLines-1);
+      const simData::LobGroupUpdatePoint &curP = update.datapoints()[numLines-1];
       simCore::Vec3 lobAngles(curP.azimuth(), curP.elevation(), 0.0);
       if (lastProps_.azelrelativetohostori())
       {
@@ -640,7 +641,7 @@ double LobGroupNode::range() const
   if (lastUpdate_.datapoints_size() == 0)
     return 0.0;
 
-  const simData::LobGroupUpdatePoint &curP = lastUpdate_.datapoints(lastUpdate_.datapoints_size()-1);
+  const simData::LobGroupUpdatePoint &curP = lastUpdate_.datapoints()[lastUpdate_.datapoints_size()-1];
   return curP.range();
 }
 

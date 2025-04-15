@@ -306,9 +306,9 @@ void testInterpolation_linearAngle()
     simData::LaserUpdate *u = ds->addLaserUpdate(laserId, &t);
     assertTrue(u != nullptr);
     u->set_time(1.0);
-    u->mutable_orientation()->set_yaw(0.0);
-    u->mutable_orientation()->set_pitch(0.0);
-    u->mutable_orientation()->set_roll(0.0);
+    u->set_yaw(0.0);
+    u->set_pitch(0.0);
+    u->set_roll(0.0);
     t.commit();
   }
 
@@ -318,9 +318,9 @@ void testInterpolation_linearAngle()
     simData::LaserUpdate *u = ds->addLaserUpdate(laserId, &t);
     assertTrue(u != nullptr);
     u->set_time(2.0);
-    u->mutable_orientation()->set_yaw(0.5);
-    u->mutable_orientation()->set_pitch(0.5);
-    u->mutable_orientation()->set_roll(0.5);
+    u->set_yaw(0.5);
+    u->set_pitch(0.5);
+    u->set_roll(0.5);
     t.commit();
   }
 
@@ -330,9 +330,9 @@ void testInterpolation_linearAngle()
     simData::LaserUpdate *u = ds->addLaserUpdate(laserId, &t);
     assertTrue(u != nullptr);
     u->set_time(3.0);
-    u->mutable_orientation()->set_yaw(M_TWOPI - 0.5);
-    u->mutable_orientation()->set_pitch(1.0);
-    u->mutable_orientation()->set_roll(1.0);
+    u->set_yaw(M_TWOPI - 0.5);
+    u->set_pitch(1.0);
+    u->set_roll(1.0);
     t.commit();
   }
 
@@ -383,9 +383,9 @@ void testInterpolation_linearAngle()
   assertTrue(lslice->current() != nullptr);
   assertEquals(lslice->isInterpolated(), true);
   assertEquals(lslice->current()->time(), 1.5);
-  assertTrue(simCore::areEqual(lslice->current()->orientation().yaw(), 0.25));
-  assertTrue(simCore::areEqual(lslice->current()->orientation().pitch(), 0.25));
-  assertTrue(simCore::areEqual(lslice->current()->orientation().roll(), 0.25));
+  assertTrue(simCore::areEqual(lslice->current()->yaw(), 0.25));
+  assertTrue(simCore::areEqual(lslice->current()->pitch(), 0.25));
+  assertTrue(simCore::areEqual(lslice->current()->roll(), 0.25));
   // test that re-updating datastore at same time does not signal a changed dataslice update (interpolated case)
   {
     // insert platform to dirty the datastore (but not affect the original platform data slice)
@@ -399,9 +399,9 @@ void testInterpolation_linearAngle()
   assertTrue(lslice->current() != nullptr);
   assertEquals(lslice->isInterpolated(), true);
   assertEquals(lslice->current()->time(), 2.5);
-  assertTrue(simCore::areEqual(lslice->current()->orientation().yaw(), 0.0));
-  assertTrue(simCore::areEqual(lslice->current()->orientation().pitch(), 0.75));
-  assertTrue(simCore::areEqual(lslice->current()->orientation().roll(), 0.75));
+  assertTrue(simCore::areEqual(lslice->current()->yaw(), 0.0));
+  assertTrue(simCore::areEqual(lslice->current()->pitch(), 0.75));
+  assertTrue(simCore::areEqual(lslice->current()->roll(), 0.75));
 
 
   // disable interpolation

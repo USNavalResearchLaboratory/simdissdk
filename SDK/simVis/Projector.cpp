@@ -40,6 +40,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/String/Format.h"
+#include "simData/DataTypes.h"
 #include "simVis/ClockOptions.h"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"

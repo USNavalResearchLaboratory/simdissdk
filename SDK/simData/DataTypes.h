@@ -55,6 +55,9 @@
 
 namespace simData
 {
+  constexpr double INVALID_UPDATE_DOUBLE = std::numeric_limits<double>::max();
+  constexpr float INVALID_UPDATE_FLOAT = std::numeric_limits<float>::max();
+
   /** Platform TSPI
    * (interface matches a Google protobuf message)
    */
@@ -62,13 +65,13 @@ namespace simData
   {
   public:
     /// copy over this with 'from'
-    void CopyFrom(const PlatformUpdate& from) { if (&from == this) return; *this = from; };
+    void CopyFrom(const PlatformUpdate& from) { if (&from == this) return; *this = from; }
 
     /**@name accessors -------------------------------------------------------
      *@{
      */
-    inline bool has_time() const { return time_ != std::numeric_limits<double>::max(); }
-    inline void clear_time() { time_ = std::numeric_limits<double>::max(); }
+    inline bool has_time() const { return time_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_time() { time_ = INVALID_UPDATE_DOUBLE; }
     inline double time() const { return time_; }
     inline void set_time(double value) { time_ = value; }
 
@@ -76,18 +79,18 @@ namespace simData
     inline void position(simCore::Vec3& vec) const { vec.setX(x_); vec.setY(y_); vec.setZ(z_); }
     inline void setPosition(const simCore::Vec3& vec) { x_ = vec.x(); y_ = vec.y(); z_ = vec.z(); }
 
-    inline bool has_x() const { return x_ != std::numeric_limits<double>::max(); }
-    inline void clear_x() { x_ = std::numeric_limits<double>::max(); }
+    inline bool has_x() const { return x_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_x() { x_ = INVALID_UPDATE_DOUBLE; }
     inline double x() const { return x_; }
     inline void set_x(double value) { x_ = value; }
 
-    inline bool has_y() const { return y_ != std::numeric_limits<double>::max(); }
-    inline void clear_y() { y_ = std::numeric_limits<double>::max(); }
+    inline bool has_y() const { return y_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_y() { y_ = INVALID_UPDATE_DOUBLE; }
     inline double y() const { return y_; }
     inline void set_y(double value) { y_ = value; }
 
-    inline bool has_z() const { return z_ != std::numeric_limits<double>::max(); }
-    inline void clear_z() { z_ = std::numeric_limits<double>::max(); }
+    inline bool has_z() const { return z_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_z() { z_ = INVALID_UPDATE_DOUBLE; }
     inline double z() const { return z_; }
     inline void set_z(double value) { z_ = value; }
 
@@ -95,18 +98,18 @@ namespace simData
     inline void orientation(simCore::Vec3& vec) const { vec.setPsi(static_cast<double>(psi_)); vec.setTheta(static_cast<double>(theta_)); vec.setPhi(static_cast<double>(phi_)); }
     inline void setOrientation(const simCore::Vec3& vec) { psi_ = static_cast<float>(vec.psi()); theta_ = static_cast<float>(vec.theta()); phi_ = static_cast<float>(vec.phi()); }
 
-    inline bool has_psi() const { return psi_ != std::numeric_limits<float>::max(); }
-    inline void clear_psi() { psi_ = std::numeric_limits<float>::max(); }
+    inline bool has_psi() const { return psi_ != INVALID_UPDATE_FLOAT; }
+    inline void clear_psi() { psi_ = INVALID_UPDATE_FLOAT; }
     inline double psi() const { return psi_; }
     inline void set_psi(double value) { psi_ = static_cast<float>(value); }
 
-    inline bool has_theta() const { return theta_ != std::numeric_limits<float>::max(); }
-    inline void clear_theta() { theta_ = std::numeric_limits<float>::max(); }
+    inline bool has_theta() const { return theta_ != INVALID_UPDATE_FLOAT; }
+    inline void clear_theta() { theta_ = INVALID_UPDATE_FLOAT; }
     inline double theta() const { return theta_; }
     inline void set_theta(double value) { theta_ = static_cast<float>(value); }
 
-    inline bool has_phi() const { return phi_ != std::numeric_limits<float>::max(); }
-    inline void clear_phi() { phi_ = std::numeric_limits<float>::max(); }
+    inline bool has_phi() const { return phi_ != INVALID_UPDATE_FLOAT; }
+    inline void clear_phi() { phi_ = INVALID_UPDATE_FLOAT; }
     inline double phi() const { return phi_; }
     inline void set_phi(double value) { phi_ = static_cast<float>(value); }
 
@@ -114,41 +117,306 @@ namespace simData
     inline void velocity(simCore::Vec3& vec) const { vec.setV0(static_cast<double>(vx_)); vec.setV1(static_cast<double>(vy_)); vec.setV2(static_cast<double>(vz_)); }
     inline void setVelocity(const simCore::Vec3& vec) { vx_ = static_cast<float>(vec.x()); vy_ = static_cast<float>(vec.y()); vz_ = static_cast<float>(vec.z()); }
 
-    inline bool has_vx() const { return vx_ != std::numeric_limits<float>::max(); }
-    inline void clear_vx() { vx_ = std::numeric_limits<float>::max(); }
+    inline bool has_vx() const { return vx_ != INVALID_UPDATE_FLOAT; }
+    inline void clear_vx() { vx_ = INVALID_UPDATE_FLOAT; }
     inline double vx() const { return vx_; }
     inline void set_vx(double value) { vx_ = static_cast<float>(value); }
 
-    inline bool has_vy() const { return vy_ != std::numeric_limits<float>::max(); }
-    inline void clear_vy() { vy_ = std::numeric_limits<float>::max(); }
+    inline bool has_vy() const { return vy_ != INVALID_UPDATE_FLOAT; }
+    inline void clear_vy() { vy_ = INVALID_UPDATE_FLOAT; }
     inline double vy() const { return vy_; }
     inline void set_vy(double value) { vy_ = static_cast<float>(value); }
 
-    inline bool has_vz() const { return vz_ != std::numeric_limits<float>::max(); }
-    inline void clear_vz() { vz_ = std::numeric_limits<float>::max(); }
+    inline bool has_vz() const { return vz_ != INVALID_UPDATE_FLOAT; }
+    inline void clear_vz() { vz_ = INVALID_UPDATE_FLOAT; }
     inline double vz() const { return vz_; }
     inline void set_vz(double value) { vz_ = static_cast<float>(value); }
     ///@}
 
   private:
     /// Seconds since the reference year
-    double time_ = std::numeric_limits<double>::max();
+    double time_ = INVALID_UPDATE_DOUBLE;
 
     /// Position is in ECEF coordinates, meters
-    double x_ = std::numeric_limits<double>::max();
-    double y_ = std::numeric_limits<double>::max();
-    double z_ = std::numeric_limits<double>::max();
+    double x_ = INVALID_UPDATE_DOUBLE;
+    double y_ = INVALID_UPDATE_DOUBLE;
+    double z_ = INVALID_UPDATE_DOUBLE;
 
     /// The following are declared as floats to save space
     /// Alignment of a body in 3D space, angles in radians; earth centric
-    float psi_ = std::numeric_limits<float>::max();
-    float theta_ = std::numeric_limits<float>::max();
-    float phi_ = std::numeric_limits<float>::max();
+    float psi_ = INVALID_UPDATE_FLOAT;
+    float theta_ = INVALID_UPDATE_FLOAT;
+    float phi_ = INVALID_UPDATE_FLOAT;
 
     /// 3D vector for velocity, m/s
-    float vx_ = std::numeric_limits<float>::max();
-    float vy_ = std::numeric_limits<float>::max();
-    float vz_ = std::numeric_limits<float>::max();
+    float vx_ = INVALID_UPDATE_FLOAT;
+    float vy_ = INVALID_UPDATE_FLOAT;
+    float vz_ = INVALID_UPDATE_FLOAT;
+  };
+
+  /// Beam time and RAE data
+  class BeamUpdate
+  {
+  public:
+    void CopyFrom(const BeamUpdate& from) { if (&from == this) return; *this = from; }
+
+    void Clear() { clear_time(); clear_range(); clear_azimuth(); clear_elevation(); }
+
+    inline bool has_time() const { return time_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_time() { time_ = INVALID_UPDATE_DOUBLE; }
+    inline double time() const { return time_; }
+    inline void set_time(double value) { time_ = value; }
+
+    inline bool has_range() const { return range_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_range() { range_ = INVALID_UPDATE_DOUBLE; }
+    inline double range() const { return range_; }
+    inline void set_range(double value) { range_ = value; }
+
+    inline bool has_azimuth() const { return azimuth_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_azimuth() { azimuth_ = INVALID_UPDATE_DOUBLE; }
+    inline double azimuth() const { return azimuth_; }
+    inline void set_azimuth(double value) { azimuth_ = value; }
+
+    inline bool has_elevation() const { return elevation_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_elevation() { elevation_ = INVALID_UPDATE_DOUBLE; }
+    inline double elevation() const { return elevation_; }
+    inline void set_elevation(double value) { elevation_ = value; }
+
+  private:
+    /// Seconds since scenario reference year for the data posit time
+    double time_ = INVALID_UPDATE_DOUBLE;
+    /// Range in meters from the platform origin
+    double range_ = INVALID_UPDATE_DOUBLE;
+    /// Azimuth; relative to north for linear beams, or relative to platform orientation for body beams; radians
+    double azimuth_ = INVALID_UPDATE_DOUBLE;
+    /// Elevation; relative to horizon for linear beams, or relative to platform orientation for body beams; radians
+    double elevation_ = INVALID_UPDATE_DOUBLE;
+  };
+
+
+  /// Gate time and data
+  class GateUpdate
+  {
+  public:
+    void CopyFrom(const GateUpdate& from) { if (&from == this) return; *this = from; }
+
+    void Clear() { clear_time(); clear_azimuth(); clear_elevation(); clear_width(); clear_height();
+      clear_minrange(); clear_maxrange(); clear_centroid(); }
+
+    inline bool has_time() const { return time_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_time() { time_ = INVALID_UPDATE_DOUBLE; }
+    inline double time() const { return time_; }
+    inline void set_time(double value) { time_ = value; }
+
+    inline bool has_azimuth() const { return azimuth_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_azimuth() { azimuth_ = INVALID_UPDATE_DOUBLE; }
+    inline double azimuth() const { return azimuth_; }
+    inline void set_azimuth(double value) { azimuth_ = value; }
+
+    inline bool has_elevation() const { return elevation_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_elevation() { elevation_ = INVALID_UPDATE_DOUBLE; }
+    inline double elevation() const { return elevation_; }
+    inline void set_elevation(double value) { elevation_ = value; }
+
+    inline bool has_width() const { return width_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_width() { width_ = INVALID_UPDATE_DOUBLE; }
+    inline double width() const { return width_; }
+    inline void set_width(double value) { width_ = value; }
+
+    inline bool has_height() const { return height_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_height() { height_ = INVALID_UPDATE_DOUBLE; }
+    inline double height() const { return height_; }
+    inline void set_height(double value) { height_ = value; }
+
+    inline bool has_minrange() const { return minRange_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_minrange() { minRange_ = INVALID_UPDATE_DOUBLE; }
+    inline double minrange() const { return minRange_; }
+    inline void set_minrange(double value) { minRange_ = value; }
+
+    inline bool has_maxrange() const { return maxRange_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_maxrange() { maxRange_ = INVALID_UPDATE_DOUBLE; }
+    inline double maxrange() const { return maxRange_; }
+    inline void set_maxrange(double value) { maxRange_ = value; }
+
+    inline bool has_centroid() const { return centroid_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_centroid() { centroid_ = INVALID_UPDATE_DOUBLE; }
+    inline double centroid() const { return centroid_; }
+    inline void set_centroid(double value) { centroid_ = value; }
+
+  private:
+    /// Seconds since scenario reference year for the data posit time
+    double time_ = INVALID_UPDATE_DOUBLE;
+    /// Azimuth; relative to north for linear gates, or relative to platform orientation for body gates; radians
+    double azimuth_ = INVALID_UPDATE_DOUBLE;
+    /// Elevation; relative to horizon for linear gates, or relative to platform orientation for body gates; radians
+    double elevation_ = INVALID_UPDATE_DOUBLE;
+    /// Full width of the gate in radians
+    double width_ = INVALID_UPDATE_DOUBLE;
+    /// Full height of the gate in radians
+    double height_ = INVALID_UPDATE_DOUBLE;
+    /// Range in meters from the platform origin to start of gate
+    double minRange_ = INVALID_UPDATE_DOUBLE;
+    /// Range in meters from the platform origin to end of gate
+    double maxRange_ = INVALID_UPDATE_DOUBLE;
+    /// Range in meters from the platform origin to centroid; often the middle of start and end
+    double centroid_ = INVALID_UPDATE_DOUBLE;
+  };
+
+  /// Projector time and field of view values
+  class ProjectorUpdate
+  {
+  public:
+    void CopyFrom(const ProjectorUpdate& from) { if (&from == this) return; *this = from; };
+
+    void Clear() { clear_time(); clear_fov(); clear_hfov(); }
+
+    inline bool has_time() const { return time_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_time() { time_ = INVALID_UPDATE_DOUBLE; }
+    inline double time() const { return time_; }
+    inline void set_time(double value) { time_ = value; }
+
+    inline bool has_fov() const { return fov_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_fov() { fov_ = INVALID_UPDATE_DOUBLE; }
+    inline double fov() const { return fov_; }
+    inline void set_fov(double value) { fov_ = value; }
+
+    inline bool has_hfov() const { return hFov_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_hfov() { hFov_ = INVALID_UPDATE_DOUBLE; }
+    inline double hfov() const { return hFov_; }
+    inline void set_hfov(double value) { hFov_ = value; }
+
+  private:
+    /// Seconds since scenario reference year for the data posit time
+    double time_ = INVALID_UPDATE_DOUBLE;
+    /// Projector vertical field of view: radians
+    double fov_ = INVALID_UPDATE_DOUBLE;
+    /// Projector horizontal field of view: radians; <= 0 means to calculate from aspect ratio
+    double hFov_ = INVALID_UPDATE_DOUBLE;
+  };
+
+  /// Custom Rendering update; not used, just a placeholder for the templates
+  class CustomRenderingUpdate
+  {
+  public:
+    void CopyFrom(const CustomRenderingUpdate& from) { if (&from == this) return; *this = from; };
+
+    void Clear() { clear_time(); }
+
+    inline bool has_time() const { return time_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_time() { time_ = INVALID_UPDATE_DOUBLE; }
+    inline double time() const { return time_; }
+    inline void set_time(double value) { time_ = value; }
+
+  private:
+    /// Seconds since scenario reference year for the data posit time
+    double time_ = INVALID_UPDATE_DOUBLE;
+  };
+
+  /// Laser time and orientation values
+  class LaserUpdate
+  {
+  public:
+    void CopyFrom(const LaserUpdate& from) { if (&from == this) return; *this = from; };
+
+    void Clear() { clear_time(); clear_yaw(); clear_pitch(); clear_roll(); }
+
+    inline bool has_time() const { return time_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_time() { time_ = INVALID_UPDATE_DOUBLE; }
+    inline double time() const { return time_; }
+    inline void set_time(double value) { time_ = value; }
+
+    inline bool has_yaw() const { return yaw_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_yaw() { yaw_ = INVALID_UPDATE_DOUBLE; }
+    inline double yaw() const { return yaw_; }
+    inline void set_yaw(double value) { yaw_ = value; }
+
+    inline bool has_pitch() const { return pitch_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_pitch() { pitch_ = INVALID_UPDATE_DOUBLE; }
+    inline double pitch() const { return pitch_; }
+    inline void set_pitch(double value) { pitch_ = value; }
+
+    inline bool has_roll() const { return roll_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_roll() { roll_ = INVALID_UPDATE_DOUBLE; }
+    inline double roll() const { return roll_; }
+    inline void set_roll(double value) { roll_ = value; }
+
+  private:
+    /// Seconds since scenario reference year for the data posit time
+    double time_ = INVALID_UPDATE_DOUBLE;
+    /// Laser yaw: radians
+    double yaw_ = INVALID_UPDATE_DOUBLE;
+    /// Laser pitch: radians
+    double pitch_ = INVALID_UPDATE_DOUBLE;
+    /// Laser roll: radians
+    double roll_ = INVALID_UPDATE_DOUBLE;
+  };
+
+  /// LOB Group point for time and RAE data
+  class LobGroupUpdatePoint
+  {
+  public:
+    void CopyFrom(const LobGroupUpdatePoint& from) { if (&from == this) return; *this = from; }
+
+    void Clear() { clear_time(); clear_range(); clear_azimuth(); clear_elevation(); }
+
+    inline bool has_time() const { return time_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_time() { time_ = INVALID_UPDATE_DOUBLE; }
+    inline double time() const { return time_; }
+    inline void set_time(double value) { time_ = value; }
+
+    inline bool has_range() const { return range_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_range() { range_ = INVALID_UPDATE_DOUBLE; }
+    inline double range() const { return range_; }
+    inline void set_range(double value) { range_ = value; }
+
+    inline bool has_azimuth() const { return azimuth_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_azimuth() { azimuth_ = INVALID_UPDATE_DOUBLE; }
+    inline double azimuth() const { return azimuth_; }
+    inline void set_azimuth(double value) { azimuth_ = value; }
+
+    inline bool has_elevation() const { return elevation_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_elevation() { elevation_ = INVALID_UPDATE_DOUBLE; }
+    inline double elevation() const { return elevation_; }
+    inline void set_elevation(double value) { elevation_ = value; }
+
+  private:
+    /// Seconds since scenario reference year for the data posit time
+    double time_ = INVALID_UPDATE_DOUBLE;
+    /// Range in meters from the platform origin
+    double range_ = INVALID_UPDATE_DOUBLE;
+    /// Azimuth; radians
+    double azimuth_ = INVALID_UPDATE_DOUBLE;
+    /// Elevation; radians
+    double elevation_ = INVALID_UPDATE_DOUBLE;
+  };
+
+  /// LOB Group time and points
+  class LobGroupUpdate
+  {
+  public:
+    void CopyFrom(const LobGroupUpdate& from) { if (&from == this) return; *this = from; }
+
+    void Clear() { clear_time(); dataPoints_.clear(); }
+
+    inline bool has_time() const { return time_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_time() { time_ = INVALID_UPDATE_DOUBLE; }
+    inline double time() const { return time_; }
+    inline void set_time(double value) { time_ = value; }
+
+    /// Returns the number of points for the update
+    int datapoints_size() const { return static_cast<int>(dataPoints_.size()); }
+    /// Returns true if the update has points
+    bool has_datapoints() const { return !dataPoints_.empty(); }
+    /// Constant version of the points
+    const std::vector<LobGroupUpdatePoint>& datapoints() const { return dataPoints_; }
+    /// Mutable version of the points
+    std::vector<LobGroupUpdatePoint>* mutable_datapoints() { return &dataPoints_; }
+
+  private:
+    /// Seconds since scenario reference year for the data posit time
+    double time_ = INVALID_UPDATE_DOUBLE;
+    /// Points all at the same time
+    std::vector<LobGroupUpdatePoint> dataPoints_;
   };
 
   /// compare for inequality (required for protobuf utils)
