@@ -144,12 +144,11 @@ void simulateLobGroup(simData::ObjectId lobID, simData::DataStore& ds)
     simData::LobGroupUpdate* update = ds.addLobGroupUpdate(lobID, &xaction);
     update->set_time(i*3.0);
     {
-      simData::LobGroupUpdatePoint p;
-      p.set_time(i*3.0);
-      p.set_range(100000.0);
-      p.set_azimuth(-1.57 + (3.14*i/12.0));
-      p.set_elevation(-.39 + (0.78*i/12.0));
-      update->mutable_datapoints()->push_back(p);
+      simData::LobGroupUpdatePoint* p = update->add_datapoints();
+      p->set_time(i * 3.0);
+      p->set_range(100000.0);
+      p->set_azimuth(-1.57 + (3.14 * i / 12.0));
+      p->set_elevation(-.39 + (0.78 * i / 12.0));
     }
     xaction.complete(&update);
   }

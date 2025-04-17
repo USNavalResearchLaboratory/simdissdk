@@ -403,14 +403,16 @@ namespace simData
     inline double time() const { return time_; }
     inline void set_time(double value) { time_ = value; }
 
-    /// Returns the number of points for the update
+    /// Returns the number of data points for the update
     int datapoints_size() const { return static_cast<int>(dataPoints_.size()); }
-    /// Returns true if the update has points
-    bool has_datapoints() const { return !dataPoints_.empty(); }
-    /// Constant version of the points
+    /// Constant version of the data points
     const std::vector<LobGroupUpdatePoint>& datapoints() const { return dataPoints_; }
+    /// Returns the requested data point;
+    const LobGroupUpdatePoint& datapoints(int index) const { return dataPoints_[index]; }
     /// Mutable version of the points
     std::vector<LobGroupUpdatePoint>* mutable_datapoints() { return &dataPoints_; }
+    /// Add a data point
+    LobGroupUpdatePoint* add_datapoints() { dataPoints_.push_back(LobGroupUpdatePoint()); return &dataPoints_.back(); }
 
   private:
     /// Seconds since scenario reference year for the data posit time

@@ -269,18 +269,16 @@ void DataStoreTestHelper::addLOBUpdate(double time, uint64_t id)
   simData::LobGroupUpdate *u = dataStore_->addLobGroupUpdate(id, &t);
   SDK_ASSERT(u != nullptr);
   u->set_time(time);
-  simData::LobGroupUpdatePoint up;
-  up.set_time(time);
-  up.set_azimuth(1.0 + time);
-  up.set_elevation(10.0 + time);
-  up.set_range(1000.0);
-  u->mutable_datapoints()->push_back(up);
-  simData::LobGroupUpdatePoint up2;
-  up2.set_time(time);
-  up2.set_azimuth(20.0 + time);
-  up2.set_elevation(5.0 + time);
-  up2.set_range(1000.0);
-  u->mutable_datapoints()->push_back(up2);
+  simData::LobGroupUpdatePoint* up = u->add_datapoints();
+  up->set_time(time);
+  up->set_azimuth(1.0 + time);
+  up->set_elevation(10.0 + time);
+  up->set_range(1000.0);
+  simData::LobGroupUpdatePoint* up2 = u->add_datapoints();
+  up2->set_time(time);
+  up2->set_azimuth(20.0 + time);
+  up2->set_elevation(5.0 + time);
+  up2->set_range(1000.0);
   t.commit();
 }
 

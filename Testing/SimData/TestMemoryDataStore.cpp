@@ -328,12 +328,11 @@ void testLobGroup_insert()
   {
     simData::LobGroupUpdate* u = ds->addLobGroupUpdate(lobId1, &t);
     u->set_time(0.0);
-    simData::LobGroupUpdatePoint up;
-    up.set_time(0.0);
-    up.set_azimuth(19.0);
-    up.set_elevation(100.0);
-    up.set_range(3450.0);
-    u->mutable_datapoints()->push_back(up);
+    simData::LobGroupUpdatePoint* up = u->add_datapoints();
+    up->set_time(0.0);
+    up->set_azimuth(19.0);
+    up->set_elevation(100.0);
+    up->set_range(3450.0);
     t.commit();
   }
 
@@ -341,12 +340,11 @@ void testLobGroup_insert()
   {
     simData::LobGroupUpdate* u = ds->addLobGroupUpdate(lobId1, &t);
     u->set_time(1.0);
-    simData::LobGroupUpdatePoint up;
-    up.set_time(1.0);
-    up.set_azimuth(11.0);
-    up.set_elevation(100.0);
-    up.set_range(3000.0);
-    u->mutable_datapoints()->push_back(up);
+    simData::LobGroupUpdatePoint* up = u->add_datapoints();
+    up->set_time(1.0);
+    up->set_azimuth(11.0);
+    up->set_elevation(100.0);
+    up->set_range(3000.0);
     t.commit();
   }
 
@@ -354,12 +352,11 @@ void testLobGroup_insert()
   {
     simData::LobGroupUpdate* u = ds->addLobGroupUpdate(lobId1, &t);
     u->set_time(1.0);
-    simData::LobGroupUpdatePoint up2;
-    up2.set_time(1.0);
-    up2.set_azimuth(12.0);
-    up2.set_elevation(100.0);
-    up2.set_range(3000.0);
-    u->mutable_datapoints()->push_back(up2);
+    simData::LobGroupUpdatePoint* up2 = u->add_datapoints();
+    up2->set_time(1.0);
+    up2->set_azimuth(12.0);
+    up2->set_elevation(100.0);
+    up2->set_range(3000.0);
     t.commit();
   }
 
@@ -368,18 +365,16 @@ void testLobGroup_insert()
   {
     simData::LobGroupUpdate* u = ds->addLobGroupUpdate(lobId1, &t);
     u->set_time(2.0);
-    simData::LobGroupUpdatePoint up;
-    up.set_time(2.0);
-    up.set_azimuth(15.0);
-    up.set_elevation(150.0);
-    up.set_range(3000.0);
-    u->mutable_datapoints()->push_back(up);
-    simData::LobGroupUpdatePoint up2;
-    up2.set_time(2.0);
-    up2.set_azimuth(16.0);
-    up2.set_elevation(150.0);
-    up2.set_range(3000.0);
-    u->mutable_datapoints()->push_back(up2);
+    simData::LobGroupUpdatePoint* up = u->add_datapoints();
+    up->set_time(2.0);
+    up->set_azimuth(15.0);
+    up->set_elevation(150.0);
+    up->set_range(3000.0);
+    simData::LobGroupUpdatePoint* up2 = u->add_datapoints();
+    up2->set_time(2.0);
+    up2->set_azimuth(16.0);
+    up2->set_elevation(150.0);
+    up2->set_range(3000.0);
     t.commit();
   }
 
@@ -387,24 +382,21 @@ void testLobGroup_insert()
   {
     simData::LobGroupUpdate* u = ds->addLobGroupUpdate(lobId1, &t);
     u->set_time(3.0);
-    simData::LobGroupUpdatePoint up;
-    up.set_time(3.0);
-    up.set_azimuth(24.0);
-    up.set_elevation(170.0);
-    up.set_range(4000.0);
-    u->mutable_datapoints()->push_back(up);
-    simData::LobGroupUpdatePoint up2;
-    up2.set_time(4.0); // this time will be reset to 3.0 on insert
-    up2.set_azimuth(35.0);
-    up2.set_elevation(180.0);
-    up2.set_range(4000.0);
-    u->mutable_datapoints()->push_back(up2);
-    simData::LobGroupUpdatePoint up3;
-    up3.set_time(3.0);
-    up3.set_azimuth(25.0);
-    up3.set_elevation(175.0);
-    up3.set_range(4000.0);
-    u->mutable_datapoints()->push_back(up3);
+    simData::LobGroupUpdatePoint* up = u->add_datapoints();
+    up->set_time(3.0);
+    up->set_azimuth(24.0);
+    up->set_elevation(170.0);
+    up->set_range(4000.0);
+    simData::LobGroupUpdatePoint* up2 = u->add_datapoints();
+    up2->set_time(4.0); // this time will be reset to 3.0 on insert
+    up2->set_azimuth(35.0);
+    up2->set_elevation(180.0);
+    up2->set_range(4000.0);
+    simData::LobGroupUpdatePoint* up3 = u->add_datapoints();
+    up3->set_time(3.0);
+    up3->set_azimuth(25.0);
+    up3->set_elevation(175.0);
+    up3->set_range(4000.0);
     t.commit();
   }
 

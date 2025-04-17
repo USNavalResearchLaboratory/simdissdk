@@ -83,11 +83,10 @@ void LobGroupMemoryDataSlice::update(double time)
   for (; useIter != curTimeIter; ++useIter)
   {
     // copy all points from each update record to the new current update
-    for (int pointIndex = 0; pointIndex < static_cast<int>((*useIter)->datapoints().size()); pointIndex++)
+    for (int pointIndex = 0; pointIndex < (*useIter)->datapoints_size(); pointIndex++)
     {
-      LobGroupUpdatePoint newPoint;
-      newPoint.CopyFrom((*useIter)->datapoints()[pointIndex]);
-      currentUpdate->mutable_datapoints()->push_back(newPoint);
+      LobGroupUpdatePoint* newPoint = currentUpdate->add_datapoints();
+      newPoint->CopyFrom((*useIter)->datapoints(pointIndex));
     }
   }
 
@@ -129,7 +128,8 @@ void LobGroupMemoryDataSlice::flush(double startTime, double endTime)
 void LobGroupMemoryDataSlice::insert(LobGroupUpdate *data)
 {
   // first, ensure that all data points have the time of the LobGroupUpdate they are associated with
-  for (int pointIndex = 0; pointIndex < static_cast<int>(data->datapoints().size()); pointIndex++)
+
+  for (int pointIndex = 0; pointIndex < data->datapoints_size(); pointIndex++)
   {
     (*data->mutable_datapoints())[pointIndex].set_time(data->time());
   }
@@ -138,8 +138,12 @@ void LobGroupMemoryDataSlice::insert(LobGroupUpdate *data)
   if (iter != updates_.end() && (*iter)->time() == data->time())
   {
     // add to update record with same time
-    for (int pointIndex = 0; pointIndex < static_cast<int>(data->datapoints().size()); pointIndex++)
-      (*iter)->mutable_datapoints()->push_back(data->datapoints()[pointIndex]);
+    for (int pointIndex = 0; pointIndex < data->datapoints_size(); pointIndex++)
+    {
+      LobGroupUpdatePoint* newPoint = (*iter)->add_datapoints();
+      newPoint->CopyFrom(data->datapoints(pointIndex));
+    }
+
     // done with data, since we added its points to an existing update record
     delete data;
   }
