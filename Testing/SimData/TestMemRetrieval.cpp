@@ -56,15 +56,15 @@ bool isValidCategory(const simData::CategoryData* catData, size_t index)
   if (catData->time() != static_cast<double>(index))
     return false;
 
-  if (catData->entry().size() != static_cast<int>(index+1))
+  if (catData->entry_size() != static_cast<int>(index+1))
     return false;
 
   for (size_t ii = 0; ii < (index+1); ii++)
   {
-    if (catData->entry().Get(static_cast<int>(ii)).key() != expectedValue("Some Key ", ii))
+    if (catData->entry(static_cast<int>(ii)).key() != expectedValue("Some Key ", ii))
       return false;
 
-    if (catData->entry().Get(static_cast<int>(ii)).value() != expectedValue("Some Value ", ii))
+    if (catData->entry(static_cast<int>(ii)).value() != expectedValue("Some Value ", ii))
       return false;
   }
 
@@ -92,7 +92,7 @@ void addPlatformGenericData(simData::DataStore* dataStore, uint64_t id, size_t i
   genData->set_duration(-1.0);
   for (size_t ii = 0; ii < (index+1); ii++)
   {
-    simData::GenericData_Entry* entry = genData->mutable_entry()->Add();
+    simData::GenericData_Entry* entry = genData->add_entry();
     entry->set_key(expectedValue("Some Tag ", ii));
     entry->set_value(expectedValue("Some Data ", ii));
   }

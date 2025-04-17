@@ -385,7 +385,7 @@ void DataStoreTestHelper::addGenericData(uint64_t id, const std::string& key, co
   genData->set_time(static_cast<double>(startTime));
   genData->set_duration(-1);
 
-  simData::GenericData_Entry* entry = genData->mutable_entry()->Add();
+  simData::GenericData_Entry* entry = genData->add_entry();
   entry->set_key(key);
   entry->set_value(value);
 

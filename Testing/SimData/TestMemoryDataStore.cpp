@@ -618,12 +618,12 @@ void testLobGroup_insert()
 bool findOnce(const simData::GenericData *g1, const std::string& key, const std::string& value)
 {
   int occurances = 0;
-  for (int ii = 0; ii < g1->entry().size(); ii++)
+  for (int ii = 0; ii < g1->entry_size(); ii++)
   {
-    if (g1->entry().Get(ii).key() == key)
+    if (g1->entry(ii).key() == key)
     {
       occurances++;
-      if (g1->entry().Get(ii).value() != value)
+      if (g1->entry(ii).value() != value)
         return false;
     }
   }
@@ -635,15 +635,15 @@ bool findOnce(const simData::GenericData *g1, const std::string& key, const std:
 bool findMany(const simData::GenericData *g1, const std::string& key, const std::vector<std::string>& values)
 {
   size_t occurances = 0;
-  for (int ii = 0; ii < g1->entry().size(); ii++)
+  for (int ii = 0; ii < g1->entry_size(); ii++)
   {
-    if (g1->entry().Get(ii).key() == key)
+    if (g1->entry(ii).key() == key)
     {
       occurances++;
       bool found = false;
       for (size_t jj = 0; jj < values.size(); jj++)
       {
-        if (g1->entry().Get(ii).value() == values[jj])
+        if (g1->entry(ii).value() == values[jj])
         {
           found = true;
           break;
@@ -1035,15 +1035,15 @@ int testCategoryData_insert()
   rv += SDK_ASSERT(sc.updates.size() == 4 && sc.updates[0].entry_size() == 1);
 
   // verify data point values
-  rv += SDK_ASSERT(sc.updates[0].entry().Get(0).key() == "key1");
-  rv += SDK_ASSERT(sc.updates[0].entry().Get(0).value() == "value1");
-  rv += SDK_ASSERT(sc.updates[1].entry().Get(0).key() == "key2");
-  rv += SDK_ASSERT(sc.updates[1].entry().Get(0).value() == "value2");
+  rv += SDK_ASSERT(sc.updates[0].entry(0).key() == "key1");
+  rv += SDK_ASSERT(sc.updates[0].entry(0).value() == "value1");
+  rv += SDK_ASSERT(sc.updates[1].entry(0).key() == "key2");
+  rv += SDK_ASSERT(sc.updates[1].entry(0).value() == "value2");
 
-  rv += SDK_ASSERT(sc.updates[2].entry().Get(0).key() == "key3");
-  rv += SDK_ASSERT(sc.updates[2].entry().Get(0).value() == "value3");
-  rv += SDK_ASSERT(sc.updates[3].entry().Get(0).key() == "key4");
-  rv += SDK_ASSERT(sc.updates[3].entry().Get(0).value() == "value4");
+  rv += SDK_ASSERT(sc.updates[2].entry(0).key() == "key3");
+  rv += SDK_ASSERT(sc.updates[2].entry(0).value() == "value3");
+  rv += SDK_ASSERT(sc.updates[3].entry(0).key() == "key4");
+  rv += SDK_ASSERT(sc.updates[3].entry(0).value() == "value4");
 
   return rv;
 }

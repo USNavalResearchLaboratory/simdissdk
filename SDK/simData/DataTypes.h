@@ -419,6 +419,107 @@ namespace simData
     std::vector<LobGroupUpdatePoint> dataPoints_;
   };
 
+
+  /// key,value data intended to categorize a platform
+  /// for example: friendly, hostile; ship, plane
+  class CategoryData
+  {
+  public:
+    inline bool has_time() const { return time_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_time() { time_ = INVALID_UPDATE_DOUBLE; }
+    inline double time() const { return time_; }
+    inline void set_time(double value) { time_ = value; }
+
+    class Entry
+    {
+    public:
+      inline std::string key() const { return key_; }
+      inline void set_key(const std::string& value) { key_ = value; }
+
+      inline std::string value() const { return value_; }
+      inline void set_value(const std::string& value) { value_ = value; }
+
+    private:
+      std::string key_;
+      std::string value_;
+    };
+
+    /// Returns the number of entries for the update
+    int entry_size() const { return static_cast<int>(entries_.size()); }
+    /// Returns a vector of entries
+    const std::vector<Entry>& entry() const { return entries_; }
+    /// Returns the requested entry;
+    const Entry& entry(int index) const { return entries_[index]; }
+    /// Add an entry
+    Entry* add_entry() { entries_.push_back(Entry()); return &entries_.back(); }
+
+  private:
+    /// Seconds since scenario reference year for the data posit time
+    double time_ = INVALID_UPDATE_DOUBLE;
+    /// Points all at the same time
+    std::vector<Entry> entries_;
+  };
+
+  // Backwards compatibility with protobuf
+  using CategoryData_Entry = CategoryData::Entry;
+
+  /// key,value data which is attached to time, but unrelated to spatial
+  /// location or orientation (display)
+  /// for example: fuel, or temperature
+  class GenericData
+  {
+  public:
+    void CopyFrom(const GenericData& from) { if (&from == this) return; *this = from; }
+
+    void Clear() { clear_time(); clear_duration();  entries_.clear(); }
+
+    inline bool has_time() const { return time_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_time() { time_ = INVALID_UPDATE_DOUBLE; }
+    inline double time() const { return time_; }
+    inline void set_time(double value) { time_ = value; }
+
+    inline bool has_duration() const { return duration_ != INVALID_UPDATE_DOUBLE; }
+    inline void clear_duration() { duration_ = INVALID_UPDATE_DOUBLE; }
+    inline double duration() const { return duration_; }
+    inline void set_duration(double value) { duration_ = value; }
+
+    class Entry
+    {
+    public:
+      inline std::string key() const { return key_; }
+      inline void set_key(const std::string& value) { key_ = value; }
+
+      inline std::string value() const { return value_; }
+      inline void set_value(const std::string& value) { value_ = value; }
+
+    private:
+      std::string key_;
+      std::string value_;
+    };
+
+    /// Returns the number of entries for the update
+    int entry_size() const { return static_cast<int>(entries_.size()); }
+    /// Returns a vector of entries
+    const std::vector<Entry>& entry() const { return entries_; }
+    /// Returns the requested entry;
+    const Entry& entry(int index) const { return entries_[index]; }
+    /// Remove all entries
+    void clear_entry() { return entries_.clear(); }
+    /// Add an entry
+    Entry* add_entry() { entries_.push_back(Entry()); return &entries_.back(); }
+
+  private:
+    /// Seconds since scenario reference year for the data posit time
+    double time_ = INVALID_UPDATE_DOUBLE;
+    /// Duration in seconds for the generic data
+    double duration_ = INVALID_UPDATE_DOUBLE;
+    /// Points all at the same time
+    std::vector<Entry> entries_;
+  };
+
+  // Backwards compatibility with protobuf
+  using GenericData_Entry = GenericData::Entry;
+
   /// compare for inequality (required for protobuf utils)
   SDKDATA_EXPORT bool operator!=(const Position &left, const Position &right);
 

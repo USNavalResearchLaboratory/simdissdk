@@ -1500,33 +1500,3 @@ message LobGroupCommand {
   optional bool isClearCommand = 3 [default = false];
 };
 
-//////////////////////////////////////////////////////////////////////////////////////////
-
-/// key,value data intended to categorize a platform
-/// for example: friendly, hostile; ship, plane
-message CategoryData {
-  optional double time = 1;
-
-  message Entry {
-    optional string key = 1;
-    optional string value = 2;
-  };
-
-  repeated Entry entry = 2;
-};
-
-/// key,value data which is attached to time, but unrelated to spatial
-/// location or orientation (display)
-/// for example: fuel, or temperature
-message GenericData {
-  optional double time = 1;
-  optional double duration = 2;
-
-  message Entry {
-    optional string key = 2;
-    optional string value = 3;
-  };
-
-  repeated Entry entry = 3;
-};
-
