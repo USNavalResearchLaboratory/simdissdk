@@ -322,7 +322,7 @@ static const std::string ALL_DATA_FILE_PATTERNS = ALL_SIMDIS_FILE_PATTERNS +
 
 /** GDAL files for osgEarth GDAL driver image and elevation layers */
 static const std::string GDAL_IMAGE_LAYER_FILE_PATTERNS =
-  "GDAL Files (*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil,*.hgt)\n"
+  "GDAL Files (*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil,*.hgt,*.gpkg)\n"
   "All Files (*)";
 
 /** MBTiles files for osgEarth MBTiles driver image layers */
@@ -337,10 +337,10 @@ static const std::string MAPBOX_GL_IMAGE_LAYER_FILE_PATTERNS =
 
 /** Pattern for GDAL, DB, MBTiles, MapBox GL, other files -- image file layer pattern */
 static const std::string FILEBASED_IMAGE_LAYER_FILE_PATTERNS =
-  "All Layer Files (*.mbtiles,*.db,*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil,*.json,Conf.xml,conf.xml)\n"
+  "All Layer Files (*.mbtiles,*.db,*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil,*.gpkg,*.json,Conf.xml,conf.xml)\n"
   "MBTiles Files (*.mbtiles)\n"
   "DB Files (*.db)\n"
-  "GDAL Files (*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil)\n"
+  "GDAL Files (*.tif,*.tiff,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil,*.gpkg)\n"
   "MapBox GL Image Style Files (*.json)\n"
   "Tile Package Configuration (Conf.xml,conf.xml)\n"
   "All Files (*)";
