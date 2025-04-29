@@ -325,7 +325,7 @@ void OsgImGuiHandler::render_(osg::RenderInfo& ri)
   constexpr ImGuiDockNodeFlags dockspace_flags =
     ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_PassthruCentralNode;
 
-  auto dockSpaceId = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
+  auto dockSpaceId = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), dockspace_flags);
 
   draw_(ri);
 
