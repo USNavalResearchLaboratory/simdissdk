@@ -489,7 +489,7 @@ int testAngleConvert()
   // Convert various values
   rv += SDK_ASSERT(simCore::areEqual(Units::RADIANS.convertTo(Units::DEGREES, 1.5), 85.9436692));
   rv += SDK_ASSERT(simCore::areEqual(Units::DEGREES.convertTo(Units::RADIANS, 90), M_PI_2));
-  rv += SDK_ASSERT(simCore::areEqual(Units::BAM.convertTo(Units::MIL, 0.5), 324.227788));
+  rv += SDK_ASSERT(simCore::areEqual(Units::BAM.convertTo(Units::MIL, 0.5), 3200));
   rv += SDK_ASSERT(simCore::areEqual(Units::MIL.convertTo(Units::DEGREES, 3.0), 0.16875));
   rv += SDK_ASSERT(simCore::areEqual(Units::RADIANS.convertTo(Units::MILLIRADIANS, 3.5), 3500.0));
 

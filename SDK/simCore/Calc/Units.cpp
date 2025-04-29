@@ -55,7 +55,7 @@ const Units Units::DAYS("days", "d", SECPERDAY, simCore::ELAPSED_TIME_FAMILY);
 const Units Units::RADIANS("radians", "rad", 1.0, simCore::ANGLE_FAMILY);
 const Units Units::DEGREES("degrees", "deg", simCore::DEG2RAD, simCore::ANGLE_FAMILY);
 const Units Units::MILLIRADIANS("milliradians", "mrad", 1e-3, simCore::ANGLE_FAMILY);
-const Units Units::BAM("binary angle measurement", "bam", M_2_PI, simCore::ANGLE_FAMILY);
+const Units Units::BAM("binary angle measurement", "bam", M_TWOPI, simCore::ANGLE_FAMILY);
 // Based on NATO definition of angular mils (6400 mils in a circle)
 const Units Units::MIL("angular mil", "mil", 9.8174770424681038701957605727484e-4, simCore::ANGLE_FAMILY);
 
