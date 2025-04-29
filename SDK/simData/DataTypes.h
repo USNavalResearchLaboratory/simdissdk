@@ -506,7 +506,7 @@ namespace simData
     /// Returns the requested entry;
     const Entry& entry(int index) const { return entries_[index]; }
     /// Remove all entries
-    void clear_entry() { return entries_.clear(); }
+    void clear_entry() { entries_.clear(); }
     /// Add an entry
     Entry* add_entry() { entries_.push_back(Entry()); return &entries_.back(); }
 
