@@ -355,6 +355,7 @@ private:
   }
 #endif
 
+#if OSGEARTH_SOVERSION < 173
   /**
    * Adapter to fire off a point-to-point LOS test
    */
@@ -371,7 +372,7 @@ private:
       }
     }
   };
-
+#endif
 
   /**
    * Creates the crosshairs that you can position to calculate a line of sight
@@ -426,7 +427,14 @@ private:
     editorGroup->addChild(node.get());
     editorGroup->addChild(app.p2pFeature.get());
 
+#if OSGEARTH_SOVERSION < 173
     dragger->addPositionChangedCallback(new RunPointToPointLOSCallback(app));
+#else
+    dragger->onPositionChanged([&app](const auto* sender, const auto& geoPoint) {
+      if (sender && sender->getDragging() == false)
+        app.runPointToPointLOS(geoPoint);
+      });
+#endif
     return editorGroup;
   }
 }
