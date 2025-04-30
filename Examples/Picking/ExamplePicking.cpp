@@ -752,8 +752,6 @@ int main(int argc, char** argv)
   }
 
 #ifdef HAVE_IMGUI
-  // Pass in existing realize operation as parent op, parent op will be called first
-  viewMan->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewMan->getViewer()->getRealizeOperation()));
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
 
   // Because RTT requires rendering the view to a texture, ImGui would get called twice (and assert)

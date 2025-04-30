@@ -1010,8 +1010,6 @@ int main(int argc, char** argv)
   controlPanel->heatColorProvider = new simRF::GradientColorProvider();
   controlPanel->heatColorProvider->setColorMap(heatColors);
 
-  // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   controlPanel->minHeight = minHeight;

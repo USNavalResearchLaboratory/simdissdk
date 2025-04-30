@@ -37,7 +37,6 @@ Third Party Dependencies
 The SIMDIS SDK depends on the following third party libraries:
 
 - [EnTT 3.14+](https://github.com/skypjack/entt)
-- [GLEW 2.1+](https://glew.sourceforge.net/)
 - [OpenSceneGraph 3.6+](https://www.openscenegraph.org)
 - [osgEarth 3.5+](https://www.osgearth.org)
 - [protobuf 2.6+](https://code.google.com/p/protobuf)

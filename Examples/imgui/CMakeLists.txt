@@ -1,9 +1,4 @@
-if(NOT TARGET simVis)
-    return()
-endif()
-
-find_package(GLEW)
-if(NOT TARGET GLEW::GLEW OR NOT TARGET osgEarth::osgEarth OR NOT TARGET OpenGL::GL)
+if(NOT TARGET simVis OR NOT TARGET osgEarth::osgEarth OR NOT TARGET OpenGL::GL)
     return()
 endif()
 
@@ -41,7 +36,7 @@ add_library(imgui_gl3 STATIC
     ${ImGui_DIR}/backends/imgui_impl_opengl3_loader.h
 )
 target_include_directories(imgui_gl3 PUBLIC "${ImGui_DIR}")
-target_link_libraries(imgui_gl3 PUBLIC GLEW::GLEW OpenGL::GL PRIVATE ${CMAKE_DL_LIBS})
+target_link_libraries(imgui_gl3 PUBLIC OpenGL::GL PRIVATE ${CMAKE_DL_LIBS})
 add_library(VSI::imgui_gl3 ALIAS imgui_gl3)
 
 # Set up the ImGuiLib, based on ImGui
@@ -57,7 +52,6 @@ set(SOURCE_FILES
 add_library(ImGuiLib ${SOURCE_FILES})
 target_include_directories(ImGuiLib PUBLIC .)
 target_link_libraries(ImGuiLib PUBLIC osgEarth::osgEarth VSI::imgui_gl3 PRIVATE simVis simCore simNotify)
-target_compile_definitions(ImGuiLib PRIVATE IMGUI_IMPL_OPENGL_LOADER_GLEW)
 if(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(ImGuiLib PRIVATE -fno-strict-aliasing)
 endif()

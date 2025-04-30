@@ -39,15 +39,6 @@ namespace GUI {
 
 class BaseGui;
 
-class GlewInitOperation : public osg::Operation
-{
-public:
-  GlewInitOperation();
-  void operator()(osg::Object* object) override;
-};
-
-/////////////////////////////////////////////////////////////////////////
-
 class OsgImGuiHandler : public osgGA::GUIEventHandler
 {
 public:
@@ -64,27 +55,6 @@ public:
 
   /** Add deprecated GUI to the manager. TODO: Remove once ::GUI::BaseGUI is removed */
   void add(::GUI::BaseGui* gui);
-
-  class RealizeOperation : public ::GUI::GlewInitOperation
-  {
-  public:
-    /** Constructor. If passed a valid operation for parentOp, its operator() will be called first */
-    explicit RealizeOperation(osg::Operation* parentOp = nullptr)
-      : ::GUI::GlewInitOperation(),
-      parentOp_(parentOp)
-    {
-    }
-
-  private:
-    void operator()(osg::Object* object) override
-    {
-      if (parentOp_.valid())
-        parentOp_->operator()(object);
-      GlewInitOperation::operator()(object);
-    }
-
-    osg::ref_ptr<osg::Operation> parentOp_;
-  };
 
   /** Get a pointer to the default font, may be NULL */
   ImFont* getDefaultFont() const;
