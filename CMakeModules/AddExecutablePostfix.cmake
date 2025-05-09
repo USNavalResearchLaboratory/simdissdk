@@ -1,5 +1,9 @@
 # Provide an implementation of add_executable that applies a debug postfix
-function(add_executable TARGET)
+
+if (USING_VCPKG)
+    message(STATUS "VCPKG is enabled disable override of add_executable")
+else()
+    function(add_executable TARGET)
     _add_executable(${TARGET} ${ARGN})
     get_target_property(IS_IMPORTED ${TARGET} IMPORTED)
     if(NOT IS_IMPORTED)
@@ -11,3 +15,5 @@ function(add_executable TARGET)
         )
     endif()
 endfunction()
+endif()
+
