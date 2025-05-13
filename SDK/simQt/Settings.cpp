@@ -85,7 +85,7 @@ Settings::MetaData& Settings::MetaData::addEnumeration(int key, const QString& v
   return *this;
 }
 
-QVariant Settings::MetaData::convertToInteralFormat(QVariant input) const
+QVariant Settings::MetaData::convertToInternalFormat(QVariant input) const
 {
   if (type_ != COLOR)
     return input;
@@ -105,7 +105,7 @@ QVariant Settings::MetaData::convertToSaveFormat(QVariant saveValue) const
   if (QColor::isValidColor(saveValue.toString()) && saveValue.canConvert<QColor>())
     return saveValue.value<QColor>().name(QColor::HexArgb);
   else if (saveValue.canConvert<QRgb>())
-    return QColor::fromRgb(saveValue.value<QRgb>()).name(QColor::HexArgb);
+    return QColor::fromRgba(saveValue.value<QRgb>()).name(QColor::HexArgb);
   return saveValue;
 }
 

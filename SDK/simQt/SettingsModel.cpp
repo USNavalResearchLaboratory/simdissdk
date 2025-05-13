@@ -155,7 +155,7 @@ public:
   void setDataValue(const QVariant& value)
   {
     assert(itemData_.size() > 1);
-    itemData_[1] = metaData_.convertToInteralFormat(value);
+    itemData_[1] = metaData_.convertToInternalFormat(value);
     valueChanged_ = true;
   }
 
@@ -365,7 +365,7 @@ public:
           valueChanged_ = true;
       }
       // convert value to the internal format now that meta data has been defined
-      itemData_[1] = metaData_.convertToInteralFormat(itemData_[1]);
+      itemData_[1] = metaData_.convertToInternalFormat(itemData_[1]);
     }
     // Data element flags next
     switch (metaData_.type())
