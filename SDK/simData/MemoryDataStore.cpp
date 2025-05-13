@@ -961,6 +961,8 @@ private:
           if (needToSetToNull_)
           {
             entry_->updates()->setCurrent(nullptr);
+            updateStartTime_.reset();
+            updateEndTime_.reset();
             needToSetToNull_ = false;
           }
           return;
