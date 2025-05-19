@@ -561,7 +561,7 @@ simData::ObjectId addBeam(const simData::ObjectId hostId, simData::DataStore& da
   simData::BeamProperties* props = dataStore.addBeam(&xaction);
   simData::ObjectId result = props->id();
   props->set_hostid(hostId);
-  props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+  props->set_type(simData::BeamProperties::Type::ABSOLUTE_POSITION);
   xaction.complete(&props);
 
   simData::BeamPrefs* prefs = dataStore.mutable_beamPrefs(result, &xaction);

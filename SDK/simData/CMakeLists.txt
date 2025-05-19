@@ -28,8 +28,13 @@ set(DATA_HEADERS
     ${DATA_INC}DataStoreProxy.h
     ${DATA_INC}DataSliceUpdaters.h
     ${DATA_INC}DataTable.h
+    ${DATA_INC}DataTypeBasics.h
+    ${DATA_INC}DataTypeProperties.h
+    ${DATA_INC}DataTypeReflection.h
     ${DATA_INC}DataTypes.h
+    ${DATA_INC}DataTypeUpdates.h
     ${DATA_INC}EntityNameCache.h
+    ${DATA_INC}EnumerationText.h
     ${DATA_INC}GenericIterator.h
     ${DATA_INC}Interpolator.h
     ${DATA_INC}LimitData.h
@@ -53,8 +58,11 @@ set(DATA_SOURCES
     ${DATA_SRC}DataStoreHelpers.cpp
     ${DATA_SRC}DataStoreProxy.cpp
     ${DATA_SRC}DataTable.cpp
+    ${DATA_SRC}DataTypeProperties.cpp
+    ${DATA_SRC}DataTypeReflection.cpp
     ${DATA_SRC}DataTypes.cpp
     ${DATA_SRC}EntityNameCache.cpp
+    ${DATA_SRC}EnumerationText.cpp
     ${DATA_SRC}GateMemoryCommandSlice.cpp
     ${DATA_SRC}LinearInterpolator.cpp
     ${DATA_SRC}LobGroupMemoryDataSlice.cpp

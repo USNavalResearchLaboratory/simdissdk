@@ -783,7 +783,7 @@ GateNode* ScenarioManager::addGate(const simData::GateProperties& props, simData
   if (props.has_hostid())
     host = find(props.hostid());
 
-  if ((props.type() == simData::GateProperties_GateType_TARGET) && (dynamic_cast<BeamNode*>(host) == nullptr))
+  if ((props.type() == simData::GateProperties::Type::TARGET) && (dynamic_cast<BeamNode*>(host) == nullptr))
   {
     // simVis gate will not update this gate - it will look just like an invisible zombie
     SIM_WARN << "ScenarioManager::addGate: a target gate requires a Beam host; gate will be ignored." << std::endl;

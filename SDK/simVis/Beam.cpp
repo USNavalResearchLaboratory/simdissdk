@@ -340,7 +340,7 @@ BeamNode::BeamNode(const simData::BeamProperties& props, Locator* hostLocator, c
   beamOriginLocator_ = new Locator(hostLocator, Locator::COMP_ALL);
 
   // if the properties call for a body-relative beam, configure that:
-  if (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE)
+  if (props.has_type() && props.type() == simData::BeamProperties::Type::BODY_RELATIVE)
   {
     // in the BeamType_BODY_RELATIVE case, beam data is relative to platform orientation;
     // the ResolvedPositionOrientationLocator maintains the host platform pos and ori
@@ -461,7 +461,7 @@ void BeamNode::setPrefs(const simData::BeamPrefs& prefs)
   localGrid_->validatePrefs(prefs.commonprefs().localgrid());
 
   // if this is a target beam, and there is a change in target id, null our target reference (will be set on update)
-  if (lastProps_.type() == simData::BeamProperties_BeamType_TARGET &&
+  if (lastProps_.type() == simData::BeamProperties::Type::TARGET &&
     (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefsApplied_, &prefs, targetid)))
   {
     target_ = nullptr;
@@ -640,7 +640,7 @@ int BeamNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3*
 void BeamNode::applyDataStoreUpdate_(const simData::BeamUpdate& update, bool force)
 {
   // if this is a target beam, we need to populate the update with calculated RAE
-  const bool targetBeam = (lastProps_.type() == simData::BeamProperties_BeamType_TARGET);
+  const bool targetBeam = (lastProps_.type() == simData::BeamProperties::Type::TARGET);
   if (!targetBeam)
     lastUpdateFromDS_ = update;
   else
@@ -694,7 +694,7 @@ void BeamNode::applyUpdateOverrides_(bool force)
 int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
 {
   // this should only be called for target beams; if assert fails, check caller
-  assert(lastProps_.type() == simData::BeamProperties_BeamType_TARGET);
+  assert(lastProps_.type() == simData::BeamProperties::Type::TARGET);
 
   // we should only receive non-null updates for target beams which have valid target ids; if assert fails check MemoryDataStore processing
   assert(lastPrefsApplied_.targetid() > 0);

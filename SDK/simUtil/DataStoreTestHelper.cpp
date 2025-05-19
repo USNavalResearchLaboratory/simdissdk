@@ -74,7 +74,7 @@ uint64_t DataStoreTestHelper::addBeam(uint64_t hostId, uint64_t originalId, bool
   beamProps->set_hostid(hostId);
   beamProps->set_originalid(originalId);
   if (targetBeam)
-    beamProps->set_type(simData::BeamProperties_BeamType_TARGET);
+    beamProps->set_type(simData::BeamProperties::Type::TARGET);
   t.commit();
   simData::BeamPrefs* beamPrefs = dataStore_->mutable_beamPrefs(beamProps->id(), &t);
   std::ostringstream beamName;
@@ -91,7 +91,7 @@ uint64_t DataStoreTestHelper::addGate(uint64_t hostId, uint64_t originalId, bool
   gateProps->set_hostid(hostId);
   gateProps->set_originalid(originalId);
   if (targetGate)
-    gateProps->set_type(simData::GateProperties_GateType_TARGET);
+    gateProps->set_type(simData::GateProperties::Type::TARGET);
   t.commit();
   simData::GatePrefs* gatePrefs = dataStore_->mutable_gatePrefs(gateProps->id(), &t);
   std::ostringstream gateName;

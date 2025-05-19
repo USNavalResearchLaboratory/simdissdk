@@ -1260,7 +1260,7 @@ void PlanetariumViewTool::addBeamToBeamHistory_(simVis::BeamNode* beam)
   // SIM-13705 - only supporting beam history for absolute/linear beams;
   //   body beam implementation is difficult and not relevant for customer
   const simData::BeamProperties& props = beam->getProperties();
-  const bool isLinearBeam = (props.type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+  const bool isLinearBeam = (props.type() == simData::BeamProperties::Type::ABSOLUTE_POSITION);
   if (isLinearBeam && history_.find(beam->getId()) == history_.end())
   {
     osg::ref_ptr<BeamHistory> history = new BeamHistory(beam, ds_, range_);

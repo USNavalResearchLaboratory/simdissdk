@@ -529,7 +529,7 @@ void addPlatformAndBeam(AppData* app,
     simData::DataStore::Transaction xaction;
     simData::BeamProperties* props = app->ds.addBeam(&xaction);
     props->set_hostid(app->platformId);
-    props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+    props->set_type(simData::BeamProperties::Type::ABSOLUTE_POSITION);
     app->beamId = props->id();
     xaction.complete(&props);
   }
@@ -610,7 +610,7 @@ int main(int argc, char **argv)
     simData::DataStore::Transaction xaction;
     simData::BeamProperties* props = ds.addBeam(&xaction);
     props->set_hostid(platformId);
-    props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+    props->set_type(simData::BeamProperties::Type::ABSOLUTE_POSITION);
     beamId = props->id();
     xaction.complete(&props);
   }

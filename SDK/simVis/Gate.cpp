@@ -336,7 +336,7 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   }
 
   // if the properties call for a body-relative beam, reconfigure locators to include platform orientation
-  if (props.has_type() && props.type() == simData::GateProperties_GateType_BODY_RELATIVE)
+  if (props.has_type() && props.type() == simData::GateProperties::Type::BODY_RELATIVE)
   {
     // for body beam, inherit from beam's position offset, and keep platform orientation.
     gateVolumeLocator_ = new ResolvedPositionOrientationLocator(hostLocator, Locator::COMP_ALL);
@@ -600,7 +600,7 @@ const simData::GateUpdate* GateNode::getLastUpdateFromDS() const
 void GateNode::applyDataStoreUpdate_(const simData::GateUpdate& update, bool force)
 {
   // if this is a target gate, we need to populate the update with calculated RAE
-  const bool targetGate = (lastProps_.type() == simData::GateProperties_GateType_TARGET);
+  const bool targetGate = (lastProps_.type() == simData::GateProperties::Type::TARGET);
   if (!targetGate)
     lastUpdateFromDS_ = update;
   else
@@ -674,7 +674,7 @@ void GateNode::applyUpdateOverrides_(bool force)
 int GateNode::calculateTargetGate_(const simData::GateUpdate& update, simData::GateUpdate& targetGateUpdate)
 {
   // this should only be called for target beams; if assert fails, check caller
-  assert(lastProps_.type() == simData::GateProperties_GateType_TARGET);
+  assert(lastProps_.type() == simData::GateProperties::Type::TARGET);
 
   if (!host_.valid())
   {
@@ -689,7 +689,7 @@ int GateNode::calculateTargetGate_(const simData::GateUpdate& update, simData::G
     return 1;
   }
 
-  assert(beam->getProperties().type() == simData::BeamProperties_BeamType_TARGET);
+  assert(beam->getProperties().type() == simData::BeamProperties::Type::TARGET);
   // the target beam should have the correct RAE; will be nullptr if target beam could not calculate
   const simData::BeamUpdate* beamUpdate = beam->getLastUpdateFromDS();
   if (beamUpdate == nullptr)

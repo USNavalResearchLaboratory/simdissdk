@@ -106,7 +106,7 @@ public:
     {
       simData::DataStore::Transaction xaction;
       const simData::BeamProperties* props = ds_.beamProperties(beamId_, &xaction);
-      std::string type = (props->type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION ? "ABSOLUTE" : "BODY RELATIVE");
+      std::string type = (props->type() == simData::BeamProperties::Type::ABSOLUTE_POSITION ? "ABSOLUTE" : "BODY RELATIVE");
       xaction.complete(&props);
 
       ImGui::TableNextColumn(); ImGui::Text("Type"); ImGui::TableNextColumn(); ImGui::Text("%s", type.c_str());
@@ -379,8 +379,8 @@ struct AppData
      view_(nullptr),
      t_(0.0)
   {
-    types_.push_back(std::make_pair(simData::BeamProperties_BeamType_ABSOLUTE_POSITION, "ABSOLUTE"));
-    types_.push_back(std::make_pair(simData::BeamProperties_BeamType_BODY_RELATIVE,     "BODY RELATIVE"));
+    types_.push_back(std::make_pair(simData::BeamProperties::Type::ABSOLUTE_POSITION, "ABSOLUTE"));
+    types_.push_back(std::make_pair(simData::BeamProperties::Type::BODY_RELATIVE,     "BODY RELATIVE"));
 
     modes_.push_back(std::make_pair(simData::BeamPrefs_DrawMode_SOLID, "SOLID"));
     modes_.push_back(std::make_pair(simData::BeamPrefs_DrawMode_WIRE,  "WIRE"));
@@ -407,7 +407,7 @@ struct AppData
     // fetch properties:
     {
       const simData::BeamProperties* props = ds_->beamProperties(beamId_, &xaction);
-      typeIndex = props->type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION ? 0 : 1;
+      typeIndex = props->type() == simData::BeamProperties::Type::ABSOLUTE_POSITION ? 0 : 1;
       xaction.complete(&props);
     }
 
@@ -635,9 +635,9 @@ simData::ObjectId addBeam(simData::DataStore& ds,
                           char**              argv)
 {
   // see if they user wants body-relative mode
-  simData::BeamProperties_BeamType type = simExamples::hasArg("--br", argc, argv)?
-    simData::BeamProperties_BeamType_BODY_RELATIVE :
-    simData::BeamProperties_BeamType_ABSOLUTE_POSITION;
+  simData::BeamProperties::Type type = simExamples::hasArg("--br", argc, argv)?
+    simData::BeamProperties::Type::BODY_RELATIVE :
+    simData::BeamProperties::Type::ABSOLUTE_POSITION;
 
   simData::ObjectId beamId;
 
