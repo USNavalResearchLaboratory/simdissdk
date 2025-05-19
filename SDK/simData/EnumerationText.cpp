@@ -31,11 +31,6 @@ EnumerationText::EnumerationText()
 {
 }
 
-EnumerationText::EnumerationText(size_t initialIndex)
-  : index_(initialIndex)
-{
-}
-
 EnumerationText::~EnumerationText()
 {
 }
@@ -64,64 +59,67 @@ void EnumerationText::insert_(size_t index, const std::string& text)
 
 void EnumerationText::append_(const std::string& text)
 {
-  // Must set the initial index value before calling append
-  assert(index_ != -1);
+  if (text_.empty())
+  {
+    // Must set the initial index value by calling insert_() before calling append_()
+    assert(false);
+    return;
+  }
 
-  insert_(index_, text);
-  ++index_;
+  insert_(text_.rbegin()->first + 1, text);
 }
 
 std::unique_ptr<EnumerationText> EnumerationText::makeBeamTypeName()
 {
-  auto rv = std::make_unique<EnumerationText>(1);
-  rv->append_("ABSOLUTE_POSITION");  ///< Beam pointing is defined based on data
-  rv->append_("BODY_RELATIVE");      ///< Beam pointing is relative to host's body orientation
-  rv->append_("TARGET");             ///< Beam pointing is towards specified target platform
+  auto rv = std::make_unique<EnumerationText>();
+  rv->insert_(1, "ABSOLUTE_POSITION"); ///< Beam pointing is defined based on data
+  rv->append_("BODY_RELATIVE");        ///< Beam pointing is relative to host's body orientation
+  rv->append_("TARGET");               ///< Beam pointing is towards specified target platform
 
   return rv;
 }
 
 std::unique_ptr<EnumerationText> EnumerationText::makeGateTypeName()
 {
-  auto rv = std::make_unique<EnumerationText>(1);
-  rv->append_("ABSOLUTE_POSITION");  ///< Gate pointing is defined based on data
-  rv->append_("BODY_RELATIVE");      ///< Gate pointing is relative to host's body orientation
-  rv->append_("TARGET");             ///< Gate pointing is towards specified target platform
+  auto rv = std::make_unique<EnumerationText>();
+  rv->insert_(1, "ABSOLUTE_POSITION"); ///< Gate pointing is defined based on data
+  rv->append_("BODY_RELATIVE");        ///< Gate pointing is relative to host's body orientation
+  rv->append_("TARGET");               ///< Gate pointing is towards specified target platform
 
   return rv;
 }
 
 std::unique_ptr<EnumerationText> EnumerationText::makeCoordinateSystemName()
 {
-  auto rv = std::make_unique<EnumerationText>(1);
-  rv->append_("NED");   ///< North/East/Down
-  rv->append_("NWU");   ///< North/West/Up
-  rv->append_("ENU");   ///< East/North/Up
-  rv->append_("LLA");   ///< Lat/Lon/Alt
-  rv->append_("ECEF");  ///< Earth-centered, Earth-fixed (stationary frame)
-  rv->append_("ECI");   ///< Earth-centered, inertial (rotates in time)
-  rv->append_("XEAST"); ///< Tangent plane, X-axis pointing East
-  rv->append_("GTP");   ///< Generic tangent plane that can be rotated and/or translated)
+  auto rv = std::make_unique<EnumerationText>();
+  rv->insert_(1, "NED"); ///< North/East/Down
+  rv->append_("NWU");    ///< North/West/Up
+  rv->append_("ENU");    ///< East/North/Up
+  rv->append_("LLA");    ///< Lat/Lon/Alt
+  rv->append_("ECEF");   ///< Earth-centered, Earth-fixed (stationary frame)
+  rv->append_("ECI");    ///< Earth-centered, inertial (rotates in time)
+  rv->append_("XEAST");  ///< Tangent plane, X-axis pointing East
+  rv->append_("GTP");    ///< Generic tangent plane that can be rotated and/or translated)
 
   return rv;
 }
 
 std::unique_ptr<EnumerationText> EnumerationText::makeMagneticVarianceName()
 {
-  auto rv = std::make_unique<EnumerationText>(1);
-  rv->append_("MV_WMM");   ///< Variance based on World Magnetic Model (WMM)
-  rv->append_("MV_TRUE");  ///< No variance, also known as True North
-  rv->append_("MV_USER");  ///< User defined variance
+  auto rv = std::make_unique<EnumerationText>();
+  rv->insert_(1, "MV_WMM"); ///< Variance based on World Magnetic Model (WMM)
+  rv->append_("MV_TRUE");   ///< No variance, also known as True North
+  rv->append_("MV_USER");   ///< User defined variance
 
   return rv;
 }
 
 std::unique_ptr<EnumerationText> EnumerationText::makeVerticalDatumName()
 {
-  auto rv = std::make_unique<EnumerationText>(1);
-  rv->append_("VD_WGS84");  ///< Referenced to WGS-84 ellipsoid
-  rv->append_("VD_MSL");    ///< Referenced to Earth Gravity Model (EGM)
-  rv->append_("VD_USER");   ///< User defined datum
+  auto rv = std::make_unique<EnumerationText>();
+  rv->insert_(1, "VD_WGS84"); ///< Referenced to WGS-84 ellipsoid
+  rv->append_("VD_MSL");      ///< Referenced to Earth Gravity Model (EGM)
+  rv->append_("VD_USER");     ///< User defined datum
 
   return rv;
 }
