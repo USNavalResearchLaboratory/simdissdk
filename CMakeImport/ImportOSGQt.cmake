@@ -39,15 +39,15 @@ set(LIB_DIRS
 )
 
 if(USING_VCPKG)
-find_path(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH NAME osgQOpenGL/Export PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
-# Newer versions of osgQt include the Qt version number in output name
-find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgQOpenGLd PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
-find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgQOpenGL PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+    find_path(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH NAME osgQOpenGL/Export PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
+    # Newer versions of osgQt include the Qt version number in output name
+    find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgQOpenGLd PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+    find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgQOpenGL PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
 else()
-find_path(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH NAME osgQt/Export PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
-# Newer versions of osgQt include the Qt version number in output name
-find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgQt${Qt5Core_VERSION_MAJOR}d osgQtd PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
-find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgQt${Qt5Core_VERSION_MAJOR} osgQt PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+    find_path(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH NAME osgQt/Export PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
+    # Newer versions of osgQt include the Qt version number in output name
+    find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgQt${Qt5Core_VERSION_MAJOR}d osgQtd PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+    find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgQt${Qt5Core_VERSION_MAJOR} osgQt PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
 endif()
 
 ############################################################
