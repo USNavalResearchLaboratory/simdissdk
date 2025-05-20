@@ -121,9 +121,12 @@ configure_file(CMakeUtilities/FindSIMDIS_SDK.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
     @ONLY
 )
+if(USING_VCPKG)
+    set(SDK_SHARE_FOLDER share/simdissdk)
+endif()
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
-    DESTINATION share/simdissdk/ExternalSdkProject/CMakeModules/
+    DESTINATION ${SDK_SHARE_FOLDER}/ExternalSdkProject/CMakeModules/
     COMPONENT Exports
 )
 
