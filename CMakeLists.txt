@@ -144,10 +144,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 # Include specific defaults for building with public release environment (third party packs)
 include(PublicDefaults)
 # Include specific defaults for building with VSI environment
-if(USING_VCPKG)
-else()
-include(VsiDefaults)
-vsi_process_packages_json(${CMAKE_SOURCE_DIR}/CMakeUtilities/VsiPackages.json)
+if(NOT USING_VCPKG)
+    include(VsiDefaults)
+    vsi_process_packages_json(${CMAKE_SOURCE_DIR}/CMakeUtilities/VsiPackages.json)
 endif()
 
 # Build Release mode by default on Linux, unless otherwise specified
