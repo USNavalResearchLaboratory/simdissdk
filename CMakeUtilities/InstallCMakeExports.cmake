@@ -116,35 +116,33 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/FindSIMDIS_SDK.cmake
 endif()
 
 if(USING_VCPKG)
-# Configure and install the ImportSIMDIS_SDK.cmake useful for external projects
-configure_file(CMakeUtilities/FindSIMDIS_SDK.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
-    @ONLY
-)
-if(USING_VCPKG)
+    # Configure and install the ImportSIMDIS_SDK.cmake useful for external projects
+    configure_file(CMakeUtilities/FindSIMDIS_SDK.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
+        @ONLY
+    )
     set(SDK_SHARE_FOLDER share/simdissdk)
-endif()
-install(FILES
+    install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
-    DESTINATION ${SDK_SHARE_FOLDER}/ExternalSdkProject/CMakeModules/
-    COMPONENT Exports
-)
+        DESTINATION ${SDK_SHARE_FOLDER}/ExternalSdkProject/CMakeModules/
+        COMPONENT Exports
+    )
 
-# Install files from the share folder
-install(DIRECTORY share/ DESTINATION share/simdissdk COMPONENT Exports)
+    # Install files from the share folder
+    install(DIRECTORY share/ DESTINATION share/simdissdk COMPONENT Exports)
 else()
-# Configure and install the ImportSIMDIS_SDK.cmake useful for external projects
-configure_file(CMakeUtilities/ImportSIMDIS_SDK.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
-    @ONLY
-)
-
-install(FILES
+    # Configure and install the ImportSIMDIS_SDK.cmake useful for external projects
+    configure_file(CMakeUtilities/ImportSIMDIS_SDK.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
-    DESTINATION share/ExternalSdkProject/CMakeModules/
-    COMPONENT Exports
-)
+        @ONLY
+    )
 
-# Install files from the share folder
-install(DIRECTORY share/ DESTINATION share COMPONENT Exports)
+    install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
+        DESTINATION share/ExternalSdkProject/CMakeModules/
+        COMPONENT Exports
+    )
+
+    # Install files from the share folder
+    install(DIRECTORY share/ DESTINATION share COMPONENT Exports)
 endif()
