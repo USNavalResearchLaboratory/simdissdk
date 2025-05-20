@@ -89,8 +89,7 @@ include(CheckOSGEarthMethodExists)
 include(TestBigEndian)
 test_big_endian(SDK_BIG_ENDIAN)
 
-if(USING_VCPKG)
-else()
+if(NOT USING_VCPKG)
 # Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
 include(AddExecutablePostfix)
 endif()
