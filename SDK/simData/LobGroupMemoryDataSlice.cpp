@@ -92,6 +92,9 @@ void LobGroupMemoryDataSlice::update(double time)
 
   // remove the old current_ object here, since we are replacing it
   delete current_;
+  // Intentionally do not set current_ to null, so that if currentUpdate has data points,
+  // we can detect that the "current_" has changed in setCurrent(nullptr). This is safe.
+
   // only pass in the currentUpdate if it has data points
   if (currentUpdate->datapoints_size())
   {

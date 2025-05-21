@@ -39,7 +39,7 @@ public:
   inline double value() const { return value_;  }
   inline double value_or(double defaultValue) const { return has_value() ? value_ : defaultValue; }
   inline void reset() { value_ = INVALID_UPDATE_DOUBLE; }
-  inline void operator=(double value) { value_ = value; }
+  inline OptionalDouble& operator=(double value) { value_ = value; return *this; }
 
 private:
   double value_ = INVALID_UPDATE_DOUBLE;
@@ -53,7 +53,7 @@ public:
   inline float value() const { return value_; }
   inline float value_or(double defaultValue) const { return has_value() ? value_ : defaultValue; }
   inline void reset() { value_ = INVALID_UPDATE_FLOAT; }
-  inline void operator=(float value) { value_ = value; }
+  inline OptionalFloat& operator=(float value) { value_ = value; return *this; }
 
 private:
   float value_ = INVALID_UPDATE_FLOAT;
