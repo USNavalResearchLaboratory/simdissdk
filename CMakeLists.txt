@@ -90,8 +90,8 @@ include(TestBigEndian)
 test_big_endian(SDK_BIG_ENDIAN)
 
 if(NOT USING_VCPKG)
-# Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
-include(AddExecutablePostfix)
+    # Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
+    include(AddExecutablePostfix)
 endif()
 
 # Set architecture identifiers
