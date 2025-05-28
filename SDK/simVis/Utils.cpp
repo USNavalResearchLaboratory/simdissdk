@@ -1649,12 +1649,13 @@ void FilteringOsgNotifyDecorator::notify(osg::NotifySeverity severity, const cha
 
 FilteringOsgNotifyDecorator* installFilteringOsgNotifyDecorator()
 {
-  FilteringOsgNotifyDecorator* decorator = new FilteringOsgNotifyDecorator(osg::getNotifyHandler());
+  osg::ref_ptr<FilteringOsgNotifyDecorator> decorator = new FilteringOsgNotifyDecorator(osg::getNotifyHandler());
 
   // Add invalid operation filter due to NVIDIA driver bug from March 2025 onward, affect NVIDIA 571+
   decorator->addFilter("detected OpenGL error 'invalid operation' at after RenderBin::draw(..)");
 
-  osg::setNotifyHandler(decorator);
-  return decorator;
+  // OSG takes ownership in its own ref_ptr
+  osg::setNotifyHandler(decorator.get());
+  return decorator.get();
 }
 }

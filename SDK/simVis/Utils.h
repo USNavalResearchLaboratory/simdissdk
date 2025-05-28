@@ -867,7 +867,7 @@ namespace simVis
   class SDKVIS_EXPORT FilteringOsgNotifyDecorator : public osg::NotifyHandler
   {
   public:
-    FilteringOsgNotifyDecorator(osg::NotifyHandler* child);
+    explicit FilteringOsgNotifyDecorator(osg::NotifyHandler* child);
 
     /** Adds a filter. Messages matching the filter exactly will be removed and not sent to output. */
     void addFilter(const std::string& filter);
