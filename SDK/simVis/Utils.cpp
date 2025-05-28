@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
 #include "osg/Billboard"
 #include "osg/BlendFunc"
 #include "osg/CullFace"
@@ -1615,4 +1616,45 @@ osg::Vec2f ViewportSizeCallback::windowSize() const
   return windowSize_;
 }
 
+//--------------------------------------------------------------------------
+
+FilteringOsgNotifyDecorator::FilteringOsgNotifyDecorator(osg::NotifyHandler* child)
+  : osg::NotifyHandler(),
+    child_(child)
+{
+  if (!child_)
+    child_ = new osg::StandardNotifyHandler;
+}
+
+FilteringOsgNotifyDecorator::~FilteringOsgNotifyDecorator()
+{
+}
+
+void FilteringOsgNotifyDecorator::addFilter(const std::string& filter)
+{
+  filters_.push_back(filter);
+}
+
+void FilteringOsgNotifyDecorator::notify(osg::NotifySeverity severity, const char* message)
+{
+  // Convert message to std::string for easier manipulation
+  const std::string msg(message);
+  // Check if the message contains the specific error
+  const bool hasMatches = std::ranges::any_of(filters_, [msg](const std::string& filter) {
+    return msg.contains(filter);
+    });
+  if (!hasMatches)
+    child_->notify(severity, message);
+}
+
+FilteringOsgNotifyDecorator* installFilteringOsgNotifyDecorator()
+{
+  FilteringOsgNotifyDecorator* decorator = new FilteringOsgNotifyDecorator(osg::getNotifyHandler());
+
+  // Add invalid operation filter due to NVIDIA driver bug from March 2025 onward, affect NVIDIA 571+
+  decorator->addFilter("detected OpenGL error 'invalid operation' at after RenderBin::draw(..)");
+
+  osg::setNotifyHandler(decorator);
+  return decorator;
+}
 }
