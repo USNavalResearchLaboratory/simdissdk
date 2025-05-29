@@ -20,7 +20,6 @@
  * disclose, or release this software.
  *
  */
-
 #include <QApplication>
 #include <QScreen>
 #include <QWidget>
@@ -74,5 +73,30 @@ void QtUtils::centerWidgetOnParent(QWidget& widget, const QWidget* parent)
   widget.move(newPos);
 }
 
+///////////////////////////////////////////////////////////////////
+
+DragDropEventFilter::DragDropEventFilter(const std::function<bool(QEvent*)>& lambda, QObject* parent)
+  : QObject(parent),
+    lambda_(lambda)
+{
+}
+
+bool DragDropEventFilter::eventFilter(QObject* watched, QEvent* event)
+{
+  if (lambda_)
+  {
+    switch (event->type())
+    {
+    case QEvent::DragEnter:
+    case QEvent::DragMove:
+    case QEvent::DragLeave:
+    case QEvent::Drop:
+      return lambda_(event);
+    default:
+      break;
+    }
+  }
+  return QObject::eventFilter(watched, event); // Let other events pass through
+}
 
 }

@@ -23,6 +23,9 @@
 #ifndef SIMQT_QTUTILS_HH
 #define SIMQT_QTUTILS_HH
 
+#include <functional>
+#include <QObject>
+#include <QRect>
 #include "simCore/Common/Export.h"
 
 class QWidget;
@@ -52,7 +55,28 @@ public:
   * @param parent target screen to find
   */
   static QRect getAvailableScreenGeometry(const QWidget& widget, const QWidget* parent);
+};
 
+/**
+ * Forwards drag/drop events to a given lambda. Useful, for example, to capture drag/drop from a
+ * QOpenGLWindow using its QWidget holder. Recommended usage:
+ * <code>
+ *   widget->installEventFilter(new simQt::DragDropEventFilter(
+ *     [this](QEvent* evt) { return event(evt); },
+ *     widget));
+ * </code>
+ */
+class SDKQT_EXPORT DragDropEventFilter : public QObject
+{
+public:
+  DragDropEventFilter(const std::function<bool(QEvent*)>& lambda, QObject* parent = nullptr);
+
+protected:
+  // From QObject:
+  virtual bool eventFilter(QObject* watched, QEvent* event) override;
+
+private:
+  std::function<bool(QEvent*)> lambda_;
 };
 
 }
