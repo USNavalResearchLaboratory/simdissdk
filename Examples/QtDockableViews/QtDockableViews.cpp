@@ -211,11 +211,14 @@ void warningMessageFilter(QtMsgType type, const QMessageLogContext& context, con
 {
   // Block spammed warning message from setGeometry() calls caused when manually resizing a QDialog.
   // This is a known Qt bug in Qt 5.15 that is unresolved: https://bugreports.qt.io/browse/QTBUG-73258
+#ifndef NDEBUG
   if (type != QtWarningMsg || !msg.startsWith("QWindowsWindow::setGeometry"))
+#endif
   {
     QByteArray localMsg = msg.toLocal8Bit();
-    fprintf(stdout, localMsg.constData());
+    fprintf(stdout, "%s", localMsg.constData());
   }
+
 }
 
 int main(int argc, char** argv)
