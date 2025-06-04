@@ -737,9 +737,9 @@ void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
   // Save the callback in a ref_ptr for memory management
   osg::ref_ptr<ModelReadyCallback> refCallback = callback;
 
-  // LST and TMD OSG plug-ins are known to not be thread safe
+  // LST and TMD OSG plug-ins are known to not be thread safe; fbx exclusion is TODO: SIM-18031
   const std::string ext = osgDB::getLowerCaseFileExtension(uri);
-  const bool threadSafe = (ext != "lst" && ext != "tmd");
+  const bool threadSafe = (ext != "lst" && ext != "tmd" && ext != "fbx");
 
   // Check that the async loader is going to work.  If it's not configured, then load synchronously.
   if (!threadSafe || !asyncLoader_->isConfigured())
