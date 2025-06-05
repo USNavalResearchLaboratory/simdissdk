@@ -25,6 +25,7 @@
 
 #include "osgQt/GraphicsWindowQt"
 #include "simCore/Common/Common.h"
+#include "simQt/AutoRepeatFilter.h"
 
 class MultiTouchEventFilter;
 namespace osg { class GraphicsContext; }
@@ -32,41 +33,6 @@ namespace osgViewer { class View; }
 
 namespace simQt
 {
-
-/**
- * Filter class that blocks auto-repeat keypress events from reaching the filtered object.  This is
- * useful for blocking auto-repeat keys from the GLWidget / ViewWidget.  osgEarth::EarthManipulator
- * can have poor keyboard interaction if the frame rate ever drops under the key autorepeat rate,
- * and this filter helps fix that problem.
- *
- * The following code can be used to install the filter on a widget:
- * <code>
- * AutoRepeatFilter* filter = new AutoRepeatFilter(viewWidget);
- * viewWidget->installEventFilter(filter);
- * </code>
- *
- * Note that this filter is auto-installed on simQt::ViewWidget instances, but is not automatically
- * installed on osgQt::GLWidget.  So if your application uses osgQt::GLWidget, consider using the filter.
- */
-class SDKQT_EXPORT AutoRepeatFilter : public QObject
-{
-  Q_OBJECT;
-
-public:
-  explicit AutoRepeatFilter(QObject* parent = nullptr);
-
-  /** Enables or disables the filtering.  If true (default), auto-repeated keys are filtered out. */
-  void setEnabled(bool enabled);
-  /** True if enabled (i.e., auto-repeated keys are filtered out) */
-  bool isEnabled() const;
-
-protected:
-  // From QObject:
-  virtual bool eventFilter(QObject* obj, QEvent* evt) override;
-
-private:
-  bool enabled_;
-};
 
 /**
  * A wrapper class to encapsulate an osgViewer::View (such as the simVis::View Main View) in a Qt widget.

@@ -19,6 +19,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}AbstractEntityTreeModel.h
     ${SIMQT_INC}ActionRegistry.h
     ${SIMQT_INC}ActionItemModel.h
+    ${SIMQT_INC}AutoRepeatFilter.h
     ${SIMQT_INC}BoundSettings.h
     ${SIMQT_INC}ColorButton.h
     ${SIMQT_INC}ColorWidget.h
@@ -161,6 +162,7 @@ source_group(Headers FILES ${SIMQT_HEADERS})
 set(SIMQT_SOURCES
     ${SIMQT_SRC}ActionRegistry.cpp
     ${SIMQT_SRC}ActionItemModel.cpp
+    ${SIMQT_SRC}AutoRepeatFilter.cpp
     ${SIMQT_SRC}BoundSettings.cpp
     ${SIMQT_SRC}ColorButton.cpp
     ${SIMQT_SRC}ColorWidget.cpp
