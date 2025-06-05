@@ -37,6 +37,15 @@
       "depend": "OSG"
     },
     {
+      "name": "OSGQOPENGL",
+      "dir": "osgQOpenGL",
+      "version": "3.6.5",
+      "depend": [
+        "OSG",
+        "QT5"
+      ]
+    },
+    {
       "name": "PROTOBUF",
       "dir": "protobuf",
       "version": [

@@ -58,6 +58,7 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}ConsoleChannel.h
     ${SIMQT_INC}FileDialog.h
     ${SIMQT_INC}FileUtilities.h
+    ${SIMQT_INC}Gl3FormatGuesser.h
     ${SIMQT_INC}MonospaceItemDelegate.h
     ${SIMQT_INC}QtFormatting.h
     ${SIMQT_INC}QtUtils.h
@@ -120,8 +121,11 @@ if(TARGET simVis)
         list(APPEND SIMQT_HEADERS_TO_MOC
             ${SIMQT_INC}ViewWidget.h
         )
-        list(APPEND SIMQT_HEADERS
-            ${SIMQT_INC}Gl3FormatGuesser.h
+    endif()
+
+    if(TARGET osgQt::osgQOpenGL)
+        list(APPEND SIMQT_HEADERS_TO_MOC
+            ${SIMQT_INC}ViewerWidgetAdapter.h
         )
     endif()
 endif()
@@ -179,6 +183,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}FileUtilities.cpp
     ${SIMQT_SRC}FontWidget.cpp
     ${SIMQT_SRC}GanttChartView.cpp
+    ${SIMQT_SRC}Gl3FormatGuesser.cpp
     ${SIMQT_INC}KeySequenceEdit.cpp
     ${SIMQT_SRC}MonospaceItemDelegate.cpp
     ${SIMQT_SRC}MruList.cpp
@@ -209,6 +214,9 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}WeightedMenuManager.cpp
     ${SIMQT_SRC}WidgetSettings.cpp
 )
+if(NOT MSVC)
+    set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+endif()
 
 # Parts of simQt depend on simData
 if(TARGET simData)
@@ -248,8 +256,13 @@ if(TARGET simVis)
     # Parts of simQt depend on both simVis and osgQt
     if(TARGET OSGQT)
         list(APPEND SIMQT_SOURCES
-            ${SIMQT_SRC}Gl3FormatGuesser.cpp
             ${SIMQT_SRC}ViewWidget.cpp
+        )
+    endif()
+
+    if(TARGET osgQt::osgQOpenGL)
+        list(APPEND SIMQT_SOURCES
+            ${SIMQT_SRC}ViewerWidgetAdapter.cpp
         )
     endif()
 
@@ -258,7 +271,6 @@ if(TARGET simVis)
         set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -wd4996)
     else()
         set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
-        set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
     endif()
 endif()
 
@@ -360,6 +372,11 @@ endif()
 target_link_libraries(simQt PUBLIC simCore simNotify)
 if(TARGET OSGQT)
     target_link_libraries(simQt PUBLIC OSGQT PRIVATE OpenGL::GL)
+endif()
+
+# Link against osgQt::osgQOpenGL if found; but only needs be a private depend
+if(TARGET osgQt::osgQOpenGL)
+    target_link_libraries(simQt PRIVATE osgQt::osgQOpenGL)
 endif()
 
 # Parts of simQt depend on simData's protobuf generated code
