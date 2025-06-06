@@ -21,6 +21,7 @@
  *
  */
 #include <algorithm>
+#include <string_view>
 #include "osg/Billboard"
 #include "osg/BlendFunc"
 #include "osg/CullFace"
@@ -1638,13 +1639,25 @@ void FilteringOsgNotifyDecorator::addFilter(const std::string& filter)
 void FilteringOsgNotifyDecorator::notify(osg::NotifySeverity severity, const char* message)
 {
   // Convert message to std::string for easier manipulation
-  const std::string msg(message);
+  std::string msg(message);
   // Check if the message contains the specific error
-  const bool hasMatches = std::ranges::any_of(filters_, [msg](const std::string& filter) {
-    return msg.contains(filter);
-    });
-  if (!hasMatches)
-    child_->notify(severity, message);
+  for (const auto& filter : filters_)
+  {
+    if (msg.contains(filter))
+    {
+      if (filter.contains("detected OpenGL error 'invalid operation' at after RenderBin::draw(..)"))
+      {
+        // modify the message to insert helpful info, before any existing newline
+        const auto pos = msg.find('\n');
+        msg.insert(pos, ". Disabling NVIDIA's threaded optimization is strongly recommended.");
+        child_->notify(severity, msg.c_str());
+      }
+      // suppress anything else
+      return;
+    }
+
+  }
+  child_->notify(severity, message);
 }
 
 FilteringOsgNotifyDecorator* installFilteringOsgNotifyDecorator()
