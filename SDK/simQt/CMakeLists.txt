@@ -58,7 +58,6 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}ConsoleChannel.h
     ${SIMQT_INC}FileDialog.h
     ${SIMQT_INC}FileUtilities.h
-    ${SIMQT_INC}Gl3FormatGuesser.h
     ${SIMQT_INC}MonospaceItemDelegate.h
     ${SIMQT_INC}QtFormatting.h
     ${SIMQT_INC}QtUtils.h
@@ -183,7 +182,6 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}FileUtilities.cpp
     ${SIMQT_SRC}FontWidget.cpp
     ${SIMQT_SRC}GanttChartView.cpp
-    ${SIMQT_SRC}Gl3FormatGuesser.cpp
     ${SIMQT_INC}KeySequenceEdit.cpp
     ${SIMQT_SRC}MonospaceItemDelegate.cpp
     ${SIMQT_SRC}MruList.cpp
@@ -214,8 +212,15 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}WeightedMenuManager.cpp
     ${SIMQT_SRC}WidgetSettings.cpp
 )
-if(NOT MSVC)
-    set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+
+if(Qt5OpenGL_FOUND)
+    list(APPEND SIMQT_HEADERS ${SIMQT_INC}Gl3FormatGuesser.h)
+    list(APPEND SIMQT_SOURCES ${SIMQT_SRC}Gl3FormatGuesser.cpp)
+    if(NOT MSVC)
+        set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+    endif()
+else()
+    set(Qt5OpenGL_FOUND OFF) # Helpful for correct Config.cmake
 endif()
 
 # Parts of simQt depend on simData
@@ -367,6 +372,9 @@ if(TARGET simVis)
         $<BUILD_INTERFACE:${osgEarth_INCLUDE_DIR}>
     )
 endif()
+if(Qt5OpenGL_FOUND)
+    target_link_libraries(simQt PUBLIC Qt5::OpenGL)
+endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
 target_link_libraries(simQt PUBLIC simCore simNotify)
@@ -377,6 +385,8 @@ endif()
 # Link against osgQt::osgQOpenGL if found; but only needs be a private depend
 if(TARGET osgQt::osgQOpenGL)
     target_link_libraries(simQt PRIVATE osgQt::osgQOpenGL)
+else()
+    set(osgQOpenGL_FOUND OFF) # Helpful for correct Config.cmake
 endif()
 
 # Parts of simQt depend on simData's protobuf generated code
