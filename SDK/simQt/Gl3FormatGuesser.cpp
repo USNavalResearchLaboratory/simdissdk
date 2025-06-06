@@ -20,8 +20,8 @@
  * disclose, or release this software.
  *
  */
+#include <cstdlib>
 #include <QOpenGLWindow>
-#include "osg/Math"
 #include "simQt/Gl3FormatGuesser.h"
 
 #ifndef WIN32
@@ -36,6 +36,23 @@ int ctxErrorHandler(Display *d, XErrorEvent* e)
 }
 }
 #endif
+
+namespace {
+
+/** Simplified replacement for osg::findAsciiToFloat(), to get GLSL version out of a string. Returns 0. if none. */
+inline
+double extractFirstNumberFrom(const char* value)
+{
+  if (!value)
+    return 0.;
+  const std::string& asString = value;
+  const auto firstDigit = asString.find_first_of("0123456789");
+  if (firstDigit == std::string::npos)
+    return 0.;
+  return std::atof(value + firstDigit);
+}
+
+}
 
 namespace simQt {
 
@@ -136,7 +153,7 @@ bool Gl3FormatGuesser::testFormat_(const QGLFormat& format) const
   const char* glslVersion = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
   if (!glslVersion || glGetError() != GL_NO_ERROR)
     return false;
-  return osg::findAsciiToFloat(glslVersion) >= 3.3f;
+  return extractFirstNumberFrom(glslVersion) >= 3.3;
 }
 
 QGLFormat Gl3FormatGuesser::getFormat(const QGLFormat& format)
@@ -252,7 +269,7 @@ bool Gl3FormatGuesser::testSurfaceFormat_(const QSurfaceFormat& format) const
   const char* glslVersion = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
   if (!glslVersion || glGetError() != GL_NO_ERROR)
     return false;
-  return osg::findAsciiToFloat(glslVersion) >= 3.3f;
+  return extractFirstNumberFrom(glslVersion) >= 3.3;
 }
 
 QSurfaceFormat Gl3FormatGuesser::getSurfaceFormat(const QSurfaceFormat& format)
