@@ -32,7 +32,7 @@
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simQt/TimeButtons.h"
-#include "simQt/ViewWidget.h"
+#include "simQt/ViewerWidgetAdapter.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
 #include "MainWindow.h"
@@ -85,10 +85,6 @@ MainWindow::MainWindow()
   dataStore_->enableInterpolation(true);
   sceneMan->getScenario()->bind(dataStore_);
 
-  // wrap the view in a Qt widget
-  simQt::ViewWidget* viewWidget = new simQt::ViewWidget(view.get());
-  setCentralWidget(viewWidget);
-
   // clock will manage simulation time
   clock_ = new simCore::ClockImpl;
   dataStore_->bindToClock(clock_);
@@ -107,9 +103,12 @@ MainWindow::MainWindow()
   timeButtons->bindToActions(timeButtonActions);
   buttonDialog->show();
 
-  // timer to drive updates
-  connect(&updateTimer_, &QTimer::timeout, this, &MainWindow::notifyFrameUpdate_);
-  updateTimer_.start(33); // 33 ms -> 30 Hz
+  // Create the ViewerWidgetAdapter, and set the central widget to it
+  auto viewerWidget = new simQt::ViewerWidgetAdapter(this);
+  viewerWidget->setViewer(viewMan_->getViewer());
+  viewerWidget->setTimerInterval(33); // 30 hz
+  connect(viewerWidget, &simQt::ViewerWidgetAdapter::aboutToPaintGl, this, &MainWindow::notifyFrameUpdate_);
+  setCentralWidget(viewerWidget);
 
   resize(800, 600);
   setWindowTitle("Qt Time Buttons SDK Example");
@@ -123,9 +122,6 @@ void MainWindow::notifyFrameUpdate_()
 
   // update the data store with the new time
   dataStore_->update(dataStore_->updateTime());
-
-  // refresh the view
-  viewMan_->frame();
 }
 
 simData::ObjectId MainWindow::addPlatform_(simData::DataStore &dataStore)
@@ -186,4 +182,3 @@ void MainWindow::setupSimulatedPlatform_()
 
   clock_->setEndTime(simCore::TimeStamp(1970, 800.));
 }
-
