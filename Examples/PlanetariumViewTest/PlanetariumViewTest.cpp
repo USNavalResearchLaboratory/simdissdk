@@ -561,7 +561,7 @@ simData::ObjectId addBeam(const simData::ObjectId hostId, simData::DataStore& da
   simData::BeamProperties* props = dataStore.addBeam(&xaction);
   simData::ObjectId result = props->id();
   props->set_hostid(hostId);
-  props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+  props->set_type(simData::BeamProperties::Type::ABSOLUTE_POSITION);
   xaction.complete(&props);
 
   simData::BeamPrefs* prefs = dataStore.mutable_beamPrefs(result, &xaction);
@@ -787,8 +787,6 @@ int main(int argc, char** argv)
   // set up the controls
   osg::observer_ptr<simVis::View> view = viewer->getMainView();
 #ifdef HAVE_IMGUI
-  // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));

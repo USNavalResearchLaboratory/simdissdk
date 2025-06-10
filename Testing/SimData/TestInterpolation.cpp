@@ -306,9 +306,9 @@ void testInterpolation_linearAngle()
     simData::LaserUpdate *u = ds->addLaserUpdate(laserId, &t);
     assertTrue(u != nullptr);
     u->set_time(1.0);
-    u->mutable_orientation()->set_yaw(0.0);
-    u->mutable_orientation()->set_pitch(0.0);
-    u->mutable_orientation()->set_roll(0.0);
+    u->set_yaw(0.0);
+    u->set_pitch(0.0);
+    u->set_roll(0.0);
     t.commit();
   }
 
@@ -318,9 +318,9 @@ void testInterpolation_linearAngle()
     simData::LaserUpdate *u = ds->addLaserUpdate(laserId, &t);
     assertTrue(u != nullptr);
     u->set_time(2.0);
-    u->mutable_orientation()->set_yaw(0.5);
-    u->mutable_orientation()->set_pitch(0.5);
-    u->mutable_orientation()->set_roll(0.5);
+    u->set_yaw(0.5);
+    u->set_pitch(0.5);
+    u->set_roll(0.5);
     t.commit();
   }
 
@@ -330,9 +330,9 @@ void testInterpolation_linearAngle()
     simData::LaserUpdate *u = ds->addLaserUpdate(laserId, &t);
     assertTrue(u != nullptr);
     u->set_time(3.0);
-    u->mutable_orientation()->set_yaw(M_TWOPI - 0.5);
-    u->mutable_orientation()->set_pitch(1.0);
-    u->mutable_orientation()->set_roll(1.0);
+    u->set_yaw(M_TWOPI - 0.5);
+    u->set_pitch(1.0);
+    u->set_roll(1.0);
     t.commit();
   }
 
@@ -383,9 +383,9 @@ void testInterpolation_linearAngle()
   assertTrue(lslice->current() != nullptr);
   assertEquals(lslice->isInterpolated(), true);
   assertEquals(lslice->current()->time(), 1.5);
-  assertTrue(simCore::areEqual(lslice->current()->orientation().yaw(), 0.25));
-  assertTrue(simCore::areEqual(lslice->current()->orientation().pitch(), 0.25));
-  assertTrue(simCore::areEqual(lslice->current()->orientation().roll(), 0.25));
+  assertTrue(simCore::areEqual(lslice->current()->yaw(), 0.25));
+  assertTrue(simCore::areEqual(lslice->current()->pitch(), 0.25));
+  assertTrue(simCore::areEqual(lslice->current()->roll(), 0.25));
   // test that re-updating datastore at same time does not signal a changed dataslice update (interpolated case)
   {
     // insert platform to dirty the datastore (but not affect the original platform data slice)
@@ -399,9 +399,9 @@ void testInterpolation_linearAngle()
   assertTrue(lslice->current() != nullptr);
   assertEquals(lslice->isInterpolated(), true);
   assertEquals(lslice->current()->time(), 2.5);
-  assertTrue(simCore::areEqual(lslice->current()->orientation().yaw(), 0.0));
-  assertTrue(simCore::areEqual(lslice->current()->orientation().pitch(), 0.75));
-  assertTrue(simCore::areEqual(lslice->current()->orientation().roll(), 0.75));
+  assertTrue(simCore::areEqual(lslice->current()->yaw(), 0.0));
+  assertTrue(simCore::areEqual(lslice->current()->pitch(), 0.75));
+  assertTrue(simCore::areEqual(lslice->current()->roll(), 0.75));
 
 
   // disable interpolation
@@ -413,6 +413,185 @@ void testInterpolation_linearAngle()
   assertTrue(lslice->current() != nullptr);
   assertEquals(lslice->current()->time(), 2.0);
   assertEquals(lslice->isInterpolated(), false);
+}
+
+int testNoInterpolationForIndividualPlatform()
+{
+  int rv = 0;
+
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore* ds = testHelper.dataStore();
+  simData::PlatformPrefs objprefs;
+
+  // setup interpolation
+  simData::LinearInterpolator interpolator;
+  ds->setInterpolator(&interpolator);
+  ds->enableInterpolation(true);
+  assertTrue(ds->isInterpolationEnabled() == true);
+
+  // insert platform
+  uint64_t platId = testHelper.addPlatform();
+
+  // turn off interpolation for an individual platform
+  simData::PlatformPrefs prefs;
+  prefs.set_interpolatepos(false);
+  testHelper.updatePlatformPrefs(prefs, platId);
+
+  // insert data points
+  {
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = ds->addPlatformUpdate(platId, &t);
+    u->set_time(0.0);
+    u->set_x(simCore::WGS_A + 10.0);
+    u->set_y(11.0);
+    u->set_z(0.0);
+    t.commit();
+  }
+
+  {
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = ds->addPlatformUpdate(platId, &t);
+    u->set_time(100.0);
+    u->set_x(simCore::WGS_A + 10.0);
+    u->set_y(11.0);
+    u->set_z(100.0);
+    t.commit();
+  }
+
+  const auto* slice = ds->platformUpdateSlice(platId);
+  assertTrue(slice != nullptr);
+
+  // Should be the first point
+  ds->update(0.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 0.0);
+
+  // Should be the first point
+  ds->update(50.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 0.0);
+
+  // Should be second point
+  ds->update(100.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 100.0);
+
+  // Should be the first point
+  ds->update(50.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 0.0);
+
+  // Should be the first point
+  ds->update(0.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 0.0);
+
+  // Should be second point
+  ds->update(100.0);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 100.0);
+
+  return rv;
+}
+
+int testNoInterpolationLifeSpan()
+{
+  int rv = 0;
+
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore* ds = testHelper.dataStore();
+  simData::PlatformPrefs objprefs;
+
+  // setup interpolation
+  simData::LinearInterpolator interpolator;
+  ds->setInterpolator(&interpolator);
+  ds->enableInterpolation(true);
+  assertTrue(ds->isInterpolationEnabled() == true);
+
+  // insert platform with longer life span
+  uint64_t longPatId = testHelper.addPlatform();
+
+  // insert data points
+  {
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = ds->addPlatformUpdate(longPatId, &t);
+    u->set_time(100.0);
+    u->set_x(simCore::WGS_A + 10.0);
+    u->set_y(11.0);
+    u->set_z(0.0);
+    t.commit();
+  }
+
+  {
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = ds->addPlatformUpdate(longPatId, &t);
+    u->set_time(200.0);
+    u->set_x(simCore::WGS_A + 10.0);
+    u->set_y(11.0);
+    u->set_z(100.0);
+    t.commit();
+  }
+
+
+  // insert platform with shorter life span
+  uint64_t platId = testHelper.addPlatform();
+
+  // turn off interpolation for an individual platform
+  simData::PlatformPrefs prefs;
+  prefs.set_interpolatepos(false);
+  testHelper.updatePlatformPrefs(prefs, platId);
+
+  // insert data points
+  {
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = ds->addPlatformUpdate(platId, &t);
+    u->set_time(125);
+    u->set_x(simCore::WGS_A + 10.0);
+    u->set_y(11.0);
+    u->set_z(0.0);
+    t.commit();
+  }
+
+  {
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = ds->addPlatformUpdate(platId, &t);
+    u->set_time(150.0);
+    u->set_x(simCore::WGS_A + 10.0);
+    u->set_y(11.0);
+    u->set_z(100.0);
+    t.commit();
+  }
+
+  const auto* slice = ds->platformUpdateSlice(platId);
+  assertTrue(slice != nullptr);
+
+  // Should be no point
+  ds->update(105);
+  assertTrue(slice->current() == nullptr);
+
+  // Should be the first point
+  ds->update(126);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 0.0);
+
+  // Should be no point
+  ds->update(151);
+  assertTrue(slice->current() == nullptr);
+
+  // Should be the first point
+  ds->update(126);
+  assertTrue(slice->current() != nullptr);
+  assertTrue(slice->current()->has_z());
+  assertEquals(slice->current()->z(), 0.0);
+
+  return rv;
 }
 
 }
@@ -427,6 +606,8 @@ int TestInterpolation(int argc, char* argv[])
     testInterpolation_linear(simData::DataStore::InterpolatorState::EXTERNAL);
     testInterpolation_linear(simData::DataStore::InterpolatorState::INTERNAL);
     testInterpolation_linearAngle();
+    testNoInterpolationForIndividualPlatform();
+    testNoInterpolationLifeSpan();
 
     return 0;
   }

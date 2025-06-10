@@ -24,12 +24,13 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osgEarth/DepthOffset"
+#include "osgEarth/LabelNode"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/StateSetCache"
-#include "osgEarth/LabelNode"
+#include "osgEarth/Version"
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
@@ -640,7 +641,11 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       {
         ts->halo()->color() = textOptions.outlineColor_;
         ts->haloOffset() = simVis::outlineThickness(static_cast<simData::TextOutline>(textOptions.outlineType_));
+#if OSGEARTH_SOVERSION < 169
         ts->halo()->width() = simVis::outlineThickness(static_cast<simData::TextOutline>(textOptions.outlineType_));
+#else
+        ts->halo()->width() = osgEarth::Distance(simVis::outlineThickness(static_cast<simData::TextOutline>(textOptions.outlineType_)), osgEarth::Units::PIXELS);
+#endif
         ts->haloBackdropType() = osgText::Text::OUTLINE;
       }
       else

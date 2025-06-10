@@ -21,8 +21,8 @@
  *
  */
 /**
- * ViewManager Qt Data Model -
- * Demonstrates basic use of the simQt::ViewManagerDataModel class with a Qt UI.
+ * Qt Touch Viewer -
+ * Demonstrates touch feedback from a touch screen, on a simQt ViewerWidgetAdapter.
  */
 
 #include <cstdlib>
@@ -37,10 +37,11 @@
 #include <QTreeView>
 #include <QTouchDevice>
 #include "simNotify/Notify.h"
-#include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
+#include "simCore/System/Utils.h"
+#include "simCore/Common/Version.h"
 #include "simQt/ViewManagerDataModel.h"
-#include "simQt/ViewWidget.h"
+#include "simQt/ViewerWidgetAdapter.h"
 #include "simUtil/ExampleResources.h"
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"
@@ -83,19 +84,6 @@ MainWindow::MainWindow(QWidget* parent)
 
   addTouchDevicesDock_();
   addMostRecentDock_();
-
-  // timer fires a paint event.
-  connect(&timer_, SIGNAL(timeout()), this, SLOT(update()));
-  // timer single shot to avoid infinite loop problems in Qt on MSVC11
-  timer_.setSingleShot(true);
-  timer_.start(10);
-}
-
-void MainWindow::paintEvent(QPaintEvent* e)
-{
-  // refresh all the views.
-  viewMan_->frame();
-  timer_.start();
 }
 
 simVis::ViewManager* MainWindow::getViewManager() const
@@ -252,6 +240,7 @@ void MainWindow::processOsgEvent(const osgGA::GUIEventAdapter& ea)
 
 int main(int argc, char** argv)
 {
+  simCore::initializeSimdisEnvironmentVariables();
   simCore::checkVersionThrow();
   osg::ArgumentParser arguments(&argc, argv);
   simExamples::configureSearchPaths();
@@ -266,9 +255,6 @@ int main(int argc, char** argv)
   QApplication qapp(argc, argv);
   MainWindow win;
   win.setGeometry(50, 50, 1024, 768);
-  QWidget* center = new QWidget();
-  center->setLayout(new QHBoxLayout());
-  win.setCentralWidget(center);
 
   // Make a view, which is needed to instantiate a ViewWidget, which is the OSG display
   osg::ref_ptr<simVis::View> mainview = new simVis::View();
@@ -276,10 +262,6 @@ int main(int argc, char** argv)
   mainview->setSceneManager(sceneMan.get());
   // Note that the view manager here is owned by the window
   win.getViewManager()->addView(mainview.get());
-
-  // Make a Qt Widget to hold our view, and add that widget to the main window.
-  QWidget* viewWidget = new simQt::ViewWidget(mainview.get());
-  center->layout()->addWidget(viewWidget);
 
   // Add one inset to the top-right
   osg::ref_ptr<simVis::View> inset = new simVis::View();
@@ -289,12 +271,21 @@ int main(int argc, char** argv)
   inset->setName("Inset");
   // Copy the earth manipulator settings from the parent
   inset->applyManipulatorSettings(*mainview);
-  mainview->addInset(inset.get());
+
+  // Make the ViewerWidgetAdapter
+  auto* viewWidget = new simQt::ViewerWidgetAdapter(&win);
+  viewWidget->setViewer(win.getViewManager()->getViewer());
+  win.setCentralWidget(viewWidget);
 
   // Forward all touch-related GUI events to the main window
   osg::ref_ptr<ForwardTouchEvents> fwdEvents(new ForwardTouchEvents(&win));
-  mainview->addEventHandler(fwdEvents);
-  inset->addEventHandler(fwdEvents);
+  mainview->addEventHandler(fwdEvents.get());
+  inset->addEventHandler(fwdEvents.get());
+
+  QObject::connect(viewWidget, &simQt::ViewerWidgetAdapter::initialized, [&win, mainview, inset]() {
+    // Cannot add the inset, until the view widget initializes. addInset() requires a graphics context
+    mainview->addInset(inset.get());
+  });
 
   // fire up the GUI.
   win.show();

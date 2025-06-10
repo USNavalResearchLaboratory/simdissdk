@@ -22,6 +22,8 @@ set(TEST_FILENAMES
     TestMessageVisitor.cpp
     TestNewUpdatesListener.cpp
     TestSliceBounds.cpp
+    TestProperties.cpp
+    TestReflection.cpp
 )
 
 # simQt is used in CategoryDataTest for its Regular Expression implementation
@@ -58,5 +60,7 @@ add_test(NAME simData_TestMemRetrieval COMMAND SimDataTests TestMemRetrieval)
 add_test(NAME simData_TestMessageVisitor COMMAND SimDataTests TestMessageVisitor)
 add_test(NAME simData_TestNewUpdatesListener COMMAND SimDataTests TestNewUpdatesListener)
 add_test(NAME simData_TestSliceBounds COMMAND SimDataTests TestSliceBounds)
+add_test(NAME simData_TestProperties COMMAND SimDataTests TestProperties)
+add_test(NAME simData_TestReflection COMMAND SimDataTests TestReflection)
 
 add_subdirectory(DataStorePerformanceTest)

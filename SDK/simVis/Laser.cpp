@@ -25,6 +25,7 @@
 #include "osgEarth/LineDrawable"
 #include "osgEarth/ObjectIndex"
 #include "simCore/Calc/Math.h"
+#include "simData/DataTypes.h"
 #include "simNotify/Notify.h"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
@@ -357,8 +358,8 @@ void LaserNode::updateLocator_(const simData::LaserUpdate* newUpdate, const simD
 {
   const bool locatorUpdateRequired = force ||
     (newUpdate &&
-      (newUpdate->orientation().yaw() != lastUpdate_.orientation().yaw() ||
-      newUpdate->orientation().pitch() != lastUpdate_.orientation().pitch())) ||
+      (newUpdate->yaw() != lastUpdate_.yaw() ||
+      newUpdate->pitch() != lastUpdate_.pitch())) ||
     (newPrefs &&
       (PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, laserxyzoffset, x) ||
       PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, laserxyzoffset, y) ||
@@ -376,8 +377,8 @@ void LaserNode::updateLocator_(const simData::LaserUpdate* newUpdate, const simD
                             activePrefs->laserxyzoffset().x(),
                             activePrefs->laserxyzoffset().z());
 
-    const simCore::Vec3 oriOffset(activeUpdate->orientation().yaw(),
-                                  activeUpdate->orientation().pitch(),
+    const simCore::Vec3 oriOffset(activeUpdate->yaw(),
+                                  activeUpdate->pitch(),
                                   0.0);
 
     if (!lastProps_.has_azelrelativetohostori() || !lastProps_.azelrelativetohostori())

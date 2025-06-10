@@ -338,7 +338,11 @@ void ShapeFileLayerFactory::setLineColor(const osg::Vec4f& color)
 void ShapeFileLayerFactory::setLineWidth(float width)
 {
   osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
+#if OSGEARTH_SOVERSION < 169
   ls->stroke()->width() = width;
+#else
+  ls->stroke()->width() = osgEarth::Distance(width, osgEarth::Units::PIXELS);
+#endif
 }
 
 void ShapeFileLayerFactory::setStipple(unsigned short pattern, unsigned int factor)

@@ -1,0 +1,40 @@
+/* -*- mode: c++ -*- */
+/****************************************************************************
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling & Simulation, Code 5773
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
+// Include guard is intentionally omitted
+@PROTOBUF_WRAPPER_PREFACE@
+
+#ifdef _MSC_VER // [
+#pragma warning( push )
+// Disable C4244: "conversion from __int64 to int, possible loss of data"
+// Disable C4251: "identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'"
+// Disable C4267: "conversion from size_t to int, possible loss of data"
+// Disable C4275: non-DLL-interface classkey 'identifier' used as base for DLL-interface classkey 'identifier'
+#pragma warning( disable : 4244 4251 4267 4275 )
+#endif // _MSC_VER ]
+
+#include "@_FILE_PREFIX@.pb.h"
+
+#ifdef _MSC_VER // [
+#pragma warning( pop )
+#endif // _MSC_VER ]
+

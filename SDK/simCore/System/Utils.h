@@ -24,6 +24,7 @@
 #define SIMCORE_SYSTEM_UTILS_H
 
 #include <string>
+#include <vector>
 #include "simCore/Common/Export.h"
 
 namespace simCore
@@ -101,6 +102,9 @@ struct InitializeEnvironmentConfig
  *   is not correctly detected based on expected files in SIMDIS_DIR.
  */
 SDKCORE_EXPORT int initializeSimdisEnvironmentVariables(const InitializeEnvironmentConfig& config);
+
+/** Initializes the SIMDIS environment variables using the default configuration. Convenience wrapper. */
+SDKCORE_EXPORT int initializeSimdisEnvironmentVariables();
 
 } // namespace simCore
 

@@ -67,35 +67,6 @@ public:
 
 ////////////////////////////////////////////////////////////////
 
-AutoRepeatFilter::AutoRepeatFilter(QObject* parent)
-  : QObject(parent),
-  enabled_(true)
-{
-}
-
-bool AutoRepeatFilter::eventFilter(QObject* obj, QEvent* evt)
-{
-  if (enabled_ && evt && evt->type() == QEvent::KeyPress)
-  {
-    const QKeyEvent* keyEvt = dynamic_cast<const QKeyEvent*>(evt);
-    if (keyEvt && keyEvt->isAutoRepeat())
-      return true;
-  }
-  return QObject::eventFilter(obj, evt);
-}
-
-void AutoRepeatFilter::setEnabled(bool enabled)
-{
-  enabled_ = enabled;
-}
-
-bool AutoRepeatFilter::isEnabled() const
-{
-  return enabled_;
-}
-
-////////////////////////////////////////////////////////////////
-
 ViewWidget::ViewWidget(osgViewer::View* view)
   : osgQt::GLWidget(simQt::Gl3FormatGuesser::getFormat())
 {

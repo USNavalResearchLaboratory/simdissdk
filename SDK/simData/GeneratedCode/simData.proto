@@ -4,14 +4,14 @@ package simData;
 /**
  * simData.proto Defines the underlying data format for SIMDIS SDK's simData module.
  *
- * Entity types include platforms, beams, gates, lasers, projectors, and line of bearing (LOB) group.  Entities are
- * generally broken up into 4 components:
+ * Entity types include platforms, beams, gates, lasers, projectors, line of bearing (LOB) group, and Custom Rendering
+ * Entities are generally broken up into 3 components:
  *
- *   Updates - A single data point, possibly with a high data rate
- *   Properties - Settings for an entity, such as ID that are mostly unchanging
  *   Preferences - Changeable settings for an entity, including Superform-like settings;
  *                 can be time stamped by using Commands
  *   Commands - A time stamp and a (likely) sparse list of preferences to apply at the time
+ *
+ * Updates are now defined in DataTypes.h
  *
  * Colors are encoded in fixed32, which is more efficient than uint32 when the MSB values are
  * likely to be set.  Colors are defined as 0xRRGGBBAA, with the MSB as part of the red component.
@@ -704,76 +704,6 @@ message CommonPrefs {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-/// Global settings for a scene
-message ScenarioProperties {
-  /// User defined version field
-  optional uint32 version = 1 [default = 20];
-  /// Note that all values stored internally as ECEF; this is a hint to import/export code
-  optional CoordinateFrame coordinateFrame = 2;
-  /// Reference year that time values are referenced to
-  optional uint32 referenceYear = 3 [default = 1970];
-
-  message Classification {
-    optional string label = 1 [default = ""];
-    optional fixed32 fontColor = 2 [default = 0x00FF00FF]; // green
-  };
-
-  optional Classification classification = 4;
-  /// Note that degreeAngles only affects input and output.  All angles are stored internally as radians
-  optional bool degreeAngles = 5 [default = true];
-  /// Textual scenario description, e.g. as set by PIData::setDescription()
-  optional string description = 6 [default = ""];
-  /**
-   * Source location for the data store, typically a file path.  For
-   * live data, this may be set to a generic description or empty.  For
-   * example, SIMDIS 10 will place the filename hint from
-   * PIData::initializeScenario() in this field.
-   */
- optional string source = 19 [default = ""];
-
-  /// Wind direction in radians
-  optional double windAngle = 7 [default = 0.0];
-  /// Wind speed in meters per second
-  optional double windSpeed = 8 [default = 0.0];
-
-  optional string viewFile = 9 [default = ""];
-  optional string ruleFile = 10 [default = ""];
-  optional string terrainFile = 11 [default = ""];
-
-  message SoundFile {
-    optional string filename = 1 [default = ""];
-    optional double startTime = 2 [default = 0.0];
-    optional double endTime = 3 [default = 0.0];
-  };
-  optional SoundFile soundFile = 12;
-
-  repeated string mediaFile = 13;
-  repeated string dedFile = 14;
-  repeated string wvsFile = 15;
-  repeated string gogFile = 16;
-
-  /// Scenario level data table and generic data limiting value in seconds of history; <= 0 indicates no limiting applied
-  optional double dataLimitTime = 17 [default = 600.0];
-  /// Scenario level data table and generic data limiting value in number of data points; == 0 indicates no limiting applied
-  optional uint32 dataLimitPoints = 18 [default = 1000];
-
-  /// Flags whether Generic Data duplicate entries should be filtered (live mode only)
-  optional bool ignoreDuplicateGenericData = 20 [default = true];
-};
-
-//////////////////////////////////////////////////////////////////////////////////////////
-
-/// (mostly) unchanging aspects of a platform
-message PlatformProperties {
-  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
-  optional uint64 id = 1;
-  /// User-defined ID value, will not change during file conversion
-  optional uint64 originalId = 2;
-  /// User-defined source string
-  optional string source = 3;
-  /// Coordinate reference frame, used for defining input/output formats; data still stored internally as ECEF
-  optional CoordinateFrame coordinateFrame = 6;
-};
 
 /// preferences for the display of a platform
 message PlatformPrefs {
@@ -1006,28 +936,6 @@ message PlatformCommand {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-/// (mostly) unchanging aspects of a beam
-message BeamProperties {
-  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
-  optional uint64 id = 1;
-  /// ID of the beam's host platform
-  optional uint64 hostId = 2;
-  /// User-defined ID value, will not change during file conversion
-  optional uint64 originalId = 4;
-  /// User-defined source string
-  optional string source = 5;
-
-  /// Describes how to interpret data points (updates)
-  enum BeamType {
-    ABSOLUTE_POSITION = 1;  ///< Beam pointing is defined based on data
-    BODY_RELATIVE = 2;      ///< Beam pointing is relative to host's body orientation
-    TARGET = 3;             ///< Beam pointing is towards specified target platform
-  };
-
-  /// Beam type affects how BeamUpdate values are interpreted
-  optional BeamType type = 6;
-};
-
 /// preferences for the display of a beam
 message BeamPrefs {
   /// Contains name, draw/active flags, label prefs, data limiting, and possibly other settings
@@ -1174,18 +1082,6 @@ message BeamPrefs {
   optional uint32 pulseStipple = 36 [default = 0x0F0F];
 };
 
-/// common update to beam data
-message BeamUpdate {
-  /// Seconds since scenario reference year for the data posit time
-  optional double time = 1;
-  /// Range in meters from the platform origin
-  optional double range = 2;
-  /// Azimuth; relative to north for linear beams, or relative to platform orientation for body beams; radians
-  optional double azimuth = 3;
-  /// Elevation; relative to horizon for linear beams, or relative to platform orientation for body beams; radians
-  optional double elevation = 4;
-};
-
 /// timed update to beam prefs; commands override prefs
 message BeamCommand {
   /// The time at which the command should be executed
@@ -1197,28 +1093,6 @@ message BeamCommand {
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
-
-/// (mostly) unchanging aspects of a gate
-message GateProperties {
-  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
-  optional uint64 id = 1;
-  /// ID of the gate's host beam
-  optional uint64 hostId = 2;
-  /// User-defined ID value, will not change during file conversion
-  optional uint64 originalId = 4;
-  /// User-defined source string
-  optional string source = 5;
-
-  /// Describes how to interpret data points (updates)
-  enum GateType {
-    ABSOLUTE_POSITION = 1;  ///< Gate pointing is defined based on data
-    BODY_RELATIVE = 2;      ///< Gate pointing is relative to host's body orientation
-    TARGET = 3;             ///< Gate pointing is towards specified target platform
-  };
-
-  /// Gate type affects how GateUpdate values are interpreted
-  optional GateType type = 6;
-};
 
 /// preferences for the display of a gate
 message GatePrefs {
@@ -1273,30 +1147,10 @@ message GatePrefs {
 
   /// Toggle drawing of the outline
   optional bool drawOutline = 11 [default = true];
-  
+
   /// Color for the centroid
   optional fixed32 centroidColor = 12 [default = 0xFFFFFFFF];
 
-};
-
-/// common update to gate data
-message GateUpdate {
-  /// Seconds since scenario reference year for the data posit time
-  optional double time = 1;
-  /// Azimuth; relative to north for linear gates, or relative to platform orientation for body gates; radians
-  optional double azimuth = 2;
-  /// Elevation; relative to horizon for linear gates, or relative to platform orientation for body gates; radians
-  optional double elevation = 3;
-  /// Full width of the gate in radians
-  optional double width = 4;
-  /// Full height of the gate in radians
-  optional double height = 5;
-  /// Range in meters from the platform origin to start of gate
-  optional double minRange = 6;
-  /// Range in meters from the platform origin to end of gate
-  optional double maxRange = 7;
-  /// Range in meters from the platform origin to centroid; often the middle of start and end
-  optional double centroid = 8;
 };
 
 /// timed update to gate prefs; commands override prefs
@@ -1311,23 +1165,6 @@ message GateCommand {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-/// (mostly) unchanging aspects of a laser
-message LaserProperties {
-  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
-  optional uint64 id = 1;
-  /// ID of the laser's host platform
-  optional uint64 hostId = 2;
-  /// User-defined ID value, will not change during file conversion
-  optional uint64 originalId = 3;
-  /// User-defined source string
-  optional string source = 4;
-
-  /// Coordinate system for orientation angle interpretation; only used in loading/saving, all angles stored internally are normalized
-  optional CoordinateSystem coordinateSystem = 5;
-  /// Indicates that the orientation values are in body angles relative to platform (true), or true angles (false)
-  optional bool azElRelativeToHostOri = 6;
-};
-
 /// preferences for the display of a laser
 message LaserPrefs {
   /// Contains name, draw/active flags, label prefs, data limiting, and possibly other settings
@@ -1341,13 +1178,6 @@ message LaserPrefs {
   optional int32 laserWidth = 4 [default = 1];
 };
 
-/// common update to laser data
-message LaserUpdate {
-  optional double time = 1;
-  /// Note that the orientation is affected by the LaserProperties azElRelativeToHostOri flag
-  optional BodyOrientation orientation = 2;
-};
-
 /// timed update to laser prefs; commands override prefs
 message LaserCommand {
   /// The time at which the command should be executed
@@ -1359,20 +1189,6 @@ message LaserCommand {
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
-
-/// (mostly) unchanging aspects of a Custom Rendering
-message CustomRenderingProperties {
-  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
-  optional uint64 id = 1;
-  /// ID of the Custom's host, if any
-  optional uint64 hostId = 2;
-  /// User-defined ID value, will not change during file conversion
-  optional uint64 originalId = 3;
-  /// User-defined source string
-  optional string source = 4;
-  /// The name of the renderer that should process this entity
-  optional string renderer = 5;
-};
 
 /// preferences for the display of a Custom Rendering
 message CustomRenderingPrefs {
@@ -1410,11 +1226,6 @@ message CustomRenderingPrefs {
   optional bool depthTest = 10 [default = true];
 };
 
-/// common update to Custom Rendering data
-message CustomRenderingUpdate {
-  optional double time = 1;
-};
-
 /// timed update to Custom Rendering prefs; commands override prefs
 message CustomRenderingCommand {
   /// The time at which the command should be executed
@@ -1426,18 +1237,6 @@ message CustomRenderingCommand {
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
-
-/// Unchanging aspects of a projector
-message ProjectorProperties {
-  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
-  optional uint64 id = 1;
-  /// ID of the projector's host platform
-  optional uint64 hostId = 2;
-  /// User-defined ID value, will not change during file conversion
-  optional uint64 originalId = 3;
-  /// User-defined source string
-  optional string source = 4;
-};
 
 /// preferences for the display of a projector
 message ProjectorPrefs {
@@ -1470,16 +1269,6 @@ message ProjectorPrefs {
   optional bool doubleSided = 10 [default = false];
 };
 
-/// common update to projector data
-message ProjectorUpdate {
-  optional double time = 1;
-
-  /// Projector vertical field of view: radians
-  optional double fov = 2;
-  /// Projector hovizontal field of view: radians; <= 0 means to calculate from aspect ratio
-  optional double hFov = 3 [default = -1];
-};
-
 /// timed update to projector prefs; commands override prefs
 message ProjectorCommand {
   /// The time at which the command should be executed
@@ -1491,23 +1280,6 @@ message ProjectorCommand {
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
-
-/// (mostly) unchanging aspects of a line of bearing (LOB) group
-message LobGroupProperties {
-  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
-  optional uint64 id = 1;
-  /// ID of the LOB's host platform
-  optional uint64 hostId = 2;
-  /// User-defined ID value, will not change during file conversion
-  optional uint64 originalId = 3;
-  /// User-defined source string
-  optional string source = 4;
-
-  /// Coordinate system for orientation angle interpretation; only used in loading/saving, all angles stored internally are normalized
-  optional CoordinateSystem coordinateSystem = 5;
-  /// Indicates that the orientation values are in body angles relative to platform (true), or true angles (false)
-  optional bool azElRelativeToHostOri = 6;
-};
 
 /// preferences for the display of a line of bearing (LOB) group
 message LobGroupPrefs {
@@ -1543,28 +1315,6 @@ message LobGroupPrefs {
   optional AnimatedLineBend bending = 13 [default = ALB_AUTO];
 };
 
-/// update data point for line of bearing (LOB) group
-message LobGroupUpdatePoint {
-  /// time of the data point
-  optional double time = 1;
-  /// Range in meters from the host platform origin
-  optional double range = 2;
-  /// Azimuth; radians
-  optional double azimuth = 3;
-  /// Elevation; radians
-  optional double elevation = 4;
-};
-
-/**
- common update to line of bearing (LOB) group data, holds a list of LobGroupUpdatePoints.
- Note that when points are inserted, the time of the points inserted must match the time of the update.
-*/
-message LobGroupUpdate {
-  /// time of the update
-  optional double time = 1;
-  repeated LobGroupUpdatePoint dataPoints = 2;
-};
-
 /// timed update to line of bearing (LOB) group prefs; commands override prefs
 message LobGroupCommand {
   /// The time at which the command should be executed
@@ -1573,35 +1323,5 @@ message LobGroupCommand {
   optional LobGroupPrefs updatePrefs = 2;
   /// Indicates that the command will clear the values that are set in updatePrefs from the command set
   optional bool isClearCommand = 3 [default = false];
-};
-
-//////////////////////////////////////////////////////////////////////////////////////////
-
-/// key,value data intended to categorize a platform
-/// for example: friendly, hostile; ship, plane
-message CategoryData {
-  optional double time = 1;
-
-  message Entry {
-    optional string key = 1;
-    optional string value = 2;
-  };
-
-  repeated Entry entry = 2;
-};
-
-/// key,value data which is attached to time, but unrelated to spatial
-/// location or orientation (display)
-/// for example: fuel, or temperature
-message GenericData {
-  optional double time = 1;
-  optional double duration = 2;
-
-  message Entry {
-    optional string key = 2;
-    optional string value = 3;
-  };
-
-  repeated Entry entry = 3;
 };
 

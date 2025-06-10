@@ -86,6 +86,11 @@ MousePositionManipulator::MousePositionManipulator(osgEarth::MapNode* mapNode, o
     scene_(scene)
 {
   assert(mapNode != nullptr);
+  if (!mapNode_->getTerrainEngine())
+  {
+    terrainEngineNode_ = nullptr;
+    return;
+  }
 #if OSGEARTH_SOVERSION >= 104
   terrainEngineNode_ = mapNode_->getTerrainEngine()->getNode();
 #else
@@ -118,6 +123,11 @@ void MousePositionManipulator::setMapNode(osgEarth::MapNode* mapNode)
 
   // If we don't have a valid map node, then try to gracefully deal with it
   if (!mapNode_.valid())
+  {
+    terrainEngineNode_ = nullptr;
+    return;
+  }
+  if (!mapNode_->getTerrainEngine())
   {
     terrainEngineNode_ = nullptr;
     return;

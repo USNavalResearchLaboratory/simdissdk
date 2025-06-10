@@ -191,6 +191,15 @@ public:
    */
   void writeTag(const std::string& tag, double data, const std::string& comment = "", const std::string& attr = "");
 
+  /** Double variant of writing a tag with precision control.
+   * @param[in ] tag String defining the XML element
+   * @param[in ] data Double written as string between start and end tags.
+   * @param[in ] precision The number of digits after the decimal point
+   * @param[in ] comment String written prior to the start tag, if useComments is true
+   * @param[in ] attr Attribute string written as-is into the start tag
+   */
+  void writeTag(const std::string& tag, double data, unsigned int precision, const std::string& comment = "", const std::string& attr = "");
+
   /**
    * Raw string variant of writing a tag.  Use this only if your text is
    * preformatted for XML output, e.g. containing CDATA.

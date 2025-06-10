@@ -30,7 +30,6 @@
 #include <vector>
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Optional.h"
 #include "simCore/GOG/GogUtils.h"
 #include "simCore/Time/TimeClass.h"
 

@@ -112,7 +112,7 @@ public:
     {
       simData::DataStore::Transaction xaction;
       const simData::GateProperties* props = ds_.gateProperties(gateId_, &xaction);
-      std::string type = (props->type() == simData::GateProperties_GateType_ABSOLUTE_POSITION ? "ABSOLUTE" : "BODY RELATIVE");
+      std::string type = (props->type() == simData::GateProperties::Type::ABSOLUTE_POSITION ? "ABSOLUTE" : "BODY RELATIVE");
       xaction.complete(&props);
       ImGui::TableNextColumn(); ImGui::Text("Type"); ImGui::TableNextColumn(); ImGui::Text("%s", type.c_str());
 
@@ -389,8 +389,8 @@ struct AppData
      view_(nullptr),
      t_(0.0)
   {
-    types_.push_back(std::make_pair(simData::GateProperties_GateType_ABSOLUTE_POSITION, "ABSOLUTE"));
-    types_.push_back(std::make_pair(simData::GateProperties_GateType_BODY_RELATIVE,     "BODY RELATIVE"));
+    types_.push_back(std::make_pair(simData::GateProperties::Type::ABSOLUTE_POSITION, "ABSOLUTE"));
+    types_.push_back(std::make_pair(simData::GateProperties::Type::BODY_RELATIVE,     "BODY RELATIVE"));
 
     modes_.push_back(std::make_pair(simData::GatePrefs_DrawMode_RANGE,    "RANGE"));
     modes_.push_back(std::make_pair(simData::GatePrefs_DrawMode_COVERAGE, "COVERAGE"));
@@ -422,7 +422,7 @@ struct AppData
     // fetch properties:
     {
       const simData::GateProperties* props = ds_->gateProperties(gateId_, &xaction);
-      typeIndex = props->type() == simData::GateProperties_GateType_ABSOLUTE_POSITION ? 0 : 1;
+      typeIndex = props->type() == simData::GateProperties::Type::ABSOLUTE_POSITION ? 0 : 1;
       xaction.complete(&props);
     }
 
@@ -638,9 +638,9 @@ simData::ObjectId addGate(simData::DataStore& ds,
                           char**              argv)
 {
   // see if they user wants body-relative mode
-  simData::GateProperties_GateType type = simExamples::hasArg("--br", argc, argv)?
-    simData::GateProperties_GateType_BODY_RELATIVE :
-    simData::GateProperties_GateType_ABSOLUTE_POSITION;
+  simData::GateProperties::Type type = simExamples::hasArg("--br", argc, argv)?
+    simData::GateProperties::Type::BODY_RELATIVE :
+    simData::GateProperties::Type::ABSOLUTE_POSITION;
 
   simData::ObjectId gateId;
 
@@ -741,8 +741,6 @@ int main(int argc, char** argv)
   viewer->getMainView()->tetherCamera(platformModel.get());
 
 #ifdef HAVE_IMGUI
-  // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(dataStore, platformId, gateId, viewer->getMainView(), scene->getScenario()));

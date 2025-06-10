@@ -239,20 +239,16 @@ bool LinearInterpolator::interpolate(double time, const LaserUpdate &prev, const
   result->set_time(time);
 
   // compute time ratio
-  double factor = simCore::getFactor(prev.time(), time, next.time());
-
-  const simData::BodyOrientation& prevOri = prev.orientation();
-  const simData::BodyOrientation& nextOri = next.orientation();
+  const double factor = simCore::getFactor(prev.time(), time, next.time());
 
   // apply Euler angle interpolation
-  double yaw = simCore::angFix2PI(simCore::linearInterpolateAngle(prevOri.yaw(), nextOri.yaw(), factor));
-  double pitch = simCore::angFixPI(simCore::linearInterpolateAngle(prevOri.pitch(), nextOri.pitch(), factor));
-  double roll = simCore::angFixPI(simCore::linearInterpolateAngle(prevOri.roll(), nextOri.roll(), factor));
+  const double yaw = simCore::angFix2PI(simCore::linearInterpolateAngle(prev.yaw(), next.yaw(), factor));
+  const double pitch = simCore::angFixPI(simCore::linearInterpolateAngle(prev.pitch(), next.pitch(), factor));
+  const double roll = simCore::angFixPI(simCore::linearInterpolateAngle(prev.roll(), next.roll(), factor));
 
-  simData::BodyOrientation* ori = result->mutable_orientation();
-  ori->set_yaw(yaw);
-  ori->set_pitch(pitch);
-  ori->set_roll(roll);
+  result->set_yaw(yaw);
+  result->set_pitch(pitch);
+  result->set_roll(roll);
 
   return true;
 }

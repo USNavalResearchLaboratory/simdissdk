@@ -529,7 +529,7 @@ void addPlatformAndBeam(AppData* app,
     simData::DataStore::Transaction xaction;
     simData::BeamProperties* props = app->ds.addBeam(&xaction);
     props->set_hostid(app->platformId);
-    props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+    props->set_type(simData::BeamProperties::Type::ABSOLUTE_POSITION);
     app->beamId = props->id();
     xaction.complete(&props);
   }
@@ -579,8 +579,6 @@ int main(int argc, char **argv)
     scene->getSkyNode()->setDateTime(osgEarth::DateTime(2012, 0, 0, 11.0));
 
 #ifdef HAVE_IMGUI
-  // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
 
@@ -612,7 +610,7 @@ int main(int argc, char **argv)
     simData::DataStore::Transaction xaction;
     simData::BeamProperties* props = ds.addBeam(&xaction);
     props->set_hostid(platformId);
-    props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+    props->set_type(simData::BeamProperties::Type::ABSOLUTE_POSITION);
     beamId = props->id();
     xaction.complete(&props);
   }

@@ -1348,8 +1348,8 @@ int testUnits()
   rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 90\n angleunits degree\n end\n", testEllipticalAngleStartFunc);
   rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 1.57079632679489661923\n angleunits rad\n end\n", testEllipticalAngleStartFunc);
   rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 1.57079632679489661923\n angleunits radians\n end\n", testEllipticalAngleStartFunc);
-  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 2.467401100272329\n angleunits bam\n end\n", testEllipticalAngleStartFunc);
-  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 2.467401100272329\n angleunits binary angle measurement\n end\n", testEllipticalAngleStartFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 0.25\n angleunits bam\n end\n", testEllipticalAngleStartFunc);
+  rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 0.25\n angleunits binary angle measurement\n end\n", testEllipticalAngleStartFunc);
   rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 1599.999999999\n angleunits mil\n end\n", testEllipticalAngleStartFunc);
   rv += testShapeFunction<simCore::GOG::Arc>("start\n arc\n anglestart 1599.999999999\n angleunits angular mil\n end\n", testEllipticalAngleStartFunc);
 

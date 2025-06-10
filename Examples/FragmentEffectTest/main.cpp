@@ -414,8 +414,6 @@ int main(int argc, char **argv)
   mainView->addEventHandler(new PrefsKeyEventHandler('/', dataStore, platform, scaleDown));
 
 #ifdef HAVE_IMGUI
-  // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   mainView->getEventHandlers().push_front(gui);
   auto* panel = new ControlPanel(dataStore, platform);

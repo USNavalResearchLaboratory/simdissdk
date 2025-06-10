@@ -20,7 +20,6 @@
  * disclose, or release this software.
  *
  */
-#include "GL/glew.h"
 #include <osg/Camera>
 #include <osg/RenderInfo>
 #include "imgui.h"
@@ -87,25 +86,6 @@
 #include "SimExamplesGui.h"
 
 namespace GUI {
-
-GlewInitOperation::GlewInitOperation()
-  : osg::Operation("GlewInitCallback", false)
-{
-}
-
-void GlewInitOperation::operator()(osg::Object* object)
-{
-  osg::GraphicsContext* context = dynamic_cast<osg::GraphicsContext*>(object);
-  if (!context)
-    return;
-
-  if (glewInit() != GLEW_OK)
-  {
-    SIM_ERROR << "glewInit() failed" << std::endl;
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////
 
 struct OsgImGuiHandler::ImGuiNewFrameCallback : public osg::Camera::DrawCallback
 {
@@ -325,7 +305,7 @@ void OsgImGuiHandler::render_(osg::RenderInfo& ri)
   constexpr ImGuiDockNodeFlags dockspace_flags =
     ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_PassthruCentralNode;
 
-  auto dockSpaceId = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
+  auto dockSpaceId = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), dockspace_flags);
 
   draw_(ri);
 

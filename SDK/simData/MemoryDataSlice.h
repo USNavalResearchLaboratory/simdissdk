@@ -289,8 +289,8 @@ protected:
   bool mdsHasChanged_;
   /// used to mark if this slice needs to be updated (i.e. the updates_ have been modified)
   bool dirty_;
-  /// list of state updates
-  std::deque<T*> updates_;
+  /// list of state updates, mutable so that fastUpdate_ can be modified in const methods
+  mutable std::deque<T*> updates_;
   /// the current state, can either point to a real state, or a "virtual" interpolated state
   T *current_;
   /// a cache of the interpolated state for the current time
@@ -299,8 +299,8 @@ protected:
   bool interpolated_;
   /// specifies the interpolation bounds; the bounds will be nullptr if no interpolation is specified
   typename DataSlice<T>::Bounds bounds_;
-  /// Used to optimize updates by looking at data near the last update
-  typename MemorySliceHelper::SafeDequeIterator<T*> fastUpdate_;
+  /// Used to optimize updates by looking at data near the last update; mutable so it can be modified in const methods
+  mutable typename MemorySliceHelper::SafeDequeIterator<T*> fastUpdate_;
   /// Used to notify parent that the slice changed
   std::function<void()> notifierFn_;
 };

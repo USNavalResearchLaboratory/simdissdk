@@ -452,7 +452,15 @@ void DbConfigurationFile::parseCloudLayers_(const std::vector<std::string>& toke
       if (clearVal < opaqueVal && (opaqueVal != 1.0f || clearVal != 0.0f) && simVis::AlphaColorFilter::isSupported())
       {
         simVis::AlphaColorFilter* filter = new simVis::AlphaColorFilter();
+#ifdef __GNUC__
+        // continue using deprecated addColorFilter()
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
         imageLayer->addColorFilter(filter);
+#pragma GCC diagnostic pop
+#else
+        imageLayer->addColorFilter(filter);
+#endif
         osg::Vec2f values(clearVal, opaqueVal);
         filter->setAlphaOffset(values);
       }

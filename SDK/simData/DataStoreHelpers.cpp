@@ -435,7 +435,7 @@ namespace {
       return false;
 
     // Active depends on Beam Type
-    if (beamProperty->type() != simData::BeamProperties::TARGET)
+    if (beamProperty->type() != simData::BeamProperties::Type::TARGET)
       return rv;
 
     // Verify that the target beam has a target and that the target is active

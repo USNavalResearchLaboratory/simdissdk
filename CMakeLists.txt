@@ -1,5 +1,5 @@
-# MSVC 2022 support in 3.20
-cmake_minimum_required(VERSION 3.20)
+# MSVC 2022 support in 3.21
+cmake_minimum_required(VERSION 3.21)
 
 # Disable in-source builds and avoid writing to source directories directly
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
@@ -45,6 +45,7 @@ option(SIMNOTIFY_SHARED "If off, simNotify SDK libraries are built statically; i
 option(SIMCORE_SHARED "If off, simCore SDK libraries are built statically; if on, simCore SDK libraries are built dynamically" ON)
 option(BUILD_SIMDATA "If off, simData SDK libraries are not compiled; if on, library is built if dependencies are satisfied." ON)
 option(SIMDATA_SHARED "If off, simData SDK libraries are built statically; if on, simData SDK libraries are built dynamically" ON)
+option(SIMDATAPROTO_SHARED "If off, simData SDK Protobuf libraries are built statically; if on, simData SDK libraries are built dynamically" ${SIMDATA_SHARED})
 option(BUILD_SIMVIS "If off, simVis SDK libraries are not compiled; if on, library is built if dependencies are satisfied." ON)
 option(SIMVIS_SHARED "If off, simVis SDK libraries are built statically; if on, simVis SDK libraries are built dynamically" ON)
 option(BUILD_SIMUTIL "If off, simUtil SDK libraries are not compiled; if on, library is built if dependencies are satisfied." ON)
@@ -175,6 +176,7 @@ include(CreateInstallProperties)
 
 find_package(OpenGL QUIET)
 find_package(OpenSceneGraph COMPONENTS osgDB osgGA osgSim osgText osgUtil osgViewer QUIET)
+find_package(osgQOpenGL 4.0 QUIET)
 find_package(GDAL CONFIG)
 find_package(osgEarth)
 
@@ -239,6 +241,7 @@ if(INSTALL_THIRDPARTY_LIBRARIES)
     include(InstallData.3rd.OSG)
     include(InstallData.3rd.osgEarth)
     include(InstallData.3rd.osgQt)
+    include(InstallData.3rd.Protobuf)
     include(InstallData.3rd.Qt5)
 endif()
 

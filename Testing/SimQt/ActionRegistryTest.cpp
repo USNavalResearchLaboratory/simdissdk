@@ -25,6 +25,7 @@
 #include <QApplication>
 #include <QPushButton>
 #include "simCore/Common/SDKAssert.h"
+#include "simCore/System/Utils.h"
 #include "simVis/Headless.h"
 #include "simQt/ActionRegistry.h"
 
@@ -487,6 +488,8 @@ int ActionRegistryTest(int argc, char* argv[])
     std::cerr << "Headless display detected; aborting test." << std::endl;
     return 0;
   }
+  simCore::initializeSimdisEnvironmentVariables();
+
   int rv = 0;
   QApplication app(argc, argv);
   rv += testFind();

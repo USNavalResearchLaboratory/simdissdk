@@ -784,7 +784,7 @@ bool BindCenterEntityToEntityTreeComposite::isTargetBeam_(uint64_t id) const
   if (!props)
     return false;
 
-  return (props->type() == simData::BeamProperties_BeamType_TARGET);
+  return (props->type() == simData::BeamProperties::Type::TARGET);
 }
 
 }

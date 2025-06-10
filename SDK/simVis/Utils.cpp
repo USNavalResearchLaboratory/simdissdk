@@ -20,6 +20,8 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
+#include <string_view>
 #include "osg/Billboard"
 #include "osg/BlendFunc"
 #include "osg/CullFace"
@@ -1615,4 +1617,58 @@ osg::Vec2f ViewportSizeCallback::windowSize() const
   return windowSize_;
 }
 
+//--------------------------------------------------------------------------
+
+FilteringOsgNotifyDecorator::FilteringOsgNotifyDecorator(osg::NotifyHandler* child)
+  : osg::NotifyHandler(),
+    child_(child)
+{
+  if (!child_)
+    child_ = new osg::StandardNotifyHandler;
+}
+
+FilteringOsgNotifyDecorator::~FilteringOsgNotifyDecorator()
+{
+}
+
+void FilteringOsgNotifyDecorator::addFilter(const std::string& filter)
+{
+  filters_.push_back(filter);
+}
+
+void FilteringOsgNotifyDecorator::notify(osg::NotifySeverity severity, const char* message)
+{
+  // Convert message to std::string for easier manipulation
+  std::string msg(message);
+  // Check if the message contains the specific error
+  for (const auto& filter : filters_)
+  {
+    if (msg.contains(filter))
+    {
+      if (filter.contains("detected OpenGL error 'invalid operation' at after RenderBin::draw(..)"))
+      {
+        // modify the message to insert helpful info, before any existing newline
+        const auto pos = msg.find('\n');
+        msg.insert(pos, ". Disabling NVIDIA's threaded optimization is strongly recommended.");
+        child_->notify(severity, msg.c_str());
+      }
+      // suppress anything else
+      return;
+    }
+
+  }
+  child_->notify(severity, message);
+}
+
+FilteringOsgNotifyDecorator* installFilteringOsgNotifyDecorator()
+{
+  osg::ref_ptr<FilteringOsgNotifyDecorator> decorator = new FilteringOsgNotifyDecorator(osg::getNotifyHandler());
+
+  // Add invalid operation filter due to NVIDIA driver bug from March 2025 onward, affect NVIDIA 571+
+  decorator->addFilter("detected OpenGL error 'invalid operation' at after RenderBin::draw(..)");
+
+  // OSG takes ownership in its own ref_ptr
+  osg::setNotifyHandler(decorator.get());
+  return decorator.get();
+}
 }

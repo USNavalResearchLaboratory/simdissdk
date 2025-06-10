@@ -348,4 +348,10 @@ int initializeSimdisEnvironmentVariables(const InitializeEnvironmentConfig& conf
   return rv;
 }
 
+int initializeSimdisEnvironmentVariables()
+{
+  const InitializeEnvironmentConfig defaults;
+  return simCore::initializeSimdisEnvironmentVariables(defaults);
+}
+
 }

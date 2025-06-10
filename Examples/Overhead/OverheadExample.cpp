@@ -717,8 +717,6 @@ int main(int argc, char** argv)
   mouseManip->addListener(latLonElevListener.get(), showElevation);
 
 #ifdef HAVE_IMGUI
-  // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   // Adjusted projection matrix is incorrect in ortho mode
   gui->setAutoAdjustProjectionMatrix(false);

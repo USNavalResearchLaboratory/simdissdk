@@ -24,6 +24,7 @@
 #define SIMQT_GL3FORMATGUESSER_H
 
 #include <QGLFormat>
+#include <QSurfaceFormat>
 #include "simCore/Common/Export.h"
 
 namespace simQt {
@@ -64,11 +65,27 @@ public:
   /** Helper method to return a reasonable format from the provided format. */
   static QGLFormat getFormat(const QGLFormat& format);
 
+  /** Change the input format for the findCompatibleSurfaceFormat() operation. */
+  void setSurfaceFormat(const QSurfaceFormat& format);
+  /** Retrieve the guessed format. findCompatibleSurfaceFormat() changes this value. */
+  const QSurfaceFormat& surfaceFormat() const;
+
+  /** Attempts to find a valid surface format compatible with the configured values. @see findCompatibleFormat() */
+  int findCompatibleSurfaceFormat();
+
+  /** Helper method to return a reasonable surface format from QSurfaceFormat::defaultFormat(). */
+  static QSurfaceFormat getSurfaceFormat();
+  /** Helper method to return a reasonable surface format from the provided format. */
+  static QSurfaceFormat getSurfaceFormat(const QSurfaceFormat& format);
+
 private:
   /** Tests a candidate format for suitability */
   bool testFormat_(const QGLFormat& format) const;
+  /** Tests a candidate format for suitability */
+  bool testSurfaceFormat_(const QSurfaceFormat& format) const;
 
   QGLFormat format_;
+  QSurfaceFormat surfaceFormat_;
 };
 
 }

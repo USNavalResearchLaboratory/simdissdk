@@ -19,6 +19,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}AbstractEntityTreeModel.h
     ${SIMQT_INC}ActionRegistry.h
     ${SIMQT_INC}ActionItemModel.h
+    ${SIMQT_INC}AutoRepeatFilter.h
     ${SIMQT_INC}BoundSettings.h
     ${SIMQT_INC}ColorButton.h
     ${SIMQT_INC}ColorWidget.h
@@ -119,8 +120,11 @@ if(TARGET simVis)
         list(APPEND SIMQT_HEADERS_TO_MOC
             ${SIMQT_INC}ViewWidget.h
         )
-        list(APPEND SIMQT_HEADERS
-            ${SIMQT_INC}Gl3FormatGuesser.h
+    endif()
+
+    if(TARGET osgQt::osgQOpenGL)
+        list(APPEND SIMQT_HEADERS_TO_MOC
+            ${SIMQT_INC}ViewerWidgetAdapter.h
         )
     endif()
 endif()
@@ -161,6 +165,7 @@ source_group(Headers FILES ${SIMQT_HEADERS})
 set(SIMQT_SOURCES
     ${SIMQT_SRC}ActionRegistry.cpp
     ${SIMQT_SRC}ActionItemModel.cpp
+    ${SIMQT_SRC}AutoRepeatFilter.cpp
     ${SIMQT_SRC}BoundSettings.cpp
     ${SIMQT_SRC}ColorButton.cpp
     ${SIMQT_SRC}ColorWidget.cpp
@@ -208,6 +213,16 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}WidgetSettings.cpp
 )
 
+if(Qt5OpenGL_FOUND)
+    list(APPEND SIMQT_HEADERS ${SIMQT_INC}Gl3FormatGuesser.h)
+    list(APPEND SIMQT_SOURCES ${SIMQT_SRC}Gl3FormatGuesser.cpp)
+    if(NOT MSVC)
+        set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+    endif()
+else()
+    set(Qt5OpenGL_FOUND OFF) # Helpful for correct Config.cmake
+endif()
+
 # Parts of simQt depend on simData
 if(TARGET simData)
     list(APPEND SIMQT_SOURCES
@@ -246,8 +261,13 @@ if(TARGET simVis)
     # Parts of simQt depend on both simVis and osgQt
     if(TARGET OSGQT)
         list(APPEND SIMQT_SOURCES
-            ${SIMQT_SRC}Gl3FormatGuesser.cpp
             ${SIMQT_SRC}ViewWidget.cpp
+        )
+    endif()
+
+    if(TARGET osgQt::osgQOpenGL)
+        list(APPEND SIMQT_SOURCES
+            ${SIMQT_SRC}ViewerWidgetAdapter.cpp
         )
     endif()
 
@@ -256,7 +276,6 @@ if(TARGET simVis)
         set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -wd4996)
     else()
         set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
-        set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
     endif()
 endif()
 
@@ -347,15 +366,14 @@ if(OSGSIM_FOUND)
     target_link_libraries(simQt PRIVATE ${OSGSIM_LIBRARIES})
     target_include_directories(simQt PRIVATE "$<BUILD_INTERFACE:${OSG_INCLUDE_DIR}>")
 endif()
-if(TARGET simData AND TARGET protobuf::libprotobuf)
-    get_target_property(_PROTO_INC protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
-    target_include_directories(simQt PUBLIC "$<BUILD_INTERFACE:${_PROTO_INC}>")
-endif()
 if(TARGET simVis)
     target_include_directories(simQt PUBLIC
         $<BUILD_INTERFACE:${OSG_LIBRARY_INCLUDE_PATH}>
         $<BUILD_INTERFACE:${osgEarth_INCLUDE_DIR}>
     )
+endif()
+if(Qt5OpenGL_FOUND)
+    target_link_libraries(simQt PUBLIC Qt5::OpenGL)
 endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
@@ -364,9 +382,16 @@ if(TARGET OSGQT)
     target_link_libraries(simQt PUBLIC OSGQT PRIVATE OpenGL::GL)
 endif()
 
+# Link against osgQt::osgQOpenGL if found; but only needs be a private depend
+if(TARGET osgQt::osgQOpenGL)
+    target_link_libraries(simQt PRIVATE osgQt::osgQOpenGL)
+else()
+    set(osgQOpenGL_FOUND OFF) # Helpful for correct Config.cmake
+endif()
+
 # Parts of simQt depend on simData's protobuf generated code
-if(TARGET simData)
-    add_dependencies(simQt simData_protobuf_generation)
+if(TARGET simDataProto)
+    target_link_libraries(simQt PRIVATE simDataProto)
 endif()
 
 if(UNIX)

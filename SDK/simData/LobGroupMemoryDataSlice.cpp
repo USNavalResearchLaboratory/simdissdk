@@ -83,7 +83,7 @@ void LobGroupMemoryDataSlice::update(double time)
   for (; useIter != curTimeIter; ++useIter)
   {
     // copy all points from each update record to the new current update
-    for (int pointIndex = 0; pointIndex < (*useIter)->datapoints().size(); pointIndex++)
+    for (int pointIndex = 0; pointIndex < (*useIter)->datapoints_size(); pointIndex++)
     {
       LobGroupUpdatePoint* newPoint = currentUpdate->add_datapoints();
       newPoint->CopyFrom((*useIter)->datapoints(pointIndex));
@@ -92,6 +92,9 @@ void LobGroupMemoryDataSlice::update(double time)
 
   // remove the old current_ object here, since we are replacing it
   delete current_;
+  // Intentionally do not set current_ to null, so that if currentUpdate has data points,
+  // we can detect that the "current_" has changed in setCurrent(nullptr). This is safe.
+
   // only pass in the currentUpdate if it has data points
   if (currentUpdate->datapoints_size())
   {
@@ -128,21 +131,22 @@ void LobGroupMemoryDataSlice::flush(double startTime, double endTime)
 void LobGroupMemoryDataSlice::insert(LobGroupUpdate *data)
 {
   // first, ensure that all data points have the time of the LobGroupUpdate they are associated with
-  for (int pointIndex = 0; pointIndex < data->datapoints().size(); pointIndex++)
+
+  for (int pointIndex = 0; pointIndex < data->datapoints_size(); pointIndex++)
   {
-    data->mutable_datapoints()->Mutable(pointIndex)->set_time(data->time());
+    (*data->mutable_datapoints())[pointIndex].set_time(data->time());
   }
 
   std::deque<LobGroupUpdate*>::iterator iter = std::lower_bound(updates_.begin(), updates_.end(), data, UpdateComp<LobGroupUpdate>());
   if (iter != updates_.end() && (*iter)->time() == data->time())
   {
     // add to update record with same time
-    for (int pointIndex = 0; pointIndex < data->datapoints().size(); pointIndex++)
+    for (int pointIndex = 0; pointIndex < data->datapoints_size(); pointIndex++)
     {
       LobGroupUpdatePoint* newPoint = (*iter)->add_datapoints();
       newPoint->CopyFrom(data->datapoints(pointIndex));
-      data->mutable_datapoints()->RemoveLast();
     }
+
     // done with data, since we added its points to an existing update record
     delete data;
   }

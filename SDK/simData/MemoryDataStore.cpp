@@ -961,6 +961,8 @@ private:
           if (needToSetToNull_)
           {
             entry_->updates()->setCurrent(nullptr);
+            updateStartTime_.reset();
+            updateEndTime_.reset();
             needToSetToNull_ = false;
           }
           return;
@@ -969,17 +971,17 @@ private:
 
       needToSetToNull_ = true;
 
-      if (interpolateState == InterpolatorState::INTERNAL)
-        update_(time);
-      else if (interpolateState == InterpolatorState::EXTERNAL)
-        entry_->updates()->update(time, ds->interpolator());
-      else
+      if (!isInterpolated)
       {
         entry_->updates()->update(time, updateStartTime_, updateEndTime_);
         // update returns the extended time which might need to be truncated back to the original slice end time
         if (fileMode && !isExtendedPlatform() && (updateEndTime_ > sliceEndTime_))
           updateEndTime_ = sliceEndTime_;
       }
+      else if (interpolateState == InterpolatorState::INTERNAL)
+        update_(time);
+      else
+        entry_->updates()->update(time, ds->interpolator());
     }
 
     /** Called when the slice is modified so that the next call to update will not kick out early */
@@ -1762,7 +1764,7 @@ void MemoryDataStore::updateBeams_(double time)
     // until we have datadraw, send nullptr; once we have datadraw, we'll immediately update with valid data
     if (!beamEntry->preferences()->commonprefs().datadraw())
       beamEntry->updates()->setCurrent(nullptr);
-    else if (beamEntry->properties()->type() == BeamProperties_BeamType_TARGET)
+    else if (beamEntry->properties()->type() == BeamProperties::Type::TARGET)
       updateTargetBeam_(iter->first, beamEntry, time);
     else if (isInterpolationEnabled() && beamEntry->preferences()->interpolatebeampos())
       beamEntry->updates()->update(time, interpolator_);
@@ -1783,7 +1785,7 @@ simData::MemoryDataStore::BeamEntry* MemoryDataStore::getBeamForGate_(google::pr
 void MemoryDataStore::updateTargetGate_(GateEntry* gate, double time)
 {
   // this should only be called for target gates; if assert fails, check caller
-  assert(gate->properties()->type() == GateProperties_GateType_TARGET);
+  assert(gate->properties()->type() == GateProperties::Type::TARGET);
 
   // Get the host beam for this gate
   if (!gate->properties()->has_hostid())
@@ -1794,8 +1796,8 @@ void MemoryDataStore::updateTargetGate_(GateEntry* gate, double time)
 
   BeamEntry* beam = getBeamForGate_(gate->properties()->hostid());
   // target gates can only be hosted by target beams. if assert fails, run away.
-  assert(beam->properties()->type() == BeamProperties_BeamType_TARGET);
-  if (!beam || !beam->properties()->has_hostid() || beam->properties()->type() != BeamProperties_BeamType_TARGET || !beam->preferences()->has_targetid())
+  assert(beam->properties()->type() == BeamProperties::Type::TARGET);
+  if (!beam || !beam->properties()->has_hostid() || beam->properties()->type() != BeamProperties::Type::TARGET || !beam->preferences()->has_targetid())
   {
     gate->updates()->setCurrent(nullptr);
     return;
@@ -1896,7 +1898,7 @@ void MemoryDataStore::updateGates_(double time)
     // until we have datadraw, send nullptr; once we have datadraw, we'll immediately update with valid data
     if (!gateEntry->preferences()->commonprefs().datadraw())
       gateEntry->updates()->setCurrent(nullptr);
-    else if (gateEntry->properties()->type() == GateProperties_GateType_TARGET)
+    else if (gateEntry->properties()->type() == GateProperties::Type::TARGET)
       updateTargetGate_(gateEntry, time);
     else
     {
@@ -3890,7 +3892,7 @@ template<typename T>
 void MemoryDataStore::MutablePropertyTransactionImpl<T>::commit()
 {
   // performance: skip if there are no changes
-  if (modifiedProperties_->SerializeAsString() != currentProperties_->SerializeAsString())
+  if (*modifiedProperties_ != *currentProperties_)
   {
     committed_ = true; // transaction is valid
 
@@ -3949,7 +3951,7 @@ MemoryDataStore::ScenarioSettingsTransactionImpl::ScenarioSettingsTransactionImp
 void MemoryDataStore::ScenarioSettingsTransactionImpl::commit()
 {
   // performance: skip if there are no changes
-  if (modifiedSettings_->SerializeAsString() != currentSettings_->SerializeAsString())
+  if (*modifiedSettings_ != *currentSettings_)
   {
     committed_ = true; // transaction is valid
 

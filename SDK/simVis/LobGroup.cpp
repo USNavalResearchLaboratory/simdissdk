@@ -30,6 +30,7 @@
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/MultiFrameCoordinate.h"
 #include "simData/DataTable.h"
+#include "simData/DataTypes.h"
 #include "simData/LinearInterpolator.h"
 #include "simVis/AnimatedLine.h"
 #include "simVis/EntityLabel.h"
@@ -330,7 +331,7 @@ void LobGroupNode::setPrefs(const simData::LobGroupPrefs &prefs)
     const simData::LobGroupUpdateSlice *updateSlice = ds_.lobGroupUpdateSlice(lastProps_.id());
     if (updateSlice)
     {
-      const simData::LobGroupUpdate *currentUpdate = ds_.lobGroupUpdateSlice(lastProps_.id())->current();
+      const simData::LobGroupUpdate *currentUpdate = updateSlice->current();
       if (currentUpdate)
         updateCache_(*currentUpdate, prefs);
     }
@@ -423,7 +424,7 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
 
   // prune the cache, since the data max values may adjust how much data is shown
   const double firstTime = update.datapoints(0).time();
-  const double lastTime = update.datapoints(numLines-1).time();
+  const double lastTime = update.datapoints(numLines - 1).time();
   lineCache_->pruneCache(this, firstTime, lastTime);
 
   simData::Interpolator* li = ds_.interpolator();

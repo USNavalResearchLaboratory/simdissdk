@@ -71,7 +71,7 @@ public:
     /** Returns the string value for each enumeration */
     QMap<int, QString> enumValues() const;
     /** Converts the setting value to the internal format */
-    QVariant convertToInteralFormat(QVariant input) const;
+    QVariant convertToInternalFormat(QVariant input) const;
     /** Converts the setting value to the save format */
     QVariant convertToSaveFormat(QVariant saveValue) const;
 

@@ -74,7 +74,7 @@ uint64_t DataStoreTestHelper::addBeam(uint64_t hostId, uint64_t originalId, bool
   beamProps->set_hostid(hostId);
   beamProps->set_originalid(originalId);
   if (targetBeam)
-    beamProps->set_type(simData::BeamProperties_BeamType_TARGET);
+    beamProps->set_type(simData::BeamProperties::Type::TARGET);
   t.commit();
   simData::BeamPrefs* beamPrefs = dataStore_->mutable_beamPrefs(beamProps->id(), &t);
   std::ostringstream beamName;
@@ -91,7 +91,7 @@ uint64_t DataStoreTestHelper::addGate(uint64_t hostId, uint64_t originalId, bool
   gateProps->set_hostid(hostId);
   gateProps->set_originalid(originalId);
   if (targetGate)
-    gateProps->set_type(simData::GateProperties_GateType_TARGET);
+    gateProps->set_type(simData::GateProperties::Type::TARGET);
   t.commit();
   simData::GatePrefs* gatePrefs = dataStore_->mutable_gatePrefs(gateProps->id(), &t);
   std::ostringstream gateName;
@@ -257,9 +257,9 @@ void DataStoreTestHelper::addLaserUpdate(double time, uint64_t id)
   simData::LaserUpdate *u = dataStore_->addLaserUpdate(id, &t);
   SDK_ASSERT(u != nullptr);
   u->set_time(time);
-  u->mutable_orientation()->set_yaw(0.0 + time);
-  u->mutable_orientation()->set_pitch(1.0 + time);
-  u->mutable_orientation()->set_roll(2.0 + time);
+  u->set_yaw(0.0 + time);
+  u->set_pitch(1.0 + time);
+  u->set_roll(2.0 + time);
   t.commit();
 }
 
@@ -269,12 +269,12 @@ void DataStoreTestHelper::addLOBUpdate(double time, uint64_t id)
   simData::LobGroupUpdate *u = dataStore_->addLobGroupUpdate(id, &t);
   SDK_ASSERT(u != nullptr);
   u->set_time(time);
-  simData::LobGroupUpdatePoint *up = u->mutable_datapoints()->Add();
+  simData::LobGroupUpdatePoint* up = u->add_datapoints();
   up->set_time(time);
   up->set_azimuth(1.0 + time);
   up->set_elevation(10.0 + time);
   up->set_range(1000.0);
-  simData::LobGroupUpdatePoint *up2 = u->mutable_datapoints()->Add();
+  simData::LobGroupUpdatePoint* up2 = u->add_datapoints();
   up2->set_time(time);
   up2->set_azimuth(20.0 + time);
   up2->set_elevation(5.0 + time);
@@ -383,7 +383,7 @@ void DataStoreTestHelper::addGenericData(uint64_t id, const std::string& key, co
   genData->set_time(static_cast<double>(startTime));
   genData->set_duration(-1);
 
-  simData::GenericData_Entry* entry = genData->mutable_entry()->Add();
+  simData::GenericData_Entry* entry = genData->add_entry();
   entry->set_key(key);
   entry->set_value(value);
 

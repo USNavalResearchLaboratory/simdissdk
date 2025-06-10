@@ -879,9 +879,9 @@ simData::ObjectId addLaser(simData::ObjectId hostId, simData::DataStore &dataSto
     simData::DataStore::Transaction xaction;
     simData::LaserUpdate* update = dataStore.addLaserUpdate(id, &xaction);
     update->set_time(0.0);
-    update->mutable_orientation()->set_yaw(0.0);
-    update->mutable_orientation()->set_pitch(0.0);
-    update->mutable_orientation()->set_roll(0.0);
+    update->set_yaw(0.0);
+    update->set_pitch(0.0);
+    update->set_roll(0.0);
     xaction.complete(&update);
   }
 
@@ -1085,8 +1085,6 @@ int main(int argc, char **argv)
 #ifdef HAVE_IMGUI
   ControlPanel* controlPanel = new ControlPanel();
   menuHandler->setImGuiControlPanel(controlPanel);
-  // Pass in existing realize operation as parent op, parent op will be called first
-  viewer->getViewer()->setRealizeOperation(new ::GUI::OsgImGuiHandler::RealizeOperation(viewer->getViewer()->getRealizeOperation()));
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(controlPanel);

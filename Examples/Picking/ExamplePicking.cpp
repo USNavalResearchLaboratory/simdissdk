@@ -30,6 +30,7 @@
 #include "osgEarth/NodeUtils"
 #include "osgEarth/ObjectIndex"
 #include "osgEarth/Registry"
+#include "osgEarth/Version"
 #include "simNotify/Notify.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Common/Version.h"
@@ -244,7 +245,11 @@ public:
     auto lineSymbol = style.getOrCreateSymbol<osgEarth::LineSymbol>();
     // Change some line aspects to indicate we picked correctly
     lineSymbol->stroke()->color() = randomColor();
+#if OSGEARTH_SOVERSION < 169
     lineSymbol->stroke()->width() = randomBetween(1.0, 7.0);
+#else
+    lineSymbol->stroke()->width() = osgEarth::Distance(randomBetween(1.0, 7.0), osgEarth::Units::PIXELS);
+#endif
     anno->setStyle(style);
     return true;
   }
@@ -747,8 +752,6 @@ int main(int argc, char** argv)
   }
 
 #ifdef HAVE_IMGUI
-  // Pass in existing realize operation as parent op, parent op will be called first
-  viewMan->getViewer()->setRealizeOperation(new GUI::OsgImGuiHandler::RealizeOperation(viewMan->getViewer()->getRealizeOperation()));
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
 
   // Because RTT requires rendering the view to a texture, ImGui would get called twice (and assert)

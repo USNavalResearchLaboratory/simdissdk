@@ -20,8 +20,7 @@
  * disclose, or release this software.
  *
  */
-#include <QGLWidget>
-#include <QWindow>
+#include <QTimer>
 #include "simVis/Utils.h"
 #include "simVis/View.h"
 #include "Reader.h"
@@ -32,26 +31,14 @@ namespace SdkQThreadExample{
 
 MyMainWindow::MyMainWindow(simVis::ViewManager* viewMan, simData::DataStore& dataStore)
   : viewManager_(viewMan),
-    dataStore_(dataStore),
-    reader_(nullptr),
-    generatorDialog_(nullptr)
+    dataStore_(dataStore)
 {
-  // disable the default ESC-to-quit event:
-  viewManager_->getViewer()->setKeyEventSetsDone(0);
-  viewManager_->getViewer()->setQuitEventSetsDone(false);
-
-  // timer fires a paint event.
-  connect(&redrawTimer_, SIGNAL(timeout()), this, SLOT(update()));
-  // timer single shot to avoid infinite loop problems in Qt on MSVC11
-  redrawTimer_.setSingleShot(true);
-  redrawTimer_.start(20);
-
-  _statsHandler = new simUtil::StatsHandler;
-  simVis::fixStatsHandlerGl2BlockyText(_statsHandler.get());
+  statsHandler_ = new simUtil::StatsHandler;
+  simVis::fixStatsHandlerGl2BlockyText(statsHandler_.get());
   osg::observer_ptr<simVis::View> mainView = viewManager_->getView(0);
   if (mainView.valid())
   {
-    mainView->addEventHandler(_statsHandler.get());
+    mainView->addEventHandler(statsHandler_.get());
 
     // Set an initial viewpoint near the data
     simVis::Viewpoint vp;
@@ -61,30 +48,22 @@ MyMainWindow::MyMainWindow(simVis::ViewManager* viewMan, simData::DataStore& dat
     vp.range()->set(1e5, osgEarth::Units::METERS);
     mainView->setViewpoint(vp);
   }
+
+  QTimer* updatedNumProcessedTimer = new QTimer(this);
+  updatedNumProcessedTimer->setInterval(500); // twice per second
+  updatedNumProcessedTimer->setSingleShot(false);
+  // Update the GUI at the slow rate of the paintEvent instead of at the data rate
+  connect(updatedNumProcessedTimer, &QTimer::timeout, this, [this]() {
+    if (reader_ && generatorDialog_)
+      generatorDialog_->updateNumberProcessed(reader_->numberProcessed());
+  });
+  updatedNumProcessedTimer->start();
 }
 
 MyMainWindow::~MyMainWindow()
 {
   delete generatorDialog_;
   delete reader_;
-}
-
-void MyMainWindow::setGlWidget(QGLWidget* glWidget)
-{
-  setCentralWidget(glWidget);
-  glWindow_ = glWidget->windowHandle();
-}
-
-void MyMainWindow::paintEvent(QPaintEvent* e)
-{
-  // refresh all the views.
-  if (glWindow_ && glWindow_->isExposed())
-    viewManager_->frame();
-  redrawTimer_.start();
-
-  // Update the GUI at the slow rate of the paintEvent instead of at the data rate
-  if ((reader_ != nullptr) && (generatorDialog_ != nullptr))
-    generatorDialog_->updateNumberProcessed(reader_->numberProcessed());
 }
 
 void MyMainWindow::showGenerateDialog()

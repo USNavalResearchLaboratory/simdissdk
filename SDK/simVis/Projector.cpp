@@ -40,6 +40,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/String/Format.h"
+#include "simData/DataTypes.h"
 #include "simVis/ClockOptions.h"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
@@ -1096,7 +1097,8 @@ void ProjectorNode::setMapNode(osgEarth::MapNode* mapNode)
     shadowCam_->removeChildren(0, shadowCam_->getNumChildren());
     if (mapNode)
     {
-      shadowCam_->addChild(mapNode->getTerrainEngine()->getNode());
+      if (mapNode->getTerrainEngine())
+        shadowCam_->addChild(mapNode->getTerrainEngine()->getNode());
       shadowCam_->setRenderingCache(nullptr);
     }
   }

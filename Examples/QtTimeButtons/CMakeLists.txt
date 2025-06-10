@@ -1,4 +1,4 @@
-if(NOT TARGET simQt OR NOT TARGET simUtil OR NOT TARGET OSGQT)
+if(NOT TARGET simQt OR NOT TARGET simUtil OR NOT TARGET osgQt::osgQOpenGL)
     return()
 endif()
 
@@ -24,4 +24,3 @@ set_target_properties(example_qttimebuttons PROPERTIES
 vsi_install_target(example_qttimebuttons SDK_Examples)
 
 VSI_QT_USE_MODULES(example_qttimebuttons LINK_PRIVATE Widgets OpenGL)
-

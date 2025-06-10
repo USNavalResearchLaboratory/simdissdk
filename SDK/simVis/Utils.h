@@ -37,6 +37,7 @@
 #include "osg/Geometry"
 #include "osg/Matrix"
 #include "osg/NodeCallback"
+#include "osg/Notify"
 #include "osg/Quat"
 #include "osg/Transform"
 #include "osgGA/GUIEventHandler"
@@ -861,6 +862,33 @@ namespace simVis
     osg::Vec2f windowSize_;
     std::function<void(const osg::Vec2f&)> func_;
   };
+
+  /** osg::NotifyHandler instance that removes messages that match filters. */
+  class SDKVIS_EXPORT FilteringOsgNotifyDecorator : public osg::NotifyHandler
+  {
+  public:
+    explicit FilteringOsgNotifyDecorator(osg::NotifyHandler* child);
+
+    /** Adds a filter. Messages matching the filter exactly will be removed and not sent to output. */
+    void addFilter(const std::string& filter);
+
+    // From NotifyHandler:
+    virtual void notify(osg::NotifySeverity severity, const char* message) override;
+
+  protected:
+    // Protected, from osg::Referenced
+    virtual ~FilteringOsgNotifyDecorator();
+
+  private:
+    osg::ref_ptr<osg::NotifyHandler> child_;
+    std::vector<std::string> filters_;
+  };
+
+  /**
+   * Creates a FilteringOsgNotifyDecorator, installs it wrapping the current notify handler, returning
+   * itself. This decorator is pre-loaded with filters that may be needed to reduce noise in OSG notify.
+   */
+  SDKVIS_EXPORT FilteringOsgNotifyDecorator* installFilteringOsgNotifyDecorator();
 
 } // namespace simVis
 

@@ -254,13 +254,22 @@ void Capabilities::checkVendorOpenGlSupport_(const std::string& vendor, const st
     }
     const int nVidiaMajor = atoi(nvidiaMajorStr.c_str());
     const int nVidiaMinor = atoi(nvidiaMinorStr.c_str());
-    // testing indicates that 304.125 and most drivers > 340 work
-    const bool usable = (nVidiaMajor >= 340) || (nVidiaMajor == 304 && nVidiaMinor >= 125);
+
+    // SIM-18144 details issues with 571. - 573. drivers;
+    // as of 2025-06, all known drivers >= 571 have memory leak issues due to threaded optimization; revisit before SR18 to see if newer nVidia are free of issues.
+    if (nVidiaMajor > 571)
+    {
+      recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, osgEarth::Stringify() << "nVidia driver version " << nVidiaMajor << "." << nVidiaMinor << " has issues when threaded optimization is not disabled.");
+      recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Disable threaded optimization in the NVIDIA control panel's 'Manage 3D settings pane'.");
+      return;
+    }
+
+    // testing indicates that 304.125 and most drivers > 340 work; SIM-18144 details issues with 571. - 573. drivers
+    // as of 2025-06, all known drivers >= 571 have memory leak issues; revisit before SR18 to see if newer nVidia are free of issues.
+    const bool usable = (nVidiaMajor == 304 && nVidiaMinor >= 125) || (nVidiaMajor >= 340 && nVidiaMajor < 571);
     if (usable)
       return;
-    // testing indicates that:
-    // nvidia 331 drivers were not usable
-    // most drivers <= 340 had issues
+    // testing indicates that: nvidia 331 drivers were not usable, most drivers <= 340 had issues
     const bool unusable = (nVidiaMajor == 331);
     recordUsabilityConcern_((unusable ? UNUSABLE : USABLE_WITH_ARTIFACTS), osgEarth::Stringify() << "nVidia driver version " << nVidiaMajor << "." << nVidiaMinor);
     return;
