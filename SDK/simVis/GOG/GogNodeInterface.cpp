@@ -2023,7 +2023,11 @@ void FeatureNodeInterface::setStyle_(const osgEarth::Style& style)
     style_ = style;
   if (!deferringStyleUpdates_() && featureNode_.valid())
   {
+#if OSGEARTH_SOVERSION >= 175
+    featureNode_->getFeature()->setStyle(style_);
+#else
     featureNode_->getFeature()->style() = style_;
+#endif
     featureNode_->setStyle(style_);
   }
 }
@@ -2865,7 +2869,11 @@ void LatLonAltBoxInterface::setStyle_(const osgEarth::Style& style)
     style_ = style;
   if (!deferringStyleUpdates_() && bottomNode_.valid())
   {
+#if OSGEARTH_SOVERSION >= 175
+    bottomNode_->getFeature()->setStyle(style_);
+#else
     bottomNode_->getFeature()->style() = style_;
+#endif
     bottomNode_->setStyle(style_);
   }
 }
