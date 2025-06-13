@@ -31,6 +31,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
+#include "simCore/System/Utils.h"
 #include "simQt/ViewWidget.h"
 #include "simUtil/ExampleResources.h"
 
@@ -223,6 +224,7 @@ void warningMessageFilter(QtMsgType type, const QMessageLogContext& context, con
 
 int main(int argc, char** argv)
 {
+  simCore::initializeSimdisEnvironmentVariables();
   simCore::checkVersionThrow();
   osg::ArgumentParser arguments(&argc, argv);
   simExamples::configureSearchPaths();

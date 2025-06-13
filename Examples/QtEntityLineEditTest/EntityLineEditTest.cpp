@@ -20,7 +20,7 @@
  * disclose, or release this software.
  *
  */
-
+#include "simCore/System/Utils.h"
 #include "simData/MemoryDataStore.h"
 #include "simQt/EntityTreeModel.h"
 #include "MainWindow.h"
@@ -168,6 +168,7 @@ void MainWindow::rename_()
 
 int main(int argc, char* argv[])
 {
+  simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
 
   simData::MemoryDataStore* dataStore = new simData::MemoryDataStore();

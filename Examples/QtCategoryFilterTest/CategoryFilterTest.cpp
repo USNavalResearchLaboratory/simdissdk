@@ -23,6 +23,7 @@
 #include <sstream>
 #include <iomanip>
 
+#include "simCore/System/Utils.h"
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/MemoryDataStore.h"
 #include "simQt/EntityTreeModel.h"
@@ -142,6 +143,7 @@ void MainWindow::addCategoryData_(double time, const std::string& key, const std
 
 int main(int argc, char* argv[])
 {
+  simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
 
   simData::MemoryDataStore* dataStore = new simData::MemoryDataStore();

@@ -118,9 +118,7 @@ public:
 ////////////////////////////////////////////////////////////////////
 
 CloseableItemDelegate::Style::Style()
-  : rectangleRadiusX(4.0),
-    rectangleRadiusY(4.0),
-    outlinePen(QColor(188, 195, 199, 255), 1.5), // Grayish
+  : outlinePen(QColor(188, 195, 199, 255), 1.5), // Grayish
     fillColor(QColor(195, 225, 240, 255)), // Light gray with a hint of blue
     altFillColor(QColor(161, 212, 237, 255)), // Slightly darker blue
     textColor(Qt::black),
@@ -361,11 +359,7 @@ private:
 
 CategoryDataBreadcrumbs::CategoryDataBreadcrumbs(QWidget* parent)
   : QWidget(parent),
-    filter_(nullptr),
-    minimumGroupSize_(3),
-    hideWhenEmpty_(true),
-    emptyText_(tr("No active category filter")),
-    validHints_(false)
+    emptyText_(tr("No active category filter"))
 {
   listWidget_ = new QListWidget(this);
   listWidget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
