@@ -390,7 +390,7 @@ CategoryDataBreadcrumbs::CategoryDataBreadcrumbs(QWidget* parent)
   // Create an item delegate that will draw the filter settings
   itemDelegate_ = new CloseableItemDelegate(this);
   listWidget_->setItemDelegate(itemDelegate_);
-  connect(itemDelegate_, SIGNAL(closeClicked(QModelIndex)), this, SLOT(removeFilter_(QModelIndex)));
+  connect(itemDelegate_, &CloseableItemDelegate::closeClicked, this, &CategoryDataBreadcrumbs::removeFilter_);
   // Create an item delegate that has no decorations that we can use when we don't want close button
   plainDelegate_ = new QStyledItemDelegate(this);
 
@@ -774,7 +774,9 @@ void CategoryDataBreadcrumbs::removeFilter_(const QModelIndex& index)
     // Removal requires a simplified filter to behave well, so simplify, remove the value, simplify again, and re-emit
     const int value = valueVariant.toInt();
     filter_->simplify();
-    filter_->removeValue(name, value);
+    const int rv = filter_->removeValue(name, value);
+    // Failure to remove value means internal configuration error
+    assert(rv == 0);
     filter_->simplify();
   }
 
@@ -1034,10 +1036,10 @@ void CategoryDataBreadcrumbs::bindTo(simQt::EntityCategoryFilter* categoryFilter
   if (!categoryFilter)
     return;
   // Changes to us will be reflected in the filter
-  connect(this, SIGNAL(filterEdited(simData::CategoryFilter)), categoryFilter, SLOT(setCategoryFilter(simData::CategoryFilter)));
+  connect(this, &CategoryDataBreadcrumbs::filterEdited, categoryFilter, &EntityCategoryFilter::setCategoryFilter);
   // Changes in the filter trigger us to resynchronize.  Note that due to the way the
   // categoryFilterChanged() signal is emitted, we cannot use it directly.
-  connect(categoryFilter, SIGNAL(filterUpdated()), this, SLOT(synchronizeToSenderFilter_()));
+  connect(categoryFilter, &EntityCategoryFilter::filterUpdated, this, &CategoryDataBreadcrumbs::synchronizeToSenderFilter_);
   // Update our current state to that of the category filter
   setFilter(categoryFilter->categoryFilter());
 }

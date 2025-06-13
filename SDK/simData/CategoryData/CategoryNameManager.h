@@ -109,13 +109,23 @@ public:
 
   /// retrieve all the category name strings
   void allCategoryNames(std::vector<std::string> &nameVec) const;
+  /// retrieve all the category name strings
+  std::vector<std::string> allCategoryNames() const;
   /// retrieve all the category name keys
   void allCategoryNameInts(std::vector<int> &nameIntVec) const;
+  /// retrieve all the category name keys
+  std::vector<int> allCategoryNameInts() const;
 
   /// retrieve all the value strings in a given category
   void allValuesInCategory(int categoryInt, std::vector<std::string> &categoryValueVec) const;
+  /// retrieve all the value strings in a given category
+  std::vector<std::string> allValuesInCategory(int categoryInt) const;
+  /// retrieve all the value strings in a given category string
+  std::vector<std::string> allValuesInCategory(const std::string& category) const;
   /// retrieve all the value keys in a given category
   void allValueIntsInCategory(int categoryInt, std::vector<int> &categoryValueIntVec) const;
+  /// retrieve all the value keys in a given category
+  std::vector<int> allValueIntsInCategory(int categoryInt) const;
 
   /// Add a listener for category messages
   void addListener(ListenerPtr callback);

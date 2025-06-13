@@ -1017,13 +1017,23 @@ int testAddRemoveFunctions()
   rv += SDK_ASSERT(filter.serialize(true) == " ");
   // Removing same key twice is an error
   rv += SDK_ASSERT(0 != filter.removeValue(KEY2, VALUE2));
+  rv += SDK_ASSERT(0 != filter.removeValue("key2", "value2"));
+  // Attempt to remove invalid keys and values
+  rv += SDK_ASSERT(0 != filter.removeValue("key2", "valueX"));
+  rv += SDK_ASSERT(0 != filter.removeValue("keyX", "value2"));
+  rv += SDK_ASSERT(0 != filter.removeValue("keyY", "valueZ"));
 
   // Ensure that we can remove a whole category
   rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)`key3(1)~No Value(1)~value2(1)", reFactory));
   rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
   rv += SDK_ASSERT(hasCategoryName(filter, KEY3));
   rv += SDK_ASSERT(!filter.match(ds, PLATFORM_ID));
-  filter.removeName(KEY3);
+  // Removing it should succeed
+  rv += SDK_ASSERT(filter.removeName(KEY3) == 0);
+  // Removing a second time should produce an error
+  rv += SDK_ASSERT(filter.removeName(KEY3) != 0);
+  // Removing it by string value should also produce an error
+  rv += SDK_ASSERT(filter.removeName("key3") != 0);
   rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
   rv += SDK_ASSERT(!hasCategoryName(filter, KEY3));
   rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~value2(1)");
@@ -1562,6 +1572,155 @@ int testNoValue()
   return rv;
 }
 
+int testRemoveHasValue()
+{
+  int rv = 0;
+
+  // Configure data store
+  simData::MemoryDataStore ds;
+  simData::CategoryNameManager& nameMgr = ds.categoryNameManager();
+  loadCategoryData(ds);
+
+  simData::CategoryFilter filter(&ds);
+  // Category filters can either be inclusive or exclusive. An inclusive filter starts empty and then specifies
+  // values that get included. An exclusive filter is when "Unlisted Value" is present. Unlisted Value means that
+  // we default to include everything, except for the items listed. See also: CategoryDataBreadcrumbs::addNameToList_(),
+  // and documentation in simData/CategoryData/CategoryFilter.h.
+
+  rv += SDK_ASSERT(filter.deserialize("key1(1)~Unlisted Value(1)~value1(0)~value3(0)~value4(0)", false, nullptr));
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~Unlisted Value(1)~value1(0)~value3(0)~value4(0)");
+
+  // Remove the value4; it should update the filter
+  rv += SDK_ASSERT(filter.removeValue("key1", "value4") == 0);
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~Unlisted Value(1)~value1(0)~value3(0)");
+
+  // Make sure we can remove another value; reload the filter and remove value3
+  rv += SDK_ASSERT(filter.deserialize("key1(1)~Unlisted Value(1)~value1(0)~value3(0)~value4(0)", false, nullptr));
+  rv += SDK_ASSERT(filter.removeValue("key1", "value3") == 0);
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~Unlisted Value(1)~value1(0)~value4(0)");
+
+  // Demonstrate that adding "No Value" to "0" is a noop
+  rv += SDK_ASSERT(filter.deserialize("key1(1)~Unlisted Value(1)~value1(0)~value3(0)~value4(0)", false, nullptr));
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~Unlisted Value(1)~value1(0)~value3(0)~value4(0)");
+  rv += SDK_ASSERT(filter.deserialize("key1(1)~Unlisted Value(1)~No Value(0)~value1(0)~value3(0)~value4(0)", false, nullptr));
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~Unlisted Value(1)~value1(0)~value3(0)~value4(0)");
+  rv += SDK_ASSERT(filter.deserialize("key1(1)~Unlisted Value(1)~value1(0)~value3(0)~value4(0)", false, nullptr));
+
+  // The rule above is:
+  //  - Unlisted values are included
+  //  - value1, value3, value4 are explicitly excluded
+  //  - No Value is **implicitly excluded**
+
+  // This shows up in the GUI as:
+  // "Has Value" ; "Not value1" ; "Not value3" ; "Not value4"
+
+  // We have just demonstrated that removing value3 removes the "Not value3" portion correctly. But "Has Value"
+  // isn't directly related to the entries seen here. "Has Value" means that Unlisted is on, and No Value is off.
+  // To remove "Has Value", we have to reverse the state of "No Value". That means, removing "Has Value" means
+  // adding "No Value (1)" without changing "Unlisted Value".
+
+  // Filter needs a special case to handle this, which this tests.
+
+  const int KEY1 = nameMgr.nameToInt("key1");
+  rv += SDK_ASSERT(filter.removeValue(KEY1, simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME) == 0);
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~Unlisted Value(1)~No Value(1)~value1(0)~value3(0)~value4(0)");
+
+  // Now, try to remove the Unlisted Value. That should work, make it an INCLUSIVE filter, which
+  // should then simplify to just "No Value(1)"
+  rv += SDK_ASSERT(filter.removeValue(KEY1, simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE) == 0);
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~No Value(1)");
+
+  return rv;
+}
+
+int testRemoveName()
+{
+  int rv = 0;
+
+  // Configure data store
+  simData::MemoryDataStore ds;
+  simData::CategoryNameManager& mgr = ds.categoryNameManager();
+  loadCategoryData(ds);
+
+  simData::CategoryFilter filter(&ds);
+  rv += SDK_ASSERT(filter.deserialize("key1(1)~value1(1)`key2(1)~value2(1)`key3(1)~value2(1)~value3(1)", false, nullptr));
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~value1(1)`key2(1)~value2(1)`key3(1)~value2(1)~value3(1)");
+
+  const int key1 = mgr.nameToInt("key1");
+
+  // Remove invalid name
+  rv += SDK_ASSERT(filter.removeName(9999) != 0);
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~value1(1)`key2(1)~value2(1)`key3(1)~value2(1)~value3(1)");
+  rv += SDK_ASSERT(filter.removeName(key1) == 0);
+  rv += SDK_ASSERT(filter.serialize() == "key2(1)~value2(1)`key3(1)~value2(1)~value3(1)");
+
+  // Same, with string versions
+  rv += SDK_ASSERT(filter.removeName("invalid1") != 0);
+  rv += SDK_ASSERT(filter.serialize() == "key2(1)~value2(1)`key3(1)~value2(1)~value3(1)");
+  rv += SDK_ASSERT(filter.removeName("key3") == 0);
+  rv += SDK_ASSERT(filter.serialize() == "key2(1)~value2(1)");
+
+  return rv;
+}
+
+int testRemoveValue()
+{
+  int rv = 0;
+
+  // Configure data store
+  simData::MemoryDataStore ds;
+  simData::CategoryNameManager& mgr = ds.categoryNameManager();
+  loadCategoryData(ds);
+
+  simData::CategoryFilter filter(&ds);
+  rv += SDK_ASSERT(filter.deserialize("key1(1)~value1(1)~value3(1)~value4(1)", false, nullptr));
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~value1(1)~value3(1)~value4(1)");
+
+  const int key1 = mgr.nameToInt("key1");
+  const int value3 = mgr.valueToInt("value3");
+
+  // Remove invalid key, invalid value; should fail
+  rv += SDK_ASSERT(filter.removeValue(9999, 9999) != 0);
+  rv += SDK_ASSERT(filter.removeValue(key1, 9999) != 0);
+  rv += SDK_ASSERT(filter.removeValue(9999, value3) != 0);
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~value1(1)~value3(1)~value4(1)");
+
+  // Now remove value key and value
+  rv += SDK_ASSERT(filter.removeValue(key1, value3) == 0);
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~value1(1)~value4(1)");
+
+  // Now use the string versions
+  rv += SDK_ASSERT(filter.removeValue("invalid1", "invalid2") != 0);
+  rv += SDK_ASSERT(filter.removeValue("key1", "invalid2") != 0);
+  rv += SDK_ASSERT(filter.removeValue("invalid1", "value4") != 0);
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~value1(1)~value4(1)");
+
+  rv += SDK_ASSERT(filter.removeValue("key1", "value4") == 0);
+  rv += SDK_ASSERT(filter.serialize() == "key1(1)~value1(1)");
+
+  return rv;
+}
+
+int testCategoryNameManagerStrings()
+{
+  int rv = 0;
+  simData::CategoryNameManager mgr;
+  const int cat1 = mgr.addCategoryName("cat1");
+  const int cat2 = mgr.addCategoryName("cat2");
+  const int value1 = mgr.addCategoryValue(cat1, "value1");
+  const int value2 = mgr.addCategoryValue(cat2, "value2");
+  const int value3 = mgr.addCategoryValue(cat1, "value3");
+
+  rv += SDK_ASSERT(mgr.allCategoryNames() == (std::vector<std::string>{ "cat1", "cat2" }));
+  rv += SDK_ASSERT(mgr.allCategoryNameInts() == (std::vector<int>{ cat1, cat2 }));
+
+  rv += SDK_ASSERT(mgr.allValuesInCategory(cat1) == (std::vector<std::string>{ "value1", "value3" }));
+  rv += SDK_ASSERT(mgr.allValuesInCategory("cat1") == (std::vector<std::string>{ "value1", "value3" }));
+  rv += SDK_ASSERT(mgr.allValueIntsInCategory(cat1) == (std::vector<int>{ value1, value3 }));
+
+  return rv;
+}
+
 }
 
 int CategoryDataTest(int argc, char *argv[])
@@ -1585,6 +1744,10 @@ int CategoryDataTest(int argc, char *argv[])
   rv += testRegExpSimplify();
   rv += testCaseInsensitivity();
   rv += testNoValue();
+  rv += testRemoveHasValue();
+  rv += testRemoveName();
+  rv += testRemoveValue();
+  rv += testCategoryNameManagerStrings();
 
   return rv;
 }
