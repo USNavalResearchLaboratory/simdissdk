@@ -256,7 +256,7 @@ int main(int argc, char** argv)
   MainWindow win;
   win.setGeometry(50, 50, 1024, 768);
 
-  // Make a view, which is needed to instantiate a ViewWidget, which is the OSG display
+  // Make a view, which is needed to instantiate a ViewerWidgetAdapter, which is the OSG display
   osg::ref_ptr<simVis::View> mainview = new simVis::View();
   mainview->setName("Main View");
   mainview->setSceneManager(sceneMan.get());
