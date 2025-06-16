@@ -38,11 +38,12 @@
 #include "osgSim/LightPointNode"
 #include "osgSim/MultiSwitch"
 #include "osgUtil/Optimizer"
+#include "osgEarth/AnnotationUtils"
 #include "osgEarth/Containers"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
-#include "osgEarth/AnnotationUtils"
+#include "osgEarth/Version"
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
 #include "simVis/ClockOptions.h"
@@ -644,7 +645,7 @@ ModelCache::ModelCache()
   : shareArticulatedModels_(false),
     addLodNode_(true),
     clock_(nullptr),
-    cache_(false, 30), // No need for thread safety, max of 30 elements
+    cache_(30u), // max of 30 elements
     asyncLoader_(new LoaderNode)
 {
   asyncLoader_->setCache(this);
@@ -674,11 +675,19 @@ ModelCache::~ModelCache()
 osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsImage)
 {
   // first check the cache.
+#if OSGEARTH_SOVERSION >= 175
+  const auto& record = cache_.get(uri);
+  if (record.has_value())
+  {
+    const auto& entry = *record;
+#else
   Cache::Record record;
   if (cache_.get(uri, record))
   {
     assert(record.valid()); // Guaranteed by get()
     const Entry& entry = record.value();
+#endif
+
     if (pIsImage)
       *pIsImage = entry.isImage_;
 
@@ -756,17 +765,24 @@ void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
   }
 
   // first check the cache
+#if OSGEARTH_SOVERSION >= 175
+  const auto& record = cache_.get(uri);
+  if (record.has_value())
+  {
+    const auto& entry = *record;
+#else
   Cache::Record record;
   if (cache_.get(uri, record))
   {
     assert(record.valid()); // Guaranteed by get()
+    const Entry& entry = record.value();
+#endif
 
     // If the callback is valid, then pass the model back immediately.  It's possible the
     // callback might not be valid in cases where someone is attempting to preload icons
     // for the sake of performance.  In that case we just return early because it's loaded.
     if (refCallback.valid())
     {
-      const Entry& entry = record.value();
       osg::ref_ptr<osg::Node> node = entry.node_.get();
       // clone articulated nodes so we get independent articulations
       if (entry.isArticulated_ && !shareArticulatedModels_)
