@@ -677,11 +677,10 @@ bool View::setUpViewAsHUD(simVis::View* host)
   if (host && host->getCamera())
   {
     osg::GraphicsContext* gc = host->getCamera()->getGraphicsContext();
-    if (!gc)
-    {
-      SIM_WARN << LC << "Host has no graphics context, cannot share!" << std::endl;
-      ok = false;
-    }
+    // It's possible that GraphicsContext is null, especially in osgQOpenGL case. The contexts
+    // will not automatically share in this case, but someone (e.g. osgQOpenGL) can go in later
+    // and initialize all the contexts. So an error here is only appropriate if the host is
+    // already initialized. Therefore we cannot detect a true error here by checking !gc.
 
     // if the user hasn't created a camera for this view, do so now.
     osg::Camera* camera = this->getCamera();
@@ -727,11 +726,10 @@ bool View::setUpViewAsInset_(simVis::View* host)
   if (host && host->getCamera())
   {
     osg::GraphicsContext* gc = host->getCamera()->getGraphicsContext();
-    if (!gc)
-    {
-      SIM_WARN << LC << "Host has no graphics context, cannot share!" << std::endl;
-      ok = false;
-    }
+    // It's possible that GraphicsContext is null, especially in osgQOpenGL case. The contexts
+    // will not automatically share in this case, but someone (e.g. osgQOpenGL) can go in later
+    // and initialize all the contexts. So an error here is only appropriate if the host is
+    // already initialized. Therefore we cannot detect a true error here by checking !gc.
 
     // if the user hasn't created a camera for this view, do so now.
     fovYDeg_ = host->fovY();
@@ -941,13 +939,16 @@ bool View::setExtents(const Extents& e)
     if (host)
     {
       const osg::Viewport* rvp = host->getCamera()->getViewport();
-      // Note that clamping is not desired here, to avoid pixel/percentage conversion issues
-      const double nx = rvp->x() + rvp->width() * e.x_;
-      const double ny = rvp->y() + rvp->height() * e.y_;
-      const double nw = rvp->width() * e.width_;
-      const double nh = rvp->height() * e.height_;
+      if (rvp)
+      {
+        // Note that clamping is not desired here, to avoid pixel/percentage conversion issues
+        const double nx = rvp->x() + rvp->width() * e.x_;
+        const double ny = rvp->y() + rvp->height() * e.y_;
+        const double nw = rvp->width() * e.width_;
+        const double nh = rvp->height() * e.height_;
 
-      fixProjectionForNewViewport_(nx, ny, nw, nh);
+        fixProjectionForNewViewport_(nx, ny, nw, nh);
+      }
     }
     else
     {

@@ -27,28 +27,22 @@
  */
 
 #include "simNotify/Notify.h"
-#include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
+#include "simCore/Common/Version.h"
 #include "simCore/System/Utils.h"
-#include "simQt/ViewWidget.h"
+#include "simVis/SceneManager.h"
+#include "simVis/View.h"
+#include "simVis/ViewManager.h"
+#include "simQt/ViewerWidgetAdapter.h"
 #include "simUtil/ExampleResources.h"
 
-#include "simVis/ViewManager.h"
-#include "simVis/View.h"
-#include "simVis/SceneManager.h"
-
 #include <QApplication>
-#include <QDialog>
-#include <QMainWindow>
-#include <QPushButton>
 #include <QLayout>
-#include <QTimer>
+#include <QMainWindow>
 
 #ifdef Q_WS_X11
 #include <X11/Xlib.h>
 #endif
-
-#include <cstdlib> // rand()
 
 int usage(char** argv)
 {
@@ -58,45 +52,6 @@ int usage(char** argv)
 
   return 0;
 }
-
-
-/**
- * A simple MainWindow derivative that shows one way to embed a
- * simVis::ViewManager configuration in a Qt UI.
- */
-struct MyMainWindow : public QMainWindow
-{
-  QTimer                            _timer;
-  osg::ref_ptr<simVis::ViewManager> _viewMan;
-
-  MyMainWindow()
-  {
-    // create a viewer manager. The "args" are optional.
-    _viewMan = new simVis::ViewManager();
-
-    // disable the default ESC-to-quit event:
-    _viewMan->getViewer()->setKeyEventSetsDone(0);
-    _viewMan->getViewer()->setQuitEventSetsDone(false);
-
-    // timer fires a paint event.
-    connect(&_timer, SIGNAL(timeout()), this, SLOT(update()));
-    // timer single shot to avoid infinite loop problems in Qt on MSVC11
-    _timer.setSingleShot(true);
-    _timer.start(10);
-  }
-
-  void paintEvent(QPaintEvent* e)
-  {
-    // refresh all the views.
-    _viewMan->frame();
-    _timer.start();
-  }
-
-  simVis::ViewManager* getViewManager()
-  {
-    return _viewMan.get();
-  }
-};
 
 
 int main(int argc, char** argv)
@@ -127,26 +82,36 @@ int main(int argc, char** argv)
   QApplication qapp(argc, argv);
 
   // Our custom main window contains a ViewManager.
-  MyMainWindow win;
+  QMainWindow win;
   win.setGeometry(50, 50, 400*numViews, 400);
   QWidget* center = new QWidget();
   center->setLayout(new QHBoxLayout());
   win.setCentralWidget(center);
 
+  // Retain the view managers so they can get cleaned up on exit
+  std::vector<osg::ref_ptr<simVis::ViewManager>> viewManagers;
+
   // Create views and connect them to our scene.
   for (int i = 0; i < numViews; ++i)
   {
+    // Each ViewerWidgetAdapter requires its own ViewManager; in osgQOpenGL
+    // there is no ability to have one ViewManager support multiple windows.
+    osg::ref_ptr<simVis::ViewManager> viewManager(new simVis::ViewManager());
+    viewManagers.push_back(viewManager);
+
     // Make a view, hook it up, and add it to the view manager.
     osg::ref_ptr<simVis::View> mainview = new simVis::View();
 
     // Make a Qt Widget to hold our view, and add that widget to the
     // main window.
-    QWidget* viewWidget = new simQt::ViewWidget(mainview.get());
+    auto* viewWidget = new simQt::ViewerWidgetAdapter(&win);
+    viewWidget->setViewer(viewManager->getViewer());
+    viewWidget->setTimerInterval(10);
     center->layout()->addWidget(viewWidget);
 
     // attach the scene manager and add it to the view manager.
     mainview->setSceneManager(sceneMan.get());
-    win.getViewManager()->addView(mainview.get());
+    viewManager->addView(mainview.get());
 
     // Each top-level view needs an Inset controller so the user can draw
     // and interact with inset views.
