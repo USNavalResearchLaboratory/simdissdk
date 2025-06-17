@@ -163,7 +163,7 @@ public:
    * Gets whether to perform LOS computation against the live scene
    * graph (versus the elevation model).
    */
-  bool getUseSceneGraph() const { return use_scene_graph_; }
+  SDK_DEPRECATE(bool getUseSceneGraph() const { return false; }, "Deprecated, no longer applicable");
 
 public:
 
@@ -182,7 +182,7 @@ public:
    * @param patch Patch node, possibly nullptr
    * @return True upon success
    */
-  bool update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& extent, osg::Node* patch = nullptr);
+  SDK_DEPRECATE(bool update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& extent, osg::Node* patch = nullptr), "Deprecated, use compute() instead");
 
   /**
    * Gets the number of samples in each radial
@@ -244,7 +244,6 @@ private:
   osgEarth::Angle     azim_resolution_;
   osg::ref_ptr<const osgEarth::SpatialReference> srs_;
   std::unique_ptr<osgEarth::ElevationPool::WorkingSet> elevationWorkingSet_;
-  bool use_scene_graph_;
 
   bool getBoundingRadials_(double azim_rad, const Radial*& out_r0, const Radial*& out_r1, double& out_mix) const;
 
