@@ -60,7 +60,13 @@ public:
 
   /** Retrieve the OSG Viewer */
   osgViewer::ViewerBase* getViewer() const;
-  /** Set the OSG Viewer */
+  /**
+   * Set the OSG Viewer. Note that a single Viewer may not be able to be used across more
+   * than one ViewerWidgetAdapter due to limitations in osgQOpenGL. This is because the
+   * graphics context supplied to OSG from osgQOpenGL cannot makeCurrent() different
+   * widgets, and the locus of control for rendering the frame now lies with osgQOpenGL
+   * instead of OSG itself.
+   */
   void setViewer(osgViewer::ViewerBase* viewer);
 
   /** Sets the timer interval for updating the graphics, in ms */

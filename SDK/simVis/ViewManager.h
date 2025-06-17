@@ -75,6 +75,10 @@ class View;
  * // Prevent image data from being deleted on CPU after sent to GPU, called once on the pager:
  * view->getScene()->getDatabasePager()->setUnrefImageDataAfterApplyPolicy(true, false);
  * </code>
+ *
+ * Note that although ViewManager can support multiple GraphicsContexts, underlying
+ * osgQOpenGL code (referenced in simQt::ViewerWidgetAdapter) does not gracefully handle
+ * this situation, and you will need one ViewManager per ViewerWidgetAdapter.
  */
 class SDKVIS_EXPORT ViewManager : public osg::Referenced
 {

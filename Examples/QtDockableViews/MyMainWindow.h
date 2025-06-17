@@ -26,18 +26,14 @@
 #define QTDOCKABLEVIEWS_MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QPointer>
 #include <osg/ref_ptr>
 
-class QTimer;
-class QWindow;
-class QGLWidget;
-namespace simVis
-{
+namespace simVis {
   class SceneManager;
   class ViewManager;
   class View;
 }
+namespace simQt { class ViewerWidgetAdapter; }
 
 /**
  * A simple MainWindow derivative that provides a showcase for creating simVis::Views in different Qt widgets.
@@ -51,26 +47,19 @@ public:
   explicit MyMainWindow(int framerate);
   virtual ~MyMainWindow();
 
-  void setGlWidget(QGLWidget* glWidget);
-  simVis::ViewManager* getViewManager();
-
-protected:
-  virtual void paintEvent(QPaintEvent* e);
-
 private Q_SLOTS:
   void createViewDialog_();
   void createViewDockable_();
   void createMainView_();
 
 private:
+  simVis::View* createView_(simVis::ViewManager& viewManager, const QString& name) const;
+  simQt::ViewerWidgetAdapter* newWidget_(const QString& viewName);
 
-  simVis::View* createView_(const QString& name) const;
-
-  int                                 viewCounter_;
-  QTimer*                             timer_;
-  osg::ref_ptr<simVis::ViewManager>   viewMan_;
-  osg::ref_ptr<simVis::SceneManager>  sceneMan_;
-  QPointer<QWindow>                   lastCreatedGlWindow_;
+  int viewCounter_ = 1;
+  int timerInterval_ = 33;
+  std::vector<osg::ref_ptr<simVis::ViewManager>> viewManagers_;
+  osg::ref_ptr<simVis::SceneManager> sceneMan_;
 };
 
 #endif
