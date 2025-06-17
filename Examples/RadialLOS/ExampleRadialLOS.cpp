@@ -159,7 +159,12 @@ namespace
         {
           p2pFeature->setNodeMask(~0);
           p2pFeature->getFeature()->getGeometry()->back() = p.vec3d();
+#if OSGEARTH_SOVERSION >= 175
+          auto newStyle = *p2pFeature->getFeature()->style();
+          auto line = newStyle.getOrCreate<osgEarth::LineSymbol>();
+#else
           osg::ref_ptr<osgEarth::LineSymbol> line = p2pFeature->getFeature()->style()->getOrCreate<osgEarth::LineSymbol>();
+#endif
 
           if (visible)
           {
@@ -179,6 +184,10 @@ namespace
 #endif
             line->stroke()->color() = simVis::Color::Red;
           }
+
+#if OSGEARTH_SOVERSION >= 175
+          p2pFeature->getFeature()->setStyle(newStyle);
+#endif
 
           p2pFeature->dirty();
         }
