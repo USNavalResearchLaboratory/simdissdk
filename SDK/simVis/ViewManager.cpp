@@ -247,7 +247,7 @@ void ViewManager::addView(simVis::View* view)
   if (!view->getHostView())
   {
     osg::ref_ptr<osgViewer::CompositeViewer> compositeViewer;
-    if (viewers_.empty())
+    if (viewers_.empty() || !useMultipleViewers_)
       compositeViewer = initialViewer_;
     else
     {
@@ -591,6 +591,16 @@ int ViewManager::frame(double simulationTime)
 int ViewManager::run()
 {
   return getViewer()->ViewerBase::run();
+}
+
+void ViewManager::setUseMultipleViewers(bool useMultipleViewers)
+{
+  useMultipleViewers_ = useMultipleViewers;
+}
+
+bool ViewManager::getUseMultipleViewers() const
+{
+  return useMultipleViewers_;
 }
 
 }

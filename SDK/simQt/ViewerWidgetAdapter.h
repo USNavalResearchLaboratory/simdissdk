@@ -48,6 +48,10 @@ class SignalingGlWindow;
  * This class is intended to be a direct replacement for osgQOpenGLWindow, and should
  * be more effective in every typical use case than either osgQOpenGLWindow or
  * osgQOpenGLWidget.
+ *
+ * It is recommended to use `simVis::ViewManager::setUseMultipleViewers(true)` when
+ * you use this with a ViewManager instance, especially if expecting to use multiple
+ * widgets with a single ViewManager.
  */
 class SDKQT_EXPORT ViewerWidgetAdapter : public QWidget
 {

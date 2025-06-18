@@ -76,6 +76,8 @@ MainWindow::MainWindow()
   view->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   viewMan_ = new simVis::ViewManager(); // Note that the log depth buffer is not installed
+  // This example has only one main view, so although it uses Qt we do not need multiple viewers
+  viewMan_->setUseMultipleViewers(false);
   viewMan_->addView(view.get());
 
   // data source which will provide positions for the platform

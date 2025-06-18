@@ -71,6 +71,10 @@ MainWindow::MainWindow()
 {
   // create a viewer manager. The "args" are optional.
   viewMan_ = new simVis::ViewManager();
+
+  // View Manager will support multiple top level CompositeViewer instances for osgQOpenGL
+  viewMan_->setUseMultipleViewers(true);
+
   // Note that the logarithmic depth buffer is not installed
 
   // Create a set of buttons on the side to add/remove views

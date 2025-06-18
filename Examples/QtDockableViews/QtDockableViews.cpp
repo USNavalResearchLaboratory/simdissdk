@@ -66,6 +66,9 @@ MyMainWindow::MyMainWindow(int framerate)
   : timerInterval_(1000 / std::max(1, framerate)),
   viewManager_(new simVis::ViewManager)
 {
+  // View Manager will support multiple top level CompositeViewer instances for osgQOpenGL
+  viewManager_->setUseMultipleViewers(true);
+
   // create toolbar
   QToolBar* toolbar = new QToolBar(this);
   QAction* dialogAction = new QAction(tr("New Dialog"), this);

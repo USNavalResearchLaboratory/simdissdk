@@ -149,6 +149,20 @@ public:
    */
   ViewManager(osg::ArgumentParser& args);
 
+  /**
+   * Sets whether to use a single shared CompositeViewer (false, default) or one Viewer
+   * per top level view. When false, each top level main view is assigned its own
+   * CompositeViewer. This is most useful for cases where rendering via
+   * `CompositeViewer::frame()` is managed externally like in osgQOpenGL. In osgQt and
+   * typical OSG usage, a graphics context is created that OSG can make current and
+   * render onto. In osgQOpenGL, the osgViewer::GraphicsWindowEmbedded is used, and so
+   * a single viewer will not suffice due to its simple adapter nature. In those cases,
+   * set the use-single-viewer to false when you expect more than one top level view.
+   */
+  void setUseMultipleViewers(bool useMultipleViewers);
+  /** Retrieves whether the ViewManager is set to use one viewer per top level view. */
+  bool getUseMultipleViewers() const;
+
   /** Adds a view. */
   void addView(simVis::View* view);
 
@@ -249,6 +263,7 @@ private:
   bool fatalRenderFlag_ = false;
 
   bool firstFrame_ = true;
+  bool useMultipleViewers_ = false;
   std::optional<osg::ArgumentParser> args_;
 };
 

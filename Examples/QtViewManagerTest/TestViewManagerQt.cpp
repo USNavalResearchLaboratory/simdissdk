@@ -81,7 +81,6 @@ int main(int argc, char** argv)
   // OK, time to set up the Qt Application and windows.
   QApplication qapp(argc, argv);
 
-  // Our custom main window contains a ViewManager.
   QMainWindow win;
   win.setGeometry(50, 50, 400*numViews, 400);
   QWidget* center = new QWidget();
@@ -89,29 +88,25 @@ int main(int argc, char** argv)
   win.setCentralWidget(center);
 
   // Retain the view managers so they can get cleaned up on exit
-  std::vector<osg::ref_ptr<simVis::ViewManager>> viewManagers;
+  osg::ref_ptr<simVis::ViewManager> viewManager(new simVis::ViewManager);
+  // View Manager will support multiple top level CompositeViewer instances for osgQOpenGL
+  viewManager->setUseMultipleViewers(true);
 
   // Create views and connect them to our scene.
   for (int i = 0; i < numViews; ++i)
   {
-    // Each ViewerWidgetAdapter requires its own ViewManager; in osgQOpenGL
-    // there is no ability to have one ViewManager support multiple windows.
-    osg::ref_ptr<simVis::ViewManager> viewManager(new simVis::ViewManager());
-    viewManagers.push_back(viewManager);
-
     // Make a view, hook it up, and add it to the view manager.
     osg::ref_ptr<simVis::View> mainview = new simVis::View();
+    // attach the scene manager and add it to the view manager.
+    mainview->setSceneManager(sceneMan.get());
+    viewManager->addView(mainview.get());
 
     // Make a Qt Widget to hold our view, and add that widget to the
     // main window.
     auto* viewWidget = new simQt::ViewerWidgetAdapter(&win);
-    viewWidget->setViewer(viewManager->getViewer());
+    viewWidget->setViewer(viewManager->getViewer(mainview));
     viewWidget->setTimerInterval(10);
     center->layout()->addWidget(viewWidget);
-
-    // attach the scene manager and add it to the view manager.
-    mainview->setSceneManager(sceneMan.get());
-    viewManager->addView(mainview.get());
 
     // Each top-level view needs an Inset controller so the user can draw
     // and interact with inset views.

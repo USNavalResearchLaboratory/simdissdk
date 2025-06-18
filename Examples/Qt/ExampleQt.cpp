@@ -107,6 +107,8 @@ int main(int argc, char **argv)
 
   // The ViewManager coordinates the rendering of all our views.
   osg::ref_ptr<simVis::ViewManager> viewMan = new simVis::ViewManager();
+  // No need for multiple viewers in this example because there is only one main view
+  viewMan->setUseMultipleViewers(false);
 
   // Set up the logarithmic depth buffer for all views
   osg::ref_ptr<simVis::ViewManagerLogDbAdapter> logDb = new simVis::ViewManagerLogDbAdapter;

@@ -81,6 +81,8 @@ MainWindow::MainWindow(QWidget* parent)
   // disable the default ESC-to-quit event:
   viewMan_->getViewer()->setKeyEventSetsDone(0);
   viewMan_->getViewer()->setQuitEventSetsDone(false);
+  // No need for multiple viewers in this example because there is only one main view
+  viewMan_->setUseMultipleViewers(false);
 
   addTouchDevicesDock_();
   addMostRecentDock_();
