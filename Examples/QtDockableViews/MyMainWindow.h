@@ -58,7 +58,7 @@ private:
 
   int viewCounter_ = 1;
   int timerInterval_ = 33;
-  std::vector<osg::ref_ptr<simVis::ViewManager>> viewManagers_;
+  osg::ref_ptr<simVis::ViewManager> viewManager_;
   osg::ref_ptr<simVis::SceneManager> sceneMan_;
 };
 

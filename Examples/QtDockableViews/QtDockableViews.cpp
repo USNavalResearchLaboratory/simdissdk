@@ -63,7 +63,8 @@ int usage(char** argv)
 
 ////////////////////////////////////////////////////////////////////
 MyMainWindow::MyMainWindow(int framerate)
-  : timerInterval_(1000 / std::max(1, framerate))
+  : timerInterval_(1000 / std::max(1, framerate)),
+  viewManager_(new simVis::ViewManager)
 {
   // create toolbar
   QToolBar* toolbar = new QToolBar(this);
@@ -107,12 +108,10 @@ MyMainWindow::~MyMainWindow()
 
 simQt::ViewerWidgetAdapter* MyMainWindow::newWidget_(const QString& viewName)
 {
-  auto* viewManager = new simVis::ViewManager;
-  viewManagers_.push_back(viewManager);
-  osg::ref_ptr<simVis::View> view = createView_(*viewManager, viewName);
+  osg::ref_ptr<simVis::View> view = createView_(*viewManager_, viewName);
 
   simQt::ViewerWidgetAdapter* viewWidget = new simQt::ViewerWidgetAdapter(this);
-  viewWidget->setViewer(viewManager->getViewer());
+  viewWidget->setViewer(viewManager_->getViewer(view.get()));
   viewWidget->setTimerInterval(timerInterval_);
   viewWidget->setMinimumSize(2, 2);
   viewWidget->resize(100, 100);

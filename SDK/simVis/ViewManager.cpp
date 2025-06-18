@@ -46,6 +46,9 @@ namespace
         return;
 
       osg::GraphicsContext* gc = dynamic_cast<osg::GraphicsContext*>(gc_obj);
+      if (!gc)
+        return;
+
       simVis::applyCoreProfileValidity(gc);
       simVis::applyMesaGeometryShaderFix(gc);
       const int width = gc->getTraits()->width;
@@ -53,9 +56,12 @@ namespace
 
       for (unsigned int i = 0; i < viewman_->getNumViews(); ++i)
       {
+        simVis::View* view = viewman_->getView(i);
+
         // View Manager does matching based on width/height against the view's
         // viewport, so we can't modify width/height here even if they are invalid (0)
-        viewman_->getView(i)->processResize(width, height);
+        if (view && view->getCamera() && view->getCamera()->getGraphicsContext() == gc)
+          viewman_->getView(i)->processResize(width, height);
       }
     }
   };
@@ -135,8 +141,15 @@ void ViewManager::RemoveView::operator()(osg::Object* obj)
     // our simVis::View objects has a unique root node this doesn't work. -gw)
     view_->getCamera()->removeChildren(0, view_->getCamera()->getNumChildren());
 
-    viewman_->viewer_->removeView(view_.get());
+    auto viewer = viewman_->getViewer(view_.get());
+    if (viewer.valid())
+      viewer->removeView(view_.get());
+
     viewman_->fireCallbacks(view_.get(), Callback::VIEW_REMOVED);
+
+    // Might have removed a top level, in which case we remove it from viewers_
+    if (viewer.valid() && viewer->getNumViews() == 0)
+      viewman_->viewers_.erase(view_.get());
   }
 }
 
@@ -187,15 +200,12 @@ AddEventHandlerToViews::~AddEventHandlerToViews()
 //........................................................................
 
 ViewManager::ViewManager()
-  : fatalRenderFlag_(false),
-    firstFrame_(true)
 {
   init_();
 }
 
 
 ViewManager::ViewManager(osg::ArgumentParser& args)
-  : fatalRenderFlag_(false)
 {
   init_(args);
 }
@@ -205,62 +215,167 @@ ViewManager::~ViewManager()
 {
 }
 
+simVis::View* ViewManager::getTopLevelView_(simVis::View* view) const
+{
+  // Recursive function to find the top-level ancestor.
+  if (!view || view->getHostView() == nullptr)
+    return view; // This is the top-level view.
+  return getTopLevelView_(view->getHostView()); // Recursively check the host.
+}
+
+osg::ref_ptr<osgViewer::CompositeViewer> ViewManager::getViewer(simVis::View* view) const
+{
+  auto* topView = getTopLevelView_(view);
+  if (!topView)
+    return nullptr;
+  auto it = viewers_.find(topView);
+  if (it == viewers_.end())
+    return nullptr;
+  return it->second.get();
+}
+
+osgViewer::CompositeViewer* ViewManager::getViewer() const
+{
+  return initialViewer_.get();
+}
 
 void ViewManager::addView(simVis::View* view)
 {
-  if (view)
+  if (!view)
+    return;
+
+  if (!view->getHostView())
   {
-    viewer_->addView(view);
+    osg::ref_ptr<osgViewer::CompositeViewer> compositeViewer;
+    if (viewers_.empty())
+      compositeViewer = initialViewer_;
+    else
+    {
+      if (args_.has_value())
+        compositeViewer = new osgViewer::CompositeViewer(args_.value());
+      else
+        compositeViewer = new osgViewer::CompositeViewer;
+      compositeViewer->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
+      compositeViewer->setRealizeOperation(new OnRealize(this));
+    }
+    compositeViewer->addView(view);
+    viewers_[view] = compositeViewer;
     view->setViewManager(this);
     view->addEventHandler(resizeHandler_.get());
     fireCallbacks(view, Callback::VIEW_ADDED);
-  }
-}
 
+    // Also, set the framestamp on the registry.
+    simVis::Registry::instance()->setFrameStamp(compositeViewer->getFrameStamp());
+    return;
+  }
+
+  auto compositeViewer = getViewer(view);
+  if (!compositeViewer.valid())
+  {
+    SIM_ERROR << "Error: Could not find CompositeViewer for top-level view of inset." << std::endl;
+    assert(0); // Should not happen
+  }
+
+  // Add the inset view to the top-level viewer.
+  compositeViewer->addView(view);
+  view->setViewManager(this);
+  view->addEventHandler(resizeHandler_.get());
+  fireCallbacks(view, Callback::VIEW_ADDED);
+}
 
 void ViewManager::removeView(simVis::View* view)
 {
-  if (view)
-  {
-    view->removeEventHandler(resizeHandler_.get());
-    // viewer_->removeView() has to happen in the update operation.
-    viewer_->addUpdateOperation(new RemoveView(this, view));
-  }
+  if (!view)
+    return;
+
+  view->removeEventHandler(resizeHandler_.get());
+
+  // viewer->removeView() has to happen in the update operation.
+  auto viewer = getViewer(view);
+  if (viewer.valid())
+    viewer->addUpdateOperation(new RemoveView(this, view));
 }
 
 void ViewManager::getViews(std::vector<simVis::View*>& views) const
 {
-  std::vector<osgViewer::View*> temp;
-  viewer_->getViews(temp);
+  views.clear(); // Clear the output vector.
 
-  views.clear();
-  for (unsigned int i = 0; i < temp.size(); ++i)
+  // Iterate through all the CompositeViewers in the map.
+  for (const auto& pair : viewers_)
   {
-    simVis::View* view = dynamic_cast<simVis::View*>(temp[i]);
-    if (view)
-      views.push_back(view);
+    const osg::ref_ptr<osgViewer::CompositeViewer>& compositeViewer = pair.second;
+    std::vector<osgViewer::View*> osgViews;
+    compositeViewer->getViews(osgViews); // Get the views from the CompositeViewer.
+
+    // Convert the osgViewer::View* to simVis::View* and add them to the output.
+    for (osgViewer::View* osgView : osgViews)
+    {
+      simVis::View* view = dynamic_cast<simVis::View*>(osgView);
+      if (view)
+        views.push_back(view);
+    }
   }
 }
 
 unsigned int ViewManager::getNumViews() const
 {
-  return viewer_->getNumViews();
+  unsigned int count = 0;
+
+  // Iterate through all the CompositeViewers and sum the number of views in each.
+  for (const auto& pair : viewers_)
+  {
+    const osg::ref_ptr<osgViewer::CompositeViewer>& compositeViewer = pair.second;
+    count += compositeViewer->getNumViews();
+  }
+
+  return count;
 }
 
 simVis::View* ViewManager::getView(unsigned int index) const
 {
-  return index < getNumViews() ? dynamic_cast<simVis::View*>(viewer_->getView(index)) : nullptr;
+  unsigned int current_index = 0;
+
+  // Iterate through all the CompositeViewers.
+  for (const auto& pair : viewers_)
+  {
+    const osg::ref_ptr<osgViewer::CompositeViewer>& compositeViewer = pair.second;
+    unsigned int numViewsInViewer = compositeViewer->getNumViews();
+
+    // Check if the index falls within the range of this CompositeViewer.
+    if (index >= current_index && index < current_index + numViewsInViewer)
+    {
+      // Get the view at the specified index within this CompositeViewer.
+      osgViewer::View* osgView = compositeViewer->getView(index - current_index);
+      return dynamic_cast<simVis::View*>(osgView);
+    }
+
+    // Update the current index to reflect the views already processed.
+    current_index += numViewsInViewer;
+  }
+
+  // The index is out of range.
+  return nullptr;
 }
 
 simVis::View* ViewManager::getViewByName(const std::string& name) const
 {
-  std::vector<osgViewer::View*> temp;
-  viewer_->getViews(temp);
-  for (std::vector<osgViewer::View*>::const_iterator i = temp.begin(); i != temp.end(); ++i)
+  // Iterate through all the CompositeViewers.
+  for (const auto& pair : viewers_)
   {
-    if ((*i)->getName() == name)
-      return dynamic_cast<simVis::View*>(*i);
+    const osg::ref_ptr<osgViewer::CompositeViewer>& compositeViewer = pair.second;
+    std::vector<osgViewer::View*> osgViews;
+    compositeViewer->getViews(osgViews);
+
+    // Search for the view with the given name in this CompositeViewer.
+    for (osgViewer::View* osgView : osgViews)
+    {
+      simVis::View* view = dynamic_cast<simVis::View*>(osgView);
+      if (view && view->getName() == name)
+        return view;
+    }
   }
+
+  // View not found.
   return nullptr;
 }
 
@@ -292,12 +407,26 @@ simVis::View* ViewManager::getViewByMouseXy(const osg::Vec2d& mouseXy) const
 
 int ViewManager::getIndexOf(simVis::View* view) const
 {
-  std::vector<osgViewer::View*> temp;
-  viewer_->getViews(temp);
-  std::vector<osgViewer::View*>::const_iterator iter = std::find(temp.begin(), temp.end(), static_cast<osgViewer::View*>(view));
-  if (iter == temp.end())
-    return -1;
-  return iter - temp.begin();
+  int current_index = 0;
+
+  // Iterate through all the CompositeViewers.
+  for (const auto& pair : viewers_)
+  {
+    const osg::ref_ptr<osgViewer::CompositeViewer>& compositeViewer = pair.second;
+    std::vector<osgViewer::View*> osgViews;
+    compositeViewer->getViews(osgViews);
+
+    // Search for the view in this CompositeViewer.
+    for (osgViewer::View* osgView : osgViews)
+    {
+      if (osgView == view)
+        return current_index; // Found the view, return its index.
+      ++current_index;
+    }
+  }
+
+  // View not found.
+  return -1;
 }
 
 void ViewManager::addCallback(Callback* value)
@@ -357,38 +486,38 @@ void ViewManager::sendPostCameraFrameNotifications_()
 
 void ViewManager::handleResize(const osg::GraphicsContext* gc, int newwidth, int newheight)
 {
-  unsigned int numViews = getNumViews();
-  for (unsigned int i = 0; i < numViews; ++i)
+  for (const auto& pair : viewers_)
   {
-    simVis::View* view = getView(i);
-    // Limit processResize() to views that share the same graphics context
-    if (view && view->getCamera() && view->getCamera()->getGraphicsContext() == gc)
-      view->processResize(newwidth, newheight);
+    osg::ref_ptr<osgViewer::CompositeViewer> compositeViewer = pair.second;
+    std::vector<osgViewer::View*> views;
+    compositeViewer->getViews(views);
+
+    for (osgViewer::View* osgView : views)
+    {
+      simVis::View* view = dynamic_cast<simVis::View*>(osgView);
+      if (view && view->getCamera() && view->getCamera()->getGraphicsContext() == gc)
+        view->processResize(newwidth, newheight);
+    }
   }
 }
 
 void ViewManager::init_()
 {
-  viewer_ = new osgViewer::CompositeViewer();
-  viewer_->setThreadingModel(viewer_->SingleThreaded);
-  viewer_->setRealizeOperation(new OnRealize(this));
-  resizeHandler_ = new OnResize(this);
+  initialViewer_ = new osgViewer::CompositeViewer;
+  initialViewer_->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
+  initialViewer_->setRealizeOperation(new OnRealize(this));
 
-  // Note that in the case of multiple view managers in an application, the last
-  // View Manager's viewer's frame stamp wins.
-  simVis::Registry::instance()->setFrameStamp(viewer_->getFrameStamp());
+  resizeHandler_ = new OnResize(this);
 }
 
 void ViewManager::init_(osg::ArgumentParser& args)
 {
-  viewer_ = new osgViewer::CompositeViewer(args);
-  viewer_->setThreadingModel(viewer_->SingleThreaded);
-  viewer_->setRealizeOperation(new OnRealize(this));
-  resizeHandler_ = new OnResize(this);
+  args_ = args;
+  initialViewer_ = new osgViewer::CompositeViewer(args);
+  initialViewer_->setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
+  initialViewer_->setRealizeOperation(new OnRealize(this));
 
-  // Note that in the case of multiple view managers in an application, the last
-  // View Manager's viewer's frame stamp wins.
-  simVis::Registry::instance()->setFrameStamp(viewer_->getFrameStamp());
+  resizeHandler_ = new OnResize(this);
 }
 
 int ViewManager::frame(double simulationTime)
@@ -398,6 +527,12 @@ int ViewManager::frame(double simulationTime)
   if (fatalRenderFlag_)
     return 1;
 
+  // Retrieve the first viewer; this only works in single viewer mode
+  assert(viewers_.size() == 1); // Must have one viewer only
+  if (viewers_.empty())
+    return 1;
+  auto viewer = viewers_.begin()->second;
+
   // Add a small epsilon to the simulation time to avoid simulating at time 0.0 due
   // to rendering issues in Triton.  Note that negative time is acceptable, but time
   // at 0.0 is not due to minor rendering glitches at time 0 in Triton.
@@ -405,35 +540,35 @@ int ViewManager::frame(double simulationTime)
   if (fabs(simulationTime) < MINIMUM_TIME)
     simulationTime = (simulationTime < 0 ? -MINIMUM_TIME : MINIMUM_TIME);
 
-  if (viewer_->getRunFrameScheme() == osgViewer::ViewerBase::CONTINUOUS ||
-    viewer_->checkNeedToDoFrame())
+  if (viewer->getRunFrameScheme() == osgViewer::ViewerBase::CONTINUOUS ||
+    viewer->checkNeedToDoFrame())
   {
     try
     {
       fatalRenderFlag_ = true;
 
-      if ( !viewer_->done() )
+      if ( !viewer->done() )
       {
         if (firstFrame_)
         {
-          // Called on the first frame because viewer_->init() is protected
-          viewer_->frame(simulationTime);
-          if ( !viewer_->isRealized() )
+          // Called on the first frame because viewer->init() is protected
+          viewer->frame(simulationTime);
+          if ( !viewer->isRealized() )
           {
-            viewer_->realize();
+            viewer->realize();
           }
           firstFrame_ = false;
         }
 
-        viewer_->advance(simulationTime);
-        viewer_->eventTraversal();
-        viewer_->updateTraversal();
+        viewer->advance(simulationTime);
+        viewer->eventTraversal();
+        viewer->updateTraversal();
 
         // post-update. This is a good place to update anything that relies on the
         // current camera position.
         sendPostCameraFrameNotifications_();
 
-        viewer_->renderingTraversals();
+        viewer->renderingTraversals();
       }
 
 
@@ -455,7 +590,7 @@ int ViewManager::frame(double simulationTime)
 
 int ViewManager::run()
 {
-  return viewer_->ViewerBase::run();
+  return getViewer()->ViewerBase::run();
 }
 
 }

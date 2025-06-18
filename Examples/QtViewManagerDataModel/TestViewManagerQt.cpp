@@ -37,7 +37,7 @@
 #include "simVis/SceneManager.h"
 
 #include "simQt/ViewManagerDataModel.h"
-#include "simQt/ViewWidget.h"
+#include "simQt/ViewerWidgetAdapter.h"
 
 #include <QApplication>
 #include <QDialog>
@@ -72,10 +72,6 @@ MainWindow::MainWindow()
   // create a viewer manager. The "args" are optional.
   viewMan_ = new simVis::ViewManager();
   // Note that the logarithmic depth buffer is not installed
-
-  // disable the default ESC-to-quit event:
-  viewMan_->getViewer()->setKeyEventSetsDone(0);
-  viewMan_->getViewer()->setQuitEventSetsDone(false);
 
   // Create a set of buttons on the side to add/remove views
   QWidget* buttonWidget = new QWidget(this);
@@ -169,22 +165,9 @@ MainWindow::MainWindow()
   connect(noChecksDataModel, SIGNAL(modelReset()), noChecksTreeView, SLOT(expandAll()));
   connect(toggleTree, SIGNAL(toggled(bool)), noChecksDataModel, SLOT(setHierarchical(bool)));
   connect(toggleChecks, SIGNAL(toggled(bool)), noChecksDataModel, SLOT(setUserCheckable(bool)));
-
-  // timer fires a paint event.
-  connect(&timer_, SIGNAL(timeout()), this, SLOT(update()));
-  // timer single shot to avoid infinite loop problems in Qt on MSVC11
-  timer_.setSingleShot(true);
-  timer_.start(10);
 }
 
-void MainWindow::paintEvent(QPaintEvent* e)
-{
-  // refresh all the views.
-  viewMan_->frame();
-  timer_.start();
-}
-
-simVis::ViewManager* MainWindow::getViewManager()
+simVis::ViewManager* MainWindow::getViewManager() const
 {
   return viewMan_.get();
 }
@@ -288,12 +271,14 @@ int main(int argc, char** argv)
     {
       // Make a Qt Widget to hold our view, and add that widget to the
       // main window.
-      QWidget* viewWidget = new simQt::ViewWidget(mainview.get());
-      center->layout()->addWidget(viewWidget);
+      auto* viewerWidget = new simQt::ViewerWidgetAdapter(&win);
+      viewerWidget->setTimerInterval(10);
+      center->layout()->addWidget(viewerWidget);
 
       // attach the scene manager and add it to the view manager.
       mainview->setSceneManager(sceneMan.get());
       win.getViewManager()->addView(mainview.get());
+      viewerWidget->setViewer(win.getViewManager()->getViewer(mainview.get()));
     }
 
     {

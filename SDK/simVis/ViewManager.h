@@ -25,6 +25,7 @@
 #define SIMVIS_VIEW_MANAGER_H 1
 
 #include <functional>
+#include <optional>
 #include <vector>
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
@@ -210,8 +211,10 @@ public:
   /** Enters a run loop that will automatically call frame() continuously. */
   virtual int run();
 
-  /** Access the underlying OSG viewer */
-  osgViewer::CompositeViewer* getViewer() const { return viewer_.get(); }
+  /** Access the underlying OSG viewer for the first view. */
+  osgViewer::CompositeViewer* getViewer() const;
+  /** Access the underlying OSG viewer for a given view. */
+  osg::ref_ptr<osgViewer::CompositeViewer> getViewer(simVis::View* view) const;
 
 protected:
   virtual ~ViewManager();
@@ -219,8 +222,10 @@ protected:
 private:
   void init_();
   void init_(osg::ArgumentParser&);
+  simVis::View* getTopLevelView_(simVis::View* view) const;
 
-  osg::ref_ptr<osgViewer::CompositeViewer> viewer_;
+  osg::ref_ptr<osgViewer::CompositeViewer> initialViewer_;
+  std::map<simVis::View*, osg::ref_ptr<osgViewer::CompositeViewer>> viewers_;
 
   typedef std::vector<osg::ref_ptr<Callback> > Callbacks;
   Callbacks callbacks_;
@@ -241,9 +246,10 @@ private:
 
   osg::ref_ptr<osgGA::GUIEventHandler> resizeHandler_;
   /// Cache fatal rendering flag to prevent rendering to invalid GL canvases
-  bool fatalRenderFlag_;
+  bool fatalRenderFlag_ = false;
 
-  bool firstFrame_;
+  bool firstFrame_ = true;
+  std::optional<osg::ArgumentParser> args_;
 };
 
 /**
