@@ -1052,7 +1052,7 @@ private:
     /** Returns true if the platform is extended */
     bool isExtendedPlatform() const
     {
-      if (lifeSpanMode_ == LIFE_FIRST_LAST_POINT)
+      if (lifeSpanMode_ == LifespanMode::LIFE_FIRST_LAST_POINT)
         return false;
 
       if (sliceStartTime_ == -1.0)
@@ -1316,7 +1316,7 @@ private:
     bool interpolatePos_ = false;
     bool needToClear_ = true;
     bool needToSetToNull_ = true;
-    LifespanMode lifeSpanMode_ = LIFE_FIRST_LAST_POINT;
+    LifespanMode lifeSpanMode_ = LifespanMode::LIFE_FIRST_LAST_POINT;
 
     /** Keep track of a platform update / MultiFrameCoordinate pair */
     struct Entry
@@ -1390,8 +1390,121 @@ private:
   std::map<simData::ObjectId, CommandCache<MemoryCommandSlice<LobGroupCommand, LobGroupPrefs>>> lobCommandCache_;
   std::map<simData::ObjectId, CommandCache<MemoryCommandSlice<ProjectorCommand, ProjectorPrefs>>> projectorCommandCache_;
 #endif
+};
 
+//----------------------------------------------------------------------------
 
+/** Add a reflector to a command slice */
+class MemoryDataStore::ReflectionObserver : public simData::DataStore::DefaultListener
+{
+public:
+  explicit ReflectionObserver(MemoryDataStore& mds)
+    : mds_(mds),
+      beamPreferences_(simData::Reflection::makePlatformPreferences()),
+      customRenderingPreferences_(simData::Reflection::makeCustomRenderingPreferences()),
+      gatePreferences_(simData::Reflection::makeGatePreferences()),
+      laserPreferences_(simData::Reflection::makeLaserPreferences()),
+      lobGroupPreferences_(simData::Reflection::makeLobGroupPreferences()),
+      platformPreferences_(simData::Reflection::makePlatformPreferences()),
+      projectorPreferences_(simData::Reflection::makeProjectorPreferences())
+  {
+  }
+
+  SDK_DISABLE_COPY_MOVE(ReflectionObserver);
+
+  virtual ~ReflectionObserver() = default;
+
+  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  {
+    if (ot == simData::PLATFORM)
+    {
+      auto it = mds_.platforms_.find(newId);
+      if (it == mds_.platforms_.end())
+      {
+        // The data store does not match what was passed in
+        assert(false);
+        return;
+      }
+
+      it->second->commands()->setReflection(platformPreferences_);
+    }
+    else if (ot == simData::CUSTOM_RENDERING)
+    {
+      auto it = mds_.customRenderings_.find(newId);
+      if (it == mds_.customRenderings_.end())
+      {
+        // The data store does not match what was passed in
+        assert(false);
+        return;
+      }
+      it->second->commands()->setReflection(customRenderingPreferences_);
+    }
+    else if (ot == simData::BEAM)
+    {
+      auto it = mds_.beams_.find(newId);
+      if (it == mds_.beams_.end())
+      {
+        // The data store does not match what was passed in
+        assert(false);
+        return;
+      }
+      it->second->commands()->setReflection(beamPreferences_);
+    }
+    else if (ot == simData::GATE)
+    {
+      auto it = mds_.gates_.find(newId);
+      if (it == mds_.gates_.end())
+      {
+        // The data store does not match what was passed in
+        assert(false);
+        return;
+      }
+      it->second->commands()->setReflection(gatePreferences_);
+    }
+    else if (ot == simData::LASER)
+    {
+      auto it = mds_.lasers_.find(newId);
+      if (it == mds_.lasers_.end())
+      {
+        // The data store does not match what was passed in
+        assert(false);
+        return;
+      }
+      it->second->commands()->setReflection(laserPreferences_);
+    }
+    else if (ot == simData::LOB_GROUP)
+    {
+      auto it = mds_.lobGroups_.find(newId);
+      if (it == mds_.lobGroups_.end())
+      {
+        // The data store does not match what was passed in
+        assert(false);
+        return;
+      }
+      it->second->commands()->setReflection(lobGroupPreferences_);
+    }
+    else if (ot == simData::PROJECTOR)
+    {
+      auto it = mds_.projectors_.find(newId);
+      if (it == mds_.projectors_.end())
+      {
+        // The data store does not match what was passed in
+        assert(false);
+        return;
+      }
+      it->second->commands()->setReflection(projectorPreferences_);
+    }
+  }
+
+  private:
+    MemoryDataStore& mds_;
+    std::shared_ptr<simData::Reflection> beamPreferences_;
+    std::shared_ptr<simData::Reflection> customRenderingPreferences_;
+    std::shared_ptr<simData::Reflection> gatePreferences_;
+    std::shared_ptr<simData::Reflection> laserPreferences_;
+    std::shared_ptr<simData::Reflection> lobGroupPreferences_;
+    std::shared_ptr<simData::Reflection> platformPreferences_;
+    std::shared_ptr<simData::Reflection> projectorPreferences_;
 };
 
 //----------------------------------------------------------------------------
@@ -1573,6 +1686,7 @@ void MemoryDataStore::initCompositeListener_()
   local->add(originalIdCache_);
   sliceCacheObserver_ = std::make_shared<SliceCacheObserver>(*this);
   local->add(sliceCacheObserver_);
+  local->add(std::make_shared<ReflectionObserver>(*this));
   addListener(local);
 }
 
@@ -1773,7 +1887,7 @@ void MemoryDataStore::updateBeams_(double time)
   }
 }
 
-simData::MemoryDataStore::BeamEntry* MemoryDataStore::getBeamForGate_(google::protobuf::uint64 gateID)
+simData::MemoryDataStore::BeamEntry* MemoryDataStore::getBeamForGate_(uint64_t gateID)
 {
   Beams::iterator beamIt = beams_.find(gateID);
   if ((beamIt == beams_.end()) || (beamIt->second == nullptr))
@@ -3796,7 +3910,7 @@ template<typename T>
 void MemoryDataStore::MutableSettingsTransactionImpl<T>::commit()
 {
   // performance: skip if there are no changes
-  if (modifiedSettings_->SerializeAsString() != currentSettings_->SerializeAsString())
+  if (*modifiedSettings_ != *currentSettings_)
   {
     committed_ = true; // transaction is valid
 

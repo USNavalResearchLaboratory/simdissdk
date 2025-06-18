@@ -85,9 +85,9 @@ public:
     cullFace_ = osg::CullFace::FRONT_AND_BACK;
     if (useCullFace_)
     {
-      if (prefs.cullface() == simData::FRONT)
+      if (prefs.cullface() == simData::PolygonFace::FRONT)
         cullFace_ = osg::CullFace::FRONT;
-      else if (prefs.cullface() == simData::BACK)
+      else if (prefs.cullface() == simData::PolygonFace::BACK)
         cullFace_ = osg::CullFace::BACK;
     }
     brightness_ = prefs.brightness();
@@ -122,14 +122,14 @@ private:
   osg::Vec3d platPositionOffset_;
   osg::Vec3d orientationOffset_;
   std::string icon_;
-  simData::TextAlignment iconAlignment_ = simData::ALIGN_CENTER_CENTER;
+  simData::TextAlignment iconAlignment_ = simData::TextAlignment::ALIGN_CENTER_CENTER;
   osg::Vec4f overrideColor_;
-  simData::OverrideColorCombineMode combineMode_ = simData::MULTIPLY_COLOR;
+  simData::OverrideColorCombineMode combineMode_ = simData::OverrideColorCombineMode::MULTIPLY_COLOR;
   bool noDepthIcons_ = true;
   bool useCullFace_ = false;
   osg::CullFace::Mode cullFace_ = osg::CullFace::FRONT_AND_BACK;
   int brightness_ = 36;
-  simData::FragmentEffect fragmentEffect_ = simData::FE_NONE;
+  simData::FragmentEffect fragmentEffect_ = simData::FragmentEffect::FE_NONE;
   osg::Vec4f fragmentEffectColor_;
 };
 
@@ -258,9 +258,9 @@ public:
         overrideColor_->setCombineMode(OverrideColor::OFF);
       else
       {
-        if (prefs.overridecolorcombinemode() == simData::REPLACE_COLOR)
+        if (prefs.overridecolorcombinemode() == simData::OverrideColorCombineMode::REPLACE_COLOR)
           overrideColor_->setCombineMode(OverrideColor::REPLACE_COLOR);
-        else if (prefs.overridecolorcombinemode() == simData::MULTIPLY_COLOR)
+        else if (prefs.overridecolorcombinemode() == simData::OverrideColorCombineMode::MULTIPLY_COLOR)
           overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
         else
           overrideColor_->setCombineMode(OverrideColor::INTENSITY_GRADIENT);
@@ -273,9 +273,9 @@ public:
     else
     {
       static const std::map<simData::PolygonFace, osg::CullFace::Mode> s_FACETOMODE = {
-        {simData::FRONT, osg::CullFace::FRONT},
-        {simData::BACK, osg::CullFace::BACK},
-        {simData::FRONT_AND_BACK, osg::CullFace::FRONT_AND_BACK},
+        {simData::PolygonFace::FRONT, osg::CullFace::FRONT},
+        {simData::PolygonFace::BACK, osg::CullFace::BACK},
+        {simData::PolygonFace::FRONT_AND_BACK, osg::CullFace::FRONT_AND_BACK},
       };
       auto iter = s_FACETOMODE.find(prefs.cullface());
       // assert fail means an invalid face was specified

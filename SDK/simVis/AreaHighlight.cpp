@@ -475,39 +475,39 @@ void CompositeHighlightNode::setShape(simData::CircleHilightShape shape)
   LineDrawableHighlightNode* asLineDrawable = dynamic_cast<LineDrawableHighlightNode*>(oldNode.get());
   switch (shape_)
   {
-  case simData::CH_PULSING_CIRCLE:
+  case simData::CircleHilightShape::CH_PULSING_CIRCLE:
     child_ = new AreaHighlightNode();
     break;
 
-  case simData::CH_CIRCLE:
+  case simData::CircleHilightShape::CH_CIRCLE:
     if (!asLineDrawable)
       asLineDrawable = new LineDrawableHighlightNode();
     child_ = asLineDrawable;
     asLineDrawable->makeCircle();
     break;
 
-  case simData::CH_DIAMOND:
+  case simData::CircleHilightShape::CH_DIAMOND:
     if (!asLineDrawable)
       asLineDrawable = new LineDrawableHighlightNode();
     child_ = asLineDrawable;
     asLineDrawable->makeDiamond();
     break;
 
-  case simData::CH_SQUARE:
+  case simData::CircleHilightShape::CH_SQUARE:
     if (!asLineDrawable)
       asLineDrawable = new LineDrawableHighlightNode();
     child_ = asLineDrawable;
     asLineDrawable->makeSquare();
     break;
 
-  case simData::CH_SQUARE_RETICLE:
+  case simData::CircleHilightShape::CH_SQUARE_RETICLE:
     if (!asLineDrawable)
       asLineDrawable = new LineDrawableHighlightNode();
     child_ = asLineDrawable;
     asLineDrawable->makeSquareReticle();
     break;
 
-  case simData::CH_COFFIN:
+  case simData::CircleHilightShape::CH_COFFIN:
     if (!asLineDrawable)
       asLineDrawable = new LineDrawableHighlightNode();
     child_ = asLineDrawable;
@@ -516,7 +516,7 @@ void CompositeHighlightNode::setShape(simData::CircleHilightShape shape)
   }
 
   // Assert failure means an enum was added that isn't covered, or user somehow got
-  // a bad value into the protobuf structure.
+  // a bad value into the field list structure.
   assert(child_.valid());
   if (!child_.valid())
     return;

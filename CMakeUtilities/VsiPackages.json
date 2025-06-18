@@ -46,20 +46,6 @@
       ]
     },
     {
-      "name": "PROTOBUF",
-      "dir": "protobuf",
-      "version": [
-          "29.3",
-          "3.21.12"
-      ],
-      "cmake_vars": [
-        {
-          "name": "Protobuf_USE_STATIC_LIBS",
-          "value": "TRUE"
-        }
-      ]
-    },
-    {
       "name": "QT5",
       "version": "5.15"
     },

@@ -32,16 +32,6 @@ namespace
 {
 const uint64_t PLATFORM_ID = 1;
 
-class Finisher
-{
-public:
-  ~Finisher()
-  {
-    google::protobuf::ShutdownProtobufLibrary();
-  }
-
-} finsher;
-
 void loadCategoryData(simData::DataStore &ds)
 {
   // insert platform

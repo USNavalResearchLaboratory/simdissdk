@@ -132,7 +132,7 @@ public:
   LabelCallback() {}
 
   /** Override the Custom Rendering version of the string to create a custom label. */
-  virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::LabelPrefs_DisplayFields& fields)
+  virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields)
   {
     // The default implementation for a Custom Rendering node's Entity Callback only shows
     // the name pref.  This implementation shows a custom string instead.  You can query

@@ -113,7 +113,7 @@ bool TrackPointsChunk::isEmpty_() const
 //----------------------------------------------------------------------------
 
 /** Creates a new chunk with a maximum size. */
-TrackChunkNode::TrackChunkNode(unsigned int maxSize, simData::TrackPrefs_Mode mode)
+TrackChunkNode::TrackChunkNode(unsigned int maxSize, simData::TrackPrefs::Mode mode)
   : TrackPointsChunk(maxSize),
   mode_(mode)
 {
@@ -185,7 +185,7 @@ void TrackChunkNode::allocate_()
   offset_ = 0;
   count_  = 0;
 
-  if (mode_ == simData::TrackPrefs_Mode_POINT)
+  if (mode_ == simData::TrackPrefs::Mode::POINT)
   {
     // center line (point mode)
     centerPoints_ = new osgEarth::PointDrawable();
@@ -210,14 +210,14 @@ void TrackChunkNode::allocate_()
     centerLine_->allocate(maxSize_);
     lineGroup_->addChild(centerLine_.get());
 
-    if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
+    if (mode_ == simData::TrackPrefs::Mode::BRIDGE)
     {
       drop_ = new osgEarth::LineDrawable(GL_LINES);
       drop_->setDataVariance(osg::Object::DYNAMIC);
       drop_->allocate(2 * maxSize_);
       lineGroup_->addChild(drop_.get());
     }
-    else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
+    else if (mode_ == simData::TrackPrefs::Mode::RIBBON)
     {
       ribbon_ = new osgEarth::LineDrawable(GL_LINES);
       ribbon_->setDataVariance(osg::Object::DYNAMIC);
@@ -246,9 +246,9 @@ void TrackChunkNode::appendEci_(const Locator& locator, const osg::Vec4& color, 
   // always either a point or line drawn
   appendPointLine_(i, local, color);
 
-  if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
+  if (mode_ == simData::TrackPrefs::Mode::BRIDGE)
     appendBridge_(i, local, world, color);
-  else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
+  else if (mode_ == simData::TrackPrefs::Mode::RIBBON)
     appendRibbon_(i, localMatrix, color, hostBounds);
 }
 
@@ -266,9 +266,9 @@ void TrackChunkNode::append_(const Locator& locator, const osg::Vec4& color, con
   // always either a point or line drawn
   appendPointLine_(i, local, color);
 
-  if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
+  if (mode_ == simData::TrackPrefs::Mode::BRIDGE)
     appendBridge_(i, local, world, color);
-  else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
+  else if (mode_ == simData::TrackPrefs::Mode::RIBBON)
   {
     const osg::Matrixd& localMatrix = (i == 0) ? getMatrix() : locator.getLocatorMatrix();
     appendRibbon_(i, localMatrix, color, hostBounds);
@@ -277,7 +277,7 @@ void TrackChunkNode::append_(const Locator& locator, const osg::Vec4& color, con
 
 void TrackChunkNode::appendPointLine_(unsigned int i, const osg::Vec3f& local, const osg::Vec4& color)
 {
-  if (mode_ == simData::TrackPrefs_Mode_POINT)
+  if (mode_ == simData::TrackPrefs::Mode::POINT)
   {
     centerPoints_->setVertex(i, local);
     centerPoints_->setColor(i, color);
@@ -291,7 +291,7 @@ void TrackChunkNode::appendPointLine_(unsigned int i, const osg::Vec3f& local, c
 void TrackChunkNode::appendBridge_(unsigned int i, const osg::Vec3f& local, const osg::Vec3d& world, const osg::Vec4& color)
 {
   // dev error if called with any other mode
-  assert (mode_ == simData::TrackPrefs_Mode_BRIDGE);
+  assert (mode_ == simData::TrackPrefs::Mode::BRIDGE);
   // draw a new drop line (2 verts)
   drop_->setVertex(2*i, local);
   drop_->setVertex(2*i+1, Math::ecefEarthPoint(convertToSim(world), world2local_));
@@ -302,7 +302,7 @@ void TrackChunkNode::appendBridge_(unsigned int i, const osg::Vec3f& local, cons
 void TrackChunkNode::appendRibbon_(unsigned int i, const osg::Matrixd& localMatrix, const osg::Vec4& color, const osg::Vec2& hostBounds)
 {
   // dev error if called with any other mode
-  assert (mode_ == simData::TrackPrefs_Mode_RIBBON);
+  assert (mode_ == simData::TrackPrefs::Mode::RIBBON);
 
   const osg::Matrixd& posMatrix = localMatrix * world2local_;
   const osg::Vec3f left  = osg::Vec3d(hostBounds.x(), 0.0, 0.0) * posMatrix;
@@ -327,7 +327,7 @@ void TrackChunkNode::appendRibbon_(unsigned int i, const osg::Matrixd& localMatr
 /// update the offset and count on each primitive set to draw the proper data.
 void TrackChunkNode::updatePrimitiveSets_()
 {
-  if (mode_ == simData::TrackPrefs_Mode_POINT)
+  if (mode_ == simData::TrackPrefs::Mode::POINT)
   {
     centerPoints_->setFirst(offset_);
     centerPoints_->setCount(count_);
@@ -338,12 +338,12 @@ void TrackChunkNode::updatePrimitiveSets_()
   centerLine_->setFirst(offset_);
   centerLine_->setCount(count_);
 
-  if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
+  if (mode_ == simData::TrackPrefs::Mode::BRIDGE)
   {
     drop_->setFirst(2*offset_);
     drop_->setCount(2*count_);
   }
-  else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
+  else if (mode_ == simData::TrackPrefs::Mode::RIBBON)
   {
     // TODO: fix for the first segment, which only has 2 instead of 6.
     ribbon_->setFirst(6*offset_);
@@ -354,7 +354,7 @@ void TrackChunkNode::updatePrimitiveSets_()
 // only to be called when points are deleted, so that ribbon visual can be fixed to not show links to deleted point
 void TrackChunkNode::fixGraphicsAfterRemoval_()
 {
-  if (mode_ == simData::TrackPrefs_Mode_RIBBON && !isEmpty_() && offset_ > 0)
+  if (mode_ == simData::TrackPrefs::Mode::RIBBON && !isEmpty_() && offset_ > 0)
   {
     // count>0 should mean offset_<size. if assert fails, check that:
     // point add and remove in this class correctly adjust count and offset, and that

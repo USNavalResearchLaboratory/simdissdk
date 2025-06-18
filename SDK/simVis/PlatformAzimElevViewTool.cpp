@@ -259,7 +259,7 @@ void PlatformAzimElevViewTool::applyOverrides_(EntityNode* entity, bool enable)
     if (enable)
     {
       simData::BeamPrefs prefs(beamPrefs_);
-      prefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
+      prefs.set_drawtype(simData::BeamPrefs::DrawType::COVERAGE);
       beam->setPrefsOverride(AZEL_OVERRIDE_TAG, prefs);
 
       simData::BeamUpdate update;

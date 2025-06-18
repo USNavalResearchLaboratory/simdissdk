@@ -19,7 +19,6 @@ set(TEST_FILENAMES
     TestMemoryDataStore.cpp
     TestMemorySlice.cpp
     TestMemRetrieval.cpp
-    TestMessageVisitor.cpp
     TestNewUpdatesListener.cpp
     TestSliceBounds.cpp
     TestProperties.cpp
@@ -57,7 +56,6 @@ add_test(NAME simData_TestListener COMMAND SimDataTests TestListener)
 add_test(NAME simData_TestMemoryDataStore COMMAND SimDataTests TestMemoryDataStore)
 add_test(NAME simData_TestMemorySlice COMMAND SimDataTests TestMemorySlice)
 add_test(NAME simData_TestMemRetrieval COMMAND SimDataTests TestMemRetrieval)
-add_test(NAME simData_TestMessageVisitor COMMAND SimDataTests TestMessageVisitor)
 add_test(NAME simData_TestNewUpdatesListener COMMAND SimDataTests TestNewUpdatesListener)
 add_test(NAME simData_TestSliceBounds COMMAND SimDataTests TestSliceBounds)
 add_test(NAME simData_TestProperties COMMAND SimDataTests TestProperties)

@@ -163,12 +163,12 @@ void BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs, const simData::B
   sv.capRes_ = prefs.capresolution();
 
   sv.drawMode_ =
-    prefs.beamdrawmode() == simData::BeamPrefs::WIRE ? simVis::SVData::DRAW_MODE_WIRE :
-    prefs.beamdrawmode() == simData::BeamPrefs::SOLID ? simVis::SVData::DRAW_MODE_SOLID :
+    prefs.beamdrawmode() == simData::BeamPrefs::DrawMode::WIRE ? simVis::SVData::DRAW_MODE_WIRE :
+    prefs.beamdrawmode() == simData::BeamPrefs::DrawMode::SOLID ? simVis::SVData::DRAW_MODE_SOLID :
     (simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_WIRE);
 
   // only the cap is drawn in coverage draw type
-  sv.drawCone_ = prefs.drawtype() != simData::BeamPrefs_DrawType_COVERAGE;
+  sv.drawCone_ = prefs.drawtype() != simData::BeamPrefs::DrawType::COVERAGE;
 
   // use a "Y-forward" direction vector because the Beam is drawn in ENU LTP space.
   simVis::SVFactory::createNode(*this, sv, osg::Y_AXIS);
@@ -865,7 +865,7 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
   const simData::BeamUpdate& activeUpdate = newUpdate ? *newUpdate : lastUpdateApplied_;
 
 
-  if (activePrefs.drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
+  if (activePrefs.drawtype() == simData::BeamPrefs::DrawType::ANTENNA_PATTERN)
   {
     // beam visual is drawn by antenna pattern impl.
     force = force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawtype));
@@ -908,7 +908,7 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
   if (force || newPrefs)
     antenna_->setPrefs(activePrefs);
 
-  if (activePrefs.drawtype() == simData::BeamPrefs_DrawType_LINE)
+  if (activePrefs.drawtype() == simData::BeamPrefs::DrawType::LINE)
   {
     // beam visual is drawn as a simple line
     // clean up if we switched draw type

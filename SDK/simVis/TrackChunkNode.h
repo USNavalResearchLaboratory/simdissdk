@@ -134,7 +134,7 @@ public:
   * @param maxSize maximum chunk size, in points
   * @param mode track draw mode that this chunk will display
   */
-  TrackChunkNode(unsigned int maxSize, simData::TrackPrefs_Mode mode = simData::TrackPrefs_Mode_POINT);
+  TrackChunkNode(unsigned int maxSize, simData::TrackPrefs::Mode mode = simData::TrackPrefs::Mode::POINT);
 
   /**
   * Add a new point to the chunk
@@ -191,7 +191,7 @@ private:
   osg::ref_ptr<osgEarth::LineDrawable> ribbon_;
   osg::ref_ptr<osgEarth::LineDrawable> drop_;
   osg::Matrixd world2local_;
-  simData::TrackPrefs_Mode mode_;  ///<  track draw mode that this chunk will display
+  simData::TrackPrefs::Mode mode_;  ///<  track draw mode that this chunk will display
 };
 
 } // namespace simVis

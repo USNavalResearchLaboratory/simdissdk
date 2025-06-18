@@ -120,7 +120,7 @@ SIMDATA_DEFINE_DEFAULT_METHODS(LaserProperties);
 SIMDATA_DEFINE_FIELD(LaserProperties, id_, id, uint64_t, 0);
 SIMDATA_DEFINE_FIELD(LaserProperties, hostId_, hostid, uint64_t, 0);
 SIMDATA_DEFINE_FIELD(LaserProperties, originalId_, originalid, uint64_t, 0);
-SIMDATA_DEFINE_FIELD(LaserProperties, coordinateSystem_, coordinatesystem, simData::CoordinateSystemProperties, simData::CoordinateSystemProperties::NED);
+SIMDATA_DEFINE_FIELD(LaserProperties, coordinateSystem_, coordinatesystem, simData::CoordinateSystem, simData::CoordinateSystem::NED);
 SIMDATA_DEFINE_FIELD(LaserProperties, azElRelativeToHostOri_, azelrelativetohostori, bool, false);
 SIMDATA_DEFINE_FIELD_CONST_REF(LaserProperties, source_, source, std::string, "");
 
@@ -154,7 +154,7 @@ SIMDATA_DEFINE_DEFAULT_METHODS(LobGroupProperties);
 SIMDATA_DEFINE_FIELD(LobGroupProperties, id_, id, uint64_t, 0);
 SIMDATA_DEFINE_FIELD(LobGroupProperties, hostId_, hostid, uint64_t, 0);
 SIMDATA_DEFINE_FIELD(LobGroupProperties, originalId_, originalid, uint64_t, 0);
-SIMDATA_DEFINE_FIELD(LobGroupProperties, coordinateSystem_, coordinatesystem, simData::CoordinateSystemProperties, simData::CoordinateSystemProperties::NED);
+SIMDATA_DEFINE_FIELD(LobGroupProperties, coordinateSystem_, coordinatesystem, simData::CoordinateSystem, simData::CoordinateSystem::NED);
 SIMDATA_DEFINE_FIELD(LobGroupProperties, azElRelativeToHostOri_, azelrelativetohostori, bool, false);
 SIMDATA_DEFINE_FIELD_CONST_REF(LobGroupProperties, source_, source, std::string, "");
 
@@ -257,9 +257,9 @@ void TangentPlaneOffsetsProperties::MergeFrom(const TangentPlaneOffsetsPropertie
 SIMDATA_DEFINE_METHODS(CoordinateFrameProperties);
 SIMDATA_DEFINE_SUBFIELD_LIST(CoordinateFrameProperties, referenceLla_, referencella, simData::ReferenceProperties);
 SIMDATA_DEFINE_SUBFIELD_LIST(CoordinateFrameProperties, tangentPlaneOffset_, tangentplaneoffset, simData::TangentPlaneOffsetsProperties);
-SIMDATA_DEFINE_FIELD(CoordinateFrameProperties, coordinateSystem_, coordinatesystem, simData::CoordinateSystemProperties, simData::CoordinateSystemProperties::NED);
-SIMDATA_DEFINE_FIELD(CoordinateFrameProperties, magneticVariance_, magneticvariance, simData::MagneticVarianceProperties, simData::MagneticVarianceProperties::MV_WMM);
-SIMDATA_DEFINE_FIELD(CoordinateFrameProperties, verticalDatum_, verticaldatum, simData::VerticalDatumProperties, simData::VerticalDatumProperties::VD_WGS84);
+SIMDATA_DEFINE_FIELD(CoordinateFrameProperties, coordinateSystem_, coordinatesystem, simData::CoordinateSystem, simData::CoordinateSystem::NED);
+SIMDATA_DEFINE_FIELD(CoordinateFrameProperties, magneticVariance_, magneticvariance, simData::MagneticVariance, simData::MagneticVariance::MV_WMM);
+SIMDATA_DEFINE_FIELD(CoordinateFrameProperties, verticalDatum_, verticaldatum, simData::VerticalDatum, simData::VerticalDatum::VD_WGS84);
 SIMDATA_DEFINE_FIELD(CoordinateFrameProperties, magneticVarianceUserValue_, magneticvarianceuservalue, double, 0.0);
 SIMDATA_DEFINE_FIELD(CoordinateFrameProperties, verticalDatumUserValue_, verticaldatumuservalue, double, 0.0);
 SIMDATA_DEFINE_FIELD(CoordinateFrameProperties, eciReferenceTime_, ecireferencetime, double, 0.0);
@@ -318,6 +318,12 @@ bool CoordinateFrameProperties::operator==(const CoordinateFrameProperties& rhs)
     (eciReferenceTime_ == rhs.eciReferenceTime_));
 }
 
+void CoordinateFrameProperties::Prune()
+{
+  SIMDATA_SUBFIELD_LIST_PRUNE(referenceLla_);
+  SIMDATA_SUBFIELD_LIST_PRUNE(tangentPlaneOffset_);
+}
+
 //---------------------------------------------------------------------------------------------------------
 
 SIMDATA_DEFINE_METHODS(PlatformProperties);
@@ -367,6 +373,10 @@ bool PlatformProperties::operator==(const PlatformProperties& rhs) const
     (source_ == rhs.source_));
 }
 
+void PlatformProperties::Prune()
+{
+  SIMDATA_SUBFIELD_LIST_PRUNE(coordinateFrame_);
+}
 //---------------------------------------------------------------------------------------------------------
 
 SIMDATA_DEFINE_DEFAULT_METHODS(ClassificationProperties);
@@ -563,6 +573,13 @@ bool ScenarioProperties::operator==(const ScenarioProperties& rhs) const
     return false;
 
   return true;
+}
+
+void ScenarioProperties::Prune()
+{
+  SIMDATA_SUBFIELD_LIST_PRUNE(coordinateFrame_);
+  SIMDATA_SUBFIELD_LIST_PRUNE(classification_);
+  SIMDATA_SUBFIELD_LIST_PRUNE(soundFile_);
 }
 
 }

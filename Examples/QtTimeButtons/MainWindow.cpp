@@ -147,7 +147,7 @@ simData::ObjectId MainWindow::addPlatform_(simData::DataStore &dataStore)
   prefs->mutable_commonprefs()->set_draw(true);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_overlayfontpointsize(14);
-  prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_LINE);
+  prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs::Mode::LINE);
   transaction.complete(&prefs);
 
   return result;

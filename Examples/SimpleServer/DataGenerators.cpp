@@ -488,7 +488,7 @@ void ToggleDrawState::generate_(double scenarioTime)
 
 ///////////////////////////////////////////////////////////
 
-/** Colors are in protobuf style, 0xRRGGBBAA */
+/** Colors are in style: 0xRRGGBBAA */
 const uint32_t COLOR_MAP[10] = {
   0xff0000a0, 0xffffffa0, 0x0000ffa0, 0x808080a0, 0xff0000a0,
   0x00ff00a0, 0x0000ffa0, 0xffff00a0, 0xff00ffa0, 0x00ffffa0

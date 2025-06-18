@@ -671,7 +671,7 @@ private:
   /// Updates all the beams
   void updateBeams_(double time);
   /// Gets the beam that corresponds to specified gate
-  BeamEntry* getBeamForGate_(google::protobuf::uint64 gateID);
+  BeamEntry* getBeamForGate_(uint64_t gateID);
   /// Updates a target gate
   void updateTargetGate_(GateEntry* gate, double time);
 
@@ -738,6 +738,8 @@ private:
   class OriginalIdCache;
   /// Improve performance by caching the slice state
   class SliceCacheObserver;
+  /// Add refelection to newly added entities
+  class ReflectionObserver;
 
   /// Key by host id and child type
   struct IdAndTypeKey {

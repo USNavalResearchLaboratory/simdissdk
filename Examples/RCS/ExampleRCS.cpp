@@ -69,7 +69,7 @@ struct AppData
 #ifdef HAVE_IMGUI
   bool draw2D = true;
   bool draw3D = true;
-  simData::Polarity polarity = simData::POL_UNKNOWN;
+  simData::Polarity polarity = simData::Polarity::POL_UNKNOWN;
   float freq = 7000.f;
   float elev = 45.f;
   float detail = 5.;

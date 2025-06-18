@@ -97,23 +97,23 @@ simCore::PolarityType RCSNode::convertPolarity(simData::Polarity pol) const
 {
   switch (pol)
   {
-  case simData::POL_HORIZONTAL:
+  case simData::Polarity::POL_HORIZONTAL:
     return simCore::POLARITY_HORIZONTAL;
-  case simData::POL_VERTICAL:
+  case simData::Polarity::POL_VERTICAL:
     return simCore::POLARITY_VERTICAL;
-  case simData::POL_CIRCULAR:
+  case simData::Polarity::POL_CIRCULAR:
     return simCore::POLARITY_CIRCULAR;
-  case simData::POL_HORZVERT:
+  case simData::Polarity::POL_HORZVERT:
     return simCore::POLARITY_HORZVERT;
-  case simData::POL_VERTHORZ:
+  case simData::Polarity::POL_VERTHORZ:
     return simCore::POLARITY_VERTHORZ;
-  case simData::POL_LEFTCIRC:
+  case simData::Polarity::POL_LEFTCIRC:
     return simCore::POLARITY_LEFTCIRC;
-  case simData::POL_RIGHTCIRC:
+  case simData::Polarity::POL_RIGHTCIRC:
     return simCore::POLARITY_RIGHTCIRC;
-  case simData::POL_LINEAR:
+  case simData::Polarity::POL_LINEAR:
     return simCore::POLARITY_LINEAR;
-  case simData::POL_UNKNOWN:
+  case simData::Polarity::POL_UNKNOWN:
     break;
   }
   return simCore::POLARITY_UNKNOWN;
@@ -146,7 +146,7 @@ void RCSNode::rebuild()
     const float elevation = lastPrefs_->rcselevation();
     const float detail = lastPrefs_->rcsdetail();
     osg::Vec4f color = ColorUtils::RgbaToVec4(lastPrefs_->rcscolor());
-    // rcscolorscale protobuf controls use of gradient color scale, RCSRender wants a bool to set use of rcscolor
+    // rcscolorscale controls use of gradient color scale, RCSRender wants a bool to set use of rcscolor
     // invert pref value for use of rcscolor
     const bool useOverrideColor = !lastPrefs_->rcscolorscale();
 

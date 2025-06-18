@@ -316,7 +316,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   if (showTrack_(prefs))
   {
     // first check time ticks
-    if (prefs.trackprefs().timeticks().drawstyle() != simData::TimeTickPrefs::NONE)
+    if (prefs.trackprefs().timeticks().drawstyle() != simData::TimeTickPrefs::DrawStyle::NONE)
     {
       if (!timeTicks_.valid())
         createTimeTicks_(prefs);
@@ -612,7 +612,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
     // need to update lastUpdate_ and lastUpdateTime_ before calling updateLocator which will reference them and expect them to be up to date
     lastUpdate_ = current;
     lastUpdateTime_ = current.time();
-    if (lastPrefs_.commonprefs().draw() || (lastPrefs_.drawoffbehavior() == simData::PlatformPrefs::DEFAULT_BEHAVIOR))
+    if (lastPrefs_.commonprefs().draw() || (lastPrefs_.drawoffbehavior() == simData::PlatformPrefs::DrawOffBehavior::DEFAULT_BEHAVIOR))
       updateLocator_(current);
 
     // update only if entity should be visible
@@ -678,7 +678,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
 bool PlatformNode::isActive_(const simData::PlatformPrefs& prefs) const
 {
   // the valid_ flag indicates that the platform node has data at current scenario time, but this can be manually overridden by the datadraw flag or drawoffbehavior enum
-  return valid_ && lastPrefs_.commonprefs().datadraw() && (lastPrefs_.commonprefs().draw() || (lastPrefs_.drawoffbehavior() == simData::PlatformPrefs::DEFAULT_BEHAVIOR));
+  return valid_ && lastPrefs_.commonprefs().datadraw() && (lastPrefs_.commonprefs().draw() || (lastPrefs_.drawoffbehavior() == simData::PlatformPrefs::DrawOffBehavior::DEFAULT_BEHAVIOR));
 }
 
 void PlatformNode::setInvalid_()
@@ -697,7 +697,7 @@ void PlatformNode::setInvalid_()
 bool PlatformNode::showTrack_(const simData::PlatformPrefs& prefs) const
 {
   return showTrackTrail_(prefs) &&
-    prefs.trackprefs().trackdrawmode() != simData::TrackPrefs_Mode_OFF;
+    prefs.trackprefs().trackdrawmode() != simData::TrackPrefs::Mode::OFF;
 }
 
 bool PlatformNode::showTrackTrail_(const simData::PlatformPrefs& prefs) const
@@ -740,7 +740,7 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
   track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
 
   // check to see if we need to create time ticks, since time ticks, like track history, can be turned on before platform is actually valid
-  if ((prefs.trackprefs().timeticks().drawstyle() != simData::TimeTickPrefs::NONE) && !timeTicks_.valid())
+  if ((prefs.trackprefs().timeticks().drawstyle() != simData::TimeTickPrefs::DrawStyle::NONE) && !timeTicks_.valid())
     createTimeTicks_(prefs);
 
   return true;
@@ -892,9 +892,9 @@ const simData::PlatformUpdate* PlatformNode::labelUpdate_(const simData::Platfor
 {
   switch (prefs.commonprefs().labelprefs().usevalues())
   {
-  case simData::LabelPrefs::DISPLAY_VALUE:
+  case simData::LabelPrefs::UseValue::DISPLAY_VALUE:
     break;
-  case simData::LabelPrefs::ACTUAL_VALUE:
+  case simData::LabelPrefs::UseValue::ACTUAL_VALUE:
     return &lastUnfilteredUpdate_;
   }
   return &lastUpdate_;
@@ -994,7 +994,7 @@ void PlatformNode::updateOrRemoveEphemerisVector_(bool prefsDraw, const simData:
 void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData::PlatformPrefs& prefs)
 {
   // pulsing circle shape never rotates with platform
-  const bool rotateWithPlatform = prefs.hilightfollowyaw() && prefs.circlehilightshape() != simData::CH_PULSING_CIRCLE;
+  const bool rotateWithPlatform = prefs.hilightfollowyaw() && prefs.circlehilightshape() != simData::CircleHilightShape::CH_PULSING_CIRCLE;
   if (prefsDraw && prefs.drawcirclehilight())
   {
     if (!highlight_.valid())
@@ -1027,7 +1027,7 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
     }
     else if (lastPrefsValid_)
     {
-      const bool lastRotateWithPlatform = lastPrefs_.hilightfollowyaw() && lastPrefs_.circlehilightshape() != simData::CH_PULSING_CIRCLE;
+      const bool lastRotateWithPlatform = lastPrefs_.hilightfollowyaw() && lastPrefs_.circlehilightshape() != simData::CircleHilightShape::CH_PULSING_CIRCLE;
       // See if the owner of highlight needs to switch
       if (rotateWithPlatform != lastRotateWithPlatform)
       {

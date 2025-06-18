@@ -79,47 +79,47 @@ int testFromOsgEarth()
   rv += SDK_ASSERT(conv.toCore(osgEarth::Units::PIXELS) == simCore::Units::UNITLESS);
 
   // Distance to data
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::CENTIMETERS) == simData::UNITS_CENTIMETERS);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::DATA_MILES) == simData::UNITS_DATAMILES);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::FATHOMS) == simData::UNITS_FATHOMS);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::FEET) == simData::UNITS_FEET);
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::CENTIMETERS) == static_cast<int>(simData::DistanceUnits::UNITS_CENTIMETERS));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::DATA_MILES) == static_cast<int>(simData::DistanceUnits::UNITS_DATAMILES));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::FATHOMS) == static_cast<int>(simData::DistanceUnits::UNITS_FATHOMS));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::FEET) == static_cast<int>(simData::DistanceUnits::UNITS_FEET));
   rv += SDK_ASSERT(conv.toData(osgEarth::Units::FEET_US_SURVEY) == 0);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::INCHES) == simData::UNITS_INCHES);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KILOFEET) == simData::UNITS_KILOFEET);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KILOMETERS) == simData::UNITS_KILOMETERS);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KILOYARDS) == simData::UNITS_KILOYARDS);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::METERS) == simData::UNITS_METERS);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::MILES) == simData::UNITS_MILES);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::MILLIMETERS) == simData::UNITS_MILLIMETERS);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::NAUTICAL_MILES) == simData::UNITS_NAUTICAL_MILES);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::YARDS) == simData::UNITS_YARDS);
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::INCHES) == static_cast<int>(simData::DistanceUnits::UNITS_INCHES));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KILOFEET) == static_cast<int>(simData::DistanceUnits::UNITS_KILOFEET));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KILOMETERS) == static_cast<int>(simData::DistanceUnits::UNITS_KILOMETERS));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KILOYARDS) == static_cast<int>(simData::DistanceUnits::UNITS_KILOYARDS));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::METERS) == static_cast<int>(simData::DistanceUnits::UNITS_METERS));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::MILES) == static_cast<int>(simData::DistanceUnits::UNITS_MILES));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::MILLIMETERS) == static_cast<int>(simData::DistanceUnits::UNITS_MILLIMETERS));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::NAUTICAL_MILES) == static_cast<int>(simData::DistanceUnits::UNITS_NAUTICAL_MILES));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::YARDS) == static_cast<int>(simData::DistanceUnits::UNITS_YARDS));
 
   // Angular to data
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::BAM) == simData::UNITS_BAM);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::DEGREES) == simData::UNITS_DEGREES);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::NATO_MILS) == simData::UNITS_MIL);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::RADIANS) == simData::UNITS_RADIANS);
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::BAM) == static_cast<int>(simData::AngleUnits::UNITS_BAM));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::DEGREES) == static_cast<int>(simData::AngleUnits::UNITS_DEGREES));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::NATO_MILS) == static_cast<int>(simData::AngleUnits::UNITS_MIL));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::RADIANS) == static_cast<int>(simData::AngleUnits::UNITS_RADIANS));
   // Decimal Hours has same name as "hours", elapsed time; skip the comparison
   //rv += SDK_ASSERT(conv.toData(osgEarth::Units::DECIMAL_HOURS) == 0);
 
   // temporal to data
   rv += SDK_ASSERT(conv.toData(osgEarth::Units::DAYS) == 0);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::HOURS) == simData::ELAPSED_HOURS);
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::HOURS) == static_cast<int>(simData::ElapsedTimeFormat::ELAPSED_HOURS));
   rv += SDK_ASSERT(conv.toData(osgEarth::Units::MICROSECONDS) == 0);
   rv += SDK_ASSERT(conv.toData(osgEarth::Units::MILLISECONDS) == 0);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::MINUTES) == simData::ELAPSED_MINUTES);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::SECONDS) == simData::ELAPSED_SECONDS);
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::MINUTES) == static_cast<int>(simData::ElapsedTimeFormat::ELAPSED_MINUTES));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::SECONDS) == static_cast<int>(simData::ElapsedTimeFormat::ELAPSED_SECONDS));
   rv += SDK_ASSERT(conv.toData(osgEarth::Units::WEEKS) == 0);
 
   // speed to data
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::FEET_PER_SECOND) == simData::UNITS_FEET_PER_SECOND);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::YARDS_PER_SECOND) == simData::UNITS_YARDS_PER_SECOND);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::METERS_PER_SECOND) == simData::UNITS_METERS_PER_SECOND);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KILOMETERS_PER_SECOND) == simData::UNITS_KILOMETERS_PER_SECOND);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KILOMETERS_PER_HOUR) == simData::UNITS_KILOMETERS_PER_HOUR);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::MILES_PER_HOUR) == simData::UNITS_MILES_PER_HOUR);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::DATA_MILES_PER_HOUR) == simData::UNITS_DATAMILES_PER_HOUR);
-  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KNOTS) == simData::UNITS_KNOTS);
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::FEET_PER_SECOND) == static_cast<int>(simData::SpeedUnits::UNITS_FEET_PER_SECOND));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::YARDS_PER_SECOND) == static_cast<int>(simData::SpeedUnits::UNITS_YARDS_PER_SECOND));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::METERS_PER_SECOND) == static_cast<int>(simData::SpeedUnits::UNITS_METERS_PER_SECOND));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KILOMETERS_PER_SECOND) == static_cast<int>(simData::SpeedUnits::UNITS_KILOMETERS_PER_SECOND));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KILOMETERS_PER_HOUR) == static_cast<int>(simData::SpeedUnits::UNITS_KILOMETERS_PER_HOUR));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::MILES_PER_HOUR) == static_cast<int>(simData::SpeedUnits::UNITS_MILES_PER_HOUR));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::DATA_MILES_PER_HOUR) == static_cast<int>(simData::SpeedUnits::UNITS_DATAMILES_PER_HOUR));
+  rv += SDK_ASSERT(conv.toData(osgEarth::Units::KNOTS) == static_cast<int>(simData::SpeedUnits::UNITS_KNOTS));
 
   // screen to data
   rv += SDK_ASSERT(conv.toData(osgEarth::Units::PIXELS) == 0);
@@ -134,84 +134,84 @@ int testFromData()
   simUtil::UnitTypeConverter conv;
 
   // time to osgEarth
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::ELAPSED_SECONDS) == osgEarth::Units::SECONDS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::ELAPSED_MINUTES) == osgEarth::Units::MINUTES);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::ELAPSED_HOURS) == osgEarth::Units::HOURS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::ElapsedTimeFormat::ELAPSED_SECONDS) == osgEarth::Units::SECONDS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::ElapsedTimeFormat::ELAPSED_MINUTES) == osgEarth::Units::MINUTES);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::ElapsedTimeFormat::ELAPSED_HOURS) == osgEarth::Units::HOURS);
 
   // angle to osgEarth
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_RADIANS) == osgEarth::Units::RADIANS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_DEGREES) == osgEarth::Units::DEGREES);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_DEGREES_MINUTES) == osgEarth::Units::DEGREES);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_DEGREES_MINUTES_SECONDS) == osgEarth::Units::DEGREES);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_UTM) == OSGEARTH_NONE);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_BAM) == osgEarth::Units::BAM);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_MIL) == osgEarth::Units::NATO_MILS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_MILLIRADIANS) == OSGEARTH_NONE);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_RADIANS) == osgEarth::Units::RADIANS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_DEGREES) == osgEarth::Units::DEGREES);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_DEGREES_MINUTES) == osgEarth::Units::DEGREES);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_DEGREES_MINUTES_SECONDS) == osgEarth::Units::DEGREES);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_UTM) == OSGEARTH_NONE);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_BAM) == osgEarth::Units::BAM);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_MIL) == osgEarth::Units::NATO_MILS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_MILLIRADIANS) == OSGEARTH_NONE);
 
   // distance to osgEarth
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_METERS) == osgEarth::Units::METERS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_KILOMETERS) == osgEarth::Units::KILOMETERS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_YARDS) == osgEarth::Units::YARDS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_MILES) == osgEarth::Units::MILES);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_FEET) == osgEarth::Units::FEET);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_INCHES) == osgEarth::Units::INCHES);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_NAUTICAL_MILES) == osgEarth::Units::NAUTICAL_MILES);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_CENTIMETERS) == osgEarth::Units::CENTIMETERS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_MILLIMETERS) == osgEarth::Units::MILLIMETERS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_KILOYARDS) == osgEarth::Units::KILOYARDS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_DATAMILES) == osgEarth::Units::DATA_MILES);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_FATHOMS) == osgEarth::Units::FATHOMS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_KILOFEET) == osgEarth::Units::KILOFEET);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_METERS) == osgEarth::Units::METERS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_KILOMETERS) == osgEarth::Units::KILOMETERS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_YARDS) == osgEarth::Units::YARDS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_MILES) == osgEarth::Units::MILES);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_FEET) == osgEarth::Units::FEET);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_INCHES) == osgEarth::Units::INCHES);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_NAUTICAL_MILES) == osgEarth::Units::NAUTICAL_MILES);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_CENTIMETERS) == osgEarth::Units::CENTIMETERS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_MILLIMETERS) == osgEarth::Units::MILLIMETERS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_KILOYARDS) == osgEarth::Units::KILOYARDS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_DATAMILES) == osgEarth::Units::DATA_MILES);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_FATHOMS) == osgEarth::Units::FATHOMS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_KILOFEET) == osgEarth::Units::KILOFEET);
 
   // speed to osgEarth
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_METERS_PER_SECOND) == osgEarth::Units::METERS_PER_SECOND);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_KILOMETERS_PER_HOUR) == osgEarth::Units::KILOMETERS_PER_HOUR);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_KNOTS) == osgEarth::Units::KNOTS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_MILES_PER_HOUR) == osgEarth::Units::MILES_PER_HOUR);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_FEET_PER_SECOND) == osgEarth::Units::FEET_PER_SECOND);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_KILOMETERS_PER_SECOND) == osgEarth::Units::KILOMETERS_PER_SECOND);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_DATAMILES_PER_HOUR) == osgEarth::Units::DATA_MILES_PER_HOUR);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::UNITS_YARDS_PER_SECOND) == osgEarth::Units::YARDS_PER_SECOND);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::SpeedUnits::UNITS_METERS_PER_SECOND) == osgEarth::Units::METERS_PER_SECOND);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::SpeedUnits::UNITS_KILOMETERS_PER_HOUR) == osgEarth::Units::KILOMETERS_PER_HOUR);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::SpeedUnits::UNITS_KNOTS) == osgEarth::Units::KNOTS);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::SpeedUnits::UNITS_MILES_PER_HOUR) == osgEarth::Units::MILES_PER_HOUR);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::SpeedUnits::UNITS_FEET_PER_SECOND) == osgEarth::Units::FEET_PER_SECOND);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::SpeedUnits::UNITS_KILOMETERS_PER_SECOND) == osgEarth::Units::KILOMETERS_PER_SECOND);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::SpeedUnits::UNITS_DATAMILES_PER_HOUR) == osgEarth::Units::DATA_MILES_PER_HOUR);
+  rv += SDK_ASSERT(conv.toOsgEarth(simData::SpeedUnits::UNITS_YARDS_PER_SECOND) == osgEarth::Units::YARDS_PER_SECOND);
 
   // time to simCore
-  rv += SDK_ASSERT(conv.toCore(simData::ELAPSED_SECONDS) == simCore::Units::SECONDS);
-  rv += SDK_ASSERT(conv.toCore(simData::ELAPSED_MINUTES) == simCore::Units::MINUTES);
-  rv += SDK_ASSERT(conv.toCore(simData::ELAPSED_HOURS) == simCore::Units::HOURS);
+  rv += SDK_ASSERT(conv.toCore(simData::ElapsedTimeFormat::ELAPSED_SECONDS) == simCore::Units::SECONDS);
+  rv += SDK_ASSERT(conv.toCore(simData::ElapsedTimeFormat::ELAPSED_MINUTES) == simCore::Units::MINUTES);
+  rv += SDK_ASSERT(conv.toCore(simData::ElapsedTimeFormat::ELAPSED_HOURS) == simCore::Units::HOURS);
 
   // angle to simCore
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_RADIANS) == simCore::Units::RADIANS);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_DEGREES) == simCore::Units::DEGREES);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_DEGREES_MINUTES) == simCore::Units::DEGREES);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_DEGREES_MINUTES_SECONDS) == simCore::Units::DEGREES);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_UTM) == simCore::Units::UNITLESS);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_BAM) == simCore::Units::BAM);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_MIL) == simCore::Units::MIL);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_MILLIRADIANS) == simCore::Units::MILLIRADIANS);
+  rv += SDK_ASSERT(conv.toCore(simData::AngleUnits::UNITS_RADIANS) == simCore::Units::RADIANS);
+  rv += SDK_ASSERT(conv.toCore(simData::AngleUnits::UNITS_DEGREES) == simCore::Units::DEGREES);
+  rv += SDK_ASSERT(conv.toCore(simData::AngleUnits::UNITS_DEGREES_MINUTES) == simCore::Units::DEGREES);
+  rv += SDK_ASSERT(conv.toCore(simData::AngleUnits::UNITS_DEGREES_MINUTES_SECONDS) == simCore::Units::DEGREES);
+  rv += SDK_ASSERT(conv.toCore(simData::AngleUnits::UNITS_UTM) == simCore::Units::UNITLESS);
+  rv += SDK_ASSERT(conv.toCore(simData::AngleUnits::UNITS_BAM) == simCore::Units::BAM);
+  rv += SDK_ASSERT(conv.toCore(simData::AngleUnits::UNITS_MIL) == simCore::Units::MIL);
+  rv += SDK_ASSERT(conv.toCore(simData::AngleUnits::UNITS_MILLIRADIANS) == simCore::Units::MILLIRADIANS);
 
   // distance to simCore
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_METERS) == simCore::Units::METERS);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_KILOMETERS) == simCore::Units::KILOMETERS);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_YARDS) == simCore::Units::YARDS);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_MILES) == simCore::Units::MILES);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_FEET) == simCore::Units::FEET);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_INCHES) == simCore::Units::INCHES);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_NAUTICAL_MILES) == simCore::Units::NAUTICAL_MILES);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_CENTIMETERS) == simCore::Units::CENTIMETERS);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_MILLIMETERS) == simCore::Units::MILLIMETERS);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_KILOYARDS) == simCore::Units::KILOYARDS);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_DATAMILES) == simCore::Units::DATA_MILES);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_FATHOMS) == simCore::Units::FATHOMS);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_KILOFEET) == simCore::Units::KILOFEET);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_METERS) == simCore::Units::METERS);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_KILOMETERS) == simCore::Units::KILOMETERS);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_YARDS) == simCore::Units::YARDS);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_MILES) == simCore::Units::MILES);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_FEET) == simCore::Units::FEET);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_INCHES) == simCore::Units::INCHES);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_NAUTICAL_MILES) == simCore::Units::NAUTICAL_MILES);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_CENTIMETERS) == simCore::Units::CENTIMETERS);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_MILLIMETERS) == simCore::Units::MILLIMETERS);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_KILOYARDS) == simCore::Units::KILOYARDS);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_DATAMILES) == simCore::Units::DATA_MILES);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_FATHOMS) == simCore::Units::FATHOMS);
+  rv += SDK_ASSERT(conv.toCore(simData::DistanceUnits::UNITS_KILOFEET) == simCore::Units::KILOFEET);
 
   // speed to simCore
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_METERS_PER_SECOND) == simCore::Units::METERS_PER_SECOND);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_KILOMETERS_PER_HOUR) == simCore::Units::KILOMETERS_PER_HOUR);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_KNOTS) == simCore::Units::KNOTS);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_MILES_PER_HOUR) == simCore::Units::MILES_PER_HOUR);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_FEET_PER_SECOND) == simCore::Units::FEET_PER_SECOND);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_KILOMETERS_PER_SECOND) == simCore::Units::KILOMETERS_PER_SECOND);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_DATAMILES_PER_HOUR) == simCore::Units::DATA_MILES_PER_HOUR);
-  rv += SDK_ASSERT(conv.toCore(simData::UNITS_YARDS_PER_SECOND) == simCore::Units::YARDS_PER_SECOND);
+  rv += SDK_ASSERT(conv.toCore(simData::SpeedUnits::UNITS_METERS_PER_SECOND) == simCore::Units::METERS_PER_SECOND);
+  rv += SDK_ASSERT(conv.toCore(simData::SpeedUnits::UNITS_KILOMETERS_PER_HOUR) == simCore::Units::KILOMETERS_PER_HOUR);
+  rv += SDK_ASSERT(conv.toCore(simData::SpeedUnits::UNITS_KNOTS) == simCore::Units::KNOTS);
+  rv += SDK_ASSERT(conv.toCore(simData::SpeedUnits::UNITS_MILES_PER_HOUR) == simCore::Units::MILES_PER_HOUR);
+  rv += SDK_ASSERT(conv.toCore(simData::SpeedUnits::UNITS_FEET_PER_SECOND) == simCore::Units::FEET_PER_SECOND);
+  rv += SDK_ASSERT(conv.toCore(simData::SpeedUnits::UNITS_KILOMETERS_PER_SECOND) == simCore::Units::KILOMETERS_PER_SECOND);
+  rv += SDK_ASSERT(conv.toCore(simData::SpeedUnits::UNITS_DATAMILES_PER_HOUR) == simCore::Units::DATA_MILES_PER_HOUR);
+  rv += SDK_ASSERT(conv.toCore(simData::SpeedUnits::UNITS_YARDS_PER_SECOND) == simCore::Units::YARDS_PER_SECOND);
 
   return rv;
 }
@@ -270,44 +270,44 @@ int testFromCore()
   // potential is not supported in osgEarth, don't bother testing
 
   // Distance to simData
-  rv += SDK_ASSERT(conv.toData(simCore::Units::METERS) == simData::UNITS_METERS);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::KILOMETERS) == simData::UNITS_KILOMETERS);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::YARDS) == simData::UNITS_YARDS);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::MILES) == simData::UNITS_MILES);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::FEET) == simData::UNITS_FEET);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::INCHES) == simData::UNITS_INCHES);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::NAUTICAL_MILES) == simData::UNITS_NAUTICAL_MILES);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::CENTIMETERS) == simData::UNITS_CENTIMETERS);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::MILLIMETERS) == simData::UNITS_MILLIMETERS);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::KILOYARDS) == simData::UNITS_KILOYARDS);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::FATHOMS) == simData::UNITS_FATHOMS);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::KILOFEET) == simData::UNITS_KILOFEET);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::DATA_MILES) == simData::UNITS_DATAMILES);
+  rv += SDK_ASSERT(conv.toData(simCore::Units::METERS) == static_cast<int>(simData::DistanceUnits::UNITS_METERS));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::KILOMETERS) == static_cast<int>(simData::DistanceUnits::UNITS_KILOMETERS));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::YARDS) == static_cast<int>(simData::DistanceUnits::UNITS_YARDS));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::MILES) == static_cast<int>(simData::DistanceUnits::UNITS_MILES));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::FEET) == static_cast<int>(simData::DistanceUnits::UNITS_FEET));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::INCHES) == static_cast<int>(simData::DistanceUnits::UNITS_INCHES));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::NAUTICAL_MILES) == static_cast<int>(simData::DistanceUnits::UNITS_NAUTICAL_MILES));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::CENTIMETERS) == static_cast<int>(simData::DistanceUnits::UNITS_CENTIMETERS));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::MILLIMETERS) == static_cast<int>(simData::DistanceUnits::UNITS_MILLIMETERS));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::KILOYARDS) == static_cast<int>(simData::DistanceUnits::UNITS_KILOYARDS));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::FATHOMS) == static_cast<int>(simData::DistanceUnits::UNITS_FATHOMS));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::KILOFEET) == static_cast<int>(simData::DistanceUnits::UNITS_KILOFEET));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::DATA_MILES) == static_cast<int>(simData::DistanceUnits::UNITS_DATAMILES));
 
   // Angular to simData
-  rv += SDK_ASSERT(conv.toData(simCore::Units::RADIANS) == simData::UNITS_RADIANS);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::DEGREES) == simData::UNITS_DEGREES);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::MILLIRADIANS) == simData::UNITS_MILLIRADIANS);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::BAM) == simData::UNITS_BAM);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::MIL) == simData::UNITS_MIL);
+  rv += SDK_ASSERT(conv.toData(simCore::Units::RADIANS) == static_cast<int>(simData::AngleUnits::UNITS_RADIANS));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::DEGREES) == static_cast<int>(simData::AngleUnits::UNITS_DEGREES));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::MILLIRADIANS) == static_cast<int>(simData::AngleUnits::UNITS_MILLIRADIANS));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::BAM) == static_cast<int>(simData::AngleUnits::UNITS_BAM));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::MIL) == static_cast<int>(simData::AngleUnits::UNITS_MIL));
 
   // temporal to simData
-  rv += SDK_ASSERT(conv.toData(simCore::Units::SECONDS) == simData::ELAPSED_SECONDS);
+  rv += SDK_ASSERT(conv.toData(simCore::Units::SECONDS) == static_cast<int>(simData::ElapsedTimeFormat::ELAPSED_SECONDS));
   rv += SDK_ASSERT(conv.toData(simCore::Units::MILLISECONDS) == 0);
   rv += SDK_ASSERT(conv.toData(simCore::Units::MICROSECONDS) == 0);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::MINUTES) == simData::ELAPSED_MINUTES);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::HOURS) == simData::ELAPSED_HOURS);
+  rv += SDK_ASSERT(conv.toData(simCore::Units::MINUTES) == static_cast<int>(simData::ElapsedTimeFormat::ELAPSED_MINUTES));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::HOURS) == static_cast<int>(simData::ElapsedTimeFormat::ELAPSED_HOURS));
   rv += SDK_ASSERT(conv.toData(simCore::Units::DAYS) == 0);
 
   // speed to simData
-  rv += SDK_ASSERT(conv.toData(simCore::Units::METERS_PER_SECOND) == simData::UNITS_METERS_PER_SECOND);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::KILOMETERS_PER_HOUR) == simData::UNITS_KILOMETERS_PER_HOUR);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::KNOTS) == simData::UNITS_KNOTS);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::MILES_PER_HOUR) == simData::UNITS_MILES_PER_HOUR);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::FEET_PER_SECOND) == simData::UNITS_FEET_PER_SECOND);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::KILOMETERS_PER_SECOND) == simData::UNITS_KILOMETERS_PER_SECOND);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::DATA_MILES_PER_HOUR) == simData::UNITS_DATAMILES_PER_HOUR);
-  rv += SDK_ASSERT(conv.toData(simCore::Units::YARDS_PER_SECOND) == simData::UNITS_YARDS_PER_SECOND);
+  rv += SDK_ASSERT(conv.toData(simCore::Units::METERS_PER_SECOND) == static_cast<int>(simData::SpeedUnits::UNITS_METERS_PER_SECOND));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::KILOMETERS_PER_HOUR) == static_cast<int>(simData::SpeedUnits::UNITS_KILOMETERS_PER_HOUR));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::KNOTS) == static_cast<int>(simData::SpeedUnits::UNITS_KNOTS));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::MILES_PER_HOUR) == static_cast<int>(simData::SpeedUnits::UNITS_MILES_PER_HOUR));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::FEET_PER_SECOND) == static_cast<int>(simData::SpeedUnits::UNITS_FEET_PER_SECOND));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::KILOMETERS_PER_SECOND) == static_cast<int>(simData::SpeedUnits::UNITS_KILOMETERS_PER_SECOND));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::DATA_MILES_PER_HOUR) == static_cast<int>(simData::SpeedUnits::UNITS_DATAMILES_PER_HOUR));
+  rv += SDK_ASSERT(conv.toData(simCore::Units::YARDS_PER_SECOND) == static_cast<int>(simData::SpeedUnits::UNITS_YARDS_PER_SECOND));
 
   // acceleration is not supported in simData, don't bother testing
   // temperature is not supported in simData, don't bother testing

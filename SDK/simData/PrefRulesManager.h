@@ -91,7 +91,7 @@ public:
   * not be updated by normal processing. Only components with authority to override the pref value enforcement will do so.
   * This is useful for cases where a pref update from one source should be flagged to take priority over updates from other sources.
   * @param id  the data store entity id. 0 is not a valid value and will not match any entities.
-  * @param tagStack  the protobuf message field numbers that identify the pref (fully qualified from PlatformPrefs, BeamPrefs, etc.)
+  * @param tagStack  the message field numbers that identify the pref (fully qualified from PlatformPrefs, BeamPrefs, etc.)
   * @param enforce If true, then turn on enforcing, preventing rules from changing the value.  If false, disables the enforcement,
   *   allowing preference rules to work with the value again.
   */
@@ -101,7 +101,7 @@ public:
    * Returns true if the preference value is set to enforcing.  Enforced prefs cannot be changed by Preference Rules.  For
    * more details, see enforcePrefValue().
    * @param id  the data store entity id. 0 is not a valid value and will not match any entities.
-   * @param tagStack  the protobuf message field numbers that identify the pref (fully qualified from PlatformPrefs, BeamPrefs, etc.)
+   * @param tagStack  the message field numbers that identify the pref (fully qualified from PlatformPrefs, BeamPrefs, etc.)
    * @return True if the value is marked for enforcement, false otherwise
    */
   virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack) const = 0;

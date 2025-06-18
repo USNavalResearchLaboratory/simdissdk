@@ -91,7 +91,7 @@ public:
   SIMDATA_DECLARE_FIELD(id_, id, uint64_t);
   SIMDATA_DECLARE_FIELD(hostId_, hostid, uint64_t);
   SIMDATA_DECLARE_FIELD(originalId_, originalid, uint64_t);
-  SIMDATA_DECLARE_FIELD(coordinateSystem_, coordinatesystem, simData::CoordinateSystemProperties);
+  SIMDATA_DECLARE_FIELD(coordinateSystem_, coordinatesystem, simData::CoordinateSystem);
   SIMDATA_DECLARE_FIELD(azElRelativeToHostOri_, azelrelativetohostori, bool);
   SIMDATA_DECLARE_FIELD_CONST_REF(source_, source, std::string);
 };
@@ -104,7 +104,7 @@ public:
   SIMDATA_DECLARE_FIELD(id_, id, uint64_t);
   SIMDATA_DECLARE_FIELD(hostId_, hostid, uint64_t);
   SIMDATA_DECLARE_FIELD(originalId_, originalid, uint64_t);
-  SIMDATA_DECLARE_FIELD(coordinateSystem_, coordinatesystem, simData::CoordinateSystemProperties);
+  SIMDATA_DECLARE_FIELD(coordinateSystem_, coordinatesystem, simData::CoordinateSystem);
   SIMDATA_DECLARE_FIELD(azElRelativeToHostOri_, azelrelativetohostori, bool);
   SIMDATA_DECLARE_FIELD_CONST_REF(source_, source, std::string);
 };
@@ -147,9 +147,9 @@ public:
   SIMDATA_DECLARE_METHODS(CoordinateFrameProperties);
   SIMDATA_DECLARE_SUBFIELD_LIST(referenceLla_, referencella, simData::ReferenceProperties);
   SIMDATA_DECLARE_SUBFIELD_LIST(tangentPlaneOffset_, tangentplaneoffset, simData::TangentPlaneOffsetsProperties);
-  SIMDATA_DECLARE_FIELD(coordinateSystem_, coordinatesystem, simData::CoordinateSystemProperties);
-  SIMDATA_DECLARE_FIELD(magneticVariance_, magneticvariance, simData::MagneticVarianceProperties);
-  SIMDATA_DECLARE_FIELD(verticalDatum_, verticaldatum, simData::VerticalDatumProperties);
+  SIMDATA_DECLARE_FIELD(coordinateSystem_, coordinatesystem, simData::CoordinateSystem);
+  SIMDATA_DECLARE_FIELD(magneticVariance_, magneticvariance, simData::MagneticVariance);
+  SIMDATA_DECLARE_FIELD(verticalDatum_, verticaldatum, simData::VerticalDatum);
   SIMDATA_DECLARE_FIELD(magneticVarianceUserValue_, magneticvarianceuservalue, double);
   SIMDATA_DECLARE_FIELD(verticalDatumUserValue_, verticaldatumuservalue, double);
   SIMDATA_DECLARE_FIELD(eciReferenceTime_, ecireferencetime, double);

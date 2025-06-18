@@ -39,7 +39,6 @@ The SIMDIS SDK depends on the following third party libraries:
 - [EnTT 3.14+](https://github.com/skypjack/entt)
 - [OpenSceneGraph 3.6+](https://www.openscenegraph.org)
 - [osgEarth 3.5+](https://www.osgearth.org)
-- [protobuf 2.6+](https://code.google.com/p/protobuf)
 - [Python 3.6+](https://www.python.org)
 - [Qt 5.5+](https://qt-project.org)
 - [SQLite 3.8+](https://www.sqlite.org)

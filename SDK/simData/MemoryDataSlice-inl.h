@@ -26,9 +26,7 @@
 #include <algorithm>
 #include <limits>
 #include "simData/DataStore.h"
-#include "simData/MessageVisitor/Message.h"
-#include "simData/MessageVisitor/MessageVisitor.h"
-#include "simData/MessageVisitor/protobuf.h"
+#include "simData/DataTypeReflection.h"
 
 namespace simData
 {
@@ -668,9 +666,13 @@ void MemoryCommandSlice<CommandType, PrefType>::modify(typename DataSlice<Comman
     if (modifier->modify(*(updates_[index])) < 0)
     {
       auto it = updates_.begin() + index;
-      delete *it;
-      updates_.erase(it);
-      --size;
+      (*it)->Prune();
+      if ((*it)->updateprefs().isEmpty())
+      {
+        delete* it;
+        updates_.erase(it);
+        --size;
+      }
     }
     else
       ++index;
@@ -901,6 +903,12 @@ void MemoryCommandSlice<CommandType, PrefType>::installNotifier(const std::funct
 }
 
 template<class CommandType, class PrefType>
+void MemoryCommandSlice<CommandType, PrefType>::setReflection(std::shared_ptr<simData::Reflection> reflection)
+{
+  reflection_ = reflection;
+}
+
+template<class CommandType, class PrefType>
 void MemoryCommandSlice<CommandType, PrefType>::limitByTime(double timeWindow)
 {
   if (timeWindow >= 0)
@@ -1121,7 +1129,7 @@ bool MemoryCommandSlice<CommandType, PrefType>::hasRepeatedFields_(const PrefTyp
 template<class CommandType, class PrefType>
 void MemoryCommandSlice<CommandType, PrefType>::clearRepeatedFields_(PrefType* prefs) const
 {
-  prefs->mutable_commonprefs()->mutable_acceptprojectorids()->Clear();
+  prefs->mutable_commonprefs()->mutable_acceptprojectorids()->clear();
 }
 
 template<class CommandType, class PrefType>
@@ -1131,57 +1139,28 @@ void MemoryCommandSlice<CommandType, PrefType>::conditionalClearRepeatedFields_(
     clearRepeatedFields_(prefs);
 }
 
-namespace {
-/// Implementation of the Visitor interface that finds only fields that are set, adding them to the specified fieldList
-class FindSetFieldsVisitor : public simData::protobuf::MessageVisitor::Visitor
-{
-public:
-  FindSetFieldsVisitor(std::vector<std::string>& fieldList)
-    : fieldList_(fieldList)
-  {
-  }
-
-  /**
-  * Visits the field 'descriptor' within the message 'message', and if the field is set, adds that field to the fieldList
-  * @param message Message that contains the field descriptor.  Is a message definition only, and can be
-  *  used to pull out siblings, reflection, and message/class names
-  * @param descriptor Descriptor for the current field.  This is essentially a description of the current
-  *  variable, and contains the variable name and class name for the field.
-  * @param variableName Will contain the fully qualified name of the variable based on variable names (as
-  *  opposed to class names).  This is different from descriptor.full_name(), which uses class names.  For
-  *  example, variableName might be "commonPrefs.offset.x", while descriptor.full_name() might return
-  *  something like "Position.x".  In other words, variableName is cognizant of scope.
-  */
-  virtual void visit(const google::protobuf::Message& message, const google::protobuf::FieldDescriptor& descriptor, const std::string& variableName)
-  {
-    const google::protobuf::Reflection& reflection = *message.GetReflection();
-    if (descriptor.is_repeated())
-    {
-      if (reflection.FieldSize(message, &descriptor) > 0)
-        fieldList_.push_back(variableName);
-    }
-    else if (reflection.HasField(message, &descriptor))
-      fieldList_.push_back(variableName);
-  }
-
-private:
-  std::vector<std::string>& fieldList_;
-};
-}
-
-
 template<class CommandType, class PrefType>
 void MemoryCommandSlice<CommandType, PrefType>::clearCommand_(PrefType* prefs, const PrefType& commandPref)
 {
   std::vector<std::string> fieldList;
-  FindSetFieldsVisitor findSetFieldsVisitor(fieldList);
-  simData::protobuf::MessageVisitor::visit(commandPref, findSetFieldsVisitor);
+  if (!reflection_)
+  {
+    // Should be set after the command slice is created
+    assert(false);
+    return;
+  }
+
+  reflection_->reflection("", [this, &commandPref, &fieldList](const std::string& path, simData::ReflectionDataType type) {
+    if (reflection_->getValue(&commandPref, path).has_value())
+      fieldList.push_back(path);
+    });
+
   // locate the fields that are set in the commandPref, and clear the corresponding fields from the commandPrefsCache_
-  for (std::vector<std::string>::const_iterator iter = fieldList.begin(); iter != fieldList.end(); ++iter)
+  for (const auto& field:  fieldList)
   {
     // clear set field value(s) from the commandPrefsCache_
-    simData::protobuf::clearField(commandPrefsCache_, *iter);
-    simData::protobuf::clearField(*prefs, *iter);
+    reflection_->clearValue(&commandPrefsCache_, field);
+    reflection_->clearValue(prefs, field);
   }
 }
 

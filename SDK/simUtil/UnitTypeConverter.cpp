@@ -158,53 +158,53 @@ UnitTypeConverter::UnitTypeConverter()
   : helper_(new LookupHelper)
 {
   // Linear
-  helper_->add(osgEarth::Units::CENTIMETERS, simCore::Units::CENTIMETERS, simData::UNITS_CENTIMETERS);
-  helper_->add(osgEarth::Units::DATA_MILES, simCore::Units::DATA_MILES, simData::UNITS_DATAMILES);
-  helper_->add(osgEarth::Units::FATHOMS, simCore::Units::FATHOMS, simData::UNITS_FATHOMS);
-  helper_->add(osgEarth::Units::FEET, simCore::Units::FEET, simData::UNITS_FEET);
+  helper_->add(osgEarth::Units::CENTIMETERS, simCore::Units::CENTIMETERS, static_cast<int>(simData::DistanceUnits::UNITS_CENTIMETERS));
+  helper_->add(osgEarth::Units::DATA_MILES, simCore::Units::DATA_MILES, static_cast<int>(simData::DistanceUnits::UNITS_DATAMILES));
+  helper_->add(osgEarth::Units::FATHOMS, simCore::Units::FATHOMS, static_cast<int>(simData::DistanceUnits::UNITS_FATHOMS));
+  helper_->add(osgEarth::Units::FEET, simCore::Units::FEET, static_cast<int>(simData::DistanceUnits::UNITS_FEET));
   helper_->add(osgEarth::Units::FEET_US_SURVEY, simCore::Units::UNITLESS, 0);
-  helper_->add(osgEarth::Units::INCHES, simCore::Units::INCHES, simData::UNITS_INCHES);
-  helper_->add(osgEarth::Units::KILOFEET, simCore::Units::KILOFEET, simData::UNITS_KILOFEET);
-  helper_->add(osgEarth::Units::KILOMETERS, simCore::Units::KILOMETERS, simData::UNITS_KILOMETERS);
-  helper_->add(osgEarth::Units::KILOYARDS, simCore::Units::KILOYARDS, simData::UNITS_KILOYARDS);
-  helper_->add(osgEarth::Units::METERS, simCore::Units::METERS, simData::UNITS_METERS);
-  helper_->add(osgEarth::Units::MILES, simCore::Units::MILES, simData::UNITS_MILES);
-  helper_->add(osgEarth::Units::MILLIMETERS, simCore::Units::MILLIMETERS, simData::UNITS_MILLIMETERS);
-  helper_->add(osgEarth::Units::NAUTICAL_MILES, simCore::Units::NAUTICAL_MILES, simData::UNITS_NAUTICAL_MILES);
-  helper_->add(osgEarth::Units::YARDS, simCore::Units::YARDS, simData::UNITS_YARDS);
+  helper_->add(osgEarth::Units::INCHES, simCore::Units::INCHES, static_cast<int>(simData::DistanceUnits::UNITS_INCHES));
+  helper_->add(osgEarth::Units::KILOFEET, simCore::Units::KILOFEET, static_cast<int>(simData::DistanceUnits::UNITS_KILOFEET));
+  helper_->add(osgEarth::Units::KILOMETERS, simCore::Units::KILOMETERS, static_cast<int>(simData::DistanceUnits::UNITS_KILOMETERS));
+  helper_->add(osgEarth::Units::KILOYARDS, simCore::Units::KILOYARDS, static_cast<int>(simData::DistanceUnits::UNITS_KILOYARDS));
+  helper_->add(osgEarth::Units::METERS, simCore::Units::METERS, static_cast<int>(simData::DistanceUnits::UNITS_METERS));
+  helper_->add(osgEarth::Units::MILES, simCore::Units::MILES, static_cast<int>(simData::DistanceUnits::UNITS_MILES));
+  helper_->add(osgEarth::Units::MILLIMETERS, simCore::Units::MILLIMETERS, static_cast<int>(simData::DistanceUnits::UNITS_MILLIMETERS));
+  helper_->add(osgEarth::Units::NAUTICAL_MILES, simCore::Units::NAUTICAL_MILES, static_cast<int>(simData::DistanceUnits::UNITS_NAUTICAL_MILES));
+  helper_->add(osgEarth::Units::YARDS, simCore::Units::YARDS, static_cast<int>(simData::DistanceUnits::UNITS_YARDS));
 
   // Angular
-  helper_->add(osgEarth::Units::BAM, simCore::Units::BAM, simData::UNITS_BAM);
-  helper_->add(osgEarth::Units::DEGREES, simCore::Units::DEGREES, simData::UNITS_DEGREES_MINUTES_SECONDS);
-  helper_->add(osgEarth::Units::DEGREES, simCore::Units::DEGREES, simData::UNITS_DEGREES_MINUTES);
-  helper_->add(osgEarth::Units::DEGREES, simCore::Units::DEGREES, simData::UNITS_DEGREES);
+  helper_->add(osgEarth::Units::BAM, simCore::Units::BAM, static_cast<int>(simData::AngleUnits::UNITS_BAM));
+  helper_->add(osgEarth::Units::DEGREES, simCore::Units::DEGREES, static_cast<int>(simData::AngleUnits::UNITS_DEGREES_MINUTES_SECONDS));
+  helper_->add(osgEarth::Units::DEGREES, simCore::Units::DEGREES, static_cast<int>(simData::AngleUnits::UNITS_DEGREES_MINUTES));
+  helper_->add(osgEarth::Units::DEGREES, simCore::Units::DEGREES, static_cast<int>(simData::AngleUnits::UNITS_DEGREES));
   // Last one (DEGREES) overrides previous (DEGREES_MINUTES, DEGREES_MINUTES_SECONDS)
-  assert(helper_->toData(simCore::Units::DEGREES) == simData::UNITS_DEGREES);
-  helper_->add(osgEarth::Units::NATO_MILS, simCore::Units::MIL, simData::UNITS_MIL);
-  helper_->add(osgEarth::Units::RADIANS, simCore::Units::RADIANS, simData::UNITS_RADIANS);
+  assert(helper_->toData(simCore::Units::DEGREES) == static_cast<int>(simData::AngleUnits::UNITS_DEGREES));
+  helper_->add(osgEarth::Units::NATO_MILS, simCore::Units::MIL, static_cast<int>(simData::AngleUnits::UNITS_MIL));
+  helper_->add(osgEarth::Units::RADIANS, simCore::Units::RADIANS, static_cast<int>(simData::AngleUnits::UNITS_RADIANS));
   // Decimal Hours has same name as "hours", elapsed time; skip the comparison
   //helper_->add(osgEarth::Units::DECIMAL_HOURS, simCore::Units::UNITLESS, 0);
-  helper_->add(OSGEARTH_NONE, simCore::Units::MILLIRADIANS, simData::UNITS_MILLIRADIANS);
-  helper_->add(OSGEARTH_NONE, simCore::Units::UNITLESS, simData::UNITS_UTM);
+  helper_->add(OSGEARTH_NONE, simCore::Units::MILLIRADIANS, static_cast<int>(simData::AngleUnits::UNITS_MILLIRADIANS));
+  helper_->add(OSGEARTH_NONE, simCore::Units::UNITLESS, static_cast<int>(simData::AngleUnits::UNITS_UTM));
 
   // Elapsed time
   helper_->add(osgEarth::Units::DAYS, simCore::Units::DAYS, 0);
-  helper_->add(osgEarth::Units::HOURS, simCore::Units::HOURS, simData::ELAPSED_HOURS);
+  helper_->add(osgEarth::Units::HOURS, simCore::Units::HOURS, static_cast<int>(simData::ElapsedTimeFormat::ELAPSED_HOURS));
   helper_->add(osgEarth::Units::MICROSECONDS, simCore::Units::MICROSECONDS, 0);
   helper_->add(osgEarth::Units::MILLISECONDS, simCore::Units::MILLISECONDS, 0);
-  helper_->add(osgEarth::Units::SECONDS, simCore::Units::SECONDS, simData::ELAPSED_SECONDS);
-  helper_->add(osgEarth::Units::MINUTES, simCore::Units::MINUTES, simData::ELAPSED_MINUTES);
+  helper_->add(osgEarth::Units::SECONDS, simCore::Units::SECONDS, static_cast<int>(simData::ElapsedTimeFormat::ELAPSED_SECONDS));
+  helper_->add(osgEarth::Units::MINUTES, simCore::Units::MINUTES, static_cast<int>(simData::ElapsedTimeFormat::ELAPSED_MINUTES));
   helper_->add(osgEarth::Units::WEEKS, simCore::Units::UNITLESS, 0);
 
   // Speed
-  helper_->add(osgEarth::Units::FEET_PER_SECOND, simCore::Units::FEET_PER_SECOND, simData::UNITS_FEET_PER_SECOND);
-  helper_->add(osgEarth::Units::YARDS_PER_SECOND, simCore::Units::YARDS_PER_SECOND, simData::UNITS_YARDS_PER_SECOND);
-  helper_->add(osgEarth::Units::METERS_PER_SECOND, simCore::Units::METERS_PER_SECOND, simData::UNITS_METERS_PER_SECOND);
-  helper_->add(osgEarth::Units::KILOMETERS_PER_SECOND, simCore::Units::KILOMETERS_PER_SECOND, simData::UNITS_KILOMETERS_PER_SECOND);
-  helper_->add(osgEarth::Units::KILOMETERS_PER_HOUR, simCore::Units::KILOMETERS_PER_HOUR, simData::UNITS_KILOMETERS_PER_HOUR);
-  helper_->add(osgEarth::Units::MILES_PER_HOUR, simCore::Units::MILES_PER_HOUR, simData::UNITS_MILES_PER_HOUR);
-  helper_->add(osgEarth::Units::DATA_MILES_PER_HOUR, simCore::Units::DATA_MILES_PER_HOUR, simData::UNITS_DATAMILES_PER_HOUR);
-  helper_->add(osgEarth::Units::KNOTS, simCore::Units::KNOTS, simData::UNITS_KNOTS);
+  helper_->add(osgEarth::Units::FEET_PER_SECOND, simCore::Units::FEET_PER_SECOND, static_cast<int>(simData::SpeedUnits::UNITS_FEET_PER_SECOND));
+  helper_->add(osgEarth::Units::YARDS_PER_SECOND, simCore::Units::YARDS_PER_SECOND, static_cast<int>(simData::SpeedUnits::UNITS_YARDS_PER_SECOND));
+  helper_->add(osgEarth::Units::METERS_PER_SECOND, simCore::Units::METERS_PER_SECOND, static_cast<int>(simData::SpeedUnits::UNITS_METERS_PER_SECOND));
+  helper_->add(osgEarth::Units::KILOMETERS_PER_SECOND, simCore::Units::KILOMETERS_PER_SECOND, static_cast<int>(simData::SpeedUnits::UNITS_KILOMETERS_PER_SECOND));
+  helper_->add(osgEarth::Units::KILOMETERS_PER_HOUR, simCore::Units::KILOMETERS_PER_HOUR, static_cast<int>(simData::SpeedUnits::UNITS_KILOMETERS_PER_HOUR));
+  helper_->add(osgEarth::Units::MILES_PER_HOUR, simCore::Units::MILES_PER_HOUR, static_cast<int>(simData::SpeedUnits::UNITS_MILES_PER_HOUR));
+  helper_->add(osgEarth::Units::DATA_MILES_PER_HOUR, simCore::Units::DATA_MILES_PER_HOUR, static_cast<int>(simData::SpeedUnits::UNITS_DATAMILES_PER_HOUR));
+  helper_->add(osgEarth::Units::KNOTS, simCore::Units::KNOTS, static_cast<int>(simData::SpeedUnits::UNITS_KNOTS));
 
   // Screen
   helper_->add(osgEarth::Units::PIXELS, simCore::Units::UNITLESS, 0);
@@ -272,22 +272,22 @@ const osgEarth::UnitsType& UnitTypeConverter::toOsgEarth(const simCore::Units& c
 
 const osgEarth::UnitsType& UnitTypeConverter::toOsgEarth(simData::ElapsedTimeFormat data) const
 {
-  return helper_->toOsgEarth(data);
+  return helper_->toOsgEarth(static_cast<int>(data));
 }
 
 const osgEarth::UnitsType& UnitTypeConverter::toOsgEarth(simData::AngleUnits data) const
 {
-  return helper_->toOsgEarth(data);
+  return helper_->toOsgEarth(static_cast<int>(data));
 }
 
 const osgEarth::UnitsType& UnitTypeConverter::toOsgEarth(simData::DistanceUnits data) const
 {
-  return helper_->toOsgEarth(data);
+  return helper_->toOsgEarth(static_cast<int>(data));
 }
 
 const osgEarth::UnitsType& UnitTypeConverter::toOsgEarth(simData::SpeedUnits data) const
 {
-  return helper_->toOsgEarth(data);
+  return helper_->toOsgEarth(static_cast<int>(data));
 }
 
 const osgEarth::UnitsType& UnitTypeConverter::toOsgEarthFromData(int data) const
@@ -302,22 +302,22 @@ const simCore::Units& UnitTypeConverter::toCore(const osgEarth::UnitsType& osg) 
 
 const simCore::Units& UnitTypeConverter::toCore(simData::ElapsedTimeFormat data) const
 {
-  return helper_->toCore(data);
+  return helper_->toCore(static_cast<int>(data));
 }
 
 const simCore::Units& UnitTypeConverter::toCore(simData::AngleUnits data) const
 {
-  return helper_->toCore(data);
+  return helper_->toCore(static_cast<int>(data));
 }
 
 const simCore::Units& UnitTypeConverter::toCore(simData::DistanceUnits data) const
 {
-  return helper_->toCore(data);
+  return helper_->toCore(static_cast<int>(data));
 }
 
 const simCore::Units& UnitTypeConverter::toCore(simData::SpeedUnits data) const
 {
-  return helper_->toCore(data);
+  return helper_->toCore(static_cast<int>(data));
 }
 
 const simCore::Units& UnitTypeConverter::toCoreFromData(int data) const

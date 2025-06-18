@@ -389,11 +389,6 @@ else()
     set(osgQOpenGL_FOUND OFF) # Helpful for correct Config.cmake
 endif()
 
-# Parts of simQt depend on simData's protobuf generated code
-if(TARGET simDataProto)
-    target_link_libraries(simQt PRIVATE simDataProto)
-endif()
-
 if(UNIX)
     # UNIX libs that link against simQt need to specify X11 lib on command line
     target_link_libraries(simQt PUBLIC X11)
