@@ -145,6 +145,10 @@ private:
 
 ///////////////////////////////////////////////////////////////////////
 
+/**
+ * Base class that adapts both osgQOpenGLWidget and osgQOpenGLWindow. Nearly all methods are
+ * forwarded practically as-is to the appropriate adapted widget/window.
+ */
 class GlPlatformInterface
 {
 public:
@@ -176,6 +180,7 @@ public:
 
 ///////////////////////////////////////////////////////////////////////
 
+/** GlPlatformInterface instance for a osgQOpenGLWindow. */
 class GlWindowPlatform : public GlPlatformInterface
 {
 public:
@@ -211,6 +216,7 @@ private:
 
 ///////////////////////////////////////////////////////////////////////
 
+/** GlPlatformInterface instance for a osgQOpenGLWidget. */
 class GlWidgetPlatform : public GlPlatformInterface
 {
 public:
@@ -659,6 +665,14 @@ void ViewerWidgetAdapter::postGlInitialize_()
   simVis::applyMesaGeometryShaderFix(gc);
 
   Q_EMIT initialized();
+}
+
+QSize ViewerWidgetAdapter::sizeHint() const
+{
+  auto oldHint = QWidget::sizeHint();
+  if (oldHint.width() == 0 && oldHint.height() == 0)
+    return QSize(640, 480);
+  return oldHint;
 }
 
 }

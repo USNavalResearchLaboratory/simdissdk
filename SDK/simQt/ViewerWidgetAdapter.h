@@ -126,6 +126,9 @@ public:
   /** Combines create() with QCoreApplication::processEvents(), as a convenience */
   void createAndProcessEvents();
 
+  // From QWidget:
+  virtual QSize sizeHint() const override;
+
 Q_SIGNALS:
   void initialized();
   void glResized(int w, int h);
