@@ -106,7 +106,7 @@ MainWindow::MainWindow()
   buttonDialog->show();
 
   // Create the ViewerWidgetAdapter, and set the central widget to it
-  auto viewerWidget = new simQt::ViewerWidgetAdapter(this);
+  auto viewerWidget = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, this);
   viewerWidget->setViewer(viewMan_->getViewer());
   viewerWidget->setTimerInterval(33); // 30 hz
   connect(viewerWidget, &simQt::ViewerWidgetAdapter::aboutToPaintGl, this, &MainWindow::notifyFrameUpdate_);

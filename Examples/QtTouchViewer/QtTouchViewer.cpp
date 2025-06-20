@@ -275,7 +275,7 @@ int main(int argc, char** argv)
   inset->applyManipulatorSettings(*mainview);
 
   // Make the ViewerWidgetAdapter
-  auto* viewWidget = new simQt::ViewerWidgetAdapter(&win);
+  auto* viewWidget = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, &win);
   viewWidget->setViewer(win.getViewManager()->getViewer());
   win.setCentralWidget(viewWidget);
 

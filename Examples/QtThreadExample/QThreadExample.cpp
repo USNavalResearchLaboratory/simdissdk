@@ -104,7 +104,7 @@ int main(int argc, char **argv)
   SdkQThreadExample::MyMainWindow win(viewMan.get(), dataStore);
 
   // Make the ViewerWidgetAdapter
-  auto* viewWidget = new simQt::ViewerWidgetAdapter(&win);
+  auto* viewWidget = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, &win);
   viewWidget->setViewer(viewMan->getViewer());
   viewWidget->setTimerInterval(20);
   win.setCentralWidget(viewWidget);

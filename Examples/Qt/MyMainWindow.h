@@ -40,7 +40,7 @@ public:
   {
     viewMan_ = viewMan;
 
-    viewerWidget_ = new simQt::ViewerWidgetAdapter(this);
+    viewerWidget_ = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, this);
     viewerWidget_->setViewer(viewMan_->getViewer());
     setCentralWidget(viewerWidget_);
 

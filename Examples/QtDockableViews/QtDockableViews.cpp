@@ -113,7 +113,7 @@ simQt::ViewerWidgetAdapter* MyMainWindow::newWidget_(const QString& viewName)
 {
   osg::ref_ptr<simVis::View> view = createView_(*viewManager_, viewName);
 
-  simQt::ViewerWidgetAdapter* viewWidget = new simQt::ViewerWidgetAdapter(this);
+  simQt::ViewerWidgetAdapter* viewWidget = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, this);
   viewWidget->setViewer(viewManager_->getViewer(view.get()));
   viewWidget->setTimerInterval(timerInterval_);
   viewWidget->setMinimumSize(2, 2);

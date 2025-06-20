@@ -275,7 +275,7 @@ int main(int argc, char** argv)
     {
       // Make a Qt Widget to hold our view, and add that widget to the
       // main window.
-      auto* viewerWidget = new simQt::ViewerWidgetAdapter(&win);
+      auto* viewerWidget = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, &win);
       viewerWidget->setTimerInterval(10);
       center->layout()->addWidget(viewerWidget);
 

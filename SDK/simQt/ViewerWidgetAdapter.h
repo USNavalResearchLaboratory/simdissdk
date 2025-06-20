@@ -26,8 +26,9 @@
 #include <QWidget>
 #include "simCore/Common/Common.h"
 
-class osgQOpenGLWindow;
 class QOpenGLContext;
+class QOpenGLWidget;
+class QOpenGLWindow;
 class QSurfaceFormat;
 namespace osgViewer {
   class GraphicsWindow;
@@ -37,28 +38,52 @@ namespace osg { class GraphicsContext; }
 
 namespace simQt {
 
-class SignalingGlWindow;
+class GlPlatformInterface;
+
+/** Specifies the OpenGL implementation to use with the ViewerWidgetAdapter. */
+enum class GlImplementation {
+  /**
+   * Use the osgQOpenGLWindow-based implementation. This implementation offers
+   * potentially faster rendering performance but may exhibit issues with
+   * Qt::WidgetWithChildrenShortcut contexts because of QWindow vs QWidget issues.
+   */
+  Window,
+
+  /**
+   * Use the osgQOpenGLWidget-based implementation. This implementation ensures
+   * correct behavior with Qt::WidgetWithChildrenShortcut contexts but may have
+   * slower rendering performance compared to the Window implementation.
+   */
+  Widget
+};
 
 /**
- * Adapter QWidget that will adapt an owned osgQt osgQOpenGLWindow to a widget. This
- * results in a faster rendering than using osgQOpenGLWidget natively, and fixes
- * various issues with using osgQOpenGLWindow without the adapter (such as mouse
- * interactions with the window).
+ * @brief Adapter QWidget that allows seamless switching between an osgQOpenGLWindow-based or an osgQOpenGLWidget-based rendering solution.
  *
- * This class is intended to be a direct replacement for osgQOpenGLWindow, and should
- * be more effective in every typical use case than either osgQOpenGLWindow or
- * osgQOpenGLWidget.
+ * This class provides a unified interface for embedding either an `osgQOpenGLWindow` or an `osgQOpenGLWidget`
+ * within a Qt application. It addresses the challenges of integrating these third-party osgQOpenGL components
+ * into a standard QWidget-based layout and event handling system.
  *
- * It is recommended to use `simVis::ViewManager::setUseMultipleViewers(true)` when
- * you use this with a ViewManager instance, especially if expecting to use multiple
- * widgets with a single ViewManager.
+ * When configured to use `osgQOpenGLWindow`, this adapter offers potentially faster rendering performance.
+ * However, due to the underlying QWindow nature of `osgQOpenGLWindow`, standard Qt shortcut handling
+ * using `Qt::WidgetWithChildrenShortcut` contexts may not function correctly. This limitation is mitigated
+ * when using the `osgQOpenGLWidget` configuration.
+ *
+ * When configured to use `osgQOpenGLWidget`, this configuration may have slower rendering performance than
+ * the `osgQOpenGLWindow` based configuration.
+ *
+ * This class is intended to be a versatile replacement for direct usage of either `osgQOpenGLWindow` or
+ * `osgQOpenGLWidget`, providing a flexible and adaptable solution for various use cases.
+ *
+ * @note It is recommended to use `simVis::ViewManager::setUseMultipleViewers(true)` when using this with a
+ *       ViewManager instance, especially if expecting to use multiple widgets with a single ViewManager.
  */
 class SDKQT_EXPORT ViewerWidgetAdapter : public QWidget
 {
   Q_OBJECT;
 
 public:
-  explicit ViewerWidgetAdapter(QWidget* parent = nullptr);
+  explicit ViewerWidgetAdapter(GlImplementation glImpl, QWidget* parent = nullptr);
   virtual ~ViewerWidgetAdapter();
   SDK_DISABLE_COPY_MOVE(ViewerWidgetAdapter);
 
@@ -81,13 +106,15 @@ public:
   /** Retrieve the graphics window */
   osgViewer::GraphicsWindow* getGraphicsWindow() const;
 
-  /** Retrieve the OpenGL Window class */
-  osgQOpenGLWindow* glWindow() const;
+  /** Retrieve the OpenGL Widget class; only if constructed with Window mode. */
+  QOpenGLWidget* glWidget() const;
+  /** Retrieve the OpenGL Window class; only if constructed with Widget mode. */
+  QOpenGLWindow* glWindow() const;
+  /** Retrieves the OpenGL Context, in Qt format; works in both configurations. */
+  QOpenGLContext* qtGraphicsContext() const;
 
   /** Sets the graphics format on the window */
   void setFormat(const QSurfaceFormat& format);
-  /** Retrieves the OpenGL Context, in Qt format */
-  QOpenGLContext* qtGraphicsContext() const;
   /** Makes the GL context current */
   void makeCurrent();
   /** Notify that the previous makeCurrent() is complete. */
@@ -121,7 +148,7 @@ private:
   /** Initializes the surface format based on OSG defaults */
   void initializeSurfaceFormat_();
 
-  SignalingGlWindow* glWindow_ = nullptr;
+  GlPlatformInterface* glPlatform_ = nullptr;
 };
 
 }
