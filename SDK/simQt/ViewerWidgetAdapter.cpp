@@ -21,7 +21,12 @@
  *
  */
 #include <functional>
+#include <memory>
 #include <QCoreApplication>
+#include <QDragEnterEvent>
+#include <QDragLeaveEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
 #include <QVBoxLayout>
 #include "osg/DisplaySettings"
 #include "osgViewer/Viewer"
@@ -141,6 +146,79 @@ private:
   std::function<void(int, int)> notifyResize_;
   std::function<void()> notifyPrePaint_;
   std::function<void()> notifyPostPaint_;
+};
+
+///////////////////////////////////////////////////////////////////////
+
+/** Simple helper function to clone a drag-and-drop event. */
+std::unique_ptr<QEvent> cloneDragDropEvent_(const QEvent* evt)
+{
+  switch (evt->type())
+  {
+  case QEvent::DragEnter:
+  {
+    const QDragEnterEvent* dragEnterEvent = static_cast<const QDragEnterEvent*>(evt);
+    return std::make_unique<QDragEnterEvent>(dragEnterEvent->pos(), dragEnterEvent->possibleActions(), dragEnterEvent->mimeData(), dragEnterEvent->mouseButtons(), dragEnterEvent->keyboardModifiers());
+  }
+  case QEvent::DragLeave:
+    return std::make_unique<QDragLeaveEvent>();
+  case QEvent::DragMove:
+  {
+    const QDragMoveEvent* dragMoveEvent = static_cast<const QDragMoveEvent*>(evt);
+    return std::make_unique<QDragMoveEvent>(dragMoveEvent->pos(), dragMoveEvent->possibleActions(), dragMoveEvent->mimeData(), dragMoveEvent->mouseButtons(), dragMoveEvent->keyboardModifiers());
+  }
+  case QEvent::Drop:
+  {
+    const QDropEvent* dropEvent = static_cast<const QDropEvent*>(evt);
+    return std::make_unique<QDropEvent>(dropEvent->pos(), dropEvent->possibleActions(), dropEvent->mimeData(), dropEvent->mouseButtons(), dropEvent->keyboardModifiers());
+  }
+  default:
+    break;
+  }
+  return {};
+}
+
+///////////////////////////////////////////////////////////////////////
+
+/**
+ * Forwards drag/drop events to a given lambda. Useful, for example, to capture drag/drop from a
+ * QOpenGLWindow using its QWidget holder. Recommended usage:
+ * <code>
+ *   widget->installEventFilter(new simQt::DragDropEventFilter(
+ *     [this](QEvent* evt) { return event(evt); },
+ *     widget));
+ * </code>
+ */
+class DragDropEventFilter : public QObject
+{
+public:
+  explicit DragDropEventFilter(const std::function<bool(QEvent*)>& lambda, QObject* parent = nullptr)
+    : lambda_(lambda)
+  {
+  }
+
+protected:
+  // From QObject:
+  virtual bool eventFilter(QObject* watched, QEvent* event) override
+  {
+    if (lambda_)
+    {
+      switch (event->type())
+      {
+      case QEvent::DragEnter:
+      case QEvent::DragMove:
+      case QEvent::DragLeave:
+      case QEvent::Drop:
+        return lambda_(event);
+      default:
+        break;
+      }
+    }
+    return QObject::eventFilter(watched, event); // Let other events pass through
+  }
+
+private:
+  std::function<bool(QEvent*)> lambda_;
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -512,21 +590,26 @@ ViewerWidgetAdapter::ViewerWidgetAdapter(GlImplementation glImpl, QWidget* paren
 
   QVBoxLayout* layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
-  QWidget* glWidget = glPlatform_->widget();
-  layout->addWidget(glWidget);
+  QWidget* windowOrWidgetContainer = glPlatform_->widget();
+  layout->addWidget(windowOrWidgetContainer);
   setLayout(layout);
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusPolicy(Qt::StrongFocus);
   // The widget also needs strong focus for OSG key processing to work
-  glWidget->setFocusPolicy(Qt::StrongFocus);
+  windowOrWidgetContainer->setFocusPolicy(Qt::StrongFocus);
 
-  // Intercept drag and drop events, converted to signals
-  const auto& evtFilter = [this](QEvent* evt) {
-    Q_EMIT dragDropEventIntercepted(evt);
-    return true;
-    };
-  // TODO SIM-18430: Is this required, helpful, or something we want for a widget-based solution?
-  glPlatform_->installEventFilter(new simQt::DragDropEventFilter(evtFilter, glWidget));
+  // Intercept drag and drop events for the window, try to process as our own
+  if (glImpl == GlImplementation::Window)
+  {
+    const auto& evtFilter = [windowOrWidgetContainer, this](QEvent* evt) -> bool {
+      auto clonedEvent = cloneDragDropEvent_(evt);
+      if (clonedEvent)
+        QCoreApplication::postEvent(this, clonedEvent.release());
+      return true;
+      };
+    glPlatform_->installEventFilter(new simQt::DragDropEventFilter(evtFilter, this));
+    windowOrWidgetContainer->setAcceptDrops(true);
+  }
 
   // Fix auto-repeat
   glPlatform_->installEventFilter(new simQt::AutoRepeatFilter(this));

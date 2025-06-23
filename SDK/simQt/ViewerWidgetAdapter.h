@@ -46,6 +46,8 @@ enum class GlImplementation {
    * Use the osgQOpenGLWindow-based implementation. This implementation offers
    * potentially faster rendering performance but may exhibit issues with
    * Qt::WidgetWithChildrenShortcut contexts because of QWindow vs QWidget issues.
+   * Window mode also does not cleanly integrate with drag-and-drop, and you may
+   * get more drag enter/leave messages than anticipated.
    */
   Window,
 
@@ -135,13 +137,6 @@ Q_SIGNALS:
   void aboutToPaintGl();
   void glPainted();
   void frameSwapped();
-
-  /**
-   * Emitted when a drag-and-drop event on the QOpenGLWindow is generated. This
-   * may be a drag, drop, move, or leave event. If you need drag and drop support,
-   * connect this signal to a function that executes your event() function.
-   */
-  void dragDropEventIntercepted(QEvent* evt);
 
 private Q_SLOTS:
   /** Called when the graphics context initializes, before initialized() emitted, applying graphics context fixes */
