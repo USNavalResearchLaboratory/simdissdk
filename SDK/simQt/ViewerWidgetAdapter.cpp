@@ -186,6 +186,7 @@ class GlWindowPlatform : public GlPlatformInterface
 public:
   explicit GlWindowPlatform(QWidget* parent = nullptr);
   virtual ~GlWindowPlatform();
+  SDK_DISABLE_COPY_MOVE(GlWindowPlatform);
 
   virtual QWidget* widget() override;
   virtual QOpenGLWidget* glWidget() const override;
@@ -222,6 +223,7 @@ class GlWidgetPlatform : public GlPlatformInterface
 public:
   explicit GlWidgetPlatform(QWidget* parent = nullptr);
   virtual ~GlWidgetPlatform() override;
+  SDK_DISABLE_COPY_MOVE(GlWidgetPlatform);
 
   virtual QWidget* widget() override;
   virtual QOpenGLWidget* glWidget() const override;

@@ -1910,7 +1910,7 @@ void MemoryDataStore::updateTargetGate_(GateEntry* gate, double time)
 
   BeamEntry* beam = getBeamForGate_(gate->properties()->hostid());
   // target gates can only be hosted by target beams. if assert fails, run away.
-  assert(beam->properties()->type() == BeamProperties::Type::TARGET);
+  assert(beam && beam->properties()->type() == BeamProperties::Type::TARGET);
   if (!beam || !beam->properties()->has_hostid() || beam->properties()->type() != BeamProperties::Type::TARGET || !beam->preferences()->has_targetid())
   {
     gate->updates()->setCurrent(nullptr);
