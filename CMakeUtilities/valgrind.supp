@@ -355,8 +355,9 @@
    match-leak-kinds: reachable
    ...
    fun:*google*protobuf*internal*OnShutdown*
+   ...
    fun:_dl_init
-   obj:/lib64/ld-2.12.so
+   obj:/lib64/ld-2.*.so
    ...
 }
 
