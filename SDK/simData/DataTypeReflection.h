@@ -84,8 +84,8 @@ public:
   explicit ReflectionValue(const std::vector<std::string>& values);
   explicit ReflectionValue(const std::vector<uint64_t>& values);
 
-  ReflectionValue(const ReflectionValue& other) = default;
-  ReflectionValue& operator=(const ReflectionValue& other) = default;
+  ReflectionValue(const ReflectionValue& other);
+  ReflectionValue& operator=(const ReflectionValue& other);
   ReflectionValue(ReflectionValue&&) = default;
   ReflectionValue& operator=(ReflectionValue&&) = default;
 

@@ -56,6 +56,17 @@ int testReflectionValue()
   rv += SDK_ASSERT(valueString == simData::ReflectionValue("Test2"));
   rv += SDK_ASSERT(valueString != simData::ReflectionValue(static_cast<uint64_t>(1)));
 
+  // Test copy assignment, which also tests the copy constructor
+  simData::ReflectionValue copyValueUint64 = valueUint64;
+  rv += SDK_ASSERT(valueUint64 == copyValueUint64);
+  rv += SDK_ASSERT(valueUint64 == simData::ReflectionValue(static_cast<uint64_t>(2)));
+  rv += SDK_ASSERT(copyValueUint64 == simData::ReflectionValue(static_cast<uint64_t>(2)));
+
+  simData::ReflectionValue copyValueString = valueString;
+  rv += SDK_ASSERT(valueString == copyValueString);
+  rv += SDK_ASSERT(valueString == simData::ReflectionValue("Test2"));
+  rv += SDK_ASSERT(copyValueString == simData::ReflectionValue("Test2"));
+
   return rv;
 }
 

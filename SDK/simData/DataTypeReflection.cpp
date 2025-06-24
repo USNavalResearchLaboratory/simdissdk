@@ -83,6 +83,63 @@ ReflectionValue::ReflectionValue(const std::vector<uint64_t>& values)
 {
 }
 
+ReflectionValue::ReflectionValue(const ReflectionValue& other)
+{
+  switch (other.type())
+  {
+  case ReflectionDataType::Unknown:
+    break;
+
+  case ReflectionDataType::Boolean:
+    data_ = other.getBoolean();
+    break;
+
+  case ReflectionDataType::Int32:
+  case ReflectionDataType::Enumeration:
+    data_ = other.getInt32();
+    break;
+
+  case ReflectionDataType::Uint32:
+    data_ = other.getUint32();
+    break;
+
+  case ReflectionDataType::Uint64:
+    data_ = other.getUint64();
+    break;
+
+  case ReflectionDataType::Float:
+    data_ = other.getFloat();
+    break;
+
+  case ReflectionDataType::Double:
+    data_ = other.getDouble();
+    break;
+
+  case ReflectionDataType::String:
+    data_ = std::make_unique<std::string>(other.getString());
+    break;
+
+  case ReflectionDataType::StringVector:
+    data_ = std::make_unique<std::vector<std::string>>(other.getStrings());
+    break;
+
+  case ReflectionDataType::IdVector:
+    data_ = std::make_unique<std::vector<uint64_t>>(other.getIds());
+    break;
+  }
+
+  enumerationText_ = other.enumerationText_;
+}
+
+// Copy Assignment Operator (using copy-and-swap idiom)
+ReflectionValue& ReflectionValue::operator=(const ReflectionValue& other)
+{
+  ReflectionValue temp(other);
+  std::swap(data_, temp.data_);
+  std::swap(enumerationText_, temp.enumerationText_);
+  return *this;
+}
+
 ReflectionValue::~ReflectionValue()
 {
 }
