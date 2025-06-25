@@ -54,7 +54,11 @@ enum class GlImplementation {
   /**
    * Use the osgQOpenGLWidget-based implementation. This implementation ensures
    * correct behavior with Qt::WidgetWithChildrenShortcut contexts but may have
-   * slower rendering performance compared to the Window implementation.
+   * slower rendering performance compared to the Window implementation. The widget
+   * implementation is not valid until it is first shown, and cannot be created
+   * without being shown. To work around this, an off-screen GL context is created
+   * if the create() function is called before initialization. This context is
+   * temporary and will be deleted on initialization.
    */
   Widget
 };

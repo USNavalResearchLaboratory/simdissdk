@@ -27,6 +27,8 @@
 #include <QDragLeaveEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
+#include <QOffscreenSurface>
+#include <QOpenGLContext>
 #include <QVBoxLayout>
 #include "osg/DisplaySettings"
 #include "osgViewer/Viewer"
@@ -232,7 +234,7 @@ class GlPlatformInterface
 public:
   virtual ~GlPlatformInterface() = default;
 
-  virtual QWidget* widget() = 0;
+  virtual QWidget* widget() const = 0;
   virtual QOpenGLWidget* glWidget() const = 0;
   virtual QOpenGLWindow* glWindow() const = 0;
   virtual QOpenGLContext* qtGraphicsContext() const = 0;
@@ -266,7 +268,7 @@ public:
   virtual ~GlWindowPlatform();
   SDK_DISABLE_COPY_MOVE(GlWindowPlatform);
 
-  virtual QWidget* widget() override;
+  virtual QWidget* widget() const override;
   virtual QOpenGLWidget* glWidget() const override;
   virtual QOpenGLWindow* glWindow() const override;
   virtual QOpenGLContext* qtGraphicsContext() const override;
@@ -303,7 +305,7 @@ public:
   virtual ~GlWidgetPlatform() override;
   SDK_DISABLE_COPY_MOVE(GlWidgetPlatform);
 
-  virtual QWidget* widget() override;
+  virtual QWidget* widget() const override;
   virtual QOpenGLWidget* glWidget() const override;
   virtual QOpenGLWindow* glWindow() const override;
   virtual QOpenGLContext* qtGraphicsContext() const override;
@@ -328,6 +330,8 @@ public:
 
 private:
   SignalingGlWidget* adaptedWidget_ = nullptr;
+  std::unique_ptr<QOpenGLContext> proxyContext_;
+  std::unique_ptr<QOffscreenSurface> offscreenSurface_;
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -342,7 +346,7 @@ GlWindowPlatform::~GlWindowPlatform()
   delete glWindow_;
 }
 
-QWidget* GlWindowPlatform::widget()
+QWidget* GlWindowPlatform::widget() const
 {
   return glWindow_->asWidget();
 }
@@ -452,6 +456,16 @@ void GlWindowPlatform::connectToInitializedSignal(const std::function<void()>& i
 GlWidgetPlatform::GlWidgetPlatform(QWidget* parent)
 {
   adaptedWidget_ = new SignalingGlWidget(parent);
+
+  // Set up a first connection to the initialized signal, so that we delete and
+  // clear out our surface and proxy context if it was previously created.
+  QMetaObject::Connection delProxyContext;
+  delProxyContext = QObject::connect(adaptedWidget_, &SignalingGlWidget::initialized, [this, delProxyContext]() {
+    proxyContext_.reset();
+    offscreenSurface_.reset();
+    // Only ever initialize once
+    adaptedWidget_->disconnect(delProxyContext);
+    });
 }
 
 GlWidgetPlatform::~GlWidgetPlatform()
@@ -459,7 +473,7 @@ GlWidgetPlatform::~GlWidgetPlatform()
   delete adaptedWidget_;
 }
 
-QWidget* GlWidgetPlatform::widget()
+QWidget* GlWidgetPlatform::widget() const
 {
   return adaptedWidget_;
 }
@@ -478,31 +492,64 @@ QOpenGLWindow* GlWidgetPlatform::glWindow() const
 void GlWidgetPlatform::setFormat(const QSurfaceFormat& format)
 {
   adaptedWidget_->setFormat(format);
+  if (proxyContext_ && offscreenSurface_)
+  {
+    offscreenSurface_->setFormat(format);
+    proxyContext_->setFormat(format);
+  }
 }
 
 QOpenGLContext* GlWidgetPlatform::qtGraphicsContext() const
 {
-  return adaptedWidget_->context();
+  // If the widget is not valid, then context will be null
+  if (adaptedWidget_->isValid())
+    return adaptedWidget_->context();
+  // Fall back on the proxy context, which may be null without create()
+  return proxyContext_.get();
 }
 
 void GlWidgetPlatform::makeCurrent()
 {
-  adaptedWidget_->makeCurrent();
+  if (adaptedWidget_->isValid())
+    adaptedWidget_->makeCurrent();
+  else if (proxyContext_ && offscreenSurface_)
+    proxyContext_->makeCurrent(offscreenSurface_.get());
 }
 
 void GlWidgetPlatform::doneCurrent()
 {
-  adaptedWidget_->doneCurrent();
+  if (adaptedWidget_->isValid())
+    adaptedWidget_->doneCurrent();
+  else if (proxyContext_ && offscreenSurface_)
+    proxyContext_->doneCurrent();
 }
 
 bool GlWidgetPlatform::isValid() const
 {
-  return adaptedWidget_->isValid();
+  return adaptedWidget_->isValid() ||
+    (proxyContext_ && proxyContext_->isValid());
 }
 
 void GlWidgetPlatform::create()
 {
-  // QOpenGLWidget doesn't support explicit create
+  // Avoid no-op
+  if (adaptedWidget_->isValid())
+    return;
+
+  // There is no way to create a QOpenGLWidget without showing it. But we can
+  // create a proxy graphics context on an offscreen surface and create that,
+  // then set it up as a shared context. Lazy creation, only when needed
+  if (offscreenSurface_ && proxyContext_ && proxyContext_->isValid())
+    return;
+  // Creating one, creates the other
+  assert(!offscreenSurface_ && !proxyContext_);
+
+  offscreenSurface_ = std::make_unique<QOffscreenSurface>();
+  offscreenSurface_->setFormat(adaptedWidget_->format());
+  offscreenSurface_->create();
+  proxyContext_ = std::make_unique<QOpenGLContext>();
+  proxyContext_->setFormat(adaptedWidget_->format());
+  proxyContext_->create();
 }
 
 osg::GraphicsContext* GlWidgetPlatform::getGraphicsContext() const
