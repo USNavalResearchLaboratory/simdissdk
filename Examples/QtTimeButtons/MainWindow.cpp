@@ -114,7 +114,7 @@ MainWindow::MainWindow()
 
   resize(800, 600);
   setWindowTitle("Qt Time Buttons SDK Example");
-  view->lookAt(51.5072, 0.1276, 6500000, 0, -90, 0);
+  view->lookAt(51.5072, 0.1276, 0, 0, -90, 6500000);
 }
 
 void MainWindow::notifyFrameUpdate_()
