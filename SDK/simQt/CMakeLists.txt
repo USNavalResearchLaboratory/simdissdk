@@ -81,6 +81,7 @@ if(TARGET simData)
         ${SIMQT_INC}CategoryTreeModel.h
         ${SIMQT_INC}DataTableComboBox.h
         ${SIMQT_INC}EntityCategoryFilter.h
+        ${SIMQT_INC}EntityDrawFilter.h
         ${SIMQT_INC}EntityFilter.h
         ${SIMQT_INC}EntityFilterLineEdit.h
         ${SIMQT_INC}EntityNameFilter.h
@@ -232,6 +233,7 @@ if(TARGET simData)
         ${SIMQT_SRC}CategoryTreeModel.cpp
         ${SIMQT_SRC}DataTableComboBox.cpp
         ${SIMQT_SRC}EntityCategoryFilter.cpp
+        ${SIMQT_SRC}EntityDrawFilter.cpp
         ${SIMQT_SRC}EntityFilterLineEdit.cpp
         ${SIMQT_SRC}EntityNameFilter.cpp
         ${SIMQT_SRC}EntityProxyModel.cpp
