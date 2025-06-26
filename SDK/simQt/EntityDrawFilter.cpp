@@ -59,6 +59,11 @@ public:
     parent_.checkDrawState_(id);
   }
 
+  virtual void onChange(simData::DataStore* source) override
+  {
+    parent_.checkDirty_();
+  }
+
 private:
   EntityDrawFilter& parent_;
 };
@@ -153,11 +158,20 @@ EntityDrawFilter::Draw EntityDrawFilter::drawFilter() const
 
 void EntityDrawFilter::setDrawFilterInternal_(int draw)
 {
-  if (draw_ != static_cast<Draw>(draw))
-  {
-    draw_ = static_cast<Draw>(draw);
-    Q_EMIT filterUpdated();
-  }
+  const Draw newDraw = static_cast<Draw>(draw);
+  if (draw_ == newDraw)
+    return;
+  draw_ = newDraw;
+  dirty_ = false;
+  Q_EMIT filterUpdated();
+}
+
+void EntityDrawFilter::checkDirty_()
+{
+  if (!dirty_)
+    return;
+  dirty_ = false;
+  Q_EMIT filterUpdated();
 }
 
 void EntityDrawFilter::checkDrawState_(simData::ObjectId entityId)
@@ -176,9 +190,9 @@ void EntityDrawFilter::checkDrawState_(simData::ObjectId entityId)
   else // add to map if new entry
     entityDrawStates_[entityId] = drawState;
 
-  // notify if filtering
-  if (draw_ != Draw::BOTH)
-    Q_EMIT filterUpdated();
+  // set dirty flag if filtering and it's not already set
+  if (draw_ != Draw::BOTH && !dirty_)
+    dirty_ = true;
 }
 
 bool EntityDrawFilter::getDrawState_(simData::ObjectId entityId) const

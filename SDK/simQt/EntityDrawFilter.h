@@ -97,12 +97,15 @@ private Q_SLOTS:
 private:
   class DataStoreListener;
 
+  /** Check dirty flag to emit update notification */
+  void checkDirty_();
   /** Check if the draw state changed for the specified entity */
   void checkDrawState_(simData::ObjectId entityId);
   /** Get the draw state for the specified entity */
   bool getDrawState_(simData::ObjectId entityId) const;
 
   simData::DataStore& dataStore_;
+  bool dirty_ = false; ///< indicates filter has changed and update needs to be emitted
   bool showWidget_ = false; ///< indicates whether this filter should produce a widget or not
   Draw draw_ = Draw::BOTH;  ///< draw state of entities to filter on
   std::map<simData::ObjectId, bool> entityDrawStates_; ///< map of entity id to draw state
