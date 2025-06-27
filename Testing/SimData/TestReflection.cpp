@@ -34,6 +34,54 @@ int testReflectionValue()
 {
   int rv = 0;
 
+  // Verify Boolean
+  simData::ReflectionValue valueBoolean(true);
+  rv += SDK_ASSERT(valueBoolean.type() == simData::ReflectionDataType::Boolean);
+  rv += SDK_ASSERT(valueBoolean.getBoolean() == true);
+  valueBoolean.setBoolean(false);
+  rv += SDK_ASSERT(valueBoolean.type() == simData::ReflectionDataType::Boolean);
+  rv += SDK_ASSERT(valueBoolean.getBoolean() == false);
+  rv += SDK_ASSERT(valueBoolean != simData::ReflectionValue(true));
+  rv += SDK_ASSERT(valueBoolean == simData::ReflectionValue(false));
+  rv += SDK_ASSERT(valueBoolean != simData::ReflectionValue("ShouldNotMatch"));
+  // Test copy assignment, which also tests the copy constructor
+  simData::ReflectionValue copyValueBoolean = valueBoolean;
+  rv += SDK_ASSERT(valueBoolean == copyValueBoolean);
+  rv += SDK_ASSERT(valueBoolean == simData::ReflectionValue(false));
+  rv += SDK_ASSERT(copyValueBoolean == simData::ReflectionValue(false));
+
+  // Verify int32_t
+  simData::ReflectionValue valueInt32(static_cast<int32_t>(1));
+  rv += SDK_ASSERT(valueInt32.type() == simData::ReflectionDataType::Int32);
+  rv += SDK_ASSERT(valueInt32.getInt32() == 1);
+  valueInt32.setInt32(2);
+  rv += SDK_ASSERT(valueInt32.type() == simData::ReflectionDataType::Int32);
+  rv += SDK_ASSERT(valueInt32.getInt32() == 2);
+  rv += SDK_ASSERT(valueInt32 != simData::ReflectionValue(static_cast<int32_t>(1)));
+  rv += SDK_ASSERT(valueInt32 == simData::ReflectionValue(static_cast<int32_t>(2)));
+  rv += SDK_ASSERT(valueInt32 != simData::ReflectionValue("ShouldNotMatch"));
+  // Test copy assignment, which also tests the copy constructor
+  simData::ReflectionValue copyValueInt32 = valueInt32;
+  rv += SDK_ASSERT(valueInt32 == copyValueInt32);
+  rv += SDK_ASSERT(valueInt32 == simData::ReflectionValue(static_cast<int32_t>(2)));
+  rv += SDK_ASSERT(copyValueInt32 == simData::ReflectionValue(static_cast<int32_t>(2)));
+
+  // Verify uint32_t
+  simData::ReflectionValue valueUint32(static_cast<uint32_t>(1));
+  rv += SDK_ASSERT(valueUint32.type() == simData::ReflectionDataType::Uint32);
+  rv += SDK_ASSERT(valueUint32.getUint32() == 1);
+  valueUint32.setUint32(2);
+  rv += SDK_ASSERT(valueUint32.type() == simData::ReflectionDataType::Uint32);
+  rv += SDK_ASSERT(valueUint32.getUint32() == 2);
+  rv += SDK_ASSERT(valueUint32 != simData::ReflectionValue(static_cast<uint32_t>(1)));
+  rv += SDK_ASSERT(valueUint32 == simData::ReflectionValue(static_cast<uint32_t>(2)));
+  rv += SDK_ASSERT(valueUint32 != simData::ReflectionValue("ShouldNotMatch"));
+  // Test copy assignment, which also tests the copy constructor
+  simData::ReflectionValue copyValueUint32 = valueUint32;
+  rv += SDK_ASSERT(valueUint32 == copyValueUint32);
+  rv += SDK_ASSERT(valueUint32 == simData::ReflectionValue(static_cast<uint32_t>(2)));
+  rv += SDK_ASSERT(copyValueUint32 == simData::ReflectionValue(static_cast<uint32_t>(2)));
+
   // Verify uint64_t
   simData::ReflectionValue valueUint64(static_cast<uint64_t>(1));
   rv += SDK_ASSERT(valueUint64.type() == simData::ReflectionDataType::Uint64);
@@ -44,6 +92,43 @@ int testReflectionValue()
   rv += SDK_ASSERT(valueUint64 != simData::ReflectionValue(static_cast<uint64_t>(1)));
   rv += SDK_ASSERT(valueUint64 == simData::ReflectionValue(static_cast<uint64_t>(2)));
   rv += SDK_ASSERT(valueUint64 != simData::ReflectionValue("ShouldNotMatch"));
+  // Test copy assignment, which also tests the copy constructor
+  simData::ReflectionValue copyValueUint64 = valueUint64;
+  rv += SDK_ASSERT(valueUint64 == copyValueUint64);
+  rv += SDK_ASSERT(valueUint64 == simData::ReflectionValue(static_cast<uint64_t>(2)));
+  rv += SDK_ASSERT(copyValueUint64 == simData::ReflectionValue(static_cast<uint64_t>(2)));
+
+  // Verify double
+  simData::ReflectionValue valueDouble(1.0);
+  rv += SDK_ASSERT(valueDouble.type() == simData::ReflectionDataType::Double);
+  rv += SDK_ASSERT(valueDouble.getDouble() == 1.0);
+  valueDouble.setDouble(2.0);
+  rv += SDK_ASSERT(valueDouble.type() == simData::ReflectionDataType::Double);
+  rv += SDK_ASSERT(valueDouble.getDouble() == 2.0);
+  rv += SDK_ASSERT(valueDouble != simData::ReflectionValue(1.0));
+  rv += SDK_ASSERT(valueDouble == simData::ReflectionValue(2.0));
+  rv += SDK_ASSERT(valueDouble != simData::ReflectionValue("ShouldNotMatch"));
+  // Test copy assignment, which also tests the copy constructor
+  simData::ReflectionValue copyValueDouble = valueDouble;
+  rv += SDK_ASSERT(valueDouble == copyValueDouble);
+  rv += SDK_ASSERT(valueDouble == simData::ReflectionValue(2.0));
+  rv += SDK_ASSERT(copyValueDouble == simData::ReflectionValue(2.0));
+
+  // Verify float
+  simData::ReflectionValue valueFloat(1.0f);
+  rv += SDK_ASSERT(valueFloat.type() == simData::ReflectionDataType::Float);
+  rv += SDK_ASSERT(valueFloat.getFloat() == 1.0f);
+  valueFloat.setFloat(2.0f);
+  rv += SDK_ASSERT(valueFloat.type() == simData::ReflectionDataType::Float);
+  rv += SDK_ASSERT(valueFloat.getFloat() == 2.0f);
+  rv += SDK_ASSERT(valueFloat != simData::ReflectionValue(1.0f));
+  rv += SDK_ASSERT(valueFloat == simData::ReflectionValue(2.0f));
+  rv += SDK_ASSERT(valueFloat != simData::ReflectionValue("ShouldNotMatch"));
+  // Test copy assignment, which also tests the copy constructor
+  simData::ReflectionValue copyValueFloat = valueFloat;
+  rv += SDK_ASSERT(valueFloat == copyValueFloat);
+  rv += SDK_ASSERT(valueFloat == simData::ReflectionValue(2.0f));
+  rv += SDK_ASSERT(copyValueFloat == simData::ReflectionValue(2.0f));
 
   // Verify std::string
   simData::ReflectionValue valueString("Test");
@@ -55,17 +140,49 @@ int testReflectionValue()
   rv += SDK_ASSERT(valueString != simData::ReflectionValue("Test"));
   rv += SDK_ASSERT(valueString == simData::ReflectionValue("Test2"));
   rv += SDK_ASSERT(valueString != simData::ReflectionValue(static_cast<uint64_t>(1)));
-
   // Test copy assignment, which also tests the copy constructor
-  simData::ReflectionValue copyValueUint64 = valueUint64;
-  rv += SDK_ASSERT(valueUint64 == copyValueUint64);
-  rv += SDK_ASSERT(valueUint64 == simData::ReflectionValue(static_cast<uint64_t>(2)));
-  rv += SDK_ASSERT(copyValueUint64 == simData::ReflectionValue(static_cast<uint64_t>(2)));
-
   simData::ReflectionValue copyValueString = valueString;
   rv += SDK_ASSERT(valueString == copyValueString);
   rv += SDK_ASSERT(valueString == simData::ReflectionValue("Test2"));
   rv += SDK_ASSERT(copyValueString == simData::ReflectionValue("Test2"));
+
+  {
+    // Verify std::vector of std::string
+    std::vector<std::string> strings = { "Test", "Test2" };
+    simData::ReflectionValue valueStringVector(strings);
+    rv += SDK_ASSERT(valueStringVector.type() == simData::ReflectionDataType::StringVector);
+    rv += SDK_ASSERT(valueStringVector.getStrings() == strings);
+    std::vector<std::string> strings2 = { "Test3", "Test4" };
+    valueStringVector.setStrings(strings2);
+    rv += SDK_ASSERT(valueStringVector.type() == simData::ReflectionDataType::StringVector);
+    rv += SDK_ASSERT(valueStringVector.getStrings() == strings2);
+    rv += SDK_ASSERT(valueStringVector != simData::ReflectionValue(strings));
+    rv += SDK_ASSERT(valueStringVector == simData::ReflectionValue(strings2));
+    rv += SDK_ASSERT(valueStringVector != simData::ReflectionValue(static_cast<uint64_t>(1)));
+    // Test copy assignment, which also tests the copy constructor
+    simData::ReflectionValue copyValueStringVector = valueStringVector;
+    rv += SDK_ASSERT(valueStringVector == copyValueStringVector);
+    rv += SDK_ASSERT(valueStringVector == simData::ReflectionValue(strings2));
+    rv += SDK_ASSERT(copyValueStringVector == simData::ReflectionValue(strings2));
+  }
+
+  // Verify std::vector of uint64_t
+  std::vector<uint64_t> ids = { 1, 2 };
+  simData::ReflectionValue valueIdVector(ids);
+  rv += SDK_ASSERT(valueIdVector.type() == simData::ReflectionDataType::IdVector);
+  rv += SDK_ASSERT(valueIdVector.getIds() == ids);
+  std::vector<uint64_t> ids2 = { 3, 4 };
+  valueIdVector.setIds(ids2);
+  rv += SDK_ASSERT(valueIdVector.type() == simData::ReflectionDataType::IdVector);
+  rv += SDK_ASSERT(valueIdVector.getIds() == ids2);
+  rv += SDK_ASSERT(valueIdVector != simData::ReflectionValue(ids));
+  rv += SDK_ASSERT(valueIdVector == simData::ReflectionValue(ids2));
+  rv += SDK_ASSERT(valueIdVector != simData::ReflectionValue(static_cast<uint64_t>(1)));
+  // Test copy assignment, which also tests the copy constructor
+  simData::ReflectionValue copyValueIdVector = valueIdVector;
+  rv += SDK_ASSERT(valueIdVector == copyValueIdVector);
+  rv += SDK_ASSERT(valueIdVector == simData::ReflectionValue(ids2));
+  rv += SDK_ASSERT(copyValueIdVector == simData::ReflectionValue(ids2));
 
   return rv;
 }

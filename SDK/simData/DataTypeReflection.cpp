@@ -152,6 +152,12 @@ bool ReflectionValue::operator==(const ReflectionValue& rhs) const
   if (std::holds_alternative<StringPtr>(data_))
     return getString() == rhs.getString();
 
+  if (std::holds_alternative<StringVectorPtr>(data_))
+    return getStrings() == rhs.getStrings();
+
+  if (std::holds_alternative<IdVectorPtr>(data_))
+    return getIds() == rhs.getIds();
+
   return data_ == rhs.data_;
 }
 
