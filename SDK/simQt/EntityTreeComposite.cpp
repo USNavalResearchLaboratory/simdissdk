@@ -696,13 +696,7 @@ void EntityTreeComposite::showFilters_()
   layout->setContentsMargins(2, 2, 2, 2);
   for (auto it = filterWidgets.begin(); it != filterWidgets.end(); ++it)
   {
-    // create a label for each widget, using the widget WindowTitle as text
-    QGroupBox* groupBox = new QGroupBox((*it)->windowTitle(), filterDialog_);
-    QVBoxLayout* gbLayout = new QVBoxLayout(groupBox);
-    gbLayout->setContentsMargins(2, 2, 2, 2);
-    gbLayout->addWidget(*it);
-    groupBox->setLayout(gbLayout);
-    layout->addWidget(groupBox);
+    layout->addWidget(*it);
   }
 
   // connect to the close signal, to clean up resources
