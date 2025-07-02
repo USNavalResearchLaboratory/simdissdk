@@ -24,6 +24,7 @@
 #include <cassert>
 #include <QAction>
 #include <QApplication>
+#include <QBitmap>
 #include <QDesktopWidget>
 #include <QDir>
 #include <QFileInfo>
@@ -32,6 +33,7 @@
 #include <QLabel>
 #include <QMainWindow>
 #include <QPainter>
+#include <QPainterPath>
 #include <QScreen>
 #include <QTabBar>
 #include <QTimer>
@@ -82,6 +84,9 @@ static const DockWidget::ExtraFeatures DEFAULT_EXTRA_FEATURES(
   DockWidget::DockUndockAndRedockHint |
   DockWidget::DockWidgetCloseOnEscapeKey
 );
+
+/** Amount of rounding around the edges for Dock Widget; 8 and 11 work well on Win11 */
+static constexpr int ROUND_RADIUS_PX = 8;
 
 /**
  * Helper that, given an input icon with transparency, will use that icon as a mask to
@@ -621,31 +626,39 @@ void DockWidget::init_()
 void DockWidget::createStylesheets_()
 {
   const QString ssTemplate =
-    "#titleBar {background: rgb(%1,%2,%3); border: 1px solid rgb(%7,%8,%9);} "
-    "#titleBarTitle {color: rgb(%4,%5,%6);} "
+    "#titleBar {"
+    "   background: %1;"
+    "   border: 1px solid %3;"
+    "   border-top-left-radius: %4px;"    // Top-left corner
+    "   border-top-right-radius: %4px;"   // Top-right corner
+    "   border-bottom-left-radius: 0px;" // Bottom-left corner (square)
+    "   border-bottom-right-radius: 0px;"// Bottom-right corner (square)
+    "} "
+    "#titleBarTitle {color: %2;} "
     ;
 
-  const QPalette& pal = palette();
-  const QColor inactiveBackground = pal.color(QPalette::Inactive, QPalette::Highlight);
-  inactiveTextColor_ = pal.color(QPalette::Inactive, QPalette::HighlightedText);
-  const QColor darkerInactiveBg = inactiveBackground.darker();
+  const QColor inactiveBackground = QColor("#e0e0e0"); // Light gray
+  inactiveTextColor_ = QColor("#404040"); // Darker gray
+  const QColor darkerInactiveBg = QColor("#d0d0d0");
 
   // Get the focus colors
-  const QColor focusBackground = pal.color(QPalette::Active, QPalette::Highlight);
-  focusTextColor_ = pal.color(QPalette::Active, QPalette::HighlightedText);
-  const QColor darkerFocusBg = focusBackground.darker();
+  const QColor focusBackground = QColor("#d8d8d8"); // Lighter gray
+  focusTextColor_ = QColor("#202020"); // Darkest gray
+  const QColor darkerFocusBg = QColor("#b0b0b0");
 
   // Create the inactive stylesheet
   inactiveStylesheet_ = ssTemplate
-    .arg(inactiveBackground.red()).arg(inactiveBackground.green()).arg(inactiveBackground.blue())
-    .arg(inactiveTextColor_.red()).arg(inactiveTextColor_.green()).arg(inactiveTextColor_.blue())
-    .arg(darkerInactiveBg.red()).arg(darkerInactiveBg.green()).arg(darkerInactiveBg.blue());
+    .arg(inactiveBackground.name())
+    .arg(inactiveTextColor_.name())
+    .arg(darkerInactiveBg.name())
+    .arg(ROUND_RADIUS_PX);
 
   // Create the focused stylesheet
   focusStylesheet_ = ssTemplate
-    .arg(focusBackground.red()).arg(focusBackground.green()).arg(focusBackground.blue())
-    .arg(focusTextColor_.red()).arg(focusTextColor_.green()).arg(focusTextColor_.blue())
-    .arg(darkerFocusBg.red()).arg(darkerFocusBg.green()).arg(darkerFocusBg.blue());
+    .arg(focusBackground.name())
+    .arg(focusTextColor_.name())
+    .arg(darkerFocusBg.name())
+    .arg(ROUND_RADIUS_PX);
 }
 
 QWidget* DockWidget::createTitleBar_()
@@ -653,7 +666,6 @@ QWidget* DockWidget::createTitleBar_()
   // Create the title bar and set its shape and style information
   QFrame* titleBar = new DoubleClickFrame(*this);
   titleBar->setObjectName("titleBar");
-  titleBar->setFrameShape(QFrame::StyledPanel);
 
   // Create the icon holders
   titleBarIcon_ = new DoubleClickIcon(*this);
@@ -677,6 +689,22 @@ QWidget* DockWidget::createTitleBar_()
   dockButton_ = newToolButton_(dockAction_);
   undockButton_ = newToolButton_(undockAction_);
   closeButton_ = newToolButton_(closeAction_);
+
+  // Style the tool buttons
+  const QString buttonStyle =
+    "QToolButton {"
+    "   background-color: transparent;"
+    "   border: none;"
+    "   padding: 2px;"
+    "}"
+    "QToolButton:hover {"
+    "   background-color: rgba(0, 0, 0, 0.1);"
+    "}";
+  restoreButton_->setStyleSheet(buttonStyle);
+  maximizeButton_->setStyleSheet(buttonStyle);
+  dockButton_->setStyleSheet(buttonStyle);
+  undockButton_->setStyleSheet(buttonStyle);
+  closeButton_->setStyleSheet(buttonStyle);
 
   // Create the layout
   titleBarLayout_ = new QHBoxLayout();
@@ -741,6 +769,28 @@ void DockWidget::updateTitleBar_()
   const bool canUndock = canFloat && extraFeatures().testFlag(DockUndockHint);
   const bool canRedock = extraFeatures().testFlag(DockRedockHint);
   const bool globalCanDock = !(disableAllDocking_ && disableAllDocking_->value());
+
+  // Update the window mask for rounded edges
+  if (floating)
+  {
+    const QRect rect(0, 0, width(), height());
+    QPainterPath path;
+    path.addRoundedRect(rect, ROUND_RADIUS_PX, ROUND_RADIUS_PX);
+    QBitmap mask(rect.size());
+    mask.clear();
+    QPainter painter(&mask);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setBrush(Qt::color1); // Required to fill the path
+    painter.setPen(Qt::NoPen);    // Ensure no outline is drawn
+    painter.drawPath(path);
+    painter.end();
+    setMask(mask);
+  }
+  else
+  {
+    // Do not use rounded edges
+    setMask(QRegion());
+  }
 
   // Maximize.  Docked: Visible if can-float;  Undocked: Visible when not maximized
   maximizeAction_->setVisible(canFloat && !maximized && canMaximize);
@@ -1529,7 +1579,7 @@ void DockWidget::setGlobalNotDockableFlag_(bool disallowDocking)
 
 void DockWidget::setBorderThickness_(int thickness)
 {
-  setStyleSheet(QString("QDockWidget { border: %1px solid; }").arg(thickness));
+  setStyleSheet(QString("QDockWidget { border: %1px solid #d0d0d0; }").arg(thickness));
 }
 
 void DockWidget::applyGlobalSettings_()
