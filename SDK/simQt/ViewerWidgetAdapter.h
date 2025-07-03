@@ -112,19 +112,27 @@ public:
   /** Retrieve the graphics window */
   osgViewer::GraphicsWindow* getGraphicsWindow() const;
 
-  /** Retrieve the OpenGL Widget class; only if constructed with Window mode. */
+  /** Retrieve the OpenGL Widget class; only if constructed with Widget mode. */
   QOpenGLWidget* glWidget() const;
-  /** Retrieve the OpenGL Window class; only if constructed with Widget mode. */
+  /** Retrieve the OpenGL Window class; only if constructed with Window mode. */
   QOpenGLWindow* glWindow() const;
   /** Retrieves the OpenGL Context, in Qt format; works in both configurations. */
   QOpenGLContext* qtGraphicsContext() const;
 
   /** Sets the graphics format on the window */
   void setFormat(const QSurfaceFormat& format);
-  /** Makes the GL context current */
+  /**
+   * Retrieves the configured surface format, which might change after initialization to reflect
+   * the actual surface capabilities. Note that some fields have been tested to be incorrect in
+   * Qt 5.15 after creation, such as the number of samples.
+   */
+  QSurfaceFormat format() const;
+
+  /** Makes the GL context current; must call create() first if expecting to use a proxy for Widget */
   void makeCurrent();
   /** Notify that the previous makeCurrent() is complete. */
   void doneCurrent();
+
   /** Returns true if the context is valid */
   bool isValid() const;
   /** Attempts to create the graphics context; a QCoreApplication::processEvents() may be required */

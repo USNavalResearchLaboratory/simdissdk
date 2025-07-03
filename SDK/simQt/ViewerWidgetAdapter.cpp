@@ -29,6 +29,7 @@
 #include <QDropEvent>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
+#include <QTimer>
 #include <QVBoxLayout>
 #include "osg/DisplaySettings"
 #include "osgViewer/Viewer"
@@ -238,6 +239,7 @@ public:
   virtual QOpenGLWidget* glWidget() const = 0;
   virtual QOpenGLWindow* glWindow() const = 0;
   virtual QOpenGLContext* qtGraphicsContext() const = 0;
+  virtual QSurfaceFormat format() const = 0;
   virtual void setFormat(const QSurfaceFormat& format) = 0;
   virtual void makeCurrent() = 0;
   virtual void doneCurrent() = 0;
@@ -272,6 +274,7 @@ public:
   virtual QOpenGLWidget* glWidget() const override;
   virtual QOpenGLWindow* glWindow() const override;
   virtual QOpenGLContext* qtGraphicsContext() const override;
+  virtual QSurfaceFormat format() const override;
   virtual void setFormat(const QSurfaceFormat& format) override;
   virtual void makeCurrent() override;
   virtual void doneCurrent() override;
@@ -309,6 +312,7 @@ public:
   virtual QOpenGLWidget* glWidget() const override;
   virtual QOpenGLWindow* glWindow() const override;
   virtual QOpenGLContext* qtGraphicsContext() const override;
+  virtual QSurfaceFormat format() const override;
   virtual void setFormat(const QSurfaceFormat& format) override;
   virtual void makeCurrent() override;
   virtual void doneCurrent() override;
@@ -360,6 +364,11 @@ QOpenGLWidget* GlWindowPlatform::glWidget() const
 QOpenGLWindow* GlWindowPlatform::glWindow() const
 {
   return glWindow_;
+}
+
+QSurfaceFormat GlWindowPlatform::format() const
+{
+  return glWindow_->format();
 }
 
 void GlWindowPlatform::setFormat(const QSurfaceFormat& format)
@@ -464,7 +473,7 @@ GlWidgetPlatform::GlWidgetPlatform(QWidget* parent)
     proxyContext_.reset();
     offscreenSurface_.reset();
     // Only ever initialize once
-    adaptedWidget_->disconnect(delProxyContext);
+    QTimer::singleShot(0, [delProxyContext, this]() { adaptedWidget_->disconnect(delProxyContext); });
     });
 }
 
@@ -487,6 +496,11 @@ QOpenGLWindow* GlWidgetPlatform::glWindow() const
 {
   assert(0); // Dev configured as widget, asking for window
   return nullptr;
+}
+
+QSurfaceFormat GlWidgetPlatform::format() const
+{
+  return adaptedWidget_->format();
 }
 
 void GlWidgetPlatform::setFormat(const QSurfaceFormat& format)
@@ -715,6 +729,11 @@ QOpenGLWindow* ViewerWidgetAdapter::glWindow() const
   return glPlatform_->glWindow();
 }
 
+QSurfaceFormat ViewerWidgetAdapter::format() const
+{
+  return glPlatform_->format();
+}
+
 void ViewerWidgetAdapter::setFormat(const QSurfaceFormat& format)
 {
   glPlatform_->setFormat(format);
@@ -747,43 +766,23 @@ void ViewerWidgetAdapter::create()
 
 void ViewerWidgetAdapter::createAndProcessEvents()
 {
-  // TODO SIM-18431: This does not create a valid context when in widget mode. Perhaps we can
-  // do something like create a temporary context?
   create();
   QCoreApplication::processEvents();
 }
 
 void ViewerWidgetAdapter::initializeSurfaceFormat_()
 {
-  // Configure the default GL profile properly based on OSG settings
-  osg::ref_ptr<osg::DisplaySettings> ds = osg::DisplaySettings::instance();
-  osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits(ds);
-
-  // Read the display parameter and fix the display number if needed
-  traits->readDISPLAY();
-
-  // Buffer sizes and other fields, from traits
   QSurfaceFormat surfaceFormat = QSurfaceFormat::defaultFormat();
-  surfaceFormat.setAlphaBufferSize(traits->alpha);
-  surfaceFormat.setRedBufferSize(traits->red);
-  surfaceFormat.setGreenBufferSize(traits->green);
-  surfaceFormat.setBlueBufferSize(traits->blue);
-
-  surfaceFormat.setDepthBufferSize(traits->depth);
-  surfaceFormat.setStencilBufferSize(traits->stencil);
-  surfaceFormat.setSamples(traits->sampleBuffers ? traits->samples : 0);
-  surfaceFormat.setStereo(traits->quadBufferStereo);
-
-  surfaceFormat.setSwapBehavior(traits->doubleBuffer ? QSurfaceFormat::DoubleBuffer : QSurfaceFormat::SingleBuffer);
-  surfaceFormat.setSwapInterval(traits->vsync ? 1 : 0);
+  surfaceFormat.setSamples(4); // Default to 4x MSAA
+  surfaceFormat.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+#ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
+  // If we are stuck with core profile, go with version 3.3; if built
+  // with compatibility profile support, don't specify version
+  surfaceFormat.setVersion(3, 3);
+  surfaceFormat.setProfile(QSurfaceFormat::CoreProfile);
+#endif
+  surfaceFormat.setSwapInterval(1); // vsync
   surfaceFormat.setRenderableType(QSurfaceFormat::OpenGL);
-
-  // Apply profile and GL version
-  surfaceFormat.setProfile(static_cast<QSurfaceFormat::OpenGLContextProfile>(traits->glContextProfileMask));
-  unsigned int major = 0;
-  unsigned int minor = 0;
-  if (traits->getContextVersion(major, minor))
-    surfaceFormat.setVersion(static_cast<int>(major), static_cast<int>(minor));
   surfaceFormat = simQt::Gl3FormatGuesser::getSurfaceFormat(surfaceFormat);
 
   // Set the default format for this adapter
