@@ -1897,8 +1897,19 @@ osg::Camera* View::createHUD_() const
   // Be sure to render after the controls widgets.
   // "10" is arbitrary, so there's room between the two (default Control Canvas value is 25000)
   hud->setRenderOrder(osg::Camera::POST_RENDER, controlCanvas_->getRenderOrderNum() + 10);
-  hud->setViewport(osg::clone(vp, osg::CopyOp::DEEP_COPY_ALL));
-  hud->setProjectionMatrix(osg::Matrix::ortho2D(0, vp->width()-1, 0, vp->height()-1));
+  if (vp)
+  {
+    hud->setViewport(osg::clone(vp, osg::CopyOp::DEEP_COPY_ALL));
+    hud->setProjectionMatrix(osg::Matrix::ortho2D(0, vp->width() - 1, 0, vp->height() - 1));
+  }
+  else
+  {
+    // This can happen when setting up HUD views on an embedded context that has not yet
+    // been realized, wherein the library doing realizing (e.g. osgQOpenGL) will need to
+    // set the viewport later. Set a default projection to start. Viewports are typically
+    // set at the creation of GL context.
+    hud->setProjectionMatrix(osg::Matrix::ortho2D(0, 100, 0, 100));
+  }
   hud->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
   hud->setViewMatrix(osg::Matrix::identity());
   hud->setClearMask(GL_DEPTH_BUFFER_BIT);

@@ -69,10 +69,12 @@ namespace simVis
       /// Start in full-screen mode
       FULLSCREEN,
       /// Start in a window
-      WINDOWED
+      WINDOWED,
+      /// Create the viewer in EMBEDDED mode, skipping graphics context creation (good for osgQOpenGL)
+      EMBEDDED
     };
 
-    /** Constructs a new viewer with a given starting screen size.  In fullscreen, params are ignored. */
+    /** Constructs a new viewer with a given starting screen size.  Params only used in WINDOWED mode. */
     Viewer(DefaultScreenSize screenSize, int x, int y, int w, int h);
 
     /**
