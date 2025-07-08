@@ -23,6 +23,7 @@
 #ifndef SIMQT_VIEWERWIDGETADAPTER_H
 #define SIMQT_VIEWERWIDGETADAPTER_H
 
+#include <functional>
 #include <QWidget>
 #include "simCore/Common/Common.h"
 
@@ -103,6 +104,8 @@ public:
    * instead of OSG itself.
    */
   void setViewer(osgViewer::ViewerBase* viewer);
+  /** Set an overriding render function. By default this calls the viewer's frame() */
+  void setRenderFunction(const std::function<void(double simulationTime)>& renderFunc);
 
   /** Sets the timer interval for updating the graphics, in ms */
   void setTimerInterval(int intervalMs);

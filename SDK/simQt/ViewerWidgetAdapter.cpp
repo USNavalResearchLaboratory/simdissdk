@@ -250,6 +250,7 @@ public:
   virtual osgViewer::GraphicsWindow* getGraphicsWindow() const = 0;
   virtual osgViewer::ViewerBase* getOsgViewer() const = 0;
   virtual void setOsgViewer(osgViewer::ViewerBase* viewer) = 0;
+  virtual void setRenderFunction(const std::function<void(double simulationTime)>& renderFunc) = 0;
   virtual void setTimerInterval(int intervalMs) = 0;
   virtual void installEventFilter(QObject* filter) = 0;
 
@@ -285,6 +286,7 @@ public:
   virtual osgViewer::GraphicsWindow* getGraphicsWindow() const override;
   virtual osgViewer::ViewerBase* getOsgViewer() const override;
   virtual void setOsgViewer(osgViewer::ViewerBase* viewer) override;
+  virtual void setRenderFunction(const std::function<void(double simulationTime)>& renderFunc) override;
   virtual void setTimerInterval(int intervalMs) override;
   virtual void installEventFilter(QObject* filter) override;
 
@@ -323,6 +325,7 @@ public:
   virtual osgViewer::GraphicsWindow* getGraphicsWindow() const override;
   virtual osgViewer::ViewerBase* getOsgViewer() const override;
   virtual void setOsgViewer(osgViewer::ViewerBase* viewer) override;
+  virtual void setRenderFunction(const std::function<void(double simulationTime)>& renderFunc) override;
   virtual void setTimerInterval(int intervalMs) override;
   virtual void installEventFilter(QObject* filter) override;
 
@@ -419,6 +422,11 @@ osgViewer::ViewerBase* GlWindowPlatform::getOsgViewer() const
 void GlWindowPlatform::setOsgViewer(osgViewer::ViewerBase* viewer)
 {
   glWindow_->setOsgViewer(viewer);
+}
+
+void GlWindowPlatform::setRenderFunction(const std::function<void(double simulationTime)>& renderFunc)
+{
+  glWindow_->setRenderFunction(renderFunc);
 }
 
 void GlWindowPlatform::setTimerInterval(int intervalMs)
@@ -586,6 +594,11 @@ void GlWidgetPlatform::setOsgViewer(osgViewer::ViewerBase* viewer)
   adaptedWidget_->setOsgViewer(viewer);
 }
 
+void GlWidgetPlatform::setRenderFunction(const std::function<void(double simulationTime)>& renderFunc)
+{
+  adaptedWidget_->setRenderFunction(renderFunc);
+}
+
 void GlWidgetPlatform::setTimerInterval(int intervalMs)
 {
   adaptedWidget_->setTimerInterval(intervalMs);
@@ -702,6 +715,11 @@ osgViewer::ViewerBase* ViewerWidgetAdapter::getViewer() const
 void ViewerWidgetAdapter::setViewer(osgViewer::ViewerBase* viewer)
 {
   glPlatform_->setOsgViewer(viewer);
+}
+
+void ViewerWidgetAdapter::setRenderFunction(const std::function<void(double simulationTime)>& renderFunc)
+{
+  glPlatform_->setRenderFunction(renderFunc);
 }
 
 void ViewerWidgetAdapter::setTimerInterval(int intervalMs)
