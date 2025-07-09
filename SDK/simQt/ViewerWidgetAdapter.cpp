@@ -259,6 +259,7 @@ public:
   virtual void setPostPaintSignal(const std::function<void()>& postPaint) = 0;
   virtual void connectToFrameSwappedSignal(const std::function<void()>& frameSwapped) = 0;
   virtual void connectToInitializedSignal(const std::function<void()>& initialized) = 0;
+  virtual void connectToAboutToRenderFirstFrameSignal(const std::function<void()>& aboutToRenderFirstFrame) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -295,6 +296,7 @@ public:
   virtual void setPostPaintSignal(const std::function<void()>& postPaint) override;
   virtual void connectToFrameSwappedSignal(const std::function<void()>& frameSwapped) override;
   virtual void connectToInitializedSignal(const std::function<void()>& initialized) override;
+  virtual void connectToAboutToRenderFirstFrameSignal(const std::function<void()>& aboutToRenderFirstFrame) override;
 
 private:
   SignalingGlWindow* glWindow_ = nullptr;
@@ -334,6 +336,7 @@ public:
   virtual void setPostPaintSignal(const std::function<void()>& postPaint) override;
   virtual void connectToFrameSwappedSignal(const std::function<void()>& frameSwapped) override;
   virtual void connectToInitializedSignal(const std::function<void()>& initialized) override;
+  virtual void connectToAboutToRenderFirstFrameSignal(const std::function<void()>& aboutToRenderFirstFrame) override;
 
 private:
   SignalingGlWidget* adaptedWidget_ = nullptr;
@@ -465,6 +468,13 @@ void GlWindowPlatform::connectToInitializedSignal(const std::function<void()>& i
 {
   QObject::connect(glWindow_, &osgQOpenGLWindow::initialized, [initialized]() {
     initialized();
+    });
+}
+
+void GlWindowPlatform::connectToAboutToRenderFirstFrameSignal(const std::function<void()>& aboutToRenderFirstFrame)
+{
+  QObject::connect(glWindow_, &osgQOpenGLWindow::aboutToRenderFirstFrame, [aboutToRenderFirstFrame]() {
+    aboutToRenderFirstFrame();
     });
 }
 
@@ -638,6 +648,13 @@ void GlWidgetPlatform::connectToInitializedSignal(const std::function<void()>& i
     });
 }
 
+void GlWidgetPlatform::connectToAboutToRenderFirstFrameSignal(const std::function<void()>& aboutToRenderFirstFrame)
+{
+  QObject::connect(adaptedWidget_, &osgQOpenGLWidget::aboutToRenderFirstFrame, [aboutToRenderFirstFrame]() {
+    aboutToRenderFirstFrame();
+    });
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 GlPlatformInterface* createGlPlatform(GlImplementation glImpl, QWidget* parent)
@@ -659,6 +676,7 @@ ViewerWidgetAdapter::ViewerWidgetAdapter(GlImplementation glImpl, QWidget* paren
   glPlatform_->setPostPaintSignal([this]() { Q_EMIT glPainted(); });
   glPlatform_->connectToFrameSwappedSignal([this]() { Q_EMIT frameSwapped(); });
   glPlatform_->connectToInitializedSignal([this]() { postGlInitialize_(); });
+  glPlatform_->connectToAboutToRenderFirstFrameSignal([this]() { Q_EMIT aboutToRenderFirstFrame(); });
 
   initializeSurfaceFormat_();
 

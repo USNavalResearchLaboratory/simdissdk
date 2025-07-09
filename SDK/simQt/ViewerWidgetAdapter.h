@@ -152,6 +152,7 @@ Q_SIGNALS:
   void aboutToPaintGl();
   void glPainted();
   void frameSwapped();
+  void aboutToRenderFirstFrame();
 
 private Q_SLOTS:
   /** Called when the graphics context initializes, before initialized() emitted, applying graphics context fixes */
