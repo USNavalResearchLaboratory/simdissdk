@@ -163,7 +163,8 @@ public:
    * Gets whether to perform LOS computation against the live scene
    * graph (versus the elevation model).
    */
-  SDK_DEPRECATE(bool getUseSceneGraph() const { return false; }, "Deprecated, no longer applicable");
+  [[deprecated("Deprecated, no longer applicable")]]
+  bool getUseSceneGraph() const { return false; };
 
 public:
 
@@ -182,7 +183,8 @@ public:
    * @param patch Patch node, possibly nullptr
    * @return True upon success
    */
-  SDK_DEPRECATE(bool update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& extent, osg::Node* patch = nullptr), "Deprecated, use compute() instead");
+  [[deprecated("Deprecated, use compute() instead")]]
+  bool update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& extent, osg::Node* patch = nullptr);
 
   /**
    * Gets the number of samples in each radial

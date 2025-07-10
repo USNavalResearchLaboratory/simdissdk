@@ -62,7 +62,6 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}QtFormatting.h
     ${SIMQT_INC}QtUtils.h
     ${SIMQT_INC}ResourceInitializer.h
-    ${SIMQT_INC}ScopedSignalBlocker.h
     ${SIMQT_INC}Settings.h
     ${SIMQT_INC}SettingsGroup.h
     ${SIMQT_INC}StartupLayoutManager.h
