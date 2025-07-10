@@ -116,7 +116,7 @@ if(TARGET simVis)
     )
 
     # Parts of simQt depend on both simVis and osgQt
-    if(TARGET OSGQT)
+    if(TARGET OSGQT AND ENABLE_DEPRECATED_SIMDISSDK_API)
         set(SIMQT_HAVE_OSGQT ON)
         list(APPEND SIMQT_HEADERS_TO_MOC
             ${SIMQT_INC}ViewWidget.h
@@ -261,7 +261,7 @@ if(TARGET simVis)
     )
 
     # Parts of simQt depend on both simVis and osgQt
-    if(TARGET OSGQT)
+    if(TARGET OSGQT AND ENABLE_DEPRECATED_SIMDISSDK_API)
         list(APPEND SIMQT_SOURCES
             ${SIMQT_SRC}ViewWidget.cpp
         )
@@ -380,8 +380,8 @@ endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
 target_link_libraries(simQt PUBLIC simCore simNotify)
-if(TARGET OSGQT)
-    target_link_libraries(simQt PUBLIC OSGQT PRIVATE OpenGL::GL)
+if(TARGET OSGQT AND ENABLE_DEPRECATED_SIMDISSDK_API)
+    target_link_libraries(simQt PUBLIC OSGQT)
 endif()
 
 # Link against osgQt::osgQOpenGL if found; but only needs be a private depend
@@ -395,6 +395,7 @@ if(UNIX)
     # UNIX libs that link against simQt need to specify X11 lib on command line
     target_link_libraries(simQt PUBLIC X11)
 endif()
+target_link_libraries(simQt PRIVATE OpenGL::GL)
 
 if(SIMQT_SHARED)
     target_compile_definitions(simQt PRIVATE simQt_LIB_EXPORT_SHARED)
@@ -414,7 +415,7 @@ if(TARGET simVis)
     endif()
 endif()
 
-if(TARGET OSGQT)
+if(TARGET OSGQT AND ENABLE_DEPRECATED_SIMDISSDK_API)
     VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets OpenGL)
 else()
     VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets)

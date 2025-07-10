@@ -198,7 +198,9 @@ if(MSVC AND TARGET Qt5::Core AND Qt5Core_VERSION VERSION_LESS 5.15.17)
     target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
 endif()
 
-include(ImportOSGQt)
+if(ENABLE_DEPRECATED_SIMDISSDK_API)
+    include(ImportOSGQt)
+endif()
 
 # Find and include the OpenGL core header
 # By default search for the GLCORE header in the OSG include path.  Non-default locations for the header

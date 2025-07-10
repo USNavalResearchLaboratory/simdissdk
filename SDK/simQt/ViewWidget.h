@@ -57,6 +57,7 @@ public:
    * @param[in] view View to attach to this widget.  The widget will install a new camera in the View
    *   if necessary.  This widget does not take ownership of View.
    */
+  [[deprecated("This class is deprecated due to Qt deprecating GLWidget. See simQt::ViewerWidgetAdapter instead.")]]
   explicit ViewWidget(osgViewer::View* view);
 
   /** Destructor */
