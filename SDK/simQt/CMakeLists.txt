@@ -394,7 +394,11 @@ if(UNIX)
     # UNIX libs that link against simQt need to specify X11 lib on command line
     target_link_libraries(simQt PUBLIC X11)
 endif()
-target_link_libraries(simQt PRIVATE OpenGL::GL)
+
+# osg/State requires a link to supply glEnable()
+if(OSG_FOUND AND TARGET OpenGL::GL)
+    target_link_libraries(simQt PRIVATE OpenGL::GL)
+endif()
 
 if(SIMQT_SHARED)
     target_compile_definitions(simQt PRIVATE simQt_LIB_EXPORT_SHARED)
