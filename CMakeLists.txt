@@ -1,6 +1,13 @@
 # MSVC 2022 support in 3.21
 cmake_minimum_required(VERSION 3.21)
 
+# VCPKG customization ....................................................
+
+if (${CMAKE_TOOLCHAIN_FILE} MATCHES ".*vcpkg.cmake.*")
+    message(STATUS "Building with vcpkg toolchain.")
+    set(USING_VCPKG ON)
+endif()
+
 # Disable in-source builds and avoid writing to source directories directly
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
@@ -82,8 +89,10 @@ include(CheckOSGEarthMethodExists)
 include(TestBigEndian)
 test_big_endian(SDK_BIG_ENDIAN)
 
-# Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
-include(AddExecutablePostfix)
+if(NOT USING_VCPKG)
+    # Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
+    include(AddExecutablePostfix)
+endif()
 
 # Set architecture identifiers
 string(TOUPPER ${BUILD_SYSTEM_ARCH} ARCH)
@@ -137,8 +146,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 # Include specific defaults for building with public release environment (third party packs)
 include(PublicDefaults)
 # Include specific defaults for building with VSI environment
-include(VsiDefaults)
-vsi_process_packages_json(${CMAKE_SOURCE_DIR}/CMakeUtilities/VsiPackages.json)
+if(NOT USING_VCPKG)
+    include(VsiDefaults)
+    vsi_process_packages_json(${CMAKE_SOURCE_DIR}/CMakeUtilities/VsiPackages.json)
+endif()
 
 # Build Release mode by default on Linux, unless otherwise specified
 include(DefaultToReleaseBuildType)
