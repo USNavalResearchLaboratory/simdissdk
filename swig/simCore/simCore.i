@@ -1,6 +1,6 @@
 %module(directors="1") simCore
 
-// Add a date here to trigger forced regeneration: 02/13/2024
+// Add a date here to trigger forced regeneration: 02/29/2024
 
 // Do not include deprecated methods in the SWIG output; defined to noop
 #define SDK_DEPRECATE(function, deprecationMessage)
