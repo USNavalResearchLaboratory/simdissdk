@@ -597,6 +597,69 @@ int testEllipsoidNormals()
   return rv;
 }
 
+int testDoesLineIntersectSphere()
+{
+  int rv = 0;
+
+  // Earth's approximate radius (average, in meters) for ECEF
+  const double EARTH_RADIUS_M = 6371000.0;
+
+  // Test Cases:
+
+  // 1. Segment entirely outside, misses sphere
+  simCore::Vec3 p1OutsideMissStart(10000000.0, 0.0, 0.0);
+  simCore::Vec3 p1OutsideMissEnd(11000000.0, 0.0, 0.0);
+  rv += SDK_ASSERT(!simCore::doesLineIntersectSphere(p1OutsideMissStart, p1OutsideMissEnd, EARTH_RADIUS_M));
+
+  // 2. Segment starts outside, passes through sphere
+  simCore::Vec3 p2ThroughStart(7000000.0, 0.0, 0.0);
+  simCore::Vec3 p2ThroughEnd(-7000000.0, 0.0, 0.0);
+  rv += SDK_ASSERT(simCore::doesLineIntersectSphere(p2ThroughStart, p2ThroughEnd, EARTH_RADIUS_M));
+
+  // 3. Segment starts inside, exits sphere
+  simCore::Vec3 p3StartsInsideStart(100000.0, 0.0, 0.0);
+  simCore::Vec3 p3StartsInsideEnd(7000000.0, 0.0, 0.0);
+  rv += SDK_ASSERT(simCore::doesLineIntersectSphere(p3StartsInsideStart, p3StartsInsideEnd, EARTH_RADIUS_M));
+
+  // 4. Segment entirely inside sphere
+  simCore::Vec3 p4EntirelyInsideStart(100000.0, 0.0, 0.0);
+  simCore::Vec3 p4EntirelyInsideEnd(200000.0, 0.0, 0.0);
+  rv += SDK_ASSERT(simCore::doesLineIntersectSphere(p4EntirelyInsideStart, p4EntirelyInsideEnd, EARTH_RADIUS_M));
+
+  // 5. Segment tangent to sphere (just touches)
+  simCore::Vec3 p5TangentStart(EARTH_RADIUS_M, EARTH_RADIUS_M, 0.0);
+  simCore::Vec3 p5TangentEnd(EARTH_RADIUS_M, -EARTH_RADIUS_M, 0.0);
+  // This segment passes through (EARTH_RADIUS_M, 0, 0) which is on the sphere
+  rv += SDK_ASSERT(simCore::doesLineIntersectSphere(p5TangentStart, p5TangentEnd, EARTH_RADIUS_M));
+
+  // 6. Segment exactly on the surface (from one point on surface to another)
+  simCore::Vec3 p6OnSurfaceStart(EARTH_RADIUS_M, 0.0, 0.0);
+  simCore::Vec3 p6OnSurfaceEnd(0.0, EARTH_RADIUS_M, 0.0);
+  rv += SDK_ASSERT(simCore::doesLineIntersectSphere(p6OnSurfaceStart, p6OnSurfaceEnd, EARTH_RADIUS_M));
+
+  // 7. Segment ends exactly at origin (sphere center)
+  simCore::Vec3 p7ToOriginStart(7000000.0, 0.0, 0.0);
+  simCore::Vec3 p7ToOriginEnd(0.0, 0.0, 0.0);
+  rv += SDK_ASSERT(simCore::doesLineIntersectSphere(p7ToOriginStart, p7ToOriginEnd, EARTH_RADIUS_M));
+
+  // 8. Segment starts exactly at origin
+  simCore::Vec3 p8FromOriginStart(0.0, 0.0, 0.0);
+  simCore::Vec3 p8FromOriginEnd(7000000.0, 0.0, 0.0);
+  rv += SDK_ASSERT(simCore::doesLineIntersectSphere(p8FromOriginStart, p8FromOriginEnd, EARTH_RADIUS_M));
+
+  // 9. Tiny segment far away
+  simCore::Vec3 p9TinyFarStart(1e9, 1e9, 1e9);
+  simCore::Vec3 p9TinyFarEnd(1e9 + 100, 1e9, 1e9);
+  rv += SDK_ASSERT(!simCore::doesLineIntersectSphere(p9TinyFarStart, p9TinyFarEnd, EARTH_RADIUS_M));
+
+  // 10. Segment goes from inside to outside, but backwards (p2 is inside, p1 is outside)
+  simCore::Vec3 p10BackwardsStart(7000000.0, 0.0, 0.0);
+  simCore::Vec3 p10BackwardsEnd(100000.0, 0.0, 0.0);
+  rv += SDK_ASSERT(simCore::doesLineIntersectSphere(p10BackwardsStart, p10BackwardsEnd, EARTH_RADIUS_M));
+
+  return rv;
+}
+
 }
 
 int GeometryTest(int argc, char* argv[])
@@ -609,6 +672,7 @@ int GeometryTest(int argc, char* argv[])
   rv += SDK_ASSERT(testEllipsoid() == 0);
   rv += SDK_ASSERT(testQuadricSurface() == 0);
   rv += SDK_ASSERT(testEllipsoidNormals() == 0);
+  rv += SDK_ASSERT(testDoesLineIntersectSphere() == 0);
 
   std::cout << "GeometryTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
   return rv;
