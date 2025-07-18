@@ -79,7 +79,7 @@ void calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &t
     Coordinate fromPos;
     coordConv->convert(cvTo, fromPos, COORD_SYS_ENU);
     coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
-    Vec3 ENUDelta = toPos.position() - fromPos.position();
+    const Vec3& ENUDelta = toPos.position() - fromPos.position();
     calculateRelAng(ENUDelta, fromOriLla, azim, elev, cmp);
   }
   else
@@ -461,13 +461,13 @@ double calculateAspectAngle(const Vec3 &fromLla, const Vec3 &toLla, const Vec3 &
   CoordinateConverter::convertGeodeticPosToEcef(fromLla, fromPosECEF);
   Vec3 toPosECEF;
   CoordinateConverter::convertGeodeticPosToEcef(toLla, toPosECEF);
-  Vec3 losECEF = toPosECEF - fromPosECEF;
+  const Vec3& losECEF = toPosECEF - fromPosECEF;
 
   // normalize prior to computing aspect angle
-  Vec3 losNOM = losECEF.normalize();
+  const Vec3& losNOM = losECEF.normalize();
 
   // Compute aspect angle, relative to the 'to' entity
-  double cosAspectAng = -losNOM.dot(bodyUnitVecX);
+  const double cosAspectAng = -losNOM.dot(bodyUnitVecX);
   return simCore::inverseCosine(cosAspectAng);
 }
 
@@ -633,7 +633,7 @@ NumericalSearchType calculateGeodesicDRCR(const Vec3 &fromLla, const double &yaw
   }
 
   // patch a missing output pointer
-  double tmpDRCRValue;
+  double tmpDRCRValue = 0.;
   if (!downRng)
     downRng = &tmpDRCRValue;
   else if (!crossRng)
@@ -1211,7 +1211,7 @@ void calculateVelFromGeodeticPos(const Vec3 &currPos, const Vec3 &prevPos, const
   Coordinate pnt2;
   cc.convert(Coordinate(COORD_SYS_LLA, prevPos), pnt2, COORD_SYS_XEAST);
 
-  Vec3 posDiff = pnt1.position() - pnt2.position();
+  const Vec3& posDiff = pnt1.position() - pnt2.position();
   velVec = posDiff * (1.0 / deltaTime);
 }
 
@@ -1243,7 +1243,7 @@ bool calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, const doub
   case COORD_SYS_XEAST:
   case COORD_SYS_ENU:
     {
-      Vec3 posDiff = currPos - prevPos;
+      const Vec3& posDiff = currPos - prevPos;
       velVec = posDiff * (1.0 / deltaTime);
     }
     break;
@@ -1254,7 +1254,7 @@ bool calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, const doub
       Vec3 enu2;
       CoordinateConverter::swapNedEnu(currPos, enu1);
       CoordinateConverter::swapNedEnu(prevPos, enu2);
-      Vec3 posDiff = enu1 - enu2;
+      const Vec3& posDiff = enu1 - enu2;
       velVec = posDiff * (1.0 / deltaTime);
     }
     break;
@@ -1265,7 +1265,7 @@ bool calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, const doub
       Vec3 enu1;
       CoordinateConverter::convertNwuToEnu(currPos, enu1);
       CoordinateConverter::convertNwuToEnu(prevPos, enu2);
-      Vec3 posDiff = enu1 - enu2;
+      const Vec3& posDiff = enu1 - enu2;
       velVec = posDiff * (1.0 / deltaTime);
     }
     break;
@@ -1376,7 +1376,7 @@ void calculateGeodeticOffsetPos(const simCore::Vec3& llaBgnPos, const simCore::V
   simCore::CoordinateConverter::convertGeodeticPosToEcef(llaBgnPos, originGeo);
 
   // compute offset, then convert geocentric back to geodetic
-  simCore::Vec3 offsetGeo = originGeo + geoOffVec;
+  const simCore::Vec3& offsetGeo = originGeo + geoOffVec;
   simCore::CoordinateConverter::convertEcefToGeodeticPos(offsetGeo, offsetLla);
 }
 
@@ -1507,11 +1507,6 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   simCore::Coordinate cvIn;
   simCore::Coordinate cvOut;
   simCore::CoordinateConverter tempFromECEF;
-  simCore::Vec3 toPnt;
-  simCore::Vec3 closestPnt;
-  simCore::Vec3 pointingVector;
-  simCore::Vec3 enuDelta;
-  double length = 0;
 
   // create direction vector for line segment, since begin point of line segment is the origin of
   // the CoordConverter, the end point will also be the direction vector
@@ -1519,17 +1514,8 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   cvIn.setCoordinateSystem(simCore::COORD_SYS_LLA);
   cvIn.setPosition(endLla);
   tempFromECEF.convert(cvIn, cvOut, simCore::COORD_SYS_XEAST);
-  // NOTE: this is also the direction vector for line segment
-  pointingVector = cvOut.position();
-
-  // create reference point in XEAST to determine closest point along line segment
-  cvIn.setPosition(toLLA_);
-  cvIn.setCoordinateSystem(simCore::COORD_SYS_LLA);
-  cvOut.clear();
-  tempFromECEF.convert(cvIn, cvOut, simCore::COORD_SYS_XEAST);
-  enuDelta = cvOut.position();
-  // store end point for use later
-  toPnt = enuDelta;
+  // NOTE: this is also the direction vector for line segment; need a copy since cvOut will be reused
+  const simCore::Vec3 pointingVector = cvOut.position();
 
   // ------------------------------------------------
   // gets the length (along the line segment pointing vector)
@@ -1540,12 +1526,16 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   if (simCore::areEqual(actualLength, 0.0))
     return 0.0;
 
+  // create reference point in XEAST to determine closest point along line segment
+  cvIn.setPosition(toLLA_);
+  cvIn.setCoordinateSystem(simCore::COORD_SYS_LLA);
+  cvOut.clear();
+  tempFromECEF.convert(cvIn, cvOut, simCore::COORD_SYS_XEAST);
+  // hold a copy, since cvOut will be reused
+  const simCore::Vec3 enuDelta = cvOut.position();
   const double angle = simCore::v3Angle(pointingVector, enuDelta);
-  if (angle > M_PI_2)
-  {
-    length = 0.0;
-  }
-  else
+  double length = 0.;
+  if (angle <= M_PI_2)
   {
     length = enuDelta.length() * cos(angle);
     if (length > actualLength)
@@ -1553,7 +1543,7 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   }
 
   // calculate the projection of the reference direction along the line segment direction vector
-  closestPnt = pointingVector * (length / actualLength);
+  const simCore::Vec3& closestPnt = pointingVector * (length / actualLength);
 
   // convert closest point on line segment to a LLA value
   cvOut.clear();
@@ -1562,7 +1552,7 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   tempFromECEF.convert(cvIn, cvOut, simCore::COORD_SYS_LLA);
   closestLLa = cvOut.position();
 
-  simCore::Vec3 delta = toPnt - closestPnt;
+  const simCore::Vec3& delta = enuDelta - closestPnt;
   return delta.length();
 }
 
