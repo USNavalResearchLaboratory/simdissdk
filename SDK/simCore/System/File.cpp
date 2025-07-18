@@ -63,6 +63,12 @@ bool FileInfo::isEquivalent(const std::string& toPath) const
   return std::filesystem::equivalent(path_, toPath, unused);
 }
 
+void FileInfo::makeAbsolute()
+{
+  std::error_code unused;
+  path_ = std::filesystem::canonical(path_, unused).string();
+}
+
 std::string FileInfo::fileName() const
 {
   return std::get<1>(simCore::pathSplit(path_));
@@ -106,6 +112,13 @@ std::string FileInfo::path() const
 
   return path;
 }
+
+std::string simCore::FileInfo::filePath() const
+{
+  // Return like this to ensure separators are corrected
+  return path() + simCore::PATH_SEPARATOR + fileName();
+}
+
 
 ///////////////////////////////////////////////////////////////
 
