@@ -1464,18 +1464,7 @@ void CoordinateConverter::setLocalToEarthDcm(double lat, double lon, const Local
 {
   double LE[3][3];
   setLocalToEarthMatrix(lat, lon, localLevelFrame, LE);
-
-  localToEarth.set(0, 0, LE[0][0]);
-  localToEarth.set(0, 1, LE[0][1]);
-  localToEarth.set(0, 2, LE[0][2]);
-
-  localToEarth.set(1, 0, LE[1][0]);
-  localToEarth.set(1, 1, LE[1][1]);
-  localToEarth.set(1, 2, LE[1][2]);
-
-  localToEarth.set(2, 0, LE[2][0]);
-  localToEarth.set(2, 1, LE[2][1]);
-  localToEarth.set(2, 2, LE[2][2]);
+  localToEarth.fromD3M(LE);
 }
 // state independent CoordinateConverter members
 //--------------------------------------------------------------------------
