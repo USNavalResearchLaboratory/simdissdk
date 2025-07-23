@@ -52,11 +52,32 @@ int testFileInfo()
   rv += SDK_ASSERT(thisCppFileInfo.exists());
   rv += SDK_ASSERT(thisCppFileInfo.isRegularFile());
   rv += SDK_ASSERT(!thisCppFileInfo.isDirectory());
+  rv += SDK_ASSERT(thisCppFileInfo.filePath() == thisCppFile);
+  rv += SDK_ASSERT(thisCppFileInfo.absoluteFilePath() == thisCppFile);
 
-  const simCore::FileInfo cwdInfo(".");
+#ifdef WIN32
+  const std::string rootFilePath = "C:/test";
+#else
+  const std::string rootFilePath = "/usr/test";
+#endif
+
+  // Confirm that FileInfo properly handles a path that is just a drive
+  const simCore::FileInfo rootLevelFile(rootFilePath);
+  auto [path, name] = simCore::pathSplit(rootFilePath);
+#ifdef WIN32
+  path = path + "/"; // Slash is relevant to root path for Windows drives
+#endif
+  rv += SDK_ASSERT(rootLevelFile.filePath() == rootFilePath);
+  rv += SDK_ASSERT(rootLevelFile.absolutePath() == path);
+  rv += SDK_ASSERT(rootLevelFile.path() == path);
+
+  simCore::FileInfo cwdInfo(".");
   rv += SDK_ASSERT(cwdInfo.exists());
   rv += SDK_ASSERT(!cwdInfo.isRegularFile());
   rv += SDK_ASSERT(cwdInfo.isDirectory());
+  rv += SDK_ASSERT(!cwdInfo.absolutePath().empty());
+  rv += SDK_ASSERT(cwdInfo.makeAbsolute());
+  rv += SDK_ASSERT(cwdInfo.path() == cwdInfo.absolutePath());
 
   const simCore::FileInfo nonExist("doesNotExist");
   rv += SDK_ASSERT(!nonExist.exists());

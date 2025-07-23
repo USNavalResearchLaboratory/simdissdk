@@ -35,8 +35,26 @@
 namespace simCore {
 
 FileInfo::FileInfo(const std::string& path)
-  : path_(path)
 {
+#ifdef WIN32
+  // On Windows, convert all backslashes to forward slashes for consistency
+  auto reslashed = simCore::backslashToFrontslash(path);
+  // Need to start search after 0th char to avoid UNC path issues
+  auto pos = reslashed.find("//", 1);
+#else
+  // But on Linux, keep backslashes, they are legal characters
+  auto reslashed = path;
+  auto pos = reslashed.find("//");
+#endif
+
+  // Remove unnecessary duplicate slashes
+  while (pos != std::string::npos)
+  {
+    reslashed.erase(pos, 1);
+    pos = reslashed.find("//", pos);
+  }
+
+  path_ = reslashed;
 }
 
 bool FileInfo::exists() const
@@ -63,10 +81,17 @@ bool FileInfo::isEquivalent(const std::string& toPath) const
   return std::filesystem::equivalent(path_, toPath, unused);
 }
 
-void FileInfo::makeAbsolute()
+bool FileInfo::makeAbsolute()
 {
-  std::error_code unused;
-  path_ = std::filesystem::canonical(path_, unused).string();
+  std::filesystem::path path(path_);
+  if (path.is_absolute())
+    return false;
+
+  path_ = std::filesystem::absolute(path).string();
+#ifdef WIN32
+  path_ = simCore::backslashToFrontslash(path_);
+#endif
+  return true;
 }
 
 std::string FileInfo::fileName() const
@@ -76,25 +101,7 @@ std::string FileInfo::fileName() const
 
 std::string FileInfo::path() const
 {
-#ifdef WIN32
-  // On Windows, convert all backslashes to forward slashes for consistency
-  auto reslashed = simCore::StringUtils::substitute(path_, "\\", "/", true);
-  // Need to start search after 0th char to avoid UNC path issues
-  auto pos = reslashed.find("//", 1);
-#else
-  // But on Linux, keep backslashes, they are legal characters
-  auto reslashed = path_;
-  auto pos = reslashed.find("//");
-#endif
-
-  // Remove unnecessary duplicate slashes
-  while (pos != std::string::npos)
-  {
-    reslashed.erase(pos, 1);
-    pos = reslashed.find("//", pos);
-  }
-
-  const auto& [path, name] = simCore::pathSplit(reslashed);
+  const auto& [path, name] = simCore::pathSplit(path_);
 
   // Catch cases like "foo" which should return "."
   if (path.empty() && !name.empty())
@@ -113,12 +120,37 @@ std::string FileInfo::path() const
   return path;
 }
 
-std::string simCore::FileInfo::filePath() const
+std::string FileInfo::absolutePath() const
 {
-  // Return like this to ensure separators are corrected
-  return path() + simCore::PATH_SEPARATOR + fileName();
+  std::error_code unused;
+  // Use path() to catch the edge cases (which also cause problems for absolute())
+  const auto& pathStr = std::filesystem::absolute(path(), unused).string();
+#ifdef WIN32
+  // On Windows, convert all backslashes to forward slashes for consistency
+  return simCore::backslashToFrontslash(pathStr);
+#else
+  // But on Linux, keep backslashes, they are legal characters
+  return pathStr;
+#endif
 }
 
+std::string simCore::FileInfo::filePath() const
+{
+  return path_;
+}
+
+std::string simCore::FileInfo::absoluteFilePath() const
+{
+  std::filesystem::path path(path_);
+  if (path.is_absolute())
+    return path_;
+
+  auto absPath = std::filesystem::absolute(path).string();
+#ifdef WIN32
+  absPath = simCore::backslashToFrontslash(absPath);
+#endif
+  return absPath;
+}
 
 ///////////////////////////////////////////////////////////////
 

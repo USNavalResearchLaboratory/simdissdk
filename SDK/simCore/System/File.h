@@ -55,15 +55,22 @@ public:
 
   /** True if the given path is equivalent (same file or directory and file status is the same) */
   bool isEquivalent(const std::string& toPath) const;
-  /** Makes the filepath an absolute (canonical) filepath, with all redirections expanded. */
-  void makeAbsolute();
+  /**
+   * Convert the stored path to an absolute form, if it isn't already.
+   * Returns true if path changed, false otherwise
+   */
+  bool makeAbsolute();
 
-  /** Returns the name portion of the filename, e.g. "foo.bar" given "/tmp/foo.bar" */
+  /** Returns the name portion of the path, e.g. "foo.bar" given "/tmp/foo.bar" */
   std::string fileName() const;
-  /** Returns the directory portion of the filename, e.g. "/tmp" given "/tmp/foo.bar" or given "/tmp/" */
+  /** Returns the directory portion of the path, e.g. "/tmp" given "/tmp/foo.bar" or given "/tmp/" */
   std::string path() const;
-  /** Returns both directory and filename */
+  /** Returns the absolute directory portion of the path, converted to absolute if necessary */
+  std::string absolutePath() const;
+  /** Returns both directory and filename, can be either absolute or relative */
   std::string filePath() const;
+  /** Returns both directory and filename, converted to absolute if necessary */
+  std::string absoluteFilePath() const;
 
 private:
   std::string path_;
