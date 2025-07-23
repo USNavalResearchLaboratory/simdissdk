@@ -38,7 +38,7 @@ int testFileInfo()
 {
   int rv = 0;
 
-#if defined(_MSC_VER) && _MSC_VER <= 1929
+#ifdef WIN32
   // On some Windows test machines, __FILE__ uses backslashes, messes up direct comparisons below
   const std::string thisCppFile = simCore::backslashToFrontslash(__FILE__);
 #else
