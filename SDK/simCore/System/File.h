@@ -177,6 +177,14 @@ SDKCORE_EXPORT std::string userApplicationDataDirectory(bool roaming);
  */
 SDKCORE_EXPORT std::vector<std::string> filesMissingFromPath(const std::string& path, const std::vector<std::string>& expectedRelativeFiles);
 
+/**
+ * Returns a lexically-normalized filepath, with environment variables expanded and
+ * no redundant dot operators (e.g. "/dir/./" => "/dir/" or "/dir/subdir/../" => "/dir/").
+ * This method does not verify the file or path exists and does not access the filesystem.
+ * Note that slashes in the return value will always be the filesystem "preferred":
+ * ("\\" on Windows and "/" on Linux)
+ */
+SDKCORE_EXPORT std::string normalizeFilepath(const std::string& filePath);
 }
 
 #endif /* SIMCORE_SYSTEM_FILE_H */

@@ -316,4 +316,10 @@ std::vector<std::string> filesMissingFromPath(const std::string& path, const std
   return rv;
 }
 
+std::string normalizeFilepath(const std::string& filePath)
+{
+  // Expand the EnvVars, then normalize it
+  return std::filesystem::path(simCore::expandEnv(filePath)).lexically_normal().string();
+}
+
 }
