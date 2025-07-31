@@ -11,4 +11,3 @@ set_target_properties(example_qtdraganddrop PROPERTIES
     PROJECT_LABEL "Qt Drag and Drop"
 )
 vsi_install_target(example_qtdraganddrop SDK_Examples)
-target_link_libraries(example_qtdraganddrop PRIVATE Qt5::Widgets)

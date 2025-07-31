@@ -61,6 +61,7 @@ if(Qt5Core_FOUND)
     add_subdirectory(QtUnitsWidgetTest)
     add_subdirectory(QtViewManagerDataModel)
     add_subdirectory(QtViewManagerTest)
+    add_subdirectory(QtWidgetNodes)
 endif()
 
 

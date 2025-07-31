@@ -112,6 +112,7 @@ if(TARGET simVis)
     )
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}FillItemModelWithNodeVisitor.h
+        ${SIMQT_INC}QWidgetNode.h
     )
 
     # Parts of simQt depend on both simVis and osgQt
@@ -255,6 +256,7 @@ if(TARGET simVis)
         ${SIMQT_SRC}FillItemModelWithNodeVisitor.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}MultiTouchEventFilter.cpp
+        ${SIMQT_SRC}QWidgetNode.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
         ${SIMQT_SRC}ViewManagerDataModel.cpp
     )
