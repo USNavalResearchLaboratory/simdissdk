@@ -23,7 +23,6 @@
 #ifndef SIMQT_HUDTEXTBINMANAGER_H
 #define SIMQT_HUDTEXTBINMANAGER_H
 
-#include <expected>
 #include <string>
 #include <vector>
 #include "osg/observer_ptr"
@@ -74,9 +73,9 @@ public:
   /** Returns all registered text IDs */
   std::vector<TextId> allTextIds() const;
   /** Returns the bin associated with a text ID. */
-  std::expected<BinId, std::string> binId(TextId uid) const;
+  BinId binId(TextId uid) const;
   /** Returns the text for a given Text ID. */
-  std::expected<std::string, std::string> text(TextId uid) const;
+  std::string text(TextId uid) const;
 
   // From osg::Node:
   virtual const char* libraryName() const override{ return "simQt"; }

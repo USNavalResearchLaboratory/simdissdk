@@ -110,7 +110,7 @@ public:
   /** Updates the text string given */
   int setText(uint64_t uid, const std::string& text);
   /** Retrieves the text string associated with the ID */
-  std::expected<std::string, std::string> textById(uint64_t uid) const;
+  std::string textById(uint64_t uid) const;
   /** Retrieves a vector of all valid IDs with text strings. */
   std::vector<uint64_t> allTextIds() const;
 
@@ -287,11 +287,11 @@ int TextBoxDataModel::setText(uint64_t uid, const std::string& text)
   return 0; // Success
 }
 
-std::expected<std::string, std::string> TextBoxDataModel::textById(uint64_t uid) const
+std::string TextBoxDataModel::textById(uint64_t uid) const
 {
   const auto it = idToStringMap_.find(uid);
   if (it == idToStringMap_.end())
-    return std::unexpected("UID not found");
+    return {};
 
   return it->second;
 }
@@ -407,25 +407,25 @@ std::vector<HudTextBinManager::TextId> HudTextBinManager::allTextIds() const
   return ids;
 }
 
-std::expected<HudTextBinManager::BinId, std::string> HudTextBinManager::binId(TextId uid) const
+HudTextBinManager::BinId HudTextBinManager::binId(TextId uid) const
 {
   auto iter = publicIdToBinAndId_.find(uid);
   if (iter == publicIdToBinAndId_.end())
-    return std::unexpected("UID not found");
+    return BinId::ALIGN_LEFT_TOP;
   const auto& binAndId = iter->second;
   return binAndId.first;
 }
 
-std::expected<std::string, std::string> HudTextBinManager::text(TextId uid) const
+std::string HudTextBinManager::text(TextId uid) const
 {
   auto iter = publicIdToBinAndId_.find(uid);
   if (iter == publicIdToBinAndId_.end())
-    return std::unexpected("UID not found");
+    return {};
   const auto& binAndId = iter->second;
   auto* bin = textBinForBinId_(binAndId.first);
   assert(bin); // Should be no realistic way to fail this; means our bin got removed
   if (!bin)
-    return std::unexpected("Local bin not accessible");
+    return {};
   return bin->data_->textById(binAndId.second);
 }
 
