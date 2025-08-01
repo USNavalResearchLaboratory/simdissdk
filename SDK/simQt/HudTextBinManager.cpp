@@ -325,11 +325,13 @@ void TextBoxDataModel::createTextString_()
 
 HudTextBinManager::HudTextBinManager()
 {
-  // Assertion failure means we cannot use a simple vector for the bins
+  // Assertion failure means we cannot use a simple vector for the bins,
+  // or that the bin order needs to be updated internally.
   static_assert(static_cast<int>(BinId::ALIGN_LEFT_TOP) == 0);
+  static_assert(static_cast<int>(BinId::ALIGN_RIGHT_BOTTOM) == 8);
 
   // Helper function to create a bin, and configure it in "this"
-  auto binFactory = [this](BinId binId, Qt::Alignment align) {
+  const auto binFactory = [this](BinId binId, Qt::Alignment align) {
     auto bin = std::make_unique<TextBin>();
     bin->binId_ = binId;
     bin->node_ = new TextBoxRenderer;
@@ -431,34 +433,30 @@ std::string HudTextBinManager::text(TextId uid) const
 
 void HudTextBinManager::setSize_(int width, int height)
 {
-  if (width_ == width && height_ == height)
+  if (!sizeDirty_ && width_ == width && height_ == height) [[likely]]
     return;
   width_ = width;
   height_ = height;
 
   // Constants
-  constexpr int MARGIN_HORZ = 4;
-  constexpr int MARGIN_VERT = 4;
-  constexpr int PADDING_HORZ = 1;
-  constexpr int PADDING_VERT = 1;
   constexpr int NUM_ROWS = 3;
   constexpr int NUM_COLS = 3;
 
   // Calculate available width and height for the grid
-  const int availableWidth = width - 2 * MARGIN_HORZ - (NUM_COLS - 1) * PADDING_HORZ;
-  const int availableHeight = height - 2 * MARGIN_VERT - (NUM_ROWS - 1) * PADDING_VERT;
+  const int availableWidth = width - margins_.left() - margins_.right() - (NUM_COLS - 1) * padding_.width();
+  const int availableHeight = height - margins_.top() - margins_.bottom() - (NUM_ROWS - 1) * padding_.height();
 
   // Calculate the width and height of each bin
   const int binWidth = availableWidth / NUM_COLS;
   const int binHeight = availableHeight / NUM_ROWS;
 
   // Calculate the lower-left corner -- (0,0) at lower left -- for each row/col
-  const int left = MARGIN_HORZ;
-  const int xCenter = (width - binWidth) / 2;
-  const int right = width - MARGIN_HORZ - binWidth;
-  const int bottom = MARGIN_VERT;
-  const int yCenter = (height - binHeight) / 2;
-  const int top = height - MARGIN_VERT - binHeight;
+  const int left = margins_.left();
+  const int xCenter = left + padding_.width() + binWidth;
+  const int right = width - margins_.right() - binWidth;
+  const int bottom = margins_.bottom();
+  const int yCenter = bottom + padding_.height() + binHeight;
+  const int top = height - margins_.top() - binHeight;
 
   // Helper function to assign a rect to a bin
   const auto setRect = [this](BinId binId, const QRect& rect) {
@@ -475,12 +473,15 @@ void HudTextBinManager::setSize_(int width, int height)
   setRect(BinId::ALIGN_RIGHT_TOP, QRect{ right, top, binWidth, binHeight });
   setRect(BinId::ALIGN_RIGHT_CENTER, QRect{ right, yCenter, binWidth, binHeight });
   setRect(BinId::ALIGN_RIGHT_BOTTOM, QRect{ right, bottom, binWidth, binHeight });
+
+  // Margins and padding applied, size is no longer dirty
+  sizeDirty_ = false;
 }
 
 void HudTextBinManager::checkViewportSize_()
 {
   // Lazily detect the camera
-  if (!camera_.valid())
+  if (!camera_.valid()) [[unlikely]]
   {
     camera_ = osgEarth::findFirstParentOfType<osg::Camera>(this);
     // Need a valid camera to continue
@@ -491,9 +492,10 @@ void HudTextBinManager::checkViewportSize_()
   // Update text bin text, so that the renderer is correct
   refreshAllDirtyTextBins_();
 
-  // Need a valid viewport to get its size
+  // Need a valid viewport to get its size; but don't care about setting
+  // the size if there are no bins (performance optimization)
   const osg::Viewport* vp = camera_->getViewport();
-  if (vp)
+  if (vp && !publicIdToBinAndId_.empty())
     setSize_(vp->width(), vp->height());
 }
 
@@ -501,7 +503,7 @@ void HudTextBinManager::refreshAllDirtyTextBins_()
 {
   for (const auto& binPtr : bins_)
   {
-    if (binPtr->dataDirty_)
+    if (binPtr->dataDirty_) [[unlikely]]
       refreshDirtyTextBin_(*binPtr);
   }
 }
@@ -555,6 +557,32 @@ int HudTextBinManager::textSize(BinId binId) const
   if (!bin)
     return 0;
   return bin->node_->textSize();
+}
+
+void HudTextBinManager::setMargins(const QMargins& margins)
+{
+  if (margins_ == margins)
+    return;
+  margins_ = margins;
+  sizeDirty_ = true;
+}
+
+QMargins HudTextBinManager::margins() const
+{
+  return margins_;
+}
+
+void HudTextBinManager::setPadding(const QSize& padding)
+{
+  if (padding_ == padding)
+    return;
+  padding_ = padding;
+  sizeDirty_ = true;
+}
+
+QSize HudTextBinManager::padding() const
+{
+  return padding_;
 }
 
 }

@@ -77,6 +77,9 @@ QImageBasedNode::QImageBasedNode() :
   // Set up the StateSet
   getOrCreateStateSet()->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
   osgEarth::Registry::shaderGenerator().run(this);
+
+  // Set initial bounding box
+  updateBoundingBox_();
 }
 
 QImageBasedNode::QImageBasedNode(const QImageBasedNode& rhs, const osg::CopyOp& copyOp)
@@ -113,6 +116,19 @@ void QImageBasedNode::setImage_(const QImage& image)
   vertices_->at(2).set(0, image.height(), 0);
   vertices_->at(3).set(image.width(), image.height(), 0);
   vertices_->dirty();
+
+  updateBoundingBox_();
+}
+
+void QImageBasedNode::updateBoundingBox_()
+{
+  osg::BoundingBox bb;
+  if (vertices_.valid() && !vertices_->empty())
+  {
+    for (const auto& vertex : *vertices_)
+      bb.expandBy(vertex);
+  }
+  setBound(bb);
 }
 
 void QImageBasedNode::qImageToOsgImage_(const QImage& qImage, osg::Image& toImage) const

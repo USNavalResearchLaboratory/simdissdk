@@ -25,6 +25,7 @@
 #include <QColorDialog>
 #include <QComboBox>
 #include <QDockWidget>
+#include <QGroupBox>
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
@@ -35,6 +36,7 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QStandardItemModel>
+#include <QToolButton>
 #include <QTreeView>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -69,10 +71,9 @@ public:
     QWidget* dockContent = new QWidget;
     QVBoxLayout* dockLayout = new QVBoxLayout(dockContent);
 
-    // Text Input
-    textInput_ = new QLineEdit;
-    connect(textInput_, &QLineEdit::returnPressed, this, &MainWindow::addText_);
-    dockLayout->addWidget(textInput_);
+    // --- Text Management Group ---
+    QGroupBox* textGroup = new QGroupBox("Text Management");
+    QVBoxLayout* textGroupLayout = new QVBoxLayout(textGroup);
 
     // Bin Selection
     binSelection_ = new QComboBox;
@@ -85,26 +86,109 @@ public:
     binSelection_->addItem("Top Right", static_cast<int>(simData::TextAlignment::ALIGN_RIGHT_TOP));
     binSelection_->addItem("Center Right", static_cast<int>(simData::TextAlignment::ALIGN_RIGHT_CENTER));
     binSelection_->addItem("Bottom Right", static_cast<int>(simData::TextAlignment::ALIGN_RIGHT_BOTTOM));
-    dockLayout->addWidget(binSelection_);
+    textGroupLayout->addWidget(binSelection_);
 
-    // Add Button
-    QPushButton* addButton = new QPushButton("Add Text");
-    connect(addButton, &QPushButton::clicked, this, &MainWindow::addText_);
-    dockLayout->addWidget(addButton);
+    // Text Input and Add Button (Horizontal Layout)
+    QWidget* textInputContainer = new QWidget;
+    QHBoxLayout* textInputLayout = new QHBoxLayout(textInputContainer);
+    textInputLayout->setContentsMargins(0, 0, 0, 0); // Remove margins to fit snugly
 
-    // Text Size Spin Box
+    textInput_ = new QLineEdit;
+    textInput_->setPlaceholderText("Type here to add to selected bin");
+    textInputLayout->addWidget(textInput_);
+
+    QToolButton* addButton = new QToolButton;
+    addButton->setText("+");
+    addButton->setToolTip("Add Text");
+    connect(addButton, &QToolButton::clicked, this, &MainWindow::addText_);
+    textInputLayout->addWidget(addButton);
+
+    textInputContainer->setLayout(textInputLayout);
+    textGroupLayout->addWidget(textInputContainer);
+
+    // Text Size and Color Button (Horizontal Layout)
+    QWidget* textSizeColorContainer = new QWidget;
+    QHBoxLayout* textSizeColorLayout = new QHBoxLayout(textSizeColorContainer);
+    textSizeColorLayout->setContentsMargins(0, 0, 0, 0); // Remove margins to fit snugly
+
     auto* textSizeSpinBox = new QSpinBox;
     textSizeSpinBox->setRange(4, 48); // Set a reasonable range for text size
     textSizeSpinBox->setValue(18);
+    textSizeSpinBox->setSuffix(" px");
+    textSizeSpinBox->setPrefix("Text Size: ");
     connect(textSizeSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::setTextSize_);
-    dockLayout->addWidget(new QLabel("Text Size:"));
-    dockLayout->addWidget(textSizeSpinBox);
+    textSizeColorLayout->addWidget(textSizeSpinBox);
 
-    // Color Button
     auto* colorButton = new QPushButton("Change Color");
     connect(colorButton, &QPushButton::clicked, this, &MainWindow::setColor_);
-    dockLayout->addWidget(new QLabel("Text Color:"));
-    dockLayout->addWidget(colorButton);
+    textSizeColorLayout->addWidget(colorButton);
+
+    textSizeColorContainer->setLayout(textSizeColorLayout);
+    textGroupLayout->addWidget(textSizeColorContainer);
+
+    textGroup->setLayout(textGroupLayout);
+    dockLayout->addWidget(textGroup);
+
+    // --- Margin and Padding Group ---
+    QGroupBox* layoutGroup = new QGroupBox("Margins / Padding");
+    QGridLayout* layoutGroupLayout = new QGridLayout(layoutGroup);
+
+    // Margins
+    QMargins currentMargins = hudTextBinManager_->margins();
+    auto* marginTopSpinBox = new QSpinBox;
+    marginTopSpinBox->setRange(-500, 500);
+    marginTopSpinBox->setValue(currentMargins.top());
+    marginTopSpinBox->setSuffix(" px");
+    connect(marginTopSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::setMarginTop_);
+    layoutGroupLayout->addWidget(new QLabel("Top:"), 0, 0);
+    layoutGroupLayout->addWidget(marginTopSpinBox, 0, 1);
+
+    auto* marginBottomSpinBox = new QSpinBox;
+    marginBottomSpinBox->setRange(-500, 500);
+    marginBottomSpinBox->setValue(currentMargins.bottom());
+    marginBottomSpinBox->setSuffix(" px");
+    connect(marginBottomSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::setMarginBottom_);
+    layoutGroupLayout->addWidget(new QLabel("Bottom:"), 1, 0);
+    layoutGroupLayout->addWidget(marginBottomSpinBox, 1, 1);
+
+    auto* marginLeftSpinBox = new QSpinBox;
+    marginLeftSpinBox->setRange(-500, 500);
+    marginLeftSpinBox->setValue(currentMargins.left());
+    marginLeftSpinBox->setSuffix(" px");
+    connect(marginLeftSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::setMarginLeft_);
+    layoutGroupLayout->addWidget(new QLabel("Left:"), 0, 2);
+    layoutGroupLayout->addWidget(marginLeftSpinBox, 0, 3);
+
+    auto* marginRightSpinBox = new QSpinBox;
+    marginRightSpinBox->setRange(-500, 500);
+    marginRightSpinBox->setValue(currentMargins.right());
+    marginRightSpinBox->setSuffix(" px");
+    connect(marginRightSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::setMarginRight_);
+    layoutGroupLayout->addWidget(new QLabel("Right:"), 1, 2);
+    layoutGroupLayout->addWidget(marginRightSpinBox, 1, 3);
+
+    // Padding
+    QSize currentPadding = hudTextBinManager_->padding();
+    auto* paddingHorizontalSpinBox = new QSpinBox;
+    paddingHorizontalSpinBox->setRange(-50, 50);
+    paddingHorizontalSpinBox->setValue(currentPadding.width());
+    paddingHorizontalSpinBox->setSuffix(" px");
+    connect(paddingHorizontalSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::setPaddingHorizontal_);
+    layoutGroupLayout->addWidget(new QLabel("Horz:"), 2, 0);
+    layoutGroupLayout->addWidget(paddingHorizontalSpinBox, 2, 1);
+
+    auto* paddingVerticalSpinBox = new QSpinBox;
+    paddingVerticalSpinBox->setRange(-50, 50);
+    paddingVerticalSpinBox->setValue(currentPadding.height());
+    paddingVerticalSpinBox->setSuffix(" px");
+    connect(paddingVerticalSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::setPaddingVertical_);
+    layoutGroupLayout->addWidget(new QLabel("Vert:"), 2, 2);
+    layoutGroupLayout->addWidget(paddingVerticalSpinBox, 2, 3);
+
+    layoutGroup->setLayout(layoutGroupLayout);
+    dockLayout->addWidget(layoutGroup);
+
+    // --- Text List (no group) ---
 
     // Text List
     textModel_ = new QStandardItemModel(this);
@@ -196,6 +280,48 @@ private:
     {
       hudTextBinManager_->setColor(boxId, color);
     }
+  }
+
+  void setMarginTop_(int value)
+  {
+    QMargins margins = hudTextBinManager_->margins();
+    margins.setTop(value);
+    hudTextBinManager_->setMargins(margins);
+  }
+
+  void setMarginBottom_(int value)
+  {
+    QMargins margins = hudTextBinManager_->margins();
+    margins.setBottom(value);
+    hudTextBinManager_->setMargins(margins);
+  }
+
+  void setMarginLeft_(int value)
+  {
+    QMargins margins = hudTextBinManager_->margins();
+    margins.setLeft(value);
+    hudTextBinManager_->setMargins(margins);
+  }
+
+  void setMarginRight_(int value)
+  {
+    QMargins margins = hudTextBinManager_->margins();
+    margins.setRight(value);
+    hudTextBinManager_->setMargins(margins);
+  }
+
+  void setPaddingHorizontal_(int value)
+  {
+    QSize padding = hudTextBinManager_->padding();
+    padding.setWidth(value);
+    hudTextBinManager_->setPadding(padding);
+  }
+
+  void setPaddingVertical_(int value)
+  {
+    QSize padding = hudTextBinManager_->padding();
+    padding.setHeight(value);
+    hudTextBinManager_->setPadding(padding);
   }
 
   osg::ref_ptr<simQt::HudTextBinManager> hudTextBinManager_;

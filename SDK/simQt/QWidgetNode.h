@@ -30,9 +30,7 @@
 
 class QLabel;
 class QWidget;
-namespace osg {
-  class Image;
-}
+namespace osg { class Image; }
 
 namespace simQt {
 
@@ -65,6 +63,9 @@ protected:
   virtual ~QImageBasedNode();
 
 private:
+  /** Recomputes bounding box when vertices change */
+  void updateBoundingBox_();
+
   QImage qImage_;
   osg::ref_ptr<osg::Image> image_;
   osg::ref_ptr<osg::Vec3Array> vertices_;

@@ -25,8 +25,12 @@
 
 #include <string>
 #include <vector>
+#include <QColor>
+#include <QMargins>
+#include <QSize>
 #include "osg/observer_ptr"
 #include "osg/Group"
+#include "simCore/Common/Common.h"
 #include "simData/CommonPreferences.h"
 
 namespace osg { class Camera; }
@@ -50,6 +54,7 @@ public:
   using BinId = simData::TextAlignment;
 
   HudTextBinManager();
+  SDK_DISABLE_COPY_MOVE(HudTextBinManager);
 
   /** Adds the given text string to the bin, returning a unique identifier for the text. */
   TextId addText(BinId binId, const std::string& text);
@@ -76,6 +81,16 @@ public:
   BinId binId(TextId uid) const;
   /** Returns the text for a given Text ID. */
   std::string text(TextId uid) const;
+
+  /** Sets the margins from the edge of the screen. */
+  void setMargins(const QMargins& margins);
+  /** Retrieves the current margins */
+  QMargins margins() const;
+
+  /** Sets the padding (spacing between boxes) in pixels: width, height. */
+  void setPadding(const QSize& padding);
+  /** Retrieves the padding (spacing between boxes) in pixels: width, height. */
+  QSize padding() const;
 
   // From osg::Node:
   virtual const char* libraryName() const override{ return "simQt"; }
@@ -107,6 +122,15 @@ private:
   TextId nextPublicId_ = 1;
   std::map<TextId, BinAndTextId> publicIdToBinAndId_;
   std::vector<std::unique_ptr<TextBin>> bins_;
+  QMargins margins_ = { 8, 8, 8, 8 }; // left, top, right, bottom
+  QSize padding_ = { 0, 0 }; // horizontal, vertical
+
+  /**
+   * Set to true when the size calculation needs to happen, even when
+   * the size doesn't change, due to other changes that can impact size
+   * such as the margins or padding changing.
+   */
+  bool sizeDirty_ = false;
 };
 
 }
