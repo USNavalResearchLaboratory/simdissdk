@@ -160,7 +160,8 @@ QImageNode::~QImageNode()
 
 void QImageNode::setImage(const QImage& image)
 {
-  QImageBasedNode::setImage_(image);
+  // Direct pass-through to inherited method
+  setImage_(image);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -188,7 +189,7 @@ void QWidgetNode::render(QWidget* widget)
   image.fill(Qt::transparent);
   QPainter painter(&image);
   widget->render(&painter, QPoint(), QRegion(), QWidget::DrawChildren);
-  QImageBasedNode::setImage_(image);
+  setImage_(image);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -212,19 +213,33 @@ void QLabelDropShadowNode::render(QLabel* label)
   if (!label)
     return;
 
-  QImage image(label->size(), QImage::Format_RGBA8888);
-  image.fill(Qt::transparent);
-  QPainter painter(&image);
+  // Render an empty image if the text is empty or size will be 0. Doing so
+  // here avoids QPainter errors with invalid label content below.
+  if (label->text().isEmpty() || label->width() <= 0 || label->height() <= 0)
+  {
+    QImage image({ 1, 1 }, QImage::Format_RGBA8888);
+    image.fill(Qt::transparent);
+    setImage_(image);
+    return;
+  }
 
-  // Render the shadow first
+  constexpr int shadowOffset = 1;
+  const auto& labelSize = label->size();
+  QImage image(labelSize.width(), labelSize.height(),
+    QImage::Format_RGBA8888);
+  image.fill(Qt::transparent);
+
+  QPainter painter(&image);
+  painter.setRenderHint(QPainter::Antialiasing);
+  painter.setRenderHint(QPainter::TextAntialiasing);
+
   const QString oldStyle = label->styleSheet();
   label->setStyleSheet(oldStyle + " ; color: black;");
-  label->render(&painter, QPoint(1, 1), QRegion(), QWidget::DrawChildren);
-
-  // Restore the style and re-render
+  label->render(&painter, QPoint(shadowOffset, shadowOffset), QRegion(), QWidget::DrawChildren);
   label->setStyleSheet(oldStyle);
-  label->render(&painter, QPoint(), QRegion(), QWidget::DrawChildren);
-  QImageBasedNode::setImage_(image);
+  label->render(&painter, QPoint(0, 0), QRegion(), QWidget::DrawChildren);
+
+  setImage_(image);
 }
 
 } // namespace simQt

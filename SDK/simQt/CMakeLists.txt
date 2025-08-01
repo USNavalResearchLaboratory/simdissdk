@@ -112,6 +112,7 @@ if(TARGET simVis)
     )
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}FillItemModelWithNodeVisitor.h
+        ${SIMQT_INC}HudTextBinManager.h
         ${SIMQT_INC}QWidgetNode.h
     )
 
@@ -254,6 +255,7 @@ if(TARGET simVis)
         ${SIMQT_SRC}CenterEntity.cpp
         ${SIMQT_SRC}EntityLineEdit.cpp
         ${SIMQT_SRC}FillItemModelWithNodeVisitor.cpp
+        ${SIMQT_SRC}HudTextBinManager.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}MultiTouchEventFilter.cpp
         ${SIMQT_SRC}QWidgetNode.cpp
