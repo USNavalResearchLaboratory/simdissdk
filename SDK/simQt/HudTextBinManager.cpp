@@ -59,10 +59,10 @@ public:
   /** Retrieve the set color */
   QColor color() const;
 
-  /** Set the text size in pixels */
-  void setTextSize(int pixels);
-  /** Retrieve the set text size (in pixels) */
-  int textSize() const;
+  /** Set the text size in points */
+  void setTextSize(double textSizePoints);
+  /** Retrieve the set text size (in points) */
+  double textSize() const;
 
   /** Changes the text string displayed; OK to be multi-line. */
   void setText(const QString& text);
@@ -83,7 +83,7 @@ private:
 
   QRect rectPx_ = QRect(10, 10, 400, 200);
   QColor color_ = Qt::white;
-  int textSizePx_ = 20;
+  double textSizePoints_ = 13.5;
   bool dirty_ = true;
 
   std::unique_ptr<QLabel> label_;
@@ -137,7 +137,9 @@ TextBoxRenderer::TextBoxRenderer()
   node_(new simQt::QLabelDropShadowNode)
 {
   addChild(node_.get());
-  label_ = std::make_unique<QLabel>();
+
+  const int textSizePoints = label_->font().pointSize();
+  textSizePoints_ = label_->font().pointSizeF();
   label_->setStyleSheet(buildStyleSheet_());
   label_->setFixedWidth(rectPx_.width());
   label_->setWordWrap(true);
@@ -182,18 +184,20 @@ QColor TextBoxRenderer::color() const
   return color_;
 }
 
-void TextBoxRenderer::setTextSize(int pixels)
+void TextBoxRenderer::setTextSize(double textSizePoints)
 {
-  if (textSizePx_ == pixels)
+  if (textSizePoints_ == textSizePoints)
     return;
-  textSizePx_ = pixels;
-  label_->setStyleSheet(buildStyleSheet_());
+  textSizePoints_ = textSizePoints;
+  QFont font = label_->font();
+  font.setPointSizeF(textSizePoints);
+  label_->setFont(font);
   dirty_ = true;
 }
 
-int TextBoxRenderer::textSize() const
+double TextBoxRenderer::textSize() const
 {
-  return textSizePx_;
+  return textSizePoints_;
 }
 
 void TextBoxRenderer::setText(const QString& text)
@@ -239,8 +243,7 @@ void TextBoxRenderer::render_()
 
 QString TextBoxRenderer::buildStyleSheet_() const
 {
-  return QString("font-size: %1px; color: rgba(%2, %3, %4, %5);")
-    .arg(textSizePx_)
+  return QString("color: rgba(%2, %3, %4, %5);")
     .arg(color_.red())
     .arg(color_.green())
     .arg(color_.blue())
@@ -538,20 +541,20 @@ QColor HudTextBinManager::color(BinId binId) const
   return bin->node_->color();
 }
 
-void HudTextBinManager::setTextSize(BinId binId, int textSizePx)
+void HudTextBinManager::setTextSize(BinId binId, double textSizePoints)
 {
   auto* bin = textBinForBinId_(binId);
   if (bin)
-    bin->node_->setTextSize(textSizePx);
+    bin->node_->setTextSize(textSizePoints);
 }
 
-void HudTextBinManager::setTextSize(int textSizePx)
+void HudTextBinManager::setTextSize(double textSizePoints)
 {
   for (const auto& binPtr : bins_)
-    binPtr->node_->setTextSize(textSizePx);
+    binPtr->node_->setTextSize(textSizePoints);
 }
 
-int HudTextBinManager::textSize(BinId binId) const
+double HudTextBinManager::textSize(BinId binId) const
 {
   auto* bin = textBinForBinId_(binId);
   if (!bin)

@@ -25,6 +25,7 @@
 #include <QColorDialog>
 #include <QComboBox>
 #include <QDockWidget>
+#include <QDoubleSpinBox>
 #include <QGroupBox>
 #include <QHeaderView>
 #include <QLabel>
@@ -86,6 +87,7 @@ public:
     binSelection_->addItem("Top Right", static_cast<int>(simData::TextAlignment::ALIGN_RIGHT_TOP));
     binSelection_->addItem("Center Right", static_cast<int>(simData::TextAlignment::ALIGN_RIGHT_CENTER));
     binSelection_->addItem("Bottom Right", static_cast<int>(simData::TextAlignment::ALIGN_RIGHT_BOTTOM));
+    connect(binSelection_, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::setGuiToSelectedBinValues);
     textGroupLayout->addWidget(binSelection_);
 
     // Text Input and Add Button (Horizontal Layout)
@@ -111,13 +113,15 @@ public:
     QHBoxLayout* textSizeColorLayout = new QHBoxLayout(textSizeColorContainer);
     textSizeColorLayout->setContentsMargins(0, 0, 0, 0); // Remove margins to fit snugly
 
-    auto* textSizeSpinBox = new QSpinBox;
-    textSizeSpinBox->setRange(4, 48); // Set a reasonable range for text size
-    textSizeSpinBox->setValue(18);
-    textSizeSpinBox->setSuffix(" px");
-    textSizeSpinBox->setPrefix("Text Size: ");
-    connect(textSizeSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::setTextSize_);
-    textSizeColorLayout->addWidget(textSizeSpinBox);
+    textSizeSpinBox_ = new QDoubleSpinBox;
+    textSizeSpinBox_->setRange(4.0, 150.0);
+    textSizeSpinBox_->setValue(12);
+    textSizeSpinBox_->setDecimals(1);
+    textSizeSpinBox_->setSingleStep(1.0);
+    textSizeSpinBox_->setSuffix(" pts");
+    textSizeSpinBox_->setPrefix("Text Size: ");
+    connect(textSizeSpinBox_, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::setTextSize_);
+    textSizeColorLayout->addWidget(textSizeSpinBox_);
 
     auto* colorButton = new QPushButton("Change Color");
     connect(colorButton, &QPushButton::clicked, this, &MainWindow::setColor_);
@@ -219,28 +223,37 @@ public:
     connect(exitAction, &QAction::triggered, this, &QApplication::quit);
     addAction(exitAction);
     fileMenu->addAction(exitAction);
+
+    setGuiToSelectedBinValues();
   }
 
-  void addText(simQt::HudTextBinManager::BinId boxId, const QString& text)
+  void addText(simQt::HudTextBinManager::BinId binId, const QString& text)
   {
-    const int boxIndex = static_cast<int>(boxId);
-    const simQt::HudTextBinManager::TextId textId = hudTextBinManager_->addText(boxId, text.toStdString());
+    const int binIndex = static_cast<int>(binId);
+    const simQt::HudTextBinManager::TextId textId = hudTextBinManager_->addText(binId, text.toStdString());
 
     QStandardItem* idItem = new QStandardItem(QString::number(textId)); // ID
     QStandardItem* textItem = new QStandardItem(text); // Text
-    QStandardItem* positionItem = new QStandardItem(binSelection_->itemText(boxIndex)); // Position
+    QStandardItem* positionItem = new QStandardItem(binSelection_->itemText(binIndex)); // Position
     idItem->setData(static_cast<qulonglong>(textId), Qt::UserRole); // Store ID for removal
     textModel_->appendRow({ idItem, textItem, positionItem });
 
     textInput_->clear();
   }
 
+  void setGuiToSelectedBinValues()
+  {
+    const int binIndex = binSelection_->currentIndex();
+    const simData::TextAlignment binId = static_cast<simData::TextAlignment>(binSelection_->itemData(binIndex).toInt());
+    textSizeSpinBox_->setValue(hudTextBinManager_->textSize(binId));
+  }
+
 private:
   void addText_()
   {
-    const int boxIndex = binSelection_->currentIndex();
-    const simData::TextAlignment boxId = static_cast<simData::TextAlignment>(binSelection_->itemData(boxIndex).toInt());
-    addText(boxId, textInput_->text());
+    const int binIndex = binSelection_->currentIndex();
+    const simData::TextAlignment binId = static_cast<simData::TextAlignment>(binSelection_->itemData(binIndex).toInt());
+    addText(binId, textInput_->text());
   }
 
   void removeText_()
@@ -263,22 +276,22 @@ private:
     textModel_->removeRow(selectedIndex.row());
   }
 
-  void setTextSize_(int size)
+  void setTextSize_(double size)
   {
-    const int boxIndex = binSelection_->currentIndex();
-    const simData::TextAlignment boxId = static_cast<simData::TextAlignment>(binSelection_->itemData(boxIndex).toInt());
-    hudTextBinManager_->setTextSize(boxId, size);
+    const int binIndex = binSelection_->currentIndex();
+    const simData::TextAlignment binId = static_cast<simData::TextAlignment>(binSelection_->itemData(binIndex).toInt());
+    hudTextBinManager_->setTextSize(binId, size);
   }
 
   void setColor_()
   {
-    const int boxIndex = binSelection_->currentIndex();
-    const simData::TextAlignment boxId = static_cast<simData::TextAlignment>(binSelection_->itemData(boxIndex).toInt());
+    const int binIndex = binSelection_->currentIndex();
+    const simData::TextAlignment binId = static_cast<simData::TextAlignment>(binSelection_->itemData(binIndex).toInt());
 
-    QColor color = QColorDialog::getColor(hudTextBinManager_->color(boxId), this, "Select Text Color");
+    QColor color = QColorDialog::getColor(hudTextBinManager_->color(binId), this, "Select Text Color");
     if (color.isValid())
     {
-      hudTextBinManager_->setColor(boxId, color);
+      hudTextBinManager_->setColor(binId, color);
     }
   }
 
@@ -328,6 +341,7 @@ private:
 
   // UI elements
   QLineEdit* textInput_ = nullptr;
+  QDoubleSpinBox* textSizeSpinBox_ = nullptr;
   QComboBox* binSelection_ = nullptr;
   QStandardItemModel* textModel_ = nullptr;
   QTreeView* textTree_ = nullptr;
@@ -380,13 +394,16 @@ int main(int argc, char* argv[])
   mainWindow.addText(simData::TextAlignment::ALIGN_RIGHT_BOTTOM, "Third line.");
 
   hudTextBinManager->setColor(Qt::white);
-  hudTextBinManager->setTextSize(18);
+  hudTextBinManager->setTextSize(13.5);
 
   // Center top and center-center are yellow and larger
   hudTextBinManager->setColor(simData::TextAlignment::ALIGN_CENTER_TOP, Qt::yellow);
-  hudTextBinManager->setTextSize(simData::TextAlignment::ALIGN_CENTER_TOP, 24);
+  hudTextBinManager->setTextSize(simData::TextAlignment::ALIGN_CENTER_TOP, 18);
   hudTextBinManager->setColor(simData::TextAlignment::ALIGN_CENTER_CENTER, Qt::yellow);
-  hudTextBinManager->setTextSize(simData::TextAlignment::ALIGN_CENTER_CENTER, 24);
+  hudTextBinManager->setTextSize(simData::TextAlignment::ALIGN_CENTER_CENTER, 18);
+
+  // We changed the default values externally, let the GUI update to current
+  mainWindow.setGuiToSelectedBinValues();
 
   return app.exec();
 }

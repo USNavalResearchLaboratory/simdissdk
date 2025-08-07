@@ -68,12 +68,12 @@ public:
   /** Retrieves the bin's color */
   QColor color(BinId binId) const;
 
-  /** Changes the text size (in pixels) */
-  void setTextSize(BinId binId, int textSizePx);
-  /** Changes the text size (in pixels) for all bins */
-  void setTextSize(int textSizePx);
-  /** Retrieves the text size (in pixels) */
-  int textSize(BinId binId) const;
+  /** Changes the text size (in points) */
+  void setTextSize(BinId binId, double textSizePoints);
+  /** Changes the text size (in points) for all bins */
+  void setTextSize(double textSizePoints);
+  /** Retrieves the text size (in points) */
+  double textSize(BinId binId) const;
 
   /** Returns all registered text IDs */
   std::vector<TextId> allTextIds() const;
