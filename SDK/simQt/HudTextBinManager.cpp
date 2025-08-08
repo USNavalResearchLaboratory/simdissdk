@@ -30,6 +30,9 @@
 
 namespace simQt {
 
+/** Sets the internal text margin around the label, between the background edge and label text. */
+constexpr int DEFAULT_LABEL_BG_MARGIN_PX = 6;
+
 /** Binds together a Bin identifier, the OSG node, the back-end data, and a dirty flag */
 struct HudTextBinManager::TextBin
 {
@@ -49,24 +52,28 @@ class TextBoxRenderer : public osg::MatrixTransform
 public:
   TextBoxRenderer();
 
-  /** Changes the alignment on the text, which also impacts the screen positioning. */
+  /** Alignment on the text, which also impacts the screen positioning (anchor position). */
   void setAlignment(Qt::Alignment qtAlignment);
-  /** Set the position of the rendering box. */
   void setRect(const QRect& rectPx);
 
-  /** Change the color */
+  /** Change the text color */
   void setColor(const QColor& color);
-  /** Retrieve the set color */
   QColor color() const;
 
-  /** Set the text size in points */
+  /** Background color to make text easier to read. Alpha of 0 means no backdrop. Defaults to (0,0,0,0) */
+  void setBackgroundColor(const QColor& color);
+  QColor backgroundColor() const;
+
+  /** Indicates distance for drop shadow offset; use 0 to not render a shadow. */
+  void setShadowOffset(int shadowOffsetPx);
+  bool shadowOffset() const;
+
+  /** Text font size in points */
   void setTextSize(double textSizePoints);
-  /** Retrieve the set text size (in points) */
   double textSize() const;
 
   /** Changes the text string displayed; OK to be multi-line. */
   void setText(const QString& text);
-  /** Returns the text string displayed; likely multi-line */
   QString text() const;
 
   // From osg::Node:
@@ -84,6 +91,7 @@ private:
 
   QRect rectPx_ = QRect(10, 10, 400, 200);
   QColor color_ = Qt::white;
+  QColor backgroundColor_ = QColor(0, 0, 0, 128);
   double textSizePoints_ = 13.5;
   bool dirty_ = true;
 
@@ -141,6 +149,7 @@ TextBoxRenderer::TextBoxRenderer()
 
   const int textSizePoints = label_->font().pointSize();
   textSizePoints_ = label_->font().pointSizeF();
+  label_->setMargin(DEFAULT_LABEL_BG_MARGIN_PX);
   label_->setStyleSheet(buildStyleSheet_());
   label_->setFixedWidth(rectPx_.width());
   label_->setWordWrap(true);
@@ -183,6 +192,33 @@ void TextBoxRenderer::setColor(const QColor& color)
 QColor TextBoxRenderer::color() const
 {
   return color_;
+}
+
+void TextBoxRenderer::setBackgroundColor(const QColor& color)
+{
+  if (backgroundColor_ == color)
+    return;
+  backgroundColor_ = color;
+  label_->setStyleSheet(buildStyleSheet_());
+  dirty_ = true;
+}
+
+QColor TextBoxRenderer::backgroundColor() const
+{
+  return backgroundColor_;
+}
+
+void TextBoxRenderer::setShadowOffset(int shadowOffsetPx)
+{
+  if (shadowOffsetPx == node_->shadowOffset())
+    return;
+  node_->setShadowOffset(shadowOffsetPx);
+  dirty_ = true;
+}
+
+bool TextBoxRenderer::shadowOffset() const
+{
+  return node_->shadowOffset();
 }
 
 void TextBoxRenderer::setTextSize(double textSizePoints)
@@ -296,11 +332,19 @@ void TextBoxRenderer::render_()
 
 QString TextBoxRenderer::buildStyleSheet_() const
 {
-  return QString("color: rgba(%2, %3, %4, %5);")
+  const QString color = QString("color: rgba(%1, %2, %3, %4); ")
     .arg(color_.red())
     .arg(color_.green())
     .arg(color_.blue())
     .arg(color_.alpha());
+  const QString bgColor = (backgroundColor_.alpha() == 0)
+    ? ""
+    : QString("background-color: rgba(%1, %2, %3, %4); ")
+    .arg(backgroundColor_.red())
+    .arg(backgroundColor_.green())
+    .arg(backgroundColor_.blue())
+    .arg(backgroundColor_.alpha());
+  return color + bgColor;
 }
 
 ///////////////////////////////////////////////////////////
@@ -592,6 +636,48 @@ QColor HudTextBinManager::color(BinId binId) const
   if (!bin)
     return Qt::white;
   return bin->node_->color();
+}
+
+void HudTextBinManager::setBackgroundColor(BinId binId, const QColor& color)
+{
+  auto* bin = textBinForBinId_(binId);
+  if (bin)
+    bin->node_->setBackgroundColor(color);
+}
+
+void HudTextBinManager::setBackgroundColor(const QColor& color)
+{
+  for (const auto& binPtr : bins_)
+    binPtr->node_->setBackgroundColor(color);
+}
+
+QColor HudTextBinManager::backgroundColor(BinId binId) const
+{
+  auto* bin = textBinForBinId_(binId);
+  if (!bin)
+    return Qt::white;
+  return bin->node_->backgroundColor();
+}
+
+void HudTextBinManager::setShadowOffset(BinId binId, int shadowOffsetPx)
+{
+  auto* bin = textBinForBinId_(binId);
+  if (bin)
+    bin->node_->setShadowOffset(shadowOffsetPx);
+}
+
+void HudTextBinManager::setShadowOffset(int shadowOffsetPx)
+{
+  for (const auto& binPtr : bins_)
+    binPtr->node_->setShadowOffset(shadowOffsetPx);
+}
+
+int HudTextBinManager::shadowOffset(BinId binId) const
+{
+  auto* bin = textBinForBinId_(binId);
+  if (!bin)
+    return 0;
+  return bin->node_->shadowOffset();
 }
 
 void HudTextBinManager::setTextSize(BinId binId, double textSizePoints)

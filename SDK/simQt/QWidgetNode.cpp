@@ -224,6 +224,16 @@ QLabelDropShadowNode::~QLabelDropShadowNode()
 {
 }
 
+void QLabelDropShadowNode::setShadowOffset(int shadowOffset)
+{
+  shadowOffset_ = shadowOffset;
+}
+
+int QLabelDropShadowNode::shadowOffset() const
+{
+  return shadowOffset_;
+}
+
 void QLabelDropShadowNode::render(QLabel* label)
 {
   if (!label)
@@ -239,7 +249,6 @@ void QLabelDropShadowNode::render(QLabel* label)
     return;
   }
 
-  constexpr int shadowOffset = 1;
   const auto& labelSize = label->size();
   QImage image(labelSize.width(), labelSize.height(),
     QImage::Format_RGBA8888);
@@ -249,13 +258,21 @@ void QLabelDropShadowNode::render(QLabel* label)
   painter.setRenderHint(QPainter::Antialiasing);
   painter.setRenderHint(QPainter::TextAntialiasing);
 
-  const QString oldStyle = label->styleSheet();
-  label->setStyleSheet(oldStyle + " ; color: black;");
-  label->render(&painter, QPoint(shadowOffset, shadowOffset), QRegion(), QWidget::DrawChildren);
-  label->setStyleSheet(oldStyle);
-  label->render(&painter, QPoint(0, 0), QRegion(), QWidget::DrawChildren);
+  if (shadowOffset_ != 0)
+  {
+    const QString oldStyle = label->styleSheet();
+    label->setStyleSheet(oldStyle + " ; color: black;");
+    label->render(&painter, QPoint(shadowOffset_, shadowOffset_), QRegion(), QWidget::DrawChildren);
+    // Make sure the label doesn't paint with a background color, obscuring the shadow. Without this,
+    // a label with a background-color set will paint it twice, doubling alpha and writing over shadow.
+    label->setStyleSheet(oldStyle + " ; background-color: none;");
+    label->render(&painter, QPoint(0, 0), QRegion(), QWidget::DrawChildren);
+    label->setStyleSheet(oldStyle);
+  }
+  else
+    label->render(&painter, QPoint(0, 0), QRegion(), QWidget::DrawChildren);
 
-  setImage_(image);
+setImage_(image);
 }
 
 } // namespace simQt

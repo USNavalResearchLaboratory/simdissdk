@@ -117,9 +117,17 @@ public:
   /** Updates the graphics to show the given label */
   void render(QLabel* label);
 
+  /** Sets the distance for the drop shadow from the normal text. 0 to disable. */
+  void setShadowOffset(int shadowOffset);
+  /** Retrieves the currently set drop shadow range. */
+  int shadowOffset() const;
+
 protected:
   /** From osg::Referenced */
   virtual ~QLabelDropShadowNode();
+
+private:
+  int shadowOffset_ = 1;
 };
 
 }

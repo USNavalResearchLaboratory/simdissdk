@@ -22,6 +22,7 @@
  */
 #include <QAction>
 #include <QApplication>
+#include <QCheckBox>
 #include <QColorDialog>
 #include <QComboBox>
 #include <QDockWidget>
@@ -111,8 +112,10 @@ public:
 
     // Text Size and Color Button (Horizontal Layout)
     QWidget* textSizeColorContainer = new QWidget;
-    QHBoxLayout* textSizeColorLayout = new QHBoxLayout(textSizeColorContainer);
+    QGridLayout* textSizeColorLayout = new QGridLayout(textSizeColorContainer);
     textSizeColorLayout->setContentsMargins(0, 0, 0, 0); // Remove margins to fit snugly
+
+    textSizeColorLayout->addWidget(new QLabel("Size:", this), 0, 0);
 
     textSizeSpinBox_ = new QDoubleSpinBox;
     textSizeSpinBox_->setRange(4.0, 150.0);
@@ -120,13 +123,20 @@ public:
     textSizeSpinBox_->setDecimals(1);
     textSizeSpinBox_->setSingleStep(1.0);
     textSizeSpinBox_->setSuffix(" pts");
-    textSizeSpinBox_->setPrefix("Text Size: ");
     connect(textSizeSpinBox_, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &MainWindow::setTextSize_);
-    textSizeColorLayout->addWidget(textSizeSpinBox_);
+    textSizeColorLayout->addWidget(textSizeSpinBox_, 0, 1);
 
     auto* colorButton = new QPushButton("Change Color");
     connect(colorButton, &QPushButton::clicked, this, &MainWindow::setColor_);
-    textSizeColorLayout->addWidget(colorButton);
+    textSizeColorLayout->addWidget(colorButton, 0, 2);
+
+    shadowCheck_ = new QCheckBox("Drop Shadow");
+    connect(shadowCheck_, &QCheckBox::clicked, this, &MainWindow::setShadowOffset_);
+    textSizeColorLayout->addWidget(shadowCheck_, 1, 0, 1, 0);
+
+    auto* bgColorButton = new QPushButton("BG Color");
+    connect(bgColorButton, &QPushButton::clicked, this, &MainWindow::setBackgroundColor_);
+    textSizeColorLayout->addWidget(bgColorButton, 1, 2);
 
     textSizeColorContainer->setLayout(textSizeColorLayout);
     textGroupLayout->addWidget(textSizeColorContainer);
@@ -247,6 +257,7 @@ public:
     const int binIndex = binSelection_->currentIndex();
     const simData::TextAlignment binId = static_cast<simData::TextAlignment>(binSelection_->itemData(binIndex).toInt());
     textSizeSpinBox_->setValue(hudTextBinManager_->textSize(binId));
+    shadowCheck_->setChecked(hudTextBinManager_->shadowOffset(binId) != 0);
   }
 
 private:
@@ -291,9 +302,25 @@ private:
 
     QColor color = QColorDialog::getColor(hudTextBinManager_->color(binId), this, "Select Text Color");
     if (color.isValid())
-    {
       hudTextBinManager_->setColor(binId, color);
-    }
+  }
+
+  void setBackgroundColor_()
+  {
+    const int boxIndex = binSelection_->currentIndex();
+    const simData::TextAlignment boxId = static_cast<simData::TextAlignment>(binSelection_->itemData(boxIndex).toInt());
+
+    const QColor color = QColorDialog::getColor(hudTextBinManager_->backgroundColor(boxId),
+      this, "Select Background Color", QColorDialog::ShowAlphaChannel);
+    if (color.isValid())
+      hudTextBinManager_->setBackgroundColor(boxId, color);
+  }
+
+  void setShadowOffset_(bool shadowOffset)
+  {
+    const int boxIndex = binSelection_->currentIndex();
+    const simData::TextAlignment boxId = static_cast<simData::TextAlignment>(binSelection_->itemData(boxIndex).toInt());
+    hudTextBinManager_->setShadowOffset(boxId, shadowOffset ? 1 : 0);
   }
 
   void setMarginTop_(int value)
@@ -343,6 +370,7 @@ private:
   // UI elements
   QLineEdit* textInput_ = nullptr;
   QDoubleSpinBox* textSizeSpinBox_ = nullptr;
+  QCheckBox* shadowCheck_ = nullptr;
   QComboBox* binSelection_ = nullptr;
   QStandardItemModel* textModel_ = nullptr;
   QTreeView* textTree_ = nullptr;
@@ -402,6 +430,13 @@ int main(int argc, char* argv[])
   hudTextBinManager->setTextSize(simData::TextAlignment::ALIGN_CENTER_TOP, 18);
   hudTextBinManager->setColor(simData::TextAlignment::ALIGN_CENTER_CENTER, Qt::yellow);
   hudTextBinManager->setTextSize(simData::TextAlignment::ALIGN_CENTER_CENTER, 18);
+
+  // Center-right gets a different background color, and center gets no background color.
+  hudTextBinManager->setBackgroundColor(simData::TextAlignment::ALIGN_RIGHT_CENTER, QColor(0, 128, 128, 128));
+  hudTextBinManager->setBackgroundColor(simData::TextAlignment::ALIGN_CENTER_CENTER, QColor(0, 0, 0, 0));
+
+  // Disable the shadow offset on bottom center
+  hudTextBinManager->setShadowOffset(simData::TextAlignment::ALIGN_CENTER_BOTTOM, 0);
 
   // We changed the default values externally, let the GUI update to current
   mainWindow.setGuiToSelectedBinValues();

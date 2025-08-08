@@ -68,6 +68,20 @@ public:
   /** Retrieves the bin's color */
   QColor color(BinId binId) const;
 
+  /** Changes the background color; use alpha of 0 to indicate no background. */
+  void setBackgroundColor(BinId binId, const QColor& bgColor);
+  /** Changes the background color; use alpha of 0 to indicate no background. For all bins. */
+  void setBackgroundColor(const QColor& bgColor);
+  /** Retrieves the background color */
+  QColor backgroundColor(BinId binId) const;
+
+  /** Changes the shadow offset (in pixels) */
+  void setShadowOffset(BinId binId, int shadowOffsetPx);
+  /** Changes the shadow offset (in pixels) for all bins */
+  void setShadowOffset(int shadowOffsetPx);
+  /** Retrieves the shadow offset (in pixels) */
+  int shadowOffset(BinId binId) const;
+
   /** Changes the text size (in points) */
   void setTextSize(BinId binId, double textSizePoints);
   /** Changes the text size (in points) for all bins */
