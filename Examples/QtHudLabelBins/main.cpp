@@ -97,6 +97,7 @@ public:
 
     textInput_ = new QLineEdit;
     textInput_->setPlaceholderText("Type here to add to selected bin");
+    connect(textInput_, &QLineEdit::returnPressed, this, &MainWindow::addText_);
     textInputLayout->addWidget(textInput_);
 
     QToolButton* addButton = new QToolButton;

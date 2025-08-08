@@ -80,6 +80,7 @@ protected:
 private:
   QString buildStyleSheet_() const;
   void render_();
+  QSize sizeForText_() const;
 
   QRect rectPx_ = QRect(10, 10, 400, 200);
   QColor color_ = Qt::white;
@@ -213,31 +214,83 @@ QString TextBoxRenderer::text() const
   return label_->text();
 }
 
+QSize TextBoxRenderer::sizeForText_() const
+{
+  // Available space is in rectPx_
+  if (label_->text().isEmpty())
+    return QSize(0, 0);
+
+  const auto& oldPolicy = label_->sizePolicy();
+
+  // Need to turn off word-wrap to get a default width that is accurate. Word wrap being
+  // on makes the label's size policy guess roughly, rather than exactly. We want exact.
+  label_->setWordWrap(false);
+  label_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+  label_->setMinimumSize(0, 0);
+  label_->setMaximumSize(rectPx_.width(), rectPx_.height());
+
+  // Force the label to a min of the preferred, and the rectangular box
+  const int preferredWidth = label_->sizeHint().width();
+  const int actualWidth = std::min(preferredWidth, rectPx_.width());
+
+  // Tighten the "height" value now using word wrap
+  label_->setWordWrap(true);
+  const int preferredHeight = label_->heightForWidth(actualWidth);
+  const int actualHeight = std::min(preferredHeight, rectPx_.height());
+
+  // Restore changes that matter
+  label_->setSizePolicy(oldPolicy);
+
+  return QSize(actualWidth, actualHeight);
+}
+
 void TextBoxRenderer::render_()
 {
   if (!dirty_)
     return;
 
-  // Need to recalculate the height on each render_ because changing
-  // things like the text size or contents will change the width and
-  // potentially the height too.
-  const int labelWidth = rectPx_.width();
-  label_->setFixedWidth(labelWidth);
-  const int labelHeight = label_->heightForWidth(labelWidth);
-  label_->resize(labelWidth, labelHeight);
+  // Determine the size of the text box with tight wrapping, and set fixed size
+  // on the label so that it doesn't stretch out.
+  const auto& desireSize = sizeForText_();
+  const bool validSize = (desireSize.width() > 0 && desireSize.height() > 0);
+  if (validSize)
+  {
+    label_->setFixedSize(desireSize);
+    node_->setNodeMask(~0);
+  }
+  else
+  {
+    // No need to render; can happen for empty strings
+    node_->setNodeMask(0);
+    return;
+  }
 
-  // Calculate the Y position of the label; not required for X because of fixed width
+  // Create the image of the label, which will then tell us the on-screen size
+  node_->render(label_.get());
+
+  // Image should match our desired size
+  assert(node_->width() == desireSize.width());
+  assert(node_->height() == desireSize.height());
+
   const auto alignment = label_->alignment();
+
+  // Calculate the X position of the label
+  int translateX = rectPx_.x();
+  if (alignment.testFlag(Qt::AlignHCenter))
+    translateX = rectPx_.center().x() - desireSize.width() / 2;
+  else if (alignment.testFlag(Qt::AlignRight))
+    translateX = rectPx_.right() - desireSize.width();
+
+  // Calculate the Y position of the label
   int translateY = rectPx_.y();
   // Note that rectPx_.bottom is actually the TOP due to inversion of Qt/OSG coord systems
-  if (alignment.testFlag(Qt::AlignTop))
-    translateY = rectPx_.bottom() - labelHeight;
-  else if (alignment.testFlag(Qt::AlignVCenter))
-    translateY = rectPx_.center().y() - labelHeight / 2;
+  if (alignment.testFlag(Qt::AlignVCenter))
+    translateY = rectPx_.center().y() - desireSize.height() / 2;
+  else if (alignment.testFlag(Qt::AlignTop))
+    translateY = rectPx_.bottom() - desireSize.height();
 
   // Move to the expected image location based on alignment
-  setMatrix(osg::Matrix::translate(rectPx_.x(), translateY, 0.));
-  node_->render(label_.get());
+  setMatrix(osg::Matrix::translate(translateX, translateY, 0.));
   dirty_ = false;
 }
 
