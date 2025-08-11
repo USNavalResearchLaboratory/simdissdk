@@ -66,7 +66,7 @@ public:
 
   /** Indicates distance for drop shadow offset; use 0 to not render a shadow. */
   void setShadowOffset(int shadowOffsetPx);
-  bool shadowOffset() const;
+  int shadowOffset() const;
 
   /** Text font size in points */
   void setTextSize(double textSizePoints);
@@ -216,7 +216,7 @@ void TextBoxRenderer::setShadowOffset(int shadowOffsetPx)
   dirty_ = true;
 }
 
-bool TextBoxRenderer::shadowOffset() const
+int TextBoxRenderer::shadowOffset() const
 {
   return node_->shadowOffset();
 }
