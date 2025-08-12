@@ -77,14 +77,16 @@ QString SettingsSearchFilter::filterText() const
 
 QModelIndexList SettingsSearchFilter::match(const QModelIndex& start, int role, const QVariant& value, int hits, Qt::MatchFlags flags) const
 {
+  const auto& actualStart = mapToSource(start);
+
   // Make a copy of the filter's regex to preserve case sensitivity and any other options it may have
   QRegExp regex = filterRegExp();
   regex.setPattern(value.toString());
   QModelIndexList hitsList;
-  for (int row = start.row(); row < sourceModel()->rowCount(start.parent()); ++row)
+  for (int row = actualStart.row(); row < sourceModel()->rowCount(actualStart.parent()); ++row)
   {
-    QModelIndex candidate = sourceModel()->index(row, 0, start.parent());
-    if (testRegExp_(candidate, sourceModel()->index(row, 1, start.parent()), start.parent(), regex))
+    QModelIndex candidate = sourceModel()->index(row, 0, actualStart.parent());
+    if (testRegExp_(candidate, sourceModel()->index(row, 1, actualStart.parent()), actualStart.parent(), regex))
     {
       hitsList.push_back(mapFromSource(candidate));
       if (hits > 0 && hitsList.size() >= hits)
