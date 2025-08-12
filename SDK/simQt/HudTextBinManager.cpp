@@ -613,7 +613,7 @@ void HudTextBinManager::refreshDirtyTextBin_(TextBin& bin)
   // Precondition, handled by caller
   assert(bin.dataDirty_);
   const auto& combinedText = bin.data_->combinedText();
-  bin.node_->setText(QString::fromStdString(combinedText).trimmed());
+  bin.node_->setText(QString::fromStdString(combinedText));
   bin.dataDirty_ = false;
 }
 
