@@ -42,15 +42,11 @@
 namespace simUtil {
 
 Capabilities::Capabilities(osg::GraphicsContext& gc)
-  : glVersion_(1.0),
-    isUsable_(USABLE)
 {
   init_(gc);
 }
 
 Capabilities::Capabilities()
-  : glVersion_(1.0),
-  isUsable_(USABLE)
 {
   init_();
 }
@@ -86,26 +82,17 @@ std::string Capabilities::toString_(float val) const
   return ss.str();
 }
 
-void Capabilities::init_()
+void Capabilities::recordThirdPartyVersions_()
 {
-  const osgEarth::Capabilities& caps = osgEarth::Registry::instance()->getCapabilities();
-  caps_.push_back(std::make_pair("Vendor", caps.getVendor()));
-  caps_.push_back(std::make_pair("Renderer", caps.getRenderer()));
-  caps_.push_back(std::make_pair("OpenGL Version", caps.getVersion()));
-  glVersion_ = extractGlVersion_(caps.getVersion());
-  caps_.push_back(std::make_pair("Core Profile", toString_(caps.isCoreProfile())));
+  caps_.push_back(std::make_pair("osgEarth Version", osgEarthGetVersion()));
+  caps_.push_back(std::make_pair("OSG Version", osgGetVersion()));
+#ifdef GDAL_RELEASE_NAME
+  caps_.push_back(std::make_pair("GDAL Version", GDAL_RELEASE_NAME));
+#endif
+}
 
-  // OpenGL version must be usable.  OSG 3.6 with core profile support will not function
-  // without support for VAO, which requires OpenGL 3.0, released in 2008.  Although we
-  // require interface blocks from GLSL 3.3, we only absolutely require OpenGL features
-  // from 3.0, so test against that.
-  if (glVersion_ < 3.0f) // Note release date of 2008
-  {
-    recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.0 (detected " << glVersion_ << ")");
-  }
-
-  checkVendorOpenGlSupport_(caps.getVendor(), caps.getVersion());
-
+void Capabilities::recordGlLimits_(const osgEarth::Capabilities& caps)
+{
   caps_.push_back(std::make_pair("Max GPU texture units", toString_(caps.getMaxGPUTextureUnits())));
   caps_.push_back(std::make_pair("Max texture size", toString_(caps.getMaxTextureSize())));
   caps_.push_back(std::make_pair("GLSL", toString_(caps.supportsGLSL())));
@@ -139,9 +126,21 @@ void Capabilities::init_()
   else // Remove trailing space
     compressionSupported = compressionSupported.substr(0, compressionSupported.length() - 1);
   caps_.push_back(std::make_pair("Texture compression", compressionSupported));
+
 }
 
-void Capabilities::init_(osg::GraphicsContext& gc)
+void Capabilities::recordContextInfoFromCaps_(const osgEarth::Capabilities& caps)
+{
+  vendorString_ = caps.getVendor();
+  caps_.push_back(std::make_pair("Vendor", vendorString_));
+  caps_.push_back(std::make_pair("Renderer", caps.getRenderer()));
+  glVersionString_ = caps.getVersion();
+  caps_.push_back(std::make_pair("OpenGL Version", glVersionString_));
+  glVersion_ = extractGlVersion_(caps.getVersion());
+  caps_.push_back(std::make_pair("Core Profile", toString_(caps.isCoreProfile())));
+}
+
+int Capabilities::recordContextInfoFromContext_(osg::GraphicsContext& gc)
 {
   osg::GLExtensions* ext = nullptr;
   if (gc.makeCurrent() && gc.getState())
@@ -156,38 +155,55 @@ void Capabilities::init_(osg::GraphicsContext& gc)
     caps_.push_back(std::make_pair("Core Profile", toString_(false)));
     glVersion_ = 0.0;
     recordUsabilityConcern_(Capabilities::UNUSABLE, "Unable to activate context.");
-    return;
+    return 1;
   }
 
-  const std::string& vendorString = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
-  caps_.push_back(std::make_pair("osgEarth Version", osgEarthGetVersion()));
-  caps_.push_back(std::make_pair("OSG Version", osgGetVersion()));
-#ifdef GDAL_RELEASE_NAME
-  caps_.push_back(std::make_pair("GDAL Version", GDAL_RELEASE_NAME));
-#endif
-  caps_.push_back(std::make_pair("Vendor", vendorString));
+  vendorString_ = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
   const std::string& rendererString = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
-  caps_.push_back(std::make_pair("Renderer", rendererString));
-  const std::string& glVersionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-  caps_.push_back(std::make_pair("OpenGL Version", glVersionString));
-  glVersion_ = extractGlVersion_(glVersionString);
+  glVersionString_ = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+  glVersion_ = extractGlVersion_(glVersionString_);
 
   // Detect core profile by investigating GL_CONTEXT_PROFILE_MASK
   GLint profileMask = 0;
   glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &profileMask);
   const bool isCoreProfile = (glVersion_ >= 3.2f && ((profileMask & GL_CONTEXT_CORE_PROFILE_BIT) != 0));
-  caps_.push_back(std::make_pair("Core Profile", toString_(isCoreProfile)));
 
+  caps_.push_back(std::make_pair("Vendor", vendorString_));
+  caps_.push_back(std::make_pair("Renderer", rendererString));
+  caps_.push_back(std::make_pair("OpenGL Version", glVersionString_));
+  caps_.push_back(std::make_pair("Core Profile", toString_(isCoreProfile)));
+  return 0;
+}
+
+void Capabilities::checkInvalidOpenGlVersion_()
+{
   // OpenGL version must be usable.  OSG 3.6 with core profile support will not function
   // without support for VAO, which requires OpenGL 3.0, released in 2008.  Although we
   // require interface blocks from GLSL 3.3, we only absolutely require OpenGL features
   // from 3.0, so test against that.
   if (glVersion_ < 3.0f) // Note release date of 2008
-  {
     recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.0 (detected " << glVersion_ << ")");
-  }
+}
 
-  checkVendorOpenGlSupport_(vendorString, glVersionString);
+void Capabilities::init_()
+{
+  recordThirdPartyVersions_();
+
+  const osgEarth::Capabilities& caps = osgEarth::Registry::instance()->getCapabilities();
+  recordContextInfoFromCaps_(caps);
+  checkInvalidOpenGlVersion_();
+  checkVendorOpenGlSupport_(vendorString_, glVersionString_);
+  recordGlLimits_(caps);
+}
+
+void Capabilities::init_(osg::GraphicsContext& gc)
+{
+  recordThirdPartyVersions_();
+
+  if (recordContextInfoFromContext_(gc) != 0)
+    return;
+  checkInvalidOpenGlVersion_();
+  checkVendorOpenGlSupport_(vendorString_, glVersionString_);
 }
 
 void Capabilities::recordUsabilityConcern_(Capabilities::Usability severity, const std::string& concern)
