@@ -41,6 +41,13 @@
 
 namespace simUtil {
 
+/**
+ * Minimum number of CPU to avoid warning on performance. This should be logical processors. A
+ * low CPU count implies a VM environment where performance might be stunted. If a user has
+ * fewer than these number of CPUs detected, present a performance warning.
+ */
+constexpr unsigned int MINIMUM_CPU_COUNT = 4;
+
 Capabilities::Capabilities(osg::GraphicsContext& gc)
 {
   init_(gc);
@@ -194,6 +201,7 @@ void Capabilities::init_()
   checkInvalidOpenGlVersion_();
   checkVendorOpenGlSupport_(vendorString_, glVersionString_);
   recordGlLimits_(caps);
+  checkCpuCount_();
 }
 
 void Capabilities::init_(osg::GraphicsContext& gc)
@@ -204,6 +212,7 @@ void Capabilities::init_(osg::GraphicsContext& gc)
     return;
   checkInvalidOpenGlVersion_();
   checkVendorOpenGlSupport_(vendorString_, glVersionString_);
+  checkCpuCount_();
 }
 
 void Capabilities::recordUsabilityConcern_(Capabilities::Usability severity, const std::string& concern)
@@ -300,6 +309,16 @@ void Capabilities::checkVendorOpenGlSupport_(const std::string& vendor, const st
     }
     return;
   }
+}
+
+void Capabilities::checkCpuCount_()
+{
+  const unsigned int numCpu = std::thread::hardware_concurrency();
+  if (numCpu == 0u)
+    return; // unknown number of CPU
+  caps_.push_back(std::make_pair("CPU Count", std::to_string(numCpu)));
+  if (numCpu < MINIMUM_CPU_COUNT)
+    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Low CPU count (" + std::to_string(numCpu) + "); possible performance issues with larger track loads.");
 }
 
 Capabilities::Usability Capabilities::isUsable() const
