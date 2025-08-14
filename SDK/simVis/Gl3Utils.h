@@ -157,10 +157,10 @@ inline void applyMesaGlVersionOverride()
   {
     SIM_WARN << "MESA_GL_VERSION_OVERRIDE has been set by user to: " << mesaGlVersionOverride << ". SIMDIS may not be able to initialize an appropriate OpenGL context.\n";
   }
-  else if (glContextVersion < 3.3f)
+  else
   {
-  // some combinations of graphics hardware and MESA drivers on Linux have an additional requirement of setting
-  // the MESA_GL_VERSION_OVERRIDE environment variable, else we get a bad version.
+    // some combinations of graphics hardware and MESA drivers on Linux have an additional requirement of setting
+    // the MESA_GL_VERSION_OVERRIDE environment variable, else we get a bad version.
     setenv("MESA_GL_VERSION_OVERRIDE", "3.3", 1);
   }
 #endif
@@ -184,7 +184,7 @@ public:
   }
 
   /** Detect mesa Geometry Shader bug with GL3 and disable geometry portions if present */
-  virtual void operator() (osg::Object* obj)
+  virtual void operator()(osg::Object* obj) override
   {
     osg::GraphicsContext* gc = dynamic_cast<osg::GraphicsContext*>(obj);
     simVis::applyCoreProfileValidity(gc);
