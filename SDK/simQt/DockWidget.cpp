@@ -1399,6 +1399,10 @@ void DockWidget::showEvent(QShowEvent* evt)
   // Queue a raise() to occur AFTER the actual show() finishes, to make window pop up
   QTimer::singleShot(0, this, SLOT(raise()));
 
+  // Schedule a fix to the tabs, if it is tabified
+  if (!isFloating())
+    QTimer::singleShot(0, this, SLOT(fixTabIcon_()));
+
   // Do nothing if dock title styling is turned off
   if (extraFeatures_.testFlag(DockNoTitleStylingHint) || titleBarWidget() == noTitleBar_)
     return;
