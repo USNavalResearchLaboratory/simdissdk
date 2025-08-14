@@ -98,6 +98,8 @@ private:
   void checkVendorOpenGlSupport_(const std::string& vendor, const std::string& glVersionString);
   /** Checks for low number of CPUs; currently hard-coded to warn on low CPU count (< 4) to catch virtual hardware. */
   void checkCpuCount_();
+  /** Checks for total RAM; currently hard-coded to warn on low RAM (<= 4gb) to catch virtual hardware. */
+  void checkRam_();
 
   /** Converts boolean to string */
   std::string toString_(bool val) const;

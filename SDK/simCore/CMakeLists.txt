@@ -148,13 +148,15 @@ set(CORE_SYSTEM_SRC System/)
 set(CORE_SYSTEM_HEADERS
     ${CORE_SYSTEM_INC}DescriptorStringCapture.h
     ${CORE_SYSTEM_INC}File.h
+    ${CORE_SYSTEM_INC}MemoryInfo.h
     ${CORE_SYSTEM_INC}ShellWindow.h
     ${CORE_SYSTEM_INC}Utils.h
 )
 set(CORE_SYSTEM_SOURCES
     ${CORE_SYSTEM_SRC}DescriptorStringCapture.cpp
     ${CORE_SYSTEM_SRC}File.cpp
-    ${CORE_SYSTEM_INC}ShellWindow.cpp
+    ${CORE_SYSTEM_SRC}MemoryInfo.cpp
+    ${CORE_SYSTEM_SRC}ShellWindow.cpp
     ${CORE_SYSTEM_SRC}Utils.cpp
 )
 source_group(Headers\\System FILES ${CORE_SYSTEM_HEADERS})
@@ -213,7 +215,7 @@ source_group("Source Files\\GOG" FILES ${CORE_GOG_SOURCES})
 
 # Avoid false MSVC 2017/2019 MSB8027 warning from Unity build on Utils.cpp and Angle.cpp
 set_source_files_properties(${CORE_STRING_SRC}Angle.cpp ${CORE_STRING_SRC}Utils.cpp
-    ${CORE_CALC_SRC}Angle.cpp ${CORE_TIME_SRC}Utils.cpp
+    ${CORE_CALC_SRC}Angle.cpp ${CORE_TIME_SRC}Utils.cpp ${CORE_SYSTEM_SRC}MemoryInfo.cpp
     PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 
 set(CORE_PROJECT_FILES

@@ -29,7 +29,9 @@
 #include "osgEarth/Registry"
 #include "osgEarth/StringUtils"
 #include "osgEarth/Version"
+#include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
+#include "simCore/System/MemoryInfo.h"
 #include "simUtil/Capabilities.h"
 
 #ifndef GL_CONTEXT_PROFILE_MASK
@@ -47,6 +49,12 @@ namespace simUtil {
  * fewer than these number of CPUs detected, present a performance warning.
  */
 constexpr unsigned int MINIMUM_CPU_COUNT = 4;
+
+/**
+ * Minimum RAM to pass capabilities test, in gigabytes. Slightly above the minimum to catch any
+ * possible rounding issues or reserved memory issues.
+ */
+constexpr double MINIMUM_RAM_GB = 4.1;
 
 Capabilities::Capabilities(osg::GraphicsContext& gc)
 {
@@ -202,6 +210,7 @@ void Capabilities::init_()
   checkVendorOpenGlSupport_(vendorString_, glVersionString_);
   recordGlLimits_(caps);
   checkCpuCount_();
+  checkRam_();
 }
 
 void Capabilities::init_(osg::GraphicsContext& gc)
@@ -213,6 +222,7 @@ void Capabilities::init_(osg::GraphicsContext& gc)
   checkInvalidOpenGlVersion_();
   checkVendorOpenGlSupport_(vendorString_, glVersionString_);
   checkCpuCount_();
+  checkRam_();
 }
 
 void Capabilities::recordUsabilityConcern_(Capabilities::Usability severity, const std::string& concern)
@@ -316,9 +326,24 @@ void Capabilities::checkCpuCount_()
   const unsigned int numCpu = std::thread::hardware_concurrency();
   if (numCpu == 0u)
     return; // unknown number of CPU
-  caps_.push_back(std::make_pair("CPU Count", std::to_string(numCpu)));
+
+  const std::string cpuStr = std::to_string(numCpu);
+  caps_.push_back(std::make_pair("CPU Count", cpuStr));
   if (numCpu < MINIMUM_CPU_COUNT)
-    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Low CPU count (" + std::to_string(numCpu) + "); possible performance issues with larger track loads.");
+    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Low CPU count (" + cpuStr + "); possible performance issues with larger track loads or large terrain data.");
+}
+
+void Capabilities::checkRam_()
+{
+  const auto& ramResult = simCore::MemoryInfo::getMemoryInfo();
+  if (!ramResult.isSuccess() || !ramResult.stats.has_value())
+    return;
+
+  const auto& ram = *ramResult.stats;
+  const std::string& totalRamStr = simCore::buildString("", ram.totalGb(), 0, 1, " GB");
+  caps_.push_back({ "Total RAM", totalRamStr });
+  if (ram.totalGb() < MINIMUM_RAM_GB)
+    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Low Total RAM (" + totalRamStr + "); possible performance issues with larger track loads or large terrain data.");
 }
 
 Capabilities::Usability Capabilities::isUsable() const
