@@ -77,7 +77,7 @@ public:
   }
 
 private:
-  osg::Callback* callback_;
+  osg::Callback* callback_ = nullptr;
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -89,10 +89,10 @@ public:
   SetRenderBinsToInherit()
     : NodeVisitor(TRAVERSE_ALL_CHILDREN)
   {
-      setNodeMaskOverride(~0);
+    setNodeMaskOverride(~0);
   }
 
-  virtual void apply(osg::Node& node)
+  virtual void apply(osg::Node& node) override
   {
     osg::StateSet* ss = node.getStateSet();
     // Catch Creator's Superface/Subface condition, where they use POLYGONOFFSET and render bin
@@ -119,7 +119,7 @@ public:
     setNodeMaskOverride(~0);
   }
 
-  virtual void apply(osg::Node& node)
+  virtual void apply(osg::Node& node) override
   {
 #ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
     // osgSim::LightPointNode is not supported in GLCORE, turn it off to prevent warning spam from OSG
@@ -167,7 +167,7 @@ public:
     traverse(node);
   }
 
-  virtual void apply(osg::Drawable& drawable)
+  virtual void apply(osg::Drawable& drawable) override
   {
     apply(static_cast<osg::Node&>(drawable));
 
@@ -200,9 +200,6 @@ public:
 
   /** Default constructor */
   ModelCacheLoaderOptions()
-    : boxWhenNotFound(false),
-      addLodNode(true),
-      clock(nullptr)
   {
     optimizeFlags = osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS |
       osgUtil::Optimizer::VERTEX_POSTTRANSFORM |
@@ -229,13 +226,13 @@ public:
    * of this failure.  To remedy this, asynchronous mode can set this flag to true to return a box
    * when the model cannot be found.
    */
-  bool boxWhenNotFound;
+  bool boxWhenNotFound = false;
   /** Set true to create an LOD node that swaps out when item is too small on screen. */
-  bool addLodNode;
+  bool addLodNode = true;
   /** Change the flags sent to optimizer.  Set to 0 to disable optimization. */
-  unsigned int optimizeFlags;
+  unsigned int optimizeFlags = 0;
   /** Clock object used for SIMDIS Media Player 2 playlist nodes. */
-  simCore::Clock* clock;
+  simCore::Clock* clock = nullptr;
   /** Pointer to the class that fixes osg::Sequence; see simVis::Registry::sequenceTimeUpdater_. */
   osg::observer_ptr<SequenceTimeUpdater> sequenceTimeUpdater;
 
@@ -267,7 +264,7 @@ public:
   }
 
   /** Called by OSG when a filename is requested to be read into a node. */
-  virtual ReadResult readNode(const std::string& filename, const osgDB::ReaderWriter::Options* options) const
+  virtual ReadResult readNode(const std::string& filename, const osgDB::ReaderWriter::Options* options) const override
   {
     const std::string ext = osgDB::getLowerCaseFileExtension(filename);
     if (!acceptsExtension(ext))
@@ -478,7 +475,6 @@ public:
 
   /** Initializes the Loader Node */
   LoaderNode()
-    : cache_(nullptr)
   {
   }
 
@@ -541,10 +537,8 @@ public:
     addChild(proxy);
   }
 
-  virtual void traverse(osg::NodeVisitor& nv)
+  virtual void traverse(osg::NodeVisitor& nv) override
   {
-    osg::Group::traverse(nv);
-
     // Check for proxy node children with children -- they just finished loading.
     unsigned int childIndex = 0;
     while (childIndex < getNumChildren())
@@ -583,12 +577,15 @@ public:
       }
       ++childIndex;
     }
+
+    // Continue traversal only after applying shader generator
+    osg::Group::traverse(nv);
   }
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  virtual const char* libraryName() const override { return "simVis"; }
   /** Return the class name */
-  virtual const char* className() const { return "ModelCache::LoaderNode"; }
+  virtual const char* className() const override { return "ModelCache::LoaderNode"; }
 
 private:
   /** Loading on a URI completed.  Alert everyone who cares. */
@@ -634,7 +631,7 @@ private:
   }
 
   /** Pointer back to our parent cache */
-  simVis::ModelCache* cache_;
+  simVis::ModelCache* cache_ = nullptr;
   /** Maps the URI to the vector of callbacks to use when the request is ready */
   std::map<std::string, CallbackVector> requests_;
 };
