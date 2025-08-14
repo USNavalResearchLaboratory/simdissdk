@@ -282,7 +282,7 @@ void Capabilities::checkVendorOpenGlSupport_(const std::string& vendor, const st
 
     // SIM-18144 details issues with 571. - 573. drivers;
     // as of 2025-06, all known drivers >= 571 have memory leak issues due to threaded optimization; revisit before SR18 to see if newer nVidia are free of issues.
-    if (nVidiaMajor > 571)
+    if (nVidiaMajor >= 571)
     {
       recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, osgEarth::Stringify() << "nVidia driver version " << nVidiaMajor << "." << nVidiaMinor << " has issues when threaded optimization is not disabled.");
       recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Disable threaded optimization in the NVIDIA control panel's 'Manage 3D settings pane'.");
