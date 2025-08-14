@@ -938,8 +938,8 @@ void DockWidget::fixTabIcon_()
 
   // Tabified, now set icon to tab
   // First, find all the tab bars, since QMainWindow doesn't provide
-  // direct access to the DockArea QTabBar
-  QList<QTabBar*> tabBars = mainWindow_->findChildren<QTabBar*>();
+  // direct access to the DockArea QTabBar, making sure to only get direct children of the main window
+  QList<QTabBar*> tabBars = mainWindow_->findChildren<QTabBar*>(QString(), Qt::FindDirectChildrenOnly);
 
   // Locate the tab bar that contains this window, based on the window title
   int index = 0;
