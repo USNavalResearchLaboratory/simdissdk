@@ -153,7 +153,7 @@ inline void applyMesaGlVersionOverride()
     SIM_WARN << "GL Context Version is: " << glContextVersionStr << " " << glContextVersion << "\n";
   }
   const std::string& mesaGlVersionOverride = simCore::getEnvVar("MESA_GL_VERSION_OVERRIDE");
-  if (!mesaGlVersionOverride.empty())
+  if (!mesaGlVersionOverride.empty() && mesaGlVersionOverride != "3.3")
   {
     SIM_WARN << "MESA_GL_VERSION_OVERRIDE has been set by user to: " << mesaGlVersionOverride << ". SIMDIS may not be able to initialize an appropriate OpenGL context.\n";
   }
@@ -162,6 +162,7 @@ inline void applyMesaGlVersionOverride()
     // some combinations of graphics hardware and MESA drivers on Linux have an additional requirement of setting
     // the MESA_GL_VERSION_OVERRIDE environment variable, else we get a bad version.
     setenv("MESA_GL_VERSION_OVERRIDE", "3.3", 1);
+    setenv("MESA_GLSL_VERSION_OVERRIDE", "330", 1);
   }
 #endif
 #endif

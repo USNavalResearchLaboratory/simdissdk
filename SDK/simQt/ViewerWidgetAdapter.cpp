@@ -669,6 +669,7 @@ GlPlatformInterface* createGlPlatform(GlImplementation glImpl, QWidget* parent)
 ViewerWidgetAdapter::ViewerWidgetAdapter(GlImplementation glImpl, QWidget* parent)
   : QWidget(parent)
 {
+  simVis::applyMesaGlVersionOverride();
   glPlatform_ = createGlPlatform(glImpl, this);
 
   glPlatform_->setResizeSignal([this](int w, int h) { Q_EMIT glResized(w, h); });
