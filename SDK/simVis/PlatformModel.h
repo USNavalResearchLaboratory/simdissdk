@@ -241,8 +241,14 @@ private:
   void updateImageDepth_(const simData::PlatformPrefs& prefs, bool force) const;
   /// Updates the RCS based on pref
   void updateRCS_(const simData::PlatformPrefs& prefs);
-  /// Updates the bounds
+
+  /// Updates the bounds; this has a variant for "model_" and a variant for "fastPathIcon_", which are mutually exclusive
   void updateBounds_();
+  /// Bounds update algorithm for "model_" (mutually exclusive to fastPathIcon_); returns zero on success
+  int updateModelBounds_();
+  /// Bounds update algorithm for "fastPathIcon_" (mutually exclusive to model_); returns zero on success
+  int updateFastPathIconBounds_();
+
   /// Updates the stippling based on prefs
   void updateStippling_(const simData::PlatformPrefs& prefs);
   /// Updates the culling based on prefs

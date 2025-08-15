@@ -36,6 +36,7 @@
 #include "osgEarth/AnnotationUtils"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Common/ScopeGuard.h"
 #include "simCore/String/Format.h"
 #include "simCore/EM/RadarCrossSection.h"
 #include "simVis/Constants.h"
@@ -588,12 +589,47 @@ bool PlatformModelNode::updateOffsets_(const simData::PlatformPrefs& prefs, bool
   return true;
 }
 
-// Recalculates the scaled and unscaled bounds of the model. We need
-// to call this whenever the model or the scale setup changes.
-void PlatformModelNode::updateBounds_()
+int PlatformModelNode::updateFastPathIconBounds_()
+{
+  // Determine size from fast-path icon
+  if (!fastPathIcon_.valid())
+    return 1;
+
+  // remove rcs to avoid inclusion in the bounds calculation
+  if (rcs_.valid())
+    imageIconXform_->removeChild(rcs_.get());
+  const simCore::ScopeGuard restoreRcs([this]() {
+    if (rcs_.valid())
+    {
+      imageIconXform_->addChild(rcs_.get());
+      // Adjust the RCS scale at this point too
+      rcs_->setScale(fastPathIcon_->getBound().radius() * 2.0);
+    }
+    });
+
+  // Temporarily hide the offsetXform_ so it's not included in bounds calculations
+  const auto oldOffsetXformNodeMask = offsetXform_->getNodeMask();
+  const simCore::ScopeGuard restoreMask([this, oldOffsetXformNodeMask]() {offsetXform_->setNodeMask(oldOffsetXformNodeMask); });
+
+  // Compute bounds; no need to exclude label because it's in offsetXform_, and hidden
+  osg::ComputeBoundsVisitor cb;
+  // compute bounds based on the icon directly for unscaled bounds
+  fastPathIcon_->accept(cb);
+  unscaledBounds_ = cb.getBoundingBox();
+
+  // Now get the scaled bounds
+  cb.reset();
+  dynamicXform_->accept(cb);
+  bounds_ = cb.getBoundingBox();
+
+  // Caller is responsible for firing off the callback for bounds changes
+  return 0;
+}
+
+int PlatformModelNode::updateModelBounds_()
 {
   if (!model_.valid())
-    return;
+    return 1;
 
   // remove rcs to avoid inclusion in the bounds calculation
   if (rcs_.valid())
@@ -613,7 +649,7 @@ void PlatformModelNode::updateBounds_()
 
   // Compute bounds, but exclude the label:
   osg::ComputeBoundsVisitor cb;
-  cb.setTraversalMask(cb.getTraversalMask() |~ simVis::DISPLAY_MASK_LABEL);
+  cb.setTraversalMask(cb.getTraversalMask() | ~simVis::DISPLAY_MASK_LABEL);
   // compute bounds based on the offsetXform_, which is the parent of the model.
   if (fastPathIcon_)
     fastPathIcon_->accept(cb);
@@ -640,7 +676,24 @@ void PlatformModelNode::updateBounds_()
   {
     offsetXform_->addChild(*iter);
   }
+  return 0;
+}
 
+// Recalculates the scaled and unscaled bounds of the model. We need
+// to call this whenever the model or the scale setup changes.
+void PlatformModelNode::updateBounds_()
+{
+  // Should only have one or the other, and not both; if both are feasible, then this assert
+  // is incorrect, and logic in this function and the bounds updating function is wrong.
+  assert(!fastPathIcon_.valid() || !model_.valid());
+
+  // Nothing to do
+  if (!fastPathIcon_.valid() && !model_.valid())
+    return;
+
+  // Only one of the two updates should work
+  updateModelBounds_();
+  updateFastPathIconBounds_();
   // Alert any listeners of bounds changes
   fireCallbacks_(Callback::BOUNDS_CHANGED);
 }
