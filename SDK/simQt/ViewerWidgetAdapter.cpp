@@ -657,11 +657,11 @@ void GlWidgetPlatform::connectToAboutToRenderFirstFrameSignal(const std::functio
 
 ///////////////////////////////////////////////////////////////////////
 
-GlPlatformInterface* createGlPlatform(GlImplementation glImpl, QWidget* parent)
+std::unique_ptr<GlPlatformInterface> createGlPlatform(GlImplementation glImpl, QWidget* parent)
 {
   if (glImpl == GlImplementation::Widget)
-    return new GlWidgetPlatform(parent);
-  return new GlWindowPlatform(parent);
+    return std::make_unique<GlWidgetPlatform>(parent);
+  return std::make_unique<GlWindowPlatform>(parent);
 }
 
 ///////////////////////////////////////////////////////////////////////

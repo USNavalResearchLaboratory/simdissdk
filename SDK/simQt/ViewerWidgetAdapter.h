@@ -24,6 +24,7 @@
 #define SIMQT_VIEWERWIDGETADAPTER_H
 
 #include <functional>
+#include <memory>
 #include <QWidget>
 #include "simCore/Common/Common.h"
 
@@ -162,7 +163,7 @@ private:
   /** Initializes the surface format based on OSG defaults */
   void initializeSurfaceFormat_();
 
-  GlPlatformInterface* glPlatform_ = nullptr;
+  std::unique_ptr<GlPlatformInterface> glPlatform_;
 };
 
 }
