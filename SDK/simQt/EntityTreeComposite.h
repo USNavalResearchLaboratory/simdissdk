@@ -173,6 +173,15 @@ public:
     QMap<QString, QVariant> configuration_; ///< Map of all filter configuration settings
   };
 
+public:
+  /** Weights associated with items in the right-click menu. */
+  static constexpr int WEIGHT_COPY = 100;
+  static constexpr int WEIGHT_CENTER = 200;
+  static constexpr int WEIGHT_POST_CENTER_SEPARATOR = 300;
+  static constexpr int WEIGHT_TOGGLE_TREE_VIEW = 400;
+  static constexpr int WEIGHT_COLLAPSE_ALL = 500;
+  static constexpr int WEIGHT_EXPAND_ALL = 600;
+
 public Q_SLOTS:
   /** If true expand the tree on double click */
   void setExpandsOnDoubleClick(bool value);

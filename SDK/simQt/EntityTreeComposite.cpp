@@ -32,12 +32,13 @@
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/EntityFilterLineEdit.h"
 #include "simQt/EntityNameFilter.h"
-#include "simQt/EntityTreeComposite.h"
 #include "simQt/EntityTreeWidget.h"
 #include "simQt/QtFormatting.h"
 #include "simQt/ResourceInitializer.h"
 #include "simQt/SettingsGroup.h"
+#include "simQt/WeightedMenuManager.h"
 #include "simQt/WidgetSettings.h"
+#include "simQt/EntityTreeComposite.h"
 #include "ui_EntityTreeComposite.h"
 
 namespace simQt {
@@ -339,31 +340,32 @@ void EntityTreeComposite::setMargins(int left, int top, int right, int bottom)
 
 void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 {
-  QMenu* menu = new QMenu(composite_->treeView);
+  auto realMenu = std::make_unique<QMenu>(composite_->treeView);
+  simQt::WeightedMenuManager menu(false);
+  menu.setMenuBar(realMenu.get());
 
-  menu->addAction(copyAction_);
+  menu.insertMenuAction(nullptr, EntityTreeComposite::WEIGHT_COPY, copyAction_);
   if (showCenterInMenu_)
-    menu->addAction(centerAction_);
+    menu.insertMenuAction(nullptr, EntityTreeComposite::WEIGHT_CENTER, centerAction_);
 
-  menu->addSeparator();
+  menu.insertMenuSeparator(nullptr, EntityTreeComposite::WEIGHT_POST_CENTER_SEPARATOR);
 
   if (showTreeOptionsInMenu_)
   {
-    menu->addAction(toggleTreeViewAction_);
-    menu->addAction(collapseAllAction_);
-    menu->addAction(expandAllAction_);
+    menu.insertMenuAction(nullptr, EntityTreeComposite::WEIGHT_TOGGLE_TREE_VIEW, toggleTreeViewAction_);
+    menu.insertMenuAction(nullptr, EntityTreeComposite::WEIGHT_COLLAPSE_ALL, collapseAllAction_);
+    menu.insertMenuAction(nullptr, EntityTreeComposite::WEIGHT_EXPAND_ALL, expandAllAction_);
   }
 
   // Give outside code a chance to update the menu before showing the menu
-  Q_EMIT rightClickMenuRequested(menu);
+  Q_EMIT rightClickMenuRequested(realMenu.get());
 
   // Show the menu with exec(), making sure the position is correctly relative
-  menu->exec(composite_->treeView->viewport()->mapToGlobal(pos));
+  realMenu->exec(composite_->treeView->viewport()->mapToGlobal(pos));
 
-  // Manually delete the menu, do not use SIGNAL(aboutToHide()).  The menu->execute() can call code
+  // Implicitly delete the menu, do not use SIGNAL(aboutToHide()).  The menu->execute() can call code
   // that displays a progress dialog after the menu is hidden. The progress dialog can cause an
   // event loop processing which will delete the hidden menu while it is still in use.
-  delete menu;
 }
 
 void EntityTreeComposite::addEntityFilter(EntityFilter* entityFilter)
