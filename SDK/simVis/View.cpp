@@ -44,6 +44,7 @@
 #include "simVis/NavigationModes.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/CustomRendering.h"
+#include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
 #include "simVis/Registry.h"
@@ -1242,6 +1243,33 @@ void View::tetherCamera(osg::Node *node, const simVis::Viewpoint& vp, double dur
     // Pass it to the setViewpoint() method
     setViewpoint(newVp, durationSeconds);
   }
+}
+
+void View::tetherAndZoom(osg::Node* node, double radiusMultiplier)
+{
+  // First, tether; this can't be done over a duration.
+  tetherCamera(node);
+  // Can't do the zoom unless we have a bounding box, and we can't get a bounding box on null
+  if (node == nullptr)
+    return;
+
+  // Determine a reasonable radius for the viewpoint
+  auto vp = getViewpoint();
+  double radius = node->getBound().radius();
+
+  // Custom calculation for platforms based on the 3D model size instead of bounding box
+  const simVis::PlatformNode* plat = dynamic_cast<const simVis::PlatformNode*>(node);
+  if (plat)
+  {
+    // Use the actual size, then scale it by the scale preference
+    radius = plat->getActualSize().radius();
+    if (plat->getPrefs().has_scale())
+      radius *= plat->getPrefs().scale();
+  }
+
+  // Set the viewpoint to the radius of the visual object times a constant
+  vp.setRange(osgEarth::Distance(radius * radiusMultiplier, osgEarth::Units::METERS));
+  setViewpoint(vp);
 }
 
 osg::Node* View::getCameraTether() const

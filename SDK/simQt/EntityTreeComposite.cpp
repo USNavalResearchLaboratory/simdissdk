@@ -239,18 +239,7 @@ private:
 //-----------------------------------------------------------------------------------
 
 EntityTreeComposite::EntityTreeComposite(QWidget* parent)
-: QWidget(parent),
-  composite_(nullptr),
-  entityTreeWidget_(nullptr),
-  model_(nullptr),
-  nameFilter_(nullptr),
-  filterDialog_(nullptr),
-  useCenterAction_(false),
-  treeViewUsable_(true),
-  useEntityIcons_(true),
-  useEntityIconsSet_(false),
-  showCenterInMenu_(true),
-  showTreeOptionsInMenu_(true)
+: QWidget(parent)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -286,6 +275,11 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   centerAction_->setIcon(QIcon(":simQt/images/Find.png"));
   centerAction_->setEnabled(false); // Should only be enabled when selections made
   connect(centerAction_, SIGNAL(triggered()), this, SLOT(centerOnSelection_()));
+
+  // NOTE: Use of this action must be enabled by the caller with setUseCenterAction()
+  centerAndZoomAction_ = new QAction(tr("Center And Zoom"), composite_->treeView);
+  centerAndZoomAction_->setEnabled(false); // Should only be enabled when selections made
+  connect(centerAndZoomAction_, &QAction::triggered, this, &EntityTreeComposite::centerAndZoom_);
 
   // Switch tree mode action
   toggleTreeViewAction_ = new QAction("Tree View", composite_->treeView);
@@ -346,7 +340,10 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 
   menu.insertMenuAction(nullptr, EntityTreeComposite::WEIGHT_COPY, copyAction_);
   if (showCenterInMenu_)
+  {
     menu.insertMenuAction(nullptr, EntityTreeComposite::WEIGHT_CENTER, centerAction_);
+    menu.insertMenuAction(nullptr, EntityTreeComposite::WEIGHT_CENTER_AND_ZOOM, centerAndZoomAction_);
+  }
 
   menu.insertMenuSeparator(nullptr, EntityTreeComposite::WEIGHT_POST_CENTER_SEPARATOR);
 
@@ -740,9 +737,15 @@ bool EntityTreeComposite::useCenterAction() const
 void EntityTreeComposite::setUseCenterAction(bool use, const QString& reason)
 {
   if (!reason.isEmpty())
+  {
     centerAction_->setText(tr("Center On Selection (%1)").arg(reason));
+    centerAndZoomAction_->setText(tr("Center And Zoom (%1)").arg(reason));
+  }
   else
+  {
     centerAction_->setText(tr("Center On Selection"));
+    centerAndZoomAction_->setText(tr("Center And Zoom"));
+  }
 
   if (use == useCenterAction_)
     return;
@@ -751,6 +754,9 @@ void EntityTreeComposite::setUseCenterAction(bool use, const QString& reason)
     centerAction_->setEnabled(use); // Only enable if there's items in the tree
   else
     centerAction_->setEnabled(false);
+
+  // Zoom can only zoom on single entities at this time
+  centerAndZoomAction_->setEnabled(use && selectedItems().size() == 1);
 }
 
 void EntityTreeComposite::setTreeView(bool useTreeView)
@@ -798,10 +804,13 @@ void EntityTreeComposite::setPinnedState_(ButtonActions& actions, bool pinned)
 
 void EntityTreeComposite::onItemsChanged_(const QList<uint64_t>& ids)
 {
-  bool empty = ids.isEmpty();
+  const bool empty = ids.isEmpty();
   copyAction_->setEnabled(!empty);
   if (useCenterAction_)
+  {
     centerAction_->setEnabled(!empty);
+    centerAndZoomAction_->setEnabled(ids.size() == 1);
+  }
 }
 
 void EntityTreeComposite::copySelection_()
@@ -830,6 +839,12 @@ void EntityTreeComposite::centerOnSelection_()
     Q_EMIT centerOnEntityRequested(selectedItems().front());
   else if (!selectedItems().empty())
     Q_EMIT centerOnSelectionRequested(selectedItems());
+}
+
+void EntityTreeComposite::centerAndZoom_()
+{
+  if (selectedItems().size() == 1)
+    Q_EMIT centerAndZoomRequested(selectedItems().front());
 }
 
 void EntityTreeComposite::setTreeView_(bool useTreeView)

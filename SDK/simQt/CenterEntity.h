@@ -84,10 +84,19 @@ public Q_SLOTS:
    * @param force Center on an invalid entity with the expectation it will soon become valid
    */
   void centerOnEntity(uint64_t id, bool force = false);
+  /**
+   * Center the current view port on the given entity Unique ID, and zoom in
+   * @param id The entity to center on
+   * @param force Center on an invalid entity with the expectation it will soon become valid
+   */
+  void centerAndZoom(uint64_t id, bool force = false);
   /** Center the current view port on the given list of entity unique IDs */
   void centerOnSelection(const QList<uint64_t>& ids);
 
 private:
+  /** Implementation for centerOnEntity( )and centerAndZoom() */
+  void centerAndZoom_(uint64_t id, bool zoomIn, bool force);
+
   osg::observer_ptr<simVis::FocusManager> focusManager_;
   osg::observer_ptr<simVis::ScenarioManager> scenarioManager_;
   osg::observer_ptr<simVis::CentroidManager> centroidManager_;
@@ -120,6 +129,7 @@ public Q_SLOTS:
 private Q_SLOTS:
   void updateCenterEnable_();
   void centerOnEntity_(uint64_t id);
+  void centerAndZoom_(uint64_t id);
 
 private:
   /** Returns the closest TSPI time to the given time if the platform is active and has TSPI points.  Returns -1.0 on error. */
@@ -172,6 +182,9 @@ private:
   bool inHostedTimeRange_(double time, double beginTime, double endTime) const;
   /** Returns true if the given id is a target beam */
   bool isTargetBeam_(uint64_t id) const;
+
+  /** Helper function during center-on-entity and center-and-zoom to set bound clock time to newTime_ */
+  void setBoundClockToNewTime_();
 
   CenterEntity& centerEntity_;
   EntityTreeComposite& tree_;

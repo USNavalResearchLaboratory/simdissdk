@@ -177,6 +177,7 @@ public:
   /** Weights associated with items in the right-click menu. */
   static constexpr int WEIGHT_COPY = 100;
   static constexpr int WEIGHT_CENTER = 200;
+  static constexpr int WEIGHT_CENTER_AND_ZOOM = 250;
   static constexpr int WEIGHT_POST_CENTER_SEPARATOR = 300;
   static constexpr int WEIGHT_TOGGLE_TREE_VIEW = 400;
   static constexpr int WEIGHT_COLLAPSE_ALL = 500;
@@ -216,6 +217,8 @@ Q_SIGNALS:
   void centerOnEntityRequested(uint64_t id);
   /** Fired when the Center On Selection context menu action is triggered with a list of ids */
   void centerOnSelectionRequested(const QList<uint64_t>& ids);
+  /** Fired when the Center and Zoom context menu action is triggered with a single id */
+  void centerAndZoomRequested(uint64_t id);
   /**
    * A filter setting was changed
    * @param settings Filters get data from the setting using a global unique key
@@ -245,6 +248,8 @@ private Q_SLOTS:
   void copySelection_();
   /** Called when a user clicks the center action from the context menu */
   void centerOnSelection_();
+  /** Called when a user clicks the center-and-zoom action from the context menu */
+  void centerAndZoom_();
   /** Toggle the tree/list view and update related UI component and action states */
   void setTreeView_(bool useTreeView);
 
@@ -273,21 +278,22 @@ private:
   /** Set the pin text and tooltip and update the button highlight for the specified actions based on the pinned state */
   void setPinnedState_(ButtonActions& actions, bool pinned);
 
-  Ui_EntityTreeComposite* composite_;
-  EntityTreeWidget* entityTreeWidget_;
-  AbstractEntityTreeModel* model_;
-  EntityNameFilter* nameFilter_;
-  QDialog* filterDialog_;
-  QAction* copyAction_;
-  QAction* centerAction_;
-  QAction* toggleTreeViewAction_;
-  QAction* collapseAllAction_;
-  QAction* expandAllAction_;
+  Ui_EntityTreeComposite* composite_ = nullptr;
+  EntityTreeWidget* entityTreeWidget_ = nullptr;
+  AbstractEntityTreeModel* model_ = nullptr;
+  EntityNameFilter* nameFilter_ = nullptr;
+  QDialog* filterDialog_ = nullptr;
+  QAction* copyAction_ = nullptr;
+  QAction* centerAction_ = nullptr;
+  QAction* centerAndZoomAction_ = nullptr;
+  QAction* toggleTreeViewAction_ = nullptr;
+  QAction* collapseAllAction_ = nullptr;
+  QAction* expandAllAction_ = nullptr;
 
   std::vector<QAction*> externalActions_;
 
-  bool useCenterAction_;
-  bool treeViewUsable_;
+  bool useCenterAction_ = false;
+  bool treeViewUsable_ = true;
 
   SettingsPtr settings_;
   simQt::Settings::ObserverPtr observer_;
@@ -296,13 +302,13 @@ private:
   std::vector<ButtonActions*> buttonActions_;
 
   /// Whether or not to use the entity icons, vs the names
-  bool useEntityIcons_;
+  bool useEntityIcons_ = true;
   /// If true, a call to setUseEntityIcons() was explicitly made by caller
-  bool useEntityIconsSet_;
+  bool useEntityIconsSet_ = false;
   /// If true, show the Center option on the right mouse click menu
-  bool showCenterInMenu_;
+  bool showCenterInMenu_ = true;
   /// If true, show the Tree options on the right mouse click menu
-  bool showTreeOptionsInMenu_;
+  bool showTreeOptionsInMenu_ = true;
 };
 
 }
