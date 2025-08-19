@@ -1,7 +1,11 @@
 # ----- simQt -----------------------------------------------------
 
-if(NOT Qt5Core_FOUND)
-    message(STATUS "Cannot configure simQt without Qt.")
+if(Qt6_FOUND)
+    set(SIMQT_QT_VERSION 6)
+elseif(Qt5_FOUND)
+    set(SIMQT_QT_VERSION 5)
+else()
+    message(FATAL_ERROR "Cannot configure simQt without Qt.")
     return()
 endif()
 
@@ -215,14 +219,15 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}WidgetSettings.cpp
 )
 
-if(Qt5OpenGL_FOUND)
+if(Qt${SIMQT_QT_VERSION}OpenGL_FOUND)
+    set(SIMQT_QOPENGL_FOUND ON)
     list(APPEND SIMQT_HEADERS ${SIMQT_INC}Gl3FormatGuesser.h)
     list(APPEND SIMQT_SOURCES ${SIMQT_SRC}Gl3FormatGuesser.cpp)
     if(NOT MSVC)
         set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
     endif()
 else()
-    set(Qt5OpenGL_FOUND OFF) # Helpful for correct Config.cmake
+    set(SIMQT_QOPENGL_FOUND OFF)
 endif()
 
 # Parts of simQt depend on simData
@@ -377,8 +382,8 @@ if(TARGET simVis)
         $<BUILD_INTERFACE:${osgEarth_INCLUDE_DIR}>
     )
 endif()
-if(Qt5OpenGL_FOUND)
-    target_link_libraries(simQt PUBLIC Qt5::OpenGL)
+if(Qt${SIMQT_QT_VERSION}OpenGL_FOUND)
+    target_link_libraries(simQt PUBLIC Qt::OpenGL)
 endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget

@@ -396,7 +396,7 @@ CategoryDataBreadcrumbs::CategoryDataBreadcrumbs(QWidget* parent)
 
   // Create a layout and add the list widget to that layout
   QVBoxLayout* layout = new QVBoxLayout(this);
-  layout->setMargin(0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(listWidget_);
 
   // Set the list contents

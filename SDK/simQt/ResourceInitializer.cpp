@@ -57,11 +57,13 @@ void ResourceInitializer::initialize()
 
 void ResourceInitializer::registerMetaTypes()
 {
+#if QT_VERSION_MAJOR == 5
   // Register meta types for use in QSettings
   qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
   qRegisterMetaTypeStreamOperators<QList<QKeySequence> >("QList<QKeySequence>");
 #ifdef HAVE_SIMDATA
   qRegisterMetaTypeStreamOperators<simQt::EntityTreeComposite::FilterConfiguration>("simQt::EntityTreeComposite::FilterConfiguration");
+#endif
 #endif
 
   // Register meta type for thread safety in channels
