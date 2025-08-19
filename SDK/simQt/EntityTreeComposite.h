@@ -139,6 +139,7 @@ public:
   bool useEntityIcons() const;
   /** Shows icons instead of text for the entity tree list Entity Type column */
   void setUseEntityIcons(bool showIcons);
+
   /** Returns true if the context menu center action is enabled */
   bool useCenterAction() const;
   /**
@@ -147,6 +148,7 @@ public:
    * @param reason The reason is appended to the end of the center action text
    */
   void setUseCenterAction(bool use, const QString& reason = "");
+
   /** Toggle the tree/list view and update related UI component and action states if the tree view action is enabled */
   void setTreeView(bool useTreeView);
   /** Apply the currently pinned filter configuration if there is one */
@@ -177,7 +179,6 @@ public:
   /** Weights associated with items in the right-click menu. */
   static constexpr int WEIGHT_COPY = 100;
   static constexpr int WEIGHT_CENTER = 200;
-  static constexpr int WEIGHT_CENTER_AND_ZOOM = 250;
   static constexpr int WEIGHT_POST_CENTER_SEPARATOR = 300;
   static constexpr int WEIGHT_TOGGLE_TREE_VIEW = 400;
   static constexpr int WEIGHT_COLLAPSE_ALL = 500;
@@ -217,8 +218,6 @@ Q_SIGNALS:
   void centerOnEntityRequested(uint64_t id);
   /** Fired when the Center On Selection context menu action is triggered with a list of ids */
   void centerOnSelectionRequested(const QList<uint64_t>& ids);
-  /** Fired when the Center and Zoom context menu action is triggered with a single id */
-  void centerAndZoomRequested(uint64_t id);
   /**
    * A filter setting was changed
    * @param settings Filters get data from the setting using a global unique key
@@ -248,8 +247,6 @@ private Q_SLOTS:
   void copySelection_();
   /** Called when a user clicks the center action from the context menu */
   void centerOnSelection_();
-  /** Called when a user clicks the center-and-zoom action from the context menu */
-  void centerAndZoom_();
   /** Toggle the tree/list view and update related UI component and action states */
   void setTreeView_(bool useTreeView);
 
@@ -285,7 +282,6 @@ private:
   QDialog* filterDialog_ = nullptr;
   QAction* copyAction_ = nullptr;
   QAction* centerAction_ = nullptr;
-  QAction* centerAndZoomAction_ = nullptr;
   QAction* toggleTreeViewAction_ = nullptr;
   QAction* collapseAllAction_ = nullptr;
   QAction* expandAllAction_ = nullptr;

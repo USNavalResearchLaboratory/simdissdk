@@ -33,6 +33,7 @@
 #include "simVis/Gate.h"
 #include "simVis/View.h"
 #include "simQt/EntityTreeComposite.h"
+#include "simQt/BoundSettings.h"
 #include "simQt/CenterEntity.h"
 
 namespace simQt {
@@ -140,8 +141,6 @@ BindCenterEntityToEntityTreeComposite::BindCenterEntityToEntityTreeComposite(Cen
     tree_(tree),
     dataStore_(dataStore),
     timeFormatter_(new simCore::TimeFormatterRegistry),
-    timeFormat_(simCore::TIMEFORMAT_ORDINAL),
-    precision_(3),
     newTime_(INVALID_TIME)
 {
 }
@@ -154,12 +153,10 @@ void BindCenterEntityToEntityTreeComposite::bind(bool centerOnDoubleClick)
 {
   connect(&tree_, &EntityTreeComposite::rightClickMenuRequested, this, &BindCenterEntityToEntityTreeComposite::updateCenterEnable_);
   connect(&tree_, &EntityTreeComposite::centerOnEntityRequested, this, &BindCenterEntityToEntityTreeComposite::centerOnEntity_);
-  connect(&tree_, &EntityTreeComposite::centerAndZoomRequested, this, &BindCenterEntityToEntityTreeComposite::centerAndZoom_);
   connect(&tree_, &EntityTreeComposite::centerOnSelectionRequested, &centerEntity_, &CenterEntity::centerOnSelection);
   if (centerOnDoubleClick)
   {
-    connect(&tree_, &EntityTreeComposite::itemDoubleClicked, this,
-      [this](uint64_t id) { centerEntity_.centerOnEntity(id, false); });
+    connect(&tree_, &EntityTreeComposite::itemDoubleClicked, this, &BindCenterEntityToEntityTreeComposite::centerOnEntity_);
     tree_.setExpandsOnDoubleClick(false); // Turns off the tree expansion on double click.
   }
 }
@@ -268,20 +265,21 @@ void BindCenterEntityToEntityTreeComposite::centerOnEntity_(uint64_t id)
 {
   setBoundClockToNewTime_();
   // Need to force the center because the setTime has not been process so the entity may not yet be valid
-  centerEntity_.centerOnEntity(id, true);
-}
-
-void BindCenterEntityToEntityTreeComposite::centerAndZoom_(uint64_t id)
-{
-  setBoundClockToNewTime_();
-  // Need to force the center because the setTime has not been process so the entity may not yet be valid
-  centerEntity_.centerAndZoom(id, true);
+  if (zoomOnCenter_)
+    centerEntity_.centerAndZoom(id, true);
+  else
+    centerEntity_.centerOnEntity(id, true);
 }
 
 void BindCenterEntityToEntityTreeComposite::setBoundClockToNewTime_()
 {
   if ((newTime_ != INVALID_TIME) && (dataStore_.getBoundClock() != nullptr) && !dataStore_.getBoundClock()->controlsDisabled() && !dataStore_.getBoundClock()->isLiveMode())
     dataStore_.getBoundClock()->setTime(simCore::TimeStamp(dataStore_.referenceYear(), newTime_));
+}
+
+void BindCenterEntityToEntityTreeComposite::setZoomOnCenter(bool zoomOnCenter)
+{
+  zoomOnCenter_ = zoomOnCenter;
 }
 
 std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getPlatformNearestTime_(double time, uint64_t id) const
@@ -821,6 +819,16 @@ bool BindCenterEntityToEntityTreeComposite::isTargetBeam_(uint64_t id) const
     return false;
 
   return (props->type() == simData::BeamProperties::Type::TARGET);
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void bindCenterZoomSetting(simQt::Settings& settings, const QString& variableName, simQt::BindCenterEntityToEntityTreeComposite& binder)
+{
+  // Tied to lifespan of "&binder"
+  auto* zoomOnCenter = new simQt::BoundBooleanSetting(&binder, settings, variableName);
+  binder.setZoomOnCenter(zoomOnCenter->value());
+  QObject::connect(zoomOnCenter, &simQt::BoundBooleanSetting::valueChanged, &binder, &simQt::BindCenterEntityToEntityTreeComposite::setZoomOnCenter);
 }
 
 }
