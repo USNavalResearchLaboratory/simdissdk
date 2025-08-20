@@ -5,7 +5,7 @@ if(Qt6_FOUND)
 elseif(Qt5_FOUND)
     set(SIMQT_QT_VERSION 5)
 else()
-    message(FATAL_ERROR "Cannot configure simQt without Qt.")
+    message(STATUS "Cannot configure simQt without Qt.")
     return()
 endif()
 
