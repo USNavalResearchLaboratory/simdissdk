@@ -39,7 +39,7 @@
     {
       "name": "OSGQOPENGL",
       "dir": "osgQOpenGL",
-      "version": "4.0.0",
+      "version": "4.0.0-qt5",
       "depend": [
         "OSG",
         "QT5"
