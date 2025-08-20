@@ -34,6 +34,7 @@
 #include "simVis/View.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
 
+#include <QActionGroup>
 #include <QApplication>
 #include <QMainWindow>
 #include <QMenuBar>

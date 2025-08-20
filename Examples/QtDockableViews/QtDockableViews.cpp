@@ -82,7 +82,7 @@ MyMainWindow::MyMainWindow(int framerate)
   // set a blank central widget
   QWidget* center = new QWidget(this);
   center->setLayout(new QHBoxLayout());
-  center->layout()->setMargin(0);
+  center->layout()->setContentsMargins(0, 0, 0, 0);
   setCentralWidget(center);
 
   // we need a map.
@@ -130,7 +130,7 @@ void MyMainWindow::createViewDialog_()
   dialog->setWindowFlag(Qt::WindowContextHelpButtonHint, false);
   dialog->setWindowTitle(viewName);
   dialog->setLayout(new QHBoxLayout());
-  dialog->layout()->setMargin(0);
+  dialog->layout()->setContentsMargins(0, 0, 0, 0);
   dialog->layout()->addWidget(newWidget_(viewName));
   dialog->resize(100, 100);
   dialog->show();

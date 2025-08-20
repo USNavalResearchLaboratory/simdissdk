@@ -42,7 +42,7 @@ if(TARGET SQLite::SQLite3)
     add_subdirectory(Overhead)
 endif()
 
-if(Qt5Core_FOUND)
+if(Qt5Core_FOUND OR Qt6Core_FOUND)
     add_subdirectory(Qt)
     add_subdirectory(QtActionItemModelTest)
     add_subdirectory(QtCategoryFilterTest)

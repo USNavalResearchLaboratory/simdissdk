@@ -2,6 +2,11 @@ if(NOT TARGET simUtil OR NOT TARGET simQt OR NOT TARGET osgQt::osgQOpenGL)
     return()
 endif()
 
+# This example has not yet been upgraded to Qt6 due to QTouchDevice
+if(Qt6Core_FOUND)
+    return()
+endif()
+
 project(EXAMPLE_QT_TOUCH_VIEWER)
 
 VSI_QT_WRAP_CPP(PROJECT_MOC_FILES MainWindow.h)

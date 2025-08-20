@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_QT_HUD_LABEL_BINS)
 
 add_executable(example_qthudlabelbins main.cpp)
-target_link_libraries(example_qthudlabelbins PRIVATE Qt5::Widgets simVis simUtil simQt)
+target_link_libraries(example_qthudlabelbins PRIVATE Qt::Widgets simVis simUtil simQt)
 set_target_properties(example_qthudlabelbins PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Qt HUD Label Bins"
