@@ -20,7 +20,11 @@
  * disclose, or release this software.
  *
  */
+#if QT_VERSION_MAJOR == 5
 #include <QRegExp>
+#else
+#include <QRegularExpression>
+#endif
 #include "simNotify/Notify.h"
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/EntityFilterLineEdit.h"
@@ -35,6 +39,7 @@ static const QString REGULAR_EXPRESSION_PATTERN_SETTING = "RegularExpressionPatt
 static const QString REGULAR_EXPRESSION_SENSITIVITY_SETTING = "RegularExpressionSensitivity";
 static const QString REGULAR_EXPRESSION_SYNTAX_SETTING = "RegularExpressionSyntax";
 
+#if QT_VERSION_MAJOR == 5
 RegExpImpl::PatternSyntax simQtPatternSyntax(QRegExp::PatternSyntax qtPatternSyntax)
 {
   switch (qtPatternSyntax)
@@ -59,6 +64,7 @@ RegExpImpl::PatternSyntax simQtPatternSyntax(QRegExp::PatternSyntax qtPatternSyn
   // To satisfy warnings.  Should never be reached
   return RegExpImpl::RegExp;
 }
+#endif
 
 //----------------------------------------------------------------------------------------------------
 
@@ -95,16 +101,21 @@ void EntityNameFilter::getFilterSettings(QMap<QString, QVariant>& settings) cons
 
 void EntityNameFilter::setFilterSettings(const QMap<QString, QVariant>& settings)
 {
-  auto it = settings.find(REGEXP_SETTING);
-  if (it != settings.end())
+#if QT_VERSION_MAJOR == 5
+  // Qt5 supports filter settings in QRegExp, which Qt6 removes in favor of QRegularExpression.
+  // QRegularExpression does not include enough information to rebuild, so this section is now
+  // legacy only for reading old Qt5 values now. Modern application uses three settings instead.
+  const auto regexpIter = settings.find(REGEXP_SETTING);
+  if (regexpIter != settings.end())
   {
-    const auto& regExp = it.value().toRegExp();
+    const auto& regExp = regexpIter.value().toRegExp();
     setRegExp(regExp.pattern(), regExp.caseSensitivity(), simQtPatternSyntax(regExp.patternSyntax()));
     return;
   }
+#endif
 
   QString pattern;
-  it = settings.find(REGULAR_EXPRESSION_PATTERN_SETTING);
+  auto it = settings.find(REGULAR_EXPRESSION_PATTERN_SETTING);
   if (it != settings.end())
     pattern = it.value().toString();
 

@@ -684,7 +684,7 @@ CategoryFilterWidget::CategoryFilterWidget(QWidget* parent)
 
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setObjectName("CategoryFilterWidgetVBox");
-  layout->setMargin(0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(search);
   layout->addWidget(treeView_);
 

@@ -27,6 +27,39 @@
 
 namespace simQt {
 
+namespace {
+
+/** Apply the reg exp filtering for settings search filter, returns true if no regexp filter is set */
+#if QT_VERSION_MAJOR == 5
+bool testRegExp_(const QAbstractItemModel& sourceModel, const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parentIndex, const QRegExp& filterText)
+#else
+bool testRegExp_(const QAbstractItemModel& sourceModel, const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parentIndex, const QRegularExpression& filterText)
+#endif
+{
+#if QT_VERSION_MAJOR == 5
+  if (filterText.isEmpty())
+#else
+  if (filterText.pattern().isEmpty())
+#endif
+    return true;
+  if (sourceModel.data(index0).toString().contains(filterText) ||
+    sourceModel.data(index1).toString().contains(filterText) ||
+    sourceModel.data(parentIndex).toString().contains(filterText))
+    return true;
+
+  // now search lineage
+  QModelIndex ancestor = sourceModel.parent(parentIndex);
+  while (ancestor.isValid())
+  {
+    if (sourceModel.data(ancestor).toString().contains(filterText))
+      return true;
+    ancestor = sourceModel.parent(ancestor);
+  }
+  return false;
+}
+
+}
+
 SettingsSearchFilter::SettingsSearchFilter(QAbstractItemModel* settingsModel, QWidget* parent)
   : QSortFilterProxyModel(parent)
 {
@@ -42,37 +75,30 @@ bool SettingsSearchFilter::filterAcceptsRow(int sourceRow, const QModelIndex &so
     return true;
   // Run regexp against children and parent text
   QModelIndex index1 = sourceModel()->index(sourceRow, 1, sourceParent);
-  return testRegExp_(index0, index1, sourceParent, filterRegExp());
-}
-
-bool SettingsSearchFilter::testRegExp_(const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parentIndex, const QRegExp& filterText) const
-{
-  if (filterText.isEmpty())
-    return true;
-  if (sourceModel()->data(index0).toString().contains(filterText) ||
-    sourceModel()->data(index1).toString().contains(filterText) ||
-    sourceModel()->data(parentIndex).toString().contains(filterText))
-    return true;
-  // now search lineage
-  QModelIndex ancestor = sourceModel()->parent(parentIndex);
-  while (ancestor.isValid())
-  {
-    if (sourceModel()->data(ancestor).toString().contains(filterText))
-      return true;
-    ancestor = sourceModel()->parent(ancestor);
-  }
-  return false;
+#if QT_VERSION_MAJOR == 5
+  return testRegExp_(*this, index0, index1, sourceParent, filterRegExp());
+#else
+  return testRegExp_(*this, index0, index1, sourceParent, filterRegularExpression());
+#endif
 }
 
 void SettingsSearchFilter::setFilterText(const QString& filterText)
 {
+#if QT_VERSION_MAJOR == 5
   setFilterRegExp(filterText);
+#else
+  setFilterRegularExpression(filterText);
+#endif
   invalidateFilter();
 }
 
 QString SettingsSearchFilter::filterText() const
 {
+#if QT_VERSION_MAJOR == 5
   return filterRegExp().pattern();
+#else
+  return filterRegularExpression().pattern();
+#endif
 }
 
 QModelIndexList SettingsSearchFilter::match(const QModelIndex& start, int role, const QVariant& value, int hits, Qt::MatchFlags flags) const
@@ -80,13 +106,18 @@ QModelIndexList SettingsSearchFilter::match(const QModelIndex& start, int role, 
   const auto& actualStart = mapToSource(start);
 
   // Make a copy of the filter's regex to preserve case sensitivity and any other options it may have
+#if QT_VERSION_MAJOR == 5
   QRegExp regex = filterRegExp();
+#else
+  auto regex = filterRegularExpression();
+#endif
+
   regex.setPattern(value.toString());
   QModelIndexList hitsList;
   for (int row = actualStart.row(); row < sourceModel()->rowCount(actualStart.parent()); ++row)
   {
-    QModelIndex candidate = sourceModel()->index(row, 0, actualStart.parent());
-    if (testRegExp_(candidate, sourceModel()->index(row, 1, actualStart.parent()), actualStart.parent(), regex))
+    const QModelIndex candidate = sourceModel()->index(row, 0, actualStart.parent());
+    if (testRegExp_(*this, candidate, sourceModel()->index(row, 1, actualStart.parent()), actualStart.parent(), regex))
     {
       hitsList.push_back(mapFromSource(candidate));
       if (hits > 0 && hitsList.size() >= hits)
@@ -96,7 +127,7 @@ QModelIndexList SettingsSearchFilter::match(const QModelIndex& start, int role, 
     // Check the children of the candidate index
     for (int i = 0; i < sourceModel()->rowCount(candidate); ++i)
     {
-      if (testRegExp_(sourceModel()->index(i, 0, candidate), sourceModel()->index(i, 1, candidate), candidate, regex))
+      if (testRegExp_(*this, sourceModel()->index(i, 0, candidate), sourceModel()->index(i, 1, candidate), candidate, regex))
       {
         hitsList.push_back(mapFromSource(sourceModel()->index(i, 0, candidate)));
         if (hits > 0 && hitsList.size() >= hits)
