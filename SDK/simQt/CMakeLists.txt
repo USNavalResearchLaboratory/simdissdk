@@ -220,14 +220,14 @@ set(SIMQT_SOURCES
 )
 
 if(Qt${SIMQT_QT_VERSION}OpenGL_FOUND)
-    set(SIMQT_QOPENGL_FOUND ON)
+    set(SIMQT_HAVE_QOPENGL ON)
     list(APPEND SIMQT_HEADERS ${SIMQT_INC}Gl3FormatGuesser.h)
     list(APPEND SIMQT_SOURCES ${SIMQT_SRC}Gl3FormatGuesser.cpp)
     if(NOT MSVC)
         set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
     endif()
 else()
-    set(SIMQT_QOPENGL_FOUND OFF)
+    set(SIMQT_HAVE_QOPENGL OFF)
 endif()
 
 # Parts of simQt depend on simData
@@ -395,8 +395,9 @@ endif()
 # Link against osgQt::osgQOpenGL if found; but only needs be a private depend
 if(TARGET osgQt::osgQOpenGL)
     target_link_libraries(simQt PRIVATE osgQt::osgQOpenGL)
+    set(SIMQT_HAVE_OSGQOPENGL ON)
 else()
-    set(osgQOpenGL_FOUND OFF) # Helpful for correct Config.cmake
+    set(SIMQT_HAVE_OSGQOPENGL OFF)  # Helpful for correct Config.cmake
 endif()
 
 if(UNIX)
