@@ -253,7 +253,8 @@ private:
         {
           // Did not work off the end to process the key event
           int pos = static_cast<int>(completeLine_->getFirstCharacterLocation(nextPart));
-          lineEdit()->setSelection(pos, static_cast<int>(nextPart->numberOfCharacters()));
+          if (pos < lineEdit()->text().size())
+            lineEdit()->setSelection(pos, static_cast<int>(nextPart->numberOfCharacters()));
           return true;
         }
       }
