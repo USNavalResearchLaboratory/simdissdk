@@ -340,6 +340,7 @@ public:
 
 private:
   SignalingGlWidget* adaptedWidget_ = nullptr;
+  QMetaObject::Connection delProxyContext_;
   std::unique_ptr<QOpenGLContext> proxyContext_;
   std::unique_ptr<QOffscreenSurface> offscreenSurface_;
 };
@@ -486,12 +487,11 @@ GlWidgetPlatform::GlWidgetPlatform(QWidget* parent)
 
   // Set up a first connection to the initialized signal, so that we delete and
   // clear out our surface and proxy context if it was previously created.
-  QMetaObject::Connection delProxyContext;
-  delProxyContext = QObject::connect(adaptedWidget_, &SignalingGlWidget::initialized, [this, delProxyContext]() {
+  delProxyContext_ = QObject::connect(adaptedWidget_, &SignalingGlWidget::initialized, [this]() {
     proxyContext_.reset();
     offscreenSurface_.reset();
     // Only ever initialize once
-    QTimer::singleShot(0, [delProxyContext, this]() { adaptedWidget_->disconnect(delProxyContext); });
+    QTimer::singleShot(0, [this]() { adaptedWidget_->disconnect(delProxyContext_); });
     });
 }
 
