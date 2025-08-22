@@ -175,7 +175,7 @@ endmacro()
 # for the DLL associated with LIB_FILENAME, based on a file(GLOB...) search.  For
 # example, osg.lib might have an associated DLL osg153-osg.dll.  This routine will
 # return the "osg153-" portion of the DLL's filename.  This routine should be reusable
-# for OSG, OpenThreads, and osgQt.
+# for OSG and OpenThreads.
 function(osg_guess_win32_dll_prefix VAR_DLL_PREFIX LIB_FILENAME)
     set(${VAR_DLL_PREFIX} "" PARENT_SCOPE)
     # Linux returns without any checks
@@ -440,12 +440,12 @@ endfunction()
 # be easily hardcoded into a <TARGET>Config.cmake.
 function(vsi_write_basic_package_config_file TARGET DEPS)
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
-        "include(CMakeFindDependencyMacro)\n"
-        "set(DEPS \"${DEPS}\")\n"
-        "foreach(DEP IN LISTS DEPS)\n"
-        "    find_dependency(\${DEP})\n"
-        "endforeach()\n"
-        "include(\"\${CMAKE_CURRENT_LIST_DIR}/${TARGET}Targets.cmake\")\n"
+"include(CMakeFindDependencyMacro)
+set(DEPS \"${DEPS}\")
+foreach(DEP IN LISTS DEPS)
+    find_dependency(\${DEP})
+endforeach()
+include(\"\${CMAKE_CURRENT_LIST_DIR}/${TARGET}Targets.cmake\")"
     )
 endfunction()
 

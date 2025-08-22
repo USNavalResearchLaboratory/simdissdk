@@ -20,27 +20,28 @@ macro(GET_YDAY_OFFSET VARIABLE)
         # Write a temporary file containing the test
         set(TMP_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/TestYDayOffset.cpp")
         file(WRITE "${TMP_FILE}"
-            "#include <cstdlib>\n"
-            "#include <iomanip>\n"
-            "#include <sstream>\n"
-            "#include <time.h>\n"
-            "int main(int argc, char* argv[])\n"
-            "{\n"
-            "int rv = 0;\n"
-            "std::tm jTm = {};\n"
-            "#ifdef _MSC_VER\n"
-            "std::istringstream is(\"1\");\n"
-            "is >> std::get_time(&jTm, \"%j\");\n"
-            "if (!is.fail())\n"
-            "  rv = jTm.tm_yday;\n"
-            "#else\n"
-            "const char* timerv = ::strptime(\"1\", \"%j\", &jTm);\n"
-            "if (timerv)\n"
-            "  rv = jTm.tm_yday;\n"
-            "#endif\n"
-            "return rv;\n"
-            "}\n"
-        )
+[=[
+#include <cstdlib>
+#include <iomanip>
+#include <sstream>
+#include <time.h>
+int main(int argc, char* argv[])
+{
+    int rv = 0;
+    std::tm jTm = {};
+    #ifdef _MSC_VER
+    std::istringstream is("1");
+    is >> std::get_time(&jTm, "%j");
+    if (!is.fail())
+      rv = jTm.tm_yday;
+    #else
+    const char* timerv = ::strptime("1", "%j", &jTm);
+    if (timerv)
+      rv = jTm.tm_yday;
+    #endif
+    return rv;
+}
+]=])
         # Try to build the file
         try_run(HAVE_${VARIABLE} COMPILE_${VARIABLE}
             "${CMAKE_BINARY_DIR}"
