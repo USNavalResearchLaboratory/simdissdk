@@ -148,22 +148,30 @@ SettingsDataLevelFilter::SettingsDataLevelFilter(QAbstractItemModel* settingsMod
 {
   setSourceModel(settingsModel);
   // insert all the invalid data types not to display in the settings model
-  invalidDataTypes_.insert(QVariant::BitArray);
-  invalidDataTypes_.insert(QVariant::ByteArray);
-  invalidDataTypes_.insert(QVariant::Invalid);
+  invalidDataTypes_.insert(QMetaType::QBitArray);
+  invalidDataTypes_.insert(QMetaType::QByteArray);
+  invalidDataTypes_.insert(QMetaType::UnknownType);
 }
 
 bool SettingsDataLevelFilter::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
-  QModelIndex index0 = sourceModel()->index(sourceRow, 0, sourceParent);
+  const QModelIndex index0 = sourceModel()->index(sourceRow, 0, sourceParent);
   // Accept all parent items
   if (sourceModel()->hasChildren(index0))
     return true;
   // Check data level of children
-  QModelIndex index1 = sourceModel()->index(sourceRow, 1, sourceParent);
-  simQt::Settings::DataLevel dataLevel = static_cast<simQt::Settings::DataLevel>(sourceModel()->data(index1, SettingsModel::DataLevelRole).toInt());
+  const QModelIndex index1 = sourceModel()->index(sourceRow, 1, sourceParent);
+  const simQt::Settings::DataLevel dataLevel = static_cast<simQt::Settings::DataLevel>(sourceModel()->data(index1, SettingsModel::DataLevelRole).toInt());
   // test data level, as well as check that data type is valid
-  return testDataLevel_(dataLevel) && invalidDataTypes_.find(sourceModel()->data(index1).type()) == invalidDataTypes_.end();
+  if (!testDataLevel_(dataLevel))
+    return false;
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  const auto variantType = sourceModel()->data(index1).type();
+#else
+  const auto variantType = sourceModel()->data(index1).metaType().id();
+#endif
+  return invalidDataTypes_.find(variantType) == invalidDataTypes_.end();
 }
 
 void SettingsDataLevelFilter::setShowAdvanced(bool showAdvanced)

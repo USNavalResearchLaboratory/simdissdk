@@ -240,7 +240,11 @@ public:
         return false;
 
       bool evtConsumed = false;
-      int tabIndex = tabBar_->tabAt(dragEvt->pos());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+      const int tabIndex = tabBar_->tabAt(dragEvt->pos());
+#else
+      const int tabIndex = tabBar_->tabAt(dragEvt->position().toPoint());
+#endif
       QString tabName = tabBar_->tabText(tabIndex);
 
       if (tabIndex < 0)
@@ -284,7 +288,11 @@ public:
         return false;
 
       QString thisTitle = dockWidget_.windowTitle();
-      int mouseIndex = tabBar_->tabAt(dragEvt->pos());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+      const int mouseIndex = tabBar_->tabAt(dragEvt->pos());
+#else
+      const int mouseIndex = tabBar_->tabAt(dragEvt->position().toPoint());
+#endif
       QString mouseTitle = tabBar_->tabText(mouseIndex);
 
       // Nothing to do if the mouse isn't over this widget's tab or the move remained over the same tab
@@ -297,7 +305,11 @@ public:
       }
 
       // Construct a drag enter event from the drag move and pass it to our dock widget
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
       QDragEnterEvent simulatedEvent(dragEvt->pos(), dragEvt->possibleActions(), dragEvt->mimeData(), dragEvt->mouseButtons(), dragEvt->keyboardModifiers());
+#else
+      QDragEnterEvent simulatedEvent(dragEvt->position().toPoint(), dragEvt->possibleActions(), dragEvt->mimeData(), dragEvt->buttons(), dragEvt->modifiers());
+#endif
       simulatedEvent.ignore();
       dockWidget_.dragEnterEvent(&simulatedEvent);
 
@@ -312,7 +324,11 @@ public:
     else if (event->type() == QEvent::Drop)
     {
       QDropEvent* dropEvt = dynamic_cast<QDropEvent*>(event);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
       if (!dropEvt || tabBar_->tabText(tabBar_->tabAt(dropEvt->pos())) != dockWidget_.windowTitle())
+#else
+      if (!dropEvt || tabBar_->tabText(tabBar_->tabAt(dropEvt->position().toPoint())) != dockWidget_.windowTitle())
+#endif
         return false;
 
       // Don't interfere with moving the dock widget between tabs

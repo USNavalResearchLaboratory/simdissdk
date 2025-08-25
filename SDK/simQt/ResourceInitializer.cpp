@@ -23,6 +23,13 @@
 #include <QtCore/qglobal.h>
 #include <QKeySequence>
 #include <QList>
+#include "simCore/Calc/CoordinateSystem.h"
+#include "simCore/Calc/MagneticVariance.h"
+#include "simCore/Calc/VerticalDatum.h"
+#include "simCore/Calc/Units.h"
+#include "simCore/String/Angle.h"
+#include "simCore/Time/Constants.h"
+
 #include "simQt/ConsoleDataModel.h"
 #ifdef HAVE_SIMDATA
 #include "simQt/EntityStateFilter.h"
@@ -30,6 +37,17 @@
 #endif
 #include "simQt/SettingsModel.h"
 #include "simQt/ResourceInitializer.h"
+
+// Qt6 meta types need to be declared only once and should only be in a .cpp file
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+Q_DECLARE_METATYPE(simCore::Units);
+Q_DECLARE_METATYPE(simCore::TimeFormat);
+Q_DECLARE_METATYPE(simCore::CoordinateSystem);
+Q_DECLARE_METATYPE(simCore::VerticalDatum);
+Q_DECLARE_METATYPE(simCore::MagneticVariance);
+Q_DECLARE_METATYPE(simCore::GeodeticFormat);
+#endif
+
 
 /// Local initialization for the simQt library.  Note that this cannot be in a namespace
 void qt_Initialize_simQt()
@@ -57,7 +75,7 @@ void ResourceInitializer::initialize()
 
 void ResourceInitializer::registerMetaTypes()
 {
-#if QT_VERSION_MAJOR == 5
+#if QT_VERSION_MAJOR < 6
   // Register meta types for use in QSettings
   qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
   qRegisterMetaTypeStreamOperators<QList<QKeySequence> >("QList<QKeySequence>");

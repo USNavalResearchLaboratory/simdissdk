@@ -86,7 +86,7 @@ private:
   bool showUnknown_;
 
   //// all data types that are considered invalid by the filter
-  std::set<QVariant::Type> invalidDataTypes_;
+  std::set<int> invalidDataTypes_;
 
 };
 
