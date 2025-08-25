@@ -175,7 +175,6 @@ include(CreateInstallProperties)
 
 find_package(OpenGL QUIET)
 find_package(OpenSceneGraph COMPONENTS osgDB osgGA osgSim osgText osgUtil osgViewer QUIET)
-find_package(osgQOpenGL 4.0 QUIET)
 find_package(GDAL CONFIG)
 find_package(osgEarth)
 
@@ -192,13 +191,30 @@ if(NOT SQLite3_FOUND)
     endif()
 endif()
 
-find_package(Qt5 COMPONENTS OpenGL Widgets)
-# Need to silence deprecation for MSVC 2022 and Qt5 to avoid build errors
-if(MSVC AND TARGET Qt5::Core AND Qt5Core_VERSION VERSION_LESS 5.15.17)
-    target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+# Conditionally find Qt5; if not found, fall back to Qt6
+find_package(Qt5 QUIET COMPONENTS OpenGL Widgets)
+set(_SDK_QT_VERSION 5)
+if(Qt5_FOUND)
+    message(STATUS "Found Qt5: ${Qt5_DIR}")
+    # Need to silence deprecation for MSVC 2022 and Qt5 to avoid build errors
+    if(MSVC AND TARGET Qt5::Core AND Qt5Core_VERSION VERSION_LESS 5.15.17)
+        target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+    endif()
+else()
+    find_package(Qt6 QUIET COMPONENTS OpenGL OpenGLWidgets Widgets)
+    if (Qt6_FOUND)
+        message(STATUS "Found Qt6: ${Qt6_DIR}")
+        set(_SDK_QT_VERSION 6)
+    else()
+        # Provide a warning if neither is found, but don't stop the configuration.
+        message(WARNING "Neither Qt5 nor Qt6 was found. simQt and Qt-based examples will not build.")
+    endif()
 endif()
+# Search for the matching qt version of osgQOpenGL
+find_package(osgQOpenGL-qt${_SDK_QT_VERSION} 4.0 QUIET)
 
-if(ENABLE_DEPRECATED_SIMDISSDK_API)
+# Old osgQt is only supported in Qt5
+if(ENABLE_DEPRECATED_SIMDISSDK_API AND Qt5_FOUND)
     include(ImportOSGQt)
 endif()
 
@@ -244,6 +260,7 @@ if(INSTALL_THIRDPARTY_LIBRARIES)
     include(InstallData.3rd.osgQOpenGL)
     include(InstallData.3rd.osgQt)
     include(InstallData.3rd.Qt5)
+    include(InstallData.3rd.Qt6)
 endif()
 
 # Install the documentation to the root of the install directory
