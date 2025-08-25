@@ -1,17 +1,17 @@
-if(NOT TARGET osgQt::osgQOpenGL-qt5)
+if(NOT TARGET osgQt::osgQOpenGL-qt${_SDK_QT_VERSION})
     return()
 endif()
 
 if(WIN32)
-    vsi_install_target(osgQt::osgQOpenGL-qt5 ThirdPartyLibs)
+    vsi_install_target(osgQt::osgQOpenGL-qt${_SDK_QT_VERSION} ThirdPartyLibs)
     return()
 endif()
 
-# Need the library directory to get symlinks from libosgQOpenGL-qt5.so
-get_target_property(_OSGQOPENGL_SO osgQt::osgQOpenGL-qt5 IMPORTED_LOCATION_RELEASE)
+# Need the library directory to get symlinks from libosgQOpenGL-qt5.so (or -qt6.so)
+get_target_property(_OSGQOPENGL_SO osgQt::osgQOpenGL-qt${_SDK_QT_VERSION} IMPORTED_LOCATION_RELEASE)
 if(NOT _OSGQOPENGL_SO)
-    get_target_property(_OSGQOPENGL_SO osgQt::osgQOpenGL-qt5 IMPORTED_LOCATION)
+    get_target_property(_OSGQOPENGL_SO osgQt::osgQOpenGL-qt${_SDK_QT_VERSION} IMPORTED_LOCATION)
 endif()
 get_filename_component(_OSGQOPENGL_LIB_DIR "${_OSGQOPENGL_SO}" DIRECTORY)
-get_symlinks("${_OSGQOPENGL_LIB_DIR}/libosgQOpenGL-qt5.so" _OSGQOPENGL_LIBS)
+get_symlinks("${_OSGQOPENGL_LIB_DIR}/libosgQOpenGL-qt${_SDK_QT_VERSION}.so" _OSGQOPENGL_LIBS)
 install(PROGRAMS ${_OSGQOPENGL_LIBS} DESTINATION "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}" OPTIONAL COMPONENT ThirdPartyLibs)
