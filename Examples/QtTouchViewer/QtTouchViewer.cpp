@@ -35,7 +35,6 @@
 #include <QPointer>
 #include <QStandardItemModel>
 #include <QTreeView>
-#include <QTouchDevice>
 #include "simNotify/Notify.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/System/Utils.h"
@@ -47,6 +46,13 @@
 #include "simVis/View.h"
 #include "simVis/SceneManager.h"
 #include "MainWindow.h"
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#include <QTouchDevice>
+#else
+#include <QInputDevice>
+#include <QPointingDevice>
+#endif
 
 /** Forwards event adapter content to the main window */
 class ForwardTouchEvents : public osgGA::GUIEventHandler
@@ -95,33 +101,61 @@ simVis::ViewManager* MainWindow::getViewManager() const
 
 void MainWindow::addTouchDevicesDock_()
 {
-  const auto& allDevices = QTouchDevice::devices();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  const auto& touchDevices = QTouchDevice::devices();
+#else
+  const auto& allDevices = QInputDevice::devices();
+  std::vector<const QInputDevice*> touchDevices;
+  for (const auto& device : allDevices)
+  {
+    if (device->type() == QInputDevice::DeviceType::TouchScreen ||
+      device->type() == QInputDevice::DeviceType::TouchPad)
+    {
+      touchDevices.push_back(device);
+    }
+  }
+#endif
+
   QDockWidget* listDock = new QDockWidget(tr("Touch Devices"), this);
   addDockWidget(Qt::LeftDockWidgetArea, listDock);
 
-  if (allDevices.empty())
+  if (touchDevices.empty())
   {
     listDock->setWidget(new QLabel(tr("No touch devices detected"), this));
     return;
   }
 
   // Fill out a standard item model with the devices
-  QStandardItemModel* model = new QStandardItemModel(allDevices.size(), 3, this);
+  QStandardItemModel* model = new QStandardItemModel(touchDevices.size(), 3, this);
   model->setHeaderData(0, Qt::Horizontal, tr("Name"), Qt::DisplayRole);
   model->setHeaderData(1, Qt::Horizontal, tr("Type"), Qt::DisplayRole);
   model->setHeaderData(2, Qt::Horizontal, tr("#Points"), Qt::DisplayRole);
-  for (int rowNum = 0; rowNum < allDevices.size(); ++rowNum)
+  for (int rowNum = 0; rowNum < touchDevices.size(); ++rowNum)
   {
-    const auto& device = allDevices[rowNum];
+    const auto& device = touchDevices[rowNum];
     if (device->name().isEmpty())
       model->setItem(rowNum, 0, new QStandardItem(tr("<none>")));
     else
       model->setItem(rowNum, 0, new QStandardItem(device->name()));
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (device->type() == QTouchDevice::TouchPad)
-      model->setItem(rowNum, 1, new QStandardItem(tr("Touchpad")));
+      model->setItem(rowNum, 1, new QStandardItem(tr("TouchPad")));
     else
-      model->setItem(rowNum, 1, new QStandardItem(tr("Touchscreen")));
+      model->setItem(rowNum, 1, new QStandardItem(tr("TouchScreen")));
     model->setItem(rowNum, 2, new QStandardItem(QString::number(device->maximumTouchPoints())));
+
+#else
+    if (device->type() == QInputDevice::DeviceType::TouchPad)
+      model->setItem(rowNum, 1, new QStandardItem(tr("TouchPad")));
+    else
+      model->setItem(rowNum, 1, new QStandardItem(tr("TouchScreen")));
+
+    if (auto pointingDevice = dynamic_cast<const QPointingDevice*>(device))
+      model->setItem(rowNum, 2, new QStandardItem(QString::number(pointingDevice->maximumPoints())));
+    else
+      model->setItem(rowNum, 2, new QStandardItem(tr("Unknown")));
+#endif
   }
 
   QTreeView* deviceList = new QTreeView(this);
