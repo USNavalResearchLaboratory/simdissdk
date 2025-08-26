@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include "simCore/Calc/Math.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Time/TimeClass.h"
 #include "simCore/Time/Utils.h"
@@ -1024,6 +1025,137 @@ int canConvertTest()
   return rv;
 }
 
+int testFreeformTimeStr()
+{
+  struct TestCase
+  {
+    std::string input;
+    bool expectedSuccess = false;
+    simCore::FreeFormResult expected;
+    std::string description;
+  };
+
+  auto intStr = [](const std::optional<int>& opt) { if (opt) return std::to_string(*opt); return std::string("{}"); };
+  auto doubleStr = [](const std::optional<double>& opt) { if (opt) return std::to_string(*opt); return std::string("{}"); };
+
+  auto runTest = [&](const TestCase& test)
+    {
+      const simCore::FreeFormResult result = simCore::parseFreeFormTimeStr(test.input);
+
+      if (result.isValid() != test.expectedSuccess)
+      {
+        std::cout << "  FAIL: \"" << test.description << "\" expected " << (test.expectedSuccess ? "success" : "failure")
+          << " but got " << (result.isValid() ? "success" : "failure") << "\n";
+        return 1;
+      }
+
+      if (result.isValid() && test.expectedSuccess)
+      {
+        if (result != test.expected)
+        {
+          std::cout << "  FAIL: \"" << test.description << "\" expected (" << intStr(test.expected.hours) << ":"
+            << intStr(test.expected.minutes) << ":" << doubleStr(test.expected.seconds) << ") but got ("
+            << intStr(result.hours) << ":" << intStr(result.minutes) << ":" << doubleStr(result.seconds) << ")\n";
+          return 1;
+        }
+      }
+
+      return 0;
+    };
+
+  int rv = 0;
+
+  // HH:MM:SS.sss format
+  rv += SDK_ASSERT(runTest({ "12:34:56.789", true, { 12, 34, 56.789 }, "Standard HH:MM:SS.sss format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "01:02:03.1", true, { 1, 2, 3.1 }, "HH:MM:SS with single fractional digit" }) == 0);
+  rv += SDK_ASSERT(runTest({ "23:59:59.999", true, { 23, 59, 59.999 }, "Maximum valid time with fractions" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:34:56.123456", true, { 12, 34, 56.123456 }, "HH:MM:SS with microsecond precision" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:34:56.", true, { 12, 34, 56.0 }, "Trailing dot with no fractional part" }) == 0);
+
+  // HH:MM:SS format (no fractions)
+  rv += SDK_ASSERT(runTest({ "12:34:56", true, { 12, 34, 56.0 }, "Standard HH:MM:SS format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "00:00:00", true, { 0, 0, 0.0 }, "Midnight" }) == 0);
+
+  // HHMMSS format
+  rv += SDK_ASSERT(runTest({ "123456", true, { 12, 34, 56.0 }, "Compact HHMMSS format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "000000", true, { 0, 0, 0.0 }, "Compact midnight" }) == 0);
+  rv += SDK_ASSERT(runTest({ "235959", true, { 23, 59, 59.0 }, "Compact maximum time" }) == 0);
+
+  // HMMSS format
+  rv += SDK_ASSERT(runTest({ "12345", true, { 1, 23, 45.0 }, "Compact HMMSS format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "00000", true, { 0, 0, 0.0 }, "Compact HMMSS midnight" }) == 0);
+
+  // MMSS format
+  rv += SDK_ASSERT(runTest({ "1234", true, { {}, 12, 34.0 }, "Compact MMSS format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "1234.56", true, { {}, 12, 34.56 }, "Compact MMSS format fractional" }) == 0);
+  rv += SDK_ASSERT(runTest({ "0000", true, { {}, 0, 0.0 }, "Compact MMSS midnight" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:34", true, { {}, 12, 34.0 }, "Separated MM:SS format" }) == 0);
+
+  // MSS format
+  rv += SDK_ASSERT(runTest({ "123", true, { {}, 1, 23.0 }, "Compact MSS format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "000", true, { {}, 0, 0.0 }, "Compact MSS midnight" }) == 0);
+  rv += SDK_ASSERT(runTest({ "123.45", true, { {}, 1, 23.45 }, "Compact MSS.ss format" }) == 0);
+
+  // SS format
+  rv += SDK_ASSERT(runTest({ "12", true, { {}, {}, 12.0 }, "SS seconds format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12.34", true, { {}, {}, 12.34 }, "SS.ss seconds format with fractional" }) == 0);
+  rv += SDK_ASSERT(runTest({ "2", true, { {}, {}, 2.0 }, "S seconds format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "2.34", true, { {}, {}, 2.34 }, "S.ss seconds format with fractional" }) == 0);
+
+  // HHMMSS.s format
+  rv += SDK_ASSERT(runTest({ "123456.5", true, { 12, 34, 56.5 }, "Compact HHMMSS.s format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "000000.123", true, { 0, 0, 0.123 }, "Compact with fractional seconds" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12345.75", true, { 1, 23, 45.75 }, "Compact HMMSS.s format" }) == 0);
+
+  // Space separated formats
+  rv += SDK_ASSERT(runTest({ "12 34 56.5", true, { 12, 34, 56.5 }, "Space separated HH MM SS.s" }) == 0);
+  rv += SDK_ASSERT(runTest({ "1 23 45", true, { 1, 23, 45.0 }, "Space separated H MM SS" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12 34", true, { {}, 12, 34.0 }, "Space separated MM SS" }) == 0);
+
+  // Comma separated formats
+  rv += SDK_ASSERT(runTest({ "12,34,56", true, { 12, 34, 56.0 }, "Comma separated" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12,34,56.789", true, { 12, 34, 56.789 }, "Comma separated with fractions" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12,34", true, { {}, 12, 34.0 }, "Comma separated MM,SS" }) == 0);
+
+  // Mixed separators
+  rv += SDK_ASSERT(runTest({ "12:34,56", true, { 12, 34, 56.0 }, "Mixed separators : and ," }) == 0);
+  rv += SDK_ASSERT(runTest({ "12 34:56.5", true, { 12, 34, 56.5 }, "Mixed separators with fractions" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12,34:56.25", true, { 12, 34, 56.25 }, "Mixed separators , and : with decimal" }) == 0);
+
+  // High precision fractional seconds
+  rv += SDK_ASSERT(runTest({ "12:34:56.001", true, { 12, 34, 56.001 }, "1 millisecond" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:34:56.000001", true, { 12, 34, 56.000001 }, "1 microsecond" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:34:56.000000001", true, { 12, 34, 56.000000001 }, "1 nanosecond" }) == 0);
+
+  // Invalid cases - fractional minutes/hours NOT supported
+  rv += SDK_ASSERT(runTest({ "12.5 34", false, {}, "Space separated HH.s MM (fractional hours - NOT supported)" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12.5:34", false, {}, "Separated HH.s:MM (fractional hours - NOT supported)" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12 34.5 56", false, {}, "Separated HH:MM.s:SS (fractional minutes - NOT supported)" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12 34.5 56", false, {}, "Separated HH MM.s SS (fractional minutes - NOT supported)" }) == 0);
+
+  // Other invalid cases
+  rv += SDK_ASSERT(runTest({ "", false, {}, "Empty string" }) == 0);
+  rv += SDK_ASSERT(runTest({ "25:00:00", false, {}, "Invalid hours" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:60:00", false, {}, "Invalid minutes" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:34:60", false, {}, "Invalid seconds" }) == 0);
+  rv += SDK_ASSERT(runTest({ "70", false, {}, "Invalid seconds compact" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:34:56:78", false, {}, "Too many components" }) == 0);
+  rv += SDK_ASSERT(runTest({ "abc:def:ghi", false, {}, "Non-numeric input" }) == 0);
+  rv += SDK_ASSERT(runTest({ "1234567", false, {}, "Too many digits for compact format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12.34.56", false, {}, "Multiple dots (dots are not valid separators)" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12.34.56.789", false, {}, "Multiple dots fractional (dots are not valid separators)" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:34.56.789", false, {}, "Multiple dots in seconds field" }) == 0);
+
+  // Additional edge cases
+  rv += SDK_ASSERT(runTest({ ":12:34", false, {}, "Empty hours" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12::34", false, {}, "Empty minutes" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:34:", false, {}, "Empty seconds" }) == 0);
+  rv += SDK_ASSERT(runTest({ "12:34:.5", false, {}, "Empty seconds with fractional" }) == 0);
+  rv += SDK_ASSERT(runTest({ ".123", false, {}, "Leading dot only" }) == 0);
+
+  return rv;
+}
+
 }
 
 int TimeStringTest(int argc, char* argv[])
@@ -1041,5 +1173,6 @@ int TimeStringTest(int argc, char* argv[])
   rv += SDK_ASSERT(testPrintIso8601() == 0);
   rv += SDK_ASSERT(testPrintDeprecated() == 0);
   rv += SDK_ASSERT(canConvertTest() == 0);
+  rv += SDK_ASSERT(testFreeformTimeStr() == 0);
   return rv;
 }
