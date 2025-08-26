@@ -381,7 +381,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Results of a call to parseFreeFormTimeStr */
-struct FreeFormResult
+struct SDKCORE_EXPORT FreeFormResult
 {
   std::optional<int> hours;
   std::optional<int> minutes;
@@ -399,7 +399,7 @@ struct FreeFormResult
  * separators. For examples of what is accepted and what is not, see the unit
  * test testFreeformTimeStr() in Testing/SimCore/TimeStringTest.cpp.
  */
-FreeFormResult parseFreeFormTimeStr(const std::string& input);
+SDKCORE_EXPORT FreeFormResult parseFreeFormTimeStr(const std::string& input);
 
 }
 
