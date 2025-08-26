@@ -142,16 +142,17 @@ inline void applyMesaGlVersionOverride()
 {
 #ifdef OSG_GL3_AVAILABLE
   osg::DisplaySettings* instance = osg::DisplaySettings::instance().get();
-  const std::string& glContextVersionStr = instance->getGLContextVersion();
-  if (glContextVersionStr == "1.0")
-    instance->setGLContextVersion("3.3");
+
+  // Default to 3.3 core profile; end users can override after call if desired. Without this, osgEarth
+  // might create a Capabilities that incorrectly identifies as Compatibility profile when Core profile
+  // is used in simQt. This is because with QOpenGLWidget, osgEarth may initialize its Capabilities
+  // before the context is valid, and will use OSG-based values instead. So this is a fallback. This
+  // particularly impacts AMD cards since it complains about invalid enumerant GL_POINT_SPRITE when
+  // used with osgEarth::PointsDrawable.
+  instance->setGLContextVersion("3.3");
+  instance->setGLContextProfileMask(GL_CONTEXT_CORE_PROFILE_BIT);
 
 #if defined(__linux__)
-  const float glContextVersion = atof(glContextVersionStr.c_str());
-  if (glContextVersion < 3.3f)
-  {
-    SIM_WARN << "GL Context Version is: " << glContextVersionStr << " " << glContextVersion << "\n";
-  }
   const std::string& mesaGlVersionOverride = simCore::getEnvVar("MESA_GL_VERSION_OVERRIDE");
   if (!mesaGlVersionOverride.empty() && mesaGlVersionOverride != "3.3")
   {
