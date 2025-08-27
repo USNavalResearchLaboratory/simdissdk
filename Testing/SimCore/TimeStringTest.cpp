@@ -1101,11 +1101,13 @@ int testFreeformTimeStr()
   rv += SDK_ASSERT(runTest({ "12.34", true, { {}, {}, 12.34 }, "SS.ss seconds format with fractional" }) == 0);
   rv += SDK_ASSERT(runTest({ "2", true, { {}, {}, 2.0 }, "S seconds format" }) == 0);
   rv += SDK_ASSERT(runTest({ "2.34", true, { {}, {}, 2.34 }, "S.ss seconds format with fractional" }) == 0);
+  rv += SDK_ASSERT(runTest({ ".123", true, { {}, {}, 0.123 }, "Leading dot only" }) == 0);
 
   // HHMMSS.s format
   rv += SDK_ASSERT(runTest({ "123456.5", true, { 12, 34, 56.5 }, "Compact HHMMSS.s format" }) == 0);
   rv += SDK_ASSERT(runTest({ "000000.123", true, { 0, 0, 0.123 }, "Compact with fractional seconds" }) == 0);
   rv += SDK_ASSERT(runTest({ "12345.75", true, { 1, 23, 45.75 }, "Compact HMMSS.s format" }) == 0);
+  rv += SDK_ASSERT(runTest({ "123456.", true, { 12, 34, 56.0 }, "Compact trailing dot with no fractional part" }) == 0);
 
   // Space separated formats
   rv += SDK_ASSERT(runTest({ "12 34 56.5", true, { 12, 34, 56.5 }, "Space separated HH MM SS.s" }) == 0);
@@ -1151,7 +1153,6 @@ int testFreeformTimeStr()
   rv += SDK_ASSERT(runTest({ "12::34", false, {}, "Empty minutes" }) == 0);
   rv += SDK_ASSERT(runTest({ "12:34:", false, {}, "Empty seconds" }) == 0);
   rv += SDK_ASSERT(runTest({ "12:34:.5", false, {}, "Empty seconds with fractional" }) == 0);
-  rv += SDK_ASSERT(runTest({ ".123", false, {}, "Leading dot only" }) == 0);
 
   return rv;
 }

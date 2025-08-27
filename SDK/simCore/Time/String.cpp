@@ -1125,8 +1125,8 @@ bool tryParseWithSeparators(const std::string& input, FreeFormResult& result)
     if (dotPos != std::string::npos)
     {
       const std::string seconds = tokens[0].substr(0, dotPos);
-      if (seconds.empty() || seconds.size() > 2)
-        return false; // Single token prior to fracPart is empty or too long
+      if (seconds.size() > 2)
+        return false; // Single token prior to fracPart is too long
     }
     if (!simCore::isValidNumber(tokens[0], seconds, false))
       return false;
@@ -1189,9 +1189,8 @@ std::string expandCompactFormat(const std::string& input)
   {
     fracPart = compact.substr(dotPos + 1);
     compact = compact.substr(0, dotPos);
-
-    if (fracPart.empty() || fracPart.find('.') != std::string::npos)
-      return std::string(); // empty fractional or multiple decimal places, empty string for failure
+    if (compact.empty())
+      compact = "0"; // Decimal only seconds value, e.g. .123. Use "0" for integral part to assist parsing below
   }
 
   // Validate compact string is now a number
