@@ -20,16 +20,20 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstring>
 #include <iomanip>
 #include <limits>
+#include <vector>
 #include <sstream>
 
+#include "simCore/Calc/Math.h"
 #include "simCore/Common/Time.h"
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/Exception.h"
+#include "simCore/Time/String.h"
 #include "simCore/Time/TimeClass.h"
 #include "simCore/Time/Utils.h"
 
@@ -602,4 +606,55 @@ double simCore::getNextTimeStep(bool faster, double lastStep)
     }
   }
   return lastStep;
+}
+
+/** Candidate go-to time, used to sort on multiple possible candidate times. See getNearestGoToTime() for usage */
+struct GoToCandidate
+{
+  simCore::TimeStamp ts;
+  double delta = 0;
+  bool valid = false;
+};
+
+std::optional<simCore::TimeStamp> simCore::getNearestGoToTime(const simCore::TimeStamp& currentTime, const simCore::TimeStamp& startTime, const simCore::TimeStamp& endTime, const simCore::FreeFormResult& request)
+{
+  if (!request.isValid())
+    return {};
+
+  unsigned int day = 0;
+  unsigned int hour = 0;
+  unsigned int min = 0;
+  unsigned int unusedSec = 0;
+  currentTime.getTimeComponents(day, hour, min, unusedSec);
+
+  // Calculate number of seconds since start of the day
+  const double newSecSinceMidnight = request.hours.value_or(hour) * simCore::SECPERHOUR +
+    request.minutes.value_or(min) * simCore::SECPERMIN + request.seconds.value_or(0.0);
+
+  // Reduce time stamp to midnight of current day
+  const double secSinceMidnight = fmod(currentTime.secondsSinceRefYear().Double(), static_cast<double>(simCore::SECPERDAY));
+  double newTime = currentTime.secondsSinceRefYear().Double() - secSinceMidnight;
+  // Apply new seconds since midnight to the current day to get the new time
+  newTime += newSecSinceMidnight;
+
+  const int refYear = currentTime.referenceYear();
+  const simCore::TimeStamp sameDayCandidate = { refYear, newTime };
+  // If hours isn't supplied, time will always be same day.
+  if (!request.hours.has_value())
+    return sameDayCandidate;
+
+  const simCore::TimeStamp nextDayCandidate = { refYear, newTime + simCore::SECPERDAY };
+  const simCore::TimeStamp prevDayCandidate = { refYear, newTime - simCore::SECPERDAY };
+
+  auto makeCandidate = [&](const simCore::TimeStamp& ts) { return GoToCandidate(ts, fabs(ts - currentTime), simCore::isBetween(ts, startTime, endTime)); };
+  std::vector<GoToCandidate> candidates = { makeCandidate(sameDayCandidate), makeCandidate(nextDayCandidate), makeCandidate(prevDayCandidate) };
+  std::sort(candidates.begin(), candidates.end(), [](const GoToCandidate& lhs, const GoToCandidate& rhs) { return lhs.delta < rhs.delta; });
+
+  for (const auto& candidate : candidates)
+  {
+    if (candidate.valid)
+      return candidate.ts;
+  }
+
+  return {};
 }
