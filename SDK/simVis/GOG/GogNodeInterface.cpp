@@ -2435,7 +2435,7 @@ void CylinderNodeInterface::setStyle_(const osgEarth::Style& style)
 
 void CylinderNodeInterface::applyOrientationOffsets_()
 {
-  if (!shapeObject() || !shapeObject()->isRelative())
+  if (!shapeObject() || !shapeObject()->canRotate())
     return;
   applyOrientationOffsetsToNode_(*shapeObject(), topCapNode_.get());
   applyOrientationOffsetsToNode_(*shapeObject(), bottomCapNode_.get());
@@ -2537,7 +2537,7 @@ void ArcNodeInterface::setStyle_(const osgEarth::Style& style)
 
 void ArcNodeInterface::applyOrientationOffsets_()
 {
-  if (!shapeObject() || !shapeObject()->isRelative())
+  if (!shapeObject() || !shapeObject()->canRotate())
     return;
   applyOrientationOffsetsToNode_(*shapeObject(), shapeNode_.get());
   applyOrientationOffsetsToNode_(*shapeObject(), fillNode_.get());
