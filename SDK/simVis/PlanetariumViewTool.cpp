@@ -299,7 +299,7 @@ void PlanetariumViewTool::BeamHistory::backfill_(double lastTime, double current
   simData::BeamPrefs pointPrefs(prefs);
   pointPrefs.mutable_commonprefs()->set_useoverridecolor(false);
   pointPrefs.set_blended(true);
-  pointPrefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
+  pointPrefs.set_drawtype(simData::BeamPrefs::DrawType::COVERAGE);
 
   // Declared outside for loop so we can continue iteration after finding nearly-recent command
   auto commandIter = beamCommandSlice_->lower_bound(-1.0);
@@ -545,7 +545,7 @@ public:
       const auto* prefs = parent_.ds_.platformPrefs(hostId_, &txn);
       if (prefs)
       {
-        newProjIds = simData::DataStoreHelpers::vecFromRepeated(prefs->commonprefs().acceptprojectorids());
+        newProjIds = prefs->commonprefs().acceptprojectorids();
         // Remove "0" entries, which might be present for Commands
         newProjIds.erase(std::remove(newProjIds.begin(), newProjIds.end(), 0), newProjIds.end());
       }
@@ -1186,7 +1186,7 @@ void PlanetariumViewTool::applyOverrides_(EntityNode* entity, bool enable) const
       if (lastUpdate && lastUpdate->range() >= range_)
       {
         simData::BeamPrefs prefs(beamPrefs_);
-        prefs.set_drawtype(simData::BeamPrefs_DrawType_COVERAGE);
+        prefs.set_drawtype(simData::BeamPrefs::DrawType::COVERAGE);
         beam->setPrefsOverride(OVERRIDE_TAG, prefs);
 
         simData::BeamUpdate update;

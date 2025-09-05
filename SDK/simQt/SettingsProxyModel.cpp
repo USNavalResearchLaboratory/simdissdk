@@ -27,6 +27,39 @@
 
 namespace simQt {
 
+namespace {
+
+/** Apply the reg exp filtering for settings search filter, returns true if no regexp filter is set */
+#if QT_VERSION_MAJOR == 5
+bool testRegExp_(const QAbstractItemModel& sourceModel, const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parentIndex, const QRegExp& filterText)
+#else
+bool testRegExp_(const QAbstractItemModel& sourceModel, const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parentIndex, const QRegularExpression& filterText)
+#endif
+{
+#if QT_VERSION_MAJOR == 5
+  if (filterText.isEmpty())
+#else
+  if (filterText.pattern().isEmpty())
+#endif
+    return true;
+  if (sourceModel.data(index0).toString().contains(filterText) ||
+    sourceModel.data(index1).toString().contains(filterText) ||
+    sourceModel.data(parentIndex).toString().contains(filterText))
+    return true;
+
+  // now search lineage
+  QModelIndex ancestor = sourceModel.parent(parentIndex);
+  while (ancestor.isValid())
+  {
+    if (sourceModel.data(ancestor).toString().contains(filterText))
+      return true;
+    ancestor = sourceModel.parent(ancestor);
+  }
+  return false;
+}
+
+}
+
 SettingsSearchFilter::SettingsSearchFilter(QAbstractItemModel* settingsModel, QWidget* parent)
   : QSortFilterProxyModel(parent)
 {
@@ -42,49 +75,49 @@ bool SettingsSearchFilter::filterAcceptsRow(int sourceRow, const QModelIndex &so
     return true;
   // Run regexp against children and parent text
   QModelIndex index1 = sourceModel()->index(sourceRow, 1, sourceParent);
-  return testRegExp_(index0, index1, sourceParent, filterRegExp());
-}
-
-bool SettingsSearchFilter::testRegExp_(const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parentIndex, const QRegExp& filterText) const
-{
-  if (filterText.isEmpty())
-    return true;
-  if (sourceModel()->data(index0).toString().contains(filterText) ||
-    sourceModel()->data(index1).toString().contains(filterText) ||
-    sourceModel()->data(parentIndex).toString().contains(filterText))
-    return true;
-  // now search lineage
-  QModelIndex ancestor = sourceModel()->parent(parentIndex);
-  while (ancestor.isValid())
-  {
-    if (sourceModel()->data(ancestor).toString().contains(filterText))
-      return true;
-    ancestor = sourceModel()->parent(ancestor);
-  }
-  return false;
+#if QT_VERSION_MAJOR == 5
+  return testRegExp_(*sourceModel(), index0, index1, sourceParent, filterRegExp());
+#else
+  return testRegExp_(*sourceModel(), index0, index1, sourceParent, filterRegularExpression());
+#endif
 }
 
 void SettingsSearchFilter::setFilterText(const QString& filterText)
 {
+#if QT_VERSION_MAJOR == 5
   setFilterRegExp(filterText);
+#else
+  setFilterRegularExpression(filterText);
+#endif
   invalidateFilter();
 }
 
 QString SettingsSearchFilter::filterText() const
 {
+#if QT_VERSION_MAJOR == 5
   return filterRegExp().pattern();
+#else
+  return filterRegularExpression().pattern();
+#endif
 }
 
 QModelIndexList SettingsSearchFilter::match(const QModelIndex& start, int role, const QVariant& value, int hits, Qt::MatchFlags flags) const
 {
+  const auto& actualStart = mapToSource(start);
+
   // Make a copy of the filter's regex to preserve case sensitivity and any other options it may have
+#if QT_VERSION_MAJOR == 5
   QRegExp regex = filterRegExp();
+#else
+  auto regex = filterRegularExpression();
+#endif
+
   regex.setPattern(value.toString());
   QModelIndexList hitsList;
-  for (int row = start.row(); row < sourceModel()->rowCount(start.parent()); ++row)
+  for (int row = actualStart.row(); row < sourceModel()->rowCount(actualStart.parent()); ++row)
   {
-    QModelIndex candidate = sourceModel()->index(row, 0, start.parent());
-    if (testRegExp_(candidate, sourceModel()->index(row, 1, start.parent()), start.parent(), regex))
+    const QModelIndex candidate = sourceModel()->index(row, 0, actualStart.parent());
+    if (testRegExp_(*sourceModel(), candidate, sourceModel()->index(row, 1, actualStart.parent()), actualStart.parent(), regex))
     {
       hitsList.push_back(mapFromSource(candidate));
       if (hits > 0 && hitsList.size() >= hits)
@@ -94,7 +127,7 @@ QModelIndexList SettingsSearchFilter::match(const QModelIndex& start, int role, 
     // Check the children of the candidate index
     for (int i = 0; i < sourceModel()->rowCount(candidate); ++i)
     {
-      if (testRegExp_(sourceModel()->index(i, 0, candidate), sourceModel()->index(i, 1, candidate), candidate, regex))
+      if (testRegExp_(*sourceModel(), sourceModel()->index(i, 0, candidate), sourceModel()->index(i, 1, candidate), candidate, regex))
       {
         hitsList.push_back(mapFromSource(sourceModel()->index(i, 0, candidate)));
         if (hits > 0 && hitsList.size() >= hits)
@@ -115,22 +148,30 @@ SettingsDataLevelFilter::SettingsDataLevelFilter(QAbstractItemModel* settingsMod
 {
   setSourceModel(settingsModel);
   // insert all the invalid data types not to display in the settings model
-  invalidDataTypes_.insert(QVariant::BitArray);
-  invalidDataTypes_.insert(QVariant::ByteArray);
-  invalidDataTypes_.insert(QVariant::Invalid);
+  invalidDataTypes_.insert(QMetaType::QBitArray);
+  invalidDataTypes_.insert(QMetaType::QByteArray);
+  invalidDataTypes_.insert(QMetaType::UnknownType);
 }
 
 bool SettingsDataLevelFilter::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
-  QModelIndex index0 = sourceModel()->index(sourceRow, 0, sourceParent);
+  const QModelIndex index0 = sourceModel()->index(sourceRow, 0, sourceParent);
   // Accept all parent items
   if (sourceModel()->hasChildren(index0))
     return true;
   // Check data level of children
-  QModelIndex index1 = sourceModel()->index(sourceRow, 1, sourceParent);
-  simQt::Settings::DataLevel dataLevel = static_cast<simQt::Settings::DataLevel>(sourceModel()->data(index1, SettingsModel::DataLevelRole).toInt());
+  const QModelIndex index1 = sourceModel()->index(sourceRow, 1, sourceParent);
+  const simQt::Settings::DataLevel dataLevel = static_cast<simQt::Settings::DataLevel>(sourceModel()->data(index1, SettingsModel::DataLevelRole).toInt());
   // test data level, as well as check that data type is valid
-  return testDataLevel_(dataLevel) && invalidDataTypes_.find(sourceModel()->data(index1).type()) == invalidDataTypes_.end();
+  if (!testDataLevel_(dataLevel))
+    return false;
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  const auto variantType = sourceModel()->data(index1).type();
+#else
+  const auto variantType = sourceModel()->data(index1).metaType().id();
+#endif
+  return invalidDataTypes_.find(variantType) == invalidDataTypes_.end();
 }
 
 void SettingsDataLevelFilter::setShowAdvanced(bool showAdvanced)

@@ -64,9 +64,9 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
   osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(gateSV_.get());
   if (solidGeometry != nullptr)
   {
-    const bool isOpaque = prefs->fillpattern() == simData::GatePrefs_FillPattern_WIRE ||
-                          prefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID ||
-                          prefs->fillpattern() == simData::GatePrefs_FillPattern_STIPPLE;
+    const bool isOpaque = prefs->fillpattern() == simData::GatePrefs::FillPattern::WIRE ||
+                          prefs->fillpattern() == simData::GatePrefs::FillPattern::SOLID ||
+                          prefs->fillpattern() == simData::GatePrefs::FillPattern::STIPPLE;
 
     solidGeometry->getOrCreateStateSet()->setRenderBinDetails(
       (isOpaque ? BIN_OPAQUE_GATE   : BIN_GATE),
@@ -159,21 +159,21 @@ SphericalVolume* GateVolume::createNode_(const simData::GatePrefs* prefs, const 
 
   switch (prefs->fillpattern())
   {
-  case simData::GatePrefs_FillPattern_STIPPLE:
+  case simData::GatePrefs::FillPattern::STIPPLE:
     sv.drawMode_ = (prefs->drawoutline()) ? simVis::SVData::DRAW_MODE_STIPPLE | simVis::SVData::DRAW_MODE_OUTLINE :  simVis::SVData::DRAW_MODE_STIPPLE;
     break;
-  case simData::GatePrefs_FillPattern_SOLID:
+  case simData::GatePrefs::FillPattern::SOLID:
     sv.drawMode_ = (prefs->drawoutline()) ? simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_OUTLINE : simVis::SVData::DRAW_MODE_SOLID;
     sv.blendingEnabled_ = false;
     break;
-  case simData::GatePrefs_FillPattern_ALPHA:
+  case simData::GatePrefs::FillPattern::ALPHA:
     sv.drawMode_ = (prefs->drawoutline()) ? simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_OUTLINE : simVis::SVData::DRAW_MODE_SOLID;
     break;
-  case simData::GatePrefs_FillPattern_WIRE:
+  case simData::GatePrefs::FillPattern::WIRE:
     sv.drawMode_ = simVis::SVData::DRAW_MODE_OUTLINE;
     sv.blendingEnabled_ = false;
     break;
-  case simData::GatePrefs_FillPattern_CENTROID:
+  case simData::GatePrefs::FillPattern::CENTROID:
     sv.drawMode_ = simVis::SVData::DRAW_MODE_NONE;
     break;
   }
@@ -210,11 +210,11 @@ SphericalVolume* GateVolume::createNode_(const simData::GatePrefs* prefs, const 
 
   // do not draw near-face and sides/walls of gate when:
   //   the gate has no thickness, or is in FOOTPRINT drawmode
-  sv.drawCone_ = (update->minrange() < update->maxrange()) && (prefs->gatedrawmode() != simData::GatePrefs_DrawMode_FOOTPRINT);
+  sv.drawCone_ = (update->minrange() < update->maxrange()) && (prefs->gatedrawmode() != simData::GatePrefs::DrawMode::FOOTPRINT);
 
   // coverage gates are sphere segments (absolute start/end degrees instead of
   // elevation and span)
-  sv.drawAsSphereSegment_ = prefs->gatedrawmode() == simData::GatePrefs_DrawMode_COVERAGE;
+  sv.drawAsSphereSegment_ = prefs->gatedrawmode() == simData::GatePrefs::DrawMode::COVERAGE;
 
   // use a Y-forward directional vector to correspond with the gate's locator.
   SphericalVolume* node = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
@@ -747,7 +747,7 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
       gateVolume_ = nullptr;
     }
 
-    if (activePrefs->fillpattern() != simData::GatePrefs_FillPattern_CENTROID)
+    if (activePrefs->fillpattern() != simData::GatePrefs::FillPattern::CENTROID)
     {
       gateVolume_ = new GateVolume(gateVolumeLocator_.get(), activePrefs, activeUpdate);
       addChild(gateVolume_);
@@ -768,7 +768,7 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   }
 
   // Fix the draw flag on the centroid - note that the logic here means that: if in fillpattern centroid, drawcentroid pref toggle does not hide it
-  const bool drawCentroid = activePrefs->drawcentroid() || activePrefs->fillpattern() == simData::GatePrefs_FillPattern_CENTROID;
+  const bool drawCentroid = activePrefs->drawcentroid() || activePrefs->fillpattern() == simData::GatePrefs::FillPattern::CENTROID;
   centroid_->setVisible(drawCentroid);
   centroid_->setColor(activePrefs);
 
@@ -835,7 +835,7 @@ void GateNode::updateLocator_(const simData::GateUpdate* newUpdate, const simDat
 
   // For a COVERAGE gate, the az/el is baked into the geometry,
   // so do not apply it to the locator.
-  if (activePrefs->gatedrawmode() == simData::GatePrefs::COVERAGE)
+  if (activePrefs->gatedrawmode() == simData::GatePrefs::DrawMode::COVERAGE)
   {
     // apply the local gate orientation
     gateVolumeLocator_->setLocalOffsets(
@@ -907,7 +907,7 @@ bool GateNode::changeRequiresRebuild_(const simData::GateUpdate* newUpdate, cons
 
     // changes to coverage gates require rebuild (instead of in-place updates)
     const simData::GatePrefs* activePrefs = newPrefs ? newPrefs : &lastPrefsApplied_;
-    if (activePrefs->gatedrawmode() == simData::GatePrefs::COVERAGE &&
+    if (activePrefs->gatedrawmode() == simData::GatePrefs::DrawMode::COVERAGE &&
       (PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, azimuth)  ||
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, elevation) ||
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, width)     ||

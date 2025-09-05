@@ -58,7 +58,9 @@ namespace osgEarth { class UnitsType; }
 namespace osgEarth { using UnitsType = Units; }
 #endif
 
-// MACROS to test for changes in protobuf properties.
+// Macros to test for changes in field values.
+// The macros were initially for protobuf messages, which is why they start with PB_.
+// The macros also work with the simData::FieldList definitions.
 
 #define PB_HAS_FIELD(a, field) ( \
   ((a)!=nullptr) && ((a)->has_##field()) )
@@ -86,7 +88,7 @@ namespace osgEarth { using UnitsType = Units; }
 
 #define PB_REPEATED_FIELD_CHANGED(a, b, field) ( \
   ((a)->field ## _size() != (b)->field ## _size()) || \
-  (simData::DataStoreHelpers::vecFromRepeated((a)->field()) != simData::DataStoreHelpers::vecFromRepeated((b)->field())) )
+  ((a)->field() != (b)->field()) )
 
 
 #define PB_HAS_SUBFIELD(a, first, second) ( \
@@ -285,10 +287,10 @@ namespace simVis
   /// Returns font size that scales from OSG to SIMDIS 9
   SDKVIS_EXPORT float simdisFontSize(float osgFontSize);
 
-  /// Converts from protobuf label backdrop type to OSG backdrop type
+  /// Converts from simData label backdrop type to OSG backdrop type
   SDKVIS_EXPORT osgText::Text::BackdropType backdropType(simData::BackdropType type);
 
-  /// Converts from protobuf label backdrop implementation to OSG backdrop implementation
+  /// Converts from simData label backdrop implementation to OSG backdrop implementation
   SDKVIS_EXPORT osgText::Text::BackdropImplementation backdropImplementation(simData::BackdropImplementation implementation);
 
   /**

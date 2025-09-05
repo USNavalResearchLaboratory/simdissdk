@@ -98,11 +98,11 @@ namespace
       simData::DataStore::Transaction xaction;
       simData::BeamPrefs* prefs = ds_->mutable_beamPrefs(id_, &xaction);
 
-      prefs->set_drawtype(value ? simData::BeamPrefs_DrawType_ANTENNA_PATTERN : simData::BeamPrefs_DrawType_BEAM_3DB);
+      prefs->set_drawtype(value ? simData::BeamPrefs::DrawType::ANTENNA_PATTERN : simData::BeamPrefs::DrawType::BEAM_3DB);
 
       if (value)
       {
-        prefs->mutable_antennapattern()->set_type(simData::BeamPrefs_AntennaPattern_Type_FILE);
+        prefs->mutable_antennapattern()->set_type(simData::AntennaPatterns::Type::FILE);
         prefs->mutable_antennapattern()->set_filename(antennaPattern_);
         //prefs.set_gain(0);
         //prefs.set_frequency(7000);

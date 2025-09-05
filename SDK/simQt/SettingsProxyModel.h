@@ -51,10 +51,6 @@ public:
 public Q_SLOTS:
   /** Changes the filter text */
   void setFilterText(const QString& filterText);
-
-private:
-  /** Apply the reg exp filtering, returns true if no regexp filter is set */
-  bool testRegExp_(const QModelIndex& index0, const QModelIndex& index1, const QModelIndex& parent, const QRegExp& filter) const;
 };
 
 /**
@@ -90,7 +86,7 @@ private:
   bool showUnknown_;
 
   //// all data types that are considered invalid by the filter
-  std::set<QVariant::Type> invalidDataTypes_;
+  std::set<int> invalidDataTypes_;
 
 };
 

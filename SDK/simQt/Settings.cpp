@@ -164,7 +164,11 @@ Settings::MetaData Settings::MetaData::makeDirectory(const QVariant& defaultValu
 Settings::MetaData Settings::MetaData::makeColor(const QVariant& defaultValue,
                                                  const QString& tooltip, Settings::DataLevel inLevel)
 {
-  if (static_cast<int>(defaultValue.type()) == QMetaType::QColor)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  if (defaultValue.type() == QVariant::Color)
+#else
+  if (defaultValue.metaType().id() == QMetaType::QColor)
+#endif
     return Settings::MetaData(COLOR, defaultValue.value<QColor>().rgba(), tooltip, inLevel);
   return Settings::MetaData(COLOR, defaultValue, tooltip, inLevel);
 }

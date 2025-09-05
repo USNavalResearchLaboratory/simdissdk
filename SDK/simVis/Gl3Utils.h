@@ -142,26 +142,28 @@ inline void applyMesaGlVersionOverride()
 {
 #ifdef OSG_GL3_AVAILABLE
   osg::DisplaySettings* instance = osg::DisplaySettings::instance().get();
-  const std::string& glContextVersionStr = instance->getGLContextVersion();
-  if (glContextVersionStr == "1.0")
-    instance->setGLContextVersion("3.3");
+
+  // Default to 3.3 core profile; end users can override after call if desired. Without this, osgEarth
+  // might create a Capabilities that incorrectly identifies as Compatibility profile when Core profile
+  // is used in simQt. This is because with QOpenGLWidget, osgEarth may initialize its Capabilities
+  // before the context is valid, and will use OSG-based values instead. So this is a fallback. This
+  // particularly impacts AMD cards since it complains about invalid enumerant GL_POINT_SPRITE when
+  // used with osgEarth::PointsDrawable.
+  instance->setGLContextVersion("3.3");
+  instance->setGLContextProfileMask(GL_CONTEXT_CORE_PROFILE_BIT);
 
 #if defined(__linux__)
-  const float glContextVersion = atof(glContextVersionStr.c_str());
-  if (glContextVersion < 3.3f)
-  {
-    SIM_WARN << "GL Context Version is: " << glContextVersionStr << " " << glContextVersion << "\n";
-  }
   const std::string& mesaGlVersionOverride = simCore::getEnvVar("MESA_GL_VERSION_OVERRIDE");
-  if (!mesaGlVersionOverride.empty())
+  if (!mesaGlVersionOverride.empty() && mesaGlVersionOverride != "3.3")
   {
     SIM_WARN << "MESA_GL_VERSION_OVERRIDE has been set by user to: " << mesaGlVersionOverride << ". SIMDIS may not be able to initialize an appropriate OpenGL context.\n";
   }
-  else if (glContextVersion < 3.3f)
+  else
   {
-  // some combinations of graphics hardware and MESA drivers on Linux have an additional requirement of setting
-  // the MESA_GL_VERSION_OVERRIDE environment variable, else we get a bad version.
+    // some combinations of graphics hardware and MESA drivers on Linux have an additional requirement of setting
+    // the MESA_GL_VERSION_OVERRIDE environment variable, else we get a bad version.
     setenv("MESA_GL_VERSION_OVERRIDE", "3.3", 1);
+    setenv("MESA_GLSL_VERSION_OVERRIDE", "330", 1);
   }
 #endif
 #endif
@@ -184,7 +186,7 @@ public:
   }
 
   /** Detect mesa Geometry Shader bug with GL3 and disable geometry portions if present */
-  virtual void operator() (osg::Object* obj)
+  virtual void operator()(osg::Object* obj) override
   {
     osg::GraphicsContext* gc = dynamic_cast<osg::GraphicsContext*>(obj);
     simVis::applyCoreProfileValidity(gc);

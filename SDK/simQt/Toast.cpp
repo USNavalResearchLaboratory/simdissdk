@@ -195,7 +195,11 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent* evt)
   Q_EMIT clicked();
 }
 
+#if QT_VERSION_MAJOR == 6
+void ClickableLabel::enterEvent(QEnterEvent* evt)
+#else
 void ClickableLabel::enterEvent(QEvent* evt)
+#endif
 {
   mouseInside_ = true;
   Q_EMIT mouseEntered();

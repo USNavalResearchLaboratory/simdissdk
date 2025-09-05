@@ -27,14 +27,10 @@
 #include <string>
 #include <utility>
 #include "simCore/Common/Common.h"
-#include "simData/DataSlice.h"
+#include "simData/DataStore.h"
 #include "simData/DataTable.h"
-#include "simData/DataTypes.h"
-#include "simData/ObjectId.h"
 
 namespace simData {
-
-class DataStore;
 
 /** Methods for getting/setting entity information given an entity ID */
 class SDKDATA_EXPORT DataStoreHelpers
@@ -76,8 +72,14 @@ public:
   /// Gets or creates a column for the given table with the given name; return 0 on success
   static int getOrCreateColumn(simData::DataTable* table, const std::string& columnName, VariableType storageType, UnitType unitType, simData::DataStore* dataStore, simData::TableColumnId& id);
 
-  /// create a protobuf message for the prefs of the given entity type
-  static google::protobuf::Message* makeMessage(simData::ObjectType entityType);
+  /// create a message for the prefs of the given entity type
+  static FieldList* makeMessage(simData::ObjectType entityType);
+
+  // Returns a mutable preferences owned by the data store for the given id, use the transaction to commit the changes; returns nullptr on error
+  static std::pair<FieldList*, simData::DataStore::Transaction> mutable_preferences(ObjectId objectId, simData::DataStore* dataStore);
+
+  // Returns a preferences owned by the data store for the given id, use the transaction to release the preferences; returns nullptr on error
+  static std::pair<const FieldList*, simData::DataStore::Transaction> preferences(ObjectId objectId, simData::DataStore* dataStore);
 
   /** Returns true if the entity is active, or false if inactive; e.g. for Super Form-like filtering. */
   static bool isEntityActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime);
@@ -88,31 +90,6 @@ public:
 
   /** Returns the user vertical datum value, in meters, for the given entity. */
   static double getUserVerticalDatum(const simData::DataStore& dataStore, simData::ObjectId id);
-
-  /** Replaces contents of repeated field with the contents of the provided vector. */
-  template <typename T>
-  static void vecToRepeated(typename google::protobuf::RepeatedField<T>* field, const typename std::vector<T>& vec)
-  {
-    if (!field)
-      return;
-    field->Clear();
-    for (const auto& value : vec)
-      field->Add(value);
-  }
-
-  /** Converts a protobuf RepeatedField into a std::vector of same type. */
-  template <typename T>
-  static typename std::vector<T> vecFromRepeated(const typename google::protobuf::RepeatedField<T>& field)
-  {
-    typename std::vector<T> rv;
-    if (!field.empty())
-    {
-      rv.reserve(field.size());
-      for (int k = 0; k < field.size(); ++k)
-        rv.emplace_back(field.Get(k));
-    }
-    return rv;
-  }
 };
 
 }

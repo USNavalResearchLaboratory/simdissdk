@@ -68,7 +68,7 @@ TimeWidget::TimeWidget(QWidget* parent)
 
   // Need a layout to make the widget fill the parent widget
   QHBoxLayout *layout = new QHBoxLayout();
-  layout->setMargin(0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(title_);
   layout->addWidget(currentContainer_->widget());
   setLayout(layout);  // do not use parent since parent could be nullptr

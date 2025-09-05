@@ -63,7 +63,7 @@ LineGraphic::LineGraphic(osg::Group* scene, osgEarth::MapNode* mapNode)
   text->fill()->color() = DEFAULT_TEXTCOLOR;
   text->halo()->color() = simVis::Color::Black;
   text->alignment() = osgEarth::TextSymbol::ALIGN_CENTER_CENTER;
-  text->haloOffset() = simVis::outlineThickness(simData::TO_THICK);
+  text->haloOffset() = simVis::outlineThickness(simData::TextOutline::TO_THICK);
   osg::ref_ptr<osgEarth::RenderSymbol> render = labelStyle_.getOrCreate<osgEarth::RenderSymbol>();
   render->lighting() = false;
   text->size() = simVis::osgFontSize(DEFAULT_FONTSIZE);

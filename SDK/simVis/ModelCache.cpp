@@ -38,11 +38,12 @@
 #include "osgSim/LightPointNode"
 #include "osgSim/MultiSwitch"
 #include "osgUtil/Optimizer"
+#include "osgEarth/AnnotationUtils"
 #include "osgEarth/Containers"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
-#include "osgEarth/AnnotationUtils"
+#include "osgEarth/Version"
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
 #include "simVis/ClockOptions.h"
@@ -76,7 +77,7 @@ public:
   }
 
 private:
-  osg::Callback* callback_;
+  osg::Callback* callback_ = nullptr;
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -88,10 +89,10 @@ public:
   SetRenderBinsToInherit()
     : NodeVisitor(TRAVERSE_ALL_CHILDREN)
   {
-      setNodeMaskOverride(~0);
+    setNodeMaskOverride(~0);
   }
 
-  virtual void apply(osg::Node& node)
+  virtual void apply(osg::Node& node) override
   {
     osg::StateSet* ss = node.getStateSet();
     // Catch Creator's Superface/Subface condition, where they use POLYGONOFFSET and render bin
@@ -118,7 +119,7 @@ public:
     setNodeMaskOverride(~0);
   }
 
-  virtual void apply(osg::Node& node)
+  virtual void apply(osg::Node& node) override
   {
 #ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
     // osgSim::LightPointNode is not supported in GLCORE, turn it off to prevent warning spam from OSG
@@ -166,7 +167,7 @@ public:
     traverse(node);
   }
 
-  virtual void apply(osg::Drawable& drawable)
+  virtual void apply(osg::Drawable& drawable) override
   {
     apply(static_cast<osg::Node&>(drawable));
 
@@ -199,9 +200,6 @@ public:
 
   /** Default constructor */
   ModelCacheLoaderOptions()
-    : boxWhenNotFound(false),
-      addLodNode(true),
-      clock(nullptr)
   {
     optimizeFlags = osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS |
       osgUtil::Optimizer::VERTEX_POSTTRANSFORM |
@@ -228,13 +226,13 @@ public:
    * of this failure.  To remedy this, asynchronous mode can set this flag to true to return a box
    * when the model cannot be found.
    */
-  bool boxWhenNotFound;
+  bool boxWhenNotFound = false;
   /** Set true to create an LOD node that swaps out when item is too small on screen. */
-  bool addLodNode;
+  bool addLodNode = true;
   /** Change the flags sent to optimizer.  Set to 0 to disable optimization. */
-  unsigned int optimizeFlags;
+  unsigned int optimizeFlags = 0;
   /** Clock object used for SIMDIS Media Player 2 playlist nodes. */
-  simCore::Clock* clock;
+  simCore::Clock* clock = nullptr;
   /** Pointer to the class that fixes osg::Sequence; see simVis::Registry::sequenceTimeUpdater_. */
   osg::observer_ptr<SequenceTimeUpdater> sequenceTimeUpdater;
 
@@ -266,7 +264,7 @@ public:
   }
 
   /** Called by OSG when a filename is requested to be read into a node. */
-  virtual ReadResult readNode(const std::string& filename, const osgDB::ReaderWriter::Options* options) const
+  virtual ReadResult readNode(const std::string& filename, const osgDB::ReaderWriter::Options* options) const override
   {
     const std::string ext = osgDB::getLowerCaseFileExtension(filename);
     if (!acceptsExtension(ext))
@@ -477,7 +475,6 @@ public:
 
   /** Initializes the Loader Node */
   LoaderNode()
-    : cache_(nullptr)
   {
   }
 
@@ -540,10 +537,8 @@ public:
     addChild(proxy);
   }
 
-  virtual void traverse(osg::NodeVisitor& nv)
+  virtual void traverse(osg::NodeVisitor& nv) override
   {
-    osg::Group::traverse(nv);
-
     // Check for proxy node children with children -- they just finished loading.
     unsigned int childIndex = 0;
     while (childIndex < getNumChildren())
@@ -582,12 +577,15 @@ public:
       }
       ++childIndex;
     }
+
+    // Continue traversal only after applying shader generator
+    osg::Group::traverse(nv);
   }
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  virtual const char* libraryName() const override { return "simVis"; }
   /** Return the class name */
-  virtual const char* className() const { return "ModelCache::LoaderNode"; }
+  virtual const char* className() const override { return "ModelCache::LoaderNode"; }
 
 private:
   /** Loading on a URI completed.  Alert everyone who cares. */
@@ -633,7 +631,7 @@ private:
   }
 
   /** Pointer back to our parent cache */
-  simVis::ModelCache* cache_;
+  simVis::ModelCache* cache_ = nullptr;
   /** Maps the URI to the vector of callbacks to use when the request is ready */
   std::map<std::string, CallbackVector> requests_;
 };
@@ -644,7 +642,7 @@ ModelCache::ModelCache()
   : shareArticulatedModels_(false),
     addLodNode_(true),
     clock_(nullptr),
-    cache_(false, 30), // No need for thread safety, max of 30 elements
+    cache_(30u), // max of 30 elements
     asyncLoader_(new LoaderNode)
 {
   asyncLoader_->setCache(this);
@@ -674,11 +672,19 @@ ModelCache::~ModelCache()
 osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsImage)
 {
   // first check the cache.
+#if OSGEARTH_SOVERSION >= 175
+  const auto& record = cache_.get(uri);
+  if (record.has_value())
+  {
+    const auto& entry = *record;
+#else
   Cache::Record record;
   if (cache_.get(uri, record))
   {
     assert(record.valid()); // Guaranteed by get()
     const Entry& entry = record.value();
+#endif
+
     if (pIsImage)
       *pIsImage = entry.isImage_;
 
@@ -756,17 +762,24 @@ void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
   }
 
   // first check the cache
+#if OSGEARTH_SOVERSION >= 175
+  const auto& record = cache_.get(uri);
+  if (record.has_value())
+  {
+    const auto& entry = *record;
+#else
   Cache::Record record;
   if (cache_.get(uri, record))
   {
     assert(record.valid()); // Guaranteed by get()
+    const Entry& entry = record.value();
+#endif
 
     // If the callback is valid, then pass the model back immediately.  It's possible the
     // callback might not be valid in cases where someone is attempting to preload icons
     // for the sake of performance.  In that case we just return early because it's loaded.
     if (refCallback.valid())
     {
-      const Entry& entry = record.value();
       osg::ref_ptr<osg::Node> node = entry.node_.get();
       // clone articulated nodes so we get independent articulations
       if (entry.isArticulated_ && !shareArticulatedModels_)

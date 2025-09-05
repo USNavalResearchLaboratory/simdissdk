@@ -355,4 +355,71 @@ simCore::Vec3 ellipsoidNormalAtIntersection(const simCore::Ellipsoid& ellipsoid,
   return normal.normalize();
 }
 
+bool doesLineIntersectSphere(const Vec3& p1, const Vec3& p2, double radius)
+{
+  if (radius <= 0.0)
+  {
+    // Must define a sphere
+    assert(false);
+    return false;
+  }
+
+  // --- Step 1: Check if either endpoint is inside or on the sphere ---
+  if (p1.length() <= radius)
+    return true;
+
+  if (p2.length() <= radius)
+    return true;
+
+  // --- Step 2: Both endpoints are outside. Now check if the segment passes through the sphere. ---
+  // Line equation: P(t) = P1 + t * direction, where direction = P2 - P1
+  // Sphere equation: ||P(t)||^2 = R^2 (since center is origin)
+  // Substitute: ||P1 + t * D||^2 = R^2
+  // This expands to a quadratic equation: at^2 + bt + c = 0
+
+  const Vec3 direction = p2 - p1; // Direction vector of the line segment
+
+  // Coefficients for the quadratic equation at^2 + bt + c = 0
+  // a = direction.direction (magnitude squared of the direction vector)
+  // b = 2 * (P1.direction)
+  // c = P1.P1 - R^2 (magnitude squared of P1 minus radius squared)
+  const double a = direction.dot(direction);
+  const double b = 2.0 * p1.dot(direction);
+  const double c = p1.dot(p1) - radius * radius;
+
+  // Calculate the discriminant (b^2 - 4ac)
+  const double discriminant = b * b - 4.0 * a * c;
+
+  // If discriminant is negative, there are no real solutions,
+  // meaning the infinite line does not intersect the sphere.
+  if (discriminant < 0)
+    return false;
+
+  // Prevent division by zero
+  if (a == 0)
+    return false;
+
+  // Calculate the two possible t values (intersection points on the infinite line)
+  const double discriminantSqrt = std::sqrt(discriminant);
+  const double t1 = (-b - discriminantSqrt) / (2.0 * a);
+  const double t2 = (-b + discriminantSqrt) / (2.0 * a);
+
+  // --- Step 3: Check if either t value is within the segment's range [0, 1] ---
+  // We need to be careful with floating-point comparisons. A small epsilon
+  // can be used for 'on the surface' checks if strict boundary behavior is needed,
+  // but for general intersection, <= and >= are usually sufficient.
+
+  // If t1 is within [0, 1], there's an intersection point on the segment.
+  if (t1 >= 0.0 && t1 <= 1.0)
+    return true;
+
+  // If t2 is within [0, 1], there's an intersection point on the segment.
+  if (t2 >= 0.0 && t2 <= 1.0)
+    return true;
+
+  // If we reach here, both endpoints were outside, and no intersection points
+  // on the infinite line fell within the segment [0, 1].
+  return false;
+}
+
 }

@@ -334,8 +334,10 @@ int initializeSimdisEnvironmentVariables(const InitializeEnvironmentConfig& conf
 
   if (config.qt)
   {
-    // QT_PLUGIN_PATH: required for 5.14, does not hurt 5.9
-    simCore::setEnvVar(QT_PLUGIN_PATH, simCore::pathJoin({ simdisDir, "bin", HWOS }), true);
+    // QT_PLUGIN_PATH: required for 5.14, does not hurt 5.9. Only force it if it's found
+    const auto& pluginPath = simCore::pathJoin({ simdisDir, "bin", HWOS });
+    const bool pathExists = simCore::FileInfo(pluginPath).exists();
+    simCore::setEnvVar(QT_PLUGIN_PATH, pluginPath, pathExists);
 #ifndef WIN32
     // Remove XDG_SESSION_TYPE to avoid Qt 5.15 warning on environment
     ::unsetenv(XDG_SESSION_TYPE.c_str());

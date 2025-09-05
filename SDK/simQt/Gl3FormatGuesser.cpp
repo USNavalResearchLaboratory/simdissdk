@@ -57,11 +57,15 @@ double extractFirstNumberFrom(const char* value)
 namespace simQt {
 
 Gl3FormatGuesser::Gl3FormatGuesser()
-  : format_(QGLFormat::defaultFormat()),
+  :
+#if QT_VERSION_MAJOR == 5
+  format_(QGLFormat::defaultFormat()),
+#endif
   surfaceFormat_(QSurfaceFormat::defaultFormat())
 {
 }
 
+#if QT_VERSION_MAJOR == 5
 void Gl3FormatGuesser::setFormat(const QGLFormat& format)
 {
   format_ = format;
@@ -168,6 +172,7 @@ QGLFormat Gl3FormatGuesser::getFormat()
 {
   return Gl3FormatGuesser::getFormat(QGLFormat::defaultFormat());
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////
 

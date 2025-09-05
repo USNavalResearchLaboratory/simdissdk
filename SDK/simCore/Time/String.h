@@ -26,6 +26,7 @@
 #include <iosfwd>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include "simCore/Common/Common.h"
@@ -377,6 +378,28 @@ private:
   mutable TimeFormatterPtr lastUsedFormatter_;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Results of a call to parseFreeFormTimeStr */
+struct SDKCORE_EXPORT FreeFormResult
+{
+  std::optional<int> hours;
+  std::optional<int> minutes;
+  std::optional<double> seconds;
+
+  /** Whether the result is valid */
+  bool isValid() const;
+  bool operator==(const FreeFormResult& rhs) const = default;
+};
+
+/**
+ * Parse a free form time string into a results structure. Attempts to parse
+ * the input string into hours, minutes, and seconds values. Time values can
+ * be in numerous formats, optionally using colons, commas, or spaces as
+ * separators. For examples of what is accepted and what is not, see the unit
+ * test testFreeformTimeStr() in Testing/SimCore/TimeStringTest.cpp.
+ */
+SDKCORE_EXPORT FreeFormResult parseFreeFormTimeStr(const std::string& input);
 
 }
 

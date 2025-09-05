@@ -243,33 +243,33 @@ int testCoordinateFrameProperties()
 
   // Verify coordinatesystem field
   rv += SDK_ASSERT(!prop.has_coordinatesystem());
-  prop.set_coordinatesystem(simData::CoordinateSystemProperties::ECEF);
+  prop.set_coordinatesystem(simData::CoordinateSystem::ECEF);
   rv += SDK_ASSERT(prop.has_coordinatesystem());
   prop.clear_coordinatesystem();
   rv += SDK_ASSERT(!prop.has_coordinatesystem());
-  prop.set_coordinatesystem(simData::CoordinateSystemProperties::ECEF);
+  prop.set_coordinatesystem(simData::CoordinateSystem::ECEF);
   rv += SDK_ASSERT(prop.has_coordinatesystem());
   prop.Clear();
   rv += SDK_ASSERT(!prop.has_coordinatesystem());
 
   // Verify magneticvariance field
   rv += SDK_ASSERT(!prop.has_magneticvariance());
-  prop.set_magneticvariance(simData::MagneticVarianceProperties::MV_TRUE);
+  prop.set_magneticvariance(simData::MagneticVariance::MV_TRUE);
   rv += SDK_ASSERT(prop.has_magneticvariance());
   prop.clear_magneticvariance();
   rv += SDK_ASSERT(!prop.has_magneticvariance());
-  prop.set_magneticvariance(simData::MagneticVarianceProperties::MV_TRUE);
+  prop.set_magneticvariance(simData::MagneticVariance::MV_TRUE);
   rv += SDK_ASSERT(prop.has_magneticvariance());
   prop.Clear();
   rv += SDK_ASSERT(!prop.has_magneticvariance());
 
   // Verify verticaldatum field
   rv += SDK_ASSERT(!prop.has_verticaldatum());
-  prop.set_verticaldatum(simData::VerticalDatumProperties::VD_MSL);
+  prop.set_verticaldatum(simData::VerticalDatum::VD_MSL);
   rv += SDK_ASSERT(prop.has_verticaldatum());
   prop.clear_verticaldatum();
   rv += SDK_ASSERT(!prop.has_verticaldatum());
-  prop.set_verticaldatum(simData::VerticalDatumProperties::VD_MSL);
+  prop.set_verticaldatum(simData::VerticalDatum::VD_MSL);
   rv += SDK_ASSERT(prop.has_verticaldatum());
   prop.Clear();
   rv += SDK_ASSERT(!prop.has_verticaldatum());
@@ -330,26 +330,26 @@ int testCoordinateFrameProperties()
   rv += SDK_ASSERT(prop == prop2);
 
   // Verify coordinatesystem field
-  prop.set_coordinatesystem(simData::CoordinateSystemProperties::ECEF);
+  prop.set_coordinatesystem(simData::CoordinateSystem::ECEF);
   rv += SDK_ASSERT(prop != prop2);
   prop2.MergeFrom(prop);
-  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystemProperties::ECEF);
+  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystem::ECEF);
   rv += SDK_ASSERT(prop.coordinatesystem() == prop2.coordinatesystem());
   rv += SDK_ASSERT(prop == prop2);
 
   // Verify magneticvariance field
-  prop.set_magneticvariance(simData::MagneticVarianceProperties::MV_USER);
+  prop.set_magneticvariance(simData::MagneticVariance::MV_USER);
   rv += SDK_ASSERT(prop != prop2);
   prop2.MergeFrom(prop);
-  rv += SDK_ASSERT(prop2.magneticvariance() == simData::MagneticVarianceProperties::MV_USER);
+  rv += SDK_ASSERT(prop2.magneticvariance() == simData::MagneticVariance::MV_USER);
   rv += SDK_ASSERT(prop.magneticvariance() == prop2.magneticvariance());
   rv += SDK_ASSERT(prop == prop2);
 
   // Verify verticaldatum field
-  prop.set_verticaldatum(simData::VerticalDatumProperties::VD_WGS84);
+  prop.set_verticaldatum(simData::VerticalDatum::VD_WGS84);
   rv += SDK_ASSERT(prop != prop2);
   prop2.MergeFrom(prop);
-  rv += SDK_ASSERT(prop2.verticaldatum() == simData::VerticalDatumProperties::VD_WGS84);
+  rv += SDK_ASSERT(prop2.verticaldatum() == simData::VerticalDatum::VD_WGS84);
   rv += SDK_ASSERT(prop.verticaldatum() == prop2.verticaldatum());
   rv += SDK_ASSERT(prop == prop2);
 
@@ -393,9 +393,9 @@ int testCoordinateFrameProperties()
   rv += SDK_ASSERT(prop2.referencella().lat() == 1.0);
   rv += SDK_ASSERT(prop2.has_tangentplaneoffset());
   rv += SDK_ASSERT(prop2.tangentplaneoffset().tx() == 2.0);
-  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystemProperties::ECEF);
-  rv += SDK_ASSERT(prop2.magneticvariance() == simData::MagneticVarianceProperties::MV_USER);
-  rv += SDK_ASSERT(prop2.verticaldatum() == simData::VerticalDatumProperties::VD_WGS84);
+  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystem::ECEF);
+  rv += SDK_ASSERT(prop2.magneticvariance() == simData::MagneticVariance::MV_USER);
+  rv += SDK_ASSERT(prop2.verticaldatum() == simData::VerticalDatum::VD_WGS84);
   rv += SDK_ASSERT(prop2.magneticvarianceuservalue() == 1.0);
   rv += SDK_ASSERT(prop2.verticaldatumuservalue() == 2.0);
   rv += SDK_ASSERT(prop2.ecireferencetime() == 3.0);
@@ -694,11 +694,11 @@ int testLaserProperties()
 
   // Verify coordinateSystem field
   rv += SDK_ASSERT(!prop.has_coordinatesystem());
-  prop.set_coordinatesystem(simData::CoordinateSystemProperties::ECEF);
+  prop.set_coordinatesystem(simData::CoordinateSystem::ECEF);
   rv += SDK_ASSERT(prop.has_coordinatesystem());
   prop.clear_coordinatesystem();
   rv += SDK_ASSERT(!prop.has_coordinatesystem());
-  prop.set_coordinatesystem(simData::CoordinateSystemProperties::ECEF);
+  prop.set_coordinatesystem(simData::CoordinateSystem::ECEF);
   rv += SDK_ASSERT(prop.has_coordinatesystem());
   prop.Clear();
   rv += SDK_ASSERT(!prop.has_coordinatesystem());
@@ -756,10 +756,10 @@ int testLaserProperties()
   rv += SDK_ASSERT(prop == prop2);
 
   // Verify coordinateSystem field
-  prop.set_coordinatesystem(simData::CoordinateSystemProperties::LLA);
+  prop.set_coordinatesystem(simData::CoordinateSystem::LLA);
   rv += SDK_ASSERT(prop != prop2);
   prop2.MergeFrom(prop);
-  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystemProperties::LLA);
+  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystem::LLA);
   rv += SDK_ASSERT(prop.coordinatesystem() == prop2.coordinatesystem());
   rv += SDK_ASSERT(prop == prop2);
 
@@ -792,7 +792,7 @@ int testLaserProperties()
   rv += SDK_ASSERT(prop2.id() == 1);
   rv += SDK_ASSERT(prop2.hostid() == 2);
   rv += SDK_ASSERT(prop2.originalid() == 3);
-  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystemProperties::LLA);
+  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystem::LLA);
   rv += SDK_ASSERT(prop2.azelrelativetohostori() == true);
   rv += SDK_ASSERT(prop2.source() == "Test");
 
@@ -840,11 +840,11 @@ int testLobGroupProperties()
 
   // Verify coordinateSystem field
   rv += SDK_ASSERT(!prop.has_coordinatesystem());
-  prop.set_coordinatesystem(simData::CoordinateSystemProperties::ECEF);
+  prop.set_coordinatesystem(simData::CoordinateSystem::ECEF);
   rv += SDK_ASSERT(prop.has_coordinatesystem());
   prop.clear_coordinatesystem();
   rv += SDK_ASSERT(!prop.has_coordinatesystem());
-  prop.set_coordinatesystem(simData::CoordinateSystemProperties::ECEF);
+  prop.set_coordinatesystem(simData::CoordinateSystem::ECEF);
   rv += SDK_ASSERT(prop.has_coordinatesystem());
   prop.Clear();
   rv += SDK_ASSERT(!prop.has_coordinatesystem());
@@ -902,10 +902,10 @@ int testLobGroupProperties()
   rv += SDK_ASSERT(prop == prop2);
 
   // Verify coordinateSystem field
-  prop.set_coordinatesystem(simData::CoordinateSystemProperties::LLA);
+  prop.set_coordinatesystem(simData::CoordinateSystem::LLA);
   rv += SDK_ASSERT(prop != prop2);
   prop2.MergeFrom(prop);
-  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystemProperties::LLA);
+  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystem::LLA);
   rv += SDK_ASSERT(prop.coordinatesystem() == prop2.coordinatesystem());
   rv += SDK_ASSERT(prop == prop2);
 
@@ -938,7 +938,7 @@ int testLobGroupProperties()
   rv += SDK_ASSERT(prop2.id() == 1);
   rv += SDK_ASSERT(prop2.hostid() == 2);
   rv += SDK_ASSERT(prop2.originalid() == 3);
-  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystemProperties::LLA);
+  rv += SDK_ASSERT(prop2.coordinatesystem() == simData::CoordinateSystem::LLA);
   rv += SDK_ASSERT(prop2.azelrelativetohostori() == true);
   rv += SDK_ASSERT(prop2.source() == "Test");
 
@@ -1509,6 +1509,21 @@ int testTangentPlaneOffsetsProperties()
   return rv;
 }
 
+int testClone()
+{
+  int rv = 0;
+
+  // This one test covers all 4 Clone macros
+
+  std::unique_ptr<simData::FieldList> original = std::make_unique<simData::ScenarioProperties>();
+  static_cast<simData::ScenarioProperties*>(original.get())->mutable_classification()->set_label("Test");
+  std::unique_ptr<simData::FieldList> clone = original->Clone();
+
+  rv += SDK_ASSERT(static_cast<simData::ScenarioProperties*>(clone.get())->classification().label() == "Test");
+
+  return rv;
+}
+
 }
 
 int TestProperties(int argc, char* argv[])
@@ -1528,6 +1543,7 @@ int TestProperties(int argc, char* argv[])
   rv += testScenarioProperties();
   rv += testSoundProperties();
   rv += testTangentPlaneOffsetsProperties();
+  rv += testClone();
 
   return rv;
 }

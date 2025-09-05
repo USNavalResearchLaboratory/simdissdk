@@ -76,6 +76,8 @@ MainWindow::MainWindow()
   view->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   viewMan_ = new simVis::ViewManager(); // Note that the log depth buffer is not installed
+  // This example has only one main view, so although it uses Qt we do not need multiple viewers
+  viewMan_->setUseMultipleViewers(false);
   viewMan_->addView(view.get());
 
   // data source which will provide positions for the platform
@@ -104,7 +106,7 @@ MainWindow::MainWindow()
   buttonDialog->show();
 
   // Create the ViewerWidgetAdapter, and set the central widget to it
-  auto viewerWidget = new simQt::ViewerWidgetAdapter(this);
+  auto viewerWidget = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, this);
   viewerWidget->setViewer(viewMan_->getViewer());
   viewerWidget->setTimerInterval(33); // 30 hz
   connect(viewerWidget, &simQt::ViewerWidgetAdapter::aboutToPaintGl, this, &MainWindow::notifyFrameUpdate_);
@@ -112,7 +114,7 @@ MainWindow::MainWindow()
 
   resize(800, 600);
   setWindowTitle("Qt Time Buttons SDK Example");
-  view->lookAt(51.5072, 0.1276, 6500000, 0, -90, 0);
+  view->lookAt(51.5072, 0.1276, 0, 0, -90, 6500000);
 }
 
 void MainWindow::notifyFrameUpdate_()
@@ -147,7 +149,7 @@ simData::ObjectId MainWindow::addPlatform_(simData::DataStore &dataStore)
   prefs->mutable_commonprefs()->set_draw(true);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_overlayfontpointsize(14);
-  prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_LINE);
+  prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs::Mode::LINE);
   transaction.complete(&prefs);
 
   return result;

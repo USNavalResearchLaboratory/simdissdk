@@ -24,6 +24,7 @@
 #define DATATYPE_BASICS_H
 
 #include <limits>
+#include <memory>
 #include <optional>
 
 namespace simData
@@ -67,6 +68,8 @@ public:
 
   bool operator==(const FieldList& rhs) const = default;
   bool operator!=(const FieldList& rhs) const = default;
+
+  virtual std::unique_ptr<FieldList> Clone() const = 0;
 };
 
 // Macros to help with defining preference messages and property messages
@@ -90,7 +93,10 @@ public: \
   void CopyFrom(const className& from); \
   void MergeFrom(const className& from); \
   void Clear(); \
-  className* New();
+  void Prune(); \
+  bool isEmpty() const; \
+  className* New(); \
+  virtual std::unique_ptr<FieldList> Clone() const override;
 
 /**
  * Declares the standard methods with default for the operators
@@ -111,7 +117,10 @@ public: \
   void CopyFrom(const className& from); \
   void MergeFrom(const className& from); \
   void Clear(); \
-  className* New();
+  void Prune(); \
+  bool isEmpty() const; \
+  className* New(); \
+  virtual std::unique_ptr<FieldList> Clone() const override;
 
 /**
  * Declares a field member variable with corresponding accessors
@@ -159,7 +168,7 @@ private: \
  */
 #define SIMDATA_DECLARE_VECTOR_FIELD(variableName, fieldName, type) \
 public: \
-  int fieldName##_size(); \
+  int fieldName##_size() const; \
   void clear_##fieldName(); \
   const std::vector<type>& fieldName() const; \
   const type& fieldName(int index) const; \
@@ -222,9 +231,21 @@ private: \
     *this = className(); \
   } \
 \
+  bool className::isEmpty() const\
+  { \
+    return *this == className(); \
+  } \
+\
   className* className::New() \
   { \
     return new className(); \
+  } \
+\
+  std::unique_ptr<FieldList> className::Clone() const \
+  { \
+     auto rv = std::make_unique<className>(); \
+     rv->CopyFrom(*this); \
+     return rv; \
   }
 
 /**
@@ -254,9 +275,25 @@ private: \
     *this = className(); \
   } \
 \
+  void className::Prune() \
+  { \
+  } \
+\
+  bool className::isEmpty() const\
+  { \
+    return *this == className(); \
+  } \
+\
   className* className::New() \
   { \
     return new className(); \
+  } \
+\
+  std::unique_ptr<FieldList> className::Clone() const \
+  { \
+     auto rv = std::make_unique<className>(); \
+     rv->CopyFrom(*this); \
+     return rv; \
   }
 
 /**
@@ -298,7 +335,7 @@ private: \
  * Example: SIMDATA_DEFINE_VECTOR_FIELD(files_, files, std::string);
  */
 #define SIMDATA_DEFINE_VECTOR_FIELD(className, variableName, fieldName, type) \
-  int className::fieldName##_size() { return static_cast<int>(variableName.size()); } \
+  int className::fieldName##_size() const { return static_cast<int>(variableName.size()); } \
   void className::clear_##fieldName() { variableName.clear();} \
   const std::vector<type>& className::fieldName() const { return variableName; } \
   const type& className::fieldName(int index) const { return variableName[index]; } \
@@ -372,12 +409,26 @@ private: \
     variableName->CopyFrom(from.fieldName()); \
   } \
   else \
-    variableName.reset()
+    variableName.reset();
+
+ /**
+  * Delete the specified submessage if it is empty
+  * @param variableName The name of the member variable to prune
+  *
+  * Example: SIMDATA_SUBFIELD_LIST_PRUNE(commonPreferences_);
+  */
+#define SIMDATA_SUBFIELD_LIST_PRUNE(variableName)\
+  if (variableName) \
+  { \
+    variableName->Prune(); \
+    if (variableName->isEmpty()) \
+      variableName.reset(); \
+  }
 
 //---------------------------------------------------------------------------------------------------------
 
 /** Supported geographic reference frames */
-enum class CoordinateSystemProperties {
+enum class CoordinateSystem {
   NED = 1,   ///< North/East/Down
   NWU = 2,   ///< North/West/Up
   ENU = 3,   ///< East/North/Up
@@ -389,14 +440,14 @@ enum class CoordinateSystemProperties {
 };
 
 /** Magnetic variance to apply to orientation angles */
-enum class MagneticVarianceProperties {
+enum class MagneticVariance {
   MV_WMM = 1,   ///< Variance based on World Magnetic Model (WMM)
   MV_TRUE = 2,  ///< No variance, also known as True North
   MV_USER = 3,  ///< User defined variance
 };
 
 /** Vertical datum to apply to altitude values in certain systems */
-enum class VerticalDatumProperties {
+enum class VerticalDatum {
   VD_WGS84 = 1,  ///< Referenced to WGS-84 ellipsoid
   VD_MSL = 2,    ///< Referenced to Earth Gravity Model (EGM)
   VD_USER = 3    ///< User defined datum

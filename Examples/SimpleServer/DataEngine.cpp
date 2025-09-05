@@ -174,7 +174,7 @@ void DataEngine::generateData_()
       // Set some parameters on the track history
       simData::DataStore::Transaction txn;
       simData::PlatformPrefs* missilePrefs = dataStore_.mutable_platformPrefs(missile->id(), &txn);
-      missilePrefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_POINT);
+      missilePrefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs::Mode::POINT);
       missilePrefs->mutable_trackprefs()->set_linewidth(2.0);
       missilePrefs->mutable_trackprefs()->set_tracklength(6000);
       missilePrefs->mutable_trackprefs()->set_trackoverridecolor(0x00ff00ff);

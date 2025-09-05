@@ -127,7 +127,7 @@ color2_(simVis::Color::Yellow),
 colorOverride_(osg::Vec4()),    // transparent
 useOverrideColor_(false),
 lineWidth_(lineWidth),
-bending_(simData::ALB_AUTO),
+bending_(simData::AnimatedLineBend::ALB_AUTO),
 coordinateConverter_(new simCore::CoordinateConverter),
 timeLastShift_(0.0),
 depthBufferTest_(depthBufferTest)
@@ -569,7 +569,7 @@ void AnimatedLineNode::drawLine_(const simCore::MultiFrameCoordinate& coord1, co
 
   switch (bending_)
   {
-  case simData::ALB_AUTO:
+  case simData::AnimatedLineBend::ALB_AUTO:
     // Do horizon checking to determine if the coordinates will hit the earth
     // with a slant line.  If so, then draw a bending line, else draw a straight line.
     if (!doesLineIntersectEarth_(coord1, coord2))
@@ -577,10 +577,10 @@ void AnimatedLineNode::drawLine_(const simCore::MultiFrameCoordinate& coord1, co
     else
       drawBendingLine_(coord1, coord2);
     break;
-  case simData::ALB_STRAIGHT:
+  case simData::AnimatedLineBend::ALB_STRAIGHT:
     drawSlantLine_(coord1, coord2);
     break;
-  case simData::ALB_BEND:
+  case simData::AnimatedLineBend::ALB_BEND:
     drawBendingLine_(coord1, coord2);
     break;
   }

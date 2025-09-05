@@ -351,7 +351,7 @@ simData::ObjectId createPlatform(simData::DataStore& dataStore, bool ship = fals
   simData::PlatformPrefs* prefs = dataStore.mutable_platformPrefs(id, &txn);
   prefs->set_dynamicscale(true);
   prefs->set_nodepthicons(false);
-  prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_LINE);
+  prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs::Mode::LINE);
   prefs->mutable_trackprefs()->set_linewidth(2.0);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_color(0xFFFFFFFF);

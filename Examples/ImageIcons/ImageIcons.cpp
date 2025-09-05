@@ -30,6 +30,7 @@
 // Version check against the SDK DLL
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
+#include "simData/EnumerationText.h"
 #include "simData/MemoryDataStore.h"
 
 /// the simulator provides time/space data for our platform
@@ -64,7 +65,7 @@ using namespace osgEarth::Util::Controls;
 
 
 /// index of currently visible calculation
-static simData::IconRotation s_iconRotation = simData::IR_2D_YAW;
+static simData::IconRotation s_iconRotation = simData::IconRotation::IR_2D_YAW;
 
 /// first line, describe the program
 static const std::string s_title = "Image Icons Example";
@@ -83,20 +84,20 @@ struct ControlPanel : public simExamples::SimExamplesGui
         // Cycle the value
         switch (s_iconRotation)
         {
-        case simData::IR_2D_UP:
-          s_iconRotation = simData::IR_2D_YAW;
+        case simData::IconRotation::IR_2D_UP:
+          s_iconRotation = simData::IconRotation::IR_2D_YAW;
           break;
-        case simData::IR_2D_YAW:
-          s_iconRotation = simData::IR_3D_YPR;
+        case simData::IconRotation::IR_2D_YAW:
+          s_iconRotation = simData::IconRotation::IR_3D_YPR;
           break;
-        case simData::IR_3D_YPR:
-          s_iconRotation = simData::IR_3D_NORTH;
+        case simData::IconRotation::IR_3D_YPR:
+          s_iconRotation = simData::IconRotation::IR_3D_NORTH;
           break;
-        case simData::IR_3D_NORTH:
-          s_iconRotation = simData::IR_3D_YAW;
+        case simData::IconRotation::IR_3D_NORTH:
+          s_iconRotation = simData::IconRotation::IR_3D_YAW;
           break;
-        case simData::IR_3D_YAW:
-          s_iconRotation = simData::IR_2D_UP;
+        case simData::IconRotation::IR_3D_YAW:
+          s_iconRotation = simData::IconRotation::IR_2D_UP;
           break;
         }
 
@@ -126,24 +127,24 @@ struct ControlPanel : public simExamples::SimExamplesGui
           return;
         switch (prefs->circlehilightshape())
         {
-        case simData::CH_PULSING_CIRCLE:
-          prefs->set_circlehilightshape(simData::CH_CIRCLE);
+        case simData::CircleHilightShape::CH_PULSING_CIRCLE:
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_CIRCLE);
           break;
-        case simData::CH_CIRCLE:
-          prefs->set_circlehilightshape(simData::CH_DIAMOND);
+        case simData::CircleHilightShape::CH_CIRCLE:
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_DIAMOND);
           break;
-        case simData::CH_DIAMOND:
-          prefs->set_circlehilightshape(simData::CH_SQUARE);
+        case simData::CircleHilightShape::CH_DIAMOND:
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_SQUARE);
           break;
-        case simData::CH_SQUARE:
-          prefs->set_circlehilightshape(simData::CH_SQUARE_RETICLE);
+        case simData::CircleHilightShape::CH_SQUARE:
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_SQUARE_RETICLE);
           break;
-        case simData::CH_SQUARE_RETICLE:
-          prefs->set_circlehilightshape(simData::CH_COFFIN);
+        case simData::CircleHilightShape::CH_SQUARE_RETICLE:
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_COFFIN);
           break;
-        case simData::CH_COFFIN:
+        case simData::CircleHilightShape::CH_COFFIN:
         default:
-          prefs->set_circlehilightshape(simData::CH_PULSING_CIRCLE);
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_PULSING_CIRCLE);
           break;
         }
         txn.complete(&prefs);
@@ -155,8 +156,10 @@ struct ControlPanel : public simExamples::SimExamplesGui
     if (!isVisible())
       return;
 
+    static std::unique_ptr<simData::EnumerationText> names;
     if (firstDraw_)
     {
+      names = simData::EnumerationText::makeIconRotationName();
       ImGui::SetNextWindowPos(ImVec2(5, 25));
       firstDraw_ = false;
     }
@@ -168,7 +171,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::Text("3 : cycle through highlight styles");
 
     std::stringstream ss;
-    ss << "Currently viewing: " << IconRotation_Name(s_iconRotation);
+    ss << "Currently viewing: " << names->text(static_cast<size_t>(s_iconRotation));
     ImGui::TextColored(ImVec4(1.f, 1.f, 0.f, 1.f), "%s", ss.str().c_str());
 
     ImGui::End();
@@ -245,20 +248,20 @@ struct MenuHandler : public osgGA::GUIEventHandler
         // Cycle the value
         switch (s_iconRotation)
         {
-        case simData::IR_2D_UP:
-          s_iconRotation = simData::IR_2D_YAW;
+        case simData::IconRotation::IR_2D_UP:
+          s_iconRotation = simData::IconRotation::IR_2D_YAW;
           break;
-        case simData::IR_2D_YAW:
-          s_iconRotation = simData::IR_3D_YPR;
+        case simData::IconRotation::IR_2D_YAW:
+          s_iconRotation = simData::IconRotation::IR_3D_YPR;
           break;
-        case simData::IR_3D_YPR:
-          s_iconRotation = simData::IR_3D_NORTH;
+        case simData::IconRotation::IR_3D_YPR:
+          s_iconRotation = simData::IconRotation::IR_3D_NORTH;
           break;
-        case simData::IR_3D_NORTH:
-          s_iconRotation = simData::IR_3D_YAW;
+        case simData::IconRotation::IR_3D_NORTH:
+          s_iconRotation = simData::IconRotation::IR_3D_YAW;
           break;
-        case simData::IR_3D_YAW:
-          s_iconRotation = simData::IR_2D_UP;
+        case simData::IconRotation::IR_3D_YAW:
+          s_iconRotation = simData::IconRotation::IR_2D_UP;
           break;
         }
 
@@ -294,24 +297,24 @@ struct MenuHandler : public osgGA::GUIEventHandler
           break;
         switch (prefs->circlehilightshape())
         {
-        case simData::CH_PULSING_CIRCLE:
-          prefs->set_circlehilightshape(simData::CH_CIRCLE);
+        case simData::CircleHilightShape::CH_PULSING_CIRCLE:
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_CIRCLE);
           break;
-        case simData::CH_CIRCLE:
-          prefs->set_circlehilightshape(simData::CH_DIAMOND);
+        case simData::CircleHilightShape::CH_CIRCLE:
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_DIAMOND);
           break;
-        case simData::CH_DIAMOND:
-          prefs->set_circlehilightshape(simData::CH_SQUARE);
+        case simData::CircleHilightShape::CH_DIAMOND:
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_SQUARE);
           break;
-        case simData::CH_SQUARE:
-          prefs->set_circlehilightshape(simData::CH_SQUARE_RETICLE);
+        case simData::CircleHilightShape::CH_SQUARE:
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_SQUARE_RETICLE);
           break;
-        case simData::CH_SQUARE_RETICLE:
-          prefs->set_circlehilightshape(simData::CH_COFFIN);
+        case simData::CircleHilightShape::CH_SQUARE_RETICLE:
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_COFFIN);
           break;
-        case simData::CH_COFFIN:
+        case simData::CircleHilightShape::CH_COFFIN:
         default:
-          prefs->set_circlehilightshape(simData::CH_PULSING_CIRCLE);
+          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_PULSING_CIRCLE);
           break;
         }
         txn.complete(&prefs);
@@ -396,7 +399,7 @@ int main(int argc, char **argv)
     simData::PlatformPrefs* prefs = dataStore.mutable_platformPrefs(obj1, &txn);
     prefs->set_dynamicscale(true);
     prefs->set_scale(3);
-    prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_POINT);
+    prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs::Mode::POINT);
     prefs->mutable_trackprefs()->set_linewidth(1);
     prefs->mutable_commonprefs()->set_name("Image");
     std::string iconFile;

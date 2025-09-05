@@ -161,7 +161,7 @@ public:
       if (currentPatternIdx != static_cast<int>(fillPattern_))
       {
         needUpdate = true;
-        fillPattern_ = static_cast<simData::GatePrefs_FillPattern>(currentPatternIdx);
+        fillPattern_ = static_cast<simData::GatePrefs::FillPattern>(currentPatternIdx);
       }
 
       // Min Range
@@ -257,11 +257,11 @@ private:
       prefs->mutable_commonprefs()->set_color(simVis::Color(color_[0], color_[1], color_[2], color_[3]).as(simVis::Color::RGBA));
       prefs->set_fillpattern(fillPattern_);
 
-      simData::GatePrefs_DrawMode drawMode = simData::GatePrefs_DrawMode_RANGE;
+      simData::GatePrefs::DrawMode drawMode = simData::GatePrefs::DrawMode::RANGE;
       if (drawModeIdx_ == 1)
-        drawMode = simData::GatePrefs_DrawMode_FOOTPRINT;
+        drawMode = simData::GatePrefs::DrawMode::FOOTPRINT;
       if (drawModeIdx_ == 2)
-        drawMode = simData::GatePrefs_DrawMode_COVERAGE;
+        drawMode = simData::GatePrefs::DrawMode::COVERAGE;
 
       prefs->set_gatedrawmode(drawMode);
       prefs->set_gatelighting(lighting_);
@@ -297,7 +297,7 @@ private:
   osg::ref_ptr<simVis::View> view_;
   osg::ref_ptr<simVis::ScenarioManager> scenario_;
   int drawModeIdx_ = 0;
-  simData::GatePrefs_FillPattern fillPattern_ = simData::GatePrefs_FillPattern_STIPPLE;
+  simData::GatePrefs::FillPattern fillPattern_ = simData::GatePrefs::FillPattern::STIPPLE;
   float time_ = 0.f;
   float minRange_ = 100.f;
   float maxRange_ = 350.f;
@@ -350,8 +350,8 @@ struct AppData
   osg::ref_ptr<ui::CheckBoxControl> globalToggle_;
 
   std::vector< std::pair<simData::GateProperties_GateType, std::string> > types_;
-  std::vector< std::pair<simData::GatePrefs_DrawMode,      std::string> > modes_;
-  std::vector< std::pair<simData::GatePrefs_FillPattern,   std::string> > fillPatterns_;
+  std::vector< std::pair<simData::GatePrefs::DrawMode,      std::string> > modes_;
+  std::vector< std::pair<simData::GatePrefs::FillPattern,   std::string> > fillPatterns_;
   std::vector< std::pair<simVis::Color, std::string> >                    colors_;
   simData::DataStore*  ds_;
   simData::ObjectId    hostId_;
@@ -392,15 +392,15 @@ struct AppData
     types_.push_back(std::make_pair(simData::GateProperties::Type::ABSOLUTE_POSITION, "ABSOLUTE"));
     types_.push_back(std::make_pair(simData::GateProperties::Type::BODY_RELATIVE,     "BODY RELATIVE"));
 
-    modes_.push_back(std::make_pair(simData::GatePrefs_DrawMode_RANGE,    "RANGE"));
-    modes_.push_back(std::make_pair(simData::GatePrefs_DrawMode_COVERAGE, "COVERAGE"));
-    modes_.push_back(std::make_pair(simData::GatePrefs_DrawMode_FOOTPRINT, "FOOTPRINT"));
+    modes_.push_back(std::make_pair(simData::GatePrefs::DrawMode::RANGE,    "RANGE"));
+    modes_.push_back(std::make_pair(simData::GatePrefs::DrawMode::COVERAGE, "COVERAGE"));
+    modes_.push_back(std::make_pair(simData::GatePrefs::DrawMode::FOOTPRINT, "FOOTPRINT"));
 
-    fillPatterns_.push_back(std::make_pair(simData::GatePrefs_FillPattern_STIPPLE,  "STIPPLE"));
-    fillPatterns_.push_back(std::make_pair(simData::GatePrefs_FillPattern_SOLID,    "SOLID"));
-    fillPatterns_.push_back(std::make_pair(simData::GatePrefs_FillPattern_ALPHA,    "ALPHA"));
-    fillPatterns_.push_back(std::make_pair(simData::GatePrefs_FillPattern_WIRE,     "WIRE"));
-    fillPatterns_.push_back(std::make_pair(simData::GatePrefs_FillPattern_CENTROID, "CENTROID"));
+    fillPatterns_.push_back(std::make_pair(simData::GatePrefs::FillPattern::STIPPLE,  "STIPPLE"));
+    fillPatterns_.push_back(std::make_pair(simData::GatePrefs::FillPattern::SOLID,    "SOLID"));
+    fillPatterns_.push_back(std::make_pair(simData::GatePrefs::FillPattern::ALPHA,    "ALPHA"));
+    fillPatterns_.push_back(std::make_pair(simData::GatePrefs::FillPattern::WIRE,     "WIRE"));
+    fillPatterns_.push_back(std::make_pair(simData::GatePrefs::FillPattern::CENTROID, "CENTROID"));
 
     colors_.push_back(std::make_pair(simVis::Color(0xffffff7fu), "White"));
     colors_.push_back(std::make_pair(simVis::Color(0x00ff007fu), "Green"));

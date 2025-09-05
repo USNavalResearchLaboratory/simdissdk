@@ -7,6 +7,7 @@ project(SimVis_UnitTests)
 set(SV_TESTS
     FontSizeTest.cpp
     LocatorTest.cpp
+    DoesLineIntersectSphereTest.cpp
 )
 # Need gdal.h for GogTest
 if(TARGET GDAL::GDAL)
@@ -31,6 +32,7 @@ set_target_properties(SimVisTests PROPERTIES
 
 add_test(NAME LocatorTest COMMAND SimVisTests LocatorTest)
 add_test(NAME FontSizeTest COMMAND SimVisTests FontSizeTest)
+add_test(NAME DoesLineIntersectSphereTest COMMAND SimVisTests DoesLineIntersectSphereTest)
 if(TARGET GDAL::GDAL)
     add_test(NAME SimVisGogTest COMMAND SimVisTests GogTest)
     target_link_libraries(SimVisTests PRIVATE GDAL::GDAL)

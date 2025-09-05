@@ -434,7 +434,7 @@ private:
       simData::PlatformPrefs *prefs = app_.ds_->mutable_platformPrefs(idMap_[id], &xaction);
       prefs->set_icon(icon);
       prefs->mutable_commonprefs()->set_draw(true);
-      prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_BRIDGE);
+      prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs::Mode::BRIDGE);
       //prefs->set_dynamicscale(true);
       //prefs->set_surfaceclamping(true);
       xaction.complete(&prefs);

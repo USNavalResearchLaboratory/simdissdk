@@ -423,12 +423,22 @@ void simExamples::addDefaultSkyNode(simVis::Viewer* viewer)
 void simExamples::addDefaultSkyNode(simVis::SceneManager* sceneMan)
 {
   // Only install simple sky if the osgEarth capabilities permit it
-  if (osgEarth::Registry::capabilities().getGLSLVersionInt() >= 330)
+  const auto& caps = osgEarth::Registry::capabilities();
+  if (caps.getGLSLVersionInt() >= 330)
   {
     osgEarth::Drivers::SimpleSky::SimpleSkyOptions skyOptions;
     skyOptions.atmosphericLighting() = false;
     skyOptions.ambient() = 0.5f;
     skyOptions.exposure() = 2.0f;
+
+    // Stars normally look good except on most newer Mesa drivers. They appear blocky
+    // and not rounded. This appears to be a driver bug, but can be worked around
+    // by forcing the star size to 1.5 when Mesa drivers are detected.
+    const auto& glVersionString = caps.getVersion();
+    const auto mesaPos = glVersionString.find("Mesa ");
+    if (mesaPos != std::string::npos)
+      skyOptions.starSize() = 1.5;
+
     sceneMan->setSkyNode(osgEarth::SkyNode::create(skyOptions));
   }
   else

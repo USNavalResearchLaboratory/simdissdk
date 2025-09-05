@@ -394,33 +394,33 @@ bool isImageFile(const std::string& location)
 osgEarth::UnitsType convertUnitsToOsgEarth(const simData::DistanceUnits& input)
 {
     return
-        input == simData::UNITS_CENTIMETERS    ? osgEarth::Units::CENTIMETERS :
-        input == simData::UNITS_DATAMILES      ? osgEarth::Units::DATA_MILES  :
-        input == simData::UNITS_FATHOMS        ? osgEarth::Units::FATHOMS :
-        input == simData::UNITS_FEET           ? osgEarth::Units::FEET :
-        input == simData::UNITS_INCHES         ? osgEarth::Units::INCHES :
-        input == simData::UNITS_KILOFEET       ? osgEarth::Units::KILOFEET :
-        input == simData::UNITS_KILOMETERS     ? osgEarth::Units::KILOMETERS :
-        input == simData::UNITS_KILOYARDS      ? osgEarth::Units::KILOYARDS :
-        input == simData::UNITS_METERS         ? osgEarth::Units::METERS :
-        input == simData::UNITS_MILES          ? osgEarth::Units::MILES :
-        input == simData::UNITS_MILLIMETERS    ? osgEarth::Units::MILLIMETERS :
-        input == simData::UNITS_NAUTICAL_MILES ? osgEarth::Units::NAUTICAL_MILES :
-        input == simData::UNITS_YARDS          ? osgEarth::Units::YARDS :
+        input == simData::DistanceUnits::UNITS_CENTIMETERS    ? osgEarth::Units::CENTIMETERS :
+        input == simData::DistanceUnits::UNITS_DATAMILES      ? osgEarth::Units::DATA_MILES  :
+        input == simData::DistanceUnits::UNITS_FATHOMS        ? osgEarth::Units::FATHOMS :
+        input == simData::DistanceUnits::UNITS_FEET           ? osgEarth::Units::FEET :
+        input == simData::DistanceUnits::UNITS_INCHES         ? osgEarth::Units::INCHES :
+        input == simData::DistanceUnits::UNITS_KILOFEET       ? osgEarth::Units::KILOFEET :
+        input == simData::DistanceUnits::UNITS_KILOMETERS     ? osgEarth::Units::KILOMETERS :
+        input == simData::DistanceUnits::UNITS_KILOYARDS      ? osgEarth::Units::KILOYARDS :
+        input == simData::DistanceUnits::UNITS_METERS         ? osgEarth::Units::METERS :
+        input == simData::DistanceUnits::UNITS_MILES          ? osgEarth::Units::MILES :
+        input == simData::DistanceUnits::UNITS_MILLIMETERS    ? osgEarth::Units::MILLIMETERS :
+        input == simData::DistanceUnits::UNITS_NAUTICAL_MILES ? osgEarth::Units::NAUTICAL_MILES :
+        input == simData::DistanceUnits::UNITS_YARDS          ? osgEarth::Units::YARDS :
         osgEarth::UnitsType(); // invalid
 }
 
 osgEarth::UnitsType convertUnitsToOsgEarth(const simData::SpeedUnits& input)
 {
     return
-        input == simData::UNITS_METERS_PER_SECOND     ? osgEarth::Units::METERS_PER_SECOND :
-        input == simData::UNITS_KILOMETERS_PER_HOUR   ? osgEarth::Units::KILOMETERS_PER_HOUR :
-        input == simData::UNITS_KNOTS                 ? osgEarth::Units::KNOTS :
-        input == simData::UNITS_MILES_PER_HOUR        ? osgEarth::Units::MILES_PER_HOUR :
-        input == simData::UNITS_FEET_PER_SECOND       ? osgEarth::Units::FEET_PER_SECOND :
-        input == simData::UNITS_KILOMETERS_PER_SECOND ? osgEarth::Units::KILOMETERS_PER_SECOND :
-        input == simData::UNITS_DATAMILES_PER_HOUR    ? osgEarth::Units::DATA_MILES_PER_HOUR :
-        input == simData::UNITS_YARDS_PER_SECOND      ? osgEarth::Units::YARDS_PER_SECOND :
+        input == simData::SpeedUnits::UNITS_METERS_PER_SECOND     ? osgEarth::Units::METERS_PER_SECOND :
+        input == simData::SpeedUnits::UNITS_KILOMETERS_PER_HOUR   ? osgEarth::Units::KILOMETERS_PER_HOUR :
+        input == simData::SpeedUnits::UNITS_KNOTS                 ? osgEarth::Units::KNOTS :
+        input == simData::SpeedUnits::UNITS_MILES_PER_HOUR        ? osgEarth::Units::MILES_PER_HOUR :
+        input == simData::SpeedUnits::UNITS_FEET_PER_SECOND       ? osgEarth::Units::FEET_PER_SECOND :
+        input == simData::SpeedUnits::UNITS_KILOMETERS_PER_SECOND ? osgEarth::Units::KILOMETERS_PER_SECOND :
+        input == simData::SpeedUnits::UNITS_DATAMILES_PER_HOUR    ? osgEarth::Units::DATA_MILES_PER_HOUR :
+        input == simData::SpeedUnits::UNITS_YARDS_PER_SECOND      ? osgEarth::Units::YARDS_PER_SECOND :
         osgEarth::UnitsType(); // invalid
 }
 
@@ -432,33 +432,33 @@ void iconAlignmentToOffsets(simData::TextAlignment align, const osg::Vec2f& icon
 
   switch (align)
   {
-  case simData::ALIGN_LEFT_TOP:
+  case simData::TextAlignment::ALIGN_LEFT_TOP:
     outOffsets.x() = width / 2.f;
     outOffsets.y() = -height / 2.f;
     break;
-  case simData::ALIGN_LEFT_CENTER:
+  case simData::TextAlignment::ALIGN_LEFT_CENTER:
     outOffsets.x() = width / 2.f;
     break;
-  case simData::ALIGN_LEFT_BOTTOM:
+  case simData::TextAlignment::ALIGN_LEFT_BOTTOM:
     outOffsets.x() = width / 2.f;
     outOffsets.y() = height / 2.f;
     break;
-  case simData::ALIGN_CENTER_TOP:
+  case simData::TextAlignment::ALIGN_CENTER_TOP:
     outOffsets.y() = -height / 2.f;
     break;
-  case simData::ALIGN_CENTER_CENTER:
+  case simData::TextAlignment::ALIGN_CENTER_CENTER:
     break;
-  case simData::ALIGN_CENTER_BOTTOM:
+  case simData::TextAlignment::ALIGN_CENTER_BOTTOM:
     outOffsets.y() = height / 2.f;
     break;
-  case simData::ALIGN_RIGHT_TOP:
+  case simData::TextAlignment::ALIGN_RIGHT_TOP:
     outOffsets.x() = -width / 2.f;
     outOffsets.y() = -height / 2.f;
     break;
-  case simData::ALIGN_RIGHT_CENTER:
+  case simData::TextAlignment::ALIGN_RIGHT_CENTER:
     outOffsets.x() = -width / 2.f;
     break;
-  case simData::ALIGN_RIGHT_BOTTOM:
+  case simData::TextAlignment::ALIGN_RIGHT_BOTTOM:
     outOffsets.x() = -width / 2.f;
     outOffsets.y() = height / 2.f;
     break;
@@ -469,11 +469,11 @@ float outlineThickness(simData::TextOutline outline)
 {
   switch (outline)
   {
-  case simData::TO_NONE:
+  case simData::TextOutline::TO_NONE:
     return 0;
-  case simData::TO_THIN:
+  case simData::TextOutline::TO_THIN:
     return .04f;
-  case simData::TO_THICK:
+  case simData::TextOutline::TO_THICK:
     return 0.14f;
   }
   return 0;
@@ -498,25 +498,25 @@ osgText::Text::BackdropType backdropType(simData::BackdropType type)
 {
   switch (type)
   {
-  case simData::BDT_SHADOW_BOTTOM_RIGHT:
+  case simData::BackdropType::BDT_SHADOW_BOTTOM_RIGHT:
     return osgText::Text::DROP_SHADOW_BOTTOM_RIGHT;
-  case simData::BDT_SHADOW_CENTER_RIGHT:
+  case simData::BackdropType::BDT_SHADOW_CENTER_RIGHT:
     return osgText::Text::DROP_SHADOW_CENTER_RIGHT;
-  case simData::BDT_SHADOW_TOP_RIGHT:
+  case simData::BackdropType::BDT_SHADOW_TOP_RIGHT:
     return osgText::Text::DROP_SHADOW_TOP_RIGHT;
-  case simData::BDT_SHADOW_BOTTOM_CENTER:
+  case simData::BackdropType::BDT_SHADOW_BOTTOM_CENTER:
     return osgText::Text::DROP_SHADOW_BOTTOM_CENTER;
-  case simData::BDT_SHADOW_TOP_CENTER:
+  case simData::BackdropType::BDT_SHADOW_TOP_CENTER:
     return osgText::Text::DROP_SHADOW_TOP_CENTER;
-  case simData::BDT_SHADOW_BOTTOM_LEFT:
+  case simData::BackdropType::BDT_SHADOW_BOTTOM_LEFT:
     return osgText::Text::DROP_SHADOW_BOTTOM_LEFT;
-  case simData::BDT_SHADOW_CENTER_LEFT:
+  case simData::BackdropType::BDT_SHADOW_CENTER_LEFT:
     return osgText::Text::DROP_SHADOW_CENTER_LEFT;
-  case simData::BDT_SHADOW_TOP_LEFT:
+  case simData::BackdropType::BDT_SHADOW_TOP_LEFT:
     return osgText::Text::DROP_SHADOW_TOP_LEFT;
-  case simData::BDT_OUTLINE:
+  case simData::BackdropType::BDT_OUTLINE:
     return osgText::Text::OUTLINE;
-  case simData::BDT_NONE:
+  case simData::BackdropType::BDT_NONE:
     return osgText::Text::NONE;
   }
 
@@ -528,15 +528,15 @@ osgText::Text::BackdropImplementation backdropImplementation(simData::BackdropIm
 {
   switch (implementation)
   {
-  case simData::BDI_POLYGON_OFFSET:
+  case simData::BackdropImplementation::BDI_POLYGON_OFFSET:
     return osgText::Text::POLYGON_OFFSET;
-  case simData::BDI_NO_DEPTH_BUFFER:
+  case simData::BackdropImplementation::BDI_NO_DEPTH_BUFFER:
     return osgText::Text::NO_DEPTH_BUFFER;
-  case simData::BDI_DEPTH_RANGE:
+  case simData::BackdropImplementation::BDI_DEPTH_RANGE:
     return osgText::Text::DEPTH_RANGE;
-  case simData::BDI_STENCIL_BUFFER:
+  case simData::BackdropImplementation::BDI_STENCIL_BUFFER:
     return osgText::Text::STENCIL_BUFFER;
-  case simData::BDI_DELAYED_DEPTH_WRITES:
+  case simData::BackdropImplementation::BDI_DELAYED_DEPTH_WRITES:
     return osgText::Text::DELAYED_DEPTH_WRITES;
   }
 

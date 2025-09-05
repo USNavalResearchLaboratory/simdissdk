@@ -236,6 +236,13 @@ void CategoryNameManager::allCategoryNames(std::vector<std::string> &nameVec) co
   }
 }
 
+std::vector<std::string> CategoryNameManager::allCategoryNames() const
+{
+  std::vector<std::string> rv;
+  allCategoryNames(rv);
+  return rv;
+}
+
 void CategoryNameManager::allCategoryNameInts(std::vector<int> &nameIntVec) const
 {
   // for each entry in the category string ints
@@ -244,6 +251,13 @@ void CategoryNameManager::allCategoryNameInts(std::vector<int> &nameIntVec) cons
     // add the name id
     nameIntVec.push_back(i->first);
   }
+}
+
+std::vector<int> CategoryNameManager::allCategoryNameInts() const
+{
+  std::vector<int> rv;
+  allCategoryNameInts(rv);
+  return rv;
 }
 
 // retrieve all the values in a given category
@@ -264,6 +278,21 @@ void CategoryNameManager::allValuesInCategory(int categoryInt, std::vector<std::
   }
 }
 
+std::vector<std::string> CategoryNameManager::allValuesInCategory(int categoryInt) const
+{
+  std::vector<std::string> rv;
+  allValuesInCategory(categoryInt, rv);
+  return rv;
+}
+
+std::vector<std::string> CategoryNameManager::allValuesInCategory(const std::string& category) const
+{
+  const int nameInt = nameToInt(category);
+  if (nameInt == NO_CATEGORY_NAME)
+    return {};
+  return allValuesInCategory(nameInt);
+}
+
 void CategoryNameManager::allValueIntsInCategory(int categoryInt, std::vector<int> &categoryValueIntVec) const
 {
   // find category in the category string ints
@@ -277,6 +306,13 @@ void CategoryNameManager::allValueIntsInCategory(int categoryInt, std::vector<in
       categoryValueIntVec.push_back(*j);
     }
   }
+}
+
+std::vector<int> CategoryNameManager::allValueIntsInCategory(int categoryInt) const
+{
+  std::vector<int> rv;
+  allValueIntsInCategory(categoryInt, rv);
+  return rv;
 }
 
 void CategoryNameManager::addListener(CategoryNameManager::ListenerPtr callback)

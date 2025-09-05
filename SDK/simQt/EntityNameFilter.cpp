@@ -20,8 +20,12 @@
  * disclose, or release this software.
  *
  */
+#if QT_VERSION_MAJOR == 5
 #include <QRegExp>
-#include <QSignalBlocker>
+#else
+#include <QRegularExpression>
+#endif
+#include "simNotify/Notify.h"
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/EntityFilterLineEdit.h"
 #include "simQt/RegExpImpl.h"
@@ -31,6 +35,36 @@ namespace simQt {
 
 // key for the regular expression stored in settings
 static const QString REGEXP_SETTING = "RegExp";
+static const QString REGULAR_EXPRESSION_PATTERN_SETTING = "RegularExpressionPattern";
+static const QString REGULAR_EXPRESSION_SENSITIVITY_SETTING = "RegularExpressionSensitivity";
+static const QString REGULAR_EXPRESSION_SYNTAX_SETTING = "RegularExpressionSyntax";
+
+#if QT_VERSION_MAJOR == 5
+RegExpImpl::PatternSyntax simQtPatternSyntax(QRegExp::PatternSyntax qtPatternSyntax)
+{
+  switch (qtPatternSyntax)
+  {
+  case QRegExp::RegExp2:
+    SIM_WARN << "Pattern syntax \"RegExp2\" unsupported for simQt::RegExpImpl.  Defaulting to \"RegExp\"";
+    return RegExpImpl::RegExp;
+  case QRegExp::W3CXmlSchema11:
+    SIM_WARN << "Pattern syntax \"W3CXmlSchema11\" unsupported for simQt::RegExpImpl.  Defaulting to \"RegExp\"";
+    return RegExpImpl::RegExp;
+  case QRegExp::RegExp:
+    return RegExpImpl::RegExp;
+  case QRegExp::WildcardUnix:
+    SIM_WARN << "Pattern syntax \"WildcardUnix\" unsupported for simQt::RegExpImpl.  Defaulting to \"Wildcard\"";
+    return RegExpImpl::Wildcard;
+  case QRegExp::Wildcard:
+    return RegExpImpl::Wildcard;
+  case QRegExp::FixedString:
+    return RegExpImpl::FixedString;
+  }
+
+  // To satisfy warnings.  Should never be reached
+  return RegExpImpl::RegExp;
+}
+#endif
 
 //----------------------------------------------------------------------------------------------------
 
@@ -40,12 +74,6 @@ EntityNameFilter::EntityNameFilter(AbstractEntityTreeModel* model)
     regExp_(new RegExpImpl("")),
     widget_(nullptr)
 {
-}
-
-EntityNameFilter::~EntityNameFilter()
-{
-  delete regExp_;
-  regExp_ = nullptr;
 }
 
 bool EntityNameFilter::acceptEntity(simData::ObjectId id) const
@@ -66,24 +94,42 @@ QWidget* EntityNameFilter::widget(QWidget* newWidgetParent) const
 
 void EntityNameFilter::getFilterSettings(QMap<QString, QVariant>& settings) const
 {
-  // Store regex as a QRegExp
-  settings.insert(REGEXP_SETTING, QRegExp(QString::fromStdString(regExp_->pattern()),
-    RegExpImpl::qtCaseSensitivity(regExp_->caseSensitivity()), RegExpImpl::qtPatternSyntax(regExp_->patternSyntax())));
+  settings.insert(REGULAR_EXPRESSION_PATTERN_SETTING, QString::fromStdString(regExp_->pattern()));
+  settings.insert(REGULAR_EXPRESSION_SENSITIVITY_SETTING, regExp_->caseSensitivity());
+  settings.insert(REGULAR_EXPRESSION_SYNTAX_SETTING, regExp_->patternSyntax());
 }
 
 void EntityNameFilter::setFilterSettings(const QMap<QString, QVariant>& settings)
 {
-  QMap<QString, QVariant>::const_iterator it = settings.find(REGEXP_SETTING);
-  if (it != settings.end())
+#if QT_VERSION_MAJOR == 5
+  // Qt5 supports filter settings in QRegExp, which Qt6 removes in favor of QRegularExpression.
+  // QRegularExpression does not include enough information to rebuild, so this section is now
+  // legacy only for reading old Qt5 values now. Modern application uses three settings instead.
+  const auto regexpIter = settings.find(REGEXP_SETTING);
+  if (regexpIter != settings.end())
   {
-    const auto& regExp = it.value().toRegExp();
-    if (QString::fromStdString(regExp_->pattern()) != regExp.pattern() ||
-      regExp_->patternSyntax() != RegExpImpl::simQtPatternSyntax(regExp.patternSyntax()) ||
-      regExp_->caseSensitivity() != RegExpImpl::simQtCaseSensitivity(regExp.caseSensitivity()))
-    {
-      setRegExp(regExp);
-    }
+    const auto& regExp = regexpIter.value().toRegExp();
+    setRegExp(regExp.pattern(), regExp.caseSensitivity(), simQtPatternSyntax(regExp.patternSyntax()));
+    return;
   }
+#endif
+
+  QString pattern;
+  auto it = settings.find(REGULAR_EXPRESSION_PATTERN_SETTING);
+  if (it != settings.end())
+    pattern = it.value().toString();
+
+  Qt::CaseSensitivity sensitivity = Qt::CaseInsensitive;
+  it = settings.find(REGULAR_EXPRESSION_SENSITIVITY_SETTING);
+  if (it != settings.end())
+    sensitivity = static_cast<Qt::CaseSensitivity>(it.value().toInt());
+
+  RegExpImpl::PatternSyntax syntax = RegExpImpl::RegExp;
+  it = settings.find(REGULAR_EXPRESSION_SYNTAX_SETTING);
+  if (it != settings.end())
+    syntax = static_cast<RegExpImpl::PatternSyntax>(it.value().toInt());
+
+  setRegExp(pattern, sensitivity, syntax);
 }
 
 void EntityNameFilter::bindToWidget(EntityFilterLineEdit* widget)
@@ -93,10 +139,8 @@ void EntityNameFilter::bindToWidget(EntityFilterLineEdit* widget)
     return;
 
   // sync the widget to the current regExp
-  const QSignalBlocker block(*widget_);
-  widget_->configure(QString::fromStdString(regExp_->pattern()), static_cast<Qt::CaseSensitivity>(regExp_->caseSensitivity()), static_cast<QRegExp::PatternSyntax>(regExp_->patternSyntax()));
-
-  connect(widget_, SIGNAL(changed(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)), this, SLOT(setRegExpAttributes_(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)));
+  widget_->configure(QString::fromStdString(regExp_->pattern()), static_cast<Qt::CaseSensitivity>(regExp_->caseSensitivity()), regExp_->patternSyntax());
+  connect(widget_, &EntityFilterLineEdit::changed, this, &EntityNameFilter::setRegExpAttributes_);
 }
 
 void EntityNameFilter::setModel(AbstractEntityTreeModel* model)
@@ -104,45 +148,45 @@ void EntityNameFilter::setModel(AbstractEntityTreeModel* model)
   model_ = model;
 }
 
-void EntityNameFilter::setRegExp(const QRegExp& regExp)
+void EntityNameFilter::setRegExp(const QString& expression, Qt::CaseSensitivity sensitivity, RegExpImpl::PatternSyntax pattern)
 {
   // Update the GUI if it's valid
   if (widget_ != nullptr)
-  {
-    const QSignalBlocker block(*widget_);
-    widget_->configure(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
-  }
+    widget_->configure(expression, sensitivity, pattern);
 
-  setRegExpAttributes_(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
+  setRegExpAttributes_(expression, sensitivity, pattern);
 }
 
-QRegExp EntityNameFilter::regExp() const
+std::tuple<QString, Qt::CaseSensitivity, RegExpImpl::PatternSyntax> EntityNameFilter::regExp() const
 {
   QString pattern = QString::fromStdString(regExp_->pattern());
   Qt::CaseSensitivity caseSensitivity = regExp_->caseSensitivity() == simQt::RegExpImpl::CaseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive;
-  QRegExp::PatternSyntax patternSyntax = RegExpImpl::qtPatternSyntax(regExp_->patternSyntax());
 
-  return QRegExp(pattern, caseSensitivity, patternSyntax);
+  return { pattern, caseSensitivity, regExp_->patternSyntax() };
 }
 
-void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression)
+void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity caseSensitive, RegExpImpl::PatternSyntax patternSyntax)
 {
   bool changed = false;
+
   if (regExp_->pattern() != filter.toStdString())
   {
     regExp_->setPattern(filter.toStdString());
     changed = true;
   }
+
   if (regExp_->caseSensitivity() != RegExpImpl::simQtCaseSensitivity(caseSensitive))
   {
     regExp_->setCaseSensitivity(RegExpImpl::simQtCaseSensitivity(caseSensitive));
     changed = true;
   }
-  if (regExp_->patternSyntax() != RegExpImpl::simQtPatternSyntax(expression))
+
+  if (regExp_->patternSyntax() != patternSyntax)
   {
-    regExp_->setPatternSyntax(RegExpImpl::simQtPatternSyntax(expression));
+    regExp_->setPatternSyntax(patternSyntax);
     changed = true;
   }
+
   if (changed)
     Q_EMIT filterUpdated();
 }
@@ -151,16 +195,18 @@ bool EntityNameFilter::acceptIndex_(const QModelIndex& index) const
 {
   // Should only pass in a valid index
   const QAbstractItemModel* model = index.model();
-  assert(model != nullptr);
+
   // Make sure pointers are valid
   if ((model == nullptr) || (regExp_ == nullptr))
+  {
+    assert(false);
     return false;
+  }
 
   // Check if this index passes the filter, return true if it does
   const QString name = model->data(index).toString();
-  bool rv = regExp_->match(name.toStdString());
-  if (rv)
-    return rv;
+  if (regExp_->match(name.toStdString()))
+    return true;
 
   // Index didn't pass, check its children
   int numChildren = model->rowCount(index);
@@ -169,11 +215,11 @@ bool EntityNameFilter::acceptIndex_(const QModelIndex& index) const
     const QModelIndex& childIdx = model->index(i, 0, index);
     // Check if this child index (or any of its children)
     // passes the filter, return true if any of them pass
-    rv = acceptIndex_(childIdx);
-    if (rv)
-      break;
+    if (acceptIndex_(childIdx))
+      return true;
   }
-  return rv;
+
+  return false;
 }
 
 }

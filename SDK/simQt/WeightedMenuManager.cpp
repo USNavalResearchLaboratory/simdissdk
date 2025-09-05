@@ -24,6 +24,7 @@
 #include <cassert>
 #include <QMenu>
 #include <QMenuBar>
+#include <QRegularExpression>
 #include <QToolBar>
 #include <QToolButton>
 #include <QHBoxLayout>
@@ -127,7 +128,7 @@ QMenu* WeightedMenuManager::findMenu_(QWidget* parent, const QString& title) con
     if (debugMenuWeights_)
     {
       // There might be digits prepended here; remove them
-      menuTitle = menuTitle.right(menuTitle.length() - menuTitle.indexOf(QRegExp("[A-Za-z]")));
+      menuTitle = menuTitle.right(menuTitle.length() - menuTitle.indexOf(QRegularExpression("[A-Za-z]")));
     }
 
     // Return the menu if it matches

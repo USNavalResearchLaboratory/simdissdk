@@ -67,7 +67,7 @@ class NullToast : public Toast
 {
 public:
   /// Show toast text for the given duration
-  virtual void showText(const QString& text, Duration duration=DURATION_SHORT) {}
+  virtual void showText(const QString& text, Duration duration=DURATION_SHORT) override {}
 };
 
 ///////////////////////////////////////////////////////////////
@@ -82,7 +82,7 @@ public:
   virtual ~ToastOnWidget();
 
   /** Shows the text in a small popup */
-  virtual void showText(const QString& text, Duration duration = DURATION_SHORT);
+  virtual void showText(const QString& text, Duration duration = DURATION_SHORT) override;
 
 private Q_SLOTS:
   /** "Soft" hide of the toast window; If the mouse is over the label, then we will hide when mouse leaves it */
@@ -108,10 +108,14 @@ public:
   bool isMouseInside() const;
 
 protected:
-  virtual void mousePressEvent(QMouseEvent* evt);
-  virtual void mouseReleaseEvent(QMouseEvent* evt);
-  virtual void enterEvent(QEvent* evt);
-  virtual void leaveEvent(QEvent* evt);
+  virtual void mousePressEvent(QMouseEvent* evt) override;
+  virtual void mouseReleaseEvent(QMouseEvent* evt) override;
+#if QT_VERSION_MAJOR == 6
+  virtual void enterEvent(QEnterEvent* evt) override;
+#else
+  virtual void enterEvent(QEvent* evt) override;
+#endif
+  virtual void leaveEvent(QEvent* evt) override;
 
 Q_SIGNALS:
   /** Mouse pressed down */

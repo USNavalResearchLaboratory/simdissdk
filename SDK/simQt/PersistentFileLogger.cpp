@@ -31,7 +31,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QCoreApplication>
-#include <QRegExp>
+#include <QRegularExpression>
 #include "simNotify/Notify.h"
 #include "simQt/FileUtilities.h"
 #include "simQt/PersistentFileLogger.h"
@@ -52,7 +52,7 @@ static const QString WILDCARD_PATTERN = "%1_*-*-*_*-*-*_*%2*";
 /** Illegal filename characters */
 static const QString ILLEGAL_FILENAME_CHARS = "\\/:*?\"<>|";
 /** Regex matcher for illegal filename characters */
-static const QRegExp ILLEGAL_REGEXP(QString("[%1]").arg(QRegExp::escape(ILLEGAL_FILENAME_CHARS)));
+static const QRegularExpression ILLEGAL_REGEXP(QString("[%1]").arg(QRegularExpression::escape(ILLEGAL_FILENAME_CHARS)));
 
 PersistentFileLogger::PersistentFileLogger(const QString& prefix, QObject* parent)
   : QObject(parent),

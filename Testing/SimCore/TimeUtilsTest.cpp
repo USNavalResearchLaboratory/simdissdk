@@ -23,6 +23,8 @@
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Time/Constants.h"
+#include "simCore/Time/String.h"
+#include "simCore/Time/TimeClass.h"
 #include "simCore/Time/Utils.h"
 
 namespace {
@@ -287,6 +289,44 @@ int leapDaysTest()
   rv += SDK_ASSERT(simCore::leapDays(119) == 29);
   return rv;
 }
+
+int nearestGoToTest()
+{
+  // Constructs a simCore::TimeStamp using a given day and hour
+  auto ts = [](int day, int hour)
+    {
+      return simCore::TimeStamp(2025, day * simCore::SECPERDAY + hour * simCore::SECPERHOUR);
+    };
+
+  simCore::TimeStamp startTime = ts(1, 18);
+  simCore::TimeStamp endTime = ts(4, 6);
+
+  int rv = 0;
+
+  // Simple same day examples
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(1, 20), startTime, endTime, { 22 }) == ts(1, 22));
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(2, 6), startTime, endTime, { 8 }) == ts(2, 8));
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(2, 20), startTime, endTime, { 12 }) == ts(2, 12));
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(4, 4), startTime, endTime, { 2 }) == ts(4, 2));
+  // Next day is closest
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(1, 20), startTime, endTime, { 3 }) == ts(2, 3));
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(3, 23), startTime, endTime, { 2 }) == ts(4, 2));
+  // Previous day is closest
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(2, 6), startTime, endTime, { 20 }) == ts(1, 20));
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(4, 4), startTime, endTime, { 10 }) == ts(3, 10));
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(4, 4), startTime, endTime, { 18 }) == ts(3, 18));
+  // Tie on nearest prefers same day
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(2, 12), startTime, endTime, { 0 }) == ts(2, 0));
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(2, 13), startTime, endTime, { 1 }) == ts(2, 1));
+  rv += SDK_ASSERT(simCore::getNearestGoToTime(ts(2, 11), startTime, endTime, { 23 }) == ts(2, 23));
+
+  // Test fully out of bounds
+  endTime = ts(1, 22);
+  rv += SDK_ASSERT(!simCore::getNearestGoToTime(ts(1, 20), startTime, endTime, { 8 }).has_value());
+
+  return rv;
+}
+
 }
 
 int TimeUtilsTest(int argc, char *argv[])
@@ -299,6 +339,7 @@ int TimeUtilsTest(int argc, char *argv[])
   rv += SDK_ASSERT(getLeapDayTest() == 0);
   rv += SDK_ASSERT(getWeekDayTest() == 0);
   rv += SDK_ASSERT(leapDaysTest() == 0);
+  rv += SDK_ASSERT(nearestGoToTest() == 0);
 
   return rv;
 }

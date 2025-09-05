@@ -1,16 +1,4 @@
-if(NOT Protobuf_FOUND)
-    # CONFIG mode needs 22+ to work well with protobuf_generate
-    find_package(Protobuf 5.22 CONFIG QUIET)
-    if(NOT Protobuf_FOUND)
-        find_package(Protobuf QUIET)
-    endif()
-endif()
 find_package(EnTT CONFIG QUIET)
-
-if(NOT TARGET protobuf::libprotobuf)
-    message(STATUS "Skipping simData because of missing PROTOBUF dependencies.")
-    return()
-endif()
 
 # Variables used in the simDataConfig.cmake generation
 set(SIMDATA_HAVE_ENTT OFF)
@@ -20,6 +8,7 @@ set(SIMDATA_HAVE_ENTT OFF)
 set(DATA_INC)
 set(DATA_SRC)
 set(DATA_HEADERS
+    ${DATA_INC}CommonPreferences.h
     ${DATA_INC}DataEntry.h
     ${DATA_INC}DataLimiter.h
     ${DATA_INC}DataSlice.h
@@ -33,7 +22,9 @@ set(DATA_HEADERS
     ${DATA_INC}DataTypeReflection.h
     ${DATA_INC}DataTypes.h
     ${DATA_INC}DataTypeUpdates.h
+    ${DATA_INC}EntityCommands.h
     ${DATA_INC}EntityNameCache.h
+    ${DATA_INC}EntityPreferences.h
     ${DATA_INC}EnumerationText.h
     ${DATA_INC}GenericIterator.h
     ${DATA_INC}Interpolator.h
@@ -46,6 +37,7 @@ set(DATA_HEADERS
     ${DATA_INC}MemoryGenericDataSlice.h
     ${DATA_INC}NearestNeighborInterpolator.h
     ${DATA_INC}ObjectId.h
+    ${DATA_INC}Preferences.h
     ${DATA_INC}PrefRulesManager.h
     ${DATA_INC}TableCellTranslator.h
     ${DATA_INC}TableStatus.h
@@ -54,6 +46,7 @@ set(DATA_HEADERS
 
 set(DATA_SOURCES
     ${DATA_SRC}BeamMemoryCommandSlice.cpp
+    ${DATA_INC}CommonPreferences.cpp
     ${DATA_SRC}DataStore.cpp
     ${DATA_SRC}DataStoreHelpers.cpp
     ${DATA_SRC}DataStoreProxy.cpp
@@ -61,7 +54,9 @@ set(DATA_SOURCES
     ${DATA_SRC}DataTypeProperties.cpp
     ${DATA_SRC}DataTypeReflection.cpp
     ${DATA_SRC}DataTypes.cpp
+    ${DATA_SRC}EntityCommands.cpp
     ${DATA_SRC}EntityNameCache.cpp
+    ${DATA_SRC}EntityPreferences.cpp
     ${DATA_SRC}EnumerationText.cpp
     ${DATA_SRC}GateMemoryCommandSlice.cpp
     ${DATA_SRC}LinearInterpolator.cpp
@@ -104,67 +99,19 @@ set(MEMORYTABLE_SOURCES
     ${DATA_SRC}MemoryTable/DataColumn.cpp
 )
 
-set(MESSAGEVISITOR_HEADERS
-    ${DATA_INC}MessageVisitor/Message.h
-    ${DATA_INC}MessageVisitor/MessageVisitor.h
-    ${DATA_INC}MessageVisitor/protobuf.h
-)
-
-set(MESSAGEVISITOR_SOURCES
-    ${DATA_SRC}MessageVisitor/Message.cpp
-    ${DATA_SRC}MessageVisitor/MessageVisitor.cpp
-)
-
-set(DATA_GENERATED_HEADERS
-    ${CMAKE_CURRENT_BINARY_DIR}/simData.pb.h
-    ${DATA_INC}GeneratedCode/simData.proto
-)
-
-set(DATA_GENERATED_SOURCES
-    ${CMAKE_CURRENT_BINARY_DIR}/simData.pb.cc
-)
-
 source_group(Headers FILES ${DATA_HEADERS})
 source_group("Source Files" FILES ${DATA_SOURCES})
 source_group(Headers\\MemoryTable FILES ${MEMORYTABLE_HEADERS})
 source_group("Source Files\\MemoryTable" FILES ${MEMORYTABLE_SOURCES})
 source_group(Headers\\CategoryData FILES ${CATEGORY_DATA_HEADERS})
 source_group("Source Files\\CategoryData" FILES ${CATEGORY_DATA_SOURCES})
-source_group(Headers\\MessageVisitor FILES ${MESSAGEVISITOR_HEADERS})
-source_group("Source Files\\MessageVisitor" FILES ${MESSAGEVISITOR_SOURCES})
-source_group(Headers\\GeneratedCode
-    FILES
-        ${DATA_GENERATED_HEADERS}
-        ${DATA_GENERATED_SOURCES}
-)
 
 # ----------------------------------------------------------------------
 
 set(DATA_PROJECT_FILES
-    ${DATA_HEADERS} ${DATA_SOURCES} ${DATA_GENERATED_HEADERS}
-    ${MEMORYTABLE_HEADERS} ${MEMORYTABLE_SOURCES} ${CATEGORY_DATA_HEADERS} ${CATEGORY_DATA_SOURCES} ${MESSAGEVISITOR_HEADERS} ${MESSAGEVISITOR_SOURCES}
+    ${DATA_HEADERS} ${DATA_SOURCES}
+    ${MEMORYTABLE_HEADERS} ${MEMORYTABLE_SOURCES} ${CATEGORY_DATA_HEADERS} ${CATEGORY_DATA_SOURCES}
 )
-
-# Fix the library for static or shared (simDataProto). Default to shared if not defined,
-# because protobuf libraries can have problems on Windows when linked statically (SIM-18053).
-set(STATIC_OR_SHARED STATIC)
-if(SIMDATAPROTO_SHARED OR NOT DEFINED SIMDATAPROTO_SHARED)
-    set(STATIC_OR_SHARED SHARED)
-endif()
-
-include(AddProtoLibrary)
-add_proto_library(simDataProto ${STATIC_OR_SHARED}
-    simData
-    NO_HEADER
-    APPEND_PATH
-    PROTO_DIR GeneratedCode
-    EXPORT_MACRO SIMDATAPROTO_EXPORT
-)
-set_target_properties(simDataProto PROPERTIES
-    FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "simData Protobuf Library"
-)
-ApplySDKVersion(simDataProto)
 
 # Fix the library for static or shared (simData)
 set(STATIC_OR_SHARED STATIC)
@@ -185,7 +132,7 @@ target_include_directories(simData PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(simData PUBLIC protobuf::libprotobuf simCore simNotify simDataProto)
+target_link_libraries(simData PUBLIC simCore simNotify)
 if(SIMDATA_SHARED)
     target_compile_definitions(simData PRIVATE simData_LIB_EXPORT_SHARED)
 else()
@@ -203,7 +150,6 @@ if(WIN32)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    vsi_install_export(simDataProto ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
     # Configure the simDataConfig.cmake file; its dependencies are dynamic
     configure_file(simDataConfig.cmake.in simDataConfig.cmake @ONLY)
     vsi_install_export(simData ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
@@ -233,13 +179,6 @@ if(INSTALL_HEADERS)
         FILES
             ${CATEGORY_DATA_HEADERS}
         DESTINATION include/simData/CategoryData
-    )
-
-    # Headers for protobuf processing
-    install(
-        FILES
-            ${MESSAGEVISITOR_HEADERS}
-        DESTINATION include/simData/MessageVisitor
     )
 
     # Headers for generated files

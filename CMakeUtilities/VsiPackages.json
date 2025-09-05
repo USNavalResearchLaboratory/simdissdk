@@ -39,24 +39,10 @@
     {
       "name": "OSGQOPENGL",
       "dir": "osgQOpenGL",
-      "version": "4.0.0",
+      "version": "4.0.0-qt5",
       "depend": [
         "OSG",
         "QT5"
-      ]
-    },
-    {
-      "name": "PROTOBUF",
-      "dir": "protobuf",
-      "version": [
-          "29.3",
-          "3.21.12"
-      ],
-      "cmake_vars": [
-        {
-          "name": "Protobuf_USE_STATIC_LIBS",
-          "value": "TRUE"
-        }
       ]
     },
     {
@@ -71,7 +57,7 @@
     {
       "name": "SWIG",
       "version": [
-        "4.3.0",
+        "4.3.1",
         "4.2.1"
       ]
     },

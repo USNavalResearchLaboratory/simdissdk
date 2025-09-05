@@ -46,6 +46,7 @@ namespace simVis {
 namespace simQt {
 
 class EntityTreeComposite;
+class Settings;
 
 /**
   * A helper class to center the given entity in the current view port.
@@ -84,10 +85,19 @@ public Q_SLOTS:
    * @param force Center on an invalid entity with the expectation it will soon become valid
    */
   void centerOnEntity(uint64_t id, bool force = false);
+  /**
+   * Center the current view port on the given entity Unique ID, and zoom in
+   * @param id The entity to center on
+   * @param force Center on an invalid entity with the expectation it will soon become valid
+   */
+  void centerAndZoom(uint64_t id, bool force = false);
   /** Center the current view port on the given list of entity unique IDs */
   void centerOnSelection(const QList<uint64_t>& ids);
 
 private:
+  /** Implementation for centerOnEntity( )and centerAndZoom() */
+  void centerAndZoom_(uint64_t id, bool zoomIn, bool force);
+
   osg::observer_ptr<simVis::FocusManager> focusManager_;
   osg::observer_ptr<simVis::ScenarioManager> scenarioManager_;
   osg::observer_ptr<simVis::CentroidManager> centroidManager_;
@@ -110,6 +120,9 @@ public:
    * @param centerOnDoubleClick If true, enables centering on an entity by double clicking it
    */
   void bind(bool centerOnDoubleClick);
+
+  /** Changes whether to use center-on-entity, or center-and-zoom on entity */
+  void setZoomOnCenter(bool zoomOnCenter);
 
 public Q_SLOTS:
   /** The format for displaying the time in the right click mouse menu */
@@ -173,14 +186,30 @@ private:
   /** Returns true if the given id is a target beam */
   bool isTargetBeam_(uint64_t id) const;
 
+  /** Helper function during center-on-entity and center-and-zoom to set bound clock time to newTime_ */
+  void setBoundClockToNewTime_();
+
   CenterEntity& centerEntity_;
   EntityTreeComposite& tree_;
   simData::DataStore& dataStore_;
   std::unique_ptr<simCore::TimeFormatterRegistry> timeFormatter_;
-  simCore::TimeFormat timeFormat_;
-  unsigned short precision_;
-  double newTime_;  ///< If not INVALID_TIME, it represents the time (seconds since reference year) needed to make the entity valid for a view center
+  simCore::TimeFormat timeFormat_ = simCore::TIMEFORMAT_ORDINAL;
+  unsigned short precision_ = 3;
+  double newTime_ = -1.0;  ///< If not INVALID_TIME (-1), it represents the time (seconds since reference year) needed to make the entity valid for a view center
+  bool zoomOnCenter_ = true;
 };
+
+/**
+ * Helper function to create a simQt::BoundBooleanValue for the zoom-on-center feature
+ * of the BindCenterEntityToEntityTreeComposite, using the value name provided. The
+ * lifespan of the bound settings value is tied to the binder.
+ * @param settings Settings container for creating the boolean value
+ * @param variableName Name of the settings string for variable, e.g. "Main Window/Zoom on Center".
+ *    If this does not exist, it is created as per BoundSettings.
+ * @param binder Binder to associate the value to. Changes to settings value will reflect in the binder.
+ */
+SDKQT_EXPORT
+void bindCenterZoomSetting(simQt::Settings& settings, const QString& variableName, simQt::BindCenterEntityToEntityTreeComposite& binder);
 
 }
 

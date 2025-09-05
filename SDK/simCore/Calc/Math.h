@@ -252,29 +252,6 @@ namespace simCore
   }
 
   /**
-  * Magnitude or length of a vector
-  * @param[in ] u vector to consider
-  * @return length (Euclidean norm or magnitude) of the vector
-  */
-  SDK_DEPRECATE(double v3Length(const Vec3& u), "Use Vec3.length() instead.");
-  inline double v3Length(const Vec3 &u)
-  {
-    return u.length();
-  }
-
-  /**
-  * Scale a vector; v  =  s * u
-  * @param[in ] s scale factor (scalar)
-  * @param[in ] u starting vector
-  * @param[out] v output
-  */
-  SDK_DEPRECATE(void v3Scale(double s, const Vec3& u, Vec3& v), "Use Vec3.operator*() instead.");
-  inline void v3Scale(double s, const Vec3 &u, Vec3 &v)
-  {
-    v = u * s;
-  }
-
-  /**
   * Turns u into a unit vector, and returns original | u |
   * Converts 3 element double vector u into a unit vector
   * @param[in,out] u vector to be set to unit length
@@ -286,76 +263,6 @@ namespace simCore
     if (t > 0.)
       u /= t;
     return t;
-  }
-
-  /**
-  * Returns the normal of vector u
-  * @param[ in] u Vector to determine normal of (3 element double vector)
-  * @param[out] v output vector to contain normal of u
-  * @param[in ] t Comparison tolerance for a zero value
-  */
-  SDK_DEPRECATE(void v3Norm(const Vec3& u, Vec3& v, double t = 1.0e-9), "Use Vec3.normalize() instead.");
-  inline void v3Norm(const Vec3 &u, Vec3 &v, double t)
-  {
-    v = u.normalize(t);
-  }
-
-  /**
-  * Add two vectors; w = u + v
-  * @param[in ] u first vector
-  * @param[in ] v second vector
-  * @param[out] w output
-  */
-  SDK_DEPRECATE(void v3Add(const Vec3& u, const Vec3& v, Vec3& w), "Use Vec3.operator+() instead.");
-  inline void v3Add(const Vec3 &u, const Vec3 &v, Vec3 &w)
-  {
-    w = u + v;
-  }
-
-  /**
-  * Subtract two vectors; w = u - v
-  * @param[in ] u left side of subtraction
-  * @param[in ] v subtracted from u
-  * @param[out] w output
-  */
-  SDK_DEPRECATE(void v3Subtract(const Vec3& u, const Vec3& v, Vec3& w), "Use Vec3.operator-() instead.");
-  inline void v3Subtract(const Vec3 &u, const Vec3 &v, Vec3 &w)
-  {
-    w = u - v;
-  }
-
-  /**
-  * Dot product of two vectors
-  * @param[in ] u first vector
-  * @param[in ] v second vector
-  */
-  SDK_DEPRECATE(double v3Dot(const Vec3& u, const Vec3& v), "Use Vec3.dot() instead.");
-  inline double v3Dot(const Vec3 &u, const Vec3 &v)
-  {
-    return u.dot(v);
-  }
-
-  /**
-  * Cross product of two vectors; w = u cross v
-  * @param[in ] u first vector
-  * @param[in ] v second vector
-  * @param[out] w output
-  */
-  SDK_DEPRECATE(void v3Cross(const Vec3& u, const Vec3& v, Vec3& w), "Use Vec3.cross() instead.");
-  inline void v3Cross(const Vec3 &u, const Vec3 &v, Vec3& w)
-  {
-    w = u.cross(v);
-  }
-
-  /**
-  * Negate a vector
-  * @param[in ] u input vector
-  * @param[out] w output
-  */
-  SDK_DEPRECATE(void v3Negate(const Vec3& u, Vec3& w), "Use Vec3.operator-() instead.");
-  inline void v3Negate(const Vec3 &u, Vec3& w)
-  {
-    w = -u;
   }
 
   /**

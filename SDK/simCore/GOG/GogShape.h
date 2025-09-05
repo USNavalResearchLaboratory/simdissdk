@@ -386,6 +386,9 @@ public:
 
   virtual ShapeType shapeType() const;
 
+  /// Returns true if the shape is relative
+  virtual bool canRotate() const override;
+
   /// Get the positions of points in the shape; in lla radians if absolute or xyz meters if relative
   const std::vector<simCore::Vec3>& points() const;
   /// Add a point position; in lla radians if absolute or xyz meters if relative
@@ -481,7 +484,7 @@ private:
 class SDKCORE_EXPORT PointBasedShape : public FillableShape
 {
 public:
-  /// Returns true if the shape is relative; but Annotation will override and always return false
+  /// Returns true if the shape is relative
   virtual bool canRotate() const override;
 
   /// Get the positions of points in the shape; in lla radians if absolute or xyz meters if relative

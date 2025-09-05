@@ -22,6 +22,9 @@
 
 %include "simCore/Calc/Math.h"
 
+// handle Dcm* output parameter
+%rename("wrap_setLocalToEarthDcm") simCore::CoordinateConverter::setLocalToEarthDcm;
+
 %rename("wrap_convert") simCore::CoordinateConverter::convert;
 %include "simCore/Calc/CoordinateConverter.h"
 %pythoncode %{
@@ -210,6 +213,12 @@ def getClosestPoint(startLla, endLla, toLla):
   closestLla = Vec3()
   dist = wrap_getClosestPoint(startLla, endLla, toLla, closestLla)
   return dist, closestLla
+
+def CoordConvert_setLocalToEarthDcm(lat, lon, localLevelFrame):
+  localToEarth = Dcm()
+  CoordinateConverter.wrap_setLocalToEarthDcm(lat, lon, localLevelFrame, localToEarth)
+  return localToEarth
+CoordinateConverter.setLocalToEarthDcm = CoordConvert_setLocalToEarthDcm
 %}
 
 %inline %{

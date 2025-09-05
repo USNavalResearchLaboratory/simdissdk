@@ -25,7 +25,6 @@
 
 #include <vector>
 #include <QMainWindow>
-#include <QTimer>
 #include "simVis/ViewManager.h"
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
@@ -45,8 +44,7 @@ class MainWindow : public QMainWindow
   Q_OBJECT;
 public:
   MainWindow();
-  virtual void paintEvent(QPaintEvent* e);
-  simVis::ViewManager* getViewManager();
+  simVis::ViewManager* getViewManager() const;
   void addMainView(simVis::View* mainView);
 
 public Q_SLOTS:
@@ -54,11 +52,10 @@ public Q_SLOTS:
   void removeView();
 
 private:
-  QTreeView* topTreeView_;
-  QTimer timer_;
+  QTreeView* topTreeView_ = nullptr;
   osg::ref_ptr<simVis::ViewManager> viewMan_;
   std::vector<osg::observer_ptr<simVis::View> > mainViews_;
-  int numInsetsCreated_;
+  int numInsetsCreated_ = 0;
 };
 
 #endif /* TVMDM_MAINWINDOW_H */

@@ -1010,10 +1010,34 @@ void CategoryFilter::setValue(int nameInt, int valueInt, bool valueChecked)
   categoryChecks.second[valueInt] = valueChecked;
 }
 
-void CategoryFilter::removeName(int nameInt)
+int CategoryFilter::removeName(int nameInt)
 {
-  categoryCheck_.erase(nameInt);
-  categoryRegExp_.erase(nameInt);
+  int rv = 1;
+  auto regexIter = categoryRegExp_.find(nameInt);
+  if (regexIter != categoryRegExp_.end())
+  {
+    categoryRegExp_.erase(nameInt);
+    rv = 0;
+  }
+
+  auto iter = categoryCheck_.find(nameInt);
+  if (iter != categoryCheck_.end())
+  {
+    categoryCheck_.erase(iter);
+    rv = 0;
+  }
+  return rv;
+}
+
+int CategoryFilter::removeName(const std::string& categoryName)
+{
+  if (!dataStore_)
+    return 1;
+  const auto& catNameMgr = dataStore_->categoryNameManager();
+  const int nameInt = catNameMgr.nameToInt(categoryName);
+  if (nameInt == CategoryNameManager::NO_CATEGORY_NAME)
+    return 1;
+  return removeName(nameInt);
 }
 
 int CategoryFilter::removeValue(int nameInt, int valueInt)
@@ -1028,8 +1052,25 @@ int CategoryFilter::removeValue(int nameInt, int valueInt)
   auto nameIter = categoryCheck_.find(nameInt);
   if (nameIter != categoryCheck_.end())
   {
-    // Find the entry for the value of this category name
     auto& valueMap = nameIter->second.second;
+
+    // Here we have another special case. "No Value" and "Unlisted Value" have a peculiar relationship
+    // because "No Value" is implicitly 0 even with Unlisted Value set to 1 (see CategoryFilter.h rule
+    // #6). Because of this, if Unlisted Value is on, and No Value is off, and we're removing No Value --
+    // we remove it by actually ADDING an entry for it to 1. This makes e.g. breadcrumb behavior consistent.
+    if (valueInt == CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
+    {
+      // Is "Unlisted Value" true/1?
+      const auto unlistedValue = valueMap.find(CategoryNameManager::UNLISTED_CATEGORY_VALUE);
+      if (unlistedValue != valueMap.end() && unlistedValue->second)
+      {
+        // Special case hit: add "No Value(1)" and return
+        addCategoryValue_(nameInt, CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME);
+        return 0;
+      }
+    }
+
+    // Find the entry for the value of this category name
     auto valueIter = valueMap.find(valueInt);
     if (valueIter != valueMap.end())
     {
@@ -1046,6 +1087,20 @@ int CategoryFilter::removeValue(int nameInt, int valueInt)
 
   // Did not remove anything
   return 1;
+}
+
+int CategoryFilter::removeValue(const std::string& categoryName, const std::string& categoryValue)
+{
+  if (!dataStore_)
+    return 1;
+  const auto& catNameMgr = dataStore_->categoryNameManager();
+  const int nameInt = catNameMgr.nameToInt(categoryName);
+  if (nameInt == CategoryNameManager::NO_CATEGORY_NAME)
+    return 1;
+  int valueInt = catNameMgr.valueToInt(categoryValue);
+  if (valueInt == CategoryNameManager::NO_CATEGORY_VALUE)
+    return 1;
+  return removeValue(nameInt, valueInt);
 }
 
 void CategoryFilter::getNames(std::vector<int>& names) const

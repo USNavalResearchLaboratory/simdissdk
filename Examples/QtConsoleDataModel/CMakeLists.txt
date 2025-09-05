@@ -1,4 +1,4 @@
-if(NOT Qt5Core_FOUND OR NOT TARGET simQt)
+if(NOT TARGET simQt)
     return()
 endif()
 

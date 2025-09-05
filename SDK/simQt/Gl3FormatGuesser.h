@@ -23,8 +23,10 @@
 #ifndef SIMQT_GL3FORMATGUESSER_H
 #define SIMQT_GL3FORMATGUESSER_H
 
-#include <QGLFormat>
 #include <QSurfaceFormat>
+#if QT_VERSION_MAJOR == 5
+#include <QGLFormat>
+#endif
 #include "simCore/Common/Export.h"
 
 namespace simQt {
@@ -43,6 +45,7 @@ public:
   /** Default constructor initializes the internal format to QGLFormat::defaultFormat(). */
   Gl3FormatGuesser();
 
+#if QT_VERSION_MAJOR == 5
   /** Change the input format for the findCompatibleFormat() operation. */
   void setFormat(const QGLFormat& format);
   /** Retrieve the guessed format.  findCompatibleFormat() changes this value. */
@@ -64,6 +67,7 @@ public:
   static QGLFormat getFormat();
   /** Helper method to return a reasonable format from the provided format. */
   static QGLFormat getFormat(const QGLFormat& format);
+#endif
 
   /** Change the input format for the findCompatibleSurfaceFormat() operation. */
   void setSurfaceFormat(const QSurfaceFormat& format);
@@ -79,12 +83,16 @@ public:
   static QSurfaceFormat getSurfaceFormat(const QSurfaceFormat& format);
 
 private:
+#if QT_VERSION_MAJOR == 5
   /** Tests a candidate format for suitability */
   bool testFormat_(const QGLFormat& format) const;
+
+  QGLFormat format_;
+#endif
+
   /** Tests a candidate format for suitability */
   bool testSurfaceFormat_(const QSurfaceFormat& format) const;
 
-  QGLFormat format_;
   QSurfaceFormat surfaceFormat_;
 };
 

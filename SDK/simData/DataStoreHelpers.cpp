@@ -272,7 +272,7 @@ std::string DataStoreHelpers::description(const simData::DataStore* dataStore)
   return dataStore->scenarioProperties(&transaction)->description();
 }
 
-google::protobuf::Message* DataStoreHelpers::makeMessage(simData::ObjectType entityType)
+simData::FieldList* DataStoreHelpers::makeMessage(simData::ObjectType entityType)
 {
   switch (entityType)
   {
@@ -296,8 +296,111 @@ google::protobuf::Message* DataStoreHelpers::makeMessage(simData::ObjectType ent
     return new simData::CustomRenderingPrefs();
   }
 
+  // invalid type passed in
   assert(false);
   return nullptr;
+}
+
+std::pair<FieldList*, simData::DataStore::Transaction> DataStoreHelpers::mutable_preferences(ObjectId objectId, simData::DataStore* dataStore)
+{
+  simData::DataStore::Transaction transaction;
+  FieldList* preferences = nullptr;
+
+  if (!dataStore)
+    return { preferences, transaction };
+
+  switch (dataStore->objectType(objectId))
+  {
+  case simData::PLATFORM:
+    preferences = dataStore->mutable_platformPrefs(objectId, &transaction);
+    break;
+
+  case simData::BEAM:
+    preferences = dataStore->mutable_beamPrefs(objectId, &transaction);
+    break;
+
+  case simData::GATE:
+    preferences = dataStore->mutable_gatePrefs(objectId, &transaction);
+    break;
+
+  case simData::LASER:
+    preferences = dataStore->mutable_laserPrefs(objectId, &transaction);
+    break;
+
+  case simData::LOB_GROUP:
+    preferences = dataStore->mutable_lobGroupPrefs(objectId, &transaction);
+    break;
+
+  case simData::PROJECTOR:
+    preferences = dataStore->mutable_projectorPrefs(objectId, &transaction);
+    break;
+
+  case simData::CUSTOM_RENDERING:
+    preferences = dataStore->mutable_customRenderingPrefs(objectId, &transaction);
+    break;
+
+  case::simData::ALL:
+    preferences = dataStore->mutable_commonPrefs(objectId, &transaction);
+  break;
+
+  case simData::NONE:
+    // Invalid type
+    assert(false);
+    break;
+  }
+
+  return { preferences, transaction };
+}
+
+std::pair<const FieldList*, simData::DataStore::Transaction> DataStoreHelpers::preferences(ObjectId objectId, simData::DataStore* dataStore)
+{
+  simData::DataStore::Transaction transaction;
+  const FieldList* preferences = nullptr;
+
+  if (!dataStore)
+    return { preferences, transaction };
+
+  switch (dataStore->objectType(objectId))
+  {
+  case simData::PLATFORM:
+    preferences = dataStore->platformPrefs(objectId, &transaction);
+    break;
+
+  case simData::BEAM:
+    preferences = dataStore->beamPrefs(objectId, &transaction);
+    break;
+
+  case simData::GATE:
+    preferences = dataStore->gatePrefs(objectId, &transaction);
+    break;
+
+  case simData::LASER:
+    preferences = dataStore->laserPrefs(objectId, &transaction);
+    break;
+
+  case simData::LOB_GROUP:
+    preferences = dataStore->lobGroupPrefs(objectId, &transaction);
+    break;
+
+  case simData::PROJECTOR:
+    preferences = dataStore->projectorPrefs(objectId, &transaction);
+    break;
+
+  case simData::CUSTOM_RENDERING:
+    preferences = dataStore->customRenderingPrefs(objectId, &transaction);
+    break;
+
+  case::simData::ALL:
+    preferences = dataStore->commonPrefs(objectId, &transaction);
+    break;
+
+  case simData::NONE:
+    // Invalid type
+    assert(false);
+    break;
+  }
+
+  return { preferences, transaction };
 }
 
 int DataStoreHelpers::addMediaFile(const std::string& fileName, simData::DataStore* dataStore)
@@ -598,14 +701,14 @@ std::optional<std::pair<double, double>> DataStoreHelpers::getFileModePlatformTi
 
   switch (lifespan)
   {
-  case LIFE_FIRST_LAST_POINT:
+  case simData::LifespanMode::LIFE_FIRST_LAST_POINT:
     // static platforms are always active (lowest to max)
     if (slice.firstTime() == -1.0)
       return std::make_pair(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
     // Inclusive first to last time
     return std::make_pair(slice.firstTime(), slice.lastTime());
 
-  case LIFE_EXTEND_SINGLE_POINT:
+  case simData::LifespanMode::LIFE_EXTEND_SINGLE_POINT:
     // static platforms are always active (lowest to max)
     if (slice.firstTime() == -1.0)
       return std::make_pair(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
@@ -616,7 +719,7 @@ std::optional<std::pair<double, double>> DataStoreHelpers::getFileModePlatformTi
 
   // Unexpected value, fall back to default of extending single point
   assert(0);
-  return DataStoreHelpers::getFileModePlatformTimeBounds(LIFE_EXTEND_SINGLE_POINT, slice);
+  return DataStoreHelpers::getFileModePlatformTimeBounds(simData::LifespanMode::LIFE_EXTEND_SINGLE_POINT, slice);
 }
 
 bool DataStoreHelpers::isFileModePlatformActive(simData::LifespanMode lifespan, const simData::PlatformUpdateSlice& slice, double atTime)

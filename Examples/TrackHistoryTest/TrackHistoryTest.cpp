@@ -65,7 +65,7 @@ namespace ui = osgEarth::Util::Controls;
 struct AppData
 {
 #ifdef HAVE_IMGUI
-  simData::TrackPrefs_Mode trackMode = simData::TrackPrefs_Mode_POINT;
+  simData::TrackPrefs::Mode trackMode = simData::TrackPrefs::Mode::POINT;
   int size = 2;
   bool flat = false;
   bool alt = false;
@@ -108,7 +108,7 @@ struct AppData
   osg::ref_ptr<ui::CheckBoxControl> globalToggle_;
   osg::ref_ptr<ui::CheckBoxControl> reverseModeCheck_;
 #endif
-  std::vector< std::pair<simData::TrackPrefs_Mode, std::string> > modes_;
+  std::vector< std::pair<simData::TrackPrefs::Mode, std::string> > modes_;
   std::vector< std::pair<simVis::Color, std::string> >            colors_;
   simData::DataStore*  ds_;
   simData::ObjectId    hostId_;
@@ -123,11 +123,11 @@ struct AppData
      view_(nullptr),
      platformModel_(nullptr)
   {
-    modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_OFF,    "OFF"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_POINT,  "POINT"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_LINE,   "LINE"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_RIBBON, "RIBBON"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_BRIDGE, "BRIDGE"));
+    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::OFF,    "OFF"));
+    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::POINT,  "POINT"));
+    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::LINE,   "LINE"));
+    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::RIBBON, "RIBBON"));
+    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::BRIDGE, "BRIDGE"));
 
     colors_.push_back(std::make_pair(simVis::Color::White, "White"));
     colors_.push_back(std::make_pair(simVis::Color::Lime,  "Green"));
@@ -366,7 +366,7 @@ public:
       // Draw mode combo box
       ImGui::TableNextColumn(); ImGui::Text("Draw Mode"); ImGui::TableNextColumn();
       static const char* TRACKMODES[] = { "OFF", "POINT", "LINE", "RIBBON", "BRIDGE" };
-      static int currentModeIdx = app_.trackMode;
+      static int currentModeIdx = static_cast<int>(app_.trackMode);
       if (ImGui::BeginCombo("##trackmode", TRACKMODES[currentModeIdx], 0))
       {
         for (int i = 0; i < IM_ARRAYSIZE(TRACKMODES); i++)
@@ -381,10 +381,10 @@ public:
         }
         ImGui::EndCombo();
       }
-      if (currentModeIdx != app_.trackMode)
+      if (currentModeIdx != static_cast<int>(app_.trackMode))
       {
         needUpdate = true;
-        app_.trackMode = static_cast<simData::TrackPrefs_Mode>(currentModeIdx);
+        app_.trackMode = static_cast<simData::TrackPrefs::Mode>(currentModeIdx);
       }
 
       int size = app_.size;

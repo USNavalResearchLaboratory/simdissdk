@@ -29,12 +29,12 @@
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/System/Utils.h"
-#include "simQt/ViewWidget.h"
 #include "simUtil/ExampleResources.h"
 #include "simVis/SceneManager.h"
 #include "simVis/View.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
 
+#include <QActionGroup>
 #include <QApplication>
 #include <QMainWindow>
 #include <QMenuBar>
@@ -108,6 +108,8 @@ int main(int argc, char **argv)
 
   // The ViewManager coordinates the rendering of all our views.
   osg::ref_ptr<simVis::ViewManager> viewMan = new simVis::ViewManager();
+  // No need for multiple viewers in this example because there is only one main view
+  viewMan->setUseMultipleViewers(false);
 
   // Set up the logarithmic depth buffer for all views
   osg::ref_ptr<simVis::ViewManagerLogDbAdapter> logDb = new simVis::ViewManagerLogDbAdapter;
@@ -116,7 +118,6 @@ int main(int argc, char **argv)
   // Add a new "top-level" view. A top-level view can have inset views, and
   // also has a HUD stack for overlay text and graphics.
   viewMan->addView(view.get());
-
 
 #ifdef Q_WS_X11
   // required for multi-threaded viewer on Linux:

@@ -202,7 +202,17 @@ osg::Node* buildFilledPolygon(const std::vector<simCore::Vec3>& v, osgEarth::Map
 
   // make and style a feature:
   osg::ref_ptr<osgEarth::Feature> feature = new osgEarth::Feature(geom.get(), mapnode->getMap()->getSRS());
+
+#if OSGEARTH_SOVERSION >= 175
+  osgEarth::Style style;
+  if (feature->style())
+    style = *feature->style();
+  styleAnnotation(style, fillColor, depthTest);
+  feature->setStyle(style);
+#else
   styleAnnotation(feature->style().mutable_value(), fillColor, depthTest);
+#endif
+
   feature->geoInterp() = osgEarth::GEOINTERP_GREAT_CIRCLE;
 
   osgEarth::FeatureNode* featureNode = new osgEarth::FeatureNode(feature.get());

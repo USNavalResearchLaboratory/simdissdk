@@ -118,10 +118,18 @@ void FontWidget::setFontDir(const QString& fontDir)
   // On some Windows systems, specific WinAPI calls can fail when trying to
   // use SIMDIS fonts. Test to make sure we are able to use SIMDIS fonts. SDK-119
   const QString& absPath = fonts.front().absoluteFilePath();
+
+#if QT_VERSION_MAJOR == 6
+  if (AddFontResourceEx(absPath.toStdWString().c_str(), FR_PRIVATE, 0) == 0)
+    useFriendlyFontName_ = false;
+  // Make sure to remove added font resource
+  RemoveFontResourceEx(absPath.toStdWString().c_str(), FR_PRIVATE, 0);
+#else
   if (AddFontResourceEx(absPath.toStdString().c_str(), FR_PRIVATE, 0) == 0)
     useFriendlyFontName_ = false;
   // Make sure to remove added font resource
   RemoveFontResourceEx(absPath.toStdString().c_str(), FR_PRIVATE, 0);
+#endif
 #endif
 
   for (auto it = fonts.begin(); it != fonts.end(); ++it)

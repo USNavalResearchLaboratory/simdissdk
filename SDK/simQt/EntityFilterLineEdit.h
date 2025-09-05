@@ -25,8 +25,8 @@
 
 #include <QLineEdit>
 #include <QActionGroup>
-#include <QRegExp>
 #include "simCore/Common/Export.h"
+#include "simQt/RegExpImpl.h"
 
 namespace simQt {
 
@@ -42,7 +42,7 @@ public:
   virtual ~EntityFilterLineEdit();
 
   /// Set options
-  void configure(const QString& filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression);
+  void configure(const QString& filter, Qt::CaseSensitivity caseSensitive, RegExpImpl::PatternSyntax expression);
 
   /// Regex-only will set to case insensitive and regex, hiding other options.  Turning off will unhide them.
   void setRegexOnly(bool regexOnly);
@@ -52,7 +52,7 @@ public:
 
 Q_SIGNALS:
   /// Let the outside know that a filter option has changed.
-  void changed(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression);
+  void changed(QString filter, Qt::CaseSensitivity caseSensitive, RegExpImpl::PatternSyntax expression);
   /// Indicates that the validity changed
   void isValidChanged(bool isValid);
 
@@ -76,21 +76,21 @@ protected:
   /// Displays the right mouse click menu
   virtual void contextMenuEvent(QContextMenuEvent* event);
 
-  Qt::CaseSensitivity caseSensitive_; ///< current case sensitivity
-  QRegExp::PatternSyntax expression_; ///< how the pattern is interpreted
+  Qt::CaseSensitivity caseSensitive_ = Qt::CaseSensitive; ///< current case sensitivity
+  RegExpImpl::PatternSyntax expression_ = RegExpImpl::RegExp; ///< how the pattern is interpreted
 
-  QAction* caseSensitiveAction_; ///< connect GUI to data
-  QAction* regularAction_; ///< connect GUI to data
-  QAction* wildcardAction_; ///< connect GUI to data
-  QAction* fixedAction_; ///< connect GUI to data
+  QAction* caseSensitiveAction_ = nullptr; ///< connect GUI to data
+  QAction* regularAction_ = nullptr; ///< connect GUI to data
+  QAction* wildcardAction_ = nullptr; ///< connect GUI to data
+  QAction* fixedAction_ = nullptr; ///< connect GUI to data
   QList<QAction*> standardClickMenu_; ///< standard right-click options
-  QMenu* rightMouseClickMenu_; ///< our context menu
+  QMenu* rightMouseClickMenu_ = nullptr; ///< our context menu
 
   /// Flags that we're in regex-only mode, hiding other options
-  bool regexOnly_;
+  bool regexOnly_ = false;
 
   /// Flags whether the currently displayed regex is valid
-  bool valid_;
+  bool valid_= true;
 };
 
 }

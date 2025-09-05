@@ -44,6 +44,7 @@
 #include "simVis/NavigationModes.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/CustomRendering.h"
+#include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
 #include "simVis/Registry.h"
@@ -677,11 +678,10 @@ bool View::setUpViewAsHUD(simVis::View* host)
   if (host && host->getCamera())
   {
     osg::GraphicsContext* gc = host->getCamera()->getGraphicsContext();
-    if (!gc)
-    {
-      SIM_WARN << LC << "Host has no graphics context, cannot share!" << std::endl;
-      ok = false;
-    }
+    // It's possible that GraphicsContext is null, especially in osgQOpenGL case. The contexts
+    // will not automatically share in this case, but someone (e.g. osgQOpenGL) can go in later
+    // and initialize all the contexts. So an error here is only appropriate if the host is
+    // already initialized. Therefore we cannot detect a true error here by checking !gc.
 
     // if the user hasn't created a camera for this view, do so now.
     osg::Camera* camera = this->getCamera();
@@ -727,11 +727,10 @@ bool View::setUpViewAsInset_(simVis::View* host)
   if (host && host->getCamera())
   {
     osg::GraphicsContext* gc = host->getCamera()->getGraphicsContext();
-    if (!gc)
-    {
-      SIM_WARN << LC << "Host has no graphics context, cannot share!" << std::endl;
-      ok = false;
-    }
+    // It's possible that GraphicsContext is null, especially in osgQOpenGL case. The contexts
+    // will not automatically share in this case, but someone (e.g. osgQOpenGL) can go in later
+    // and initialize all the contexts. So an error here is only appropriate if the host is
+    // already initialized. Therefore we cannot detect a true error here by checking !gc.
 
     // if the user hasn't created a camera for this view, do so now.
     fovYDeg_ = host->fovY();
@@ -941,13 +940,16 @@ bool View::setExtents(const Extents& e)
     if (host)
     {
       const osg::Viewport* rvp = host->getCamera()->getViewport();
-      // Note that clamping is not desired here, to avoid pixel/percentage conversion issues
-      const double nx = rvp->x() + rvp->width() * e.x_;
-      const double ny = rvp->y() + rvp->height() * e.y_;
-      const double nw = rvp->width() * e.width_;
-      const double nh = rvp->height() * e.height_;
+      if (rvp)
+      {
+        // Note that clamping is not desired here, to avoid pixel/percentage conversion issues
+        const double nx = rvp->x() + rvp->width() * e.x_;
+        const double ny = rvp->y() + rvp->height() * e.y_;
+        const double nw = rvp->width() * e.width_;
+        const double nh = rvp->height() * e.height_;
 
-      fixProjectionForNewViewport_(nx, ny, nw, nh);
+        fixProjectionForNewViewport_(nx, ny, nw, nh);
+      }
     }
     else
     {
@@ -1241,6 +1243,33 @@ void View::tetherCamera(osg::Node *node, const simVis::Viewpoint& vp, double dur
     // Pass it to the setViewpoint() method
     setViewpoint(newVp, durationSeconds);
   }
+}
+
+void View::tetherAndZoom(osg::Node* node, double radiusMultiplier)
+{
+  // First, tether; this can't be done over a duration.
+  tetherCamera(node);
+  // Can't do the zoom unless we have a bounding box, and we can't get a bounding box on null
+  if (node == nullptr)
+    return;
+
+  // Determine a reasonable radius for the viewpoint
+  auto vp = getViewpoint();
+  double radius = node->getBound().radius();
+
+  // Custom calculation for platforms based on the 3D model size instead of bounding box
+  const simVis::PlatformNode* plat = dynamic_cast<const simVis::PlatformNode*>(node);
+  if (plat)
+  {
+    // Use the actual size, then scale it by the scale preference
+    radius = plat->getActualSize().radius();
+    if (plat->getPrefs().has_scale())
+      radius *= plat->getPrefs().scale();
+  }
+
+  // Set the viewpoint to the radius of the visual object times a constant
+  vp.setRange(osgEarth::Distance(radius * radiusMultiplier, osgEarth::Units::METERS));
+  setViewpoint(vp);
 }
 
 osg::Node* View::getCameraTether() const
@@ -1896,8 +1925,19 @@ osg::Camera* View::createHUD_() const
   // Be sure to render after the controls widgets.
   // "10" is arbitrary, so there's room between the two (default Control Canvas value is 25000)
   hud->setRenderOrder(osg::Camera::POST_RENDER, controlCanvas_->getRenderOrderNum() + 10);
-  hud->setViewport(osg::clone(vp, osg::CopyOp::DEEP_COPY_ALL));
-  hud->setProjectionMatrix(osg::Matrix::ortho2D(0, vp->width()-1, 0, vp->height()-1));
+  if (vp)
+  {
+    hud->setViewport(osg::clone(vp, osg::CopyOp::DEEP_COPY_ALL));
+    hud->setProjectionMatrix(osg::Matrix::ortho2D(0, vp->width() - 1, 0, vp->height() - 1));
+  }
+  else
+  {
+    // This can happen when setting up HUD views on an embedded context that has not yet
+    // been realized, wherein the library doing realizing (e.g. osgQOpenGL) will need to
+    // set the viewport later. Set a default projection to start. Viewports are typically
+    // set at the creation of GL context.
+    hud->setProjectionMatrix(osg::Matrix::ortho2D(0, 100, 0, 100));
+  }
   hud->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
   hud->setViewMatrix(osg::Matrix::identity());
   hud->setClearMask(GL_DEPTH_BUFFER_BIT);

@@ -23,6 +23,9 @@
 #ifndef SIMQT_ENTITY_NAME_FILTER_H
 #define SIMQT_ENTITY_NAME_FILTER_H
 
+#include <memory>
+#include <tuple>
+#include "simQt/RegExpImpl.h"
 #include "simQt/EntityFilter.h"
 
 namespace simQt {
@@ -46,7 +49,7 @@ public:
   explicit EntityNameFilter(AbstractEntityTreeModel* model);
 
   /** Destructor */
-  virtual ~EntityNameFilter();
+  virtual ~EntityNameFilter() = default;
 
   /**
   * Inherited from EntityFilter, determines if the specified entity passes this filter
@@ -69,7 +72,7 @@ public:
   virtual void setFilterSettings(const QMap<QString, QVariant>& settings);
 
   /** Returns the filter's QRegExp*/
-  QRegExp regExp() const;
+  std::tuple<QString, Qt::CaseSensitivity, RegExpImpl::PatternSyntax> regExp() const;
 
   /** Connect to the specified widget for updating and receiving reg exp filter */
   void bindToWidget(EntityFilterLineEdit* widget);
@@ -79,22 +82,22 @@ public:
 
 public Q_SLOTS:
   /// Set the filter's QRegExp
-  void setRegExp(const QRegExp& regExp);
+  void setRegExp(const QString& expression, Qt::CaseSensitivity sensitivity = Qt::CaseSensitive, RegExpImpl::PatternSyntax pattern = RegExpImpl::PatternSyntax::RegExp);
 
 private Q_SLOTS:
   /// Set the attributes of the QRegExp filter
-  void setRegExpAttributes_(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression);
+  void setRegExpAttributes_(QString filter, Qt::CaseSensitivity caseSensitive, RegExpImpl::PatternSyntax patternSyntax);
 
 private:
   /// Recursively determines if the specified index or any of its children pass the filter
   bool acceptIndex_(const QModelIndex& idx) const;
 
   // reference to the entity tree model for looking up entity name
-  AbstractEntityTreeModel* model_;
+  AbstractEntityTreeModel* model_ = nullptr;
   /// regular expression filter to apply to entity name
-  RegExpImpl* regExp_;
+  std::unique_ptr<RegExpImpl> regExp_;
   /// widget that generates a reg exp filter
-  EntityFilterLineEdit* widget_;
+  EntityFilterLineEdit* widget_ = nullptr;
 };
 
 }
