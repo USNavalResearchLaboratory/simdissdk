@@ -32,6 +32,10 @@
 #include "simQt/ConsoleChannel.h"
 #include "simQt/ConsoleDataModel.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+Q_DECLARE_METATYPE(simNotify::NotifySeverity);
+#endif
+
 namespace simQt {
 
 /////////////////////////////////////////////////////////////////
