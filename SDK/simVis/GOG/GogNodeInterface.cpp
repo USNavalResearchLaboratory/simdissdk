@@ -1435,7 +1435,7 @@ void GogNodeInterface::setGeoPositionAltitude_(osgEarth::GeoPositionNode& node, 
 {
   bool extrude = false;
   osgEarth::AltitudeMode mode = osgEarth::ALTMODE_ABSOLUTE;
-  double altitude = altitude_ + altOffset_ + altitudeAdjustment;
+  double altitude = altitude_ + altOffset_;
 
   switch (altMode_)
   {
@@ -1443,6 +1443,7 @@ void GogNodeInterface::setGeoPositionAltitude_(osgEarth::GeoPositionNode& node, 
     break;
   case ALTITUDE_GROUND_RELATIVE:
     mode = osgEarth::ALTMODE_RELATIVE;
+    altitude += altitudeAdjustment;
     break;
   case ALTITUDE_GROUND_CLAMPED:
     mode = osgEarth::ALTMODE_RELATIVE;
@@ -1450,6 +1451,7 @@ void GogNodeInterface::setGeoPositionAltitude_(osgEarth::GeoPositionNode& node, 
     break;
   case ALTITUDE_EXTRUDE:
     mode = osgEarth::ALTMODE_RELATIVE;
+    altitude += altitudeAdjustment;
     extrude = true;
     break;
   }
