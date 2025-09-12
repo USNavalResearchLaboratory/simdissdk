@@ -41,11 +41,10 @@
 #include "simVis/View.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
 
+#include <QAction>
 #include <QApplication>
-#include <QMainWindow>
 #include <QMenuBar>
 #include <QStatusBar>
-#include <QSignalMapper>
 
 #include "MyMainWindow.h"
 
@@ -114,11 +113,11 @@ int main(int argc, char **argv)
 
   QMenu* bar = win.menuBar()->addMenu(QString("File"));
   QAction* generateAction = new QAction(QString("Generate Data..."), &win);
-  QObject::connect(generateAction, SIGNAL(triggered(bool)), &win, SLOT(showGenerateDialog()));
+  QObject::connect(generateAction, &QAction::triggered, &win, &SdkQThreadExample::MyMainWindow::showGenerateDialog);
   bar->addAction(generateAction);
 
   QAction* exitAction = new QAction(QString("Exit"), &win);
-  QObject::connect(exitAction, SIGNAL(triggered(bool)), &win, SLOT(close()));
+  QObject::connect(exitAction, &QAction::triggered, &win, &QMainWindow::close);
   exitAction->setShortcut(QKeySequence("Alt+Q"));
   bar->addAction(exitAction);
 
