@@ -44,11 +44,9 @@ FontWidget::FontWidget(QWidget* parent)
     ui_(nullptr),
     useFriendlyFontName_(true)
 {
-
   ui_ = new Ui_FontWidget();
   ui_->setupUi(this);
-  connect(ui_->fontNameComboBox, SIGNAL(currentIndexChanged(QString)),
-    this, SLOT(fontNameChanged_(QString)));
+  connect(ui_->fontNameComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(fontNameChanged_(QString))); // TODO: fix SIM-18743
   connect(ui_->fontSizeSpinBox, SIGNAL(valueChanged(int)), this, SIGNAL(fontSizeChanged(int)));
   connect(ui_->fontColorWidget, SIGNAL(colorChanged(QColor)), this, SIGNAL(fontColorChanged(QColor)));
 

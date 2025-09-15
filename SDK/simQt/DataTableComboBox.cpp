@@ -78,7 +78,7 @@ dataStore_(nullptr)
   ui_ = new Ui_DataTableComboBox;
   ui_->setupUi(this);
 
-  connect(ui_->TableComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(tableSelected_(int)));
+  connect(ui_->TableComboBox, qOverload<int>(&QComboBox::currentIndexChanged), this, &DataTableComboBox::tableSelected_);
   observer_ = simData::DataTableManager::ManagerObserverPtr(new TableManagerObserver(this));
 }
 
