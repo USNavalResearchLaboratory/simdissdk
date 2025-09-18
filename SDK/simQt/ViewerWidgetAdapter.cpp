@@ -161,19 +161,31 @@ std::unique_ptr<QEvent> cloneDragDropEvent_(const QEvent* evt)
   case QEvent::DragEnter:
   {
     const QDragEnterEvent* dragEnterEvent = static_cast<const QDragEnterEvent*>(evt);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return std::make_unique<QDragEnterEvent>(dragEnterEvent->pos(), dragEnterEvent->possibleActions(), dragEnterEvent->mimeData(), dragEnterEvent->mouseButtons(), dragEnterEvent->keyboardModifiers());
+#else
+    return std::make_unique<QDragEnterEvent>(dragEnterEvent->position().toPoint(), dragEnterEvent->possibleActions(), dragEnterEvent->mimeData(), dragEnterEvent->buttons(), dragEnterEvent->modifiers());
+#endif
   }
   case QEvent::DragLeave:
     return std::make_unique<QDragLeaveEvent>();
   case QEvent::DragMove:
   {
     const QDragMoveEvent* dragMoveEvent = static_cast<const QDragMoveEvent*>(evt);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return std::make_unique<QDragMoveEvent>(dragMoveEvent->pos(), dragMoveEvent->possibleActions(), dragMoveEvent->mimeData(), dragMoveEvent->mouseButtons(), dragMoveEvent->keyboardModifiers());
+#else
+    return std::make_unique<QDragMoveEvent>(dragMoveEvent->position().toPoint(), dragMoveEvent->possibleActions(), dragMoveEvent->mimeData(), dragMoveEvent->buttons(), dragMoveEvent->modifiers());
+#endif
   }
   case QEvent::Drop:
   {
     const QDropEvent* dropEvent = static_cast<const QDropEvent*>(evt);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return std::make_unique<QDropEvent>(dropEvent->pos(), dropEvent->possibleActions(), dropEvent->mimeData(), dropEvent->mouseButtons(), dropEvent->keyboardModifiers());
+#else
+    return std::make_unique<QDropEvent>(dropEvent->position().toPoint(), dropEvent->possibleActions(), dropEvent->mimeData(), dropEvent->buttons(), dropEvent->modifiers());
+#endif
   }
   default:
     break;
