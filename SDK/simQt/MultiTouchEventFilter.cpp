@@ -31,7 +31,7 @@ namespace simQt {
 namespace {
 
 /** Anonymous function to convert from Qt touch state to OSG touch state */
-#if QT_VERSION_MAJOR == 5
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 osgGA::GUIEventAdapter::TouchPhase toTouchPhase(Qt::TouchPointState state)
 #else
 osgGA::GUIEventAdapter::TouchPhase toTouchPhase(QEventPoint::State state)
@@ -47,6 +47,10 @@ osgGA::GUIEventAdapter::TouchPhase toTouchPhase(QEventPoint::State state)
     return osgGA::GUIEventAdapter::TOUCH_STATIONERY;
   case Qt::TouchPointReleased:
     return osgGA::GUIEventAdapter::TOUCH_ENDED;
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+  case Qt::TouchPointUnknownState:
+    return osgGA::GUIEventAdapter::TOUCH_UNKNOWN;
+#endif
   }
 
   // Unknown state, return a moved
@@ -126,7 +130,11 @@ bool MultiTouchEventFilter::touchBeginEvent_(QTouchEvent* evt)
     return false;
 
   // Must be touching at least one finger
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   const auto& touchPoints = evt->touchPoints();
+#else
+  const auto& touchPoints = evt->points();
+#endif
   if (touchPoints.empty())
     return false;
 
@@ -177,7 +185,11 @@ bool MultiTouchEventFilter::touchUpdateEvent_(QTouchEvent* evt)
     touchBeginEvent_(evt);
 
   // Must be touching at least one finger
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   const auto& touchPoints = evt->touchPoints();
+#else
+  const auto& touchPoints = evt->points();
+#endif
   if (touchPoints.empty())
     return false;
 
@@ -217,7 +229,11 @@ bool MultiTouchEventFilter::touchEndEvent_(QTouchEvent* evt)
     return false;
 
   // Must be touching at least one finger, even for end events
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   const auto& touchPoints = evt->touchPoints();
+#else
+  const auto& touchPoints = evt->points();
+#endif
   if (touchPoints.empty())
     return false;
 
