@@ -90,7 +90,11 @@ QVariant Settings::MetaData::convertToInternalFormat(QVariant input) const
   if (type_ != COLOR)
     return input;
   // convert color value into QRgb if possible
+#if QT_VERSION < QT_VERSION_CHECK(6, 4, 0)
   if (QColor::isValidColor(input.toString()) && input.canConvert<QColor>())
+#else
+  if (QColor::isValidColorName(input.toString()) && input.canConvert<QColor>())
+#endif
     return input.value<QColor>().rgba();
   else if (input.canConvert<QRgb>())
     return input.value<QRgb>();
@@ -102,7 +106,11 @@ QVariant Settings::MetaData::convertToSaveFormat(QVariant saveValue) const
   if (type_ != COLOR)
     return saveValue;
   // convert color value into QColor hex string if possible
+#if QT_VERSION < QT_VERSION_CHECK(6, 4, 0)
   if (QColor::isValidColor(saveValue.toString()) && saveValue.canConvert<QColor>())
+#else
+  if (QColor::isValidColorName(saveValue.toString()) && saveValue.canConvert<QColor>())
+#endif
     return saveValue.value<QColor>().name(QColor::HexArgb);
   else if (saveValue.canConvert<QRgb>())
     return QColor::fromRgba(saveValue.value<QRgb>()).name(QColor::HexArgb);
