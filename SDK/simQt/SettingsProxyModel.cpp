@@ -169,7 +169,7 @@ bool SettingsDataLevelFilter::filterAcceptsRow(int sourceRow, const QModelIndex 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   const auto variantType = sourceModel()->data(index1).type();
 #else
-  const auto variantType = sourceModel()->data(index1).metaType().id();
+  const auto variantType = sourceModel()->data(index1).typeId();
 #endif
   return invalidDataTypes_.find(variantType) == invalidDataTypes_.end();
 }

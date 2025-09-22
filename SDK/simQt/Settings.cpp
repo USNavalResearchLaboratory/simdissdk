@@ -175,7 +175,7 @@ Settings::MetaData Settings::MetaData::makeColor(const QVariant& defaultValue,
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   if (defaultValue.type() == QVariant::Color)
 #else
-  if (defaultValue.metaType().id() == QMetaType::QColor)
+  if (defaultValue.typeId() == QMetaType::QColor)
 #endif
     return Settings::MetaData(COLOR, defaultValue.value<QColor>().rgba(), tooltip, inLevel);
   return Settings::MetaData(COLOR, defaultValue, tooltip, inLevel);
