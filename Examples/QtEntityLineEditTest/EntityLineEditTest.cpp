@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <QStyleHints>
 #include "simCore/System/Utils.h"
 #include "simData/MemoryDataStore.h"
 #include "simQt/EntityTreeModel.h"
@@ -170,6 +171,11 @@ int main(int argc, char* argv[])
 {
   simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
+
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   simData::MemoryDataStore* dataStore = new simData::MemoryDataStore();
   MainWindow* window = new MainWindow(nullptr, dataStore);

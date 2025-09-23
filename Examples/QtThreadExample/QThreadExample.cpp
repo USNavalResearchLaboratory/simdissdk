@@ -45,6 +45,7 @@
 #include <QApplication>
 #include <QMenuBar>
 #include <QStatusBar>
+#include <QStyleHints>
 
 #include "MyMainWindow.h"
 
@@ -99,6 +100,11 @@ int main(int argc, char **argv)
 #endif
 
   QApplication app(argc, argv);
+  
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   SdkQThreadExample::MyMainWindow win(viewMan.get(), dataStore);
 
