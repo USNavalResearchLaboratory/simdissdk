@@ -29,6 +29,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPushButton>
+#include <QStyleHints>
 #include <QTimer>
 #include <QToolTip>
 #include <QTreeView>
@@ -86,21 +87,28 @@ struct StyleOptionToggleSwitch
     value(false),
     locked(false)
   {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    const bool lightMode = (qApp->styleHints()->colorScheme() == Qt::ColorScheme::Light);
+#else
+    const bool lightMode = true;
+#endif
     // Teal colored track and thumb
-    on.track = QColor(0, 150, 136);
-    on.thumb = on.track;
+    on.track = QColor(125, 192, 186);
+    on.thumb = QColor(0, 150, 136);
     on.text = QObject::tr("Exclude");
     on.textColor = Qt::black;
 
     // Black and grey track and thumb
-    off.track = Qt::black;
+    off.track = QColor(125, 125, 125);
     off.thumb = QColor(200, 200, 200);
+    if (!lightMode)
+      std::swap(off.track, off.thumb);
     off.text = QObject::tr("Match");
-    off.textColor = Qt::white;
+    off.textColor = (lightMode ? Qt::white : Qt::black);
 
     // Disabled-looking grey track and thumb
-    lock.track = QColor(100, 100, 100);
-    lock.thumb = lock.track.color().lighter();
+    lock.track = QColor(170, 170, 170);
+    lock.thumb = QColor(150, 150, 150);
     lock.text = QObject::tr("Locked");
     lock.textColor = Qt::black;
   }
@@ -146,7 +154,6 @@ void ToggleSwitchPainter::paint(const StyleOptionToggleSwitch& option, QPainter*
   // Draw the track
   painter->setPen(Qt::NoPen);
   painter->setBrush(valueStyle.track);
-  painter->setOpacity(0.45);
   painter->setRenderHint(QPainter::Antialiasing, true);
   // Newer Qt with newer MSVC renders the rounded rect poorly if the rounding
   // pixels argument is half of pixel height or greater; reduce to 0.49
@@ -262,12 +269,19 @@ void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionVie
 {
   const QStyle* style = (opt.widget ? opt.widget->style() : qApp->style());
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  const Qt::ColorScheme cs = qApp->styleHints()->colorScheme();
+  const QColor bgColor = (cs == Qt::ColorScheme::Light ? QColor(228, 228, 228) : QColor(100, 100, 100));
+#else
+  const QColor bgColor = QColor(228, 228, 228);
+#endif
+
   // Calculate the rectangles for drawing
   ChildRects r;
   calculateRects_(opt, index, r);
 
   { // Draw a background for the whole row
-    painter->setBrush(opt.backgroundBrush);
+    painter->setBrush(bgColor);
     painter->setPen(Qt::NoPen);
     painter->drawRect(r.background);
   }
@@ -281,6 +295,7 @@ void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionVie
 
   { // Draw the text for the category
     opt.rect = r.text;
+    opt.backgroundBrush = bgColor;
     style->drawControl(QStyle::CE_ItemViewItem, &opt, painter);
   }
 
