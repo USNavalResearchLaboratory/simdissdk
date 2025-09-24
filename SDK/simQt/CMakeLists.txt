@@ -435,8 +435,6 @@ else()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    # Configure the simQtConfig.cmake file; its dependencies are dynamic
-    configure_file(simQtConfig.cmake.in simQtConfig.cmake @ONLY)
     vsi_install_export(simQt ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
