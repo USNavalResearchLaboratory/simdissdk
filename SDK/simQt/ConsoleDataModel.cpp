@@ -21,7 +21,7 @@
  *
  */
 #include <cassert>
-#include <QApplication>
+#include <QGuiApplication>
 #include <QDateTime>
 #include <QColor>
 #include <QStyleHints>
@@ -39,9 +39,9 @@ Q_DECLARE_METATYPE(simNotify::NotifySeverity);
 #endif
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-static const bool IS_LIGHT_MODE = (qApp->styleHints()->colorScheme() == Qt::ColorScheme::Light);
+static const bool IS_LIGHT_MODE = (qGuiApp->styleHints()->colorScheme() == Qt::ColorScheme::Light);
 #else
-static const bool IS_LIGHT_MODE = false;
+static const bool IS_LIGHT_MODE = true;
 #endif
 
 namespace simQt {
