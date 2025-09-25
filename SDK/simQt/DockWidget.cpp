@@ -34,6 +34,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QScreen>
+#include <QStyleHints>
 #include <QTabBar>
 #include <QTimer>
 #include <QToolButton>
@@ -652,6 +653,19 @@ void DockWidget::createStylesheets_()
     "#titleBarTitle {color: %2;} "
     ;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  const Qt::ColorScheme cs = qApp->styleHints()->colorScheme();
+  const bool lightMode = (qApp->styleHints()->colorScheme() == Qt::ColorScheme::Light);
+
+  const QColor inactiveBackground = lightMode ? QColor("#e0e0e0") : QColor("#3C3C3C"); // Light gray vs dark gray
+  inactiveTextColor_ = lightMode ? QColor("#404040") : Qt::white; // Darker gray or white
+  const QColor darkerInactiveBg = QColor("#d0d0d0");
+
+  // Get the focus colors
+  const QColor focusBackground = lightMode ? QColor("#d8d8d8") : QColor("#0078D7"); // Lighter gray or blue
+  focusTextColor_ = lightMode ? QColor("#202020") : Qt::white; // Darkest gray or white
+  const QColor darkerFocusBg = QColor("#b0b0b0");
+#else
   const QColor inactiveBackground = QColor("#e0e0e0"); // Light gray
   inactiveTextColor_ = QColor("#404040"); // Darker gray
   const QColor darkerInactiveBg = QColor("#d0d0d0");
@@ -660,6 +674,7 @@ void DockWidget::createStylesheets_()
   const QColor focusBackground = QColor("#d8d8d8"); // Lighter gray
   focusTextColor_ = QColor("#202020"); // Darkest gray
   const QColor darkerFocusBg = QColor("#b0b0b0");
+#endif
 
   // Create the inactive stylesheet
   inactiveStylesheet_ = ssTemplate
