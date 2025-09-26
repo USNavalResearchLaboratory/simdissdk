@@ -160,6 +160,9 @@ void SettingsDirectorySelectorDelegate::setEditorData(QWidget* editor, const QMo
   QString fqn = index.model()->data(index, SettingsModel::FullyQualifiedNameRole).toString();
   selector->setWindowTitle("Select Directory for " + fqn);
   selector->setRegistryKey(fqn);
+
+  // Avoid a DirectorySelectorWidget::directoryChanged, avoiding a commitData()
+  const QSignalBlocker block(selector);
   selector->setDirectory(data);
 }
 
@@ -327,6 +330,9 @@ void SettingsFileSelectorDelegate::setEditorData(QWidget* editor, const QModelIn
   fileSelector->setWindowTitle(QString("Select File For ") + fqn);
   fileSelector->setRegistryKey(fqn);
   fileSelector->setCustomFileFilter(filter);
+
+  // Avoid a FileSelectorWidget::filenameChanged, avoiding a commitData()
+  const QSignalBlocker block(fileSelector);
   fileSelector->setFilename(data);
 }
 
@@ -585,7 +591,8 @@ void SettingsFontSelectorDelegate::setEditorData(QWidget* editor, const QModelIn
   // get the current font file name from the model
   const QString data = index.model()->data(index, Qt::EditRole).toString();
 
-  // update the font widget
+  // Avoid a FontWidget::fontFileChanged, avoiding a commitData()
+  const QSignalBlocker block(fontSelector);
   fontSelector->setFontFile(data);
 }
 
