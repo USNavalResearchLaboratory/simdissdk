@@ -29,7 +29,6 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPushButton>
-#include <QStyleHints>
 #include <QTimer>
 #include <QToolTip>
 #include <QTreeView>
@@ -37,12 +36,13 @@
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/DataStore.h"
-#include "simQt/QtFormatting.h"
 #include "simQt/CategoryFilterCounter.h"
+#include "simQt/CategoryTreeModel.h"
 #include "simQt/EntityFilterLineEdit.h"
+#include "simQt/QtFormatting.h"
+#include "simQt/QtUtils.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/Settings.h"
-#include "simQt/CategoryTreeModel.h"
 #include "simQt/CategoryFilterWidget.h"
 
 namespace simQt {
@@ -87,11 +87,7 @@ struct StyleOptionToggleSwitch
     value(false),
     locked(false)
   {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-    const bool lightMode = (qApp->styleHints()->colorScheme() == Qt::ColorScheme::Light);
-#else
-    const bool lightMode = true;
-#endif
+    const bool lightMode = !simQt::QtUtils::isDarkTheme();
     // Teal colored track and thumb
     on.track = QColor(125, 192, 186);
     on.thumb = QColor(0, 150, 136);
@@ -268,13 +264,7 @@ void CategoryTreeItemDelegate::paint(QPainter* painter, const QStyleOptionViewIt
 void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionViewItem& opt, const QModelIndex& index) const
 {
   const QStyle* style = (opt.widget ? opt.widget->style() : qApp->style());
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-  const Qt::ColorScheme cs = qApp->styleHints()->colorScheme();
-  const QColor bgColor = (cs == Qt::ColorScheme::Light ? QColor(228, 228, 228) : QColor(100, 100, 100));
-#else
-  const QColor bgColor = QColor(228, 228, 228);
-#endif
+  const QColor bgColor = (simQt::QtUtils::isDarkTheme() ? QColor(100, 100, 100) : QColor(228, 228, 228));
 
   // Calculate the rectangles for drawing
   ChildRects r;
