@@ -86,7 +86,7 @@ foreach(PACKAGENAME IN ITEMS Core DBus Gui OpenGL OpenGLWidgets Widgets XcbQpa)
 endforeach()
 
 # Each install needs some defaults
-foreach(PLUGINNAME IN ITEMS imageformats platforms styles xcbglintegrations)
+foreach(PLUGINNAME IN ITEMS imageformats platforminputcontexts platforms platformthemes styles xcbglintegrations)
     vsi_install_qt6plugins(${PLUGINNAME})
 endforeach()
 

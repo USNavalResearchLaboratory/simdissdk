@@ -649,7 +649,7 @@ macro(vsi_add_json_prefix_path PACKAGE_JSON_OBJ)
 
     # Get the versions list
     vsi_json_get_value_or_list(_VERSIONS "${PACKAGE_JSON_OBJ}" version)
-    if(_DIR STREQUAL "QT5" OR _DIR STREQUAL "QT6")
+    if(_DIR STREQUAL "QT5")
         vsi_add_qt_prefix_path(${_VERSIONS})
     else()
         vsi_add_third_prefix_path(${_DIR} ${_VERSIONS})
