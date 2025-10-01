@@ -3,7 +3,10 @@
     {
       "name": "ENTT",
       "dir": "EnTT",
-      "version": "3.14.0"
+      "version": [
+        "3.15.0",
+        "3.14.0"
+      ]
     },
     {
       "name": "GDAL",
@@ -52,7 +55,10 @@
     {
       "name": "SQLITE",
       "dir": "SQLite",
-      "version": "3.42.0"
+      "version": [
+        "3.50.4",
+        "3.42.0"
+      ]
     },
     {
       "name": "SWIG",
