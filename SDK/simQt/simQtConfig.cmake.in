@@ -1,6 +1,6 @@
 include(CMakeFindDependencyMacro)
 
-find_dependency(Qt5Widgets)
+find_dependency(Qt@SIMQT_QT_VERSION@Widgets)
 find_dependency(simNotify)
 find_dependency(simCore)
 
@@ -8,8 +8,14 @@ if(@SIMQT_HAVE_SIMDATA@)
     find_dependency(simData)
 endif()
 if(@SIMQT_HAVE_OSGQT@)
-    find_dependency(Qt5OpenGL)
+    find_dependency(Qt@SIMQT_QT_VERSION@OpenGL)
     include("${CMAKE_CURRENT_LIST_DIR}/../ImportOSGQT.cmake")
+endif()
+if(@SIMQT_HAVE_OSGQOPENGL@)
+    find_dependency(osgQOpenGL-qt@SIMQT_QT_VERSION@ 4.0)
+endif()
+if(@SIMQT_HAVE_QOPENGL@)
+    find_dependency(Qt@SIMQT_QT_VERSION@OpenGL)
 endif()
 
 # The dependencies below are only required for static builds (private links)

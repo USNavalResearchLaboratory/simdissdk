@@ -49,10 +49,6 @@ public:
   /** Displays content of an OSG event */
   void processOsgEvent(const osgGA::GUIEventAdapter& ea);
 
-protected:
-  // From QMainWindow:
-  virtual void paintEvent(QPaintEvent* e) override;
-
 private:
   /** Creates the dock widget for the touch device display */
   void addTouchDevicesDock_();

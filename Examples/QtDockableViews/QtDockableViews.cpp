@@ -31,7 +31,8 @@
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
-#include "simQt/ViewWidget.h"
+#include "simCore/System/Utils.h"
+#include "simQt/ViewerWidgetAdapter.h"
 #include "simUtil/ExampleResources.h"
 
 #include "simVis/ViewManager.h"
@@ -62,8 +63,12 @@ int usage(char** argv)
 
 ////////////////////////////////////////////////////////////////////
 MyMainWindow::MyMainWindow(int framerate)
-  :viewCounter_(1)
+  : timerInterval_(1000 / std::max(1, framerate)),
+  viewManager_(new simVis::ViewManager)
 {
+  // View Manager will support multiple top level CompositeViewer instances for osgQOpenGL
+  viewManager_->setUseMultipleViewers(true);
+
   // create toolbar
   QToolBar* toolbar = new QToolBar(this);
   QAction* dialogAction = new QAction(tr("New Dialog"), this);
@@ -77,15 +82,8 @@ MyMainWindow::MyMainWindow(int framerate)
   // set a blank central widget
   QWidget* center = new QWidget(this);
   center->setLayout(new QHBoxLayout());
+  center->layout()->setContentsMargins(0, 0, 0, 0);
   setCentralWidget(center);
-
-  // create a viewer manager. The "args" are optional.
-  viewMan_ = new simVis::ViewManager();
-  // Note that the logarithmic depth buffer is not installed
-
-  // disable the default ESC-to-quit event:
-  viewMan_->getViewer()->setKeyEventSetsDone(0);
-  viewMan_->getViewer()->setQuitEventSetsDone(false);
 
   // we need a map.
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
@@ -100,15 +98,6 @@ MyMainWindow::MyMainWindow(int framerate)
   // create our first widget, seems to be required on startup
   createViewDockable_();
 
-  // timer fires a paint event.
-  timer_ = new QTimer();
-  // timer single shot to avoid infinite loop problems in Qt on MSVC11
-  timer_->setSingleShot(true);
-  connect(timer_, SIGNAL(timeout()), this, SLOT(update()));
-  if (framerate < 1)
-    framerate = 1;
-  timer_->start(1000/framerate);
-
   // connect actions to our slots
   connect(dialogAction, SIGNAL(triggered()), this, SLOT(createViewDialog_()));
   connect(dockableAction, SIGNAL(triggered()), this, SLOT(createViewDockable_()));
@@ -118,55 +107,42 @@ MyMainWindow::MyMainWindow(int framerate)
 
 MyMainWindow::~MyMainWindow()
 {
-  delete timer_;
 }
 
-void MyMainWindow::paintEvent(QPaintEvent* e)
+simQt::ViewerWidgetAdapter* MyMainWindow::newWidget_(const QString& viewName)
 {
-  // refresh all the views -- only repaint if the last created GL window was exposed (or got deleted).
-  // This repaints on nullptr because the flag (in this app) can only be nullptr if user closed an open
-  // window, and other windows that are still open are almost certainly still exposed.  We do check
-  // for isExposed() on the last created window, under the presumption that once it is exposed, we
-  // can safely draw on all windows.
-  if (!lastCreatedGlWindow_ || lastCreatedGlWindow_->isExposed())
-    viewMan_->frame();
-  timer_->start();
-}
+  osg::ref_ptr<simVis::View> view = createView_(*viewManager_, viewName);
 
-simVis::ViewManager* MyMainWindow::getViewManager()
-{
-  return viewMan_.get();
+  simQt::ViewerWidgetAdapter* viewWidget = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, this);
+  viewWidget->setViewer(viewManager_->getViewer(view.get()));
+  viewWidget->setTimerInterval(timerInterval_);
+  viewWidget->setMinimumSize(2, 2);
+  viewWidget->resize(100, 100);
+  return viewWidget;
 }
 
 void MyMainWindow::createViewDialog_()
 {
-  QString viewName = tr("Dialog View %1").arg(viewCounter_++);
-  osg::ref_ptr<simVis::View> view = createView_(viewName);
+  const QString viewName = tr("Dialog View %1").arg(viewCounter_++);
 
   // now create a dock widget for each inset
   QDialog* dialog = new QDialog(this);
-  QWidget* viewWidget = new simQt::ViewWidget(view.get());
-  lastCreatedGlWindow_ = viewWidget->windowHandle();
-  viewWidget->setMinimumSize(2, 2);
   dialog->setWindowFlag(Qt::WindowContextHelpButtonHint, false);
   dialog->setWindowTitle(viewName);
   dialog->setLayout(new QHBoxLayout());
-  dialog->layout()->addWidget(viewWidget);
+  dialog->layout()->setContentsMargins(0, 0, 0, 0);
+  dialog->layout()->addWidget(newWidget_(viewName));
   dialog->resize(100, 100);
   dialog->show();
 }
 
 void MyMainWindow::createViewDockable_()
 {
-  QString viewName = tr("Dockable View %1").arg(viewCounter_++);
-  osg::ref_ptr<simVis::View> view = createView_(viewName);
+  const QString viewName = tr("Dockable View %1").arg(viewCounter_++);
 
   // now create a dock widget for each inset
   QDockWidget* dockable = new QDockWidget(this);
-  QWidget* viewWidget = new simQt::ViewWidget(view.get());
-  lastCreatedGlWindow_ = viewWidget->windowHandle();
-  viewWidget->setMinimumSize(2, 2);
-  dockable->setWidget(viewWidget);
+  dockable->setWidget(newWidget_(viewName));
   dockable->setWindowTitle(viewName);
   dockable->resize(100, 100);
   addDockWidget(Qt::RightDockWidgetArea, dockable);
@@ -175,24 +151,13 @@ void MyMainWindow::createViewDockable_()
 void MyMainWindow::createMainView_()
 {
   // Make a main view, hook it up, and add it to the view manager.
-  QString viewName = tr("Main View %1").arg(viewCounter_++);
-  osg::ref_ptr<simVis::View> mainview = createView_(viewName);
+  const QString viewName = tr("Main View %1").arg(viewCounter_++);
 
-  // Make a Qt Widget to hold our view, and add that widget to the
-  // main window.
-  QWidget* viewWidget = new simQt::ViewWidget(mainview.get());
-  lastCreatedGlWindow_ = viewWidget->windowHandle();
-  viewWidget->setMinimumSize(2, 2);
-  viewWidget->resize(100, 100);
-  centralWidget()->layout()->addWidget(viewWidget);
-
-  // by default, the database pager unreferenced image objects once it downloads them
-  // the driver. In composite viewer mode we don't want that since we may be adding
-  // and removing views.  This may use more memory, but it's a requirement for multiple GCs.
-  mainview->getScene()->getDatabasePager()->setUnrefImageDataAfterApplyPolicy(true, false);
+  // Make a Qt Widget to hold our view, and add that widget to the main window.
+  centralWidget()->layout()->addWidget(newWidget_(viewName));
 }
 
-simVis::View* MyMainWindow::createView_(const QString& name) const
+simVis::View* MyMainWindow::createView_(simVis::ViewManager& viewManager, const QString& name) const
 {
   simVis::View* view = new simVis::View();
   view->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
@@ -200,8 +165,13 @@ simVis::View* MyMainWindow::createView_(const QString& name) const
 
   // attach the scene manager and add it to the view manager.
   view->setSceneManager(sceneMan_.get());
-  viewMan_->addView(view);
+  viewManager.addView(view);
   view->installDebugHandlers();
+
+  // by default, the database pager unreferenced image objects once it downloads them
+  // the driver. In composite viewer mode we don't want that since we may be adding
+  // and removing views.  This may use more memory, but it's a requirement for multiple GCs.
+  view->getScene()->getDatabasePager()->setUnrefImageDataAfterApplyPolicy(true, false);
 
   return view;
 }
@@ -211,15 +181,19 @@ void warningMessageFilter(QtMsgType type, const QMessageLogContext& context, con
 {
   // Block spammed warning message from setGeometry() calls caused when manually resizing a QDialog.
   // This is a known Qt bug in Qt 5.15 that is unresolved: https://bugreports.qt.io/browse/QTBUG-73258
+#ifndef NDEBUG
   if (type != QtWarningMsg || !msg.startsWith("QWindowsWindow::setGeometry"))
+#endif
   {
     QByteArray localMsg = msg.toLocal8Bit();
-    fprintf(stdout, localMsg.constData());
+    fprintf(stdout, "%s", localMsg.constData());
   }
+
 }
 
 int main(int argc, char** argv)
 {
+  simCore::initializeSimdisEnvironmentVariables();
   simCore::checkVersionThrow();
   osg::ArgumentParser arguments(&argc, argv);
   simExamples::configureSearchPaths();

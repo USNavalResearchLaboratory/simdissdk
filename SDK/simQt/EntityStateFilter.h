@@ -32,7 +32,7 @@ namespace simData { class CategoryFilter; class DataStore; }
 namespace simQt {
 
   /**
-  * Class to implement a filter based on entity state. This filter can also be updated using on the widget provided.
+  * Class to implement a filter based on entity state. This filter can also be updated using the widget provided.
   */
   class SDKQT_EXPORT EntityStateFilter : public EntityFilter
   {

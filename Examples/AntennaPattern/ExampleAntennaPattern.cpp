@@ -128,7 +128,7 @@ public:
       if (currentAlgIdx + 1 != static_cast<int>(alg_))
       {
         needUpdate = true;
-        alg_ = static_cast<simData::BeamPrefs_AntennaPattern_Algorithm>(currentAlgIdx + 1);
+        alg_ = static_cast<simData::AntennaPatterns::Algorithm>(currentAlgIdx + 1);
       }
 
       // Polarity combo box
@@ -246,17 +246,17 @@ private:
   /** Update the beam's prefs with the current values */
   void update_()
   {
-    std::vector<std::pair<simData::BeamPrefs_AntennaPattern_Algorithm, std::string> > algs;
-    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_PEDESTAL, "PEDESTAL"));
-    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_GAUSS, "GAUSS"));
-    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_CSCSQ, "CSCSQ"));
-    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_SINXX, "SINXX"));
-    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_OMNI, "OMNI"));
+    std::vector<std::pair<simData::AntennaPatterns::Algorithm, std::string> > algs;
+    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::PEDESTAL, "PEDESTAL"));
+    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::GAUSS, "GAUSS"));
+    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::CSCSQ, "CSCSQ"));
+    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::SINXX, "SINXX"));
+    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::OMNI, "OMNI"));
 
     simData::DataStore::Transaction xaction;
     simData::BeamPrefs* prefs = ds_.mutable_beamPrefs(beamId_, &xaction);
-    prefs->set_drawtype(simData::BeamPrefs_DrawType_ANTENNA_PATTERN);
-    prefs->mutable_antennapattern()->set_type(simData::BeamPrefs_AntennaPattern_Type_ALGORITHM);
+    prefs->set_drawtype(simData::BeamPrefs::DrawType::ANTENNA_PATTERN);
+    prefs->mutable_antennapattern()->set_type(simData::AntennaPatterns::Type::ALGORITHM);
     prefs->mutable_antennapattern()->set_algorithm(alg_);
     prefs->mutable_antennapattern()->set_filename(algs[static_cast<int>(alg_) - 1].second);
     prefs->set_polarity(polarity_);
@@ -280,8 +280,8 @@ private:
 
   simData::MemoryDataStore& ds_;
   simData::ObjectId beamId_;
-  simData::BeamPrefs_AntennaPattern_Algorithm alg_ = simData::BeamPrefs_AntennaPattern_Algorithm_PEDESTAL;
-  simData::Polarity polarity_ = simData::POL_UNKNOWN;
+  simData::AntennaPatterns::Algorithm alg_ = simData::AntennaPatterns::Algorithm::PEDESTAL;
+  simData::Polarity polarity_ = simData::Polarity::POL_UNKNOWN;
   float sensitivity_ = -50.f;
   float frequency_ = 7000.f;
   float gain_ = 20.f;
@@ -321,14 +321,14 @@ struct AppData
      blending(nullptr),
      lighting(nullptr)
   {
-    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_PEDESTAL, "PEDESTAL"));
-    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_GAUSS,    "GAUSS"));
-    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_CSCSQ,    "CSCSQ"));
-    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_SINXX,    "SINXX"));
-    algs.push_back(std::make_pair(simData::BeamPrefs_AntennaPattern_Algorithm_OMNI,     "OMNI"));
+    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::PEDESTAL, "PEDESTAL"));
+    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::GAUSS,    "GAUSS"));
+    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::CSCSQ,    "CSCSQ"));
+    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::SINXX,    "SINXX"));
+    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::OMNI,     "OMNI"));
   }
 
-  std::vector< std::pair<simData::BeamPrefs_AntennaPattern_Algorithm, std::string> > algs;
+  std::vector< std::pair<simData::AntennaPatterns::Algorithm, std::string> > algs;
 
   simData::MemoryDataStore ds;
   simData::ObjectId        platformId;
@@ -362,8 +362,8 @@ void applyAntennaPrefs(AppData* app)
 
   simData::DataStore::Transaction xaction;
   simData::BeamPrefs* prefs = app->ds.mutable_beamPrefs(app->beamId, &xaction);
-  prefs->set_drawtype(simData::BeamPrefs_DrawType_ANTENNA_PATTERN);
-  prefs->mutable_antennapattern()->set_type(simData::BeamPrefs_AntennaPattern_Type_ALGORITHM);
+  prefs->set_drawtype(simData::BeamPrefs::DrawType::ANTENNA_PATTERN);
+  prefs->mutable_antennapattern()->set_type(simData::AntennaPatterns::Type::ALGORITHM);
   prefs->mutable_antennapattern()->set_algorithm(app->algs[algorithmIndex].first);
   prefs->mutable_antennapattern()->set_filename(app->algs[algorithmIndex].second);
   prefs->set_polarity((simData::Polarity)polarityIndex);
@@ -529,7 +529,7 @@ void addPlatformAndBeam(AppData* app,
     simData::DataStore::Transaction xaction;
     simData::BeamProperties* props = app->ds.addBeam(&xaction);
     props->set_hostid(app->platformId);
-    props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+    props->set_type(simData::BeamProperties::Type::ABSOLUTE_POSITION);
     app->beamId = props->id();
     xaction.complete(&props);
   }
@@ -610,7 +610,7 @@ int main(int argc, char **argv)
     simData::DataStore::Transaction xaction;
     simData::BeamProperties* props = ds.addBeam(&xaction);
     props->set_hostid(platformId);
-    props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+    props->set_type(simData::BeamProperties::Type::ABSOLUTE_POSITION);
     beamId = props->id();
     xaction.complete(&props);
   }

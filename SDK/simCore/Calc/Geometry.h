@@ -30,6 +30,7 @@
 
 namespace simCore
 {
+class MultiFrameCoordinate;
 
 /// Vector of simCore::Vec3
 typedef std::vector<Vec3> Vec3String;
@@ -305,6 +306,15 @@ SDKCORE_EXPORT simCore::Ray reflectRay(const simCore::Ray& ray, const simCore::V
  * @return Normal of the surface at the intersection point.
  */
 SDKCORE_EXPORT simCore::Vec3 ellipsoidNormalAtIntersection(const simCore::Ellipsoid& ellipsoid, const simCore::Vec3& isectPt);
+
+/**
+ * Returns true if the line segment defined by p1 and p2 intersects a sphere of radius.
+ * @param ecef1 The first location in ECEF coordinates
+ * @param ecef2 The second location in ECEF coordinates
+ * @param radius The radius of the sphere in meters
+ * @return Returns true if the line segment defined by p1 and p2 intersects a sphere of radius.
+ */
+SDKCORE_EXPORT bool doesLineIntersectSphere(const simCore::Vec3& ecef1, const simCore::Vec3& ecef2, double radius);
 
 } // namespace simCore
 

@@ -301,10 +301,14 @@ public:
    * @param[in] valueChecked  check state for this category value
    */
   void setValue(int nameInt, int valueInt, bool valueChecked);
-  /** Removes the entire category name and all values under, as well any associated regular expression. */
-  void removeName(int nameInt);
+  /** Removes the entire category name and all values under, as well any associated regular expression. Returns 0 on success. Failures include name not existing. */
+  int removeName(int nameInt);
+  /** Convenience wrapper around removeName(int); additional failure state if name does not exist. */
+  int removeName(const std::string& categoryName);
   /** Removes the value entirely from the filter.  If the name is empty, it is also removed.  Returns 0 on success. */
   int removeValue(int nameInt, int valueInt);
+  /** Convenience wrapper around removeValue(int, int); additional failure state if a name does not exist. */
+  int removeValue(const std::string& categoryName, const std::string& categoryValue);
 
   /** Retrieves a list of names that are included in this filter.  This includes names impacted by regular expression. */
   void getNames(std::vector<int>& names) const;

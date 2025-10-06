@@ -31,6 +31,7 @@
 #include "simCore/Common/Common.h"
 
 namespace osg { class GraphicsContext; }
+namespace osgEarth { class Capabilities; }
 
 namespace simUtil {
 
@@ -71,10 +72,15 @@ public:
   void print(std::ostream& os, size_t indent=0) const;
 
 private:
-  std::vector<std::pair<std::string, std::string> > caps_;
-  double glVersion_;
-  Usability isUsable_;
-  std::vector<std::string> usabilityConcerns_;
+  /** Adds osgEarth, OSG, and GDAL version data to the capabilities vector. */
+  void recordThirdPartyVersions_();
+  /** Adds OpenGL limits detected by osgEarth capabilities */
+  void recordGlLimits_(const osgEarth::Capabilities& caps);
+
+  /** Adds Graphics Context info (vendor, renderer, version, core profile), records version, from Capabilities */
+  void recordContextInfoFromCaps_(const osgEarth::Capabilities& caps);
+  /** Adds Graphics Context info (vendor, renderer, version, core profile), records version, from OpenGL direct calls; returns non-zero on critical error */
+  int recordContextInfoFromContext_(osg::GraphicsContext& gc);
 
   /** Initialize the capabilities vector from osgEarth::Registry's global Capabilities. */
   void init_();
@@ -85,8 +91,15 @@ private:
   void recordUsabilityConcern_(Usability severity, const std::string& concern);
   /** Extracts the OpenGL version from the GL_VERSION string */
   double extractGlVersion_(const std::string& glVersionString) const;
+
+  /** Checks for invalid GL version, recording a usability concern if needed */
+  void checkInvalidOpenGlVersion_();
   /** Checks for usability concerns wrt vendor-specific OpenGL support */
   void checkVendorOpenGlSupport_(const std::string& vendor, const std::string& glVersionString);
+  /** Checks for low number of CPUs; currently hard-coded to warn on low CPU count (< 4) to catch virtual hardware. */
+  void checkCpuCount_();
+  /** Checks for total RAM; currently hard-coded to warn on low RAM (<= 4gb) to catch virtual hardware. */
+  void checkRam_();
 
   /** Converts boolean to string */
   std::string toString_(bool val) const;
@@ -94,6 +107,13 @@ private:
   std::string toString_(int val) const;
   /** Converts float to string */
   std::string toString_(float val) const;
+
+  std::vector<std::pair<std::string, std::string>> caps_;
+  double glVersion_ = 0.0;
+  std::string vendorString_;
+  std::string glVersionString_;
+  Usability isUsable_ = USABLE;
+  std::vector<std::string> usabilityConcerns_;
 };
 
 }

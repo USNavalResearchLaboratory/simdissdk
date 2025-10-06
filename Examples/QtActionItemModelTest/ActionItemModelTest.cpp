@@ -28,6 +28,7 @@
 #include <QLineEdit>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include "simCore/System/Utils.h"
 #include "simQt/ActionRegistry.h"
 #include "simQt/ActionItemModel.h"
 #include "ActionItemModelTest.h"
@@ -79,6 +80,7 @@ void Engine::addAction(simQt::ActionRegistry& registry, const QString& group, co
 // Example demonstration of the item model
 int main(int argc, char* argv[])
 {
+  simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
   QWidget mainWindow;
 

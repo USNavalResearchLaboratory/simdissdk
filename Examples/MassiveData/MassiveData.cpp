@@ -262,12 +262,12 @@ void configPlatform(const simData::ObjectId&  id,
 
   if (tracks)
   {
-    prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_BRIDGE);
+    prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs::Mode::BRIDGE);
     prefs->mutable_trackprefs()->set_linewidth(1);
   }
   else
   {
-    prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_OFF);
+    prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs::Mode::OFF);
   }
 
   // Set the icon to either a 2D image or a 3D shape
@@ -280,7 +280,7 @@ void configPlatform(const simData::ObjectId&  id,
   if (!nodynscale)
     prefs->set_dynamicscale(true);
 
-  prefs->set_rotateicons(simData::IR_2D_YAW);
+  prefs->set_rotateicons(simData::IconRotation::IR_2D_YAW);
   xaction.complete(&prefs);
 }
 

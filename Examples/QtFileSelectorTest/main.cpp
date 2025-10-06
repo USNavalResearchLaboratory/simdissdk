@@ -21,10 +21,12 @@
  *
  */
 #include <QApplication>
+#include "simCore/System/Utils.h"
 #include "TestFileSelectorWidget.h"
 
 int main(int argc, char* argv[])
 {
+  simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
 
   TestFileSelectorWidget fileSelectorWidget(nullptr);

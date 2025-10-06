@@ -23,6 +23,7 @@
 #include "simCore/Calc/Units.h"
 #include "simCore/String/Angle.h"
 #include "simCore/String/Format.h"
+#include "simCore/System/Utils.h"
 #include "simQt/UnitsComboBox.h"
 #include "UnitsComboBoxTest.h"
 #include "ui_UnitsComboBoxTest.h"
@@ -72,6 +73,7 @@ void UnitsComboBoxTest::updateUnitConverter_()
 // Example demonstration of the Units Combo Boxes
 int main(int argc, char* argv[])
 {
+  simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
   UnitsComboBoxTest mainWindow;
   mainWindow.show();

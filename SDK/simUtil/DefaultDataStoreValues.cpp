@@ -30,7 +30,7 @@ namespace simUtil {
 
 void DefaultEntityPrefs::initializeDataStorePrefs(simData::DataStore& dataStore)
 {
-  // most of the default values are in the protobuf definitions
+  // most of the default values are in the field list definitions
 
   simData::PlatformPrefs platformPrefs;
   DefaultEntityPrefs::initializeDefaultPlatformPrefs(platformPrefs);
@@ -44,7 +44,7 @@ void DefaultEntityPrefs::initializeDataStorePrefs(simData::DataStore& dataStore)
 void DefaultEntityPrefs::initializeDefaultPlatformPrefs(simData::PlatformPrefs& prefs)
 {
   // Platforms-only get default hover settings for position and course/speed on
-  simData::LabelPrefs_DisplayFields* hoverFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hoverdisplayfields();
+  simData::DisplayFields* hoverFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hoverdisplayfields();
   hoverFields->set_xlat(true);
   hoverFields->set_ylon(true);
   hoverFields->set_zalt(true);
@@ -52,7 +52,7 @@ void DefaultEntityPrefs::initializeDefaultPlatformPrefs(simData::PlatformPrefs& 
   hoverFields->set_speed(true);
 
   // Default hook window content
-  simData::LabelPrefs_DisplayFields* hookFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hookdisplayfields();
+  simData::DisplayFields* hookFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hookdisplayfields();
   hookFields->set_xlat(true);
   hookFields->set_ylon(true);
   hookFields->set_zalt(true);
@@ -69,14 +69,14 @@ void DefaultEntityPrefs::initializeDefaultPlatformPrefs(simData::PlatformPrefs& 
 
 void DefaultEntityPrefs::initializeDefaultLaserPrefs(simData::LaserPrefs& prefs)
 {
-  // Lasers default to red, not yellow (colors are 0xRRGGBBAA in protobuf)
+  // Lasers default to red, not yellow (colors are 0xRRGGBBAA)
   prefs.mutable_commonprefs()->set_color(0xff0000ff);
 }
 
 void DefaultEntityPrefs::initializeDefaultLobGroupPrefs(simData::LobGroupPrefs& prefs)
 {
   // LOBs get default hover settings for position and az/el on
-  simData::LabelPrefs_DisplayFields* hoverFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hoverdisplayfields();
+  simData::DisplayFields* hoverFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hoverdisplayfields();
   hoverFields->set_xlat(true);
   hoverFields->set_ylon(true);
   hoverFields->set_zalt(true);
@@ -84,7 +84,7 @@ void DefaultEntityPrefs::initializeDefaultLobGroupPrefs(simData::LobGroupPrefs& 
   hoverFields->set_pitch(true);
 
   // Default hook window content should show position, az/el, and generic/category values
-  simData::LabelPrefs_DisplayFields* hookFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hookdisplayfields();
+  simData::DisplayFields* hookFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hookdisplayfields();
   hookFields->set_xlat(true);
   hookFields->set_ylon(true);
   hookFields->set_zalt(true);

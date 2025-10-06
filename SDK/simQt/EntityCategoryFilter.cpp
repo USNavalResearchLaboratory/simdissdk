@@ -24,6 +24,7 @@
 #include "simData/DataStore.h"
 #include "simQt/CategoryFilterWidget.h"
 #include "simQt/CategoryTreeModel.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/RegExpImpl.h"
 #include "simQt/EntityCategoryFilter.h"
 
@@ -110,6 +111,7 @@ QWidget* EntityCategoryFilter::widget(QWidget* newWidgetParent) const
     rv->setDataStore(categoryFilter_->getDataStore());
     rv->setFilter(*categoryFilter_);
     rv->setSettings(settings_, settingsKeyPrefix_);
+    rv->setToolTip(simQt::formatTooltip(tr("Category Filter"), tr("Display entities based on their category data values.")));
     bindToWidget(rv);
     return rv;
   }

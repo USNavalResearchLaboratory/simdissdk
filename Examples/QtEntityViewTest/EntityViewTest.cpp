@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include "simCore/System/Utils.h"
 #include "simData/DataStoreHelpers.h"
 #include "simData/MemoryDataStore.h"
 #include "simQt/EntityTreeComposite.h"
@@ -196,6 +197,7 @@ void MainWindow::deleteEntity_()
 
 int main(int argc, char* argv[])
 {
+  simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
 
   MainWindow* window = new MainWindow(nullptr);

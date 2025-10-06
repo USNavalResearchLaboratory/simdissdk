@@ -22,6 +22,7 @@
  */
 #include <QApplication>
 #include "simCore/Common/Version.h"
+#include "simCore/System/Utils.h"
 #include "simQt/ResourceInitializer.h"
 #include "simUtil/ExampleResources.h"
 #include "MainWindow.h"
@@ -31,6 +32,7 @@
 int main(int argc, char **argv)
 {
   simCore::checkVersionThrow();
+  simCore::initializeSimdisEnvironmentVariables();
 
   QApplication app(argc, argv);
 
@@ -44,4 +46,3 @@ int main(int argc, char **argv)
 
   return app.exec();
 }
-

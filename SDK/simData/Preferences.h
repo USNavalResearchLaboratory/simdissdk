@@ -20,21 +20,11 @@
  * disclose, or release this software.
  *
  */
-// Include guard is intentionally omitted
-@PROTOBUF_WRAPPER_PREFACE@
+#ifndef SIMDATA_PREFERENCES_H
+#define SIMDATA_PREFERENCES_H
 
-#ifdef _MSC_VER // [
-#pragma warning( push )
-// Disable C4244: "conversion from __int64 to int, possible loss of data"
-// Disable C4251: "identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'"
-// Disable C4267: "conversion from size_t to int, possible loss of data"
-// Disable C4275: non-DLL-interface classkey 'identifier' used as base for DLL-interface classkey 'identifier'
-#pragma warning( disable : 4244 4251 4267 4275 )
-#endif // _MSC_VER ]
+#include "simData/CommonPreferences.h"
+#include "simData/EntityCommands.h"
+#include "simData/EntityPreferences.h"
 
-#include "@_FILE_PREFIX@.pb.h"
-
-#ifdef _MSC_VER // [
-#pragma warning( pop )
-#endif // _MSC_VER ]
-
+#endif

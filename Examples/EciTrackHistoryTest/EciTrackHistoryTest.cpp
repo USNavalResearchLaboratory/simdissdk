@@ -118,7 +118,7 @@ public:
       if (currentModeIdx != static_cast<int>(trackMode_))
       {
         needUpdate = true;
-        trackMode_ = static_cast<simData::TrackPrefs_Mode>(currentModeIdx);
+        trackMode_ = static_cast<simData::TrackPrefs::Mode>(currentModeIdx);
       }
 
       // Alt mode
@@ -148,7 +148,7 @@ public:
       if (currentStyleIdx != static_cast<int>(drawStyle_))
       {
         needUpdate = true;
-        drawStyle_ = static_cast<simData::TimeTickPrefs_DrawStyle>(currentStyleIdx);
+        drawStyle_ = static_cast<simData::TimeTickPrefs::DrawStyle>(currentStyleIdx);
       }
 
       ImGui::TableNextColumn(); ImGui::Text("Transport"); ImGui::TableNextColumn();
@@ -231,8 +231,8 @@ private:
   osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler_;
   osg::ref_ptr<simVis::View> view_;
   osg::ref_ptr<osg::Node> platformModel_;
-  simData::TrackPrefs_Mode trackMode_ = simData::TrackPrefs_Mode_POINT;
-  simData::TimeTickPrefs_DrawStyle drawStyle_ = simData::TimeTickPrefs_DrawStyle_POINT;
+  simData::TrackPrefs::Mode trackMode_ = simData::TrackPrefs::Mode::POINT;
+  simData::TimeTickPrefs::DrawStyle drawStyle_ = simData::TimeTickPrefs::DrawStyle::POINT;
   float time_ = SIM_START;
   bool altMode_ = false;
   bool reverseMode_ = false;
@@ -259,8 +259,8 @@ struct AppData
   osg::ref_ptr<ui::CheckBoxControl> altModeCheck_;
   osg::ref_ptr<ui::CheckBoxControl> reverseModeCheck_;
 
-  std::vector< std::pair<simData::TrackPrefs_Mode, std::string> > modes_;
-  std::vector< std::pair<simData::TimeTickPrefs_DrawStyle, std::string> > timeTickModes_;
+  std::vector< std::pair<simData::TrackPrefs::Mode, std::string> > modes_;
+  std::vector< std::pair<simData::TimeTickPrefs::DrawStyle, std::string> > timeTickModes_;
   simData::DataStore*  ds_;
   simData::ObjectId    hostId_;
   osg::ref_ptr<simVis::View> view_;
@@ -285,15 +285,15 @@ struct AppData
     view_(nullptr),
     platformModel_(nullptr)
   {
-    modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_OFF,    "OFF"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_POINT,  "POINT"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_LINE,   "LINE"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_RIBBON, "RIBBON"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_BRIDGE, "BRIDGE"));
+    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::OFF,    "OFF"));
+    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::POINT,  "POINT"));
+    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::LINE,   "LINE"));
+    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::RIBBON, "RIBBON"));
+    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::BRIDGE, "BRIDGE"));
 
-    timeTickModes_.push_back(std::make_pair(simData::TimeTickPrefs_DrawStyle_NONE,   "OFF"));
-    timeTickModes_.push_back(std::make_pair(simData::TimeTickPrefs_DrawStyle_POINT,  "POINT"));
-    timeTickModes_.push_back(std::make_pair(simData::TimeTickPrefs_DrawStyle_LINE,   "LINE"));
+    timeTickModes_.push_back(std::make_pair(simData::TimeTickPrefs::DrawStyle::NONE,   "OFF"));
+    timeTickModes_.push_back(std::make_pair(simData::TimeTickPrefs::DrawStyle::POINT,  "POINT"));
+    timeTickModes_.push_back(std::make_pair(simData::TimeTickPrefs::DrawStyle::LINE,   "LINE"));
   }
 
   void apply()

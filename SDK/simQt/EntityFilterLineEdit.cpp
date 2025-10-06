@@ -28,11 +28,7 @@
 namespace simQt {
 
 EntityFilterLineEdit::EntityFilterLineEdit(QWidget *parent)
-  : QLineEdit(parent),
-    caseSensitive_(Qt::CaseSensitive),
-    expression_(QRegExp::RegExp),
-    regexOnly_(false),
-    valid_(true)
+  : QLineEdit(parent)
 {
   connect(this, SIGNAL(textChanged(QString)), this, SLOT(textFilterChanged()));
 
@@ -86,14 +82,14 @@ EntityFilterLineEdit::~EntityFilterLineEdit()
 void EntityFilterLineEdit::contextMenuEvent(QContextMenuEvent *event)
 {
   caseSensitiveAction_->setChecked(caseSensitive_ == Qt::CaseSensitive ? true : false);
-  regularAction_->setChecked(expression_ == QRegExp::RegExp ? true : false);
-  wildcardAction_->setChecked(expression_ == QRegExp::Wildcard ? true : false);
-  fixedAction_->setChecked(expression_ == QRegExp::FixedString ? true : false);
+  regularAction_->setChecked(expression_ == RegExpImpl::RegExp ? true : false);
+  wildcardAction_->setChecked(expression_ == RegExpImpl::Wildcard ? true : false);
+  fixedAction_->setChecked(expression_ == RegExpImpl::FixedString ? true : false);
 
   rightMouseClickMenu_->exec(event->globalPos());
 }
 
-void EntityFilterLineEdit::configure(const QString& filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression)
+void EntityFilterLineEdit::configure(const QString& filter, Qt::CaseSensitivity caseSensitive, RegExpImpl::PatternSyntax expression)
 {
   bool revalidate = (text() != filter);
 
@@ -102,7 +98,7 @@ void EntityFilterLineEdit::configure(const QString& filter, Qt::CaseSensitivity 
 
   if (!regexOnly_)
   {
-    // Do not overwrite a pending request for a revalidate
+    // Do not overwrite a pending request for a revalidation
     if (revalidate == false)
       revalidate = ((caseSensitive_ != caseSensitive) || (expression_ != expression));
 
@@ -124,7 +120,7 @@ void EntityFilterLineEdit::revalidate_()
 {
   // Determine whether currently valid
   bool newValid = true;
-  if (expression_ == QRegExp::RegExp)
+  if (expression_ == RegExpImpl::RegExp)
   {
     const QRegularExpression re(text());
     newValid = re.isValid();
@@ -162,16 +158,16 @@ void EntityFilterLineEdit::caseSensitive()
       caseSensitive_ =  Qt::CaseInsensitive;
     else
       caseSensitive_ = Qt::CaseSensitive;
-    // Validity cannot change on this, don't revalidate
+    // Validity cannot change on this, don't re-validate
     Q_EMIT(changed(text(), caseSensitive_, expression_));
   }
 }
 
 void EntityFilterLineEdit::regularExpression()
 {
-  if (expression_ != QRegExp::RegExp)
+  if (expression_ != RegExpImpl::RegExp)
   {
-    expression_= QRegExp::RegExp;
+    expression_= RegExpImpl::RegExp;
     revalidate_();
     Q_EMIT(changed(text(), caseSensitive_, expression_));
   }
@@ -179,9 +175,9 @@ void EntityFilterLineEdit::regularExpression()
 
 void EntityFilterLineEdit::wildcard()
 {
-  if (!regexOnly_ && expression_ != QRegExp::Wildcard)
+  if (!regexOnly_ && expression_ != RegExpImpl::Wildcard)
   {
-    expression_ = QRegExp::Wildcard;
+    expression_ = RegExpImpl::Wildcard;
     revalidate_();
     Q_EMIT(changed(text(), caseSensitive_, expression_));
   }
@@ -189,9 +185,9 @@ void EntityFilterLineEdit::wildcard()
 
 void EntityFilterLineEdit::fixedString()
 {
-  if (!regexOnly_ && expression_ != QRegExp::FixedString)
+  if (!regexOnly_ && expression_ != RegExpImpl::FixedString)
   {
-    expression_ = QRegExp::FixedString;
+    expression_ = RegExpImpl::FixedString;
     revalidate_();
     Q_EMIT(changed(text(), caseSensitive_, expression_));
   }
@@ -218,10 +214,10 @@ void EntityFilterLineEdit::setRegexOnly(bool regexOnly)
   fixedAction_->setVisible(!regexOnly);
 
   // If we're going into regex mode, then we need to update values and emit a signal
-  if (regexOnly && (caseSensitive_ != Qt::CaseInsensitive || expression_ != QRegExp::RegExp))
+  if (regexOnly && (caseSensitive_ != Qt::CaseInsensitive || expression_ != RegExpImpl::RegExp))
   {
     caseSensitive_ = Qt::CaseInsensitive;
-    expression_ = QRegExp::RegExp;
+    expression_ = RegExpImpl::RegExp;
     revalidate_();
     Q_EMIT changed(text(), caseSensitive_, expression_);
   }

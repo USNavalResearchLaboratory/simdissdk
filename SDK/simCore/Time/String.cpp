@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <iomanip>
@@ -1077,6 +1078,177 @@ int TimeFormatterRegistry::fromString(const std::string& timeString, simCore::Ti
 {
   const TimeFormatter& parser = formatter(timeString);
   return parser.fromString(timeString, timeStamp, referenceYear);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+namespace { // anonymous namespace to prevent possible naming conflicts
+
+std::string normalizeSeparators(const std::string& input)
+{
+  std::string normalized = input;
+
+  // Replace common separators with spaces for easier parsing
+  // NOTE: Dots are NOT treated as separators - only as decimal points
+  std::replace(normalized.begin(), normalized.end(), ':', ' ');
+  std::replace(normalized.begin(), normalized.end(), ',', ' ');
+
+  return normalized;
+}
+
+bool tryParseWithSeparators(const std::string& input, FreeFormResult& result)
+{
+  result.hours.reset();
+  result.minutes.reset();
+  result.seconds.reset();
+  if (input.empty())
+    return false;
+
+  std::vector<std::string> tokens;
+  simCore::stringTokenizer(tokens, normalizeSeparators(input), STR_WHITE_SPACE_CHARS, true, false);
+  if (tokens.empty() || tokens.size() > 3)
+    return false;
+
+  if (std::find_if(tokens.begin(), tokens.end(), [](const auto& token) { return token.empty(); }) != tokens.end())
+    return false; // Empty tokens not supported (covers case e.g. HH::SS.sss)
+
+  int hours = 0;
+  int minutes = 0;
+  double seconds = 0.0;
+
+  // Parse based on number of tokens
+  if (tokens.size() == 1)
+  {
+    // Accept seconds values, e.g. SS.ss or S.ss. Portion before
+    // first decimal (if exists) should be size 1 or 2
+    const size_t dotPos = tokens[0].find('.');
+    if (dotPos != std::string::npos)
+    {
+      const std::string seconds = tokens[0].substr(0, dotPos);
+      if (seconds.size() > 2)
+        return false; // Single token prior to fracPart is too long
+    }
+    if (!simCore::isValidNumber(tokens[0], seconds, false))
+      return false;
+
+    result.seconds = seconds;
+  }
+  else if (tokens.size() == 2)
+  {
+    // Assume MM SS format
+    if (tokens[0].find('.') != std::string::npos)
+      return false;  // Fractional minutes not supported
+
+    if (!simCore::isValidNumber(tokens[0], minutes, false) ||
+      !simCore::isValidNumber(tokens[1], seconds, false))
+      return false;
+
+    result.minutes = minutes;
+    result.seconds = seconds;
+  }
+  else if (tokens.size() == 3)
+  {
+    // Assume HH MM SS format
+    if (tokens[0].find('.') != std::string::npos ||
+      tokens[1].find('.') != std::string::npos)
+      return false;  // Fractional hours and minutes not supported
+
+    if (tokens[2].starts_with('.'))
+      return false; // Rejects empty seconds case e.g. HH:MM:.ss
+
+    if (!simCore::isValidNumber(tokens[0], hours, false) ||
+      !simCore::isValidNumber(tokens[1], minutes, false) ||
+      !simCore::isValidNumber(tokens[2], seconds, false))
+      return false;
+
+    result.hours = hours;
+    result.minutes = minutes;
+    result.seconds = seconds;
+  }
+
+  return result.isValid();
+}
+
+std::string expandCompactFormat(const std::string& input)
+{
+  // Clean up any extra whitespace before expanding
+  std::string compact = input;
+  compact.erase(std::remove_if(compact.begin(), compact.end(), ::isspace), compact.end());
+
+  // If input string contains any known separators, assume
+  // it doesn't need expanding and return input string
+  if (input.find(':') != std::string::npos ||
+    input.find(',') != std::string::npos ||
+    input.find(' ') != std::string::npos)
+    return input;
+
+  // Handle fractional seconds (decimal point only)
+  std::string fracPart;
+  size_t dotPos = compact.find('.');
+  if (dotPos != std::string::npos)
+  {
+    fracPart = compact.substr(dotPos + 1);
+    compact = compact.substr(0, dotPos);
+    if (compact.empty())
+      compact = "0"; // Decimal only seconds value, e.g. .123. Use "0" for integral part to assist parsing below
+  }
+
+  // Validate compact string is now a number
+  int compactNumber = 0;
+  if (!simCore::isValidNumber(compact, compactNumber, false))
+    return std::string();  // Return empty string to indicate failure
+
+  std::string expanded;
+  const size_t length = compact.length();
+  switch (length)
+  {
+  case 1:
+  case 2:
+    return input; // Seconds values don't need to be expanded, return as-is
+  case 3: // Assume MSS format, expand "123" to "1 23"
+    expanded = compact.substr(0, 1) + " " + compact.substr(1, 2);
+    break;
+  case 4: // Assume MMSS format, expand "1234" to "12 34"
+    expanded = compact.substr(0, 2) + " " + compact.substr(2, 2);
+    break;
+  case 5: // Assume HMMSS format, expand "12345" to "1 23 45"
+    expanded = compact.substr(0, 1) + " " + compact.substr(1, 2) + " " + compact.substr(3, 2);
+    break;
+  case 6: // Assume HHMMSS format, expand "123456" to "12 34 56"
+    expanded = compact.substr(0, 2) + " " + compact.substr(2, 2) + " " + compact.substr(4, 2);
+    break;
+  default:
+    return std::string();
+  }
+
+  // Add fractional part if present
+  if (!fracPart.empty())
+    expanded += "." + fracPart;
+
+  return expanded;
+}
+
+} // anonymous namespace
+
+bool FreeFormResult::isValid() const
+{
+  // Validate each value is within correct bounds. If value is unset,
+  // use a value that will pass. has_value() checks below verify the
+  // overall struct is valid.
+  if (!simCore::isBetween(hours.value_or(0), 0, 23) ||
+    !simCore::isBetween(minutes.value_or(0), 0, 59) ||
+    seconds.value_or(0.) < 0. || seconds.value_or(0.) >= 60.)
+    return false;
+
+  return hours.has_value() || minutes.has_value() || seconds.has_value();
+}
+
+FreeFormResult parseFreeFormTimeStr(const std::string& input)
+{
+  FreeFormResult result;
+  if (tryParseWithSeparators(expandCompactFormat(input), result))
+    return result;
+  return FreeFormResult();
 }
 
 }

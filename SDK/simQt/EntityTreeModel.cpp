@@ -915,6 +915,10 @@ QModelIndex EntityTreeModel::index(uint64_t id)
       return QModelIndex();
   }
 
+  // Return invalid index if marked for removal
+  if (item->isMarked())
+    return QModelIndex();
+
   return createIndex(item->row(), 0, item);
 }
 

@@ -1,3 +1,8 @@
+# Return early if Qt5 isn't found
+if(NOT TARGET Qt5::Core)
+    return()
+endif()
+
 # sets up installation preferences for LIBNAME, i.e. Core; uses ARGN for component list
 function(vsi_install_qt5_lib LIBNAME)
     # Ui Plug-in has nothing to install

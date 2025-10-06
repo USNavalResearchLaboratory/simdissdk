@@ -56,8 +56,8 @@ public:
   struct Style
   {
     /// Radius values for rounded rectangle drawing
-    qreal rectangleRadiusX;
-    qreal rectangleRadiusY;
+    qreal rectangleRadiusX = 4.0;
+    qreal rectangleRadiusY = 4.0;
 
     /// Pen and colors for the rectangle and its outline
     QPen outlinePen;
@@ -258,25 +258,25 @@ private:
   std::shared_ptr<FilterClearListener> listener_;
 
   /** Widget that displays the filters */
-  QListWidget* listWidget_;
+  QListWidget* listWidget_ = nullptr;
   /** Delegate that draws the filter items */
-  CloseableItemDelegate* itemDelegate_;
+  CloseableItemDelegate* itemDelegate_ = nullptr;
   /** Delegate to use when the list has no items (default delegate) */
-  QStyledItemDelegate* plainDelegate_;
+  QStyledItemDelegate* plainDelegate_ = nullptr;
   /** Copy of the current filter */
-  simData::CategoryFilter* filter_;
+  simData::CategoryFilter* filter_ = nullptr;
 
   /** Minimum number of items in a category before grouping */
-  int minimumGroupSize_;
+  int minimumGroupSize_ = 3;
   /** Hide the widget with a size of 0 when it is empty */
-  bool hideWhenEmpty_;
+  bool hideWhenEmpty_ = true;
   /** Text to display when there are no items in the list */
   QString emptyText_;
 
   // Size hints calculated in minimumSizeHint(); mutable, following style from QLabel
   mutable QSize minimumSizeHint_;
   mutable QSize sizeHint_;
-  mutable bool validHints_;
+  mutable bool validHints_ = false;
 };
 
 }

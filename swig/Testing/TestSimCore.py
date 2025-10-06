@@ -192,6 +192,8 @@ assert(outCoord.coordinateSystem() == simCore.COORD_SYS_ECEF)
 # Note, static conversion methods are called by CoordinateConverter.convert() internally.  They
 # are not explicitly tested in this script.
 
+localToEarth = simCore.CoordinateConverter.setLocalToEarthDcm(45.0, -123.0, simCore.LOCAL_LEVEL_FRAME_NED)
+assert(localToEarth is not None)
 #############################
 # Gars.h
 isValid, err, lonBand, latPrimaryIdx, latSecondaryIdx, quad15, key5 = simCore.Gars.isValidGars("718KR45")

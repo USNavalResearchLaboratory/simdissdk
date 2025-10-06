@@ -43,6 +43,15 @@ bool draw(simData::DataStore* ds, uint64_t id)
   return (pp ? pp->commonprefs().draw() : false);
 }
 
+/// Returns the color setting for a particular platform
+uint32_t color(simData::DataStore* ds, uint64_t id)
+{
+  simData::DataStore::Transaction t;
+  const simData::PlatformPrefs* pp = ds->platformPrefs(id, &t);
+  assert(pp);
+  return (pp ? pp->commonprefs().color() : 0);
+}
+
 bool labelDraw(simData::DataStore* ds, uint64_t id)
 {
   simData::DataStore::Transaction t;
@@ -476,7 +485,7 @@ int validateAcceptProjectorIds(const simData::DataStore* ds, simData::ObjectId i
   simData::DataStore::Transaction txn;
   auto* prefs = ds->commonPrefs(id, &txn);
   rv += SDK_ASSERT(prefs != nullptr);
-  const auto& actualValues = simData::DataStoreHelpers::vecFromRepeated(prefs->acceptprojectorids());
+  const auto& actualValues = prefs->acceptprojectorids();
   rv += SDK_ASSERT(actualValues == expectedValues);
   return rv;
 }
@@ -508,18 +517,19 @@ int testAcceptProjectorsPrefs()
   // "5,6" at time 5
   cmd = ds->addPlatformCommand(platId1, &t);
   cmd->set_time(5.0);
-  simData::DataStoreHelpers::vecToRepeated(cmd->mutable_updateprefs()->mutable_commonprefs()->mutable_acceptprojectorids(), { 5, 6 });
+  *cmd->mutable_updateprefs()->mutable_commonprefs()->mutable_acceptprojectorids() = { 5, 6 };
   t.complete(&cmd);
   // "6,15" at time 15
   cmd = ds->addPlatformCommand(platId1, &t);
   cmd->set_time(15.0);
-  simData::DataStoreHelpers::vecToRepeated(cmd->mutable_updateprefs()->mutable_commonprefs()->mutable_acceptprojectorids(), { 6, 15 });
+  *cmd->mutable_updateprefs()->mutable_commonprefs()->mutable_acceptprojectorids() = { 6, 15 };
   t.complete(&cmd);
   // "10" only, at time 10
   cmd = ds->addPlatformCommand(platId1, &t);
   cmd->set_time(10.0);
-  simData::DataStoreHelpers::vecToRepeated(cmd->mutable_updateprefs()->mutable_commonprefs()->mutable_acceptprojectorids(), { 10 });
+  *cmd->mutable_updateprefs()->mutable_commonprefs()->mutable_acceptprojectorids() = { 10 };
   t.complete(&cmd);
+
 
   // Since time hasn't updated, we shouldn't have any changes -- nothing prior to time 5
   rv += validateAcceptProjectorIds(ds, platId1, { 4 });
@@ -703,6 +713,194 @@ int testCommandTiming()
   return rv;
 }
 
+int testClear()
+{
+  int rv = 0;
+
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore* ds = testHelper.dataStore();
+
+  // insert platform
+  simData::DataStore::Transaction t;
+  uint64_t platId1 = testHelper.addPlatform();
+  testHelper.addPlatformUpdate(0, platId1);
+  testHelper.addPlatformUpdate(100, platId1);
+
+  simData::PlatformCommand command;
+  command.mutable_updateprefs()->set_icon("1");
+  command.mutable_updateprefs()->mutable_commonprefs()->set_color(1);
+  command.set_time(1.0);
+  testHelper.addPlatformCommand(command, platId1);
+
+  command.set_time(2.0);
+  command.set_isclearcommand(true);
+  command.mutable_updateprefs()->mutable_commonprefs()->clear_color();
+  testHelper.addPlatformCommand(command, platId1);
+
+  command.mutable_updateprefs()->set_icon("3");
+  command.set_time(3.0);
+  command.set_isclearcommand(false);
+  testHelper.addPlatformCommand(command, platId1);
+
+  // Default values set by the DataStoreTestHelper
+  ds->update(0.0);
+  rv += SDK_ASSERT(icon(ds, platId1) == "icon1");
+  rv += SDK_ASSERT(color(ds, platId1) == 0xffff00ff); // Yellow
+
+  // First command
+  ds->update(1.0);
+  rv += SDK_ASSERT(icon(ds, platId1) == "1");
+  rv += SDK_ASSERT(color(ds, platId1) == 1);
+
+  // Clear command only affects the icon
+  ds->update(2.0);
+  rv += SDK_ASSERT(icon(ds, platId1) == "");
+  rv += SDK_ASSERT(color(ds, platId1) == 1);
+
+  // Third command
+  ds->update(3.0);
+  rv += SDK_ASSERT(icon(ds, platId1) == "3");
+  rv += SDK_ASSERT(color(ds, platId1) == 1);
+
+  // Go back in time, but the default values are lost since they were overwritten by a command
+  ds->update(0.0);
+  rv += SDK_ASSERT(icon(ds, platId1) == "3");
+  rv += SDK_ASSERT(color(ds, platId1) == 1);
+
+  // First command
+  ds->update(1.0);
+  rv += SDK_ASSERT(icon(ds, platId1) == "1");
+  rv += SDK_ASSERT(color(ds, platId1) == 1);
+
+  // Clear command only affects the icon
+  ds->update(2.0);
+  rv += SDK_ASSERT(icon(ds, platId1) == "");
+  rv += SDK_ASSERT(color(ds, platId1) == 1);
+
+  // Third command
+  ds->update(3.0);
+  rv += SDK_ASSERT(icon(ds, platId1) == "3");
+  rv += SDK_ASSERT(color(ds, platId1) == 1);
+
+  return rv;
+}
+
+int testModify()
+{
+  int rv = 0;
+
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore* ds = testHelper.dataStore();
+
+  // insert platform
+  simData::DataStore::Transaction t;
+  uint64_t platId1 = testHelper.addPlatform();
+  testHelper.addPlatformUpdate(0, platId1);
+  testHelper.addPlatformUpdate(100, platId1);
+
+  simData::PlatformCommand command;
+  command.mutable_updateprefs()->set_icon("1");
+  command.mutable_updateprefs()->mutable_commonprefs()->set_color(1);
+  command.set_time(1.0);
+  testHelper.addPlatformCommand(command, platId1);
+
+  command.set_time(2.0);
+  command.set_isclearcommand(true);
+  command.mutable_updateprefs()->mutable_commonprefs()->clear_color();
+  testHelper.addPlatformCommand(command, platId1);
+
+  command.mutable_updateprefs()->set_icon("3");
+  command.set_time(3.0);
+  command.set_isclearcommand(false);
+  testHelper.addPlatformCommand(command, platId1);
+
+  /** Remove icons from platform commands*/
+  class RemoveIconCommand : public simData::VisitableDataSlice<simData::PlatformCommand>::Modifier
+  {
+  public:
+
+    RemoveIconCommand()
+    {
+    }
+
+    virtual ~RemoveIconCommand()
+    {
+    }
+
+    virtual int modify(simData::FieldList& message) override
+    {
+      auto command = dynamic_cast<simData::PlatformCommand*>(&message);
+      // Wrong message was passed in
+      assert(command != nullptr);
+      if (command == nullptr)
+        return 0;
+
+      if (!command->has_updateprefs())
+        return 0;
+
+      if (!command->updateprefs().has_icon())
+        return 0;
+
+      command->mutable_updateprefs()->clear_icon();
+      return -1;
+    }
+  };
+
+  /** Remove Color from platform commands*/
+  class RemoveColorCommand : public simData::VisitableDataSlice<simData::PlatformCommand>::Modifier
+  {
+  public:
+
+    RemoveColorCommand()
+    {
+    }
+
+    virtual ~RemoveColorCommand()
+    {
+    }
+
+    virtual int modify(simData::FieldList& message) override
+    {
+      auto command = dynamic_cast<simData::PlatformCommand*>(&message);
+      // Wrong message was passed in
+      assert(command != nullptr);
+      if (command == nullptr)
+        return 0;
+
+      if (!command->has_updateprefs())
+        return 0;
+
+      if (!command->updateprefs().has_commonprefs())
+        return 0;
+
+      if (!command->updateprefs().commonprefs().has_color())
+        return 0;
+
+      command->mutable_updateprefs()->mutable_commonprefs()->clear_color();
+      return -1;
+    }
+  };
+
+  // Should start with 3 commands
+  rv += SDK_ASSERT(ds->platformCommandSlice(platId1)->numItems() == 3);
+
+  // Remove 2 icon commands
+  RemoveIconCommand remove;
+  ds->modifyPlatformCommandSlice(platId1, &remove);
+
+  // Should be one color command left
+  rv += SDK_ASSERT(ds->platformCommandSlice(platId1)->numItems() == 1);
+
+  // Remove the remaining color command
+  RemoveColorCommand color;
+  ds->modifyPlatformCommandSlice(platId1, &color);
+
+  // All commands removed
+  rv += SDK_ASSERT(ds->platformCommandSlice(platId1)->numItems() == 0);
+
+  return rv;
+}
+
 }
 
 int TestCommands(int argc, char* argv[])
@@ -715,6 +913,8 @@ int TestCommands(int argc, char* argv[])
   rv += testPlatformCommand();
   rv += testAcceptProjectorsPrefs();
   rv += testAcceptProjectorsCommands();
+  rv += testClear();
+  rv += testModify();
 
   return rv;
 }

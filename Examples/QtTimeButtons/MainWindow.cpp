@@ -32,7 +32,7 @@
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simQt/TimeButtons.h"
-#include "simQt/ViewWidget.h"
+#include "simQt/ViewerWidgetAdapter.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
 #include "MainWindow.h"
@@ -76,6 +76,8 @@ MainWindow::MainWindow()
   view->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   viewMan_ = new simVis::ViewManager(); // Note that the log depth buffer is not installed
+  // This example has only one main view, so although it uses Qt we do not need multiple viewers
+  viewMan_->setUseMultipleViewers(false);
   viewMan_->addView(view.get());
 
   // data source which will provide positions for the platform
@@ -84,10 +86,6 @@ MainWindow::MainWindow()
   dataStore_->setInterpolator(new simData::LinearInterpolator());
   dataStore_->enableInterpolation(true);
   sceneMan->getScenario()->bind(dataStore_);
-
-  // wrap the view in a Qt widget
-  simQt::ViewWidget* viewWidget = new simQt::ViewWidget(view.get());
-  setCentralWidget(viewWidget);
 
   // clock will manage simulation time
   clock_ = new simCore::ClockImpl;
@@ -107,13 +105,16 @@ MainWindow::MainWindow()
   timeButtons->bindToActions(timeButtonActions);
   buttonDialog->show();
 
-  // timer to drive updates
-  connect(&updateTimer_, &QTimer::timeout, this, &MainWindow::notifyFrameUpdate_);
-  updateTimer_.start(33); // 33 ms -> 30 Hz
+  // Create the ViewerWidgetAdapter, and set the central widget to it
+  auto viewerWidget = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, this);
+  viewerWidget->setViewer(viewMan_->getViewer());
+  viewerWidget->setTimerInterval(33); // 30 hz
+  connect(viewerWidget, &simQt::ViewerWidgetAdapter::aboutToPaintGl, this, &MainWindow::notifyFrameUpdate_);
+  setCentralWidget(viewerWidget);
 
   resize(800, 600);
   setWindowTitle("Qt Time Buttons SDK Example");
-  view->lookAt(51.5072, 0.1276, 6500000, 0, -90, 0);
+  view->lookAt(51.5072, 0.1276, 0, 0, -90, 6500000);
 }
 
 void MainWindow::notifyFrameUpdate_()
@@ -123,9 +124,6 @@ void MainWindow::notifyFrameUpdate_()
 
   // update the data store with the new time
   dataStore_->update(dataStore_->updateTime());
-
-  // refresh the view
-  viewMan_->frame();
 }
 
 simData::ObjectId MainWindow::addPlatform_(simData::DataStore &dataStore)
@@ -151,7 +149,7 @@ simData::ObjectId MainWindow::addPlatform_(simData::DataStore &dataStore)
   prefs->mutable_commonprefs()->set_draw(true);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_overlayfontpointsize(14);
-  prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_LINE);
+  prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs::Mode::LINE);
   transaction.complete(&prefs);
 
   return result;
@@ -186,4 +184,3 @@ void MainWindow::setupSimulatedPlatform_()
 
   clock_->setEndTime(simCore::TimeStamp(1970, 800.));
 }
-

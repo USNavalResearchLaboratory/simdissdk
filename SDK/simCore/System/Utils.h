@@ -24,6 +24,7 @@
 #define SIMCORE_SYSTEM_UTILS_H
 
 #include <string>
+#include <vector>
 #include "simCore/Common/Export.h"
 
 namespace simCore

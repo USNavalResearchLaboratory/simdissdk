@@ -1142,6 +1142,16 @@ void CategoryTreeModel::setFilter(const simData::CategoryFilter& filter)
   if (firstChangeRow != -1 && lastChangeRow != -1)
   {
     Q_EMIT dataChanged(index(firstChangeRow, 0), index(lastChangeRow, 0));
+
+    // Need to also send out change signals for children (category values); Loop through changed
+    // parents (category names) and send for all children (category values)
+    for (int parentRow = firstChangeRow; parentRow <= lastChangeRow; ++parentRow)
+    {
+      const QModelIndex categoryIndex = index(parentRow, 0);
+      const int numRows = rowCount(categoryIndex);
+      if (numRows > 0)
+        Q_EMIT dataChanged(index(0, 0, categoryIndex), index(numRows - 1, 0, categoryIndex));
+    }
   }
   Q_EMIT filterChanged(*filter_);
 }

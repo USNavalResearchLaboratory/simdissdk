@@ -34,23 +34,6 @@
 #include "simCore/Common/Export.h"
 
 
-// Define helper macros for declaring methods as deprecated
-#ifdef WIN32
-#define SDK_DEPRECATED_PRE(_TEXT) __declspec(deprecated(_TEXT))
-#define SDK_DEPRECATED_POST(_TEXT)
-#else
-#define SDK_DEPRECATED_PRE(_TEXT)
-#define SDK_DEPRECATED_POST(_TEXT) __attribute__((deprecated))
-#endif
-
-/**
- * Defines a convenient macro for marking a method or function as deprecated.
- * The macro will use the compiler-specific tags to mark a method deprecated, so
- * that if you call it in your code, you get a warning in your compile log.
- */
-#define SDK_DEPRECATE(METHOD, TEXT) SDK_DEPRECATED_PRE(TEXT) METHOD SDK_DEPRECATED_POST(TEXT)
-
-
 /** Disable copy constructor and copy assignment, on class "K" */
 #define SDK_DISABLE_COPY(K) \
   K(const K&) = delete; \

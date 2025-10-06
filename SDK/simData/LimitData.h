@@ -40,6 +40,7 @@
  */
 
 #include <cassert>
+#include <map>
 #include "simData/DataLimiter.h"
 #include "simData/DataStore.h"
 

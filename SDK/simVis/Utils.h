@@ -37,6 +37,7 @@
 #include "osg/Geometry"
 #include "osg/Matrix"
 #include "osg/NodeCallback"
+#include "osg/Notify"
 #include "osg/Quat"
 #include "osg/Transform"
 #include "osgGA/GUIEventHandler"
@@ -57,7 +58,9 @@ namespace osgEarth { class UnitsType; }
 namespace osgEarth { using UnitsType = Units; }
 #endif
 
-// MACROS to test for changes in protobuf properties.
+// Macros to test for changes in field values.
+// The macros were initially for protobuf messages, which is why they start with PB_.
+// The macros also work with the simData::FieldList definitions.
 
 #define PB_HAS_FIELD(a, field) ( \
   ((a)!=nullptr) && ((a)->has_##field()) )
@@ -85,7 +88,7 @@ namespace osgEarth { using UnitsType = Units; }
 
 #define PB_REPEATED_FIELD_CHANGED(a, b, field) ( \
   ((a)->field ## _size() != (b)->field ## _size()) || \
-  (simData::DataStoreHelpers::vecFromRepeated((a)->field()) != simData::DataStoreHelpers::vecFromRepeated((b)->field())) )
+  ((a)->field() != (b)->field()) )
 
 
 #define PB_HAS_SUBFIELD(a, first, second) ( \
@@ -284,10 +287,10 @@ namespace simVis
   /// Returns font size that scales from OSG to SIMDIS 9
   SDKVIS_EXPORT float simdisFontSize(float osgFontSize);
 
-  /// Converts from protobuf label backdrop type to OSG backdrop type
+  /// Converts from simData label backdrop type to OSG backdrop type
   SDKVIS_EXPORT osgText::Text::BackdropType backdropType(simData::BackdropType type);
 
-  /// Converts from protobuf label backdrop implementation to OSG backdrop implementation
+  /// Converts from simData label backdrop implementation to OSG backdrop implementation
   SDKVIS_EXPORT osgText::Text::BackdropImplementation backdropImplementation(simData::BackdropImplementation implementation);
 
   /**
@@ -861,6 +864,33 @@ namespace simVis
     osg::Vec2f windowSize_;
     std::function<void(const osg::Vec2f&)> func_;
   };
+
+  /** osg::NotifyHandler instance that removes messages that match filters. */
+  class SDKVIS_EXPORT FilteringOsgNotifyDecorator : public osg::NotifyHandler
+  {
+  public:
+    explicit FilteringOsgNotifyDecorator(osg::NotifyHandler* child);
+
+    /** Adds a filter. Messages matching the filter exactly will be removed and not sent to output. */
+    void addFilter(const std::string& filter);
+
+    // From NotifyHandler:
+    virtual void notify(osg::NotifySeverity severity, const char* message) override;
+
+  protected:
+    // Protected, from osg::Referenced
+    virtual ~FilteringOsgNotifyDecorator();
+
+  private:
+    osg::ref_ptr<osg::NotifyHandler> child_;
+    std::vector<std::string> filters_;
+  };
+
+  /**
+   * Creates a FilteringOsgNotifyDecorator, installs it wrapping the current notify handler, returning
+   * itself. This decorator is pre-loaded with filters that may be needed to reduce noise in OSG notify.
+   */
+  SDKVIS_EXPORT FilteringOsgNotifyDecorator* installFilteringOsgNotifyDecorator();
 
 } // namespace simVis
 

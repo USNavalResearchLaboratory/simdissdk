@@ -26,6 +26,7 @@
 #include <array>
 #include <vector>
 #include "simCore/Calc/SquareMatrix.h"
+#include "simCore/Calc/Vec3.h"
 
 namespace simCore
 {
@@ -89,6 +90,26 @@ public:
   * @return 0 on success, non-zero if quaternion array was invalid or not normalized
   */
   int fromQ(const std::array<double, 4>& q);
+
+  /**
+  * Converts from a direction cosine matrix provided as double [3][3]
+  * @param a  matrix
+  */
+  void fromD3M(const double a[][3]);
+
+  /**
+  * Multiply by the given vector
+  * @param u  Vec3 vector
+  * @return Vec3  this * u
+  */
+  Vec3 d3Mv3Mult(const Vec3& u);
+
+  /**
+  * Multiply the transpose by the given vector
+  * @param u  Vec3 vector
+  * @return Vec3  transpose(this) * u
+  */
+  Vec3 d3MTv3Mult(const Vec3& u);
 };
 
 }

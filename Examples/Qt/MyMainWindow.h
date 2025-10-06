@@ -23,18 +23,11 @@
 #ifndef EXAMPLES_QT_MYMAINWINDOW_H
 #define EXAMPLES_QT_MYMAINWINDOW_H
 
-#include <QApplication>
 #include <QMainWindow>
-#include <QMenuBar>
-#include <QStatusBar>
-#include <QTimer>
-#include <QSignalMapper>
-#include <QGLWidget>
-#include <QWindow>
-
 #include "simVis/Utils.h"
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"
+#include "simQt/ViewerWidgetAdapter.h"
 #include "simUtil/StatsHandler.h"
 
 // custom MainWindow that runs a timer against the ViewManager.
@@ -44,19 +37,12 @@ class MyMainWindow : public QMainWindow
 
 public:
   explicit MyMainWindow(simVis::ViewManager* viewMan)
-    : glWindow_(nullptr)
   {
     viewMan_ = viewMan;
 
-    // disable the default ESC-to-quit event:
-    viewMan_->getViewer()->setKeyEventSetsDone(0);
-    viewMan_->getViewer()->setQuitEventSetsDone(false);
-
-    // timer fires a paint event.
-    connect(&timer_, SIGNAL(timeout()), this, SLOT(update()));
-    // timer single shot to avoid infinite loop problems in Qt on MSVC11
-    timer_.setSingleShot(true);
-    timer_.start(20);
+    viewerWidget_ = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, this);
+    viewerWidget_->setViewer(viewMan_->getViewer());
+    setCentralWidget(viewerWidget_);
 
     statsHandler_ = new simUtil::StatsHandler;
     simVis::fixStatsHandlerGl2BlockyText(statsHandler_.get());
@@ -65,25 +51,11 @@ public:
       mainView->addEventHandler(statsHandler_.get());
   }
 
-  void setGlWidget(QGLWidget* glWidget)
-  {
-    setCentralWidget(glWidget);
-    glWindow_ = glWidget->windowHandle();
-  }
-
-  void paintEvent(QPaintEvent* e)
-  {
-    // refresh all the views.
-    if (glWindow_ && glWindow_->isExposed())
-      viewMan_->frame();
-    timer_.start();
-  }
-
 public Q_SLOTS:
 
   void setTimerInterval(int value)
   {
-    timer_.setInterval(value);
+    viewerWidget_->setTimerInterval(value);
   }
 
   void toggleFrameRate(bool turnOn)
@@ -97,10 +69,9 @@ public Q_SLOTS:
   }
 
 protected:
-  QTimer                              timer_;
   osg::ref_ptr<simVis::ViewManager>   viewMan_;
   osg::ref_ptr<simUtil::StatsHandler> statsHandler_;
-  QWindow*                            glWindow_;
+  simQt::ViewerWidgetAdapter* viewerWidget_ = nullptr;
 };
 
 #endif /* EXAMPLES_QT_MYMAINWINDOW_H */

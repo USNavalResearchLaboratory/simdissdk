@@ -47,7 +47,7 @@ class SDKUTIL_EXPORT GogObject
 {
 public:
   /// Definition of the GOG draw state.
-  enum DrawState
+  enum class GogDrawState
   {
     ON = 0, ///< all child shape nodes are drawn
     OFF,    ///< all child shape nodes are not drawn
@@ -141,7 +141,7 @@ public:
   * Defines the current draw state of the GOG, which depends on the draw state of all the child shape nodes
   * @return the current draw state of the whole GOG
   */
-  virtual DrawState getDrawState() const = 0;
+  virtual GogDrawState getDrawState() const = 0;
 
   /**
   * Update the fill color of the GOG. Will apply the fill color to all shape nodes that support filled.

@@ -55,11 +55,22 @@ public:
 
   /** True if the given path is equivalent (same file or directory and file status is the same) */
   bool isEquivalent(const std::string& toPath) const;
+  /**
+   * Convert the stored path to an absolute form, if it isn't already.
+   * Returns true if path changed, false otherwise
+   */
+  bool makeAbsolute();
 
-  /** Returns the name portion of the filename, e.g. "foo.bar" given "/tmp/foo.bar" */
+  /** Returns the name portion of the path, e.g. "foo.bar" given "/tmp/foo.bar" */
   std::string fileName() const;
-  /** Returns the directory portion of the filename, e.g. "/tmp" given "/tmp/foo.bar" or given "/tmp/" */
+  /** Returns the directory portion of the path, e.g. "/tmp" given "/tmp/foo.bar" or given "/tmp/" */
   std::string path() const;
+  /** Returns the absolute directory portion of the path, converted to absolute if necessary */
+  std::string absolutePath() const;
+  /** Returns both directory and filename, can be either absolute or relative */
+  std::string filePath() const;
+  /** Returns both directory and filename, converted to absolute if necessary */
+  std::string absoluteFilePath() const;
 
 private:
   std::string path_;
@@ -166,6 +177,14 @@ SDKCORE_EXPORT std::string userApplicationDataDirectory(bool roaming);
  */
 SDKCORE_EXPORT std::vector<std::string> filesMissingFromPath(const std::string& path, const std::vector<std::string>& expectedRelativeFiles);
 
+/**
+ * Returns a lexically-normalized filepath, with environment variables expanded and
+ * no redundant dot operators (e.g. "/dir/./" => "/dir/" or "/dir/subdir/../" => "/dir/").
+ * This method does not verify the file or path exists and does not access the filesystem.
+ * Note that slashes in the return value will always be the filesystem "preferred":
+ * ("\\" on Windows and "/" on Linux)
+ */
+SDKCORE_EXPORT std::string normalizeFilepath(const std::string& filePath);
 }
 
 #endif /* SIMCORE_SYSTEM_FILE_H */

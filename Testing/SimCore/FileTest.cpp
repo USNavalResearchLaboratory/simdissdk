@@ -25,6 +25,7 @@
 #include <iostream>
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/ScopeGuard.h"
+#include "simCore/String/Utils.h"
 #include "simCore/System/File.h"
 
 #ifndef WIN32
@@ -37,7 +38,13 @@ int testFileInfo()
 {
   int rv = 0;
 
+#ifdef WIN32
+  // On some Windows test machines, __FILE__ uses backslashes, messes up direct comparisons below
+  const std::string thisCppFile = simCore::backslashToFrontslash(__FILE__);
+#else
   const std::string thisCppFile = __FILE__;
+#endif
+
   // Make sure the file exists. If not, the rest of the test is bogus.
   std::ifstream ifs(thisCppFile);
   if (!ifs)
@@ -52,11 +59,32 @@ int testFileInfo()
   rv += SDK_ASSERT(thisCppFileInfo.exists());
   rv += SDK_ASSERT(thisCppFileInfo.isRegularFile());
   rv += SDK_ASSERT(!thisCppFileInfo.isDirectory());
+  rv += SDK_ASSERT(thisCppFileInfo.filePath() == thisCppFile);
+  rv += SDK_ASSERT(thisCppFileInfo.absoluteFilePath() == thisCppFile);
 
-  const simCore::FileInfo cwdInfo(".");
+#ifdef WIN32
+  const std::string rootFilePath = "C:/test";
+#else
+  const std::string rootFilePath = "/usr/test";
+#endif
+
+  // Confirm that FileInfo properly handles a path that is just a drive
+  const simCore::FileInfo rootLevelFile(rootFilePath);
+  auto [path, name] = simCore::pathSplit(rootFilePath);
+#ifdef WIN32
+  path = path + "/"; // Slash is relevant to root path for Windows drives
+#endif
+  rv += SDK_ASSERT(rootLevelFile.filePath() == rootFilePath);
+  rv += SDK_ASSERT(rootLevelFile.absolutePath() == path);
+  rv += SDK_ASSERT(rootLevelFile.path() == path);
+
+  simCore::FileInfo cwdInfo(".");
   rv += SDK_ASSERT(cwdInfo.exists());
   rv += SDK_ASSERT(!cwdInfo.isRegularFile());
   rv += SDK_ASSERT(cwdInfo.isDirectory());
+  rv += SDK_ASSERT(!cwdInfo.absolutePath().empty());
+  rv += SDK_ASSERT(cwdInfo.makeAbsolute());
+  rv += SDK_ASSERT(cwdInfo.path() == cwdInfo.absolutePath());
 
   const simCore::FileInfo nonExist("doesNotExist");
   rv += SDK_ASSERT(!nonExist.exists());
@@ -496,6 +524,73 @@ int testFileInfoNamePath()
   return rv;
 }
 
+int testNormalizeFile()
+{
+  int rv = 0;
+
+  // ExpandEnv tested elsewhere, just a cursory check to make sure it's happening
+#ifdef WIN32
+  rv += SDK_ASSERT(simCore::normalizeFilepath("$(SIMDIS_DIR)\\path") != "$(SIMDIS_DIR)\\path");
+#else
+  rv += SDK_ASSERT(simCore::normalizeFilepath("$(SIMDIS_DIR)/path") != "$(SIMDIS_DIR)/path");
+#endif
+
+  // Test removal of useless dots
+#ifdef WIN32
+  rv += SDK_ASSERT(simCore::normalizeFilepath("\\a\\.\\") == "\\a\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath(".\\a\\") == "a\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("\\.\\a\\") == "\\a\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("a\\b\\.\\") == "a\\b\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("C:\\a\\b\\.\\") == "C:\\a\\b\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("C:\\a\\.\\b\\") == "C:\\a\\b\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("\\a\\b\\..\\") == "\\a\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("\\a\\b\\..\\file") == "\\a\\file");
+#else
+  rv += SDK_ASSERT(simCore::normalizeFilepath("/a/./") == "/a/");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("./a/") == "a/");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("/./a/") == "/a/");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("a/b/./") == "a/b/");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("C:/a/b/./") == "C:/a/b/");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("C:/a/./b/") == "C:/a/b/");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("/a/b/../") == "/a/");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("/a/b/../file") == "/a/file");
+#endif
+
+
+  // Test that valid dots are left
+#ifdef WIN32
+  rv += SDK_ASSERT(simCore::normalizeFilepath("..\\a\\.\\") == "..\\a\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("..\\..\\a\\.\\") == "..\\..\\a\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("a\\..\\..\\") == ".."); // For a relative path, a\\ cancels the first .. (go into a, then back up), leaving only the second (one level above start)
+  rv += SDK_ASSERT(simCore::normalizeFilepath("\\a\\..\\") == "\\"); // For an absolute path, only the root directory is above "\\a\\"
+  rv += SDK_ASSERT(simCore::normalizeFilepath("\\a\\..\\..\\") == "\\"); // Cannot go beyond root
+#else
+  rv += SDK_ASSERT(simCore::normalizeFilepath("../a/./") == "../a/");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("../../a/./") == "../../a/");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("a/../../") == ".."); // For a relative path, a/ cancels the first .. (go into a, then back up), leaving only the second (one level above start)
+  rv += SDK_ASSERT(simCore::normalizeFilepath("/a/../") == "/"); // For an absolute path, only the root directory is above /a/
+  rv += SDK_ASSERT(simCore::normalizeFilepath("/a/../../") == "/"); // Cannot go beyond root
+#endif
+
+
+  // Test normalization of slashes
+#ifdef WIN32
+  rv += SDK_ASSERT(simCore::normalizeFilepath("C:\\test\\path\\") == "C:\\test\\path\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("C:/test/path/") == "C:\\test\\path\\");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("\\test\\\\path\\") == "\\test\\path\\"); // Removal of extra slashes
+  rv += SDK_ASSERT(simCore::normalizeFilepath("\\\\test\\\\path\\") == "\\\\test\\path\\"); // Double slash at start left alone
+  rv += SDK_ASSERT(simCore::normalizeFilepath("\\\\\\test\\\\path\\") == "\\test\\path\\"); // Any more than two slashes at start treated as incorrect, reverts to single
+#else
+  rv += SDK_ASSERT(simCore::normalizeFilepath("C:\\test\\path\\") == "C:\\test\\path\\"); // std::filesystem leaves backslashes as-is on Linux, since they are valid filename characters
+  rv += SDK_ASSERT(simCore::normalizeFilepath("C:/test/path/") == "C:/test/path/");
+  rv += SDK_ASSERT(simCore::normalizeFilepath("/test///path/") == "/test/path/"); // Removal of extra slashes
+  rv += SDK_ASSERT(simCore::normalizeFilepath("//test///path/") == "/test/path/"); // Double slash doesn't mean anything on Linux
+  rv += SDK_ASSERT(simCore::normalizeFilepath("///test///path/") == "/test/path/"); // Any more than two slashes at start treated as incorrect, reverts to single
+#endif
+
+  return rv;
+}
+
 }
 
 int FileTest(int argc, char* argv[])
@@ -510,6 +605,7 @@ int FileTest(int argc, char* argv[])
   rv += SDK_ASSERT(testWritable() == 0);
   rv += SDK_ASSERT(testFilesMissingFromPath() == 0);
   rv += SDK_ASSERT(testFileInfoNamePath() == 0);
+  rv += SDK_ASSERT(testNormalizeFile() == 0);
 
   std::cout << "simCore FileTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
 

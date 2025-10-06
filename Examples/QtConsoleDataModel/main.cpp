@@ -24,6 +24,7 @@
 #include <QApplication>
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
+#include "simCore/System/Utils.h"
 #include "simQt/ConsoleDataModel.h"
 #include "simQt/ConsoleChannel.h"
 #include "simQt/StdStreamConsoleChannel.h"
@@ -68,6 +69,7 @@ int showConsoleWindow(QApplication& app)
 
 int main(int argc, char* argv[])
 {
+  simCore::initializeSimdisEnvironmentVariables();
   simCore::checkVersionThrow();
 
   QApplication app(argc, argv);

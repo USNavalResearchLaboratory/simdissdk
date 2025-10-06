@@ -31,7 +31,11 @@ namespace simQt {
 namespace {
 
 /** Anonymous function to convert from Qt touch state to OSG touch state */
+#if QT_VERSION_MAJOR == 5
 osgGA::GUIEventAdapter::TouchPhase toTouchPhase(Qt::TouchPointState state)
+#else
+osgGA::GUIEventAdapter::TouchPhase toTouchPhase(QEventPoint::State state)
+#endif
 {
   switch (state)
   {

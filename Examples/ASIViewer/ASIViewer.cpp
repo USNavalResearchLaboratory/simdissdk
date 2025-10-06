@@ -70,26 +70,26 @@ void deQuote(std::string &str)
   }
 }
 
-simData::BeamProperties::BeamType beamTypeFromString(const std::string &beamTypeString)
+simData::BeamProperties::Type beamTypeFromString(const std::string &beamTypeString)
 {
   if (beamTypeString == "BODY")
-    return simData::BeamProperties::BODY_RELATIVE;
+    return simData::BeamProperties::Type::BODY_RELATIVE;
   if (beamTypeString == "TARGET")
-    return simData::BeamProperties::TARGET;
+    return simData::BeamProperties::Type::TARGET;
 
   // default
-  return simData::BeamProperties::ABSOLUTE_POSITION;
+  return simData::BeamProperties::Type::ABSOLUTE_POSITION;
 }
 
-simData::GateProperties::GateType gateTypeFromString(const std::string &gateTypeString)
+simData::GateProperties::Type gateTypeFromString(const std::string &gateTypeString)
 {
   if (gateTypeString == "BODY")
-    return simData::GateProperties::BODY_RELATIVE;
+    return simData::GateProperties::Type::BODY_RELATIVE;
   if (gateTypeString == "TARGET")
-    return simData::GateProperties::TARGET;
+    return simData::GateProperties::Type::TARGET;
 
   // default
-  return simData::GateProperties::ABSOLUTE_POSITION;
+  return simData::GateProperties::Type::ABSOLUTE_POSITION;
 }
 
 uint32_t colorFromString(const std::string &colorString)
@@ -283,14 +283,14 @@ private:
   {
     uint64_t hostId;
     uint64_t beamId;
-    simData::BeamProperties::BeamType beamType;
+    simData::BeamProperties::Type beamType;
     double hw;
     double vw;
 
     BeamData(uint64_t id = 0, uint64_t host = 0)
     : hostId(host),
       beamId(id),
-      beamType(simData::BeamProperties::ABSOLUTE_POSITION),
+      beamType(simData::BeamProperties::Type::ABSOLUTE_POSITION),
       hw(0),
       vw(0)
     {
@@ -334,12 +334,12 @@ private:
   {
     uint64_t hostId;
     uint64_t gateId;
-    simData::GateProperties::GateType gateType;
+    simData::GateProperties::Type gateType;
 
     GateData(uint64_t id = 0, uint64_t host = 0)
     : hostId(host),
       gateId(id),
-      gateType(simData::GateProperties::ABSOLUTE_POSITION)
+      gateType(simData::GateProperties::Type::ABSOLUTE_POSITION)
     {
     }
   };
@@ -434,7 +434,7 @@ private:
       simData::PlatformPrefs *prefs = app_.ds_->mutable_platformPrefs(idMap_[id], &xaction);
       prefs->set_icon(icon);
       prefs->mutable_commonprefs()->set_draw(true);
-      prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_BRIDGE);
+      prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs::Mode::BRIDGE);
       //prefs->set_dynamicscale(true);
       //prefs->set_surfaceclamping(true);
       xaction.complete(&prefs);

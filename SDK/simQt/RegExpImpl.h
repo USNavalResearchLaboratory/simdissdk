@@ -23,8 +23,9 @@
 #ifndef SIMQT_REGEXPIMPL_H
 #define SIMQT_REGEXPIMPL_H
 
+#include <memory>
 #include <string>
-#include <QRegExp>
+#include <QString>
 #include "simCore/Common/Common.h"
 #include "simData/CategoryData/CategoryFilter.h"
 
@@ -34,7 +35,6 @@
 #pragma warning(disable : 4275)
 #endif // _MSC_VER ]
 
-class QRegExp;
 class QRegularExpression;
 
 namespace simQt {
@@ -138,12 +138,10 @@ public:
   /** Static function to convert values of the Qt CaseSensitivity enum to values of the simQt CaseSensitivity enum*/
   static CaseSensitivity simQtCaseSensitivity(Qt::CaseSensitivity qtCaseSensitivity);
 
-  /** Static function to convert values of the simQt PatternSyntax enum to values of the Qt PatternSyntax enum*/
-  static QRegExp::PatternSyntax qtPatternSyntax(PatternSyntax simQtPatternSyntax);
-  /** Static function to convert values of the Qt PatternSyntax enum to values of the simQt PatternSyntax enum*/
-  static PatternSyntax simQtPatternSyntax(QRegExp::PatternSyntax qtPatternSyntax);
-
 private:
+
+  /// Convert the given expression to the actual expression based on pattern syntax
+  QString getActual_(const QString& given) const;
 
   /// private initializer for QRegExp
   void initializeQRegExp_();
@@ -151,11 +149,11 @@ private:
   /// private implementation of QRegExp
   bool matchQt_(const std::string& test) const;
 
-  std::string exp_;
+  QString givenExpression_;
+  QString actualExpression_; ///< The givenExpression as modified based on the PatternSyntax
   CaseSensitivity caseSensitivity_;
   PatternSyntax patternSyntax_;
-  QRegExp* qRegExp_;
-  QRegularExpression* fastRegex_;
+  std::unique_ptr<QRegularExpression> fastRegex_;
 };
 
 /** Implements a RegExpFilterFactory to create Qt based RegExpFilter objects */

@@ -1,4 +1,4 @@
-if(NOT TARGET simUtil OR NOT TARGET simQt OR NOT TARGET OSGQT)
+if(NOT TARGET simUtil OR NOT TARGET simQt OR NOT TARGET osgQt::osgQOpenGL)
     return()
 endif()
 

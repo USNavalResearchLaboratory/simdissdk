@@ -204,7 +204,7 @@ void TimeTicks::addUpdate_(double tickTime)
         return;
       // if drawing line ticks, set singlePoint_ flag since orientation may not be correct and will need to update once next point comes in
       // this may occur in live mode
-      if (lastPlatformPrefs_.trackprefs().timeticks().drawstyle() == simData::TimeTickPrefs::LINE)
+      if (lastPlatformPrefs_.trackprefs().timeticks().drawstyle() == simData::TimeTickPrefs::DrawStyle::LINE)
         singlePoint_ = true;
     }
     // use the next point to calculate the correct orientation for the first tick
@@ -271,14 +271,14 @@ void TimeTicks::addUpdate_(double tickTime)
     const simData::TimeTickPrefs& timeTicks = lastPlatformPrefs_.trackprefs().timeticks();
     const simData::ElapsedTimeFormat timeFormat = timeTicks.labeltimeformat();
     // show HH:MM:SS
-    if (timeFormat == simData::ELAPSED_HOURS)
+    if (timeFormat == simData::ElapsedTimeFormat::ELAPSED_HOURS)
     {
       simCore::HoursWrappedTimeFormatter formatter;
       labelText = formatter.toString(textTime, refYear, 0);
     }
 
     // show MM:SS
-    else if (timeFormat == simData::ELAPSED_MINUTES)
+    else if (timeFormat == simData::ElapsedTimeFormat::ELAPSED_MINUTES)
     {
       simCore::MinutesWrappedTimeFormatter formatter;
       labelText = formatter.toString(textTime, refYear, 0);
@@ -324,7 +324,7 @@ void TimeTicks::addUpdate_(double tickTime)
 
     // allocate a new chunk
     const simData::TimeTickPrefs& timeTicks = lastPlatformPrefs_.trackprefs().timeticks();
-    TimeTicksChunk::Type type = ((timeTicks.drawstyle() == simData::TimeTickPrefs::POINT) ? TimeTicksChunk::POINT_TICKS : TimeTicksChunk::LINE_TICKS);
+    TimeTicksChunk::Type type = ((timeTicks.drawstyle() == simData::TimeTickPrefs::DrawStyle::POINT) ? TimeTicksChunk::POINT_TICKS : TimeTicksChunk::LINE_TICKS);
     chunk = new TimeTicksChunk(chunkSize_, type, timeTicks.linelength() / 2, timeTicks.linewidth(), timeTicks.largesizefactor());
     // set the new chunk's locator - this establishes the position of the chunk
     chunk->setLocator(newLocator.get());
@@ -399,7 +399,7 @@ void TimeTicks::removePointsOlderThan_(double oldestDrawTime)
 
 void TimeTicks::updateVisibility_(const simData::TrackPrefs& prefs)
 {
-  const bool invisible = (prefs.trackdrawmode() == simData::TrackPrefs::OFF);
+  const bool invisible = (prefs.trackdrawmode() == simData::TrackPrefs::Mode::OFF);
   setNodeMask(invisible ? simVis::DISPLAY_MASK_NONE : simVis::DISPLAY_MASK_TRACK_HISTORY);
 }
 
@@ -432,7 +432,7 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
 
   // platform should be deleting track when trackdrawmode turned off, this should never be called with trackdrawmode off
   // if assert fails, check platform setPrefs logic that processes prefs.trackprefs().trackdrawmode()
-  assert(prefs.trackdrawmode() != simData::TrackPrefs_Mode_OFF);
+  assert(prefs.trackdrawmode() != simData::TrackPrefs::Mode::OFF);
   bool resetRequested = false;
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, tracklength))
@@ -461,7 +461,7 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
     osg::StateSet* stateSet = this->getOrCreateStateSet();
     osgEarth::LineDrawable::setLineWidth(stateSet, timeTicks.linewidth());
     // need to redraw points if line width changed
-    if (timeTicks.drawstyle() == simData::TimeTickPrefs::POINT)
+    if (timeTicks.drawstyle() == simData::TimeTickPrefs::DrawStyle::POINT)
       resetRequested = true;
   }
 
@@ -712,7 +712,7 @@ bool TimeTicks::getTickCoord_(const simData::PlatformUpdate& prevPoint, const si
     ds_.interpolator()->interpolate(time, prevUpdate, curUpdate, &platformUpdate);
 
   // for point ticks, only need the position
-  if (lastPlatformPrefs_.trackprefs().timeticks().drawstyle() == simData::TimeTickPrefs::POINT)
+  if (lastPlatformPrefs_.trackprefs().timeticks().drawstyle() == simData::TimeTickPrefs::DrawStyle::POINT)
   {
     ecefTickCoord = simCore::Coordinate(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate.x(), platformUpdate.y(), platformUpdate.z()));
     return true;

@@ -253,7 +253,8 @@ private:
         {
           // Did not work off the end to process the key event
           int pos = static_cast<int>(completeLine_->getFirstCharacterLocation(nextPart));
-          lineEdit()->setSelection(pos, static_cast<int>(nextPart->numberOfCharacters()));
+          if (pos < lineEdit()->text().size())
+            lineEdit()->setSelection(pos, static_cast<int>(nextPart->numberOfCharacters()));
           return true;
         }
       }
@@ -286,13 +287,13 @@ private:
     const int selectionLength = lineEdit()->selectedText().length();
     const int cursorPosition = lineEdit()->cursorPosition();
     lineEdit()->setText(completeLine_->text());
-    lineEdit()->setCursorPosition(simCore::sdkMin(cursorPosition, lineEdit()->text().length()));
+    lineEdit()->setCursorPosition(simCore::sdkMin(cursorPosition, static_cast<int>(lineEdit()->text().length())));
     // If there was a selection, restore it after timestamp is updated
     if (selectionStart != -1)
     {
-      const int newSelectionStart = simCore::sdkMin(selectionStart, lineEdit()->text().length() - 1);
+      const int newSelectionStart = simCore::sdkMin(selectionStart, static_cast<int>(lineEdit()->text().length()) - 1);
       if (newSelectionStart != -1)
-        lineEdit()->setSelection(newSelectionStart, simCore::sdkMin(selectionLength, lineEdit()->text().length() - newSelectionStart));
+        lineEdit()->setSelection(newSelectionStart, simCore::sdkMin(selectionLength, static_cast<int>(lineEdit()->text().length()) - newSelectionStart));
     }
 
     if (lastEditedTime_ != completeLine_->timeStamp())

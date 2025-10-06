@@ -426,7 +426,7 @@ void CircumnavigationPlatformSimulation::createPlatform_()
     prefs->mutable_commonprefs()->set_name("Satellite");
     prefs->set_dynamicscale(true);
     prefs->set_icon(EXAMPLE_IMAGE_ICON);
-    prefs->set_rotateicons(simData::IR_2D_YAW);
+    prefs->set_rotateicons(simData::IconRotation::IR_2D_YAW);
     xaction.complete(&prefs);
   }
 
@@ -480,7 +480,7 @@ simData::ObjectId MultiPlatformSimulation::createPlatform(const std::string& nam
   prefs->mutable_commonprefs()->set_name(name);
   prefs->set_dynamicscale(true);
   prefs->set_icon(icon);
-  prefs->set_rotateicons(simData::IR_2D_UP);
+  prefs->set_rotateicons(simData::IconRotation::IR_2D_UP);
   transaction.complete(&prefs);
 
   return id;

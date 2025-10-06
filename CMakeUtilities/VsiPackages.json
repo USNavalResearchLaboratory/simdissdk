@@ -18,16 +18,6 @@
       "version": "3.11.0"
     },
     {
-      "name": "GLEW",
-      "version": "2.1.0",
-      "cmake_vars": [
-        {
-          "name": "GLEW_USE_STATIC_LIBS",
-          "value": "TRUE"
-        }
-      ]
-    },
-    {
       "name": "MRSID",
       "dir": "MrSID_DSDK",
       "version": [
@@ -47,17 +37,12 @@
       "depend": "OSG"
     },
     {
-      "name": "PROTOBUF",
-      "dir": "protobuf",
-      "version": [
-          "29.3",
-          "3.21.12"
-      ],
-      "cmake_vars": [
-        {
-          "name": "Protobuf_USE_STATIC_LIBS",
-          "value": "TRUE"
-        }
+      "name": "OSGQOPENGL",
+      "dir": "osgQOpenGL",
+      "version": "4.0.0-qt5",
+      "depend": [
+        "OSG",
+        "QT5"
       ]
     },
     {
@@ -72,7 +57,7 @@
     {
       "name": "SWIG",
       "version": [
-        "4.3.0",
+        "4.3.1",
         "4.2.1"
       ]
     },

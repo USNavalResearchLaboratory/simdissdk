@@ -163,12 +163,12 @@ void BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs, const simData::B
   sv.capRes_ = prefs.capresolution();
 
   sv.drawMode_ =
-    prefs.beamdrawmode() == simData::BeamPrefs::WIRE ? simVis::SVData::DRAW_MODE_WIRE :
-    prefs.beamdrawmode() == simData::BeamPrefs::SOLID ? simVis::SVData::DRAW_MODE_SOLID :
+    prefs.beamdrawmode() == simData::BeamPrefs::DrawMode::WIRE ? simVis::SVData::DRAW_MODE_WIRE :
+    prefs.beamdrawmode() == simData::BeamPrefs::DrawMode::SOLID ? simVis::SVData::DRAW_MODE_SOLID :
     (simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_WIRE);
 
   // only the cap is drawn in coverage draw type
-  sv.drawCone_ = prefs.drawtype() != simData::BeamPrefs_DrawType_COVERAGE;
+  sv.drawCone_ = prefs.drawtype() != simData::BeamPrefs::DrawType::COVERAGE;
 
   // use a "Y-forward" direction vector because the Beam is drawn in ENU LTP space.
   simVis::SVFactory::createNode(*this, sv, osg::Y_AXIS);
@@ -340,7 +340,7 @@ BeamNode::BeamNode(const simData::BeamProperties& props, Locator* hostLocator, c
   beamOriginLocator_ = new Locator(hostLocator, Locator::COMP_ALL);
 
   // if the properties call for a body-relative beam, configure that:
-  if (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE)
+  if (props.has_type() && props.type() == simData::BeamProperties::Type::BODY_RELATIVE)
   {
     // in the BeamType_BODY_RELATIVE case, beam data is relative to platform orientation;
     // the ResolvedPositionOrientationLocator maintains the host platform pos and ori
@@ -461,7 +461,7 @@ void BeamNode::setPrefs(const simData::BeamPrefs& prefs)
   localGrid_->validatePrefs(prefs.commonprefs().localgrid());
 
   // if this is a target beam, and there is a change in target id, null our target reference (will be set on update)
-  if (lastProps_.type() == simData::BeamProperties_BeamType_TARGET &&
+  if (lastProps_.type() == simData::BeamProperties::Type::TARGET &&
     (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefsApplied_, &prefs, targetid)))
   {
     target_ = nullptr;
@@ -640,7 +640,7 @@ int BeamNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3*
 void BeamNode::applyDataStoreUpdate_(const simData::BeamUpdate& update, bool force)
 {
   // if this is a target beam, we need to populate the update with calculated RAE
-  const bool targetBeam = (lastProps_.type() == simData::BeamProperties_BeamType_TARGET);
+  const bool targetBeam = (lastProps_.type() == simData::BeamProperties::Type::TARGET);
   if (!targetBeam)
     lastUpdateFromDS_ = update;
   else
@@ -694,7 +694,7 @@ void BeamNode::applyUpdateOverrides_(bool force)
 int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
 {
   // this should only be called for target beams; if assert fails, check caller
-  assert(lastProps_.type() == simData::BeamProperties_BeamType_TARGET);
+  assert(lastProps_.type() == simData::BeamProperties::Type::TARGET);
 
   // we should only receive non-null updates for target beams which have valid target ids; if assert fails check MemoryDataStore processing
   assert(lastPrefsApplied_.targetid() > 0);
@@ -865,7 +865,7 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
   const simData::BeamUpdate& activeUpdate = newUpdate ? *newUpdate : lastUpdateApplied_;
 
 
-  if (activePrefs.drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
+  if (activePrefs.drawtype() == simData::BeamPrefs::DrawType::ANTENNA_PATTERN)
   {
     // beam visual is drawn by antenna pattern impl.
     force = force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawtype));
@@ -908,7 +908,7 @@ void BeamNode::manageBeamVisualization_(const simData::BeamUpdate* newUpdate, co
   if (force || newPrefs)
     antenna_->setPrefs(activePrefs);
 
-  if (activePrefs.drawtype() == simData::BeamPrefs_DrawType_LINE)
+  if (activePrefs.drawtype() == simData::BeamPrefs::DrawType::LINE)
   {
     // beam visual is drawn as a simple line
     // clean up if we switched draw type

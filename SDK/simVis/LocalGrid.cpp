@@ -75,7 +75,7 @@ public:
   {
     setFont(simVis::Registry::instance()->getOrCreateFont(prefs.gridlabelfontname()));
     setAxisAlignment(osgText::TextBase::SCREEN);
-    setBackdropType(prefs.gridlabeltextoutline() == simData::TO_NONE ? osgText::Text::NONE : osgText::Text::OUTLINE);
+    setBackdropType(prefs.gridlabeltextoutline() == simData::TextOutline::TO_NONE ? osgText::Text::NONE : osgText::Text::OUTLINE);
     setBackdropColor(simVis::Color(prefs.gridlabeloutlinecolor(), simVis::Color::RGBA));
     const float outlineThickness = simVis::outlineThickness(prefs.gridlabeltextoutline());
     setBackdropOffset(outlineThickness, outlineThickness);
@@ -144,18 +144,18 @@ public:
     const double radiusS = spacingS * (ring_ + 1);
 
     const simData::ElapsedTimeFormat timeFormat = prefs.speedring().timeformat();
-    assert(timeFormat == simData::ELAPSED_HOURS || timeFormat == simData::ELAPSED_MINUTES || timeFormat == simData::ELAPSED_SECONDS);
+    assert(timeFormat == simData::ElapsedTimeFormat::ELAPSED_HOURS || timeFormat == simData::ElapsedTimeFormat::ELAPSED_MINUTES || timeFormat == simData::ElapsedTimeFormat::ELAPSED_SECONDS);
     std::stringstream buf;
 
     // show HH:MM:SS.SS
-    if (timeFormat == simData::ELAPSED_HOURS)
+    if (timeFormat == simData::ElapsedTimeFormat::ELAPSED_HOURS)
     {
       simCore::HoursTimeFormatter formatter;
       formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
     }
 
     // show MM:SS.SS
-    else if (timeFormat == simData::ELAPSED_MINUTES)
+    else if (timeFormat == simData::ElapsedTimeFormat::ELAPSED_MINUTES)
     {
       simCore::MinutesTimeFormatter formatter;
       formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
@@ -471,20 +471,20 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
   // build for the appropriate grid type:
   switch (prefs.gridtype())
   {
-  case simData::LocalGridPrefs_Type_CARTESIAN:
+  case simData::LocalGridPrefs::Type::CARTESIAN:
     createCartesian_(prefs, graphicsGroup_.get(), labelGroup_.get());
     break;
 
-  case simData::LocalGridPrefs_Type_POLAR:
+  case simData::LocalGridPrefs::Type::POLAR:
     createRangeRings_(prefs, graphicsGroup_.get(), labelGroup_.get(), true);
     break;
 
-  case simData::LocalGridPrefs_Type_RANGE_RINGS:
+  case simData::LocalGridPrefs::Type::RANGE_RINGS:
     createRangeRings_(prefs, graphicsGroup_.get(), labelGroup_.get(), false);
     break;
 
-  case simData::LocalGridPrefs_Type_SPEED_RINGS:
-  case simData::LocalGridPrefs_Type_SPEED_LINE:
+  case simData::LocalGridPrefs::Type::SPEED_RINGS:
+  case simData::LocalGridPrefs::Type::SPEED_LINE:
   {
     // determine if we can validly display speedrings/speedline
     double sizeM;
@@ -492,7 +492,7 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
     const int status = processSpeedParams_(prefs, sizeM, timeRadiusSeconds);
     if (status >= 0)
     {
-      createSpeedRings_(prefs, graphicsGroup_.get(), labelGroup_.get(), (prefs.gridtype() == simData::LocalGridPrefs_Type_SPEED_LINE));
+      createSpeedRings_(prefs, graphicsGroup_.get(), labelGroup_.get(), (prefs.gridtype() == simData::LocalGridPrefs::Type::SPEED_LINE));
       updateSpeedRings_(prefs, sizeM, timeRadiusSeconds);
     }
     break;
@@ -650,8 +650,8 @@ void LocalGridNode::syncWithLocator()
   // call the base class to update the matrix.
   LocatorNode::syncWithLocator();
 
-  if ((lastPrefs_.gridtype() == simData::LocalGridPrefs_Type_SPEED_RINGS) ||
-    (lastPrefs_.gridtype() == simData::LocalGridPrefs_Type_SPEED_LINE))
+  if ((lastPrefs_.gridtype() == simData::LocalGridPrefs::Type::SPEED_RINGS) ||
+    (lastPrefs_.gridtype() == simData::LocalGridPrefs::Type::SPEED_LINE))
   {
     double sizeM;
     double timeRadiusSeconds;
@@ -884,7 +884,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
 
 void LocalGridNode::updateSpeedRings_(const simData::LocalGridPrefs& prefs, double sizeM, double timeRadiusSeconds)
 {
-  if ((prefs.gridtype() != simData::LocalGridPrefs_Type_SPEED_RINGS) && (prefs.gridtype() != simData::LocalGridPrefs_Type_SPEED_LINE))
+  if ((prefs.gridtype() != simData::LocalGridPrefs::Type::SPEED_RINGS) && (prefs.gridtype() != simData::LocalGridPrefs::Type::SPEED_LINE))
   {
     assert(0);
     return;

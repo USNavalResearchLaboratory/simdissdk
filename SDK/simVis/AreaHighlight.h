@@ -143,7 +143,7 @@ class SDKVIS_EXPORT CompositeHighlightNode : public HighlightNode
 public:
   /** Declare boilerplate code */
   META_Node(simVis, CompositeHighlightNode);
-  explicit CompositeHighlightNode(simData::CircleHilightShape shape=simData::CH_PULSING_CIRCLE);
+  explicit CompositeHighlightNode(simData::CircleHilightShape shape=simData::CircleHilightShape::CH_PULSING_CIRCLE);
   CompositeHighlightNode(const CompositeHighlightNode& rhs, const osg::CopyOp& copyOp=osg::CopyOp::SHALLOW_COPY);
 
   /** Sets the shape */

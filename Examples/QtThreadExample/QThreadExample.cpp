@@ -28,11 +28,12 @@
  */
 
 #include "simCore/Common/Version.h"
+#include "simCore/System/Utils.h"
 #include "simData/MemoryDataStore.h"
 #include "simCore/Time/Clock.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
-#include "simQt/ViewWidget.h"
+#include "simQt/ViewerWidgetAdapter.h"
 #include "simUtil/DefaultDataStoreValues.h"
 #include "simUtil/ExampleResources.h"
 #include "simVis/Scenario.h"
@@ -58,6 +59,7 @@
 int main(int argc, char **argv)
 {
   // Set up the scene:
+  simCore::initializeSimdisEnvironmentVariables();
   simCore::checkVersionThrow();
   simExamples::configureSearchPaths();
 
@@ -77,6 +79,8 @@ int main(int argc, char **argv)
 
   // The ViewManager coordinates the rendering of all our views.
   osg::ref_ptr<simVis::ViewManager> viewMan = new simVis::ViewManager();
+  // This example has only one main view, so although it uses Qt we do not need multiple viewers
+  viewMan->setUseMultipleViewers(false);
 
   // Set up the logarithmic depth buffer for all views
   osg::ref_ptr<simVis::ViewManagerLogDbAdapter> logDb = new simVis::ViewManagerLogDbAdapter;
@@ -98,9 +102,13 @@ int main(int argc, char **argv)
   QApplication app(argc, argv);
 
   SdkQThreadExample::MyMainWindow win(viewMan.get(), dataStore);
-  simQt::ViewWidget* viewWidget = new simQt::ViewWidget(view.get());
+
+  // Make the ViewerWidgetAdapter
+  auto* viewWidget = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, &win);
+  viewWidget->setViewer(viewMan->getViewer());
+  viewWidget->setTimerInterval(20);
+  win.setCentralWidget(viewWidget);
   win.setGeometry(100, 100, 1024, 800);
-  win.setGlWidget(viewWidget);
 
   win.statusBar()->showMessage(QString("Congratulations! You've embedded the SDK Viewer in a Qt Widget."));
 
@@ -121,4 +129,3 @@ int main(int argc, char **argv)
   delete viewWidget;
   return 0;
 }
-

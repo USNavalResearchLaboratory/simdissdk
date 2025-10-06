@@ -2291,6 +2291,98 @@ int testReferencePositionField()
   return rv;
 }
 
+// test if shape can or cannot apply rotation, assumes 45 degree yaw rotation in shape definition
+int testShapeRotation(const std::string& shapeString, bool canRotate)
+{
+  int rv = 0;
+  simCore::GOG::Parser parser;
+  std::vector<simCore::GOG::GogShapePtr> shapes;
+  std::stringstream shape;
+  shape << shapeString;
+  parser.parse(shape, "", shapes);
+  // should be valid shape
+  rv += SDK_ASSERT(shapes.size() == 1);
+  // verify shape state matches canRotate
+  rv += SDK_ASSERT(shapes.front()->canRotate() == canRotate);
+  // nothing more to test if shape can't apply rotation
+  if (!canRotate)
+    return rv;
+  double yawOffset = 0.;
+  // check shape has yaw offset
+  rv += SDK_ASSERT(shapes.front()->getYawOffset(yawOffset) == 0);
+  // check that yaw offset is correct
+  rv += SDK_ASSERT(simCore::areEqual(yawOffset * simCore::RAD2DEG, 45.));
+
+  shapes.front()->setYawOffset(M_PI);
+  shapes.front()->getYawOffset(yawOffset);
+
+  // check that updated yaw offset is correct
+  rv += SDK_ASSERT(simCore::areEqual(yawOffset * simCore::RAD2DEG, 180.));
+
+  return rv;
+}
+
+// test the orient keyword, which applies rotation to shapes
+int testOrient()
+{
+  int rv = 0;
+
+  // testing absolute, relative, and relative un-attached
+
+  // all circular shapes should support rotation
+  rv += testShapeRotation("start\n circle\n centerlla 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n circle\n centerxyz 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n circle\n centerxyz 25.1 58.2 0.\n ref 12.1 22.3 0.\n orient 45\n end\n", true);
+
+  rv += testShapeRotation("start\n sphere\n centerlla 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n sphere\n centerxyz 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n sphere\n centerxyz 25.1 58.2 0.\n ref 12.1 22.3 0.\n orient 45\n end\n", true);
+
+  rv += testShapeRotation("start\n hemisphere\n centerlla 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n hemisphere\n centerxyz 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n hemisphere\n centerxyz 25.1 58.2 0.\n orient 45\n end\n", true);
+
+  rv += testShapeRotation("start\n ellipsoid\n centerlla 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n ellipsoid\n centerxyz 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n ellipsoid\n centerxyz 25.1 58.2 0.\n ref 12.1 22.3 0.\n orient 45\n end\n", true);
+
+  rv += testShapeRotation("start\n arc\n centerlla 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n arc\n centerxyz 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n arc\n centerxyz 25.1 58.2 0.\n ref 12.1 22.3 0.\n orient 45\n end\n", true);
+
+  rv += testShapeRotation("start\n ellipse\n centerlla 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n ellipse\n centerxyz 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n ellipse\n centerxyz 25.1 58.2 0.\n ref 12.1 22.3 0.\n orient 45\n end\n", true);
+
+  rv += testShapeRotation("start\n cylinder\n centerlla 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n cylinder\n centerxyz 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n cylinder\n centerxyz 25.1 58.2 0.\n ref 12.1 22.3 0.\n orient 45\n orient 45\n end\n", true);
+
+  rv += testShapeRotation("start\n cone\n centerlla 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n cone\n centerxyz 25.1 58.2 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n cone\n centerxyz 25.1 58.2 0.\n ref 12.1 22.3 0.\n orient 45\n end\n", true);
+
+  // points and point based shapes should support rotation only when relative or relative un-attached
+  rv += testShapeRotation("start\n points\n lla 25.1 58.2 0.\n lla 26.2 58.3 0.\n lla 26.2 57.9 0.\n orient 45\n end\n", false);
+  rv += testShapeRotation("start\n points\n xyz 25.1 58.2 0.\n xyz 26.2 58.3 0.\n xyz 26.2 57.9 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n points\n xyz 25.1 58.2 0.\n xyz 26.2 58.3 0.\n xyz 26.2 57.9 0.\n ref 12.1 22.3 0.\n orient 45\n end\n", true);
+
+  rv += testShapeRotation("start\n line\n lla 25.1 58.2 0.\n lla 26.2 58.3 0.\n lla 26.2 57.9 0.\n orient 45\n end\n", false);
+  rv += testShapeRotation("start\n line\n xyz 25.1 58.2 0.\n xyz 26.2 58.3 0.\n xyz 26.2 57.9 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n line\n xyz 25.1 58.2 0.\n xyz 26.2 58.3 0.\n xyz 26.2 57.9 0.\n ref 12.1 22.3 0.\n orient 45\n end\n", true);
+
+  rv += testShapeRotation("start\n poly\n lla 25.1 58.2 0.\n lla 26.2 58.3 0.\n lla 26.2 57.9 0.\n orient 45\n end\n", false);
+  rv += testShapeRotation("start\n poly\n xyz 25.1 58.2 0.\n xyz 26.2 58.3 0.\n xyz 26.2 57.9 0.\n orient 45\n end\n", true);
+  rv += testShapeRotation("start\n poly\n xyz 25.1 58.2 0.\n xyz 26.2 58.3 0.\n xyz 26.2 57.9 0.\n ref 12.1 22.3 0.\n orient 45\n end\n", true);
+
+  // annotation never supports orient
+  rv += testShapeRotation("start\n annotation test\n centerlla 24.2 43.3 0.\n orient 45\n end\n", false);
+  rv += testShapeRotation("start\n annotation test\n centerxyz 24.2 43.3 0.\n orient 45\n end\n", false);
+  rv += testShapeRotation("start\n annotation test\n centerxyz 24.2 43.3 0.\n ref 12.1 22.3 0.\n orient 45\n end\n", false);
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -2315,6 +2407,7 @@ int GogTest(int argc, char* argv[])
   rv += testLineWidthStrings();
   rv += testTimeStrings();
   rv += testReferencePositionField();
+  rv += testOrient();
 
   return rv;
 }

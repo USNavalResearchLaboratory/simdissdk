@@ -21,23 +21,29 @@
  *
  */
 #include <limits>
+#include <QMenu>
+#include <QtGlobal>
 #include "simCore/Time/Clock.h"
 #include "simCore/Time/String.h"
 #include "simVis/CentroidManager.h"
 #include "simVis/CustomRendering.h"
 #include "simVis/Scenario.h"
 #include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
 #include "simVis/Gate.h"
 #include "simVis/View.h"
 #include "simQt/EntityTreeComposite.h"
+#include "simQt/BoundSettings.h"
 #include "simQt/CenterEntity.h"
 
 namespace simQt {
 
 /// The amount of time, in seconds, to back into a custom rendering valid time range
-static const double TIME_DELTA = 1e-6;
+constexpr double TIME_DELTA = 1e-6;
 /// Sentinel value for invalid time
-static const double INVALID_TIME = -1.0;
+constexpr double INVALID_TIME = -1.0;
+/// Muliplier against the visual radius, to set the eye's distance after tethering
+constexpr double TETHER_RANGE_MULTIPLIER = 4.0;
 
 CenterEntity::CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, QObject* parent)
   : QObject(parent),
@@ -81,18 +87,36 @@ void CenterEntity::centerOnSelection(const QList<uint64_t>& ids)
 
 void CenterEntity::centerOnEntity(uint64_t id, bool force)
 {
+  centerAndZoom_(id, false, force);
+}
+
+void CenterEntity::centerAndZoom(uint64_t id, bool force)
+{
+  centerAndZoom_(id, true, force);
+}
+
+void CenterEntity::centerAndZoom_(uint64_t id, bool zoomIn, bool force)
+{
   // Need the scenario and focus manager to continue
   if (!scenarioManager_ || !focusManager_)
     return;
 
+  // Must have a valid node and valid view to center on
   simVis::EntityNode* node = getViewCenterableNode(id);
-  if ((node != nullptr) && (force  || (node->isActive() && node->isVisible())))
-  {
-    if (focusManager_->getFocusedView() != nullptr)
-    {
-      focusManager_->getFocusedView()->tetherCamera(node);
-    }
-  }
+  auto* view = focusManager_->getFocusedView();
+  if (!node || !view)
+    return;
+
+  // Must be active and visible, or forced, to continue
+  const bool activeAndVisible = (node->isActive() && node->isVisible());
+  if (!force && !activeAndVisible)
+    return;
+
+  // Tether to the node and zoom if needed
+  if (zoomIn)
+    view->tetherAndZoom(node);
+  else
+    view->tetherCamera(node);
 }
 
 void CenterEntity::setCentroidManager(simVis::CentroidManager* centroidManager)
@@ -117,8 +141,6 @@ BindCenterEntityToEntityTreeComposite::BindCenterEntityToEntityTreeComposite(Cen
     tree_(tree),
     dataStore_(dataStore),
     timeFormatter_(new simCore::TimeFormatterRegistry),
-    timeFormat_(simCore::TIMEFORMAT_ORDINAL),
-    precision_(3),
     newTime_(INVALID_TIME)
 {
 }
@@ -129,12 +151,12 @@ BindCenterEntityToEntityTreeComposite::~BindCenterEntityToEntityTreeComposite()
 
 void BindCenterEntityToEntityTreeComposite::bind(bool centerOnDoubleClick)
 {
-  connect(&tree_, SIGNAL(rightClickMenuRequested()), this, SLOT(updateCenterEnable_()));
-  connect(&tree_, SIGNAL(centerOnEntityRequested(uint64_t)), this, SLOT(centerOnEntity_(uint64_t)));
-  connect(&tree_, SIGNAL(centerOnSelectionRequested(QList<uint64_t>)), &centerEntity_, SLOT(centerOnSelection(QList<uint64_t>)));
+  connect(&tree_, &EntityTreeComposite::rightClickMenuRequested, this, &BindCenterEntityToEntityTreeComposite::updateCenterEnable_);
+  connect(&tree_, &EntityTreeComposite::centerOnEntityRequested, this, &BindCenterEntityToEntityTreeComposite::centerOnEntity_);
+  connect(&tree_, &EntityTreeComposite::centerOnSelectionRequested, &centerEntity_, &CenterEntity::centerOnSelection);
   if (centerOnDoubleClick)
   {
-    connect(&tree_, SIGNAL(itemDoubleClicked(uint64_t)), &centerEntity_, SLOT(centerOnEntity(uint64_t)));
+    connect(&tree_, &EntityTreeComposite::itemDoubleClicked, this, &BindCenterEntityToEntityTreeComposite::centerOnEntity_);
     tree_.setExpandsOnDoubleClick(false); // Turns off the tree expansion on double click.
   }
 }
@@ -241,11 +263,23 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
 
 void BindCenterEntityToEntityTreeComposite::centerOnEntity_(uint64_t id)
 {
+  setBoundClockToNewTime_();
+  // Need to force the center because the setTime has not been process so the entity may not yet be valid
+  if (zoomOnCenter_)
+    centerEntity_.centerAndZoom(id, true);
+  else
+    centerEntity_.centerOnEntity(id, true);
+}
+
+void BindCenterEntityToEntityTreeComposite::setBoundClockToNewTime_()
+{
   if ((newTime_ != INVALID_TIME) && (dataStore_.getBoundClock() != nullptr) && !dataStore_.getBoundClock()->controlsDisabled() && !dataStore_.getBoundClock()->isLiveMode())
     dataStore_.getBoundClock()->setTime(simCore::TimeStamp(dataStore_.referenceYear(), newTime_));
+}
 
-  // Need to force the center because the setTime has not been process so the entity may not yet be valid
-  centerEntity_.centerOnEntity(id, true);
+void BindCenterEntityToEntityTreeComposite::setZoomOnCenter(bool zoomOnCenter)
+{
+  zoomOnCenter_ = zoomOnCenter;
 }
 
 std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getPlatformNearestTime_(double time, uint64_t id) const
@@ -784,7 +818,17 @@ bool BindCenterEntityToEntityTreeComposite::isTargetBeam_(uint64_t id) const
   if (!props)
     return false;
 
-  return (props->type() == simData::BeamProperties_BeamType_TARGET);
+  return (props->type() == simData::BeamProperties::Type::TARGET);
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void bindCenterZoomSetting(simQt::Settings& settings, const QString& variableName, simQt::BindCenterEntityToEntityTreeComposite& binder)
+{
+  // Tied to lifespan of "&binder"
+  auto* zoomOnCenter = new simQt::BoundBooleanSetting(&binder, settings, variableName);
+  binder.setZoomOnCenter(zoomOnCenter->value());
+  QObject::connect(zoomOnCenter, &simQt::BoundBooleanSetting::valueChanged, &binder, &simQt::BindCenterEntityToEntityTreeComposite::setZoomOnCenter);
 }
 
 }

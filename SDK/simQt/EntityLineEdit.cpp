@@ -84,7 +84,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   connect(tree_, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(accept_())); // Have double click auto close the dialog
 
   QVBoxLayout* layout = new QVBoxLayout(this);
-  layout->setMargin(0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(tree_);
   setLayout(layout);
 }

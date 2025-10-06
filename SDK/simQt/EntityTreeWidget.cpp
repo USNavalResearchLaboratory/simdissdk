@@ -471,7 +471,16 @@ void EntityTreeWidget::setFilterSettings(const QMap<QString, QVariant>& settings
 
 QList<uint64_t> EntityTreeWidget::selectedItems() const
 {
-  return selectionList_;
+  // A user of the EntityTreeWidget might get the signal that an entity was deleted before this object gets the signal.
+  // Filter the list to only return valid id.  The list will get corrected when this object receives the signal.
+  QList<uint64_t> rv;
+  for (const auto id : selectionList_)
+  {
+    if (model_->index(id) != QModelIndex())
+      rv.push_back(id);
+  }
+
+  return rv;
 }
 
 void EntityTreeWidget::setSettings(SettingsPtr settings)

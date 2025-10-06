@@ -230,11 +230,15 @@ void AsyncCategoryCounter::asyncCountEntities()
   counter_->prepare();
 
   // Be sure to set up a connect() before setFuture() to avoid race.
-  connect(watcher, SIGNAL(finished()), this, SLOT(emitResults_()));
+  connect(watcher, &QFutureWatcher<void>::finished, this, &AsyncCategoryCounter::emitResults_);
   // To prevent race conditions use deleteLater() instead of Qt parents to manage lifespan
-  connect(watcher, SIGNAL(finished()), watcher, SLOT(deleteLater()));
+  connect(watcher, &QFutureWatcher<void>::finished, watcher, &QObject::deleteLater);
 
+#if QT_VERSION_MAJOR == 5
   watcher->setFuture(QtConcurrent::run(counter_, &CategoryFilterCounter::testAllCategories));
+#else
+  watcher->setFuture(QtConcurrent::run(&CategoryFilterCounter::testAllCategories, counter_));
+#endif
 }
 
 void AsyncCategoryCounter::reset()

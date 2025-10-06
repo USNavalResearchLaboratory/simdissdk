@@ -9,8 +9,6 @@ SET(CTEST_CUSTOM_COVERAGE_EXCLUDE
     "simVis"
     # ignore moc files that are auto-generated
     "moc_.*"
-    # ignore auto-generated protobuf files
-    "simData.pb.*"
     # ignore simQt, which cannot be unit tested without a headed display
     "simQt"
     # ignore simUtil, which contains primarily visualization utilities

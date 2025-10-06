@@ -52,7 +52,6 @@ option(SIMNOTIFY_SHARED "If off, simNotify SDK libraries are built statically; i
 option(SIMCORE_SHARED "If off, simCore SDK libraries are built statically; if on, simCore SDK libraries are built dynamically" ON)
 option(BUILD_SIMDATA "If off, simData SDK libraries are not compiled; if on, library is built if dependencies are satisfied." ON)
 option(SIMDATA_SHARED "If off, simData SDK libraries are built statically; if on, simData SDK libraries are built dynamically" ON)
-option(SIMDATAPROTO_SHARED "If off, simData SDK Protobuf libraries are built statically; if on, simData SDK libraries are built dynamically" ${SIMDATA_SHARED})
 option(BUILD_SIMVIS "If off, simVis SDK libraries are not compiled; if on, library is built if dependencies are satisfied." ON)
 option(SIMVIS_SHARED "If off, simVis SDK libraries are built statically; if on, simVis SDK libraries are built dynamically" ON)
 option(BUILD_SIMUTIL "If off, simUtil SDK libraries are not compiled; if on, library is built if dependencies are satisfied." ON)
@@ -203,13 +202,32 @@ if(NOT SQLite3_FOUND)
     endif()
 endif()
 
-find_package(Qt5 COMPONENTS OpenGL Widgets)
-# Need to silence deprecation for MSVC 2022 and Qt5 to avoid build errors
-if(MSVC AND TARGET Qt5::Core AND Qt5Core_VERSION VERSION_LESS 5.15.17)
-    target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+# Conditionally find Qt5; if not found, fall back to Qt6
+find_package(Qt5 QUIET COMPONENTS OpenGL Widgets)
+set(_SDK_QT_VERSION 5)
+if(Qt5_FOUND)
+    message(STATUS "Found Qt5: ${Qt5_DIR}")
+    # Need to silence deprecation for MSVC 2022 and Qt5 to avoid build errors
+    if(MSVC AND TARGET Qt5::Core AND Qt5Core_VERSION VERSION_LESS 5.15.17)
+        target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+    endif()
+else()
+    find_package(Qt6 QUIET COMPONENTS OpenGL OpenGLWidgets Widgets)
+    if (Qt6_FOUND)
+        message(STATUS "Found Qt6: ${Qt6_DIR}")
+        set(_SDK_QT_VERSION 6)
+    else()
+        # Provide a warning if neither is found, but don't stop the configuration.
+        message(WARNING "Neither Qt5 nor Qt6 was found. simQt and Qt-based examples will not build.")
+    endif()
 endif()
+# Search for the matching qt version of osgQOpenGL
+find_package(osgQOpenGL-qt${_SDK_QT_VERSION} 4.0 QUIET)
 
-include(ImportOSGQt)
+# Old osgQt is only supported in Qt5
+if(ENABLE_DEPRECATED_SIMDISSDK_API AND Qt5_FOUND)
+    include(ImportOSGQt)
+endif()
 
 # Find and include the OpenGL core header
 # By default search for the GLCORE header in the OSG include path.  Non-default locations for the header
@@ -250,9 +268,10 @@ if(INSTALL_THIRDPARTY_LIBRARIES)
     include(InstallData.3rd.MrSID)
     include(InstallData.3rd.OSG)
     include(InstallData.3rd.osgEarth)
+    include(InstallData.3rd.osgQOpenGL)
     include(InstallData.3rd.osgQt)
-    include(InstallData.3rd.Protobuf)
     include(InstallData.3rd.Qt5)
+    include(InstallData.3rd.Qt6)
 endif()
 
 # Install the documentation to the root of the install directory

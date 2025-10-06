@@ -36,6 +36,7 @@
 #include "osgEarth/AnnotationUtils"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Common/ScopeGuard.h"
 #include "simCore/String/Format.h"
 #include "simCore/EM/RadarCrossSection.h"
 #include "simVis/Constants.h"
@@ -261,7 +262,7 @@ bool PlatformModelNode::addFixedScaledChild(osg::Node* node)
     if (!isImageModel_)
       fixedImageIconXform_->setRotateInScreenSpace(false);
     else
-      fixedImageIconXform_->setRotateInScreenSpace(lastPrefs_.rotateicons() == simData::IR_2D_YAW);
+      fixedImageIconXform_->setRotateInScreenSpace(lastPrefs_.rotateicons() == simData::IconRotation::IR_2D_YAW);
     fixedImageIconXform_->dirty();
 
     //TODO: Is a HorizonCullCallback needed for fixedImageIconXform_?
@@ -426,7 +427,7 @@ PlatformModelNode::ModelUpdate PlatformModelNode::updateFastPathModel_(const sim
   imageOriginalSize_.y() = bounds.yMax() - bounds.yMin();
 
   // Fix the sizing node for the dynamic transform to avoid initial very-large icons.
-  dynamicXform_->setDynamicScaleToPixels(isImageModel_ && prefs.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
+  dynamicXform_->setDynamicScaleToPixels(isImageModel_ && prefs.dynamicscalealgorithm() == simData::DynamicScaleAlgorithm::DSA_METERS_TO_PIXELS);
   dynamicXform_->setSizingNode(fastPathIcon_.get());
 
   // Kill off any pending async model loads
@@ -493,7 +494,7 @@ void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
     offsetXform_->addChild(model_.get());
     alphaVolumeGroup_->addChild(model_.get());
     if (lastPrefsValid_)
-      dynamicXform_->setDynamicScaleToPixels(isImageModel_ && lastPrefs_.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
+      dynamicXform_->setDynamicScaleToPixels(isImageModel_ && lastPrefs_.dynamicscalealgorithm() == simData::DynamicScaleAlgorithm::DSA_METERS_TO_PIXELS);
     dynamicXform_->setSizingNode(model_.get());
   }
 
@@ -588,12 +589,47 @@ bool PlatformModelNode::updateOffsets_(const simData::PlatformPrefs& prefs, bool
   return true;
 }
 
-// Recalculates the scaled and unscaled bounds of the model. We need
-// to call this whenever the model or the scale setup changes.
-void PlatformModelNode::updateBounds_()
+int PlatformModelNode::updateFastPathIconBounds_()
+{
+  // Determine size from fast-path icon
+  if (!fastPathIcon_.valid())
+    return 1;
+
+  // remove rcs to avoid inclusion in the bounds calculation
+  if (rcs_.valid())
+    imageIconXform_->removeChild(rcs_.get());
+  const simCore::ScopeGuard restoreRcs([this]() {
+    if (rcs_.valid())
+    {
+      imageIconXform_->addChild(rcs_.get());
+      // Adjust the RCS scale at this point too
+      rcs_->setScale(fastPathIcon_->getBound().radius() * 2.0);
+    }
+    });
+
+  // Temporarily hide the offsetXform_ so it's not included in bounds calculations
+  const auto oldOffsetXformNodeMask = offsetXform_->getNodeMask();
+  const simCore::ScopeGuard restoreMask([this, oldOffsetXformNodeMask]() {offsetXform_->setNodeMask(oldOffsetXformNodeMask); });
+
+  // Compute bounds; no need to exclude label because it's in offsetXform_, and hidden
+  osg::ComputeBoundsVisitor cb;
+  // compute bounds based on the icon directly for unscaled bounds
+  fastPathIcon_->accept(cb);
+  unscaledBounds_ = cb.getBoundingBox();
+
+  // Now get the scaled bounds
+  cb.reset();
+  dynamicXform_->accept(cb);
+  bounds_ = cb.getBoundingBox();
+
+  // Caller is responsible for firing off the callback for bounds changes
+  return 0;
+}
+
+int PlatformModelNode::updateModelBounds_()
 {
   if (!model_.valid())
-    return;
+    return 1;
 
   // remove rcs to avoid inclusion in the bounds calculation
   if (rcs_.valid())
@@ -613,7 +649,7 @@ void PlatformModelNode::updateBounds_()
 
   // Compute bounds, but exclude the label:
   osg::ComputeBoundsVisitor cb;
-  cb.setTraversalMask(cb.getTraversalMask() |~ simVis::DISPLAY_MASK_LABEL);
+  cb.setTraversalMask(cb.getTraversalMask() | ~simVis::DISPLAY_MASK_LABEL);
   // compute bounds based on the offsetXform_, which is the parent of the model.
   if (fastPathIcon_)
     fastPathIcon_->accept(cb);
@@ -640,7 +676,24 @@ void PlatformModelNode::updateBounds_()
   {
     offsetXform_->addChild(*iter);
   }
+  return 0;
+}
 
+// Recalculates the scaled and unscaled bounds of the model. We need
+// to call this whenever the model or the scale setup changes.
+void PlatformModelNode::updateBounds_()
+{
+  // Should only have one or the other, and not both; if both are feasible, then this assert
+  // is incorrect, and logic in this function and the bounds updating function is wrong.
+  assert(!fastPathIcon_.valid() || !model_.valid());
+
+  // Nothing to do
+  if (!fastPathIcon_.valid() && !model_.valid())
+    return;
+
+  // Only one of the two updates should work
+  updateModelBounds_();
+  updateFastPathIconBounds_();
   // Alert any listeners of bounds changes
   fireCallbacks_(Callback::BOUNDS_CHANGED);
 }
@@ -696,7 +749,7 @@ bool PlatformModelNode::updateDynamicScale_(const simData::PlatformPrefs& prefs)
   {
     dynamicXform_->setDynamicScalar(prefs.dynamicscalescalar());
     dynamicXform_->setScaleOffset(prefs.dynamicscaleoffset());
-    dynamicXform_->setDynamicScaleToPixels(isImageModel_ && prefs.dynamicscalealgorithm() == simData::DSA_METERS_TO_PIXELS);
+    dynamicXform_->setDynamicScaleToPixels(isImageModel_ && prefs.dynamicscalealgorithm() == simData::DynamicScaleAlgorithm::DSA_METERS_TO_PIXELS);
     if (fixedDynamicXform_.valid())
     {
       fixedDynamicXform_->setDynamicScalar(prefs.dynamicscalescalar());
@@ -756,24 +809,24 @@ void PlatformModelNode::updateImageIconRotation_(const simData::PlatformPrefs& p
     return;
   }
 
-  setRotateToScreen(prefs.rotateicons() == simData::IR_2D_UP);
-  imageIconXform_->setRotateInScreenSpace(prefs.rotateicons() == simData::IR_2D_YAW);
+  setRotateToScreen(prefs.rotateicons() == simData::IconRotation::IR_2D_UP);
+  imageIconXform_->setRotateInScreenSpace(prefs.rotateicons() == simData::IconRotation::IR_2D_YAW);
   if (fixedImageIconXform_.valid())
-    fixedImageIconXform_->setRotateInScreenSpace(prefs.rotateicons() == simData::IR_2D_YAW);
+    fixedImageIconXform_->setRotateInScreenSpace(prefs.rotateicons() == simData::IconRotation::IR_2D_YAW);
 
-  if (prefs.rotateicons() == simData::IR_3D_YPR)
+  if (prefs.rotateicons() == simData::IconRotation::IR_3D_YPR)
   {
     setLocator(getLocator(),
       (getLocator()->getComponentsToInherit() | simVis::Locator::COMP_ORIENTATION));
   }
-  else if (prefs.rotateicons() == simData::IR_3D_YAW || prefs.rotateicons() == simData::IR_2D_YAW)
+  else if (prefs.rotateicons() == simData::IconRotation::IR_3D_YAW || prefs.rotateicons() == simData::IconRotation::IR_2D_YAW)
   {
     unsigned int mask = getLocator()->getComponentsToInherit();
     mask &= ~Locator::COMP_ORIENTATION;
     mask |=  Locator::COMP_HEADING;
     setLocator(getLocator(), mask);
   }
-  else if (prefs.rotateicons() == simData::IR_3D_NORTH || prefs.rotateicons() == simData::IR_2D_UP)
+  else if (prefs.rotateicons() == simData::IconRotation::IR_3D_NORTH || prefs.rotateicons() == simData::IconRotation::IR_2D_UP)
   {
     unsigned int mask = getLocator()->getComponentsToInherit();
     mask &= ~Locator::COMP_ORIENTATION;
@@ -823,7 +876,7 @@ void PlatformModelNode::updateStippling_(const simData::PlatformPrefs& prefs)
     return;
   osg::observer_ptr<osg::StateSet> stateSet = offsetXform_->getStateSet();
 
-  // Polygon stipple index in protobuf is off-by-one
+  // Polygon stipple index in field list is off-by-one
   unsigned int patternIndex = prefs.polygonstipple();
   if (patternIndex > 0)
     --patternIndex;
@@ -846,19 +899,19 @@ void PlatformModelNode::updateCulling_(const simData::PlatformPrefs& prefs)
   {
     switch (prefs.cullface())
     {
-    case simData::FRONT:
+    case simData::PolygonFace::FRONT:
     {
       osg::ref_ptr<osg::CullFace> face = new osg::CullFace(osg::CullFace::FRONT);
       stateSet->setAttributeAndModes(face.get(), osg::StateAttribute::ON);
       break;
     }
-    case simData::BACK:
+    case simData::PolygonFace::BACK:
     {
       osg::ref_ptr<osg::CullFace> face = new osg::CullFace(osg::CullFace::BACK);
       stateSet->setAttributeAndModes(face.get(), osg::StateAttribute::ON);
       break;
     }
-    case simData::FRONT_AND_BACK:
+    case simData::PolygonFace::FRONT_AND_BACK:
     {
       osg::ref_ptr<osg::CullFace> face = new osg::CullFace(osg::CullFace::FRONT_AND_BACK);
       stateSet->setAttributeAndModes(face.get(), osg::StateAttribute::ON);
@@ -904,13 +957,13 @@ void PlatformModelNode::updatePolygonMode_(const simData::PlatformPrefs& prefs)
       face = osg::PolygonMode::FRONT_AND_BACK;
       switch (prefs.drawmode())
       {
-      case simData::MDM_POINTS:
+      case simData::ModelDrawMode::MDM_POINTS:
         mode = osg::PolygonMode::POINT;
         break;
-      case simData::MDM_WIRE:
+      case simData::ModelDrawMode::MDM_WIRE:
         mode = osg::PolygonMode::LINE;
         break;
-      case simData::MDM_SOLID:
+      case simData::ModelDrawMode::MDM_SOLID:
         mode = osg::PolygonMode::FILL;
         break;
       default:
@@ -968,9 +1021,9 @@ void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs
     overrideColor_->setCombineMode(OverrideColor::OFF);
   else
   {
-    if (prefs.overridecolorcombinemode() == simData::REPLACE_COLOR)
+    if (prefs.overridecolorcombinemode() == simData::OverrideColorCombineMode::REPLACE_COLOR)
       overrideColor_->setCombineMode(OverrideColor::REPLACE_COLOR);
-    else if (prefs.overridecolorcombinemode() == simData::MULTIPLY_COLOR)
+    else if (prefs.overridecolorcombinemode() == simData::OverrideColorCombineMode::MULTIPLY_COLOR)
       overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
     else
       overrideColor_->setCombineMode(OverrideColor::INTENSITY_GRADIENT);

@@ -274,4 +274,42 @@ int Dcm::fromQ(const std::array<double, 4>& q)
   return 0;
 }
 
+void Dcm::fromD3M(const double a[][3])
+{
+  if (!a)
+  {
+    assert(0);
+    return;
+  }
+  set(0, 0, a[0][0]);
+  set(0, 1, a[0][1]);
+  set(0, 2, a[0][2]);
+
+  set(1, 0, a[1][0]);
+  set(1, 1, a[1][1]);
+  set(1, 2, a[1][2]);
+
+  set(2, 0, a[2][0]);
+  set(2, 1, a[2][1]);
+  set(2, 2, a[2][2]);
+}
+
+Vec3 Dcm::d3Mv3Mult(const Vec3& u)
+{
+  Vec3 v;
+  v.setV0(get(0,0) * u[0] + get(0,1) * u[1] + get(0,2) * u[2]);
+  v.setV1(get(1,0) * u[0] + get(1,1) * u[1] + get(1,2) * u[2]);
+  v.setV2(get(2,0) * u[0] + get(2,1) * u[1] + get(2,2) * u[2]);
+  return v;
+}
+
+Vec3 Dcm::d3MTv3Mult(const Vec3& u)
+{
+  Vec3 v;
+  v.setV0(get(0, 0) * u[0] + get(1, 0) * u[1] + get(2, 0) * u[2]);
+  v.setV1(get(0, 1) * u[0] + get(1, 1) * u[1] + get(2, 1) * u[2]);
+  v.setV2(get(0, 2) * u[0] + get(1, 2) * u[1] + get(2, 2) * u[2]);
+  return v;
+}
+
 }

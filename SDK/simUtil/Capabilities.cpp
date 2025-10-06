@@ -29,7 +29,9 @@
 #include "osgEarth/Registry"
 #include "osgEarth/StringUtils"
 #include "osgEarth/Version"
+#include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
+#include "simCore/System/MemoryInfo.h"
 #include "simUtil/Capabilities.h"
 
 #ifndef GL_CONTEXT_PROFILE_MASK
@@ -41,16 +43,25 @@
 
 namespace simUtil {
 
+/**
+ * Minimum number of CPU to avoid warning on performance. This should be logical processors. A
+ * low CPU count implies a VM environment where performance might be stunted. If a user has
+ * fewer than these number of CPUs detected, present a performance warning.
+ */
+constexpr unsigned int MINIMUM_CPU_COUNT = 4;
+
+/**
+ * Minimum RAM to pass capabilities test, in gigabytes. Slightly above the minimum to catch any
+ * possible rounding issues or reserved memory issues.
+ */
+constexpr double MINIMUM_RAM_GB = 4.1;
+
 Capabilities::Capabilities(osg::GraphicsContext& gc)
-  : glVersion_(1.0),
-    isUsable_(USABLE)
 {
   init_(gc);
 }
 
 Capabilities::Capabilities()
-  : glVersion_(1.0),
-  isUsable_(USABLE)
 {
   init_();
 }
@@ -86,26 +97,17 @@ std::string Capabilities::toString_(float val) const
   return ss.str();
 }
 
-void Capabilities::init_()
+void Capabilities::recordThirdPartyVersions_()
 {
-  const osgEarth::Capabilities& caps = osgEarth::Registry::instance()->getCapabilities();
-  caps_.push_back(std::make_pair("Vendor", caps.getVendor()));
-  caps_.push_back(std::make_pair("Renderer", caps.getRenderer()));
-  caps_.push_back(std::make_pair("OpenGL Version", caps.getVersion()));
-  glVersion_ = extractGlVersion_(caps.getVersion());
-  caps_.push_back(std::make_pair("Core Profile", toString_(caps.isCoreProfile())));
+  caps_.push_back(std::make_pair("osgEarth Version", osgEarthGetVersion()));
+  caps_.push_back(std::make_pair("OSG Version", osgGetVersion()));
+#ifdef GDAL_RELEASE_NAME
+  caps_.push_back(std::make_pair("GDAL Version", GDAL_RELEASE_NAME));
+#endif
+}
 
-  // OpenGL version must be usable.  OSG 3.6 with core profile support will not function
-  // without support for VAO, which requires OpenGL 3.0, released in 2008.  Although we
-  // require interface blocks from GLSL 3.3, we only absolutely require OpenGL features
-  // from 3.0, so test against that.
-  if (glVersion_ < 3.0f) // Note release date of 2008
-  {
-    recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.0 (detected " << glVersion_ << ")");
-  }
-
-  checkVendorOpenGlSupport_(caps.getVendor(), caps.getVersion());
-
+void Capabilities::recordGlLimits_(const osgEarth::Capabilities& caps)
+{
   caps_.push_back(std::make_pair("Max GPU texture units", toString_(caps.getMaxGPUTextureUnits())));
   caps_.push_back(std::make_pair("Max texture size", toString_(caps.getMaxTextureSize())));
   caps_.push_back(std::make_pair("GLSL", toString_(caps.supportsGLSL())));
@@ -139,9 +141,21 @@ void Capabilities::init_()
   else // Remove trailing space
     compressionSupported = compressionSupported.substr(0, compressionSupported.length() - 1);
   caps_.push_back(std::make_pair("Texture compression", compressionSupported));
+
 }
 
-void Capabilities::init_(osg::GraphicsContext& gc)
+void Capabilities::recordContextInfoFromCaps_(const osgEarth::Capabilities& caps)
+{
+  vendorString_ = caps.getVendor();
+  caps_.push_back(std::make_pair("Vendor", vendorString_));
+  caps_.push_back(std::make_pair("Renderer", caps.getRenderer()));
+  glVersionString_ = caps.getVersion();
+  caps_.push_back(std::make_pair("OpenGL Version", glVersionString_));
+  glVersion_ = extractGlVersion_(caps.getVersion());
+  caps_.push_back(std::make_pair("Core Profile", toString_(caps.isCoreProfile())));
+}
+
+int Capabilities::recordContextInfoFromContext_(osg::GraphicsContext& gc)
 {
   osg::GLExtensions* ext = nullptr;
   if (gc.makeCurrent() && gc.getState())
@@ -156,38 +170,59 @@ void Capabilities::init_(osg::GraphicsContext& gc)
     caps_.push_back(std::make_pair("Core Profile", toString_(false)));
     glVersion_ = 0.0;
     recordUsabilityConcern_(Capabilities::UNUSABLE, "Unable to activate context.");
-    return;
+    return 1;
   }
 
-  const std::string& vendorString = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
-  caps_.push_back(std::make_pair("osgEarth Version", osgEarthGetVersion()));
-  caps_.push_back(std::make_pair("OSG Version", osgGetVersion()));
-#ifdef GDAL_RELEASE_NAME
-  caps_.push_back(std::make_pair("GDAL Version", GDAL_RELEASE_NAME));
-#endif
-  caps_.push_back(std::make_pair("Vendor", vendorString));
+  vendorString_ = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
   const std::string& rendererString = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
-  caps_.push_back(std::make_pair("Renderer", rendererString));
-  const std::string& glVersionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-  caps_.push_back(std::make_pair("OpenGL Version", glVersionString));
-  glVersion_ = extractGlVersion_(glVersionString);
+  glVersionString_ = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+  glVersion_ = extractGlVersion_(glVersionString_);
 
   // Detect core profile by investigating GL_CONTEXT_PROFILE_MASK
   GLint profileMask = 0;
   glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &profileMask);
   const bool isCoreProfile = (glVersion_ >= 3.2f && ((profileMask & GL_CONTEXT_CORE_PROFILE_BIT) != 0));
-  caps_.push_back(std::make_pair("Core Profile", toString_(isCoreProfile)));
 
+  caps_.push_back(std::make_pair("Vendor", vendorString_));
+  caps_.push_back(std::make_pair("Renderer", rendererString));
+  caps_.push_back(std::make_pair("OpenGL Version", glVersionString_));
+  caps_.push_back(std::make_pair("Core Profile", toString_(isCoreProfile)));
+  return 0;
+}
+
+void Capabilities::checkInvalidOpenGlVersion_()
+{
   // OpenGL version must be usable.  OSG 3.6 with core profile support will not function
   // without support for VAO, which requires OpenGL 3.0, released in 2008.  Although we
   // require interface blocks from GLSL 3.3, we only absolutely require OpenGL features
   // from 3.0, so test against that.
   if (glVersion_ < 3.0f) // Note release date of 2008
-  {
     recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.0 (detected " << glVersion_ << ")");
-  }
+}
 
-  checkVendorOpenGlSupport_(vendorString, glVersionString);
+void Capabilities::init_()
+{
+  recordThirdPartyVersions_();
+
+  const osgEarth::Capabilities& caps = osgEarth::Registry::instance()->getCapabilities();
+  recordContextInfoFromCaps_(caps);
+  checkInvalidOpenGlVersion_();
+  checkVendorOpenGlSupport_(vendorString_, glVersionString_);
+  recordGlLimits_(caps);
+  checkCpuCount_();
+  checkRam_();
+}
+
+void Capabilities::init_(osg::GraphicsContext& gc)
+{
+  recordThirdPartyVersions_();
+
+  if (recordContextInfoFromContext_(gc) != 0)
+    return;
+  checkInvalidOpenGlVersion_();
+  checkVendorOpenGlSupport_(vendorString_, glVersionString_);
+  checkCpuCount_();
+  checkRam_();
 }
 
 void Capabilities::recordUsabilityConcern_(Capabilities::Usability severity, const std::string& concern)
@@ -254,13 +289,22 @@ void Capabilities::checkVendorOpenGlSupport_(const std::string& vendor, const st
     }
     const int nVidiaMajor = atoi(nvidiaMajorStr.c_str());
     const int nVidiaMinor = atoi(nvidiaMinorStr.c_str());
-    // testing indicates that 304.125 and most drivers > 340 work
-    const bool usable = (nVidiaMajor >= 340) || (nVidiaMajor == 304 && nVidiaMinor >= 125);
+
+    // SIM-18144 details issues with 571. - 573. drivers;
+    // as of 2025-06, all known drivers >= 571 have memory leak issues due to threaded optimization; revisit before SR18 to see if newer nVidia are free of issues.
+    if (nVidiaMajor >= 571)
+    {
+      recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, osgEarth::Stringify() << "nVidia driver version " << nVidiaMajor << "." << nVidiaMinor << " has issues when threaded optimization is not disabled.");
+      recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Disable threaded optimization in the NVIDIA control panel's 'Manage 3D settings pane'.");
+      return;
+    }
+
+    // testing indicates that 304.125 and most drivers > 340 work; SIM-18144 details issues with 571. - 573. drivers
+    // as of 2025-06, all known drivers >= 571 have memory leak issues; revisit before SR18 to see if newer nVidia are free of issues.
+    const bool usable = (nVidiaMajor == 304 && nVidiaMinor >= 125) || (nVidiaMajor >= 340 && nVidiaMajor < 571);
     if (usable)
       return;
-    // testing indicates that:
-    // nvidia 331 drivers were not usable
-    // most drivers <= 340 had issues
+    // testing indicates that: nvidia 331 drivers were not usable, most drivers <= 340 had issues
     const bool unusable = (nVidiaMajor == 331);
     recordUsabilityConcern_((unusable ? UNUSABLE : USABLE_WITH_ARTIFACTS), osgEarth::Stringify() << "nVidia driver version " << nVidiaMajor << "." << nVidiaMinor);
     return;
@@ -275,6 +319,31 @@ void Capabilities::checkVendorOpenGlSupport_(const std::string& vendor, const st
     }
     return;
   }
+}
+
+void Capabilities::checkCpuCount_()
+{
+  const unsigned int numCpu = std::thread::hardware_concurrency();
+  if (numCpu == 0u)
+    return; // unknown number of CPU
+
+  const std::string cpuStr = std::to_string(numCpu);
+  caps_.push_back(std::make_pair("CPU Count", cpuStr));
+  if (numCpu < MINIMUM_CPU_COUNT)
+    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Low CPU count (" + cpuStr + "); possible performance issues with larger track loads or large terrain data.");
+}
+
+void Capabilities::checkRam_()
+{
+  const auto& ramResult = simCore::MemoryInfo::getMemoryInfo();
+  if (!ramResult.isSuccess() || !ramResult.stats.has_value())
+    return;
+
+  const auto& ram = *ramResult.stats;
+  const std::string& totalRamStr = simCore::buildString("", ram.totalGb(), 0, 1, " GB");
+  caps_.push_back({ "Total RAM", totalRamStr });
+  if (ram.totalGb() < MINIMUM_RAM_GB)
+    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Low Total RAM (" + totalRamStr + "); possible performance issues with larger track loads or large terrain data.");
 }
 
 Capabilities::Usability Capabilities::isUsable() const
