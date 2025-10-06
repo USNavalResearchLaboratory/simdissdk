@@ -105,7 +105,7 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, Locator* parent
   : ds_(ds),
   supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL(3.3f)),
   chunkSize_(64),  // keep this lowish or your app won't scale.
-  defaultColor_(simVis::Color(simData::PlatformPrefs::default_instance().trackprefs().trackcolor(), simVis::Color::RGBA)),
+  defaultColor_(simVis::Color(simData::PlatformPrefs().trackprefs().trackcolor(), simVis::Color::RGBA)),
   totalPoints_(0),
   hasLastDrawTime_(false),
   lastDrawTime_(0.0),
@@ -402,7 +402,7 @@ void TrackHistoryNode::removePointsOlderThan_(double oldestDrawTime)
 
 void TrackHistoryNode::updateVisibility_(const simData::TrackPrefs& prefs)
 {
-  const bool invisible = (prefs.trackdrawmode() == simData::TrackPrefs::OFF);
+  const bool invisible = (prefs.trackdrawmode() == simData::TrackPrefs::Mode::OFF);
   setNodeMask(invisible ? simVis::DISPLAY_MASK_NONE : simVis::DISPLAY_MASK_TRACK_HISTORY);
 }
 
@@ -461,7 +461,7 @@ void TrackHistoryNode::setHostBounds(const osg::Vec2& bounds)
 {
   hostBounds_ = bounds;
   // the size of the ribbon depends on the size of the model, so force a rebuild
-  if (lastPlatformPrefs_.trackprefs().trackdrawmode() == simData::TrackPrefs_Mode_RIBBON)
+  if (lastPlatformPrefs_.trackprefs().trackdrawmode() == simData::TrackPrefs::Mode::RIBBON)
   {
     reset();
     update();
@@ -535,7 +535,7 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
 
   // platform should be deleting track when trackdrawmode turned off, this should never be called with trackdrawmode off
   // if assert fails, check platform setPrefs logic that processes prefs.trackprefs().trackdrawmode()
-  assert(prefs.trackdrawmode() != simData::TrackPrefs_Mode_OFF);
+  assert(prefs.trackdrawmode() != simData::TrackPrefs::Mode::OFF);
   bool resetRequested = false;
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, trackdrawmode))
@@ -805,7 +805,7 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
   // only line, ribbon, and bridge draw modes require this processing,
   // but if there is not a previous point, there is nothing to do
   if (!updateSlice.isInterpolated() ||
-      lastPlatformPrefs_.trackprefs().trackdrawmode() == simData::TrackPrefs_Mode_POINT ||
+      lastPlatformPrefs_.trackprefs().trackdrawmode() == simData::TrackPrefs::Mode::POINT ||
       chunkGroup_->getNumChildren() == 0)
     return;
 

@@ -24,6 +24,7 @@
 #define SIMDATA_DATASTORE_H
 
 #include <cassert>
+#include <functional>
 #include <memory>
 #include <vector>
 

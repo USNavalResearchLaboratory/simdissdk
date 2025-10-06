@@ -22,6 +22,7 @@
  */
 #include <sstream>
 #include <QTreeWidget>
+#include "simCore/System/Utils.h"
 #include "simQt/DataTableModel.h"
 #include "simQt/EntityTreeComposite.h"
 #include "simQt/EntityTreeModel.h"
@@ -312,6 +313,7 @@ namespace DataTableViewTest
 
 int main(int argc, char* argv[])
 {
+  simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
 
   DataTableViewTest::MainWindow* window = new DataTableViewTest::MainWindow(nullptr);

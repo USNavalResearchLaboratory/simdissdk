@@ -58,7 +58,9 @@ static const char* EFFECT_NAMES[] = {
   "Glow",
   "Flash"
 };
-static const int EFFECT_COUNT = simData::FragmentEffect_ARRAYSIZE;
+
+static const int EFFECT_COUNT = static_cast<int>(simData::FragmentEffect::FE_FLASH);
+
 
 /**
  * Sets platform prefs using a lambda. Returns 0 if the prefs are set. For example:
@@ -120,7 +122,7 @@ public:
       // Extract the fragment effect
       simData::DataStore::Transaction txn;
       auto* prefs = ds_.platformPrefs(id_, &txn);
-      currentEffect_ = prefs->fragmenteffect();
+      currentEffect_ = static_cast<int>(prefs->fragmenteffect());
       txn.release(&prefs);
 
       int oldEffect = currentEffect_;
@@ -167,7 +169,7 @@ private:
 
   simData::DataStore& ds_;
   simData::ObjectId id_ = 0;
-  int currentEffect_ = simData::FE_NONE;
+  int currentEffect_ = static_cast<int>(simData::FragmentEffect::FE_NONE);
   double nextScaleMult_ = 1.0;
 };
 
@@ -345,7 +347,7 @@ public:
   void cycleNext()
   {
     int nextValue = (static_cast<int>(currentEffect_) + 1);
-    if (nextValue >= simData::FragmentEffect_ARRAYSIZE)
+    if (nextValue >= EFFECT_COUNT)
       nextValue = 0;
     setValue_(static_cast<simData::FragmentEffect>(nextValue));
   }
@@ -362,7 +364,7 @@ private:
 
   simData::DataStore& dataStore_;
   simData::ObjectId entityId_ = 0;
-  simData::FragmentEffect currentEffect_ = simData::FE_NONE;
+  simData::FragmentEffect currentEffect_ = simData::FragmentEffect::FE_NONE;
 };
 
 //----------------------------------------------------------------------------

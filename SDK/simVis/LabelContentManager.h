@@ -42,7 +42,7 @@ namespace simVis
     * @param fields Display fields to use when forming the display string
     * @return A label content based on the given preference and update; does not include platform name/alias
     */
-    virtual std::string createString(const simData::PlatformPrefs& prefs, const simData::PlatformUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::PlatformPrefs& prefs, const simData::PlatformUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
 
     /**
     * Returns a beam label content based on the given preference and update
@@ -51,7 +51,7 @@ namespace simVis
     * @param fields Display fields to use when forming the display string
     * @return A label content based on the given preference and update; does not include beam name/alias
     */
-    virtual std::string createString(const simData::BeamPrefs& prefs, const simData::BeamUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::BeamPrefs& prefs, const simData::BeamUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
 
     /**
     * Returns a gate label content based on the given preference and update
@@ -60,7 +60,7 @@ namespace simVis
     * @param fields Display fields to use when forming the display string
     * @return A label content based on the given preference and update; does not include gate name/alias
     */
-    virtual std::string createString(const simData::GatePrefs& prefs, const simData::GateUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::GatePrefs& prefs, const simData::GateUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
 
     /**
     * Returns a laser label content based on the given preference and update
@@ -69,7 +69,7 @@ namespace simVis
     * @param fields Display fields to use when forming the display string
     * @return A label content based on the given preference and update; does not include laser name/alias
     */
-    virtual std::string createString(const simData::LaserPrefs& prefs, const simData::LaserUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::LaserPrefs& prefs, const simData::LaserUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
 
     /**
     * Returns a LOB Group label content based on the given preference and update
@@ -78,7 +78,7 @@ namespace simVis
     * @param fields Display fields to use when forming the display string
     * @return A label content based on the given preference and update; does not include LOB Group name/alias
     */
-    virtual std::string createString(const simData::LobGroupPrefs& prefs, const simData::LobGroupUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::LobGroupPrefs& prefs, const simData::LobGroupUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
 
     /**
     * Returns a projector label content based on the given preference and update
@@ -87,7 +87,7 @@ namespace simVis
     * @param fields Display fields to use when forming the display string
     * @return A label content based on the given preference and update; does not include projector name/alias
     */
-    virtual std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
 
     /**
     * Returns a custom rendering label content based on the given preference
@@ -96,7 +96,7 @@ namespace simVis
     * @param fields Display fields to use when forming the display string
     * @return A label content based on the given preference; does not include custom rendering name/alias
     */
-    virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::LabelPrefs_DisplayFields& fields) = 0;
+    virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields) = 0;
 
   protected:
     virtual ~LabelContentCallback() {}
@@ -120,37 +120,37 @@ namespace simVis
   public:
     NullEntityCallback() {}
 
-    virtual std::string createString(const simData::PlatformPrefs& prefs, const simData::PlatformUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) override
+    virtual std::string createString(const simData::PlatformPrefs& prefs, const simData::PlatformUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(const simData::BeamPrefs& prefs, const simData::BeamUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) override
+    virtual std::string createString(const simData::BeamPrefs& prefs, const simData::BeamUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(const simData::GatePrefs& prefs, const simData::GateUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) override
+    virtual std::string createString(const simData::GatePrefs& prefs, const simData::GateUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(const simData::LaserPrefs& prefs, const simData::LaserUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) override
+    virtual std::string createString(const simData::LaserPrefs& prefs, const simData::LaserUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(const simData::LobGroupPrefs& prefs, const simData::LobGroupUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) override
+    virtual std::string createString(const simData::LobGroupPrefs& prefs, const simData::LobGroupUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) override
+    virtual std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::LabelPrefs_DisplayFields& fields) override
+    virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields) override
     {
       return "";
     }

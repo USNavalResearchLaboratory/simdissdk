@@ -421,8 +421,8 @@ simData::ObjectId addGate(simData::ObjectId hostId, simData::DataStore &dataStor
   simData::GatePrefs* gatePrefs = dataStore.mutable_gatePrefs(gateId, &transaction);
   gatePrefs->set_gateazimuthoffset(osg::DegreesToRadians(0.0));
   gatePrefs->mutable_commonprefs()->set_color(0xffffff7f); //simVis::Color::White.as(simVis::Color::RGBA));
-  gatePrefs->set_fillpattern(simData::GatePrefs_FillPattern_ALPHA);
-  gatePrefs->set_gatedrawmode(simData::GatePrefs_DrawMode_ANGLE);
+  gatePrefs->set_fillpattern(simData::GatePrefs::FillPattern::ALPHA);
+  gatePrefs->set_gatedrawmode(simData::GatePrefs::DrawMode::ANGLE);
   gatePrefs->set_gatelighting(false);
   transaction.complete(&gatePrefs);
 
@@ -462,8 +462,7 @@ int setAcceptedProjectors(simData::DataStore& ds, simData::ObjectId entityId, co
   auto* prefs = ds.mutable_commonPrefs(entityId, &txn);
   if (!prefs)
     return 1;
-  // Fill out the repeated field of projector IDs to accept
-  simData::DataStoreHelpers::vecToRepeated(prefs->mutable_acceptprojectorids(), projIds);
+  *prefs->mutable_acceptprojectorids() = projIds;
   txn.complete(&prefs);
   return 0;
 }

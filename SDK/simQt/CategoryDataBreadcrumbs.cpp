@@ -118,9 +118,7 @@ public:
 ////////////////////////////////////////////////////////////////////
 
 CloseableItemDelegate::Style::Style()
-  : rectangleRadiusX(4.0),
-    rectangleRadiusY(4.0),
-    outlinePen(QColor(188, 195, 199, 255), 1.5), // Grayish
+  : outlinePen(QColor(188, 195, 199, 255), 1.5), // Grayish
     fillColor(QColor(195, 225, 240, 255)), // Light gray with a hint of blue
     altFillColor(QColor(161, 212, 237, 255)), // Slightly darker blue
     textColor(Qt::black),
@@ -361,11 +359,7 @@ private:
 
 CategoryDataBreadcrumbs::CategoryDataBreadcrumbs(QWidget* parent)
   : QWidget(parent),
-    filter_(nullptr),
-    minimumGroupSize_(3),
-    hideWhenEmpty_(true),
-    emptyText_(tr("No active category filter")),
-    validHints_(false)
+    emptyText_(tr("No active category filter"))
 {
   listWidget_ = new QListWidget(this);
   listWidget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -396,13 +390,13 @@ CategoryDataBreadcrumbs::CategoryDataBreadcrumbs(QWidget* parent)
   // Create an item delegate that will draw the filter settings
   itemDelegate_ = new CloseableItemDelegate(this);
   listWidget_->setItemDelegate(itemDelegate_);
-  connect(itemDelegate_, SIGNAL(closeClicked(QModelIndex)), this, SLOT(removeFilter_(QModelIndex)));
+  connect(itemDelegate_, &CloseableItemDelegate::closeClicked, this, &CategoryDataBreadcrumbs::removeFilter_);
   // Create an item delegate that has no decorations that we can use when we don't want close button
   plainDelegate_ = new QStyledItemDelegate(this);
 
   // Create a layout and add the list widget to that layout
   QVBoxLayout* layout = new QVBoxLayout(this);
-  layout->setMargin(0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(listWidget_);
 
   // Set the list contents
@@ -780,7 +774,9 @@ void CategoryDataBreadcrumbs::removeFilter_(const QModelIndex& index)
     // Removal requires a simplified filter to behave well, so simplify, remove the value, simplify again, and re-emit
     const int value = valueVariant.toInt();
     filter_->simplify();
-    filter_->removeValue(name, value);
+    const int rv = filter_->removeValue(name, value);
+    // Failure to remove value means internal configuration error
+    assert(rv == 0);
     filter_->simplify();
   }
 
@@ -1040,10 +1036,10 @@ void CategoryDataBreadcrumbs::bindTo(simQt::EntityCategoryFilter* categoryFilter
   if (!categoryFilter)
     return;
   // Changes to us will be reflected in the filter
-  connect(this, SIGNAL(filterEdited(simData::CategoryFilter)), categoryFilter, SLOT(setCategoryFilter(simData::CategoryFilter)));
+  connect(this, &CategoryDataBreadcrumbs::filterEdited, categoryFilter, &EntityCategoryFilter::setCategoryFilter);
   // Changes in the filter trigger us to resynchronize.  Note that due to the way the
   // categoryFilterChanged() signal is emitted, we cannot use it directly.
-  connect(categoryFilter, SIGNAL(filterUpdated()), this, SLOT(synchronizeToSenderFilter_()));
+  connect(categoryFilter, &EntityCategoryFilter::filterUpdated, this, &CategoryDataBreadcrumbs::synchronizeToSenderFilter_);
   // Update our current state to that of the category filter
   setFilter(categoryFilter->categoryFilter());
 }

@@ -67,8 +67,6 @@
 #include "osgEarth/StringUtils"
 #include "osgEarth/Style"
 
-#include "google/protobuf/stubs/common.h"
-
 using namespace osgEarth;
 using namespace osgEarth::Util;
 
@@ -286,19 +284,19 @@ struct MenuHandler : public osgGA::GUIEventHandler
         localgrid->set_drawgrid(true);
 
         localgrid->set_gridtype(
-          localgrid->gridtype() == simData::LocalGridPrefs_Type_CARTESIAN   ? simData::LocalGridPrefs_Type_POLAR :
-          localgrid->gridtype() == simData::LocalGridPrefs_Type_POLAR       ? simData::LocalGridPrefs_Type_RANGE_RINGS :
-          localgrid->gridtype() == simData::LocalGridPrefs_Type_RANGE_RINGS ? simData::LocalGridPrefs_Type_SPEED_RINGS :
-          simData::LocalGridPrefs_Type_CARTESIAN);
+          localgrid->gridtype() == simData::LocalGridPrefs::Type::CARTESIAN   ? simData::LocalGridPrefs::Type::POLAR :
+          localgrid->gridtype() == simData::LocalGridPrefs::Type::POLAR       ? simData::LocalGridPrefs::Type::RANGE_RINGS :
+          localgrid->gridtype() == simData::LocalGridPrefs::Type::RANGE_RINGS ? simData::LocalGridPrefs::Type::SPEED_RINGS :
+          simData::LocalGridPrefs::Type::CARTESIAN);
 
         localgrid->set_followyaw(true);
         localgrid->set_followpitch(false);
         localgrid->set_followroll(true);
 
         setText(
-          localgrid->gridtype() == simData::LocalGridPrefs_Type_CARTESIAN   ? "CARTESIAN" :
-          localgrid->gridtype() == simData::LocalGridPrefs_Type_POLAR       ? "POLAR" :
-          localgrid->gridtype() == simData::LocalGridPrefs_Type_RANGE_RINGS ? "RANGE RINGS" :
+          localgrid->gridtype() == simData::LocalGridPrefs::Type::CARTESIAN   ? "CARTESIAN" :
+          localgrid->gridtype() == simData::LocalGridPrefs::Type::POLAR       ? "POLAR" :
+          localgrid->gridtype() == simData::LocalGridPrefs::Type::RANGE_RINGS ? "RANGE RINGS" :
                                                                               "SPEED RINGS");
 
         xaction.complete(&prefs);
@@ -371,13 +369,13 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
         const simData::BeamPrefs::DrawMode oldMode = prefs->beamdrawmode();
         prefs->set_beamdrawmode(
-          oldMode == simData::BeamPrefs::WIRE  ? simData::BeamPrefs::SOLID :
-          oldMode == simData::BeamPrefs::SOLID ? simData::BeamPrefs::WIRE_ON_SOLID :
-                                                 simData::BeamPrefs::WIRE);
+          oldMode == simData::BeamPrefs::DrawMode::WIRE  ? simData::BeamPrefs::DrawMode::SOLID :
+          oldMode == simData::BeamPrefs::DrawMode::SOLID ? simData::BeamPrefs::DrawMode::WIRE_ON_SOLID :
+                                                 simData::BeamPrefs::DrawMode::WIRE);
 
         setText(Stringify() << "Set beam draw mode to " << (
-          prefs->beamdrawmode() == simData::BeamPrefs::WIRE  ? "WIRE" :
-          prefs->beamdrawmode() == simData::BeamPrefs::SOLID ? "SOLID" :
+          prefs->beamdrawmode() == simData::BeamPrefs::DrawMode::WIRE  ? "WIRE" :
+          prefs->beamdrawmode() == simData::BeamPrefs::DrawMode::SOLID ? "SOLID" :
                                                            "WIRE_ON_SOLID"));
 
         xaction.complete(&prefs);
@@ -454,15 +452,15 @@ struct MenuHandler : public osgGA::GUIEventHandler
         const simData::GatePrefs::FillPattern old = prefs->fillpattern();
 
         prefs->set_fillpattern(
-          old == simData::GatePrefs::CENTROID ? simData::GatePrefs::STIPPLE :
-          old == simData::GatePrefs::STIPPLE  ? simData::GatePrefs::ALPHA :
-          old == simData::GatePrefs::ALPHA    ? simData::GatePrefs::WIRE :
-          /*old == simData::GatePrefs::WIRE   ? */ simData::GatePrefs::CENTROID);
+          old == simData::GatePrefs::FillPattern::CENTROID ? simData::GatePrefs::FillPattern::STIPPLE :
+          old == simData::GatePrefs::FillPattern::STIPPLE  ? simData::GatePrefs::FillPattern::ALPHA :
+          old == simData::GatePrefs::FillPattern::ALPHA    ? simData::GatePrefs::FillPattern::WIRE :
+          /*old == simData::GatePrefs::WIRE   ? */ simData::GatePrefs::FillPattern::CENTROID);
 
         setText(Stringify() << "Set gate fill pattern to " << (
-          prefs->fillpattern() == simData::GatePrefs::CENTROID ? "CENTROID" :
-          prefs->fillpattern() == simData::GatePrefs::STIPPLE  ? "STIPPLE"  :
-          prefs->fillpattern() == simData::GatePrefs::ALPHA    ? "APLHA"    :
+          prefs->fillpattern() == simData::GatePrefs::FillPattern::CENTROID ? "CENTROID" :
+          prefs->fillpattern() == simData::GatePrefs::FillPattern::STIPPLE  ? "STIPPLE"  :
+          prefs->fillpattern() == simData::GatePrefs::FillPattern::ALPHA    ? "APLHA"    :
                                                                  "WIRE"));
 
         xaction.complete(&prefs);
@@ -523,17 +521,17 @@ struct MenuHandler : public osgGA::GUIEventHandler
         simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
         simData::IconRotation old = prefs->rotateicons();
         prefs->set_rotateicons(
-          old == simData::IR_2D_UP    ? simData::IR_2D_YAW :
-          old == simData::IR_2D_YAW   ? simData::IR_3D_YPR :
-          old == simData::IR_3D_YPR   ? simData::IR_3D_NORTH :
-          old == simData::IR_3D_NORTH ? simData::IR_3D_YAW :
-          /*old == simData::IR_3D_YAW ? */  simData::IR_2D_UP);
+          old == simData::IconRotation::IR_2D_UP    ? simData::IconRotation::IR_2D_YAW :
+          old == simData::IconRotation::IR_2D_YAW   ? simData::IconRotation::IR_3D_YPR :
+          old == simData::IconRotation::IR_3D_YPR   ? simData::IconRotation::IR_3D_NORTH :
+          old == simData::IconRotation::IR_3D_NORTH ? simData::IconRotation::IR_3D_YAW :
+          /*old == simData::IconRotation::IR_3D_YAW ? */  simData::IconRotation::IR_2D_UP);
 
         setText(Stringify() << "Set icon rotate mode to " << (
-          prefs->rotateicons() == simData::IR_2D_UP    ? "2D_UP (Billboard Pointing Up)" :
-          prefs->rotateicons() == simData::IR_2D_YAW   ? "2D_YAW (Billboard with Yaw)" :
-          prefs->rotateicons() == simData::IR_3D_YPR   ? "3D_YPR (Follow Platform)"   :
-          prefs->rotateicons() == simData::IR_3D_NORTH ? "3D_NORTH (Flat Oriented North)" :
+          prefs->rotateicons() == simData::IconRotation::IR_2D_UP    ? "2D_UP (Billboard Pointing Up)" :
+          prefs->rotateicons() == simData::IconRotation::IR_2D_YAW   ? "2D_YAW (Billboard with Yaw)" :
+          prefs->rotateicons() == simData::IconRotation::IR_3D_YPR   ? "3D_YPR (Follow Platform)"   :
+          prefs->rotateicons() == simData::IconRotation::IR_3D_NORTH ? "3D_NORTH (Flat Oriented North)" :
                                                          "3D_YAW (Flat with Yaw)"));
 
         xaction.complete(&prefs);
@@ -580,9 +578,9 @@ struct MenuHandler : public osgGA::GUIEventHandler
         simData::DataStore::Transaction xaction;
         simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
         prefs->mutable_commonprefs()->mutable_labelprefs()->set_textoutline(
-          prefs->commonprefs().labelprefs().textoutline() == simData::TO_NONE ? simData::TO_THIN :
-          prefs->commonprefs().labelprefs().textoutline() == simData::TO_THIN ? simData::TO_THICK :
-          simData::TO_NONE);
+          prefs->commonprefs().labelprefs().textoutline() == simData::TextOutline::TO_NONE ? simData::TextOutline::TO_THIN :
+          prefs->commonprefs().labelprefs().textoutline() == simData::TextOutline::TO_THIN ? simData::TextOutline::TO_THICK :
+          simData::TextOutline::TO_NONE);
         xaction.complete(&prefs);
         handled = true;
       }
@@ -625,34 +623,34 @@ struct MenuHandler : public osgGA::GUIEventHandler
         simData::BackdropType type = prefs->commonprefs().labelprefs().backdroptype();
         // NOTE: There's also a BDT_NONE value which turns off the backdrop.  We don't need
         // to use that and let label outline drive turning on and off the outline.
-        if (type == simData::BDT_SHADOW_BOTTOM_RIGHT)
-          type = simData::BDT_SHADOW_CENTER_RIGHT;
-        else if (type == simData::BDT_SHADOW_CENTER_RIGHT)
-          type = simData::BDT_SHADOW_TOP_RIGHT;
-        else if (type == simData::BDT_SHADOW_TOP_RIGHT)
-          type = simData::BDT_SHADOW_BOTTOM_CENTER;
-        else if (type == simData::BDT_SHADOW_BOTTOM_CENTER)
-          type = simData::BDT_SHADOW_TOP_CENTER;
-        else if (type == simData::BDT_SHADOW_TOP_CENTER)
-          type = simData::BDT_SHADOW_BOTTOM_LEFT;
-        else if (type == simData::BDT_SHADOW_BOTTOM_LEFT)
-          type = simData::BDT_SHADOW_CENTER_LEFT;
-        else if (type == simData::BDT_SHADOW_CENTER_LEFT)
-          type = simData::BDT_SHADOW_TOP_LEFT;
-        else if (type == simData::BDT_SHADOW_TOP_LEFT)
-          type = simData::BDT_OUTLINE;
-        else if (type == simData::BDT_OUTLINE)
-          type = simData::BDT_SHADOW_BOTTOM_RIGHT;
+        if (type == simData::BackdropType::BDT_SHADOW_BOTTOM_RIGHT)
+          type = simData::BackdropType::BDT_SHADOW_CENTER_RIGHT;
+        else if (type == simData::BackdropType::BDT_SHADOW_CENTER_RIGHT)
+          type = simData::BackdropType::BDT_SHADOW_TOP_RIGHT;
+        else if (type == simData::BackdropType::BDT_SHADOW_TOP_RIGHT)
+          type = simData::BackdropType::BDT_SHADOW_BOTTOM_CENTER;
+        else if (type == simData::BackdropType::BDT_SHADOW_BOTTOM_CENTER)
+          type = simData::BackdropType::BDT_SHADOW_TOP_CENTER;
+        else if (type == simData::BackdropType::BDT_SHADOW_TOP_CENTER)
+          type = simData::BackdropType::BDT_SHADOW_BOTTOM_LEFT;
+        else if (type == simData::BackdropType::BDT_SHADOW_BOTTOM_LEFT)
+          type = simData::BackdropType::BDT_SHADOW_CENTER_LEFT;
+        else if (type == simData::BackdropType::BDT_SHADOW_CENTER_LEFT)
+          type = simData::BackdropType::BDT_SHADOW_TOP_LEFT;
+        else if (type == simData::BackdropType::BDT_SHADOW_TOP_LEFT)
+          type = simData::BackdropType::BDT_OUTLINE;
+        else if (type == simData::BackdropType::BDT_OUTLINE)
+          type = simData::BackdropType::BDT_SHADOW_BOTTOM_RIGHT;
 
         setText(Stringify() << "Set backdrop type to\n" << (
-          type == simData::BDT_SHADOW_BOTTOM_RIGHT ?  "SHADOW_BOTTOM_RIGHT" :
-          type == simData::BDT_SHADOW_CENTER_RIGHT ?  "SHADOW_CENTER_RIGHT" :
-          type == simData::BDT_SHADOW_TOP_RIGHT ?     "SHADOW_TOP_RIGHT" :
-          type == simData::BDT_SHADOW_BOTTOM_CENTER ? "SHADOW_BOTTOM_CENTER" :
-          type == simData::BDT_SHADOW_TOP_CENTER ?    "SHADOW_TOP_CENTER" :
-          type == simData::BDT_SHADOW_BOTTOM_LEFT ?   "SHADOW_BOTTOM_LEFT" :
-          type == simData::BDT_SHADOW_CENTER_LEFT ?   "SHADOW_CENTER_LEFT" :
-          type == simData::BDT_SHADOW_TOP_LEFT ?      "SHADOW_TOP_LEFT" :
+          type == simData::BackdropType::BDT_SHADOW_BOTTOM_RIGHT ?  "SHADOW_BOTTOM_RIGHT" :
+          type == simData::BackdropType::BDT_SHADOW_CENTER_RIGHT ?  "SHADOW_CENTER_RIGHT" :
+          type == simData::BackdropType::BDT_SHADOW_TOP_RIGHT ?     "SHADOW_TOP_RIGHT" :
+          type == simData::BackdropType::BDT_SHADOW_BOTTOM_CENTER ? "SHADOW_BOTTOM_CENTER" :
+          type == simData::BackdropType::BDT_SHADOW_TOP_CENTER ?    "SHADOW_TOP_CENTER" :
+          type == simData::BackdropType::BDT_SHADOW_BOTTOM_LEFT ?   "SHADOW_BOTTOM_LEFT" :
+          type == simData::BackdropType::BDT_SHADOW_CENTER_LEFT ?   "SHADOW_CENTER_LEFT" :
+          type == simData::BackdropType::BDT_SHADOW_TOP_LEFT ?      "SHADOW_TOP_LEFT" :
                                                       "OUTLINE"));
 
         prefs->mutable_commonprefs()->mutable_labelprefs()->set_backdroptype(type);
@@ -670,22 +668,22 @@ struct MenuHandler : public osgGA::GUIEventHandler
         simData::DataStore::Transaction xaction;
         simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
         simData::BackdropImplementation implementation = prefs->commonprefs().labelprefs().backdropimplementation();
-        if (implementation == simData::BDI_POLYGON_OFFSET)
-          implementation = simData::BDI_NO_DEPTH_BUFFER;
-        else if (implementation == simData::BDI_NO_DEPTH_BUFFER)
-          implementation = simData::BDI_DEPTH_RANGE;
-        else if (implementation == simData::BDI_DEPTH_RANGE)
-          implementation = simData::BDI_STENCIL_BUFFER;
-        else if (implementation == simData::BDI_STENCIL_BUFFER)
-          implementation = simData::BDI_DELAYED_DEPTH_WRITES;
-        else if (implementation == simData::BDI_DELAYED_DEPTH_WRITES)
-          implementation = simData::BDI_POLYGON_OFFSET;
+        if (implementation == simData::BackdropImplementation::BDI_POLYGON_OFFSET)
+          implementation = simData::BackdropImplementation::BDI_NO_DEPTH_BUFFER;
+        else if (implementation == simData::BackdropImplementation::BDI_NO_DEPTH_BUFFER)
+          implementation = simData::BackdropImplementation::BDI_DEPTH_RANGE;
+        else if (implementation == simData::BackdropImplementation::BDI_DEPTH_RANGE)
+          implementation = simData::BackdropImplementation::BDI_STENCIL_BUFFER;
+        else if (implementation == simData::BackdropImplementation::BDI_STENCIL_BUFFER)
+          implementation = simData::BackdropImplementation::BDI_DELAYED_DEPTH_WRITES;
+        else if (implementation == simData::BackdropImplementation::BDI_DELAYED_DEPTH_WRITES)
+          implementation = simData::BackdropImplementation::BDI_POLYGON_OFFSET;
 
         setText(Stringify() << "Set backdrop implementation to\n" << (
-          implementation == simData::BDI_POLYGON_OFFSET ?  "POLYGON_OFFSET" :
-          implementation == simData::BDI_NO_DEPTH_BUFFER ? "NO_DEPTH_BUFFER" :
-          implementation == simData::BDI_DEPTH_RANGE ?     "DEPTH_RANGE" :
-          implementation == simData::BDI_STENCIL_BUFFER ?  "STENCIL_BUFFER" :
+          implementation == simData::BackdropImplementation::BDI_POLYGON_OFFSET ?  "POLYGON_OFFSET" :
+          implementation == simData::BackdropImplementation::BDI_NO_DEPTH_BUFFER ? "NO_DEPTH_BUFFER" :
+          implementation == simData::BackdropImplementation::BDI_DEPTH_RANGE ?     "DEPTH_RANGE" :
+          implementation == simData::BackdropImplementation::BDI_STENCIL_BUFFER ?  "STENCIL_BUFFER" :
                                                            "DELAYED_DEPTH_WRITES"));
 
         prefs->mutable_commonprefs()->mutable_labelprefs()->set_backdropimplementation(implementation);
@@ -904,7 +902,7 @@ void configurePlatformPrefs(simData::ObjectId platformId, simData::DataStore* da
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_overlayfontpointsize(14);
 
-  prefs->mutable_commonprefs()->mutable_localgrid()->mutable_speedring()->set_timeformat(simData::ELAPSED_SECONDS);
+  prefs->mutable_commonprefs()->mutable_localgrid()->mutable_speedring()->set_timeformat(simData::ElapsedTimeFormat::ELAPSED_SECONDS);
   prefs->mutable_commonprefs()->mutable_localgrid()->mutable_speedring()->set_radius(2);
 
   xaction.complete(&prefs);
@@ -923,7 +921,7 @@ void configurePrefs(simData::ObjectId   platformId,
   {
     simData::DataStore::Transaction xaction;
     simData::BeamPrefs* prefs = dataStore->mutable_beamPrefs(beamId, &xaction);
-    prefs->set_beamdrawmode(simData::BeamPrefs::WIRE_ON_SOLID);
+    prefs->set_beamdrawmode(simData::BeamPrefs::DrawMode::WIRE_ON_SOLID);
     xaction.complete(&prefs);
   }
 

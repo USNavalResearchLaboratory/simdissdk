@@ -312,11 +312,11 @@ simData::TextOutline LoaderUtils::convertToVisOutlineThickness(simCore::GOG::Out
   case simCore::GOG::OutlineThickness::NONE:
     break;
   case simCore::GOG::OutlineThickness::THIN:
-    return simData::TO_THIN;
+    return simData::TextOutline::TO_THIN;
   case simCore::GOG::OutlineThickness::THICK:
-    return simData::TO_THICK;
+    return simData::TextOutline::TO_THICK;
   }
-  return simData::TO_NONE;
+  return simData::TextOutline::TO_NONE;
 }
 
 simCore::GOG::AltitudeMode LoaderUtils::convertToCoreAltitudeMode(AltitudeMode mode)
@@ -372,11 +372,11 @@ simCore::GOG::OutlineThickness LoaderUtils::convertToCoreOutlineThickness(simDat
 {
   switch (thickness)
   {
-  case simData::TO_NONE:
+  case simData::TextOutline::TO_NONE:
     break;
-  case simData::TO_THIN:
+  case simData::TextOutline::TO_THIN:
     return simCore::GOG::OutlineThickness::THIN;
-  case simData::TO_THICK:
+  case simData::TextOutline::TO_THICK:
     return simCore::GOG::OutlineThickness::THICK;
   }
   return simCore::GOG::OutlineThickness::NONE;

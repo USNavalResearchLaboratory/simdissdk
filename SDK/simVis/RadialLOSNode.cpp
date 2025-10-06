@@ -71,8 +71,11 @@ void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
   osgEarth::MapNode* oldMap = getMapNode();
   if (mapNode == oldMap)
     return;
-  if (oldMap && oldMap->getTerrain())
+  if (oldMap && oldMap->getTerrain() && callbackHook_.valid())
     oldMap->getTerrain()->removeTerrainCallback(callbackHook_.get());
+
+  if (!callbackHook_.valid())
+    callbackHook_ = new TerrainCallbackHook(this);
   if (mapNode && mapNode->getTerrain())
     mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 
@@ -122,17 +125,6 @@ void RadialLOSNode::setDataModel(const RadialLOS& los)
     los_ = newLOS;
     refreshGeometry_();
     losPrevious_ = los_;
-  }
-
-  // If the data model is using the scene graph for LOS computation,
-  // we need to listen for terrain changes and update the LOS dynamically.
-  if (los_.getUseSceneGraph())
-  {
-    if (callbackHook_.valid() == false)
-    {
-      callbackHook_ = new TerrainCallbackHook(this);
-      getMapNode()->getTerrain()->addTerrainCallback(callbackHook_.get());
-    }
   }
 }
 
@@ -199,7 +191,7 @@ void RadialLOSNode::updateDataModel(const osgEarth::GeoExtent& extent,
     osgEarth::GeoCircle circle = extent.computeBoundingGeoCircle();
     if (bound_.intersects(circle))
     {
-      if (los_.update(getMapNode(), extent, patch))
+      if (updateLOS_(getMapNode(), coord_))
       {
         refreshGeometry_();
       }

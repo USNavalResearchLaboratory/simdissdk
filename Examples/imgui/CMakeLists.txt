@@ -38,6 +38,10 @@ add_library(imgui_gl3 STATIC
 target_include_directories(imgui_gl3 PUBLIC "${ImGui_DIR}")
 target_link_libraries(imgui_gl3 PUBLIC OpenGL::GL PRIVATE ${CMAKE_DL_LIBS})
 add_library(VSI::imgui_gl3 ALIAS imgui_gl3)
+set_target_properties(imgui_gl3 PROPERTIES
+    FOLDER "Dear ImGui"
+    PROJECT_LABEL "Dear ImGui"
+)
 
 # Set up the ImGuiLib, based on ImGui
 set(SOURCE_FILES
@@ -56,8 +60,8 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(ImGuiLib PRIVATE -fno-strict-aliasing)
 endif()
 set_target_properties(ImGuiLib PROPERTIES
-    FOLDER "ImGui Library"
-    PROJECT_LABEL "ImGui"
+    FOLDER "Dear ImGui"
+    PROJECT_LABEL "Dear ImGui Utilities Library"
 )
 
 find_package(Threads)

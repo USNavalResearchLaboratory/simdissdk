@@ -179,7 +179,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
       if (currentTypeIdx + 1 != static_cast<int>(type_))
       {
         needUpdate = true;
-        type_ = static_cast<simData::LocalGridPrefs_Type>(currentTypeIdx + 1);
+        type_ = static_cast<simData::LocalGridPrefs::Type>(currentTypeIdx + 1);
       }
 
       int prec = prec_;
@@ -210,7 +210,7 @@ private:
   simData::DataStore& ds_;
   simData::ObjectId id_;
   bool drawGrid_ = true;
-  simData::LocalGridPrefs::Type type_ = simData::LocalGridPrefs::POLAR;
+  simData::LocalGridPrefs::Type type_ = simData::LocalGridPrefs::Type::POLAR;
   int prec_ = 1;
 };
 

@@ -1,6 +1,10 @@
 # ----- simQt -----------------------------------------------------
 
-if(NOT Qt5Core_FOUND)
+if(Qt6_FOUND)
+    set(SIMQT_QT_VERSION 6)
+elseif(Qt5_FOUND)
+    set(SIMQT_QT_VERSION 5)
+else()
     message(STATUS "Cannot configure simQt without Qt.")
     return()
 endif()
@@ -19,6 +23,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}AbstractEntityTreeModel.h
     ${SIMQT_INC}ActionRegistry.h
     ${SIMQT_INC}ActionItemModel.h
+    ${SIMQT_INC}AutoRepeatFilter.h
     ${SIMQT_INC}BoundSettings.h
     ${SIMQT_INC}ColorButton.h
     ${SIMQT_INC}ColorWidget.h
@@ -61,7 +66,6 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}QtFormatting.h
     ${SIMQT_INC}QtUtils.h
     ${SIMQT_INC}ResourceInitializer.h
-    ${SIMQT_INC}ScopedSignalBlocker.h
     ${SIMQT_INC}Settings.h
     ${SIMQT_INC}SettingsGroup.h
     ${SIMQT_INC}StartupLayoutManager.h
@@ -80,6 +84,7 @@ if(TARGET simData)
         ${SIMQT_INC}CategoryTreeModel.h
         ${SIMQT_INC}DataTableComboBox.h
         ${SIMQT_INC}EntityCategoryFilter.h
+        ${SIMQT_INC}EntityDrawFilter.h
         ${SIMQT_INC}EntityFilter.h
         ${SIMQT_INC}EntityFilterLineEdit.h
         ${SIMQT_INC}EntityNameFilter.h
@@ -111,16 +116,21 @@ if(TARGET simVis)
     )
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}FillItemModelWithNodeVisitor.h
+        ${SIMQT_INC}HudTextBinManager.h
+        ${SIMQT_INC}QWidgetNode.h
     )
 
     # Parts of simQt depend on both simVis and osgQt
-    if(TARGET OSGQT)
+    if(TARGET OSGQT AND ENABLE_DEPRECATED_SIMDISSDK_API)
         set(SIMQT_HAVE_OSGQT ON)
         list(APPEND SIMQT_HEADERS_TO_MOC
             ${SIMQT_INC}ViewWidget.h
         )
-        list(APPEND SIMQT_HEADERS
-            ${SIMQT_INC}Gl3FormatGuesser.h
+    endif()
+
+    if(TARGET osgQt::osgQOpenGL)
+        list(APPEND SIMQT_HEADERS_TO_MOC
+            ${SIMQT_INC}ViewerWidgetAdapter.h
         )
     endif()
 endif()
@@ -161,6 +171,7 @@ source_group(Headers FILES ${SIMQT_HEADERS})
 set(SIMQT_SOURCES
     ${SIMQT_SRC}ActionRegistry.cpp
     ${SIMQT_SRC}ActionItemModel.cpp
+    ${SIMQT_SRC}AutoRepeatFilter.cpp
     ${SIMQT_SRC}BoundSettings.cpp
     ${SIMQT_SRC}ColorButton.cpp
     ${SIMQT_SRC}ColorWidget.cpp
@@ -208,6 +219,17 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}WidgetSettings.cpp
 )
 
+if(Qt${SIMQT_QT_VERSION}OpenGL_FOUND)
+    set(SIMQT_HAVE_QOPENGL ON)
+    list(APPEND SIMQT_HEADERS ${SIMQT_INC}Gl3FormatGuesser.h)
+    list(APPEND SIMQT_SOURCES ${SIMQT_SRC}Gl3FormatGuesser.cpp)
+    if(NOT MSVC)
+        set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+    endif()
+else()
+    set(SIMQT_HAVE_QOPENGL OFF)
+endif()
+
 # Parts of simQt depend on simData
 if(TARGET simData)
     list(APPEND SIMQT_SOURCES
@@ -217,6 +239,7 @@ if(TARGET simData)
         ${SIMQT_SRC}CategoryTreeModel.cpp
         ${SIMQT_SRC}DataTableComboBox.cpp
         ${SIMQT_SRC}EntityCategoryFilter.cpp
+        ${SIMQT_SRC}EntityDrawFilter.cpp
         ${SIMQT_SRC}EntityFilterLineEdit.cpp
         ${SIMQT_SRC}EntityNameFilter.cpp
         ${SIMQT_SRC}EntityProxyModel.cpp
@@ -237,17 +260,24 @@ if(TARGET simVis)
         ${SIMQT_SRC}CenterEntity.cpp
         ${SIMQT_SRC}EntityLineEdit.cpp
         ${SIMQT_SRC}FillItemModelWithNodeVisitor.cpp
+        ${SIMQT_SRC}HudTextBinManager.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}MultiTouchEventFilter.cpp
+        ${SIMQT_SRC}QWidgetNode.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
         ${SIMQT_SRC}ViewManagerDataModel.cpp
     )
 
     # Parts of simQt depend on both simVis and osgQt
-    if(TARGET OSGQT)
+    if(TARGET OSGQT AND ENABLE_DEPRECATED_SIMDISSDK_API)
         list(APPEND SIMQT_SOURCES
-            ${SIMQT_SRC}Gl3FormatGuesser.cpp
             ${SIMQT_SRC}ViewWidget.cpp
+        )
+    endif()
+
+    if(TARGET osgQt::osgQOpenGL)
+        list(APPEND SIMQT_SOURCES
+            ${SIMQT_SRC}ViewerWidgetAdapter.cpp
         )
     endif()
 
@@ -256,7 +286,6 @@ if(TARGET simVis)
         set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -wd4996)
     else()
         set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
-        set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
     endif()
 endif()
 
@@ -353,21 +382,32 @@ if(TARGET simVis)
         $<BUILD_INTERFACE:${osgEarth_INCLUDE_DIR}>
     )
 endif()
+if(Qt${SIMQT_QT_VERSION}OpenGL_FOUND)
+    target_link_libraries(simQt PUBLIC Qt::OpenGL)
+endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
 target_link_libraries(simQt PUBLIC simCore simNotify)
-if(TARGET OSGQT)
-    target_link_libraries(simQt PUBLIC OSGQT PRIVATE OpenGL::GL)
+if(TARGET OSGQT AND ENABLE_DEPRECATED_SIMDISSDK_API)
+    target_link_libraries(simQt PUBLIC OSGQT)
 endif()
 
-# Parts of simQt depend on simData's protobuf generated code
-if(TARGET simDataProto)
-    target_link_libraries(simQt PRIVATE simDataProto)
+# Link against osgQt::osgQOpenGL if found; but only needs be a private depend
+if(TARGET osgQt::osgQOpenGL)
+    target_link_libraries(simQt PRIVATE osgQt::osgQOpenGL)
+    set(SIMQT_HAVE_OSGQOPENGL ON)
+else()
+    set(SIMQT_HAVE_OSGQOPENGL OFF)  # Helpful for correct Config.cmake
 endif()
 
 if(UNIX)
     # UNIX libs that link against simQt need to specify X11 lib on command line
     target_link_libraries(simQt PUBLIC X11)
+endif()
+
+# osg/State requires a link to supply glEnable()
+if(OSG_FOUND AND TARGET OpenGL::GL)
+    target_link_libraries(simQt PRIVATE OpenGL::GL)
 endif()
 
 if(SIMQT_SHARED)
@@ -388,7 +428,7 @@ if(TARGET simVis)
     endif()
 endif()
 
-if(TARGET OSGQT)
+if(TARGET OSGQT AND ENABLE_DEPRECATED_SIMDISSDK_API)
     VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets OpenGL)
 else()
     VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets)

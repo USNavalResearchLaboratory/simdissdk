@@ -77,9 +77,9 @@ public:
     /**
      * Called by DataSlice::modify
      * @param message  The message to modify
-     * @returns 0=Continue, 1=Stop, -1=Error
+     * @returns 0=No change, 1=at least one field changed with no fields removed, -1=at least one field removed
      */
-    virtual int modify(google::protobuf::Message& message) = 0;
+    virtual int modify(FieldList& message) = 0;
 
     virtual ~Modifier() {}
   };

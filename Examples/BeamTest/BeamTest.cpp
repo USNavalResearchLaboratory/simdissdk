@@ -106,7 +106,7 @@ public:
     {
       simData::DataStore::Transaction xaction;
       const simData::BeamProperties* props = ds_.beamProperties(beamId_, &xaction);
-      std::string type = (props->type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION ? "ABSOLUTE" : "BODY RELATIVE");
+      std::string type = (props->type() == simData::BeamProperties::Type::ABSOLUTE_POSITION ? "ABSOLUTE" : "BODY RELATIVE");
       xaction.complete(&props);
 
       ImGui::TableNextColumn(); ImGui::Text("Type"); ImGui::TableNextColumn(); ImGui::Text("%s", type.c_str());
@@ -132,7 +132,7 @@ public:
       if (currentModeIdx != static_cast<int>(drawMode_))
       {
         needUpdate = true;
-        drawMode_ = static_cast<simData::BeamPrefs_DrawMode>(currentModeIdx);
+        drawMode_ = static_cast<simData::BeamPrefs::DrawMode>(currentModeIdx);
       }
 
       // Range
@@ -278,7 +278,7 @@ private:
   simData::MemoryDataStore& ds_;
   simData::ObjectId beamId_;
   osg::ref_ptr<simVis::View> view_;
-  simData::BeamPrefs_DrawMode drawMode_ = simData::BeamPrefs_DrawMode_WIRE;
+  simData::BeamPrefs::DrawMode drawMode_ = simData::BeamPrefs::DrawMode::WIRE;
   float time_ = 0.f;
   float range_ = 250.f;
   float horzSize_ = 45.f;
@@ -339,7 +339,7 @@ struct AppData
   osg::ref_ptr<ui::CheckBoxControl> globalToggle_;
 
   std::vector< std::pair<simData::BeamProperties_BeamType, std::string> > types_;
-  std::vector< std::pair<simData::BeamPrefs_DrawMode,      std::string> > modes_;
+  std::vector< std::pair<simData::BeamPrefs::DrawMode,      std::string> > modes_;
   std::vector< std::pair<simVis::Color, std::string> >                    colors_;
   simData::DataStore*  ds_;
   simData::ObjectId    hostId_;
@@ -379,12 +379,12 @@ struct AppData
      view_(nullptr),
      t_(0.0)
   {
-    types_.push_back(std::make_pair(simData::BeamProperties_BeamType_ABSOLUTE_POSITION, "ABSOLUTE"));
-    types_.push_back(std::make_pair(simData::BeamProperties_BeamType_BODY_RELATIVE,     "BODY RELATIVE"));
+    types_.push_back(std::make_pair(simData::BeamProperties::Type::ABSOLUTE_POSITION, "ABSOLUTE"));
+    types_.push_back(std::make_pair(simData::BeamProperties::Type::BODY_RELATIVE,     "BODY RELATIVE"));
 
-    modes_.push_back(std::make_pair(simData::BeamPrefs_DrawMode_SOLID, "SOLID"));
-    modes_.push_back(std::make_pair(simData::BeamPrefs_DrawMode_WIRE,  "WIRE"));
-    modes_.push_back(std::make_pair(simData::BeamPrefs_DrawMode_WIRE_ON_SOLID, "WIRE ON SOLID"));
+    modes_.push_back(std::make_pair(simData::BeamPrefs::DrawMode_SOLID, "SOLID"));
+    modes_.push_back(std::make_pair(simData::BeamPrefs::DrawMode_WIRE,  "WIRE"));
+    modes_.push_back(std::make_pair(simData::BeamPrefs::DrawMode_WIRE_ON_SOLID, "WIRE ON SOLID"));
 
     colors_.push_back(std::make_pair(simVis::Color(0xffffff7fu), "White"));
     colors_.push_back(std::make_pair(simVis::Color(0x00ff007fu), "Green"));
@@ -407,7 +407,7 @@ struct AppData
     // fetch properties:
     {
       const simData::BeamProperties* props = ds_->beamProperties(beamId_, &xaction);
-      typeIndex = props->type() == simData::BeamProperties_BeamType_ABSOLUTE_POSITION ? 0 : 1;
+      typeIndex = props->type() == simData::BeamProperties::Type::ABSOLUTE_POSITION ? 0 : 1;
       xaction.complete(&props);
     }
 
@@ -635,9 +635,9 @@ simData::ObjectId addBeam(simData::DataStore& ds,
                           char**              argv)
 {
   // see if they user wants body-relative mode
-  simData::BeamProperties_BeamType type = simExamples::hasArg("--br", argc, argv)?
-    simData::BeamProperties_BeamType_BODY_RELATIVE :
-    simData::BeamProperties_BeamType_ABSOLUTE_POSITION;
+  simData::BeamProperties::Type type = simExamples::hasArg("--br", argc, argv)?
+    simData::BeamProperties::Type::BODY_RELATIVE :
+    simData::BeamProperties::Type::ABSOLUTE_POSITION;
 
   simData::ObjectId beamId;
 

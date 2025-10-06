@@ -138,28 +138,28 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
   {
     patternFile_.clear();
 
-    if (prefs.antennapattern().type() == simData::BeamPrefs_AntennaPattern_Type_ALGORITHM)
+    if (prefs.antennapattern().type() == simData::AntennaPatterns::Type::ALGORITHM)
     {
       switch (prefs.antennapattern().algorithm())
       {
-      case simData::BeamPrefs_AntennaPattern_Algorithm_PEDESTAL:
+      case simData::AntennaPatterns::Algorithm::PEDESTAL:
         patternFile_ = simCore::ANTENNA_STRING_ALGORITHM_PEDESTAL;
         break;
-      case simData::BeamPrefs_AntennaPattern_Algorithm_GAUSS:
+      case simData::AntennaPatterns::Algorithm::GAUSS:
         patternFile_ = simCore::ANTENNA_STRING_ALGORITHM_GAUSS;
         break;
-      case simData::BeamPrefs_AntennaPattern_Algorithm_CSCSQ:
+      case simData::AntennaPatterns::Algorithm::CSCSQ:
         patternFile_ = simCore::ANTENNA_STRING_ALGORITHM_CSCSQ;
         break;
-      case simData::BeamPrefs_AntennaPattern_Algorithm_SINXX:
+      case simData::AntennaPatterns::Algorithm::SINXX:
         patternFile_ = simCore::ANTENNA_STRING_ALGORITHM_SINXX;
         break;
-      case simData::BeamPrefs_AntennaPattern_Algorithm_OMNI:
+      case simData::AntennaPatterns::Algorithm::OMNI:
         patternFile_ = simCore::ANTENNA_STRING_ALGORITHM_OMNI;
         break;
       }
     }
-    else if (prefs.antennapattern().type() == simData::BeamPrefs_AntennaPattern_Type_FILE)
+    else if (prefs.antennapattern().type() == simData::AntennaPatterns::Type::FILE)
     {
       if (!prefs.antennapattern().filename().empty())
       {
@@ -178,7 +178,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
   polarity_ = static_cast<simCore::PolarityType>(prefs.polarity());
 
   const bool drawAntennaPattern = loadedOK_ &&
-    (prefs.drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN);
+    (prefs.drawtype() == simData::BeamPrefs::DrawType::ANTENNA_PATTERN);
 
   const bool requiresRedraw = drawAntennaPattern &&
       (requiresRebuild ||

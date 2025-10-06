@@ -23,6 +23,7 @@
 #ifndef SIMVIS_CYLINDER_STORAGE_H
 #define SIMVIS_CYLINDER_STORAGE_H
 
+#include <map>
 #include "simData/DataStore.h"
 #include "simVis/CylinderGeode.h"
 

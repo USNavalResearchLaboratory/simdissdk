@@ -101,7 +101,7 @@ endfunction()
 
 # Wrapper for Qt form files (.ui)
 macro(VSI_QT_WRAP_UI DEST)
-    QT5_WRAP_UI(${DEST} ${ARGN})
+    QT_WRAP_UI(${DEST} ${ARGN})
     SOURCE_GROUP("Qt\\Form Files" FILES ${ARGN})
     SOURCE_GROUP("Qt\\Generated Files" FILES ${${DEST}})
 endmacro()
@@ -109,14 +109,14 @@ endmacro()
 # Wrapper for header files with the Qt macro QOBJECT
 macro(VSI_QT_WRAP_CPP DEST)
     if(NOT CMAKE_AUTOMOC)
-        QT5_WRAP_CPP(${DEST} ${ARGN})
+        QT_WRAP_CPP(${DEST} ${ARGN})
         SOURCE_GROUP("Qt\\Generated Files" FILES ${${DEST}})
     endif()
 endmacro()
 
 # Wrapper for Qt resource files (.qrc)
 macro(VSI_QT_ADD_RESOURCES DEST)
-    QT5_ADD_RESOURCES(${DEST} ${ARGN})
+    QT_ADD_RESOURCES(${DEST} ${ARGN})
     SOURCE_GROUP("Qt\\Resource Files" FILES ${ARGN})
     SOURCE_GROUP("Qt\\Generated Files" FILES ${${DEST}})
 endmacro()
@@ -128,7 +128,8 @@ macro(VSI_QT_USE_MODULES TARGET LINK_TYPE)
     elseif("${LINK_TYPE}" STREQUAL "LINK_PRIVATE")
         set(_CM_LINK_TYPE PRIVATE)
     endif()
-    if(Qt5Widgets_FOUND)
+
+    if(Qt5_FOUND OR Qt6_FOUND)
         set(_QT_LIBS ${ARGN})
         # If LINK_TYPE wasn't set to LINK_PUBLIC or LINK_PRIVATE then it's a Qt library
         if(NOT _CM_LINK_TYPE)
@@ -136,7 +137,7 @@ macro(VSI_QT_USE_MODULES TARGET LINK_TYPE)
         endif()
         # Link against each library specified, e.g. Qt5::Widgets
         foreach(_QT_LIB ${_QT_LIBS})
-            target_link_libraries(${TARGET} ${_CM_LINK_TYPE} Qt5::${_QT_LIB})
+            target_link_libraries(${TARGET} ${_CM_LINK_TYPE} Qt::${_QT_LIB})
         endforeach()
     else()
         target_link_libraries(${TARGET} ${_CM_LINK_TYPE} ${QT_LIBRARIES})
@@ -174,7 +175,7 @@ endmacro()
 # for the DLL associated with LIB_FILENAME, based on a file(GLOB...) search.  For
 # example, osg.lib might have an associated DLL osg153-osg.dll.  This routine will
 # return the "osg153-" portion of the DLL's filename.  This routine should be reusable
-# for OSG, OpenThreads, and osgQt.
+# for OSG and OpenThreads.
 function(osg_guess_win32_dll_prefix VAR_DLL_PREFIX LIB_FILENAME)
     set(${VAR_DLL_PREFIX} "" PARENT_SCOPE)
     # Linux returns without any checks
@@ -439,12 +440,12 @@ endfunction()
 # be easily hardcoded into a <TARGET>Config.cmake.
 function(vsi_write_basic_package_config_file TARGET DEPS)
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
-        "include(CMakeFindDependencyMacro)\n"
-        "set(DEPS \"${DEPS}\")\n"
-        "foreach(DEP IN LISTS DEPS)\n"
-        "    find_dependency(\${DEP})\n"
-        "endforeach()\n"
-        "include(\"\${CMAKE_CURRENT_LIST_DIR}/${TARGET}Targets.cmake\")\n"
+"include(CMakeFindDependencyMacro)
+set(DEPS \"${DEPS}\")
+foreach(DEP IN LISTS DEPS)
+    find_dependency(\${DEP})
+endforeach()
+include(\"\${CMAKE_CURRENT_LIST_DIR}/${TARGET}Targets.cmake\")"
     )
 endfunction()
 
@@ -639,7 +640,7 @@ macro(vsi_add_json_prefix_path PACKAGE_JSON_OBJ)
 
     # Get the versions list
     vsi_json_get_value_or_list(_VERSIONS "${PACKAGE_JSON_OBJ}" version)
-    if(_DIR STREQUAL "QT5")
+    if(_DIR STREQUAL "QT5" OR _DIR STREQUAL "QT6")
         vsi_add_qt_prefix_path(${_VERSIONS})
     else()
         vsi_add_third_prefix_path(${_DIR} ${_VERSIONS})

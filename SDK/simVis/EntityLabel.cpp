@@ -161,7 +161,7 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
       ts->fill() = osgEarth::Fill(color.r(), color.g(), color.b(), color.a());
 
       // outline:
-      if (labelPrefs.textoutline() != simData::TO_NONE && labelPrefs.backdroptype() != simData::BDT_NONE && color.a() != 0)
+      if (labelPrefs.textoutline() != simData::TextOutline::TO_NONE && labelPrefs.backdroptype() != simData::BackdropType::BDT_NONE && color.a() != 0)
       {
         ts->halo()->color() = ColorUtils::RgbaToVec4(labelPrefs.outlinecolor());
         ts->haloOffset() = simVis::outlineThickness(labelPrefs.textoutline());

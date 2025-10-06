@@ -19,14 +19,16 @@ macro(TEST_TIMESPEC VARIABLE)
         # Write a temporary file containing the test
         set(TMP_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/TestTimespec.cpp")
         file(WRITE "${TMP_FILE}"
-            "#include <time.h>\n"
-            "int main(int argc, char* argv[])\n"
-            "{\n"
-            "  timespec ts;\n"
-            "  ts.tv_sec = 0;\n"
-            "  ts.tv_nsec = 0;\n"
-            "  return 0;\n"
-            "}\n"
+        [=[
+            #include <time.h>
+            int main(int argc, char* argv[])
+            {
+              timespec ts;
+              ts.tv_sec = 0;
+              ts.tv_nsec = 0;
+              return 0;
+            }
+        ]=]
         )
         # Try to build the file
         try_compile(HAVE_${VARIABLE}

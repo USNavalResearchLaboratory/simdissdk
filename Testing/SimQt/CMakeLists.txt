@@ -55,11 +55,18 @@ if(TARGET simVis)
     add_test(NAME ActionRegistryTest COMMAND SimQtTests ActionRegistryTest)
     add_test(NAME QColorTest COMMAND SimQtTests QColorTest)
     target_link_libraries(SimQtTests PRIVATE simVis)
+
+    # Extract the installation prefix
+    set(_QT_INSTALL_PREFIX "${QT6_INSTALL_PREFIX}")
+    if(Qt5Core_FOUND)
+        set(_QT_INSTALL_PREFIX "${_qt5Gui_install_prefix}")
+    endif()
+
     # Set QT_PLUGIN_PATH, required for Qt 5.14 but not 5.9
     set_tests_properties(
             ActionRegistryTest
         PROPERTIES
-            ENVIRONMENT "QT_PLUGIN_PATH=${_qt5Gui_install_prefix}/plugins"
+            ENVIRONMENT "QT_PLUGIN_PATH=${_QT_INSTALL_PREFIX}/plugins"
 )
 endif()
 if(OSG_FOUND)

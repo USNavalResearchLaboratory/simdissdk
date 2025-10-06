@@ -21,10 +21,12 @@
  *
  */
 #include <QApplication>
+#include "simCore/System/Utils.h"
 #include "TestColorWidget.h"
 
 int main(int argc, char* argv[])
 {
+  simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
 
   TestColorWidget* colorWidget = new TestColorWidget(nullptr);

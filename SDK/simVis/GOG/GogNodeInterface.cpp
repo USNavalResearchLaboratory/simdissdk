@@ -537,14 +537,14 @@ void GogNodeInterface::applyToStyle(const ParsedShape& parent, const UnitsState&
     if (parent.hasValue(GOG_TEXTOUTLINECOLOR))
       outlineColor = osgEarth::Color(parent.stringValue(GOG_TEXTOUTLINECOLOR));
 
-    simData::TextOutline outlineThickness = simData::TO_THIN;
+    simData::TextOutline outlineThickness = simData::TextOutline::TO_THIN;
     if (parent.hasValue(GOG_TEXTOUTLINETHICKNESS))
     {
       std::string thicknessStr = parent.stringValue(GOG_TEXTOUTLINETHICKNESS);
       if (simCore::caseCompare(thicknessStr, "thick") == 0)
-        outlineThickness = simData::TO_THICK;
+        outlineThickness = simData::TextOutline::TO_THICK;
       else if (simCore::caseCompare(thicknessStr, "none") == 0)
-        outlineThickness = simData::TO_NONE;
+        outlineThickness = simData::TextOutline::TO_NONE;
       else if (simCore::caseCompare(thicknessStr, "thin") != 0)
         SIM_WARN << "Found invalid text outline thickness value \"" << thicknessStr << "\" while parsing GOG\n";
   }
@@ -776,13 +776,13 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
       std::string outlineThicknessStr;
       switch (outlineThickness)
       {
-      case simData::TO_THICK:
+      case simData::TextOutline::TO_THICK:
         outlineThicknessStr = "thick";
         break;
-      case simData::TO_THIN:
+      case simData::TextOutline::TO_THIN:
         outlineThicknessStr = "thin";
         break;
-      case simData::TO_NONE:
+      case simData::TextOutline::TO_NONE:
         outlineThicknessStr = "none";
         break;
       }
@@ -2023,7 +2023,11 @@ void FeatureNodeInterface::setStyle_(const osgEarth::Style& style)
     style_ = style;
   if (!deferringStyleUpdates_() && featureNode_.valid())
   {
+#if OSGEARTH_SOVERSION >= 175
+    featureNode_->getFeature()->setStyle(style_);
+#else
     featureNode_->getFeature()->style() = style_;
+#endif
     featureNode_->setStyle(style_);
   }
 }
@@ -2135,7 +2139,7 @@ void LocalGeometryNodeInterface::applyOrientationOffsets_()
 LabelNodeInterface::LabelNodeInterface(osgEarth::GeoPositionNode* labelNode, const simVis::GOG::GogMetaData& metaData)
   : GogNodeInterface(labelNode, metaData),
     labelNode_(labelNode),
-    outlineThickness_(simData::TO_THIN)
+    outlineThickness_(simData::TextOutline::TO_THIN)
 {
   if (labelNode_.valid())
   {
@@ -2258,7 +2262,7 @@ void LabelNodeInterface::setTextOutline(const osg::Vec4f& outlineColor, simData:
 
   ts->haloOffset() = simVis::outlineThickness(outlineThickness);
   // Backdrop type must be set to none when outline thickness is none to avoid artifacts
-  ts->haloBackdropType() = (outlineThickness == simData::TO_NONE ? osgText::Text::NONE : osgText::Text::OUTLINE);
+  ts->haloBackdropType() = (outlineThickness == simData::TextOutline::TO_NONE ? osgText::Text::NONE : osgText::Text::OUTLINE);
 
   setStyle_(style_);
 
@@ -2431,7 +2435,7 @@ void CylinderNodeInterface::setStyle_(const osgEarth::Style& style)
 
 void CylinderNodeInterface::applyOrientationOffsets_()
 {
-  if (!shapeObject() || !shapeObject()->isRelative())
+  if (!shapeObject() || !shapeObject()->canRotate())
     return;
   applyOrientationOffsetsToNode_(*shapeObject(), topCapNode_.get());
   applyOrientationOffsetsToNode_(*shapeObject(), bottomCapNode_.get());
@@ -2533,7 +2537,7 @@ void ArcNodeInterface::setStyle_(const osgEarth::Style& style)
 
 void ArcNodeInterface::applyOrientationOffsets_()
 {
-  if (!shapeObject() || !shapeObject()->isRelative())
+  if (!shapeObject() || !shapeObject()->canRotate())
     return;
   applyOrientationOffsetsToNode_(*shapeObject(), shapeNode_.get());
   applyOrientationOffsetsToNode_(*shapeObject(), fillNode_.get());
@@ -2865,7 +2869,11 @@ void LatLonAltBoxInterface::setStyle_(const osgEarth::Style& style)
     style_ = style;
   if (!deferringStyleUpdates_() && bottomNode_.valid())
   {
+#if OSGEARTH_SOVERSION >= 175
+    bottomNode_->getFeature()->setStyle(style_);
+#else
     bottomNode_->getFeature()->style() = style_;
+#endif
     bottomNode_->setStyle(style_);
   }
 }

@@ -27,6 +27,7 @@
 #include <QSet>
 #include <QSettings>
 #include <QTimer>
+#include <QWidget>
 #include "simQt/QtFormatting.h"
 #include "simQt/ActionRegistry.h"
 

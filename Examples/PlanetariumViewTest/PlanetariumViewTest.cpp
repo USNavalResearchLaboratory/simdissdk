@@ -561,7 +561,7 @@ simData::ObjectId addBeam(const simData::ObjectId hostId, simData::DataStore& da
   simData::BeamProperties* props = dataStore.addBeam(&xaction);
   simData::ObjectId result = props->id();
   props->set_hostid(hostId);
-  props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+  props->set_type(simData::BeamProperties::Type::ABSOLUTE_POSITION);
   xaction.complete(&props);
 
   simData::BeamPrefs* prefs = dataStore.mutable_beamPrefs(result, &xaction);
@@ -592,7 +592,7 @@ simData::ObjectId addGate(const simData::ObjectId hostId, simData::DataStore& da
   prefs->mutable_commonprefs()->set_color(simVis::Color(1, 0, 0, 0.25f).as(simVis::Color::RGBA));
   prefs->set_gateblending(true);
   prefs->set_gatelighting(false);
-  prefs->set_fillpattern(simData::GatePrefs_FillPattern_STIPPLE);
+  prefs->set_fillpattern(simData::GatePrefs::FillPattern::STIPPLE);
   prefs->set_gateazimuthoffset(simCore::DEG2RAD * az);
   prefs->set_gateelevationoffset(simCore::DEG2RAD * el);
   prefs->set_gaterolloffset(simCore::DEG2RAD * roll);
@@ -640,7 +640,8 @@ void acceptProjectors(simData::DataStore& dataStore, simData::ObjectId platform,
 {
   simData::DataStore::Transaction txn;
   auto* prefs = dataStore.mutable_platformPrefs(platform, &txn);
-  simData::DataStoreHelpers::vecToRepeated(prefs->mutable_commonprefs()->mutable_acceptprojectorids(), projectors);
+  *prefs->mutable_commonprefs()->mutable_acceptprojectorids() = projectors;
+
   txn.complete(&prefs);
 }
 

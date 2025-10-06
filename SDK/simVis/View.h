@@ -295,6 +295,17 @@ public:
   void tetherCamera(osg::Node *node, const simVis::Viewpoint& vp, double durationSeconds);
 
   /**
+   * Immediately tether to the given node and zoom in to the tethered node based on its bounding
+   * sphere. The range of the eye is set to the bounding radius of the node, times the given
+   * multiplier. Generally, values between 3 and 10 look decent.
+   * @param node EntityNode or PlatformModelNode to which to tether the camera, or nullptr to clear
+   *   the tether. If null, then this behaves the same as tetherCamera().
+   * @param radiusMultiplier Range multiplier against the bounding radius. High values zoom
+   *   farther from the node, and lower values closer.
+   */
+  void tetherAndZoom(osg::Node* node, double radiusMultiplier = 4.0);
+
+  /**
   * Get the node to which the camera is tethered.
   * @return a node, or nullptr if the camera is not tethered.
   * @see simVis::Viewpoint::getNode()

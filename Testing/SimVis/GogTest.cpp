@@ -1046,7 +1046,7 @@ int testDynamicEdits()
     gog->serializeToStream(annoGog1);
     rv += testItemsInSerialization(annoGog1.str(), annoItems);
 
-    gog->setTextOutline(osg::Vec4f(1.0, 1.0, 0, 0), simData::TO_THICK);
+    gog->setTextOutline(osg::Vec4f(1.0, 1.0, 0, 0), simData::TextOutline::TO_THICK);
     annoItems.push_back("textoutlinecolor hex 0x0000ffff\n");
     annoItems.push_back("textoutlinethickness thick\n");
     std::stringstream annoGog2;
@@ -1184,8 +1184,6 @@ int GogTest(int argc, char* argv[])
   rv += testDynamicEdits();
   rv += testArcSweep();
 
-  // Shut down protobuf lib for valgrind testing
-  google::protobuf::ShutdownProtobufLibrary();
   // Need to destroy simVis Registry for valgrind testing
   simVis::Registry::destroy();
   // Need to destroy GDAL, even with the atexit(), to avoid a race condition. It appears

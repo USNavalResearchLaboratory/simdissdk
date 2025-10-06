@@ -82,8 +82,7 @@ RadialLOS::RadialLOS()
     azim_center_(osgEarth::Angle(0.0, osgEarth::Units::DEGREES)),
     fov_(osgEarth::Angle(360.0, osgEarth::Units::DEGREES)),
     azim_resolution_(osgEarth::Angle(15.0, osgEarth::Units::DEGREES)),
-    elevationWorkingSet_(new osgEarth::ElevationPool::WorkingSet(WORKINGSET_SIZE)),
-    use_scene_graph_(false)
+    elevationWorkingSet_(new osgEarth::ElevationPool::WorkingSet(WORKINGSET_SIZE))
 {
 }
 
@@ -106,7 +105,6 @@ RadialLOS& RadialLOS::operator=(const RadialLOS& rhs)
   azim_center_ = rhs.azim_center_;
   fov_ = rhs.fov_;
   azim_resolution_ = rhs.azim_resolution_;
-  use_scene_graph_ = rhs.use_scene_graph_;
   elevationWorkingSet_.reset(new osgEarth::ElevationPool::WorkingSet(WORKINGSET_SIZE));
   // nocopy: srs_
 
@@ -254,22 +252,15 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
       double hamsl = 0.0, hae = 0.0;
 
       bool ok;
-      if (use_scene_graph_)
+      osgEarth::ElevationSample sample = mapNode->getMap()->getElevationPool()->getSample(mapPoint, osgEarth::Distance(1.0, osgEarth::Units::METERS), elevationWorkingSet_.get());
+      hae = sample.elevation().as(osgEarth::Units::METERS);
+      hamsl = hae;
+      ok = true;
+      if (hae == NO_DATA_VALUE)
       {
-        ok = mapNode->getTerrain()->getHeight(mapPoint.getSRS(), mapPoint.x(), mapPoint.y(), &hamsl, &hae);
-      }
-      else
-      {
-        osgEarth::ElevationSample sample = mapNode->getMap()->getElevationPool()->getSample(mapPoint, osgEarth::Distance(1.0, osgEarth::Units::METERS), elevationWorkingSet_.get());
-        hae = sample.elevation().as(osgEarth::Units::METERS);
-        hamsl = hae;
-        ok = true;
-        if (hae == NO_DATA_VALUE)
-        {
-          // If there is invalid data at a point treat it as 0 HAE.
-          hae = 0.0;
-          hamsl = 0.0;
-        }
+        // If there is invalid data at a point treat it as 0 HAE.
+        hae = 0.0;
+        hamsl = 0.0;
       }
 
       if (ok)
@@ -320,85 +311,11 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
   return validLos;
 }
 
-// Note: this method only used when use_scene_graph_ == true
 bool RadialLOS::update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& extent, osg::Node* patch)
 {
-  osg::Vec3d originWorld;
-  originMap_.toWorld(originWorld);
-
-  // NOTE:
-  // if any point in the radial falls within the extent, we will have to
-  // recalculate the visibility of the entire radial.
-  for (unsigned int radialIndex = 0; radialIndex < radials_.size(); ++radialIndex)
-  {
-    Radial& radial = radials_[radialIndex];
-    unsigned int firstNewSampleIndex = ~0;
-
-    for (unsigned int sampleIndex = 0; sampleIndex < radial.samples_.size(); ++sampleIndex)
-    {
-      Sample& sample = radial.samples_[sampleIndex];
-
-      if (!sample.point_.isValid() || extent.contains(sample.point_))
-      {
-        bool ok = mapNode->getTerrain()->getHeight(patch, sample.point_.getSRS(), sample.point_.x(), sample.point_.y(), &sample.hamsl_m_, &sample.hae_m_);
-
-        if (ok && firstNewSampleIndex == ~(0u))
-        {
-          firstNewSampleIndex = sampleIndex;
-        }
-      }
-    }
-
-    // if we re-sampled anything, start with the first new sample and recalculate
-    // visibility from there on out.
-    if (firstNewSampleIndex != ~(0u))
-    {
-      osg::Matrix local2world;
-      originMap_.createLocalToWorld(local2world);
-
-      osg::Vec3d originUpWorld = osg::Vec3d(0, 0, 1) * local2world;
-      originUpWorld.normalize();
-
-      double maxElev = -2 * M_PI;
-      for (unsigned int sampleIndex = 0; sampleIndex < radial.samples_.size(); ++sampleIndex)
-      {
-        Sample& sample = radial.samples_[sampleIndex];
-
-        // recalculate the elevation for all the new samples only.
-        if (sampleIndex >= firstNewSampleIndex)
-        {
-          // see if the point is unobstructed.
-          sample.point_.z() = sample.hae_m_;
-
-          simCore::Coordinate destCoord;
-          convertGeoPointToCoord(sample.point_, destCoord, mapNode);
-          simCore::Coordinate originCoord;
-          convertGeoPointToCoord(originMap_, originCoord, mapNode);
-
-          simCore::CoordinateConverter cc;
-          simCore::Coordinate originLlaCoord;
-          cc.convert(originCoord, originLlaCoord, simCore::COORD_SYS_LLA);
-          cc.setReferenceOrigin(originLlaCoord.lat(), originLlaCoord.lon(), originLlaCoord.alt());
-
-          double elev;
-          simCore::calculateAbsAzEl(originLlaCoord.position(), destCoord.position(), nullptr, &elev, nullptr, simCore::FLAT_EARTH, &cc);
-          sample.elev_rad_ = elev;
-        }
-
-        if (sample.elev_rad_ >= maxElev)
-        {
-          maxElev = sample.elev_rad_;
-          sample.visible_ = true;
-        }
-        else
-        {
-          sample.visible_ = false;
-        }
-      }
-    }
-  }
-
-  return true;
+  // deprecated
+  // This function was eliminated during a refactor that changed the source of elevation data from osgEarth::Terrain to osgEarth::ElevationPool
+  return false;
 }
 
 bool RadialLOS::getMinMaxHeight(const osgEarth::Angle& azimuth, osgEarth::Distance& out_minHeight, osgEarth::Distance& out_maxHeight) const

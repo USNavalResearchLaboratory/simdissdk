@@ -20,18 +20,35 @@
  * disclose, or release this software.
  *
  */
-#ifndef SIMDATA_PROTOBUF_DESCRIPTOR_H
-#define SIMDATA_PROTOBUF_DESCRIPTOR_H
+#include <QKeyEvent>
+#include "simQt/AutoRepeatFilter.h"
 
-/** Utility header to silence common MSVC warnings for protobuf includes. */
+namespace simQt {
 
-#ifdef _MSC_VER // [
-#pragma warning( push )
-// Disable C4244: "conversion from __int64 to int, possible loss of data"
-#pragma warning( disable : 4244 )
-#endif // _MSC_VER ]
+AutoRepeatFilter::AutoRepeatFilter(QObject* parent)
+  : QObject(parent)
+{
+}
 
-#include "google/protobuf/descriptor.h"
-#include "google/protobuf/message.h"
+bool AutoRepeatFilter::eventFilter(QObject* obj, QEvent* evt)
+{
+  if (enabled_ && evt && evt->type() == QEvent::KeyPress)
+  {
+    const QKeyEvent* keyEvt = dynamic_cast<const QKeyEvent*>(evt);
+    if (keyEvt && keyEvt->isAutoRepeat())
+      return true;
+  }
+  return QObject::eventFilter(obj, evt);
+}
 
-#endif /* SIMDATA_PROTOBUF_DESCRIPTOR_H */
+void AutoRepeatFilter::setEnabled(bool enabled)
+{
+  enabled_ = enabled;
+}
+
+bool AutoRepeatFilter::isEnabled() const
+{
+  return enabled_;
+}
+
+}

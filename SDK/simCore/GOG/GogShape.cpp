@@ -561,6 +561,11 @@ Points::Points(bool relative)
   setRelative(relative);
 }
 
+bool Points::canRotate() const
+{
+  return isRelative();
+}
+
 ShapeType Points::shapeType() const
 {
   return ShapeType::POINTS;

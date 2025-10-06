@@ -23,6 +23,8 @@
 #ifndef SIMQT_QTUTILS_HH
 #define SIMQT_QTUTILS_HH
 
+#include <QObject>
+#include <QRect>
 #include "simCore/Common/Export.h"
 
 class QWidget;
@@ -52,7 +54,6 @@ public:
   * @param parent target screen to find
   */
   static QRect getAvailableScreenGeometry(const QWidget& widget, const QWidget* parent);
-
 };
 
 }

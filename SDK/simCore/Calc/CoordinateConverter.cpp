@@ -27,6 +27,7 @@
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Dcm.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
 
@@ -1456,6 +1457,15 @@ int CoordinateConverter::convertXEastToGeodetic_(const Coordinate &tpCoord, Coor
   return 0;
 }
 
+// state independent CoordinateConverter members
+//--------------------------------------------------------------------------
+///@pre system is NED/NWU/ENU
+void CoordinateConverter::setLocalToEarthDcm(double lat, double lon, const LocalLevelFrame localLevelFrame, Dcm& localToEarth)
+{
+  double LE[3][3];
+  setLocalToEarthMatrix(lat, lon, localLevelFrame, LE);
+  localToEarth.fromD3M(LE);
+}
 // state independent CoordinateConverter members
 //--------------------------------------------------------------------------
 ///@pre system is NED/NWU/ENU

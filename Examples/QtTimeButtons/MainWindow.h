@@ -24,7 +24,6 @@
 #define EXAMPLES_TIME_BUTTONS_MAIN_WINDOW_H
 
 #include <QMainWindow>
-#include <QTimer>
 #include "simData/DataStore.h"
 #include "simVis/ViewManager.h"
 
@@ -48,11 +47,9 @@ private:
   /// Populate 'dataStore' with simulated data (provided by 'sim'), through 'endTimeS', at the given 'dataRateHz'
   void populateDataStore_(simData::DataStore &dataStore, simUtil::PlatformSimulator &sim, double endTimeS, double dataRateHz);
 
-  QTimer updateTimer_;
   osg::ref_ptr<simVis::ViewManager> viewMan_;
-  simData::MemoryDataStore *dataStore_;
-  simCore::ClockImpl *clock_;
+  simData::MemoryDataStore *dataStore_ = nullptr;
+  simCore::ClockImpl *clock_ = nullptr;
 };
 
 #endif
-

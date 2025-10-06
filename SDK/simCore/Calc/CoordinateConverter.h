@@ -31,6 +31,7 @@
 
 namespace simCore
 {
+  class Dcm;
   /**
   * @brief Performs coordinate conversions between various projections.
   *
@@ -308,6 +309,17 @@ namespace simCore
     * @pre out param valid
     */
     static void setLocalToEarthMatrix(double lat, double lon, LocalLevelFrame localLevelFrame, double localToEarth[][3]);
+
+    /**
+    * @brief Compute local to Earth DCM rotation matrix based on input coordinate system
+    *
+    * Compute local to Earth DCM based on input coordinate system
+    * @param[in ] lat latitude value (rad)
+    * @param[in ] lon longitude value (rad)
+    * @param[in ] localLevelFrame alignment of local geodetic horizon system (NED, ENU, NWU)
+    * @param[out] localToEarth 3x3 DCM
+    */
+    static void setLocalToEarthDcm(double lat, double lon, LocalLevelFrame localLevelFrame, Dcm& localToEarth);
 
     /**
     * @brief Swaps input vector between NED and ENU systems

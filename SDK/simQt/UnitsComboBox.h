@@ -162,11 +162,14 @@ private:
 
 }
 
+// Qt5 meta types need to be declared in header to work with QVariant
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 Q_DECLARE_METATYPE(simCore::Units);
 Q_DECLARE_METATYPE(simCore::TimeFormat);
 Q_DECLARE_METATYPE(simCore::CoordinateSystem);
 Q_DECLARE_METATYPE(simCore::VerticalDatum);
 Q_DECLARE_METATYPE(simCore::MagneticVariance);
 Q_DECLARE_METATYPE(simCore::GeodeticFormat);
+#endif
 
 #endif /* SIMQT_UNITSCOMBOBOX_H */

@@ -134,6 +134,8 @@ struct MenuHandler : public osgGA::GUIEventHandler
       case 'h': // TOGGLE BETWEEN HOVER-TO-FOCUS and CLICK-TO-FOCUS
       {
         int mask = 0;
+        if (insetViewHandler_.valid())
+          mask = insetViewHandler_->getFocusActions();
         bool hover = (mask & simVis::InsetViewEventHandler::ACTION_HOVER) != 0;
         if (hover)
         {

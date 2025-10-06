@@ -155,7 +155,7 @@ void RotatingBeam::create(simData::ObjectId hostPlatform, const std::string& nam
     simData::BeamProperties* props = dataStore_.addBeam(&txn);
     id_ = props->id();
     props->set_hostid(hostPlatform);
-    props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
+    props->set_type(simData::BeamProperties::Type::ABSOLUTE_POSITION);
     props->set_source("RotatingBeam");
     txn.complete(&props);
   }
@@ -214,7 +214,7 @@ void CyclingTargetBeam::create(simData::ObjectId hostPlatform, const std::string
     simData::BeamProperties* props = dataStore_.addBeam(&txn);
     id_ = props->id();
     props->set_hostid(hostPlatform);
-    props->set_type(simData::BeamProperties_BeamType_TARGET);
+    props->set_type(simData::BeamProperties::Type::TARGET);
     props->set_source("CyclingTargetBeam");
     txn.complete(&props);
   }
@@ -291,7 +291,7 @@ void RotatingGate::create(simData::ObjectId hostBeam, const std::string& name)
     simData::GateProperties* props = dataStore_.addGate(&txn);
     id_ = props->id();
     props->set_hostid(hostBeam);
-    props->set_type(simData::GateProperties_GateType_ABSOLUTE_POSITION);
+    props->set_type(simData::GateProperties::Type::ABSOLUTE_POSITION);
     props->set_source("RotatingGate");
     txn.complete(&props);
   }
@@ -488,7 +488,7 @@ void ToggleDrawState::generate_(double scenarioTime)
 
 ///////////////////////////////////////////////////////////
 
-/** Colors are in protobuf style, 0xRRGGBBAA */
+/** Colors are in style: 0xRRGGBBAA */
 const uint32_t COLOR_MAP[10] = {
   0xff0000a0, 0xffffffa0, 0x0000ffa0, 0x808080a0, 0xff0000a0,
   0x00ff00a0, 0x0000ffa0, 0xffff00a0, 0xff00ffa0, 0x00ffffa0

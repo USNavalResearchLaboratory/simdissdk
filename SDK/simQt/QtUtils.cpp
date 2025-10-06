@@ -20,7 +20,6 @@
  * disclose, or release this software.
  *
  */
-
 #include <QApplication>
 #include <QScreen>
 #include <QWidget>
@@ -73,6 +72,5 @@ void QtUtils::centerWidgetOnParent(QWidget& widget, const QWidget* parent)
 
   widget.move(newPos);
 }
-
 
 }

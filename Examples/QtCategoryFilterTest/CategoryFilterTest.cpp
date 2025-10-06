@@ -23,6 +23,7 @@
 #include <sstream>
 #include <iomanip>
 
+#include "simCore/System/Utils.h"
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/MemoryDataStore.h"
 #include "simQt/EntityTreeModel.h"
@@ -43,20 +44,16 @@ MainWindow::MainWindow(simData::DataStore* dataStore, QWidget *parent)
   ui_ = new Ui_MainWindow();
   ui_->setupUi(this);
 
-  connect(ui_->smallButton, SIGNAL(clicked()), this, SLOT(addSmallAmount_()));
-  connect(ui_->massiveButton, SIGNAL(clicked()), this, SLOT(addMassiveAmount_()));
-  connect(ui_->togglePushButton, SIGNAL(clicked()), this, SLOT(toggleState_()));
+  connect(ui_->smallButton, &QPushButton::clicked, this, &MainWindow::addSmallAmount_);
+  connect(ui_->massiveButton, &QPushButton::clicked, this, &MainWindow::addMassiveAmount_);
+  connect(ui_->togglePushButton, &QPushButton::clicked, this, &MainWindow::toggleState_);
 
   // Configure the new Category Filter Widget
   ui_->categoryFilterWidget->setDataStore(dataStore);
-  connect(ui_->categoryFilterWidget, SIGNAL(filterChanged(simData::CategoryFilter)),
-    ui_->breadcrumbs, SLOT(setFilter(simData::CategoryFilter)));
-  connect(ui_->breadcrumbs, SIGNAL(filterEdited(simData::CategoryFilter)),
-    ui_->categoryFilterWidget, SLOT(setFilter(simData::CategoryFilter)));
-  connect(ui_->categoryFilterWidget, SIGNAL(filterChanged(simData::CategoryFilter)),
-    this, SLOT(categoryFilterChanged_(simData::CategoryFilter)));
-  connect(ui_->breadcrumbs, SIGNAL(filterEdited(simData::CategoryFilter)),
-    this, SLOT(categoryFilterChanged_(simData::CategoryFilter)));
+  connect(ui_->categoryFilterWidget, &simQt::CategoryFilterWidget::filterChanged, ui_->breadcrumbs, &simQt::CategoryDataBreadcrumbs::setFilter);
+  connect(ui_->breadcrumbs, &simQt::CategoryDataBreadcrumbs::filterEdited, ui_->categoryFilterWidget, &simQt::CategoryFilterWidget::setFilter);
+  connect(ui_->categoryFilterWidget, &simQt::CategoryFilterWidget::filterChanged, this, &MainWindow::categoryFilterChanged_);
+  connect(ui_->breadcrumbs, &simQt::CategoryDataBreadcrumbs::filterEdited, this, &MainWindow::categoryFilterChanged_);
 }
 
 MainWindow::~MainWindow()
@@ -142,6 +139,7 @@ void MainWindow::addCategoryData_(double time, const std::string& key, const std
 
 int main(int argc, char* argv[])
 {
+  simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
 
   simData::MemoryDataStore* dataStore = new simData::MemoryDataStore();

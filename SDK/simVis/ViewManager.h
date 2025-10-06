@@ -25,6 +25,7 @@
 #define SIMVIS_VIEW_MANAGER_H 1
 
 #include <functional>
+#include <optional>
 #include <vector>
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
@@ -75,6 +76,10 @@ class View;
  * // Prevent image data from being deleted on CPU after sent to GPU, called once on the pager:
  * view->getScene()->getDatabasePager()->setUnrefImageDataAfterApplyPolicy(true, false);
  * </code>
+ *
+ * Note that although ViewManager can support multiple GraphicsContexts, underlying
+ * osgQOpenGL code (referenced in simQt::ViewerWidgetAdapter) does not gracefully handle
+ * this situation, and you will need one ViewManager per ViewerWidgetAdapter.
  */
 class SDKVIS_EXPORT ViewManager : public osg::Referenced
 {
@@ -144,6 +149,20 @@ public:
    */
   ViewManager(osg::ArgumentParser& args);
 
+  /**
+   * Sets whether to use a single shared CompositeViewer (false, default) or one Viewer
+   * per top level view. When false, each top level main view is assigned its own
+   * CompositeViewer. This is most useful for cases where rendering via
+   * `CompositeViewer::frame()` is managed externally like in osgQOpenGL. In osgQt and
+   * typical OSG usage, a graphics context is created that OSG can make current and
+   * render onto. In osgQOpenGL, the osgViewer::GraphicsWindowEmbedded is used, and so
+   * a single viewer will not suffice due to its simple adapter nature. In those cases,
+   * set the use-single-viewer to false when you expect more than one top level view.
+   */
+  void setUseMultipleViewers(bool useMultipleViewers);
+  /** Retrieves whether the ViewManager is set to use one viewer per top level view. */
+  bool getUseMultipleViewers() const;
+
   /** Adds a view. */
   void addView(simVis::View* view);
 
@@ -206,8 +225,10 @@ public:
   /** Enters a run loop that will automatically call frame() continuously. */
   virtual int run();
 
-  /** Access the underlying OSG viewer */
-  osgViewer::CompositeViewer* getViewer() const { return viewer_.get(); }
+  /** Access the underlying OSG viewer for the first view. */
+  osgViewer::CompositeViewer* getViewer() const;
+  /** Access the underlying OSG viewer for a given view. */
+  osg::ref_ptr<osgViewer::CompositeViewer> getViewer(simVis::View* view) const;
 
 protected:
   virtual ~ViewManager();
@@ -215,8 +236,10 @@ protected:
 private:
   void init_();
   void init_(osg::ArgumentParser&);
+  simVis::View* getTopLevelView_(simVis::View* view) const;
 
-  osg::ref_ptr<osgViewer::CompositeViewer> viewer_;
+  osg::ref_ptr<osgViewer::CompositeViewer> initialViewer_;
+  std::map<simVis::View*, osg::ref_ptr<osgViewer::CompositeViewer>> viewers_;
 
   typedef std::vector<osg::ref_ptr<Callback> > Callbacks;
   Callbacks callbacks_;
@@ -237,9 +260,11 @@ private:
 
   osg::ref_ptr<osgGA::GUIEventHandler> resizeHandler_;
   /// Cache fatal rendering flag to prevent rendering to invalid GL canvases
-  bool fatalRenderFlag_;
+  bool fatalRenderFlag_ = false;
 
-  bool firstFrame_;
+  bool firstFrame_ = true;
+  bool useMultipleViewers_ = false;
+  std::optional<osg::ArgumentParser> args_;
 };
 
 /**

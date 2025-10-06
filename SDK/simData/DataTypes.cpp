@@ -25,16 +25,5 @@
 namespace simData
 {
 
-  bool operator!=(const Position &left, const Position &right)
-  {
-    return left.x() != right.x() ||
-           left.y() != right.y() ||
-           left.z() != right.z();
-  }
-
-  bool operator==(const Position &left, const Position &right)
-  {
-    return !(left != right);
-  }
 }
 

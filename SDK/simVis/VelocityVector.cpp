@@ -181,10 +181,10 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
     velocity = lla.velocity();
     scale = prefs.velvectime();
     const simData::ElapsedTimeFormat timeFormat = prefs.velvectimeunits();
-    assert(timeFormat == simData::ELAPSED_HOURS || timeFormat == simData::ELAPSED_MINUTES || timeFormat == simData::ELAPSED_SECONDS);
-    if (timeFormat == simData::ELAPSED_MINUTES)
+    assert(timeFormat == simData::ElapsedTimeFormat::ELAPSED_HOURS || timeFormat == simData::ElapsedTimeFormat::ELAPSED_MINUTES || timeFormat == simData::ElapsedTimeFormat::ELAPSED_SECONDS);
+    if (timeFormat == simData::ElapsedTimeFormat::ELAPSED_MINUTES)
       scale *= 60.0;
-    else if (timeFormat == simData::ELAPSED_HOURS)
+    else if (timeFormat == simData::ElapsedTimeFormat::ELAPSED_HOURS)
       scale *= 3600.0;
   }
 

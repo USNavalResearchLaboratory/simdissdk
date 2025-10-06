@@ -159,7 +159,12 @@ namespace
         {
           p2pFeature->setNodeMask(~0);
           p2pFeature->getFeature()->getGeometry()->back() = p.vec3d();
+#if OSGEARTH_SOVERSION >= 175
+          auto newStyle = *p2pFeature->getFeature()->style();
+          auto line = newStyle.getOrCreate<osgEarth::LineSymbol>();
+#else
           osg::ref_ptr<osgEarth::LineSymbol> line = p2pFeature->getFeature()->style()->getOrCreate<osgEarth::LineSymbol>();
+#endif
 
           if (visible)
           {
@@ -179,6 +184,10 @@ namespace
 #endif
             line->stroke()->color() = simVis::Color::Red;
           }
+
+#if OSGEARTH_SOVERSION >= 175
+          p2pFeature->getFeature()->setStyle(newStyle);
+#endif
 
           p2pFeature->dirty();
         }
@@ -355,6 +364,7 @@ private:
   }
 #endif
 
+#if OSGEARTH_SOVERSION < 173
   /**
    * Adapter to fire off a point-to-point LOS test
    */
@@ -371,7 +381,7 @@ private:
       }
     }
   };
-
+#endif
 
   /**
    * Creates the crosshairs that you can position to calculate a line of sight
@@ -426,7 +436,14 @@ private:
     editorGroup->addChild(node.get());
     editorGroup->addChild(app.p2pFeature.get());
 
+#if OSGEARTH_SOVERSION < 173
     dragger->addPositionChangedCallback(new RunPointToPointLOSCallback(app));
+#else
+    dragger->onPositionChanged([&app](const auto* sender, const auto& geoPoint) {
+      if (sender && sender->getDragging() == false)
+        app.runPointToPointLOS(geoPoint);
+      });
+#endif
     return editorGroup;
   }
 }

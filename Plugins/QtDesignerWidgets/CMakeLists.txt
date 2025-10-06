@@ -3,9 +3,9 @@ if(NOT TARGET simQt OR NOT TARGET simData)
 endif()
 
 # Must have Qt Designer module to build
-find_package(Qt5Designer QUIET)
-if(NOT Qt5Designer_FOUND)
-    message(WARNING "Qt5Designer module not found, skipping Qt Designer plug-ins.")
+find_package(Qt${_SDK_QT_VERSION}Designer QUIET)
+if(NOT Qt${_SDK_QT_VERSION}Designer_FOUND)
+    message(WARNING "Qt${_SDK_QT_VERSION}Designer module not found, skipping Qt Designer plug-ins.")
     return()
 endif()
 
@@ -75,16 +75,17 @@ set(PROJ_RESOURCES
 )
 source_group(Qt FILES ${PROJ_RESOURCES})
 
-# Must explicitly add the include directories for Designer in Qt5
-if(Qt5UiPlugin_FOUND)
+# Must explicitly add the include directories for Designer in Qt
+if(Qt${_SDK_QT_VERSION}UiPlugin_FOUND)
     set(DESIGNER_LIBRARY UiPlugin)
-    get_target_property(Qt5UiPlugin_INCLUDE_DIRS Qt5::UiPlugin INTERFACE_INCLUDE_DIRECTORIES)
-    include_directories(${Qt5UiPlugin_INCLUDE_DIRS})
-elseif(Qt5Designer_FOUND)
+    # Cannot use the alias when getting the property for include dir
+    get_target_property(Qt${_SDK_QT_VERSION}UiPlugin_INCLUDE_DIRS Qt${_SDK_QT_VERSION}::UiPlugin INTERFACE_INCLUDE_DIRECTORIES)
+    include_directories(${Qt${_SDK_QT_VERSION}UiPlugin_INCLUDE_DIRS})
+elseif(Qt${_SDK_QT_VERSION}Designer_FOUND)
     set(DESIGNER_LIBRARY Designer)
-    include_directories(${Qt5Designer_INCLUDE_DIRS})
+    include_directories(${Qt${_SDK_QT_VERSION}Designer_INCLUDE_DIRS})
 else()
-    message(STATUS "Qt5 found, but Qt5UiPlugin package not found.  Skipping QtDesigner Plugin.")
+    message(STATUS "Qt${_SDK_QT_VERSION} found, but Qt${_SDK_QT_VERSION}UiPlugin package not found.  Skipping QtDesigner Plugin.")
     return()
 endif()
 
@@ -114,13 +115,19 @@ VSI_QT_USE_MODULES(simQtDesignerWidgets LINK_PRIVATE Widgets OpenGL ${DESIGNER_L
 
 option(AUTOINSTALL_QTDESIGNER_WIDGETS "Copies simQt Widgets to Qt Designer plugin directory" OFF)
 if(AUTOINSTALL_QTDESIGNER_WIDGETS)
+    # Extract the installation prefix
+    set(_QT_INSTALL_PREFIX "${QT6_INSTALL_PREFIX}")
+    if(Qt5Core_FOUND)
+        set(_QT_INSTALL_PREFIX "${_qt5Core_install_prefix}")
+    endif()
+
     # After the build, copy the library over
     add_custom_command(TARGET simQtDesignerWidgets POST_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E make_directory "${_qt5Core_install_prefix}/plugins/designer/"
+        ARGS -E make_directory "${_QT_INSTALL_PREFIX}/plugins/designer/"
         )
     add_custom_command(TARGET simQtDesignerWidgets POST_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy $<TARGET_FILE:simQtDesignerWidgets> "${_qt5Core_install_prefix}/plugins/designer/"
+        ARGS -E copy $<TARGET_FILE:simQtDesignerWidgets> "${_QT_INSTALL_PREFIX}/plugins/designer/"
         )
 endif()

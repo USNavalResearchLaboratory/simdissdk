@@ -28,12 +28,13 @@
  */
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
-#include "simQt/ViewWidget.h"
+#include "simCore/System/Utils.h"
 #include "simUtil/ExampleResources.h"
 #include "simVis/SceneManager.h"
 #include "simVis/View.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
 
+#include <QActionGroup>
 #include <QApplication>
 #include <QMainWindow>
 #include <QMenuBar>
@@ -88,6 +89,7 @@ int main(int argc, char **argv)
 {
   // Set up the scene:
   simCore::checkVersionThrow();
+  simCore::initializeSimdisEnvironmentVariables();
   simExamples::configureSearchPaths();
 
   // a Map and a Scene Manager:
@@ -106,6 +108,8 @@ int main(int argc, char **argv)
 
   // The ViewManager coordinates the rendering of all our views.
   osg::ref_ptr<simVis::ViewManager> viewMan = new simVis::ViewManager();
+  // No need for multiple viewers in this example because there is only one main view
+  viewMan->setUseMultipleViewers(false);
 
   // Set up the logarithmic depth buffer for all views
   osg::ref_ptr<simVis::ViewManagerLogDbAdapter> logDb = new simVis::ViewManagerLogDbAdapter;
@@ -115,7 +119,6 @@ int main(int argc, char **argv)
   // also has a HUD stack for overlay text and graphics.
   viewMan->addView(view.get());
 
-
 #ifdef Q_WS_X11
   // required for multi-threaded viewer on Linux:
   XInitThreads();
@@ -124,8 +127,6 @@ int main(int argc, char **argv)
   QApplication app(argc, argv);
 
   MyMainWindow win(viewMan.get());
-  simQt::ViewWidget* viewWidget = new simQt::ViewWidget(view.get());
-  win.setGlWidget(viewWidget);
   win.setGeometry(100, 100, 1024, 800);
 
   QSignalMapper mapper(&app);
@@ -164,7 +165,5 @@ int main(int argc, char **argv)
   win.show();
   app.exec();
   delete action;
-  delete viewWidget;
   return 0;
 }
-

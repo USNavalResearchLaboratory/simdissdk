@@ -32,8 +32,8 @@ namespace simVis
 {
 
 Viewer::Viewer()
+  : Viewer(WINDOWED, 100, 100, 1024, 768)
 {
-  init_(WINDOWED, 100, 100, 1024, 768);
 }
 
 Viewer::Viewer(osg::ArgumentParser& parser)
@@ -63,27 +63,30 @@ void Viewer::init_(DefaultScreenSize screenSize, int x, int y, int w, int h)
   addView(mainView);
   mainView->setName("Main View");
 
-  // Set up in a window if asked by environment variable
-  const char* win = ::getenv("OSG_WINDOW");
-  if (win)
+  // Set up in a window if asked by environment variable, unless embedded
+  if (screenSize != EMBEDDED)
   {
-    int x = 0;
-    int y = 0;
-    int width = 0;
-    int height = 0;
-    std::istringstream iss(win);
-    iss >> x >> y >> width >> height;
-    if (!iss.fail() && width > 0 && height > 0)
-      mainView->setUpViewInWindow(x, y, width, height, 0u);
-  }
+    const char* win = ::getenv("OSG_WINDOW");
+    if (win)
+    {
+      int x = 0;
+      int y = 0;
+      int width = 0;
+      int height = 0;
+      std::istringstream iss(win);
+      iss >> x >> y >> width >> height;
+      if (!iss.fail() && width > 0 && height > 0)
+        mainView->setUpViewInWindow(x, y, width, height, 0u);
+    }
 
-  // Apply the windowing request as long as OSG_WINDOW did not override
-  if (!mainView->getCamera()->getViewport())
-  {
-    if (screenSize == FULLSCREEN)
-      mainView->setUpViewOnSingleScreen();
-    else // screenSize == WINDOWED
-      mainView->setUpViewInWindow(x, y, w, h, 0u);
+    // Apply the windowing request as long as OSG_WINDOW did not override
+    if (!mainView->getCamera()->getViewport())
+    {
+      if (screenSize == FULLSCREEN)
+        mainView->setUpViewOnSingleScreen();
+      else // screenSize == WINDOWED
+        mainView->setUpViewInWindow(x, y, w, h, 0u);
+    }
   }
 
   mainView->setSceneManager(scene_.get());
