@@ -1,4 +1,4 @@
-if("$ENV{PEOPLE_DIR}" STREQUAL "" OR NOT IS_DIRECTORY "$ENV{PEOPLE_DIR}../3rd")
+if("$ENV{PEOPLE_DIR}" STREQUAL "" OR NOT IS_DIRECTORY "$ENV{PEOPLE_DIR}/../3rd")
     return()
 endif()
 
