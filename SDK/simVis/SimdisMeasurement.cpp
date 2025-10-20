@@ -69,8 +69,11 @@ void RfMeasurement::getRfParameters_(RangeToolState& state, double *azAbs, doubl
       *elAbs = elAbsLocal;
   }
 
-  auto simdisBeginState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
-  auto simdisEndState = dynamic_cast<SimdisEntityState*>(state.endEntity_);
+  // it is believed that this assertion is true;
+  assert(state.beginEntity_ && state.endEntity_);
+  const auto simdisBeginState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  const auto simdisEndState = dynamic_cast<SimdisEntityState*>(state.endEntity_);
+  // simdisBeginState and simdisEndState can be null, if beginEntity_ or endEntity_ are not SimdisEntityState (possibly base class simVis::EntityState instead)
 
   if (hgtMeters != nullptr)
   {
@@ -130,8 +133,9 @@ void RfMeasurement::getRfParameters_(RangeToolState& state, double *azAbs, doubl
           const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(simdisBeginState->node_.get());
           if (beam)
           {
-            type = static_cast<simCore::PolarityType>(beam->getPrefs().polarity());
-            frequency = beam->getPrefs().frequency();
+            const auto& prefs = beam->getPrefs();
+            type = static_cast<simCore::PolarityType>(prefs.polarity());
+            frequency = prefs.frequency();
           }
           else // otherwise, use the end platform's polarity/frequency
           {
@@ -156,14 +160,14 @@ void RfMeasurement::getRfParameters_(RangeToolState& state, double *azAbs, doubl
     *rcs = rcsLocal;
   }
 
-  if ((freqMHz != nullptr) || (powerWatts != nullptr))
+  if (freqMHz != nullptr || powerWatts != nullptr)
   {
     double freqMHzBLocal = 0.0;
     double powerWattsLocal = 0.0;
-    const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(simdisBeginState->node_.get());
+    const simVis::BeamNode* beam = (simdisBeginState == nullptr) ? nullptr : dynamic_cast<const simVis::BeamNode*>(simdisBeginState->node_.get());
     if (beam)
     {
-      auto prefs = beam->getPrefs();
+      const auto& prefs = beam->getPrefs();
       freqMHzBLocal = prefs.frequency();
       powerWattsLocal = prefs.power();
     }
