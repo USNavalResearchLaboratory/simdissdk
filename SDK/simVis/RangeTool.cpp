@@ -312,9 +312,7 @@ void RangeTool::Calculation::setValid(bool value)
 
 RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2)
   : id1_(id1),
-    id2_(id2),
-    visible_(true),
-    xform_(nullptr)
+    id2_(id2)
 {
   geode_ = new osg::Geode();
   osg::StateSet* s = geode_->getOrCreateStateSet();
@@ -854,7 +852,6 @@ osg::Vec3 RangeTool::PieSliceGraphic::labelPos(RangeToolState& state)
     render(nullptr, state);
   return *labelPos_;
 }
-
 
 //----------------------------------------------------------------------------
 
