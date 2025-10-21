@@ -72,7 +72,9 @@ function(vsi_install_qt6plugins dir)
             DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
             OPTIONAL
             COMPONENT ThirdPartyLibs
-            FILES_MATCHING PATTERN *.so)
+            FILES_MATCHING PATTERN *.so
+            PATTERN libqgtk3.so EXCLUDE
+            PATTERN *wayland* EXCLUDE)
     endif()
 endfunction()
 
