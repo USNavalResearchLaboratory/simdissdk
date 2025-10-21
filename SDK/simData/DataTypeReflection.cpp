@@ -1657,16 +1657,24 @@ Reflection::TagStack Reflection::getPreferencesTagStack(const std::string& path,
 
 Reflection::TagStack Reflection::getPreferencesTagStack(const std::string& path, simData::ObjectType type)
 {
-  const auto& tags = makePreferencesTagStackMap(type);
+  static std::map<simData::ObjectType, Reflection::TagStackMap> tagStackMap;
 
-  if (tags.empty())
+  auto it = tagStackMap.find(type);
+  if (it == tagStackMap.end())
   {
-    // Invalid type
-    assert(false);
-    return Reflection::TagStack();
+    const auto tags = makePreferencesTagStackMap(type);
+    if (tags.empty())
+    {
+      // Invalid type
+      assert(false);
+      return Reflection::TagStack();
+    }
+
+    tagStackMap[type] = tags;
+    it = tagStackMap.find(type);
   }
 
-  return getPreferencesTagStack(path, tags);
+  return getPreferencesTagStack(path, it->second);
 }
 
 }
