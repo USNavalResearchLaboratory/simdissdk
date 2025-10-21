@@ -372,7 +372,10 @@ public:
    */
   static TagStack getPreferencesTagStack(const std::string& path, const TagStackMap& tags);
 
-  /** Returns a preference tag stack for the given path and entity type; returns empty tag stack on error */
+  /**
+   * Returns a preference tag stack for the given path and entity type; returns empty tag stack on error.
+   * Not thread safe, must call from main thread.
+   */
   static TagStack getPreferencesTagStack(const std::string& path, simData::ObjectType type);
 
 private:
