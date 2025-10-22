@@ -821,7 +821,7 @@ SIMDATA_DEFINE_FIELD(TrackPrefs, useTrackOverrideColor_, usetrackoverridecolor, 
 SIMDATA_DEFINE_FIELD(TrackPrefs, trackOverrideColor_, trackoverridecolor, uint32_t, 0x19E500FF); // Green
 SIMDATA_DEFINE_FIELD(TrackPrefs, trackLength_, tracklength, int32_t, 60);
 SIMDATA_DEFINE_FIELD(TrackPrefs, lineWidth_, linewidth, double, 1.0);
-SIMDATA_DEFINE_FIELD(TrackPrefs, trackDrawMode_, trackdrawmode, TrackPrefs::Mode, TrackPrefs::Mode::POINT);
+SIMDATA_DEFINE_FIELD(TrackPrefs, trackDrawMode_, trackdrawmode, TrackPrefs::Mode, TrackPrefs::Mode::OFF);
 
 void TrackPrefs::MergeFrom(const TrackPrefs& from)
 {
