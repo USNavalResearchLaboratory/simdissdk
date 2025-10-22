@@ -56,6 +56,8 @@ inline const std::string SIMDIS_SDK_FILE_PATH = "SIMDIS_SDK_FILE_PATH";
 inline const std::string SIMDIS_TERRAIN = "SIMDIS_TERRAIN";
 inline const std::string SIMDIS_USER_DIR = "SIMDIS_USER_DIR";
 inline const std::string XDG_SESSION_TYPE = "XDG_SESSION_TYPE";
+inline const std::string QT_QPA_PLATFORM = "QT_QPA_PLATFORM";
+inline const std::string QT_QPA_PLATFORM_XCB = "xcb";
 
 #ifdef WIN32
 inline const std::string VARSEP_STR = ";";
@@ -341,6 +343,9 @@ int initializeSimdisEnvironmentVariables(const InitializeEnvironmentConfig& conf
 #ifndef WIN32
     // Remove XDG_SESSION_TYPE to avoid Qt 5.15 warning on environment
     ::unsetenv(XDG_SESSION_TYPE.c_str());
+    // Force the QPA to xcb unless it's already set. Wayland has significant issues as of Qt 6.9 with OpenGL
+    // or Vulkan implementations and XCB just performs better. Let users override if they have it set already.
+    simCore::setEnvVar(QT_QPA_PLATFORM, QT_QPA_PLATFORM_XCB, false);
 #endif
   }
 
