@@ -24,6 +24,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/EM/AntennaPattern.h"
+#include "simCore/EM/ElectroMagRange.h"
 #include "simCore/EM/Propagation.h"
 #include "simCore/EM/RadarCrossSection.h"
 
@@ -677,6 +678,18 @@ int antennaPatternTest(int argc, char* argv[])
   return rv;
 }
 
+int testMaximumUnambiguousRange()
+{
+  double prf_hz = 1000.; // hz
+  double pulseWidth_uS = 0.; // uS
+  auto umr_m = simCore::maximumUnambiguousDetectionRange(prf_hz, pulseWidth_uS);
+  auto rv = SDK_ASSERT(simCore::areEqual(umr_m, 149851.273617));
+  pulseWidth_uS = 9.; // uS
+  umr_m = simCore::maximumUnambiguousDetectionRange(prf_hz, pulseWidth_uS);
+  rv = SDK_ASSERT(simCore::areEqual(umr_m, 148502.612155));
+  return rv;
+}
+
 }
 
 int EMTest(int argc, char* argv[])
@@ -689,6 +702,7 @@ int EMTest(int argc, char* argv[])
   rv += testOneWayFreeSpaceRangeLoss();
   rv += testLossToPpf();
   rv += antennaPatternTest(argc, argv);
+  rv += testMaximumUnambiguousRange();
 
   std::cout << "EMTests " << ((rv == 0) ? "Passed" : "Failed") << std::endl;
 

@@ -107,6 +107,16 @@ namespace simCore
   inline double rangeToTimeAir(double range)
   { return range / (LIGHT_SPEED_AIR * .5); }
 
+  /**
+  * Computes the maximum unambiguous detection range for an ESM receiver, based on free-space propagation
+  * from http://www.radartutorial.eu/01.basics/Maximum%20Unambiguous%20Range.en.html
+  * @param pulseRepetitionFrequency  pulse repetition frequency in Hz
+  * @param pulseWidth  pulse width in uSec
+  * @return Free space unambiguous detection range for an ESM receiver in meters
+  */
+  inline double maximumUnambiguousDetectionRange(double pulseRepetitionFrequency_Hz, double pulseWidth_uS)
+  { return (pulseRepetitionFrequency_Hz > 0.) ? simCore::timeToRangeAir((1. / pulseRepetitionFrequency_Hz) - (1e-6 * pulseWidth_uS)) : 0; }
+
 }
 
 #endif /* SIMCORE_EM_ELECTRO_MAG_RANGE_H */
