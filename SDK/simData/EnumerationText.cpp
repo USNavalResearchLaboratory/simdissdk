@@ -411,6 +411,16 @@ std::unique_ptr<EnumerationText> EnumerationText::makePolarityName()
 
   return rv;
 }
+
+std::unique_ptr<EnumerationText> EnumerationText::makeVolumeTypeName()
+{
+  auto rv = std::make_unique<EnumerationText>();
+  rv->insert_(0, "GAIN_AS_RANGE_SCALAR");
+  rv->append_("ONE_WAY_PWR_FREE_SPACE");
+
+  return rv;
+}
+
 std::unique_ptr<EnumerationText> EnumerationText::makeModelDrawModeName()
 {
   auto rv = std::make_unique<EnumerationText>();

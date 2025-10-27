@@ -27,6 +27,7 @@
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/EM/AntennaPattern.h"
+#include "simCore/EM/Propagation.h"
 
 #include "simData/DataTypes.h"
 #include "simVis/AxisVector.h"
@@ -94,7 +95,8 @@ AntennaNode::AntennaNode(const osg::Quat& rot)
     scaleFactor_(-1.0f),
     rot_(rot),
     min_(HUGE_VAL),
-    max_(-HUGE_VAL)
+    max_(-HUGE_VAL),
+    maxRadius_(-HUGE_VAL)
 {
   colorUtils_ = new ColorUtils(0.3);
   setNodeMask(simVis::DISPLAY_MASK_NONE);
@@ -182,6 +184,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
 
   const bool requiresRedraw = drawAntennaPattern &&
       (requiresRebuild ||
+        PB_SUBFIELD_CHANGED(oldPrefs, newPrefs, antennapattern, volumeType) ||
         PB_FIELD_CHANGED(oldPrefs, newPrefs, drawtype)      ||
         PB_FIELD_CHANGED(oldPrefs, newPrefs, colorscale)      ||
         PB_FIELD_CHANGED(oldPrefs, newPrefs, detail) ||
@@ -277,7 +280,21 @@ float AntennaNode::PatternGain(float azim, float elev, simCore::PolarityType pol
   return lastPrefs_->gain();
 }
 
-float AntennaNode::ComputeRadius_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const
+float AntennaNode::computeRadius_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const
+{
+  if (!lastPrefs_.isSet())
+    return 0.0f;
+  switch (lastPrefs_->antennapattern().volumeType())
+  {
+    case simData::AntennaPatterns::VolumeType::GAIN_AS_RANGE_SCALAR:
+      return computeRadiusGainAsRangeScalar_(azim, elev, polarity, p);
+    case simData::AntennaPatterns::VolumeType::ONE_WAY_PWR_FREE_SPACE:
+      return computeRadiusOneWayPowerFreespace_(azim, elev, polarity, p);
+  }
+  return 0.0f;
+}
+
+float AntennaNode::computeRadiusGainAsRangeScalar_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const
 {
   // values returned from PatternGain are in dB
   const float gain = PatternGain(azim, elev, polarity);
@@ -298,6 +315,39 @@ float AntennaNode::ComputeRadius_(float azim, float elev, simCore::PolarityType 
     radius * sinf(elev));
 
   return gain;
+}
+
+float AntennaNode::computeRadiusOneWayPowerFreespace_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const
+{
+  // values returned from PatternGain are in dB
+  const float gain = PatternGain(azim, elev, polarity);
+  double radius = computeOneWayPowerRadiusForRendering_(gain);
+
+  double normalizedRadius = 0.0;
+  if (maxRadius_ == 0.0)
+    normalizedRadius = 0.0;
+  else
+    normalizedRadius = radius / maxRadius_;
+
+  // convert azim & elev to a rectangular coordinate
+  p.set(normalizedRadius * cosf(azim) * cosf(elev),
+    normalizedRadius * sinf(azim) * cosf(elev),
+    normalizedRadius * sinf(elev));
+
+  return gain;
+}
+
+double AntennaNode::computeOneWayPowerRadiusForRendering_(float gain) const
+{
+  // For computing normalized radii values with the freespace range estimate, the actual
+  // xmitPower, freq, and receiverSensitivy just need to be static for all calculated radii.
+  // See spreadsheet in SIM-18942, which allows for changing them and seeing that the differences
+  // in the normalized radii don't change relative to each other.
+  constexpr double xmitPowerWatts = 1.0; // a positive value to use for normalized radii calculations
+  constexpr double freqMHz = 2.0; // a positive value to use for normalized radii calculations
+  constexpr double receiverSensitivityDbm = -3.0; // a negative value to use for normalized radii calculations
+
+  return simCore::getOneWayFreeSpaceRangeAndLoss(gain, freqMHz, xmitPowerWatts, receiverSensitivityDbm, nullptr);
 }
 
 // antennaPattern's scale is a product of update range (in m) and beamScale preference (no units, 1.0 default)
@@ -359,6 +409,9 @@ void AntennaNode::render_()
 
     // prevent divide by zero error for OMNI case
     scaleFactor_ = (max_ == min_) ? 1.0f/max_ : 1.0f/(max_ - min_);
+
+    // calculates one-way power radius corresponding to max_ gain
+    maxRadius_ = computeOneWayPowerRadiusForRendering_(max_);
   }
 
   const double endelev = simCore::RAD2DEG * vRange * 0.5;
@@ -428,7 +481,7 @@ void AntennaNode::render_()
 
       // compute first point in t-strip
       osg::Vec3f pt;
-      float gain = ComputeRadius_(azim, elev, polarity_, pt);
+      float gain = computeRadius_(azim, elev, polarity_, pt);
       verts->push_back(pt);
       pt.normalize();
       norms->push_back(pt);
@@ -440,7 +493,7 @@ void AntennaNode::render_()
       // compute alternate point in t-strip
       // TODO: this calculated result could potentially be reused in the next azim iteration; consider using an index array.
       osg::Vec3f ptne;
-      gain = ComputeRadius_(azim2, elev, polarity_, ptne);
+      gain = computeRadius_(azim2, elev, polarity_, ptne);
       verts->push_back(ptne);
       ptne.normalize();
       norms->push_back(ptne);
@@ -477,7 +530,7 @@ void AntennaNode::render_()
       {
         const float azim = *iriter;
         osg::Vec3f pt;
-        const float gain = ComputeRadius_(azim, elev, polarity_, pt);
+        const float gain = computeRadius_(azim, elev, polarity_, pt);
         verts->push_back(pt);
         const osg::Vec3f& normalVec = calcNormalXY(pt);
         norms->push_back(normalVec);
@@ -518,7 +571,7 @@ void AntennaNode::render_()
       {
         const float azim = *iiter;
         osg::Vec3f pt;
-        const float gain = ComputeRadius_(azim, elev, polarity_, pt);
+        const float gain = computeRadius_(azim, elev, polarity_, pt);
         verts->push_back(pt);
         // sign change is required for top side
         const osg::Vec3f& normalVec = -calcNormalXY(pt);
@@ -566,7 +619,7 @@ void AntennaNode::render_()
       {
         const float elev = *jiter;
         osg::Vec3f pt;
-        const float gain = ComputeRadius_(azim, elev, polarity_, pt);
+        const float gain = computeRadius_(azim, elev, polarity_, pt);
         verts->push_back(pt);
         const osg::Vec3f& normalVec = calcNormalXZ(pt);
         norms->push_back(normalVec);
@@ -607,7 +660,7 @@ void AntennaNode::render_()
       {
         const float elev = *jriter;
         osg::Vec3f pt;
-        const float gain = ComputeRadius_(azim, elev, polarity_, pt);
+        const float gain = computeRadius_(azim, elev, polarity_, pt);
         verts->push_back(pt);
         // sign change is required for left side
         const osg::Vec3f& normalVec = -calcNormalXZ(pt);

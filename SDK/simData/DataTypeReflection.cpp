@@ -1271,6 +1271,8 @@ std::unique_ptr<Reflection> Reflection::makeAntennaPatternsPreferences()
   rv->SIMDATA_REFLECTION_ADD_FIELD(fileName, filename, AntennaPatterns, getString, ReflectionDataType::String);
   std::shared_ptr<EnumerationText> algorithmEnum = EnumerationText::makeAntennaPatternAlgorithmName();
   rv->SIMDATA_REFLECTION_ADD_ENUM(algorithm, algorithm, AntennaPatterns, AntennaPatterns::Algorithm, algorithmEnum);
+  std::shared_ptr<EnumerationText> volumeTypeEnum = EnumerationText::makeVolumeTypeName();
+  rv->SIMDATA_REFLECTION_ADD_ENUM(volumeType, volumeType, AntennaPatterns, AntennaPatterns::VolumeType, volumeTypeEnum);
 
   return rv;
 }

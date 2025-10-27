@@ -486,6 +486,7 @@ SIMDATA_DEFINE_FIELD(AntennaPatterns, type_, type, AntennaPatterns::Type, Antenn
 SIMDATA_DEFINE_FIELD(AntennaPatterns, fileFormat_, fileformat, AntennaPatterns::FileFormat, AntennaPatterns::FileFormat::TABLE);
 SIMDATA_DEFINE_FIELD_CONST_REF(AntennaPatterns, fileName_, filename, std::string, "");
 SIMDATA_DEFINE_FIELD(AntennaPatterns, algorithm_, algorithm, AntennaPatterns::Algorithm, AntennaPatterns::Algorithm::PEDESTAL);
+SIMDATA_DEFINE_FIELD(AntennaPatterns, volumeType_, volumeType, AntennaPatterns::VolumeType, AntennaPatterns::VolumeType::GAIN_AS_RANGE_SCALAR);
 
 void AntennaPatterns::MergeFrom(const AntennaPatterns& from)
 {
@@ -503,6 +504,9 @@ void AntennaPatterns::MergeFrom(const AntennaPatterns& from)
 
   if (from.has_algorithm())
     algorithm_ = from.algorithm_;
+
+  if (from.has_volumeType())
+    volumeType_ = from.volumeType_;
 }
 
 //----------------------------------------------------------------------------------------------------------

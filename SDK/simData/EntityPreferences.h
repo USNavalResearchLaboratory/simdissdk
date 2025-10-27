@@ -184,11 +184,18 @@ public:
     OMNI = 5       ///< Omni directional algorithm
   };
 
+  /// Enumeration of antenna volume rendering types
+  enum class VolumeType {
+    GAIN_AS_RANGE_SCALAR = 0,  ///< Use the gain value as if it were a range scalar
+    ONE_WAY_PWR_FREE_SPACE = 1, ///< Use the gain (and other values to calculate) a free-space one-way-power
+  };
+
   SIMDATA_DECLARE_DEFAULT_METHODS(AntennaPatterns);
   SIMDATA_DECLARE_FIELD(type_, type, AntennaPatterns::Type);
   SIMDATA_DECLARE_FIELD(fileFormat_, fileformat, AntennaPatterns::FileFormat);
   SIMDATA_DECLARE_FIELD_CONST_REF(fileName_, filename, std::string);
   SIMDATA_DECLARE_FIELD(algorithm_, algorithm, AntennaPatterns::Algorithm);
+  SIMDATA_DECLARE_FIELD(volumeType_, volumeType, AntennaPatterns::VolumeType);
 };
 
 /** Beam preferences */
