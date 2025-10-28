@@ -23,10 +23,9 @@
 #ifndef SIMVIS_ANTENNA_H
 #define SIMVIS_ANTENNA_H
 
+#include <memory>
 #include <optional>
 #include "osg/MatrixTransform"
-#include "osg/ref_ptr"
-#include "osgEarth/Config"
 #include "simCore/Common/Common.h"
 #include "simCore/EM/Constants.h"
 #include "simData/DataTypes.h"
@@ -55,7 +54,7 @@ namespace simVis
     /**
      * Whether the antenna pattern loaded OK.
      */
-    bool isValid() const { return loadedOK_; }
+    bool isValid() const { return antennaPattern_ != nullptr; }
 
     /**
      * The range/scale of the antenna pattern
@@ -113,19 +112,17 @@ namespace simVis
     void render_();
 
   private:
-    simCore::AntennaPattern* antennaPattern_;
-    bool                     loadedOK_;
+    std::unique_ptr<simCore::AntennaPattern> antennaPattern_;
     std::string              patternFile_;
-    simCore::PolarityType    polarity_;
-
-    float                    beamRange_;
-    float                    beamScale_;
+    simCore::PolarityType    polarity_ = simCore::POLARITY_UNKNOWN;
+    float                    beamRange_ = 1.f;
+    float                    beamScale_ = 1.f;
     std::optional<double>    scaleFactor_;
     osg::Quat                rot_;
-    float                    min_;
-    float                    max_;
-    osgEarth::optional<simData::BeamPrefs>      lastPrefs_;
-    ColorUtils*      colorUtils_;
+    float                    minPowerGain_dB_ = 0.f;
+    float                    maxPowerGain_dB_ = 0.f;
+    std::optional<simData::BeamPrefs> lastPrefs_;
+    std::unique_ptr<ColorUtils> colorUtils_;
   };
 
 } // namespace simVis

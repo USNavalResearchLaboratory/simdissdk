@@ -26,13 +26,10 @@
 #include "osgEarth/MeshConsolidator"
 
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/EM/AntennaPattern.h"
-#include "simCore/EM/Propagation.h"
-
-#include "simData/DataTypes.h"
 #include "simVis/AxisVector.h"
 #include "simVis/Constants.h"
-#include "simVis/Registry.h"
 #include "simVis/Utils.h"
 #include "simVis/Antenna.h"
 
@@ -88,22 +85,14 @@ namespace simVis
 //        Geometry - contains the antenna primitives
 
 AntennaNode::AntennaNode(const osg::Quat& rot)
-  : antennaPattern_(nullptr),
-    loadedOK_(false),
-    beamRange_(1.0f),
-    beamScale_(1.0f),
-    rot_(rot),
-    min_(HUGE_VAL),
-    max_(-HUGE_VAL)
+  : rot_(rot)
 {
-  colorUtils_ = new ColorUtils(0.3);
+  colorUtils_ = std::make_unique<ColorUtils>(0.3);
   setNodeMask(simVis::DISPLAY_MASK_NONE);
 }
 
 AntennaNode::~AntennaNode()
 {
-  delete colorUtils_;
-  delete antennaPattern_;
 }
 
 // antennaPattern's scale is a product of update range (in m) and pref beamScale (no units, 1.0 default)
@@ -118,11 +107,11 @@ void AntennaNode::setRange(float range)
 
 bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
 {
-  const simData::BeamPrefs* oldPrefs = &lastPrefs_.get();
+  const simData::BeamPrefs* oldPrefs = lastPrefs_ ? &lastPrefs_.value() : nullptr;
   const simData::BeamPrefs* newPrefs = &prefs;
 
   const bool requiresRebuild =
-       !lastPrefs_.isSet() ||
+       !lastPrefs_ ||
         PB_SUBFIELD_CHANGED(oldPrefs, newPrefs, antennapattern, type) ||
         PB_SUBFIELD_CHANGED(oldPrefs, newPrefs, antennapattern, algorithm) ||
         PB_SUBFIELD_CHANGED(oldPrefs, newPrefs, antennapattern, filename) ||
@@ -168,16 +157,14 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
     }
 
     // load the new pattern file
-    delete(antennaPattern_);
     // Frequency must be > 0, if <= 0 use default value
     const float freq = static_cast<float>(prefs.frequency() > 0 ? prefs.frequency() : simCore::DEFAULT_FREQUENCY);
-    antennaPattern_ = simCore::loadPatternFile(patternFile_, freq);
-    loadedOK_ = (antennaPattern_ != nullptr);
+    antennaPattern_ = std::unique_ptr<simCore::AntennaPattern>(simCore::loadPatternFile(patternFile_, freq));
   }
 
   polarity_ = static_cast<simCore::PolarityType>(prefs.polarity());
 
-  const bool drawAntennaPattern = loadedOK_ &&
+  const bool drawAntennaPattern = antennaPattern_ &&
     (prefs.drawtype() == simData::BeamPrefs::DrawType::ANTENNA_PATTERN);
 
   // determine if pattern needs to be re-rendered, i.e. shape has changed. some changes (like scale) don't require this.
@@ -213,7 +200,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
   else
   {
     // this is a guard on the use of oldPrefs; if assert fails, check that !lastPrefs_.isSet() forces requiresRebuild to true
-    assert(lastPrefs_.isSet());
+    assert(lastPrefs_);
     // a change in draw state should be handled in two if blocks above
     assert(getNodeMask() == simVis::DISPLAY_MASK_BEAM);
     if (PB_FIELD_CHANGED(oldPrefs, newPrefs, shaded))
@@ -255,7 +242,7 @@ void AntennaNode::updateBlending_(bool blending)
 
 float AntennaNode::PatternGain(float azim, float elev, simCore::PolarityType polarity) const
 {
-  if (!lastPrefs_.isSet())
+  if (!lastPrefs_)
     return 0.0f;
   // convert freq in MHz to Hz (note that freq is not actually used in any supported gain calcs)
   double freq = lastPrefs_->frequency() * 1e6;
@@ -281,7 +268,7 @@ float AntennaNode::PatternGain(float azim, float elev, simCore::PolarityType pol
 
 float AntennaNode::computeRadius_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const
 {
-  if (!lastPrefs_.isSet())
+  if (!lastPrefs_)
     return 0.0f;
   if (!scaleFactor_)
   {
@@ -300,10 +287,10 @@ float AntennaNode::computeRadius_(float azim, float elev, simCore::PolarityType 
   case simData::AntennaPatterns::VolumeType::GAIN_AS_RANGE_SCALAR:
     if (gain <= lastPrefs_->sensitivity())
       return gain;
-    if (min_ == max_)
+    if (minPowerGain_dB_ == maxPowerGain_dB_)
       radius = ((gain > lastPrefs_->sensitivity()) ? osg::absolute(gain) * scaleFactor_.value() : 0.0f);
     else
-      radius = ((gain > lastPrefs_->sensitivity()) ? osg::absolute(gain - min_) * scaleFactor_.value() : 0.0f);
+      radius = ((gain > lastPrefs_->sensitivity()) ? osg::absolute(gain - minPowerGain_dB_) * scaleFactor_.value() : 0.0f);
     break;
 
   case simData::AntennaPatterns::VolumeType::ONE_WAY_PWR_FREE_SPACE:
@@ -343,9 +330,9 @@ void AntennaNode::drawAxes_(const osg::Vec3f& pos, const osg::Vec3f& vec)
 void AntennaNode::render_()
 {
   // render should never be called unless a valid pattern is set. if assert fails, check logic in setPrefs
-  assert(loadedOK_);
+  assert(antennaPattern_);
   // lastPrefs_ must be valid before a pattern can be rendered; if assert fails, check for changes in setPrefs
-  assert(lastPrefs_.isSet());
+  assert(lastPrefs_);
 
   removeChildren(0, getNumChildren());
 
@@ -364,26 +351,26 @@ void AntennaNode::render_()
   antGeom->setColorArray(colors.get());
 
   // expected range for vRange is (0, M_PI]
-  const double vRange = osg::clampBetween(lastPrefs_->fieldofview(), std::numeric_limits<double>::min(), M_PI);
+  const double vRange = simCore::clamp(lastPrefs_->fieldofview(), std::numeric_limits<double>::min(), M_PI);
   // expected range for vRange is (0, M_TWOPI]
-  const double hRange = osg::clampBetween(lastPrefs_->fieldofview(), std::numeric_limits<double>::min(), M_TWOPI);
+  const double hRange = simCore::clamp(lastPrefs_->fieldofview(), std::numeric_limits<double>::min(), M_TWOPI);
 
   // detail is in degrees, determines the step size between az and el points, expected value is [1, 10] degrees
-  const double degDetail = osg::clampBetween(lastPrefs_->detail(), 1.0, 10.0);
+  const double degDetail = simCore::clamp(lastPrefs_->detail(), 1.0, 10.0);
 
   // determine pattern bounds in order to normalize [min, max] to [0, 1]
   if (!scaleFactor_)
   {
-    antennaPattern_->minMaxGain(&min_, &max_, simCore::AntennaGainParameters(0, 0, polarity_, simCore::angFix2PI(lastPrefs_->horizontalwidth()), osg::absolute(simCore::angFixPI(lastPrefs_->verticalwidth())), lastPrefs_->gain(), -23.2f, -20.0f, lastPrefs_->frequency() * 1e6, lastPrefs_->weighting()));
+    antennaPattern_->minMaxGain(&minPowerGain_dB_, &maxPowerGain_dB_, simCore::AntennaGainParameters(0, 0, polarity_, simCore::angFix2PI(lastPrefs_->horizontalwidth()), osg::absolute(simCore::angFixPI(lastPrefs_->verticalwidth())), lastPrefs_->gain(), -23.2f, -20.0f, lastPrefs_->frequency() * 1e6, lastPrefs_->weighting()));
     switch (lastPrefs_->antennapattern().volumeType())
     {
     case simData::AntennaPatterns::VolumeType::GAIN_AS_RANGE_SCALAR:
       // prevent divide by zero error for OMNI case
-      scaleFactor_ = (max_ == min_) ? 1.0f / max_ : 1.0f / (max_ - min_);
+      scaleFactor_ = (maxPowerGain_dB_ == minPowerGain_dB_) ? 1.0f / maxPowerGain_dB_ : 1.0f / (maxPowerGain_dB_ - minPowerGain_dB_);
       break;
     case simData::AntennaPatterns::VolumeType::ONE_WAY_PWR_FREE_SPACE:
       // calc a linear scale factor (for one-way range) from gain in dB
-      scaleFactor_ = 1. / pow(10., max_ / 20.);
+      scaleFactor_ = 1. / pow(10., maxPowerGain_dB_ / 20.);
       break;
     }
   }
@@ -423,11 +410,11 @@ void AntennaNode::render_()
     return;
   }
 
-  const osg::Vec3f& zeroPt = osg::Vec3f(0.0f, 0.0f, 0.0f);
+  const osg::Vec3f zeroPt;
   const bool colorScale = lastPrefs_->colorscale();
-  const osg::Vec4f color = (lastPrefs_->commonprefs().useoverridecolor()) ? ColorUtils::RgbaToVec4(lastPrefs_->commonprefs().overridecolor()) : ColorUtils::RgbaToVec4(lastPrefs_->commonprefs().color());
+  const osg::Vec4f& color = (lastPrefs_->commonprefs().useoverridecolor()) ? ColorUtils::RgbaToVec4(lastPrefs_->commonprefs().overridecolor()) : ColorUtils::RgbaToVec4(lastPrefs_->commonprefs().color());
   // this is the color that corresponds to minimum gain (-100)
-  const osg::Vec4f scaleAltColor = colorUtils_->GainThresholdColor(-100);
+  const osg::Vec4f& scaleAltColor = colorUtils_->GainThresholdColor(-100);
   int lastCount = 0;
 
   #ifdef DRAW_AXES
@@ -449,10 +436,8 @@ void AntennaNode::render_()
     const float azim2 = *nextIter;
     azimDone = (nextIter + 1 == azimPoints.end());
 
-    for (std::vector<float>::const_iterator jiter = elevPoints.begin(); jiter != elevPoints.end(); ++jiter)
+    for (const auto elev : elevPoints)
     {
-      const float elev = *jiter;
-
       // compute first point in t-strip
       osg::Vec3f pt;
       float gain = computeRadius_(azim, elev, polarity_, pt);
@@ -541,9 +526,8 @@ void AntennaNode::render_()
       else
         colors->push_back(color);
 
-      for (std::vector<float>::const_iterator iiter = azimPoints.begin(); iiter != azimPoints.end(); ++iiter)
+      for (const float azim : azimPoints)
       {
-        const float azim = *iiter;
         osg::Vec3f pt;
         const float gain = computeRadius_(azim, elev, polarity_, pt);
         verts->push_back(pt);
@@ -589,9 +573,8 @@ void AntennaNode::render_()
       else
         colors->push_back(color);
 
-      for (std::vector<float>::const_iterator jiter = elevPoints.begin(); jiter != elevPoints.end(); ++jiter)
+      for (const float elev : elevPoints)
       {
-        const float elev = *jiter;
         osg::Vec3f pt;
         const float gain = computeRadius_(azim, elev, polarity_, pt);
         verts->push_back(pt);
