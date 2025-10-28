@@ -92,11 +92,9 @@ AntennaNode::AntennaNode(const osg::Quat& rot)
     loadedOK_(false),
     beamRange_(1.0f),
     beamScale_(1.0f),
-    scaleFactor_(-1.0f),
     rot_(rot),
     min_(HUGE_VAL),
-    max_(-HUGE_VAL),
-    maxRadius_(-HUGE_VAL)
+    max_(-HUGE_VAL)
 {
   colorUtils_ = new ColorUtils(0.3);
   setNodeMask(simVis::DISPLAY_MASK_NONE);
@@ -182,6 +180,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
   const bool drawAntennaPattern = loadedOK_ &&
     (prefs.drawtype() == simData::BeamPrefs::DrawType::ANTENNA_PATTERN);
 
+  // determine if pattern needs to be re-rendered, i.e. shape has changed. some changes (like scale) don't require this.
   const bool requiresRedraw = drawAntennaPattern &&
       (requiresRebuild ||
         PB_SUBFIELD_CHANGED(oldPrefs, newPrefs, antennapattern, volumeType) ||
@@ -201,8 +200,8 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
   }
   else if (requiresRedraw)
   {
-    // this needs to be recalc'd if prefs change. reset to -1 to force recalc
-    scaleFactor_ = -1.0f;
+    // this needs to be recalc'd if prefs change. reset to force recalc
+    scaleFactor_.reset();
     beamScale_ = prefs.beamscale();
     lastPrefs_ = prefs;
     render_();
@@ -284,77 +283,47 @@ float AntennaNode::computeRadius_(float azim, float elev, simCore::PolarityType 
 {
   if (!lastPrefs_.isSet())
     return 0.0f;
+  if (!scaleFactor_)
+  {
+    // caller should have set this
+    assert(0);
+    return 0.f;
+  }
+  // values returned from PatternGain are in dB
+  const float gain = PatternGain(azim, elev, polarity);
+  if (gain < simCore::SMALL_DB_COMPARE)
+    return gain;
+
+  double radius = 0.;
   switch (lastPrefs_->antennapattern().volumeType())
   {
-    case simData::AntennaPatterns::VolumeType::GAIN_AS_RANGE_SCALAR:
-      return computeRadiusGainAsRangeScalar_(azim, elev, polarity, p);
-    case simData::AntennaPatterns::VolumeType::ONE_WAY_PWR_FREE_SPACE:
-      return computeRadiusOneWayPowerFreespace_(azim, elev, polarity, p);
+  case simData::AntennaPatterns::VolumeType::GAIN_AS_RANGE_SCALAR:
+    if (gain <= lastPrefs_->sensitivity())
+      return gain;
+    if (min_ == max_)
+      radius = ((gain > lastPrefs_->sensitivity()) ? osg::absolute(gain) * scaleFactor_.value() : 0.0f);
+    else
+      radius = ((gain > lastPrefs_->sensitivity()) ? osg::absolute(gain - min_) * scaleFactor_.value() : 0.0f);
+    break;
+
+  case simData::AntennaPatterns::VolumeType::ONE_WAY_PWR_FREE_SPACE:
+    // one-way range is proportional to pow(10, gain/20) - convert from dB to linear, then scale to [0, 1]
+    radius = pow(10., gain / 20.) * scaleFactor_.value();
   }
-  return 0.0f;
-}
-
-float AntennaNode::computeRadiusGainAsRangeScalar_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const
-{
-  // values returned from PatternGain are in dB
-  const float gain = PatternGain(azim, elev, polarity);
-  float radius;
-
-  if (gain < simCore::SMALL_DB_COMPARE)
-    radius = 0.0;
-
-  // prevent multiply by zero error when fMin == fMax (OMNI case)
-  else if (min_ == max_)
-    radius = ((gain > lastPrefs_->sensitivity()) ? osg::absolute(gain) * scaleFactor_ : 0.0f);
-  else
-    radius = ((gain > lastPrefs_->sensitivity()) ? osg::absolute(gain - min_) * scaleFactor_ : 0.0f);
 
   // convert azim & elev to a rectangular coordinate
-  p.set(radius * cosf(azim) * cosf(elev),
-    radius * sinf(azim) * cosf(elev),
-    radius * sinf(elev));
+  p.set(radius * cos(azim) * cos(elev),
+    radius * sin(azim) * cos(elev),
+    radius * sin(elev));
 
   return gain;
-}
-
-float AntennaNode::computeRadiusOneWayPowerFreespace_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const
-{
-  // values returned from PatternGain are in dB
-  const float gain = PatternGain(azim, elev, polarity);
-  double radius = computeOneWayPowerRadiusForRendering_(gain);
-
-  double normalizedRadius = 0.0;
-  if (maxRadius_ == 0.0)
-    normalizedRadius = 0.0;
-  else
-    normalizedRadius = radius / maxRadius_;
-
-  // convert azim & elev to a rectangular coordinate
-  p.set(normalizedRadius * cosf(azim) * cosf(elev),
-    normalizedRadius * sinf(azim) * cosf(elev),
-    normalizedRadius * sinf(elev));
-
-  return gain;
-}
-
-double AntennaNode::computeOneWayPowerRadiusForRendering_(float gain) const
-{
-  // For computing normalized radii values with the freespace range estimate, the actual
-  // xmitPower, freq, and receiverSensitivy just need to be static for all calculated radii.
-  // See spreadsheet in SIM-18942, which allows for changing them and seeing that the differences
-  // in the normalized radii don't change relative to each other.
-  constexpr double xmitPowerWatts = 1.0; // a positive value to use for normalized radii calculations
-  constexpr double freqMHz = 2.0; // a positive value to use for normalized radii calculations
-  constexpr double receiverSensitivityDbm = -3.0; // a negative value to use for normalized radii calculations
-
-  return simCore::getOneWayFreeSpaceRangeAndLoss(gain, freqMHz, xmitPowerWatts, receiverSensitivityDbm, nullptr);
 }
 
 // antennaPattern's scale is a product of update range (in m) and beamScale preference (no units, 1.0 default)
 void AntennaNode::applyScale_()
 {
-  const float newScale = beamRange_ * beamScale_;
-  setMatrix(osg::Matrixf::scale(newScale, newScale, newScale) * osg::Matrix::rotate(rot_));
+  const double newScale = beamRange_ * beamScale_;
+  setMatrix(osg::Matrix::scale(newScale, newScale, newScale) * osg::Matrix::rotate(rot_));
 #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
   // GL_RESCALE_NORMAL is deprecated in GL CORE builds
   if (newScale != 1.0f)
@@ -402,16 +371,21 @@ void AntennaNode::render_()
   // detail is in degrees, determines the step size between az and el points, expected value is [1, 10] degrees
   const double degDetail = osg::clampBetween(lastPrefs_->detail(), 1.0, 10.0);
 
-  // determine pattern bounds in order to normalize
-  if (scaleFactor_ < 0.0)
+  // determine pattern bounds in order to normalize [min, max] to [0, 1]
+  if (!scaleFactor_)
   {
     antennaPattern_->minMaxGain(&min_, &max_, simCore::AntennaGainParameters(0, 0, polarity_, simCore::angFix2PI(lastPrefs_->horizontalwidth()), osg::absolute(simCore::angFixPI(lastPrefs_->verticalwidth())), lastPrefs_->gain(), -23.2f, -20.0f, lastPrefs_->frequency() * 1e6, lastPrefs_->weighting()));
-
-    // prevent divide by zero error for OMNI case
-    scaleFactor_ = (max_ == min_) ? 1.0f/max_ : 1.0f/(max_ - min_);
-
-    // calculates one-way power radius corresponding to max_ gain
-    maxRadius_ = computeOneWayPowerRadiusForRendering_(max_);
+    switch (lastPrefs_->antennapattern().volumeType())
+    {
+    case simData::AntennaPatterns::VolumeType::GAIN_AS_RANGE_SCALAR:
+      // prevent divide by zero error for OMNI case
+      scaleFactor_ = (max_ == min_) ? 1.0f / max_ : 1.0f / (max_ - min_);
+      break;
+    case simData::AntennaPatterns::VolumeType::ONE_WAY_PWR_FREE_SPACE:
+      // calc a linear scale factor (for one-way range) from gain in dB
+      scaleFactor_ = 1. / pow(10., max_ / 20.);
+      break;
+    }
   }
 
   const double endelev = simCore::RAD2DEG * vRange * 0.5;
