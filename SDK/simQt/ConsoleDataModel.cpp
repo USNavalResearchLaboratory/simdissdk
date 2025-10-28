@@ -682,6 +682,9 @@ void SimpleConsoleTextFilter::addCommonOsgEarthFilters()
   filters_.push_back("[osgEarth]* [MGRSGraticule] Empty SQID geom at ");
   // "[osgEarth]  SQID100kmCell SW=6.30464349477,0 NE=7.20284692297,0.904282609865, SRS=WGS 84"
   filters_.push_back("[osgEarth]  SQID100kmCell SW=");
+  // Hide osg notification
+  // "osg::Registry::addImageProcessor(ImageProcessor)"
+  filters_.push_back("osg::Registry::addImageProcessor(ImageProcessor)");
 }
 
 bool SimpleConsoleTextFilter::acceptEntry(ConsoleDataModel::ConsoleEntry& entry) const
