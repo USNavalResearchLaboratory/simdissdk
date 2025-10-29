@@ -1570,6 +1570,9 @@ QString DockWidget::path_() const
 
 void DockWidget::setFloatingGeometry_(const QByteArray& geometryBytes)
 {
+  // geometry is empty, add to main window momentarily so main window state can track geometry
+  if (geometryBytes.isEmpty() && mainWindow_)
+    mainWindow_->addDockWidget(Qt::RightDockWidgetArea, this);
   setFloating(true);
   if (!restoreGeometry(geometryBytes))
   {
