@@ -84,13 +84,20 @@ bool SettingsSearchFilter::filterAcceptsRow(int sourceRow, const QModelIndex &so
 
 void SettingsSearchFilter::setFilterText(const QString& filterText)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
+  beginFilterChange();
+#endif
+
 #if QT_VERSION_MAJOR == 5
   setFilterRegExp(filterText);
-  invalidateFilter();
 #else
-  beginFilterChange();
   setFilterRegularExpression(filterText);
+#endif
+
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
   endFilterChange();
+#else
+  invalidateFilter();
 #endif
 }
 
