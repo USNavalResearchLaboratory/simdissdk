@@ -86,10 +86,12 @@ void SettingsSearchFilter::setFilterText(const QString& filterText)
 {
 #if QT_VERSION_MAJOR == 5
   setFilterRegExp(filterText);
-#else
-  setFilterRegularExpression(filterText);
-#endif
   invalidateFilter();
+#else
+  beginFilterChange();
+  setFilterRegularExpression(filterText);
+  endFilterChange();
+#endif
 }
 
 QString SettingsSearchFilter::filterText() const
@@ -178,8 +180,17 @@ void SettingsDataLevelFilter::setShowAdvanced(bool showAdvanced)
 {
   if (this->showAdvanced() != showAdvanced)
   {
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
+    beginFilterChange();
+#endif
+
     showAdvanced_ = showAdvanced;
+
+#if QT_VERSION < QT_VERSION_CHECK(6,10,0)
     invalidateFilter();
+#else
+    endFilterChange();
+#endif
   }
 }
 
@@ -192,8 +203,17 @@ void SettingsDataLevelFilter::setShowUnknown(bool showUnknown)
 {
   if (this->showUnknown() != showUnknown)
   {
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
+    beginFilterChange();
+#endif
+
     showUnknown_ = showUnknown;
+
+#if QT_VERSION < QT_VERSION_CHECK(6,10,0)
     invalidateFilter();
+#else
+    endFilterChange();
+#endif
   }
 }
 
