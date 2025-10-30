@@ -53,12 +53,12 @@ double getRcvdPowerFreeSpace(double rngMeters, double freqMhz, double powerWatts
   double lamdaSqrd = square(simCore::LIGHT_SPEED_AIR / (1e6 * freqMhz));
   if (oneWay == false)
   {
-    // http://www.microwaves101.com/encyclopedia/Navy_Handbook.cfm  Section 4.4
+    // https://www.microwaves101.com/encyclopedias/ew-and-radar-handbook  Section 4.4
     rcvPower = xmtGaindB + rcvGaindB - systemLossdB + simCore::linear2dB((rcsSqm * powerWatts * lamdaSqrd) / (simCore::RRE_CONSTANT * square(square(rngMeters))));
   }
   else
   {
-    // http://www.microwaves101.com/encyclopedia/Navy_Handbook.cfm  Section 4.3
+    // https://www.microwaves101.com/encyclopedias/ew-and-radar-handbook  Section 4.3
     rcvPower = xmtGaindB + rcvGaindB - systemLossdB + simCore::linear2dB((powerWatts * lamdaSqrd) / (square(4. * M_PI * rngMeters)));
   }
   return rcvPower;
@@ -72,6 +72,19 @@ double getRcvdPowerBlake(double rngMeters, double freqMhz, double powerWatts, do
   // Lamont V. Blake, ISBN 0-89006-224-2
   // Use free space value, then apply propagation factor
   return (oneWay == false) ? (rcvPower + (4. * ppfdB)) : (rcvPower + (2. * ppfdB));
+}
+
+double getTwoWayFreeSpaceRange(double minRcvPowerdB, double freqMhz, double xmtPowerWatts, double xmtAntGaindB, double rcvAntGaindB, double systemLossdB, double rcsSqm)
+{
+  if (freqMhz == 0.0)
+  {
+    assert(0); // Must be non-zero to avoid divide by zero below
+    return 0.0;
+  }
+  // wavelength is represented in mathematical formulae by greek symbol lambda
+  const double lambdaSqrd = square(simCore::LIGHT_SPEED_AIR / (1e6 * freqMhz));
+  // https://www.microwaves101.com/encyclopedias/ew-and-radar-handbook  Section 4.4
+  return pow((rcsSqm * xmtPowerWatts * lambdaSqrd) / (simCore::RRE_CONSTANT * dB2Linear(minRcvPowerdB - xmtAntGaindB - rcvAntGaindB + systemLossdB)), 0.25);
 }
 
 double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, double xmtrPwrWatts, double rcvrSensDbm, double* fsLossDb)

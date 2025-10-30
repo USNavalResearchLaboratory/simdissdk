@@ -83,6 +83,20 @@ namespace simCore
   */
   SDKCORE_EXPORT double getRcvdPowerBlake(double rngMeters, double freqMhz, double powerWatts, double xmtGaindB, double rcvGaindB, double rcsSqm, double ppfdB, double systemLossdB, bool oneWay=false);
 
+
+  /**
+  * This function returns the two-way free-space range (m) using the free space received signal power calculation
+  * @param minRcvPowerdB  minimum signal power required by receiver in dB
+  * @param freqMhz  Transmitter frequency (MHz), must be non-zero
+  * @param xmtPowerWatts  Transmitter peak power (Watts)
+  * @param xmtAntGaindB  Xmt antenna gain (dB)
+  * @param rcvAntGaindB  Rcv antenna gain (dB)
+  * @param systemLossdB  Total system loss (dB)
+  * @param rcsSqm  Target radar cross section (sqm)
+  * @return Two-way free space range (m).
+  */
+  SDKCORE_EXPORT double getTwoWayFreeSpaceRange(double minRcvPowerdB, double freqMhz, double xmtPowerWatts, double xmtAntGaindB, double rcvAntGaindB, double systemLossdB, double rcsSqm = 1.0);
+
   /**
   * This function returns the free space detection range (m) for an ESM receiver as well as an optional free space path loss (dB)
   * @param xmtGaindB Xmt antenna gain (dB)
