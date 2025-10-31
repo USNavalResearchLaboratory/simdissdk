@@ -266,7 +266,10 @@ void BindCenterEntityToEntityTreeComposite::centerOnEntity_(uint64_t id)
   setBoundClockToNewTime_();
   // Need to force the center because the setTime has not been process so the entity may not yet be valid
   if (zoomOnCenter_)
-    centerEntity_.centerAndZoom(id, true);
+  {
+    // SIM-18938 never force center and zoom as zooming on an inactive or hidden entity can cause the camera to get into a bad state
+    centerEntity_.centerAndZoom(id, false);
+  }
   else
     centerEntity_.centerOnEntity(id, true);
 }
