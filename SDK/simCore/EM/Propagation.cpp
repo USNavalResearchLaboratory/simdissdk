@@ -83,8 +83,14 @@ double getTwoWayFreeSpaceRange(double minRcvPowerdB, double freqMhz, double xmtP
   }
   // wavelength is represented in mathematical formulae by greek symbol lambda
   const double lambdaSqrd = square(simCore::LIGHT_SPEED_AIR / (1e6 * freqMhz));
+  const double transmissionTerm = dB2Linear(minRcvPowerdB - xmtAntGaindB - rcvAntGaindB + systemLossdB);
+  if (transmissionTerm == 0.)
+  {
+    // dB2Linear can (only) return 0 if its argument is -std::numeric_limits<double>::infinity()
+    return 0;
+  }
   // https://www.microwaves101.com/encyclopedias/ew-and-radar-handbook  Section 4.4
-  return pow((rcsSqm * xmtPowerWatts * lambdaSqrd) / (simCore::RRE_CONSTANT * dB2Linear(minRcvPowerdB - xmtAntGaindB - rcvAntGaindB + systemLossdB)), 0.25);
+  return sqrt(sqrt( (rcsSqm * xmtPowerWatts * lambdaSqrd) / (simCore::RRE_CONSTANT * transmissionTerm) ));
 }
 
 double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, double xmtrPwrWatts, double rcvrSensDbm, double* fsLossDb)

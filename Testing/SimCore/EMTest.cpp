@@ -384,12 +384,17 @@ int testTwoWayFreeSpaceRange()
 {
   double rangeM = 0;
   int err = 0;
+
   // example from EW & Radar Handbook (https://apps.dtic.mil/sti/tr/pdf/ADA617071.pdf) page 4-4.7
   rangeM = simCore::getTwoWayFreeSpaceRange(-107.534, 5000, 10000, 45, 40, 5, 9);
   err += SDK_ASSERT(simCore::areEqual(rangeM, 31000, 0.9));
 
   rangeM = simCore::getTwoWayFreeSpaceRange(-110.456, 7000, 10000, 45, 40, 5, 9);
   err += SDK_ASSERT(simCore::areEqual(rangeM, 31000, 0.9));
+
+  // safely handles -infinity
+  rangeM = simCore::getTwoWayFreeSpaceRange(-std::numeric_limits<double>::infinity(), 7000, 10000, 45, 40, 5, 9);
+  err += SDK_ASSERT(rangeM == 0.);
 
   return err;
 }
