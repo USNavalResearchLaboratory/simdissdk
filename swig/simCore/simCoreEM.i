@@ -5,6 +5,12 @@
 %include "simCore/EM/Decibel.h"
 // TODO: template instantiations for Decibel.h methods
 
+// TODO: Ignore getFreqMhzRange() due to overloaded enum args
+%ignore simCore::getFreqMhzRange;
+// simCore::getOneWayFreeSpaceRangeAndLoss()
+%apply double* OUTPUT { double* fsLossDb };
+%include "simCore/EM/Propagation.h"
+
 
 // TODO: Implement
 /*
