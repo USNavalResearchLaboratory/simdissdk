@@ -682,7 +682,7 @@ void EntityTreeComposite::showFilters_()
   QList<QWidget*> filterWidgets = entityTreeWidget_->filterWidgets(filterDialog_);
   filterDialog_->setMinimumWidth(200);
   filterDialog_->setWindowTitle(tr("Entity Filters"));
-  filterDialog_->setWindowFlags(filterDialog_->windowFlags() ^ Qt::WindowContextHelpButtonHint);
+  filterDialog_->setWindowFlag(Qt::WindowContextHelpButtonHint, false);
   QVBoxLayout* layout = new QVBoxLayout(filterDialog_);
   layout->setContentsMargins(2, 2, 2, 2);
   for (auto it = filterWidgets.begin(); it != filterWidgets.end(); ++it)
