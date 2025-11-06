@@ -42,15 +42,16 @@
     {
       "name": "OSGQOPENGL",
       "dir": "osgQOpenGL",
-      "version": "4.0.0-qt5",
+      "version": "4.1.0-qt6",
       "depend": [
         "OSG",
-        "QT5"
+        "QT6"
       ]
     },
     {
-      "name": "QT5",
-      "version": "5.15"
+      "name": "QT6",
+      "dir": "Qt6",
+      "version": "6.10.0"
     },
     {
       "name": "SQLITE",
