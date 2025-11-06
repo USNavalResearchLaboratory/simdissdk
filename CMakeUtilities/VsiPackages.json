@@ -21,6 +21,11 @@
       ]
     },
     {
+      "name": "IMGUI",
+      "dir": "ImGui",
+      "version": "1.92.4"
+    },
+    {
       "name": "MRSID",
       "dir": "MrSID_DSDK",
       "version": [
