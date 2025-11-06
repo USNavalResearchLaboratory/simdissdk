@@ -187,7 +187,7 @@ public:
   /// Enumeration of antenna volume rendering types
   enum class VolumeType {
     GAIN_AS_RANGE_SCALAR = 0,  ///< Use the gain value as if it were a range scalar
-    ONE_WAY_PWR_FREE_SPACE = 1, ///< Use the gain (and other values to calculate) a free-space one-way-power
+    FREE_SPACE_RANGE_LINEAR = 1, ///< Use the gain converted to linear range
   };
 
   SIMDATA_DECLARE_DEFAULT_METHODS(AntennaPatterns);

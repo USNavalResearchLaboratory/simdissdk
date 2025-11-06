@@ -416,7 +416,7 @@ std::unique_ptr<EnumerationText> EnumerationText::makeVolumeTypeName()
 {
   auto rv = std::make_unique<EnumerationText>();
   rv->insert_(0, "GAIN_AS_RANGE_SCALAR");
-  rv->append_("ONE_WAY_PWR_FREE_SPACE");
+  rv->append_("FREE_SPACE_RANGE_LINEAR");
 
   return rv;
 }

@@ -293,7 +293,7 @@ float AntennaNode::computeRadius_(float azim, float elev, simCore::PolarityType 
       radius = ((gain > lastPrefs_->sensitivity()) ? osg::absolute(gain - minPowerGain_dB_) * scaleFactor_.value() : 0.0f);
     break;
 
-  case simData::AntennaPatterns::VolumeType::ONE_WAY_PWR_FREE_SPACE:
+  case simData::AntennaPatterns::VolumeType::FREE_SPACE_RANGE_LINEAR:
     // one-way range is proportional to pow(10, gain/20) - convert from dB to linear, then scale to [0, 1]
     radius = pow(10., gain / 20.) * scaleFactor_.value();
   }
@@ -368,7 +368,7 @@ void AntennaNode::render_()
       // prevent divide by zero error for OMNI case
       scaleFactor_ = (maxPowerGain_dB_ == minPowerGain_dB_) ? 1.0f / maxPowerGain_dB_ : 1.0f / (maxPowerGain_dB_ - minPowerGain_dB_);
       break;
-    case simData::AntennaPatterns::VolumeType::ONE_WAY_PWR_FREE_SPACE:
+    case simData::AntennaPatterns::VolumeType::FREE_SPACE_RANGE_LINEAR:
       // calc a linear scale factor (for one-way range) from gain in dB
       scaleFactor_ = 1. / pow(10., maxPowerGain_dB_ / 20.);
       break;
