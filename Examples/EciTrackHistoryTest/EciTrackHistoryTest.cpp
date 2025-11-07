@@ -24,7 +24,6 @@
  * ECI Track History TEST
  * Test app for the various features of the ECI Track History feature.
  */
-#include <osgEarth/Controls>
 #include "simData/DataTable.h"
 #include "simData/LinearInterpolator.h"
 #include "simData/MemoryDataStore.h"
@@ -43,8 +42,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-namespace ui = osgEarth::Util::Controls;
 #endif
 
 namespace
@@ -238,199 +235,6 @@ private:
   bool reverseMode_ = false;
 };
 
-#else
-
-struct AppData
-{
-  osg::ref_ptr<ui::HSliderControl>  modeSlider_;
-  osg::ref_ptr<ui::HSliderControl>  timeTicksSlider_;
-
-  osg::ref_ptr<ui::LabelControl>   modeLabel_;
-  osg::ref_ptr<ui::LabelControl>   sizeLabel_;
-  osg::ref_ptr<ui::LabelControl>   timeTicksLabel_;
-
-  osg::ref_ptr<ui::ButtonControl>  rewind1_;
-  osg::ref_ptr<ui::ButtonControl>  rewind2_;
-  osg::ref_ptr<ui::ButtonControl>  ff1_;
-  osg::ref_ptr<ui::ButtonControl>  ff2_;
-  osg::ref_ptr<ui::HSliderControl> timeSlider_;
-  osg::ref_ptr<ui::ButtonControl>  tether_;
-
-  osg::ref_ptr<ui::CheckBoxControl> altModeCheck_;
-  osg::ref_ptr<ui::CheckBoxControl> reverseModeCheck_;
-
-  std::vector< std::pair<simData::TrackPrefs::Mode, std::string> > modes_;
-  std::vector< std::pair<simData::TimeTickPrefs::DrawStyle, std::string> > timeTickModes_;
-  simData::DataStore*  ds_;
-  simData::ObjectId    hostId_;
-  osg::ref_ptr<simVis::View> view_;
-  osg::ref_ptr<osg::Node>    platformModel_;
-
-  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler_;
-
-  AppData(simData::DataStore* ds, simData::ObjectId hostId)
-   : modeSlider_(nullptr),
-    timeTicksSlider_(nullptr),
-    modeLabel_(nullptr),
-    sizeLabel_(nullptr),
-    timeTicksLabel_(nullptr),
-    rewind1_(nullptr),
-    rewind2_(nullptr),
-    ff1_(nullptr),
-    ff2_(nullptr),
-    timeSlider_(nullptr),
-    tether_(nullptr),
-    ds_(ds),
-    hostId_(hostId),
-    view_(nullptr),
-    platformModel_(nullptr)
-  {
-    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::OFF,    "OFF"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::POINT,  "POINT"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::LINE,   "LINE"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::RIBBON, "RIBBON"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::BRIDGE, "BRIDGE"));
-
-    timeTickModes_.push_back(std::make_pair(simData::TimeTickPrefs::DrawStyle::NONE,   "OFF"));
-    timeTickModes_.push_back(std::make_pair(simData::TimeTickPrefs::DrawStyle::POINT,  "POINT"));
-    timeTickModes_.push_back(std::make_pair(simData::TimeTickPrefs::DrawStyle::LINE,   "LINE"));
-  }
-
-  void apply()
-  {
-    int modeIndex  = simCore::sdkMax(0, (int)floor(modeSlider_->getValue()));
-    int timeTicksIndex  = simCore::sdkMax(0, (int)floor(timeTicksSlider_->getValue()));
-
-    simData::DataStore::Transaction xaction;
-    simData::PlatformPrefs* platformPrefs = ds_->mutable_platformPrefs(hostId_, &xaction);
-    simData::TrackPrefs*    trackPrefs    = platformPrefs->mutable_trackprefs();
-    simData::TimeTickPrefs* timeTickPrefs    = trackPrefs->mutable_timeticks();
-
-    trackPrefs->set_trackdrawmode(modes_[modeIndex].first);
-    trackPrefs->set_linewidth(2.0);
-    trackPrefs->set_altmode(altModeCheck_->getValue());
-    timeTickPrefs->set_drawstyle(timeTickModes_[timeTicksIndex].first);
-    timeTickPrefs->set_interval(2.);
-    timeTickPrefs->set_linelength(1000.);
-
-    xaction.complete(&platformPrefs);
-
-    // time direction:
-    if (reverseModeCheck_->getValue() == true)
-      ds_->getBoundClock()->playReverse();
-    else
-      ds_->getBoundClock()->playForward();
-
-    // update labels.
-    modeLabel_->setText(modes_[modeIndex].second);
-    timeTicksLabel_->setText(timeTickModes_[timeTicksIndex].second);
-  }
-
-  void rewind(double seconds)
-  {
-    if (ds_->getBoundClock()->timeDirection() == simCore::REVERSE)
-      seconds = -seconds;
-    simHandler_->setTime(simHandler_->getTime() - seconds);
-  }
-
-  void ff(double seconds)
-  {
-    if (ds_->getBoundClock()->timeDirection() == simCore::REVERSE)
-      seconds = -seconds;
-    simHandler_->setTime(simHandler_->getTime() + seconds);
-  }
-
-  void tether()
-  {
-    view_->tetherCamera(nullptr);
-    view_->tetherCamera(platformModel_.get());
-    view_->setFocalOffsets(45, -45, 2e4);
-  }
-};
-
-//----------------------------------------------------------------------------
-
-struct ApplyUI : public ui::ControlEventHandler
-{
-  explicit ApplyUI(AppData* app): app_(app) {}
-  AppData* app_;
-  void onValueChanged(ui::Control* c, bool value) { app_->apply(); }
-  void onValueChanged(ui::Control* c, float value) { app_->apply(); }
-  void onValueChanged(ui::Control* c, double value) { onValueChanged(c, (float)value); }
-
-  void onClick(ui::Control* c, int buttons)
-  {
-    if (c == app_->rewind1_) app_->rewind(5.0);
-    else if (c == app_->rewind2_) app_->rewind(15.0);
-    else if (c == app_->ff1_)     app_->ff(5.0);
-    else if (c == app_->ff2_)     app_->ff(15.0);
-    else if (c == app_->tether_) app_->tether();
-  }
-};
-
-struct SlideTime : public ui::ControlEventHandler
-{
-  explicit SlideTime(AppData* app): app_(app) {}
-  AppData* app_;
-  void onValueChanged(ui::Control* c, float value)
-  {
-    app_->simHandler_->setTime(value);
-  }
-};
-
-ui::Control* createUI(AppData& app)
-{
-  osg::ref_ptr<ApplyUI> applyUI = new ApplyUI(&app);
-
-  ui::VBox* top = new ui::VBox();
-  top->setAbsorbEvents(true);
-  top->setMargin(ui::Gutter(5.0f));
-  top->setBackColor(osg::Vec4(0, 0, 0, 0.5));
-  top->addControl(new ui::LabelControl("ECI Track History - Test App", 22.0f, simVis::Color::Yellow));
-
-  int c=0, r=0;
-  osg::ref_ptr<ui::Grid> grid = top->addControl(new ui::Grid());
-  grid->setChildSpacing(5.0f);
-
-  grid->setControl(c, r, new ui::LabelControl("Mode"));
-  app.modeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.modes_.size(), 1, applyUI.get()));
-  app.modeLabel_  = grid->setControl(c+2, r, new ui::LabelControl());
-  app.modeSlider_->setHorizFill(true, 250);
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Alt mode"));
-  app.altModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("TimeTicks"));
-  app.timeTicksSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.timeTickModes_.size(), 1, applyUI.get()));
-  app.timeTicksLabel_  = grid->setControl(c+2, r, new ui::LabelControl());
-  app.timeTicksSlider_->setHorizFill(true, 250);
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Transport:"));
-  osg::ref_ptr<ui::HBox> buttons = grid->setControl(c+1, r, new ui::HBox());
-  buttons->setChildSpacing(10.0f);
-  app.rewind2_ = buttons->addControl(new ui::ButtonControl("<<", applyUI.get()));
-  app.rewind1_ = buttons->addControl(new ui::ButtonControl("<", applyUI.get()));
-  app.ff1_     = buttons->addControl(new ui::ButtonControl(">", applyUI.get()));
-  app.ff2_     = buttons->addControl(new ui::ButtonControl(">>", applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Reverse mode:"));
-  app.reverseModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Time:"));
-  app.timeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(SIM_START, SIM_END, SIM_START, new SlideTime(&app)));
-  app.timeSlider_->setHorizFill(true, 250);
-
-  r++;
-  app.tether_ = grid->setControl(c+1, r, new ui::ButtonControl("Reset Tether", applyUI.get()));
-
-  return top;
-}
-
 #endif
 
 //----------------------------------------------------------------------------
@@ -518,15 +322,6 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(dataStore, platformId, simHandler.get(), viewer->getMainView(), platformModel.get()));
-#else
-  // Attach the simulation updater to OSG timer events
-  AppData app(&dataStore, platformId);
-  app.simHandler_ = simHandler;
-  app.view_          = viewer->getMainView();
-  app.platformModel_ = platformModel;
-  // show the instructions overlay
-  viewer->getMainView()->addOverlayControl(createUI(app));
-  app.apply();
 #endif
 
   // set the camera to look at the platform

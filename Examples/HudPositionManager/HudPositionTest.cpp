@@ -48,8 +48,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-namespace ui = osgEarth::Util::Controls;
 #endif
 
 static const std::string KEY_MAP_SCALE = "MapScale";
@@ -61,24 +59,6 @@ static const std::string KEY_COMPASS = "Compass";
 static const std::string KEY_LEGEND = "Legend";
 
 //----------------------------------------------------------------------------
-
-static std::string s_title =
-  "HUD Position Manager Example \n";
-
-static std::string s_help =
-  "1 : Move 'Demo Text' to the mouse position\n"
-  "2 : Move 'Map Scale' to the mouse position\n"
-  "3 : Move 'Status Text' to mouse position\n"
-  "4 : Move 'Top Classification' to mouse position\n"
-  "5 : Move 'Bottom Classification' to mouse position\n"
-  "6 : Move 'Compass' to mouse position\n"
-  "7 : Move 'Legend' to mouse position\n"
-  "c : Cycle classification string and color\n"
-  "e : Toggle HUD Editor mode\n"
-  "r : Reset all to default positions\n"
-  "W : Toggle Wind Vane on Compass\n"
-  "z : Cycle wind angle and speed values\n"
-  ;
 
 #ifdef HAVE_IMGUI
 
@@ -190,162 +170,6 @@ private:
     hudEditor_.setPosition(windowName, pos);
   }
 
-  simUtil::HudPositionEditor& hudEditor_;
-  osg::observer_ptr<simVis::CompassNode> compass_;
-  simData::DataStore& dataStore_;
-  int classificationCycle_;
-  int windCycle_;
-};
-
-#else
-
-static ui::Control* createHelp()
-{
-  // vbox is returned to caller, memory owned by caller
-  ui::VBox* vbox = new ui::VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new ui::LabelControl(s_title, 20, simVis::Color::Yellow));
-  vbox->addControl(new ui::LabelControl(s_help, 14, simVis::Color::Silver));
-  // Move it down just a bit
-  vbox->setPosition(10, 40);
-  return vbox;
-}
-
-//----------------------------------------------------------------------------
-
-// An event handler to assist in testing the Inset functionality.
-struct MenuHandler : public osgGA::GUIEventHandler
-{
-  MenuHandler(simUtil::HudPositionEditor& hudEditor, simData::DataStore& ds)
-    : hudEditor_(hudEditor),
-      dataStore_(ds),
-      classificationCycle_(0),
-      windCycle_(0)
-  {
-  }
-
-  void setCompass(simVis::CompassNode* compass)
-  {
-    compass_ = compass;
-  }
-
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
-  {
-    if (ea.getEventType() != osgGA::GUIEventAdapter::KEYDOWN)
-      return false;
-
-    bool handled = false;
-    std::string windowName;
-    // Figure out which key was pressed
-    switch (ea.getKey())
-    {
-    case '1':
-      windowName = KEY_DEMO_TEXT;
-      break;
-    case '2':
-      windowName = KEY_MAP_SCALE;
-      break;
-    case '3':
-      windowName = KEY_STATUS_TEXT;
-      break;
-    case '4':
-      windowName = KEY_CLASSIFICATION_TOP;
-      break;
-    case '5':
-      windowName = KEY_CLASSIFICATION_BOTTOM;
-      break;
-    case '6':
-      windowName = KEY_COMPASS;
-      break;
-    case '7':
-      windowName = KEY_LEGEND;
-      break;
-
-    case 'c':
-    {
-      // Cycle through a few different classification strings
-      classificationCycle_ = ((classificationCycle_ + 1) % 3);
-      simData::DataStore::Transaction txn;
-      simData::ScenarioProperties* props = dataStore_.mutable_scenarioProperties(&txn);
-      switch (classificationCycle_)
-      {
-      case 0:
-        props->mutable_classification()->set_label("UNCLASSIFIED");
-        props->mutable_classification()->set_fontcolor(0x00ff0080);
-        break;
-      case 1:
-        props->mutable_classification()->set_label("U N C L A S S I F I E D");
-        props->mutable_classification()->set_fontcolor(0xffffff80);
-        break;
-      case 2:
-        props->mutable_classification()->set_label("YOUR STRING HERE");
-        props->mutable_classification()->set_fontcolor(0xffff0080);
-        break;
-      }
-      txn.complete(&props);
-      handled = true;
-      break;
-    }
-
-    case 'e':
-      hudEditor_.setVisible(!hudEditor_.isVisible());
-      handled = true;
-      break;
-
-    case 'r':
-      hudEditor_.resetAllPositions();
-      handled = true;
-      break;
-
-    case 'W':
-      if (compass_.valid())
-      {
-        compass_->setWindVaneVisible(!compass_->isWindVaneVisible());
-        handled = true;
-      }
-      break;
-
-    case 'z':
-    {
-      // Cycle through a few different wind settings
-      windCycle_ = ((windCycle_ + 1) % 3);
-      simData::DataStore::Transaction txn;
-      simData::ScenarioProperties* props = dataStore_.mutable_scenarioProperties(&txn);
-      switch (windCycle_)
-      {
-      case 0:
-        props->set_windangle(35.0 * simCore::DEG2RAD);
-        props->set_windspeed(11.0);
-        break;
-      case 1:
-        props->set_windangle(282.0 * simCore::DEG2RAD);
-        props->set_windspeed(6.0);
-        break;
-      case 2:
-        props->set_windangle(179.625 * simCore::DEG2RAD);
-        props->set_windspeed(36.15698);
-        break;
-      }
-      txn.complete(&props);
-      handled = true;
-      break;
-    }
-    }
-
-    // Assign the position to the mouse's location
-    if (!windowName.empty())
-    {
-      // Rescale normalized from (-1,+1) to (0,1)
-      const osg::Vec2d pos(0.5 * (1.0 + ea.getXnormalized()),
-        0.5 * (1.0 + ea.getYnormalized()));
-      hudEditor_.setPosition(windowName, pos);
-      handled = true;
-    }
-    return handled;
-  }
-
-private:
   simUtil::HudPositionEditor& hudEditor_;
   osg::observer_ptr<simVis::CompassNode> compass_;
   simData::DataStore& dataStore_;
@@ -482,10 +306,6 @@ int main(int argc, char** argv)
   // Create a "Super HUD" on top of all other views and insets
   simVis::View* superHUD = new simVis::View();
   superHUD->setUpViewAsHUD(mainView);
-#ifndef HAVE_IMGUI
-  // Add a help control
-  superHUD->addOverlayControl(createHelp());
-#endif
   mainView->getViewManager()->addView(superHUD);
 
   // For osgEarth::LineDrawable to work on SuperHUD, need an InstallCameraUniform
@@ -510,10 +330,6 @@ int main(int argc, char** argv)
   mainView->getEventHandlers().push_front(gui);
   ControlPanel* controlPanel = new ControlPanel(hudEditor, dataStore);
   gui->add(controlPanel);
-#else
-  // Install a handler to respond to the demo keys in this sample.
-  MenuHandler* menuHandler = new MenuHandler(hudEditor, dataStore);
-  mainView->getCamera()->addEventCallback(menuHandler);
 #endif
 
   // Configure text replacement variables that will be used for status text
@@ -577,8 +393,6 @@ int main(int argc, char** argv)
     compass->setActiveView(mainView);
 #ifdef HAVE_IMGUI
     controlPanel->setCompass(compass.get());
-#else
-    menuHandler->setCompass(compass.get());
 #endif
     std::shared_ptr<simVis::UpdateWindVaneListener> dsUpdate(new simVis::UpdateWindVaneListener(compass.get()));
     dataStore.addScenarioListener(dsUpdate);

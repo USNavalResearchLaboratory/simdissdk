@@ -41,9 +41,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
-using namespace osgEarth::Util::Controls;
 #endif
 
 static std::vector<std::string> earthFiles;
@@ -70,13 +67,6 @@ public:
     lastElevation_(0.0)
   {
   }
-#else
-  explicit LatLonElevationListener(LabelControl* elevationLabel)
-    : elevationLabel_(elevationLabel),
-    showLatLonElevation_(false),
-    lastElevation_(0.0)
-  {
-  }
 #endif
   virtual void mouseOverLatLon(double lat, double lon, double elev)
   {
@@ -91,8 +81,6 @@ public:
       os << elev;
 #ifdef HAVE_IMGUI
     elevationLabel_ = os.str();
-#else
-    elevationLabel_->setText(os.str());
 #endif
   }
 
@@ -102,19 +90,15 @@ public:
       return;
     showLatLonElevation_ = show;
 
-    if (!show)
 #ifdef HAVE_IMGUI
+    if (!show)
       elevationLabel_.clear();
-#else
-      elevationLabel_->setText("");
 #endif
   }
 
 private:
 #ifdef HAVE_IMGUI
   std::string& elevationLabel_;
-#else
-  LabelControl* elevationLabel_;
 #endif
   bool showLatLonElevation_;
   double lastElevation_;
@@ -226,27 +210,6 @@ private:
   std::string llaLabel_;
 };
 
-#else
-
-static std::string s_help =
-  "1 : load next earth file\n"
-  "2 : load next earth file (map only)\n"
-  "e : toggle show lat/lon/elevation\n"
-  "i : toggle add-inset mouse mode\n"
-  "r : remove all insets\n";
-
-
-static Control* createHelp(LabelControl* elevationLabel)
-{
-  VBox* vbox = new VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
-  vbox->addControl(new LabelControl(s_help, 14, simVis::Color::Silver));
-  vbox->addControl(elevationLabel);
-  return vbox;
-}
-
 #endif
 
 void earthFileLoader::loadEarthFile(const std::string& earthFile,
@@ -266,103 +229,6 @@ void earthFileLoader::loadEarthFile(const std::string& earthFile,
       viewer->setMapNode(mapNode.get());
   }
 }
-
-#ifndef HAVE_IMGUI
-
-/// An event handler to assist in testing the InsetViewManager / Load Earth functionality.
-struct MenuHandler : public osgGA::GUIEventHandler
-{
-  MenuHandler(simVis::Viewer* viewer, simVis::CreateInsetEventHandler* handler, LabelControl* elevationLabel, simUtil::MouseDispatcher* mouseDispatcher)
-   : viewer_(viewer),
-     handler_(handler),
-     latLonElevListener_(nullptr),
-     showLatLonElevation_(false)
-  {
-    latLonElevListener_ = new LatLonElevationListener(elevationLabel);
-    mouseDispatcher_ = mouseDispatcher;
-    mouseDispatcher_->setViewManager(nullptr);
-    setUpMouseManip_(viewer_.get());
-  }
-
-  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
-  {
-    bool handled = false;
-
-    if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
-    {
-      switch (ea.getKey())
-      {
-      case 'r': // REMOVE ALL INSETS.
-      {
-        simVis::View::Insets insets;
-        viewer_->getMainView()->getInsets(insets);
-        for (simVis::View::Insets::const_iterator i = insets.begin(); i != insets.end(); ++i)
-          viewer_->getMainView()->removeInset(i->get());
-        SIM_NOTICE << "Removed all insets..." << std::endl;
-        handled = true;
-        break;
-      }
-
-      case 'i': // TOGGLE INSERT INSET MODE
-        handler_->setEnabled(!handler_->isEnabled());
-        handled = true;
-        break;
-
-      case 'l': // LOAD EARTH FILE
-      case '1':
-        mouseManip_->removeListener(latLonElevListener_);
-        earthFileIndex = (earthFileIndex + 1) % earthFiles.size();
-        earthFileLoader::loadEarthFile(earthFiles[earthFileIndex], viewer_.get(), false);
-        setUpMouseManip_(viewer_.get());
-        handled = true;
-        break;
-
-      case '2': // LOAD EARTH FILE, MAP ONLY
-        mouseManip_->removeListener(latLonElevListener_);
-        earthFileIndex = (earthFileIndex + 1) % earthFiles.size();
-        earthFileLoader::loadEarthFile(earthFiles[earthFileIndex], viewer_.get(), true);
-        setUpMouseManip_(viewer_.get());
-        handled = true;
-        break;
-
-      case 'e': // TOGGLE SHOW LAT/LON/ELEVATION
-        // always remove listener
-        mouseManip_->removeListener(latLonElevListener_);
-        showLatLonElevation_ = !showLatLonElevation_;
-        // if showing elevation, add the elevation mouse listener
-        if (showLatLonElevation_)
-          mouseManip_->addListener(latLonElevListener_, true);
-        latLonElevListener_->showLatLonElevation(showLatLonElevation_);
-        handled = true;
-        break;
-      }
-    }
-    return handled;
-  }
-
-private:
-
-  // create a new mouse position manipulator for the specified viewer, set the viewer as view manager in the mouse dispatcher
-  void setUpMouseManip_(simVis::Viewer* viewer)
-  {
-    mouseManip_.reset(new simUtil::MousePositionManipulator(viewer->getSceneManager()->getMapNode(), viewer->getSceneManager()->getOrCreateAttachPoint("Map Callbacks")));
-    mouseManip_->setTerrainResolution(0.0001);
-    mouseDispatcher_->setViewManager(viewer);
-    mouseDispatcher_->addManipulator(0, mouseManip_);
-    if (showLatLonElevation_)
-      mouseManip_->addListener(latLonElevListener_, true);
-  }
-
-  osg::observer_ptr<simVis::Viewer> viewer_;
-  osg::observer_ptr<simVis::CreateInsetEventHandler> handler_;
-  LatLonElevationListener* latLonElevListener_;
-  bool showLatLonElevation_;
-  simUtil::MouseDispatcher* mouseDispatcher_;
-  std::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
-};
-
-#endif
-
 
 int main(int argc, char** argv)
 {
@@ -437,15 +303,6 @@ int main(int argc, char** argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(viewer.get(), createInsetsHandler.get(), mouseDispatcher.get()));
-#else
-  // label for elevation readout
-  osg::ref_ptr<LabelControl> elevationLabel = new LabelControl("", 14, simVis::Color::Silver);
-
-  // Handles hotkeys from user
-  mainView->addEventHandler(new MenuHandler(viewer.get(), createInsetsHandler.get(), elevationLabel.get(), mouseDispatcher.get()));
-
-  // show the help menu
-  viewer->getMainView()->addOverlayControl(createHelp(elevationLabel.get()));
 #endif
 
   viewer->installDebugHandlers();

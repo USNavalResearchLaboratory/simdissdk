@@ -28,7 +28,6 @@
  */
 
 #include <vector>
-#include "osgEarth/Controls"
 #include "osgEarth/LabelNode"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/optional"
@@ -61,15 +60,11 @@ using namespace osgEarth::Util;
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-using namespace osgEarth::Util::Controls;
-namespace ui = osgEarth::Util::Controls;
 #endif
 
 typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 static std::vector<GogNodeInterfacePtr> s_overlayNodes;
 
-static std::string s_title = " \n \nGOG Example";
 static std::string s_help =
 "c : center on next GOG\n"
 "a : change altitude mode for centered GOG\n"
@@ -114,7 +109,6 @@ private:
 class MouseAndMenuHandler : public osgGA::GUIEventHandler
 {
 public:
-#ifdef HAVE_IMGUI
   MouseAndMenuHandler(simVis::Viewer* viewer, simData::DataStore& dataStore,
     bool showElevation, simVis::PlatformNode* platform)
     : viewer_(viewer),
@@ -135,29 +129,6 @@ public:
     setUpMouseManip_(viewer_.get());
     updateStatusAndLabel_();
   }
-#else
-  MouseAndMenuHandler(simVis::Viewer* viewer, ui::LabelControl* status, simData::DataStore& dataStore,
-    bool showElevation, simVis::PlatformNode* platform)
-    : viewer_(viewer),
-    statusLabel_(status),
-    dataStore_(dataStore),
-    showElevation_(showElevation),
-    removeAllRequested_(false),
-    insertViewPortMode_(false),
-    dynamicScaleOn_(true),
-    labelsOn_(true),
-    border_(0),
-    platform_(platform),
-    altMode_(simVis::GOG::ALTITUDE_NONE)
-  {
-    centeredGogIndex_.init(0);
-    mouseDispatcher_.reset(new simUtil::MouseDispatcher);
-    mouseDispatcher_->setViewManager(nullptr);
-    latLonElevListener_.reset(new LatLonElevListener());
-    setUpMouseManip_(viewer_.get());
-    updateStatusAndLabel_();
-  }
-#endif
 
   virtual ~MouseAndMenuHandler()
   {
@@ -345,10 +316,6 @@ private:
     if (showElevation_)
       mouseOs << ", elev:" << latLonElevListener_->elev();
     statusText_ += mouseOs.str() + "\n";
-
-#ifndef HAVE_IMGUI
-    statusLabel_->setText(statusText_);
-#endif
   }
 
   void setUpMouseManip_(simVis::Viewer* viewer)
@@ -363,9 +330,6 @@ private:
   }
 
   osg::ref_ptr<simVis::Viewer> viewer_;
-#ifndef HAVE_IMGUI
-  osg::observer_ptr<ui::LabelControl> statusLabel_;
-#endif
   std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher_;
   std::shared_ptr<LatLonElevListener> latLonElevListener_;
   std::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
@@ -488,31 +452,6 @@ struct ControlPanel : public simExamples::SimExamplesGui
 private:
   MouseAndMenuHandler& handler_;
   float opacity_ = 100.f;
-};
-#else
-/** Process changes on the opacity slider. */
-class OpacitySliderCallback : public ui::ControlEventHandler
-{
-public:
-  void setLabel(ui::LabelControl* label)
-  {
-    label_ = label;
-  }
-
-  virtual void onValueChanged(ui::Control* control, float value) override
-  {
-    // Write the percentage to the label
-    osg::ref_ptr<ui::LabelControl> label;
-    if (label_.lock(label))
-      label->setText(std::to_string(static_cast<int>((value * 100) + 0.5f)) + "%");
-
-    // Set the override color on all nodes based on the provided opacity
-    for (const auto& overlay : s_overlayNodes)
-      overlay->setOpacity(value);
-  }
-
-private:
-  osg::observer_ptr<ui::LabelControl> label_;
 };
 #endif
 
@@ -693,39 +632,10 @@ int main(int argc, char** argv)
 
   simVis::View* mainView = viewer->getMainView();
 
-#ifndef HAVE_IMGUI
-  // add help and status labels
-  ui::VBox* vbox = new ui::VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new ui::LabelControl(s_title, 20, simVis::Color::Yellow));
-  vbox->addControl(new ui::LabelControl(s_help, 14, simVis::Color::Silver));
-  ui::LabelControl* statusLabel = new ui::LabelControl("STATUS", 14, simVis::Color::Silver);
-  vbox->addControl(statusLabel);
-
-  // Add a section to control the opacity
-  vbox->addControl(new ui::LabelControl("Opacity:", 14));
-  OpacitySliderCallback* sliderCallback = new OpacitySliderCallback;
-  ui::HSliderControl* opacitySlider = new ui::HSliderControl(0.f, 1.f, 1.f, sliderCallback);
-  opacitySlider->setHorizFill(false);
-  opacitySlider->setWidth(250.f);
-  ui::LabelControl* opacityPercent = new ui::LabelControl("100%", 14);
-  sliderCallback->setLabel(opacityPercent);
-  ui::HBox* hbox = new ui::HBox();
-  hbox->addControl(opacitySlider);
-  hbox->addControl(opacityPercent);
-  vbox->addControl(hbox);
-
-  mainView->addOverlayControl(vbox);
-#endif
-
   // Install a handler to respond to the demo keys in this sample.
   osg::ref_ptr<MouseAndMenuHandler> mouseHandler =
     new MouseAndMenuHandler(
       viewer.get(),
-#ifndef HAVE_IMGUI
-      statusLabel,
-#endif
       dataStore,
       showElevation,
       attach ? platform.get() : nullptr);

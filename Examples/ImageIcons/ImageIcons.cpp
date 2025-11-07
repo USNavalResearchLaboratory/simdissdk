@@ -56,8 +56,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-using namespace osgEarth::Util::Controls;
 #endif
 
 
@@ -185,153 +183,6 @@ private:
   simData::ObjectId platId_;
 };
 
-#else
-/// keep a handle, for toggling
-static osg::ref_ptr<Control> s_helpControl = nullptr;
-
-/// label displaying the name of the current calculation
-static osg::ref_ptr<LabelControl> s_iconRotationLabel = nullptr;
-
-
-//----------------------------------------------------------------------------
-/// create an overlay with some helpful information
-Control* createHelp()
-{
-  VBox* vbox = new VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.4);
-
-  vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
-
-  vbox->addControl(new LabelControl("1 : cycle through rotation types", 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("2 : toggle highlight", 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("3 : cycle through highlight styles", 14, simVis::Color::Silver));
-  s_iconRotationLabel = new LabelControl("Currently viewing: " + IconRotation_Name(s_iconRotation),
-    14, simVis::Color::Yellow);
-  s_iconRotationLabel->setMargin(Gutter(0, 0, 10, 0));
-  vbox->addControl(s_iconRotationLabel.get());
-
-  s_helpControl = vbox;
-  return vbox;
-}
-
-
-//----------------------------------------------------------------------------
-/// event handler for keyboard commands to alter symbology at runtime
-struct MenuHandler : public osgGA::GUIEventHandler
-{
-  /// constructor grabs all the state it needs for updating
-  MenuHandler(simData::DataStore& ds, const simData::ObjectId& platId)
-    : dataStore_(ds),
-      platId_(platId)
-  {
-    //nop
-  }
-
-  /// callback to process user input
-  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
-  {
-    bool handled = false;
-
-    if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
-    {
-      switch (ea.getKey())
-      {
-      case '?' : // toggle help
-        s_helpControl->setVisible(!s_helpControl->visible());
-        handled = true;
-        break;
-
-      case '1' : // cycle rotate mode
-      {
-
-        // Cycle the value
-        switch (s_iconRotation)
-        {
-        case simData::IconRotation::IR_2D_UP:
-          s_iconRotation = simData::IconRotation::IR_2D_YAW;
-          break;
-        case simData::IconRotation::IR_2D_YAW:
-          s_iconRotation = simData::IconRotation::IR_3D_YPR;
-          break;
-        case simData::IconRotation::IR_3D_YPR:
-          s_iconRotation = simData::IconRotation::IR_3D_NORTH;
-          break;
-        case simData::IconRotation::IR_3D_NORTH:
-          s_iconRotation = simData::IconRotation::IR_3D_YAW;
-          break;
-        case simData::IconRotation::IR_3D_YAW:
-          s_iconRotation = simData::IconRotation::IR_2D_UP;
-          break;
-        }
-
-        // Apply the setting
-        simData::DataStore::Transaction txn;
-        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
-        if (prefs)
-        {
-          prefs->set_rotateicons(s_iconRotation);
-          txn.complete(&prefs);
-        }
-
-        s_iconRotationLabel->setText("Currently viewing: " + IconRotation_Name(s_iconRotation));
-        break;
-      }
-
-      case '2': // toggle circle highlight
-      {
-        simData::DataStore::Transaction txn;
-        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
-        if (!prefs)
-          break;
-        prefs->set_drawcirclehilight(!prefs->drawcirclehilight());
-        txn.complete(&prefs);
-        break;
-      }
-
-      case '3': // cycle circle highlight shape
-      {
-        simData::DataStore::Transaction txn;
-        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
-        if (!prefs)
-          break;
-        switch (prefs->circlehilightshape())
-        {
-        case simData::CircleHilightShape::CH_PULSING_CIRCLE:
-          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_CIRCLE);
-          break;
-        case simData::CircleHilightShape::CH_CIRCLE:
-          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_DIAMOND);
-          break;
-        case simData::CircleHilightShape::CH_DIAMOND:
-          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_SQUARE);
-          break;
-        case simData::CircleHilightShape::CH_SQUARE:
-          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_SQUARE_RETICLE);
-          break;
-        case simData::CircleHilightShape::CH_SQUARE_RETICLE:
-          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_COFFIN);
-          break;
-        case simData::CircleHilightShape::CH_COFFIN:
-        default:
-          prefs->set_circlehilightshape(simData::CircleHilightShape::CH_PULSING_CIRCLE);
-          break;
-        }
-        txn.complete(&prefs);
-        break;
-      }
-
-      }
-    }
-
-    return handled;
-  }
-
-protected: // data
-  simData::DataStore& dataStore_;
-  simData::ObjectId platId_;
-};
-
 #endif
 
 //----------------------------------------------------------------------------
@@ -428,11 +279,6 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(dataStore, obj1));
-#else
-  // handle key press events
-  viewer->addEventHandler(new MenuHandler(dataStore, obj1));
-  // show the instructions overlay
-  viewer->getMainView()->addOverlayControl(createHelp());
 #endif
 
   // add some stock OSG handlers

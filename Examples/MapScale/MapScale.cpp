@@ -28,8 +28,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
 #endif
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
@@ -183,172 +181,6 @@ private:
   osg::ref_ptr<simUtil::MapScaleTwoUnitsProvider> imperialUnits_;
   osg::ref_ptr<simUtil::MapScaleTwoUnitsProvider> nauticalUnits_;
 };
-
-#else
-/** Responds to click on mono color button */
-struct MonoColorHandler : public ui::ControlEventHandler
-{
-  explicit MonoColorHandler(simUtil::MapScale* mapScale) : mapScale_(mapScale) {}
-  virtual void onClick(ui::Control* control) {
-    mapScale_->setBarColor1(simVis::Color::Black);
-    mapScale_->setBarColor2(simVis::Color::White);
-    mapScale_->setUnitsColor(simVis::Color::White);
-    mapScale_->setValuesColor(simVis::Color::White);
-    mapScale_->setBackgroundColor(osg::Vec4f(1.f, 1.f, 1.f, 0.f));
-  }
-  osg::ref_ptr<simUtil::MapScale> mapScale_;
-};
-
-/** Responds to click on alpha color button */
-struct AlphaColorHandler : public ui::ControlEventHandler
-{
-  explicit AlphaColorHandler(simUtil::MapScale* mapScale) : mapScale_(mapScale) {}
-  virtual void onClick(ui::Control* control) {
-    static const float ALPHA_VALUE = 0.7f;
-    mapScale_->setBarColor1(osg::Vec4f(0.f, 0.f, 0.f, ALPHA_VALUE));
-    mapScale_->setBarColor2(osg::Vec4f(1.f, 1.f, 1.f, ALPHA_VALUE));
-    mapScale_->setUnitsColor(osg::Vec4f(1.f, 1.f, 1.f, ALPHA_VALUE));
-    mapScale_->setValuesColor(osg::Vec4f(1.f, 1.f, 1.f, ALPHA_VALUE));
-    mapScale_->setBackgroundColor(osg::Vec4f(1.f, 1.f, 1.f, 0.f));
-  }
-  osg::ref_ptr<simUtil::MapScale> mapScale_;
-};
-
-/** Responds to click on gray color button */
-struct GrayColorHandler : public ui::ControlEventHandler
-{
-  explicit GrayColorHandler(simUtil::MapScale* mapScale) : mapScale_(mapScale) {}
-  virtual void onClick(ui::Control* control) {
-    mapScale_->setBarColor1(simVis::Color::Gray);
-    mapScale_->setBarColor2(simVis::Color::Silver);
-    mapScale_->setUnitsColor(simVis::Color::Silver);
-    mapScale_->setValuesColor(simVis::Color::Silver);
-    mapScale_->setBackgroundColor(osg::Vec4f(1.f, 1.f, 1.f, 0.25f));
-  }
-  osg::ref_ptr<simUtil::MapScale> mapScale_;
-};
-
-/** Responds to click on colorful color button */
-struct ColorfulColorHandler : public ui::ControlEventHandler
-{
-  explicit ColorfulColorHandler(simUtil::MapScale* mapScale) : mapScale_(mapScale) {}
-  virtual void onClick(ui::Control* control) {
-    mapScale_->setBarColor1(simVis::Color::Green);
-    mapScale_->setBarColor2(simVis::Color::Purple);
-    mapScale_->setUnitsColor(simVis::Color::Yellow);
-    mapScale_->setValuesColor(simVis::Color::Orange);
-    mapScale_->setBackgroundColor(osg::Vec4f(0.25f, 0.25f, 1.f, 0.25f));
-  }
-  osg::ref_ptr<simUtil::MapScale> mapScale_;
-};
-
-/** Responds to click on height change buttons */
-struct HeightHandler : public ui::ControlEventHandler
-{
-  explicit HeightHandler(simUtil::MapScale* mapScale, float scalar) : mapScale_(mapScale), scalar_(scalar) {}
-  virtual void onClick(ui::Control* control) {
-    mapScale_->setBarHeight(8.f + 20.f * (scalar_ - 1));
-    mapScale_->setUnitsCharacterSize(simVis::osgFontSize(12.f * scalar_));
-    mapScale_->setValuesCharacterSize(simVis::osgFontSize(13.f * scalar_));
-    mapScale_->setPadding(10.f * scalar_, 10.f * scalar_, 5.f * scalar_, 5.f * scalar_);
-  }
-  osg::ref_ptr<simUtil::MapScale> mapScale_;
-  float scalar_;
-};
-
-/** Responds to click on width change buttons */
-struct WidthHandler : public ui::ControlEventHandler
-{
-  explicit WidthHandler(simUtil::MapScale* mapScale, float scalar) : mapScale_(mapScale), scalar_(scalar) {}
-  virtual void onClick(ui::Control* control) {
-    mapScale_->setWidth(scalar_);
-  }
-  osg::ref_ptr<simUtil::MapScale> mapScale_;
-  float scalar_;
-};
-
-/** Responds to click on unit change buttons */
-struct UnitsHandler : public ui::ControlEventHandler
-{
-  explicit UnitsHandler(simUtil::MapScale* mapScale, simUtil::MapScale::UnitsProvider* unitsProvider)
-    : mapScale_(mapScale), unitsProvider_(unitsProvider) {}
-  virtual void onClick(ui::Control* control) {
-    mapScale_->setUnitsProvider(unitsProvider_.get());
-  }
-  osg::ref_ptr<simUtil::MapScale> mapScale_;
-  osg::ref_ptr<simUtil::MapScale::UnitsProvider> unitsProvider_;
-};
-
-
-static ui::Control* createHelp(simUtil::MapScale* mapScale)
-{
-  // vbox is returned to caller, memory owned by caller
-  ui::VBox* vbox = new ui::VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new ui::LabelControl(s_title, 20, simVis::Color::Yellow));
-  vbox->addControl(new ui::LabelControl(s_help, 14, simVis::Color::Silver));
-
-  ui::Grid* grid = new ui::Grid;
-  grid->setMargin(0);
-  grid->setPadding(10);
-  grid->setChildSpacing(10);
-  grid->setChildVertAlign(ui::Control::ALIGN_CENTER);
-  vbox->addControl(grid);
-
-  int row = 0;
-
-  // Color settings
-  static const float CONTROL_FONT_SIZE = 14.f;
-  auto* widget = grid->setControl(0, row, new ui::LabelControl("Color"));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(1, row, new ui::ButtonControl("Mono", new MonoColorHandler(mapScale)));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(2, row, new ui::ButtonControl("Alpha", new AlphaColorHandler(mapScale)));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(3, row, new ui::ButtonControl("Dim", new GrayColorHandler(mapScale)));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(4, row, new ui::ButtonControl("Colorful", new ColorfulColorHandler(mapScale)));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  row++;
-
-  // Size settings
-  widget = grid->setControl(0, row, new ui::LabelControl("Height"));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(1, row, new ui::ButtonControl("80%", new HeightHandler(mapScale, 0.8f)));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(2, row, new ui::ButtonControl("100%", new HeightHandler(mapScale, 1.f)));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(3, row, new ui::ButtonControl("125%", new HeightHandler(mapScale, 1.25f)));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  row++;
-
-  // Width
-  widget = grid->setControl(0, row, new ui::LabelControl("Width"));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(1, row, new ui::ButtonControl("350px", new WidthHandler(mapScale, 350.f)));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(2, row, new ui::ButtonControl("500px", new WidthHandler(mapScale, 500.f)));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(3, row, new ui::ButtonControl("650px", new WidthHandler(mapScale, 650.f)));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  row++;
-
-  // Units settings
-  widget = grid->setControl(0, row, new ui::LabelControl("Units"));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(1, row, new ui::ButtonControl("Metric", new UnitsHandler(mapScale,
-    new simUtil::MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::KILOMETERS, 10000.0))));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(2, row, new ui::ButtonControl("Imperial", new UnitsHandler(mapScale,
-    new simUtil::MapScaleTwoUnitsProvider(simCore::Units::YARDS, simCore::Units::MILES, 16093.4))));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-  widget = grid->setControl(3, row, new ui::ButtonControl("Nautical", new UnitsHandler(mapScale,
-    new simUtil::MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::NAUTICAL_MILES, 18520.0))));
-  widget->setFontSize(CONTROL_FONT_SIZE);
-
-  return vbox;
-}
 
 #endif
 
@@ -568,9 +400,6 @@ int main(int argc, char** argv)
   mainView->getEventHandlers().push_front(gui);
 
   gui->add(new ControlPanel(mapScale));
-#else
-  // Create a HUD for managing everything
-  mainView->addOverlayControl(createHelp(mapScale));
 #endif
 
   // Add a mouse handler that lets us move the scale around the screen

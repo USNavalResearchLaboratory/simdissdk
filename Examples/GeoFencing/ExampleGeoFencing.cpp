@@ -46,9 +46,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
-namespace ui = osgEarth::Util::Controls;
 #endif
 
 //----------------------------------------------------------------------------
@@ -90,8 +87,6 @@ struct AppData
 
 #ifdef HAVE_IMGUI
   std::string feedbackText;
-#else
-  osg::ref_ptr<ui::LabelControl> feedbackLabel;
 #endif
 
   /** Sets the feedback text, in IMGUI/non-IMGUI independent way */
@@ -99,8 +94,6 @@ struct AppData
   {
 #ifdef HAVE_IMGUI
     feedbackText = text;
-#else
-    feedbackLabel->setText(text);
 #endif
   }
 };
@@ -142,25 +135,6 @@ private:
   AppData& app_;
 };
 
-#else
-namespace
-{
-  ui::Control* createUI(AppData* app)
-  {
-    // vbox returned to caller as caller's memory
-    ui::VBox* vbox = new ui::VBox();
-    vbox->setAbsorbEvents(true);
-    vbox->setVertAlign(ui::Control::ALIGN_TOP);
-    vbox->setPadding(10);
-    vbox->setBackColor(0.f, 0.f, 0.f, 0.4f);
-    vbox->addControl(new ui::LabelControl("GeoFencing Test", 20.f));
-    vbox->addControl(new ui::LabelControl("The yellow areas are geo-fences.", simVis::Color::Yellow));
-    vbox->addControl(new ui::LabelControl("Move mouse to test whether inside/outside"));
-    app->feedbackLabel = vbox->addControl(new ui::LabelControl());
-
-    return vbox;
-  }
-}
 #endif
 //----------------------------------------------------------------------------
 
@@ -438,9 +412,6 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
-#else
-  // Install the UI:
-  viewer->getMainView()->addOverlayControl(createUI(&app));
 #endif
 
   viewer->getMainView()->setViewpoint(osgEarth::Viewpoint("start", DEFAULT_LON_DEG, DEFAULT_LAT_DEG, 0., 0, -90, 1e7));
