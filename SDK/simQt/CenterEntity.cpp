@@ -334,7 +334,7 @@ std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getCustomRend
 
   double crEarlierTime = getCustomRenderingEarlierTime_(time, commands);
   double crLaterTime = getCustomRenderingLaterTime_(time, commands);
-  if ((crEarlierTime == INVALID_TIME) || (crLaterTime == INVALID_TIME))
+  if ((crEarlierTime == INVALID_TIME) && (crLaterTime == INVALID_TIME))
     return { INVALID_TIME, tr("Custom rendering lacks data draw") };
 
   // The custom rendering is limited by its host, if any
@@ -381,7 +381,7 @@ double BindCenterEntityToEntityTreeComposite::getCustomRenderingEarlierTime_(dou
 
 double BindCenterEntityToEntityTreeComposite::getCustomRenderingLaterTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const
 {
-  auto iter = slice->upper_bound(searchTime);
+  auto iter = slice->lower_bound(searchTime);
 
   // Custom Render code enforces no repeats on data draw, so this is safe
   while (iter.peekNext() != nullptr)
@@ -461,7 +461,7 @@ std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getNearestDra
   double earlierTime = INVALID_TIME;
   double laterTime = INVALID_TIME;
 
-  // Start at the requested time and search backwards for the first valid time
+  // Start at the requested time (inclusive) and search backwards for the first valid time
   for (auto updateIter = updates->upper_bound(searchTime); updateIter.peekPrevious() != nullptr; updateIter.previous())
   {
     double time = updateIter.peekPrevious()->time();
@@ -474,7 +474,7 @@ std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getNearestDra
     }
   }
 
-  // Start at the requested time and search forward for the first valid time
+  // Start at the requested time (exclusive) and search forward for the first valid time
   for (auto updateIter = updates->upper_bound(searchTime); updateIter.peekNext() != nullptr; updateIter.next())
   {
     double time = updateIter.peekNext()->time();
@@ -582,7 +582,7 @@ bool BindCenterEntityToEntityTreeComposite::isActive_(double time, const std::ma
   if (drawState.empty())
     return false;
 
-  auto it = drawState.upper_bound(time);
+  auto it = drawState.lower_bound(time);
   if (it == drawState.begin())
     return false;
 
@@ -799,7 +799,7 @@ int BindCenterEntityToEntityTreeComposite::getTargetTimeRange_(uint64_t id, doub
   }
 
   // Search backwards for the end time
-  for (auto commandIter = commands->lower_bound(commands->lastTime()); commandIter.peekPrevious() != nullptr; commandIter.previous())
+  for (auto commandIter = commands->upper_bound(commands->lastTime()); commandIter.peekPrevious() != nullptr; commandIter.previous())
   {
     auto previous = commandIter.peekPrevious();
     if (previous->has_updateprefs() &&
