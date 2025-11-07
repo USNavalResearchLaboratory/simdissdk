@@ -49,9 +49,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include <osgEarth/Controls>
-namespace ui = osgEarth::Util::Controls;
 #endif
 
 //----------------------------------------------------------------------------
@@ -79,34 +76,6 @@ struct AppData
   bool reverse = false;
   float time = SIM_START;
   bool globalTrackDisplay = true;
-#else
-  osg::ref_ptr<ui::HSliderControl>  modeSlider_;
-  osg::ref_ptr<ui::HSliderControl>  sizeSlider_;
-  osg::ref_ptr<ui::HSliderControl>  colorSlider_;
-  osg::ref_ptr<ui::CheckBoxControl> overrideColorCheck_;
-  osg::ref_ptr<ui::HSliderControl>  overrideColorSlider_;
-  osg::ref_ptr<ui::HSliderControl>  maxLengthSlider_;
-  osg::ref_ptr<ui::CheckBoxControl> multiColorCheck_;
-  osg::ref_ptr<ui::CheckBoxControl> platformColorCheck_;
-  osg::ref_ptr<ui::CheckBoxControl> generateColorCommandsCheck_;
-
-  osg::ref_ptr<ui::LabelControl>   modeLabel_;
-  osg::ref_ptr<ui::LabelControl>   sizeLabel_;
-  osg::ref_ptr<ui::LabelControl>   colorLabel_;
-  osg::ref_ptr<ui::LabelControl>   overrideColorLabel_;
-  osg::ref_ptr<ui::LabelControl>   maxLengthLabel_;
-
-  osg::ref_ptr<ui::ButtonControl>  rewind1_;
-  osg::ref_ptr<ui::ButtonControl>  rewind2_;
-  osg::ref_ptr<ui::ButtonControl>  ff1_;
-  osg::ref_ptr<ui::ButtonControl>  ff2_;
-  osg::ref_ptr<ui::HSliderControl> timeSlider_;
-  osg::ref_ptr<ui::ButtonControl>  tether_;
-
-  osg::ref_ptr<ui::CheckBoxControl> flatModeCheck_;
-  osg::ref_ptr<ui::CheckBoxControl> altModeCheck_;
-  osg::ref_ptr<ui::CheckBoxControl> globalToggle_;
-  osg::ref_ptr<ui::CheckBoxControl> reverseModeCheck_;
 #endif
   std::vector< std::pair<simData::TrackPrefs::Mode, std::string> > modes_;
   std::vector< std::pair<simVis::Color, std::string> >            colors_;
@@ -181,65 +150,6 @@ struct AppData
     view_->setDisplayMask(globalTrackDisplay ?
       (displayMask | simVis::DISPLAY_MASK_TRACK_HISTORY) :
       (displayMask & ~simVis::DISPLAY_MASK_TRACK_HISTORY));
-#else
-    int modeIndex  = simCore::sdkMax(0, (int)floor(modeSlider_->getValue()));
-    int size       = simCore::sdkMax(1, (int)floor(sizeSlider_->getValue()));
-    int maxlength  = simCore::sdkMax(-1, (int)floor(maxLengthSlider_->getValue()));
-    int colorIndex = simCore::sdkMax(0, (int)floor(colorSlider_->getValue()));
-    int overrideColorIndex = simCore::sdkMax(0, (int)floor(overrideColorSlider_->getValue()));
-
-    // add to the data table for track history
-    if (generateColorCommandsCheck_->getValue())
-      generateColorCommand_(colorIndex);
-    else
-      removeColorCommands_();
-
-    simData::DataStore::Transaction xaction;
-    simData::PlatformPrefs* platformPrefs = ds_->mutable_platformPrefs(hostId_, &xaction);
-    simData::TrackPrefs*    trackPrefs    = platformPrefs->mutable_trackprefs();
-
-    trackPrefs->set_trackdrawmode(modes_[modeIndex].first);
-    trackPrefs->set_linewidth(size);
-
-    trackPrefs->set_flatmode(flatModeCheck_->getValue());
-    trackPrefs->set_altmode(altModeCheck_->getValue());
-    trackPrefs->set_trackcolor(colors_[colorIndex].first.as(simVis::Color::RGBA));
-
-    trackPrefs->set_trackoverridecolor(colors_[overrideColorIndex].first.as(simVis::Color::RGBA));
-    if (overrideColorCheck_->getValue())
-      trackPrefs->set_usetrackoverridecolor(true);
-    else
-      trackPrefs->set_usetrackoverridecolor(false);
-
-    trackPrefs->set_multitrackcolor(multiColorCheck_->getValue());
-    trackPrefs->set_useplatformcolor(platformColorCheck_->getValue());
-
-    // -1 value signifies no limiting
-    if (maxlength >= -1 && maxlength <= MAX_LENGTH)
-      trackPrefs->set_tracklength(maxlength);
-    else
-      trackPrefs->clear_tracklength();
-
-    xaction.complete(&platformPrefs);
-
-    // time direction:
-    if (reverseModeCheck_->getValue() == true)
-        ds_->getBoundClock()->playReverse();
-    else
-        ds_->getBoundClock()->playForward();
-
-    // update labels.
-    modeLabel_->setText(modes_[modeIndex].second);
-    sizeLabel_->setText(osgEarth::Stringify() << size);
-    colorLabel_->setText(colors_[colorIndex].second);
-    overrideColorLabel_->setText(colors_[overrideColorIndex].second);
-    maxLengthLabel_->setText(osgEarth::Stringify() << maxlength);
-
-    // global mask toggle.
-    unsigned displayMask = view_->getDisplayMask();
-    view_->setDisplayMask(globalToggle_->getValue() ?
-      (displayMask |  simVis::DISPLAY_MASK_TRACK_HISTORY) :
-      (displayMask & ~simVis::DISPLAY_MASK_TRACK_HISTORY));
 #endif
   }
 
@@ -313,8 +223,6 @@ private:
 #ifdef HAVE_IMGUI
       simVis::Color c(color[0], color[1], color[2], color[3]);
       newRow.setValue(colId, c.as(simVis::Color::RGBA));
-#else
-      newRow.setValue(colId, colors_[colorIndex].first.as(simVis::Color::RGBA));
 #endif
       table->addRow(newRow);
     }
@@ -483,130 +391,6 @@ private:
 
   AppData& app_;
 };
-#else
-struct ApplyUI : public ui::ControlEventHandler
-{
-  explicit ApplyUI(AppData* app): app_(app) {}
-  AppData* app_;
-  void onValueChanged(ui::Control* c, bool value) { app_->apply(); }
-  void onValueChanged(ui::Control* c, float value) { app_->apply(); }
-  void onValueChanged(ui::Control* c, double value) { onValueChanged(c, (float)value); }
-
-  void onClick(ui::Control* c, int buttons)
-  {
-    if (c == app_->rewind1_) app_->rewind(5.0);
-    else if (c == app_->rewind2_) app_->rewind(15.0);
-    else if (c == app_->ff1_)     app_->ff(5.0);
-    else if (c == app_->ff2_)     app_->ff(15.0);
-    else if (c == app_->tether_) app_->tether();
-  }
-};
-
-struct SlideTime : public ui::ControlEventHandler
-{
-  explicit SlideTime(AppData* app): app_(app) {}
-  AppData* app_;
-  void onValueChanged(ui::Control* c, float value)
-  {
-    app_->simHandler_->setTime(value);
-  }
-};
-
-ui::Control* createUI(AppData& app)
-{
-  osg::ref_ptr<ApplyUI> applyUI = new ApplyUI(&app);
-
-  ui::VBox* top = new ui::VBox();
-  top->setAbsorbEvents(true);
-  top->setMargin(ui::Gutter(5.0f));
-  top->setBackColor(osg::Vec4(0, 0, 0, 0.5));
-  top->addControl(new ui::LabelControl("Track History - Test App", 22.0f, simVis::Color::Yellow));
-
-  int c=0, r=0;
-  osg::ref_ptr<ui::Grid> grid = top->addControl(new ui::Grid());
-  grid->setChildSpacing(5.0f);
-
-  grid->setControl(c, r, new ui::LabelControl("Mode"));
-  app.modeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.modes_.size(), 1, applyUI.get()));
-  app.modeLabel_  = grid->setControl(c+2, r, new ui::LabelControl());
-  app.modeSlider_->setHorizFill(true, 250);
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Size"));
-  app.sizeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(1, 10, 2, applyUI.get()));
-  app.sizeSlider_->setHorizFill(true, 250);
-  app.sizeLabel_ = grid->setControl(c+2, r, new ui::LabelControl());
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Flat mode"));
-  app.flatModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Alt mode"));
-  app.altModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Generate TrackColor Commands"));
-  app.generateColorCommandsCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Use Platform Color"));
-  app.platformColorCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Use Multi-color"));
-  app.multiColorCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Color"));
-  app.colorSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.colors_.size(), 0, applyUI.get()));
-  app.colorSlider_->setHorizFill(true, 250);
-  app.colorLabel_ = grid->setControl(c+2, r, new ui::LabelControl());
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Override color"));
-  app.overrideColorCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl(""));
-  app.overrideColorSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.colors_.size(), 0, applyUI.get()));
-  app.overrideColorSlider_->setHorizFill(true, 250);
-  app.overrideColorLabel_ = grid->setControl(c+2, r, new ui::LabelControl());
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Max Points"));
-  app.maxLengthSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(-1, 512, INIT_NUM_POINTS, applyUI.get()));
-  app.maxLengthSlider_->setHorizFill(true, 250);
-  app.maxLengthLabel_ = grid->setControl(c+2, r, new ui::LabelControl());
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Transport:"));
-  osg::ref_ptr<ui::HBox> buttons = grid->setControl(c+1, r, new ui::HBox());
-  buttons->setChildSpacing(10.0f);
-  app.rewind2_ = buttons->addControl(new ui::ButtonControl("<<", applyUI.get()));
-  app.rewind1_ = buttons->addControl(new ui::ButtonControl("<", applyUI.get()));
-  app.ff1_     = buttons->addControl(new ui::ButtonControl(">", applyUI.get()));
-  app.ff2_     = buttons->addControl(new ui::ButtonControl(">>", applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Reverse mode:"));
-  app.reverseModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Time:"));
-  app.timeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(SIM_START, SIM_END, SIM_START, new SlideTime(&app)));
-  app.timeSlider_->setHorizFill(true, 250);
-
-  r++;
-  app.tether_ = grid->setControl(c+1, r, new ui::ButtonControl("Reset Tether", applyUI.get()));
-
-  r++;
-  ui::HBox* toggleBox = grid->setControl(c+1, r, new ui::HBox());
-  app.globalToggle_ = toggleBox->addControl(new ui::CheckBoxControl(true, applyUI.get()));
-  toggleBox->addControl(new ui::LabelControl("Global track display toggle"));
-
-  return top;
-}
 #endif
 
 //----------------------------------------------------------------------------
@@ -698,8 +482,6 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
-#else
-  viewer->getMainView()->addOverlayControl(createUI(app));
 #endif
   app.apply();
 

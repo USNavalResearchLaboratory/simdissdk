@@ -59,8 +59,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-using namespace osgEarth::Util::Controls;
 #endif
 
 //----------------------------------------------------------------------------
@@ -141,30 +139,6 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::End();
   }
 };
-
-#else
-/// keep a handle, for toggling
-static osg::ref_ptr<Control> s_helpControl;
-
-static Control* createHelp()
-{
-  VBox* vbox = new VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
-  vbox->addControl(new LabelControl(s_rotate, 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl(s_interpolate, 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl(s_viewPlatformOne, 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl(s_viewPlatformTwo, 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl(s_viewPlatformThree, 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl(s_viewPlatformFour, 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl(s_viewPlatformFive, 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl(s_togglePlatformFiveShadowMap, 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl(s_togglePlatformFiveMaxDrawRange, 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl(s_reloadMap, 14, simVis::Color::Silver));
-  s_helpControl = vbox;
-  return vbox;
-}
 
 #endif
 
@@ -607,9 +581,6 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel());
-#else
-  /// show the instructions overlay
-  viewer->getMainView()->addOverlayControl(createHelp());
 #endif
 
   /// add some stock OSG handlers

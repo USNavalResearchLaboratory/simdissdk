@@ -50,9 +50,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
-namespace ui = osgEarth::Util::Controls;
 #endif
 
 #define LC "[Planetarium Test] "
@@ -78,17 +75,6 @@ struct AppData
   simData::ObjectId proj1Id = 0; // external projector, pointing in
   simData::ObjectId proj2Id = 0; // external projector, pointing in
   simData::ObjectId proj3Id = 0; // internal projector, pointing out
-
-#ifndef HAVE_IMGUI
-  osg::ref_ptr<ui::CheckBoxControl>     toggleCheck;
-  osg::ref_ptr<ui::CheckBoxControl>     vectorCheck;
-  osg::ref_ptr<ui::HSliderControl>      rangeSlider;
-  osg::ref_ptr<ui::LabelControl>        rangeLabel;
-  osg::ref_ptr<ui::HSliderControl>      colorSlider;
-  osg::ref_ptr<ui::LabelControl>        colorLabel;
-  osg::ref_ptr<ui::CheckBoxControl>     ldbCheck;
-  osg::ref_ptr<ui::CheckBoxControl>     doubleSidedCheck;
-#endif
 
   std::vector< std::pair<simVis::Color, std::string> > colors;
   int colorIndex = 0;
@@ -386,142 +372,6 @@ private:
   float image2Lat_[2] = { 0.f, 40.f };
   float image2Lon_[2] = { 80.f, 150.f };
 };
-#else
-struct Toggle : public ui::ControlEventHandler
-{
-  explicit Toggle(AppData& app) : a(app) {}
-  AppData& a;
-  void onValueChanged(ui::Control* c, bool value)
-  {
-    if (value)
-      a.scenario->addTool(a.planetarium.get());
-    else
-      a.scenario->removeTool(a.planetarium.get());
-  }
-};
-
-struct ToggleVectors : public ui::ControlEventHandler
-{
-  explicit ToggleVectors(AppData& app) : a(app) {}
-  AppData& a;
-  void onValueChanged(ui::Control* c, bool value)
-  {
-    a.planetarium->setDisplayTargetVectors(value);
-  }
-};
-
-struct ToggleLDB : public ui::ControlEventHandler
-{
-  explicit ToggleLDB(AppData& app) : a(app) {}
-  AppData& a;
-  void onValueChanged(ui::Control* c, bool value)
-  {
-    a.viewer->setLogarithmicDepthBufferEnabled(!a.viewer->isLogarithmicDepthBufferEnabled());
-  }
-};
-
-struct ToggleProjectors : public ui::ControlEventHandler
-{
-  explicit ToggleProjectors(AppData& app) : a(app) {}
-  AppData& a;
-  void onValueChanged(ui::Control* c, bool value)
-  {
-    a.setProjectorsVisible(value);
-  }
-};
-
-struct ToggleShadowMapping : public ui::ControlEventHandler
-{
-  explicit ToggleShadowMapping(AppData& app) : a(app) {}
-  AppData& a;
-  void onValueChanged(ui::Control* c, bool value)
-  {
-    a.setShadowMapping(value);
-  }
-};
-
-struct ToggleDoubleSidedProjection : public ui::ControlEventHandler
-{
-  explicit ToggleDoubleSidedProjection(AppData& app) : a(app) {}
-  AppData& a;
-  void onValueChanged(ui::Control* c, bool value)
-  {
-    a.setDoubleSidedProjection(value);
-  }
-};
-
-struct SetColor : public ui::ControlEventHandler
-{
-  explicit SetColor(AppData& app) : a(app) {}
-  AppData& a;
-  void onValueChanged(ui::Control* c, double value)
-  {
-    a.planetarium->setColor(a.colors[ int(value) % a.colors.size() ].first);
-    a.colorLabel->setText(a.colors[ int(value) % a.colors.size() ].second);
-  }
-};
-
-struct SetRange : public ui::ControlEventHandler
-{
-  explicit SetRange(AppData& app) : a(app) {}
-  AppData& a;
-  void onValueChanged(ui::Control* c, double value)
-  {
-    a.planetarium->setRange(value);
-  }
-};
-
-//----------------------------------------------------------------------------
-ui::Control* createUI(AppData& app)
-{
-  ui::VBox* top = new ui::VBox();
-  top->setAbsorbEvents(true);
-  top->setMargin(ui::Gutter(5.0f));
-  top->setBackColor(osg::Vec4(0, 0, 0, 0.5));
-  top->addControl(new ui::LabelControl("PlanetariumViewTool - Test App", 22.0f, simVis::Color::Yellow));
-
-  int c=0, r=0;
-  osg::ref_ptr<ui::Grid> grid = top->addControl(new ui::Grid());
-  grid->setChildSpacing(5.0f);
-
-  grid->setControl(c, r, new ui::LabelControl("ON/OFF:"));
-  app.toggleCheck = grid->setControl(c+1, r, new ui::CheckBoxControl(false, new Toggle(app)));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Target Vecs:"));
-  app.vectorCheck = grid->setControl(c+1, r, new ui::CheckBoxControl(true, new ToggleVectors(app)));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Range:"));
-  app.rangeSlider = grid->setControl(c+1, r, new ui::HSliderControl(40000, 120000, 90000, new SetRange(app)));
-  app.rangeLabel  = grid->setControl(c+2, r, new ui::LabelControl(app.rangeSlider.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Color:"));
-  app.colorSlider = grid->setControl(c+1, r, new ui::HSliderControl(0, app.colors.size()-1, 0, new SetColor(app)));
-  app.colorLabel  = grid->setControl(c+2, r, new ui::LabelControl());
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("LDB:"));
-  app.ldbCheck = grid->setControl(c+1, r, new ui::CheckBoxControl(true, new ToggleLDB(app)));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Projectors:"));
-  grid->setControl(c + 1, r, new ui::CheckBoxControl(false, new ToggleProjectors(app)));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Shadow Map:"));
-  grid->setControl(c + 1, r, new ui::CheckBoxControl(true, new ToggleShadowMapping(app)));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Double-sided:"));
-  grid->setControl(c + 1, r, new ui::CheckBoxControl(false, new ToggleDoubleSidedProjection(app)));
-
-  // force a width.
-  app.rangeSlider->setHorizFill(true, 200);
-
-  return top;
-}
 #endif
 
 //----------------------------------------------------------------------------
@@ -791,13 +641,9 @@ int main(int argc, char** argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
-  if (view.valid())
-  {
-#else
-  if (view.valid())
-  {
-    view->addOverlayControl(createUI(app));
 #endif
+  if (view.valid())
+  {
     view->setLighting(false);
 
     // zoom the camera

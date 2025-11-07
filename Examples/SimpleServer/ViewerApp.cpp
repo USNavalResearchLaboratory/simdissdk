@@ -58,98 +58,6 @@
 
 namespace SimpleServer {
 
-namespace ui = osgEarth::Util::Controls;
-
-//////////////////////////////////////////////////////////////////
-
-static const std::string TITLE = "Simple Server SDK Example";
-static const std::string HELP_TEXT =
-  "c : Cycle centered platform\n"
-  "C : Toggle overhead clamping\n"
-  "d : Toggle dynamic scale\n"
-  "D : Toggle label declutter on/off\n"
-  "l : Toggle Logarithmic Depth Buffer\n"
-  "n : Toggle labels\n"
-  "o : Cycle time format\n"
-  "O : Toggle overhead mode\n"
-  "p : Play/pause\n"
-  "s : Cycle OSG statistics\n"
-  "t : Toggle declutter technique\n"
-  "T : Cycle callout line style\n"
-  "w : Toggle compass\n"
-  "z : Toggle cockpit mode (if centered)\n"
-  ;
-
-//////////////////////////////////////////////////////////////////
-
-#ifndef HAVE_IMGUI
-/** Handles various shortcuts from OSG and activates features in the Viewer App */
-class Shortcuts : public osgGA::GUIEventHandler
-{
-public:
-  explicit Shortcuts(ViewerApp& app)
-    : app_(app)
-  {
-  }
-
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
-  {
-    if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
-    {
-      switch (ea.getKey())
-      {
-      case osgGA::GUIEventAdapter::KEY_F4:
-        if ((ea.getModKeyMask() & osgGA::GUIEventAdapter::MODKEY_ALT) != 0)
-        {
-          app_.exit();
-          return true;
-        }
-        break;
-      case 'c': // lowercase
-        app_.centerNext();
-        return true;
-      case 'd':
-        app_.toggleDynamicScale();
-        return true;
-      case 'n':
-        app_.toggleLabels();
-        return true;
-      case 'w':
-        app_.toggleCompass();
-        return true;
-      case 'l':
-        app_.toggleLogDb();
-        return true;
-      case 'o': // lowercase
-        app_.cycleTimeFormat();
-        return true;
-      case 'z':
-        app_.toggleCockpit();
-        return true;
-      case 'p':
-        app_.playPause();
-        return true;
-      case 'D':
-        app_.toggleTextDeclutter();
-        return true;
-      case 't':
-        app_.toggleDeclutterTechnique();
-        return true;
-      case 'T':
-        app_.cycleCalloutLineStyle();
-        return true;
-      }
-    }
-    return false;
-  }
-
-private:
-  ViewerApp& app_;
-};
-#endif
-
-//////////////////////////////////////////////////////////////////
-
 #ifdef HAVE_IMGUI
 struct TestPanel : public simExamples::SimExamplesGui
 {
@@ -320,18 +228,8 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   // Update the clock on an event callback
   sceneManager_->addUpdateCallback(new simExamples::IdleClockCallback(*clock_, *dataStore_));
 
-#ifndef HAVE_IMGUI
-  // Tie in our keyboard shortcuts
-  sceneManager_->addEventCallback(new Shortcuts(*this));
-#endif
-
   // Create the data engine, which generates its own data and puts it into the data store
   engine_ = new DataEngine(*dataStore_, *sceneManager_->getScenario());
-
-#ifndef HAVE_IMGUI
-  // Create Help overlay
-  mainView->addOverlayControl(createHelp_());
-#endif
 
   // Configure the variable replacement for status text
   timeVariable_ = new simUtil::TimeVariable(*clock_);
@@ -513,19 +411,6 @@ void ViewerApp::cycleTimeFormat()
   if (timeVariable_ == nullptr)
     return;
   timeVariable_->cycleFormat();
-}
-
-ui::Control* ViewerApp::createHelp_() const
-{
-  // vbox is returned to caller, memory owned by caller
-  ui::VBox* vbox = new ui::VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new ui::LabelControl(TITLE, 20.f, simVis::Color::Yellow));
-  vbox->addControl(new ui::LabelControl(HELP_TEXT, 14, simVis::Color::Silver));
-  // Move it down just a bit
-  vbox->setPosition(10, 10);
-  return vbox;
 }
 
 int ViewerApp::loadGog_(const std::string& filename)

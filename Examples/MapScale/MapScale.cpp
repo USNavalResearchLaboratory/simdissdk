@@ -41,8 +41,6 @@
 
 #define LC "[MapScale demo] "
 
-namespace ui = osgEarth::Util::Controls;
-
 //----------------------------------------------------------------------------
 
 namespace {

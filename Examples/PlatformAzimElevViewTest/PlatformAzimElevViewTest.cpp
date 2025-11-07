@@ -47,9 +47,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
-namespace ui = osgEarth::Util::Controls;
 #endif
 #define LC "[PlatformAzimElevViewTest] "
 
@@ -64,11 +61,6 @@ struct AppData
   osg::ref_ptr<simVis::SceneManager> scene;
   osg::ref_ptr<simVis::ScenarioManager> scenario;
   simData::ObjectId platformId;
-#ifndef HAVE_IMGUI
-  osg::ref_ptr<ui::HSliderControl>      rangeSlider;
-  osg::ref_ptr<ui::CheckBoxControl>     toggleCheck;
-  osg::ref_ptr<ui::HSliderControl>      elevLabelAngle;
-#endif
   osg::ref_ptr<osg::Uniform>            scaleUniform;
 
   AppData() { }
@@ -150,83 +142,6 @@ private:
   float range_ = 150000.f;
   float angle_ = osg::PI_2;
 };
-#else
-struct Toggle : public ui::ControlEventHandler
-{
-  explicit Toggle(AppData& app) : a(app) { }
-  AppData& a;
-  void onValueChanged(ui::Control* c, bool value)
-  {
-    if (value)
-    {
-      a.scenario->addTool(a.azimElevView.get());
-      a.view->tetherCamera(a.scenario->find<simVis::PlatformNode>(a.platformId));
-      a.view->setFocalOffsets(0.0, -90.0, a.azimElevView->getRange() * 7.0);
-      a.view->enableOverheadMode(true);
-      a.view->enableOrthographic(true);
-    }
-    else
-    {
-      a.scenario->removeTool(a.azimElevView.get());
-      a.view->setFocalOffsets(0.0, -35.0, a.azimElevView->getRange() * 7.0);
-      a.view->enableOverheadMode(false);
-      a.view->enableOrthographic(false);
-    }
-  }
-};
-
-struct SetRange : public ui::ControlEventHandler
-{
-  explicit SetRange(AppData& app) : a(app) {}
-  AppData& a;
-  void onValueChanged(ui::Control* c, double value)
-  {
-    a.azimElevView->setRange(value);
-  }
-};
-
-struct SetElevLabelAngle : public ui::ControlEventHandler
-{
-  explicit SetElevLabelAngle(AppData& app) : a(app) {}
-  AppData& a;
-  void onValueChanged(ui::Control* c, double value)
-  {
-    a.azimElevView->setElevLabelAngle(value);
-  }
-};
-
-//----------------------------------------------------------------------------
-
-ui::Control* createUI(AppData& app)
-{
-  ui::VBox* top = new ui::VBox();
-  top->setAbsorbEvents(true);
-  top->setMargin(ui::Gutter(5.0f));
-  top->setBackColor(osg::Vec4(0, 0, 0, 0.5));
-  top->addControl(new ui::LabelControl("Platform Azim/Elev View - Test App", 22.0f, simVis::Color::Yellow));
-
-  int c=0, r=0;
-  osg::ref_ptr<ui::Grid> grid = top->addControl(new ui::Grid());
-  grid->setChildSpacing(5.0f);
-
-  grid->setControl(c, r, new ui::LabelControl("ON/OFF:"));
-  app.toggleCheck = grid->setControl(c+1, r, new ui::CheckBoxControl(false, new Toggle(app)));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Range:"));
-  app.rangeSlider = grid->setControl(c+1, r, new ui::HSliderControl(40000, 225000, 150000, new SetRange(app)));
-  grid->setControl(c+2, r, new ui::LabelControl(app.rangeSlider.get()));
-
-  r++;
-  grid->setControl(c, r, new ui::LabelControl("Label Angle:"));
-  app.elevLabelAngle = grid->setControl(c+1, r, new ui::HSliderControl(0.0f, osg::PI*2.0, osg::PI_2, new SetElevLabelAngle(app)));
-  grid->setControl(c+2, r, new ui::LabelControl(app.elevLabelAngle.get()));
-
-  // force a width.
-  app.rangeSlider->setHorizFill(true, 200);
-
-  return top;
-}
 #endif
 
 //----------------------------------------------------------------------------
@@ -434,13 +349,9 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
-  if (view.valid())
-  {
-#else
-  if (view.valid())
-  {
-    view->addOverlayControl(createUI(app));
 #endif
+  if (view.valid())
+  {
     view->setLighting(false);
 
     // zoom the camera

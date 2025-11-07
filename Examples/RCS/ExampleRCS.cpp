@@ -52,8 +52,6 @@ using namespace osgEarth::Util;
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-using namespace osgEarth::Util::Controls;
 #endif
 
 //----------------------------------------------------------------------------
@@ -73,14 +71,6 @@ struct AppData
   float freq = 7000.f;
   float elev = 45.f;
   float detail = 5.;
-#else
-  osg::ref_ptr<CheckBoxControl>  draw2D;
-  osg::ref_ptr<CheckBoxControl>  draw3D;
-  osg::ref_ptr<HSliderControl>   polarity;
-  osg::ref_ptr<HSliderControl>   frequency;
-  osg::ref_ptr<HSliderControl>   elevation;
-  osg::ref_ptr<HSliderControl>   detail;
-  osg::ref_ptr<LabelControl>     polarityLabel;
 #endif
 
   void applyPrefs()
@@ -95,15 +85,6 @@ struct AppData
       prefs->set_rcselevation(elev);
       prefs->set_rcsfrequency(freq);
       prefs->set_rcspolarity(polarity);
-#else
-      unsigned polarityIndex = (unsigned)floor(polarity->getValue());
-      prefs->set_drawrcs(draw2D->getValue());
-      prefs->set_draw3drcs(draw3D->getValue());
-      prefs->set_rcsdetail(detail->getValue());
-      prefs->set_rcselevation(elevation->getValue());
-      prefs->set_rcsfrequency(frequency->getValue());
-      prefs->set_rcspolarity((simData::Polarity)polarityIndex);
-      polarityLabel->setText(simCore::polarityString((simCore::PolarityType)polarityIndex));
 #endif
     }
     xaction.complete(&prefs);
@@ -203,66 +184,6 @@ public:
 private:
   AppData& app_;
 };
-#else
-struct ApplyUI : public ControlEventHandler
-{
-  explicit ApplyUI(AppData* app) : app_(app) { }
-  AppData* app_;
-  void onValueChanged(Control* c, bool value) { app_->applyPrefs(); }
-  void onValueChanged(Control* c, float value) { app_->applyPrefs(); }
-  void onValueChanged(Control* c, double value) { onValueChanged(c, (float)value); }
-};
-
-
-Control* createUI(AppData* app)
-{
-  VBox* vbox = new VBox();
-  vbox->setAbsorbEvents(true);
-  vbox->setVertAlign(Control::ALIGN_TOP);
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->addControl(new LabelControl(s_title, 20.f, simVis::Color::Yellow));
-
-  // sensor parameters
-  osg::ref_ptr<ApplyUI> applyUI = new ApplyUI(app);
-
-  osg::ref_ptr<Grid> g = vbox->addControl(new Grid());
-  unsigned row=0, col=0;
-
-  row++;
-  app->draw2D = g->setControl(col, row, new CheckBoxControl(true, applyUI.get()));
-  g->setControl(col+1, row, new LabelControl("Draw 2D RCS"));
-
-  row++;
-  app->draw3D = g->setControl(col, row, new CheckBoxControl(true, applyUI.get()));
-  g->setControl(col+1, row, new LabelControl("Draw 3D RCS"));
-
-  row++;
-  g->setControl(col, row, new LabelControl("Polarity"));
-  app->polarity = g->setControl(col+1, row, new HSliderControl(0.0, 9.0, 0.0, applyUI.get()));
-  app->polarity->setHorizFill(true, 250.0);
-  app->polarityLabel = g->setControl(col+2, row, new LabelControl());
-
-  row++;
-  g->setControl(col, row, new LabelControl("Frequency"));
-  app->frequency = g->setControl(col+1, row, new HSliderControl(0.0, 10000.0, 7000.0, applyUI.get()));
-  g->setControl(col+2, row, new LabelControl(app->frequency.get()));
-  app->frequency->setHorizFill(true, 250.0);
-
-  row++;
-  g->setControl(col, row, new LabelControl("Elevation"));
-  app->elevation = g->setControl(col+1, row, new HSliderControl(0.0, 90.0, 45.0, applyUI.get()));
-  g->setControl(col+2, row, new LabelControl(app->elevation.get()));
-  app->elevation->setHorizFill(true, 250.0);
-
-  row++;
-  g->setControl(col, row, new LabelControl("Detail angle"));
-  app->detail = g->setControl(col+1, row, new HSliderControl(1.0, 15.0, 5.0, applyUI.get()));
-  g->setControl(col+2, row, new LabelControl(app->detail.get()));
-  app->detail->setHorizFill(true, 250.0);
-
-  return vbox;
-}
 #endif
 
 //----------------------------------------------------------------------------
@@ -332,9 +253,6 @@ int main(int argc, char **argv)
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
-#else
-  // install the GUI
-  viewer->getMainView()->addOverlayControl(createUI(&app));
 #endif
 
   // Create the platform:

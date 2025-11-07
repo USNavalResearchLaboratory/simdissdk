@@ -48,8 +48,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
 #endif
 //----------------------------------------------------------------------------
 
@@ -90,14 +88,6 @@ namespace
     float rangeMax = INIT_RANGE_MAX;
     float rangeRes = INIT_RANGE_RES;
     std::string p2pResult;
-#else
-    osg::ref_ptr<HSliderControl> altitude;
-    osg::ref_ptr<HSliderControl> azim_center;
-    osg::ref_ptr<HSliderControl> fov;
-    osg::ref_ptr<HSliderControl> azim_res;
-    osg::ref_ptr<HSliderControl> range_max;
-    osg::ref_ptr<HSliderControl> range_res;
-    osg::ref_ptr<LabelControl>   p2p_result;
 #endif
 
     osg::observer_ptr<simVis::RadialLOSNode> los;
@@ -115,12 +105,6 @@ namespace
       data.setAzimuthalResolution(osgEarth::Angle(azimRes, osgEarth::Units::DEGREES));
       data.setMaxRange(osgEarth::Distance(rangeMax, osgEarth::Units::KILOMETERS));
       data.setRangeResolution(osgEarth::Distance(rangeRes, osgEarth::Units::KILOMETERS));
-#else
-      data.setCentralAzimuth(osgEarth::Angle(azim_center->getValue(), osgEarth::Units::DEGREES));
-      data.setFieldOfView(osgEarth::Angle(fov->getValue(), osgEarth::Units::DEGREES));
-      data.setAzimuthalResolution(osgEarth::Angle(azim_res->getValue(), osgEarth::Units::DEGREES));
-      data.setMaxRange(osgEarth::Distance(range_max->getValue(), osgEarth::Units::KILOMETERS));
-      data.setRangeResolution(osgEarth::Distance(range_res->getValue(), osgEarth::Units::KILOMETERS));
 #endif
 
       los->setDataModel(data);
@@ -133,17 +117,6 @@ namespace
           simCore::Vec3(RLOS_LAT * simCore::DEG2RAD, RLOS_LON * simCore::DEG2RAD, alt)));
       }
       p2pResult.clear();
-#else
-      if (altitude->getValue() != los->getCoordinate().alt())
-      {
-        los->setCoordinate(simCore::Coordinate(
-          simCore::COORD_SYS_LLA,
-          simCore::Vec3(RLOS_LAT*simCore::DEG2RAD, RLOS_LON*simCore::DEG2RAD, altitude->getValue())));
-      }
-
-      p2p_result->setText("");
-      if (p2pFeature.valid())
-        p2pFeature->setNodeMask(0);
 #endif
     }
 
@@ -170,8 +143,6 @@ namespace
           {
 #ifdef HAVE_IMGUI
             p2pResult = "visible";
-#else
-            p2p_result->setText("visible");
 #endif
             line->stroke()->color() = simVis::Color::Lime;
           }
@@ -179,8 +150,6 @@ namespace
           {
 #ifdef HAVE_IMGUI
             p2pResult = "obstructed";
-#else
-            p2p_result->setText("obstructed");
 #endif
             line->stroke()->color() = simVis::Color::Red;
           }
@@ -188,16 +157,12 @@ namespace
 #if OSGEARTH_SOVERSION >= 175
           p2pFeature->getFeature()->setStyle(newStyle);
 #endif
-
           p2pFeature->dirty();
         }
         else
         {
 #ifdef HAVE_IMGUI
           p2pResult.clear();
-#else
-          p2pFeature->setNodeMask(0);
-          p2p_result->setText("error");
 #endif
         }
       }
@@ -219,7 +184,7 @@ namespace
 class ControlPanel : public simExamples::SimExamplesGui
 {
 public:
-  ControlPanel(AppData& app)
+  explicit ControlPanel(AppData& app)
     : simExamples::SimExamplesGui(s_title),
     app_(app)
   {
@@ -292,76 +257,6 @@ public:
 private:
   AppData& app_;
 };
-#else
-  using namespace osgEarth::Util::Controls;
-
-  struct ApplyUI : public ControlEventHandler
-  {
-    explicit ApplyUI(AppData* app) : app_(app) { }
-    AppData* app_;
-    void onValueChanged(Control* c, bool value) { app_->apply(); }
-    void onValueChanged(Control* c, float value) { app_->apply(); }
-    void onValueChanged(Control* c, double value) { onValueChanged(c, (float)value); }
-  };
-
-  osgEarth::Util::Controls::Control* createUI(AppData* app)
-  {
-    VBox* vbox = new VBox();
-    vbox->setAbsorbEvents(true);
-    vbox->setVertAlign(Control::ALIGN_TOP);
-    vbox->setPadding(10);
-    vbox->setBackColor(0, 0, 0, 0.4);
-    vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
-
-    osg::ref_ptr<ApplyUI> applyUI = new ApplyUI(app);
-
-    osg::ref_ptr<Grid> g = vbox->addControl(new Grid());
-    unsigned row=0, col=0;
-
-    row++;
-    g->setControl(col, row, new LabelControl("Altitude MSL"));
-    app->altitude = g->setControl(col+1, row, new HSliderControl(0.0, 1000.0, INIT_ALT, applyUI.get()));
-    g->setControl(col+2, row, new LabelControl(app->altitude.get()));
-    g->setControl(col+3, row, new LabelControl("m"));
-    app->altitude->setHorizFill(true, 250.0);
-
-    row++;
-    g->setControl(col, row, new LabelControl("Central azimuth"));
-    app->azim_center = g->setControl(col+1, row, new HSliderControl(-180.0, 180.0, INIT_AZIM, applyUI.get()));
-    g->setControl(col+2, row, new LabelControl(app->azim_center.get()));
-    g->setControl(col+3, row, new LabelControl("deg"));
-
-    row++;
-    g->setControl(col, row, new LabelControl("Field of view"));
-    app->fov = g->setControl(col+1, row, new HSliderControl(10.0, 360.0, INIT_FOV, applyUI.get()));
-    g->setControl(col+2, row, new LabelControl(app->fov.get()));
-    g->setControl(col+3, row, new LabelControl("deg"));
-
-    row++;
-    g->setControl(col, row, new LabelControl("Azimuth resolution"));
-    app->azim_res = g->setControl(col+1, row, new HSliderControl(1.0, 40.0, INIT_AZIM_RES, applyUI.get()));
-    g->setControl(col+2, row, new LabelControl(app->azim_res.get()));
-    g->setControl(col+3, row, new LabelControl("deg"));
-
-    row++;
-    g->setControl(col, row, new LabelControl("Max range"));
-    app->range_max = g->setControl(col+1, row, new HSliderControl(1.0, 50.0, INIT_RANGE_MAX, applyUI.get()));
-    g->setControl(col+2, row, new LabelControl(app->range_max.get()));
-    g->setControl(col+3, row, new LabelControl("km"));
-
-    row++;
-    g->setControl(col, row, new LabelControl("Range resolution"));
-    app->range_res = g->setControl(col+1, row, new HSliderControl(0.5, 5.0, INIT_RANGE_RES, applyUI.get()));
-    g->setControl(col+2, row, new LabelControl(app->range_res.get()));
-    g->setControl(col+3, row, new LabelControl("km"));
-
-    vbox->addControl(new LabelControl("Drag the sphere to test point-to-point LOS."));
-    osg::ref_ptr<HBox> resultBox = vbox->addControl(new HBox());
-    resultBox->addControl(new LabelControl("P2P result:"));
-    app->p2p_result = resultBox->addControl(new LabelControl(""));
-
-    return vbox;
-  }
 #endif
 
 #if OSGEARTH_SOVERSION < 173
@@ -465,11 +360,6 @@ int main(int argc, char **argv)
 
   // Application data:
   AppData app;
-
-#ifndef HAVE_IMGUI
-  // Install the UI:
-  viewer->getMainView()->addOverlayControl(createUI(&app));
-#endif
 
   // Initialize the LOS:
   osg::observer_ptr<simVis::SceneManager> scene = viewer->getSceneManager();

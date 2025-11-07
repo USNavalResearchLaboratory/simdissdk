@@ -382,19 +382,6 @@ namespace
     optional<SilverLining::CloudTypes> addCloud_;
   };
   osg::ref_ptr<CloudManager> s_CloudManager = new CloudManager;
-
-  /** Control handler that on click will add a specific cloud type */
-  struct AddCloudType : public osgEarth::Util::Controls::ControlEventHandler
-  {
-    SilverLining::CloudTypes cloudType_;
-    explicit AddCloudType(SilverLining::CloudTypes cloudType) : cloudType_(cloudType) {}
-    void onClick(osgEarth::Util::Controls::Control*) { s_CloudManager->addCloudType(cloudType_); }
-  };
-  /** Control handler that on click will remove all clouds */
-  struct ClearClouds : public osgEarth::Util::Controls::ControlEventHandler
-  {
-    void onClick(osgEarth::Util::Controls::Control*) { s_CloudManager->clearClouds(); }
-  };
 #endif
 
 #ifdef HAVE_IMGUI

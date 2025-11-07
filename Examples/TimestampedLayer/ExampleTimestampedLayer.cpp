@@ -35,9 +35,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
-namespace ui = osgEarth::Util::Controls;
 #endif
 
 
@@ -51,12 +48,6 @@ struct App
       now_(0)
   {
   }
-
-#ifndef HAVE_IMGUI
-  // UI controls
-  ui::HSliderControl* timeSlider_ = nullptr;
-  ui::LabelControl* clockLabel_ = nullptr;
-#endif
 
   std::string timeLabel_;
 
@@ -83,11 +74,6 @@ struct App
     osgEarth::DateTime dt(t);
 
     timeLabel_ = dt.asISO8601();
-
-#ifndef HAVE_IMGUI
-    timeSlider_->setValue(t, false);
-    clockLabel_->setText(timeLabel_);
-#endif
 
     // Make the appropriate layer visible.
     LayerTable::const_iterator i = layers_.lower_bound(t);
@@ -153,47 +139,6 @@ public:
 private:
   App& app_;
 };
-
-#else
-
-// Callback to set the current clock using the slider
-struct ChangeTime : public ui::ControlEventHandler
-{
-  App& app_;
-  explicit ChangeTime(App& app)
-    : app_(app)
-  {
-  }
-  void onValueChanged(ui::Control* control, float value)
-  {
-    app_.setTime(value);
-  }
-};
-
-// Builds a UI to control the clock
-ui::Control* createUI(App& app)
-{
-  ui::Grid* grid = new ui::Grid();
-  grid->setPadding(10);
-  grid->setBackColor(0, 0, 0, 0.6);
-  int row = 0;
-
-  // The time slider
-  grid->setControl(0, row, new ui::LabelControl("Time:"));
-  app.timeSlider_ = grid->setControl(1, row, new ui::HSliderControl(
-    app.firstTime_, app.lastTime_, app.firstTime_,
-    new ChangeTime(app)));
-  ++row;
-
-  // The clock label
-  grid->setControl(0, row, new ui::LabelControl("Clock:"));
-  app.clockLabel_ = grid->setControl(1, row, new ui::LabelControl());
-  ++row;
-
-  app.timeSlider_->setHorizFill(true, 400.f);
-
-  return grid;
-}
 
 #endif
 
@@ -309,9 +254,6 @@ int main(int argc, char** argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
-#else
-  // Install the time slider UI:
-  viewer->getMainView()->addOverlayControl(createUI(app));
 #endif
 
   // Set the initial time to the time of the first timestamped layer:
