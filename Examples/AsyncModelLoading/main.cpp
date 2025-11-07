@@ -50,8 +50,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-using namespace osgEarth::Util::Controls;
 #endif
 
 /// Icon to use to trigger box mode
@@ -63,22 +61,12 @@ static const std::string NOT_FOUND_ICON = "does/not/exist.flt";
 class RoundTripAsyncTimer : public simVis::ReplaceChildReadyCallback
 {
 public:
-
-#ifdef HAVE_IMGUI
   RoundTripAsyncTimer(std::string& str, osg::Group* parent)
     : ReplaceChildReadyCallback(parent),
     str_(str)
   {
     str_ = "N/A";
   }
-#else
-  RoundTripAsyncTimer(LabelControl* label, osg::Group* parent)
-    : ReplaceChildReadyCallback(parent),
-    label_(label)
-  {
-    label_->setText("N/A");
-  }
-#endif
 
   virtual void loadFinished(const osg::ref_ptr<osg::Node>& model, bool isImage, const std::string& filename)
   {
@@ -87,19 +75,11 @@ public:
 
     std::stringstream ss;
     ss << timer_.elapsedTime_m() << " ms";
-#ifdef HAVE_IMGUI
     str_ = ss.str();
-#else
-    label_->setText(ss.str());
-#endif
   }
 
 private:
-#ifdef HAVE_IMGUI
   std::string& str_;
-#else
-  osg::ref_ptr<LabelControl> label_;
-#endif
   osg::ElapsedTime timer_;
 };
 
@@ -121,19 +101,6 @@ struct App
   std::string asyncTimerStr = "N/A";
   std::string asyncRoundTripStr = "N/A";
   std::string syncTimerStr = "N/A";
-#else
-  /// Various timing labels
-  osg::ref_ptr<LabelControl> timingEntity;
-  osg::ref_ptr<LabelControl> timingAsync;
-  osg::ref_ptr<LabelControl> roundTripAsync;
-  osg::ref_ptr<LabelControl> timingSync;
-  /// Contains all controls
-  osg::ref_ptr<Control> helpBox;
-
-  /// Labels of the different files to load for each load type
-  std::vector<osg::ref_ptr<LabelControl> > entityLabels;
-  std::vector<osg::ref_ptr<LabelControl> > asyncLabels;
-  std::vector<osg::ref_ptr<LabelControl> > syncLabels;
 #endif
 
   simData::DataStore* dataStore;
@@ -297,203 +264,6 @@ private:
   CurrentIcon currentAsync_ = MISSILE;
   CurrentIcon currentSync_ = MISSILE;
 };
-
-#else
-//----------------------------------------------------------------------------
-/** Changes the icon name of a platform entity */
-struct EntitySetter : public ControlEventHandler
-{
-  EntitySetter(const App& app, const std::string& filename)
-    : app_(app),
-      filename_(filename)
-  {
-  }
-
-  virtual void onClick(Control* control)
-  {
-    for (auto i = app_.entityLabels.begin(); i != app_.entityLabels.end(); ++i)
-      (*i)->setForeColor(simVis::Color::White);
-    control->setForeColor(simVis::Color::Lime);
-
-    // Change the icon name in the prefs
-    osg::ElapsedTime timer;
-    simData::DataStore::Transaction txn;
-    auto* prefs = app_.dataStore->mutable_platformPrefs(app_.platId, &txn);
-    prefs->set_icon(filename_);
-    txn.complete(&prefs);
-
-    // Report the elapsed time for transaction completion
-    std::stringstream ss;
-    ss << timer.elapsedTime_m() << " ms";
-    app_.timingEntity->setText(ss.str());
-  }
-
-  const App& app_;
-  std::string filename_;
-};
-
-//----------------------------------------------------------------------------
-/** Changes the icon asynchronously on a node */
-struct AsyncSetter : public ControlEventHandler
-{
-  AsyncSetter(const App& app, const std::string& filename)
-    : app_(app),
-      filename_(filename)
-  {
-  }
-
-  virtual void onClick(Control* control)
-  {
-    for (auto i = app_.asyncLabels.begin(); i != app_.asyncLabels.end(); ++i)
-      (*i)->setForeColor(simVis::Color::White);
-    control->setForeColor(simVis::Color::Lime);
-
-    osg::ElapsedTime timer;
-    simVis::Registry* reg = simVis::Registry::instance();
-    simVis::ModelCache* cache = reg->modelCache();
-    cache->asyncLoad(reg->findModelFile(filename_), new RoundTripAsyncTimer(app_.roundTripAsync.get(), app_.asyncNode.get()));
-
-    // Report the elapsed time for loading completion
-    std::stringstream ss;
-    ss << timer.elapsedTime_m() << " ms";
-    app_.timingAsync->setText(ss.str());
-  }
-
-  const App& app_;
-  std::string filename_;
-};
-
-//----------------------------------------------------------------------------
-/** Changes the icon synchronously on a node */
-struct SyncSetter : public ControlEventHandler
-{
-  SyncSetter(const App& app, const std::string& filename)
-    : app_(app),
-      filename_(filename)
-  {
-  }
-
-  virtual void onClick(Control* control)
-  {
-    for (auto i = app_.syncLabels.begin(); i != app_.syncLabels.end(); ++i)
-      (*i)->setForeColor(simVis::Color::White);
-    control->setForeColor(simVis::Color::Lime);
-
-    osg::ElapsedTime timer;
-
-    simVis::Registry* reg = simVis::Registry::instance();
-    osg::ref_ptr<osg::Node> newModel = reg->getOrCreateIconModel(filename_);
-    // If the new model is not valid, then show a box.  Note that the registry does not do
-    // this for us automatically, although it does for the asynchronous load.  This difference
-    // is due to backwards compatibility concerns combined with circumstances in the ProxyNode
-    // implementation that encourage use of a placeholder on failure.
-    if (!newModel.valid())
-    {
-      osg::Geode* geode = new osg::Geode();
-      geode->addDrawable(new osg::ShapeDrawable(new osg::Box()));
-      newModel = geode;
-    }
-
-    app_.syncNode->removeChildren(0, app_.syncNode->getNumChildren());
-    app_.syncNode->addChild(newModel.get());
-
-    // Report the elapsed time for loading completion
-    std::stringstream ss;
-    ss << timer.elapsedTime_m() << " ms";
-    app_.timingSync->setText(ss.str());
-  }
-
-  const App& app_;
-  std::string filename_;
-};
-
-//----------------------------------------------------------------------------
-/** Clears the model cache when clicked */
-struct ClearCacheHandler : public ControlEventHandler
-{
-  virtual void onClick(Control* control)
-  {
-    simVis::Registry::instance()->clearModelCache();
-  }
-};
-
-//----------------------------------------------------------------------------
-LabelControl* addEntityLabel(App& app, const std::string& text, const simVis::Color& color, const std::string& filename)
-{
-  LabelControl* c = new LabelControl(text, 14, color);
-  c->addEventHandler(new EntitySetter(app, filename));
-  app.entityLabels.push_back(c);
-  return c;
-}
-
-LabelControl* addAsyncLabel(App& app, const std::string& text, const simVis::Color& color, const std::string& filename)
-{
-  LabelControl* c = new LabelControl(text, 14, color);
-  c->addEventHandler(new AsyncSetter(app, filename));
-  app.asyncLabels.push_back(c);
-  return c;
-}
-
-LabelControl* addSyncLabel(App& app, const std::string& text, const simVis::Color& color, const std::string& filename)
-{
-  LabelControl* c = new LabelControl(text, 14, color);
-  c->addEventHandler(new SyncSetter(app, filename));
-  app.syncLabels.push_back(c);
-  return c;
-}
-
-/// create an overlay with some helpful information
-Control* createHelp(App& app)
-{
-  VBox* vbox = new VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->setMargin(10);
-  vbox->setVertAlign(Control::ALIGN_BOTTOM);
-
-  vbox->addControl(new LabelControl("Asynchronous Loading Node Example", 20, simVis::Color::Yellow));
-  vbox->addControl(new LabelControl("c: Center Next", 14.f, simVis::Color::Silver));
-
-  Grid* iconGrid = vbox->addControl(new Grid);
-  iconGrid->setControl(0, 0, new LabelControl("Platform:", simVis::Color::Silver, 14.f));
-  iconGrid->setControl(1, 0, addEntityLabel(app, "Image", simVis::Color::White, EXAMPLE_IMAGE_ICON));
-  iconGrid->setControl(2, 0, addEntityLabel(app, "Missile", simVis::Color::Lime, EXAMPLE_MISSILE_ICON));
-  iconGrid->setControl(3, 0, addEntityLabel(app, "Tank", simVis::Color::White, EXAMPLE_TANK_ICON));
-  iconGrid->setControl(4, 0, addEntityLabel(app, "Not-Found", simVis::Color::White, NOT_FOUND_ICON));
-
-  iconGrid->setControl(0, 1, new LabelControl("Asynchronous:", simVis::Color::Silver, 14.f));
-  iconGrid->setControl(1, 1, addAsyncLabel(app, "Image", simVis::Color::White, EXAMPLE_IMAGE_ICON));
-  iconGrid->setControl(2, 1, addAsyncLabel(app, "Missile", simVis::Color::Lime, EXAMPLE_MISSILE_ICON));
-  iconGrid->setControl(3, 1, addAsyncLabel(app, "Tank", simVis::Color::White, EXAMPLE_TANK_ICON));
-  iconGrid->setControl(4, 1, addAsyncLabel(app, "Not-Found", simVis::Color::White, NOT_FOUND_ICON));
-
-  iconGrid->setControl(0, 2, new LabelControl("Synchronous:", simVis::Color::Silver, 14.f));
-  iconGrid->setControl(1, 2, addSyncLabel(app, "Image", simVis::Color::White, EXAMPLE_IMAGE_ICON));
-  iconGrid->setControl(2, 2, addSyncLabel(app, "Missile", simVis::Color::Lime, EXAMPLE_MISSILE_ICON));
-  iconGrid->setControl(3, 2, addSyncLabel(app, "Tank", simVis::Color::White, EXAMPLE_TANK_ICON));
-  iconGrid->setControl(4, 2, addSyncLabel(app, "Not-Found", simVis::Color::White, NOT_FOUND_ICON));
-
-  auto* clearButton = vbox->addControl(new ButtonControl("Clear Cache", new ClearCacheHandler));
-  clearButton->setFontSize(14.f);
-
-  LabelControl* timingLabel = vbox->addControl(new LabelControl("Timing", 16.f, simVis::Color::Yellow));
-  timingLabel->setMargin(Control::SIDE_TOP, 10.f);
-
-  Grid* timingGrid = vbox->addControl(new Grid);
-  timingGrid->setControl(0, 0, new LabelControl("Platform:", 14.f, simVis::Color::Silver));
-  app.timingEntity = timingGrid->setControl(1, 0, new LabelControl("N/A", 14.f, simVis::Color::Silver));
-
-  timingGrid->setControl(0, 1, new LabelControl("Asynchronous:", 14.f, simVis::Color::Silver));
-  app.timingAsync = timingGrid->setControl(1, 1, new LabelControl("N/A", 14.f, simVis::Color::Silver));
-  timingGrid->setControl(0, 2, new LabelControl("Async Round-Trip:", 14.f, simVis::Color::Silver));
-  app.roundTripAsync = timingGrid->setControl(1, 2, new LabelControl("N/A", 14.f, simVis::Color::Silver));
-
-  timingGrid->setControl(0, 3, new LabelControl("Synchronous:", 14.f, simVis::Color::Silver));
-  app.timingSync = timingGrid->setControl(1, 3, new LabelControl("N/A", 14.f, simVis::Color::Silver));
-
-  app.helpBox = vbox;
-  return vbox;
-}
 #endif
 
 //----------------------------------------------------------------------------
@@ -511,11 +281,6 @@ struct MenuHandler : public osgGA::GUIEventHandler
     {
       switch (ea.getKey())
       {
-#ifndef HAVE_IMGUI
-      case '?': // toggle help
-        app_.helpBox->setVisible(!app_.helpBox->visible());
-        return true;
-#endif
       case 'c':
         tetherNext_();
         return true;
@@ -663,9 +428,6 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
-#else
-  // show the instructions overlay
-  app.mainView->addOverlayControl(createHelp(app));
 #endif
 
   // add some stock OSG handlers

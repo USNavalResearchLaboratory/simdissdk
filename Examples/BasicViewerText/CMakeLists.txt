@@ -14,4 +14,10 @@ set_target_properties(example_basicviewertext PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Basic Viewer Text"
 )
+
+if (TARGET ImGuiLib)
+    target_link_libraries(example_basicviewertext PRIVATE ImGuiLib)
+    target_compile_definitions(example_basicviewertext PRIVATE HAVE_IMGUI)
+endif()
+
 vsi_install_target(example_basicviewertext SDK_Examples)

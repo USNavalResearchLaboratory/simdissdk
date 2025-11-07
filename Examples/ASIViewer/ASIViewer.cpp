@@ -54,9 +54,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
-namespace ui = osgEarth::Util::Controls;
 #endif
 
 //----------------------------------------------------------------------------
@@ -155,12 +152,6 @@ double timeFromString(std::string t, int referenceYear)
 //----------------------------------------------------------------------------
 struct AppData
 {
-#ifndef HAVE_IMGUI
-  osg::ref_ptr<ui::HSliderControl> timeSlider_;
-  osg::ref_ptr<ui::CheckBoxControl> playCheck_;
-  osg::ref_ptr<ui::CheckBoxControl> overheadMode_;
-  osg::ref_ptr<ui::LabelControl> timeReadout_;
-#endif
   simData::DataStore *ds_;
   simVis::View* view_;
   double startTime_;
@@ -185,20 +176,10 @@ struct AppData
 
   void apply()
   {
-#ifndef HAVE_IMGUI
-    lastTime_ = timeSlider_->getValue();
-#endif
     ds_->update(lastTime_);
     updateTimeReadout_();
   }
 
-  void applyToggles()
-  {
-#ifndef HAVE_IMGUI
-    playing_ = playCheck_->getValue();
-    view_->enableOverheadMode(overheadMode_->getValue());
-#endif
-  }
 
   void tetherNext()
   {
@@ -231,10 +212,6 @@ struct AppData
       ds_->update(t);
       lastTime_ = t;
       updateTimeReadout_();
-
-#ifndef HAVE_IMGUI
-      timeSlider_->setValue(lastTime_, false);
-#endif
     }
   }
 
@@ -242,10 +219,6 @@ struct AppData
   {
     osgEarth::DateTime now = refDateTime_ + (lastTime_ / 3600.0);
     nowTimeStr_ = now.asRFC1123();
-
-#ifndef HAVE_IMGUI
-    timeReadout_->setText(nowTimeStr_);
-#endif
   }
 };
 
@@ -947,58 +920,6 @@ public:
 private:
   AppData& app_;
 };
-#else
-struct ApplyUI : public ui::ControlEventHandler
-{
-  explicit ApplyUI(AppData* app): app_(app) {}
-  AppData* app_;
-  void onValueChanged(ui::Control* c, bool value) { app_->applyToggles(); }
-  void onValueChanged(ui::Control* c, float value) { app_->apply(); }
-  void onValueChanged(ui::Control* c, double value) { onValueChanged(c, (float)value); }
-};
-
-struct TetherNext : public ui::ControlEventHandler
-{
-    explicit TetherNext(AppData* app) : app_(app) {}
-    AppData* app_;
-    void onClick(ui::Control* c) { app_->tetherNext(); }
-};
-
-ui::Control* createUI(AppData& app)
-{
-  osg::ref_ptr<ApplyUI> applyUI = new ApplyUI(&app);
-
-  ui::VBox* top = new ui::VBox();
-  top->setAbsorbEvents(true);
-  top->setMargin(ui::Gutter(5.0f));
-  top->setBackColor(osg::Vec4(0, 0, 0, 0.5));
-  top->addControl(new ui::LabelControl("ASI Simple Viewer", 22.0f, simVis::Color::Yellow));
-
-  int c=0, r=0;
-  osg::ref_ptr<ui::Grid> grid = top->addControl(new ui::Grid());
-  grid->setChildSpacing(5.0f);
-
-  // note that the slider control uses float, so seconds since 1970 will cause it to lose precision
-  grid->setControl(c, r, new ui::LabelControl("Time:"));
-  app.timeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(app.startTime_, app.endTime_, app.startTime_, applyUI.get()));
-  app.timeSlider_->setHorizFill(true, 700);
-
-  ++r;
-  app.timeReadout_ = grid->setControl(c+1, r, new ui::LabelControl());
-
-  ++r;
-  grid->setControl(c, r, new ui::LabelControl("Playing:"));
-  app.playCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(app.playing_, applyUI.get()));
-
-  ++r;
-  grid->setControl(c, r, new ui::LabelControl("Overhead:"));
-  app.overheadMode_ = grid->setControl(c + 1, r, new ui::CheckBoxControl(false, applyUI.get()));
-
-  ++r;
-  grid->setControl(c, r, new ui::ButtonControl("Tether Next", new TetherNext(&app)));
-
-  return top;
-}
 #endif
 
 //----------------------------------------------------------------------------
@@ -1051,8 +972,6 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
-#else
-  viewer->getMainView()->addOverlayControl(createUI(app));
 #endif
   app.apply();
 
