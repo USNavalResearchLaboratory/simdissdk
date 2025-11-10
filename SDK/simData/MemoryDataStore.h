@@ -86,6 +86,7 @@ public:
 
   /// flush all the updates, command, category data and generic data for the specified id,
   /// if 0 is passed in flushes the entire scenario, except for static entities
+  [[deprecated("Use flush(ObjectId, FlushScope, FlushFields) instead.")]]
   virtual void flush(ObjectId flushId, FlushType type = NON_RECURSIVE) override;
 
   /** Removes all the specified data */

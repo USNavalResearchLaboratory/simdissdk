@@ -168,7 +168,7 @@ int testEntityCollection()
   rv += SDK_ASSERT(p3Times.count(4.0) != 0);
 
   // Do a single flush on one platform; still in the same frame as last time
-  ds->flush(plat1);
+  ds->flush(plat1, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_ALL);
   // .. so we should have one flush and one empty set of times on plat1
   rv += SDK_ASSERT(timeCollector->getTimes(plat1).empty());
   rv += SDK_ASSERT(timeCollector->getTimes(plat2).size() == 2);
@@ -182,7 +182,7 @@ int testEntityCollection()
   helper.addPlatformUpdate(4.1, plat1);
   helper.addPlatformUpdate(4.2, plat2);
   helper.addPlatformUpdate(4.3, plat3);
-  ds->flush(plat2);
+  ds->flush(plat2, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_ALL);
   helper.addPlatformUpdate(4.5, plat1);
   helper.addPlatformUpdate(4.6, plat2);
   helper.addPlatformUpdate(4.7, plat3);
@@ -207,7 +207,7 @@ int testEntityCollection()
   // New frame, flush everything
   timeCollector->clear();
   helper.addPlatformUpdate(5.3, plat3);
-  ds->flush(0);
+  ds->flush(0, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL);
   rv += SDK_ASSERT(timeCollector->getTimes(plat1).empty());
   rv += SDK_ASSERT(timeCollector->getTimes(plat2).empty());
   rv += SDK_ASSERT(timeCollector->getTimes(plat3).empty());
@@ -346,7 +346,7 @@ int testDataTableCollection()
   rv += SDK_ASSERT(col2_1->getTimeRange(begin, end) != 0);
 
   // Execute a flush on the data and make sure things are good still
-  ds->flush(0);
+  ds->flush(0, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL);
   rv += SDK_ASSERT(timeCollector->getTimes(plat1).empty());
   rv += SDK_ASSERT(timeCollector->getTimes(plat2).empty());
   rv += SDK_ASSERT(timeCollector->getTimes(0).empty());

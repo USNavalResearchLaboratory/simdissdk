@@ -379,6 +379,7 @@ public: // methods
    * flush all the updates, command, category data and generic data for the specified id,
    * if 0 is passed in flushes the entire scenario, except for static entities
    */
+  [[deprecated("Use flush(ObjectId, FlushScope, FlushFields) instead.")]]
   virtual void flush(ObjectId flushId, FlushType type = NON_RECURSIVE) = 0;
 
   /// The scope of the flush
@@ -399,7 +400,10 @@ public: // methods
 
     FLUSH_EXCLUDE_MINUS_ONE = 0x80000000, ///< Keep data with time tag of -1, applies only to platform updates and category data
 
-    FLUSH_ALL = 0x000FFFFF
+    FLUSH_ALL = 0x000FFFFF,
+
+    /// Common: flush all, but exclude static / -1 values
+    FLUSH_ALL_EXCLUDE_MINUS_ONE = FLUSH_ALL | FLUSH_EXCLUDE_MINUS_ONE,
   };
 
   /** Removes all the specified data */
