@@ -204,6 +204,10 @@ public:
     optimizeFlags = osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS |
       osgUtil::Optimizer::VERTEX_POSTTRANSFORM |
       osgUtil::Optimizer::INDEX_MESH;
+    // SIM-18919: Do not combine adjacent LODs, else they get renamed and reordered, which
+    // can cause problems e.g. with transparency and railings with in-order rendering.
+    optimizeFlags = optimizeFlags &
+      (~osgUtil::Optimizer::COMBINE_ADJACENT_LODS);
   }
 
   /** OSG Copy constructor; required for use with database pager options. */
