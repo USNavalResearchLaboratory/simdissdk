@@ -527,6 +527,13 @@ DockWidget::~DockWidget()
 
 void DockWidget::init_()
 {
+  // QTBUG-140207: Appears to be mitigated by turning off animations on the main window. This is
+  // a central location in which to do that. Likely also related to QTBUG-141718, QTBUG-141350.
+#if QT_VERSION > QT_VERSION_CHECK(6,8,4) && QT_VERSION < QT_VERSION_CHECK(6,10,1)
+  if (mainWindow_)
+    mainWindow_->setAnimated(false);
+#endif
+
   // SIM-17647: the event filter cannot be a child of the tab bar, must persist for the life of the widget
   // This is because after unloading plug-ins, the QTabBar might still reference the event filter after it has been destroyed
   tabDragFilter_ = new TabDragDropEventFilter(*this);
