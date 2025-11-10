@@ -442,12 +442,14 @@ public:
   * Add an 2D overlay control to this view.
   * @param control 2D control to add
   */
+  [[deprecated("Deprecated, no longer available")]]
   void addOverlayControl(osgEarth::Util::Controls::Control *control);
 
   /**
   * Remove a 2D overlay control from this view.
   * @param control 2D control to remove
   */
+  [[deprecated("Deprecated, no longer available")]]
   void removeOverlayControl(osgEarth::Util::Controls::Control *control);
 
   /**
@@ -456,12 +458,14 @@ public:
   * @param location Georeferenced location of this control
   * @param priority Priority of this control over other scene controls (for conflict mitigation)
   */
+  [[deprecated("Deprecated, no longer available")]]
   bool addSceneControl(osgEarth::Util::Controls::Control *control, const osgEarth::GeoPoint& location, float priority = 0.0f);
 
   /**
   * Remove a scene control.
   * @param control Control to remove
   */
+  [[deprecated("Deprecated, no longer available")]]
   bool removeSceneControl(osgEarth::Util::Controls::Control *control);
 
   /**
@@ -469,12 +473,14 @@ public:
   * @param control  Control to relocate
   * @param location New location for the control
   */
+  [[deprecated("Deprecated, no longer available")]]
   bool moveSceneControl(osgEarth::Util::Controls::Control* control, const osgEarth::GeoPoint& location);
 
   /**
   * Toggle whether labels are allowed to overlap in this view.
   * @param value True to allow labels to overlap, false to disallow.
   */
+  [[deprecated("Deprecated, no longer available")]]
   void setAllowLabelOverlap(bool value);
 
   /**
@@ -620,6 +626,7 @@ public:
   ViewManager* getViewManager() const { return viewman_.get(); }
 
   /// The view's control canvas
+  [[deprecated("Deprecated, no longer available")]]
   osgEarth::Util::Controls::ControlCanvas* controlCanvas() const;
 
   /// type of view either top level, inset, or super hud
@@ -714,6 +721,7 @@ private: // data
   osg::observer_ptr<simVis::SceneManager> sceneData_;
   osg::observer_ptr<simVis::View>         host_;
   osg::ref_ptr<osg::Camera> hud_;
+  // Deprecated along with usage of osgEarth::Controls, slated for removal in near future
   osg::ref_ptr<osgEarth::Util::Controls::ControlCanvas> controlCanvas_;
 
   typedef std::vector< osg::ref_ptr<simVis::View> > InsetViews;
@@ -725,8 +733,11 @@ private: // data
   bool watchEnabled_;
   bool orthoEnabled_;
   NavMode currentMode_;
+  // Deprecated along with usage of osgEarth::Controls, slated for removal in near future
   osg::ref_ptr<osg::Group> sceneControls_;
+  // Deprecated along with usage of osgEarth::Controls, slated for removal in near future
   std::map<osgEarth::Util::Controls::Control*, osg::Node*> sceneControlsLUT_;
+
   osg::ref_ptr<osg::NodeCallback> autoClipCallback_;
 
   // inset border support.
