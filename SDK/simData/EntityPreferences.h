@@ -217,6 +217,13 @@ public:
     LINE = 3              ///< Beam drawn as a line
   };
 
+  /** RangeMode allows user to override beam range with a calculation */
+  enum class RangeMode {
+    BEAM_UPDATE = 0,         ///< Use range provided in beam update
+    ONE_WAY_FREE_SPACE = 1,  ///< Use one-way-free-space calculation
+    TWO_WAY_FREE_SPACE = 2  ///< Use two-way-free-space calculation
+  };
+
   SIMDATA_DECLARE_METHODS(BeamPrefs);
   SIMDATA_DECLARE_SUBFIELD_LIST(commonPrefs_, commonprefs, CommonPrefs);
   SIMDATA_DECLARE_SUBFIELD_LIST(antennaPattern_, antennapattern, AntennaPatterns);
@@ -254,6 +261,7 @@ public:
   SIMDATA_DECLARE_FIELD(pulseLength_, pulselength, double);
   SIMDATA_DECLARE_FIELD(pulseRate_, pulserate, double);
   SIMDATA_DECLARE_FIELD(pulseStipple_, pulsestipple, uint32_t);
+  SIMDATA_DECLARE_FIELD(rangeMode_, rangemode, BeamPrefs::RangeMode);
 };
 
 /** Time Tick preferences */

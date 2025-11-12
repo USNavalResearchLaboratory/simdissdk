@@ -71,6 +71,7 @@ public:
   static std::unique_ptr<EnumerationText> makeBeamDrawModeName();
   static std::unique_ptr<EnumerationText> makeBeamDrawTypeName();
   static std::unique_ptr<EnumerationText> makeBeamTypeName();
+  static std::unique_ptr<EnumerationText> makeBeamRangeMode();
   static std::unique_ptr<EnumerationText> makeCircleHilightShapeName();
   static std::unique_ptr<EnumerationText> makeCoordinateSystemName();
   static std::unique_ptr<EnumerationText> makeDistanceUnitsName();

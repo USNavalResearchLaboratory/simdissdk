@@ -1326,6 +1326,9 @@ std::unique_ptr<Reflection> Reflection::makeBeamPreferences()
   rv->SIMDATA_REFLECTION_ADD_FIELD(pulseRate, pulserate, BeamPrefs, getDouble, ReflectionDataType::Double);
   rv->SIMDATA_REFLECTION_ADD_FIELD(pulseStipple, pulsestipple, BeamPrefs, getUint32, ReflectionDataType::Uint32);
 
+  std::shared_ptr<EnumerationText> rangeModeEnum = EnumerationText::makeBeamRangeMode();
+  rv->SIMDATA_REFLECTION_ADD_ENUM(rangeMode, rangemode, BeamPrefs, BeamPrefs::RangeMode, rangeModeEnum);
+
   return rv;
 }
 
