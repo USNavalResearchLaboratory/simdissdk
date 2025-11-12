@@ -112,7 +112,7 @@ private:
  * T must be copy constructible and have an assignment and equality operator.
  */
 template <typename T>
-class SDKUTIL_EXPORT SilverLiningValueT : public SilverLiningValue
+class SilverLiningValueT : public SilverLiningValue
 {
 public:
   /** Returns a reference back to the previously set value. */
@@ -172,7 +172,7 @@ protected: \
 
 #define DECLARE_SIMPLE_EVTHANDLER(CLASS, SETTING, VALUETYPE) \
 /** Control handler for changing double values */ \
-class SDKUTIL_EXPORT CLASS : public osgEarth::Util::Controls::ControlEventHandler \
+class [[deprecated("Deprecated, no longer available")]] SDKUTIL_EXPORT CLASS : public osgEarth::Util::Controls::ControlEventHandler \
 { \
 public: \
   /** Changes value from control */ \
@@ -197,7 +197,7 @@ private: \
 DECLARE_SIMPLE_SETTING(SilverLiningConditionPreset, int);
 
 /** Provides an on-click method to change condition to a specific preset */
-class SDKUTIL_EXPORT SetConditionPresetEventHandler : public osgEarth::Util::Controls::ControlEventHandler
+class [[deprecated("Deprecated, no longer available")]] SDKUTIL_EXPORT SetConditionPresetEventHandler : public osgEarth::Util::Controls::ControlEventHandler
 {
 public:
   SetConditionPresetEventHandler(SilverLiningConditionPreset* preset, int value);
@@ -213,7 +213,9 @@ private:
  * Enable or disable a big, flashy lens flare effect when sun is visible in scene.
  */
 DECLARE_SIMPLE_SETTING(SilverLiningLensFlare, bool);
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(LensFlareEventHandler, SilverLiningLensFlare, bool);
+#endif
 
 /**
  * Sets the value for gamma correction of the display.  Defaults to the sky-box-gamma
@@ -221,13 +223,17 @@ DECLARE_SIMPLE_EVTHANDLER(LensFlareEventHandler, SilverLiningLensFlare, bool);
  * lighter skies and natural light.
  */
 DECLARE_SIMPLE_SETTING(SilverLiningGamma, double);
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(GammaEventHandler, SilverLiningGamma, double);
+#endif
 
 /**
  * Simulates an infrared sensor simulator mode.  Just renders everything black except sun.
  */
 DECLARE_SIMPLE_SETTING(SilverLiningInfrared, bool);
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(InfraredEventHandler, SilverLiningInfrared, bool);
+#endif
 
 /**
  * Sets physical model for simulating sky colors.  The Preetham model is simple and fast,
@@ -237,7 +243,9 @@ DECLARE_SIMPLE_EVTHANDLER(InfraredEventHandler, SilverLiningInfrared, bool);
  * Hosek-Wilkie only simulates colors from positive solar angles.
  */
 DECLARE_SIMPLE_SETTING(SilverLiningSkyModel, int);
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(HosekWilkieToggleEventHandler, SilverLiningSkyModel, bool);
+#endif
 
 /**
  * Sets simulated visibility in meters; will affect appearance of clouds in distance.
@@ -245,7 +253,9 @@ DECLARE_SIMPLE_EVTHANDLER(HosekWilkieToggleEventHandler, SilverLiningSkyModel, b
  * distance.  It does not fog the sky itself.
  */
 DECLARE_SIMPLE_SETTING(SilverLiningVisibility, double);
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(VisibilityEventHandler, SilverLiningVisibility, double);
+#endif
 
 /**
  * Sets turbidity of atmosphere, a measure of "haziness."  This simulates the number of
@@ -255,14 +265,18 @@ DECLARE_SIMPLE_EVTHANDLER(VisibilityEventHandler, SilverLiningVisibility, double
  * light haze (range 8km).
  */
 DECLARE_SIMPLE_SETTING(SilverLiningTurbidity, double);
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(TurbidityEventHandler, SilverLiningTurbidity, double);
+#endif
 
 /**
  * Sets simulated nighttime light pollution in watts per square meter.  Default is 0.0.
  * Reasonable values are on the order of 0.01.
  */
 DECLARE_SIMPLE_SETTING(SilverLiningLightPollution, double);
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(LightPollutionEventHandler, SilverLiningLightPollution, double);
+#endif
 
 /**
  * Simulates global precipitation.  Precipitation types can be combined.  To clear all
@@ -276,11 +290,12 @@ DECLARE_SIMPLE_SETTING(SilverLiningRainRate, double);
 DECLARE_SIMPLE_SETTING(SilverLiningDrySnowRate, double);
 DECLARE_SIMPLE_SETTING(SilverLiningWetSnowRate, double);
 DECLARE_SIMPLE_SETTING(SilverLiningSleetRate, double);
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(RainRateEventHandler, SilverLiningRainRate, double);
 DECLARE_SIMPLE_EVTHANDLER(DrySnowRateEventHandler, SilverLiningDrySnowRate, double);
 DECLARE_SIMPLE_EVTHANDLER(WetSnowRateEventHandler, SilverLiningWetSnowRate, double);
 DECLARE_SIMPLE_EVTHANDLER(SleetRateEventHandler, SilverLiningSleetRate, double);
-
+#endif
 /**
  * Composite global precipitation setting.  Combines wet and dry snow and lets you
  * choose between which is shown.  Rate is in millimeters per hour.
@@ -320,8 +335,10 @@ private:
   bool isWet_;
 };
 
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(SnowRateEventHandler, SilverLiningSnowRate, double);
 DECLARE_SIMPLE_EVTHANDLER(SnowIsWetEventHandler, SilverLiningSnowRate, bool);
+#endif
 
 /**
  * Composite setting that manages the wind direction and speed for SilverLining.
@@ -365,8 +382,10 @@ private:
   double speedMs_;
 };
 
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(SlWindDirectionDegEventHandler, SilverLiningWind, double);
 DECLARE_SIMPLE_EVTHANDLER(SlWindSpeedEventHandler, SilverLiningWind, double);
+#endif
 
 #undef DECLARE_SIMPLE_SETTING
 #undef DECLARE_SIMPLE_EVTHANDLER

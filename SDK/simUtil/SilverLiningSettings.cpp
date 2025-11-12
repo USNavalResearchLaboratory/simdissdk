@@ -373,6 +373,7 @@ SilverLiningWind* SilverLiningSettingsAdapter::wind() const
 
 /////////////////////////////////////////////////////////
 
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 #define SL_IMPL_EVTHANDLER(CLASS, SETTING, VALUETYPE, SETMETHOD) \
 CLASS::CLASS(SETTING* value) : value_(value) {} \
 CLASS::~CLASS() {} \
@@ -403,6 +404,7 @@ SL_IMPL_EVTHANDLER(SlWindSpeedEventHandler, SilverLiningWind, double, setSpeed(v
 
 SL_IMPL_EVTHANDLER(HosekWilkieToggleEventHandler, SilverLiningSkyModel, bool,
   set(value ? osgEarth::SilverLining::Atmosphere::HOSEK_WILKIE : osgEarth::SilverLining::Atmosphere::PREETHAM));
+#endif
 
 SetConditionPresetEventHandler::SetConditionPresetEventHandler(SilverLiningConditionPreset* preset, int value)
   : preset_(preset),
