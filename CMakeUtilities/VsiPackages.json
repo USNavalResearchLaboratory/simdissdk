@@ -47,7 +47,10 @@
     {
       "name": "OSGQOPENGL",
       "dir": "osgQOpenGL",
-      "version": "4.1.0-qt6",
+      "version": [
+        "4.1.1-qt6",
+        "4.1.0-qt6"
+      ],
       "depend": [
         "OSG",
         "QT6"
