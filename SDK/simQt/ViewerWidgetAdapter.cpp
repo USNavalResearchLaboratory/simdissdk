@@ -60,7 +60,7 @@ public:
   {
   }
 
-  void setResizeSignal(const std::function<void(int, int)>& resize)
+  void setResizeSignal(const std::function<void(int, int, double)>& resize)
   {
     notifyResize_ = resize;
   }
@@ -75,11 +75,11 @@ public:
 
 protected:
   // From osgQOpenGLWindow:
-  virtual void resizeGL(int w, int h) override
+  virtual void resizeGL(int logicalWidth, int logicalHeight) override
   {
-    osgQOpenGLWindow::resizeGL(w, h);
+    osgQOpenGLWindow::resizeGL(logicalWidth, logicalHeight);
     if (notifyResize_) [[likely]]
-      notifyResize_(w, h);
+      notifyResize_(logicalWidth, logicalHeight, devicePixelRatio());
   }
   virtual void paintGL() override
   {
@@ -92,7 +92,7 @@ protected:
 
 private:
   osg::ref_ptr<osgViewer::Viewer> viewer_;
-  std::function<void(int, int)> notifyResize_;
+  std::function<void(int, int, double)> notifyResize_;
   std::function<void()> notifyPrePaint_;
   std::function<void()> notifyPostPaint_;
 };
@@ -114,7 +114,7 @@ public:
   {
   }
 
-  void setResizeSignal(const std::function<void(int, int)>& resize)
+  void setResizeSignal(const std::function<void(int, int, double)>& resize)
   {
     notifyResize_ = resize;
   }
@@ -129,11 +129,11 @@ public:
 
 protected:
   // From osgQOpenGLWidget:
-  virtual void resizeGL(int w, int h) override
+  virtual void resizeGL(int logicalWidth, int logicalHeight) override
   {
-    osgQOpenGLWidget::resizeGL(w, h);
+    osgQOpenGLWidget::resizeGL(logicalWidth, logicalHeight);
     if (notifyResize_) [[likely]]
-      notifyResize_(w, h);
+      notifyResize_(logicalWidth, logicalHeight, this->devicePixelRatio());
   }
   virtual void paintGL() override
   {
@@ -146,7 +146,7 @@ protected:
 
 private:
   osg::ref_ptr<osgViewer::Viewer> viewer_;
-  std::function<void(int, int)> notifyResize_;
+  std::function<void(int, int, double)> notifyResize_;
   std::function<void()> notifyPrePaint_;
   std::function<void()> notifyPostPaint_;
 };
@@ -266,7 +266,7 @@ public:
   virtual void setTimerInterval(int intervalMs) = 0;
   virtual void installEventFilter(QObject* filter) = 0;
 
-  virtual void setResizeSignal(const std::function<void(int, int)>& resize) = 0;
+  virtual void setResizeSignal(const std::function<void(int, int, double)>& resize) = 0;
   virtual void setPrePaintSignal(const std::function<void()>& prePaint) = 0;
   virtual void setPostPaintSignal(const std::function<void()>& postPaint) = 0;
   virtual void connectToFrameSwappedSignal(const std::function<void()>& frameSwapped) = 0;
@@ -303,7 +303,7 @@ public:
   virtual void setTimerInterval(int intervalMs) override;
   virtual void installEventFilter(QObject* filter) override;
 
-  virtual void setResizeSignal(const std::function<void(int, int)>& resize) override;
+  virtual void setResizeSignal(const std::function<void(int, int, double)>& resize) override;
   virtual void setPrePaintSignal(const std::function<void()>& prePaint) override;
   virtual void setPostPaintSignal(const std::function<void()>& postPaint) override;
   virtual void connectToFrameSwappedSignal(const std::function<void()>& frameSwapped) override;
@@ -343,7 +343,7 @@ public:
   virtual void setTimerInterval(int intervalMs) override;
   virtual void installEventFilter(QObject* filter) override;
 
-  virtual void setResizeSignal(const std::function<void(int, int)>& resize) override;
+  virtual void setResizeSignal(const std::function<void(int, int, double)>& resize) override;
   virtual void setPrePaintSignal(const std::function<void()>& prePaint) override;
   virtual void setPostPaintSignal(const std::function<void()>& postPaint) override;
   virtual void connectToFrameSwappedSignal(const std::function<void()>& frameSwapped) override;
@@ -455,7 +455,7 @@ void GlWindowPlatform::installEventFilter(QObject* filter)
   glWindow_->installEventFilter(filter);
 }
 
-void GlWindowPlatform::setResizeSignal(const std::function<void(int, int)>& resize)
+void GlWindowPlatform::setResizeSignal(const std::function<void(int, int, double)>& resize)
 {
   glWindow_->setResizeSignal(resize);
 }
@@ -631,7 +631,7 @@ void GlWidgetPlatform::installEventFilter(QObject* filter)
   adaptedWidget_->installEventFilter(filter);
 }
 
-void GlWidgetPlatform::setResizeSignal(const std::function<void(int, int)>& resize)
+void GlWidgetPlatform::setResizeSignal(const std::function<void(int, int, double)>& resize)
 {
   adaptedWidget_->setResizeSignal(resize);
 }
@@ -684,7 +684,7 @@ ViewerWidgetAdapter::ViewerWidgetAdapter(GlImplementation glImpl, QWidget* paren
   simVis::applyMesaGlVersionOverride();
   glPlatform_ = createGlPlatform(glImpl, this);
 
-  glPlatform_->setResizeSignal([this](int w, int h) { Q_EMIT glResized(w, h); });
+  glPlatform_->setResizeSignal([this](int logicalWidth, int logicalHeight, double pixelScale) { Q_EMIT glResized(logicalWidth, logicalHeight, pixelScale); });
   glPlatform_->setPrePaintSignal([this]() { Q_EMIT aboutToPaintGl(); });
   glPlatform_->setPostPaintSignal([this]() { Q_EMIT glPainted(); });
   glPlatform_->connectToFrameSwappedSignal([this]() { Q_EMIT frameSwapped(); });
