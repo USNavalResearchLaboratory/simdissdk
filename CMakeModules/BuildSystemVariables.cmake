@@ -1,13 +1,13 @@
 # Define system specific parameters:
 # BUILD_SYSTEM_OS {win|linux}
 # BUILD_SYSTEM_ARCH {amd64}
-# BUILD_COMPILER {vc-14.3|gcc-8.3|abi-cxx11}
+# BUILD_COMPILER {vc-14.3|vc-14.5|gcc-8.3|abi-cxx11}
 # BUILD_COMPILER_NAME {vc|${CMAKE_C_COMPILER}}
 # BUILD_COMPILER_VERSION (Compiler name with max and min version numbers)
 # BUILD_COMPILER_MAJOR_VERSION
 # BUILD_COMPILER_MINOR_VERSION
 # BUILD_SYSTEM_CANONICAL_NAME {${BUILD_PLATFORM}_${BUILD_COMPILER}} (e.g. win64_vc-14.3,
-#     linux64_gcc-8.3, linux64_abi-cxx11)
+#     win64_vc-14.5, linux64_gcc-8.3, linux64_abi-cxx11)
 # BUILD_TYPE {64}
 # BUILD_HWOS {amd64-nt|amd64-linux}
 # BUILD_PLATFORM {win64|linux64}
@@ -54,9 +54,13 @@ set(BUILD_HWOS "${BUILD_SYSTEM_ARCH}-${OS_TYPE}")
 
 # Get compiler info
 if(MSVC)
-    # VS 2022 is 14.3
+    # VS 2022 is 14.3; 2026 is 14.5
     set(BUILD_COMPILER_VERSION_MAJOR "14")
-    set(BUILD_COMPILER_VERSION_MINOR "3")
+    if(MSVC_VERSION GREATER_EQUAL 1950)
+        set(BUILD_COMPILER_VERSION_MINOR "5")
+    else()
+        set(BUILD_COMPILER_VERSION_MINOR "3")
+    endif()
     # Put them together to form something like 9.0, 10.0, 7.1, etc.
     set(BUILD_COMPILER_VERSION "${BUILD_COMPILER_VERSION_MAJOR}.${BUILD_COMPILER_VERSION_MINOR}")
 else()

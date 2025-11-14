@@ -1,4 +1,4 @@
-# MSVC 2022 support in 3.21
+# MSVC 2022 support in 3.21; MSVC 2026 support in 4.2
 cmake_minimum_required(VERSION 3.21)
 
 # Disable in-source builds and avoid writing to source directories directly
