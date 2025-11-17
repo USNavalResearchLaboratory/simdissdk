@@ -371,7 +371,7 @@ bool isImageFile(const std::string& location)
   if (!ext.empty())
   {
     // first check some known extensions (based on SIMDIS_MODEL_FILE_PATTERNS in simCore/String/FilePatterns.h)
-    if (ext == "3db" || ext == "opt" || ext == "ive" || ext == "flt" || ext == "3ds" || ext == "obj" || ext == "lwo" || ext == "dxf" || ext == "osg" || ext == "osga" || ext == "osgb" || ext == "gltf" || ext == "fbx")
+    if (ext == "3db" || ext == "opt" || ext == "ive" || ext == "flt" || ext == "3ds" || ext == "obj" || ext == "lwo" || ext == "dxf" || ext == "osg" || ext == "osga" || ext == "osgb" || ext == "osgt" || ext == "gltf" || ext == "fbx")
       return false;
 
     if (ext == "jpg" || ext == "png" || ext == "gif" || ext == "bmp" || ext == "tmd" || ext == "lst")
