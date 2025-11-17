@@ -1690,6 +1690,25 @@ void MemoryDataStore::initCompositeListener_()
   addListener(local);
 }
 
+void MemoryDataStore::sendFlushToListeners_(ObjectId id)
+{
+  // Need to handle recursion so make a local copy
+  ListenerList localCopy = listeners_;
+  justRemoved_.clear();
+  // now send out notification to listeners
+  for (ListenerList::const_iterator i = localCopy.begin(); i != localCopy.end(); ++i)
+  {
+    if (*i != nullptr)
+    {
+      (*i)->onFlush(this, id);
+      checkForRemoval_(localCopy);
+    }
+  }
+  // Send out notification to the new-updates listener
+  for (const auto& listenerPtr : newUpdatesListeners_)
+    listenerPtr->onFlush(this, id);
+}
+
 void MemoryDataStore::clear()
 {
   for (ListenerList::const_iterator i = listeners_.begin(); i != listeners_.end(); ++i)
@@ -2085,7 +2104,7 @@ void MemoryDataStore::updateLobGroups_(double time)
   }
 }
 
-void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields, double startTime, double endTime)
+void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields, double startTime, double endTime, bool notifyListener)
 {
   const bool recursive = (flushScope == FLUSH_RECURSIVE);
   const bool flushUpdates = ((flushFields & FLUSH_UPDATES) != 0);
@@ -2099,23 +2118,23 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
     {
       beamIdListForHost(id, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, simData::BEAM, flushScope, flushFields, startTime, endTime);
+        flushEntity_(*iter, simData::BEAM, flushScope, flushFields, startTime, endTime, notifyListener);
       ids.clear();
       laserIdListForHost(id, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, simData::LASER, flushScope, flushFields, startTime, endTime);
+        flushEntity_(*iter, simData::LASER, flushScope, flushFields, startTime, endTime, notifyListener);
       ids.clear();
       lobGroupIdListForHost(id, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, simData::LOB_GROUP, flushScope, flushFields, startTime, endTime);
+        flushEntity_(*iter, simData::LOB_GROUP, flushScope, flushFields, startTime, endTime, notifyListener);
       ids.clear();
       projectorIdListForHost(id, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, simData::PROJECTOR, flushScope, flushFields, startTime, endTime);
+        flushEntity_(*iter, simData::PROJECTOR, flushScope, flushFields, startTime, endTime, notifyListener);
       ids.clear();
       customRenderingIdListForHost(id, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, simData::CUSTOM_RENDERING, flushScope, flushFields, startTime, endTime);
+        flushEntity_(*iter, simData::CUSTOM_RENDERING, flushScope, flushFields, startTime, endTime, notifyListener);
     }
     break;
   case BEAM:
@@ -2124,11 +2143,11 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
     {
       gateIdListForHost(id, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, simData::GATE, flushScope, flushFields, startTime, endTime);
+        flushEntity_(*iter, simData::GATE, flushScope, flushFields, startTime, endTime, notifyListener);
       ids.clear();
       projectorIdListForHost(id, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, simData::PROJECTOR, flushScope, flushFields, startTime, endTime);
+        flushEntity_(*iter, simData::PROJECTOR, flushScope, flushFields, startTime, endTime, notifyListener);
     }
     break;
   case GATE:
@@ -2177,6 +2196,10 @@ void MemoryDataStore::flushEntity_(ObjectId id, simData::ObjectType type, FlushS
 
   if ((flushFields & FLUSH_DATA_TABLES) != 0)
     flushDataTables_(id, startTime, endTime);
+
+  hasChanged_ = true;
+  if (notifyListener)
+    sendFlushToListeners_(id);
 }
 
 
@@ -2403,9 +2426,9 @@ int MemoryDataStore::flush(ObjectId id, FlushScope scope, FlushFields fields, do
     if (scope == FLUSH_RECURSIVE)
     {
       for (Platforms::const_iterator iter = platforms_.begin(); iter != platforms_.end(); ++iter)
-        flushEntity_(iter->first, simData::PLATFORM, scope, fields, startTime, endTime);
+        flushEntity_(iter->first, simData::PLATFORM, scope, fields, startTime, endTime, false);
       for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
-        flushEntity_(iter->first, simData::CUSTOM_RENDERING, scope, fields, startTime, endTime);
+        flushEntity_(iter->first, simData::CUSTOM_RENDERING, scope, fields, startTime, endTime, false);
     }
 
     if (fields & FLUSH_DATA_TABLES)
@@ -2422,6 +2445,9 @@ int MemoryDataStore::flush(ObjectId id, FlushScope scope, FlushFields fields, do
           it->second->flush(startTime, endTime);
       }
     }
+
+    hasChanged_ = true;
+    sendFlushToListeners_(0);
   }
   else
   {
@@ -2429,26 +2455,8 @@ int MemoryDataStore::flush(ObjectId id, FlushScope scope, FlushFields fields, do
     if (type == simData::NONE)
       return 1;
 
-    flushEntity_(id, type, scope, fields, startTime, endTime);
+    flushEntity_(id, type, scope, fields, startTime, endTime, true);
   }
-
-  hasChanged_ = true;
-
-  // Need to handle recursion so make a local copy
-  ListenerList localCopy = listeners_;
-  justRemoved_.clear();
-  // now send out notification to listeners
-  for (ListenerList::const_iterator i = localCopy.begin(); i != localCopy.end(); ++i)
-  {
-    if (*i != nullptr)
-    {
-      (*i)->onFlush(this, id);
-      checkForRemoval_(localCopy);
-    }
-  }
-  // Send out notification to the new-updates listener
-  for (const auto& listenerPtr : newUpdatesListeners_)
-    listenerPtr->onFlush(this, id);
 
   return 0;
 }
