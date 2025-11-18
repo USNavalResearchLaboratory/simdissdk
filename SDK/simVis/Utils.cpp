@@ -370,11 +370,16 @@ bool isImageFile(const std::string& location)
   std::string ext = osgDB::getLowerCaseFileExtension(location);
   if (!ext.empty())
   {
-    // first check some known extensions (based on SIMDIS_MODEL_FILE_PATTERNS in simCore/String/FilePatterns.h)
-    if (ext == "3db" || ext == "opt" || ext == "ive" || ext == "flt" || ext == "3ds" || ext == "obj" || ext == "lwo" || ext == "dxf" || ext == "osg" || ext == "osga" || ext == "osgb" || ext == "osgt" || ext == "gltf" || ext == "fbx")
+    // first check known model format extensions (based on SIMDIS_MODEL_FILE_PATTERNS in simCore/String/FilePatterns.h)
+    if (ext == "3db" || ext == "dae" || ext == "opt" || ext == "ive" || ext == "flt" || ext == "3ds" || ext == "obj" || ext == "lwo" || ext == "dxf" || ext == "osg" || ext == "osga" || ext == "osgb" || ext == "osgt" || ext == "osgx" || ext == "gltf" || ext == "fbx" || ext == "stl")
       return false;
 
-    if (ext == "jpg" || ext == "png" || ext == "gif" || ext == "bmp" || ext == "tmd" || ext == "lst")
+    // video icons (based on SIMDIS_MODEL_FILE_PATTERNS in simCore/String/FilePatterns.h)
+    if (ext == "tmd" || ext == "lst")
+      return true;
+
+    // image files (based on SIMDIS_MODEL_FILE_PATTERNS in simCore/String/FilePatterns.h)
+    if (ext == "png" || ext == "gif" || ext == "jpg" || ext == "jpeg" || ext == "rgb" || ext == "rgba" || ext == "tga" || ext == "tif" || ext == "tiff" || ext == "bmp" || ext == "webp")
       return true;
 
     // something else; so check for rw support.

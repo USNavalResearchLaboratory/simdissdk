@@ -135,20 +135,21 @@ static const std::string SIMDIS10_IMAGERY_CONFIG_SAVE_PATTERNS =
     "osgEarth Earth File (*.earth)\n"
     "All Files (*)";
 
+// NOTE:  When modifications are made to file patterns, also investigate any required changes in simVis/Utils.cpp isImageFile
 /** SIMDIS supported model format file patterns, separated by commas. */
-static const std::string ALL_SIMDIS_MODEL_FILE_PATTERNS = "*.opt,*.3db,*.flt,*.fbx,*.osg,*.osga,*.osgb,*.osgt,*.ive,*.obj,*.stl,*.3ds,*.lwo,*.dxf,*.ac,*.gltf,*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.tif,*.tiff,*.bmp,*.tmd,*.lst";
+static const std::string ALL_SIMDIS_MODEL_FILE_PATTERNS = "*.opt,*.3db,*.flt,*.fbx,*.osg,*.osgb,*.osgt,*.osgx,*.ive,*.obj,*.stl,*.3ds,*.lwo,*.dxf,*.ac,*.gltf,*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.rgba,*.tga,*.tif,*.tiff,*.bmp,*.tmd,*.lst";
 /** SIMDIS supported texture file format file patterns, separated by commas */
-static const std::string ALL_SIMDIS_TEXTURE_FILE_PATTERNS = "*.png,*.gif,*.jpg,*.jpeg,*.rgba,*.rgb,*.tif,*.tiff,*.bmp,*.bw,*.inta,*.int,*.raw,*.pgm";
+static const std::string ALL_SIMDIS_TEXTURE_FILE_PATTERNS = "*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.rgba,*.tga,*.tif,*.tiff,*.bmp,*.bw,*.inta,*.int,*.raw,*.pgm";
 /** Dialog-oriented user-friendly list of SIMDIS supported model format patterns. */
 static const std::string SIMDIS_MODEL_FILE_PATTERNS =
-  "All Supported Formats (*.opt,*.3db,*.flt,*.fbx,*.osg,*.osga,*.osgb,*.osgt,*.ive,*.obj,*.stl,*.3ds,*.lwo,*.dxf,*.ac,*.gltf,*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.tif,*.tiff,*.bmp,*.tmd,*.lst)\n"
-  "SIMDIS Model Files (*.opt,*.3db,*.flt,*.fbx,*.osg,*.osga,*.osgb,*.osgt,*.ive,*.obj,*.stl,*.3ds,*.lwo,*.dxf,*.ac,*.gltf)\n"
-  "Image Files (*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.tif,*.tiff,*.bmp)\n"
+  "All Supported Formats (*.opt,*.3db,*.flt,*.fbx,*.osg,*.osgb,*.osgt,*.osgx,*.ive,*.obj,*.stl,*.3ds,*.lwo,*.dxf,*.ac,*.gltf,*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.rgba,*.tga,*.tif,*.tiff,*.bmp,*.tmd,*.lst)\n"
+  "SIMDIS Model Files (*.opt,*.3db,*.flt,*.fbx,*.osg,*.osgb,*.osgt,*.osgx,*.ive,*.obj,*.stl,*.3ds,*.lwo,*.dxf,*.ac,*.gltf)\n"
+  "Image Files (*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.rgba,*.tga,*.tif,*.tiff,*.bmp,*.webp)\n"
   "Media Player Video Icons (*.tmd,*.lst)\n"
   "All Files (*)";
 /** Dialog-oriented user-friendly list of SIMDIS supported image format patterns. */
 static const std::string SIMDIS_IMAGE_FILE_PATTERNS =
-  "Image Files (*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.tif,*.tiff,*.bmp)\n"
+  "Image Files (*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.rgba,*.tga,*.tif,*.tiff,*.bmp,*.webp)\n"
   "All Files (*)";
 
 /** Media Player file format patterns, separated by commas */
