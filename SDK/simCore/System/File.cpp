@@ -99,6 +99,14 @@ std::string FileInfo::fileName() const
   return std::get<1>(simCore::pathSplit(path_));
 }
 
+std::string FileInfo::fileNameStem() const
+{
+  if (path_.empty())
+    return "";
+  const std::filesystem::path path(path_);
+  return path.stem().string();
+}
+
 std::string FileInfo::path() const
 {
   const auto& [path, name] = simCore::pathSplit(path_);
