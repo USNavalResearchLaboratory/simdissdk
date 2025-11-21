@@ -215,6 +215,12 @@ std::tuple<std::string, std::string> pathSplit(const std::string& path)
   if (pathLastSlash == std::string::npos)
     return { "", path };
 
+#ifdef WIN32
+  // Check for UNC use case where the text after the // is the system name and not a file name
+  if ((pathLastSlash == 1) && (path.front() == '/'))
+    return { path, ""};
+#endif
+
   // At this point, tail is correct, and head may or may not contain trailing slashes
   const std::string& tail = path.substr(pathLastSlash + 1);
   const std::string& head = path.substr(0, pathLastSlash + 1);
