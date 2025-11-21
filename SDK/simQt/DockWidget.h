@@ -24,7 +24,6 @@
 #define SIMQT_DOCKWIDGET_HH
 
 #include <QDockWidget>
-#include <QPointer>
 #include <QRect>
 #include <QSize>
 #include "simCore/Common/Export.h"
