@@ -33,6 +33,7 @@
 #include <QMainWindow>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPointer>
 #include <QScreen>
 #include <QStyleHints>
 #include <QTabBar>
@@ -347,7 +348,7 @@ public:
   void uninstall(QMainWindow* mainWindow)
   {
     // remove event filter from previous tab bar, if it still exists
-    if (mainWindow)
+    if (mainWindow && tabBar_)
     {
       QList<QTabBar*> tabBars = mainWindow->findChildren<QTabBar*>();
       for (auto tabBar : tabBars)
@@ -364,7 +365,7 @@ public:
 
 private:
   DockWidget& dockWidget_;
-  QTabBar* tabBar_ = nullptr;
+  QPointer<QTabBar> tabBar_;
   QString prevTab_;
 };
 
