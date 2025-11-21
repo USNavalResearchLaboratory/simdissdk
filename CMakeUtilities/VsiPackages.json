@@ -59,7 +59,7 @@
     {
       "name": "QT6",
       "dir": "Qt6",
-      "version": "6.10.0"
+      "version": "6.10.1"
     },
     {
       "name": "SQLITE",
