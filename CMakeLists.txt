@@ -174,7 +174,7 @@ include(CreateInstallProperties)
 # --- System Libraries --------------------
 
 find_package(OpenGL QUIET)
-find_package(OpenSceneGraph COMPONENTS osgDB osgGA osgSim osgText osgUtil osgViewer QUIET)
+find_package(OpenSceneGraph COMPONENTS osgAnimation osgDB osgGA osgSim osgText osgUtil osgViewer QUIET)
 find_package(GDAL CONFIG)
 find_package(osgEarth)
 

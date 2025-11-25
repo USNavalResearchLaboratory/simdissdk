@@ -33,6 +33,7 @@
 #include "osg/MatrixTransform"
 #include "osg/NodeVisitor"
 #include "osg/PositionAttitudeTransform"
+#include "osgAnimation/BasicAnimationManager"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
 #include "osgSim/DOFTransform"
@@ -1676,4 +1677,55 @@ FilteringOsgNotifyDecorator* installFilteringOsgNotifyDecorator()
   osg::setNotifyHandler(decorator.get());
   return decorator.get();
 }
+
+/** Node visitor that searches for animation management; use with accept() */
+class AnimationVisitor : public osg::NodeVisitor
+{
+public:
+  /** Constructs the visitor */
+  AnimationVisitor()
+    : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN)
+  {
+  }
+
+  /** Override the apply() method to traverse the node and subgraph */
+  virtual void apply(osg::Node& node) override
+  {
+    if (mgr_.valid())
+      return;
+
+    // Visit all update callbacks for the node
+    auto* callback = node.getUpdateCallback();
+    while (callback)
+    {
+      mgr_ = dynamic_cast<osgAnimation::BasicAnimationManager*>(callback);
+      if (mgr_.valid())
+        return;
+      if (callback->getNestedCallback() == callback)
+        break;
+      callback = callback->getNestedCallback();
+    }
+
+    traverse(node);
+  }
+
+  /** Returns the manager that was found in the search, or nullptr if none */
+  osgAnimation::BasicAnimationManager* foundManager() const
+  {
+    return mgr_.get();
+  }
+
+private:
+  osg::observer_ptr<osgAnimation::BasicAnimationManager> mgr_;
+};
+
+osgAnimation::BasicAnimationManager* findAnimationManager(osg::Node* node)
+{
+  if (!node)
+    return nullptr;
+  AnimationVisitor v;
+  node->accept(v);
+  return v.foundManager();
+}
+
 }
