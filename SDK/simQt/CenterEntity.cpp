@@ -581,7 +581,8 @@ bool BindCenterEntityToEntityTreeComposite::isActive_(double time, const std::ma
   if (drawState.empty())
     return false;
 
-  auto it = drawState.lower_bound(time);
+  // Need the entry at or before time; so go pass and backup one
+  auto it = drawState.upper_bound(time);
   if (it == drawState.begin())
     return false;
 
@@ -778,7 +779,7 @@ int BindCenterEntityToEntityTreeComposite::getTimeRange_(uint64_t id, double& be
 int BindCenterEntityToEntityTreeComposite::getTargetTimeRange_(uint64_t id, double& beginTime, double& endTime) const
 {
   beginTime = INVALID_TIME;
-  endTime = INVALID_TIME;
+  endTime = std::numeric_limits<double>::max();
 
   const simData::BeamCommandSlice* commands = dataStore_.beamCommandSlice(id);
   if ((commands == nullptr) || (commands->numItems() == 0))
@@ -797,20 +798,23 @@ int BindCenterEntityToEntityTreeComposite::getTargetTimeRange_(uint64_t id, doub
     }
   }
 
-  // Search backwards for the end time
+  if (beginTime == INVALID_TIME)
+    return 1;
+
+  // Search backwards for a possible end time indicated by a null target id
   for (auto commandIter = commands->upper_bound(commands->lastTime()); commandIter.peekPrevious() != nullptr; commandIter.previous())
   {
     auto previous = commandIter.peekPrevious();
-    if (previous->has_updateprefs() &&
-      previous->updateprefs().has_targetid() &&
-      previous->updateprefs().targetid() != 0)
-    {
+    if (!previous->has_time() || !previous->has_updateprefs() || !previous->updateprefs().has_targetid())
+      continue;
+
+    if (previous->updateprefs().targetid() == 0)
       endTime = previous->time();
+    else
       break;
-    }
   }
 
-  return (beginTime != INVALID_TIME) ? 0 : 1;
+  return 0;
 }
 
 bool BindCenterEntityToEntityTreeComposite::isTargetBeam_(uint64_t id) const
