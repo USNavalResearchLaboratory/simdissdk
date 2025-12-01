@@ -300,6 +300,7 @@ QWidget* SettingsFileSelectorDelegate::createEditor(QWidget* parent, const QStyl
   fileSelector->setFilterOption(simQt::FileSelectorWidget::CUSTOM_USERDEFINED_FILTER);
   fileSelector->setFileOptions(simQt::FileSelectorWidget::FileLoad);
   fileSelector->setFocusPolicy(Qt::StrongFocus);
+  fileSelector->setShowClearFilename(true);
   connect(fileSelector, &FileSelectorWidget::filenameChanged, this, &SettingsFileSelectorDelegate::commitEditor_);
   return fileSelector;
 }

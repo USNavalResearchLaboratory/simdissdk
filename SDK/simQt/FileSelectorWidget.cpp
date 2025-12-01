@@ -42,10 +42,13 @@ FileSelectorWidget::FileSelectorWidget(QWidget* parent)
 
   ui_ = new Ui_FileSelectorWidget;
   ui_->setupUi(this);
-  connect(ui_->fileButton, SIGNAL(clicked()), this, SLOT(loadButton_()));
+  connect(ui_->fileButton, &QPushButton::clicked, this, &FileSelectorWidget::loadButton_);
+  connect(ui_->clearButton, &QPushButton::clicked, this, [this](int idx) { setFilename_("", true); });
   ui_->fileButton->setToolTip(tr("Display File Browser to select file to load."));
-  connect(ui_->fileText, SIGNAL(textEdited(const QString&)), this, SLOT(textEdited_()));
-  connect(ui_->fileText, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
+  ui_->clearButton->setToolTip(tr("Clear current filename."));
+  ui_->clearButton->setVisible(showClearButton_);
+  connect(ui_->fileText, &QLineEdit::textEdited, this, &FileSelectorWidget::textEdited_);
+  connect(ui_->fileText, &QLineEdit::editingFinished, this, &FileSelectorWidget::editingFinished_);
 #ifndef NDEBUG
   // Developers are allowed to type by default, in debug mode; users by default must use the file browser
   ui_->fileText->setReadOnly(false);
@@ -217,6 +220,7 @@ void FileSelectorWidget::setFilename_(const QString& filename, bool canEmitFileS
     return;
   filename_ = osFilename;
   ui_->fileText->setText(filename_);
+  ui_->clearButton->setVisible(showClearButton_ && !filename_.isEmpty());
   Q_EMIT filenameChanged(filename_);
   if (canEmitFileSelected)
     Q_EMIT fileSelected(filename_);
@@ -371,6 +375,18 @@ bool FileSelectorWidget::readOnlyLineEdit() const
 void FileSelectorWidget::setReadOnlyLineEdit(bool readOnly)
 {
   ui_->fileText->setReadOnly(readOnly);
+}
+
+void FileSelectorWidget::setShowClearFilename(bool showClearFilenameControl)
+{
+  showClearButton_ = showClearFilenameControl;
+  // only show the clear button if there is something to clear
+  ui_->clearButton->setVisible(showClearButton_ && !filename_.isEmpty());
+}
+
+bool FileSelectorWidget::showClearFilename() const
+{
+  return showClearButton_;
 }
 
 }
