@@ -889,7 +889,12 @@ CategoryProxyModel::~CategoryProxyModel()
 
 void CategoryProxyModel::resetFilter()
 {
+#if QT_VERSION < QT_VERSION_CHECK(6,10,0)
   invalidateFilter();
+#else
+  beginFilterChange();
+  endFilterChange();
+#endif
 }
 
 void CategoryProxyModel::setFilterText(const QString& filter)
@@ -897,8 +902,17 @@ void CategoryProxyModel::setFilterText(const QString& filter)
   if (filter_ == filter)
     return;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
+  beginFilterChange();
+#endif
+
   filter_ = filter;
+
+#if QT_VERSION < QT_VERSION_CHECK(6,10,0)
   invalidateFilter();
+#else
+  endFilterChange();
+#endif
 }
 
 bool CategoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const

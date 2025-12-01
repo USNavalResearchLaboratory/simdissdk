@@ -13,12 +13,14 @@ Supported Systems/Compilers
 ===========================
 Operating systems officially supported by the SIMDIS SDK:
 
-* Windows 10
+* Windows 11
 * Red Hat Enterprise Linux 8
+* Red Hat Enterprise Linux 9
 
 Compilers officially supported by the SIMDIS SDK:
 
 * Windows compilers:
+  - Microsoft Visual C++ 2026 (VC-14.5)
   - Microsoft Visual C++ 2022 (VC-14.3)
 * Linux compilers:
   - GCC, with CXX11 ABI

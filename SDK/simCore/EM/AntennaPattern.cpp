@@ -2881,14 +2881,14 @@ int AntennaPatternEZNEC::readPat_(std::istream& fp)
 
   // process row header to determine EZNEC angle convention and polarizations
   //
-  // Angle Convention – EZNEC allows you to represent azimuth angles in either of two ways.
+  // Angle Convention - EZNEC allows you to represent azimuth angles in either of two ways.
   //
-  // Compass Bearing – Zero is in the direction of the +y axis (at the top of the 2D azimuth plot display).
+  // Compass Bearing - Zero is in the direction of the +y axis (at the top of the 2D azimuth plot display).
   // Angles increase as you go clockwise from zero.
   // Files saved in this format will have the following unit line:
   // "Bear","V dB","H dB","Tot dB"
   //
-  // CCW From X Axis – Zero is in the direction of the +x axis (to the right of the 2D azimuth plot display).
+  // CCW From X Axis - Zero is in the direction of the +x axis (to the right of the 2D azimuth plot display).
   // Angles increase as you go counterclockwise from zero. This is the convention commonly used in mathematics and physics.
   // Files saved in this format will have the following unit line:
   // "Deg","V dB","H dB","Tot dB"

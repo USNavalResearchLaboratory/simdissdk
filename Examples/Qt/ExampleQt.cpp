@@ -38,8 +38,9 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <QMenuBar>
-#include <QStatusBar>
 #include <QSignalMapper>
+#include <QStatusBar>
+#include <QStyleHints>
 
 #include "MyMainWindow.h"
 
@@ -67,7 +68,7 @@ struct FrameRateAction : public QAction
     }
 
     signalMapper.setMapping(this, interval);
-    connect(this, SIGNAL(triggered()), &signalMapper, SLOT(map()));
+    connect(this, &QAction::triggered, &signalMapper, qOverload<>(&QSignalMapper::map));
     setCheckable(true);
   }
 };
@@ -78,7 +79,7 @@ struct ExitAction : public QAction
 {
   explicit ExitAction(QMainWindow* win) : QAction(tr("Exit"), nullptr), win_(win)
   {
-    connect(this, SIGNAL(triggered()), win_, SLOT(close()));
+    connect(this, &QAction::triggered, win_, &QMainWindow::close);
   }
   QMainWindow* win_;
 };
@@ -126,11 +127,16 @@ int main(int argc, char **argv)
 
   QApplication app(argc, argv);
 
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
+
   MyMainWindow win(viewMan.get());
   win.setGeometry(100, 100, 1024, 800);
 
   QSignalMapper mapper(&app);
-  QObject::connect(&mapper, SIGNAL(mapped(int)), &win, SLOT(setTimerInterval(int)));
+  QObject::connect(&mapper, &QSignalMapper::mappedInt, &win, &MyMainWindow::setTimerInterval);
 
   win.statusBar()->showMessage(QObject::tr("Congratulations! You've embedded the SDK Viewer in a Qt Widget."));
 
@@ -145,7 +151,7 @@ int main(int argc, char **argv)
   toggleFrameRateAction->setShortcut(QKeySequence("Alt+F"));
   toggleFrameRateAction->setCheckable(true);
   bar->addAction(toggleFrameRateAction);
-  QObject::connect(toggleFrameRateAction, SIGNAL(toggled(bool)), &win, SLOT(toggleFrameRate(bool)));
+  QObject::connect(toggleFrameRateAction, &QAction::toggled, &win, &MyMainWindow::toggleFrameRate);
   bar->addSeparator()->setText(QObject::tr("Rates"));
 
   QActionGroup* actionGroup = new QActionGroup(&win);

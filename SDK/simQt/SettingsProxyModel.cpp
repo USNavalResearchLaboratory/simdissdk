@@ -84,12 +84,21 @@ bool SettingsSearchFilter::filterAcceptsRow(int sourceRow, const QModelIndex &so
 
 void SettingsSearchFilter::setFilterText(const QString& filterText)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
+  beginFilterChange();
+#endif
+
 #if QT_VERSION_MAJOR == 5
   setFilterRegExp(filterText);
 #else
   setFilterRegularExpression(filterText);
 #endif
+
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
+  endFilterChange();
+#else
   invalidateFilter();
+#endif
 }
 
 QString SettingsSearchFilter::filterText() const
@@ -169,7 +178,7 @@ bool SettingsDataLevelFilter::filterAcceptsRow(int sourceRow, const QModelIndex 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   const auto variantType = sourceModel()->data(index1).type();
 #else
-  const auto variantType = sourceModel()->data(index1).metaType().id();
+  const auto variantType = sourceModel()->data(index1).typeId();
 #endif
   return invalidDataTypes_.find(variantType) == invalidDataTypes_.end();
 }
@@ -178,8 +187,17 @@ void SettingsDataLevelFilter::setShowAdvanced(bool showAdvanced)
 {
   if (this->showAdvanced() != showAdvanced)
   {
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
+    beginFilterChange();
+#endif
+
     showAdvanced_ = showAdvanced;
+
+#if QT_VERSION < QT_VERSION_CHECK(6,10,0)
     invalidateFilter();
+#else
+    endFilterChange();
+#endif
   }
 }
 
@@ -192,8 +210,17 @@ void SettingsDataLevelFilter::setShowUnknown(bool showUnknown)
 {
   if (this->showUnknown() != showUnknown)
   {
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
+    beginFilterChange();
+#endif
+
     showUnknown_ = showUnknown;
+
+#if QT_VERSION < QT_VERSION_CHECK(6,10,0)
     invalidateFilter();
+#else
+    endFilterChange();
+#endif
   }
 }
 

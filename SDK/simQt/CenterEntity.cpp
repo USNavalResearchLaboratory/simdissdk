@@ -264,9 +264,11 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
 void BindCenterEntityToEntityTreeComposite::centerOnEntity_(uint64_t id)
 {
   setBoundClockToNewTime_();
-  // Need to force the center because the setTime has not been process so the entity may not yet be valid
   if (zoomOnCenter_)
-    centerEntity_.centerAndZoom(id, true);
+  {
+    // SIM-18938 never force center and zoom as zooming on an inactive or hidden entity can cause the camera to get into a bad state
+    centerEntity_.centerAndZoom(id, false);
+  }
   else
     centerEntity_.centerOnEntity(id, true);
 }
@@ -331,7 +333,7 @@ std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getCustomRend
 
   double crEarlierTime = getCustomRenderingEarlierTime_(time, commands);
   double crLaterTime = getCustomRenderingLaterTime_(time, commands);
-  if ((crEarlierTime == INVALID_TIME) || (crLaterTime == INVALID_TIME))
+  if ((crEarlierTime == INVALID_TIME) && (crLaterTime == INVALID_TIME))
     return { INVALID_TIME, tr("Custom rendering lacks data draw") };
 
   // The custom rendering is limited by its host, if any
@@ -378,7 +380,7 @@ double BindCenterEntityToEntityTreeComposite::getCustomRenderingEarlierTime_(dou
 
 double BindCenterEntityToEntityTreeComposite::getCustomRenderingLaterTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const
 {
-  auto iter = slice->upper_bound(searchTime);
+  auto iter = slice->lower_bound(searchTime);
 
   // Custom Render code enforces no repeats on data draw, so this is safe
   while (iter.peekNext() != nullptr)
@@ -458,7 +460,7 @@ std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getNearestDra
   double earlierTime = INVALID_TIME;
   double laterTime = INVALID_TIME;
 
-  // Start at the requested time and search backwards for the first valid time
+  // Start at the requested time (inclusive) and search backwards for the first valid time
   for (auto updateIter = updates->upper_bound(searchTime); updateIter.peekPrevious() != nullptr; updateIter.previous())
   {
     double time = updateIter.peekPrevious()->time();
@@ -471,7 +473,7 @@ std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getNearestDra
     }
   }
 
-  // Start at the requested time and search forward for the first valid time
+  // Start at the requested time (exclusive) and search forward for the first valid time
   for (auto updateIter = updates->upper_bound(searchTime); updateIter.peekNext() != nullptr; updateIter.next())
   {
     double time = updateIter.peekNext()->time();
@@ -579,6 +581,7 @@ bool BindCenterEntityToEntityTreeComposite::isActive_(double time, const std::ma
   if (drawState.empty())
     return false;
 
+  // Need the entry at or before time; so go pass and backup one
   auto it = drawState.upper_bound(time);
   if (it == drawState.begin())
     return false;
@@ -776,7 +779,7 @@ int BindCenterEntityToEntityTreeComposite::getTimeRange_(uint64_t id, double& be
 int BindCenterEntityToEntityTreeComposite::getTargetTimeRange_(uint64_t id, double& beginTime, double& endTime) const
 {
   beginTime = INVALID_TIME;
-  endTime = INVALID_TIME;
+  endTime = std::numeric_limits<double>::max();
 
   const simData::BeamCommandSlice* commands = dataStore_.beamCommandSlice(id);
   if ((commands == nullptr) || (commands->numItems() == 0))
@@ -795,20 +798,23 @@ int BindCenterEntityToEntityTreeComposite::getTargetTimeRange_(uint64_t id, doub
     }
   }
 
-  // Search backwards for the end time
-  for (auto commandIter = commands->lower_bound(commands->lastTime()); commandIter.peekPrevious() != nullptr; commandIter.previous())
+  if (beginTime == INVALID_TIME)
+    return 1;
+
+  // Search backwards for a possible end time indicated by a null target id
+  for (auto commandIter = commands->upper_bound(commands->lastTime()); commandIter.peekPrevious() != nullptr; commandIter.previous())
   {
     auto previous = commandIter.peekPrevious();
-    if (previous->has_updateprefs() &&
-      previous->updateprefs().has_targetid() &&
-      previous->updateprefs().targetid() != 0)
-    {
+    if (!previous->has_time() || !previous->has_updateprefs() || !previous->updateprefs().has_targetid())
+      continue;
+
+    if (previous->updateprefs().targetid() == 0)
       endTime = previous->time();
+    else
       break;
-    }
   }
 
-  return (beginTime != INVALID_TIME) ? 0 : 1;
+  return 0;
 }
 
 bool BindCenterEntityToEntityTreeComposite::isTargetBeam_(uint64_t id) const

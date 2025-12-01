@@ -230,7 +230,7 @@ int testFlush(simData::MemoryDataStore &ds)
   rv += (SDK_ASSERT(cd->numItems() == 6));
 
   // flush should retain current category data, should be same as final state of testIterator test
-  ds.flush(PLATFORM_ID, simData::DataStore::RECURSIVE);
+  ds.flush(PLATFORM_ID, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL_EXCLUDE_MINUS_ONE);
   rv += testTime3(*cdslice);
 
   rv += (SDK_ASSERT(cd->numItems() == 3));

@@ -392,18 +392,19 @@ class LocatorNode;
       osg::Node* getNode() const;
 
     private:
-      simData::ObjectId                  id1_, id2_;             // id's of the associated entities
-      bool                               dirty_;                 // whether the scene geometry needs rebuilding
-      bool                               visible_;               // whether to render the association
+      simData::ObjectId                  id1_ = 0;               // id's of the associated entities
+      simData::ObjectId                  id2_ = 0;               // id's of the associated entities
+      bool                               dirty_ = false;         // whether the scene geometry needs rebuilding
+      bool                               visible_ = true;        // whether to render the association
       osg::ref_ptr<LocatorNode>          xform_;                 // local-to-world transform
-      osg::Geode*                        geode_;                 // scene geometry
-      osg::Group*                        labels_;                // label controls
+      osg::Geode*                        geode_ = nullptr;       // scene geometry
+      osg::Group*                        labels_ = nullptr;      // label controls
       osg::observer_ptr<EntityNode>      obj1_obs_;              // cached pointer to first entity
       osg::observer_ptr<EntityNode>      obj2_obs_;              // cached pointer to second entity
       osgEarth::Revision                 obj1LocatorRev_;        // tracks whether entity 1 is up to date with scenario data
       osgEarth::Revision                 obj2LocatorRev_;        // tracks whether entity 2 is up to date with scenario data
       CalculationVector                  calculations_;          // calculations to render
-      SimdisRangeToolState*              state_;                 // the calc state for this assoc
+      SimdisRangeToolState*              state_ = nullptr;       // the calc state for this assoc
       osg::ref_ptr<Graphic>              labelPos_;              // Use the mid-point of the slant line for the text
 
     protected:
@@ -548,7 +549,7 @@ class LocatorNode;
       virtual ~PieSliceGraphic() {}
 
       osgEarth::optional<osg::Vec3> labelPos_; ///< label position
-      double measuredValue_;                  ///< value of calc's measurement
+      double measuredValue_ = 0.;              ///< value of calc's measurement
     };
 
   public: // Built-in Graphics

@@ -183,7 +183,7 @@ int testStaticPlatformUpdates()
   rv += SDK_ASSERT(slice->current() != nullptr);
   rv += SDK_ASSERT(slice->current()->time() == -1.0);
 
-  ds->flush(staticID);
+  ds->flush(staticID, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_ALL_EXCLUDE_MINUS_ONE);
   ds->update(1.0);
   rv += SDK_ASSERT(!slice->hasChanged());
   rv += SDK_ASSERT(slice->current() != nullptr);

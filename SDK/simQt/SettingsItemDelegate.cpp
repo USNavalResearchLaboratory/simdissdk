@@ -91,8 +91,8 @@ QWidget* SettingsColorItemDelegate::createEditor(QWidget* parent, const QStyleOp
   QColorDialog* dialog = new QColorDialog(parent);
   dialog->setOptions(QColorDialog::ShowAlphaChannel);
   dialog->setModal(true);
-  connect(dialog, SIGNAL(accepted()), this, SLOT(commitAndCloseEditor_()));
-  connect(dialog, SIGNAL(rejected()), this, SLOT(cancelEditor_()));
+  connect(dialog, &QDialog::accepted, this, &SettingsColorItemDelegate::commitAndCloseEditor_);
+  connect(dialog, &QDialog::rejected, this, &SettingsColorItemDelegate::cancelEditor_);
   return dialog;
 }
 
@@ -148,7 +148,7 @@ QWidget* SettingsDirectorySelectorDelegate::createEditor(QWidget* parent, const 
   // Set globally acceptable values for the widget
   directorySelector->setIncludeLabel(false);
   directorySelector->setFocusPolicy(Qt::StrongFocus);
-  connect(directorySelector, SIGNAL(directoryChanged(const QString&)), this, SLOT(commitEditor_()));
+  connect(directorySelector, &DirectorySelectorWidget::directoryChanged, this, &SettingsDirectorySelectorDelegate::commitEditor_);
   return directorySelector;
 }
 
@@ -160,6 +160,9 @@ void SettingsDirectorySelectorDelegate::setEditorData(QWidget* editor, const QMo
   QString fqn = index.model()->data(index, SettingsModel::FullyQualifiedNameRole).toString();
   selector->setWindowTitle("Select Directory for " + fqn);
   selector->setRegistryKey(fqn);
+
+  // Avoid a DirectorySelectorWidget::directoryChanged, avoiding a commitData()
+  const QSignalBlocker block(selector);
   selector->setDirectory(data);
 }
 
@@ -297,7 +300,7 @@ QWidget* SettingsFileSelectorDelegate::createEditor(QWidget* parent, const QStyl
   fileSelector->setFilterOption(simQt::FileSelectorWidget::CUSTOM_USERDEFINED_FILTER);
   fileSelector->setFileOptions(simQt::FileSelectorWidget::FileLoad);
   fileSelector->setFocusPolicy(Qt::StrongFocus);
-  connect(fileSelector, SIGNAL(filenameChanged(const QString&)), this, SLOT(commitEditor_()));
+  connect(fileSelector, &FileSelectorWidget::filenameChanged, this, &SettingsFileSelectorDelegate::commitEditor_);
   return fileSelector;
 }
 
@@ -327,6 +330,9 @@ void SettingsFileSelectorDelegate::setEditorData(QWidget* editor, const QModelIn
   fileSelector->setWindowTitle(QString("Select File For ") + fqn);
   fileSelector->setRegistryKey(fqn);
   fileSelector->setCustomFileFilter(filter);
+
+  // Avoid a FileSelectorWidget::filenameChanged, avoiding a commitData()
+  const QSignalBlocker block(fileSelector);
   fileSelector->setFilename(data);
 }
 
@@ -574,7 +580,7 @@ QWidget* SettingsFontSelectorDelegate::createEditor(QWidget* parent, const QStyl
   fontSelector->setFocusPolicy(Qt::StrongFocus);
   fontSelector->setShowFontSize(false); // we don't provide size change option in setting delegate
   fontSelector->setShowFontColor(false); // we don't provide color change option in setting delegate
-  connect(fontSelector, SIGNAL(fontFileChanged(const QString&)), this, SLOT(commitEditor_()));
+  connect(fontSelector, &FontWidget::fontFileChanged, this, &SettingsFontSelectorDelegate::commitEditor_);
   return fontSelector;
 }
 
@@ -585,7 +591,8 @@ void SettingsFontSelectorDelegate::setEditorData(QWidget* editor, const QModelIn
   // get the current font file name from the model
   const QString data = index.model()->data(index, Qt::EditRole).toString();
 
-  // update the font widget
+  // Avoid a FontWidget::fontFileChanged, avoiding a commitData()
+  const QSignalBlocker block(fontSelector);
   fontSelector->setFontFile(data);
 }
 
@@ -622,8 +629,8 @@ QWidget* SettingsQFontSelectorDelegate::createEditor(QWidget* parent, const QSty
 {
   QFontDialog* dialog = new QFontDialog(parent);
   dialog->setModal(true);
-  connect(dialog, SIGNAL(accepted()), this, SLOT(commitAndCloseEditor_()));
-  connect(dialog, SIGNAL(rejected()), this, SLOT(cancelEditor_()));
+  connect(dialog, &QDialog::accepted, this, &SettingsQFontSelectorDelegate::commitAndCloseEditor_);
+  connect(dialog, &QDialog::rejected, this, &SettingsQFontSelectorDelegate::cancelEditor_);
   return dialog;
 }
 
@@ -671,24 +678,24 @@ SettingsItemDelegate::SettingsItemDelegate(QObject* parent)
   : QStyledItemDelegate(parent)
 {
   // Connect the delegate signals to our signals so the view gets the notices
-  connect(&colorDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-  connect(&colorDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
-  connect(&integerDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-  connect(&integerDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
-  connect(&doubleDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-  connect(&doubleDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
-  connect(&filenameDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-  connect(&filenameDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
-  connect(&directoryDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-  connect(&directoryDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
-  connect(&enumerationDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-  connect(&enumerationDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
-  connect(&fontDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-  connect(&fontDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
-  connect(&qFontDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-  connect(&qFontDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
-  connect(&hexDelegate_, SIGNAL(commitData(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-  connect(&hexDelegate_, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)), this, SIGNAL(closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)));
+  connect(&colorDelegate_, &SettingsColorItemDelegate::commitData, this, &SettingsItemDelegate::commitData);
+  connect(&colorDelegate_, &SettingsColorItemDelegate::closeEditor, this, &SettingsItemDelegate::closeEditor);
+  connect(&integerDelegate_, &SettingsIntegerSpinBoxDelegate::commitData, this, &SettingsItemDelegate::commitData);
+  connect(&integerDelegate_, &SettingsIntegerSpinBoxDelegate::closeEditor, this, &SettingsItemDelegate::closeEditor);
+  connect(&doubleDelegate_, &SettingsDoubleSpinBoxDelegate::commitData, this, &SettingsItemDelegate::commitData);
+  connect(&doubleDelegate_, &SettingsDoubleSpinBoxDelegate::closeEditor, this, &SettingsItemDelegate::closeEditor);
+  connect(&filenameDelegate_, &SettingsFileSelectorDelegate::commitData, this, &SettingsItemDelegate::commitData);
+  connect(&filenameDelegate_, &SettingsFileSelectorDelegate::closeEditor, this, &SettingsItemDelegate::closeEditor);
+  connect(&directoryDelegate_, &SettingsDirectorySelectorDelegate::commitData, this, &SettingsItemDelegate::commitData);
+  connect(&directoryDelegate_, &SettingsDirectorySelectorDelegate::closeEditor, this, &SettingsItemDelegate::closeEditor);
+  connect(&enumerationDelegate_, &SettingsEnumerationDelegate::commitData, this, &SettingsItemDelegate::commitData);
+  connect(&enumerationDelegate_, &SettingsEnumerationDelegate::closeEditor, this, &SettingsItemDelegate::closeEditor);
+  connect(&fontDelegate_, &SettingsFontSelectorDelegate::commitData, this, &SettingsItemDelegate::commitData);
+  connect(&fontDelegate_, &SettingsFontSelectorDelegate::closeEditor, this, &SettingsItemDelegate::closeEditor);
+  connect(&qFontDelegate_, &SettingsQFontSelectorDelegate::commitData, this, &SettingsItemDelegate::commitData);
+  connect(&qFontDelegate_, &SettingsQFontSelectorDelegate::closeEditor, this, &SettingsItemDelegate::closeEditor);
+  connect(&hexDelegate_, &SettingsHexEditDelegate::commitData, this, &SettingsItemDelegate::commitData);
+  connect(&hexDelegate_, &SettingsHexEditDelegate::closeEditor, this, &SettingsItemDelegate::closeEditor);
 }
 
 SettingsItemDelegate::~SettingsItemDelegate()

@@ -180,7 +180,6 @@ if(TARGET GDAL::GDAL AND TARGET OpenGL::GL)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    configure_file(simUtilConfig.cmake.in simUtilConfig.cmake @ONLY)
     vsi_install_export(simUtil ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 

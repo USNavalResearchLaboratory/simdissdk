@@ -27,6 +27,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/EM/Propagation.h"
 #include "simVis/Antenna.h"
 #include "simVis/BeamPulse.h"
 #include "simVis/Constants.h"
@@ -44,6 +45,7 @@
 #include "simVis/Beam.h"
 
 #define BEAM_IN_PLACE_UPDATES
+#define RANGE_MODE_OVERRIDE_TAG "BEAM_NODE"
 
 // --------------------------------------------------------------------------
 
@@ -455,6 +457,46 @@ std::string BeamNode::legendText() const
   return "";
 }
 
+void BeamNode::processRangeMode_(const simData::BeamPrefs& prefs)
+{
+  if ((!hasLastPrefs_ || prefs.rangemode() == lastPrefsApplied_.rangemode()) &&
+    prefs.rangemode() != simData::BeamPrefs::RangeMode::ONE_WAY_FREE_SPACE &&
+    prefs.rangemode() != simData::BeamPrefs::RangeMode::TWO_WAY_FREE_SPACE)
+    return;
+
+  if (prefs.rangemode() == simData::BeamPrefs::RangeMode::BEAM_UPDATE)
+    removeUpdateOverride(RANGE_MODE_OVERRIDE_TAG);
+  else
+  {
+    // update range on every prefs change (instead of trying to test for changes to all component prefs)
+    simData::BeamUpdate update;
+    if (prefs.rangemode() == simData::BeamPrefs::RangeMode::ONE_WAY_FREE_SPACE)
+    {
+      if (prefs.frequency() > 0. && prefs.power() > 0.)
+      {
+        simData::BeamUpdate update;
+        // using this beam's sensitivity as stand-in for receiver's sensitivity
+        update.set_range(simCore::getOneWayFreeSpaceRangeAndLoss(prefs.gain(), prefs.frequency(), prefs.power(), prefs.sensitivity(), nullptr));
+        setUpdateOverride(RANGE_MODE_OVERRIDE_TAG, update);
+        return;
+      }
+    }
+    else if (prefs.rangemode() == simData::BeamPrefs::RangeMode::TWO_WAY_FREE_SPACE)
+    {
+      if (prefs.frequency() > 0.)
+      {
+        simData::BeamUpdate update;
+        // assuming xmt gain = rcv gain, sysloss 0
+        update.set_range(simCore::getTwoWayFreeSpaceRange(prefs.sensitivity(), prefs.frequency(), prefs.power(), prefs.gain(), prefs.gain(), 0.0, 10.0));
+        setUpdateOverride(RANGE_MODE_OVERRIDE_TAG, update);
+        return;
+      }
+    }
+    // unset the range in the override (but keep the override in place)
+    setUpdateOverride(RANGE_MODE_OVERRIDE_TAG, simData::BeamUpdate());
+  }
+}
+
 void BeamNode::setPrefs(const simData::BeamPrefs& prefs)
 {
   // validate localgrid prefs changes that might provide user notifications
@@ -466,6 +508,9 @@ void BeamNode::setPrefs(const simData::BeamPrefs& prefs)
   {
     target_ = nullptr;
   }
+
+  // process range mode override
+  processRangeMode_(prefs);
 
   applyProjectorPrefs_(lastPrefsFromDS_.commonprefs(), prefs.commonprefs());
   applyPrefs_(prefs);

@@ -469,7 +469,6 @@ if(HAVE_NONNULL_COMPARE)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    configure_file(simVisConfig.cmake.in simVisConfig.cmake @ONLY)
     vsi_install_export(simVis ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 

@@ -94,12 +94,21 @@ namespace simQt {
 
   void EntityProxyModel::addEntityFilter(EntityFilter* entityFilter)
   {
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
+    beginFilterChange();
+#endif
+
     connect(entityFilter, SIGNAL(filterUpdated()), this, SLOT(filterUpdated_()));
     connect(entityFilter, SIGNAL(filterUpdated()), this, SIGNAL(filterChanged()));
     entityFilters_.push_back(entityFilter);
     // Do the initial apply of the filter
     alwaysShow_ = 0;
+
+#if QT_VERSION < QT_VERSION_CHECK(6,10,0)
     invalidateFilter();
+#else
+    endFilterChange();
+#endif
   }
 
   QList<QWidget*> EntityProxyModel::filterWidgets(QWidget* newWidgetParent) const
@@ -249,10 +258,19 @@ namespace simQt {
 
   void EntityProxyModel::filterUpdated_()
   {
+#if QT_VERSION >= QT_VERSION_CHECK(6,10,0)
+    beginFilterChange();
+#endif
     // Changing a filter clears the always show entity
     alwaysShow_ = 0;
-    // apply new filter, invalidate current one
+
+#if QT_VERSION < QT_VERSION_CHECK(6,10,0)
     invalidateFilter();
+#else
+    endFilterChange();
+#endif
+
+    // apply new filter, invalidate current one
     QMap<QString, QVariant> settings;
     for (auto it = entityFilters_.begin(); it != entityFilters_.end(); ++it)
       (*it)->getFilterSettings(settings);

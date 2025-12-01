@@ -53,7 +53,7 @@ public:
   * @param[in] ds handle to the data store
   * @return 0 on successful application, non-zero on error
   */
-  virtual int apply(uint64_t entityId, simData::DataStore& ds) = 0;
+  virtual int apply(uint64_t entityId, simData::DataStore& ds) const = 0;
 
   /** Get the category filter used to determine if an entity is affected by this */
   virtual const simData::CategoryFilter* categoryFilter() const = 0;
@@ -127,14 +127,14 @@ public:
    * @param[in] rules Vector of rules to serialize to string
    * @return String representing the serialized rules
    */
-  virtual std::string serializeRules(const std::vector<PrefRule*>& rules) = 0;
+  virtual std::string serializeRules(const std::vector<PrefRule*>& rules) const = 0;
 
   /**
    * Serializes the rules of this preference rules manager into the given output stream
    * @param os the given output stream
    * @return 0 on total success, non-zero if there were any problems serializing the rules
    */
-  virtual int serializeRules(std::ostream& os) = 0;
+  virtual int serializeRules(std::ostream& os) const = 0;
 
   /**
    * Deserializes the rules passed in the istream.  Rules are always force applied when added.
@@ -159,7 +159,7 @@ public:
    * owns this memory
    * @param[out] prefRules  vector of all the current preference rules
    */
-  virtual void listRules(std::vector<PrefRule*>& prefRules) = 0;
+  virtual void listRules(std::vector<PrefRule*>& prefRules) const = 0;
 
   /**
    * Remove the specified preference rule.  PrefRuleManager deletes the memory in this method
@@ -232,11 +232,11 @@ class NullPrefRulesManager : public simData::PrefRulesManager
   virtual int appendRuleFile(const std::string& ) override { return 1; }
   virtual int loadRuleFiles(const std::vector<std::string>& , bool, bool ) override { return 1; }
   virtual int removeAllRules() override { return 1; }
-  virtual std::string serializeRules(const std::vector<simData::PrefRule*>& rules) override { return ""; }
-  virtual int serializeRules(std::ostream& os) override { return 1; }
+  virtual std::string serializeRules(const std::vector<simData::PrefRule*>& rules) const override { return ""; }
+  virtual int serializeRules(std::ostream& os) const override { return 1; }
   virtual int deserializeRules(std::istream& rules) override { return 1; }
   virtual int addSerializedRule(std::vector<simData::PrefRule*>& rules, const std::string& serializedRule, int fileFormatVersion) override { return 1; }
-  virtual void listRules(std::vector<simData::PrefRule*>& prefRules) override { }
+  virtual void listRules(std::vector<simData::PrefRule*>& prefRules) const override { }
   virtual int removeRule(simData::PrefRule* prefRule) override { return 1; }
   virtual int applyRules(bool force) override { return 1; }
   virtual int applyRules(uint64_t id) override { return 1; }

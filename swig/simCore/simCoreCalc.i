@@ -5,6 +5,8 @@
 %ignore simCore::CoordinateConverter::operator=;
 %ignore simCore::SquareMatrix::operator=;
 %ignore simCore::rayIntersectsPlane;
+%ignore simCore::rayIntersectsSphere;
+%ignore simCore::rayIntersectsEllipsoid;
 
 ////////////////////////////////////////////////
 // simCore/Calc
@@ -233,5 +235,35 @@ double rayIntersectsPlaneWrapped(const simCore::Ray& ray, const simCore::Plane& 
 %pythoncode %{
 def rayIntersectsPlane(ray, plane):
   value, valid = rayIntersectsPlaneWrapped(ray, plane)
+  return value if valid else None
+%}
+
+%inline %{
+double rayIntersectsSphereWrapped(const simCore::Ray& ray, const simCore::Sphere& sphere, bool& OUTPUT)
+{
+  const auto& dOpt = simCore::rayIntersectsSphere(ray, sphere);
+  OUTPUT = dOpt.has_value();
+  return dOpt.value_or(0.);
+}
+%}
+
+%pythoncode %{
+def rayIntersectsSphere(ray, sphere):
+  value, valid = rayIntersectsSphereWrapped(ray, sphere)
+  return value if valid else None
+%}
+
+%inline %{
+double rayIntersectsEllipsoidWrapped(const simCore::Ray& ray, const simCore::Ellipsoid& ellipsoid, bool& OUTPUT)
+{
+  const auto& dOpt = simCore::rayIntersectsEllipsoid(ray, ellipsoid);
+  OUTPUT = dOpt.has_value();
+  return dOpt.value_or(0.);
+}
+%}
+
+%pythoncode %{
+def rayIntersectsEllipsoid(ray, ellipsoid):
+  value, valid = rayIntersectsEllipsoidWrapped(ray, ellipsoid)
   return value if valid else None
 %}

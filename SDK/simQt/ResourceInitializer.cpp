@@ -75,21 +75,22 @@ void ResourceInitializer::initialize()
 
 void ResourceInitializer::registerMetaTypes()
 {
-#if QT_VERSION_MAJOR < 6
-  // Register meta types for use in QSettings
-  qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
+  qRegisterMetaType<QList<QKeySequence> >("QList<QKeySequence>");
+  qRegisterMetaType<simQt::Settings::MetaData>("simQt::Settings::MetaData");
+  qRegisterMetaType<simNotify::NotifySeverity>("simNotify::NotifySeverity");
+
+#ifdef HAVE_SIMDATA
+  qRegisterMetaType<simQt::EntityTreeComposite::FilterConfiguration>("simQt::EntityTreeComposite::FilterConfiguration");
+  qRegisterMetaType<EntityStateFilter::State>("EntityStateFilter::State");
+#endif
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  // Register meta types for use in QSettings; Qt6 does not require the qRegisterMetaTypeStreamOperators call
   qRegisterMetaTypeStreamOperators<QList<QKeySequence> >("QList<QKeySequence>");
+  qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
 #ifdef HAVE_SIMDATA
   qRegisterMetaTypeStreamOperators<simQt::EntityTreeComposite::FilterConfiguration>("simQt::EntityTreeComposite::FilterConfiguration");
 #endif
-#endif
-
-  // Register meta type for thread safety in channels
-  qRegisterMetaType<simNotify::NotifySeverity>("simNotify::NotifySeverity");
-
-  // Register meta type for use as an argument in signals/slots
-#ifdef HAVE_SIMDATA
-  qRegisterMetaType<EntityStateFilter::State>("EntityStateFilter::State");
 #endif
 }
 

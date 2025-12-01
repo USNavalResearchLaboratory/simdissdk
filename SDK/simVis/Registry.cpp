@@ -330,6 +330,11 @@ void simVis::Registry::setShareArticulatedIconModels(bool value)
   modelCache_->setShareArticulatedIconModels(value);
 }
 
+void simVis::Registry::setShareAnimatedIconModels(bool value)
+{
+  modelCache_->setShareAnimatedIconModels(value);
+}
+
 std::string simVis::Registry::findModelFile(const std::string& name) const
 {
   osgEarth::Threading::ScopedRecursiveMutexLock lock(fileSearchMutex_);

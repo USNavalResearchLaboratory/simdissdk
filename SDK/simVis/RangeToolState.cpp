@@ -41,7 +41,7 @@ RangeToolState::~RangeToolState()
   delete endEntity_;
 }
 
-void RangeToolState::line(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset, osg::Vec3Array* verts)
+void RangeToolState::line(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset, osg::Vec3Array* verts) const
 {
   // Use Sodano method to calculate azimuth and distance
   double azimuth = 0.0;
@@ -65,13 +65,13 @@ void RangeToolState::line(const simCore::Vec3& lla0, const simCore::Vec3& lla1, 
   }
 
   // make sure there's enough room. Don't bother shrinking.
-  const unsigned int numSegs = simCore::sdkMax(MIN_NUM_SEGMENTS, simCore::sdkMin(MAX_NUM_SEGMENTS, static_cast<unsigned int>(distance / segmentLength)));
+  const size_t numSegs = simCore::sdkMax(MIN_NUM_SEGMENTS, simCore::sdkMin(MAX_NUM_SEGMENTS, static_cast<unsigned int>(distance / segmentLength)));
   verts->reserve(numSegs + 1);
   verts->clear();
 
   // Add points to the vertex list, from back to front, for consistent stippling.  Order
   // matters because it affects the line direction during stippling.
-  for (unsigned int k = 0; k <= numSegs; ++k)
+  for (size_t k = 0; k <= numSegs; ++k)
   {
     const float percentOfFull = static_cast<float>(k) / static_cast<float>(numSegs); // From 0 to 1
 
@@ -151,9 +151,9 @@ osg::Vec3 RangeToolState::lla2local(double lat, double lon, double alt) const
   return simCore2osg(ecefPos) * world2local_;
 }
 
-simCore::Vec3 RangeToolState::local2lla(const osg::Vec3d& local)
+simCore::Vec3 RangeToolState::local2lla(const osg::Vec3d& local) const
 {
-  const osg::Vec3d world = local * local2world_;
+  const osg::Vec3d& world = local * local2world_;
   simCore::Vec3 llaPos;
   simCore::CoordinateConverter::convertEcefToGeodeticPos(osg2simCore(world), llaPos);
   return llaPos;

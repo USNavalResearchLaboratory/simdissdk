@@ -32,6 +32,7 @@
 #include <QPainter>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QStyleHints>
 #include <QTimer>
 #include <QWidget>
 #include "simCore/System/Utils.h"
@@ -274,6 +275,11 @@ int main(int argc, char* argv[])
   viewMan->addView(mainView.get());
 
   QApplication app(argc, argv);
+
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   MainWindow mainWindow(mainView.get());
   mainWindow.resize(1024, 768);

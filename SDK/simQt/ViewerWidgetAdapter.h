@@ -149,7 +149,19 @@ public:
 
 Q_SIGNALS:
   void initialized();
-  void glResized(int w, int h);
+
+  /**
+   * GL canvas resized to given in logical pixels. Actual physical pixels are defined
+   * by multiplying the logical pixels by pixelScale. For example, a logical canvas of
+   * 800x600 and 150% scaling, would have a logical width of 800, logical height of 600,
+   * pixelScale of 1.5, and physical pixel size of 1200x900.
+   * @param logicalWidth Width in logical pixels for the GL canvas
+   * @param logicalHeight Height in logical pixels for the GL canvas
+   * @param pixelScale Scale factor to multiply against logical pixels, to get physical
+   *   pixels. Typically 1.0, but high DPI monitors might be 2.0 for 200% scaling.
+   */
+  void glResized(int logicalWidth, int logicalHeight, double pixelScale);
+
   void aboutToPaintGl();
   void glPainted();
   void frameSwapped();

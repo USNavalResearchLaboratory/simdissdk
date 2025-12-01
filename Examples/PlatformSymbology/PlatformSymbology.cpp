@@ -73,8 +73,6 @@ using namespace osgEarth::Util;
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-using namespace osgEarth::Util::Controls;
 #endif
 
 namespace
@@ -167,23 +165,6 @@ public:
 private:
   std::string text_;
 };
-#else
-/// keep a handle, for toggling
-static osg::ref_ptr<Control>      s_helpControl;
-static osg::ref_ptr<LabelControl> s_action;
-
-static Control* createHelp()
-{
-  VBox* vbox = new VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
-  vbox->addControl(new LabelControl(s_help, 14, simVis::Color::Silver));
-  s_action = new LabelControl("", 16, simVis::Color::Lime);
-  vbox->addControl(s_action.get());
-  s_helpControl = vbox;
-  return vbox;
-}
 #endif
 
 //----------------------------------------------------------------------------
@@ -235,8 +216,6 @@ struct MenuHandler : public osgGA::GUIEventHandler
 #ifdef HAVE_IMGUI
     if (controlPanel_)
       controlPanel_->setText(text);
-#else
-    s_action->setText(text);
 #endif
   }
 
@@ -755,15 +734,6 @@ struct MenuHandler : public osgGA::GUIEventHandler
         handled = true;
       }
       break;
-
-#ifndef HAVE_IMGUI
-      case '?' : // toggle help
-      {
-        s_helpControl->setVisible(!s_helpControl->visible());
-        handled = true;
-      }
-      break;
-#endif
     }
 
     return handled;
@@ -1086,9 +1056,6 @@ int main(int argc, char **argv)
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(controlPanel);
-#else
-  /// show the instructions overlay
-  viewer->getMainView()->addOverlayControl(createHelp());
 #endif
 
   /// add some stock OSG handlers

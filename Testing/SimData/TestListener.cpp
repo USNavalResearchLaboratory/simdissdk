@@ -701,7 +701,7 @@ int testFlush()
   // Added a platform, so the add, pref and name counters should be 1
   rv += SDK_ASSERT(counter->compareAndClear(1, 0, 1, 0, 0, 1, 0, 0));
 
-  ds->flush(platId1);
+  ds->flush(platId1, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_ALL);
 
   // Added BEFORE the flush so the time and category counters should have been incremented
   rv += SDK_ASSERT(counter->compareAndClear(0, 0, 0, 0, 0, 0, 1, 0));
@@ -714,7 +714,7 @@ int testFlush()
   ds->addListener(simData::DataStore::ListenerPtr(new RemoveDuringCallback(Flush, calledBeforeRemoveShared)));
   ds->addListener(simData::DataStore::ListenerPtr(new DoesNothingCallback));
 
-  ds->flush(platId1);
+  ds->flush(platId1, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_ALL);
 
   // Added BEFORE the flush so the counter should have been incremented
   rv += SDK_ASSERT(counter->compareAndClear(0, 0, 0, 0, 0, 0, 1, 0));
@@ -728,7 +728,7 @@ int testFlush()
   ds->addListener(calledAfterRemoveShared);
   ds->addListener(simData::DataStore::ListenerPtr(new DoesNothingCallback));
 
-  ds->flush(platId1);
+  ds->flush(platId1, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_ALL);
 
   // Added BEFORE the flush so the counter should have been incremented
   rv += SDK_ASSERT(counter->compareAndClear(0, 0, 0, 0, 0, 0, 1, 0));

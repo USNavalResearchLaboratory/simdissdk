@@ -236,8 +236,8 @@ void BoundIntegerSetting::bindTo(QComboBox* comboBox, bool populateToolTip, bool
     }
   }
   comboBox->setCurrentIndex(value());
-  connect(comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setValue(int)));
-  connect(this, SIGNAL(valueChanged(int)), comboBox, SLOT(setCurrentIndex(int)));
+  connect(comboBox, qOverload<int>(&QComboBox::currentIndexChanged), this, &simQt::BoundIntegerSetting::setValue);
+  connect(this, &simQt::BoundIntegerSetting::valueChanged, comboBox, &QComboBox::setCurrentIndex);
 }
 
 void BoundIntegerSetting::bindTo(QSpinBox* spinBox, bool populateToolTip, bool populateLimits)

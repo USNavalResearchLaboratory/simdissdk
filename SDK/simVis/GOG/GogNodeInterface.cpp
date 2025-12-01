@@ -150,8 +150,8 @@ public:
 
   void operator()(osg::Node* node, osg::NodeVisitor* nv) override
   {
-    int refYear;
-    double seconds;
+    int refYear = 0;
+    double seconds = 0.;
     // Defined in simVis/Scenario.cpp
     bool hasTime = nv->getUserValue("simVis.ScenarioManager.RefYear", refYear);
     hasTime = hasTime && nv->getUserValue("simVis.ScenarioManager.Seconds", seconds);
@@ -211,7 +211,13 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     // flatten in overhead mode by default - subclass might change this
     simVis::OverheadMode::enableGeometryFlattening(true, osgNode_.get());
 
-    osgNode_->addCullCallback(timeCallback_);
+    // Label Node and others can have a STATIC callback assigned. Using addCullCallback() is problematic
+    // because it appends the callback to the STATIC callback, meaning everything using
+    // osgEarth::CullIfVisibleCallback ALSO has our callbacks that we're installing. To avoid,
+    // put our callback in the front.
+    if (osgNode_->getCullCallback())
+      timeCallback_->addNestedCallback(osgNode_->getCullCallback());
+    osgNode_->setCullCallback(timeCallback_);
 
     // Add a tag for picking
     objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(osgNode_.get(), osgNode_.get());
@@ -1435,7 +1441,7 @@ void GogNodeInterface::setGeoPositionAltitude_(osgEarth::GeoPositionNode& node, 
 {
   bool extrude = false;
   osgEarth::AltitudeMode mode = osgEarth::ALTMODE_ABSOLUTE;
-  double altitude = altitude_ + altOffset_ + altitudeAdjustment;
+  double altitude = altitude_ + altOffset_;
 
   switch (altMode_)
   {
@@ -1443,6 +1449,7 @@ void GogNodeInterface::setGeoPositionAltitude_(osgEarth::GeoPositionNode& node, 
     break;
   case ALTITUDE_GROUND_RELATIVE:
     mode = osgEarth::ALTMODE_RELATIVE;
+    altitude += altitudeAdjustment;
     break;
   case ALTITUDE_GROUND_CLAMPED:
     mode = osgEarth::ALTMODE_RELATIVE;
@@ -1450,6 +1457,7 @@ void GogNodeInterface::setGeoPositionAltitude_(osgEarth::GeoPositionNode& node, 
     break;
   case ALTITUDE_EXTRUDE:
     mode = osgEarth::ALTMODE_RELATIVE;
+    altitude += altitudeAdjustment;
     extrude = true;
     break;
   }

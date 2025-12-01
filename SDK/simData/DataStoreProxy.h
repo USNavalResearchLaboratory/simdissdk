@@ -93,7 +93,8 @@ public: // methods
    * flush all the updates, command, category data and generic data for the specified id,
    * if 0 is passed in flushes the entire scenario, except for static entities
    */
-  virtual void flush(ObjectId flushId, FlushType type = NON_RECURSIVE) override {dataStore_->flush(flushId, type);}
+  [[deprecated("Use flush(ObjectId, FlushScope, FlushFields) instead.")]]
+  virtual void flush(ObjectId flushId, FlushType flushType = NON_RECURSIVE) override;
 
   /** Removes all the specified data */
   virtual int flush(ObjectId id, FlushScope scope, FlushFields fields) override {return dataStore_->flush(id, scope, fields);}

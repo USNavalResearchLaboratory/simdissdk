@@ -279,7 +279,10 @@ void DataTableModel::setDataTable(simData::DataTable* dataTable)
   dataTable_->accept(cv);
   // empty table, nothing more to do
   if (cv.columns().empty())
+  {
+    endResetModel();
     return;
+  }
 
   // use size() instead of size() - 1 because of the time column
   const int lastColIndex = cv.columns().size();

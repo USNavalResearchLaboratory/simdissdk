@@ -34,7 +34,7 @@ namespace simCore
   /**
   * Converts an dB value to linear notation
   * @param[in ] in a value in dB
-  * @return a linear value
+  * @return a linear value, can be 0 if in is -std::numeric_limits<Type>::infinity()
   */
   template <class Type>
   inline Type dB2Linear(Type in) { return static_cast<Type>(pow(10., in * 0.1)); }
@@ -42,7 +42,7 @@ namespace simCore
   /**
   * Converts an dBm value to linear notation
   * @param[in ] in a value in dBm
-  * @return a linear value
+  * @return a linear value, can be 0 if in is -std::numeric_limits<Type>::infinity()
   */
   template <class Type>
   inline Type dBm2Linear(Type in) { return pow(10., (in - 30.) * 0.1); }

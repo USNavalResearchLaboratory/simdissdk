@@ -126,6 +126,15 @@ std::unique_ptr<EnumerationText> EnumerationText::makeBeamTypeName()
   return rv;
 }
 
+std::unique_ptr<EnumerationText> EnumerationText::makeBeamRangeMode()
+{
+  auto rv = std::make_unique<EnumerationText>();
+  rv->insert_(0, "BEAM_UPDATE"); ///< Beam uses range as provided in beam update
+  rv->append_("ONE-WAY_FREE_SPACE");  ///< Beam uses calculated one-way free-space range
+  rv->append_("TWO-WAY_FREE_SPACE");  ///< Beam uses calculated two-way free-space range
+
+  return rv;
+}
 std::unique_ptr<EnumerationText> EnumerationText::makeGateDrawModeName()
 {
   auto rv = std::make_unique<EnumerationText>();
@@ -411,6 +420,16 @@ std::unique_ptr<EnumerationText> EnumerationText::makePolarityName()
 
   return rv;
 }
+
+std::unique_ptr<EnumerationText> EnumerationText::makeVolumeTypeName()
+{
+  auto rv = std::make_unique<EnumerationText>();
+  rv->insert_(0, "GAIN_AS_RANGE_SCALAR");
+  rv->append_("FREE_SPACE_RANGE_LINEAR");
+
+  return rv;
+}
+
 std::unique_ptr<EnumerationText> EnumerationText::makeModelDrawModeName()
 {
   auto rv = std::make_unique<EnumerationText>();

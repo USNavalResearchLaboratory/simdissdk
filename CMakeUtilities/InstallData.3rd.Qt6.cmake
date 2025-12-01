@@ -72,7 +72,9 @@ function(vsi_install_qt6plugins dir)
             DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
             OPTIONAL
             COMPONENT ThirdPartyLibs
-            FILES_MATCHING PATTERN *.so)
+            FILES_MATCHING PATTERN *.so
+            PATTERN libqgtk3.so EXCLUDE
+            PATTERN *wayland* EXCLUDE)
     endif()
 endfunction()
 
@@ -86,7 +88,7 @@ foreach(PACKAGENAME IN ITEMS Core DBus Gui OpenGL OpenGLWidgets Widgets XcbQpa)
 endforeach()
 
 # Each install needs some defaults
-foreach(PLUGINNAME IN ITEMS imageformats platforms styles xcbglintegrations)
+foreach(PLUGINNAME IN ITEMS imageformats platforminputcontexts platforms platformthemes styles xcbglintegrations)
     vsi_install_qt6plugins(${PLUGINNAME})
 endforeach()
 

@@ -41,8 +41,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
 #endif
 
 //----------------------------------------------------------------------------
@@ -172,25 +170,6 @@ private:
   int currentEffect_ = static_cast<int>(simData::FragmentEffect::FE_NONE);
   double nextScaleMult_ = 1.0;
 };
-
-#else
-osg::ref_ptr<osgEarth::Util::Controls::Control> createHelp()
-{
-  using VBox = osgEarth::Util::Controls::VBox;
-  using LabelControl = osgEarth::Util::Controls::LabelControl;
-
-  osg::ref_ptr<VBox> vbox = new VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->setMargin(10);
-
-  vbox->addControl(new LabelControl("Fragment Effect Example", 20.f, simVis::Color::Yellow));
-  vbox->addControl(new LabelControl("1: Cycle Effect", 14.f, simVis::Color::White));
-  vbox->addControl(new LabelControl("*: Increase Scale", 14.f, simVis::Color::White));
-  vbox->addControl(new LabelControl("/: Decrease Scale", 14.f, simVis::Color::White));
-  vbox->addControl(new LabelControl("c: Center on Platform", 14.f, simVis::Color::White));
-  return vbox;
-}
 
 #endif
 
@@ -420,9 +399,6 @@ int main(int argc, char **argv)
   mainView->getEventHandlers().push_front(gui);
   auto* panel = new ControlPanel(dataStore, platform);
   gui->add(panel);
-#else
-  /// show the instructions overlay
-  mainView->addOverlayControl(createHelp());
 #endif
 
   // add some stock OSG handlers and go

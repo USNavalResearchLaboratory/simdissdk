@@ -171,8 +171,13 @@ public:
   */
   void setShareArticulatedIconModels(bool value);
 
-  /** Retrieves the flag for whether to share articulated models or not */
-  bool getShareArticulatedIconModels() const;
+  /**
+  * Whether models loaded by getOrCreateIconModel() that contain animation rigging
+  * should be shared. Default=FALSE so that each instance can be animated
+  * separately. Set to true if you do not intend to used animated models; this will
+  * save memory by sharing the geometry across instances.
+  */
+  void setShareAnimatedIconModels(bool value);
 
   /** Set a clock for time-dependent icons */
   void setClock(simCore::Clock* clock);

@@ -1474,6 +1474,133 @@ int testDataTableTimeRange()
   return rv;
 }
 
+/// A listener that tracks how many times flush has been called and with what IDs
+class TestListener : public simData::DataStore::DefaultListener
+{
+public:
+  void onFlush(simData::DataStore* source, simData::ObjectId id) override
+  {
+    totalCalls_++;
+    if (id != 0)
+      flushedIds_.insert(id);
+  }
+
+  void reset()
+  {
+    flushedIds_.clear();
+    totalCalls_ = 0;
+  }
+
+  bool check(int expectedCalls, std::set<simData::ObjectId> expectedIds) const
+  {
+    return totalCalls_ == expectedCalls && expectedIds == flushedIds_;
+  }
+private:
+  std::set<simData::ObjectId> flushedIds_;
+  int totalCalls_ = 0;
+};
+
+int testListener()
+{
+  int rv = 0;
+  std::set<simData::ObjectId> expectedIds;
+  Ids ids;
+
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore* ds = testHelper.dataStore();
+  std::shared_ptr<TestListener> listener(new TestListener);
+  ds->addListener(listener);
+
+  // Flush an empty scenario
+  ds->flush(0, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+  expectedIds.clear();
+
+  // Flush a single platform in an otherwise empty scenario
+  ids.platformId = testHelper.addPlatform();
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL);
+  expectedIds.insert(ids.platformId);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+  expectedIds.clear();
+
+  // Add dependants and flush the host platform
+  ids.beamId = testHelper.addBeam(ids.platformId);
+  ids.gateId = testHelper.addGate(ids.beamId);
+  ids.laserId = testHelper.addLaser(ids.platformId);
+  ids.lobId = testHelper.addLOB(ids.platformId);
+  ids.platformCustomRenderingId = testHelper.addCustomRendering(ids.platformId);
+  ids.platformProjectorId = testHelper.addProjector(ids.platformId);
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL);
+  expectedIds.insert(ids.platformId);
+  expectedIds.insert(ids.beamId);
+  expectedIds.insert(ids.gateId);
+  expectedIds.insert(ids.laserId);
+  expectedIds.insert(ids.lobId);
+  expectedIds.insert(ids.platformCustomRenderingId);
+  expectedIds.insert(ids.platformProjectorId);
+  rv += SDK_ASSERT(listener->check(7, expectedIds));
+  listener->reset();
+  // Add an unrelated platform and flush again to ensure it does not get announced by the listener
+  testHelper.addPlatform();
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL);
+  rv += SDK_ASSERT(listener->check(7, expectedIds));
+  listener->reset();
+  expectedIds.clear();
+
+  // Flush one of those dependants directly
+  ds->flush(ids.gateId, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL);
+  expectedIds.insert(ids.gateId);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+  expectedIds.clear();
+
+  // Flush a single independent custom rendering
+  simData::ObjectId cr = testHelper.addCustomRendering(0);
+  ds->flush(cr, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL);
+  expectedIds.insert(cr);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+  expectedIds.clear();
+
+  // Flush the full scenario, confirm a single listener call
+  ds->flush(0, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+
+  // Flush the platform nonrecursively
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_ALL);
+  expectedIds.insert(ids.platformId);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+
+  // Do a basic flush with all field options, verify listener behavior is not affected
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_UPDATES);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_COMMANDS);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_CATEGORY_DATA);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_GENERIC_DATA);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_DATA_TABLES);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_EXCLUDE_MINUS_ONE);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+  ds->flush(ids.platformId, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_ALL_EXCLUDE_MINUS_ONE);
+  rv += SDK_ASSERT(listener->check(1, expectedIds));
+  listener->reset();
+
+  return rv;
+}
+
 }
 
 int TestFlush(int argc, char* argv[])
@@ -1491,6 +1618,7 @@ int TestFlush(int argc, char* argv[])
   rv += testGenericDataTimeRange();
   rv += testCategoryDataTimeRange();
   rv += testDataTableTimeRange();
+  rv += testListener();
 
   return rv;
 }

@@ -20,26 +20,45 @@
  * disclose, or release this software.
  *
  */
-#include <QApplication>
-#include <QStyleHints>
-#include "simCore/System/Utils.h"
-#include "TestColorWidget.h"
+#ifndef SIMQT_TABDROPDOWNBUTTON_H
+#define SIMQT_TABDROPDOWNBUTTON_H
 
-int main(int argc, char* argv[])
+#include <QPointer>
+#include <QToolButton>
+#include "simCore/Common/Export.h"
+
+class QMenu;
+class QTabWidget;
+
+namespace simQt {
+
+/**
+ * Creates a QToolButton with a drop down menu to set the current index on a QTabWidget.
+ * Installs itself as part of construction, and memory is managed by Qt parentage. Example usage:
+ *
+ *   QTabWidget* tabWidget = new QTabWidget();
+ *   new simQt::TabDropDownButton(tabWidget);
+ */
+class SDKQT_EXPORT TabDropDownButton : public QToolButton
 {
-  simCore::initializeSimdisEnvironmentVariables();
-  QApplication app(argc, argv);
-  
-  // Force light mode for now until we fully support dark mode
-#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-  app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
-#endif
+  Q_OBJECT;
 
-  TestColorWidget* colorWidget = new TestColorWidget(nullptr);
-  colorWidget->show();
+public:
+  explicit TabDropDownButton(QTabWidget* parent = nullptr);
+  virtual ~TabDropDownButton();
 
-  int rv = app.exec();
+private Q_SLOTS:
+  /**
+   * Update the menu to the current tabs in tab widget.
+   * Triggered when the menu is about to be shown.
+   */
+  void updateMenu_();
 
-  delete colorWidget;
-  return rv;
+private:
+  QPointer<QTabWidget> tabWidget_;
+  QPointer<QMenu> menu_;
+};
+
 }
+
+#endif /* SIMQT_TABDROPDOWNBUTTON_H */

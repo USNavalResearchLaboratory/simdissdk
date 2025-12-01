@@ -129,7 +129,11 @@ ArticulationsEditorWidget::ArticulationsEditorWidget(QWidget* parent)
   // Connect signals and slots
   connect(ui_->articulationTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &ArticulationsEditorWidget::updateArticulationDetails_);
   connect(ui_->switchIndexCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ArticulationsEditorWidget::updateMultiSwitch_);
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
   connect(ui_->sequenceActiveCheck, &QCheckBox::stateChanged, this, &ArticulationsEditorWidget::updateSequence_);
+#else
+  connect(ui_->sequenceActiveCheck, &QCheckBox::checkStateChanged, this, &ArticulationsEditorWidget::updateSequence_);
+#endif
   connect(ui_->headingSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ArticulationsEditorWidget::setSpinBoxCurrentHeading_);
   connect(ui_->pitchSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ArticulationsEditorWidget::setSpinBoxCurrentPitch_);
   connect(ui_->rollSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ArticulationsEditorWidget::setSpinBoxCurrentRoll_);

@@ -184,11 +184,18 @@ public:
     OMNI = 5       ///< Omni directional algorithm
   };
 
+  /// Enumeration of antenna volume rendering types
+  enum class VolumeType {
+    GAIN_AS_RANGE_SCALAR = 0,  ///< Use the gain value as if it were a range scalar
+    FREE_SPACE_RANGE_LINEAR = 1, ///< Use the gain converted to linear range
+  };
+
   SIMDATA_DECLARE_DEFAULT_METHODS(AntennaPatterns);
   SIMDATA_DECLARE_FIELD(type_, type, AntennaPatterns::Type);
   SIMDATA_DECLARE_FIELD(fileFormat_, fileformat, AntennaPatterns::FileFormat);
   SIMDATA_DECLARE_FIELD_CONST_REF(fileName_, filename, std::string);
   SIMDATA_DECLARE_FIELD(algorithm_, algorithm, AntennaPatterns::Algorithm);
+  SIMDATA_DECLARE_FIELD(volumeType_, volumeType, AntennaPatterns::VolumeType);
 };
 
 /** Beam preferences */
@@ -208,6 +215,13 @@ public:
     ANTENNA_PATTERN = 1,  ///< Beam drawn using antenna pattern
     COVERAGE = 2,         ///< Beam drawn as a spherical slice (cap only)
     LINE = 3              ///< Beam drawn as a line
+  };
+
+  /** RangeMode allows user to override beam range with a calculation */
+  enum class RangeMode {
+    BEAM_UPDATE = 0,         ///< Use range provided in beam update
+    ONE_WAY_FREE_SPACE = 1,  ///< Use one-way-free-space calculation
+    TWO_WAY_FREE_SPACE = 2  ///< Use two-way-free-space calculation
   };
 
   SIMDATA_DECLARE_METHODS(BeamPrefs);
@@ -247,6 +261,7 @@ public:
   SIMDATA_DECLARE_FIELD(pulseLength_, pulselength, double);
   SIMDATA_DECLARE_FIELD(pulseRate_, pulserate, double);
   SIMDATA_DECLARE_FIELD(pulseStipple_, pulsestipple, uint32_t);
+  SIMDATA_DECLARE_FIELD(rangeMode_, rangemode, BeamPrefs::RangeMode);
 };
 
 /** Time Tick preferences */
