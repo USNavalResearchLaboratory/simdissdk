@@ -58,12 +58,12 @@
      </property>
      <property name="icon">
       <iconset resource="simQtResources.qrc">
-       <normaloff>:/simQt/images/Close.png</normaloff>:/simQt/images/Close.png</iconset>
+       <normaloff>:/simQt/images/Close_Button.png</normaloff>:/simQt/images/Close_Button.png</iconset>
      </property>
      <property name="iconSize">
       <size>
-       <width>8</width>
-       <height>8</height>
+       <width>14</width>
+       <height>14</height>
       </size>
      </property>
      <property name="flat">
