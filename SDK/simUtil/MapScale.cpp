@@ -22,6 +22,7 @@
  */
 #include "osg/Callback"
 #include "osg/ShadeModel"
+#include "osgText/Text"
 #include "osgEarth/Capabilities"
 #include "osgEarth/TerrainEngineNode"
 #include "simCore/Calc/Calculations.h"
@@ -29,7 +30,6 @@
 #include "simCore/Calc/Units.h"
 #include "simVis/Registry.h"
 #include "simVis/SceneManager.h"
-#include "simVis/Text.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"
 #include "simUtil/Shaders.h"
@@ -103,7 +103,7 @@ MapScale::MapScale()
 
   osgText::Font* font = simVis::Registry::instance()->getOrCreateFont("arial.ttf");
 
-  unitsText_ = new simVis::Text;
+  unitsText_ = new osgText::Text;
   unitsText_->setFont(font);
   unitsText_->setCharacterSize(simVis::osgFontSize(12.f));
   unitsText_->setPosition(osg::Vec3f(0.f, 0.f, 0.f));
@@ -111,7 +111,7 @@ MapScale::MapScale()
   unitsText_->setBackdropType(osgText::Text::DROP_SHADOW_BOTTOM_RIGHT);
   unitsText_->setDataVariance(osg::Object::DYNAMIC);
 
-  valueTextPrototype_ = new simVis::Text();
+  valueTextPrototype_ = new osgText::Text();
   valueTextPrototype_->setFont(font);
   valueTextPrototype_->setCharacterSize(simVis::osgFontSize(13.f));
   valueTextPrototype_->setPosition(osg::Vec3f(0.f, 0.f, 0.f));
@@ -478,7 +478,7 @@ void MapScale::drawBars_(double maxValue, unsigned int numDivisions, float width
   {
     if (condenseText_ && (k == 0))
     {
-      simVis::Text* valueText = new simVis::Text(*valueTextPrototype_);
+      osgText::Text* valueText = new osgText::Text(*valueTextPrototype_);
       valueText->setPosition(osg::Vec3f(pixelIncrement * k, heightPx_, 0.f));
       valueText->setAlignment(osgText::Text::LEFT_TOP);
       valueText->setText("Div: " + valueToString_(dataIncrement, precision) + " " + unitsText_->getText().createUTF8EncodedString());
@@ -486,7 +486,7 @@ void MapScale::drawBars_(double maxValue, unsigned int numDivisions, float width
     }
     else if (!condenseText_ || (k == numDivisions))
     {
-      simVis::Text* valueText = new simVis::Text(*valueTextPrototype_);
+      osgText::Text* valueText = new osgText::Text(*valueTextPrototype_);
       valueText->setPosition(osg::Vec3f(pixelIncrement * k, heightPx_, 0.f));
       if (condenseText_ && (k == numDivisions))
         valueText->setAlignment(osgText::Text::RIGHT_TOP);
