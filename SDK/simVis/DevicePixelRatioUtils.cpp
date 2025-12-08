@@ -102,7 +102,10 @@ bool areFloatValuesEqual(const T& a, const T& b)
     return areVecEqual(a, b);
   else
   {
+#if defined(__cplusplus) && __cplusplus >= 202302L
     static_assert(false, "Unsupported type for DPR equality comparison");
+#endif
+    return simCore::areEqual(static_cast<double>(a), static_cast<double>(b));
   }
 }
 
