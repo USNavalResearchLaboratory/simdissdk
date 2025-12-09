@@ -111,7 +111,7 @@ private:
  * T must be copy constructible and have an assignment and equality operator.
  */
 template <typename T>
-class SDKUTIL_EXPORT TritonValueT : public TritonValue
+class TritonValueT : public TritonValue
 {
 public:
   /** Returns a reference back to the previously set value. */
@@ -341,7 +341,7 @@ private:
 
 #define DECLARE_SIMPLE_EVTHANDLER(CLASS, SETTING, VALUETYPE) \
 /** Control handler for changing double values */ \
-class SDKUTIL_EXPORT CLASS : public osgEarth::Util::Controls::ControlEventHandler \
+class [[deprecated("Deprecated, no longer available")]] SDKUTIL_EXPORT CLASS : public osgEarth::Util::Controls::ControlEventHandler \
 { \
 public: \
   /** Changes value from control */ \
@@ -355,6 +355,7 @@ private: \
   osg::observer_ptr<SETTING> value_; \
 };
 
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 DECLARE_SIMPLE_EVTHANDLER(ChoppinessEventHandler, TritonChoppiness, double);
 DECLARE_SIMPLE_EVTHANDLER(SunIntensityEventHandler, TritonSunIntensity, double);
 DECLARE_SIMPLE_EVTHANDLER(EnableSprayEventHandler, TritonEnableSpray, bool);
@@ -364,9 +365,11 @@ DECLARE_SIMPLE_EVTHANDLER(GodRaysFadeEventHandler, TritonGodRaysFade, double);
 DECLARE_SIMPLE_EVTHANDLER(WindDirectionDegEventHandler, TritonSeaState, double);
 DECLARE_SIMPLE_EVTHANDLER(SeaStateEventHandler, TritonSeaState, double);
 DECLARE_SIMPLE_EVTHANDLER(QualityEventHandler, TritonQuality, double);
+#endif
 
 #undef DECLARE_SIMPLE_EVTHANDLER
 
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 /** When attached to a Quality slider, will update the label provided with Quality text */
 class SDKUTIL_EXPORT QualityTextUpdater : public osgEarth::Util::Controls::ControlEventHandler
 {
@@ -383,6 +386,7 @@ protected:
 private:
   osg::observer_ptr<osgEarth::Util::Controls::LabelControl> label_;
 };
+#endif
 
 }
 

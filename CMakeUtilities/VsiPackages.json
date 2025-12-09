@@ -3,19 +3,27 @@
     {
       "name": "ENTT",
       "dir": "EnTT",
-      "version": "3.14.0"
+      "version": [
+        "3.15.0"
+      ]
     },
     {
       "name": "GDAL",
       "version": [
-        "3.10.0",
-        "3.8.2"
+        "3.11.4"
       ],
       "depend": "GEOS"
     },
     {
       "name": "GEOS",
-      "version": "3.11.0"
+      "version": [
+        "3.14.0"
+      ]
+    },
+    {
+      "name": "IMGUI",
+      "dir": "ImGui",
+      "version": "1.92.4"
     },
     {
       "name": "MRSID",
@@ -39,34 +47,38 @@
     {
       "name": "OSGQOPENGL",
       "dir": "osgQOpenGL",
-      "version": "4.0.0-qt5",
+      "version": [
+        "4.1.1-qt6",
+        "4.1.0-qt6"
+      ],
       "depend": [
         "OSG",
-        "QT5"
+        "QT6"
       ]
     },
     {
-      "name": "QT5",
-      "version": "5.15"
+      "name": "QT6",
+      "dir": "Qt6",
+      "version": "6.10.1"
     },
     {
       "name": "SQLITE",
       "dir": "SQLite",
-      "version": "3.42.0"
+      "version": [
+        "3.50.4"
+      ]
     },
     {
       "name": "SWIG",
       "version": [
-        "4.3.1",
-        "4.2.1"
+        "4.3.1"
       ]
     },
     {
       "name": "ZLIB",
       "dir": "ZLib",
       "version": [
-        "1.3.1",
-        "1.2.13"
+        "1.3.1"
       ]
     }
   ]

@@ -44,13 +44,11 @@ FontWidget::FontWidget(QWidget* parent)
     ui_(nullptr),
     useFriendlyFontName_(true)
 {
-
   ui_ = new Ui_FontWidget();
   ui_->setupUi(this);
-  connect(ui_->fontNameComboBox, SIGNAL(currentIndexChanged(QString)),
-    this, SLOT(fontNameChanged_(QString)));
-  connect(ui_->fontSizeSpinBox, SIGNAL(valueChanged(int)), this, SIGNAL(fontSizeChanged(int)));
-  connect(ui_->fontColorWidget, SIGNAL(colorChanged(QColor)), this, SIGNAL(fontColorChanged(QColor)));
+  connect(ui_->fontNameComboBox, &QComboBox::currentTextChanged, this, &FontWidget::fontNameChanged_);
+  connect(ui_->fontSizeSpinBox, qOverload<int>(&QSpinBox::valueChanged), this, &FontWidget::fontSizeChanged);
+  connect(ui_->fontColorWidget, &simQt::ColorWidget::colorChanged, this, & FontWidget::fontColorChanged);
 
   // set tool tips
   ui_->fontNameComboBox->setToolTip(simQt::formatTooltip(tr("Fonts"), tr("Provides a list of available system fonts.")));

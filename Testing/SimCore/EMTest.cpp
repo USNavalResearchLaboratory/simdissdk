@@ -24,6 +24,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/EM/AntennaPattern.h"
+#include "simCore/EM/ElectroMagRange.h"
 #include "simCore/EM/Propagation.h"
 #include "simCore/EM/RadarCrossSection.h"
 
@@ -359,7 +360,7 @@ int testTwoWayRcvdPowerFreeSpace()
     int err = 0;
     std::cout << "  testTwoWayRcvdPowerFreeSpace..." << std::endl;
 
-    // example from EW & Radar Handbook (https://ewhdbks.mugu.navy.mil/two-way-mono.htm)
+    // example from EW & Radar Handbook (https://apps.dtic.mil/sti/tr/pdf/ADA617071.pdf) page 4-4.7
     rv = simCore::getRcvdPowerFreeSpace(31000, 5000, 10000, 45, 40, 9, 5, false);
     std::cout << "two-way: " << rv << std::endl;
     err += SDK_ASSERT(simCore::areEqual(rv, -107.52, 0.05));
@@ -379,6 +380,25 @@ int testTwoWayRcvdPowerFreeSpace()
   return 1;
 }
 
+int testTwoWayFreeSpaceRange()
+{
+  double rangeM = 0;
+  int err = 0;
+
+  // example from EW & Radar Handbook (https://apps.dtic.mil/sti/tr/pdf/ADA617071.pdf) page 4-4.7
+  rangeM = simCore::getTwoWayFreeSpaceRange(-107.534, 5000, 10000, 45, 40, 5, 9);
+  err += SDK_ASSERT(simCore::areEqual(rangeM, 31000, 0.9));
+
+  rangeM = simCore::getTwoWayFreeSpaceRange(-110.456, 7000, 10000, 45, 40, 5, 9);
+  err += SDK_ASSERT(simCore::areEqual(rangeM, 31000, 0.9));
+
+  // safely handles -infinity
+  rangeM = simCore::getTwoWayFreeSpaceRange(-std::numeric_limits<double>::infinity(), 7000, 10000, 45, 40, 5, 9);
+  err += SDK_ASSERT(rangeM == 0.);
+
+  return err;
+}
+
 int testOneWayRcvdPowerFreeSpace()
 {
   try
@@ -387,7 +407,7 @@ int testOneWayRcvdPowerFreeSpace()
     int err = 0;
     std::cout << "  testOneWayRcvdPowerFreeSpace..." << std::endl;
 
-    // example from EW & Radar Handbook (https://ewhdbks.mugu.navy.mil/one-way.htm)
+    // example from EW & Radar Handbook (https://apps.dtic.mil/sti/tr/pdf/ADA617071.pdf) page 4-3.9
     rv = simCore::getRcvdPowerFreeSpace(31000, 5000, 10000, 45, 0, 1, 5, true);
     std::cout << "one-way: " << rv << std::endl;
     err += SDK_ASSERT(simCore::areEqual(rv, -56.25, 0.05));
@@ -677,6 +697,18 @@ int antennaPatternTest(int argc, char* argv[])
   return rv;
 }
 
+int testMaximumUnambiguousRange()
+{
+  double prf_hz = 1000.; // hz
+  double pulseWidth_uS = 0.; // uS
+  auto umr_m = simCore::maximumUnambiguousDetectionRange(prf_hz, pulseWidth_uS);
+  auto rv = SDK_ASSERT(simCore::areEqual(umr_m, 149851.273617));
+  pulseWidth_uS = 9.; // uS
+  umr_m = simCore::maximumUnambiguousDetectionRange(prf_hz, pulseWidth_uS);
+  rv = SDK_ASSERT(simCore::areEqual(umr_m, 148502.612155));
+  return rv;
+}
+
 }
 
 int EMTest(int argc, char* argv[])
@@ -685,10 +717,12 @@ int EMTest(int argc, char* argv[])
 
   rv += rcsTest(argc, argv);
   rv += testTwoWayRcvdPowerFreeSpace();
+  rv += testTwoWayFreeSpaceRange();
   rv += testOneWayRcvdPowerFreeSpace();
   rv += testOneWayFreeSpaceRangeLoss();
   rv += testLossToPpf();
   rv += antennaPatternTest(argc, argv);
+  rv += testMaximumUnambiguousRange();
 
   std::cout << "EMTests " << ((rv == 0) ? "Passed" : "Failed") << std::endl;
 

@@ -62,8 +62,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-namespace ui = osgEarth::Util::Controls;
 #endif
 
 static const double MAX_TIME = 600.0; // seconds of data
@@ -82,8 +80,6 @@ struct Application
 {
 #ifdef HAVE_IMGUI
   std::string pickLabel = NO_PICK;
-#else
-  osg::ref_ptr<ui::LabelControl> pickLabel;
 #endif
   osg::ref_ptr<simVis::View> mainView;
   osg::ref_ptr<simVis::View> mainRttView;
@@ -276,11 +272,6 @@ public:
     : label_(label)
   {
   }
-#else
-  explicit UpdateLabelPickCallback(ui::LabelControl* label)
-    : label_(label)
-  {
-  }
 #endif
 
   /** Update the label when new items are picked */
@@ -320,14 +311,10 @@ private:
   {
 #ifdef HAVE_IMGUI
     label_ = text;
-#else
-    label_->setText(text);
 #endif
   }
 #ifdef HAVE_IMGUI
   std::string& label_;
-#else
-  ui::LabelControl* label_;
 #endif
 };
 
@@ -375,38 +362,6 @@ private:
   Application& app_;
   bool rttEnabled_;
 };
-#else
-/** Creates an overlay that will show information to the user. */
-ui::Control* createUi(osg::ref_ptr<ui::LabelControl>& pickLabel, bool rttEnabled)
-{
-  // vbox is returned to caller, memory owned by caller
-  ui::VBox* vbox = new ui::VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new ui::LabelControl("Picking Example", 20, simVis::Color::Yellow));
-  vbox->addControl(new ui::LabelControl("h: Toggle highlighting", 14, simVis::Color::White));
-  vbox->addControl(new ui::LabelControl("O: Toggle overhead mode", 14, simVis::Color::White));
-  vbox->addControl(new ui::LabelControl("p: Pause playback", 14, simVis::Color::White));
-  vbox->addControl(new ui::LabelControl("v: Swap viewpoints", 14, simVis::Color::White));
-  vbox->addControl(new ui::LabelControl("d: Delete inset", 14, simVis::Color::White));
-  vbox->addControl(new ui::LabelControl("t: Toggle inset", 14, simVis::Color::White));
-  if (rttEnabled)
-  {
-    vbox->addControl(new ui::LabelControl("1: Toggle RTT 1 display", 14, simVis::Color::White));
-    vbox->addControl(new ui::LabelControl("2: Toggle RTT 2 display", 14, simVis::Color::White));
-  }
-
-  ui::Grid* grid = vbox->addControl(new ui::Grid);
-  grid->setControl(0, 0, new ui::LabelControl("Picked:", 14, simVis::Color::White));
-  pickLabel = grid->setControl(1, 0, new ui::LabelControl(NO_PICK, 14, simVis::Color::Lime));
-
-  // Move it down just a bit
-  vbox->setPosition(10, 10);
-  // Don't absorb events
-  vbox->setAbsorbEvents(false);
-
-  return vbox;
-}
 #endif
 
 /** Adds data points to a platform to bounce around inside a box */
@@ -760,15 +715,7 @@ int main(int argc, char** argv)
   imGuiView->addEventHandler(gui);
 
   gui->add(new ControlPanel(app, pickType == PickRtt));
-#else
-  app.mainView->addOverlayControl(createUi(app.pickLabel, (pickType == PickRtt)));
-#endif
-
-#ifdef HAVE_IMGUI
   app.picker->addCallback(new UpdateLabelPickCallback(app.pickLabel));
-#else
-  // When a new item is picked, update the label
-  app.picker->addCallback(new UpdateLabelPickCallback(app.pickLabel.get()));
 #endif
 
   // Add a popup handler to demonstrate its use of the picker

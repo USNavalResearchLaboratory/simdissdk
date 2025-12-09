@@ -170,8 +170,8 @@ void SettingsGroup::setValue(const QString& name, const QVariant& value, const M
 {
   if (settings_)
   {
-     settings_->setValue(getFullPath_(name), value, metaData);
-     addObserver(name, observer);
+    settings_->setValue(getFullPath_(name), value, metaData);
+    addObserver(name, observer);
   }
 }
 

@@ -113,6 +113,7 @@ namespace osgEarth { using UnitsType = Units; }
 
 namespace osgEarth { class LineDrawable; }
 
+namespace osgAnimation { class BasicAnimationManager; }
 namespace osgViewer {
   class StatsHandler;
   class View;
@@ -891,6 +892,9 @@ namespace simVis
    * itself. This decorator is pre-loaded with filters that may be needed to reduce noise in OSG notify.
    */
   SDKVIS_EXPORT FilteringOsgNotifyDecorator* installFilteringOsgNotifyDecorator();
+
+  /** Finds the first BasicAnimationManager on or under the node (depth first) */
+  SDKVIS_EXPORT osgAnimation::BasicAnimationManager* findAnimationManager(osg::Node* node);
 
 } // namespace simVis
 

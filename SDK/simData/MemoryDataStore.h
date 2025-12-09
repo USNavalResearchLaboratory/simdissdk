@@ -86,6 +86,7 @@ public:
 
   /// flush all the updates, command, category data and generic data for the specified id,
   /// if 0 is passed in flushes the entire scenario, except for static entities
+  [[deprecated("Use flush(ObjectId, FlushScope, FlushFields) instead.")]]
   virtual void flush(ObjectId flushId, FlushType type = NON_RECURSIVE) override;
 
   /** Removes all the specified data */
@@ -691,8 +692,8 @@ private:
   void updateProjectors_(double time);
   /// Updates all the LobGroups
   void updateLobGroups_(double time);
-  /// Flushes an entity based on the given scope, fields and time ranges
-  void flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields, double startTime, double endTime);
+  /// Flushes an entity based on the given scope, fields and time ranges. Optionally notifies listeners
+  void flushEntity_(ObjectId id, simData::ObjectType type, FlushScope flushScope, FlushFields flushFields, double startTime, double endTime, bool notifyListener);
   /// Flushes an entity's data tables
   void flushDataTables_(ObjectId id);
   /// Flushes an entity's data tables for the given time range; up to but not including endTime
@@ -700,6 +701,8 @@ private:
 
   /// Configure local listeners
   void initCompositeListener_();
+  /// Notify listeners of flush
+  void sendFlushToListeners_(ObjectId id);
 
   /// Initialize the default prefs objects
   virtual void setDefaultPrefs(const PlatformPrefs& platformPrefs,

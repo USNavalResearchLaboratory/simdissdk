@@ -131,7 +131,7 @@ struct SDKVIS_EXPORT RangeToolState
     const simCore::Vec3& lla0,
     const simCore::Vec3& lla1,
     double               altOffset,
-    osg::Vec3Array*      verts);
+    osg::Vec3Array*      verts) const;
 
   /**
   * Generate a list of lat/lon points between lla0 and lla1 at intervals of at most distDelta.  List does not include lla0 or lla1.
@@ -150,7 +150,7 @@ struct SDKVIS_EXPORT RangeToolState
   osg::Vec3 lla2local(double lat_rad, double lon_rad, double alt_m) const;
 
   ///@return lla values for the given position relative to the local frame
-  simCore::Vec3 local2lla(const osg::Vec3d& local);
+  simCore::Vec3 local2lla(const osg::Vec3d& local) const;
 
   ///@return the local/ENU vector produced by rotating the start->end vector by specified az, rotated in the ltp
   osg::Vec3d rotateEndVec(double az);
@@ -166,9 +166,9 @@ struct SDKVIS_EXPORT RangeToolState
   */
   osg::Matrixd                     world2local_;     // world to local tangent plane
   osg::Matrixd                     local2world_;     // reverse of above
-  EntityState*                     beginEntity_;
-  EntityState*                     endEntity_;
-  simCore::EarthModelCalculations  earthModel_;
+  EntityState*                     beginEntity_ = nullptr;
+  EntityState*                     endEntity_ = nullptr;
+  simCore::EarthModelCalculations  earthModel_ = simCore::WGS_84;
   simCore::CoordinateConverter     coordConv_;
   osgEarth::optional<osg::Vec3d>   coord_[COORD_CACHE_SIZE];  // number of enumerations in State::Coord
   simCore::TimeStamp timeStamp_; // the timeStamp of the last update

@@ -256,7 +256,9 @@ void OsgImGuiHandler::init_()
 
   ImGui_ImplOpenGL3_Init();
 
+#ifdef IMGUI_HAS_DOCK
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+#endif
 
   std::string font = simVis::Registry::instance()->findFontFile("droidsdans.ttf");
   // Attempt fallback to arial if droidsans isn't available
@@ -299,6 +301,7 @@ void OsgImGuiHandler::newFrame_(osg::RenderInfo& renderInfo)
 
 void OsgImGuiHandler::render_(osg::RenderInfo& ri)
 {
+#ifdef IMGUI_HAS_DOCK
   auto camera = ri.getCurrentCamera();
   auto viewport = camera->getViewport();
 
@@ -306,12 +309,14 @@ void OsgImGuiHandler::render_(osg::RenderInfo& ri)
     ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_PassthruCentralNode;
 
   auto dockSpaceId = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), dockspace_flags);
+#endif
 
   draw_(ri);
 
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+#ifdef IMGUI_HAS_DOCK
   auto centralNode = ImGui::DockBuilderGetCentralNode(dockSpaceId);
 
   auto io = ImGui::GetIO();
@@ -368,6 +373,7 @@ void OsgImGuiHandler::render_(osg::RenderInfo& ri)
       camera->setProjectionMatrixAsOrtho(newLeft, newRight, newBottom, newTop, znear, zfar);
     }
   }
+#endif
 }
 
 bool OsgImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)

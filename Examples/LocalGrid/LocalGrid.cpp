@@ -45,9 +45,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
-namespace ui = osgEarth::Util::Controls;
 #endif
 
 //----------------------------------------------------------------------------
@@ -214,151 +211,6 @@ private:
   int prec_ = 1;
 };
 
-#else
-
-/** Base class that provides a useful mergeIn() method */
-class ApplyPrefs : public ui::ControlEventHandler
-{
-public:
-  ApplyPrefs(simData::DataStore& ds, simData::ObjectId id)
-    : ds_(ds),
-      id_(id)
-  {
-  }
-
-  /** Given sparse input message, merges changes into the current datastore platform settings */
-  void mergeIn(const simData::PlatformPrefs& prefs)
-  {
-    simData::DataStore::Transaction txn;
-    simData::PlatformPrefs* dsPrefs = ds_.mutable_platformPrefs(id_, &txn);
-    dsPrefs->MergeFrom(prefs);
-    txn.complete(&dsPrefs);
-  }
-
-private:
-  simData::DataStore& ds_;
-  simData::ObjectId id_;
-};
-
-/** Turns the grid on and off */
-class ToggleLocalGrid : public ApplyPrefs
-{
-public:
-  ToggleLocalGrid(simData::DataStore& ds, simData::ObjectId id) : ApplyPrefs(ds, id) { }
-
-  virtual void onValueChanged(ui::Control* control, bool value)
-  {
-    simData::PlatformPrefs prefs;
-    prefs.mutable_commonprefs()->mutable_localgrid()->set_drawgrid(value);
-    mergeIn(prefs);
-  }
-};
-
-/** Changes the grid type to a specific display format */
-class ApplyGridType : public ApplyPrefs
-{
-public:
-  ApplyGridType(simData::DataStore& ds, simData::ObjectId id, simData::LocalGridPrefs::Type type)
-   : ApplyPrefs(ds, id),
-     type_(type)
-  { }
-
-  virtual void onClick(ui::Control* control)
-  {
-    simData::PlatformPrefs prefs;
-    prefs.mutable_commonprefs()->mutable_localgrid()->set_gridtype(type_);
-    mergeIn(prefs);
-  }
-
-private:
-  simData::LocalGridPrefs::Type type_;
-};
-
-/** Changes the text precision on the labels for the grid */
-class ApplyGridTextPrecision : public ApplyPrefs
-{
-public:
-  ApplyGridTextPrecision(simData::DataStore& ds, simData::ObjectId id, ui::LabelControl* label)
-   : ApplyPrefs(ds, id),
-     label_(label)
-  {
-  }
-
-  virtual void onValueChanged(ui::Control* control, float valueFloat)
-  {
-    int value = static_cast<int>(valueFloat + 0.5f);
-    simData::PlatformPrefs prefs;
-    prefs.mutable_commonprefs()->mutable_localgrid()->set_gridlabelprecision(value);
-    mergeIn(prefs);
-    if (label_)
-    {
-      std::stringstream ss;
-      ss << value;
-      label_->setText(ss.str());
-    }
-  }
-
-private:
-  ui::LabelControl* label_;
-};
-
-ui::Control* createHelp(simData::DataStore& ds, simData::ObjectId id)
-{
-  // vbox is returned to caller, memory owned by caller
-  ui::VBox* vbox = new ui::VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0);
-  vbox->addControl(new ui::LabelControl(s_title, 20, simVis::Color::Yellow));
-
-  // Grid for the various controls, memory will be owned by vbox
-  ui::Grid* grid = new ui::Grid();
-  grid->setBackColor(0, 0, 0, 0.5);
-  grid->setMargin(10);
-  grid->setPadding(10);
-  grid->setChildSpacing(10);
-  grid->setChildVertAlign(ui::Control::ALIGN_CENTER);
-  grid->setAbsorbEvents(true);
-  grid->setVertAlign(ui::Control::ALIGN_BOTTOM);
-  vbox->addControl(grid);
-
-  int row = 0;
-
-  grid->setControl(0, row, new ui::LabelControl("Draw Grid"));
-  ui::CheckBoxControl* drawGrid = new ui::CheckBoxControl(true);
-  drawGrid->addEventHandler(new ToggleLocalGrid(ds, id));
-  grid->setControl(1, row, drawGrid);
-
-  row++;
-
-  grid->setControl(0, row, new ui::LabelControl("Type"));
-  ui::LabelControl* cartesian = new ui::LabelControl("Cartesian");
-  cartesian->addEventHandler(new ApplyGridType(ds, id, simData::LocalGridPrefs::CARTESIAN));
-  grid->setControl(1, row, cartesian);
-  ui::LabelControl* polar = new ui::LabelControl("Polar");
-  polar->addEventHandler(new ApplyGridType(ds, id, simData::LocalGridPrefs::POLAR));
-  grid->setControl(2, row, polar);
-  ui::LabelControl* rangeRings = new ui::LabelControl("Range Rings");
-  rangeRings->addEventHandler(new ApplyGridType(ds, id, simData::LocalGridPrefs::RANGE_RINGS));
-  grid->setControl(3, row, rangeRings);
-  ui::LabelControl* speedRings = new ui::LabelControl("Speed Rings");
-  speedRings->addEventHandler(new ApplyGridType(ds, id, simData::LocalGridPrefs::SPEED_RINGS));
-  grid->setControl(4, row, speedRings);
-  ui::LabelControl* speedLine = new ui::LabelControl("Speed Line");
-  speedLine->addEventHandler(new ApplyGridType(ds, id, simData::LocalGridPrefs::SPEED_LINE));
-  grid->setControl(5, row, speedLine);
-
-  row++;
-
-  grid->setControl(0, row, new ui::LabelControl("Text Precision"));
-  ui::HSliderControl* precision = new ui::HSliderControl(0, 10, 1);
-  grid->setControl(1, row, precision);
-  ui::LabelControl* precisionLabel = new ui::LabelControl("1");
-  grid->setControl(2, row, precisionLabel);
-  precision->addEventHandler(new ApplyGridTextPrecision(ds, id, precisionLabel));
-
-  return vbox;
-}
-
 #endif
 
 }
@@ -398,10 +250,6 @@ int main(int argc, char** argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(dataStore, platformId));
-#else
-  // Create a HUD
-  ui::ControlCanvas* canvas = ui::ControlCanvas::get(viewer->getMainView());
-  canvas->addControl(createHelp(dataStore, platformId));
 #endif
 
   return viewer->run();

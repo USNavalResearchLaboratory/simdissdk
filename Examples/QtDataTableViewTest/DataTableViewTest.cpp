@@ -21,6 +21,7 @@
  *
  */
 #include <sstream>
+#include <QStyleHints>
 #include <QTreeWidget>
 #include "simCore/System/Utils.h"
 #include "simQt/DataTableModel.h"
@@ -155,15 +156,19 @@ namespace DataTableViewTest
     entityTreeModel_ = new simQt::EntityTreeModel(nullptr, ds);
     entityTreeComposite_ = ui_->EntityTreeComposite;
     entityTreeComposite_->setModel(entityTreeModel_);
-    connect(entityTreeComposite_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(itemsSelected(QList<uint64_t>)));
-    connect(ui_->AddDataTableButton, SIGNAL(pressed()), this, SLOT(addTable_()));
-    connect(ui_->AddRowButton, SIGNAL(pressed()), this, SLOT(addRow_()));
-    connect(ui_->AddColumnButton, SIGNAL(pressed()), this, SLOT(addColumn_()));
-    connect(ui_->DataTableComboBox, SIGNAL(dataTableSelected(simData::DataTable*)), this, SLOT(tableSelected_(simData::DataTable*)));
-    connect(ui_->RemoveTableButton, SIGNAL(pressed()), this, SLOT(removeTable_()));
-    connect(ui_->DataLimitPointsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setDataLimitPoints_(int)));
-    connect(ui_->DataLimitTimeSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataLimitTime_(double)));
-    connect(ui_->DataLimitEnableCheckBox, SIGNAL(stateChanged(int)), this, SLOT(enableDataLimiting_(int)));
+    connect(entityTreeComposite_, &simQt::EntityTreeComposite::itemsSelected, this, &MainWindow::itemsSelected);
+    connect(ui_->AddDataTableButton, &QPushButton::clicked, this, &MainWindow::addTable_);
+    connect(ui_->AddRowButton, &QPushButton::clicked, this, &MainWindow::addRow_);
+    connect(ui_->AddColumnButton, &QPushButton::clicked, this, &MainWindow::addColumn_);
+    connect(ui_->DataTableComboBox, &simQt::DataTableComboBox::dataTableSelected, this, &MainWindow::tableSelected_);
+    connect(ui_->RemoveTableButton, &QPushButton::clicked, this, &MainWindow::removeTable_);
+    connect(ui_->DataLimitPointsSpinBox, qOverload<int>(&QSpinBox::valueChanged), this, &MainWindow::setDataLimitPoints_);
+    connect(ui_->DataLimitTimeSpinBox, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &MainWindow::setDataLimitTime_);
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+    connect(ui_->DataLimitEnableCheckBox, &QCheckBox::stateChanged, this, &MainWindow::enableDataLimiting_);
+#else
+    connect(ui_->DataLimitEnableCheckBox, &QCheckBox::checkStateChanged, this, &MainWindow::enableDataLimiting_);
+#endif
 
     ui_->TableSizeSpinBox->setValue(3);
 
@@ -315,6 +320,11 @@ int main(int argc, char* argv[])
 {
   simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
+
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   DataTableViewTest::MainWindow* window = new DataTableViewTest::MainWindow(nullptr);
   window->show();

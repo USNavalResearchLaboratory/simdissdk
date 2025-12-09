@@ -102,8 +102,8 @@ QWidget* EntityStateFilter::widget(QWidget* newWidgetParent) const
     rv->setCurrentIndex(static_cast<int>(state_));
     rv->setToolTip(simQt::formatTooltip(tr("Entity State Filter"), tr("Display all entities that are active, inactive, or both.")));
     // connect to the signal so we can update the filter based on GUI changes
-    connect(rv, SIGNAL(currentIndexChanged(int)), this, SLOT(entityStateChanged_(int)));
-    connect(this, SIGNAL(entityStateChanged(int)), rv, SLOT(setCurrentIndex(int)));
+    connect(rv, qOverload<int>(&QComboBox::currentIndexChanged), this, &EntityStateFilter::entityStateChanged_);
+    connect(this, &EntityStateFilter::entityStateChanged, rv, &QComboBox::setCurrentIndex);
     return rv;
   }
   return nullptr;

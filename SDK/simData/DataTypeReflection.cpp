@@ -1271,6 +1271,8 @@ std::unique_ptr<Reflection> Reflection::makeAntennaPatternsPreferences()
   rv->SIMDATA_REFLECTION_ADD_FIELD(fileName, filename, AntennaPatterns, getString, ReflectionDataType::String);
   std::shared_ptr<EnumerationText> algorithmEnum = EnumerationText::makeAntennaPatternAlgorithmName();
   rv->SIMDATA_REFLECTION_ADD_ENUM(algorithm, algorithm, AntennaPatterns, AntennaPatterns::Algorithm, algorithmEnum);
+  std::shared_ptr<EnumerationText> volumeTypeEnum = EnumerationText::makeVolumeTypeName();
+  rv->SIMDATA_REFLECTION_ADD_ENUM(volumeType, volumeType, AntennaPatterns, AntennaPatterns::VolumeType, volumeTypeEnum);
 
   return rv;
 }
@@ -1323,6 +1325,9 @@ std::unique_ptr<Reflection> Reflection::makeBeamPreferences()
   rv->SIMDATA_REFLECTION_ADD_FIELD(pulseLength, pulselength, BeamPrefs, getDouble, ReflectionDataType::Double);
   rv->SIMDATA_REFLECTION_ADD_FIELD(pulseRate, pulserate, BeamPrefs, getDouble, ReflectionDataType::Double);
   rv->SIMDATA_REFLECTION_ADD_FIELD(pulseStipple, pulsestipple, BeamPrefs, getUint32, ReflectionDataType::Uint32);
+
+  std::shared_ptr<EnumerationText> rangeModeEnum = EnumerationText::makeBeamRangeMode();
+  rv->SIMDATA_REFLECTION_ADD_ENUM(rangeMode, rangemode, BeamPrefs, BeamPrefs::RangeMode, rangeModeEnum);
 
   return rv;
 }
@@ -1657,16 +1662,24 @@ Reflection::TagStack Reflection::getPreferencesTagStack(const std::string& path,
 
 Reflection::TagStack Reflection::getPreferencesTagStack(const std::string& path, simData::ObjectType type)
 {
-  const auto& tags = makePreferencesTagStackMap(type);
+  static std::map<simData::ObjectType, Reflection::TagStackMap> tagStackMap;
 
-  if (tags.empty())
+  auto it = tagStackMap.find(type);
+  if (it == tagStackMap.end())
   {
-    // Invalid type
-    assert(false);
-    return Reflection::TagStack();
+    const auto tags = makePreferencesTagStackMap(type);
+    if (tags.empty())
+    {
+      // Invalid type
+      assert(false);
+      return Reflection::TagStack();
+    }
+
+    tagStackMap[type] = tags;
+    it = tagStackMap.find(type);
   }
 
-  return getPreferencesTagStack(path, tags);
+  return getPreferencesTagStack(path, it->second);
 }
 
 }

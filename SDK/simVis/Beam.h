@@ -348,6 +348,12 @@ namespace simVis
     */
     void applyPrefs_(const simData::BeamPrefs& prefs, bool force = false);
 
+    /**
+    * Using the specified prefs, if beam range is being overridden, use setUpdateOverride to apply that range override
+    * @param prefs the beam preferences
+    */
+    void processRangeMode_(const simData::BeamPrefs& prefs);
+
   private: // data
     simData::BeamProperties lastProps_;
 

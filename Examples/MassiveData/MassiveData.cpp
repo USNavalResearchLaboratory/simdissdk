@@ -58,9 +58,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
-namespace ui = osgEarth::Util::Controls;
 #endif
 //----------------------------------------------------------------------------
 
@@ -143,68 +140,6 @@ private:
   float time_ = 0.f;
   bool overhead_ = false;
 };
-#else
-namespace
-{
-  struct SetLODScale : public ui::ControlEventHandler
-  {
-    explicit SetLODScale(App& app) : app_(app) {}
-    void onValueChanged(ui::Control*, float value)
-    {
-      app_.scenario_->setLODScaleFactor(value);
-    }
-    App& app_;
-  };
-
-  struct SetTime : public ui::ControlEventHandler
-  {
-    explicit SetTime(App& app) : app_(app) {}
-    void onValueChanged(ui::Control*, float value)
-    {
-      app_.simHandler_->setTime(value);
-    }
-    App& app_;
-  };
-
-  struct ToggleOverhead : public ui::ControlEventHandler
-  {
-    explicit ToggleOverhead(App& app) : app_(app) {}
-    void onValueChanged(ui::Control*, bool value)
-    {
-      app_.view_->enableOverheadMode(!app_.view_->isOverheadEnabled());
-    }
-    App& app_;
-  };
-}
-
-
-ui::Control* createUI(App& app, float duration)
-{
-  ui::Grid* grid = new ui::Grid();
-  grid->setVertAlign(ui::Control::ALIGN_BOTTOM);
-  grid->setPadding(10);
-  grid->setBackColor(0, 0, 0, 0.4);
-  int r = 0;
-  grid->setControl(0, r, new ui::LabelControl("Massive Data Example", 20, simVis::Color::Yellow));
-
-  ++r;
-  grid->setControl(0, r, new ui::LabelControl("LOD scale:"));
-  grid->setControl(1, r, new ui::HSliderControl(1.0, 60.0, 1.0, new SetLODScale(app)));
-  grid->getControl(1, r)->setHorizFill(true, 300);
-  grid->setControl(2, r, new ui::LabelControl(grid->getControl(1, r)));
-
-  ++r;
-  grid->setControl(0, r, new ui::LabelControl("Time:"));
-  grid->setControl(1, r, new ui::HSliderControl(0.0, duration, 0.0, new SetTime(app)));
-  grid->getControl(1, r)->setHorizFill(true, 300);
-
-  ++r;
-  grid->setControl(0, r, new ui::LabelControl("Overhead:"));
-  grid->setControl(1, r, new ui::CheckBoxControl(false, new ToggleOverhead(app)));
-
-  return grid;
-}
-
 #endif
 
 int usage(int argc, char** argv)
@@ -387,9 +322,6 @@ int main(int argc, char** argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app, duration));
-#else
-  // instructions:
-  viewer->getMainView()->addOverlayControl(createUI(app, duration));
 #endif
 
   // add some stock OSG handlers

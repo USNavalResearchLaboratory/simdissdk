@@ -87,7 +87,7 @@ int RecenterEyeOnArea::centerOn(double lowerLat, double upperLat, double leftLon
     osgEarth::SpatialReference::create("wgs84"),
     osg::Vec3d(centerLla.lon() * simCore::RAD2DEG, centerLla.lat() * simCore::RAD2DEG, 0.0));
 
-  // Always look down on the area•
+  // Always look down on the area*
   eyePos.heading()->set(0.0, osgEarth::Units::DEGREES);
   eyePos.pitch()->set(-90.0, osgEarth::Units::DEGREES);
   // Clamp the distance between the close and far eye distances, so that we don't

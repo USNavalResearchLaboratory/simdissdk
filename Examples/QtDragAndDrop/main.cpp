@@ -30,6 +30,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMimeData>
+#include <QStyleHints>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -241,6 +242,11 @@ int main(int argc, char* argv[])
   viewMan->addView(view2.get());
 
   QApplication app(argc, argv);
+
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   MainWindow mainWindow(view1.get(), view2.get());
   mainWindow.resize(1200, 600);

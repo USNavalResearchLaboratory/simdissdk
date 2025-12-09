@@ -1,4 +1,4 @@
-# MSVC 2022 support in 3.21
+# MSVC 2022 support in 3.21; MSVC 2026 support in 4.2
 cmake_minimum_required(VERSION 3.21)
 
 # VCPKG customization ....................................................
@@ -185,7 +185,7 @@ include(CreateInstallProperties)
 # --- System Libraries --------------------
 
 find_package(OpenGL QUIET)
-find_package(OpenSceneGraph COMPONENTS osgDB osgGA osgSim osgText osgUtil osgViewer QUIET)
+find_package(OpenSceneGraph COMPONENTS osgAnimation osgDB osgGA osgSim osgText osgUtil osgViewer QUIET)
 find_package(GDAL CONFIG)
 find_package(osgEarth)
 
@@ -203,19 +203,19 @@ if(NOT SQLite3_FOUND)
 endif()
 
 # Conditionally find Qt5; if not found, fall back to Qt6
-find_package(Qt5 QUIET COMPONENTS OpenGL Widgets)
-set(_SDK_QT_VERSION 5)
-if(Qt5_FOUND)
-    message(STATUS "Found Qt5: ${Qt5_DIR}")
-    # Need to silence deprecation for MSVC 2022 and Qt5 to avoid build errors
-    if(MSVC AND TARGET Qt5::Core AND Qt5Core_VERSION VERSION_LESS 5.15.17)
-        target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
-    endif()
+find_package(Qt6 QUIET COMPONENTS OpenGL OpenGLWidgets Widgets)
+set(_SDK_QT_VERSION 6)
+if(Qt6_FOUND)
+    message(STATUS "Found Qt6: ${Qt6_DIR}")
 else()
-    find_package(Qt6 QUIET COMPONENTS OpenGL OpenGLWidgets Widgets)
-    if (Qt6_FOUND)
-        message(STATUS "Found Qt6: ${Qt6_DIR}")
-        set(_SDK_QT_VERSION 6)
+    find_package(Qt5 QUIET COMPONENTS OpenGL Widgets)
+    if(Qt5_FOUND)
+        message(STATUS "Found Qt5: ${Qt5_DIR}")
+        # Need to silence deprecation for MSVC 2022 and Qt5 to avoid build errors
+        if(MSVC AND TARGET Qt5::Core AND Qt5Core_VERSION VERSION_LESS 5.15.17)
+            target_compile_definitions(Qt5::Core INTERFACE _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+        endif()
+        set(_SDK_QT_VERSION 5)
     else()
         # Provide a warning if neither is found, but don't stop the configuration.
         message(WARNING "Neither Qt5 nor Qt6 was found. simQt and Qt-based examples will not build.")

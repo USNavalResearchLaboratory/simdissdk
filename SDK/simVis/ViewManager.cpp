@@ -73,10 +73,7 @@ namespace
   struct OnResize : public osgGA::GUIEventHandler
   {
     explicit OnResize(simVis::ViewManager* viewMan) :
-      viewMan_(viewMan),
-      width_(0),
-      height_(0),
-      resizeView_(nullptr)
+      viewMan_(viewMan)
       { }
 
     bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object* object, osg::NodeVisitor*)
@@ -109,9 +106,9 @@ namespace
 
   private:
     osg::observer_ptr<simVis::ViewManager> viewMan_;
-    int width_;
-    int height_;
-    osg::View* resizeView_;
+    int width_ = 0;
+    int height_ = 0;
+    osg::View* resizeView_ = nullptr;
   };
 }
 

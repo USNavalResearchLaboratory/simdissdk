@@ -185,20 +185,10 @@ struct MenuHandler : public osgGA::GUIEventHandler
 {
   osg::observer_ptr<simVis::Viewer> viewer_;
   osg::observer_ptr<simVis::SceneManager> scene_;
-#ifndef HAVE_IMGUI
-  osgEarth::Util::Controls::Control* menuControl_;
-
-  MenuHandler(simVis::Viewer* viewer, simVis::SceneManager* scene, osgEarth::Util::Controls::Control* menuControl)
-    : viewer_(viewer),
-      scene_(scene),
-      menuControl_(menuControl)
-  { }
-#else
   MenuHandler(simVis::Viewer* viewer, simVis::SceneManager* scene)
     : viewer_(viewer),
     scene_(scene)
   { }
-#endif
 
   bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
   {
@@ -229,12 +219,6 @@ struct MenuHandler : public osgGA::GUIEventHandler
         if (viewer_.valid())
           viewer_->getMainView()->tetherCamera(nullptr);
         break;
-#ifndef HAVE_IMGUI
-      case 'h':
-        if (menuControl_)
-          menuControl_->setVisible(!menuControl_->visible());
-        break;
-#endif
       case 'a':
         if (viewer_.valid())
           viewer_->setLogarithmicDepthBufferEnabled(!viewer_->isLogarithmicDepthBufferEnabled());
@@ -289,127 +273,12 @@ static simData::ObjectId createShip(simData::DataStore& dataStore)
   return result;
 }
 
-static char s_menu[] =
-"0 : reset view (to ship)\n"
-"1 : untether camera\n"
-"h : toggle this menu\n";
-
 #ifdef HAVE_OSGEARTH_TRITON
 static osg::ref_ptr<simUtil::TritonSettingsAdapter> s_TritonSettings(new simUtil::TritonSettingsAdapter);
 #endif /* HAVE_OSGEARTH_TRITON */
 
 namespace
 {
-#ifndef HAVE_IMGUI
-  using namespace osgEarth::Util::Controls;
-
-  /** Applies an opacity value from a slider */
-  class ApplyOpacity : public ControlEventHandler
-  {
-  public:
-    ApplyOpacity(VisibleLayer* layer, LabelControl* pctLabel)
-      : layer_(layer),
-        pctLabel_(pctLabel)
-    {
-    }
-
-    virtual void onValueChanged(Control* c, float value)
-    {
-      // Clamp between 0.f and 1.f
-      value = simCore::sdkMax(0.f, simCore::sdkMin(1.f, value));
-      if (layer_.valid())
-        layer_->setOpacity(value);
-      if (pctLabel_.valid())
-        pctLabel_->setText(Stringify() << static_cast<int>(value * 100.f) << "%");
-    }
-
-  private:
-    osg::observer_ptr<VisibleLayer> layer_;
-    osg::observer_ptr<LabelControl> pctLabel_;
-  };
-
-  /** Applies a sea level value from a slider */
-  class ApplySeaLevel : public ControlEventHandler
-  {
-  public:
-    ApplySeaLevel(SimpleOceanLayer* ocean, LabelControl* valueLabel)
-      : ocean_(ocean),
-        valueLabel_(valueLabel)
-    {
-    }
-
-    virtual void onValueChanged(Control* c, float value)
-    {
-      if (ocean_.valid())
-        ocean_->setSeaLevel(value);
-      if (valueLabel_.valid())
-        valueLabel_->setText(Stringify() << value << " m");
-    }
-
-  private:
-    osg::observer_ptr<SimpleOceanLayer> ocean_;
-    osg::observer_ptr<LabelControl> valueLabel_;
-  };
-
-  /** Check or uncheck to toggle sky lighting */
-  class ToggleLighting : public ControlEventHandler
-  {
-  public:
-    explicit ToggleLighting(SkyNode* sky)
-      : sky_(sky)
-    {
-    }
-    virtual void onValueChanged(Control* control, bool value)
-    {
-      if (sky_.valid())
-      {
-        if (value)
-          sky_->setLighting(osg::StateAttribute::OVERRIDE | osg::StateAttribute::ON);
-        else
-          sky_->setLighting(osg::StateAttribute::OVERRIDE | osg::StateAttribute::OFF);
-      }
-    }
-
-  private:
-    osg::observer_ptr<SkyNode> sky_;
-  };
-
-  /** Check or uncheck to toggle overhead mode */
-  class ToggleOverheadMode : public ControlEventHandler
-  {
-  public:
-    explicit ToggleOverheadMode(simVis::View* view)
-      : view_(view)
-    {
-    }
-    virtual void onValueChanged(Control* control, bool value)
-    {
-      if (view_.valid())
-        view_->enableOverheadMode(!view_->isOverheadEnabled());
-    }
-
-  private:
-    osg::observer_ptr<simVis::View> view_;
-  };
-
-#ifdef HAVE_OSGEARTH_TRITON
-  /** Toggler for the Triton buoyancy simulation */
-  class ToggleBuoyancySimulation : public ControlEventHandler
-  {
-  public:
-    explicit ToggleBuoyancySimulation(PlatformBuoyancyCallback* cb)
-      : _cb(cb)
-    {
-    }
-    virtual void onValueChanged(Control* control, bool value)
-    {
-      _cb->setEnabled(value);
-    }
-  private:
-    osg::ref_ptr<PlatformBuoyancyCallback> _cb;
-  };
-#endif /* HAVE_OSGEARTH_TRITON */
-#endif /* HAVE_IMGUI */
 
 #ifdef HAVE_OSGEARTH_SILVERLINING
   osg::ref_ptr<simUtil::SilverLiningSettingsAdapter> s_SlSettings = new simUtil::SilverLiningSettingsAdapter;
@@ -513,19 +382,6 @@ namespace
     optional<SilverLining::CloudTypes> addCloud_;
   };
   osg::ref_ptr<CloudManager> s_CloudManager = new CloudManager;
-
-  /** Control handler that on click will add a specific cloud type */
-  struct AddCloudType : public osgEarth::Util::Controls::ControlEventHandler
-  {
-    SilverLining::CloudTypes cloudType_;
-    explicit AddCloudType(SilverLining::CloudTypes cloudType) : cloudType_(cloudType) {}
-    void onClick(osgEarth::Util::Controls::Control*) { s_CloudManager->addCloudType(cloudType_); }
-  };
-  /** Control handler that on click will remove all clouds */
-  struct ClearClouds : public osgEarth::Util::Controls::ControlEventHandler
-  {
-    void onClick(osgEarth::Util::Controls::Control*) { s_CloudManager->clearClouds(); }
-  };
 #endif
 
 #ifdef HAVE_IMGUI
@@ -857,253 +713,6 @@ namespace
     bool lighting_ = true;
 };
 
-#else
-  Control* createMenu(osgEarth::SimpleOceanLayer* simpleOceanLayer, osgEarth::VisibleLayer* tritonLayer,
-                      PlatformBuoyancyCallback* buoyancyCallback, SkyNode* skyNode, simVis::View* view,
-                      bool isTriton, bool isSilverLining)
-  {
-    static const float TITLE_SIZE = 16.f;
-    static const float TEXT_SIZE = 12.f;
-    static const osg::Vec4f YELLOW(1.f, 1.f, 0.f, 1.f);
-    static const osg::Vec4f WHITE(1.f, 1.f, 1.f, 1.f);
-
-    VBox* b = new VBox();
-    b->setBackColor(0, 0, 0, 0.5);
-    b->addControl(new LabelControl("OCEAN DEMO", TITLE_SIZE, YELLOW));
-    b->addControl(new LabelControl(s_menu, TEXT_SIZE));
-
-    Grid* grid = b->addControl(new Grid);
-    grid->setChildSpacing(1.f); // Decrease spacing because of so many controls
-
-    // Opacity
-    int row = 0;
-    grid->setControl(0, row, new LabelControl("Opacity", TEXT_SIZE, WHITE));
-    LabelControl* opacityPctLabel = grid->setControl(2, row, new LabelControl("80%", TEXT_SIZE, WHITE));
-    // Provide a little buffer on either side so we can get to 0% and 100%...
-    HSliderControl* opacitySlider;
-    if (simpleOceanLayer)
-      opacitySlider = grid->setControl(1, row, new HSliderControl(-0.1f, 1.1f, 0.8f, new ApplyOpacity(simpleOceanLayer, opacityPctLabel)));
-    else
-      opacitySlider = grid->setControl(1, row, new HSliderControl(-0.1f, 1.1f, 0.8f, new ApplyOpacity(tritonLayer, opacityPctLabel)));
-    opacitySlider->setHorizFill(true, 250.0f);
-
-    // Sea level
-    if (simpleOceanLayer)
-    {
-    ++row;
-    grid->setControl(0, row, new LabelControl("Sea Level", TEXT_SIZE, WHITE));
-    LabelControl* seaLevelLabel = grid->setControl(2, row, new LabelControl("0 m", TEXT_SIZE, WHITE));
-    HSliderControl* seaLevelSlider = grid->setControl(1, row, new HSliderControl(-100.f, 100.f, 0.f, new ApplySeaLevel(simpleOceanLayer, seaLevelLabel)));
-    seaLevelSlider->setHorizFill(true, 250.0f);
-    }
-
-    // Sky lighting
-    ++row;
-    grid->setControl(0, row, new LabelControl("Lighting", TEXT_SIZE));
-    grid->setControl(1, row, new CheckBoxControl(true, new ToggleLighting(skyNode)));
-
-    ++row;
-    grid->setControl(0, row, new LabelControl("Overhead mode", TEXT_SIZE));
-    grid->setControl(1, row, new CheckBoxControl(false, new ToggleOverheadMode(view)));
-
-#ifdef HAVE_OSGEARTH_TRITON
-    if (isTriton)
-    {
-      // For Triton, we have several more settings...
-      ++row;
-      grid->setControl(0, row, new LabelControl("Triton", TITLE_SIZE, YELLOW));
-
-      // Choppiness
-      ++row;
-      grid->setControl(0, row, new LabelControl("Choppiness", TEXT_SIZE, WHITE));
-      ControlEventHandler* evtHandler = new simUtil::ChoppinessEventHandler(s_TritonSettings->choppiness());
-      HSliderControl* slider = grid->setControl(1, row, new HSliderControl(0.f, 3.f, 3.f, evtHandler));
-      slider->setHorizFill(true, 250.0f);
-      slider->setValue(s_TritonSettings->choppiness()->value());
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE, WHITE));
-
-      // Quality
-      ++row;
-      grid->setControl(0, row, new LabelControl("Quality", TEXT_SIZE, WHITE));
-      evtHandler = new simUtil::QualityEventHandler(s_TritonSettings->quality());
-      slider = grid->setControl(1, row, new HSliderControl(0.f, 3.f, 2.5f, evtHandler));
-      slider->setHorizFill(true, 250.0f);
-      LabelControl* qualityLabel = grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE, WHITE));
-      slider->addEventHandler(new simUtil::QualityTextUpdater(qualityLabel));
-      slider->setValue(s_TritonSettings->quality()->value());
-
-      // Wind Direction
-      ++row;
-      grid->setControl(0, row, new LabelControl("Wind Direction", TEXT_SIZE, WHITE));
-      evtHandler = new simUtil::WindDirectionDegEventHandler(s_TritonSettings->seaState());
-      slider = grid->setControl(1, row, new HSliderControl(-180.f, 180, 1.f, evtHandler));
-      slider->setHorizFill(true, 250.0f);
-      slider->setValue(s_TritonSettings->seaState()->windDirection());
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE, WHITE));
-
-      // Sea state
-      ++row;
-      grid->setControl(0, row, new LabelControl("Sea State", TEXT_SIZE, WHITE));
-      evtHandler = new simUtil::SeaStateEventHandler(s_TritonSettings->seaState());
-      slider = grid->setControl(1, row, new HSliderControl(0.f, 12.f, 12.f, evtHandler));
-      slider->setHorizFill(true, 250.0f);
-      slider->setValue(s_TritonSettings->seaState()->seaState());
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE, WHITE));
-
-      // Sun Intensity
-      ++row;
-      grid->setControl(0, row, new LabelControl("Sun Intensity", TEXT_SIZE, WHITE));
-      evtHandler = new simUtil::SunIntensityEventHandler(s_TritonSettings->sunIntensity());
-      slider = grid->setControl(1, row, new HSliderControl(0.f, 1.f, 1.f, evtHandler));
-      slider->setHorizFill(true, 250.0f);
-      slider->setValue(s_TritonSettings->sunIntensity()->value());
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE, WHITE));
-
-      // Spray
-      ++row;
-      grid->setControl(0, row, new LabelControl("Spray", TEXT_SIZE, WHITE));
-      evtHandler = new simUtil::EnableSprayEventHandler(s_TritonSettings->enableSpray());
-      grid->setControl(1, row, new CheckBoxControl(s_TritonSettings->enableSpray()->value(), evtHandler));
-
-      // Wireframe
-      ++row;
-      grid->setControl(0, row, new LabelControl("Wireframe", TEXT_SIZE, WHITE));
-      evtHandler = new simUtil::EnableWireframeEventHandler(s_TritonSettings->enableWireframe());
-      grid->setControl(1, row, new CheckBoxControl(s_TritonSettings->enableWireframe()->value(), evtHandler));
-
-      // God Rays
-      ++row;
-      grid->setControl(0, row, new LabelControl("God Rays", TEXT_SIZE, WHITE));
-      evtHandler = new simUtil::EnableGodRaysEventHandler(s_TritonSettings->enableGodRays());
-      grid->setControl(1, row, new CheckBoxControl(s_TritonSettings->enableGodRays()->value(), evtHandler));
-
-      // God Ray fade
-      ++row;
-      grid->setControl(0, row, new LabelControl("God Ray Fade", TEXT_SIZE, WHITE));
-      evtHandler = new simUtil::GodRaysFadeEventHandler(s_TritonSettings->godRaysFade());
-      slider = grid->setControl(1, row, new HSliderControl(0.f, 1.f, 0.5f, evtHandler));
-      slider->setHorizFill(true, 250.0f);
-      slider->setValue(s_TritonSettings->godRaysFade()->value());
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE, WHITE));
-
-      // Platform Buoyancy
-      ++row;
-      grid->setControl(0, row, new LabelControl("Platform Buoyancy", TEXT_SIZE, WHITE));
-      evtHandler = new ToggleBuoyancySimulation(buoyancyCallback);
-      grid->setControl(1, row, new CheckBoxControl(false, evtHandler));
-    }
-#endif /* HAVE_OSGEARTH_TRITON */
-
-#ifdef HAVE_OSGEARTH_SILVERLINING
-    if (isSilverLining)
-    {
-      // For SilverLining, we have several more settings...
-      ++row;
-      grid->setControl(0, row, new LabelControl("SilverLining", TITLE_SIZE, YELLOW));
-
-      ++row;
-      grid->setControl(0, row, new LabelControl("Visibility", TEXT_SIZE));
-      HSliderControl* slider = grid->setControl(1, row, new HSliderControl(100.0f, 100000.0f, 30000.0f, new simUtil::VisibilityEventHandler(s_SlSettings->visibility())));
-      slider->setHorizFill(true, 175);
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE));
-
-      ++row;
-      grid->setControl(0, row, new LabelControl("Turbidity", TEXT_SIZE));
-      slider = grid->setControl(1, row, new HSliderControl(1.8f, 8.0f, 2.2f, new simUtil::TurbidityEventHandler(s_SlSettings->turbidity())));
-      slider->setHorizFill(true, 175);
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE));
-
-      ++row;
-      grid->setControl(0, row, new LabelControl("Light Pollution", TEXT_SIZE));
-      slider = grid->setControl(1, row, new HSliderControl(0.0f, 0.01f, 0.0f, new simUtil::LightPollutionEventHandler(s_SlSettings->lightPollution())));
-      slider->setHorizFill(true, 175);
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE));
-
-      ++row;
-      grid->setControl(0, row, new LabelControl("Rain", TEXT_SIZE));
-      slider = grid->setControl(1, row, new HSliderControl(0, 30.0, 0, new simUtil::RainRateEventHandler(s_SlSettings->rainRate())));
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE));
-      ++row;
-      grid->setControl(0, row, new LabelControl("Snow", TEXT_SIZE));
-      slider = grid->setControl(1, row, new HSliderControl(0, 30.0, 0, new simUtil::SnowRateEventHandler(s_SlSettings->snowRate())));
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE));
-      ++row;
-      grid->setControl(0, row, new LabelControl("Wet Snow", TEXT_SIZE));
-      grid->setControl(1, row, new CheckBoxControl(false, new simUtil::SnowIsWetEventHandler(s_SlSettings->snowRate())));
-      ++row;
-      grid->setControl(0, row, new LabelControl("Sleet", TEXT_SIZE));
-      slider = grid->setControl(1, row, new HSliderControl(0, 30.0, 0, new simUtil::SleetRateEventHandler(s_SlSettings->sleetRate())));
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE));
-
-      ++row;
-      grid->setControl(0, row, new LabelControl("Lens Flare", TEXT_SIZE));
-      grid->setControl(1, row, new CheckBoxControl(true, new simUtil::LensFlareEventHandler(s_SlSettings->lensFlare())));
-
-      ++row;
-      grid->setControl(0, row, new LabelControl("Gamma", TEXT_SIZE));
-      slider = grid->setControl(1, row, new HSliderControl(0, 6.0, 1.8, new simUtil::GammaEventHandler(s_SlSettings->gamma())));
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE));
-      ++row;
-      grid->setControl(0, row, new LabelControl("Wind Speed", TEXT_SIZE));
-      slider = grid->setControl(1, row, new HSliderControl(0, 75.0, 0.0, new simUtil::SlWindSpeedEventHandler(s_SlSettings->wind())));
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE));
-      ++row;
-      grid->setControl(0, row, new LabelControl("Wind Direction", TEXT_SIZE));
-      slider = grid->setControl(1, row, new HSliderControl(-180, 180.0, 0, new simUtil::SlWindDirectionDegEventHandler(s_SlSettings->wind())));
-      grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE));
-      ++row;
-      grid->setControl(0, row, new LabelControl("Infra-Red", TEXT_SIZE));
-      grid->setControl(1, row, new CheckBoxControl(false, new simUtil::InfraredEventHandler(s_SlSettings->infrared())));
-      ++row;
-      grid->setControl(0, row, new LabelControl("Hosek-Wilkie", TEXT_SIZE));
-      grid->setControl(1, row, new CheckBoxControl(false, new simUtil::HosekWilkieToggleEventHandler(s_SlSettings->skyModel())));
-      ++row;
-      grid->setControl(0, row, new LabelControl("Add Clouds", TEXT_SIZE));
-      HBox* cloudBoxes1 = grid->setControl(1, row, new HBox());
-      ButtonControl* button = cloudBoxes1->addControl(new ButtonControl("Cirrocumulus", new AddCloudType(SilverLining::CIRROCUMULUS)));
-      button->setFontSize(TEXT_SIZE);
-      button = cloudBoxes1->addControl(new ButtonControl("Cirrus Fibratus", new AddCloudType(SilverLining::CIRRUS_FIBRATUS)));
-      button->setFontSize(TEXT_SIZE);
-      button = cloudBoxes1->addControl(new ButtonControl("Stratus", new AddCloudType(SilverLining::STRATUS)));
-      button->setFontSize(TEXT_SIZE);
-      button = cloudBoxes1->addControl(new ButtonControl("Cumulus Mediocris", new AddCloudType(SilverLining::CUMULUS_MEDIOCRIS)));
-      button->setFontSize(TEXT_SIZE);
-      ++row;
-      HBox* cloudBoxes2 = grid->setControl(1, row, new HBox());
-      button = cloudBoxes2->addControl(new ButtonControl("Cumulus Congestus", new AddCloudType(SilverLining::CUMULUS_CONGESTUS)));
-      button->setFontSize(TEXT_SIZE);
-      button = cloudBoxes2->addControl(new ButtonControl("Cumulus Congestus HiRes", new AddCloudType(SilverLining::CUMULUS_CONGESTUS_HI_RES)));
-      button->setFontSize(TEXT_SIZE);
-      ++row;
-      HBox* cloudBoxes3 = grid->setControl(1, row, new HBox());
-      button = cloudBoxes3->addControl(new ButtonControl("Cumolonimbus Cappilatus", new AddCloudType(SilverLining::CUMULONIMBUS_CAPPILATUS)));
-      button->setFontSize(TEXT_SIZE);
-      button = cloudBoxes3->addControl(new ButtonControl("Stratocumulus", new AddCloudType(SilverLining::STRATOCUMULUS)));
-      button->setFontSize(TEXT_SIZE);
-      ++row;
-      HBox* cloudBoxes4 = grid->setControl(1, row, new HBox());
-      button = cloudBoxes4->addControl(new ButtonControl("Towering Cumulus", new AddCloudType(SilverLining::TOWERING_CUMULUS)));
-      button->setFontSize(TEXT_SIZE);
-      button = cloudBoxes4->addControl(new ButtonControl("Sandstorm", new AddCloudType(SilverLining::SANDSTORM)));
-      button->setFontSize(TEXT_SIZE);
-      button = cloudBoxes4->addControl(new ButtonControl("Clear", new ClearClouds));
-      button->setFontSize(TEXT_SIZE);
-      ++row;
-      grid->setControl(0, row, new LabelControl("Presets", TEXT_SIZE));
-      HBox* condBoxes = grid->setControl(1, row, new HBox());
-      button = condBoxes->addControl(new ButtonControl("Fair", new simUtil::SetConditionPresetEventHandler(s_SlSettings->conditionPreset(), osgEarth::SilverLining::AtmosphericConditions::FAIR)));
-      button->setFontSize(TEXT_SIZE);
-      button = condBoxes->addControl(new ButtonControl("Partly Cloudy", new simUtil::SetConditionPresetEventHandler(s_SlSettings->conditionPreset(), osgEarth::SilverLining::AtmosphericConditions::PARTLY_CLOUDY)));
-      button->setFontSize(TEXT_SIZE);
-      button = condBoxes->addControl(new ButtonControl("Mostly Cloudy", new simUtil::SetConditionPresetEventHandler(s_SlSettings->conditionPreset(), osgEarth::SilverLining::AtmosphericConditions::MOSTLY_CLOUDY)));
-      button->setFontSize(TEXT_SIZE);
-      button = condBoxes->addControl(new ButtonControl("Overcast", new simUtil::SetConditionPresetEventHandler(s_SlSettings->conditionPreset(), osgEarth::SilverLining::AtmosphericConditions::OVERCAST)));
-      button->setFontSize(TEXT_SIZE);
-    }
-#endif /* HAVE_OSGEARTH_SILVERLINING */
-
-    return b;
-  }
 #endif /* HAVE_IMGUI */
 
   /** Factory for a sky node */
@@ -1308,20 +917,7 @@ int main(int argc, char** argv)
   viewer->getMainView()->tetherCamera(shipNode.get());
   viewer->getMainView()->setFocalOffsets(80.0, -10.0, 2000.0);
 
-#ifndef HAVE_IMGUI
-  // install an on-screen menu
-  Control* menu = createMenu(
-      simpleOceanLayer.get(),
-      tritonLayer.get(),
-      buoyancyCallback.get(),
-      sky.get(),
-      viewer->getMainView(),
-      useTriton,
-      useSilverLining);
-  viewer->getMainView()->addOverlayControl(menu);
-  // install the handler for the demo keys in the notify() above
-  viewer->addEventHandler(new MenuHandler(viewer.get(), scene.get(), menu));
-#else
+#ifdef HAVE_IMGUI
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(simpleOceanLayer.get(), tritonLayer.get(), buoyancyCallback.get(),

@@ -124,4 +124,30 @@ simCore::Clock* DataStoreProxy::getBoundClock() const
   return dataStore_->getBoundClock();
 }
 
+void DataStoreProxy::flush(ObjectId flushId, FlushType flushType)
+{
+  if (flushId == 0)
+    flushType = RECURSIVE;
+
+  switch (flushType)
+  {
+  case NON_RECURSIVE:
+    flush(flushId, FLUSH_NONRECURSIVE, static_cast<FlushFields>(FLUSH_ALL_EXCLUDE_MINUS_ONE & ~FLUSH_DATA_TABLES));
+    break;
+  case NON_RECURSIVE_TSPI_STATIC:
+    flush(flushId, FLUSH_NONRECURSIVE, static_cast<FlushFields>(FLUSH_ALL & ~FLUSH_DATA_TABLES));
+    break;
+  case RECURSIVE:
+    flush(flushId, FLUSH_RECURSIVE, FLUSH_ALL_EXCLUDE_MINUS_ONE);
+    break;
+  case NON_RECURSIVE_TSPI_ONLY:
+    flush(flushId, FLUSH_NONRECURSIVE, FLUSH_UPDATES);
+    break;
+  case NON_RECURSIVE_DATA:
+    flush(flushId, FLUSH_NONRECURSIVE, static_cast<FlushFields>(FLUSH_UPDATES | FLUSH_COMMANDS));
+    break;
+  }
+}
+
+
 } // End of namespace simData

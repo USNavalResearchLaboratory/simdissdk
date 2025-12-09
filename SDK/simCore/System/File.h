@@ -63,6 +63,8 @@ public:
 
   /** Returns the name portion of the path, e.g. "foo.bar" given "/tmp/foo.bar" */
   std::string fileName() const;
+  /** Returns the title or stem of the path (fileName() minus last extension). e.g. "foo" given "/tmp/foo.bar", or "foo.bar" given "/tmp/foo.bar.baz" */
+  std::string fileNameStem() const;
   /** Returns the directory portion of the path, e.g. "/tmp" given "/tmp/foo.bar" or given "/tmp/" */
   std::string path() const;
   /** Returns the absolute directory portion of the path, converted to absolute if necessary */

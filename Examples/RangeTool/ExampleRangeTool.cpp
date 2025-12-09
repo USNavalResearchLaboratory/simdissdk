@@ -56,8 +56,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-using namespace osgEarth::Util::Controls;
 #endif
 
 //----------------------------------------------------------------------------
@@ -117,7 +115,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
 
     ImGui::Text("Depth Testing"); ImGui::SameLine();
     bool depthTesting = depthTesting_;
-    ImGui::Checkbox("", &depthTesting_);
+    ImGui::Checkbox("##", &depthTesting_);
     if (depthTesting != depthTesting_)
     {
       for (simVis::RangeTool::CalculationVector::iterator c = s_lineCalcs.begin(); c != s_lineCalcs.end(); ++c)
@@ -140,68 +138,6 @@ struct ControlPanel : public simExamples::SimExamplesGui
 private:
   bool depthTesting_ = true;
 };
-#else
-/// keep a handle, for toggling
-static osg::ref_ptr<Control> s_helpControl = nullptr;
-
-/// label displaying the name of the current calculation
-static osg::ref_ptr<LabelControl> s_lineCalcLabel = nullptr;
-static osg::ref_ptr<LabelControl> s_angleCalcLabel = nullptr;
-
-
-// callback to toggle depth testing flag
-struct ToggleDepthTest : public ControlEventHandler
-{
-  void onValueChanged(Control*, bool value)
-  {
-    for (simVis::RangeTool::CalculationVector::iterator c = s_lineCalcs.begin(); c != s_lineCalcs.end(); ++c)
-    {
-      simVis::RangeTool::GraphicVector& graphics = c->get()->graphics();
-      for (simVis::RangeTool::GraphicVector::iterator g = graphics.begin(); g !=graphics.end(); ++g)
-      {
-        g->get()->graphicOptions().useDepthTest_ = value;
-        g->get()->setDirty();
-      }
-    }
-  }
-};
-
-Control* createHelp()
-{
-  VBox* vbox = new VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.4);
-
-  vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
-
-  vbox->addControl(new LabelControl("1 : cycle through line calculations", 14, simVis::Color::Silver));
-  s_lineCalcLabel = new LabelControl("currently viewing: none", 14, simVis::Color::Yellow);
-  s_lineCalcLabel->setMargin(Gutter(0, 0, 10, 0));
-  vbox->addControl(s_lineCalcLabel.get());
-
-  vbox->addControl(new LabelControl("2 : cycle through angle calculations", 14, simVis::Color::Silver));
-  s_angleCalcLabel = new LabelControl("currently viewing: none", 14, simVis::Color::Yellow);
-  s_angleCalcLabel->setMargin(Gutter(0, 0, 10, 0));
-  vbox->addControl(s_angleCalcLabel.get());
-
-  vbox->addControl(new LabelControl("3 : zoom in", 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("4 : rotate zoomed in view", 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("5 : reset to main view", 14, simVis::Color::Silver));
-
-  vbox->addControl(new LabelControl("t : toggle follow-platform", 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("w,x : position offset north/south", 14, simVis::Color::Gray));
-  vbox->addControl(new LabelControl("a,d : position offset west/east", 14, simVis::Color::Gray));
-  vbox->addControl(new LabelControl("q,z : position offset up/down", 14, simVis::Color::Gray));
-  vbox->addControl(new LabelControl("g : reset position offset", 14, simVis::Color::Gray));
-  vbox->addControl(new LabelControl("Press \".\" to play/pause", 14, simVis::Color::Silver));
-
-  osg::ref_ptr<HBox> hbox = vbox->addControl(new HBox());
-  hbox->addControl(new CheckBoxControl(true, new ToggleDepthTest()));
-  hbox->addControl(new LabelControl("depth testing"));
-
-  s_helpControl = vbox;
-  return vbox;
-}
 #endif
 
 //----------------------------------------------------------------------------
@@ -372,8 +308,6 @@ struct MenuHandler : public osgGA::GUIEventHandler
 #ifdef HAVE_IMGUI
     if (controlPanel_)
       controlPanel_->lineCalcText = text;
-#else
-    s_lineCalcLabel->setText(text);
 #endif
   }
 
@@ -382,8 +316,6 @@ struct MenuHandler : public osgGA::GUIEventHandler
 #ifdef HAVE_IMGUI
     if (controlPanel_)
       controlPanel_->angleCalcText = text;
-#else
-    s_angleCalcLabel->setText(text);
 #endif
   }
 
@@ -398,13 +330,6 @@ struct MenuHandler : public osgGA::GUIEventHandler
     {
       switch (ea.getKey())
       {
-#ifndef HAVE_IMGUI
-      case '?' : // toggle help
-        s_helpControl->setVisible(!s_helpControl->visible());
-        handled = true;
-        break;
-#endif
-
       case '1' : // cycle line calculations
         if (s_lineCalcIndex >= 0)
           s_association->remove(s_lineCalcs[s_lineCalcIndex].get());
@@ -671,9 +596,6 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(controlPanel);
-#else
-  /// show the instructions overlay
-  mainView->addOverlayControl(createHelp());
 #endif
 
   // Create one inset centered on each object

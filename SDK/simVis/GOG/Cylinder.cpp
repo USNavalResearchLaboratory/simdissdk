@@ -181,18 +181,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
     localOffset[2] += heightValue;
     Utils::applyLocalGeometryOffsets(*topCapNode, p, nodeType);
     // offset the top cap node's altitude by the height
-    if (nodeType == GOGNODE_GEOGRAPHIC)
-    {
-      osgEarth::GeoPoint pos = topCapNode->getPosition();
-      pos.alt() += heightValue;
-      topCapNode->setPosition(pos);
-    }
-    else
-    {
-      osg::Vec3d pos = topCapNode->getPositionAttitudeTransform()->getPosition();
-      pos.z() += heightValue;
-      topCapNode->getPositionAttitudeTransform()->setPosition(pos);
-    }
+    topCapNode->getPositionAttitudeTransform()->setPivotPoint(osg::Vec3(0, 0, -heightValue));
 
     g->addChild(topCapNode);
   }
@@ -338,18 +327,7 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
 
     LoaderUtils::setShapePositionOffsets(*topCapNode, cyl, center, refPoint, attached, false);
     // offset the top cap node's altitude by the height
-    if (!attached)
-    {
-      osgEarth::GeoPoint pos = topCapNode->getPosition();
-      pos.alt() += heightM;
-      topCapNode->setPosition(pos);
-    }
-    else
-    {
-      osg::Vec3d pos = topCapNode->getPositionAttitudeTransform()->getPosition();
-      pos.z() += heightM;
-      topCapNode->getPositionAttitudeTransform()->setPosition(pos);
-    }
+    topCapNode->getPositionAttitudeTransform()->setPivotPoint(osg::Vec3(0, 0, -heightM));
 
     g->addChild(topCapNode);
   }

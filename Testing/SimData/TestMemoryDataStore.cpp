@@ -724,7 +724,7 @@ void testGenericData_insert()
   mdsAssertEquals(sc.entries[3].value(), "value4");
 
   // Do a flush and the visitor should come back empty
-  ds->flush(platId, simData::DataStore::RECURSIVE);
+  ds->flush(platId, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL);
   GenericDataSliceCopy sc2;
   gdslice->visit(&sc2);
   mdsAssertEquals(sc2.entries.size(), static_cast<size_t>(0));

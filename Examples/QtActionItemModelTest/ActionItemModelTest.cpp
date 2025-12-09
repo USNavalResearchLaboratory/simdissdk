@@ -20,14 +20,15 @@
  * disclose, or release this software.
  *
  */
-#include <QObject>
-#include <QApplication>
 #include <QAction>
-#include <QMainWindow>
-#include <QTreeView>
+#include <QApplication>
 #include <QLineEdit>
-#include <QVBoxLayout>
+#include <QMainWindow>
+#include <QObject>
 #include <QPushButton>
+#include <QStyleHints>
+#include <QTreeView>
+#include <QVBoxLayout>
 #include "simCore/System/Utils.h"
 #include "simQt/ActionRegistry.h"
 #include "simQt/ActionItemModel.h"
@@ -83,6 +84,11 @@ int main(int argc, char* argv[])
   simCore::initializeSimdisEnvironmentVariables();
   QApplication app(argc, argv);
   QWidget mainWindow;
+  
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   simQt::ActionRegistry registry(&mainWindow);
 

@@ -34,16 +34,19 @@ namespace simData { class DataStore; }
 namespace simExamples
 {
   /** Creates a map with a one image and one elevation layer. */
+  [[deprecated("Deprecated, no longer available")]]
   extern SDKUTIL_EXPORT osgEarth::Util::Controls::Control* createPlatformListControl(
     simVis::View* view,
     simData::DataStore*  dataStore);
 
   /** Creates a VCR control for playing back a datastore. */
+  [[deprecated("Deprecated, no longer available")]]
   extern SDKUTIL_EXPORT osgEarth::Util::Controls::Control* createVCRControl(
     simVis::View* view,
     simData::DataStore*  dataStore);
 
-  ///** Creates a list of beams with a toggle for the draw type */
+  /** Creates a list of beams with a toggle for the draw type */
+  [[deprecated("Deprecated, no longer available")]]
   extern SDKUTIL_EXPORT osgEarth::Util::Controls::Control* createBeamListControl(
     simVis::View* view,
     simData::DataStore*  dataStore,

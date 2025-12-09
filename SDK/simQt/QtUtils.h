@@ -54,6 +54,9 @@ public:
   * @param parent target screen to find
   */
   static QRect getAvailableScreenGeometry(const QWidget& widget, const QWidget* parent);
+
+  /** Returns true if the current QApplication is in a dark theme. */
+  static bool isDarkTheme();
 };
 
 }

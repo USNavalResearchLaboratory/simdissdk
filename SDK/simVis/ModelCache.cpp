@@ -33,6 +33,7 @@
 #include "osg/TexEnv"
 #include "osg/TexEnvCombine"
 #include "osg/ValueObject"
+#include "osgAnimation/BasicAnimationManager"
 #include "osgDB/ReadFile"
 #include "osgSim/DOFTransform"
 #include "osgSim/LightPointNode"
@@ -204,6 +205,10 @@ public:
     optimizeFlags = osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS |
       osgUtil::Optimizer::VERTEX_POSTTRANSFORM |
       osgUtil::Optimizer::INDEX_MESH;
+    // SIM-18919: Do not combine adjacent LODs, else they get renamed and reordered, which
+    // can cause problems e.g. with transparency and railings with in-order rendering.
+    optimizeFlags = optimizeFlags &
+      (~osgUtil::Optimizer::COMBINE_ADJACENT_LODS);
   }
 
   /** OSG Copy constructor; required for use with database pager options. */
@@ -611,16 +616,18 @@ private:
       node->getUserValue(CACHE_HINT_KEY, cacheIt);
     }
     const bool isArticulated = ModelCache::isArticulated(node.get());
+    const bool isAnimated = ModelCache::isAnimated(node.get());
 
     // Respect the cache hint
     if (cacheIt)
-      cache_->saveToCache_(uri, node.get(), isArticulated, isImage);
+      cache_->saveToCache_(uri, node.get(), isArticulated, isAnimated, isImage);
 
     // Pass the new node to everyone who is listening
     for (auto i = callbacks.begin(); i != callbacks.end(); ++i)
     {
-      // Articulated models need to clone
-      if (isArticulated && !cache_->getShareArticulatedIconModels())
+      // Articulated and animated models need to clone
+      if ((isArticulated && !cache_->getShareArticulatedIconModels()) ||
+        (isAnimated && !cache_->getShareAnimatedIconModels()))
       {
         osg::ref_ptr<osg::Node> copy = osg::clone(node.get(), osg::CopyOp::DEEP_COPY_NODES);
         (*i)->loadFinished(copy, isImage, uri);
@@ -639,10 +646,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////
 
 ModelCache::ModelCache()
-  : shareArticulatedModels_(false),
-    addLodNode_(true),
-    clock_(nullptr),
-    cache_(30u), // max of 30 elements
+  : cache_(30u), // max of 30 elements
     asyncLoader_(new LoaderNode)
 {
   asyncLoader_->setCache(this);
@@ -688,9 +692,10 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
     if (pIsImage)
       *pIsImage = entry.isImage_;
 
-    if (entry.isArticulated_ && !shareArticulatedModels_)
+    if ((entry.isArticulated_ && !shareArticulatedModels_) ||
+      (entry.isAnimated_ && !shareAnimatedModels_))
     {
-      // clone nodes so we get independent articulations
+      // clone nodes so we get independent articulations/animations
       return osg::clone(entry.node_.get(), osg::CopyOp::DEEP_COPY_NODES);
     }
 
@@ -722,19 +727,20 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
   bool cacheIt = false;
   result->getUserValue(CACHE_HINT_KEY, cacheIt);
   if (cacheIt)
-    saveToCache_(uri, result.get(), ModelCache::isArticulated(result.get()), isImage);
+    saveToCache_(uri, result.get(), ModelCache::isArticulated(result.get()), ModelCache::isAnimated(result.get()), isImage);
 
   SIM_DEBUG << "Loaded icon model \"" << uri << "\"\n";
 
   return result.release();
 }
 
-void ModelCache::saveToCache_(const std::string& uri, osg::Node* node, bool isArticulated, bool isImage)
+void ModelCache::saveToCache_(const std::string& uri, osg::Node* node, bool isArticulated, bool isAnimated, bool isImage)
 {
   Entry newEntry;
   newEntry.node_ = node;
   newEntry.isImage_ = isImage;
   newEntry.isArticulated_ = isArticulated;
+  newEntry.isAnimated_ = isAnimated;
   cache_.insert(uri, newEntry);
 }
 
@@ -782,7 +788,8 @@ void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
     {
       osg::ref_ptr<osg::Node> node = entry.node_.get();
       // clone articulated nodes so we get independent articulations
-      if (entry.isArticulated_ && !shareArticulatedModels_)
+      if ((entry.isArticulated_ && !shareArticulatedModels_) ||
+        (entry.isAnimated_ && !shareAnimatedModels_))
         node = osg::clone(entry.node_.get(), osg::CopyOp::DEEP_COPY_NODES);
       refCallback->loadFinished(node, entry.isImage_, uri);
     }
@@ -802,6 +809,16 @@ void ModelCache::setShareArticulatedIconModels(bool value)
 bool ModelCache::getShareArticulatedIconModels() const
 {
   return shareArticulatedModels_;
+}
+
+void ModelCache::setShareAnimatedIconModels(bool value)
+{
+  shareAnimatedModels_ = value;
+}
+
+bool ModelCache::getShareAnimatedIconModels() const
+{
+  return shareAnimatedModels_;
 }
 
 void ModelCache::setUseLodNode(bool useLodNode)
@@ -844,6 +861,14 @@ bool ModelCache::isArticulated(osg::Node* node)
   if (ms)
     return true;
   return osgEarth::findTopMostNodeOfType<osg::Sequence>(node) != nullptr;
+}
+
+bool ModelCache::isAnimated(osg::Node* node)
+{
+  auto* manager = simVis::findAnimationManager(node);
+  if (!manager)
+    return false;
+  return manager->getNumRegisteredAnimations() > 0;
 }
 
 osg::Node* ModelCache::asyncLoaderNode() const

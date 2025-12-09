@@ -250,7 +250,7 @@ UnitsSelectorComboBox::UnitsSelectorComboBox(QWidget* parent)
     registryOwned_(true)
 {
   setUnitsRegistry(nullptr);
-  connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(emitUnitsOnCurrentChange_(int)));
+  connect(this, qOverload<int>(&QComboBox::currentIndexChanged), this, &UnitsSelectorComboBox::emitUnitsOnCurrentChange_);
 }
 
 void UnitsSelectorComboBox::setUnitsRegistry(const simCore::UnitsRegistry* registry)

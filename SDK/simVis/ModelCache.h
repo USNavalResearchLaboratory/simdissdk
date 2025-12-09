@@ -60,6 +60,16 @@ public:
   /** Retrieves the flag for whether to share articulated models or not */
   bool getShareArticulatedIconModels() const;
 
+  /**
+   * Whether models loaded by getOrCreateIconModel() that contain animation rigging
+   * should be shared. Default=FALSE so that each instance can be animated
+   * separately. Set to true if you do not intend to used animated models; this will
+   * save memory by sharing the geometry across instances.
+   */
+  void setShareAnimatedIconModels(bool value);
+  /** Retrieves the flag for whether to share articulated models or not */
+  bool getShareAnimatedIconModels() const;
+
   /** Flag whether to use an LOD node to hide the model at an appropriate distance.  Default: true. */
   void setUseLodNode(bool useLodNode);
   /** Retrieves flag for whether to add an LOD node at the root level */
@@ -128,6 +138,8 @@ public:
 
   /** Helper method that returns true if an articulation node is present under the provided node. */
   static bool isArticulated(osg::Node* node);
+  /** Helper method that returns true if an animation manager is present under the provided node. */
+  static bool isAnimated(osg::Node* node);
 
 private:
   /// Copy constructor not permitted
@@ -136,7 +148,7 @@ private:
   ModelCache& operator=(const ModelCache& rhs);
 
   /// Saves the given URI into the cache
-  void saveToCache_(const std::string& uri, osg::Node* node, bool isArticulated, bool isImage);
+  void saveToCache_(const std::string& uri, osg::Node* node, bool isArticulated, bool isAnimated, bool isImage);
 
   /// Entry in the cache
   struct Entry
@@ -144,19 +156,23 @@ private:
     /// Node returned to end users
     osg::ref_ptr<osg::Node> node_;
     /// Set true when node_ represents a model with articulations
-    bool isArticulated_;
+    bool isArticulated_ = false;
+    /// Set true when node_ represents a model with animations
+    bool isAnimated_ = false;
     /// Set true when node_ represents an image icon
-    bool isImage_;
+    bool isImage_ = false;
   };
   /// osg::Node that is responsible for loading nodes in the background using osg::ProxyNode
   class LoaderNode;
 
   /// If false, return a separate model instance for any model with articulations
-  bool shareArticulatedModels_;
+  bool shareArticulatedModels_ = false;
+  /// If false, return a separate model instance for any model with animation rigging
+  bool shareAnimatedModels_ = true;
   /// If true (default), add an LOD node at the top of the scene
-  bool addLodNode_;
+  bool addLodNode_ = true;
   /// Clock is required for SIMDIS MP2 models
-  simCore::Clock* clock_;
+  simCore::Clock* clock_ = nullptr;
   /// Sequence updater is associated with nodes with osg::Sequence, to fix backwards time problems.  See simVis::Registry::sequenceTimeUpdater_
   osg::observer_ptr<SequenceTimeUpdater> sequenceTimeUpdater_;
 

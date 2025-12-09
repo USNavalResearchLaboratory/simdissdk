@@ -457,13 +457,23 @@ int testFilesMissingFromPath()
 int testFileInfoNamePath()
 {
   int rv = 0;
+
   rv += SDK_ASSERT(simCore::FileInfo("/tmp/foo.txt").fileName() == "foo.txt");
   rv += SDK_ASSERT(simCore::FileInfo("/tmp/two/foo.txt").fileName() == "foo.txt");
   rv += SDK_ASSERT(simCore::FileInfo("c:/tmp/foo.txt").fileName() == "foo.txt");
   rv += SDK_ASSERT(simCore::FileInfo("/foo.txt").fileName() == "foo.txt");
   rv += SDK_ASSERT(simCore::FileInfo("/foo.txt/baz").fileName() == "baz");
   rv += SDK_ASSERT(simCore::FileInfo("/foo").fileName() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("//a//foo").fileName() == "foo");
+
+#ifdef WIN32
+  // UNC path, cannot be "foo"
+  rv += SDK_ASSERT(simCore::FileInfo("//foo").fileName() == "");
+#else
+  // UNC path not supported in same way, so "foo"
   rv += SDK_ASSERT(simCore::FileInfo("//foo").fileName() == "foo");
+#endif
+
   rv += SDK_ASSERT(simCore::FileInfo("/foo/").fileName() == "");
   rv += SDK_ASSERT(simCore::FileInfo("foo").fileName() == "foo");
   rv += SDK_ASSERT(simCore::FileInfo("foo/").fileName() == "");
@@ -473,7 +483,6 @@ int testFileInfoNamePath()
   rv += SDK_ASSERT(simCore::FileInfo("/").fileName() == "");
   rv += SDK_ASSERT(simCore::FileInfo("").fileName() == "");
   rv += SDK_ASSERT(simCore::FileInfo("/tmp///foo/bar").fileName() == "bar");
-
 
 #ifdef WIN32
   rv += SDK_ASSERT(simCore::FileInfo("c:\\foo.txt").fileName() == "foo.txt");
@@ -489,13 +498,55 @@ int testFileInfoNamePath()
   rv += SDK_ASSERT(simCore::FileInfo(R"(\\host\unc\path\file)").fileName() == "\\\\host\\unc\\path\\file");
 #endif
 
+  rv += SDK_ASSERT(simCore::FileInfo("/tmp/foo.txt").fileNameStem() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("/tmp/foo.one.two.three").fileNameStem() == "foo.one.two");
+  rv += SDK_ASSERT(simCore::FileInfo("/tmp/two/foo.txt").fileNameStem() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("c:/tmp/foo.txt").fileNameStem() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo.txt").fileNameStem() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo.txt/baz").fileNameStem() == "baz");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo").fileNameStem() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("//a//foo").fileNameStem() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("/foo/").fileNameStem() == "");
+  rv += SDK_ASSERT(simCore::FileInfo("foo").fileNameStem() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/").fileNameStem() == "");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar").fileNameStem() == "bar");
+  rv += SDK_ASSERT(simCore::FileInfo("foo//bar").fileNameStem() == "bar");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar/baz").fileNameStem() == "baz");
+  rv += SDK_ASSERT(simCore::FileInfo("/").fileNameStem() == "");
+  rv += SDK_ASSERT(simCore::FileInfo("").fileNameStem() == "");
+  rv += SDK_ASSERT(simCore::FileInfo("/tmp///foo/bar").fileNameStem() == "bar");
+
+#ifdef WIN32
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\foo.txt").fileNameStem() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\tmp\\foo.txt").fileNameStem() == "foo");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar\\baz").fileNameStem() == "baz");
+  rv += SDK_ASSERT(simCore::FileInfo("foo\\bar\\baz").fileNameStem() == "baz");
+  rv += SDK_ASSERT(simCore::FileInfo(R"(\\host\unc\path\file)").fileNameStem() == "file");
+  rv += SDK_ASSERT(simCore::FileInfo("//foo").fileNameStem() == ""); // UNC path, it can't be a filename
+#else
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\foo.txt").fileNameStem() == "c:\\foo");
+  rv += SDK_ASSERT(simCore::FileInfo("c:\\tmp\\foo.txt").fileNameStem() == "c:\\tmp\\foo");
+  rv += SDK_ASSERT(simCore::FileInfo("foo/bar\\baz").fileNameStem() == "bar\\baz");
+  rv += SDK_ASSERT(simCore::FileInfo("foo\\bar\\baz").fileNameStem() == "foo\\bar\\baz");
+  rv += SDK_ASSERT(simCore::FileInfo(R"(\\host\unc\path\file)").fileNameStem() == "\\\\host\\unc\\path\\file");
+  rv += SDK_ASSERT(simCore::FileInfo("//foo").fileNameStem() == "foo");
+#endif
+
   rv += SDK_ASSERT(simCore::FileInfo("/tmp/foo.txt").path() == "/tmp");
   rv += SDK_ASSERT(simCore::FileInfo("/tmp/two/foo.txt").path() == "/tmp/two");
   rv += SDK_ASSERT(simCore::FileInfo("c:/tmp/foo.txt").path() == "c:/tmp");
   rv += SDK_ASSERT(simCore::FileInfo("/foo.txt").path() == "/");
   rv += SDK_ASSERT(simCore::FileInfo("/foo.txt/baz").path() == "/foo.txt");
   rv += SDK_ASSERT(simCore::FileInfo("/foo").path() == "/");
+
+#ifdef WIN32
+  // UNC path
+  rv += SDK_ASSERT(simCore::FileInfo("//foo").path() == "//foo");
+#else
+  // UNC path not supported in same way, so //
   rv += SDK_ASSERT(simCore::FileInfo("//foo").path() == "/");
+#endif
+
   rv += SDK_ASSERT(simCore::FileInfo("/foo/").path() == "/foo");
   rv += SDK_ASSERT(simCore::FileInfo("foo").path() == ".");
   rv += SDK_ASSERT(simCore::FileInfo("foo/").path() == "foo");
