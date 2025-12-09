@@ -94,6 +94,7 @@ public:
 
   bool operator==(const ReflectionValue& rhs) const;
   bool operator!=(const ReflectionValue& rhs) const;
+  bool operator<(const ReflectionValue& rhs) const;
 
   /** Get/Set Boolean value; get returns false on error */
   bool getBoolean() const;

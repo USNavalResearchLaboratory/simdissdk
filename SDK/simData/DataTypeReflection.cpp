@@ -166,6 +166,42 @@ bool ReflectionValue::operator!=(const ReflectionValue& rhs) const
   return !operator==(rhs);
 }
 
+bool ReflectionValue::operator<(const ReflectionValue& rhs) const
+{
+  if (type() != rhs.type())
+  {
+    // The types should be the same
+    assert(false);
+    return type() < rhs.type();
+  }
+
+  if (std::holds_alternative<StringPtr>(data_))
+  {
+    const auto& lhsString = getString();
+    const auto& rhsString = rhs.getString();
+    if (lhsString != rhsString)
+      return lhsString < rhsString;
+  }
+
+  if (std::holds_alternative<StringVectorPtr>(data_))
+  {
+    const auto& lhsStrings = getStrings();
+    const auto& rhsStrings = rhs.getStrings();
+    if (lhsStrings != rhsStrings)
+      return lhsStrings < rhsStrings;
+  }
+
+  if (std::holds_alternative<IdVectorPtr>(data_))
+  {
+    const auto& lhsIds = getIds();
+    const auto& rhsIds = rhs.getIds();
+    if (lhsIds != rhsIds)
+      return lhsIds < rhsIds;
+  }
+
+  return data_ < rhs.data_;
+}
+
 bool ReflectionValue::getBoolean() const
 {
   try
