@@ -543,7 +543,7 @@ void BeamNode::applyPrefs_(const simData::BeamPrefs& prefs, bool force)
   if (prefs.animate())
   {
     if (beamPulse_ == nullptr)
-      beamPulse_ = new simVis::BeamPulse(getOrCreateStateSet());
+      beamPulse_ = new simVis::BeamPulse(beamLocatorNode_->getOrCreateStateSet());
 
     beamPulse_->setEnabled(true);
     beamPulse_->setLength(static_cast<float>(prefs.pulselength()));
