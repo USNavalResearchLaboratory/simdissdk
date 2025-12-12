@@ -16,7 +16,7 @@
 vcpkg_from_git(  
     OUT_SOURCE_PATH SOURCE_PATH  
     URL "http://192.168.1.32:3000/yanzixiang/simdissdk.git"  
-    REF 1ce99dc0ce94096437de9fb1e1fe41755f3cb72b  
+    REF 323f86618a87fd5cd259ca77aeac53f53a17d984  
 )
 
 
@@ -45,6 +45,7 @@ vcpkg_cmake_configure(
         ${FEATURE_OPTIONS}
         -DINSTALL_THIRDPARTY_LIBRARIES=OFF
         -DBUILD_SDK_EXAMPLES=OFF
+        -DENABLE_QTDESIGNER_WIDGETS=OFF
     OPTIONS_DEBUG
     MAYBE_UNUSED_VARIABLES
 )
