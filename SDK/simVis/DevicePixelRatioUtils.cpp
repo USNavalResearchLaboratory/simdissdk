@@ -102,7 +102,8 @@ bool areFloatValuesEqual(const T& a, const T& b)
     return areVecEqual(a, b);
   else
   {
-    static_assert(false, "Unsupported type for DPR equality comparison");
+    //static_assert(false, "Unsupported type for DPR equality comparison");
+    return false;
   }
 }
 
