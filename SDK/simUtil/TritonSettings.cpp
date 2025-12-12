@@ -247,6 +247,7 @@ TritonGodRaysFade* TritonSettingsAdapter::godRaysFade() const
 
 /////////////////////////////////////////////////////////
 
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 #define TRI_IMPL_SIMPLE_EVTHANDLER(CLASS, SETTING, VALUETYPE) \
 CLASS::CLASS(SETTING* value) : value_(value) {} \
 CLASS::~CLASS() {} \
@@ -346,5 +347,7 @@ void QualityTextUpdater::onValueChanged(osgEarth::Util::Controls::Control* c, do
   else
     label->setText("Best");
 }
+
+#endif
 
 }

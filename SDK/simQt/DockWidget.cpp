@@ -33,7 +33,9 @@
 #include <QMainWindow>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPointer>
 #include <QScreen>
+#include <QStyleHints>
 #include <QTabBar>
 #include <QTimer>
 #include <QToolButton>
@@ -346,7 +348,7 @@ public:
   void uninstall(QMainWindow* mainWindow)
   {
     // remove event filter from previous tab bar, if it still exists
-    if (mainWindow)
+    if (mainWindow && tabBar_)
     {
       QList<QTabBar*> tabBars = mainWindow->findChildren<QTabBar*>();
       for (auto tabBar : tabBars)
@@ -363,7 +365,7 @@ public:
 
 private:
   DockWidget& dockWidget_;
-  QTabBar* tabBar_ = nullptr;
+  QPointer<QTabBar> tabBar_;
   QString prevTab_;
 };
 
@@ -526,6 +528,13 @@ DockWidget::~DockWidget()
 
 void DockWidget::init_()
 {
+  // QTBUG-140207: Appears to be mitigated by turning off animations on the main window. This is
+  // a central location in which to do that. Likely also related to QTBUG-141718, QTBUG-141350.
+#if QT_VERSION > QT_VERSION_CHECK(6,8,4) && QT_VERSION < QT_VERSION_CHECK(6,10,1)
+  if (mainWindow_)
+    mainWindow_->setAnimated(false);
+#endif
+
   // SIM-17647: the event filter cannot be a child of the tab bar, must persist for the life of the widget
   // This is because after unloading plug-ins, the QTabBar might still reference the event filter after it has been destroyed
   tabDragFilter_ = new TabDragDropEventFilter(*this);
@@ -652,13 +661,15 @@ void DockWidget::createStylesheets_()
     "#titleBarTitle {color: %2;} "
     ;
 
-  const QColor inactiveBackground = QColor("#e0e0e0"); // Light gray
-  inactiveTextColor_ = QColor("#404040"); // Darker gray
+  const bool lightMode = !simQt::QtUtils::isDarkTheme();
+
+  const QColor inactiveBackground = lightMode ? QColor("#e0e0e0") : QColor("#3C3C3C"); // Light gray vs dark gray
+  inactiveTextColor_ = lightMode ? QColor("#404040") : Qt::white; // Darker gray or white
   const QColor darkerInactiveBg = QColor("#d0d0d0");
 
   // Get the focus colors
-  const QColor focusBackground = QColor("#d8d8d8"); // Lighter gray
-  focusTextColor_ = QColor("#202020"); // Darkest gray
+  const QColor focusBackground = lightMode ? QColor("#d8d8d8") : QColor("#0078D7"); // Lighter gray or blue
+  focusTextColor_ = lightMode ? QColor("#202020") : Qt::white; // Darkest gray or white
   const QColor darkerFocusBg = QColor("#b0b0b0");
 
   // Create the inactive stylesheet
@@ -1567,6 +1578,9 @@ QString DockWidget::path_() const
 
 void DockWidget::setFloatingGeometry_(const QByteArray& geometryBytes)
 {
+  // geometry is empty, add to main window momentarily so main window state can track geometry
+  if (geometryBytes.isEmpty() && mainWindow_)
+    mainWindow_->addDockWidget(Qt::RightDockWidgetArea, this);
   setFloating(true);
   if (!restoreGeometry(geometryBytes))
   {

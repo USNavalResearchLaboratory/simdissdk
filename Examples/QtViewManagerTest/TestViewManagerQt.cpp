@@ -39,6 +39,7 @@
 #include <QApplication>
 #include <QLayout>
 #include <QMainWindow>
+#include <QStyleHints>
 
 #ifdef Q_WS_X11
 #include <X11/Xlib.h>
@@ -80,6 +81,11 @@ int main(int argc, char** argv)
 
   // OK, time to set up the Qt Application and windows.
   QApplication qapp(argc, argv);
+
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  qapp.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   QMainWindow win;
   win.setGeometry(50, 50, 400*numViews, 400);

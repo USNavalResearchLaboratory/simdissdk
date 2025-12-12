@@ -174,7 +174,7 @@ int RFPropagationFacade::setRadarParams(const simCore::RadarParameters& radarPar
   else
     radarParameters_ = std::make_shared<simCore::RadarParameters>(radarParams);
 
-  // noise power in db = 10 log (kT/pw); for T, use standard ambient temperature: 17°C/290K
+  // noise power in db = 10 log (kT/pw); for T, use standard ambient temperature: 17 deg C/290K
   radarParameters_->noisePowerdB = simCore::linear2dB(4e-15 / radarParams.pulseWidth_uSec) + radarParams.noiseFiguredB;
   radarParameters_->xmtPowerW = radarParams.xmtPowerKW * 1e03;
   return 0;

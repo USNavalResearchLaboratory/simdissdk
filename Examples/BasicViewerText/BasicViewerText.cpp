@@ -41,39 +41,55 @@
 #include "simUtil/Replaceables.h"
 #include "simUtil/StatusText.h"
 
-#define LC "[BasicViewerText demo] "
+#ifdef HAVE_IMGUI
+#include "SimExamplesGui.h"
+#include "OsgImGuiHandler.h"
+#endif
 
-namespace ui = osgEarth::Util::Controls;
+#define LC "[BasicViewerText demo] "
 
 //----------------------------------------------------------------------------
 
-static std::string s_title =
-  "Viewer with HudManager Text Example \n";
+static std::string s_title = "Viewer with HudManager Text Example \n";
 
-static std::string s_help =
-  "i : toggles the mode for creating a new inset\n"
-  "r : remove all inset views \n"
-  "1 : activate 'Perspective' navigation mode \n"
-  "2 : activate 'Overhead' navigation mode \n"
-  "3 : activate 'GIS' navigation mode \n"
-  "h : toggle between click-to-focus and hover-to-focus \n"
-  "tab : cycle focus (in click-to-focus mode only) \n"
-  "v : create viewport (doesn't obscure text)\n"
-  "b : create viewport (blown up, doesn't obscure)\n";
-
-static ui::Control* createHelp()
+#ifdef HAVE_IMGUI
+struct ControlPanel : public simExamples::SimExamplesGui
 {
-  // vbox is returned to caller, memory owned by caller
-  ui::VBox* vbox = new ui::VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new ui::LabelControl(s_title, 20, simVis::Color::Yellow));
-  vbox->addControl(new ui::LabelControl(s_help, 14, simVis::Color::Silver));
-  // Move it down just a bit
-  vbox->setPosition(10, 40);
-  return vbox;
-}
+  ControlPanel(simVis::Viewer* viewer, simVis::InsetViewEventHandler* insetViewHandler, simVis::CreateInsetEventHandler* createHandler)
+    : simExamples::SimExamplesGui(s_title),
+    viewer_(viewer)
+  {
+  }
 
+  void draw(osg::RenderInfo& ri) override
+  {
+    if (!isVisible())
+      return;
+
+    if (firstDraw_)
+    {
+      ImGui::SetNextWindowPos(ImVec2(5, 25));
+      firstDraw_ = false;
+    }
+    ImGui::SetNextWindowBgAlpha(.6f);
+    ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text("i : toggles the mode for creating a new inset");
+    ImGui::Text("r : remove all inset views");
+    ImGui::Text("1 : activate 'Perspective' navigation mode");
+    ImGui::Text("2 : activate 'Overhead' navigation mode");
+    ImGui::Text("3 : activate 'GIS' navigation mode");
+    ImGui::Text("h : toggle between click-to-focus and hover-to-focus");
+    ImGui::Text("tab : cycle focus (in click-to-focus mode only)");
+    ImGui::Text("v : create viewport (doesn't obscure text)");
+    ImGui::Text("b : create viewport (blown up, doesn't obscure)");
+    ImGui::End();
+  }
+
+private:
+  osg::ref_ptr<simVis::Viewer> viewer_;
+};
+
+#endif
 
 // In BasicViewer, initial view window size is full screen size, and no resize events occur at startup
 // This results in bad positioning of text until first resize event is prompted by user action
@@ -282,8 +298,11 @@ int main(int argc, char** argv)
   osg::ref_ptr<simVis::ClassificationBanner> banner = new simVis::ClassificationBanner(&dataStore, 24, "arialbd.ttf");
   banner->addToView(superHUD);
 
-  // Add a help control
-  superHUD->addOverlayControl(createHelp());
+#ifdef HAVE_IMGUI
+  GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
+  mainView->getEventHandlers().push_front(gui);
+  gui->add(new ControlPanel(viewer.get(), insetFocusHandler.get(), createInsetsHandler.get()));
+#endif
 
   // for status and debugging
   viewer->installDebugHandlers();

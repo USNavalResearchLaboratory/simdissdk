@@ -22,6 +22,7 @@
  */
 #include <iostream>
 #include <QApplication>
+#include <QStyleHints>
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/System/Utils.h"
@@ -74,6 +75,11 @@ int main(int argc, char* argv[])
 
   QApplication app(argc, argv);
   simQt::ResourceInitializer::initialize();
+  
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   // Dedicate a new scope here so that all of the handlers and background work
   // done for capturing the console is deallocated before the QApplication.

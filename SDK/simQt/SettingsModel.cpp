@@ -591,7 +591,8 @@ SettingsModel::~SettingsModel()
 
 void SettingsModel::init_()
 {
-#if QT_VERSION_MAJOR == 5
+  qRegisterMetaType<simQt::Settings::MetaData>("simQt::Settings::MetaData");
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   // Register operators to avoid "Unable to load type" and "Unknown user type"
   qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
 #endif
@@ -939,19 +940,20 @@ void SettingsModel::clearUndoHistory()
 
 QModelIndex SettingsModel::findKey_(const QString& relativeKey, const QModelIndex& fromParent) const
 {
-  // Break out the top and bottom tiers of directory structure
-  QString dir = relativeKey.section('/', 0, 0);
-  QString underDir = relativeKey.section('/', 1);
   if (relativeKey.isEmpty()) // found match, return immediately
     return fromParent;
 
+  // Break out the top and bottom tiers of directory structure
+  const QString dir = relativeKey.section('/', 0, 0);
+  const QString underDir = relativeKey.section('/', 1);
+
   // Loop through children looking for next part of the path
-  int numChildren = rowCount(fromParent);
+  const int numChildren = rowCount(fromParent);
   for (int row = 0; row < numChildren; ++row)
   {
     // Create index and pull out its TreeNode
-    QModelIndex idx = index(row, 0, fromParent);
-    TreeNode* treeNode = treeNode_(idx);
+    const QModelIndex idx = index(row, 0, fromParent);
+    const TreeNode* treeNode = treeNode_(idx);
     // If the path() portion matches our portion, continue recursing
     if (treeNode != nullptr && treeNode->path() == dir)
       return findKey_(underDir, idx);
@@ -1121,14 +1123,26 @@ void SettingsModel::clear()
 
 void SettingsModel::resetDefaults()
 {
-  resetDefaults_(rootNode_);
+  resetDefaults_(rootNode_, QModelIndex());
 }
 
 void SettingsModel::resetDefaults(const QString& name)
 {
   TreeNode* rootNode = getNode_(name);
   if (rootNode != nullptr)
-    resetDefaults_(rootNode);
+  {
+    const QModelIndex& rootNodeIndex = findKey_(rootNode->fullPath(), QModelIndex());
+    resetDefaults_(rootNode, rootNodeIndex);
+
+    // resetDefaults_() makes it so that the leaf nodes do not emit their own dataChanged(),
+    // and it's up to the directory parent to do so. This only matters if `rootNode` is in
+    // fact a leaf, in which case we must emit dataChanged for it.
+    if (rootNode->childCount() == 0)
+    {
+      const QModelIndex& dataCell = rootNodeIndex.siblingAtColumn(1);
+      Q_EMIT dataChanged(dataCell, dataCell, { Qt::DisplayRole, Qt::EditRole });
+    }
+  }
   else
   {
     SIM_ERROR << "rootNode is null, cannot reset defaults for a null node\n";
@@ -1136,29 +1150,51 @@ void SettingsModel::resetDefaults(const QString& name)
   }
 }
 
-void SettingsModel::resetDefaults_(TreeNode* node)
+void SettingsModel::resetDefaults_(TreeNode* node, const QModelIndex& nodeIndex)
 {
   if (node == nullptr)
     return;
 
-  int size = node->childCount();
+  // Failure means recursion issue or invalid model index creation. If the node is the root
+  // node, we expect to get an invalid model index. Otherwise, the nodeIndex should match
+  // the node, meaning that it represents the node, meaning the internal pointer is node.
+  if (node == rootNode_)
+    assert(!nodeIndex.isValid());
+  else
+    assert(static_cast<TreeNode*>(nodeIndex.internalPointer()) == node);
 
-  if ((size == 0) && !node->isRootItem())
+  const int numChildren = node->childCount();
+  if ((numChildren == 0) && !node->isRootItem())
   {
-    QVariant value = node->metaData().defaultValue();
-    QString name = node->path();
+    const QVariant value = node->metaData().defaultValue();
+    const QString name = node->path();
     if (node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE) != value)
     {
       node->setDataValue(value);
       fireObservers_(observers_, name, value);
       node->fireSettingChange();
     }
-    // It is a leaf so return
+    // It is a leaf so return; parent responsible for emitting dataChanged()
     return;
   }
 
-  for (int ii = 0; ii < size; ++ii)
-    resetDefaults_(node->child(ii));
+  // Reset all the child nodes
+  for (int ii = 0; ii < numChildren; ++ii)
+  {
+    auto* child = node->child(ii);
+    resetDefaults_(child, createIndex(ii, 0, child));
+  }
+
+  // Emit dataChanged() for all children
+  if (numChildren != 0)
+  {
+    auto* firstChild = node->child(0);
+    auto* lastChild = node->child(numChildren - 1);
+    Q_EMIT dataChanged(
+      createIndex(0, 1, firstChild),
+      createIndex(numChildren - 1, 1, lastChild)
+    );
+  }
 }
 
 SettingsModel::TreeNode* SettingsModel::getNode_(const QString& name) const

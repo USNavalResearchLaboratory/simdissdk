@@ -50,6 +50,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}SplashScreen.h
     ${SIMQT_INC}StartupLayoutTask.h
     ${SIMQT_INC}StdStreamConsoleChannel.h
+    ${SIMQT_INC}TabDropDownButton.h
     ${SIMQT_INC}TimeButtons.h
     ${SIMQT_INC}TimeFormatContainer.h
     ${SIMQT_INC}TimeSliderClockBinding.h
@@ -207,6 +208,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}StartupLayoutManager.cpp
     ${SIMQT_SRC}StartupLayoutTask.cpp
     ${SIMQT_SRC}StdStreamConsoleChannel.cpp
+    ${SIMQT_SRC}TabDropDownButton.cpp
     ${SIMQT_SRC}TimeButtons.cpp
     ${SIMQT_SRC}TimeFormatContainer.cpp
     ${SIMQT_SRC}TimeSliderClockBinding.cpp
@@ -435,8 +437,6 @@ else()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    # Configure the simQtConfig.cmake file; its dependencies are dynamic
-    configure_file(simQtConfig.cmake.in simQtConfig.cmake @ONLY)
     vsi_install_export(simQt ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 

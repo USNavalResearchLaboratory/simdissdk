@@ -150,8 +150,6 @@ if(WIN32)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    # Configure the simDataConfig.cmake file; its dependencies are dynamic
-    configure_file(simDataConfig.cmake.in simDataConfig.cmake @ONLY)
     vsi_install_export(simData ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 

@@ -75,7 +75,7 @@ struct InitializeEnvironmentConfig
   /** Set up Python3: PYTHONHOME, PYTHONPATH, PYTHONPYCACHEPREFIX */
   bool python3 = true;
   /** Python version string, used to combine to create the .ZIP and dynamic-load folders */
-  std::string python3Version = "3.12";
+  std::string python3Version = "3.14";
 
   /** Set SIMDIS_SDK_FILE_PATH to SIMDIS_DIR/data */
   bool simdisSdkFilePath = true;

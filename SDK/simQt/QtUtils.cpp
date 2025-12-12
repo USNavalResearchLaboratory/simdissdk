@@ -22,6 +22,11 @@
  */
 #include <QApplication>
 #include <QScreen>
+#ifdef WIN32
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+#include <QStyleHints>
+#endif
+#endif
 #include <QWidget>
 #include "simQt/QtUtils.h"
 
@@ -71,6 +76,35 @@ void QtUtils::centerWidgetOnParent(QWidget& widget, const QWidget* parent)
     newPos.setY(screenGeometry.bottom() - 30);
 
   widget.move(newPos);
+}
+
+bool QtUtils::isDarkTheme()
+{
+#ifdef WIN32
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  return (qGuiApp->styleHints()->colorScheme() == Qt::ColorScheme::Dark);
+#else
+  return false;
+#endif
+#endif
+
+  // Testing has shown QStyleHints::colorScheme() is unreliable on linux
+  const QPalette palette = QApplication::palette();
+  const QColor windowColor = palette.color(QPalette::Window);
+  const QColor textColor = palette.color(QPalette::WindowText);
+
+  // Compare lightness on the window and text if this looks like a standard theme (low saturation colors)
+  const int maxSaturation = 50;
+  const bool standardTheme = (windowColor.hsvSaturation() < maxSaturation && textColor.hsvSaturation() < maxSaturation);
+
+  if (standardTheme)
+  {
+    // Guess a dark theme if the window color is darker than the text color
+    return windowColor.lightness() < textColor.lightness();
+  }
+
+  // In a non-standard theme, assume dark theme if the window color is relatively dark
+  return windowColor.lightness() < 80;
 }
 
 }

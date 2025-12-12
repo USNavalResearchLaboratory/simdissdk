@@ -41,11 +41,11 @@
 #include "simVis/View.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
 
+#include <QAction>
 #include <QApplication>
-#include <QMainWindow>
 #include <QMenuBar>
 #include <QStatusBar>
-#include <QSignalMapper>
+#include <QStyleHints>
 
 #include "MyMainWindow.h"
 
@@ -100,6 +100,11 @@ int main(int argc, char **argv)
 #endif
 
   QApplication app(argc, argv);
+  
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   SdkQThreadExample::MyMainWindow win(viewMan.get(), dataStore);
 
@@ -114,11 +119,11 @@ int main(int argc, char **argv)
 
   QMenu* bar = win.menuBar()->addMenu(QString("File"));
   QAction* generateAction = new QAction(QString("Generate Data..."), &win);
-  QObject::connect(generateAction, SIGNAL(triggered(bool)), &win, SLOT(showGenerateDialog()));
+  QObject::connect(generateAction, &QAction::triggered, &win, &SdkQThreadExample::MyMainWindow::showGenerateDialog);
   bar->addAction(generateAction);
 
   QAction* exitAction = new QAction(QString("Exit"), &win);
-  QObject::connect(exitAction, SIGNAL(triggered(bool)), &win, SLOT(close()));
+  QObject::connect(exitAction, &QAction::triggered, &win, &QMainWindow::close);
   exitAction->setShortcut(QKeySequence("Alt+Q"));
   bar->addAction(exitAction);
 

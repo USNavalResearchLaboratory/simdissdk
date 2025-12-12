@@ -486,6 +486,7 @@ SIMDATA_DEFINE_FIELD(AntennaPatterns, type_, type, AntennaPatterns::Type, Antenn
 SIMDATA_DEFINE_FIELD(AntennaPatterns, fileFormat_, fileformat, AntennaPatterns::FileFormat, AntennaPatterns::FileFormat::TABLE);
 SIMDATA_DEFINE_FIELD_CONST_REF(AntennaPatterns, fileName_, filename, std::string, "");
 SIMDATA_DEFINE_FIELD(AntennaPatterns, algorithm_, algorithm, AntennaPatterns::Algorithm, AntennaPatterns::Algorithm::PEDESTAL);
+SIMDATA_DEFINE_FIELD(AntennaPatterns, volumeType_, volumeType, AntennaPatterns::VolumeType, AntennaPatterns::VolumeType::GAIN_AS_RANGE_SCALAR);
 
 void AntennaPatterns::MergeFrom(const AntennaPatterns& from)
 {
@@ -503,6 +504,9 @@ void AntennaPatterns::MergeFrom(const AntennaPatterns& from)
 
   if (from.has_algorithm())
     algorithm_ = from.algorithm_;
+
+  if (from.has_volumeType())
+    volumeType_ = from.volumeType_;
 }
 
 //----------------------------------------------------------------------------------------------------------
@@ -544,6 +548,7 @@ SIMDATA_DEFINE_FIELD(BeamPrefs, animate_, animate, bool, false);
 SIMDATA_DEFINE_FIELD(BeamPrefs, pulseLength_, pulselength, double, 100.0);
 SIMDATA_DEFINE_FIELD(BeamPrefs, pulseRate_, pulserate, double, 1.0);
 SIMDATA_DEFINE_FIELD(BeamPrefs, pulseStipple_, pulsestipple, uint32_t, 0x0F0F);
+SIMDATA_DEFINE_FIELD(BeamPrefs, rangeMode_, rangemode, BeamPrefs::RangeMode, BeamPrefs::RangeMode::BEAM_UPDATE);
 
 void BeamPrefs::MergeFrom(const BeamPrefs& from)
 {
@@ -652,6 +657,9 @@ void BeamPrefs::MergeFrom(const BeamPrefs& from)
 
   if (from.has_pulsestipple())
     pulseStipple_ = from.pulseStipple_;
+
+  if (from.has_rangemode())
+    rangeMode_ = from.rangeMode_;
 }
 
 void BeamPrefs::CopyFrom(const BeamPrefs& from)
@@ -696,6 +704,7 @@ void BeamPrefs::CopyFrom(const BeamPrefs& from)
   pulseLength_ = from.pulseLength_;
   pulseRate_ = from.pulseRate_;
   pulseStipple_ = from.pulseStipple_;
+  rangeMode_ = from.rangeMode_;
 }
 
 bool BeamPrefs::operator==(const BeamPrefs& rhs) const
@@ -739,7 +748,9 @@ bool BeamPrefs::operator==(const BeamPrefs& rhs) const
     (animate_ == rhs.animate_) &&
     (pulseLength_ == rhs.pulseLength_) &&
     (pulseRate_ == rhs.pulseRate_) &&
-    (pulseStipple_ == rhs.pulseStipple_));
+    (pulseStipple_ == rhs.pulseStipple_)  &&
+    (rangeMode_ == rhs.rangeMode_)
+    );
 }
 
 void BeamPrefs::Prune()

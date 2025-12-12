@@ -36,12 +36,13 @@
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/DataStore.h"
-#include "simQt/QtFormatting.h"
 #include "simQt/CategoryFilterCounter.h"
+#include "simQt/CategoryTreeModel.h"
 #include "simQt/EntityFilterLineEdit.h"
+#include "simQt/QtFormatting.h"
+#include "simQt/QtUtils.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/Settings.h"
-#include "simQt/CategoryTreeModel.h"
 #include "simQt/CategoryFilterWidget.h"
 
 namespace simQt {
@@ -86,21 +87,24 @@ struct StyleOptionToggleSwitch
     value(false),
     locked(false)
   {
+    const bool lightMode = !simQt::QtUtils::isDarkTheme();
     // Teal colored track and thumb
-    on.track = QColor(0, 150, 136);
-    on.thumb = on.track;
+    on.track = QColor(125, 192, 186);
+    on.thumb = QColor(0, 150, 136);
     on.text = QObject::tr("Exclude");
     on.textColor = Qt::black;
 
     // Black and grey track and thumb
-    off.track = Qt::black;
+    off.track = QColor(125, 125, 125);
     off.thumb = QColor(200, 200, 200);
+    if (!lightMode)
+      std::swap(off.track, off.thumb);
     off.text = QObject::tr("Match");
-    off.textColor = Qt::white;
+    off.textColor = (lightMode ? Qt::white : Qt::black);
 
     // Disabled-looking grey track and thumb
-    lock.track = QColor(100, 100, 100);
-    lock.thumb = lock.track.color().lighter();
+    lock.track = QColor(170, 170, 170);
+    lock.thumb = QColor(150, 150, 150);
     lock.text = QObject::tr("Locked");
     lock.textColor = Qt::black;
   }
@@ -146,7 +150,6 @@ void ToggleSwitchPainter::paint(const StyleOptionToggleSwitch& option, QPainter*
   // Draw the track
   painter->setPen(Qt::NoPen);
   painter->setBrush(valueStyle.track);
-  painter->setOpacity(0.45);
   painter->setRenderHint(QPainter::Antialiasing, true);
   // Newer Qt with newer MSVC renders the rounded rect poorly if the rounding
   // pixels argument is half of pixel height or greater; reduce to 0.49
@@ -261,13 +264,14 @@ void CategoryTreeItemDelegate::paint(QPainter* painter, const QStyleOptionViewIt
 void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionViewItem& opt, const QModelIndex& index) const
 {
   const QStyle* style = (opt.widget ? opt.widget->style() : qApp->style());
+  const QColor bgColor = (simQt::QtUtils::isDarkTheme() ? QColor(100, 100, 100) : QColor(228, 228, 228));
 
   // Calculate the rectangles for drawing
   ChildRects r;
   calculateRects_(opt, index, r);
 
   { // Draw a background for the whole row
-    painter->setBrush(opt.backgroundBrush);
+    painter->setBrush(bgColor);
     painter->setPen(Qt::NoPen);
     painter->drawRect(r.background);
   }
@@ -281,6 +285,7 @@ void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionVie
 
   { // Draw the text for the category
     opt.rect = r.text;
+    opt.backgroundBrush = bgColor;
     style->drawControl(QStyle::CE_ItemViewItem, &opt, painter);
   }
 

@@ -312,7 +312,7 @@ int test_ignoreDuplicates()
   rv += SDK_ASSERT(gd->current()->entry_size() == 3);
 
   // Test flush
-  ds->flush(0, simData::DataStore::RECURSIVE);
+  ds->flush(0, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL_EXCLUDE_MINUS_ONE);
   rv += SDK_ASSERT(gd->numItems() == 0);
   rv += SDK_ASSERT(gd->current()->entry_size() == 0);
   // After an update; should still be zero

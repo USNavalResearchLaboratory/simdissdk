@@ -41,11 +41,12 @@
 
 #include <QApplication>
 #include <QDialog>
-#include <QPushButton>
-#include <QLayout>
 #include <QDockWidget>
-#include <QTreeView>
+#include <QLayout>
 #include <QListView>
+#include <QPushButton>
+#include <QStyleHints>
+#include <QTreeView>
 
 #ifdef Q_WS_X11
 #include <X11/Xlib.h>
@@ -256,6 +257,11 @@ int main(int argc, char** argv)
 
   // OK, time to set up the Qt Application and windows.
   QApplication qapp(argc, argv);
+
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  qapp.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   // Our custom main window contains a ViewManager.
   MainWindow win;

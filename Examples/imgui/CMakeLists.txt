@@ -8,9 +8,9 @@ if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
     return()
 endif()
 
-# Add the local ImGui to search path. Due to osgEarth incompatibilities with newer
-# versions, set this to the front of CMAKE_PREFIX_PATH for VSI compatibility.
-set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/1.90;${CMAKE_PREFIX_PATH}")
+# Add the local Dear ImGui to the search path at the end. This way, your own
+# Dear ImGui if it exists ought to be found first.
+set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${CMAKE_CURRENT_SOURCE_DIR}/1.92")
 # Prepend the user's environment variable, to prefer it first
 if(DEFINED ENV{IMGUI_DIR})
     set(CMAKE_PREFIX_PATH "$ENV{IMGUI_DIR};${CMAKE_PREFIX_PATH}")

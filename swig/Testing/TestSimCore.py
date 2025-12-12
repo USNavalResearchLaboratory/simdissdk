@@ -244,6 +244,24 @@ assert(results == 1.0)
 ray.direction.set(1, 0, 0)
 results = simCore.rayIntersectsPlane(ray, p)
 assert(results is None) # parallel to plane
+s = simCore.Sphere()
+ray.origin.set(0, 0, 10.)
+ray.direction.set(0, 0, -1)
+distance_in_meters = simCore.rayIntersectsSphere(ray, s)
+assert(distance_in_meters is not None)
+assert(distance_in_meters == 9.0)
+ray.direction.set(1, 0, 0)
+distance_in_meters = simCore.rayIntersectsSphere(ray, s)
+assert(distance_in_meters is None)
+e = simCore.Ellipsoid()
+ray.origin.set(0, 0, 10.)
+ray.direction.set(0, 0, -1)
+distance_in_meters = simCore.rayIntersectsEllipsoid(ray, e)
+assert(distance_in_meters is not None)
+assert(distance_in_meters == 9.0)
+ray.direction.set(1, 0, 0)
+distance_in_meters = simCore.rayIntersectsEllipsoid(ray, e)
+assert(distance_in_meters is None)
 
 #############################
 # GeoFence.h
@@ -651,6 +669,24 @@ assert(simCore.SMALL_DB_VAL is not None)
 assert(simCore.SMALL_RCS_SM is not None)
 assert(simCore.SMALL_DB_COMPARE is not None)
 # TODO: More simCore/EM/Decibel.h testing here
+
+# Propagation.h
+assert(simCore.RadarParameters() is not None)
+assert(simCore.getRcvdPowerFreeSpace(31000.0, 5000.0, 10000.0, 45.0, 40.0, 9.0, 5.0, True) is not None)
+assert(simCore.getRcvdPowerFreeSpace(31000.0, 5000.0, 10000.0, 45.0, 40.0, 9.0, 5.0) is not None)
+assert(simCore.getRcvdPowerBlake(31000.0, 5000.0, 10000.0, 45.0, 40.0, 9.0, 1.0, 5.0, True) is not None)
+assert(simCore.getRcvdPowerBlake(31000.0, 5000.0, 10000.0, 45.0, 40.0, 9.0, 1.0, 5.0) is not None)
+assert(simCore.getTwoWayFreeSpaceRange(-107.534, 5000, 10000, 45, 40, 5, 9) is not None)
+assert(simCore.getTwoWayFreeSpaceRange(-107.534, 5000, 10000, 45, 40, 5) is not None)
+freeSpace, fsLossDb = simCore.getOneWayFreeSpaceRangeAndLoss(5.0, 100.0, 100.0, -10.0)
+assert(freeSpace is not None and fsLossDb is not None)
+assert(simCore.lossToPpf(631.5449, 3000.0, 107.5))
+assert(simCore.toUsEcm(1000.0) is not None)
+assert(simCore.toIeeeBand(300.0, True) is not None)
+assert(simCore.toIeeeBand(300.0) is not None)
+# TODO wrap overloaded getFreqMhzRange() to handle both
+#assert(simCore.getFreqMhzRange(simCore.USECM_FREQ_OUT_OF_BOUNDS) is not None)
+#assert(simCore.getFreqMhzRange(simCore.IEEE_FREQ_OUT_OF_BOUNDS) is not None)
 
 # TODO: More simCore/EM testing here
 

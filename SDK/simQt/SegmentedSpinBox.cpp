@@ -22,10 +22,11 @@
  */
 #include <cassert>
 
-#include <QSpinBox>
-#include <QLineEdit>
 #include <QEvent>
+#include <QLineEdit>
 #include <QKeyEvent>
+#include <QSpinBox>
+#include <QStyleHints>
 #include <QTimer>
 
 #include "simCore/Calc/Math.h"
@@ -412,7 +413,17 @@ private:
     else if (state == QValidator::Intermediate)
     {
       if (colorCodeText)
-        lineEdit()->setStyleSheet("QLineEdit {color: blue }");
+      {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+        const bool lightMode = (qApp->styleHints()->colorScheme() == Qt::ColorScheme::Light);
+#else
+        const bool lightMode = true;
+#endif
+        if (lightMode)
+          lineEdit()->setStyleSheet("QLineEdit { color: blue }");
+        else
+          lineEdit()->setStyleSheet("QLineEdit { color: #0078D7 }");
+      }
       else
         lineEdit()->setStyleSheet("");
       completeLine_->setText(text);
@@ -421,7 +432,7 @@ private:
     else
     {
       if (colorCodeText)
-        lineEdit()->setStyleSheet("QLineEdit {color: red }");
+        lineEdit()->setStyleSheet("QLineEdit { color: red }");
       else
         lineEdit()->setStyleSheet("");
       timer_->stop();

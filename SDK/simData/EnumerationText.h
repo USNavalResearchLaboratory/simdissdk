@@ -71,6 +71,7 @@ public:
   static std::unique_ptr<EnumerationText> makeBeamDrawModeName();
   static std::unique_ptr<EnumerationText> makeBeamDrawTypeName();
   static std::unique_ptr<EnumerationText> makeBeamTypeName();
+  static std::unique_ptr<EnumerationText> makeBeamRangeMode();
   static std::unique_ptr<EnumerationText> makeCircleHilightShapeName();
   static std::unique_ptr<EnumerationText> makeCoordinateSystemName();
   static std::unique_ptr<EnumerationText> makeDistanceUnitsName();
@@ -89,6 +90,7 @@ public:
   static std::unique_ptr<EnumerationText> makeOverrideColorCombineModeName();
   static std::unique_ptr<EnumerationText> makePlatformDrawOffBehaviorName();
   static std::unique_ptr<EnumerationText> makePolarityName();
+  static std::unique_ptr<EnumerationText> makeVolumeTypeName();
   static std::unique_ptr<EnumerationText> makePolygonFaceName();
   static std::unique_ptr<EnumerationText> makePolygonModeName();
   static std::unique_ptr<EnumerationText> makeSpeedUnitsName();

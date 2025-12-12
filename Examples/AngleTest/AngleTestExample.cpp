@@ -56,13 +56,10 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
 #endif
 
 using namespace osgEarth;
 using namespace osgEarth::Util;
-using namespace osgEarth::Util::Controls;
 
 /** Test program for update angle computations. */
 
@@ -192,76 +189,6 @@ private:
   float time_;
 };
 
-#else
-/// keep a handle, for toggling
-static osg::ref_ptr<Control> s_helpControl;
-static HSliderControl* yaw, * pitch, * roll, * lat, * lon;
-
-struct SetUpdate : public ControlEventHandler
-{
-  void onValueChanged(Control*, float value)
-  {
-    s_time += 1.0;
-
-    simCore::Coordinate lla(
-      simCore::COORD_SYS_LLA,
-      simCore::Vec3(simCore::DEG2RAD * lat->getValue(), simCore::DEG2RAD * lon->getValue(), 10000.0),
-      simCore::Vec3(simCore::DEG2RAD * yaw->getValue(), pitch->getValue() * simCore::DEG2RAD, roll->getValue() * simCore::DEG2RAD));
-    simCore::Coordinate ecef;
-    simCore::CoordinateConverter::convertGeodeticToEcef(lla, ecef);
-
-    simData::DataStore::Transaction t;
-    simData::PlatformUpdate* u = s_dataStore->addPlatformUpdate(s_id, &t);
-    if (u)
-    {
-      u->set_time(s_time);
-      u->set_x(ecef.x());
-      u->set_y(ecef.y());
-      u->set_z(ecef.z());
-      u->set_psi(ecef.psi());
-      u->set_theta(ecef.theta());
-      u->set_phi(ecef.phi());
-      t.complete(&u);
-    }
-
-    s_dataStore->update(s_time);
-  }
-};
-
-static Control* createHelp()
-{
-  osg::ref_ptr<Grid> g = new Grid();
-  g->setChildSpacing(5);
-
-  g->setControl(0, 0, new LabelControl("Yaw:"));
-  yaw = g->setControl(1, 0, new HSliderControl(-180, 180, 0.0));
-  yaw->setSize(300, 35);
-  yaw->addEventHandler(new SetUpdate());
-
-  g->setControl(0, 1, new LabelControl("Pitch:"));
-  pitch = g->setControl(1, 1, new HSliderControl(-90, 90, 0.0));
-  pitch->setSize(300, 35);
-  pitch->addEventHandler(new SetUpdate());
-
-  g->setControl(0, 2, new LabelControl("Roll:"));
-  roll = g->setControl(1, 2, new HSliderControl(-90, 90, 0.0));
-  roll->setSize(300, 35);
-  roll->addEventHandler(new SetUpdate());
-
-  g->setControl(0, 3, new LabelControl("Lat:"));
-  lat = g->setControl(1, 3, new HSliderControl(-89, 89, 0.0));
-  lat->setSize(300, 35);
-  lat->addEventHandler(new SetUpdate());
-
-  g->setControl(0, 4, new LabelControl("Long:"));
-  lon = g->setControl(1, 4, new HSliderControl(-180, 180, 0.0));
-  lon->setSize(300, 35);
-  lon->addEventHandler(new SetUpdate());
-
-  s_helpControl = g.get();
-  return g.release();
-}
-
 #endif
 
 //----------------------------------------------------------------------------
@@ -326,12 +253,6 @@ int main(int argc, char **argv)
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(dataStore, s_id));
-#else
-  /// show the instructions overlay
-  viewer->getMainView()->addOverlayControl(createHelp());
-
-  /// Prime it
-  SetUpdate().onValueChanged(nullptr, 0.0);
 #endif
 
   /// add some stock OSG handlers

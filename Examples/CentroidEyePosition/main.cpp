@@ -49,8 +49,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-using namespace osgEarth::Util::Controls;
 #endif
 
 static const simCore::Coordinate DEFAULT_POS_LLA(simCore::COORD_SYS_LLA,
@@ -65,9 +63,6 @@ struct App
 {
   osg::ref_ptr<simVis::Viewer> viewer;
   osg::ref_ptr<simVis::View> mainView;
-#ifndef HAVE_IMGUI
-  osg::ref_ptr<Control> helpBox;
-#endif
   osg::ref_ptr<simVis::AveragePositionNode> centroidNode;
   osg::ref_ptr<osg::MatrixTransform> sphereXform;
   simData::DataStore* dataStore;
@@ -170,116 +165,8 @@ private:
 
   App& app_;
 };
-
-#else
-
-/** Event handler to process user key presses */
-struct MenuHandler : public osgGA::GUIEventHandler
-{
-  explicit MenuHandler(App& app)
-    : app_(app)
-  {
-  }
-
-  /// Callback to process user input
-  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
-  {
-    if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
-    {
-      switch (ea.getKey())
-      {
-      case '?': // Toggle help
-        app_.helpBox->setVisible(!app_.helpBox->visible());
-        return true;
-
-      case 'c': // Center on centroid node
-      {
-        auto vp = app_.mainView->getViewpoint();
-        vp.setNode(app_.centroidNode.get());
-        app_.mainView->setViewpoint(vp);
-        return true;
-      }
-
-      case 'o': // Toggle overhead mode
-        app_.mainView->enableOverheadMode(!app_.mainView->isOverheadEnabled());
-        return true;
-
-      case '1':
-        toggleTrackNode_(1);
-        return true;
-      case '2':
-        toggleTrackNode_(2);
-        return true;
-      case '3':
-        toggleTrackNode_(3);
-        return true;
-      case '4':
-        toggleTrackNode_(4);
-        return true;
-      case '5':
-        toggleTrackNode_(5);
-        return true;
-      case '6':
-        toggleTrackNode_(6);
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-private: // data
-
-  void toggleTrackNode_(simData::ObjectId id)
-  {
-    uint32_t color;
-    osg::observer_ptr<simVis::EntityNode> objNode = app_.viewer->getSceneManager()->getScenario()->find(id);
-    if (app_.centroidNode->isTrackingNode(objNode.get()))
-    {
-      app_.centroidNode->removeTrackedNode(objNode.get());
-      color = 0xFFFFFFFF;
-    }
-    else
-    {
-      app_.centroidNode->addTrackedNode(objNode.get());
-      color = GREEN.asABGR();
-    }
-    simData::DataStore::Transaction txn;
-    simData::PlatformPrefs* prefs = app_.dataStore->mutable_platformPrefs(id, &txn);
-    prefs->mutable_commonprefs()->mutable_labelprefs()->set_color(color);
-    txn.complete(&prefs);
-  }
-
-  App& app_;
-};
-
-//----------------------------------------------------------------------------
-
-Control* createControls(App& app)
-{
-  VBox* vbox = new VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->setMargin(10);
-  vbox->setVertAlign(Control::ALIGN_BOTTOM);
-
-  vbox->addControl(new LabelControl("Centroid Eye Position Example", 20, simVis::Color::Yellow));
-  vbox->addControl(new LabelControl("Green labels are tracked, while", 14.f, GREEN));
-  vbox->addControl(new LabelControl("white labels are not tracked", 14.f, simVis::Color::White));
-  vbox->addControl(new LabelControl("c: Center camera on centroid", 14.f, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("o: Toggle overhead mode", 14.f, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("--------------------------------", 14.f, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("1: Toggle Tracking of Platform 1", 14.f, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("2: Toggle Tracking of Platform 2", 14.f, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("3: Toggle Tracking of Platform 3", 14.f, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("4: Toggle Tracking of Platform 4", 14.f, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("5: Toggle Tracking of Platform 5", 14.f, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("6: Toggle Tracking of Platform 6", 14.f, simVis::Color::Silver));
-
-  app.helpBox = vbox;
-  return vbox;
-}
 #endif
+
 void initializeDrawables(App& app)
 {
   // Create a sphere that will represent the bounding sphere
@@ -490,11 +377,6 @@ int main(int argc, char **argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   app.mainView->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
-#else
-  // Handle key press events
-  viewer->addEventHandler(new MenuHandler(app));
-  // Show the controls overlay
-  app.mainView->addOverlayControl(createControls(app));
 #endif
 
   // Add some stock OSG handlers

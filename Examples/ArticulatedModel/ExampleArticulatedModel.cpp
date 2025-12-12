@@ -59,7 +59,6 @@
 
 using namespace osgEarth;
 using namespace osgEarth::Util;
-using namespace osgEarth::Util::Controls;
 
 //----------------------------------------------------------------------------
 
@@ -308,104 +307,6 @@ private:
   osg::observer_ptr<osg::Node> node_;
 };
 
-#else
-
-/** Application object that syncs the UI with the Tank data after async model load */
-struct App : public osg::Node
-{
-  TankNode tank_;
-  osg::observer_ptr<osg::Node> node_;
-  osg::ref_ptr<HSliderControl> turretSlider_;
-  osg::ref_ptr<HSliderControl> gunSlider_;
-
-  explicit App(simVis::EntityNode* node) :
-    node_(node)
-  {
-    setNumChildrenRequiringUpdateTraversal(1u);
-  }
-
-  void traverse(osg::NodeVisitor& nv)
-  {
-    if (nv.getVisitorType() == nv.UPDATE_VISITOR && tank_.needsSetup())
-    {
-      osg::ref_ptr<osg::Node> node;
-      if (node_.lock(node))
-      {
-        tank_.setup(node.get());
-        syncUI();
-      }
-    }
-    osg::Node::traverse(nv);
-  }
-
-  void syncUI()
-  {
-    turretSlider_->setMin(tank_.turretMinimumYaw());
-    turretSlider_->setMax(tank_.turretMaximumYaw());
-    turretSlider_->setValue(tank_.turretYaw());
-
-    gunSlider_->setMin(tank_.gunMinimumPitch());
-    gunSlider_->setMax(tank_.gunMaximumPitch());
-    gunSlider_->setValue(tank_.gunPitch());
-  }
-};
-
-//----------------------------------------------------------------------------
-
-/** Control handler to change the gun pitch */
-class TankGunPitchChange : public ControlEventHandler
-{
-public:
-  explicit TankGunPitchChange(TankNode* tank)
-    : tank_(tank)
-  {
-  }
-  void onValueChanged(Control*, float value)
-  {
-    tank_->setGunPitch(value);
-  }
-private:
-  TankNode* tank_;
-};
-
-//----------------------------------------------------------------------------
-
-/** Control handler to change the turret yaw */
-class TankTurretYawChange : public ControlEventHandler
-{
-public:
-  explicit TankTurretYawChange(TankNode* tank)
-    : tank_(tank)
-  {
-  }
-  void onValueChanged(Control*, float value)
-  {
-    tank_->setTurretYaw(value);
-  }
-private:
-  TankNode* tank_;
-};
-
-//----------------------------------------------------------------------------
-
-/** Control handler to update the label to the current value. */
-class SetLabelValue : public ControlEventHandler
-{
-public:
-  explicit SetLabelValue(LabelControl* label)
-    : label_(label)
-  {
-  }
-  void onValueChanged(Control*, float value)
-  {
-    std::stringstream ss;
-    ss << value;
-    label_->setText(ss.str());
-  }
-private:
-  osg::ref_ptr<LabelControl> label_;
-};
-
 #endif
 
 //----------------------------------------------------------------------------
@@ -449,33 +350,6 @@ int main(int argc, char **argv)
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(node2.get()));
-#else
-  // Set up the tank to manipulate the articulations
-  App* app = new App(node2.get());
-  viewer->getMainView()->getSceneData()->asGroup()->addChild(app);
-
-  // Set up a grid for animation controls
-  osg::ref_ptr<Grid> grid = new Grid;
-  grid->setChildSpacing(5);
-
-  // Turret widgets
-  grid->setControl(0, 0, new LabelControl("Turret:"));
-  app->turretSlider_ = grid->setControl(1, 0, new HSliderControl());
-  app->turretSlider_->setSize(300, 35);
-  app->turretSlider_->addEventHandler(new TankTurretYawChange(&app->tank_));
-  app->turretSlider_->addEventHandler(new SetLabelValue(grid->setControl(2, 0, new LabelControl("0.0"))));
-
-  // Gun widgets
-  grid->setControl(0, 1, new LabelControl("Gun:"));
-  app->gunSlider_ = grid->setControl(1, 1, new HSliderControl());
-  app->gunSlider_->setSize(300, 35);
-  app->gunSlider_->addEventHandler(new TankGunPitchChange(&app->tank_));
-  app->gunSlider_->addEventHandler(new SetLabelValue(grid->setControl(2, 1, new LabelControl("0.0"))));
-
-  app->syncUI();
-
-  // Add grid to the main view
-  viewer->getMainView()->addOverlayControl(grid.get());
 #endif
 
   // add some stock OSG handlers and go

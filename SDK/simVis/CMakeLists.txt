@@ -76,6 +76,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}CustomRendering.h
     ${VIS_INC}CylinderGeode.h
     ${VIS_INC}CylinderStorage.h
+    ${VIS_INC}DevicePixelRatioUtils.h
     ${VIS_INC}DisableDepthOnAlpha.h
     ${VIS_INC}DynamicScaleTransform.h
     ${VIS_INC}EarthManipulator.h
@@ -241,6 +242,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}CustomRendering.cpp
     ${VIS_SRC}CylinderGeode.cpp
     ${VIS_SRC}CylinderStorage.cpp
+    ${VIS_SRC}DevicePixelRatioUtils.cpp
     ${VIS_SRC}DisableDepthOnAlpha.cpp
     ${VIS_SRC}DynamicScaleTransform.cpp
     ${VIS_SRC}EarthManipulator.cpp
@@ -469,7 +471,6 @@ if(HAVE_NONNULL_COMPARE)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    configure_file(simVisConfig.cmake.in simVisConfig.cmake @ONLY)
     vsi_install_export(simVis ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 

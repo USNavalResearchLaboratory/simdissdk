@@ -247,10 +247,10 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   composite_->setupUi(this);
   composite_->filterButton->hide(); // start out hidden until filters are added
   entityTreeWidget_ = new EntityTreeWidget(composite_->treeView);
-  connect(entityTreeWidget_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(onItemsChanged_(QList<uint64_t>)));
-  connect(entityTreeWidget_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SIGNAL(itemsSelected(QList<uint64_t>)));  // Echo out the signal
-  connect(entityTreeWidget_, SIGNAL(itemDoubleClicked(uint64_t)), this, SIGNAL(itemDoubleClicked(uint64_t))); // Echo out the signal
-  connect(entityTreeWidget_, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>)), this, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>))); // Echo out the signal
+  connect(entityTreeWidget_, &EntityTreeWidget::itemsSelected, this, &EntityTreeComposite::onItemsChanged_);
+  connect(entityTreeWidget_, &EntityTreeWidget::itemsSelected, this, &EntityTreeComposite::itemsSelected);  // Echo out the signal
+  connect(entityTreeWidget_, &EntityTreeWidget::itemDoubleClicked, this, &EntityTreeComposite::itemDoubleClicked); // Echo out the signal
+  connect(entityTreeWidget_, &EntityTreeWidget::filterSettingsChanged, this, &EntityTreeComposite::filterSettingsChanged); // Echo out the signal
 
   // model is null at startup. Will be updated in the name filter in the call to setModel()
   nameFilter_ = new EntityNameFilter(nullptr);
@@ -258,7 +258,7 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   addEntityFilter(nameFilter_);
 
   composite_->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(composite_->treeView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(makeAndDisplayMenu_(QPoint)));
+  connect(composite_->treeView, &simQt::DndTreeView::customContextMenuRequested, this, &EntityTreeComposite::makeAndDisplayMenu_);
 
   // handle right-context menu (any actions will appear there)
   // Create a new QAction for copying data from the clipboard
@@ -267,14 +267,14 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   copyAction_->setShortcut(QKeySequence::Copy);
   copyAction_->setShortcutContext(Qt::WidgetShortcut);
   copyAction_->setEnabled(false); // Should only be enabled when selections made
-  connect(copyAction_, SIGNAL(triggered()), this, SLOT(copySelection_()));
+  connect(copyAction_, &QAction::triggered, this, &EntityTreeComposite::copySelection_);
 
   // Right click center action
   // NOTE: Use of this action must be enabled by the caller with setUseCenterAction()
   centerAction_ = new QAction(tr("Center On Selection"), composite_->treeView);
   centerAction_->setIcon(QIcon(":simQt/images/Find.png"));
   centerAction_->setEnabled(false); // Should only be enabled when selections made
-  connect(centerAction_, SIGNAL(triggered()), this, SLOT(centerOnSelection_()));
+  connect(centerAction_, &QAction::triggered, this, &EntityTreeComposite::centerOnSelection_);
 
   // Switch tree mode action
   toggleTreeViewAction_ = new QAction("Tree View", composite_->treeView);
@@ -283,7 +283,7 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   toggleTreeViewAction_->setChecked(entityTreeWidget_->isTreeView());
   toggleTreeViewAction_->setToolTip(simQt::formatTooltip(tr("Toggle Tree View"), tr("Toggles the display of entity types between a tree and a list view.")));
   toggleTreeViewAction_->setEnabled(false); // Disabled until entities are added
-  connect(toggleTreeViewAction_, SIGNAL(triggered(bool)), this, SLOT(setTreeView_(bool)));
+  connect(toggleTreeViewAction_, &QAction::triggered, this, &EntityTreeComposite::setTreeView_);
 
   // Collapse All and Expand All actions
   collapseAllAction_ = composite_->actionCollapse_All;
@@ -291,8 +291,8 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   expandAllAction_ = composite_->actionExpand_All;
   expandAllAction_->setEnabled(false); // Disabled until entities are added
 
-  connect(composite_->filterButton, SIGNAL(clicked()), this, SLOT(showFilters_()));
-  connect(entityTreeWidget_, SIGNAL(numFilteredItemsChanged(int, int)), this, SLOT(setNumFilteredItemsLabel_(int, int)));
+  connect(composite_->filterButton, &QToolButton::clicked, this, &EntityTreeComposite::showFilters_);
+  connect(entityTreeWidget_, &simQt::EntityTreeWidget::numFilteredItemsChanged, this, &EntityTreeComposite::setNumFilteredItemsLabel_);
 
   // Set tooltips
   composite_->filterButton->setToolTip(simQt::formatTooltip(tr("Entity Filter"),
@@ -352,7 +352,7 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
   // Show the menu with exec(), making sure the position is correctly relative
   realMenu->exec(composite_->treeView->viewport()->mapToGlobal(pos));
 
-  // Implicitly delete the menu, do not use SIGNAL(aboutToHide()).  The menu->execute() can call code
+  // Implicitly delete the menu, do not use ::aboutToHide()).  The menu->execute() can call code
   // that displays a progress dialog after the menu is hidden. The progress dialog can cause an
   // event loop processing which will delete the hidden menu while it is still in use.
 }
@@ -542,13 +542,13 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
 
   // Filter configuration buttons use signal mappers to convey index
   QSignalMapper* loadMapper = new QSignalMapper(this);
-  connect(loadMapper, SIGNAL(mapped(int)), this, SLOT(loadFilterConfig_(int)));
+  connect(loadMapper, &QSignalMapper::mappedInt, this, &EntityTreeComposite::loadFilterConfig_);
   QSignalMapper* saveMapper = new QSignalMapper(this);
-  connect(saveMapper, SIGNAL(mapped(int)), this, SLOT(saveFilterConfig_(int)));
+  connect(saveMapper, &QSignalMapper::mappedInt, this, &EntityTreeComposite::saveFilterConfig_);
   QSignalMapper* clearMapper = new QSignalMapper(this);
-  connect(clearMapper, SIGNAL(mapped(int)), this, SLOT(clearFilterConfig_(int)));
+  connect(clearMapper, &QSignalMapper::mappedInt, this, &EntityTreeComposite::clearFilterConfig_);
   QSignalMapper* pinMapper = new QSignalMapper(this);
-  connect(pinMapper, SIGNAL(mapped(int)), this, SLOT(pinFilterConfig_(int)));
+  connect(pinMapper, &QSignalMapper::mappedInt, this, &EntityTreeComposite::pinFilterConfig_);
 
   auto pinned = settings_->value(PINNED_CUSTOM_FILTER).toString();
   for (int k = 0; k < 4; ++k)
@@ -562,13 +562,13 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
 
     // Configure all signals to our signal mappers
     loadMapper->setMapping(actions->loadAction(), k);
-    connect(actions->loadAction(), SIGNAL(triggered()), loadMapper, SLOT(map()));
+    connect(actions->loadAction(), &QAction::triggered, loadMapper, qOverload<>(&QSignalMapper::map));
     saveMapper->setMapping(actions->saveAction(), k);
-    connect(actions->saveAction(), SIGNAL(triggered()), saveMapper, SLOT(map()));
+    connect(actions->saveAction(), &QAction::triggered, saveMapper, qOverload<>(&QSignalMapper::map));
     clearMapper->setMapping(actions->clearAction(), k);
-    connect(actions->clearAction(), SIGNAL(triggered()), clearMapper, SLOT(map()));
+    connect(actions->clearAction(), &QAction::triggered, clearMapper, qOverload<>(&QSignalMapper::map));
     pinMapper->setMapping(actions->pinAction(), k);
-    connect(actions->pinAction(), SIGNAL(triggered()), pinMapper, SLOT(map()));
+    connect(actions->pinAction(), &QAction::triggered, pinMapper, qOverload<>(&QSignalMapper::map));
 
     // Initialize the button with the filter data from settings
     QVariant defaultValue;
@@ -682,7 +682,7 @@ void EntityTreeComposite::showFilters_()
   QList<QWidget*> filterWidgets = entityTreeWidget_->filterWidgets(filterDialog_);
   filterDialog_->setMinimumWidth(200);
   filterDialog_->setWindowTitle(tr("Entity Filters"));
-  filterDialog_->setWindowFlags(filterDialog_->windowFlags() ^ Qt::WindowContextHelpButtonHint);
+  filterDialog_->setWindowFlag(Qt::WindowContextHelpButtonHint, false);
   QVBoxLayout* layout = new QVBoxLayout(filterDialog_);
   layout->setContentsMargins(2, 2, 2, 2);
   for (auto it = filterWidgets.begin(); it != filterWidgets.end(); ++it)
@@ -691,7 +691,7 @@ void EntityTreeComposite::showFilters_()
   }
 
   // connect to the close signal, to clean up resources
-  connect(filterDialog_, SIGNAL(closedGui()), this, SLOT(closeFilters_()));
+  connect(dynamic_cast<FilterDialog*>(filterDialog_), &FilterDialog::closedGui, this, &EntityTreeComposite::closeFilters_);
   filterDialog_->setLayout(layout);
   filterDialog_->show();
 }

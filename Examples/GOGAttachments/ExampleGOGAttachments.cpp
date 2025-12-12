@@ -73,8 +73,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-using namespace osgEarth::Util::Controls;
 #endif
 using namespace osgEarth;
 using namespace osgEarth::Util;
@@ -94,24 +92,6 @@ static const std::string s_help =
 static osg::NodeList s_attachments;
 typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 static std::vector<GogNodeInterfacePtr> s_overlayNodes;
-
-#ifndef HAVE_IMGUI
-static osg::ref_ptr<Control>      s_helpControl;
-static osg::ref_ptr<LabelControl> s_nowViewing;
-static Control* createHelp()
-{
-  // vbox is allocated here but memory owned by caller
-  VBox* vbox = new VBox();
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->addControl(new LabelControl(s_title, 20, Color::Yellow));
-  vbox->addControl(new LabelControl(s_help, 14, Color::White));
-  s_nowViewing = vbox->addControl(new LabelControl("", 24, Color::White));
-  s_nowViewing->setPadding(Gutter(10.0f, 0.f, 0.f, 0.f));
-  s_helpControl = vbox;
-  return vbox;
-}
-#endif
 
 //----------------------------------------------------------------------------
 
@@ -170,41 +150,6 @@ struct ControlPanel : public simExamples::SimExamplesGui
 private:
   unsigned int swChild_;
   std::string nowViewing_;
-};
-
-#else
-
-//----------------------------------------------------------------------------
-/// event handler for keyboard commands to alter symbology at runtime
-struct MenuHandler : public osgGA::GUIEventHandler
-{
-  /// constructor grabs all the state it needs for updating
-  MenuHandler() : swChild_(static_cast<unsigned>(~0)) { }
-
-  /// callback to process user input
-  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
-  {
-    bool handled = false;
-    if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
-    {
-      switch (ea.getKey())
-      {
-        case 'g': // cycle through the various GOG objects.
-          if (swChild_ != static_cast<unsigned>(~0))
-            s_attachments[swChild_]->setNodeMask(0);
-          if (++swChild_ == s_attachments.size())
-            swChild_ = 0;
-          s_attachments[swChild_]->setNodeMask(~0);
-          s_nowViewing->setText("Now viewing: " + s_attachments[swChild_]->getName());
-          handled = true;
-          break;
-      }
-    }
-    return handled;
-  }
-
-protected: // data
-  unsigned     swChild_;
 };
 
 #endif
@@ -572,18 +517,10 @@ int main(int argc, char **argv)
     platform->attach(i->get());
   }
 
-#ifndef HAVE_IMGUI
-    /// handle key press events
-    viewer->addEventHandler(new MenuHandler());
-#endif
-
 #ifdef HAVE_IMGUI
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
   viewer->getMainView()->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel());
-#else
-  /// show the instructions overlay
-  viewer->getMainView()->addOverlayControl(createHelp());
 #endif
 
   /// add some stock OSG handlers

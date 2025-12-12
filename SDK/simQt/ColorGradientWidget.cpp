@@ -560,12 +560,22 @@ public:
       }
       return;
     }
+
     // Clamp to [0,1] for tooltip purposes
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     const float newVal = simCore::sdkMin(1.f, simCore::sdkMax((static_cast<float>(evt->x()) / width()), 0.f));
+#else
+    const float newVal = simCore::sdkMin(1.f, simCore::sdkMax((static_cast<float>(evt->position().x()) / width()), 0.f));
+#endif
     assert(dragIndex_.column() == ColorGradientModel::COL_VALUE); // Dev Error: model should've given value index
     model_.setData(dragIndex_, newVal, ColorGradientModel::DECIMAL_VALUE_ROLE);
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     const QPoint ttPos = mapToGlobal(QPoint(evt->x(), y()));
+#else
+    const QPoint ttPos = mapToGlobal(QPoint(evt->position().x(), y()));
+#endif
+
     QToolTip::showText(ttPos,
       tr("Value: %1%2").arg(QString::number(static_cast<int>(simCore::rint(toUserValue_(newVal))), 'f', 0)).arg(valueSuffix_),
       this);
@@ -590,7 +600,11 @@ public:
     if (!findStopForEvent_(evt, dragIndex_))
     {
       // If we didn't doubleclick on a stop, create a new stop
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
       const float newVal = (static_cast<float>(evt->x()) / width());
+#else
+      const float newVal = (static_cast<float>(evt->position().x()) / width());
+#endif
       dragIndex_ = model_.addStop(newVal);
       createdIndex = true;
     }
@@ -640,13 +654,22 @@ private:
   {
     const int midY = (height() / 2);
     // Ignore events outside the vertical center
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if (width() == 0 || !simCore::isBetween(evt->y(), midY - HANDLE_SIZE_PX, midY + HANDLE_SIZE_PX))
+#else
+    if (width() == 0 || !simCore::isBetween(static_cast<int>(evt->position().y()), midY - HANDLE_SIZE_PX, midY + HANDLE_SIZE_PX))
+#endif
     {
       stopIdx = QModelIndex();
       return false;
     }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     const float trueVal = (static_cast<float>(evt->x()) / width());
+#else
+    const float trueVal = (static_cast<float>(evt->position().x()) / width());
+#endif
+
     const float maxDelta = (HANDLE_TOLERANCE_PX / width());
     return model_.controlIndexForValue(trueVal, stopIdx, maxDelta);
   }

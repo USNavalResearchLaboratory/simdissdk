@@ -42,9 +42,6 @@
 #ifdef HAVE_IMGUI
 #include "SimExamplesGui.h"
 #include "OsgImGuiHandler.h"
-#else
-#include "osgEarth/Controls"
-using namespace osgEarth::Util::Controls;
 #endif
 
 namespace
@@ -78,13 +75,7 @@ static const SkyModel INITIAL_SKY_MODEL = SKY_SIMPLE;
 /** Application settings in a struct with basic set/apply functions */
 struct AppData
 {
-#ifdef HAVE_IMGUI
   float mag = INITIAL_AMBIENT;
-#else
-  osg::ref_ptr<HSliderControl> ambient;
-  osg::ref_ptr<HSliderControl> skyModelSlider;
-  osg::ref_ptr<LabelControl> skyModelText;
-#endif
   osg::ref_ptr<simVis::SceneManager> sceneManager;
   osg::ref_ptr<simVis::View> mainView;
   std::string slUser;
@@ -103,10 +94,6 @@ struct AppData
   /** Apply ambient value from slider */
   void applyAmbient()
   {
-#ifndef HAVE_IMGUI
-    float mag = ambient->getValue();
-#endif
-
     if (sceneManager->getSkyNode() != nullptr)
       sceneManager->getSkyNode()->getSunLight()->setAmbient(osg::Vec4f(mag, mag, mag, 1.f));
   }
@@ -119,11 +106,6 @@ struct AppData
   /** Changes the current sky model */
   void setSkyModel(SkyModel model)
   {
-#ifndef HAVE_IMGUI
-    // Update the slider unconditionally for crisp values
-    skyModelSlider->setValue(static_cast<float>(model));
-#endif
-
     // No-op if setting to the current value
     if (model == skyModelValue_)
       return;
@@ -154,19 +136,12 @@ private:
   /** Turns off the sky model */
   void setNoSky_()
   {
-#ifndef HAVE_IMGUI
-    skyModelText->setText("None");
-#endif
     setSky_(new simUtil::NullSkyModel);
   }
 
   /** Sets up the Simple sky model */
   void setSimpleSky_()
   {
-#ifndef HAVE_IMGUI
-    skyModelText->setText("Simple");
-#endif
-
     // Set up the Config for Simple
     osgEarth::Config skyOptions;
     skyOptions.set("driver", "simple");
@@ -177,10 +152,6 @@ private:
   /** Sets up the GL sky model */
   void setGlSky_()
   {
-#ifndef HAVE_IMGUI
-    skyModelText->setText("GL");
-#endif
-
     // Set up the Config for GL
     osgEarth::Config skyOptions;
     skyOptions.set("driver", "gl");
@@ -190,10 +161,6 @@ private:
   /** Sets up the SilverLining sky model with configured user/license */
   void setSilverLiningSky_()
   {
-#ifndef HAVE_IMGUI
-    skyModelText->setText("SilverLining");
-#endif
-
     // Set up the Config for SilverLining
     osgEarth::Config skyOptions;
     skyOptions.set("driver", "silverlining");
@@ -322,58 +289,6 @@ private:
   AppData& app_;
 };
 
-#else
-/** Handler for Ambient changes, applying them using the AppData */
-struct ApplyAmbient : public ControlEventHandler
-{
-  explicit ApplyAmbient(AppData& app) : app_(app) {}
-  AppData& app_;
-  void onValueChanged(Control* c, float value) { app_.applyAmbient(); }
-  void onValueChanged(Control* c, double value) { app_.applyAmbient(); }
-};
-
-/** Handler for SkyModel changes, applying them using the AppData */
-struct ApplySkyModel : public ControlEventHandler
-{
-  explicit ApplySkyModel(AppData& app)
-    : app_(app)
-  {
-  }
-  AppData& app_;
-  void onValueChanged(Control* c, float value)
-  {
-    int idx = static_cast<int>(value + 0.5f);
-    app_.setSkyModel(static_cast<SkyModel>(idx));
-  }
-  void onValueChanged(Control* c, double value) { onValueChanged(c, static_cast<float>(value)); }
-};
-
-/** Creates a UI for the AppData, returning the VBox containing all UI items */
-Control* createUi(AppData& app)
-{
-  VBox* vbox = new VBox;
-  vbox->setPadding(10);
-  vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->addControl(new LabelControl("Sky Model Example", 20.f, simVis::Color::Yellow));
-
-  osg::ref_ptr<Grid> grid = vbox->addControl(new Grid());
-  unsigned int row = 0;
-  unsigned int col = 0;
-
-  row++;
-  grid->setControl(col, row, new LabelControl("Ambient"));
-  app.ambient = grid->setControl(col + 1, row, new HSliderControl(0.0, 1.0, INITIAL_AMBIENT, new ApplyAmbient(app)));
-  app.ambient->setHorizFill(true, 250.0);
-  grid->setControl(col + 2, row, new LabelControl(app.ambient.get()));
-
-  row++;
-  grid->setControl(col, row, new LabelControl("Model"));
-  app.skyModelSlider = grid->setControl(col + 1, row, new HSliderControl(0.0f, 3.0f, static_cast<float>(INITIAL_SKY_MODEL), new ApplySkyModel(app)));
-  app.skyModelSlider->setHorizFill(true, 250.0);
-  app.skyModelText = grid->setControl(col + 2, row, new LabelControl("Sky Model", simVis::Color::White));
-
-  return vbox;
-}
 #endif
 
 }
@@ -424,9 +339,6 @@ int main(int argc, char** argv)
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   mainView->getEventHandlers().push_front(gui);
   gui->add(new ControlPanel(app));
-#else
-  // Create the User Interface controls
-  mainView->addOverlayControl(createUi(app));
 #endif
 
   // Apply the current settings so the GUI is up to date

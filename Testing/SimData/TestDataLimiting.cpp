@@ -180,7 +180,7 @@ public:
     rv += SDK_ASSERT(slice->lower_bound(20.0).peekPrevious()->time() == 19.0);
 
     // flush
-    ds_->flush(id);
+    ds_->flush(id, simData::DataStore::FLUSH_NONRECURSIVE, simData::DataStore::FLUSH_ALL_EXCLUDE_MINUS_ONE);
     rv += SDK_ASSERT(slice->numItems() == 0);
 
     return rv;
@@ -207,7 +207,7 @@ public:
     uint64_t id = testHelper_.addPlatform();
     testHelper_.addPlatformUpdate(-1, id);
     const simData::PlatformUpdateSlice *slice = ds_->platformUpdateSlice(id);
-    ds_->flush(0);
+    ds_->flush(0, simData::DataStore::FLUSH_RECURSIVE, simData::DataStore::FLUSH_ALL_EXCLUDE_MINUS_ONE);
     rv += SDK_ASSERT(slice->numItems() == 1);
 
     return rv;

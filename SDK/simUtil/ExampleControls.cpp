@@ -33,6 +33,7 @@
 #include "simVis/SceneManager.h"
 #include "simUtil/ExampleControls.h"
 
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
 using namespace osgEarth;
 using namespace osgEarth::Util::Controls;
 
@@ -574,29 +575,43 @@ namespace
   };
 }
 
+#endif
+
 //----------------------------------------------------------------------
 
-Control* simExamples::createPlatformListControl(simVis::View* view, simData::DataStore* dataStore)
+osgEarth::Util::Controls::Control* simExamples::createPlatformListControl(simVis::View* view, simData::DataStore* dataStore)
 {
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   Control* control = new PlatformListControl(view, dataStore);
   control->setHorizAlign(Control::ALIGN_RIGHT);
   control->setVertAlign(Control::ALIGN_TOP);
   return control;
+#else
+  return nullptr;
+#endif
 }
 
-Control* simExamples::createBeamListControl(simVis::View* view, simData::DataStore* dataStore, const std::string& antennaPattern)
+osgEarth::Util::Controls::Control* simExamples::createBeamListControl(simVis::View* view, simData::DataStore* dataStore, const std::string& antennaPattern)
 {
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   Control* control = new BeamListControl(view, dataStore, antennaPattern);
   control->setHorizAlign(Control::ALIGN_LEFT);
   control->setVertAlign(Control::ALIGN_BOTTOM);
   control->setMargin(osgEarth::Util::Controls::Gutter(0, 0, 50, 0));
   return control;
+#else
+  return nullptr;
+#endif
 }
 
-Control* simExamples::createVCRControl(simVis::View* view, simData::DataStore* dataStore)
+osgEarth::Util::Controls::Control* simExamples::createVCRControl(simVis::View* view, simData::DataStore* dataStore)
 {
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   Control* control = new VCRControl(view, dataStore);
   control->setHorizAlign(Control::ALIGN_LEFT);
   control->setVertAlign(Control::ALIGN_BOTTOM);
   return control;
+#else
+  return nullptr;
+#endif
 }

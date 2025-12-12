@@ -454,6 +454,10 @@ endfunction()
 # Given a library TARGET that is being exported, installs a generated <TARGET>Targets.cmake
 # file, a generated <TARGET>ConfigVersion.cmake, and either a generated or in-source
 # <TARGET>Config.cmake file.  The files get installed to <INSTALLSETTINGS_CMAKE_DIR>/<TARGET>.
+# If <TARGET>Config.cmake does not exist, but <TARGET>Config.cmake.in does exist, then
+# configure_file() is automatically run on it and that result is copied in instead. This
+# convenience means you can use a Config.cmake or Config.cmake.in and either one is
+# automatically picked up, with a preference for the Config.cmake file.
 #
 # The generated Targets file includes the namespace "VSI::".  The library gets installed to
 # <INSTALLSETTINGS_SHARED_LIBRARY_DIR> or <INSTALLSETTINGS_LIBRARY_DIR> as appropriate.
@@ -489,9 +493,14 @@ function(vsi_install_export TARGET VERSION COMPATIBILITY)
          DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET}
     )
 
-    # Use a locally defined <TARGET>Config.cmake if possible
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}Config.cmake")
+        # Use a locally defined <TARGET>Config.cmake if possible
         install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}Config.cmake"
+             DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET})
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}Config.cmake.in")
+        # Use configure_file() on the <TARGET>Config.cmake.in file to create the Config.cmake
+        configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}Config.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake" @ONLY)
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
              DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET})
     else()
         # Create the placeholder file, only once (don't continuously overwrite)
@@ -640,7 +649,7 @@ macro(vsi_add_json_prefix_path PACKAGE_JSON_OBJ)
 
     # Get the versions list
     vsi_json_get_value_or_list(_VERSIONS "${PACKAGE_JSON_OBJ}" version)
-    if(_DIR STREQUAL "QT5" OR _DIR STREQUAL "QT6")
+    if(_DIR STREQUAL "QT5")
         vsi_add_qt_prefix_path(${_VERSIONS})
     else()
         vsi_add_third_prefix_path(${_DIR} ${_VERSIONS})

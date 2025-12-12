@@ -24,6 +24,7 @@
 #include <math.h>
 #include <limits>
 #include <QDateTime>
+#include <QTimeZone>
 
 #include "simCore/Calc/Math.h"
 #include "simCore/Time/Exception.h"
@@ -953,9 +954,9 @@ static const unsigned int MAX_PRECISION = 6;
     {
       // Define a UTC datetime with the timestamp
       const tm& timeComponents = simCore::getTimeStruct(stamp);
-      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), QTimeZone::utc());
       // Change it to local time so that Qt figures out the local time offset from UTC time
-      dateTime.setTimeSpec(Qt::LocalTime);
+      dateTime.setTimeZone(QTimeZone::systemTimeZone());
       stamp -= simCore::Seconds(dateTime.offsetFromUtc(), 0);
     }
     return stamp;
@@ -971,9 +972,9 @@ static const unsigned int MAX_PRECISION = 6;
     {
       // Define a UTC datetime with the timestamp
       const tm& timeComponents = simCore::getTimeStruct(value);
-      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), QTimeZone::utc());
       // Change it to local time so that Qt figures out the local time offset from UTC time
-      dateTime.setTimeSpec(Qt::LocalTime);
+      dateTime.setTimeZone(QTimeZone::systemTimeZone());
       stamp += simCore::Seconds(dateTime.offsetFromUtc(), 0);
     }
 
@@ -1096,9 +1097,9 @@ static const unsigned int MAX_PRECISION = 6;
     {
       // Define a UTC datetime with the timestamp
       const tm& timeComponents = simCore::getTimeStruct(stamp);
-      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), QTimeZone::utc());
       // Change it to local time so that Qt figures out the local time offset from UTC time
-      dateTime.setTimeSpec(Qt::LocalTime);
+      dateTime.setTimeZone(QTimeZone::systemTimeZone());
       stamp -= simCore::Seconds(dateTime.offsetFromUtc(), 0);
     }
     return stamp;
@@ -1114,9 +1115,9 @@ static const unsigned int MAX_PRECISION = 6;
     {
       // Define a UTC datetime with the timestamp
       const tm& timeComponents = simCore::getTimeStruct(value);
-      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), QTimeZone::utc());
       // Change it to local time so that Qt figures out the local time offset from UTC time
-      dateTime.setTimeSpec(Qt::LocalTime);
+      dateTime.setTimeZone(QTimeZone::systemTimeZone());
       stamp += simCore::Seconds(dateTime.offsetFromUtc(), 0);
     }
 
@@ -1232,9 +1233,9 @@ static const unsigned int MAX_PRECISION = 6;
     {
       // Define a UTC datetime with the timestamp
       const tm& timeComponents = simCore::getTimeStruct(stamp);
-      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), QTimeZone::utc());
       // Change it to local time so that Qt figures out the local time offset from UTC time
-      dateTime.setTimeSpec(Qt::LocalTime);
+      dateTime.setTimeZone(QTimeZone::systemTimeZone());
       stamp -= simCore::Seconds(dateTime.offsetFromUtc(), 0);
     }
     return stamp;
@@ -1250,9 +1251,9 @@ static const unsigned int MAX_PRECISION = 6;
     {
       // Define a UTC datetime with the timestamp
       const tm& timeComponents = simCore::getTimeStruct(value);
-      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), QTimeZone::utc());
       // Change it to local time so that Qt figures out the local time offset from UTC time
-      dateTime.setTimeSpec(Qt::LocalTime);
+      dateTime.setTimeZone(QTimeZone::systemTimeZone());
       stamp += simCore::Seconds(dateTime.offsetFromUtc(), 0);
     }
 

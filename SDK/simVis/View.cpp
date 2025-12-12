@@ -600,6 +600,7 @@ View::View()
   // activate the actual overhead mode on the view.
   OverheadMode::install(root);
 
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   // install a control canvas for UI elements
   controlCanvas_ = new osgEarth::Util::Controls::ControlCanvas();
   controlCanvas_->setName("Control Canvas");
@@ -609,6 +610,7 @@ View::View()
   sceneControls_ = new osg::Group();
   sceneControls_->setName("Scene Controls");
   root->addChild(sceneControls_.get());
+#endif
 
   // initial camera configuration
   // disable 'small feature culling'
@@ -689,8 +691,12 @@ bool View::setUpViewAsHUD(simVis::View* host)
 
     // render this view just before the canvas; that way it will
     // always render atop everything else.
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
     camera->setRenderOrder(osg::Camera::POST_RENDER, controlCanvas_->getRenderOrderNum()+1);
-
+#else
+    // formerly, this was set to control canvas (25000) + 1
+    camera->setRenderOrder(osg::Camera::POST_RENDER, 25001);
+#endif
     // tell the camera to use the same GC as the "host".
     camera->setGraphicsContext(gc);
 
@@ -1212,7 +1218,9 @@ osg::Camera* View::getOrCreateHUD()
 
 void View::setAllowLabelOverlap(bool value)
 {
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   controlCanvas_->setAllowControlNodeOverlap(value);
+#endif
 }
 
 void View::tetherCamera(osg::Node* node)
@@ -1326,18 +1334,23 @@ void View::lookAt(double lat_deg, double lon_deg, double alt_m, double heading_d
 
 void View::addOverlayControl(osgEarth::Util::Controls::Control* control)
 {
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   // There is no reason to store the same control more than once
   if (!controlCanvas_->containsNode(control))
     controlCanvas_->addControl(control);
+#endif
 }
 
 void View::removeOverlayControl(osgEarth::Util::Controls::Control* control)
 {
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   controlCanvas_->removeControl(control);
+#endif
 }
 
 bool View::addSceneControl(osgEarth::Util::Controls::Control* control, const osgEarth::GeoPoint& location, float priority)
 {
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   if (!sceneData_.valid() || !sceneData_->getMap())
     return false;
 
@@ -1357,10 +1370,14 @@ bool View::addSceneControl(osgEarth::Util::Controls::Control* control, const osg
   {
     return false;
   }
+#else
+  return false;
+#endif
 }
 
 bool View::removeSceneControl(osgEarth::Util::Controls::Control* control)
 {
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   std::map<osgEarth::Util::Controls::Control*, osg::Node*>::iterator i = sceneControlsLUT_.find(control);
   if (i != sceneControlsLUT_.end())
   {
@@ -1368,10 +1385,14 @@ bool View::removeSceneControl(osgEarth::Util::Controls::Control* control)
     sceneControlsLUT_.erase(i);
   }
   return true;
+#else
+  return false;
+#endif
 }
 
 bool View::moveSceneControl(osgEarth::Util::Controls::Control* control, const osgEarth::GeoPoint& location)
 {
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   if (!sceneData_.valid() || !sceneData_->getMap())
     return false;
 
@@ -1389,6 +1410,9 @@ bool View::moveSceneControl(osgEarth::Util::Controls::Control* control, const os
     }
   }
   return true;
+#else
+  return false;
+#endif
 }
 
 simVis::Viewpoint View::getViewpoint() const
@@ -1924,7 +1948,12 @@ osg::Camera* View::createHUD_() const
   hud->setName("HUD Camera");
   // Be sure to render after the controls widgets.
   // "10" is arbitrary, so there's room between the two (default Control Canvas value is 25000)
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   hud->setRenderOrder(osg::Camera::POST_RENDER, controlCanvas_->getRenderOrderNum() + 10);
+#else
+  constexpr int orderNum = 25010;
+  hud->setRenderOrder(osg::Camera::POST_RENDER, orderNum);
+#endif
   if (vp)
   {
     hud->setViewport(osg::clone(vp, osg::CopyOp::DEEP_COPY_ALL));
@@ -2158,7 +2187,11 @@ void View::getFrustumBounds_(double& left, double& right, double& bottom, double
 
 osgEarth::Util::Controls::ControlCanvas* View::controlCanvas() const
 {
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
   return controlCanvas_.get();
+#else
+  return nullptr;
+#endif
 }
 
 }

@@ -34,6 +34,7 @@
 #include <QLineEdit>
 #include <QPointer>
 #include <QStandardItemModel>
+#include <QStyleHints>
 #include <QTreeView>
 #include "simNotify/Notify.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
@@ -289,6 +290,12 @@ int main(int argc, char** argv)
 
   // Set up the Qt application, main window, and central widget.
   QApplication qapp(argc, argv);
+
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  qapp.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
+
   MainWindow win;
   win.setGeometry(50, 50, 1024, 768);
 

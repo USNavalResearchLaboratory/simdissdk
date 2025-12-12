@@ -46,6 +46,7 @@
 #include <QLayout>
 #include <QMainWindow>
 #include <QResizeEvent>
+#include <QStyleHints>
 #include <QTimer>
 #include <QToolBar>
 #include <QWindow>
@@ -215,6 +216,11 @@ int main(int argc, char** argv)
   // OK, time to set up the Qt Application and windows.
   qInstallMessageHandler(warningMessageFilter);
   QApplication qapp(argc, argv);
+  
+  // Force light mode for now until we fully support dark mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  qapp.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
 
   // Our custom main window contains a ViewManager.
   MyMainWindow win(framerate);
