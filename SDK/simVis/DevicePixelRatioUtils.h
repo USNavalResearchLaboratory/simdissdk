@@ -30,10 +30,6 @@ namespace osg {
   class Vec3f;
 }
 namespace osgText { class TextBase; }
-namespace osgEarth {
-  class LineDrawable;
-  class PointDrawable;
-}
 
 namespace simVis {
 
@@ -63,8 +59,6 @@ public:
   // Clean wrappers for commonly scaled values; accepts values at 100% scaling.
   static void setTextCharacterSize(osgText::TextBase& text, float characterSize);
   static void setTextPosition(osgText::TextBase& text, const osg::Vec3f& position);
-  static void setPointSize(osgEarth::PointDrawable& point, float size);
-  static void setLineWidth(osgEarth::LineDrawable& line, float lineWidth);
 
   /** Extracts the current DPR from osgEarth's registry, and applies it recursively to the node tree and all children */
   static void updateScenePixelRatio(osg::Node& rootNode);
