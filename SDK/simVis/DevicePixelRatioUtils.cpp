@@ -24,8 +24,6 @@
 #include <string>
 #include "osg/Vec3f"
 #include "osgText/TextBase"
-#include "osgEarth/LineDrawable"
-#include "osgEarth/PointDrawable"
 #include "osgEarth/Registry"
 #include "simCore/Calc/Math.h"
 #include "simVis/DevicePixelRatioUtils.h"
@@ -36,27 +34,19 @@ namespace {
 inline const std::string DPR_DISABLED = "dpr_disabled";
 inline const std::string DPR_TEXT_SIZE = "dpr_size";
 inline const std::string DPR_TEXT_POSITION = "dpr_position";
-inline const std::string DPR_POINT_SIZE = "dpr_size";
-inline const std::string DPR_LINE_WIDTH = "dpr_width";
 inline const std::string DPR_PERCENT_SUFFIX = "_%";
 
-/** NodeVisitor to recursively update text/lines/points */
+/** NodeVisitor to recursively update text */
 class DprUpscaleVisitor : public osg::NodeVisitor
 {
 public:
   explicit DprUpscaleVisitor(double devicePixelRatio);
 
-  /** Extracts TextBase and LineDrawable */
+  /** Extracts TextBase */
   virtual void apply(osg::Drawable& drawable) override;
-  /** Extracts PointDrawable */
-  virtual void apply(osg::Geometry& geometry) override;
 
   /** Performs updates on TextBase */
   void applyText(osgText::TextBase& text);
-  /** Performs updates on PointDrawable */
-  void applyPoint(osgEarth::PointDrawable& point);
-  /** Performs updates on LineDrawable */
-  void applyLine(osgEarth::LineDrawable& line);
 
 private:
   double scale_ = 1.0;
@@ -102,7 +92,10 @@ bool areFloatValuesEqual(const T& a, const T& b)
     return areVecEqual(a, b);
   else
   {
+#if defined(__cplusplus) && __cplusplus >= 202302L
     static_assert(false, "Unsupported type for DPR equality comparison");
+#endif
+    return simCore::areEqual(static_cast<double>(a), static_cast<double>(b));
   }
 }
 
@@ -112,7 +105,7 @@ bool areFloatValuesEqual(const T& a, const T& b)
  * userValueKey, then adds the DPR_PERCENT_SUFFIX to store the DPR used to get current value.
  * This is useful later, so we can detect if the user changed the value externally for correct
  * re-scaling cases.
- * @param object TextBase, PointDrawable, or LineDrawable typically
+ * @param object TextBase typically
  * @param value Unscaled 100% value to set
  * @param setter Function that takes object and value, to set the scaled value
  * @param userValueKey Key storing information in user values in the object
@@ -137,7 +130,7 @@ void setDprScaledValue(auto& object, const auto& value, auto setter, const std::
  * new DPR. If the value is not stored, it assumes the current value is supposed to be 100%. And
  * if the actual current value isn't what we expect based on getUserValue values, we assume also
  * that it's a user value at 100% scaling.
- * @param object TextBase, PointDrawable, or LineDrawable typically
+ * @param object TextBase typically
  * @param newDpr Device pixel ratio, typically 1.0, 1.5, 2.0, etc.
  * @param getter Function that takes object and returns the currently set value
  * @param setter Function that takes object and value, to set the scaled value
@@ -186,16 +179,7 @@ void DprUpscaleVisitor::apply(osg::Drawable& drawable)
 {
   if (osgText::TextBase* text = dynamic_cast<osgText::TextBase*>(&drawable))
     applyText(*text);
-  else if (osgEarth::LineDrawable* line = dynamic_cast<osgEarth::LineDrawable*>(&drawable))
-    applyLine(*line);
   traverse(drawable);
-}
-
-void DprUpscaleVisitor::apply(osg::Geometry& geometry)
-{
-  if (osgEarth::PointDrawable* point = dynamic_cast<osgEarth::PointDrawable*>(&geometry))
-    applyPoint(*point);
-  traverse(geometry);
 }
 
 void DprUpscaleVisitor::applyText(osgText::TextBase& text)
@@ -208,22 +192,6 @@ void DprUpscaleVisitor::applyText(osgText::TextBase& text)
     [](const auto& obj) { return obj.getPosition(); },
     [](auto& obj, const auto& val) { obj.setPosition(val); },
     DPR_TEXT_POSITION);
-}
-
-void DprUpscaleVisitor::applyPoint(osgEarth::PointDrawable& point)
-{
-  upscaleToNewRatio(point, scale_,
-    [](const auto& obj) { return obj.getPointSize(); },
-    [](auto& obj, const auto& val) { obj.setPointSize(val); },
-    DPR_POINT_SIZE);
-}
-
-void DprUpscaleVisitor::applyLine(osgEarth::LineDrawable& line)
-{
-  upscaleToNewRatio(line, scale_,
-    [](const auto& obj) { return obj.getLineWidth(); },
-    [](auto& obj, const auto& val) { obj.setLineWidth(val); },
-    DPR_LINE_WIDTH);
 }
 
 }
@@ -258,20 +226,6 @@ void DevicePixelRatioUtils::setTextPosition(osgText::TextBase& text, const osg::
   setDprScaledValue(text, position,
     [](auto& obj, const auto& val) { obj.setPosition(val); },
     DPR_TEXT_POSITION);
-}
-
-void DevicePixelRatioUtils::setPointSize(osgEarth::PointDrawable& point, float pointSize)
-{
-  setDprScaledValue(point, pointSize,
-    [](auto& obj, const auto& val) { obj.setPointSize(val); },
-    DPR_POINT_SIZE);
-}
-
-void DevicePixelRatioUtils::setLineWidth(osgEarth::LineDrawable& line, float lineWidth)
-{
-  setDprScaledValue(line, lineWidth,
-    [](auto& obj, const auto& val) { obj.setLineWidth(val); },
-    DPR_LINE_WIDTH);
 }
 
 void DevicePixelRatioUtils::updateScenePixelRatio(osg::Node& root)

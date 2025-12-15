@@ -1053,6 +1053,72 @@ int testEnumerationText()
   return rv;
 }
 
+int testLessThan()
+{
+  int rv = 0;
+
+  {
+    simData::ReflectionValue lhs(false);
+    simData::ReflectionValue rhs(true);
+    rv += SDK_ASSERT(lhs < rhs);
+    rv += SDK_ASSERT(!(rhs < lhs));
+  }
+
+  {
+    simData::ReflectionValue lhs(1.f);
+    simData::ReflectionValue rhs(2.f);
+    rv += SDK_ASSERT(lhs < rhs);
+    rv += SDK_ASSERT(!(rhs < lhs));
+  }
+
+  {
+    simData::ReflectionValue lhs(1.0);
+    simData::ReflectionValue rhs(2.0);
+    rv += SDK_ASSERT(lhs < rhs);
+    rv += SDK_ASSERT(!(rhs < lhs));
+  }
+
+  {
+    simData::ReflectionValue lhs(1.0);
+    simData::ReflectionValue rhs(2.0);
+    rv += SDK_ASSERT(lhs < rhs);
+    rv += SDK_ASSERT(!(rhs < lhs));
+  }
+
+  {
+    simData::ReflectionValue lhs(1);
+    simData::ReflectionValue rhs(2);
+    rv += SDK_ASSERT(lhs < rhs);
+    rv += SDK_ASSERT(!(rhs < lhs));
+  }
+
+  {
+    simData::ReflectionValue lhs("1");
+    simData::ReflectionValue rhs("2");
+    rv += SDK_ASSERT(lhs < rhs);
+    rv += SDK_ASSERT(!(rhs < lhs));
+  }
+
+  {
+    std::vector<std::string> strings1 = { "1", "2" };
+    std::vector<std::string> strings2 = { "2", "3" };
+    simData::ReflectionValue lhs(strings1);
+    simData::ReflectionValue rhs(strings2);
+    rv += SDK_ASSERT(lhs < rhs);
+    rv += SDK_ASSERT(!(rhs < lhs));
+  }
+
+  {
+    std::vector<simData::ObjectId> vec1 = { 1, 2 };
+    std::vector<simData::ObjectId> vec2 = { 2, 3 };
+    simData::ReflectionValue lhs(vec1);
+    simData::ReflectionValue rhs(vec2);
+    rv += SDK_ASSERT(lhs < rhs);
+    rv += SDK_ASSERT(!(rhs < lhs));
+  }
+
+  return rv;
+}
 
 }
 
@@ -1083,6 +1149,7 @@ int TestReflection(int argc, char* argv[])
   rv += testHelperMethods();
   rv += testCommonPrefs();
   rv += testEnumerationText();
+  rv += testLessThan();
 
   return rv;
 }
