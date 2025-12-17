@@ -207,13 +207,9 @@ struct ControlPanel : public simExamples::SimExamplesGui
     if (!isVisible())
       return;
 
-    if (firstDraw_)
-    {
-      // This GUI positions bottom left instead of top left, need the size of the window
-      ImVec2 viewSize = ImGui::GetMainViewport()->WorkSize;
-      ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), 0, ImVec2(0, 1));
-      firstDraw_ = false;
-    }
+    // This GUI positions bottom left instead of top left, need the size of the window
+    const ImVec2& viewSize = ImGui::GetMainViewport()->WorkSize;
+    ImGui::SetNextWindowPos(ImVec2(15, viewSize.y - 15), ImGuiCond_Once, ImVec2(0, 1));
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 

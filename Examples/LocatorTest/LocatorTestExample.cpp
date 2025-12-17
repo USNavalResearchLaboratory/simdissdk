@@ -146,11 +146,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     if (!isVisible())
       return;
 
-    if (firstDraw_)
-    {
-      ImGui::SetNextWindowPos(ImVec2(5, 25));
-      firstDraw_ = false;
-    }
+    ImGui::SetNextWindowPos(ImVec2(5, 25), ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
