@@ -5,4 +5,7 @@ if(Qt5Core_FOUND OR Qt6Core_FOUND)
     endif()
 endif()
 
-add_subdirectory(wbp)
+option(ENABLE_WBP_PLUGIN "Build OSG WebP plugin for wbp extension" ON)
+if(ENABLE_WBP_PLUGIN)
+    add_subdirectory(wbp)
+endif()

@@ -89,3 +89,12 @@ endif()
 if(NOT INSTALLSETTINGS_EXTENSION_DIR)
     set(INSTALLSETTINGS_EXTENSION_DIR "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}/extensions")
 endif()
+
+# Define osgPlugins directory root; typically the shared library directory (bin or lib); can be plugins under vcpkg
+if(NOT INSTALLSETTINGS_OSGPLUGINS_DIR)
+    if(USING_VCPKG)
+        set(INSTALLSETTINGS_OSGPLUGINS_DIR "plugins")
+    else()
+        set(INSTALLSETTINGS_OSGPLUGINS_DIR "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}")
+    endif()
+endif()
