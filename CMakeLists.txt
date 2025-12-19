@@ -178,6 +178,12 @@ find_package(OpenSceneGraph COMPONENTS osgAnimation osgDB osgGA osgSim osgText o
 find_package(GDAL CONFIG)
 find_package(osgEarth)
 
+# vcpkg installs plugins into the plugins/ folder, not bin or lib
+set(INSTALLSETTINGS_OSGPLUGINS_DIR "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}")
+if(USING_VCPKG)
+    set(INSTALLSETTINGS_OSGPLUGINS_DIR "plugins")
+endif()
+
 # Find SQLite for DB file support in simVis and simUtil
 find_package(SQLite3 QUIET)
 set(SQLite3_VCPKG OFF)
