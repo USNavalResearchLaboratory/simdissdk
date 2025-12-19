@@ -26,7 +26,6 @@ namespace simExamples {
 
 SimExamplesGui::SimExamplesGui(const std::string& name)
   : OSGEARTH_GUI_BASE_CLASS(name.c_str()),
-  firstDraw_(true),
   defaultFont_(nullptr),
   largeFont_(nullptr),
   largeFontPushed_(false)

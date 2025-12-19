@@ -124,6 +124,87 @@ namespace simCore
   SDKCORE_EXPORT std::string printLongitude(double lonRadians, GeodeticFormat format, bool allNumerics,
     size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir = 'E', char negativeDir = 'W');
 
+  /** High performance angle formatter. Create once and use many time for best performance. */
+  class SDKCORE_EXPORT AngleFormatter
+  {
+  public:
+    AngleFormatter();
+    virtual ~AngleFormatter();
+
+    /** Set the geodetic format */
+    void setFormat(GeodeticFormat format);
+
+    /** If true only numbers */
+    void setAllNumerics(bool allNumerics);
+
+    /** Number of digits after the decimal point */
+    void setPrecision(size_t precision);
+
+    /** The degree symbol to use*/
+    void setSymbol(DegreeSymbolFormat degSymbol);
+
+    /** The optional 'N'/'S' or 'E'/'W' */
+    void setDir(char positiveDir, char negativeDir);
+
+    /** If true allow values over 360/2PI */
+    void setAllowRollover(bool allowRollover);
+
+    /** The value to format based on the options above */
+    std::string format(double radianAngle) const;
+
+  private:
+    /** Format the value into degrees */
+    std::string formatDegrees_(double radianAngle) const;
+
+    /** Format the value into degrees and minutes */
+    std::string formatDegreesMinutes_(double radianAngle) const;
+
+    /** Format the value into degrees, minutes and seconds */
+    std::string formatDegreesMinutesSeconds_(double radianAngle) const;
+
+    /** Format the value into radians */
+    std::string formatRadians_(double radianAngle) const;
+
+    /** Format the value into format specified by format_ */
+    std::string formatMiscellaneous_(double radianAngle) const;
+
+    /** Returns the hemisphere direction character */
+    std::string getHemisphereDirection_(bool wasNegative) const;
+
+    /** Returns true if the negative sign should be printed */
+    bool getPrintNegativeSign_() const;
+
+    /** Appends an integer with leading zeros based on the width */
+    void appendPadded_(std::string& str, int value, int width) const;
+
+    /** Appends a double with the given precision */
+    void appendDouble_(std::string& str, double value, size_t precision) const;
+
+    /** Appends, if necessary, the hemisphere direction */
+    void appendHemisphereDirection_(std::string& str, bool wasNegative) const;
+
+    /** Set the scale member variables based on precision_ */
+    void calculateScales_();
+
+    /** Set the symbol member variables based on allNumerics_*/
+    void setSymbols_();
+
+    bool allNumerics_ = false;
+    bool allowRollover_ = false;
+    bool printNegativeSign_ = false;
+    std::string positiveDir_;
+    std::string negativeDir_;
+    GeodeticFormat format_ = GeodeticFormat::FMT_DEGREES;
+    DegreeSymbolFormat degSymbol_ = DegreeSymbolFormat::DEG_SYM_NONE;
+    size_t precision_ = 0;
+    double scale_ = 0.0;
+    double radiansTolerance_ = 0.0;
+    double degreesTolerance_ = 0.0;
+    std::string degreeSymbolString_;
+    std::string minuteSymbolString_;
+    std::string secondSymbolString_;
+  };
+
 } // namespace simCore
 
 #endif /* SIMCORE_STRING_ANGLE_H */
