@@ -2,7 +2,6 @@
 cmake_minimum_required(VERSION 3.21)
 
 # VCPKG customization ....................................................
-
 if (${CMAKE_TOOLCHAIN_FILE} MATCHES ".*vcpkg.cmake.*")
     message(STATUS "Building with vcpkg toolchain.")
     set(USING_VCPKG ON)

@@ -99,11 +99,15 @@ foreach(SDK_LIB IN LISTS SDK_LIBS)
     endif()
 endforeach()
 
+if(USING_VCPKG)
+    # Install files from the share folder
+    install(DIRECTORY share/ DESTINATION share/simdissdk COMPONENT Exports)
+    return()
+endif()
+
 # Get the absolute path out for use in the configured CMake file ImportSIMDIS_SDK.cmake
 set(SDK_LIB_CMAKE_FULLPATH "${CMAKE_INSTALL_PREFIX}/${SDK_LIB_CMAKE_PATH}")
 
-if(USING_VCPKG)
-else()
 # Create and install the FindSIMDIS_SDK.cmake file
 configure_file(CMakeUtilities/FindSIMDIS_SDK.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/cmake/FindSIMDIS_SDK.cmake
@@ -113,36 +117,17 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/FindSIMDIS_SDK.cmake
     DESTINATION ${SDK_LIB_CMAKE_PATH}
     COMPONENT Exports
 )
-endif()
 
-if(USING_VCPKG)
-    # Configure and install the ImportSIMDIS_SDK.cmake useful for external projects
-    configure_file(CMakeUtilities/FindSIMDIS_SDK.cmake.in
+# Configure and install the ImportSIMDIS_SDK.cmake useful for external projects
+configure_file(CMakeUtilities/ImportSIMDIS_SDK.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
+    @ONLY
+)
+install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
-        @ONLY
-    )
-    set(SDK_SHARE_FOLDER share/simdissdk)
-    install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
-        DESTINATION ${SDK_SHARE_FOLDER}/ExternalSdkProject/CMakeModules/
-        COMPONENT Exports
-    )
+    DESTINATION share/ExternalSdkProject/CMakeModules/
+    COMPONENT Exports
+)
 
-    # Install files from the share folder
-    install(DIRECTORY share/ DESTINATION share/simdissdk COMPONENT Exports)
-else()
-    # Configure and install the ImportSIMDIS_SDK.cmake useful for external projects
-    configure_file(CMakeUtilities/ImportSIMDIS_SDK.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
-        @ONLY
-    )
-
-    install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
-        DESTINATION share/ExternalSdkProject/CMakeModules/
-        COMPONENT Exports
-    )
-
-    # Install files from the share folder
-    install(DIRECTORY share/ DESTINATION share COMPONENT Exports)
-endif()
+# Install files from the share folder
+install(DIRECTORY share/ DESTINATION share COMPONENT Exports)
