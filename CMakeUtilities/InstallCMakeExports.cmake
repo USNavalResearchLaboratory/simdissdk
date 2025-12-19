@@ -99,6 +99,12 @@ foreach(SDK_LIB IN LISTS SDK_LIBS)
     endif()
 endforeach()
 
+if(USING_VCPKG)
+    # Install files from the share folder
+    install(DIRECTORY share/ DESTINATION share/simdissdk COMPONENT Exports)
+    return()
+endif()
+
 # Get the absolute path out for use in the configured CMake file ImportSIMDIS_SDK.cmake
 set(SDK_LIB_CMAKE_FULLPATH "${CMAKE_INSTALL_PREFIX}/${SDK_LIB_CMAKE_PATH}")
 
