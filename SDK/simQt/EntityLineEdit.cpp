@@ -40,6 +40,7 @@
 #include "simQt/EntityTreeWidget.h"
 #include "simQt/EntityTypeFilter.h"
 #include "simQt/QtFormatting.h"
+#include "simQt/QtUtils.h"
 #include "simQt/ResourceInitializer.h"
 #include "simQt/EntityLineEdit.h"
 #include "ui_EntityLineEdit.h"
@@ -431,7 +432,8 @@ void EntityLineEdit::showEntityDialog_()
 
   if (entityDialog_ == nullptr)
   {
-    entityDialog_ = new EntityDialog(this, entityTreeModel_, type_, clock_, settings_);
+    // Qt6 has problems with QDialogs that aren't parented to the QMainWindow, so attempt to set main window as the parent
+    entityDialog_ = new EntityDialog(QtUtils::getMainWindowParent(this), entityTreeModel_, type_, clock_, settings_);
     entityDialog_->setStateFilter(state_);
     entityDialog_->setCenterEntity(centerEntity_);
 

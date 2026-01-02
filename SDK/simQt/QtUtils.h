@@ -57,6 +57,13 @@ public:
 
   /** Returns true if the current QApplication is in a dark theme. */
   static bool isDarkTheme();
+
+  /**
+  * Get the QMainWindow parent widget for the specified widget, simply returns the input if no QMainWindow parent is found.
+  * @param widget input widget to search parent tree for a QMainWidget
+  * @return the QMainWidget if found, otherwise returns the input widget
+  */
+  static QWidget* getMainWindowParent(QWidget* widget);
 };
 
 }
