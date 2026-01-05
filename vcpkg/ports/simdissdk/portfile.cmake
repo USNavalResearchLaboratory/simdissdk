@@ -6,7 +6,9 @@
 #    SHA512 ee69403fea2fbc56476043fbb10d4a21519289cce9c5b735a427a4c354a3c395ceef896e68b8df9eacbe6ab5ac3ea680d83c11d09f132476bfc0967546cff9a9
 #    PATCHES
 #)
-set(SOURCE_PATH "c:/people/SDK/SIMDIS_SDK")
+
+# Moving up from vcpkg/ports/simdissdk/ to the project root
+get_filename_component(SOURCE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
