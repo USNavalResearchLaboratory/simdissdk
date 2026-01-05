@@ -215,6 +215,17 @@ int setEnvVar(const std::string& key, const std::string& value, bool overrideExi
 
 std::string removeTrailingZeros(const std::string& str, bool leaveDecimal)
 {
+  if (str.empty())
+    return str;
+
+  if (str.back() != '0')
+  {
+    if (leaveDecimal || (str.back() != '.'))
+      return str;
+
+    return str.substr(0, str.size() - 1);
+  }
+
   size_t dec = str.find('.');
   if (dec == str.npos)
     return str;
@@ -225,6 +236,7 @@ std::string removeTrailingZeros(const std::string& str, bool leaveDecimal)
     if (i < str.size() && (leaveDecimal || str[i] != '.'))
       ++i;
   }
+
   return str.substr(0, i);
 }
 

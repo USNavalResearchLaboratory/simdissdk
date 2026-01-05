@@ -21,6 +21,7 @@
  *
  */
 #include <QApplication>
+#include <QMainWindow>
 #include <QScreen>
 #ifdef WIN32
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
@@ -105,6 +106,19 @@ bool QtUtils::isDarkTheme()
 
   // In a non-standard theme, assume dark theme if the window color is relatively dark
   return windowColor.lightness() < 80;
+}
+
+QWidget* QtUtils::getMainWindowParent(QWidget* widget)
+{
+  if (!widget)
+    return widget;
+
+  for (QWidget* rv = dynamic_cast<QWidget*>(widget->parent()); rv != nullptr; rv = dynamic_cast<QWidget*>(rv->parent()))
+  {
+    if (dynamic_cast<QMainWindow*>(rv) != nullptr)
+      return rv;
+  }
+  return widget;
 }
 
 }
