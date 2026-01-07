@@ -393,6 +393,11 @@ double BindCenterEntityToEntityTreeComposite::getCustomRenderingLaterTime_(doubl
       // Start of a new time range so return its time
       if (next->updateprefs().commonprefs().datadraw())
         return next->time();
+
+      // If search time falls on an off command need to backup a little
+      if (next->time() == searchTime)
+        return searchTime - TIME_DELTA;
+
       // Turning off so that means the search time was in a valid time range so return the search time
       return searchTime;
     }
