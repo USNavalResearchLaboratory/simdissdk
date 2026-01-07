@@ -345,10 +345,16 @@ std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getCustomRend
 
   if (hostId != 0)
   {
-    // adjust crEarlierTime and crLaterTime as necessary
-    auto [rv, reason] = getHostTimeRange_(hostId, crEarlierTime, crLaterTime);
+    double hostBeginTime = 0;
+    double hostEndTime = 0;
+    auto [rv, reason] = getHostTimeRange_(hostId, hostBeginTime, hostEndTime);
     if (rv != 0)
       return { INVALID_TIME, reason };
+    // adjust crEarlierTime and crLaterTime as necessary
+    if (crEarlierTime != INVALID_TIME && hostBeginTime > crEarlierTime)
+      crEarlierTime = hostBeginTime;
+    if (crLaterTime != INVALID_TIME && hostEndTime < crLaterTime)
+      crLaterTime = hostEndTime;
   }
 
   return { getNearestTime_(time, crEarlierTime, crLaterTime), QString() };
@@ -438,8 +444,8 @@ template<typename CommandSlice, typename UpdateSlice>
 std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getNearestDrawTime_(double searchTime, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const
 {
   // Calculate the time range as limited by the host
-  double hostBeginTime;
-  double hostEndTime;
+  double hostBeginTime = 0.;
+  double hostEndTime = 0.;
   auto [rv, reason] = getHostTimeRange_(id, hostBeginTime, hostEndTime);
   if (rv != 0)
     return { INVALID_TIME, reason };
@@ -517,8 +523,8 @@ double BindCenterEntityToEntityTreeComposite::getNearestTime_(double searchTime,
 std::tuple<double, QString>  BindCenterEntityToEntityTreeComposite::getNearestTargetTime_(double searchTime, uint64_t id) const
 {
   // Calculate the time range as limited by the host
-  double hostBeginTime;
-  double hostEndTime;
+  double hostBeginTime = 0;
+  double hostEndTime = 0;
   auto [rv, reason] = getHostTimeRange_(id, hostBeginTime, hostEndTime);
   if (rv != 0)
     return { INVALID_TIME, reason };
