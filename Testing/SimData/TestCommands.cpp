@@ -732,6 +732,12 @@ int testClear()
   command.set_time(1.0);
   testHelper.addPlatformCommand(command, platId1);
 
+  // SIM-19250 test that clear command for scale does not clear the set_icon command at same time: it should clear scale, but not icon
+  command.mutable_updateprefs()->set_scale(1.0);
+  command.set_isclearcommand(true);
+  command.set_time(1.0);
+  testHelper.addPlatformCommand(command, platId1);
+
   command.set_time(2.0);
   command.set_isclearcommand(true);
   command.mutable_updateprefs()->mutable_commonprefs()->clear_color();

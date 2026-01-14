@@ -728,6 +728,11 @@ void MemoryCommandSlice<CommandType, PrefType>::insert(CommandType *data)
     // the transaction owns the data item, transfers ownership to the deque here
     updates_.insert(iter, data);
   }
+  else if ((*iter)->isclearcommand() != data->isclearcommand())
+  {
+    // SIM-19250 can't mix clear commands with other commands; this needs to be its own command
+    updates_.insert(iter, data);
+  }
   else
   {
     // Must clear out the shared fields in target, that are repeated and non-empty
