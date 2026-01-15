@@ -417,6 +417,9 @@ private:
   /** Flags true when widget is dockable */
   bool isDockable_ = true;
 
+  /** Flags true when overriding Tool WindowType to Window WindowType */
+  bool overrideQtWindowTypeTool_ = false;
+
   /** Global flag that can be used to turn off all docking at once. */
   simQt::BoundBooleanSetting* disableAllDocking_;
 

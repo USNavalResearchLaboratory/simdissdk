@@ -40,6 +40,7 @@
 #include <QTimer>
 #include <QToolButton>
 #include "simNotify/Notify.h"
+#include "simCore/String/Utils.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/BoundSettings.h"
 #include "simQt/QtFormatting.h"
@@ -535,6 +536,13 @@ void DockWidget::init_()
     mainWindow_->setAnimated(false);
 #endif
 
+#ifndef WIN32
+  // SIM-19156: WSL Wayland impl doesn't support Qt::WindowType::Tool, used by floating DockWidget;
+  // this envvar allows users running under WSL to override the WindowType to Qt::Window instead.
+  const std::string& overrideWindowTypeTool = simCore::getEnvVar("SIMDIS_NO_QT-WINDOWTYPE-TOOL");
+  overrideQtWindowTypeTool_ = (overrideWindowTypeTool != "");
+#endif
+
   // SIM-17647: the event filter cannot be a child of the tab bar, must persist for the life of the widget
   // This is because after unloading plug-ins, the QTabBar might still reference the event filter after it has been destroyed
   tabDragFilter_ = new TabDragDropEventFilter(*this);
@@ -811,6 +819,26 @@ void DockWidget::updateTitleBar_()
     painter.drawPath(path);
     painter.end();
     setMask(mask);
+
+#ifndef WIN32
+    if (overrideQtWindowTypeTool_ && windowType() == Qt::Tool)
+    {
+      // SIM-19156: WSL Wayland impl doesn't support Qt::WindowType::Tool, used by floating DockWidget
+      // QDockWidgetPrivate::setWindowState forces Qt::Tool on floating QDockWidget
+      // QDockWidget::setTitleBarWidget, QDockWidget::setFeatures and QDockWidget::setFloating all call QDockWidgetPrivate::setWindowState
+      // It is believed that updateTitleBar_ is called in every calling sequence after any of these calls;
+      // the intent here is to always override the WindowType to Qt::Window instead.
+
+      // windows flag changes don't always apply if window is shown, so hide, set flags, show.
+      hide();
+      // When running with this change, dockwidgets can go behind mainwindow,
+      // but each dockwidget is a window and has an icon in the OS application dock;
+      // and can be pulled to front via the OS application dock
+      // in typical linux, this will make the application dock too busy.
+      setWindowFlags((windowFlags() & ~Qt::Tool) | Qt::Window);
+      show();
+    }
+#endif
   }
   else
   {
@@ -1517,7 +1545,6 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
       setFloatingGeometry_(geometryBytes);
     return;
   }
-
   // If ignoring settings, bypass main window. Otherwise give main window first opportunity to restore the position
   if (extraFeatures_.testFlag(DockWidgetIgnoreSettings) || !mainWindow_->restoreDockWidget(this))
   {
@@ -1534,10 +1561,13 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
   else
   {
 #ifndef WIN32
+    // SIM-7125
+    // this is still required with RHEL8 & Qt 6.10, but not desirable for the overrideQtWindowTypeTool_ use-case
     // On some versions of Gnome, this flag gets set and causes problems where
     // the dock widget, when undocked, will always be in front of other modal
     // always-on-top windows like the file dialog
-    setWindowFlags(windowFlags() & ~(Qt::X11BypassWindowManagerHint));
+    if (!overrideQtWindowTypeTool_)
+      setWindowFlags(windowFlags() & ~(Qt::X11BypassWindowManagerHint));
 #endif
   }
 }
