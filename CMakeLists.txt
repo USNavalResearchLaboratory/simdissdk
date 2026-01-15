@@ -187,6 +187,7 @@ find_package(OpenGL QUIET)
 find_package(OpenSceneGraph COMPONENTS osgAnimation osgDB osgGA osgSim osgText osgUtil osgViewer QUIET)
 find_package(GDAL CONFIG)
 find_package(osgEarth)
+find_package(osgQOpenGL 4.0 QUIET)
 
 # vcpkg installs plugins into the plugins/ folder, not bin or lib
 set(INSTALLSETTINGS_OSGPLUGINS_DIR "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}")
@@ -226,8 +227,6 @@ else()
         message(WARNING "Neither Qt5 nor Qt6 was found. simQt and Qt-based examples will not build.")
     endif()
 endif()
-# Search for the matching qt version of osgQOpenGL
-find_package(osgQOpenGL-qt${_SDK_QT_VERSION} 4.0 QUIET)
 
 # Old osgQt is only supported in Qt5
 if(ENABLE_DEPRECATED_SIMDISSDK_API AND Qt5_FOUND)
