@@ -720,38 +720,49 @@ int testClear()
   simUtil::DataStoreTestHelper testHelper;
   simData::DataStore* ds = testHelper.dataStore();
 
-  // insert platform
+  // 0.0 insert platform
   simData::DataStore::Transaction t;
   uint64_t platId1 = testHelper.addPlatform();
   testHelper.addPlatformUpdate(0, platId1);
   testHelper.addPlatformUpdate(100, platId1);
 
+  // 1.0 commands to set both color and icon
   simData::PlatformCommand command;
   command.mutable_updateprefs()->set_icon("1");
   command.mutable_updateprefs()->mutable_commonprefs()->set_color(1);
   command.set_time(1.0);
   testHelper.addPlatformCommand(command, platId1);
 
-  // SIM-19250 test that clear command for scale does not clear the set_icon command at same time: it should clear scale, but not icon
-  command.mutable_updateprefs()->set_scale(1.0);
+  // 2.0 clear command for color clears color but does not clear the icon command.
+  command.Clear();
   command.set_isclearcommand(true);
-  command.set_time(1.0);
-  testHelper.addPlatformCommand(command, platId1);
-
+  command.mutable_updateprefs()->set_icon("1"); // this set tells the clearcommand what is to be cleared
   command.set_time(2.0);
-  command.set_isclearcommand(true);
-  command.mutable_updateprefs()->mutable_commonprefs()->clear_color();
   testHelper.addPlatformCommand(command, platId1);
 
-  command.mutable_updateprefs()->set_icon("3");
+  // 3.0 set icon
+  command.Clear();
   command.set_time(3.0);
+  command.mutable_updateprefs()->set_icon("2");
+  testHelper.addPlatformCommand(command, platId1);
+  // SIM-19250 test that clear command for color only clears color and does not clear the icon command at same time.
+  command.Clear();
+  command.set_time(3.0);
+  command.set_isclearcommand(true);
+  command.mutable_updateprefs()->mutable_commonprefs()->set_color(1); // this set tells the clearcommand what is to be cleared
+  testHelper.addPlatformCommand(command, platId1);
+
+  // 4.0
+  command.Clear();
+  command.set_time(4.0);
+  command.mutable_updateprefs()->mutable_commonprefs()->set_color(2);
   command.set_isclearcommand(false);
   testHelper.addPlatformCommand(command, platId1);
 
-  // Default values set by the DataStoreTestHelper
+  
   ds->update(0.0);
-  rv += SDK_ASSERT(icon(ds, platId1) == "icon1");
-  rv += SDK_ASSERT(color(ds, platId1) == 0xffff00ff); // Yellow
+  rv += SDK_ASSERT(icon(ds, platId1) == "icon1"); // Default values set by the DataStoreTestHelper
+  rv += SDK_ASSERT(color(ds, platId1) == 0xffff00ff); // Default values set by simdata commonpreferences : Yellow
 
   // First command
   ds->update(1.0);
@@ -760,18 +771,23 @@ int testClear()
 
   // Clear command only affects the icon
   ds->update(2.0);
-  rv += SDK_ASSERT(icon(ds, platId1) == "");
+  rv += SDK_ASSERT(icon(ds, platId1) == ""); // clearcommand always resets to simdata def: ""
   rv += SDK_ASSERT(color(ds, platId1) == 1);
 
-  // Third command
+  // Clear command only affects the color, icon is set at same time
   ds->update(3.0);
-  rv += SDK_ASSERT(icon(ds, platId1) == "3");
-  rv += SDK_ASSERT(color(ds, platId1) == 1);
+  rv += SDK_ASSERT(icon(ds, platId1) == "2");
+  rv += SDK_ASSERT(color(ds, platId1) == 0xffff00ff); // clearcommand always resets to simdata def: Yellow
 
-  // Go back in time, but the default values are lost since they were overwritten by a command
+  // 4th command
+  ds->update(4.0);
+  rv += SDK_ASSERT(icon(ds, platId1) == "2");
+  rv += SDK_ASSERT(color(ds, platId1) == 2);
+
+  // Go back in time, but the default values are lost since they were overwritten by a command, and no command at time 0
   ds->update(0.0);
-  rv += SDK_ASSERT(icon(ds, platId1) == "3");
-  rv += SDK_ASSERT(color(ds, platId1) == 1);
+  rv += SDK_ASSERT(icon(ds, platId1) == "2");
+  rv += SDK_ASSERT(color(ds, platId1) == 2);
 
   // First command
   ds->update(1.0);
@@ -780,13 +796,18 @@ int testClear()
 
   // Clear command only affects the icon
   ds->update(2.0);
-  rv += SDK_ASSERT(icon(ds, platId1) == "");
+  rv += SDK_ASSERT(icon(ds, platId1) == ""); // clearcommand always resets to simdata def: ""
   rv += SDK_ASSERT(color(ds, platId1) == 1);
 
   // Third command
   ds->update(3.0);
-  rv += SDK_ASSERT(icon(ds, platId1) == "3");
-  rv += SDK_ASSERT(color(ds, platId1) == 1);
+  rv += SDK_ASSERT(icon(ds, platId1) == "2");
+  rv += SDK_ASSERT(color(ds, platId1) == 0xffff00ff); // clearcommand always resets to simdata def: Yellow
+
+  // 4th command
+  ds->update(4.0);
+  rv += SDK_ASSERT(icon(ds, platId1) == "2");
+  rv += SDK_ASSERT(color(ds, platId1) == 2);
 
   return rv;
 }

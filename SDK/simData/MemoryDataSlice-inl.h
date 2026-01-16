@@ -730,8 +730,10 @@ void MemoryCommandSlice<CommandType, PrefType>::insert(CommandType *data)
   }
   else if ((*iter)->isclearcommand() != data->isclearcommand())
   {
-    // SIM-19250 can't mix clear commands with other commands; this needs to be its own command
-    updates_.insert(iter, data);
+    // guaranteed by if above
+    assert((*iter)->time() == data->time());
+    // SIM-19250 can't mix clear commands with other commands; this needs to be its own command, inserted after previous command at same time
+    updates_.insert(++iter, data);
   }
   else
   {
