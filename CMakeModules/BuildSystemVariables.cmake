@@ -1,6 +1,5 @@
 # Define system specific parameters:
 # BUILD_SYSTEM_OS {win|linux}
-# BUILD_SYSTEM_ARCH {amd64}
 # BUILD_COMPILER {vc-14.3|vc-14.5|gcc-8.3|abi-cxx11}
 # BUILD_COMPILER_NAME {vc|${CMAKE_C_COMPILER}}
 # BUILD_COMPILER_VERSION (Compiler name with max and min version numbers)
@@ -9,7 +8,6 @@
 # BUILD_SYSTEM_CANONICAL_NAME {${BUILD_PLATFORM}_${BUILD_COMPILER}} (e.g. win64_vc-14.3,
 #     win64_vc-14.5, linux64_gcc-8.3, linux64_abi-cxx11)
 # BUILD_TYPE {64}
-# BUILD_HWOS {amd64-nt|amd64-linux}
 # BUILD_PLATFORM {win64|linux64}
 
 # Must be 64 bit
@@ -47,10 +45,8 @@ else()
     set(BUILD_COMPILER_NAME "gcc")
 endif()
 
-set(BUILD_SYSTEM_ARCH "amd64")
 set(BUILD_TYPE "64")
 set(BUILD_PLATFORM "${BUILD_SYSTEM_OS}${BUILD_TYPE}")
-set(BUILD_HWOS "${BUILD_SYSTEM_ARCH}-${OS_TYPE}")
 
 # Get compiler info
 if(MSVC)

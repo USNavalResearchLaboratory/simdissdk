@@ -92,10 +92,6 @@ if(NOT USING_VCPKG)
     include(AddExecutablePostfix)
 endif()
 
-# Set architecture identifiers
-string(TOUPPER ${BUILD_SYSTEM_ARCH} ARCH)
-add_definitions(-D${ARCH})
-
 # Set system identifiers
 if(WIN32)
     if(MSVC)

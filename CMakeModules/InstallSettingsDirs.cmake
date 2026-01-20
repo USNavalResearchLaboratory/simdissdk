@@ -50,24 +50,12 @@
 # Destination specifically for SIMDIS extensions.  The path is relative under the
 # ``INSTALLSETTINGS_SHARED_LIBRARY_DIR`` path.
 
-# Form the HW-OS (amd64-nt, amd64-linux, etc)
-set(_HW amd64)
-if(WIN32)
-    set(_OS nt)
-else()
-    set(_OS linux)
-endif()
-
 # Select bin and lib directories by platform
-set(INSTALLSETTINGS_RUNTIME_DIR "bin/${_HW}-${_OS}" CACHE STRING "Directory containing exectuables and DLLs; non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
-set(INSTALLSETTINGS_LIBRARY_DIR "lib/${_HW}-${_OS}" CACHE STRING "Directory containing shared object files (UNIX only); non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
-set(INSTALLSETTINGS_PLUGIN_DIR "plugins" CACHE STRING "Directory containing plug-ins; non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
-set(INSTALLSETTINGS_CMAKE_DIR "lib/cmake" CACHE STRING "Directory for CMake configuration modules; non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
-set(INSTALLSETTINGS_INCLUDE_DIR "include" CACHE STRING "Directory for include files; non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
-
-# Clear internal variables
-unset(_HW)
-unset(_OS)
+set(INSTALLSETTINGS_RUNTIME_DIR "bin" CACHE STRING "Directory containing executables and DLLs; paths are relative to CMAKE_INSTALL_PREFIX")
+set(INSTALLSETTINGS_LIBRARY_DIR "lib" CACHE STRING "Directory containing shared object files (UNIX only); paths are relative to CMAKE_INSTALL_PREFIX")
+set(INSTALLSETTINGS_PLUGIN_DIR "plugins" CACHE STRING "Directory containing plug-ins; paths are relative to CMAKE_INSTALL_PREFIX")
+set(INSTALLSETTINGS_CMAKE_DIR "lib/cmake" CACHE STRING "Directory for CMake configuration modules; paths are relative to CMAKE_INSTALL_PREFIX")
+set(INSTALLSETTINGS_INCLUDE_DIR "include" CACHE STRING "Directory for include files; paths are relative to CMAKE_INSTALL_PREFIX")
 
 # Cache-based variables are advanced
 mark_as_advanced(
