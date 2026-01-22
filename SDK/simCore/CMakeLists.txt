@@ -70,15 +70,6 @@ set(CORE_CALC_SOURCES
 source_group(Headers\\Calc FILES ${CORE_CALC_HEADERS})
 source_group("Source Files\\Calc" FILES ${CORE_CALC_SOURCES})
 
-# ----- simCore/Calc/LUT --------------------------------------------------------
-
-set(CORE_CALC_LUT_HEADERS
-    LUT/InterpTable.h
-    LUT/LUT1.h
-    LUT/LUT2.h
-)
-source_group(Headers\\LUT FILES ${CORE_CALC_LUT_HEADERS})
-
 # ----- simCore/EM --------------------------------------------------------
 
 set(CORE_EM_HEADERS
@@ -96,6 +87,26 @@ set(CORE_EM_SOURCES
 )
 source_group(Headers\\EM FILES ${CORE_EM_HEADERS})
 source_group("Source Files\\EM" FILES ${CORE_EM_SOURCES})
+
+# ----- simCore/Formats --------------------------------------------------------
+
+set(CORE_FORMATS_HEADERS
+    Formats/DisModels.h
+)
+set(CORE_FORMATS_SOURCES
+    Formats/DisModels.cpp
+)
+source_group(Headers\\Formats FILES ${CORE_FORMATS_HEADERS})
+source_group("Source Files\\Formats" FILES ${CORE_FORMATS_SOURCES})
+
+# ----- simCore/LUT --------------------------------------------------------
+
+set(CORE_LUT_HEADERS
+    LUT/InterpTable.h
+    LUT/LUT1.h
+    LUT/LUT2.h
+)
+source_group(Headers\\LUT FILES ${CORE_LUT_HEADERS})
 
 # ----- simCore/String --------------------------------------------------------
 
@@ -204,14 +215,15 @@ set_source_files_properties(String/Angle.cpp String/Utils.cpp
     PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 
 set(CORE_PROJECT_FILES
-    ${CORE_COMMON_HEADERS} ${CORE_COMMON_SOURCES}
     ${CORE_CALC_HEADERS} ${CORE_CALC_SOURCES}
-    ${CORE_CALC_LUT_HEADERS}
+    ${CORE_COMMON_HEADERS} ${CORE_COMMON_SOURCES}
     ${CORE_EM_HEADERS} ${CORE_EM_SOURCES}
-    ${CORE_TIME_HEADERS} ${CORE_TIME_SOURCES}
-    ${CORE_STRING_HEADERS} ${CORE_STRING_SOURCES}
+    ${CORE_FORMATS_HEADERS} ${CORE_FORMATS_SOURCES}
     ${CORE_GOG_HEADERS} ${CORE_GOG_SOURCES}
+    ${CORE_LUT_HEADERS}
+    ${CORE_STRING_HEADERS} ${CORE_STRING_SOURCES}
     ${CORE_SYSTEM_HEADERS} ${CORE_SYSTEM_SOURCES}
+    ${CORE_TIME_HEADERS} ${CORE_TIME_SOURCES}
 )
 
 # Create the Version.h file
@@ -279,16 +291,18 @@ if(INSTALL_HEADERS)
         DESTINATION include/simCore/Common)
     install(FILES ${CORE_CALC_HEADERS}
         DESTINATION include/simCore/Calc)
-    install(FILES ${CORE_CALC_LUT_HEADERS}
-        DESTINATION include/simCore/LUT)
     install(FILES ${CORE_EM_HEADERS}
         DESTINATION include/simCore/EM)
-    install(FILES ${CORE_STRING_HEADERS}
-        DESTINATION include/simCore/String)
-    install(FILES ${CORE_TIME_HEADERS}
-        DESTINATION include/simCore/Time)
+    install(FILES ${CORE_FORMATS_HEADERS}
+        DESTINATION include/simCore/Formats)
     install(FILES ${CORE_GOG_HEADERS}
         DESTINATION include/simCore/GOG)
+    install(FILES ${CORE_LUT_HEADERS}
+        DESTINATION include/simCore/LUT)
+    install(FILES ${CORE_STRING_HEADERS}
+        DESTINATION include/simCore/String)
     install(FILES ${CORE_SYSTEM_HEADERS}
         DESTINATION include/simCore/System)
+    install(FILES ${CORE_TIME_HEADERS}
+        DESTINATION include/simCore/Time)
 endif()
