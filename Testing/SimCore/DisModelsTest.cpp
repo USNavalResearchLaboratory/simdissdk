@@ -20,39 +20,34 @@
  * disclose, or release this software.
  *
  */
-#include <fstream>
+#include <sstream>
 #include <string>
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Formats/DisModels.h"
-
-#ifndef _WIN32
-#include <unistd.h>
-#endif
 
 namespace {
 
 // Test that DisModels can load a *.dis file and parse the contents
 int testDisModels()
 {
-  // Create minimal test DIS Model file
-  const std::string tempFilename = "DISTest.dis";
-  std::ofstream ofs(tempFilename);
+  // Create minimal test DIS Model file with comments
+  const std::string modelDisFile = R"(
+// Kind: Platform, Domain: Land
+1.1.0.0.0.0.0 generic_land
+1.1.0.1.0.0.0 category_land
 
-  // Kind: Platform, Domain: Land
-  ofs << "1.1.0.0.0.0.0 generic_land\n";
-  ofs << "1.1.0.1.0.0.0 category_land\n";
-  // Country-specific Specialization
-  ofs << "1.1.225.1.0.0.0 country_land\n";
-  // Kind: Munition
-  ofs << "2.1.0.1.0.0.0 category_munition\n";
-  ofs.close();
+// Country-specific Specialization
+1.1.225.1.0.0.0 country_land
 
+// Kind: Munition
+2.1.0.1.0.0.0 category_munition
+)";
+
+  // Load the file content
   simCore::DisModels disModel;
-  if (disModel.loadFile(tempFilename) != 0)
+  std::stringstream ss(modelDisFile);
+  if (disModel.loadStream(ss) != 0)
     return 1;
-
-  // Done with load, remove file
-  unlink(tempFilename.c_str());
 
   int rv = 0;
   // At level 0, only exact matches pass
@@ -71,6 +66,21 @@ int testDisModels()
   // over generic 1.1.0.1.xxx, even when not exact matches
   rv += SDK_ASSERT(disModel.getModel("1.1.225.1.0.0.0", 4) == "country_land");
   rv += SDK_ASSERT(disModel.getModel("1.1.225.1.0.0.1", 4) == "country_land");
+
+  // Loaded 4 models; test clearing
+  rv += SDK_ASSERT(disModel.modelCount() == 4);
+  rv += SDK_ASSERT(!disModel.empty());
+  disModel.clear();
+  rv += SDK_ASSERT(disModel.modelCount() == 0);
+  rv += SDK_ASSERT(disModel.empty());
+
+  // Previous success should fail
+  rv += SDK_ASSERT(disModel.getModel("1.1.0.1", 0) == "");
+  // Add the string and succeed
+  rv += SDK_ASSERT(disModel.loadModel("1.1.0.1.0.0.0 category_land") == 0);
+  rv += SDK_ASSERT(disModel.modelCount() == 1);
+  rv += SDK_ASSERT(!disModel.empty());
+  rv += SDK_ASSERT(disModel.getModel("1.1.0.1", 0) == "category_land");
 
   return rv;
 }

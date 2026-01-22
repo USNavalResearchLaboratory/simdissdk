@@ -23,6 +23,7 @@
 #ifndef SIMCORE_FORMAT_DISMODELS_H
 #define SIMCORE_FORMAT_DISMODELS_H
 
+#include <iosfwd>
 #include <map>
 #include <string>
 #include <vector>
@@ -38,6 +39,8 @@ public:
 
   /** Loads the given file; returns 0 on success */
   int loadFile(const std::string& filename);
+  /** Loads the input stream as though it was a model.dis file; returns 0 on success */
+  int loadStream(std::istream& is);
 
   /**
    * Loads a model from either the format 'k.d.c.c.s.s.e modelName' or the legacy format 'DIS k.d.c.c.s.s.e modelName'

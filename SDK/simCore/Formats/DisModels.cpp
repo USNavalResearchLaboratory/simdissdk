@@ -44,16 +44,18 @@ int DisModels::loadFile(const std::string& filename)
   std::ifstream inFile(simCore::streamFixUtf8(simCore::expandEnv(filename)), std::ios::in);
   if (inFile.fail())
     return 1;
+  return loadStream(inFile);
+}
+
+int DisModels::loadStream(std::istream& is)
+{
+  if (!is)
+    return 1;
 
   disModels_.clear();
-
   std::string st;
-
-  while (simCore::getStrippedLine(inFile, st))
-  {
+  while (simCore::getStrippedLine(is, st))
     loadModel(st);
-  }
-
   return 0;
 }
 
