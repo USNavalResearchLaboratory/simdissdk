@@ -149,7 +149,11 @@ void styleAnnotation(osgEarth::Style& style, const simVis::Color& fillColor, boo
   style.getOrCreate<sym::LineSymbol>()->stroke()->width() = osgEarth::Distance(2.f, osgEarth::Units::PIXELS);
 #endif
   style.getOrCreate<sym::LineSymbol>()->tessellationSize()->set(100, osgEarth::Units::KILOMETERS);
+#if OSGEARTH_SOVERSION < 181
   style.getOrCreate<sym::AltitudeSymbol>()->verticalOffset() = 10000;
+#else
+  style.getOrCreate<sym::AltitudeSymbol>()->verticalOffset() = osgEarth::Distance(10000, osgEarth::Units::METERS);
+#endif
   style.getOrCreate<sym::RenderSymbol>()->backfaceCulling() = false;
   style.getOrCreate<sym::RenderSymbol>()->depthTest() = depthTest;
   style.getOrCreate<sym::RenderSymbol>()->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;

@@ -812,7 +812,11 @@ simCore::Coordinate ParserData::getCoordinate(MapNode* mapNode, Style& style) co
     GeoPoint pos = getMapPosition();
     if (pos.z() != 0.0)
     {
+#if OSGEARTH_SOVERSION < 181
       style.getOrCreate<AltitudeSymbol>()->verticalOffset() = pos.z();
+#else
+      style.getOrCreate<AltitudeSymbol>()->verticalOffset() = osgEarth::Distance(pos.z(), osgEarth::Units::METERS);
+#endif
       pos.z() = 0.0;
     }
     simVis::convertGeoPointToCoord(pos, result, mapNode);

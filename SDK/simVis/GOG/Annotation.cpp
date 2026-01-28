@@ -96,7 +96,11 @@ GogNodeInterface* TextAnnotation::deserialize(
   // Circumvent osgEarth bug with annotation and style here by setting the priority forcefully
   const TextSymbol* textSymbol = p.style_.getSymbol<TextSymbol>();
   if (textSymbol && textSymbol->priority().isSet())
+#if OSGEARTH_SOVERSION < 181
     label->setPriority(textSymbol->priority().value().eval());
+#else
+    label->setPriority(textSymbol->priority().value().literal());
+#endif
 
   rv = new LabelNodeInterface(label, metaData);
   rv->applyToStyle(parsedShape, p.units_);
