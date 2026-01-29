@@ -85,6 +85,50 @@ int testDisModels()
   return rv;
 }
 
+int testEntityString()
+{
+  int rv = 0;
+
+  // Test that any vector with less than 7 parts will return an empty string
+  std::vector<std::string> parts;
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 0) == "");
+  parts.push_back("1");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 1) == "");
+  parts.push_back("2");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 2) == "");
+  parts.push_back("3");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 3) == "");
+  parts.push_back("4");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 4) == "");
+  parts.push_back("5");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 5) == "");
+  parts.push_back("6");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 6) == "");
+
+  // Test getting the full string without any wildcards
+  parts.push_back("7");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 0) == "1.2.3.4.5.6.7");
+  // Test wildcard levels up to 6
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 1) == "1.2.3.4.5.6.0");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 2) == "1.2.3.4.5.0.0");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 3) == "1.2.3.4.0.0.0");
+  // Note that the 4th wildcard level is not the 4th from the back
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 4) == "1.2.0.4.0.0.0");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 5) == "1.2.0.0.0.0.0");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 6) == "1.0.0.0.0.0.0");
+
+  // Test that wildcard levels above 6 are functionally the same as wildcard 6
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 6) == "1.0.0.0.0.0.0");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 10) == "1.0.0.0.0.0.0");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 9999) == "1.0.0.0.0.0.0");
+
+  // Test that any vector with more than 7 parts will return an empty string
+  parts.push_back("8");
+  rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 8) == "");
+
+  return rv;
+}
+
 }
 
 int DisModelsTest(int argc, char* argv[])
@@ -92,6 +136,7 @@ int DisModelsTest(int argc, char* argv[])
   int rv = 0;
 
   rv += SDK_ASSERT(testDisModels() == 0);
+  rv += SDK_ASSERT(testEntityString() == 0);
 
   std::cout << "simCore DisModelsTest: " << (rv == 0 ? "PASSED" : "FAILED") << "\n";
 

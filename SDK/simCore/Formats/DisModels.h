@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 #include "simCore/Common/Export.h"
+#include "simCore/String/Tokenizer.h"
 
 namespace simCore {
 
@@ -70,10 +71,51 @@ public:
    */
   std::string getModel(const std::string& disId, unsigned int wildcardLevel) const;
 
-private:
-  /** Applies the given wildcard setting to the type string, replacing parts with 0 */
-  std::string entityTypeString_(const std::vector<std::string>& parts, unsigned int wildcardLevel) const;
+  /**
+   * Template function to expose DIS ID matching logic to external maps
+   * @param disId DIS ID in format of "kind.domain.country.category.subcat.specific.extra"
+   * @param wildcardLevel Starting from the right and working to the left replace parts of the
+   *                      DIS ID with "0" until a match is achieved or specified level is reached.
+   * @param modelToSearch Map from DIS ID to template type to search through
+   * @return Returns mapped template value if the key is found in the map, or the default constructor value of the type if it's not
+   */
+  template<typename T>
+  static T getFromGenericMap(const std::string& disId, unsigned int wildcardLevel, std::map<std::string, T> modelToSearch)
+  {
+    if (modelToSearch.empty())
+      return T();
 
+    // Break the DIS ID down into its component parts, k.d.c.c.s.s.e
+    std::vector<std::string> parts;
+    simCore::stringTokenizer(parts, disId, ".");
+    if (parts.empty())
+      return T();
+
+    // A full DIS ID has 7 components. If a partial ID was given, pad it with 0s to get a full ID
+    while (parts.size() < 7)
+      parts.push_back("0");
+
+    // iterative search for best match to the entityType
+    for (unsigned int ii = 0; ii <= wildcardLevel; ii++)
+    {
+      const std::string& etString = entityTypeString(parts, ii);
+      const auto iter = modelToSearch.find(etString);
+      if (iter != modelToSearch.end())
+        return iter->second;
+    }
+
+    return T();
+  }
+
+  /**
+  * Helper function to assemble an entity type string from the given parts, replacing wildcarded components with 0
+  * @param parts 7 part DIS enum split by '.'
+  * @param wildcardLevel Number of components to replace with 0
+  * @return Constructed entity type string
+  */
+  static std::string entityTypeString(const std::vector<std::string>& parts, unsigned int wildcardLevel);
+
+private:
   std::map<std::string, std::string> disModels_; ///< Map of DIS ID to SIMDIS models
 };
 

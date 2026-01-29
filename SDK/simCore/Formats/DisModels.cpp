@@ -25,7 +25,6 @@
 #include <fstream>
 #include <vector>
 #include "simCore/String/Format.h"
-#include "simCore/String/Tokenizer.h"
 #include "simCore/String/UtfUtils.h"
 #include "simCore/String/Utils.h"
 #include "simCore/Formats/DisModels.h"
@@ -109,33 +108,12 @@ void DisModels::clear()
 
 std::string DisModels::getModel(const std::string& disId, unsigned int wildcardLevel) const
 {
-  if (disModels_.empty())
-    return "";
-
-  std::vector<std::string> parts;
-  simCore::stringTokenizer(parts, disId, ".");
-  if (parts.empty())
-    return "";
-
-  while (parts.size() < 7)
-    parts.push_back("0");
-
-  // iterative search for best match to the entityType
-  for (unsigned int ii = 0; ii <= wildcardLevel; ii++)
-  {
-    const std::string& etString = entityTypeString_(parts, ii);
-    const std::map<std::string, std::string>::const_iterator iter = disModels_.find(etString);
-    if (iter != disModels_.end())
-      return iter->second;
-  }
-
-  return "";
+  return DisModels::getFromGenericMap(disId, wildcardLevel, disModels_);
 }
 
-std::string DisModels::entityTypeString_(const std::vector<std::string>& parts, unsigned int wildcardLevel) const
+std::string DisModels::entityTypeString(const std::vector<std::string>& parts, unsigned int wildcardLevel)
 {
   // must specify all 7 parts
-  assert(parts.size() == 7);
   if (parts.size() != 7)
     return "";
 
