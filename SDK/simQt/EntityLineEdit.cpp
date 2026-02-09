@@ -181,10 +181,7 @@ public:
       parent_->unavailableId_ = 0;
 
     if (parent_->uniqueId_ == removedId)
-    {
-      parent_->uniqueId_ = 0;
-      parent_->setTextStyle_(false);
-    }
+      parent_->setSelected(0);
   }
 
   /// entity name has changed
