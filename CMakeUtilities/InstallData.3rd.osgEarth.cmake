@@ -15,6 +15,12 @@ if(NOT _OSGEARTH_PLUGIN)
 endif()
 get_filename_component(_OSGEARTH_PLUGIN_DIR "${_OSGEARTH_PLUGIN}" DIRECTORY)
 
+# Detect configuration to use for release installs
+set(_CONFIG "Release" "RelWithDebInfo" "MinSizeRel" "")
+if(UNIX AND NOT EXISTS "${_OSGEARTH_LIB_DIR}/libosgEarthd.so")
+    set(_CONFIG)
+endif()
+
 # Determine which files to install based on Debug or Release Build Type
 if(WIN32)
     set(_DEBUG_INSTALL_PATTERN ".+d\\.dll")
@@ -37,13 +43,13 @@ foreach(_LIB_FILE IN LISTS _ALL_OSGEARTH_LIBS)
         install(FILES "${_LIB_FILE}"
             DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
             CONFIGURATIONS "Debug"
-            COMPONENT ThirdPartyLibsx
+            COMPONENT ThirdPartyLibs
         )
     elseif(_FILENAME MATCHES "${_RELEASE_INSTALL_PATTERN}")
         install(FILES "${_LIB_FILE}"
             DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
-            CONFIGURATIONS "Release" "RelWithDebInfo" "MinSizeRel" ""
-            COMPONENT ThirdPartyLibsx
+            CONFIGURATIONS ${_CONFIG}
+            COMPONENT ThirdPartyLibs
         )
     endif()
 endforeach()
@@ -62,8 +68,9 @@ install(DIRECTORY ${_OSGEARTH_PLUGIN_DIR}/
 )
 install(DIRECTORY ${_OSGEARTH_PLUGIN_DIR}/
     DESTINATION ${INSTALLSETTINGS_OSGPLUGINS_DIR}/osgPlugins-${OPENSCENEGRAPH_VERSION}
-    CONFIGURATIONS "Release" "RelWithDebInfo" "MinSizeRel" ""
+    CONFIGURATIONS ${_CONFIG}
     COMPONENT ThirdPartyLibs
     FILES_MATCHING
         REGEX "osgdb_${_RELEASE_INSTALL_PATTERN}"
 )
+unset(_CONFIG)
