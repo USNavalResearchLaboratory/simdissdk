@@ -1,4 +1,4 @@
-#version $GLSL_VERSION_STR
+#version 330
 #pragma vp_function sim_proj_vert, vertex_view
 #pragma import_defines(SIMVIS_PROJECT_USE_SHADOWMAP)
 

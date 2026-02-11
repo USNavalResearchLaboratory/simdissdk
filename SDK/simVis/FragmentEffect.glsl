@@ -1,4 +1,4 @@
-#version $GLSL_VERSION_STR
+#version 330
 
 #pragma vp_entryPoint sim_frageffect_fs
 #pragma vp_location fragment_lighting
