@@ -2372,7 +2372,11 @@ CylinderNodeInterface::CylinderNodeInterface(osg::Group* groupNode, osgEarth::Lo
   // height is from the side node's extrusion height, altitude is from side node's altitude
   if (sideNode_.valid() && sideNode_->getStyle().has<osgEarth::ExtrusionSymbol>())
   {
+#if OSGEARTH_SOVERSION < 181
     height_ = sideNode_->getStyle().getSymbol<osgEarth::ExtrusionSymbol>()->height().value();
+#else
+    height_ = sideNode_->getStyle().getSymbol<osgEarth::ExtrusionSymbol>()->height()->literal().as(osgEarth::Units::METERS);
+#endif
     initializeFromGeoPositionNode_(*sideNode);
   }
 
