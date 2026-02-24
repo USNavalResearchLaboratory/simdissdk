@@ -1090,7 +1090,7 @@ void DockWidget::setDefaultSize(const QSize& defaultSize)
   defaultSize_ = defaultSize;
 }
 
-void DockWidget::setWidget(QWidget* widget)
+void DockWidget::setWidget(QWidget* newWidget)
 {
   // Deal with settings -- restore the is-dockable setting
   if (!objectName().isEmpty())
@@ -1106,10 +1106,16 @@ void DockWidget::setWidget(QWidget* widget)
     }
   }
 
-  QDockWidget::setWidget(widget);
-  if (widget == nullptr)
+  // Starting with Qt6 QDockWidget::setWidget no longer immediately deletes the previous widget.
+  // Manually delete the previous widget to force synchronous behavior.  See SIM-19383 for details.
+  QWidget* previousWidget = widget();
+  QDockWidget::setWidget(newWidget);
+  delete previousWidget;
+
+  if (newWidget == nullptr)
     return;
-  setWindowIcon(widget->windowIcon());
+
+  setWindowIcon(newWidget->windowIcon());
 
   // Save the geometry now so that we have some valid value at initialization
   normalGeometry_ = geometry();

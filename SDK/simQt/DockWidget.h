@@ -140,9 +140,9 @@ public:
 
   /**
    * Set the widget that the dock widget will display.
-   * @param widget The widget that the dock widget will display
+   * @param newWidget The widget that the dock widget will display
    */
-  void setWidget(QWidget* widget);
+  void setWidget(QWidget* newWidget);
 
   /*
    * Set a default size for the widget, which serves as a backup if there is no size defined in settings.
