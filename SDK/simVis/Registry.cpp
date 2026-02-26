@@ -204,6 +204,11 @@ simVis::Registry::Registry()
   pseudoLoaderExtensions_.insert("scale"); // scale model
   pseudoLoaderExtensions_.insert("trans"); // translate model
 
+  // Add aliases to OSG to force the right loaders to be searched:
+  // osgEarth GLTF loader supplies both .glb and .b3dm
+  osgDB::Registry::instance()->addFileExtensionAlias("glb", "gltf");
+  osgDB::Registry::instance()->addFileExtensionAlias("b3dm", "gltf");
+
   // initialize the default NOTIFY level from the environment variable
   const std::string val = simCore::getEnvVar("SIM_NOTIFY_LEVEL");
   if (!val.empty())
