@@ -847,6 +847,38 @@ int testIncompleteShapes()
   rv += SDK_ASSERT(shapes.size() == 0);
   shapes.clear();
 
+  // test ellipsoid if only major axis defined
+  {
+    std::stringstream ellipsoidMajorAxis;
+    ellipsoidMajorAxis << "start\n ellipsoid\n centerll 1 2\n majoraxis 5464\n rangeunits m\n end\n";
+    parser.parse(ellipsoidMajorAxis, "", shapes);
+    rv += SDK_ASSERT(shapes.size() == 1);
+    auto ellipsoidShape = dynamic_cast<simCore::GOG::Ellipsoid*>(shapes.front().get());
+    double majorAxis = 0.;
+    double minorAxis = 0.;
+    rv += SDK_ASSERT(ellipsoidShape->getMajorAxis(majorAxis) == 0);
+    rv += SDK_ASSERT(ellipsoidShape->getMinorAxis(minorAxis) == 1);
+    rv += SDK_ASSERT(majorAxis == 5464.);
+    rv += SDK_ASSERT(minorAxis == 1000.);
+    shapes.clear();
+  }
+
+  // test ellipsoid if only minor axis defined
+  {
+    std::stringstream ellipsoidMinorAxis;
+    ellipsoidMinorAxis << "start\n ellipsoid\n centerll 1 2\n minoraxis 5464\n rangeunits m\n end\n";
+    parser.parse(ellipsoidMinorAxis, "", shapes);
+    rv += SDK_ASSERT(shapes.size() == 1);
+    auto ellipsoidShape = dynamic_cast<simCore::GOG::Ellipsoid*>(shapes.front().get());
+    double majorAxis = 0.;
+    double minorAxis = 0.;
+    rv += SDK_ASSERT(ellipsoidShape->getMajorAxis(majorAxis) == 1);
+    rv += SDK_ASSERT(ellipsoidShape->getMinorAxis(minorAxis) == 0);
+    rv += SDK_ASSERT(majorAxis == 1000.);
+    rv += SDK_ASSERT(minorAxis == 5464.);
+    shapes.clear();
+  }
+
   return rv;
 }
 
