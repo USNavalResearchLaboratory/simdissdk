@@ -28,7 +28,6 @@ set(SHADER_FILES
     DisableDepthOnAlpha.frag.glsl
     FragmentEffect.glsl
     Flashing.frag.glsl
-    LineDrawable.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl
     Picker.vert.glsl
@@ -76,6 +75,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}CustomRendering.h
     ${VIS_INC}CylinderGeode.h
     ${VIS_INC}CylinderStorage.h
+    ${VIS_INC}DevicePixelRatioUtils.h
     ${VIS_INC}DisableDepthOnAlpha.h
     ${VIS_INC}DynamicScaleTransform.h
     ${VIS_INC}EarthManipulator.h
@@ -241,6 +241,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}CustomRendering.cpp
     ${VIS_SRC}CylinderGeode.cpp
     ${VIS_SRC}CylinderStorage.cpp
+    ${VIS_SRC}DevicePixelRatioUtils.cpp
     ${VIS_SRC}DisableDepthOnAlpha.cpp
     ${VIS_SRC}DynamicScaleTransform.cpp
     ${VIS_SRC}EarthManipulator.cpp

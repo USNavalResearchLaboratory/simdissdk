@@ -36,7 +36,7 @@ namespace simVis
   * Replacement for osgText::Text class that addresses a sizing bug when
   * using the SCREEN_COORDS mode.
   */
-  class SDKVIS_EXPORT Text : public osgText::Text
+  class [[deprecated("Deprecated, use osgText::Text instead")]] SDKVIS_EXPORT Text : public osgText::Text
   {
   public:
     Text() : osgText::Text(), x_(0.0f), y_(0.0f) { }

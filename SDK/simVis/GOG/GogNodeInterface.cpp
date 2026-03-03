@@ -1164,7 +1164,11 @@ void GogNodeInterface::setExtrude(bool extrude)
     osgEarth::ExtrusionSymbol* ext = style_.getOrCreate<osgEarth::ExtrusionSymbol>();
     // set the height value if necessary, otherwise unset to allow extrude to ground
     if (height != 0.f)
+#if OSGEARTH_SOVERSION < 181
       ext->height() = height;
+#else
+      ext->height() = osgEarth::Distance(height, osgEarth::Units::METERS);
+#endif
     else
       ext->height().unset();
   }
@@ -2169,7 +2173,11 @@ int LabelNodeInterface::getFont(std::string& fontFile, int& fontSize, osg::Vec4f
   const osgEarth::TextSymbol* ts = style_.getSymbol<osgEarth::TextSymbol>();
   if (ts->font()->size() > 0)
     fontFile = *(ts->font());
+#if OSGEARTH_SOVERSION < 181
   fontSize = static_cast<int>(simCore::round(simVis::simdisFontSize(static_cast<float>(ts->size()->eval()))));
+#else
+  fontSize = static_cast<int>(simCore::round(simVis::simdisFontSize(static_cast<float>(ts->size()->literal()))));
+#endif
   fontColor = ts->fill()->color();
   return 0;
 }
@@ -2181,7 +2189,11 @@ int LabelNodeInterface::getDeclutterPriority(int& priority) const
     return 1;
   const osgEarth::TextSymbol* ts = style_.getSymbol<osgEarth::TextSymbol>();
   if (ts->declutter().get())
+#if OSGEARTH_SOVERSION < 181
     priority = ts->priority().get().eval();
+#else
+    priority = ts->priority().get().literal();
+#endif
   return 0;
 }
 
@@ -2209,7 +2221,11 @@ void LabelNodeInterface::setFont(const std::string& fontName, int fontSize, cons
 
   if (ts->font() != fileFullPath)
     metaData_.setExplicitly(GOG_FONT_NAME_SET);
+#if OSGEARTH_SOVERSION < 181
   if (ts->size().value().eval() != osgFontSize)
+#else
+  if (ts->size().value().literal() != osgFontSize)
+#endif
     metaData_.setExplicitly(GOG_FONT_SIZE_SET);
   if (ts->fill()->color() != colorVec)
     metaData_.setExplicitly(GOG_LINE_COLOR_SET);
@@ -2356,7 +2372,11 @@ CylinderNodeInterface::CylinderNodeInterface(osg::Group* groupNode, osgEarth::Lo
   // height is from the side node's extrusion height, altitude is from side node's altitude
   if (sideNode_.valid() && sideNode_->getStyle().has<osgEarth::ExtrusionSymbol>())
   {
+#if OSGEARTH_SOVERSION < 181
     height_ = sideNode_->getStyle().getSymbol<osgEarth::ExtrusionSymbol>()->height().value();
+#else
+    height_ = sideNode_->getStyle().getSymbol<osgEarth::ExtrusionSymbol>()->height()->literal().as(osgEarth::Units::METERS);
+#endif
     initializeFromGeoPositionNode_(*sideNode);
   }
 
@@ -2419,7 +2439,11 @@ void CylinderNodeInterface::setStyle_(const osgEarth::Style& style)
   // format style for the side node
   osgEarth::Style sideStyle = style_;
   // need to add the extrusion symbol to the side style
+#if OSGEARTH_SOVERSION < 181
   sideStyle.getOrCreate<osgEarth::ExtrusionSymbol>()->height() = height_;
+#else
+  sideStyle.getOrCreate<osgEarth::ExtrusionSymbol>()->height() = osgEarth::Distance(height_, osgEarth::Units::METERS);
+#endif
   // In some cases it appears that extrusion can cause lighting
   sideStyle.getOrCreate<osgEarth::RenderSymbol>()->lighting() = false;
   // need to remove the line symbol from the side style
@@ -2677,7 +2701,11 @@ void SphericalNodeInterface::setStyle_(const osgEarth::Style& style)
   if (render->order().isSet() || render->renderBin().isSet())
   {
     osg::StateSet* ss = node->getOrCreateStateSet();
-    int binNumber = render->order().isSet() ? (int)render->order()->eval() : ss->getBinNumber();
+#if OSGEARTH_SOVERSION < 181
+    const int binNumber = render->order().isSet() ? (int)render->order()->eval() : ss->getBinNumber();
+#else
+    const int binNumber = render->order().isSet() ? (int)render->order()->literal() : ss->getBinNumber();
+#endif
     std::string binName =
       render->renderBin().isSet() ? render->renderBin().get() :
         ss->useRenderBinDetails() ? ss->getBinName() : "DepthSortedBin";

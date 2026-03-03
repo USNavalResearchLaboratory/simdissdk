@@ -21,6 +21,7 @@
  *
  */
 #include <QApplication>
+#include <QMainWindow>
 #include <QScreen>
 #ifdef WIN32
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
@@ -105,6 +106,43 @@ bool QtUtils::isDarkTheme()
 
   // In a non-standard theme, assume dark theme if the window color is relatively dark
   return windowColor.lightness() < 80;
+}
+
+bool QtUtils::hasAccentColorProblems()
+{
+#ifndef WIN32
+  return false; // No known issues on linux
+#endif
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  return false; // No known issues in Qt5
+#endif
+
+  // Qt (at least in 6.10) has very poor coloration in the Windows theme. It grabs the
+  // accent color for highlights. Accent should mainly be used for Window titles and accents,
+  // but Qt uses it in many more places. This code detects problems with the color by
+  // comparing the lightness of the highlight (i.e. accent) vs the light/dark mode values.
+  // This attempts to avoid problems with light on light and dark on dark.
+
+  QPalette palette = QApplication::palette();
+  QColor highlightColor = palette.color(QPalette::Highlight);
+
+  if (simQt::QtUtils::isDarkTheme())
+    return (highlightColor.lightness() > LIGHTNESS_HIGH_THRESHOLD);
+  else
+    return (highlightColor.lightness() < LIGHTNESS_LOW_THRESHOLD);
+}
+
+QWidget* QtUtils::getMainWindowParent(QWidget* widget)
+{
+  if (!widget)
+    return widget;
+
+  for (QWidget* rv = dynamic_cast<QWidget*>(widget->parent()); rv != nullptr; rv = dynamic_cast<QWidget*>(rv->parent()))
+  {
+    if (dynamic_cast<QMainWindow*>(rv) != nullptr)
+      return rv;
+  }
+  return widget;
 }
 
 }

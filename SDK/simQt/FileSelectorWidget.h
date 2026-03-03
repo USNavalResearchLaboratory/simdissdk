@@ -66,6 +66,8 @@ class SDKQT_EXPORT FileSelectorWidget : public QWidget
   Q_PROPERTY(bool iconBeforeText READ iconBeforeText WRITE setIconBeforeText);
   /** Sets/gets the field for user-editable text in Qt Designer */
   Q_PROPERTY(bool readOnlyLineEdit READ readOnlyLineEdit WRITE setReadOnlyLineEdit);
+  /** Sets/gets the field for showing the clear text button in Qt Designer */
+  Q_PROPERTY(bool showClearFilename READ showClearFilename WRITE setShowClearFilename);
 
 public:
   /** Constructor */
@@ -182,6 +184,11 @@ public:
   /** Indicates whether the line edit is user-editable or disabled (default). */
   bool readOnlyLineEdit() const;
 
+  /** Set the visible state of the clear filename control */
+  void setShowClearFilename(bool showClearFilenameControl);
+  /** Indicates if the clear filename control is visible */
+  bool showClearFilename() const;
+
   /** Retrieve currently set filename */
   QString filename() const;
 
@@ -234,6 +241,8 @@ private:
   bool iconBeforeText_ = false;
   /** The valid state of the control as dictated by a caller */
   bool isValid_ = true;
+  /** Show clear button button if true */
+  bool showClearButton_ = false;
 
   /** Cached value of the filename */
   QString filename_;

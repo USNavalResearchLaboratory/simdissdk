@@ -1,6 +1,12 @@
 # MSVC 2022 support in 3.21; MSVC 2026 support in 4.2
 cmake_minimum_required(VERSION 3.21)
 
+# VCPKG customization ....................................................
+if (${CMAKE_TOOLCHAIN_FILE} MATCHES ".*vcpkg.cmake.*")
+    message(STATUS "Building with vcpkg toolchain.")
+    set(USING_VCPKG ON)
+endif()
+
 # Disable in-source builds and avoid writing to source directories directly
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
@@ -81,12 +87,10 @@ include(CheckOSGEarthMethodExists)
 include(TestBigEndian)
 test_big_endian(SDK_BIG_ENDIAN)
 
-# Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
-include(AddExecutablePostfix)
-
-# Set architecture identifiers
-string(TOUPPER ${BUILD_SYSTEM_ARCH} ARCH)
-add_definitions(-D${ARCH})
+if(NOT USING_VCPKG)
+    # Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
+    include(AddExecutablePostfix)
+endif()
 
 # Set system identifiers
 if(WIN32)
@@ -136,8 +140,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 # Include specific defaults for building with public release environment (third party packs)
 include(PublicDefaults)
 # Include specific defaults for building with VSI environment
-include(VsiDefaults)
-vsi_process_packages_json(${CMAKE_SOURCE_DIR}/CMakeUtilities/VsiPackages.json)
+if(NOT USING_VCPKG)
+    include(VsiDefaults)
+    vsi_process_packages_json(${CMAKE_SOURCE_DIR}/CMakeUtilities/VsiPackages.json)
+endif()
 
 # Build Release mode by default on Linux, unless otherwise specified
 include(DefaultToReleaseBuildType)
@@ -177,6 +183,13 @@ find_package(OpenGL QUIET)
 find_package(OpenSceneGraph COMPONENTS osgAnimation osgDB osgGA osgSim osgText osgUtil osgViewer QUIET)
 find_package(GDAL CONFIG)
 find_package(osgEarth)
+find_package(osgQOpenGL 4.0 QUIET)
+
+# vcpkg installs plugins into the plugins/ folder, not bin or lib
+set(INSTALLSETTINGS_OSGPLUGINS_DIR "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}")
+if(USING_VCPKG)
+    set(INSTALLSETTINGS_OSGPLUGINS_DIR "plugins")
+endif()
 
 # Find SQLite for DB file support in simVis and simUtil
 find_package(SQLite3 QUIET)
@@ -210,8 +223,6 @@ else()
         message(WARNING "Neither Qt5 nor Qt6 was found. simQt and Qt-based examples will not build.")
     endif()
 endif()
-# Search for the matching qt version of osgQOpenGL
-find_package(osgQOpenGL-qt${_SDK_QT_VERSION} 4.0 QUIET)
 
 # Old osgQt is only supported in Qt5
 if(ENABLE_DEPRECATED_SIMDISSDK_API AND Qt5_FOUND)

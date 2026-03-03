@@ -10,4 +10,4 @@ set_target_properties(osgdb_wbp PROPERTIES
     FOLDER "OSG Plugins"
     PROJECT_LABEL "Plugin - OSG .wbp Driver"
 )
-vsi_install_shared_library(osgdb_wbp SDK_OSG_Plugins "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}/osgPlugins-${OPENSCENEGRAPH_VERSION}")
+vsi_install_shared_library(osgdb_wbp SDK_OSG_Plugins "${INSTALLSETTINGS_OSGPLUGINS_DIR}/osgPlugins-${OPENSCENEGRAPH_VERSION}")

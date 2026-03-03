@@ -61,6 +61,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/String/FilePatterns.h"
 #include "simCore/String/Format.h"
 #include "simNotify/Notify.h"
 #include "simVis/AlphaTest.h"
@@ -371,16 +372,16 @@ bool isImageFile(const std::string& location)
   std::string ext = osgDB::getLowerCaseFileExtension(location);
   if (!ext.empty())
   {
-    // first check known model format extensions (based on SIMDIS_MODEL_FILE_PATTERNS in simCore/String/FilePatterns.h)
-    if (ext == "3db" || ext == "dae" || ext == "opt" || ext == "ive" || ext == "flt" || ext == "3ds" || ext == "obj" || ext == "lwo" || ext == "dxf" || ext == "osg" || ext == "osga" || ext == "osgb" || ext == "osgt" || ext == "osgx" || ext == "gltf" || ext == "fbx" || ext == "stl")
+    // first check known model format extensions
+    if (simCore::SIMDIS_MODEL_FILE_PATTERNS_SET.contains(ext))
       return false;
 
-    // video icons (based on SIMDIS_MODEL_FILE_PATTERNS in simCore/String/FilePatterns.h)
-    if (ext == "tmd" || ext == "lst")
+    // video icons
+    if (simCore::SIMDIS_VIDEO_ICON_PATTERS_SET.contains(ext))
       return true;
 
-    // image files (based on SIMDIS_MODEL_FILE_PATTERNS in simCore/String/FilePatterns.h)
-    if (ext == "png" || ext == "gif" || ext == "jpg" || ext == "jpeg" || ext == "rgb" || ext == "rgba" || ext == "tga" || ext == "tif" || ext == "tiff" || ext == "bmp" || ext == "webp")
+    // image files
+    if (simCore::SIMDIS_IMAGE_FILE_PATTERNS_SET.contains(ext))
       return true;
 
     // something else; so check for rw support.

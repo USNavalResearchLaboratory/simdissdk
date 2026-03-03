@@ -34,6 +34,7 @@
 #include "simQt/EntityNameFilter.h"
 #include "simQt/EntityTreeWidget.h"
 #include "simQt/QtFormatting.h"
+#include "simQt/QtUtils.h"
 #include "simQt/ResourceInitializer.h"
 #include "simQt/SettingsGroup.h"
 #include "simQt/WeightedMenuManager.h"
@@ -678,7 +679,8 @@ void EntityTreeComposite::showFilters_()
     return;
   }
   // create a new filter dialog, using the filter widgets from the EntityTreeWidget's proxy model
-  filterDialog_ = new FilterDialog(settings_, this);
+  // Qt6 has problems with QDialogs that aren't parented to the QMainWindow, so attempt to set main window as the parent
+  filterDialog_ = new FilterDialog(settings_, QtUtils::getMainWindowParent(this));
   QList<QWidget*> filterWidgets = entityTreeWidget_->filterWidgets(filterDialog_);
   filterDialog_->setMinimumWidth(200);
   filterDialog_->setWindowTitle(tr("Entity Filters"));

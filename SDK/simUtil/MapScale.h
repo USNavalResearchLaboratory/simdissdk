@@ -29,11 +29,13 @@
 #include "osg/Vec4"
 #include "simCore/Common/Common.h"
 
-namespace osgText { class Font; }
+namespace osgText {
+  class Font;
+  class Text;
+}
 namespace simCore { class Units; }
 namespace simVis {
   class FocusManager;
-  class Text;
   class View;
 }
 
@@ -165,9 +167,9 @@ private:
   osg::ref_ptr<osg::Group> textGroup_;
 
   /** Representative text for the values on the top */
-  osg::ref_ptr<simVis::Text> valueTextPrototype_;
+  osg::ref_ptr<osgText::Text> valueTextPrototype_;
   /** Displays the unit type on the bottom, such as "meters" */
-  osg::ref_ptr<simVis::Text> unitsText_;
+  osg::ref_ptr<osgText::Text> unitsText_;
 
   /** Height of the bar in pixels */
   float barHeightPx_;

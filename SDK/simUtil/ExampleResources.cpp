@@ -242,8 +242,6 @@ void simExamples::configureSearchPaths()
   {
     // On Linux, add a search path for libraries relative to executable path (installDir/bin)
     osgDB::FilePathList libPaths = osgDB::getLibraryFilePathList();
-    // ../lib/amd64-linux is used by SIMDIS applications distributed by NRL
-    libPaths.push_back("../lib/amd64-linux");
     // SDK examples from an SDK build need ../lib in the libpath
     libPaths.push_back("../lib");
     osgDB::setLibraryFilePathList(libPaths);

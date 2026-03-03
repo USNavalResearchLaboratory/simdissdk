@@ -154,13 +154,9 @@ struct ControlPanel : public simExamples::SimExamplesGui
     if (!isVisible())
       return;
 
-    static std::unique_ptr<simData::EnumerationText> names;
-    if (firstDraw_)
-    {
-      names = simData::EnumerationText::makeIconRotationName();
-      ImGui::SetNextWindowPos(ImVec2(5, 25));
-      firstDraw_ = false;
-    }
+    static std::unique_ptr<simData::EnumerationText> names = simData::EnumerationText::makeIconRotationName();
+    ImGui::SetNextWindowPos(ImVec2(5, 25), ImGuiCond_Once);
+    
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 

@@ -1,4 +1,4 @@
-#version $GLSL_VERSION_STR
+#version 330
 
 #pragma vp_location fragment_coloring
 #pragma vp_entryPoint sdkPickHighlightFragment

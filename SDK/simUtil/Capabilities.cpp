@@ -148,7 +148,8 @@ void Capabilities::recordContextInfoFromCaps_(const osgEarth::Capabilities& caps
 {
   vendorString_ = caps.getVendor();
   caps_.push_back(std::make_pair("Vendor", vendorString_));
-  caps_.push_back(std::make_pair("Renderer", caps.getRenderer()));
+  renderer_ = caps.getRenderer();
+  caps_.push_back(std::make_pair("Renderer", renderer_));
   glVersionString_ = caps.getVersion();
   caps_.push_back(std::make_pair("OpenGL Version", glVersionString_));
   glVersion_ = extractGlVersion_(caps.getVersion());
@@ -174,7 +175,7 @@ int Capabilities::recordContextInfoFromContext_(osg::GraphicsContext& gc)
   }
 
   vendorString_ = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
-  const std::string& rendererString = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+  renderer_ = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
   glVersionString_ = reinterpret_cast<const char*>(glGetString(GL_VERSION));
   glVersion_ = extractGlVersion_(glVersionString_);
 
@@ -184,7 +185,7 @@ int Capabilities::recordContextInfoFromContext_(osg::GraphicsContext& gc)
   const bool isCoreProfile = (glVersion_ >= 3.2f && ((profileMask & GL_CONTEXT_CORE_PROFILE_BIT) != 0));
 
   caps_.push_back(std::make_pair("Vendor", vendorString_));
-  caps_.push_back(std::make_pair("Renderer", rendererString));
+  caps_.push_back(std::make_pair("Renderer", renderer_));
   caps_.push_back(std::make_pair("OpenGL Version", glVersionString_));
   caps_.push_back(std::make_pair("Core Profile", toString_(isCoreProfile)));
   return 0;
@@ -269,7 +270,8 @@ void Capabilities::checkVendorOpenGlSupport_(const std::string& vendor, const st
   // Based on recommendation from https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_information_queries
   // Note that Mesa, Gallium, and Direct3D renderers are all potentially backed by a hardware
   // acceleration, and do not necessarily imply software acceleration.
-  if (vendor.find("Microsoft") != std::string::npos)
+  // LLVM however probably strongly suggests software rendering
+  if (vendor.find("Microsoft") != std::string::npos && renderer_.find("D3D12") == std::string::npos)
   {
     recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Software renderer detected; possibly no 3D acceleration; performance concerns");
     return;

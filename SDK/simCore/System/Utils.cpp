@@ -61,10 +61,8 @@ inline const std::string QT_QPA_PLATFORM_XCB = "xcb";
 
 #ifdef WIN32
 inline const std::string VARSEP_STR = ";";
-inline const std::string HWOS = "amd64-nt";
 #else
 inline const std::string VARSEP_STR = ":";
-inline const std::string HWOS = "amd64-linux";
 #endif
 
 /** Location of the soft link for the current process (Linux only) */
@@ -75,7 +73,7 @@ inline constexpr size_t PATH_MAX_LEN = 4096;
 /**
  * Internal helper function that is responsible for attempting to guess the SIMDIS_DIR
  * environment based on the current executable's path. This is a text-only comparison
- * that checks path portions like "SIMDIS/bin/amd64-nt" to check for expected SIMDIS
+ * that checks path portions like "SIMDIS/bin" to check for expected SIMDIS
  * path portions.
  */
 inline
@@ -97,19 +95,17 @@ std::string guessSimdisDir(bool& confident)
   assert(executablePath.back() != '\\');
 #endif
 
-  // Extract the last 3 path items, which will be used for testing
-  const auto& [pathMinus1, expectedHwOs] = simCore::pathSplit(executablePath);
-  const auto& [pathMinus2, expectedBin] = simCore::pathSplit(pathMinus1);
-  const auto& [pathMinus3, expectedSimdis] = simCore::pathSplit(pathMinus2);
+  // Extract the last 2 path items, which will be used for testing
+  const auto& [pathMinus1, expectedBin] = simCore::pathSplit(executablePath);
+  const auto& [pathMinus2, expectedSimdis] = simCore::pathSplit(pathMinus1);
 
-  // Check for something like SIMDIS/bin/amd64-nt or amd64-linux
-  if (expectedHwOs != HWOS ||
-    expectedBin != "bin" ||
+  // Check for something like SIMDIS/bin
+  if (expectedBin != "bin" ||
     expectedSimdis != "SIMDIS")
   {
     confident = false;
   }
-  return pathMinus2;
+  return pathMinus1;
 }
 
 /** Internal function that initializes Python for SIMDIS_DIR init code */
@@ -119,7 +115,7 @@ void initializePython3(const std::string python3Version)
   const std::string& pythonWithVersion = "python" + python3Version;
 
   const std::string& simdisDir = simCore::getEnvVar(SIMDIS_DIR);
-  const std::string& pythonHome = simCore::pathJoin({ simdisDir, "lib", HWOS, pythonWithVersion });
+  const std::string& pythonHome = simCore::pathJoin({ simdisDir, "lib", pythonWithVersion });
   // PYTHONHOME
   if (simCore::FileInfo(pythonHome).exists())
     simCore::setEnvVar(PYTHONHOME, pythonHome, true);
@@ -142,9 +138,9 @@ void initializePython3(const std::string python3Version)
 
   // add path to python pyd/.so files
 #ifdef WIN32
-  const std::string& libDynLoadPython = simCore::pathJoin({ simdisDir, "lib", HWOS, pythonWithVersion });
+  const std::string& libDynLoadPython = simCore::pathJoin({ simdisDir, "lib", pythonWithVersion });
 #else
-  const std::string libDynLoadPython = simCore::pathJoin({ simdisDir, "lib", HWOS, pythonWithVersion, "lib-dynload" });
+  const std::string libDynLoadPython = simCore::pathJoin({ simdisDir, "lib", pythonWithVersion, "lib-dynload" });
 #endif
   if (simCore::FileInfo(libDynLoadPython).exists())
     pythonPath += VARSEP_STR + libDynLoadPython;
@@ -280,7 +276,7 @@ int initializeSimdisEnvironmentVariables(const InitializeEnvironmentConfig& conf
   if (config.path)
   {
     const std::string path = simCore::toNativeSeparators(simCore::getEnvVar(PATH));
-    const std::string simdisBinDir = simCore::pathJoin({ simdisDir, "bin", HWOS });
+    const std::string simdisBinDir = simCore::pathJoin({ simdisDir, "bin" });
     if (path.find(simdisBinDir) == std::string::npos)
       simCore::setEnvVar(PATH, (simdisBinDir + VARSEP_STR + path), true);
   }
@@ -317,9 +313,9 @@ int initializeSimdisEnvironmentVariables(const InitializeEnvironmentConfig& conf
     simCore::setEnvVar(GDAL_DATA, simCore::pathJoin({ simdisDir, "data", "GDAL" }), true);
     // GDAL_DRIVER_PATH
 #ifdef WIN32
-    simCore::setEnvVar(GDAL_DRIVER_PATH, simCore::pathJoin({ simdisDir, "bin", HWOS, "gdalplugins" }), false);
+    simCore::setEnvVar(GDAL_DRIVER_PATH, simCore::pathJoin({ simdisDir, "bin", "gdalplugins" }), false);
 #else
-    simCore::setEnvVar(GDAL_DRIVER_PATH, simCore::pathJoin({ simdisDir, "lib", HWOS, "gdalplugins" }), false);
+    simCore::setEnvVar(GDAL_DRIVER_PATH, simCore::pathJoin({ simdisDir, "lib", "gdalplugins" }), false);
 #endif
   }
   if (config.gdal || config.rocky)
@@ -337,7 +333,7 @@ int initializeSimdisEnvironmentVariables(const InitializeEnvironmentConfig& conf
   if (config.qt)
   {
     // QT_PLUGIN_PATH: required for 5.14, does not hurt 5.9. Only force it if it's found
-    const auto& pluginPath = simCore::pathJoin({ simdisDir, "bin", HWOS });
+    const auto& pluginPath = simCore::pathJoin({ simdisDir, "bin" });
     const bool pathExists = simCore::FileInfo(pluginPath).exists();
     simCore::setEnvVar(QT_PLUGIN_PATH, pluginPath, pathExists);
 #ifndef WIN32

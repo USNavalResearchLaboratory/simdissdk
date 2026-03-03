@@ -69,7 +69,6 @@ protected:
   /** Add a key function. When the key is pressed, the function will be called. */
   void addKeyFunc_(ImGuiKey key, const KeyFunc& func);
 
-  bool firstDraw_;
   std::map<ImGuiKey, KeyFunc> keyFuncs_;
 
 private:

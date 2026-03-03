@@ -59,6 +59,7 @@ public:
    * @return 0 on successful set; non-zero on error (i.e. not LLA or ECEF)
    */
   int setCoordinate(const simCore::Coordinate& coordinate);
+
   /**
    * Sets to a given coordinate, using the provided Coordinate Converter for ECI and tangent transforms.
    * The call to coordinate() will return this coordinate value only if coordinate is in a LLA or ECEF
@@ -71,6 +72,7 @@ public:
 
   /** Clears the coordinate. (Cleared coordinates are !isValid()) */
   void clear();
+
   /** Returns true if the coordinate is valid. */
   bool isValid() const;
 
@@ -85,6 +87,9 @@ public:
    * its coordinate system set to NONE.  May need to calculate ECEF and update the cache.
    */
   const simCore::Coordinate& ecefCoordinate() const;
+
+  /** Synchronize the ECEF and LLA coordinates. */
+  void synchronizeCoordinates();
 
 private:
 

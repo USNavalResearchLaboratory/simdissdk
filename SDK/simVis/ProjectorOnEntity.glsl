@@ -1,4 +1,4 @@
-#version $GLSL_VERSION_STR
+#version 330
 #pragma vp_function sim_proj_on_entity_vert vertex_view
 #pragma import_defines(SIMVIS_NUM_PROJECTORS)
 
@@ -35,7 +35,7 @@ void sim_proj_on_entity_vert(inout vec4 vertex_VIEW)
 
 
 [break]
-#version $GLSL_VERSION_STR
+#version 330
 #pragma vp_function sim_proj_on_entity_frag fragment
 #pragma import_defines(SIMVIS_NUM_PROJECTORS)
 

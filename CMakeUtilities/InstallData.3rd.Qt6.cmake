@@ -19,7 +19,7 @@ function(vsi_install_qt6_lib LIBNAME)
         if(RELEASE_DLL)
             INSTALL(FILES ${RELEASE_DLL}
                 DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
-                CONFIGURATIONS Release
+                CONFIGURATIONS "Release" "RelWithDebInfo" "MinSizeRel" ""
                 COMPONENT ThirdPartyLibs
             )
         endif()
@@ -34,13 +34,13 @@ function(vsi_install_qt6_lib LIBNAME)
         set(_QT_LIBRARY_DIR "${Qt6Core_DIR}/../..")
         INSTALL(FILES ${_QT_LIBRARY_DIR}/libQt6${LIBNAME}.so.${Qt6Core_VERSION_MAJOR}
             DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
-            CONFIGURATIONS Release
+            CONFIGURATIONS "Release" "RelWithDebInfo" "MinSizeRel" ""
             COMPONENT ThirdPartyLibs
             OPTIONAL
         )
         INSTALL(FILES ${_QT_LIBRARY_DIR}/libQt6${LIBNAME}.so.${Qt6Core_VERSION}
             DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
-            CONFIGURATIONS Release
+            CONFIGURATIONS "Release" "RelWithDebInfo" "MinSizeRel" ""
             COMPONENT ThirdPartyLibs
             OPTIONAL
         )
@@ -57,7 +57,7 @@ function(vsi_install_qt6plugins dir)
             DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
             OPTIONAL
             COMPONENT ThirdPartyLibs
-            CONFIGURATIONS Release RelWithDebInfo
+            CONFIGURATIONS "Release" "RelWithDebInfo" "MinSizeRel" ""
             FILES_MATCHING PATTERN *.dll
             PATTERN *d.dll EXCLUDE)
         INSTALL(DIRECTORY ${QT6_INSTALL_PREFIX}/plugins/${dir}
@@ -91,6 +91,14 @@ endforeach()
 foreach(PLUGINNAME IN ITEMS imageformats platforminputcontexts platforms platformthemes styles xcbglintegrations)
     vsi_install_qt6plugins(${PLUGINNAME})
 endforeach()
+# Get the missing qdirect2d.dll
+if(WIN32)
+    INSTALL(FILES "${QT6_INSTALL_PREFIX}/plugins/platforms/qdirect2d.dll"
+        DESTINATION "${INSTALLSETTINGS_RUNTIME_DIR}/platforms/"
+        OPTIONAL
+        COMPONENT ThirdPartyLibs
+        CONFIGURATIONS "Release" "RelWithDebInfo" "MinSizeRel" "")
+endif()
 
 # Users can add custom modules to install using QT6_MODULES variable
 if(DEFINED QT6_MODULES)

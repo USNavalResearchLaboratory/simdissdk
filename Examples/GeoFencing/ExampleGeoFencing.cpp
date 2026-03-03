@@ -115,11 +115,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     if (!isVisible())
       return;
 
-    if (firstDraw_)
-    {
-      ImGui::SetNextWindowPos(ImVec2(5, 25));
-      firstDraw_ = false;
-    }
+    ImGui::SetNextWindowPos(ImVec2(5, 25), ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -153,7 +149,11 @@ void styleAnnotation(osgEarth::Style& style, const simVis::Color& fillColor, boo
   style.getOrCreate<sym::LineSymbol>()->stroke()->width() = osgEarth::Distance(2.f, osgEarth::Units::PIXELS);
 #endif
   style.getOrCreate<sym::LineSymbol>()->tessellationSize()->set(100, osgEarth::Units::KILOMETERS);
+#if OSGEARTH_SOVERSION < 181
   style.getOrCreate<sym::AltitudeSymbol>()->verticalOffset() = 10000;
+#else
+  style.getOrCreate<sym::AltitudeSymbol>()->verticalOffset() = osgEarth::Distance(10000, osgEarth::Units::METERS);
+#endif
   style.getOrCreate<sym::RenderSymbol>()->backfaceCulling() = false;
   style.getOrCreate<sym::RenderSymbol>()->depthTest() = depthTest;
   style.getOrCreate<sym::RenderSymbol>()->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;

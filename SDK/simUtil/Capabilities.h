@@ -111,6 +111,7 @@ private:
   std::vector<std::pair<std::string, std::string>> caps_;
   double glVersion_ = 0.0;
   std::string vendorString_;
+  std::string renderer_;
   std::string glVersionString_;
   Usability isUsable_ = USABLE;
   std::vector<std::string> usabilityConcerns_;

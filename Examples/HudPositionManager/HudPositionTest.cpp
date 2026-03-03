@@ -20,8 +20,8 @@
  * disclose, or release this software.
  *
  */
-
 #include "osgEarth/CullingUtils"
+#include "osgEarth/Version"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Common/Version.h"
@@ -42,6 +42,11 @@
 #include "simUtil/Replaceables.h"
 #include "simUtil/StatusText.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <osgViewer/api/Win32/GraphicsWindowWin32>
+#endif
+
 // Uncomment this define to add various GridTransform test grids
 // #define GRID_TESTING
 
@@ -60,15 +65,52 @@ static const std::string KEY_LEGEND = "Legend";
 
 //----------------------------------------------------------------------------
 
+/** Helper that returns the device pixel ratio for a given graphics context. */
+float getGraphicsContextDpr(const osg::GraphicsContext* gc)
+{
+#ifdef _WIN32
+  // Convert from DPI to a device pixel ratio, assuming 96 (default screen) DPI for 1.0
+  if (auto* win = dynamic_cast<const osgViewer::GraphicsWindowWin32*>(gc))
+    return GetDpiForWindow(win->getHWND()) / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
+  return GetDpiForSystem() / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
+#endif
+  return 1.f;
+}
+
+/** Contains vital parts of the application */
+struct HudApp
+{
+  osg::ref_ptr<simVis::Viewer> viewer;
+  osg::ref_ptr<simVis::View> mainView;
+  osg::ref_ptr<simVis::View> hud;
+  float dpr = 1.f;
+};
+
 #ifdef HAVE_IMGUI
 
 struct ControlPanel : public simExamples::SimExamplesGui
 {
-  ControlPanel(simUtil::HudPositionEditor& hudEditor, simData::DataStore& dataStore)
+  ControlPanel(simUtil::HudPositionEditor& hudEditor, simData::DataStore& dataStore, HudApp& app)
     : simExamples::SimExamplesGui("HUD Position Manager Example"),
     hudEditor_(hudEditor),
-    dataStore_(dataStore)
+    dataStore_(dataStore),
+    app_(app)
   {
+#ifndef _WIN32
+    // Unsupported on Linux
+    autoDpr_ = false;
+#endif
+
+#if OSGEARTH_SOVERSION >= 180
+    // configure osgEarth:
+    osgEarth::Registry::instance()->setDevicePixelRatioFunction([this](osg::GraphicsContext* gc)
+      {
+        if (autoDpr_)
+          app_.dpr = getGraphicsContextDpr(gc);
+        return app_.dpr;
+      });
+#endif
+
     addKeyFunc_(ImGuiKey_1, [this]() { moveWindowToMouse_(KEY_DEMO_TEXT); });
     addKeyFunc_(ImGuiKey_2, [this]() { moveWindowToMouse_(KEY_MAP_SCALE); });
     addKeyFunc_(ImGuiKey_3, [this]() { moveWindowToMouse_(KEY_STATUS_TEXT); });
@@ -131,12 +173,8 @@ struct ControlPanel : public simExamples::SimExamplesGui
   {
     if (!isVisible())
       return;
-
-    if (firstDraw_)
-    {
-      ImGui::SetNextWindowPos(ImVec2(5, 25));
-      firstDraw_ = false;
-    }
+    ImGui::GetIO().FontGlobalScale = app_.dpr;
+    ImGui::SetNextWindowPos(ImVec2(5 * app_.dpr, 25 * app_.dpr), ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("1 : Move 'Demo Text' to the mouse position");
@@ -151,7 +189,28 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::Text("r : Reset all to default positions");
     ImGui::Text("W : Toggle Wind Vane on Compass");
     ImGui::Text("z : Cycle wind angle and speed values");
+
+    ImGui::Separator();
+
+#ifdef _WIN32
+    // Only Windows can adjust DPR automatically at this time
+    ImGui::Checkbox("Automatic DPR", &autoDpr_);
+#endif
+
+    ImGui::Text("DPR: %.2f", app_.dpr);
+    // Slider to adjust the DPR (Disabled when in auto mode)
+    ImGui::BeginDisabled(autoDpr_);
+    ImGui::SliderFloat("Manual DPR", &app_.dpr, 0.5f, 2.0f, "%.2f");
+    ImGui::EndDisabled();
+
     ImGui::End();
+
+#if OSGEARTH_SOVERSION < 180
+    // The callback handles this in newer osgEarth; we must manually do it here in older osgEarth
+    if (autoDpr_)
+      app_.dpr = getGraphicsContextDpr(app_.mainView->getCamera()->getGraphicsContext());
+    osgEarth::Registry::instance()->setDevicePixelRatio(app_.dpr);
+#endif
 
     handlePressedKeys_();
   }
@@ -173,8 +232,11 @@ private:
   simUtil::HudPositionEditor& hudEditor_;
   osg::observer_ptr<simVis::CompassNode> compass_;
   simData::DataStore& dataStore_;
-  int classificationCycle_;
-  int windCycle_;
+  int classificationCycle_ = 0;
+  int windCycle_ = 0;
+
+  HudApp& app_;
+  bool autoDpr_ = true;
 };
 
 #endif
@@ -274,9 +336,8 @@ protected:
 private:
   osg::ref_ptr<osgText::Text> title_;
   osg::ref_ptr<osgText::Text> content_;
-  float titleHeight_;
+  float titleHeight_ = 0.f;
 };
-
 
 int main(int argc, char** argv)
 {
@@ -285,26 +346,31 @@ int main(int argc, char** argv)
   simExamples::configureSearchPaths();
 
   // initialize a SIMDIS viewer and load a planet.
-  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(arguments);
-  viewer->setMap(simExamples::createDefaultExampleMap());
+  HudApp app;
+  app.viewer = new simVis::Viewer(arguments);
+  app.viewer->setMap(simExamples::createDefaultExampleMap());
+  app.mainView = app.viewer->getMainView();
+  app.dpr = getGraphicsContextDpr(app.mainView->getCamera()->getGraphicsContext());
 
   // Create a mouse dispatcher for the HUD Editor
   simUtil::MouseDispatcher mouseDispatcher;
-  mouseDispatcher.setViewManager(viewer.get());
+  mouseDispatcher.setViewManager(app.viewer.get());
 
   // Create a HUD position manager that will move on-screen objects
   simUtil::HudPositionEditor hudEditor;
   osg::ref_ptr<simUtil::HudPositionManager> hud = hudEditor.hud();
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer.get());
+  simExamples::addDefaultSkyNode(app.viewer.get());
   // Demonstrate the view-drawing service.  This is used to create new inset views with the mouse.
-  simVis::View* mainView = viewer->getMainView();
+  simVis::View* mainView = app.mainView;
   // set an initial viewpoint
   mainView->lookAt(45, 0, 0, 0, -89, 7e6);
+  mainView->setUpViewInWindow(100 * app.dpr, 100 * app.dpr, 1024 * app.dpr, 768 * app.dpr);
 
   // Create a "Super HUD" on top of all other views and insets
-  simVis::View* superHUD = new simVis::View();
+  app.hud = new simVis::View();
+  simVis::View* superHUD = app.hud;
   superHUD->setUpViewAsHUD(mainView);
   mainView->getViewManager()->addView(superHUD);
 
@@ -328,7 +394,7 @@ int main(int argc, char** argv)
 #ifdef HAVE_IMGUI
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
   mainView->getEventHandlers().push_front(gui);
-  ControlPanel* controlPanel = new ControlPanel(hudEditor, dataStore);
+  ControlPanel* controlPanel = new ControlPanel(hudEditor, dataStore, app);
   gui->add(controlPanel);
 #endif
 
@@ -528,7 +594,7 @@ int main(int argc, char** argv)
   }
 
   // for status and debugging
-  viewer->installDebugHandlers();
+  app.viewer->installDebugHandlers();
 
-  viewer->run();
+  app.viewer->run();
 }

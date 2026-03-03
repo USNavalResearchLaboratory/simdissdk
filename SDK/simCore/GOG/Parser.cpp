@@ -1019,6 +1019,9 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       double majorAxis = 0.;
       if (validateDouble_(parsed.stringValue(ShapeParameter::MAJORAXIS), "majoraxis", name, parsed, majorAxis) == 0)
         ellipsoid->setMajorAxis(units.rangeUnits().convertTo(simCore::Units::METERS, majorAxis));
+    }
+    if (parsed.hasValue(ShapeParameter::MINORAXIS))
+    {
       double minorAxis = 0.;
       if (validateDouble_(parsed.stringValue(ShapeParameter::MINORAXIS), "minoraxis", name, parsed, minorAxis) == 0)
         ellipsoid->setMinorAxis(units.rangeUnits().convertTo(simCore::Units::METERS, minorAxis));

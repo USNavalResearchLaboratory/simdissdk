@@ -33,6 +33,8 @@
 #include <QVBoxLayout>
 #include "osg/DisplaySettings"
 #include "osgViewer/Viewer"
+#include "osgEarth/Registry"
+#include "osgEarth/Version"
 #include "osgQOpenGL/osgQOpenGLWidget"
 #include "osgQOpenGL/osgQOpenGLWindow"
 #include "simVis/Gl3Utils.h"
@@ -682,6 +684,11 @@ ViewerWidgetAdapter::ViewerWidgetAdapter(GlImplementation glImpl, QWidget* paren
   : QWidget(parent)
 {
   simVis::applyMesaGlVersionOverride();
+#if OSGEARTH_SOVERSION >= 180
+  // osgEarth should use this window's DPR
+  osgEarth::Registry::instance()->setDevicePixelRatioFunction([this](auto* unused) { return devicePixelRatio(); });
+#endif
+
   glPlatform_ = createGlPlatform(glImpl, this);
 
   glPlatform_->setResizeSignal([this](int logicalWidth, int logicalHeight, double pixelScale) { Q_EMIT glResized(logicalWidth, logicalHeight, pixelScale); });
@@ -736,6 +743,10 @@ ViewerWidgetAdapter::ViewerWidgetAdapter(GlImplementation glImpl, QWidget* paren
 
 ViewerWidgetAdapter::~ViewerWidgetAdapter()
 {
+#if OSGEARTH_SOVERSION >= 180
+  // Ensure the DPR doesn't reference this, which is going out of scope
+  osgEarth::Registry::instance()->setDevicePixelRatioFunction([](auto* unused) { return 1.f; });
+#endif
 }
 
 osgViewer::ViewerBase* ViewerWidgetAdapter::getViewer() const

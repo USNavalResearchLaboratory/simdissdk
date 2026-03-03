@@ -54,7 +54,8 @@ int MultiFrameCoordinate::setCoordinate(const simCore::Coordinate& coordinate)
     ecefCoordinate_.clear();
     return 0;
   }
-  else if (coordinate.coordinateSystem() == simCore::COORD_SYS_ECEF)
+
+  if (coordinate.coordinateSystem() == simCore::COORD_SYS_ECEF)
   {
     llaValid_ = false;
     ecefValid_ = true;
@@ -123,6 +124,22 @@ const simCore::Coordinate& MultiFrameCoordinate::ecefCoordinate() const
   }
   // Return the ECEF value, either valid or not
   return ecefCoordinate_;
+}
+
+void MultiFrameCoordinate::synchronizeCoordinates()
+{
+  if ((llaValid_ && ecefValid_) || (!llaValid_ && !ecefValid_))
+    return;
+
+  if (!llaValid_)
+  {
+    simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoordinate_, llaCoordinate_);
+    llaValid_ = true;
+    return;
+  }
+
+  simCore::CoordinateConverter::convertGeodeticToEcef(llaCoordinate_, ecefCoordinate_);
+  ecefValid_ = true;
 }
 
 }

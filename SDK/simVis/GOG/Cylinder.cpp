@@ -132,7 +132,11 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
   LocalGeometryNode* sideNode = nullptr;
   {
     Style style(p.style_);
+#if OSGEARTH_SOVERSION < 181
     style.getOrCreate<ExtrusionSymbol>()->height() = heightValue;
+#else
+    style.getOrCreate<ExtrusionSymbol>()->height() = osgEarth::Distance(heightValue, osgEarth::Units::METERS);
+#endif
 
     // remove a line symbol so we don't stripe the sides
     style.remove<LineSymbol>();
@@ -280,7 +284,11 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
   LocalGeometryNode* sideNode = nullptr;
   {
     Style style;
+#if OSGEARTH_SOVERSION < 181
     style.getOrCreate<ExtrusionSymbol>()->height() = heightM;
+#else
+    style.getOrCreate<ExtrusionSymbol>()->height() = osgEarth::Distance(heightM, osgEarth::Units::METERS);
+#endif
 
     // remove a line symbol so we don't stripe the sides
     style.remove<LineSymbol>();

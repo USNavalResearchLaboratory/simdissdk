@@ -5,13 +5,13 @@ if 'SIMDIS_DIR' in os.environ:
 	SIMDIS_DIR = os.environ['SIMDIS_DIR']
 	# SIMDIS_DIR/bin/pythonScripts for module wrappers
 	sys.path.insert(0, os.path.join(SIMDIS_DIR, 'bin', 'pythonScripts'))
-	# SIMDIS_DIR/lib/amd64-nt/python#.## or SIMDIS_DIR/lib/amd64-linux/python#.##/lib-dynload for _module shared objects
-	base_lib = os.path.join(SIMDIS_DIR, 'lib', 'amd64-nt' if os.name == 'nt' else 'amd64-linux')
+	# SIMDIS_DIR/lib/python#.## or SIMDIS_DIR/lib/python#.##/lib-dynload for _module shared objects
+	base_lib = os.path.join(SIMDIS_DIR, 'lib')
 	search_for = 'python' if os.name == 'nt' else 'lib-dynload'
 	for root_dir, dirs, files in os.walk(base_lib):
 		for dir_name in dirs:
 			if search_for in dir_name: sys.path.insert(0, os.path.join(root_dir, dir_name))
-	if os.name == "nt": os.add_dll_directory(os.path.join(os.environ['SIMDIS_DIR'], 'bin', 'amd64-nt')) # for SIMDIS SDK notify DLL
+	if os.name == "nt": os.add_dll_directory(os.path.join(os.environ['SIMDIS_DIR'], 'bin')) # for SIMDIS SDK notify DLL
 
 import simCore
 

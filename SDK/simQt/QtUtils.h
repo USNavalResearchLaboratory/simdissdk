@@ -38,6 +38,11 @@ class SDKQT_EXPORT QtUtils
 {
 public:
 
+  /** QColor::lightness() high threshold value. Higher lightness colors may cause issues in some places. */
+  static const int LIGHTNESS_HIGH_THRESHOLD = 200;
+  /** QColor::lightness() low threshold value. Lower lightness colors may cause issues in some places. */
+  static const int LIGHTNESS_LOW_THRESHOLD = 60;
+
   /**
   * Moves the specified widget so that it is centered on the specified parent widget. If the parent widget's center is not onscreen, will
   * center on the parent's screen. If the parent widget does not exist, will center on the main screen. If centering obscures the widget's
@@ -57,6 +62,15 @@ public:
 
   /** Returns true if the current QApplication is in a dark theme. */
   static bool isDarkTheme();
+  /** Returns true if configured Windows 11 accent color might make some text hard to read. */
+  static bool hasAccentColorProblems();
+
+  /**
+  * Get the QMainWindow parent widget for the specified widget, simply returns the input if no QMainWindow parent is found.
+  * @param widget input widget to search parent tree for a QMainWidget
+  * @return the QMainWidget if found, otherwise returns the input widget
+  */
+  static QWidget* getMainWindowParent(QWidget* widget);
 };
 
 }

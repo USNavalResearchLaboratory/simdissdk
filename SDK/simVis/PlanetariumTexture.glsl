@@ -1,4 +1,4 @@
-#version $GLSL_VERSION_STR
+#version 330
 
 #pragma vp_function planetarium_texture_vert vertex_view
 
@@ -13,7 +13,7 @@ void planetarium_texture_vert(inout vec4 vertex)
 
 [break]
 
-#version $GLSL_VERSION_STR
+#version 330
 #pragma vp_function planetarium_texture_frag fragment
 // Should process early, ahead of projectors, so projectors blend into this instead of other way around
 #pragma vp_order 0.5

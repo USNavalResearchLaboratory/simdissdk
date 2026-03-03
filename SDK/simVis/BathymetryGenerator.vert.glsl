@@ -1,4 +1,4 @@
-#version $GLSL_VERSION_STR
+#version 330
 
 #pragma import_defines(SIMVIS_IGNORE_BATHYMETRY_GEN)
 

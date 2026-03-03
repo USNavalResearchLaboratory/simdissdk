@@ -239,19 +239,9 @@ simData::AnimatedLineBend AnimatedLineNode::getLineBending() const
 
 void AnimatedLineNode::setShiftsPerSecond(double value)
 {
-  const bool wasDynamicStippled = (shiftsPerSecond_ != 0.);
-
   shiftsPerSecond_ = value;
   // Need to reset the time shift to recalculate shifting correctly, per SIMDIS-3104
   timeLastShift_ = 0.0;
-
-  const bool isDynamicStippled = (shiftsPerSecond_ != 0.);
-  if (isDynamicStippled != wasDynamicStippled)
-  {
-    // enable dynamic stipple shader when needed
-    osg::StateSet* stateSet = lineGroup_->getOrCreateStateSet();
-    stateSet->setDefine("USE_DYNAMIC_STIPPLE_SHADER", osg::StateAttribute::OverrideValue(isDynamicStippled ? 1 : 0));
-  }
 }
 
 void AnimatedLineNode::initializeGeometry_()
