@@ -80,7 +80,7 @@ public:
    * @return Returns mapped template value if the key is found in the map, or the default constructor value of the type if it's not
    */
   template<typename T>
-  static T getFromGenericMap(const std::string& disId, unsigned int wildcardLevel, std::map<std::string, T> modelToSearch)
+  static T getFromGenericMap(const std::string& disId, unsigned int wildcardLevel, const std::map<std::string, T>& modelToSearch)
   {
     if (modelToSearch.empty())
       return T();
