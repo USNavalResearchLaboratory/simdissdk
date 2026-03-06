@@ -600,8 +600,8 @@ int main(int argc, char** argv)
   app.mainView->addInset(app.insetView.get()); // auto-added to viewMan
 
   // Create several platforms
+  simCore::ClockImpl clock; // clock must be declared before dataStore since dataStore depends on the clock
   simData::MemoryDataStore dataStore;
-  simCore::ClockImpl clock;
   sceneMan->addUpdateCallback(new simExamples::IdleClockCallback(clock, dataStore));
   dataStore.bindToClock(&clock);
   simVis::ScenarioManager* scenarioManager = sceneMan->getScenario();
