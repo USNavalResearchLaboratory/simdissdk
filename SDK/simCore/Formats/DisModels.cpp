@@ -51,7 +51,7 @@ int DisModels::loadStream(std::istream& is)
   if (!is)
     return 1;
 
-  disModels_.clear();
+  clear();
   std::string st;
   while (simCore::getStrippedLine(is, st))
     loadModel(st);
@@ -87,6 +87,8 @@ int DisModels::loadModel(const std::string& disId, const std::string& modelName)
   // if all 7 components are specified, the reconstructed string should match the original
   assert(disId == sv[0] + '.' + sv[1] + '.' + sv[2] + '.' + sv[3] + '.' + sv[4] + '.' + sv[5] + '.' + sv[6]);
   disModels_[disId] = modelName;
+  // models has changed, need to clear out cache for next search
+  modelCache_.clear();
   return 0;
 }
 
@@ -104,32 +106,18 @@ bool DisModels::empty() const
 void DisModels::clear()
 {
   disModels_.clear();
+  modelCache_.clear();
 }
 
 std::string DisModels::getModel(const std::string& disId, unsigned int wildcardLevel) const
 {
-  return DisModels::getFromGenericMap(disId, wildcardLevel, disModels_);
+  return modelCache_.getModel(disId, wildcardLevel, disModels_);
 }
 
 std::string DisModels::entityTypeString(const std::vector<std::string>& parts, unsigned int wildcardLevel)
 {
-  // must specify all 7 parts
-  if (parts.size() != 7)
-    return "";
-
-  std::ostringstream buff;
-  // The order of entity type is kind.domain.country.category.subcat.specific.extra;
-  // but order of the default-model processing here is kind/domain/category/country/...
-  // which allows assigning one default model for kind/domain/category that can apply to all countries,
-  // while still allowing specific country overrides.
-  buff << parts[0];
-  buff << "." << ((wildcardLevel >= 6) ? "0" : parts[1]);
-  buff << "." << ((wildcardLevel >= 4) ? "0" : parts[2]);
-  buff << "." << ((wildcardLevel >= 5) ? "0" : parts[3]);
-  buff << "." << ((wildcardLevel >= 3) ? "0" : parts[4]);
-  buff << "." << ((wildcardLevel >= 2) ? "0" : parts[5]);
-  buff << "." << ((wildcardLevel >= 1) ? "0" : parts[6]);
-  return buff.str();
+  return DisModelCache<std::string>::entityTypeString(parts, wildcardLevel);
 }
+
 
 }
