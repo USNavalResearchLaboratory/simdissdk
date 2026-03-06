@@ -413,6 +413,11 @@ function(vsi_install_target TARGET COMPONENT)
     get_target_property(IS_IMPORTED ${TARGET} IMPORTED)
     if(TARGET_TYPE STREQUAL "EXECUTABLE")
         vsi_install_executable(${TARGET} ${COMPONENT})
+        
+        # Set up OSGEARTH plugin directory for executables
+        if(WIN32 AND COMMAND setup_osgearth_plugin_dir)
+            setup_osgearth_plugin_dir(${TARGET})
+        endif()
     elseif(TARGET_TYPE STREQUAL "SHARED_LIBRARY")
         if(IS_IMPORTED)
             vsi_install_imported_shared_library(${TARGET} ${COMPONENT})

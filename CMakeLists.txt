@@ -46,6 +46,9 @@ else()
     remove_definitions(-DUSE_DEPRECATED_SIMDISSDK_API)
 endif()
 
+# Option to use simdissdk from vcpkg instead of building from source
+option(USE_VCPKG_SIMDISSDK "Use simdissdk from vcpkg instead of building from source" OFF)
+
 # Static build for libraries?
 option(SIMNOTIFY_SHARED "If off, simNotify SDK libraries are built statically; if on, simNotify SDK libraries are built dynamically" ON)
 option(SIMCORE_SHARED "If off, simCore SDK libraries are built statically; if on, simCore SDK libraries are built dynamically" ON)
@@ -237,7 +240,10 @@ find_package(GLCORE)
 # --- osgEarth -----------------------------
 
 # subprojects
-add_subdirectory(SDK)
+if(NOT USE_VCPKG_SIMDISSDK)
+    add_subdirectory(SDK)
+endif()
+
 option(BUILD_SDK_EXAMPLES "Build SIMDIS SDK Example Applications" ON)
 if(BUILD_SDK_EXAMPLES)
     add_subdirectory(Examples)

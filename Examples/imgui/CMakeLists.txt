@@ -1,4 +1,4 @@
-if(NOT TARGET simVis OR NOT TARGET osgEarth::osgEarth OR NOT TARGET OpenGL::GL)
+if(NOT TARGET osgEarth::osgEarth OR NOT TARGET OpenGL::GL)
     return()
 endif()
 
@@ -8,40 +8,51 @@ if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
     return()
 endif()
 
-# Add the local Dear ImGui to the search path at the end. This way, your own
-# Dear ImGui if it exists ought to be found first.
-set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${CMAKE_CURRENT_SOURCE_DIR}/1.92")
-# Prepend the user's environment variable, to prefer it first
-if(DEFINED ENV{IMGUI_DIR})
-    set(CMAKE_PREFIX_PATH "$ENV{IMGUI_DIR};${CMAKE_PREFIX_PATH}")
+if(USE_VCPKG_SIMDISSDK)
+    # Use vcpkg's imgui
+    message(STATUS "Using vcpkg's imgui")
+    find_package(imgui CONFIG REQUIRED)
+    add_library(VSI::imgui_gl3 ALIAS imgui::imgui)
+    # Create a backends directory structure for vcpkg imgui
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/backends")
+    file(COPY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/imgui_impl_opengl3.h" DESTINATION "${CMAKE_BINARY_DIR}/backends/")
+    file(COPY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/imgui_impl_opengl3_loader.h" DESTINATION "${CMAKE_BINARY_DIR}/backends/")
+else()
+    # Add the local Dear ImGui to the search path at the end. This way, your own
+    # Dear ImGui if it exists ought to be found first.
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${CMAKE_CURRENT_SOURCE_DIR}/1.92")
+    # Prepend the user's environment variable, to prefer it first
+    if(DEFINED ENV{IMGUI_DIR})
+        set(CMAKE_PREFIX_PATH "$ENV{IMGUI_DIR};${CMAKE_PREFIX_PATH}")
+    endif()
+
+    # Let user override with either CMAKE_PREFIX_PATH, or IMGUI_DIR environment variable
+    find_path(ImGui_DIR NAMES imgui.h)
+
+    # Must have ImGui_DIR defined to move past this point
+    if(NOT ImGui_DIR)
+        return()
+    endif()
+
+    add_library(imgui_gl3 STATIC
+        ${ImGui_DIR}/imgui.h
+        ${ImGui_DIR}/imgui.cpp
+        ${ImGui_DIR}/imgui_demo.cpp
+        ${ImGui_DIR}/imgui_draw.cpp
+        ${ImGui_DIR}/imgui_tables.cpp
+        ${ImGui_DIR}/imgui_widgets.cpp
+        ${ImGui_DIR}/backends/imgui_impl_opengl3.h
+        ${ImGui_DIR}/backends/imgui_impl_opengl3.cpp
+        ${ImGui_DIR}/backends/imgui_impl_opengl3_loader.h
+    )
+    target_include_directories(imgui_gl3 PUBLIC "${ImGui_DIR}")
+    target_link_libraries(imgui_gl3 PUBLIC OpenGL::GL PRIVATE ${CMAKE_DL_LIBS})
+    add_library(VSI::imgui_gl3 ALIAS imgui_gl3)
+    set_target_properties(imgui_gl3 PROPERTIES
+        FOLDER "Dear ImGui"
+        PROJECT_LABEL "Dear ImGui"
+    )
 endif()
-
-# Let user override with either CMAKE_PREFIX_PATH, or IMGUI_DIR environment variable
-find_path(ImGui_DIR NAMES imgui.h)
-
-# Must have ImGui_DIR defined to move past this point
-if(NOT ImGui_DIR)
-    return()
-endif()
-
-add_library(imgui_gl3 STATIC
-    ${ImGui_DIR}/imgui.h
-    ${ImGui_DIR}/imgui.cpp
-    ${ImGui_DIR}/imgui_demo.cpp
-    ${ImGui_DIR}/imgui_draw.cpp
-    ${ImGui_DIR}/imgui_tables.cpp
-    ${ImGui_DIR}/imgui_widgets.cpp
-    ${ImGui_DIR}/backends/imgui_impl_opengl3.h
-    ${ImGui_DIR}/backends/imgui_impl_opengl3.cpp
-    ${ImGui_DIR}/backends/imgui_impl_opengl3_loader.h
-)
-target_include_directories(imgui_gl3 PUBLIC "${ImGui_DIR}")
-target_link_libraries(imgui_gl3 PUBLIC OpenGL::GL PRIVATE ${CMAKE_DL_LIBS})
-add_library(VSI::imgui_gl3 ALIAS imgui_gl3)
-set_target_properties(imgui_gl3 PROPERTIES
-    FOLDER "Dear ImGui"
-    PROJECT_LABEL "Dear ImGui"
-)
 
 # Set up the ImGuiLib, based on ImGui
 set(SOURCE_FILES
@@ -55,6 +66,12 @@ set(SOURCE_FILES
 
 add_library(ImGuiLib ${SOURCE_FILES})
 target_include_directories(ImGuiLib PUBLIC .)
+# Add binary directory to include path so we can use #include "backends/imgui_impl_opengl3.h" for vcpkg
+if(USE_VCPKG_SIMDISSDK)
+    target_include_directories(ImGuiLib PRIVATE "${CMAKE_BINARY_DIR}")
+else()
+    target_include_directories(ImGuiLib PRIVATE "${ImGui_DIR}")
+endif()
 target_link_libraries(ImGuiLib PUBLIC osgEarth::osgEarth VSI::imgui_gl3 PRIVATE simVis simCore simNotify)
 if(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(ImGuiLib PRIVATE -fno-strict-aliasing)
