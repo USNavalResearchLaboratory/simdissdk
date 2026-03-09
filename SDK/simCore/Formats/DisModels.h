@@ -23,8 +23,8 @@
 #ifndef SIMCORE_FORMAT_DISMODELS_H
 #define SIMCORE_FORMAT_DISMODELS_H
 
-#include <iosfwd>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 #include "simCore/Common/Export.h"
