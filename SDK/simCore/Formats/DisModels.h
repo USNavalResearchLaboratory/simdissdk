@@ -37,7 +37,7 @@ namespace simCore {
 * searches for that ID don't require wildcard matching.
 */
 template<typename T>
-class SDKCORE_EXPORT DisModelCache
+class DisModelCache
 {
 public:
   DisModelCache() {}
