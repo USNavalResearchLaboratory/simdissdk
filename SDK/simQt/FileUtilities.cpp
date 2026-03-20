@@ -28,11 +28,6 @@
 
 namespace simQt {
 
-bool FileUtilities::isPathWritable(const QString& absoluteFilePath)
-{
-  return simCore::isDirectoryWritable(absoluteFilePath.toStdString());
-}
-
 int FileUtilities::createHomePath(const QString& relativeFilePath, bool roaming, QString& absolutePath)
 {
   if (!QDir::isRelativePath(relativeFilePath))
