@@ -24,7 +24,6 @@
 #include <osg/RenderInfo>
 #include "imgui.h"
 #include "backends/imgui_impl_opengl3.h"
-#include "BaseGui.h"
 #include "OsgImGuiHandler.h"
 #include "osgEarth/Version"
 #include "osgEarth/ShaderLoader"
@@ -163,12 +162,6 @@ void OsgImGuiHandler::add(osgEarth::GUI::BaseGUI* gui)
     menus_["User"].push_back(std::unique_ptr<osgEarth::GUI::BaseGUI>(gui));
 }
 #endif
-
-void OsgImGuiHandler::add(::GUI::BaseGui* gui)
-{
-  std::cerr << "GUI \"" << gui->name() << "\" is of a deprecated type (::GUI::BaseGui). Update to simExamples::SimExamplesGui\n";
-  deprecatedGuis_.push_back(std::unique_ptr<::GUI::BaseGui>(gui));
-}
 
 static ImGuiKey convertKey(int c)
 {
@@ -513,18 +506,6 @@ void OsgImGuiHandler::draw_(osg::RenderInfo& ri)
       }
       gui->draw(ri);
     }
-  }
-
-  for (auto& gui : deprecatedGuis_)
-  {
-    if (firstDraw_)
-    {
-      if (defaultFont_)
-        gui->setDefaultFont(defaultFont_);
-      if (largeFont_)
-        gui->setLargeFont(largeFont_);
-    }
-    gui->draw(ri);
   }
 
   firstDraw_ = false;

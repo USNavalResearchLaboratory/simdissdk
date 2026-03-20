@@ -45,8 +45,6 @@ set_target_properties(imgui_gl3 PROPERTIES
 
 # Set up the ImGuiLib, based on ImGui
 set(SOURCE_FILES
-    BaseGui.h
-    BaseGui.cpp
     OsgImGuiHandler.h
     OsgImGuiHandler.cpp
     SimExamplesGui.h
