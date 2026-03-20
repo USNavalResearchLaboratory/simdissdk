@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class Circle; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Circle */
 class SDKVIS_EXPORT Circle
 {
 public:
-  /** Create the circle from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the circle from the shape object */
   static GogNodeInterface* createCircle(const simCore::GOG::Circle& circle, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

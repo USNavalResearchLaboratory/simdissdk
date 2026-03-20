@@ -28,56 +28,10 @@
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
 #include "simVis/GOG/LoaderUtils.h"
-#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Sphere.h"
 #include "simVis/GOG/Utils.h"
 
 namespace simVis { namespace GOG {
-
-GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
-                    simVis::GOG::ParserData& p,
-                    const GOGNodeType&       nodeType,
-                    const GOGContext&        context,
-                    const GogMetaData&       metaData,
-                    osgEarth::MapNode*       mapNode)
-{
-  osgEarth::Distance radius(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_RADIUS, 1000.0)), osgEarth::Units::METERS);
-
-  osg::Vec4f color(osgEarth::Color::White);
-
-  float radius_m = radius.as(osgEarth::Units::METERS);
-
-  // cannot create a sphere with no radius
-  if (radius_m <= 0.f)
-  {
-    SIM_WARN << "Cannot create sphere with no radius\n";
-    return nullptr;
-  }
-  osg::ref_ptr<osg::Node> shape = simVis::createSphere(
-    radius_m, color);
-  shape->setName("GOG Sphere");
-
-  osgEarth::LocalGeometryNode* node = nullptr;
-
-  if (nodeType == GOGNODE_GEOGRAPHIC)
-  {
-    node = new osgEarth::LocalGeometryNode();
-    node->getPositionAttitudeTransform()->addChild(shape.get());
-    node->setStyle(p.style_);
-    node->setMapNode(mapNode);
-  }
-  else
-  {
-    node = new HostedLocalGeometryNode(shape.get(), p.style_);
-  }
-
-  node->setName("GOG Sphere Position");
-  Utils::applyLocalGeometryOffsets(*node, p, nodeType);
-  GogNodeInterface* rv = new SphericalNodeInterface(node, metaData);
-  rv->applyToStyle(parsedShape, p.units_);
-
-  return rv;
-}
 
 GogNodeInterface* Sphere::createSphere(const simCore::GOG::Sphere& sphere, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {

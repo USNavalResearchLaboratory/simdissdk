@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class ImageOverlay; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display an image overlay, implements the KML GroundOverlay using an osgEarth ImageOverlay object */
 class SDKVIS_EXPORT ImageOverlay
 {
 public:
-  /** Create the image overlay from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the image overlay from the shape object */
   static GogNodeInterface* createImageOverlay(const simCore::GOG::ImageOverlay& imageOverlay, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

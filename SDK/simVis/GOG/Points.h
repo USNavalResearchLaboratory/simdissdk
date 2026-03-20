@@ -1,4 +1,5 @@
 /* -*- mode: c++ -*- */
+/* -*- mode: c++ -*- */
 /****************************************************************************
  *****                                                                  *****
  *****                   Classification: UNCLASSIFIED                   *****
@@ -31,37 +32,13 @@ namespace simCore { namespace GOG { class Points; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Points */
 class SDKVIS_EXPORT Points
 {
 public:
-  /** Create the points from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the points from the shape object */
   static GogNodeInterface* createPoints(const simCore::GOG::Points& points, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
-
-private:
-  /** Implements the deserialization once the parser data's points have been configured. */
-  GogNodeInterface* deserializeImpl_(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
-  /** Takes the points data from ParserData and recreates linesegments for extrusion */
-  void recreateAsLineSegs_(simVis::GOG::ParserData& p, double extrudeHeight) const;
 };
 
 } } // namespace simVis::GOG

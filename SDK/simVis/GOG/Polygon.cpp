@@ -29,7 +29,6 @@
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
 #include "simVis/GOG/LoaderUtils.h"
-#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
 #undef LC
@@ -38,63 +37,6 @@
 using namespace osgEarth;
 
 namespace simVis { namespace GOG {
-
-GogNodeInterface* simVis::GOG::Polygon::deserialize(const ParsedShape& parsedShape,
-                                  simVis::GOG::ParserData& p,
-                                  const GOGNodeType&       nodeType,
-                                  const GOGContext&        context,
-                                  const GogMetaData&       metaData,
-                                  osgEarth::MapNode*       mapNode)
-{
-  p.parseGeometry<osgEarth::Polygon>(parsedShape);
-  GogNodeInterface* rv = nullptr;
-  if (nodeType == GOGNODE_GEOGRAPHIC)
-  {
-    // Try to prevent terrain z-fighting.
-    if (p.geometryRequiresClipping())
-      Utils::configureStyleForClipping(p.style_);
-
-    // force non-zero crease angle for extruded tessellated polygon, we want to only draw posts at actual vertices
-    if (p.style_.has<osgEarth::LineSymbol>() &&
-      p.style_.getSymbol<osgEarth::LineSymbol>()->tessellation() > 0 &&
-      p.style_.has<osgEarth::ExtrusionSymbol>() &&
-      !p.style_.getSymbol<osgEarth::LineSymbol>()->creaseAngle().isSet())
-    {
-      p.style_.getSymbol<osgEarth::LineSymbol>()->creaseAngle() = 1.0f;
-    }
-
-    if (p.hasAbsoluteGeometry())
-    {
-      Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
-      if (p.geoInterp_.isSet())
-        feature->geoInterp() = p.geoInterp_.value();
-      FeatureNode* featureNode = new FeatureNode(feature);
-      featureNode->setMapNode(mapNode);
-      rv = new FeatureNodeInterface(featureNode, metaData);
-      featureNode->setName("GOG Polygon");
-    }
-    else
-    {
-      LocalGeometryNode* node = new LocalGeometryNode(p.geom_.get(), p.style_);
-      node->setMapNode(mapNode);
-      Utils::applyLocalGeometryOffsets(*node, p, nodeType);
-      rv = new LocalGeometryNodeInterface(node, metaData);
-      node->setName("GOG Polygon");
-    }
-  }
-  else // if ( nodeType == GOGNODE_HOSTED )
-  {
-    LocalGeometryNode* node = new HostedLocalGeometryNode(p.geom_.get(), p.style_);
-    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
-    rv = new LocalGeometryNodeInterface(node, metaData);
-    node->setName("GOG Polygon");
-  }
-
-  if (rv)
-    rv->applyToStyle(parsedShape, p.units_);
-
-  return rv;
-}
 
 GogNodeInterface* Polygon::createPolygon(const simCore::GOG::Polygon& polygon, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
