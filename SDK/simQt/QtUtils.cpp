@@ -21,6 +21,7 @@
  *
  */
 #include <QApplication>
+#include <QDialog>
 #include <QMainWindow>
 #include <QScreen>
 #ifdef WIN32
@@ -136,9 +137,16 @@ QWidget* QtUtils::getMainWindowParent(QWidget* widget)
 {
   if (!widget)
     return widget;
-
+  
+  // SIM-19177: When docking a QDockWidget that has spawned other dialogs, having them parented to the QDockWidget
+  // causes odd behavior resulting in them being hidden behind the MainWindow and not closing when the application is exited.
+  // However, if a modal dialog creates another dialog and the latter is parented to the MainWindow, then it becomes unusable
+  // and is hidden behind the "parent" modal dialog. 
+  // These behavioral issues seem to stem from bugs in Qt6, so we're working around them and keeping our eye on it.
   for (QWidget* rv = dynamic_cast<QWidget*>(widget->parent()); rv != nullptr; rv = dynamic_cast<QWidget*>(rv->parent()))
   {
+    if (auto dialog = dynamic_cast<QDialog*>(rv); dialog != nullptr && dialog->isModal())
+      return rv;
     if (dynamic_cast<QMainWindow*>(rv) != nullptr)
       return rv;
   }

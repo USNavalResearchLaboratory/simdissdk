@@ -66,9 +66,9 @@ public:
   static bool hasAccentColorProblems();
 
   /**
-  * Get the QMainWindow parent widget for the specified widget, simply returns the input if no QMainWindow parent is found.
-  * @param widget input widget to search parent tree for a QMainWidget
-  * @return the QMainWidget if found, otherwise returns the input widget
+  * Get the QMainWindow or Modal QDialog parent widget for the specified widget, simply returns the input if no relevant parent is found.
+  * @param widget input widget to search parent tree for a QMainWidget or Modal QDialog
+  * @return the QMainWidget or earliest Model QDialog parent if found, otherwise returns the input widget
   */
   static QWidget* getMainWindowParent(QWidget* widget);
 };

@@ -679,7 +679,7 @@ void EntityTreeComposite::showFilters_()
     return;
   }
   // create a new filter dialog, using the filter widgets from the EntityTreeWidget's proxy model
-  // Qt6 has problems with QDialogs that aren't parented to the QMainWindow, so attempt to set main window as the parent
+  // SIM-19177: Qt6 has problems with QDialogs that aren't parented to the QMainWindow, so attempt to set main window as the parent
   filterDialog_ = new FilterDialog(settings_, QtUtils::getMainWindowParent(this));
   QList<QWidget*> filterWidgets = entityTreeWidget_->filterWidgets(filterDialog_);
   filterDialog_->setMinimumWidth(200);
