@@ -427,14 +427,6 @@ public:
 protected: // methods
 
   /**
-  * Child classes implement this to serialize their geometry into a GOG format string
-  */
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const = 0;
-
-  /** Serialize the keyword to the specified output stream */
-  virtual void serializeKeyword_(std::ostream& gogOutputStream) const;
-
-  /**
   * Child classes can override this to return a reference to their Style object
   * @return the current Style object reference
   */
@@ -515,15 +507,6 @@ protected: // data
   std::string saveDirPath_; ///< Directory path location when saving a GOG file
 
 private:
-
-  /**
-  * Check the metadata string for the specified flag keyword. If it is present, erase the keyword from the
-  * metadata and return true, otherwise return false
-  * @param flag  keyword to match in metadata
-  * @param metaData  value to search
-  */
-  bool getMetaDataFlag_(const std::string& flag, std::string& metaData);
-
   /** Check which shapes are valid to use with the GogNodeInterface base class fill methods */
   bool isFillable_(simVis::GOG::GogShape shape) const;
 
@@ -583,7 +566,6 @@ public:
 
 protected:
   virtual void adjustAltitude_() override;
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const override;
   virtual void setStyle_(const osgEarth::Style& style) override;
   virtual void applyOrientationOffsets_() override;
 
@@ -611,7 +593,6 @@ public:
 
 protected:
   virtual void adjustAltitude_();
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
   virtual void applyOrientationOffsets_();
 
@@ -642,8 +623,6 @@ public:
 
 protected:
   virtual void adjustAltitude_();
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
-  virtual void serializeKeyword_(std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
 
 private:
@@ -672,7 +651,6 @@ public:
 
 protected:
   virtual void adjustAltitude_();
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
 
 private:
@@ -700,7 +678,6 @@ public:
 
 protected:
   virtual void adjustAltitude_();
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
   virtual void applyOrientationOffsets_();
 
@@ -764,7 +741,6 @@ public:
 
 protected:
   virtual void adjustAltitude_();
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
   virtual void applyOrientationOffsets_();
 
@@ -784,8 +760,6 @@ public:
   virtual void setAltOffset(double altOffsetMeters);
 
 protected:
-  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
-  virtual void serializeKeyword_(std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
 
 private:

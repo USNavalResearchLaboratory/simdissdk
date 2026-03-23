@@ -478,190 +478,9 @@ size_t GogNodeInterface::lineNumber() const
 
 void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
 {
-  // prefer shape if it's set
-  if (shape_)
-  {
-    shape_->serializeToStream(gogOutputStream);
+  if (!shape_)
     return;
-  }
-
-  std::string metaData = metaData_.metadata;
-  simVis::GOG::GogShape shape = metaData_.shape;
-
-  // first add the shape keyword
-  serializeKeyword_(gogOutputStream);
-
-  // check for keyword flags
-  bool serializeGeometry = Utils::canSerializeGeometry_(shape);
-  bool relativeShape = getMetaDataFlag_(simVis::GOG::RelativeShapeKeyword, metaData);
-  bool referencePoint = getMetaDataFlag_(simVis::GOG::ReferencePointKeyword, metaData);
-
-  // add the metadata
-  gogOutputStream << metaData;
-
-  // serialize geometry where it is possible to extract geometry information from the nodes. Otherwise, geometry will have been stored in meta data
-  if (serializeGeometry)
-  {
-    // alt units are meters
-    gogOutputStream << "altitudeunits meters\n";
-
-    // if relative, the xy range units are in meters
-    if (relativeShape)
-    {
-      // if relative shape has a reference position, serialize it, if possible
-      if (referencePoint)
-      {
-        osg::Vec3d position;
-        // note that in osg position syntax, lat is y, lon is x, alt is z
-        if (getReferencePosition(position) == 0)
-          gogOutputStream << "referencepoint " << position.y() << " " << position.x() << " " << position.z() << "\n";
-      }
-      gogOutputStream << "rangeunits meters\n";
-    }
-
-    // try to serialize the geometry
-    serializeGeometry_(relativeShape, gogOutputStream);
-  }
-  // now add the style data
-
-  // draw flag
-  if (!getDraw())
-    gogOutputStream << "off\n";
-
-  // line style
-  int lineWidth = 1;
-  bool outlineState = false;
-  osg::Vec4f lineColor;
-  Utils::LineStyle lineStyle = Utils::LINE_SOLID;
-  if (getLineState(outlineState, lineColor, lineStyle, lineWidth) == 0)
-  {
-    if (metaData_.isSetExplicitly(GOG_LINE_WIDTH_SET))
-      gogOutputStream << "linewidth " << lineWidth << "\n";
-    if (metaData_.isSetExplicitly(GOG_LINE_COLOR_SET))
-      gogOutputStream << "linecolor hex " << Utils::serializeOsgColor(lineColor) << "\n";
-    if (metaData_.isSetExplicitly(GOG_LINE_STYLE_SET))
-      gogOutputStream << "linestyle " << Utils::serializeLineStyle(lineStyle) << "\n";
-    if (outlineState && metaData_.isSetExplicitly(GOG_OUTLINE_SET))
-      gogOutputStream << "outline true\n";
-    else if (!outlineState && metaData_.isSetExplicitly(GOG_OUTLINE_SET))
-      gogOutputStream << "outline false\n";
-  }
-
-  int pointSize;
-  if ((getPointSize(pointSize) == 0) && metaData_.isSetExplicitly(GOG_POINT_SIZE_SET))
-    gogOutputStream << "pointsize" << pointSize << "\n";
-
-  // fill style
-  bool fillState = false;
-  osg::Vec4f fillColor;
-  if ((getFilledState(fillState, fillColor) == 0))
-  {
-    if (metaData_.isSetExplicitly(GOG_FILL_COLOR_SET))
-      gogOutputStream << "fillcolor hex " << Utils::serializeOsgColor(fillColor) << "\n";
-    if (fillState)
-      gogOutputStream << "filled\n";
-  }
-
-  // depth buffer
-  bool depthBuffer = false;
-  if (getDepthBuffer(depthBuffer) == 0 && metaData_.isSetExplicitly(GOG_DEPTH_BUFFER_SET))
-    gogOutputStream << "depthBuffer " << (depthBuffer ? "true" : "false") << "\n";
-
-  // altoffset
-  double altOffset = 0.0;
-  if (getAltOffset(altOffset) == 0 && metaData_.isSetExplicitly(GOG_THREE_D_OFFSET_ALT_SET))
-  {
-    // if not serializing geometry, which always uses meters, convert to the stored altitude units
-    if (!serializeGeometry)
-    {
-      simCore::Units curUnits(simCore::Units::METERS);
-      altOffset = curUnits.convertTo(metaData_.altitudeUnits_, altOffset);
-    }
-    gogOutputStream << "3d offsetalt " << altOffset << "\n";
-  }
-  // font
-  int fontSize;
-  std::string fontFile;
-  osg::Vec4f fontColor;
-  if (getFont(fontFile, fontSize, fontColor) == 0)
-  {
-    // font file is full path, serialize only file name
-    std::string fontFileNoPath = simCore::backslashToFrontslash(fontFile);
-    fontFileNoPath = fontFileNoPath.substr((fontFileNoPath.rfind("/") + 1)); //< increment index so the slash is not saved out with the font name
-    if (metaData_.isSetExplicitly(GOG_FONT_NAME_SET))
-      gogOutputStream << "fontname " << fontFileNoPath << "\n";
-    if (metaData_.isSetExplicitly(GOG_FONT_SIZE_SET))
-      gogOutputStream << "fontsize " << fontSize << "\n";
-    if (metaData_.isSetExplicitly(GOG_LINE_COLOR_SET))
-      gogOutputStream << "linecolor hex " << Utils::serializeOsgColor(fontColor) << "\n";
-  }
-
-  // text outline
-  osg::Vec4f outlineColor;
-  simData::TextOutline outlineThickness;
-  if (getTextOutline(outlineColor, outlineThickness) == 0)
-  {
-    if (metaData_.isSetExplicitly(GOG_TEXT_OUTLINE_COLOR_SET))
-      gogOutputStream << "textoutlinecolor hex " << Utils::serializeOsgColor(outlineColor) << "\n";
-    if (metaData_.isSetExplicitly(GOG_TEXT_OUTLINE_THICKNESS_SET))
-    {
-      std::string outlineThicknessStr;
-      switch (outlineThickness)
-      {
-      case simData::TextOutline::TO_THICK:
-        outlineThicknessStr = "thick";
-        break;
-      case simData::TextOutline::TO_THIN:
-        outlineThicknessStr = "thin";
-        break;
-      case simData::TextOutline::TO_NONE:
-        outlineThicknessStr = "none";
-        break;
-      }
-
-      // Assertion failure means there's an unhandled value in the above switch
-      assert(!outlineThicknessStr.empty());
-      gogOutputStream << "textoutlinethickness " << outlineThicknessStr << "\n";
-    }
-  }
-
-  // extrude
-  bool extruded = false;
-  if ((getExtruded(extruded) == 0) && extruded)
-  {
-    double extrudeHeightM;
-    if (0 == getExtrudedHeight(extrudeHeightM))
-      gogOutputStream << "extrude true " << extrudeHeightM << "\n";
-    else
-      gogOutputStream << "extrude true\n";
-  }
-  else if (metaData_.isSetExplicitly(GOG_EXTRUDE_SET))
-    gogOutputStream << "extrude false\n";
-
-  // tessellate
-  TessellationStyle tessellate = TESSELLATE_NONE;
-  if ((getTessellation(tessellate) == 0) && tessellate != TESSELLATE_NONE)
-  {
-    gogOutputStream << "tessellate true\n";
-    if (metaData_.isSetExplicitly(GOG_LINE_PROJECTION_SET))
-      gogOutputStream << "lineprojection " << (tessellate == TESSELLATE_GREAT_CIRCLE_PROJECTION ? "greatcircle" : "rhumbline") << "\n";
-  }
-  else if (metaData_.isSetExplicitly(GOG_TESSELLATE_SET))
-    gogOutputStream << "tessellate false\n";
-
-  // altitude mode
-  simVis::GOG::AltitudeMode altMode = simVis::GOG::ALTITUDE_NONE;
-  if (getAltitudeMode(altMode) == 0)
-  {
-    if (altMode == simVis::GOG::ALTITUDE_NONE && metaData_.isSetExplicitly(GOG_ALTITUDE_MODE_SET))
-      gogOutputStream << "altitudemode none\n";
-    else if (altMode == simVis::GOG::ALTITUDE_GROUND_RELATIVE)
-      gogOutputStream << "altitudemode relativetoground\n";
-    else if (altMode == simVis::GOG::ALTITUDE_GROUND_CLAMPED)
-      gogOutputStream << "altitudemode clamptoground\n";
-    // simVis::GOG::ALTITUDE_EXTRUDE is covered by the extrude keyword
-  }
-  // Follow data is not currently serialized out
+  shape_->serializeToStream(gogOutputStream);
 }
 
 int GogNodeInterface::getAltitudeMode(AltitudeMode& altMode) const
@@ -1415,16 +1234,6 @@ void GogNodeInterface::applyBackfaceCulling()
 
   setStyle_(style_);
 }
-bool GogNodeInterface::getMetaDataFlag_(const std::string& flag, std::string& metaData)
-{
-  size_t keywordIndex = metaData.find(flag);
-  if (keywordIndex == std::string::npos)
-    return false;
-  // erase our flag keyword
-  metaData.erase(keywordIndex, flag.size());
-  return true;
-}
-
 void GogNodeInterface::initializeAltitudeSymbol_()
 {
   osgEarth::AltitudeSymbol* alt = style_.getOrCreate<osgEarth::AltitudeSymbol>();
@@ -1528,11 +1337,6 @@ void GogNodeInterface::endStyleUpdates_()
 bool GogNodeInterface::deferringStyleUpdates_() const
 {
   return deferringStyleUpdate_;
-}
-
-void GogNodeInterface::serializeKeyword_(std::ostream& gogOutputStream) const
-{
-  gogOutputStream << simVis::GOG::Utils::getKeywordFromShape(metaData_.shape) << "\n";
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -1825,30 +1629,6 @@ void FeatureNodeInterface::adjustAltitude_()
   // No-op in feature node
 }
 
-void FeatureNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  if (!featureNode_.valid())
-    return;
-
-  osgEarth::Geometry* geometry = featureNode_->getFeature()->getGeometry();
-  if (!geometry)
-    return;
-
-  if (geometry->size() != originalAltitude_.size())
-  {
-    assert(0); // somehow our vector of original altitude values is out of synch with the geometry
-    return;
-  }
-
-  // since we may have applied an altitude offset, get the original altitude values before serializing
-  osg::ref_ptr<osgEarth::Geometry> originalGeometry = geometry->clone();
-  for (size_t i = 0; i < originalGeometry->size(); ++i)
-  {
-    (*originalGeometry)[i].z() = originalAltitude_.at(i);
-  }
-  Utils::serializeShapeGeometry(originalGeometry.get(), relativeShape, gogOutputStream);
-}
-
 void FeatureNodeInterface::markDirty()
 {
   if (featureNode_.valid())
@@ -1943,16 +1723,6 @@ void LocalGeometryNodeInterface::adjustAltitude_()
 {
   if (localNode_.valid())
     setGeoPositionAltitude_(*localNode_.get(), 0.);
-}
-
-void LocalGeometryNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  if (!localNode_.valid())
-    return;
-
-  const osgEarth::Geometry* geometry = localNode_->getGeometry();
-  if (geometry)
-    Utils::serializeShapeGeometry(geometry, relativeShape, gogOutputStream);
 }
 
 void LocalGeometryNodeInterface::setStyle_(const osgEarth::Style& style)
@@ -2161,16 +1931,6 @@ void LabelNodeInterface::adjustAltitude_()
     setGeoPositionAltitude_(*labelNode_.get(), 0.);
 }
 
-void LabelNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  // nothing to do, labels don't serialize geometry
-}
-
-void LabelNodeInterface::serializeKeyword_(std::ostream& gogOutputStream) const
-{
-  // nothing to do, labels include the keyword in their text value element
-}
-
 void LabelNodeInterface::setStyle_(const osgEarth::Style& style)
 {
   if (&style != &style_)
@@ -2245,11 +2005,6 @@ void CylinderNodeInterface::adjustAltitude_()
     setGeoPositionAltitude_(*sideNode_.get(), 0.);
   if (bottomCapNode_.valid())
     setGeoPositionAltitude_(*bottomCapNode_.get(), 0.);
-}
-
-void CylinderNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  // Cylinder can't serialize its geometry, serialization of center, radius, height is stored in the meta data
 }
 
 void CylinderNodeInterface::setStyle_(const osgEarth::Style& style)
@@ -2354,11 +2109,6 @@ void ArcNodeInterface::setFilledState(bool state)
   simCore::GOG::FillableShape* fillable = dynamic_cast<simCore::GOG::FillableShape*>(shape_.get());
   if (fillable)
     fillable->setFilled(state);
-}
-
-void ArcNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  // Arc can't serialize its geometry, serialization for center and radius is stored in the meta data
 }
 
 void ArcNodeInterface::setStyle_(const osgEarth::Style& style)
@@ -2669,11 +2419,6 @@ void ImageOverlayInterface::adjustAltitude_()
   // no-op
 }
 
-void ImageOverlayInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  // no-op since this is not officially supported in GOG format, the geometry will be part of the meta-data
-}
-
 void ImageOverlayInterface::setStyle_(const osgEarth::Style& style)
 {
   // no-op, can't update style
@@ -2709,16 +2454,6 @@ void LatLonAltBoxInterface::setAltOffset(double altOffsetMeters)
 
   if (shape_)
     shape_->setAltitudeOffset(altOffsetMeters);
-}
-
-void LatLonAltBoxInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  // no-op, LatLonAltBox corners are stored in the meta data
-}
-
-void LatLonAltBoxInterface::serializeKeyword_(std::ostream& gogOutputStream) const
-{
-  // nothing to do, LLA box includes the keyword in their metadata as part of the corner LLAs
 }
 
 void LatLonAltBoxInterface::setStyle_(const osgEarth::Style& style)

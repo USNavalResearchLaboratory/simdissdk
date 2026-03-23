@@ -66,11 +66,6 @@ namespace simVis { namespace GOG
   static const unsigned short GogDashStipple = 0x3ffc;
   static const unsigned short GogSolidStipple = 0xffff;
 
-  // Keyword in meta data to indicate the shape is relative, i.e. has xyz positions
-  static const std::string RelativeShapeKeyword = "RELATIVE_SHAPE";
-  // Keyword in meta data to indicate the shape has a referencepoint which may be obtained from the node's geometry
-  static const std::string ReferencePointKeyword = "REFERENCE_POINT";
-
   /**
   * Describes the GOG's shape type
   */

@@ -56,33 +56,6 @@ static const float DEFAULT_LABEL_PRIORITY = -1.f;
 
 namespace simVis { namespace GOG {
 
-bool Utils::canSerializeGeometry_(simVis::GOG::GogShape shape)
-{
-  switch (shape)
-  {
-  case simVis::GOG::GOG_LINE:
-  case simVis::GOG::GOG_LINESEGS:
-  case simVis::GOG::GOG_POLYGON:
-  case simVis::GOG::GOG_POINTS:
-    return true;
-  case simVis::GOG::GOG_ARC:
-  case simVis::GOG::GOG_CIRCLE:
-  case simVis::GOG::GOG_ELLIPSE:
-  case simVis::GOG::GOG_ELLIPSOID:
-  case simVis::GOG::GOG_CYLINDER:
-  case simVis::GOG::GOG_SPHERE:
-  case simVis::GOG::GOG_HEMISPHERE:
-  case simVis::GOG::GOG_UNKNOWN:
-  case simVis::GOG::GOG_ANNOTATION:
-  case simVis::GOG::GOG_LATLONALTBOX:
-  case simVis::GOG::GOG_CONE:
-  case simVis::GOG::GOG_IMAGEOVERLAY:
-  case simVis::GOG::GOG_ORBIT:
-    break;
-  }
-  return false;
-}
-
 void Utils::getGeometryPoints(const osgEarth::Geometry* geometry, std::vector<osg::Vec3d>& points)
 {
   if (!geometry)

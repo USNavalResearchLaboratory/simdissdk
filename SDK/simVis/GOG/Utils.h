@@ -56,13 +56,6 @@ namespace simVis { namespace GOG
       };
 
       /**
-      * Determines if the specified shape's geometry can be serialized directly into Overlay format. This is dependent on how the shapes
-      * are constructed from osg::Nodes. Things like lines and polygons have few points representing the vertices, which matches. However circles
-      * and ellipses are made up of multiple points around the circumference, and these points will not easily translate into Overlay format
-      */
-      static bool canSerializeGeometry_(simVis::GOG::GogShape shape);
-
-      /**
       * Get a vector of all the points in the Geometry. Handle the case where the geometry may be a MultiGeometry, for shapes like
       * line segs. Fills up the points param with all the point values, in standard osgEarth format, lon/lat/alt, units are deg/deg/meters
       */
