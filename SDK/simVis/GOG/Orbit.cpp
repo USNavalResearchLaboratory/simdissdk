@@ -27,7 +27,6 @@
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/GOG/GogShape.h"
-#include "simVis/GOG/ErrorHandler.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
 #include "simVis/GOG/LoaderUtils.h"

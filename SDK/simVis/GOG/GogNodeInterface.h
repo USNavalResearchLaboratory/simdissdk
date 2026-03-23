@@ -122,9 +122,6 @@ public:
   /** Revert to the default style set by storeDefaultStyle(). */
   void revertToDefaultStyle();
 
-  /** Apply a ParsedShape object to the GOG's style */
-  virtual void applyToStyle(const ParsedShape& parsedShape, const UnitsState& units);
-
   /**
   * Get the altitude mode of the Overlay, returns false if the Overlay does not support an altitude mode
   * @param altMode  returns current valid altitude mode
@@ -381,12 +378,6 @@ public:
 
   /** Set backface culling based on shape state */
   void applyBackfaceCulling();
-
-  /**
-   * Get the shape's original load format, which is defined in the meta data
-   * @return load format enum
-   */
-  simVis::GOG::LoadFormat loadFormat() const;
 
   /** Sets the units that were specified for "xy" commands (default to YARDS) */
   void setRangeUnits(const simCore::Units& rangeUnits);

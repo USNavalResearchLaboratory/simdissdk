@@ -32,7 +32,6 @@
 #include "simCore/GOG/GogShape.h"
 #include "simVis/Constants.h"
 #include "simVis/GOG/Arc.h"
-#include "simVis/GOG/ErrorHandler.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
 #include "simVis/GOG/LoaderUtils.h"

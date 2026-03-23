@@ -199,7 +199,6 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/Cylinder.h
     ${VIS_INC}GOG/Ellipse.h
     ${VIS_INC}GOG/Ellipsoid.h
-    ${VIS_INC}GOG/ErrorHandler.h
     ${VIS_INC}GOG/GOGNode.h
     ${VIS_INC}GOG/GogNodeInterface.h
     ${VIS_INC}GOG/Hemisphere.h
@@ -211,7 +210,6 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/Loader.h
     ${VIS_INC}GOG/LoaderUtils.h
     ${VIS_INC}GOG/Orbit.h
-    ${VIS_INC}GOG/ParsedShape.h
     ${VIS_INC}GOG/Points.h
     ${VIS_INC}GOG/Polygon.h
     ${VIS_INC}GOG/Sphere.h
@@ -359,7 +357,6 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/Loader.cpp
     ${VIS_SRC}GOG/LoaderUtils.cpp
     ${VIS_SRC}GOG/Orbit.cpp
-    ${VIS_SRC}GOG/ParsedShape.cpp
     ${VIS_SRC}GOG/Points.cpp
     ${VIS_SRC}GOG/Polygon.cpp
     ${VIS_SRC}GOG/Sphere.cpp

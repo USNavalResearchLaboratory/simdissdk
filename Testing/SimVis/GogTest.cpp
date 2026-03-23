@@ -40,7 +40,6 @@
 #include "simCore/String/Utils.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Loader.h"
-#include "simVis/GOG/ParsedShape.h"
 #include "simVis/Headless.h"
 #include "simVis/Registry.h"
 

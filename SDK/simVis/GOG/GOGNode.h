@@ -66,48 +66,10 @@ namespace simVis { namespace GOG
   static const unsigned short GogDashStipple = 0x3ffc;
   static const unsigned short GogSolidStipple = 0xffff;
 
-  // surface tessellation size (meters) for ellipsoids, spheres, etc.
-  static float GogSurfaceResolution = 5000.0f;
-
   // Keyword in meta data to indicate the shape is relative, i.e. has xyz positions
   static const std::string RelativeShapeKeyword = "RELATIVE_SHAPE";
   // Keyword in meta data to indicate the shape has a referencepoint which may be obtained from the node's geometry
   static const std::string ReferencePointKeyword = "REFERENCE_POINT";
-  // Keyword in config to indicate shape has absolute points
-  static const std::string AbsoluteKeyword = "ABSOLUTE_SHAPE";
-
-  // Forward declare an error handler for the context (see simVis/GOG/ErrorHandler.h"
-  class ErrorHandler;
-
-  /// internal: context object used by the GOG parser
-  struct GOGContext
-  {
-    /** reference coordinate for relative objects */
-    osgEarth::optional<osgEarth::GeoPoint> refPoint_;
-    /** Error reporting */
-    std::shared_ptr<ErrorHandler> errorHandler_;
-    /** Possibly nullptr pointer to the shared Units Registry */
-    const simCore::UnitsRegistry* unitsRegistry_;
-
-    GOGContext()
-      : unitsRegistry_(nullptr)
-    {
-    }
-  };
-
-
-  /**
-   * GOG node types
-   */
-  enum GOGNodeType
-  {
-    /** Independent GOG with a specified position on the map. */
-    GOGNODE_GEOGRAPHIC,
-
-    /** GOG with relative positioning only, for attachment to an entity. */
-    GOGNODE_HOSTED
-  };
-
 
   /**
   * Describes the GOG's shape type
@@ -133,13 +95,6 @@ namespace simVis { namespace GOG
     GOG_ORBIT
   };
 
-  /** Describes the original load format of the shape */
-  enum LoadFormat
-  {
-    FORMAT_GOG = 0,
-    FORMAT_KML
-  };
-
   /**
   * Struct that defines meta data for a GOG. The string is metadata that captures attributes of the GOG
   * that may be lost when translated to an osg::Node, specifically things like the shape type
@@ -153,7 +108,6 @@ namespace simVis { namespace GOG
   public:
     std::string             metadata; ///< attributes of the GOG
     GogShape                shape; ///< identifying the exact shape type of the GOG
-    LoadFormat              loadFormat; ///< indicate the original load format of the GOG
     size_t                  lineNumber; ///< line number from the source GOG file
     simCore::Units          altitudeUnits_; ///< altitude units specified in the GOG file
   public:
@@ -166,22 +120,6 @@ namespace simVis { namespace GOG
   private:
     uint32_t                setFields_; ///< bitmap tracking which fields have been set explicitly by a loaded file or user input
     bool                    allowingSetExplicitly_; ///< bool to prevent setExplicitly from working when setting defaults
-  };
-
-  /**
-  * Struct that defines the follow orientation data for an attached gog, its locator flags will be updated with
-  * the orientation components to follow, simVis::Locator::COMP_HEADING, simVis::Locator::COMP_PITCH,
-  * simVis::Locator::COMP_ROLL. The offset values are in the orientationOffsets vector. Constructor initializes
-  * locatorFlags to simVis::Locator::COMP_NONE.
-  *
-  * @deprecated This is only used in the now-deprecated simVis::GOG::Parser
-  */
-  struct SDKVIS_EXPORT GogFollowData
-  {
-    unsigned int            locatorFlags; ///< The orientation components to follow
-    simCore::Vec3           orientationOffsets; ///< Offset values
-    /** Constructor */
-    GogFollowData();
   };
 
 } } // namespace simVis::GOG
