@@ -147,6 +147,8 @@ endif()
 
 # Build Release mode by default on Linux, unless otherwise specified
 include(DefaultToReleaseBuildType)
+# Define the various INSTALLSETTINGS values
+include(InstallSettingsDirs)
 
 # Copy the helper script into the build directory
 configure_file("${PROJECT_SOURCE_DIR}/CMakeUtilities/ExperimentalSubmit.cmake" "${PROJECT_BINARY_DIR}/ExperimentalSubmit.cmake")
@@ -170,12 +172,6 @@ if(UNIX AND COVERAGE_COMMAND)
 endif()
 
 # Setup third party dependencies
-
-# Prepopulate the installation runtime and library directory to override SIMDIS defaults
-set(INSTALLSETTINGS_RUNTIME_DIR "bin" CACHE STRING "Directory containing exectuables and DLLs; non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
-set(INSTALLSETTINGS_LIBRARY_DIR "lib" CACHE STRING "Directory containing shared object files (UNIX only); non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
-include(CreateInstallProperties)
-
 
 # --- System Libraries --------------------
 
