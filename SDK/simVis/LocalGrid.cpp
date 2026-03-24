@@ -316,7 +316,7 @@ public:
     }
     points_->allocate(vertexCount);
     points_->setColor(color);
-    addChild(points_);
+    addChild(points_.get());
   }
   void update(double sizeM)
   {
@@ -345,9 +345,9 @@ public:
     points_->dirty();
   }
 private:
-  float sectorAngleDeg_;
-  unsigned int numRings_;
-  osgEarth::PointDrawable* points_;
+  float sectorAngleDeg_ = 0.f;
+  unsigned int numRings_ = 0u;
+  osg::ref_ptr<osgEarth::PointDrawable> points_;
 };
 
 /// Geometry for range rings in Polar, RangeRing and SpeedRing grid types.
