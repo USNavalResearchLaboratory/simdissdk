@@ -255,7 +255,7 @@ endfunction()
 # Sets the INSTALL_RPATH property on TARGET based on installing to DESTINATION.
 # DESTINATION is typically relative to CMAKE_INSTALL_PREFIX, but may also be
 # an absolute path.  The RPATH will be set to pull libs from the
-# INSTALLSETTINGS_LIBRARY_DIR value under CMAKE_INSTALL_PREFIX.
+# CMAKE_INSTALL_LIBDIR value under CMAKE_INSTALL_PREFIX.
 function(vsi_set_rpath TARGET DESTINATION)
     if(WIN32)
         return()
@@ -267,7 +267,7 @@ function(vsi_set_rpath TARGET DESTINATION)
     endif()
 
     # Compute RPATH for lib directory containing dependencies relative to bin installation directory
-    file(RELATIVE_PATH REL_INSTALL_PATH ${DESTINATION_ABS} ${CMAKE_INSTALL_PREFIX}/${INSTALLSETTINGS_LIBRARY_DIR})
+    file(RELATIVE_PATH REL_INSTALL_PATH ${DESTINATION_ABS} ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
     # If the lib and bin paths were the same, an empty value will be returned
     if(NOT REL_INSTALL_PATH)
         set(REL_INSTALL_PATH ".")
@@ -279,10 +279,10 @@ endfunction()
 # vsi_install_executable(<TARGET> <COMPONENT> [DESTINATION])
 #
 # Installs executable for compiled TARGET using the installation component
-# COMPONENT.  Installs to INSTALLSETTINGS_RUNTIME_DIR unless the DESTINATION
+# COMPONENT.  Installs to CMAKE_INSTALL_BINDIR unless the DESTINATION
 # field is set.
 function(vsi_install_executable TARGET COMPONENT)
-    set(DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR})
+    set(DESTINATION ${CMAKE_INSTALL_BINDIR})
     if(${ARGC} GREATER 2)
         set(DESTINATION ${ARGV2})
     endif()
@@ -301,12 +301,12 @@ endfunction()
 # vsi_install_shared_library(<TARGET> <COMPONENT> [DESTINATION])
 #
 # Installs compiled shared library TARGET using the installation component
-# COMPONENT.  Installs to INSTALLSETTINGS_SHARED_LIBRARY_DIR unless the
+# COMPONENT.  Installs to PROJECT_INSTALL_SHARED_DIR unless the
 # DESTINATION field is set.  Sets RPATH as needed on the target.  If the
 # library TARGET has the target property TARGET_EXPORT_NAME set, it will
 # install using that value for the install(TARGETS EXPORT) signature.
 function(vsi_install_shared_library TARGET COMPONENT)
-    set(DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR})
+    set(DESTINATION ${PROJECT_INSTALL_SHARED_DIR})
     if(${ARGC} GREATER 2)
         set(DESTINATION ${ARGV2})
     endif()
@@ -327,17 +327,17 @@ function(vsi_install_shared_library TARGET COMPONENT)
         COMPONENT ${COMPONENT}
         RUNTIME DESTINATION ${DESTINATION}  # Windows DLLs
         LIBRARY DESTINATION ${DESTINATION}  # UNIX shared objects
-        ARCHIVE DESTINATION ${INSTALLSETTINGS_LIBRARY_DIR}  # Windows LIBs
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Windows LIBs
     )
 endfunction()
 
 # vsi_install_plugin(<TARGET> <COMPONENT> [DESTINATION])
 #
 # Installs compiled plug-in TARGET using the installation component
-# COMPONENT.  Installs to INSTALLSETTINGS_PLUGIN_DIR unless the
+# COMPONENT.  Installs to "plugins" unless the
 # DESTINATION field is set.  Sets RPATH as needed on the target.
 function(vsi_install_plugin TARGET COMPONENT)
-    set(DESTINATION ${INSTALLSETTINGS_PLUGIN_DIR})
+    set(DESTINATION "plugins")
     if(${ARGC} GREATER 2)
         set(DESTINATION ${ARGV2})
     endif()
@@ -347,11 +347,11 @@ endfunction()
 # vsi_install_imported_shared_library(<TARGET> <COMPONENT> [DESTINATION])
 #
 # Installs shared library and related symbolic links for TARGET using the
-# installation component COMPONENT.  Installs to INSTALLSETTINGS_SHARED_LIBRARY_DIR
+# installation component COMPONENT.  Installs to PROJECT_INSTALL_SHARED_DIR
 # unless the DESTINATION field is set.  Files to install are pulled from the
 # IMPORTED_LOCATION property of TARGET.
 function(vsi_install_imported_shared_library TARGET COMPONENT)
-    set(DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR})
+    set(DESTINATION ${PROJECT_INSTALL_SHARED_DIR})
     if(${ARGC} GREATER 2)
         set(DESTINATION ${ARGV2})
     endif()
@@ -381,12 +381,12 @@ endfunction()
 # vsi_install_static_library(<TARGET> <COMPONENT> [DESTINATION])
 #
 # Installs compiled static library for TARGET using the installation component
-# COMPONENT.  Installs to INSTALLSETTINGS_LIBRARY_DIR unless the DESTINATION
+# COMPONENT.  Installs to CMAKE_INSTALL_LIBDIR unless the DESTINATION
 # parameter is set.  If the library TARGET has the target property
 # TARGET_EXPORT_NAME set, it will install using that value for the
 # install(TARGETS EXPORT) signature.
 function(vsi_install_static_library TARGET COMPONENT)
-    set(DESTINATION ${INSTALLSETTINGS_LIBRARY_DIR})
+    set(DESTINATION ${CMAKE_INSTALL_LIBDIR})
     if(${ARGC} GREATER 2)
         set(DESTINATION ${ARGV2})
     endif()
@@ -453,33 +453,33 @@ endfunction()
 #
 # Given a library TARGET that is being exported, installs a generated <TARGET>Targets.cmake
 # file, a generated <TARGET>ConfigVersion.cmake, and either a generated or in-source
-# <TARGET>Config.cmake file.  The files get installed to <INSTALLSETTINGS_CMAKE_DIR>/<TARGET>.
+# <TARGET>Config.cmake file.  The files get installed to <CMAKE_INSTALL_LIBDIR>/cmake/<TARGET>.
 # If <TARGET>Config.cmake does not exist, but <TARGET>Config.cmake.in does exist, then
 # configure_file() is automatically run on it and that result is copied in instead. This
 # convenience means you can use a Config.cmake or Config.cmake.in and either one is
 # automatically picked up, with a preference for the Config.cmake file.
 #
 # The generated Targets file includes the namespace "VSI::".  The library gets installed to
-# <INSTALLSETTINGS_SHARED_LIBRARY_DIR> or <INSTALLSETTINGS_LIBRARY_DIR> as appropriate.
+# <PROJECT_INSTALL_SHARED_DIR> or <CMAKE_INSTALL_LIBDIR> as appropriate.
 #
 # This function also creates a new alias target VSI::<TARGET> for ease of use, so that in-source
 # builds and out-of-source builds can refer to the target by the same name.
 function(vsi_install_export TARGET VERSION COMPATIBILITY)
     install(TARGETS ${TARGET} EXPORT ${TARGET}Targets
-        LIBRARY DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
-        RUNTIME DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
-        ARCHIVE DESTINATION ${INSTALLSETTINGS_LIBRARY_DIR}
+        LIBRARY DESTINATION ${PROJECT_INSTALL_SHARED_DIR}
+        RUNTIME DESTINATION ${PROJECT_INSTALL_SHARED_DIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
     install(EXPORT ${TARGET}Targets
         FILE ${TARGET}Targets.cmake
         NAMESPACE VSI::
-        DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
     )
 
     # Compute RPATH for UNIX; ignore on Windows
     get_target_property(TARGET_TYPE ${TARGET} TYPE)
     if(UNIX AND TARGET_TYPE STREQUAL "SHARED_LIBRARY")
-        vsi_set_rpath(${TARGET} ${INSTALLSETTINGS_SHARED_LIBRARY_DIR})
+        vsi_set_rpath(${TARGET} ${PROJECT_INSTALL_SHARED_DIR})
     endif()
     set_target_properties(${TARGET} PROPERTIES VERSION "${VERSION}")
 
@@ -490,25 +490,25 @@ function(vsi_install_export TARGET VERSION COMPATIBILITY)
         COMPATIBILITY ${COMPATIBILITY}
     )
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}ConfigVersion.cmake"
-         DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET}
+         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
     )
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}Config.cmake")
         # Use a locally defined <TARGET>Config.cmake if possible
         install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}Config.cmake"
-             DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET})
+             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET})
     elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}Config.cmake.in")
         # Use configure_file() on the <TARGET>Config.cmake.in file to create the Config.cmake
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}Config.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake" @ONLY)
         install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
-             DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET})
+             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET})
     else()
         # Create the placeholder file, only once (don't continuously overwrite)
         if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake")
             file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake" "include(\"\${CMAKE_CURRENT_LIST_DIR}/${TARGET}Targets.cmake\")\n")
         endif()
         install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
-             DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET})
+             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET})
     endif()
 
     # Create an alias library

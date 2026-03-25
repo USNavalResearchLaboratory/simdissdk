@@ -21,7 +21,7 @@ macro(mrsid_install_library PATH NAME)
         # Pull out all the share links too
         get_symlinks("${MRSID_RELEASE_LIB}" RELEASE_LIBS)
         install(PROGRAMS ${RELEASE_LIBS}
-            DESTINATION "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}"
+            DESTINATION "${PROJECT_INSTALL_SHARED_DIR}"
             COMPONENT ${${LIBRARYNAME}_INSTALL_COMPONENT}
         )
     else()

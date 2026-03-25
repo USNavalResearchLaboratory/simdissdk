@@ -23,9 +23,7 @@ mark_as_advanced(
     GDAL_DIR
 
     # Shouldn't change in most circumstances
-    INSTALLSETTINGS_LIBRARY_DIR
-    INSTALLSETTINGS_OSGPLUGIN_DIR
-    INSTALLSETTINGS_RUNTIME_DIR
+    INSTALLSETTINGS_OSGPLUGINS_DIR
 
     # Auto-detected OSG values
     APPEND_OPENSCENEGRAPH_VERSION

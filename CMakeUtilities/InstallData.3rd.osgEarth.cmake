@@ -41,13 +41,13 @@ foreach(_LIB_FILE IN LISTS _ALL_OSGEARTH_LIBS)
     get_filename_component(_FILENAME ${_LIB_FILE} NAME)
     if(_FILENAME MATCHES "${_DEBUG_INSTALL_PATTERN}")
         install(FILES "${_LIB_FILE}"
-            DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
+            DESTINATION ${PROJECT_INSTALL_SHARED_DIR}
             CONFIGURATIONS "Debug"
             COMPONENT ThirdPartyLibs
         )
     elseif(_FILENAME MATCHES "${_RELEASE_INSTALL_PATTERN}")
         install(FILES "${_LIB_FILE}"
-            DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
+            DESTINATION ${PROJECT_INSTALL_SHARED_DIR}
             CONFIGURATIONS ${_CONFIG}
             COMPONENT ThirdPartyLibs
         )

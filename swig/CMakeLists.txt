@@ -40,10 +40,10 @@ macro(InstallPythonFiles TARGET)
 
     if(WIN32)
         set(PYD_EXTENSION "pyd")
-        set(PYD_DESTINATION "${INSTALLSETTINGS_LIBRARY_DIR}/python3.${Python3_VERSION_MINOR}")
+        set(PYD_DESTINATION "${CMAKE_INSTALL_LIBDIR}/python3.${Python3_VERSION_MINOR}")
     else()
         set(PYD_EXTENSION "so")
-        set(PYD_DESTINATION "${INSTALLSETTINGS_LIBRARY_DIR}/python3.${Python3_VERSION_MINOR}/lib-dynload")
+        set(PYD_DESTINATION "${CMAKE_INSTALL_LIBDIR}/python3.${Python3_VERSION_MINOR}/lib-dynload")
     endif()
 
     install(FILES ${CMAKE_SWIG_OUTDIR}/${TARGET}.py

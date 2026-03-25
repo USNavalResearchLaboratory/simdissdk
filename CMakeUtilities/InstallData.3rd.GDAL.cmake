@@ -14,7 +14,7 @@ if(WIN32)
     vsi_install_target(GDAL::GDAL ThirdPartyLibs)
 else()
     get_symlinks("${_GDAL_LIB_DIR}/libgdal.so" _GDAL_LIBS)
-    install(PROGRAMS ${_GDAL_LIBS} DESTINATION "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}" OPTIONAL COMPONENT ThirdPartyLibs)
+    install(PROGRAMS ${_GDAL_LIBS} DESTINATION "${PROJECT_INSTALL_SHARED_DIR}" OPTIONAL COMPONENT ThirdPartyLibs)
 endif()
 
 # Install GDAL plugins
@@ -29,7 +29,7 @@ if(NOT INSTALLSOURCE_GDAL_PLUGINS_DIR)
 else()
     mark_as_advanced(FORCE INSTALLSOURCE_GDAL_PLUGINS_DIR)
     install(DIRECTORY "${INSTALLSOURCE_GDAL_PLUGINS_DIR}/gdalplugins/"
-        DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}/gdalplugins
+        DESTINATION ${PROJECT_INSTALL_SHARED_DIR}/gdalplugins
         COMPONENT ThirdPartyLibs)
 endif()
 

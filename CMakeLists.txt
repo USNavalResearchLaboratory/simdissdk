@@ -147,7 +147,7 @@ endif()
 
 # Build Release mode by default on Linux, unless otherwise specified
 include(DefaultToReleaseBuildType)
-# Define the various INSTALLSETTINGS values
+# Define the various target directories for installation
 include(InstallSettingsDirs)
 
 # Copy the helper script into the build directory
@@ -182,7 +182,7 @@ find_package(osgEarth)
 find_package(osgQOpenGL 4.0 QUIET)
 
 # vcpkg installs plugins into the plugins/ folder, not bin or lib
-set(INSTALLSETTINGS_OSGPLUGINS_DIR "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}")
+set(INSTALLSETTINGS_OSGPLUGINS_DIR "${PROJECT_INSTALL_SHARED_DIR}")
 if(USING_VCPKG)
     set(INSTALLSETTINGS_OSGPLUGINS_DIR "plugins")
 endif()
