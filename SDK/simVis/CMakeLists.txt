@@ -28,6 +28,7 @@ set(SHADER_FILES
     DisableDepthOnAlpha.frag.glsl
     FragmentEffect.glsl
     Flashing.frag.glsl
+    HeatMapSystem.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl
     Picker.vert.glsl
@@ -91,6 +92,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}GlDebugMessage.h
     ${VIS_INC}GradientShader.h
     ${VIS_INC}Headless.h
+    ${VIS_INC}HeatMapSystem.h
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
@@ -253,6 +255,7 @@ set(VIS_SOURCES_CORE
     ${VIS_INC}GlDebugMessage.cpp
     ${VIS_SRC}GradientShader.cpp
     ${VIS_SRC}Headless.cpp
+    ${VIS_SRC}HeatMapSystem.cpp
     ${VIS_SRC}InsetViewEventHandler.cpp
     ${VIS_SRC}Laser.cpp
     ${VIS_SRC}LayerRefreshCallback.cpp
