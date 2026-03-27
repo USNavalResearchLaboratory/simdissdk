@@ -298,8 +298,9 @@ void ConsoleDataModel::addEntry(simNotify::NotifySeverity severity, const QStrin
   for (auto it = split.begin(); it != split.end(); ++it)
   {
     QString& str = *it;
-    // Remove instances of carriage return before adding text
+    // Remove instances of carriage return and excess null terminators before adding text
     str.remove('\r');
+    str.remove('\0');
     if (!str.isEmpty())
       addPlainEntry_(severity, channel, str);
   }
