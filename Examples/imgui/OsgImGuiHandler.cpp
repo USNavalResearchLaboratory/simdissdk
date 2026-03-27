@@ -23,7 +23,7 @@
 #include <osg/Camera>
 #include <osg/RenderInfo>
 #include "imgui.h"
-#include "backends/imgui_impl_opengl3.h"
+#include "imgui_impl_opengl3.h"
 #include "OsgImGuiHandler.h"
 #include "osgEarth/Version"
 #include "osgEarth/ShaderLoader"

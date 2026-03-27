@@ -23,7 +23,10 @@
     {
       "name": "IMGUI",
       "dir": "ImGui",
-      "version": "1.92.4"
+      "version": [
+         "1.92.4-lib",
+         "1.92.4"
+      ]
     },
     {
       "name": "MRSID",
