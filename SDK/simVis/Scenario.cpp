@@ -43,6 +43,7 @@
 #include "simVis/Gate.h"
 #include "simVis/CustomRendering.h"
 #include "simVis/FragmentEffect.h"
+#include "simVis/HeatMapSystem.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
@@ -465,7 +466,8 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   projectorManager_(projMan),
   labelContentManager_(new NullLabelContentManager()),
   rfManager_(new simRF::NullRFPropagationManager()),
-  losCreator_(new ScenarioLosCreator())
+  losCreator_(new ScenarioLosCreator()),
+  heatMapSystem_(new HeatMapSystem)
 {
   root_->setName("root");
   root_->addChild(entityGraph_->node());
@@ -521,6 +523,10 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   PolygonStipple::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
   stateSet->getOrCreateUniform(SCENE_RENDER_STAGE_UNIFORM, osg::Uniform::INT)->set(SCENE_RENDER_STAGE_GLOBAL);
+
+  // Set up the shaders on the heat map and configure it in an update callback
+  heatMapSystem_->installShaders(this);
+  addUpdateCallback(new simVis::LambdaOsgCallback([this]() { heatMapSystem_->update(); }));
 
   scenarioEciLocator_ = new Locator();
 }
@@ -1445,4 +1451,10 @@ osg::Group* ScenarioManager::getOrCreateAttachPoint(const std::string& name)
   }
   return result;
 }
+
+HeatMapSystem* ScenarioManager::heatMapSystem() const
+{
+  return heatMapSystem_.get();
+}
+
 }

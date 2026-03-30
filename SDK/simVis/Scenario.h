@@ -24,9 +24,10 @@
 #define SIMVIS_SCENARIO_H
 
 #include <limits>
-#include <string>
+#include <memory>
 #include <map>
 #include <set>
+#include <string>
 #include "osg/Group"
 #include "osg/ref_ptr"
 #include "osg/View"
@@ -48,6 +49,7 @@ class BeamNode;
 class CoordSurfaceClamping;
 class GateNode;
 class CustomRenderingNode;
+class HeatMapSystem;
 class LabelContentManager;
 class LaserNode;
 class LobGroupNode;
@@ -96,6 +98,12 @@ public:
 
   /** Returns the RFPropagationManager */
   simRF::RFPropagationManagerPtr rfPropagationManager() const;
+
+  /**
+   * Access the system responsible for localized heat map overlays on entities
+   * @return Pointer to the HeatMapSystem, guaranteed to be valid for the life of scenario.
+   */
+  HeatMapSystem* heatMapSystem() const;
 
   /**
   * Add a new platform to the scenario and bind it to the data store.
@@ -365,6 +373,9 @@ public: // package protected
 
   /** Creates a new ScenarioManager with the given projector manager */
   explicit ScenarioManager(ProjectorManager* projMan);
+  // Copy constructor/operator disabled
+  ScenarioManager(const ScenarioManager&) = delete;
+  ScenarioManager& operator=(const ScenarioManager&) = delete;
 
   /**
   * Check for scenario entity updates and applies them to the corresponding
@@ -406,13 +417,13 @@ protected:
   osg::ref_ptr<osgUtil::LineSegmentIntersector> findHelper_(osg::View* view, float x, float y, int typeMask) const;
 
   /** Provides capability to process platform TSPI points */
-  PlatformTspiFilterManager*   platformTspiFilterManager_;
+  PlatformTspiFilterManager*   platformTspiFilterManager_ = nullptr;
   /** PlatformTspiFilter that provides surface clamping capabilities */
-  SurfaceClamping*             surfaceClamping_;
+  SurfaceClamping*             surfaceClamping_ = nullptr;
   /** PlatformTspiFilter that provides surface limiting capabilities */
-  AboveSurfaceClamping*        aboveSurfaceClamping_;
+  AboveSurfaceClamping*        aboveSurfaceClamping_ = nullptr;
   /** Helps clamping for LOBs to map surface */
-  CoordSurfaceClamping*        lobSurfaceClamping_;
+  CoordSurfaceClamping*        lobSurfaceClamping_ = nullptr;
   /** Root node for the scenario */
   osg::ref_ptr<osg::Group>     root_;
   /** Strategy for grouping up entities into the scene graph */
@@ -425,7 +436,7 @@ protected:
   /** Observer to the current map */
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
   /** Responsible for managing Projector entities */
-  ProjectorManager*         projectorManager_;
+  ProjectorManager*         projectorManager_ = nullptr;
   /** Responsible for linking a data store to this instance */
   ScenarioDataStoreAdapter  dataStoreAdapter_;
   /** Manages callbacks that are responsible for creating entity labels */
@@ -433,7 +444,7 @@ protected:
   /** Manages RF Propagation data */
   simRF::RFPropagationManagerPtr rfManager_;
   /** Responsible for creation of LOS nodes as needed by platforms */
-  ScenarioLosCreator* losCreator_;
+  ScenarioLosCreator* losCreator_ = nullptr;
 
   /** Association between the EntityNode, the data store, and the entity's update slice */
   class EntityRecord : public osg::Group
@@ -460,9 +471,9 @@ protected:
     osg::ref_ptr<EntityNode> node_;
 
     /** Const pointer to the entity's data update slice */
-    const simData::DataSliceBase* updateSlice_;
+    const simData::DataSliceBase* updateSlice_ = nullptr;
     /** Convenience pointer to the data store */
-    simData::DataStore* dataStore_;
+    simData::DataStore* dataStore_ = nullptr;
   };
 
   /** Typedef to map entity IDs to EntityRecord structs */
@@ -493,9 +504,8 @@ protected:
   /// node getter given to entity nodes on creation
   std::function<EntityNode* (simData::ObjectId)> nodeGetter_ = [this](simData::ObjectId id) ->EntityNode* { return find(id); };
 
-private:
-  /// Copy constructor, not implemented or available.
-  ScenarioManager(const ScenarioManager&);
+  /** Heat map system that can render color patches on platforms */
+  std::unique_ptr<HeatMapSystem> heatMapSystem_;
 };
 
 } // namespace simVis

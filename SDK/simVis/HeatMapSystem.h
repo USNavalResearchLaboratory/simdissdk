@@ -30,6 +30,7 @@
 #include "osg/Uniform"
 #include "osg/Vec3f"
 #include "entt/container/dense_map.hpp"
+#include "simCore/Common/Export.h"
 
 namespace simVis {
 
@@ -46,7 +47,7 @@ struct HeatMapPoint
  * Manages point-based heat map gradients for 3D entities.
  * Decouples the simulation logic from the OpenSceneGraph uniform packing.
  */
-class HeatMapSystem
+class SDKVIS_EXPORT HeatMapSystem
 {
 public:
   /// The maximum number of heat points allowed per model.
