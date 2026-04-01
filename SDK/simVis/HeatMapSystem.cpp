@@ -205,4 +205,29 @@ void HeatMapSystem::update()
   }
 }
 
-} // namespace simVis
+void HeatMapSystem::setPoint(osg::Node* targetNode, size_t pointIndex, const HeatMapPoint& point)
+{
+  if (!targetNode || pointIndex >= MAX_HEAT_POINTS)
+    return;
+
+  ensureUniformsExist_(targetNode);
+
+  auto& points = heatData_[targetNode];
+  if (pointIndex >= points.size())
+  {
+    const size_t oldSize = points.size();
+    points.resize(pointIndex + 1);
+
+    // Zero out any skipped elements so they don't accidentally render default heat spheres
+    for (size_t i = oldSize; i < pointIndex; ++i)
+    {
+      points[i].intensity = 0.f;
+      points[i].radius = 0.f;
+    }
+  }
+
+  points[pointIndex] = point;
+  uniformCache_[targetNode].isDirty = true;
+}
+
+}

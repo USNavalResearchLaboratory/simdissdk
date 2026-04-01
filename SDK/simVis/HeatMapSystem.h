@@ -65,6 +65,9 @@ public:
   /** Replaces all heat points for a specific target. */
   void setPoints(osg::Node* targetNode, const std::vector<HeatMapPoint>& points);
 
+  /** Updates a single point's properties at a specific index without touching the others */
+  void setPoint(osg::Node* targetNode, size_t pointIndex, const HeatMapPoint& point);
+
   /**
    * Fast-path update: Modifies ONLY the intensity of an existing point.
    * Use this in the main simulation loop for high-frequency updates.
