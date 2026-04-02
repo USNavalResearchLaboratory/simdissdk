@@ -22,7 +22,8 @@
  */
 #include <algorithm>
 #include <cassert>
-#include <osgEarth/VirtualProgram>
+#include "osg/Texture1D"
+#include "osgEarth/VirtualProgram"
 #include "simVis/Shaders.h"
 #include "simVis/HeatMapSystem.h"
 
@@ -34,6 +35,76 @@ namespace {
 constexpr const char* UNIFORM_NUM_SOURCES = "svheat_NumSources";
 constexpr const char* UNIFORM_POSITIONS = "svheat_Positions";
 constexpr const char* UNIFORM_PARAMS = "svheat_Params";
+constexpr const char* UNIFORM_GRADIENT = "svheat_Gradient";
+constexpr int HEAT_LUT_TEXTURE_UNIT = 15; // High unit to avoid osgEarth conflicts
+
+/** Fast CPU-side linear interpolation for building the texture for the gradient */
+osg::Vec4 interpolateColor(const std::map<float, osg::Vec4>& grad, float val)
+{
+  if (grad.empty())
+    return osg::Vec4(0,0,0,0);
+  const auto upper = grad.lower_bound(val);
+  if (upper == grad.end())
+    return grad.rbegin()->second;
+  if (upper == grad.begin() || upper->first == val)
+    return upper->second;
+
+  const auto lower = std::prev(upper);
+  // Impossible to have a divide-by-zero with these data types
+  const float t = (val - lower->first) / (upper->first - lower->first);
+  return lower->second * (1.0f - t) + upper->second * t;
+}
+
+/** Retrieve a default gradient */
+std::map<float, osg::Vec4> getDefaultHeatGradient()
+{
+  return {
+    { 0.0f, osg::Vec4(1.0f, 1.0f, 0.0f, 0.0f) }, // Yellow, transparent
+    { 0.5f, osg::Vec4(1.0f, 0.5f, 0.0f, 1.0f) }, // Orange, opaque
+    { 1.0f, osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f) } // Red, opaque
+  };
+}
+
+std::map<float, osg::Vec4> getWhiteHotGradient()
+{
+  return {
+    { 0.0f, osg::Vec4(0.0f, 0.0f, 0.0f, 0.0f) }, // Transparent Black
+    { 1.0f, osg::Vec4(1.0f, 1.0f, 1.0f, 1.0f) }  // Opaque White
+  };
+}
+
+std::map<float, osg::Vec4> getBlackHotGradient()
+{
+  return {
+    { 0.0f, osg::Vec4(1.0f, 1.0f, 1.0f, 0.0f) }, // Transparent White
+    { 1.0f, osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f) }  // Opaque Black
+  };
+}
+
+std::map<float, osg::Vec4> getIronbowGradient()
+{
+  return {
+    { 0.00f, osg::Vec4(0.00f, 0.00f, 0.00f, 0.0f) }, // Transparent Black
+    { 0.25f, osg::Vec4(0.40f, 0.00f, 0.60f, 0.5f) }, // Purple
+    { 0.50f, osg::Vec4(0.90f, 0.20f, 0.10f, 0.8f) }, // Orange-Red
+    { 0.75f, osg::Vec4(1.00f, 0.80f, 0.00f, 1.0f) }, // Yellow
+    { 1.00f, osg::Vec4(1.00f, 1.00f, 1.00f, 1.0f) }  // White
+  };
+}
+
+std::map<float, osg::Vec4> getJetGradient()
+{
+  return {
+    // Fade the alpha in over the first 5% to prevent a harsh visual "cliff" at the radius edge
+    { 0.000f, osg::Vec4(0.0f, 0.0f, 0.5f, 0.0f) }, // Dark Blue, Fully Transparent
+    { 0.050f, osg::Vec4(0.0f, 0.0f, 0.7f, 1.0f) }, // Dark Blue, Fully Opaque
+    { 0.125f, osg::Vec4(0.0f, 0.0f, 1.0f, 1.0f) }, // Blue
+    { 0.375f, osg::Vec4(0.0f, 1.0f, 1.0f, 1.0f) }, // Cyan
+    { 0.625f, osg::Vec4(1.0f, 1.0f, 0.0f, 1.0f) }, // Yellow
+    { 0.875f, osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f) }, // Red
+    { 1.000f, osg::Vec4(0.5f, 0.0f, 0.0f, 1.0f) }  // Dark Red
+  };
+}
 
 }
 
@@ -108,6 +179,14 @@ void HeatMapSystem::ensureUniformsExist_(osg::Node* targetNode)
   cache.positionsUniform = new osg::Uniform(osg::Uniform::FLOAT_VEC3, UNIFORM_POSITIONS, MAX_HEAT_POINTS);
   cache.parametersUniform = new osg::Uniform(osg::Uniform::FLOAT_VEC3, UNIFORM_PARAMS, MAX_HEAT_POINTS);
 
+  // Initialize the per-node 1D Lookup Texture
+  cache.lutImage = new osg::Image;
+  cache.lutImage->allocateImage(256, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+  cache.lutTexture = new osg::Texture1D(cache.lutImage);
+  cache.lutTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+  cache.lutTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+  cache.lutTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+
   // Initialize defaults
   cache.numSourcesUniform->set(0);
   cache.isDirty = false;
@@ -117,10 +196,63 @@ void HeatMapSystem::ensureUniformsExist_(osg::Node* targetNode)
   ss->addUniform(cache.positionsUniform.get());
   ss->addUniform(cache.parametersUniform.get());
 
+  // Attach the per-node 1D texture to the node's StateSet
+  ss->setTextureAttributeAndModes(HEAT_LUT_TEXTURE_UNIT, cache.lutTexture.get(), osg::StateAttribute::ON);
+  osg::ref_ptr<osg::Uniform> gradientUniform = new osg::Uniform(osg::Uniform::SAMPLER_1D, UNIFORM_GRADIENT);
+  gradientUniform->set(HEAT_LUT_TEXTURE_UNIT);
+  ss->addUniform(gradientUniform.get());
+
   uniformCache_[targetNode] = cache;
 
   // Begin watching this node for destruction
   targetNode->addObserver(nodeTracker_.get());
+
+  // Bake the default colors into the image immediately
+  setGradient(targetNode, HeatGradientType::Heat);
+}
+
+void HeatMapSystem::setGradient(osg::Node* targetNode, const std::map<float, osg::Vec4>& gradient)
+{
+  if (!targetNode)
+    return;
+
+  ensureUniformsExist_(targetNode);
+  auto& cache = uniformCache_[targetNode];
+  unsigned char* rowData = cache.lutImage->data();
+  for (int x = 0; x < 256; ++x)
+  {
+    const float pct = static_cast<float>(x) / 255.0f;
+    const osg::Vec4 c = interpolateColor(gradient, pct);
+    rowData[x * 4 + 0] = static_cast<unsigned char>(c.r() * 255.0f);
+    rowData[x * 4 + 1] = static_cast<unsigned char>(c.g() * 255.0f);
+    rowData[x * 4 + 2] = static_cast<unsigned char>(c.b() * 255.0f);
+    rowData[x * 4 + 3] = static_cast<unsigned char>(c.a() * 255.0f);
+  }
+
+  // Tell OpenGL the pixel buffer for this specific node changed
+  cache.lutImage->dirty();
+}
+
+void HeatMapSystem::setGradient(osg::Node* targetNode, HeatGradientType gradientType)
+{
+  switch (gradientType)
+  {
+  case HeatGradientType::Heat:
+    setGradient(targetNode, getDefaultHeatGradient());
+    break;
+  case HeatGradientType::WhiteHot:
+    setGradient(targetNode, getWhiteHotGradient());
+    break;
+  case HeatGradientType::BlackHot:
+    setGradient(targetNode, getBlackHotGradient());
+    break;
+  case HeatGradientType::Ironbow:
+    setGradient(targetNode, getIronbowGradient());
+    break;
+  case HeatGradientType::Jet:
+    setGradient(targetNode, getJetGradient());
+    break;
+  }
 }
 
 void HeatMapSystem::handleNodeDeletion_(osg::Node* targetNode)
@@ -169,6 +301,8 @@ void HeatMapSystem::clearPoints(osg::Node* targetNode)
       ss->removeUniform(UNIFORM_NUM_SOURCES);
       ss->removeUniform(UNIFORM_POSITIONS);
       ss->removeUniform(UNIFORM_PARAMS);
+      ss->removeUniform(UNIFORM_GRADIENT);
+      ss->removeTextureAttribute(HEAT_LUT_TEXTURE_UNIT, osg::StateAttribute::TEXTURE);
     }
     uniformCache_.erase(iter);
   }

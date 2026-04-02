@@ -22,14 +22,7 @@ in vec3 svheat_ModelPosition;
 uniform int svheat_NumSources;
 uniform vec3 svheat_Positions[4]; // Array size must match MAX_HEAT_POINTS in HeatMapSystem.h
 uniform vec3 svheat_Params[4];  // x = radius, y = intensity, z = falloff
-
-vec4 calculateHeatColor(float heat) {
-  const vec3 yellow = vec3(1.0, 1.0, 0.0);
-  const vec3 red  = vec3(1.0, 0.0, 0.0);
-  vec3 heatColor = mix(yellow, red, heat);
-  float alpha = smoothstep(0.0, 0.5, heat);
-  return vec4(heatColor, alpha);
-}
+uniform sampler1D svheat_Gradient; // 256px 1D Lookup Table
 
 void simvis_applyPointHeatMap(inout vec4 color) {
   // Prevent out-of-bounds loops
@@ -56,7 +49,10 @@ void simvis_applyPointHeatMap(inout vec4 color) {
     totalHeat += localizedHeat;
   }
 
-  totalHeat = clamp(totalHeat, 0.0, 1.0);
-  vec4 heatOverlay = calculateHeatColor(totalHeat);
-  color.rgb = mix(color.rgb, heatOverlay.rgb, heatOverlay.a);
+  // Only sample the texture and blend if there is actual heat on this pixel
+  if (totalHeat > 0.0) {
+    totalHeat = clamp(totalHeat, 0.0, 1.0);
+    vec4 heatOverlay = texture(svheat_Gradient, totalHeat);
+    color.rgb = mix(color.rgb, heatOverlay.rgb, heatOverlay.a);
+  }
 }

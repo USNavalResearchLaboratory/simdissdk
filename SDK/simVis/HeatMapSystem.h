@@ -22,6 +22,7 @@
  */
 #pragma once
 
+#include <map>
 #include <memory>
 #include <vector>
 #include "osg/ref_ptr"
@@ -32,6 +33,11 @@
 #include "entt/container/dense_map.hpp"
 #include "simCore/Common/Export.h"
 
+namespace osg {
+  class Image;
+  class Texture1D;
+}
+
 namespace simVis {
 
 /** Represents a single localized heat source on a 3D model. */
@@ -41,6 +47,16 @@ struct HeatMapPoint
   float radius = 1.f;     // Max distance of effect
   float intensity = 1.f;    // Heat value at center (0.0 to 1.0)
   float falloff = 2.f;    // Curve of the fade (1.0 = linear, 2.0 = quadratic)
+};
+
+/** Standard predefined color palettes for heat maps */
+enum class HeatGradientType
+{
+  Heat,       ///< Default: Transparent Yellow -> Opaque Red
+  WhiteHot,   ///< Thermal: Black (Cold) -> White (Hot)
+  BlackHot,   ///< Thermal: White (Cold) -> Black (Hot)
+  Ironbow,    ///< Thermal: Black -> Purple -> Orange -> Yellow -> White
+  Jet         ///< Scientific: Blue -> Cyan -> Green -> Yellow -> Red
 };
 
 /**
@@ -77,6 +93,11 @@ public:
   /** Clears all heat points from a target, returning it to normal colors. */
   void clearPoints(osg::Node* targetNode);
 
+  /** Sets the color gradient used by all heat map points on this specific target. */
+  void setGradient(osg::Node* targetNode, const std::map<float, osg::Vec4>& gradient);
+  /** Sets the color gradient to a predefined gradient type. */
+  void setGradient(osg::Node* targetNode, HeatGradientType gradientType);
+
   /**
    * Updates the OpenSceneGraph Uniforms for all tracked nodes. Should be called
    * once per frame during the rendering loop.
@@ -93,6 +114,10 @@ private:
     osg::ref_ptr<osg::Uniform> positionsUniform;
     /** Radius, intensity, and falloff, in vec3 format */
     osg::ref_ptr<osg::Uniform> parametersUniform;
+
+    /** Per-node 1D Texture used as a Lookup Table (LUT) for the gradient */
+    osg::ref_ptr<osg::Image> lutImage;
+    osg::ref_ptr<osg::Texture1D> lutTexture;
 
     /** Dirty flag so we only upload uniforms that actually changed */
     bool isDirty = false;
