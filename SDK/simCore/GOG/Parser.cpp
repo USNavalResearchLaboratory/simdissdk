@@ -1272,22 +1272,29 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       printError_(parsed.filename(), parsed.lineNumber(), "Invalid referencepoint: " + parsed.stringValue(ShapeParameter::REF_LLA) + " for " + name);
 
   }
+
   // if SCALEX exists, so should the others
   if (parsed.hasValue(ShapeParameter::SCALEX))
   {
     // parsing error, should not have only one of the scale components set
-    if (parsed.hasValue(ShapeParameter::SCALEY) && parsed.hasValue(ShapeParameter::SCALEZ))
-      printError_(parsed.filename(), parsed.lineNumber(), "Invalid scale: scalex, scaley, and scalez must be used together to take effect");
-    double scaleX = 1.;
-    double scaleY = 1.;
-    double scaleZ = 1.;
-    bool validX = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEX), "scale x", name, parsed, scaleX) == 0);
-    bool validY = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEY), "scale y", name, parsed, scaleY) == 0);
-    bool validZ = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEZ), "scale z", name, parsed, scaleZ) == 0);
-    // only need one valid value, using scale default of 1 otherwise
-    if (validX || validY || validZ)
-      rv->setScale(simCore::Vec3(scaleX, scaleY, scaleZ));
+    if (!parsed.hasValue(ShapeParameter::SCALEY) || !parsed.hasValue(ShapeParameter::SCALEZ))
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid scale: scalex, scaley, and scalez must be specified at once to take effect");
+    else
+    {
+      double scaleX = 1.;
+      double scaleY = 1.;
+      double scaleZ = 1.;
+      const bool validX = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEX), "scale x", name, parsed, scaleX) == 0);
+      const bool validY = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEY), "scale y", name, parsed, scaleY) == 0);
+      const bool validZ = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEZ), "scale z", name, parsed, scaleZ) == 0);
+      // only need one valid value, using scale default of 1 otherwise
+      if (validX || validY || validZ)
+        rv->setScale(simCore::Vec3(scaleX, scaleY, scaleZ));
+    }
   }
+  // ScaleX does not exist -- so scaleY and scaleZ should also not exist
+  else if (parsed.hasValue(ShapeParameter::SCALEY) || parsed.hasValue(ShapeParameter::SCALEZ))
+    printError_(parsed.filename(), parsed.lineNumber(), "Invalid scale: scalex, scaley, and scalez must be specified at once to take effect");
 
   if (parsed.hasValue(ShapeParameter::FOLLOW))
   {
