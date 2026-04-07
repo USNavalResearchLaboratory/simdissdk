@@ -133,11 +133,18 @@ int GogShape::getReferencePosition(simCore::Vec3& refPos) const
   return (referencePosition_.has_value() ? 0 : 1);
 }
 
-void GogShape::setReferencePosition(const simCore::Vec3& refPos)
+int GogShape::setReferencePosition(const simCore::Vec3& refPos)
 {
+  // Reference position is in radians with latitude on the X. Try to catch degrees
+  // issues and issues with swapping lat/lon (e.g. from GeoPoint). Accept "wrapped"
+  // values from -360 to +360 on longitude to account for possible wrapping on input.
+  assert(simCore::isBetween(refPos.x(), -M_PI_2, M_PI_2)); // -90 to +90
+  assert(simCore::isBetween(refPos.y(), -M_TWOPI, M_TWOPI)); // -360 to +360
   // reference position is only valid for relative shapes
-  if (relative_)
-    referencePosition_ = refPos;
+  if (!relative_)
+    return 1;
+  referencePosition_ = refPos;
+  return 0;
 }
 
 void GogShape::clearReferencePosition()

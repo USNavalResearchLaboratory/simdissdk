@@ -198,8 +198,8 @@ public:
   * @return 0 if value was set, non-zero otherwise
   */
   int getReferencePosition(simCore::Vec3& refPos) const;
-  /// Set reference position for relative shapes
-  void setReferencePosition(const simCore::Vec3& refPos);
+  /// Set reference position for relative shapes; expects LLA in radians. Fails (non-zero return) on non-relative shapes; 0 on success
+  int setReferencePosition(const simCore::Vec3& refPos);
   /// Clear out the current reference position
   void clearReferencePosition();
 

@@ -225,10 +225,22 @@ public:
   /**
   * Get the reference position of the shape on the map, in osgEarth::GeoPoint position format, lon/lat/alt degrees/degrees/meters.
   * Return 0 if the node has a reference position and it was filled in, non-zero if no reference position exists for the node.
-  * @param referencePosition to be filled in
+  * If this shape is a LocalGeometryNodeInterface, it is expected that this will be the on-screen reference position. If that is
+  * not set (e.g. for a FeatureNodeInterface) it is expected that this will fall back to the reference origin
+  * set on the underlying GOG shape, which is only valid for relative GOG.
+  * @param referencePosition to be filled in -- it will be filled with x=longitude degrees, y=latitude degrees,
+  *   z=altitude meters.
   * @return 0 if reference position was found, non-zero otherwise
   */
   virtual int getReferencePosition(osg::Vec3d& referencePosition) const;
+  /**
+   * Set the reference position of the shape on the map, in osgEarth::GeoPoint position format, lon/lat/alt degrees/degrees/meters.
+   * Returns 0 if the shape has been successfully updated with the new position. Note that this position is a GeoPoint, unlike the
+   * underlying Shape that stores a SIMDIS-typical lat/lon/alt in radians and meters.
+   * @param referencePos New reference location, with x as longitude degrees, y as latitude degrees, and z in meters
+   * @return 0 on success, non-zero on error.
+   */
+  virtual int setReferencePosition(const osg::Vec3& referencePos);
 
   /**
   * Get the tessellation style of the Overlay, returns false if the Overlay doesn't support tessellation
@@ -404,7 +416,12 @@ public:
   /// Set the roll angular offset from a reference orientation in radians
   void setRollOffset(double offsetRad);
 
-  /** Return the starting line number from the source GOG file*/
+  /** Indicates that the shape is relative, i.e. not absolute. */
+  bool isRelative() const;
+  /** Indicates that the shape is relative AND attached to an entity; only some GOGs can be attached */
+  virtual bool isAttached() const;
+
+  /** Return the starting line number from the source GOG file */
   size_t lineNumber() const;
 
   /** Add the specified listener */
@@ -587,14 +604,17 @@ public:
   /** Constructor */
   LocalGeometryNodeInterface(osgEarth::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~LocalGeometryNodeInterface() {}
-  virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = nullptr) const;
-  /// override the get reference position
-  virtual int getReferencePosition(osg::Vec3d& referencePosition) const;
+  virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = nullptr) const override;
+  // override the get/set reference position to work directly with in-scene content
+  virtual int getReferencePosition(osg::Vec3d& referencePosition) const override;
+  virtual int setReferencePosition(const osg::Vec3& referencePos) override;
+  /// Override is-attached to inspect the local geometry node
+  virtual bool isAttached() const override;
 
 protected:
-  virtual void adjustAltitude_();
-  virtual void setStyle_(const osgEarth::Style& style);
-  virtual void applyOrientationOffsets_();
+  virtual void adjustAltitude_() override;
+  virtual void setStyle_(const osgEarth::Style& style) override;
+  virtual void applyOrientationOffsets_() override;
 
   /** LocalGeometryNode that this interface represents */
   osg::observer_ptr<osgEarth::LocalGeometryNode> localNode_;

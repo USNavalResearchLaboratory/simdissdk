@@ -471,6 +471,18 @@ void GogNodeInterface::setRollOffset(double offsetRad)
     applyOrientationOffsets_();
 }
 
+bool GogNodeInterface::isRelative() const
+{
+  if (!shape_)
+    return false;
+  return shape_->isRelative();
+}
+
+bool GogNodeInterface::isAttached() const
+{
+  return false;
+}
+
 size_t GogNodeInterface::lineNumber() const
 {
   return metaData_.lineNumber;
@@ -613,7 +625,27 @@ int GogNodeInterface::getPointSize(int& pointSize) const
 
 int GogNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
 {
-  return 1;
+  // Fall back on the shape pointer's value
+  if (!shape_)
+    return 1;
+  simCore::Vec3 lla;
+  if (shape_->getReferencePosition(lla) != 0)
+    return 1;
+  referencePosition.set(lla.lon() * simCore::RAD2DEG,
+    lla.lat() * simCore::RAD2DEG,
+    lla.alt());
+  return 0;
+}
+
+int GogNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
+{
+  // Nothing to update here, but use this to set the shape's value
+  if (!shape_)
+    return 1;
+  const simCore::Vec3 llaRad(referencePos.y() * simCore::DEG2RAD,
+    referencePos.x() * simCore::DEG2RAD,
+    referencePos.z());
+  return shape_->setReferencePosition(llaRad);
 }
 
 int GogNodeInterface::getTessellation(TessellationStyle& style) const
@@ -1710,19 +1742,53 @@ int LocalGeometryNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoP
 
 int LocalGeometryNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
 {
+  // Fall back to the Shape (using GogNodeInterface method) if local node not defined
   if (!localNode_.valid())
-    return 1;
+    return GogNodeInterface::getReferencePosition(referencePosition);
+
   const osgEarth::GeoPoint& refPoint = localNode_->getPosition();
-  referencePosition.x() = refPoint.x(); // note this is lon
-  referencePosition.y() = refPoint.y(); // note this is lat
+  // If attached, the SRS is unset. The reference position returned is the Shape's (from GogNodeInterface)
+  if (!refPoint.getSRS())
+    return GogNodeInterface::getReferencePosition(referencePosition);
+
+  // Extract from the local node's position
+  referencePosition.x() = refPoint.x(); // note this is lon, in degrees
+  referencePosition.y() = refPoint.y(); // note this is lat, in degrees
   referencePosition.z() = altitude_; // always use original altitude, since an altitude offset may have been applied
   return 0;
+}
+
+int LocalGeometryNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
+{
+  // First, apply to the shape, using the GogNodeInterface methods
+  const int gniRv = GogNodeInterface::setReferencePosition(referencePos);
+  // If it failed, or local node doesn't exist, return early
+  if (!localNode_.valid() || gniRv != 0)
+    return 1;
+
+  auto* srs = localNode_->getPosition().getSRS();
+  // Don't permit changing the actual on-screen reference position for attached GOG
+  if (!srs)
+    return 1;
+
+  // Create a GeoPoint and feed it to the Local Node's position
+  const osgEarth::GeoPoint newReference(
+    srs,
+    referencePos);
+  localNode_->setPosition(newReference);
+  setGeoPositionAltitude_(*localNode_, 0.);
+  return 0;
+}
+
+bool LocalGeometryNodeInterface::isAttached() const
+{
+  return isRelative() && localNode_.valid() && localNode_->getPosition().getSRS() == nullptr;
 }
 
 void LocalGeometryNodeInterface::adjustAltitude_()
 {
   if (localNode_.valid())
-    setGeoPositionAltitude_(*localNode_.get(), 0.);
+    setGeoPositionAltitude_(*localNode_, 0.);
 }
 
 void LocalGeometryNodeInterface::setStyle_(const osgEarth::Style& style)
