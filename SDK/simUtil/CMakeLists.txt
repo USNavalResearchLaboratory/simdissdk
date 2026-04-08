@@ -34,6 +34,7 @@ set(UTIL_HEADERS
     ${UTIL_INC}HudManager.h
     ${UTIL_INC}HudPositionEditor.h
     ${UTIL_INC}HudPositionManager.h
+    ${UTIL_INC}IconDragger.h
     ${UTIL_INC}IdMapper.h
     ${UTIL_INC}LayerFactory.h
     ${UTIL_INC}LineGraphic.h
@@ -70,6 +71,7 @@ set(UTIL_SOURCES
     ${UTIL_SRC}HudManager.cpp
     ${UTIL_SRC}HudPositionEditor.cpp
     ${UTIL_SRC}HudPositionManager.cpp
+    ${UTIL_SRC}IconDragger.cpp
     ${UTIL_SRC}IdMapper.cpp
     ${UTIL_SRC}LayerFactory.cpp
     ${UTIL_SRC}LineGraphic.cpp

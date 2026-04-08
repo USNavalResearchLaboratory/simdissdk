@@ -24,6 +24,7 @@
 #define SIMVIS_UTILS_H
 
 #include <functional>
+#include <span>
 
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
@@ -499,6 +500,16 @@ namespace simVis
 
   /// makes a big red "X" square image for the given size in pixels
   SDKVIS_EXPORT osg::Image* makeBrokenImage(int size=32);
+
+  /// Given a span and format (fed to OSG), returns an image, or null if none
+  SDKVIS_EXPORT osg::ref_ptr<osg::Image> readImageFromSpan(std::span<const uint8_t> data, const std::string& format = "png");
+
+  /// Returns a 32x32 icon appropriate for a mouse translate operation (e.g. white cross with arrows)
+  SDKVIS_EXPORT osg::ref_ptr<osg::Image> makeCursorTranslateImage();
+  /// Returns a 32x32 icon appropriate for a mouse rotate operation (e.g. circle with arrow)
+  SDKVIS_EXPORT osg::ref_ptr<osg::Image> makeCursorRotateImage();
+  /// Returns a 32x32 icon appropriate for a mouse scale operation (e.g. lower-left to upper-right with arrows)
+  SDKVIS_EXPORT osg::ref_ptr<osg::Image> makeCursorDiagonalLlUrImage();
 
   /**
    * Builds a sphere mesh geometry, configured potentially with a two-pass alpha render bin for
