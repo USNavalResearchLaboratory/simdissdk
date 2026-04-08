@@ -67,73 +67,109 @@
 
 namespace {
 
-  /**
-  * Calculates the position of the node (GeoPositionNode) passed in, applying the offset if it has one.
-  * Will use the referencePosition if it is provided, otherwise uses the node's internal position.
-  * If useLocalOffset is specified, will use the node's local offset, otherwise uses the center of the bounding sphere
-  * Returns 0 on success, non-zero if no position could be found
-  */
-  template<class T>
-  int findLocalGeometryPosition(T* node, osgEarth::GeoPoint* referencePosition, osg::Vec3d& position, bool useLocalOffset)
+/**
+ * Calculates the position of the node (GeoPositionNode) passed in, applying the offset if it has one.
+ * Will use the referencePosition if it is provided, otherwise uses the node's internal position.
+ * If useLocalOffset is specified, will use the node's local offset, otherwise uses the center of the bounding sphere
+ * Returns 0 on success, non-zero if no position could be found
+ */
+template<class T>
+int findLocalGeometryPosition(T* node, osgEarth::GeoPoint* referencePosition, osg::Vec3d& position, bool useLocalOffset)
+{
+  if (!node || (!referencePosition && !node->getPosition().isValid()))
+    return 1;
+  // use reference point if it's valid, otherwise use the node's position
+  osgEarth::GeoPoint refPosition = referencePosition != nullptr ? *referencePosition : node->getPosition();
+
+  osg::Vec3d centerPoint;
+
+  if (useLocalOffset)
   {
-    if (!node || (!referencePosition && !node->getPosition().isValid()))
-      return 1;
-    // use reference point if it's valid, otherwise use the node's position
-    osgEarth::GeoPoint refPosition = referencePosition != nullptr ? *referencePosition : node->getPosition();
-
-    osg::Vec3d centerPoint;
-
-    if (useLocalOffset)
+    centerPoint = node->getLocalOffset();
+    // if the offsets are 0, just pass back the position
+    if (centerPoint == osg::Vec3d(0.0, 0.0, 0.0))
     {
-      centerPoint = node->getLocalOffset();
-      // if the offsets are 0, just pass back the position
-      if (centerPoint == osg::Vec3d(0.0, 0.0, 0.0))
-      {
-        position = refPosition.vec3d();
-        return 0;
-      }
+      position = refPosition.vec3d();
+      return 0;
     }
-    else // use bounding sphere for center
-      centerPoint = node->getBound().center();
+  }
+  else // use bounding sphere for center
+    centerPoint = node->getBound().center();
 
-    simCore::Coordinate llaCoord;
-    // apply the offset to the ref position if using the local offset or if the map node is nullptr which indicates this is a hosted node (relative to ref position)
-    if (useLocalOffset || node->getMapNode() == nullptr)
-    {
-      // if the offsets are non-zero, apply the offsets to our reference position
-      simCore::CoordinateConverter converter;
-      converter.setReferenceOrigin(refPosition.y() * simCore::DEG2RAD, refPosition.x() * simCore::DEG2RAD, refPosition.z());
-      simCore::Coordinate xEastCoord(simCore::COORD_SYS_XEAST, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
-      converter.convert(xEastCoord, llaCoord, simCore::COORD_SYS_LLA);
-    }
-    else // convert from absolute center, ECEF to LLA
-    {
-      const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
-      simCore::CoordinateConverter converter;
-      converter.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
-    }
-
-    position = osg::Vec3d(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, llaCoord.alt());
-    return 0;
+  simCore::Coordinate llaCoord;
+  // apply the offset to the ref position if using the local offset or if the map node is nullptr which indicates this is a hosted node (relative to ref position)
+  if (useLocalOffset || node->getMapNode() == nullptr)
+  {
+    // if the offsets are non-zero, apply the offsets to our reference position
+    simCore::CoordinateConverter converter;
+    converter.setReferenceOrigin(refPosition.y() * simCore::DEG2RAD, refPosition.x() * simCore::DEG2RAD, refPosition.z());
+    simCore::Coordinate xEastCoord(simCore::COORD_SYS_XEAST, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
+    converter.convert(xEastCoord, llaCoord, simCore::COORD_SYS_LLA);
+  }
+  else // convert from absolute center, ECEF to LLA
+  {
+    const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
+    simCore::CoordinateConverter converter;
+    converter.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
   }
 
-  /// Apply the orientation offsets from the specified shape to the local rotation of the specified node
-  void applyOrientationOffsetsToNode_(const simCore::GOG::GogShape& shape, osgEarth::LocalGeometryNode* node)
-  {
-    if (node == nullptr)
-      return;
+  position = osg::Vec3d(llaCoord.lon() * simCore::RAD2DEG, llaCoord.lat() * simCore::RAD2DEG, llaCoord.alt());
+  return 0;
+}
 
-    double yawOffset = 0.;
-    shape.getYawOffset(yawOffset);
-    osg::Quat yaw(yawOffset, -osg::Vec3(0, 0, 1));
-    double pitchOffset = 0.;
-    shape.getPitchOffset(pitchOffset);
-    osg::Quat pitch(pitchOffset, osg::Vec3(1, 0, 0));
-    double rollOffset = 0.;
-    shape.getRollOffset(rollOffset);
-    osg::Quat roll(rollOffset, osg::Vec3(0, 1, 0));
-    node->setLocalRotation(roll * pitch * yaw);
-  }
+/// Apply the orientation offsets from the specified shape to the local rotation of the specified node
+inline
+void applyOrientationOffsetsToNode_(const simCore::GOG::GogShape& shape, osgEarth::LocalGeometryNode* node)
+{
+  if (node == nullptr)
+    return;
+
+  double yawOffset = 0.;
+  shape.getYawOffset(yawOffset);
+  osg::Quat yaw(yawOffset, -osg::Vec3(0, 0, 1));
+  double pitchOffset = 0.;
+  shape.getPitchOffset(pitchOffset);
+  osg::Quat pitch(pitchOffset, osg::Vec3(1, 0, 0));
+  double rollOffset = 0.;
+  shape.getRollOffset(rollOffset);
+  osg::Quat roll(rollOffset, osg::Vec3(0, 1, 0));
+  node->setLocalRotation(roll * pitch * yaw);
+}
+
+/// Retrieve the reference position, given a Geo Position Node
+int getReferencePosition_(osg::Vec3d& referencePosition, const osgEarth::GeoPositionNode& localNode, double altitudeM)
+{
+  const osgEarth::GeoPoint& refPoint = localNode.getPosition();
+  // If attached, the SRS is unset. The reference position returned is the Shape's (from GogNodeInterface)
+  if (!refPoint.getSRS())
+    return 1;
+
+  // Extract from the local node's position
+  referencePosition.x() = refPoint.x(); // note this is lon, in degrees
+  referencePosition.y() = refPoint.y(); // note this is lat, in degrees
+  referencePosition.z() = altitudeM; // always use original altitude, since an altitude offset may have been applied
+  return 0;
+}
+
+/// Retrieve the reference position, given a Geo Position Node
+int setReferencePosition_(const osg::Vec3d& referencePos, osgEarth::GeoPositionNode& localNode)
+{
+  auto* srs = localNode.getPosition().getSRS();
+  // Don't permit changing the actual on-screen reference position for attached GOG
+  if (!srs)
+    return 1;
+
+  // Create a GeoPoint and feed it to the Local Node's position
+  const osgEarth::GeoPoint newReference(srs, referencePos);
+  localNode.setPosition(newReference);
+  return 0;
+}
+
+bool isAttached_(const simVis::GOG::GogNodeInterface& iface, const osgEarth::GeoPositionNode& localNode)
+{
+  return iface.isRelative() && localNode.getPosition().getSRS() == nullptr;
+}
+
 }
 
 namespace simVis { namespace GOG {
@@ -680,18 +716,10 @@ int GogNodeInterface::setScale(const osg::Vec3d& scale)
     return 1;
   // Apply to the underlying shape
   shape_->setScale({ scale.x(), scale.y(), scale.z() });
-  LoaderUtils::setScale(*shape_, osgNode_);
-
-  // For relative GOGs that are not attached, update the geo-position altitude, which
-  // resets the flags and state needed to deal with clamped or ground-relative altitudes
-  simCore::GOG::AltitudeMode altMode = simCore::GOG::AltitudeMode::NONE;
-  if (shape_->getAltitudeMode(altMode) == 0 && altMode != simCore::GOG::AltitudeMode::NONE)
-  {
-    // This ends up calling setGeoPositionAltitude_() which resets the ground-relative data
-    osg::Vec3d refPos;
-    if (getReferencePosition(refPos) == 0)
-      setReferencePosition(refPos);
-  }
+  applyScale_(scale);
+  // This ends up calling setGeoPositionAltitude_() which resets the ground-relative data,
+  // which is important when rescaling large GOGs especially clamped or surface relative
+  adjustAltitude_();
   return 0;
 }
 
@@ -1400,6 +1428,12 @@ bool GogNodeInterface::deferringStyleUpdates_() const
   return deferringStyleUpdate_;
 }
 
+void GogNodeInterface::applyScale_(const osg::Vec3d& scale)
+{
+  // Default implementation from LoaderUtils
+  LoaderUtils::setScale(*shape_, osgNode_);
+}
+
 ///////////////////////////////////////////////////////////////////
 
 FeatureNodeInterface::FeatureNodeInterface(osgEarth::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData)
@@ -1771,47 +1805,25 @@ int LocalGeometryNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoP
 
 int LocalGeometryNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
 {
-  // Fall back to the Shape (using GogNodeInterface method) if local node not defined
-  if (!localNode_.valid())
-    return GogNodeInterface::getReferencePosition(referencePosition);
-
-  const osgEarth::GeoPoint& refPoint = localNode_->getPosition();
-  // If attached, the SRS is unset. The reference position returned is the Shape's (from GogNodeInterface)
-  if (!refPoint.getSRS())
-    return GogNodeInterface::getReferencePosition(referencePosition);
-
-  // Extract from the local node's position
-  referencePosition.x() = refPoint.x(); // note this is lon, in degrees
-  referencePosition.y() = refPoint.y(); // note this is lat, in degrees
-  referencePosition.z() = altitude_; // always use original altitude, since an altitude offset may have been applied
-  return 0;
+  if (localNode_.valid() && getReferencePosition_(referencePosition, *localNode_, altitude_) == 0)
+    return 0;
+  // Fall back to GogNodeInterface if node inspection fails
+  return GogNodeInterface::getReferencePosition(referencePosition);
 }
 
 int LocalGeometryNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
 {
   // First, apply to the shape, using the GogNodeInterface methods
   const int gniRv = GogNodeInterface::setReferencePosition(referencePos);
-  // If it failed, or local node doesn't exist, return early
-  if (!localNode_.valid() || gniRv != 0)
+  if (gniRv != 0 || !localNode_ || setReferencePosition_(referencePos, *localNode_) != 0)
     return 1;
-
-  auto* srs = localNode_->getPosition().getSRS();
-  // Don't permit changing the actual on-screen reference position for attached GOG
-  if (!srs)
-    return 1;
-
-  // Create a GeoPoint and feed it to the Local Node's position
-  const osgEarth::GeoPoint newReference(
-    srs,
-    referencePos);
-  localNode_->setPosition(newReference);
-  setGeoPositionAltitude_(*localNode_, 0.);
+  adjustAltitude_();
   return 0;
 }
 
 bool LocalGeometryNodeInterface::isAttached() const
 {
-  return isRelative() && localNode_.valid() && localNode_->getPosition().getSRS() == nullptr;
+  return localNode_.valid() && isAttached_(*this, *localNode_);
 }
 
 void LocalGeometryNodeInterface::adjustAltitude_()
@@ -2041,6 +2053,29 @@ void LabelNodeInterface::applyOrientationOffsets_()
   // no-op, labels don't respect orientation offsets
 }
 
+int LabelNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  if (labelNode_.valid() && getReferencePosition_(referencePosition, *labelNode_, altitude_) == 0)
+    return 0;
+  // Fall back to GogNodeInterface if node inspection fails
+  return GogNodeInterface::getReferencePosition(referencePosition);
+}
+
+int LabelNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
+{
+  // First, apply to the shape, using the GogNodeInterface methods
+  const int gniRv = GogNodeInterface::setReferencePosition(referencePos);
+  if (gniRv != 0 || !labelNode_.valid() || setReferencePosition_(referencePos, *labelNode_) != 0)
+    return 1;
+  adjustAltitude_();
+  return 0;
+}
+
+bool LabelNodeInterface::isAttached() const
+{
+  return labelNode_.valid() && isAttached_(*this, *labelNode_);
+}
+
 //////////////////////////////////////////////
 
 CylinderNodeInterface::CylinderNodeInterface(osg::Group* groupNode, osgEarth::LocalGeometryNode* sideNode, osgEarth::LocalGeometryNode* topCapNode, osgEarth::LocalGeometryNode* bottomCapNode, const simVis::GOG::GogMetaData& metaData)
@@ -2150,6 +2185,43 @@ void CylinderNodeInterface::applyOrientationOffsets_()
   applyOrientationOffsetsToNode_(*shapeObject(), sideNode_.get());
 }
 
+int CylinderNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  if (bottomCapNode_.valid() && getReferencePosition_(referencePosition, *bottomCapNode_, altitude_) == 0)
+    return 0;
+  // Fall back to GogNodeInterface if node inspection fails
+  return GogNodeInterface::getReferencePosition(referencePosition);
+}
+
+int CylinderNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
+{
+  // First, apply to the shape, using the GogNodeInterface methods
+  const int gniRv = GogNodeInterface::setReferencePosition(referencePos);
+  if (gniRv != 0 || !bottomCapNode_ || setReferencePosition_(referencePos, *bottomCapNode_) != 0)
+    return 1;
+  if (topCapNode_.valid())
+    setReferencePosition_(referencePos, *topCapNode_);
+  if (sideNode_.valid())
+    setReferencePosition_(referencePos, *sideNode_);
+  adjustAltitude_();
+  return 0;
+}
+
+bool CylinderNodeInterface::isAttached() const
+{
+  return bottomCapNode_.valid() && isAttached_(*this, *bottomCapNode_);
+}
+
+void CylinderNodeInterface::applyScale_(const osg::Vec3d& scale)
+{
+  if (bottomCapNode_.valid())
+    bottomCapNode_->setScale(scale);
+  if (topCapNode_.valid())
+    topCapNode_->setScale(scale);
+  if (sideNode_.valid())
+    sideNode_->setScale(scale);
+}
+
 //////////////////////////////////////////////
 
 ArcNodeInterface::ArcNodeInterface(osg::Group* groupNode, osgEarth::LocalGeometryNode* shapeNode, osgEarth::LocalGeometryNode* fillNode, const simVis::GOG::GogMetaData& metaData)
@@ -2245,6 +2317,40 @@ void ArcNodeInterface::applyOrientationOffsets_()
   applyOrientationOffsetsToNode_(*shapeObject(), shapeNode_.get());
   applyOrientationOffsetsToNode_(*shapeObject(), fillNode_.get());
 }
+
+int ArcNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  if (shapeNode_.valid() && getReferencePosition_(referencePosition, *shapeNode_, altitude_) == 0)
+    return 0;
+  // Fall back to GogNodeInterface if node inspection fails
+  return GogNodeInterface::getReferencePosition(referencePosition);
+}
+
+int ArcNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
+{
+  // First, apply to the shape, using the GogNodeInterface methods
+  const int gniRv = GogNodeInterface::setReferencePosition(referencePos);
+  if (gniRv != 0 || !shapeNode_ || setReferencePosition_(referencePos, *shapeNode_) != 0)
+    return 1;
+  if (fillNode_.valid())
+    setReferencePosition_(referencePos, *fillNode_);
+  adjustAltitude_();
+  return 0;
+}
+
+bool ArcNodeInterface::isAttached() const
+{
+  return shapeNode_.valid() && isAttached_(*this, *fillNode_);
+}
+
+void ArcNodeInterface::applyScale_(const osg::Vec3d& scale)
+{
+  shapeNode_->setScale(scale);
+  if (fillNode_.valid())
+    fillNode_->setScale(scale);
+}
+
+//////////////////////////////////////////////
 
 SphericalNodeInterface::SphericalNodeInterface(osgEarth::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData)
   : LocalGeometryNodeInterface(localNode, metaData)
@@ -2395,6 +2501,8 @@ void SphericalNodeInterface::setStyle_(const osgEarth::Style& style)
   }
 }
 
+//////////////////////////////////////////////
+
 ConeNodeInterface::ConeNodeInterface(osgEarth::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData)
   : LocalGeometryNodeInterface(localNode, metaData)
 {
@@ -2436,6 +2544,8 @@ void ConeNodeInterface::setFillColor(const osg::Vec4f& color)
   if (fillable)
     fillable->setFillColor(LoaderUtils::convertToCoreColor(color));
 }
+
+//////////////////////////////////////////////
 
 ImageOverlayInterface::ImageOverlayInterface(osgEarth::ImageOverlay* imageNode, const simVis::GOG::GogMetaData& metaData)
   : GogNodeInterface(imageNode, metaData),
@@ -2523,6 +2633,17 @@ void ImageOverlayInterface::applyOrientationOffsets_()
 {
   // no-op, this class does not implement relative shapes
 }
+
+int ImageOverlayInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  if (!imageNode_)
+    return GogNodeInterface::getReferencePosition(referencePosition);
+  const osg::Vec2d& lonLat = imageNode_->getCenter();
+  referencePosition.set(lonLat.x(), lonLat.y(), altitude_);
+  return 0;
+}
+
+//////////////////////////////////////////////
 
 LatLonAltBoxInterface::LatLonAltBoxInterface(osg::Group* node, osgEarth::FeatureNode* topNode, osgEarth::FeatureNode* bottomNode, const simVis::GOG::GogMetaData& metaData)
   : FeatureNodeInterface(node, topNode, metaData),
