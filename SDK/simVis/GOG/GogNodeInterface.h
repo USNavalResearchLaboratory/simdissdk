@@ -265,6 +265,22 @@ public:
   int getOpacity(float& opacity) const;
 
   /**
+   * Retrieves the X Y Z scale associated with the underlying GOG Shape.
+   * @param scale Out: scale factor for the GOG. Typically (1,1,1). Even on error return, this is set to 1,1,1
+   * @return 0 on success, and a scale was set; non-zero if the scale was not set.
+   */
+  int getScale(osg::Vec3d& scale) const;
+
+  /**
+   * Sets the scale on the underlying GOG shape, and the 3D node. Returns success if all
+   * operations succeed. The underlying scale on GOG is always set, but the 3D node might
+   * not properly scale.
+   * @param scale X, Y, and Z scale factor. Typically (1,1,1) for most GOGs.
+   * @return 0 on success, non-zero on failure
+   */
+  int setScale(const osg::Vec3d& scale);
+
+  /**
   * Get the underlying osg::Node that represents the Overlay in the scene graph
   * @return the Overlay osg::Node
   */

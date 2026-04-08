@@ -666,6 +666,35 @@ int GogNodeInterface::getOpacity(float& opacity) const
   return 0;
 }
 
+int GogNodeInterface::getScale(osg::Vec3d& scale) const
+{
+  simCore::Vec3 vec(1., 1., 1.);
+  const int rv = (shape_ && shape_->getScale(vec) == 0) ? 0 : 1;
+  scale.set(vec.x(), vec.y(), vec.z());
+  return rv;
+}
+
+int GogNodeInterface::setScale(const osg::Vec3d& scale)
+{
+  if (!shape_)
+    return 1;
+  // Apply to the underlying shape
+  shape_->setScale({ scale.x(), scale.y(), scale.z() });
+  LoaderUtils::setScale(*shape_, osgNode_);
+
+  // For relative GOGs that are not attached, update the geo-position altitude, which
+  // resets the flags and state needed to deal with clamped or ground-relative altitudes
+  simCore::GOG::AltitudeMode altMode = simCore::GOG::AltitudeMode::NONE;
+  if (shape_->getAltitudeMode(altMode) == 0 && altMode != simCore::GOG::AltitudeMode::NONE)
+  {
+    // This ends up calling setGeoPositionAltitude_() which resets the ground-relative data
+    osg::Vec3d refPos;
+    if (getReferencePosition(refPos) == 0)
+      setReferencePosition(refPos);
+  }
+  return 0;
+}
+
 void GogNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
   // not all shapes support extrude
