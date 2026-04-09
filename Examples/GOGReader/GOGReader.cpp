@@ -53,6 +53,7 @@
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Loader.h"
 #include "simUtil/ExampleResources.h"
+#include "simUtil/GogManipulatorController.h"
 #include "simUtil/MouseDispatcher.h"
 #include "simUtil/MousePositionManipulator.h"
 
@@ -69,6 +70,8 @@ using GogNodeVector = std::vector<GogNodeInterfacePtr>;
 
 constexpr const char* HELP_TEXT =
 "c : center on next GOG\n"
+"e : toggle edit mode for centered GOG\n"
+"g : toggle global opt-in editing\n"
 "a : change altitude mode for centered GOG\n"
 "f : toggle fill state for centered GOG\n"
 "n : toggle labels for all platforms\n"
@@ -107,11 +110,13 @@ class MouseAndMenuHandler : public osgGA::GUIEventHandler
 {
 public:
   MouseAndMenuHandler(simVis::Viewer* viewer, simData::DataStore& dataStore,
-    bool showElevation, simVis::PlatformNode* platform, GogNodeVector& overlayNodes)
+    bool showElevation, simVis::PlatformNode* platform, GogNodeVector& overlayNodes,
+    std::shared_ptr<simUtil::GogManipulatorController> manipulatorController)
     : viewer_(viewer),
     dataStore_(dataStore),
     overlayNodes_(overlayNodes),
     platform_(platform),
+    manipulatorController_(manipulatorController),
     showElevation_(showElevation)
   {
     centeredGogIndex_.init(0);
@@ -266,6 +271,29 @@ private:
       }
       return true;
     }
+
+    case 'e': // toggle edit mode for centered GOG
+      if (!centeredGogIndex_.isSet() || centeredGogIndex_ >= overlayNodes_.size())
+        return false;
+
+      // Let the controller handle the spawn/destroy logic
+      if (manipulatorController_)
+      {
+        auto gog = overlayNodes_[centeredGogIndex_.get()];
+        manipulatorController_->toggleExplicitEdit(gog);
+      }
+
+      updateStatusAndLabel_();
+      return true;
+
+    case 'g': // toggle global opt-in edit mode
+      if (manipulatorController_)
+      {
+        const bool newState = !manipulatorController_->isGlobalEditMode();
+        manipulatorController_->setGlobalEditMode(newState, overlayNodes_);
+      }
+      updateStatusAndLabel_();
+      return true;
     }
     return false;
   }
@@ -276,7 +304,13 @@ private:
 
     os << "Centered: ";
     if (centeredGogIndex_.isSet() && centeredGogIndex_ < overlayNodes_.size())
-      os << overlayNodes_[centeredGogIndex_.get()]->osgNode()->getName() << "\n";
+    {
+      auto gog = overlayNodes_[centeredGogIndex_.get()];
+      os << gog->osgNode()->getName();
+      if (manipulatorController_ && manipulatorController_->isEditing(gog.get()))
+        os << " [EDITING]";
+      os << "\n";
+    }
     else
       os << "None\n";
 
@@ -290,6 +324,9 @@ private:
     }
 
     os << "\nDynamic Scale: " << (dynamicScaleOn_ ? "ON" : "OFF") << "\n";
+
+    if (manipulatorController_)
+      os << "Global Edit Mode: " << (manipulatorController_->isGlobalEditMode() ? "ON" : "OFF") << "\n";
 
     const simVis::View* focusedView = viewer_->getMainView()->getFocusManager()->getFocusedView();
     os << std::fixed << std::setprecision(2)
@@ -331,6 +368,7 @@ private:
   std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher_;
   std::shared_ptr<LatLonElevListener> latLonElevListener_;
   std::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
+  std::shared_ptr<simUtil::GogManipulatorController> manipulatorController_;
 
   bool showElevation_ = false;
   bool dynamicScaleOn_ = true;
@@ -472,6 +510,9 @@ int main(int argc, char** argv)
   viewer->setMap(map.get());
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
+  // Create central manipulator controller
+  auto manipulatorController = std::make_shared<simUtil::GogManipulatorController>(scene->getMapNode(), scene->getScenario());
+
   if (sky)
     simExamples::addDefaultSkyNode(viewer.get());
 
@@ -601,7 +642,8 @@ int main(int argc, char** argv)
     dataStore,
     showElevation,
     attach ? platform.get() : nullptr,
-    overlayNodes);
+    overlayNodes,
+    manipulatorController);
 
 #ifdef HAVE_IMGUI
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
