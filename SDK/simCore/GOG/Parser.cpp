@@ -699,9 +699,11 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         current.set(ShapeParameter::SCALEX, tokens[1]);
         current.set(ShapeParameter::SCALEY, tokens[2]);
         current.set(ShapeParameter::SCALEZ, tokens[3]);
+        if (tokens.size() > 4)
+          printError_(filename, lineNumber, "scale command requires 3 arguments (got " + std::to_string(tokens.size() - 1) + ")");
       }
       else
-        printError_(filename, lineNumber, "scale command requires 3 arguments");
+        printError_(filename, lineNumber, "scale command requires 3 arguments (got " + std::to_string(tokens.size() - 1) + ")");
     }
     else if (tokens[0] == "orient")
     {

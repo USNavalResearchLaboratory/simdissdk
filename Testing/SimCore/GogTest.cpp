@@ -2415,6 +2415,63 @@ int testOrient()
   return rv;
 }
 
+int testScaleField()
+{
+  int rv = 0;
+
+  // Test programmatic API setter/getter
+  simCore::GOG::Circle circle(false);
+  simCore::Vec3 testScale(5.0, 0.5, 2.0);
+  circle.setScale(testScale);
+  simCore::Vec3 outScale;
+  rv += SDK_ASSERT(circle.getScale(outScale) == 0);
+  rv += SDK_ASSERT(outScale == testScale);
+
+  // Helper lambda to parse and evaluate string inputs
+  auto parseAndCheckScale = [](const std::string& scaleStr, bool getScaleSuccess, const simCore::Vec3& expectedVal) -> int
+    {
+      int localRv = 0;
+      simCore::GOG::Parser parser;
+      std::vector<simCore::GOG::GogShapePtr> shapes;
+      std::stringstream ss;
+
+      ss << "start\n circle\n centerlla 0 0 0\n " << scaleStr << " end\n";
+      parser.parse(ss, "", shapes);
+
+      // Invalid scale should never impact shape creation
+      localRv += SDK_ASSERT(shapes.size() == 1);
+      if (!shapes.empty())
+      {
+        simCore::Vec3 parsedScale;
+        localRv += SDK_ASSERT(shapes.front()->getScale(parsedScale) == (getScaleSuccess ? 0 : 1));
+        localRv += SDK_ASSERT(simCore::areEqual(parsedScale.x(), expectedVal.x()));
+        localRv += SDK_ASSERT(simCore::areEqual(parsedScale.y(), expectedVal.y()));
+        localRv += SDK_ASSERT(simCore::areEqual(parsedScale.z(), expectedVal.z()));
+      }
+      return localRv;
+    };
+
+  const simCore::Vec3 noScale(1., 1., 1.);
+
+  std::cout << ">>> Expecting 4 errors about scale parsing, all in a row:\n";
+  // Test 0 arguments - expecting error printout, no scale set (i.e. default 1,1,1)
+  rv += parseAndCheckScale("scale\n", false, noScale);
+  // Test 1 argument - expecting error printout, no scale set (i.e. default 1,1,1)
+  rv += parseAndCheckScale("scale 5.0\n", false, noScale);
+  // Test 2 arguments - expecting error printout, no scale set (i.e. default 1,1,1)
+  rv += parseAndCheckScale("scale 5.0 2.0\n", false, noScale);
+  // Test 4 arguments - expecting error printout, but first 3 values saved as scale
+  rv += parseAndCheckScale("scale 5.0 2.0 3.0 9.9\n", true, simCore::Vec3(5.0, 2.0, 3.0));
+  std::cout << "<<< End of expected errors.\n";
+
+  // Test 3 arguments (Expect explicit X, Y, Z)
+  rv += parseAndCheckScale("scale 5.0 2.0 3.0\n", true, simCore::Vec3(5.0, 2.0, 3.0));
+  // Test zero scale handling - expecting it to be blindly accepted
+  rv += parseAndCheckScale("scale 0.0 0.0 0.0\n", true, simCore::Vec3(0.0, 0.0, 0.0));
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -2440,6 +2497,7 @@ int GogTest(int argc, char* argv[])
   rv += testTimeStrings();
   rv += testReferencePositionField();
   rv += testOrient();
+  rv += testScaleField();
 
   return rv;
 }
