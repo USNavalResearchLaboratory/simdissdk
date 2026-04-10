@@ -61,8 +61,8 @@ public:
   /** Returns true if the specific GOG currently has an active manipulator attached. */
   bool isEditing(const simVis::GOG::GogNodeInterface* gog) const;
 
-  /** Turns global opt-in editing on or off for the provided list of GOGs. */
-  void setGlobalEditMode(bool active, const std::vector<std::shared_ptr<simVis::GOG::GogNodeInterface>>& availableGogs);
+  /** Turns global opt-in editing on or off. */
+  void setGlobalEditMode(bool active);
   /** Returns the current state of the global edit mode. */
   bool isGlobalEditMode() const;
 
@@ -87,6 +87,8 @@ private:
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
   osg::observer_ptr<osg::Group> manipulatorRoot_;
 
+  /** List of all GOG pointers this class knows about. */
+  std::vector<std::shared_ptr<simVis::GOG::GogNodeInterface>> editableShapes_;
   /** Maps the raw pointer of the shape to its UI edit state */
   std::map<const simVis::GOG::GogNodeInterface*, EditState> activeManipulators_;
 

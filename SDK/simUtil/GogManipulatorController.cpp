@@ -90,6 +90,8 @@ void GogManipulatorController::removeGog(std::shared_ptr<simVis::GOG::GogNodeInt
     it->second.globalRequest = false;
     removeIfUnused_(it);
   }
+  // Remove from list of all GOGs
+  std::erase(editableShapes_, gog);
 }
 
 bool GogManipulatorController::isEditing(const simVis::GOG::GogNodeInterface* gog) const
@@ -111,10 +113,10 @@ void GogManipulatorController::removeIfUnused_(std::map<const simVis::GOG::GogNo
   }
 }
 
-void GogManipulatorController::setGlobalEditMode(bool active, const std::vector<std::shared_ptr<simVis::GOG::GogNodeInterface>>& availableGogs)
+void GogManipulatorController::setGlobalEditMode(bool active)
 {
   globalEditMode_ = active;
-  for (const auto& gog : availableGogs)
+  for (const auto& gog : editableShapes_)
     applyGlobalStateToShape_(gog);
 }
 
@@ -157,6 +159,13 @@ bool GogManipulatorController::isGlobalEditMode() const
 
 void GogManipulatorController::notifyShapesAdded(const std::vector<std::shared_ptr<simVis::GOG::GogNodeInterface>>& addedShapes)
 {
+  // Save GOGs for later toggle of global edit
+  for (const auto& shape : addedShapes)
+  {
+    if (shape && GogManipulator::canEdit(*shape))
+      editableShapes_.push_back(shape);
+  }
+
   if (!globalEditMode_)
     return;
   for (const auto& shape : addedShapes)

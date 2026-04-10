@@ -290,7 +290,7 @@ private:
       if (manipulatorController_)
       {
         const bool newState = !manipulatorController_->isGlobalEditMode();
-        manipulatorController_->setGlobalEditMode(newState, overlayNodes_);
+        manipulatorController_->setGlobalEditMode(newState);
       }
       updateStatusAndLabel_();
       return true;
@@ -636,6 +636,9 @@ int main(int argc, char** argv)
   }
 
   simVis::View* mainView = viewer->getMainView();
+
+  // Controller will need to know about the overlay nodes
+  manipulatorController->notifyShapesAdded(overlayNodes);
 
   osg::ref_ptr<MouseAndMenuHandler> mouseHandler = new MouseAndMenuHandler(
     viewer.get(),
