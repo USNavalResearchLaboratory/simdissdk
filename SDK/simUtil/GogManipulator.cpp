@@ -139,14 +139,17 @@ void GogManipulator::setTarget(std::shared_ptr<simVis::GOG::GogNodeInterface> go
   else
     transDragger_->setNodeMask(0);
 
-  // Annotations cannot rotate
+  // Annotations cannot rotate or scale; scaling can sometimes work but is inconsistent
   if (activeGog_->shape() == simVis::GOG::GOG_ANNOTATION)
+  {
     rotDragger_->setNodeMask(0);
+    scaleDragger_->setNodeMask(0);
+  }
   else
+  {
     rotDragger_->setNodeMask(~0);
-
-  // Everyone can scale
-  scaleDragger_->setNodeMask(~0);
+    scaleDragger_->setNodeMask(~0);
+  }
 }
 
 std::shared_ptr<simVis::GOG::GogNodeInterface> GogManipulator::target() const
