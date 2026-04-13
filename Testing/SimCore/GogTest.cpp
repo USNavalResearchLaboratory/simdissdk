@@ -2472,6 +2472,82 @@ int testScaleField()
   return rv;
 }
 
+int testEditModeField()
+{
+  int rv = 0;
+
+  // Test Programmatic API (Setter/Getter)
+  simCore::GOG::Circle circle(false);
+  rv += SDK_ASSERT(!circle.getEditMode().has_value());
+  circle.setEditMode(simCore::GOG::EditMode::GLOBAL);
+  rv += SDK_ASSERT(circle.getEditMode().has_value());
+  rv += SDK_ASSERT(circle.getEditMode().value() == simCore::GOG::EditMode::GLOBAL);
+  circle.setEditMode(simCore::GOG::EditMode::LOCKED);
+  rv += SDK_ASSERT(circle.getEditMode().value() == simCore::GOG::EditMode::LOCKED);
+
+  // Helper lambda to parse and evaluate string inputs and serialization
+  auto parseAndCheckEditMode = [](const std::string& editStr, std::optional<simCore::GOG::EditMode> expectedMode, const std::string& expectedSerialized) -> int
+    {
+      int localRv = 0;
+      simCore::GOG::Parser parser;
+      std::vector<simCore::GOG::GogShapePtr> shapes;
+      std::stringstream ss;
+
+      ss << "start\n circle\n centerlla 0 0 0\n " << editStr << " end\n";
+      parser.parse(ss, "", shapes);
+
+      localRv += SDK_ASSERT(shapes.size() == 1);
+      if (!shapes.empty())
+      {
+        auto shape = shapes.front();
+        auto parsedMode = shape->getEditMode();
+
+        // Verify parsed state matches expected state
+        localRv += SDK_ASSERT(parsedMode.has_value() == expectedMode.has_value());
+        if (parsedMode.has_value() && expectedMode.has_value())
+        {
+          localRv += SDK_ASSERT(parsedMode.value() == expectedMode.value());
+        }
+
+        // Verify serialization
+        std::stringstream outStream;
+        shape->serializeToStream(outStream);
+        std::string serialized = outStream.str();
+
+        if (expectedSerialized.empty())
+        {
+          // If it wasn't set, it shouldn't serialize out
+          localRv += SDK_ASSERT(serialized.find("3d edit") == std::string::npos);
+        }
+        else
+        {
+          // Verify it serializes back out to the correct canonical keyword
+          localRv += SDK_ASSERT(serialized.find(expectedSerialized) != std::string::npos);
+        }
+      }
+      return localRv;
+    };
+
+  // "GLOBAL" Parsing and Serialization
+  rv += parseAndCheckEditMode("3d edit on\n", simCore::GOG::EditMode::GLOBAL, "3d edit on\n");
+  rv += parseAndCheckEditMode("3d edit true\n", simCore::GOG::EditMode::GLOBAL, "3d edit on\n"); // Assuming stringIsTrueToken captures "true"
+  // "EXPLICIT_ONLY" Parsing and Serialization
+  rv += parseAndCheckEditMode("3d edit off\n", simCore::GOG::EditMode::EXPLICIT_ONLY, "3d edit off\n");
+  rv += parseAndCheckEditMode("3d edit false\n", simCore::GOG::EditMode::EXPLICIT_ONLY, "3d edit off\n");
+  // "LOCKED" Parsing and Serialization
+  rv += parseAndCheckEditMode("3d edit never\n", simCore::GOG::EditMode::LOCKED, "3d edit never\n");
+
+  // Test Default Fallbacks
+  // Keyword present but no arg (parser defaults to "on")
+  rv += parseAndCheckEditMode("3d edit\n", simCore::GOG::EditMode::GLOBAL, "3d edit on\n");
+  // Keyword present but unrecognized arg (parser defaults to EXPLICIT_ONLY)
+  rv += parseAndCheckEditMode("3d edit unknown\n", simCore::GOG::EditMode::EXPLICIT_ONLY, "3d edit off\n");
+
+  // Keyword omitted entirely (optional should be empty, no serialization)
+  rv += parseAndCheckEditMode("", std::nullopt, "");
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -2498,7 +2574,7 @@ int GogTest(int argc, char* argv[])
   rv += testReferencePositionField();
   rv += testOrient();
   rv += testScaleField();
+  rv += testEditModeField();
 
   return rv;
 }
-

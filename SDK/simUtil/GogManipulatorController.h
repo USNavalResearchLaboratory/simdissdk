@@ -66,6 +66,13 @@ public:
   /** Returns the current state of the global edit mode. */
   bool isGlobalEditMode() const;
 
+  /** Callback fired when the availability of globally editable shapes changes. */
+  using GlobalEditAvailabilityCallback = std::function<void(bool isAvailable)>;
+  /** Provide a callback to be notified when globally editable shape availability changes, e.g. to drive enable/disable buttons. */
+  void setGlobalEditAvailabilityCallback(GlobalEditAvailabilityCallback cb);
+  /** Returns true if there is at least one globally editable shape known to the controller. */
+  bool hasGloballyEditableShapes() const;
+
   /** Call this when new shapes are loaded into the scene so the controller can apply global rules. */
   void notifyShapesAdded(const std::vector<std::shared_ptr<simVis::GOG::GogNodeInterface>>& addedShapes);
   /** Call this before shapes are removed from memory to safely destroy active draggers. */
@@ -84,6 +91,9 @@ private:
   /** Turns on edit mode, if global editing, for a single shape that just got created */
   void applyGlobalStateToShape_(std::shared_ptr<simVis::GOG::GogNodeInterface> gog);
 
+  /** Helper to safely update the count and fire the callback if needed */
+  void updateGloballyEditableCount_(int delta);
+
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
   osg::observer_ptr<osg::Group> manipulatorRoot_;
 
@@ -94,6 +104,11 @@ private:
 
   /** Turns global editing on and off */
   bool globalEditMode_ = false;
+
+  /** User-supplied callback when globally editable becomes 0 or non-zero */
+  GlobalEditAvailabilityCallback availabilityCallback_;
+  /** Count of globally editable items */
+  size_t globallyEditableCount_ = 0;
 };
 
 }

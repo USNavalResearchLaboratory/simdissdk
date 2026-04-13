@@ -758,6 +758,11 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       else
         printError_(filename, lineNumber, "3d command requires at least 2 arguments: " + line);
     }
+    else if (startsWith(line, "3d edit"))
+    {
+      // Default to "on"
+      current.set(ShapeParameter::EDIT, tokens.size() > 2 ? tokens[2] : "on");
+    }
     else if (startsWith(line, "extrude"))
     {
       if (tokens.size() >= 2)
@@ -1228,6 +1233,17 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
 
   if (parsed.hasValue(ShapeParameter::DRAW))
     rv->setDrawn(parsed.boolValue(ShapeParameter::DRAW, true));
+
+  if (parsed.hasValue(ShapeParameter::EDIT))
+  {
+    const std::string& editString = parsed.stringValue(ShapeParameter::EDIT);
+    if (simCore::stringIsTrueToken(editString))
+      rv->setEditMode(EditMode::GLOBAL);
+    else if (simCore::caseCompare(editString, "never") == 0)
+      rv->setEditMode(EditMode::LOCKED);
+    else
+      rv->setEditMode(EditMode::EXPLICIT_ONLY);
+  }
 
   if (parsed.hasValue(ShapeParameter::DEPTHBUFFER))
     rv->setDepthBufferActive(parsed.boolValue(ShapeParameter::DEPTHBUFFER, false));

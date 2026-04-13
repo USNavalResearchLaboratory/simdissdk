@@ -82,16 +82,24 @@ void GogManipulatorController::removeGog(std::shared_ptr<simVis::GOG::GogNodeInt
   if (!gog)
     return;
 
-  auto it = activeManipulators_.find(gog.get());
-  if (it != activeManipulators_.end())
+  auto manipIt = activeManipulators_.find(gog.get());
+  if (manipIt != activeManipulators_.end())
   {
     // Clear flags to trigger cleanup in evaluateState_()
-    it->second.explicitRequest = false;
-    it->second.globalRequest = false;
-    removeIfUnused_(it);
+    manipIt->second.explicitRequest = false;
+    manipIt->second.globalRequest = false;
+    removeIfUnused_(manipIt);
   }
-  // Remove from list of all GOGs
-  std::erase(editableShapes_, gog);
+
+  // Find it in the list of editableShapes_ - we do this to ensure we don't fall out of sync
+  auto shapeIt = std::find(editableShapes_.begin(), editableShapes_.end(), gog);
+  if (shapeIt != editableShapes_.end())
+  {
+    // Sync up the editable count
+    if (GogManipulator::isOptInForGlobalEditing(*gog))
+      updateGloballyEditableCount_(-1);
+    std::erase(editableShapes_, gog);
+  }
 }
 
 bool GogManipulatorController::isEditing(const simVis::GOG::GogNodeInterface* gog) const
@@ -159,12 +167,22 @@ bool GogManipulatorController::isGlobalEditMode() const
 
 void GogManipulatorController::notifyShapesAdded(const std::vector<std::shared_ptr<simVis::GOG::GogNodeInterface>>& addedShapes)
 {
+  int newGlobalEdits = 0;
+
   // Save GOGs for later toggle of global edit
   for (const auto& shape : addedShapes)
   {
     if (shape && GogManipulator::canEdit(*shape))
+    {
       editableShapes_.push_back(shape);
+      if (GogManipulator::isOptInForGlobalEditing(*shape))
+        ++newGlobalEdits;
+    }
   }
+
+  // Increment the global edit count with new shapes
+  if (newGlobalEdits > 0)
+    updateGloballyEditableCount_(newGlobalEdits);
 
   if (!globalEditMode_)
     return;
@@ -176,6 +194,34 @@ void GogManipulatorController::notifyShapesRemoved(const std::vector<std::shared
 {
   for (const auto& shape : removedShapes)
     removeGog(shape);
+}
+
+void GogManipulatorController::setGlobalEditAvailabilityCallback(GlobalEditAvailabilityCallback cb)
+{
+  availabilityCallback_ = std::move(cb);
+}
+
+bool GogManipulatorController::hasGloballyEditableShapes() const
+{
+  return globallyEditableCount_ > 0;
+}
+
+void GogManipulatorController::updateGloballyEditableCount_(int delta)
+{
+  const bool wasAvailable = (globallyEditableCount_ > 0);
+  // Avoid underflow
+  if (delta < 0 && static_cast<int>(globallyEditableCount_) < -delta)
+  {
+    assert(0); // lost track; shouldn't happen
+    globallyEditableCount_ = 0;
+  }
+  else
+    globallyEditableCount_ += delta;
+  const bool isAvailable = (globallyEditableCount_ > 0);
+
+  // Only fire the callback if the state actually crossed the 0/1 threshold
+  if (wasAvailable != isAvailable && availabilityCallback_)
+    availabilityCallback_(isAvailable);
 }
 
 }

@@ -519,6 +519,13 @@ bool GogNodeInterface::isAttached() const
   return false;
 }
 
+simCore::GOG::EditMode GogNodeInterface::editMode() const
+{
+  if (!shape_)
+    return simCore::GOG::EditMode::EXPLICIT_ONLY;
+  return shape_->getEditMode().value_or(simCore::GOG::EditMode::EXPLICIT_ONLY);
+}
+
 size_t GogNodeInterface::lineNumber() const
 {
   return metaData_.lineNumber;

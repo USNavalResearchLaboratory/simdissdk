@@ -96,10 +96,10 @@ enum class ShapeType
 // Define's a GOG color's RGBA values, 0-255
 struct SDKCORE_EXPORT Color
 {
-  int red;
-  int green;
-  int blue;
-  int alpha;
+  int red = 255;
+  int green = 0;
+  int blue = 0;
+  int alpha = 255;
 
   Color(int redIn, int greenIn, int blueIn, int alphaIn) : red(redIn), green(greenIn), blue(blueIn), alpha(alphaIn) {};
   Color() : Color(255, 0, 0, 255) {}
@@ -132,6 +132,17 @@ enum class OutlineThickness
   THICK
 };
 
+/// Defines how a shape responds to interactive 3D manipulation requests
+enum class EditMode
+{
+  /// Default. Shape ignores global edit toggles but can be explicitly targeted for editing.
+  EXPLICIT_ONLY = 0,
+  /// Opt-in. Shape responds to global edit toggles as well as explicit targeting.
+  GLOBAL,
+  /// Opt-out. Shape cannot be interactively edited under any circumstances.
+  LOCKED
+};
+
 /// Base class for the GOG shapes, containing common fields that apply to all shapes
 class SDKCORE_EXPORT GogShape
 {
@@ -160,6 +171,10 @@ public:
   /// Draw state of the shape
   int getIsDrawn(bool& draw) const;
   void setDrawn(bool draw);
+
+  /// Edit mode for the shape
+  std::optional<EditMode> getEditMode() const;
+  void setEditMode(EditMode editMode);
 
   /**
   * Get flag indicating if depth buffer is active for the shape; if value is not set, default value is returned
@@ -325,14 +340,15 @@ protected:
   UnitsState originalUnits_; ///< store original units for serialization
 
 private:
-  bool canExtrude_; ///< Indicates if shape supports extrusion
-  bool canFollow_; ///< Indicates if shape's orientation can be locked to a reference orientation
-  bool relative_; ///< Indicates if shape is relative coordinates (xyz meters) or absolute coordinates (lla radians)
-  bool serializeName_; ///< Indicates if shape will serialize out its name as a separate line item using '3d name'
-  size_t lineNumber_; ///< Location in original GOG file
+  bool canExtrude_ = false; ///< Indicates if shape supports extrusion
+  bool canFollow_ = false; ///< Indicates if shape's orientation can be locked to a reference orientation
+  bool relative_ = false; ///< Indicates if shape is relative coordinates (xyz meters) or absolute coordinates (lla radians)
+  bool serializeName_ = true; ///< Indicates if shape will serialize out its name as a separate line item using '3d name'
+  size_t lineNumber_ = 0; ///< Location in original GOG file
 
   std::optional<std::string> name_; ///< Display name
   std::optional<bool> draw_; ///< Draw state
+  std::optional<EditMode> editMode_; ///< Edit mode
   std::optional<double> altitudeOffset_; ///< offset for altitude values, meters
   std::optional<bool> depthBuffer_; ///< Depth buffer active state
   std::optional<AltitudeMode> altitudeMode_; ///< Defines special behavior for altitude
@@ -933,11 +949,11 @@ private:
   /// Serialize the shape's specific implementation attributes to the stream
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
-  double north_; ///< north corner latitude, radians
-  double south_; ///< south corner latitude, radians
-  double east_; ///< east corner latitude, radians
-  double west_; ///< west corner latitude, radians
-  double altitude_; ///< altitude of the box bottom, meters
+  double north_ = 0.; ///< north corner latitude, radians
+  double south_ = 0.; ///< south corner latitude, radians
+  double east_ = 0.; ///< east corner latitude, radians
+  double west_ = 0.; ///< west corner latitude, radians
+  double altitude_ = 0.; ///< altitude of the box bottom, meters
   std::optional<double> height_; ///< height of the box above the altitude, meters
 };
 
@@ -983,11 +999,11 @@ private:
   /// Serialize the shape's specific implementation attributes to the stream
   virtual void serializeToStream_(std::ostream& gogOutputStream) const;
 
-  double north_; ///< north corner latitude, radians
-  double south_; ///< south corner latitude, radians
-  double east_; ///< east corner latitude, radians
-  double west_; ///< west corner latitude, radians
-  double rotation_; ///< rotation angle from true north, radians
+  double north_ = 0.; ///< north corner latitude, radians
+  double south_ = 0.; ///< south corner latitude, radians
+  double east_ = 0.; ///< east corner latitude, radians
+  double west_ = 0.; ///< west corner latitude, radians
+  double rotation_ = 0.; ///< rotation angle from true north, radians
   std::string imageFile_; ///< image file to display
   std::optional<double> opacity_; ///< 0.0 (transparent) to 1.0 (opaque)
 };

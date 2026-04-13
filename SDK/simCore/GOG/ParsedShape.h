@@ -93,6 +93,7 @@ enum class ShapeParameter
 {
   // GOG Structure Commands
   DRAW = 0, // Maps to "off"
+  EDIT,     // Opt-in to edit features
 
   // GOG Type Commands
   LLABOX_E = 20, // LatLonAltBox

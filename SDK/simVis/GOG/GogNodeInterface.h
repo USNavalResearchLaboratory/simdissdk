@@ -437,6 +437,9 @@ public:
   /** Indicates that the shape is relative AND attached to an entity; only some GOGs can be attached */
   virtual bool isAttached() const;
 
+  /** Convenience: retrieve the Edit Mode on the underlying Shape, returning EXPLICIT if unset */
+  simCore::GOG::EditMode editMode() const;
+
   /** Return the starting line number from the source GOG file */
   size_t lineNumber() const;
 

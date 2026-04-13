@@ -42,11 +42,6 @@ std::string Color::serialize() const
 
 
 GogShape::GogShape()
-  : canExtrude_(false),
-    canFollow_(false),
-    relative_(false),
-    serializeName_(true),
-    lineNumber_(0)
 {}
 
 GogShape::~GogShape()
@@ -79,6 +74,16 @@ int GogShape::getIsDrawn(bool& draw) const
 void GogShape::setDrawn(bool draw)
 {
   draw_ = draw;
+}
+
+std::optional<EditMode> GogShape::getEditMode() const
+{
+  return editMode_;
+}
+
+void GogShape::setEditMode(EditMode editMode)
+{
+  editMode_ = editMode;
 }
 
 int GogShape::getIsDepthBufferActive(bool& depthBuffer) const
@@ -393,7 +398,7 @@ void GogShape::serializeToStream(std::ostream& gogOutputStream) const
 {
   gogOutputStream << "start\n";
   // comments should be serialized first
-  for (std::string comment : comments_)
+  for (const auto& comment : comments_)
     gogOutputStream << comment << "\n";
 
   // first call implementation methods
@@ -405,6 +410,17 @@ void GogShape::serializeToStream(std::ostream& gogOutputStream) const
   // serialize out draw state only if it's specifically set to 'off'
   if (draw_.has_value() && !draw_.value_or(true))
     gogOutputStream << "off\n";
+
+  // Serialize edit state only if it's set, else use default
+  if (editMode_.has_value())
+  {
+    switch (*editMode_)
+    {
+    case EditMode::EXPLICIT_ONLY: gogOutputStream << "3d edit off\n"; break;
+    case EditMode::GLOBAL:        gogOutputStream << "3d edit on\n"; break;
+    case EditMode::LOCKED:        gogOutputStream << "3d edit never\n"; break;
+    }
+  }
 
   simCore::Units altUnits(simCore::Units::METERS);
 
@@ -1376,12 +1392,7 @@ void Annotation::serializeToStream_(std::ostream& gogOutputStream) const
 }
 
 LatLonAltBox::LatLonAltBox()
-  : FillableShape(),
-    north_(0.),
-    south_(0.),
-    east_(0.),
-    west_(0.),
-    altitude_(0.)
+  : FillableShape()
 {
   setCanExtrude_(false);
   setCanFollow_(false);
@@ -1465,12 +1476,7 @@ void LatLonAltBox::serializeToStream_(std::ostream& gogOutputStream) const
 }
 
 ImageOverlay::ImageOverlay()
-  : GogShape(),
-    north_(0.),
-    south_(0.),
-    east_(0.),
-    west_(0.),
-    rotation_(0.)
+  : GogShape()
 {
   setCanExtrude_(false);
   setCanFollow_(false);

@@ -291,8 +291,7 @@ bool GogManipulator::isOptInForGlobalEditing(const simVis::GOG::GogNodeInterface
 {
   if (!GogManipulator::canEdit(gog))
     return false;
-  // TODO: Replace with a GOG keyword inspection
-  return gog.isRelative();
+  return gog.editMode() == simCore::GOG::EditMode::GLOBAL;
 }
 
 }
