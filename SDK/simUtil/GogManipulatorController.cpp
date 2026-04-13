@@ -45,14 +45,14 @@ GogManipulatorController::~GogManipulatorController()
   activeManipulators_.clear();
 }
 
-void GogManipulatorController::toggleExplicitEdit(std::shared_ptr<simVis::GOG::GogNodeInterface> gog)
+int GogManipulatorController::toggleExplicitEdit(std::shared_ptr<simVis::GOG::GogNodeInterface> gog)
 {
   if (!gog || !mapNode_.valid() || !manipulatorRoot_.valid())
-    return;
+    return 1;
 
   // Never allow editing if the GOG inherently denies it
   if (!GogManipulator::canEdit(*gog))
-    return;
+    return 1;
 
   auto it = activeManipulators_.find(gog.get());
   if (it == activeManipulators_.end())
@@ -75,6 +75,16 @@ void GogManipulatorController::toggleExplicitEdit(std::shared_ptr<simVis::GOG::G
     it->second.explicitRequest = !it->second.explicitRequest;
     removeIfUnused_(it);
   }
+  return 0;
+}
+
+int GogManipulatorController::setExplicitEdit(std::shared_ptr<simVis::GOG::GogNodeInterface> gog, bool edit)
+{
+  if (!gog)
+    return 1;
+  if (isExplicitlyEditing(*gog) == edit)
+    return 0;
+  return toggleExplicitEdit(gog);
 }
 
 void GogManipulatorController::removeGog(std::shared_ptr<simVis::GOG::GogNodeInterface> gog)
@@ -102,9 +112,15 @@ void GogManipulatorController::removeGog(std::shared_ptr<simVis::GOG::GogNodeInt
   }
 }
 
-bool GogManipulatorController::isEditing(const simVis::GOG::GogNodeInterface* gog) const
+bool GogManipulatorController::isEditing(const simVis::GOG::GogNodeInterface& gog) const
 {
-  return activeManipulators_.find(gog) != activeManipulators_.end();
+  return activeManipulators_.find(&gog) != activeManipulators_.end();
+}
+
+bool GogManipulatorController::isExplicitlyEditing(const simVis::GOG::GogNodeInterface& gog) const
+{
+  auto it = activeManipulators_.find(&gog);
+  return (it != activeManipulators_.end()) && it->second.explicitRequest;
 }
 
 void GogManipulatorController::removeIfUnused_(std::map<const simVis::GOG::GogNodeInterface*, EditState>::iterator it)

@@ -48,9 +48,11 @@ public:
   /**
    * Toggles the explicit (user-requested) edit state for a specific GOG shape.
    * Will allocate and attach a GogManipulator if one does not exist, or destroy it if
-   * no other modes (like global opt-in) are keeping it alive.
+   * no other modes (like global opt-in) are keeping it alive. Returns 0 on successful toggle.
    */
-  void toggleExplicitEdit(std::shared_ptr<simVis::GOG::GogNodeInterface> gog);
+  int toggleExplicitEdit(std::shared_ptr<simVis::GOG::GogNodeInterface> gog);
+  /** Sets the explicit edit state on the GOG; can fail if GOG cannot be edited. Returns 0 on success */
+  int setExplicitEdit(std::shared_ptr<simVis::GOG::GogNodeInterface> gog, bool edit);
 
   /**
    * Forcefully removes a GOG from the controller.
@@ -59,7 +61,9 @@ public:
   void removeGog(std::shared_ptr<simVis::GOG::GogNodeInterface> gog);
 
   /** Returns true if the specific GOG currently has an active manipulator attached. */
-  bool isEditing(const simVis::GOG::GogNodeInterface* gog) const;
+  bool isEditing(const simVis::GOG::GogNodeInterface& gog) const;
+  /** Returns true if the specific GOG has editing explicitly enabled */
+  bool isExplicitlyEditing(const simVis::GOG::GogNodeInterface& gog) const;
 
   /** Turns global opt-in editing on or off. */
   void setGlobalEditMode(bool active);

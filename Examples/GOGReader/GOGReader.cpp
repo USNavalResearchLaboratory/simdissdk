@@ -307,7 +307,7 @@ private:
     {
       auto gog = overlayNodes_[centeredGogIndex_.get()];
       os << gog->osgNode()->getName();
-      if (manipulatorController_ && manipulatorController_->isEditing(gog.get()))
+      if (manipulatorController_ && manipulatorController_->isEditing(*gog))
         os << " [EDITING]";
       os << "\n";
     }
