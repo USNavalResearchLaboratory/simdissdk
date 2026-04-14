@@ -24,11 +24,13 @@
 
 #include <functional>
 #include <memory>
+#include <vector>
 #include "osg/Group"
 #include "osgEarth/MapNode"
 #include "simCore/Common/Common.h"
 
 namespace osgEarth { class GeoPoint; }
+namespace simVis { class AnimatedLineNode; }
 namespace simVis::GOG { class GogNodeInterface; }
 
 namespace simUtil {
@@ -92,6 +94,13 @@ private:
 
   /** Track whether we're dragging, so we know when to send out the edit-finished callback. */
   bool isDragging_ = false;
+
+  /** Holds the visual guides for bounding box and line to rotation icon */
+  osg::ref_ptr<osg::Group> guideGroup_;
+  /** Draws a line from center of shape into the 0 degree north location of the rotation icon */
+  osg::ref_ptr<simVis::AnimatedLineNode> centerToRotLine_;
+  /** Draws a box around the bounding box to help identify the scale and rotation locations */
+  std::vector<osg::ref_ptr<simVis::AnimatedLineNode>> boxLines_;
 };
 
 }

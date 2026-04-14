@@ -21,9 +21,11 @@
  *
  */
 #include <algorithm>
+#include <array>
 #include "osg/ComputeBoundsVisitor"
 #include "simCore/Calc/Calculations.h"
 #include "simVis/GOG/GogNodeInterface.h"
+#include "simVis/AnimatedLine.h"
 #include "simUtil/IconDragger.h"
 #include "simUtil/GogManipulator.h"
 
@@ -39,7 +41,8 @@ constexpr double DRAGGER_DEFAULT_SCALE_MULTIPLIER = 1.4142136;
 constexpr double DRAGGER_SCALE_ANGLE_RAD = M_PI * 0.75; // 135 deg
 
 GogManipulator::GogManipulator(osgEarth::MapNode* mapNode)
-  : mapNode_(mapNode)
+  : mapNode_(mapNode),
+  guideGroup_(new osg::Group)
 {
   // Setup Translation Dragger (Center)
   transDragger_ = new simUtil::IconDragger(mapNode_.get(), simVis::makeCursorTranslateImage());
@@ -56,6 +59,27 @@ GogManipulator::GogManipulator(osgEarth::MapNode* mapNode)
   addChild(transDragger_.get());
   addChild(rotDragger_.get());
   addChild(scaleDragger_.get());
+  addChild(guideGroup_.get());
+
+  // Center to Rotation handle
+  centerToRotLine_ = new simVis::AnimatedLineNode(2.0f, false);
+  centerToRotLine_->setColor1(osg::Vec4(1.0f, 0.8f, 0.0f, 0.8f)); // Yellow, a bit more solid
+  centerToRotLine_->setStipple1(0x0F0F);
+  centerToRotLine_->setStipple2(0);
+  centerToRotLine_->setShiftsPerSecond(0.);
+  guideGroup_->addChild(centerToRotLine_.get());
+
+  // Rotation-aligned bounding box with four edges
+  for (int i = 0; i < 4; ++i)
+  {
+    auto* boxLine = new simVis::AnimatedLineNode(1.5f, false);
+    boxLine->setColor1(osg::Vec4(1.0f, 0.8f, 0.0f, 0.6f)); // Yellow, a bit less solid
+    boxLine->setStipple1(0x3333);
+    boxLine->setStipple2(0);
+    boxLine->setShiftsPerSecond(0.);
+    boxLines_.push_back(boxLine);
+    guideGroup_->addChild(boxLine);
+  }
 
   // Generate drag event callbacks
   auto makeDragHandler = [this](auto updateFunc) {
@@ -144,11 +168,14 @@ void GogManipulator::setTarget(std::shared_ptr<simVis::GOG::GogNodeInterface> go
   {
     rotDragger_->setNodeMask(0);
     scaleDragger_->setNodeMask(0);
+    guideGroup_->setNodeMask(0);
   }
   else
   {
     rotDragger_->setNodeMask(~0);
     scaleDragger_->setNodeMask(~0);
+    // Only show the guides if rotation and scale are shown, else the BB doesn't make sense
+    guideGroup_->setNodeMask(~0);
   }
 }
 
@@ -198,26 +225,54 @@ void GogManipulator::syncDraggersToGog_()
   const double centerLonRad = osg::DegreesToRadians(centerGeo.x());
 
   // Extract out the rotation node lat/lon based on yaw and distance
-  double outLatRad = 0.;
-  double outLonRad = 0.;
+  double rotLatRad = 0.;
+  double rotLonRad = 0.;
   simCore::sodanoDirect(centerLatRad, centerLonRad, 0.0,
     rotationDistanceM_ * currentScale, yawOffsetRad,
-    &outLatRad, &outLonRad);
+    &rotLatRad, &rotLonRad);
 
-  // Create a GeoPoint and set the rotation dragger position
   const osgEarth::GeoPoint rotPos(mapNode_->getMapSRS(),
-    osg::RadiansToDegrees(outLonRad), osg::RadiansToDegrees(outLatRad),
+    osg::RadiansToDegrees(rotLonRad), osg::RadiansToDegrees(rotLatRad),
     0., osgEarth::ALTMODE_ABSOLUTE);
   rotDragger_->setPosition(rotPos, false);
 
+  double scaleLatRad = 0.;
+  double scaleLonRad = 0.;
   simCore::sodanoDirect(centerLatRad, centerLonRad, 0.0,
     baseScaleDistanceM_ * currentScale, yawOffsetRad + DRAGGER_SCALE_ANGLE_RAD,
-    &outLatRad, &outLonRad);
+    &scaleLatRad, &scaleLonRad);
 
   const osgEarth::GeoPoint scalePos(mapNode_->getMapSRS(),
-    osg::RadiansToDegrees(outLonRad), osg::RadiansToDegrees(outLatRad),
+    osg::RadiansToDegrees(scaleLonRad), osg::RadiansToDegrees(scaleLatRad),
     0., osgEarth::ALTMODE_ABSOLUTE);
   scaleDragger_->setPosition(scalePos, false);
+
+  // Update position of the line for center-to-rotation point
+  const simCore::Coordinate centerCoord(simCore::COORD_SYS_LLA, simCore::Vec3(centerLatRad, centerLonRad, 0.0));
+  const simCore::Coordinate rotCoord(simCore::COORD_SYS_LLA, simCore::Vec3(rotLatRad, rotLonRad, 0.0));
+  centerToRotLine_->setEndPoints(centerCoord, rotCoord);
+
+  // Defines the 4 corners around the shape, in radians
+  static constexpr std::array<double, 4> cornerAnglesRad = {
+    M_PI * 0.25, M_PI * 0.75, M_PI * 1.25, M_PI * 1.75
+  };
+
+  // Update Bounding Box lines using the range and corner angles
+  std::array<simCore::Coordinate, 4> cornerCoords;
+  for (int i = 0; i < 4; ++i)
+  {
+    double cornerLatRad = 0.;
+    double cornerLonRad = 0.;
+    simCore::sodanoDirect(centerLatRad, centerLonRad, 0.0,
+      baseScaleDistanceM_ * currentScale, yawOffsetRad + cornerAnglesRad[i],
+      &cornerLatRad, &cornerLonRad);
+    cornerCoords[i] = simCore::Coordinate(simCore::COORD_SYS_LLA,
+      simCore::Vec3(cornerLatRad, cornerLonRad, 0.0));
+  }
+
+  // Set all the end points consecutively
+  for (int i = 0; i < 4; ++i)
+    boxLines_[i]->setEndPoints(cornerCoords[i], cornerCoords[(i + 1) % 4]);
 }
 
 void GogManipulator::handleTranslation_(const osgEarth::GeoPoint& newPos)
