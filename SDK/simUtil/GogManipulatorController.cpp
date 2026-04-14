@@ -50,7 +50,8 @@ int GogManipulatorController::toggleExplicitEdit(std::shared_ptr<simVis::GOG::Go
   if (!gog || !mapNode_.valid() || !manipulatorRoot_.valid())
     return 1;
 
-  // Never allow editing if the GOG inherently denies it
+  // Never allow editing if the GOG inherently denies it -- note do not call canEditRightNow() here,
+  // because we want to queue up the edit operation so when GOG becomes visible, the handles are there.
   if (!GogManipulator::canEdit(*gog))
     return 1;
 
@@ -106,7 +107,7 @@ void GogManipulatorController::removeGog(std::shared_ptr<simVis::GOG::GogNodeInt
   if (shapeIt != editableShapes_.end())
   {
     // Sync up the editable count
-    if (GogManipulator::isOptInForGlobalEditing(*gog))
+    if (isGloballyEditable_(*gog))
       updateGloballyEditableCount_(-1);
     std::erase(editableShapes_, gog);
   }
@@ -150,7 +151,7 @@ void GogManipulatorController::applyGlobalStateToShape_(std::shared_ptr<simVis::
     return;
 
   // We only care about GOGs that explicitly opt-in and are safely editable
-  if (!GogManipulator::isOptInForGlobalEditing(*gog) || !GogManipulator::canEdit(*gog))
+  if (!isGloballyEditable_(*gog))
     return;
 
   auto it = activeManipulators_.find(gog.get());
@@ -191,7 +192,7 @@ void GogManipulatorController::notifyShapesAdded(const std::vector<std::shared_p
     if (shape && GogManipulator::canEdit(*shape))
     {
       editableShapes_.push_back(shape);
-      if (GogManipulator::isOptInForGlobalEditing(*shape))
+      if (isGloballyEditable_(*shape))
         ++newGlobalEdits;
     }
   }
@@ -238,6 +239,11 @@ void GogManipulatorController::updateGloballyEditableCount_(int delta)
   // Only fire the callback if the state actually crossed the 0/1 threshold
   if (wasAvailable != isAvailable && availabilityCallback_)
     availabilityCallback_(isAvailable);
+}
+
+bool GogManipulatorController::isGloballyEditable_(const simVis::GOG::GogNodeInterface& gog) const
+{
+  return GogManipulator::canEdit(gog) && gog.editMode() == simCore::GOG::EditMode::GLOBAL;
 }
 
 }

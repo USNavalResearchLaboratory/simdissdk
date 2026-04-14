@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <array>
 #include "osg/ComputeBoundsVisitor"
+#include "osg/NodeCallback"
 #include "simCore/Calc/Calculations.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/AnimatedLine.h"
@@ -40,10 +41,75 @@ constexpr double DRAGGER_DEFAULT_SCALE_MULTIPLIER = 1.4142136;
 /** Angle for the scale dragger, in radians, from center */
 constexpr double DRAGGER_SCALE_ANGLE_RAD = M_PI * 0.75; // 135 deg
 
+/** Lightweight callback that will hide the manipulators if the GOG interface node is hidden */
+class GogManipulator::SynchronizeCallback : public osg::NodeCallback
+{
+public:
+  /**
+   * Helper that will sync the displayed content to the GOG itself, per-update, if it is different.
+   * This fires off only when the editing is enabled, only on edited GOGs, to make sure the draw flag
+   * is correct, as well as the position/ori/scale.
+   */
+  void synchronize(simUtil::GogManipulator& manip, const simVis::GOG::GogNodeInterface& gog)
+  {
+    // Handle transient visibility (e.g. draw flag)
+    if (!simUtil::GogManipulator::canEdit(gog) || !gog.getDraw())
+    {
+      manip.handlesGroup_->setNodeMask(0);
+      return;
+    }
+
+    manip.handlesGroup_->setNodeMask(~0);
+    if (manip.isDragging_) // Don't fight with our own dragger math
+      return;
+
+    // Poll for GUI-driven state changes so we don't fall out of sync
+    osg::Vec3d currentPos = cachedPos_;
+    gog.getReferencePosition(currentPos);
+    osg::Vec3d currentScale = cachedScale_;
+    gog.getScale(currentScale);
+
+    // Orientation offset comes from the underlying GOG Shape, the node interface does not expose a getter
+    double currentYawRad = cachedYawRad_;
+    if (const auto* shape = gog.shapeObject())
+      shape->getYawOffset(currentYawRad);
+
+    // If anything changed externally (from GUI, plug-ins, etc), resync
+    if (currentPos != cachedPos_ || currentYawRad != cachedYawRad_ || currentScale != cachedScale_)
+    {
+      manip.syncDraggersToGog_();
+
+      // Update cache
+      cachedPos_ = currentPos;
+      cachedYawRad_ = currentYawRad;
+      cachedScale_ = currentScale;
+    }
+  }
+
+  // From NodeVisitor:
+  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv) override
+  {
+    auto* manip = dynamic_cast<simUtil::GogManipulator*>(node);
+    if (manip && manip->hasTarget())
+      synchronize(*manip, *manip->target());
+    traverse(node, nv);
+  }
+
+private:
+  osg::Vec3d cachedPos_;
+  double cachedYawRad_ = 0.0;
+  osg::Vec3d cachedScale_ = osg::Vec3d(1, 1, 1);
+};
+
+////////////////////////////////////////////////////////////
+
 GogManipulator::GogManipulator(osgEarth::MapNode* mapNode)
   : mapNode_(mapNode),
+  handlesGroup_(new osg::Group),
   guideGroup_(new osg::Group)
 {
+  addChild(handlesGroup_.get());
+
   // Setup Translation Dragger (Center)
   transDragger_ = new simUtil::IconDragger(mapNode_.get(), simVis::makeCursorTranslateImage());
   transDragger_->setNodeMask(0); // Hidden by default
@@ -56,10 +122,10 @@ GogManipulator::GogManipulator(osgEarth::MapNode* mapNode)
   scaleDragger_ = new simUtil::IconDragger(mapNode_.get(), simVis::makeCursorDiagonalLlUrImage());
   scaleDragger_->setNodeMask(0);
 
-  addChild(transDragger_.get());
-  addChild(rotDragger_.get());
-  addChild(scaleDragger_.get());
-  addChild(guideGroup_.get());
+  handlesGroup_->addChild(transDragger_.get());
+  handlesGroup_->addChild(rotDragger_.get());
+  handlesGroup_->addChild(scaleDragger_.get());
+  handlesGroup_->addChild(guideGroup_.get());
 
   // Center to Rotation handle
   centerToRotLine_ = new simVis::AnimatedLineNode(2.0f, false);
@@ -108,6 +174,8 @@ GogManipulator::GogManipulator(osgEarth::MapNode* mapNode)
   transDragger_->onPositionChanged(makeDragHandler(&GogManipulator::handleTranslation_));
   rotDragger_->onPositionChanged(makeDragHandler(&GogManipulator::handleRotation_));
   scaleDragger_->onPositionChanged(makeDragHandler(&GogManipulator::handleScale_));
+
+  setUpdateCallback(new SynchronizeCallback());
 }
 
 GogManipulator::~GogManipulator()
@@ -348,13 +416,6 @@ bool GogManipulator::canEdit(const simVis::GOG::GogNodeInterface& gog)
 void GogManipulator::setEditFinishedCallback(EditFinishedCallback cb)
 {
   editFinishedCallback_ = std::move(cb);
-}
-
-bool GogManipulator::isOptInForGlobalEditing(const simVis::GOG::GogNodeInterface& gog)
-{
-  if (!GogManipulator::canEdit(gog))
-    return false;
-  return gog.editMode() == simCore::GOG::EditMode::GLOBAL;
 }
 
 }

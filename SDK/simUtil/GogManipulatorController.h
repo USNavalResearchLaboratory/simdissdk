@@ -90,6 +90,9 @@ private:
     osg::ref_ptr<GogManipulator> manipulator;
   };
 
+  /** Returns true if the GOG is editable, and opted in to global edit */
+  bool isGloballyEditable_(const simVis::GOG::GogNodeInterface& gog) const;
+
   /** Removes the iterator from activeManipulators_ and the scene if it's no longer needed */
   void removeIfUnused_(std::map<const simVis::GOG::GogNodeInterface*, EditState>::iterator it);
   /** Turns on edit mode, if global editing, for a single shape that just got created */

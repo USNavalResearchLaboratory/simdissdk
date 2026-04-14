@@ -62,10 +62,8 @@ public:
   /** Returns true if the target GOG is set and is editable */
   bool hasTarget() const;
 
-  /** Helper that will return true if the given GOG is editable. Some GOGs (absolute especially) cannot be edited. */
+  /** Returns true if the GOG is "structurally" uneditable, e.g. absolute, attached, or not supported. These don't change. */
   static bool canEdit(const simVis::GOG::GogNodeInterface& gog);
-  /** Helper that indicates a GOG has opted in for global editing */
-  static bool isOptInForGlobalEditing(const simVis::GOG::GogNodeInterface& gog);
 
   /** Callback fired when the user releases the mouse after dragging a handle. */
   using EditFinishedCallback = std::function<void(std::shared_ptr<simVis::GOG::GogNodeInterface>)>;
@@ -73,6 +71,8 @@ public:
   void setEditFinishedCallback(EditFinishedCallback cb);
 
 private:
+  class SynchronizeCallback;
+
   void syncDraggersToGog_();
   void handleTranslation_(const osgEarth::GeoPoint& newPos);
   void handleRotation_(const osgEarth::GeoPoint& handlePos);
@@ -80,6 +80,7 @@ private:
 
   std::shared_ptr<simVis::GOG::GogNodeInterface> activeGog_;
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
+  osg::ref_ptr<osg::Group> handlesGroup_;
   osg::ref_ptr<simUtil::IconDragger> transDragger_;
   osg::ref_ptr<simUtil::IconDragger> rotDragger_;
   osg::ref_ptr<simUtil::IconDragger> scaleDragger_;
