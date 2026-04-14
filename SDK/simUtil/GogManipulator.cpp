@@ -324,6 +324,10 @@ void GogManipulator::handleScale_(const osgEarth::GeoPoint& handlePos)
 
 bool GogManipulator::canEdit(const simVis::GOG::GogNodeInterface& gog)
 {
+  // If user requested "never editable", then we never edit
+  if (gog.editMode() == simCore::GOG::EditMode::LOCKED)
+    return false;
+
   // No editing attached GOGs at all
   if (gog.isAttached())
     return false;
@@ -337,6 +341,7 @@ bool GogManipulator::canEdit(const simVis::GOG::GogNodeInterface& gog)
   osg::Vec3d refGeoPoint;
   if (gog.getReferencePosition(refGeoPoint) != 0)
     return false;
+
   return true;
 }
 
