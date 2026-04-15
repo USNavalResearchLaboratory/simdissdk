@@ -22,9 +22,6 @@ mark_as_advanced(
     # GDAL is only a dependency when using PublicDefaults
     GDAL_DIR
 
-    # Shouldn't change in most circumstances
-    INSTALLSETTINGS_OSGPLUGINS_DIR
-
     # Auto-detected OSG values
     APPEND_OPENSCENEGRAPH_VERSION
     OSGEARTH_PLUGIN_PATH

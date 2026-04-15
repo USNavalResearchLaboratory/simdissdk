@@ -181,12 +181,6 @@ find_package(GDAL CONFIG)
 find_package(osgEarth)
 find_package(osgQOpenGL 4.0 QUIET)
 
-# vcpkg installs plugins into the plugins/ folder, not bin or lib
-set(INSTALLSETTINGS_OSGPLUGINS_DIR "${PROJECT_INSTALL_SHARED_DIR}")
-if(USING_VCPKG)
-    set(INSTALLSETTINGS_OSGPLUGINS_DIR "plugins")
-endif()
-
 # Find SQLite for DB file support in simVis and simUtil
 find_package(SQLite3 QUIET)
 set(SQLite3_VCPKG OFF)
