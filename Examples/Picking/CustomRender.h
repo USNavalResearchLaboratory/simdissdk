@@ -48,7 +48,7 @@ public:
   {
   }
 
-  virtual bool update(const simData::DataSliceBase* updateSlice, bool force = false)
+  bool update(const simData::DataSliceBase* updateSlice, bool force = false) override
   {
     // Break out if the node isn't currently valid
     if (!node_)
@@ -155,7 +155,7 @@ public:
   }
 
   /** Detect our Custom Render nodes */
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot) override
   {
     // Break out if not a custom rendering; we don't care about those entities here
     if (!manager_.valid() || ot != simData::CUSTOM_RENDERING)

@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class Orbit; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Orbit */
 class SDKVIS_EXPORT Orbit
 {
 public:
-  /** Create the orbit from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the orbit from the shape object */
   static GogNodeInterface* createOrbit(const simCore::GOG::Orbit& orbit, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

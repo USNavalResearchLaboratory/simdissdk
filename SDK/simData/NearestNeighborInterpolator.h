@@ -34,19 +34,19 @@ class SDKDATA_EXPORT NearestNeighborInterpolator : public Interpolator
 {
 public:
   /** @see Interpolator::interpolate() */
-  virtual bool interpolate(double time, const PlatformUpdate &prev, const PlatformUpdate &next, PlatformUpdate *result);
+  bool interpolate(double time, const PlatformUpdate &prev, const PlatformUpdate &next, PlatformUpdate *result) override;
 
   /** @see Interpolator::interpolate() */
-  virtual bool interpolate(double time, const BeamUpdate &prev, const BeamUpdate &next, BeamUpdate *result);
+  bool interpolate(double time, const BeamUpdate &prev, const BeamUpdate &next, BeamUpdate *result) override;
 
   /** @see Interpolator::interpolate() */
-  virtual bool interpolate(double time, const GateUpdate &prev, const GateUpdate &next, GateUpdate *result);
+  bool interpolate(double time, const GateUpdate &prev, const GateUpdate &next, GateUpdate *result) override;
 
   /** @see Interpolator::interpolate() */
-  virtual bool interpolate(double time, const LaserUpdate &prev, const LaserUpdate &next, LaserUpdate *result);
+  bool interpolate(double time, const LaserUpdate &prev, const LaserUpdate &next, LaserUpdate *result) override;
 
   /** @see Interpolator::interpolate() */
-  virtual bool interpolate(double time, const ProjectorUpdate &prev, const ProjectorUpdate &next, ProjectorUpdate *result);
+  bool interpolate(double time, const ProjectorUpdate &prev, const ProjectorUpdate &next, ProjectorUpdate *result) override;
 }; // End NearestNeighborInterpolator
 
 } // End namespace simData

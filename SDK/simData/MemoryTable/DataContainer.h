@@ -31,7 +31,7 @@ namespace simData { namespace MemoryTable {
 class DataContainer
 {
 public:
-  virtual ~DataContainer() {}
+  virtual ~DataContainer() = default;
 
   /**@name Data Container insert() methods
    * @{

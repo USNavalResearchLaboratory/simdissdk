@@ -83,7 +83,7 @@ class CategoryCounter : public simData::CategoryDataSlice::Visitor
 public:
   CategoryCounter() : counter_(0) {}
   virtual ~CategoryCounter() {}
-  virtual void operator()(const simData::CategoryData *update)
+  void operator()(const simData::CategoryData *update) override
   {
     ++counter_;
   }
@@ -194,7 +194,7 @@ public:
   DataTableCounter() : counter_(0) {}
   virtual ~DataTableCounter() {}
 
-  virtual VisitReturn visit(const simData::TableRow& row)
+  VisitReturn visit(const simData::TableRow& row) override
   {
     ++counter_;
     return VISIT_CONTINUE;
@@ -709,7 +709,7 @@ public:
   {
   }
 
-  virtual void operator()(const simData::PlatformUpdate* update)
+  void operator()(const simData::PlatformUpdate* update) override
   {
     if (update->time() != times_[index_])
       ++errors_;
@@ -774,7 +774,7 @@ public:
   {
   }
 
-  virtual void operator()(const simData::PlatformCommand* update)
+  void operator()(const simData::PlatformCommand* update) override
   {
     if (update->time() != times_[index_])
       ++errors_;
@@ -927,7 +927,7 @@ public:
   {
   }
 
-  virtual void operator()(const simData::LobGroupUpdate* update)
+  void operator()(const simData::LobGroupUpdate* update) override
   {
     if (update->time() != times_[index_])
       ++errors_;
@@ -1041,7 +1041,7 @@ public:
   {
   }
 
-  virtual void operator()(const simData::GenericData* update)
+  void operator()(const simData::GenericData* update) override
   {
     if (update->time() != pairs_[index_].time)
       ++errors_;
@@ -1156,7 +1156,7 @@ public:
   {
   }
 
-  virtual void operator()(const simData::CategoryData* update)
+  void operator()(const simData::CategoryData* update) override
   {
     if (update->time() != pairs_[index_].time)
       ++errors_;
@@ -1258,7 +1258,7 @@ public:
   {
   }
 
-  virtual VisitReturn visit(const simData::TableRow& row)
+  VisitReturn visit(const simData::TableRow& row) override
   {
     if (row.time() != pairs_[index_].time)
       ++errors_;

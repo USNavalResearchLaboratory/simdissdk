@@ -24,6 +24,7 @@
 #define SIMVIS_UTILS_H
 
 #include <functional>
+#include <span>
 
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
@@ -166,20 +167,20 @@ namespace simVis
     }
 
     /** Calls update on the node and continues traversal */
-    virtual bool run(osg::Object* object, osg::Object* data) override
+    bool run(osg::Object* object, osg::Object* data) override
     {
       voidFunc_();
       return traverse(object, data);
     }
 
     /** Return the proper library name */
-    virtual const char* libraryName() const { return "simVis"; }
+    const char* libraryName() const override { return "simVis"; }
     /** Return the class name */
-    virtual const char* className() const { return "LambdaOsgCallback"; }
+    const char* className() const override { return "LambdaOsgCallback"; }
 
   protected:
     /// osg::Referenced-derived
-    virtual ~LambdaOsgCallback() {}
+    virtual ~LambdaOsgCallback() = default;
 
   private:
     std::function<void()> voidFunc_;
@@ -500,6 +501,16 @@ namespace simVis
   /// makes a big red "X" square image for the given size in pixels
   SDKVIS_EXPORT osg::Image* makeBrokenImage(int size=32);
 
+  /// Given a span and format (fed to OSG), returns an image, or null if none
+  SDKVIS_EXPORT osg::ref_ptr<osg::Image> readImageFromSpan(std::span<const uint8_t> data, const std::string& format = "png");
+
+  /// Returns a 32x32 icon appropriate for a mouse translate operation (e.g. white cross with arrows)
+  SDKVIS_EXPORT osg::ref_ptr<osg::Image> makeCursorTranslateImage();
+  /// Returns a 32x32 icon appropriate for a mouse rotate operation (e.g. circle with arrow)
+  SDKVIS_EXPORT osg::ref_ptr<osg::Image> makeCursorRotateImage();
+  /// Returns a 32x32 icon appropriate for a mouse scale operation (e.g. lower-left to upper-right with arrows)
+  SDKVIS_EXPORT osg::ref_ptr<osg::Image> makeCursorDiagonalLlUrImage();
+
   /**
    * Builds a sphere mesh geometry, configured potentially with a two-pass alpha render bin for
    * colors that are transparent.
@@ -600,7 +611,7 @@ namespace simVis
     void setFrameStamp(osg::FrameStamp* frameStamp);
 
     /** Applies a strictly increasing time stamp to the sequence */
-    virtual void operator()(osg::Node* node, osg::NodeVisitor* nv);
+    void operator()(osg::Node* node, osg::NodeVisitor* nv) override;
 
   protected:
     /** Protected osg::Referenced-derived destructor */
@@ -771,7 +782,7 @@ namespace simVis
     explicit RemoveModeVisitor(GLenum mode);
 
     /** Override apply(osg::Node&) to remove from all statesets */
-    virtual void apply(osg::Node& node);
+    void apply(osg::Node& node) override;
 
   private:
     GLenum mode_;
@@ -798,7 +809,7 @@ namespace simVis
     FixDeprecatedDrawModes();
 
     /** Override apply() to detect GL3-incompatible draw modes on primitive sets */
-    virtual void apply(osg::Geometry& geom);
+    void apply(osg::Geometry& geom) override;
   };
 
   /** Turns a DOF transform's animation on or off. */
@@ -806,7 +817,7 @@ namespace simVis
   {
   public:
     explicit EnableDOFTransform(bool enabled);
-    virtual void apply(osg::Node& node);
+    void apply(osg::Node& node) override;
 
   private:
     bool enabled_;
@@ -825,9 +836,9 @@ namespace simVis
     META_Node(simVis, PixelScaleHudTransform);
 
     /** Override osg::Transform method. */
-    virtual bool computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const;
+    bool computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const override;
     /** Override osg::Transform method. */
-    virtual bool computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const;
+    bool computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const override;
 
   private:
     /** Computes the inverse of the MVPW and saves it */
@@ -856,7 +867,7 @@ namespace simVis
     explicit ViewportSizeCallback(std::function<void(const osg::Vec2f&)> func);
 
     /** Checks for updated viewport size. */
-    virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*) override;
+    bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*) override;
 
     /** Retrieves the last window size seen */
     osg::Vec2f windowSize() const;
@@ -876,7 +887,7 @@ namespace simVis
     void addFilter(const std::string& filter);
 
     // From NotifyHandler:
-    virtual void notify(osg::NotifySeverity severity, const char* message) override;
+    void notify(osg::NotifySeverity severity, const char* message) override;
 
   protected:
     // Protected, from osg::Referenced

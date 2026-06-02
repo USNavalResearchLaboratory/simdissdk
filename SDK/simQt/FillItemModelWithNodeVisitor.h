@@ -53,7 +53,7 @@ public:
   explicit StateSetVisitor(osg::NodeVisitor::TraversalMode tm = osg::NodeVisitor::TRAVERSE_NONE);
 
   /** Override from osg::NodeVisitor */
-  virtual void apply(osg::Node& node);
+  void apply(osg::Node& node) override;
 
   // Override these methods in your StateSetVisitor instance.
 
@@ -91,19 +91,19 @@ public:
   // Overrides from StateSetVisitor
 
   /** Adds the render bin details only if not inheriting */
-  virtual void applyRenderBin(osg::StateSet& stateSet, int binNumber, const std::string& binName, osg::StateSet::RenderBinMode binMode, bool nestedBins);
+  void applyRenderBin(osg::StateSet& stateSet, int binNumber, const std::string& binName, osg::StateSet::RenderBinMode binMode, bool nestedBins) override;
   /** Creates a Modes sub-tree and adds the parameters to it. */
-  virtual void applyMode(osg::StateSet& stateSet, unsigned int mode, unsigned int value);
+  void applyMode(osg::StateSet& stateSet, unsigned int mode, unsigned int value) override;
   /** Creates an Attributes sub-tree and adds the parameters to it. */
-  virtual void applyAttribute(osg::StateSet& stateSet, osg::StateAttribute& attrib, unsigned int value);
+  void applyAttribute(osg::StateSet& stateSet, osg::StateAttribute& attrib, unsigned int value) override;
   /** Creates a Texture Modes sub-tree and the texture unit and adds the parameters to it. */
-  virtual void applyTextureMode(osg::StateSet& stateSet, unsigned int unit, unsigned int mode, unsigned int value);
+  void applyTextureMode(osg::StateSet& stateSet, unsigned int unit, unsigned int mode, unsigned int value) override;
   /** Creates a Texture Attributes sub-tree for the texture unit and adds the parameters to it. */
-  virtual void applyTextureAttribute(osg::StateSet& stateSet, unsigned int unit, osg::StateAttribute& attrib, unsigned int value);
+  void applyTextureAttribute(osg::StateSet& stateSet, unsigned int unit, osg::StateAttribute& attrib, unsigned int value) override;
   /** Creates a Uniforms sub-tree and adds the parameters to it. */
-  virtual void applyUniform(osg::StateSet& stateSet, osg::Uniform& uniform, unsigned int value);
+  void applyUniform(osg::StateSet& stateSet, osg::Uniform& uniform, unsigned int value) override;
   /** Creates a Defines sub-tree and adds the parameters to it. */
-  virtual void applyDefine(osg::StateSet& stateSet, const std::string& name, const std::string& definition, unsigned int value);
+  void applyDefine(osg::StateSet& stateSet, const std::string& name, const std::string& definition, unsigned int value) override;
 
 private:
   /** Helper method to add a row to the given parent */
@@ -143,9 +143,9 @@ public:
   explicit FillItemModelWithNodeVisitor(QStandardItemModel* model, osg::NodeVisitor::TraversalMode tm=osg::NodeVisitor::TRAVERSE_ALL_CHILDREN);
 
   /** From osg::NodeVisitor */
-  virtual void apply(osg::Node& node);
+  void apply(osg::Node& node) override;
   /** From osg::NodeVisitor */
-  virtual void apply(osg::Group& group);
+  void apply(osg::Group& group) override;
 
 private:
   /** Builds a node and its stateset, adding it to the current stack item.  Returns the 0th item in row, for children. */

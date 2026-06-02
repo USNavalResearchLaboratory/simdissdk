@@ -47,13 +47,13 @@ public:
   virtual ~DatumConvert();
 
   /// Converts Magnetic Datum
-  virtual double convertMagneticDatum(const simCore::Vec3& lla, const simCore::TimeStamp& timeStamp, double bearingRad,
+  double convertMagneticDatum(const simCore::Vec3& lla, const simCore::TimeStamp& timeStamp, double bearingRad,
     simCore::CoordinateSystem coordSystem, simCore::MagneticVariance inputDatum, simCore::MagneticVariance outputDatum,
-    double userOffset) const;
+    double userOffset) const override;
 
   /// Converts Vertical Datum
-  virtual double convertVerticalDatum(const simCore::Vec3& lla, const simCore::TimeStamp& timeStamp, simCore::CoordinateSystem coordSystem,
-    simCore::VerticalDatum inputDatum, simCore::VerticalDatum outputDatum, double userOffset);
+  double convertVerticalDatum(const simCore::Vec3& lla, const simCore::TimeStamp& timeStamp, simCore::CoordinateSystem coordSystem,
+    simCore::VerticalDatum inputDatum, simCore::VerticalDatum outputDatum, double userOffset) override;
 
   /**
    * Pre-loads all vertical datum libraries.  This may take a few moments as the data is converted into

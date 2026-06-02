@@ -58,13 +58,13 @@ public:
     : parent_(parent)
   {}
 
-  void onAddTable(simData::DataTable* table)
+  void onAddTable(simData::DataTable* table) override
   {
     if ((table != nullptr) && (table->ownerId() == parent_.entityId_) && (table->tableName() == simData::INTERNAL_TRACK_HISTORY_TABLE))
       parent_.initializeTableId_();
   }
 
-  void onPreRemoveTable(simData::DataTable* table)
+  void onPreRemoveTable(simData::DataTable* table) override
   {
     if (table != nullptr && table->tableId() == parent_.tableId_)
     {
@@ -84,16 +84,16 @@ public:
     : parent_(parent)
   {}
 
-  virtual void onAddColumn(simData::DataTable& table, const simData::TableColumn& column) {}
+  void onAddColumn(simData::DataTable& table, const simData::TableColumn& column) override {}
 
-  virtual void onAddRow(simData::DataTable& table, const simData::TableRow& row)
+  void onAddRow(simData::DataTable& table, const simData::TableRow& row) override
   {
     parent_.checkColorHistoryChange_(table, row);
   }
 
-  virtual void onPreRemoveColumn(simData::DataTable& table, const simData::TableColumn& column) {}
+  void onPreRemoveColumn(simData::DataTable& table, const simData::TableColumn& column) override {}
 
-  virtual void onPreRemoveRow(simData::DataTable& table, double rowTime) {}
+  void onPreRemoveRow(simData::DataTable& table, double rowTime) override {}
 
 private:
   TrackHistoryNode& parent_;
@@ -310,7 +310,7 @@ void TrackHistoryNode::addUpdate_(const simData::PlatformUpdate& u, const simDat
       if (fillLocator_(*prevUpdate, newChunkLocator.get()))
       {
         const double last_t = prevUpdate->time();
-        chunk->addPoint(*(newChunkLocator.get()), last_t, historyColorAtTime_(last_t), hostBounds_);
+        chunk->addPoint(*(newChunkLocator), last_t, historyColorAtTime_(last_t), hostBounds_);
         totalPoints_++;
       }
     }
@@ -334,7 +334,7 @@ void TrackHistoryNode::addUpdate_(const simData::PlatformUpdate& u, const simDat
   // now add the new point
   const double drawTime = toDrawTime_(u.time());
   // add the point (along with its timestamp)
-  const bool addSuccess = chunk->addPoint(*(newPtLocator.get()), drawTime, historyColorAtTime_(drawTime), hostBounds_);
+  const bool addSuccess = chunk->addPoint(*(newPtLocator), drawTime, historyColorAtTime_(drawTime), hostBounds_);
   if (!addSuccess)
   {
     // if assert fails, check that getCurrentChunk_ and previous code ensure that either chunk is not full, or new chunk created
@@ -843,7 +843,7 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
     if (fillLocator_(*current, currentChunkLocator.get()))
     {
       const double drawTime = toDrawTime_(current->time());
-      currentPointChunk_->addPoint(*(currentChunkLocator.get()), drawTime, historyColorAtTime_(drawTime), hostBounds_);
+      currentPointChunk_->addPoint(*(currentChunkLocator), drawTime, historyColorAtTime_(drawTime), hostBounds_);
       addedFirstPoint = true;
     }
   }
@@ -860,7 +860,7 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
     {
       // this point should never be the current point; if assert fails, check to make sure we only process interpolated points
       assert(u->time() < current->time());
-      currentPointChunk_->addPoint(*(uLocator.get()), u->time(), historyColorAtTime_(u->time()), hostBounds_);
+      currentPointChunk_->addPoint(*(uLocator), u->time(), historyColorAtTime_(u->time()), hostBounds_);
       addedFirstPoint = true;
     }
   }
@@ -869,7 +869,7 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
   {
     osg::ref_ptr<Locator> fLocator = (addedFirstPoint) ? localLocator_ : currentChunkLocator;
     if (fillLocator_(*current, fLocator.get()))
-      currentPointChunk_->addPoint(*(fLocator.get()), current->time(), historyColorAtTime_(current->time()), hostBounds_);
+      currentPointChunk_->addPoint(*(fLocator), current->time(), historyColorAtTime_(current->time()), hostBounds_);
   }
 }
 

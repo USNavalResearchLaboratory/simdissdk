@@ -45,7 +45,7 @@ public:
   }
 
   /** Watch a TerrainLayer when it's added */
-  virtual void onLayerAdded(osgEarth::Layer* layer, unsigned index)
+  void onLayerAdded(osgEarth::Layer* layer, unsigned index) override
   {
     osgEarth::TileLayer* terrainLayer = dynamic_cast<osgEarth::TileLayer*>(layer);
     if (terrainLayer != nullptr)
@@ -53,7 +53,7 @@ public:
   }
 
   /** Forget a TerrainLayer when it's removed */
-  virtual void onLayerRemoved(osgEarth::Layer* layer, unsigned index)
+  void onLayerRemoved(osgEarth::Layer* layer, unsigned index) override
   {
     osgEarth::TileLayer* terrainLayer = dynamic_cast<osgEarth::TileLayer*>(layer);
     if (terrainLayer != nullptr)
@@ -61,7 +61,7 @@ public:
   }
 
   /** Watch a TerrainLayer when it's enabled */
-  virtual void onLayerEnabled(osgEarth::Layer* layer)
+  void onLayerEnabled(osgEarth::Layer* layer) override
   {
     osgEarth::TileLayer* terrainLayer = dynamic_cast<osgEarth::TileLayer*>(layer);
     if (terrainLayer != nullptr)
@@ -69,7 +69,7 @@ public:
   }
 
   /** Forget a TerrainLayer when it's disabled */
-  virtual void onLayerDisabled(osgEarth::Layer* layer)
+  void onLayerDisabled(osgEarth::Layer* layer) override
   {
     osgEarth::TileLayer* terrainLayer = dynamic_cast<osgEarth::TileLayer*>(layer);
     if (terrainLayer != nullptr)

@@ -283,7 +283,7 @@ public:
       widget_->setStyleSheet("");
   }
 
-  virtual void applyValue(simCore::TimeStamp value, bool hasValues) override
+  void applyValue(simCore::TimeStamp value, bool hasValues) override
   {
     MergeValues<simCore::TimeStamp>::applyValue(value, hasValues);
     // Only update the min/max if the incoming time stamp is valid

@@ -150,9 +150,9 @@ void Console::threeThreadFlood_()
   std::vector<std::thread> threads;
   for (int k = 0; k < 3; ++k)
   {
-    threads.emplace_back(std::thread(
+    threads.emplace_back(
       &Console::floodOneChannel_, this, simNotify::NOTIFY_WARN, tr("Thread %1").arg(k + 1)
-    ));
+    );
   }
   for (auto& thread : threads)
     thread.join();

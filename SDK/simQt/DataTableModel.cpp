@@ -46,7 +46,7 @@ public:
   {
   }
 
-  virtual void visit(simData::TableColumn* column)
+  void visit(simData::TableColumn* column) override
   {
     // just add columns onto our vector, they will be in order
     columns_.push_back(column);
@@ -72,7 +72,7 @@ public:
   {
   }
 
-  virtual VisitReturn visit(const simData::TableRow& row)
+  VisitReturn visit(const simData::TableRow& row) override
   {
     // add rows in the order they exist in the table, will be time ordered
     rows_.push_back(row.time());

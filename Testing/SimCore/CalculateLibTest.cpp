@@ -389,7 +389,7 @@ int readNextTest(std::istream& fd, bool& doneReading)
   }
 
   // Check for comments
-  if (test.compare(0, 1, "#") == 0)
+  if (test.starts_with("#"))
     return 0;
 
   int rv = 0;
@@ -447,33 +447,33 @@ int readNextTest(std::istream& fd, bool& doneReading)
   double result[3] = { 0.0 };
 
   // set to/from and run relevant test
-  if (test.compare(0, 5, "Slant") == 0)
+  if (test.starts_with("Slant"))
   {
     fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
     fd >> result[0];
     rv += testCalculateSlant(from, to, earth, coordConvert, result);
   }
-  else if (test.compare(0, 7, "AbsAzEl") == 0)
+  else if (test.starts_with("AbsAzEl"))
   {
     fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
     fd >> result[0] >> result[1] >> result[2];
     rv += testCalculateAbsAzEl(from, to, earth, coordConvert, result);
   }
-  else if (test.compare(0, 7, "RelAzEl") == 0)
+  else if (test.starts_with("RelAzEl"))
   {
     fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5];
     fd >> to[0] >> to[1] >> to[2];
     fd >> result[0] >> result[1] >> result[2];
     rv += testCalculateRelAzEl(from, from + 3, to, earth, coordConvert, result);
   }
-  else if (test.compare(0, 11, "AspectAngle") == 0)
+  else if (test.starts_with("AspectAngle"))
   {
     fd >> from[0] >> from[1] >> from[2];
     fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5];
     fd >> result[0];
     rv += testCalculateAspectAngle(from, to, earth, coordConvert, result);
   }
-  else if (test.compare(0, 18, "BearingAspectAngle") == 0)
+  else if (test.starts_with("BearingAspectAngle"))
   {
     fd >> from[0] >> from[1] >> from[2];
     fd >> to[0] >> to[1] >> to[2] >> to[3];
@@ -482,33 +482,33 @@ int readNextTest(std::istream& fd, bool& doneReading)
     fd >> text;
     rv += testBearingAspectAngle(from, to, *result, text);
   }
-  else if (test.compare(0, 8, "Altitude") == 0)
+  else if (test.starts_with("Altitude"))
   {
     fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
     fd >> result[0];
     rv += testCalculateAltitude(from, to, earth, coordConvert, result);
   }
-  else if (test.compare(0, 10, "GroundDist") == 0)
+  else if (test.starts_with("GroundDist"))
   {
     fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
     fd >> result[0];
     rv += testCalculateGroundDist(from, to, earth, coordConvert, result);
   }
-  else if (test.compare(0, 12, "GeodesicDRCR") == 0)
+  else if (test.starts_with("GeodesicDRCR"))
   {
     fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5];
     fd >> to[0] >> to[1] >> to[2];
     fd >> result[0] >> result[1];
     rv += testCalculateGeodesicDRCR(from, to, earth, coordConvert, result);
   }
-  else if (test.compare(0, 13, "VelocityDelta") == 0)
+  else if (test.starts_with("VelocityDelta"))
   {
     fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5] >> from[6] >> from[7] >> from[8];
     fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5] >> to[6] >> to[7] >> to[8];
     fd >> result[0];
     rv += testCalculateVelocityDelta(from, to, earth, coordConvert, result);
   }
-  else if (test.compare(0, 13, "TotalVelocity") == 0)
+  else if (test.starts_with("TotalVelocity"))
   {
     fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5] >> from[6] >> from[7] >> from[8];
     fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5] >> to[6] >> to[7] >> to[8];
@@ -517,21 +517,21 @@ int readNextTest(std::istream& fd, bool& doneReading)
     fd >> result[0] >> result[1] >> result[2];
     rv += testCalculateTotalVelocity(from, to, time, earth, result);
   }
-  else if (test.compare(0, 13, "DRCRDownValue") == 0)
+  else if (test.starts_with("DRCRDownValue"))
   {
     fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5];
     fd >> to[0] >> to[1] >> to[2];
     fd >> result[0] >> result[1] >> result[2];
     rv += testCalculateDRCRDownValue(from, to, earth, coordConvert, result);
   }
-  else if (test.compare(0, 15, "ClosingVelocity") == 0)
+  else if (test.starts_with("ClosingVelocity"))
   {
     fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5] >> from[6] >> from[7] >> from[8];
     fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5] >> to[6] >> to[7] >> to[8];
     fd >> result[0];
     rv += testCalculateClosingVelocity(from, to, earth, coordConvert, result);
   }
-  else if (test.compare(0, 14, "PositionInGate") == 0)
+  else if (test.starts_with("PositionInGate"))
   {
     double gate[6] = { 0.0 };
     fd >> from[0] >> from[1] >> from[2];
@@ -540,7 +540,7 @@ int readNextTest(std::istream& fd, bool& doneReading)
     fd >> result[0];
     rv += testPositionInGate(from, to, gate, earth, coordConvert, result);
   }
-  else if (test.compare(0, 11, "LaserInGate") == 0)
+  else if (test.starts_with("LaserInGate"))
   {
     double gate[6] = { 0.0 };
     double laser[3] = { 0.0 };

@@ -43,7 +43,7 @@ class SphericalVolume : public osg::MatrixTransform
 {
 protected:
   /// osg::Referenced-derived
-  virtual ~SphericalVolume() {}
+  virtual ~SphericalVolume() = default;
 };
 
 /// Configuration data for creating volumetric geometry for beams and gates

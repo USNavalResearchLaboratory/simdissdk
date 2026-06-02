@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="QtDocking">
+    <file>simdisLogo.png</file>
+  </qresource>
+</RCC>

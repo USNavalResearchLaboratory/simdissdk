@@ -48,34 +48,34 @@ public:
   {
   }
 
-  virtual double time() const
+  double time() const override
   {
     return time_;
   }
 
-  virtual TableStatus getValue(uint8_t& value) const { return data_->getValue(position_, value); }
-  virtual TableStatus getValue(int8_t& value) const { return data_->getValue(position_, value); }
-  virtual TableStatus getValue(uint16_t& value) const { return data_->getValue(position_, value); }
-  virtual TableStatus getValue(int16_t& value) const { return data_->getValue(position_, value); }
-  virtual TableStatus getValue(uint32_t& value) const { return data_->getValue(position_, value); }
-  virtual TableStatus getValue(int32_t& value) const { return data_->getValue(position_, value); }
-  virtual TableStatus getValue(uint64_t& value) const { return data_->getValue(position_, value); }
-  virtual TableStatus getValue(int64_t& value) const { return data_->getValue(position_, value); }
-  virtual TableStatus getValue(float& value) const { return data_->getValue(position_, value); }
-  virtual TableStatus getValue(double& value) const { return data_->getValue(position_, value); }
-  virtual TableStatus getValue(std::string& value) const { return data_->getValue(position_, value); }
+  TableStatus getValue(uint8_t& value) const override { return data_->getValue(position_, value); }
+  TableStatus getValue(int8_t& value) const override { return data_->getValue(position_, value); }
+  TableStatus getValue(uint16_t& value) const override { return data_->getValue(position_, value); }
+  TableStatus getValue(int16_t& value) const override { return data_->getValue(position_, value); }
+  TableStatus getValue(uint32_t& value) const override { return data_->getValue(position_, value); }
+  TableStatus getValue(int32_t& value) const override { return data_->getValue(position_, value); }
+  TableStatus getValue(uint64_t& value) const override { return data_->getValue(position_, value); }
+  TableStatus getValue(int64_t& value) const override { return data_->getValue(position_, value); }
+  TableStatus getValue(float& value) const override { return data_->getValue(position_, value); }
+  TableStatus getValue(double& value) const override { return data_->getValue(position_, value); }
+  TableStatus getValue(std::string& value) const override { return data_->getValue(position_, value); }
 
-  virtual TableStatus setValue(uint8_t value) { return data_->replace(position_, value); }
-  virtual TableStatus setValue(int8_t value) { return data_->replace(position_, value); }
-  virtual TableStatus setValue(uint16_t value) { return data_->replace(position_, value); }
-  virtual TableStatus setValue(int16_t value) { return data_->replace(position_, value); }
-  virtual TableStatus setValue(uint32_t value) { return data_->replace(position_, value); }
-  virtual TableStatus setValue(int32_t value) { return data_->replace(position_, value); }
-  virtual TableStatus setValue(uint64_t value) { return data_->replace(position_, value); }
-  virtual TableStatus setValue(int64_t value) { return data_->replace(position_, value); }
-  virtual TableStatus setValue(float value) { return data_->replace(position_, value); }
-  virtual TableStatus setValue(double value) { return data_->replace(position_, value); }
-  virtual TableStatus setValue(const std::string& value) { return data_->replace(position_, value); }
+  TableStatus setValue(uint8_t value) override { return data_->replace(position_, value); }
+  TableStatus setValue(int8_t value) override { return data_->replace(position_, value); }
+  TableStatus setValue(uint16_t value) override { return data_->replace(position_, value); }
+  TableStatus setValue(int16_t value) override { return data_->replace(position_, value); }
+  TableStatus setValue(uint32_t value) override { return data_->replace(position_, value); }
+  TableStatus setValue(int32_t value) override { return data_->replace(position_, value); }
+  TableStatus setValue(uint64_t value) override { return data_->replace(position_, value); }
+  TableStatus setValue(int64_t value) override { return data_->replace(position_, value); }
+  TableStatus setValue(float value) override { return data_->replace(position_, value); }
+  TableStatus setValue(double value) override { return data_->replace(position_, value); }
+  TableStatus setValue(const std::string& value) override { return data_->replace(position_, value); }
 
 private:
   DataContainer* data_;
@@ -100,47 +100,47 @@ public:
   {
   }
 
-  virtual const IteratorDataPtr next()
+  const IteratorDataPtr next() override
   {
     return IteratorDataPtr(newIteratorDataImpl_(timeIter_.next()));
   }
 
-  virtual const IteratorDataPtr peekNext() const
+  const IteratorDataPtr peekNext() const override
   {
     return IteratorDataPtr(newIteratorDataImpl_(timeIter_.peekNext()));
   }
 
-  virtual const IteratorDataPtr previous()
+  const IteratorDataPtr previous() override
   {
     return IteratorDataPtr(newIteratorDataImpl_(timeIter_.previous()));
   }
 
-  virtual const IteratorDataPtr peekPrevious() const
+  const IteratorDataPtr peekPrevious() const override
   {
     return IteratorDataPtr(newIteratorDataImpl_(timeIter_.peekPrevious()));
   }
 
-  virtual void toFront()
+  void toFront() override
   {
     timeIter_.toFront();
   }
 
-  virtual void toBack()
+  void toBack() override
   {
     timeIter_.toBack();
   }
 
-  virtual bool hasNext() const
+  bool hasNext() const override
   {
     return timeIter_.hasNext();
   }
 
-  virtual bool hasPrevious() const
+  bool hasPrevious() const override
   {
     return timeIter_.hasPrevious();
   }
 
-  virtual GenericIteratorImpl<IteratorDataPtr>* clone() const
+  GenericIteratorImpl<IteratorDataPtr>* clone() const override
   {
     return new ColumnIteratorImpl(freshData_, staleData_, timeIter_);
   }
@@ -173,46 +173,46 @@ public:
   virtual ~DataContainerT() {}
 
   // Insert item into the data container at the given position
-  virtual void insert(size_t position, uint8_t value) { insert_(position, value); }
-  virtual void insert(size_t position, int8_t value) { insert_(position, value); }
-  virtual void insert(size_t position, uint16_t value) { insert_(position, value); }
-  virtual void insert(size_t position, int16_t value) { insert_(position, value); }
-  virtual void insert(size_t position, uint32_t value) { insert_(position, value); }
-  virtual void insert(size_t position, int32_t value) { insert_(position, value); }
-  virtual void insert(size_t position, uint64_t value) { insert_(position, value); }
-  virtual void insert(size_t position, int64_t value) { insert_(position, value); }
-  virtual void insert(size_t position, float value) { insert_(position, value); }
-  virtual void insert(size_t position, double value) { insert_(position, value); }
-  virtual void insert(size_t position, const std::string& value) { insert_(position, value); }
+  void insert(size_t position, uint8_t value) override { insert_(position, value); }
+  void insert(size_t position, int8_t value) override { insert_(position, value); }
+  void insert(size_t position, uint16_t value) override { insert_(position, value); }
+  void insert(size_t position, int16_t value) override { insert_(position, value); }
+  void insert(size_t position, uint32_t value) override { insert_(position, value); }
+  void insert(size_t position, int32_t value) override { insert_(position, value); }
+  void insert(size_t position, uint64_t value) override { insert_(position, value); }
+  void insert(size_t position, int64_t value) override { insert_(position, value); }
+  void insert(size_t position, float value) override { insert_(position, value); }
+  void insert(size_t position, double value) override { insert_(position, value); }
+  void insert(size_t position, const std::string& value) override { insert_(position, value); }
 
   // Replace item in the data container at the given position
-  virtual TableStatus replace(size_t position, uint8_t value) { return replace_(position, value); }
-  virtual TableStatus replace(size_t position, int8_t value) { return replace_(position, value); }
-  virtual TableStatus replace(size_t position, uint16_t value) { return replace_(position, value); }
-  virtual TableStatus replace(size_t position, int16_t value) { return replace_(position, value); }
-  virtual TableStatus replace(size_t position, uint32_t value) { return replace_(position, value); }
-  virtual TableStatus replace(size_t position, int32_t value) { return replace_(position, value); }
-  virtual TableStatus replace(size_t position, uint64_t value) { return replace_(position, value); }
-  virtual TableStatus replace(size_t position, int64_t value) { return replace_(position, value); }
-  virtual TableStatus replace(size_t position, float value) { return replace_(position, value); }
-  virtual TableStatus replace(size_t position, double value) { return replace_(position, value); }
-  virtual TableStatus replace(size_t position, const std::string& value) { return replace_(position, value); }
+  TableStatus replace(size_t position, uint8_t value) override { return replace_(position, value); }
+  TableStatus replace(size_t position, int8_t value) override { return replace_(position, value); }
+  TableStatus replace(size_t position, uint16_t value) override { return replace_(position, value); }
+  TableStatus replace(size_t position, int16_t value) override { return replace_(position, value); }
+  TableStatus replace(size_t position, uint32_t value) override { return replace_(position, value); }
+  TableStatus replace(size_t position, int32_t value) override { return replace_(position, value); }
+  TableStatus replace(size_t position, uint64_t value) override { return replace_(position, value); }
+  TableStatus replace(size_t position, int64_t value) override { return replace_(position, value); }
+  TableStatus replace(size_t position, float value) override { return replace_(position, value); }
+  TableStatus replace(size_t position, double value) override { return replace_(position, value); }
+  TableStatus replace(size_t position, const std::string& value) override { return replace_(position, value); }
 
   // Retrieve the item in the data container at the given position
-  virtual TableStatus getValue(size_t position, uint8_t& value) const { return getValue_(position, value); }
-  virtual TableStatus getValue(size_t position, int8_t& value) const { return getValue_(position, value); }
-  virtual TableStatus getValue(size_t position, uint16_t& value) const { return getValue_(position, value); }
-  virtual TableStatus getValue(size_t position, int16_t& value) const { return getValue_(position, value); }
-  virtual TableStatus getValue(size_t position, uint32_t& value) const { return getValue_(position, value); }
-  virtual TableStatus getValue(size_t position, int32_t& value) const { return getValue_(position, value); }
-  virtual TableStatus getValue(size_t position, uint64_t& value) const { return getValue_(position, value); }
-  virtual TableStatus getValue(size_t position, int64_t& value) const { return getValue_(position, value); }
-  virtual TableStatus getValue(size_t position, float& value) const { return getValue_(position, value); }
-  virtual TableStatus getValue(size_t position, double& value) const { return getValue_(position, value); }
-  virtual TableStatus getValue(size_t position, std::string& value) const { return getValue_(position, value); }
+  TableStatus getValue(size_t position, uint8_t& value) const override { return getValue_(position, value); }
+  TableStatus getValue(size_t position, int8_t& value) const override { return getValue_(position, value); }
+  TableStatus getValue(size_t position, uint16_t& value) const override { return getValue_(position, value); }
+  TableStatus getValue(size_t position, int16_t& value) const override { return getValue_(position, value); }
+  TableStatus getValue(size_t position, uint32_t& value) const override { return getValue_(position, value); }
+  TableStatus getValue(size_t position, int32_t& value) const override { return getValue_(position, value); }
+  TableStatus getValue(size_t position, uint64_t& value) const override { return getValue_(position, value); }
+  TableStatus getValue(size_t position, int64_t& value) const override { return getValue_(position, value); }
+  TableStatus getValue(size_t position, float& value) const override { return getValue_(position, value); }
+  TableStatus getValue(size_t position, double& value) const override { return getValue_(position, value); }
+  TableStatus getValue(size_t position, std::string& value) const override { return getValue_(position, value); }
 
   ///Sets the row's cell to our value
-  virtual TableStatus copyToRowCell(TableRow& row, simData::TableColumnId whichCell, size_t position) const
+  TableStatus copyToRowCell(TableRow& row, simData::TableColumnId whichCell, size_t position) const override
   {
     T value;
     // Note: uses std::string::operator=(char), else POD.operator=.  Cannot use constructor.  Avoids warnings.
@@ -225,7 +225,7 @@ public:
   }
 
   /** Removes the entries starting at the given index */
-  virtual void erase(size_t position, size_t number = 1)
+  void erase(size_t position, size_t number = 1) override
   {
     if (position < size())
     {
@@ -237,11 +237,11 @@ public:
     }
   }
   /** Total size of the data structure */
-  virtual size_t size() const { return data_.size(); }
+  size_t size() const override { return data_.size(); }
   /** True if the structure is empty */
-  virtual bool empty() const { return data_.empty(); }
+  bool empty() const override { return data_.empty(); }
   /** Removes all items from container */
-  virtual void clear() { data_.clear(); }
+  void clear() override { data_.clear(); }
 
 private:
   /**

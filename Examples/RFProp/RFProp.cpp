@@ -149,7 +149,7 @@ struct AutoBearingHandler : public osgGA::GUIEventHandler
   {
   }
 
-  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
   {
     double rate = osg::DegreesToRadians(20.0);
     osg::Timer_t time = osg::Timer::instance()->tick();
@@ -677,7 +677,7 @@ int main(int argc, char** argv)
   controlPanel->heatColorProvider->setColorMap(heatColors);
 
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
   controlPanel->minHeight = minHeight;
   controlPanel->maxHeight = maxHeight;
   controlPanel->numHeights = numHeights;

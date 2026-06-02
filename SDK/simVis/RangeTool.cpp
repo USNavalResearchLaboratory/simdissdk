@@ -165,7 +165,7 @@ void RangeTool::update(const ScenarioManager* scenario, const simCore::TimeStamp
 RangeTool::Association* RangeTool::add(simData::ObjectId obj1, simData::ObjectId obj2)
 {
   Association* a = new Association(obj1, obj2);
-  associations_.push_back(a);
+  associations_.emplace_back(a);
   a->addParent(this);
   root_->addChild(a->getNode());
   setDirty();
@@ -245,7 +245,7 @@ RangeTool::Calculation::Calculation(const std::string& name)
 
 void RangeTool::Calculation::addGraphic(Graphic* graphic, bool useAsLabelGraphic)
 {
-  graphics_.push_back(graphic);
+  graphics_.emplace_back(graphic);
   graphic->addParent(this);
 
   if (useAsLabelGraphic)
@@ -354,7 +354,7 @@ RangeTool::Association::~Association()
 
 void RangeTool::Association::add(Calculation* calc)
 {
-  calculations_.push_back(calc);
+  calculations_.emplace_back(calc);
   calc->addParent(this);
   setDirty();
 }
@@ -551,7 +551,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
         if (calc->textOptions().textLocation_ == TextOptions::ALL)
           labelPos = posGraphic->labelPos(*state_);
         CalculationVector& calcs = labels[labelPos].first;
-        calcs.push_back(calc);
+        calcs.emplace_back(calc);
         if (calcs.size() == 1)
         {
           labels[labelPos].second = calc->textOptions();

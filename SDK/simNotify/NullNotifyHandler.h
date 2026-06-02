@@ -45,14 +45,14 @@ namespace simNotify
     *
     * NOOP implementation of NotifyHandler::notifyPrefix().
     */
-    virtual void notifyPrefix() { }
+    void notifyPrefix() override { }
 
     /**
     * @brief NOOP implementation of NotifyHandler::notify().
     *
     * NOOP implementation of NotifyHandler::notify().
     */
-    virtual void notify(const std::string &message) { }
+    void notify(const std::string &message) override { }
   };
 
 }

@@ -119,7 +119,7 @@ public:
     virtual void pickChanged(const std::vector<PickedEntity>& picked) = 0;
 
   protected:
-    virtual ~Callback() {}
+    virtual ~Callback() = default;
   };
 
   /** Adds a callback that will trigger when the selected object changes. */

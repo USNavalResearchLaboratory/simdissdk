@@ -45,22 +45,22 @@ public:
   /// constructor for (custom rendering) entity that does not provide a transform-derived parent to position the label
   explicit EntityLabelNode(simVis::Locator* locator);
 
+  /** Copy constructor, not implemented or available. */
+  EntityLabelNode(const EntityLabelNode&) = delete;
+
   /// Update the label with the given preferences and text
   void update(const simData::CommonPrefs& commonPrefs, const std::string& text, float zOffset=0.f);
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "EntityLabelNode"; }
+  const char* className() const override { return "EntityLabelNode"; }
 
 protected:
   virtual ~EntityLabelNode();
 
 private:
-  /** Copy constructor, not implemented or available. */
-  EntityLabelNode(const EntityLabelNode&);
-
   osg::ref_ptr<LocatorNode> locatorNode_; // optional locator node to position the label
   osg::ref_ptr<osgEarth::LabelNode> label_;  ///< The actual label
   simData::CommonPrefs lastCommonPrefs_;  ///< The last preferences to check for changes

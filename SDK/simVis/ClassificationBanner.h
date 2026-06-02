@@ -40,7 +40,7 @@ public:
   /** Construct to update a text string */
   explicit SetToClassificationTextCallback(osgText::Text* text);
   /** Override from ScenarioListener. */
-  virtual void onScenarioPropertiesChange(simData::DataStore* source);
+  void onScenarioPropertiesChange(simData::DataStore* source) override;
 
 private:
   osg::observer_ptr<osgText::Text> text_;
@@ -69,11 +69,11 @@ public:
   void bindTo(simData::DataStore* ds);
 
   // Override osgText::Text methods
-  virtual osg::Object* cloneType() const { return new ClassificationLabelNode(); }
-  virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new ClassificationLabelNode(*this, copyop); }
-  virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const ClassificationLabelNode*>(obj) != nullptr; }
-  virtual const char* className() const { return "ClassificationLabelNode"; }
-  virtual const char* libraryName() const { return "simVis"; }
+  osg::Object* cloneType() const override { return new ClassificationLabelNode(); }
+  osg::Object* clone(const osg::CopyOp& copyop) const override { return new ClassificationLabelNode(*this, copyop); }
+  bool isSameKindAs(const osg::Object* obj) const override { return dynamic_cast<const ClassificationLabelNode*>(obj) != nullptr; }
+  const char* className() const override { return "ClassificationLabelNode"; }
+  const char* libraryName() const override { return "simVis"; }
 
 protected:
   /** Virtual destructor protected to avoid ref_ptr double delete issues. */

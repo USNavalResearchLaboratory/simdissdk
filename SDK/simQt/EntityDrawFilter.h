@@ -62,20 +62,20 @@ public:
   * @param id  entity id to test
   * @return bool  true if the entity passed this filter
   */
-  virtual bool acceptEntity(simData::ObjectId id) const override;
+  bool acceptEntity(simData::ObjectId id) const override;
 
   /**
   * Inherited from EntityFilter, returns a new instance of the widget to be displayed, otherwise returns nullptr; memory is owned by caller
   * @param newWidgetParent QWidget parent, useful for memory management purposes; may be nullptr if desired
   * @return QWidget used for changing filter settings
   */
-  virtual QWidget* widget(QWidget* newWidgetParent) const override;
+  QWidget* widget(QWidget* newWidgetParent) const override;
 
   /** @copydoc EntityFilter::getFilterSettings() */
-  virtual void getFilterSettings(QMap<QString, QVariant>& settings) const override;
+  void getFilterSettings(QMap<QString, QVariant>& settings) const override;
 
   /** @copydoc EntityFilter::setFilterSettings() */
-  virtual void setFilterSettings(const QMap<QString, QVariant>& settings) override;
+  void setFilterSettings(const QMap<QString, QVariant>& settings) override;
 
   /** Set the draw filter to the given state, either directly or through a connected widget if it exits */
   void setDrawFilter(Draw drawState);

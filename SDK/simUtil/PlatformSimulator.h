@@ -118,7 +118,7 @@ public:
 
 protected:
   /// osg::Referenced-derived
-  virtual ~PlatformSimulator() {}
+  virtual ~PlatformSimulator() = default;
 
 private:
   double t0_;
@@ -175,7 +175,7 @@ public:
 
 protected:
   /// osg::Referenced-derived
-  virtual ~PlatformSimulatorManager() {}
+  virtual ~PlatformSimulatorManager() = default;
 
 protected: // types
   /// Vector of pointers to simulators
@@ -269,7 +269,7 @@ public:
   SimulatorEventHandler(simUtil::PlatformSimulatorManager *simMgr, double startTime, double endTime, bool loop = true);
 
   /// handle an event
-  virtual bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa);
+  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa) override;
 
   /// Changes the current time
   void setTime(double t);
@@ -278,9 +278,9 @@ public:
   double getTime() const;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
   /** Return the class name */
-  virtual const char* className() const { return "SimulatorEventHandler"; }
+  const char* className() const override { return "SimulatorEventHandler"; }
 
 protected:
   /// osg::Referenced-derived

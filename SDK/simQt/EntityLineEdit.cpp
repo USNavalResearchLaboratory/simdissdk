@@ -175,7 +175,7 @@ public:
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
+  void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) override
   {
     if (parent_->unavailableId_ == removedId)
       parent_->unavailableId_ = 0;
@@ -185,7 +185,7 @@ public:
   }
 
   /// entity name has changed
-  virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId)
+  void onNameChange(simData::DataStore *source, simData::ObjectId changeId) override
   {
     if (parent_->uniqueId_ == changeId)
       parent_->composite_->lineEdit->setText(simData::DataStoreHelpers::nameOrAliasFromId(changeId, source).c_str());
@@ -201,7 +201,7 @@ protected:
 class NoGrayStyle : public QProxyStyle
 {
 public:
-  virtual QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap& pixmap, const QStyleOption* option) const Q_DECL_OVERRIDE
+  QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap& pixmap, const QStyleOption* option) const Q_DECL_OVERRIDE
   {
     if (iconMode == QIcon::Disabled || !baseStyle())
       return pixmap;
@@ -345,7 +345,7 @@ void EntityLineEdit::wasActivated_(const QModelIndex& index)
 
   QCompleter* completer = composite_->lineEdit->completer();
   QAbstractProxyModel* proxyModel = qobject_cast<QAbstractProxyModel*>(completer->completionModel());
-  Q_ASSERT(proxyModel != 0);
+  Q_ASSERT(proxyModel != nullptr);
 
   // Unwind the double proxy, ours and the build in proxy of the completer
   QModelIndex modelIndex = proxy_->mapToSource(proxyModel->mapToSource(index));

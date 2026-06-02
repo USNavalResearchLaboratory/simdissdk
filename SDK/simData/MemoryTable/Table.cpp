@@ -50,7 +50,7 @@ public:
   }
 
   /// Takes ownership of pointer and updates subtable map for all columns
-  virtual void notifySplit(SubTable* originalTable, SubTable* newTable, const std::vector<TableColumnId>& splitColumns)
+  void notifySplit(SubTable* originalTable, SubTable* newTable, const std::vector<TableColumnId>& splitColumns) override
   {
     // Take ownership
     owner_.subtables_.push_back(newTable);
@@ -90,17 +90,17 @@ public:
       visitStatus_(TableStatus::Success())
   {
   }
-  virtual void visit(TableColumnId columnId, uint8_t value) { visit_(columnId, value); }
-  virtual void visit(TableColumnId columnId, int8_t value) { visit_(columnId, value); }
-  virtual void visit(TableColumnId columnId, uint16_t value) { visit_(columnId, value); }
-  virtual void visit(TableColumnId columnId, int16_t value) { visit_(columnId, value); }
-  virtual void visit(TableColumnId columnId, uint32_t value) { visit_(columnId, value); }
-  virtual void visit(TableColumnId columnId, int32_t value) { visit_(columnId, value); }
-  virtual void visit(TableColumnId columnId, uint64_t value) { visit_(columnId, value); }
-  virtual void visit(TableColumnId columnId, int64_t value) { visit_(columnId, value); }
-  virtual void visit(TableColumnId columnId, float value) { visit_(columnId, value); }
-  virtual void visit(TableColumnId columnId, double value) { visit_(columnId, value); }
-  virtual void visit(TableColumnId columnId, const std::string& value) { visit_(columnId, value); }
+  void visit(TableColumnId columnId, uint8_t value) override { visit_(columnId, value); }
+  void visit(TableColumnId columnId, int8_t value) override { visit_(columnId, value); }
+  void visit(TableColumnId columnId, uint16_t value) override { visit_(columnId, value); }
+  void visit(TableColumnId columnId, int16_t value) override { visit_(columnId, value); }
+  void visit(TableColumnId columnId, uint32_t value) override { visit_(columnId, value); }
+  void visit(TableColumnId columnId, int32_t value) override { visit_(columnId, value); }
+  void visit(TableColumnId columnId, uint64_t value) override { visit_(columnId, value); }
+  void visit(TableColumnId columnId, int64_t value) override { visit_(columnId, value); }
+  void visit(TableColumnId columnId, float value) override { visit_(columnId, value); }
+  void visit(TableColumnId columnId, double value) override { visit_(columnId, value); }
+  void visit(TableColumnId columnId, const std::string& value) override { visit_(columnId, value); }
 
   /**
    * Retrieves the status of row visitation.  Visitation will stop upon the first error encountered,

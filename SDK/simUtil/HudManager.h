@@ -153,13 +153,13 @@ public:
   virtual void setVisible(bool value) = 0;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "HudText"; }
+  const char* className() const override { return "HudText"; }
 
 protected:
-  virtual ~HudText() {}
+  virtual ~HudText() = default;
 };
 
 
@@ -174,7 +174,7 @@ public:
   HudTextAdapter(int width, int height);
 
   /// Called by the HUD Manager when a window re-size occurs so that relative text can repositioned
-  virtual void resize(int width, int height);
+  void resize(int width, int height) override;
 
   /// Getters and Setters
   /**
@@ -190,78 +190,78 @@ public:
    * @param font The font family of the text
    * @param fontSize The font size in points
    */
-  virtual void update(const std::string& text, double x=0.0, double y=0.0,
+  void update(const std::string& text, double x=0.0, double y=0.0,
         bool percentageX=true, bool percentageY=true,
         Alignment hAlign=ALIGN_LEFT, Alignment vAlign=ALIGN_BOTTOM,
         const osg::Vec4& color=simVis::Color::White,
-        const std::string& font="arial.ttf", double fontSize=10.);
+        const std::string& font="arial.ttf", double fontSize=10.) override;
 
   // Functions to set/get smaller parts
 
   /// Returns the text that will be displayed
-  virtual std::string text() const;
+  std::string text() const override;
   /// Sets the text to display
-  virtual void setText(const std::string& text);
+  void setText(const std::string& text) override;
 
   /// Returns the X position in either pixels or percentage as per the percentage_ variable with respect to the lower left hand corner
-  virtual double x() const;
+  double x() const override;
   /// Returns the X position in either pixels or percentage as per the percentage_ variable  with respect to the lower left hand corner
-  virtual double y() const;
+  double y() const override;
   /// Returns the percentage;  true means X is percentage value; false means X is pixel value
-  virtual bool isPercentageX() const;
+  bool isPercentageX() const override;
   /// Returns the percentage;  true means Y is percentage value; false means Y is pixel value
-  virtual bool isPercentageY() const;
+  bool isPercentageY() const override;
   /// Sets the text position
-  virtual void setPosition(double x, double y, bool percentageX, bool percentageY);
+  void setPosition(double x, double y, bool percentageX, bool percentageY) override;
 
   /// Returns the font family of the text
-  virtual std::string font() const;
+  std::string font() const override;
   /// Returns the font size in points
-  virtual double fontSize() const;
+  double fontSize() const override;
   /// Sets the font family and the font size in points
-  virtual void setFont(const std::string& font, double size);
+  void setFont(const std::string& font, double size) override;
 
   /// Returns the horizontal alignment
-  virtual Alignment hAlignment() const;
+  Alignment hAlignment() const override;
   /// Return the vertical alignment
-  virtual Alignment vAlignment() const;
+  Alignment vAlignment() const override;
   /// Sets the alignment of the text with respect to the specified point
-  virtual void setAlignment(Alignment hAlign, Alignment vAlign);
+  void setAlignment(Alignment hAlign, Alignment vAlign) override;
 
   /// Returns the color of the text
-  virtual osg::Vec4 color() const;
+  osg::Vec4 color() const override;
   /// Sets the color of the text
-  virtual void setColor(const osg::Vec4& color);
+  void setColor(const osg::Vec4& color) override;
 
   /// Background color of the text; cannot be used with backdrops
-  virtual osg::Vec4 backgroundColor() const;
+  osg::Vec4 backgroundColor() const override;
   /// Set background color of text; if text alpha is non-0, then backdrop is disabled.
-  virtual void setBackgroundColor(const osg::Vec4& color);
+  void setBackgroundColor(const osg::Vec4& color) override;
 
   /// Sets the backdrop type, including offset; see documentation of osgText::Text::setBackdropType() and setBackdropOffset()
-  virtual void setBackdrop(osgText::Text::BackdropType backdrop, float backdropOffset);
+  void setBackdrop(osgText::Text::BackdropType backdrop, float backdropOffset) override;
   /// Sets the backdrop type; see documentation of osgText::Text::setBackdropType()
-  virtual void setBackdropType(osgText::Text::BackdropType backdrop);
+  void setBackdropType(osgText::Text::BackdropType backdrop) override;
   /// Retrieves the backdrop type; see documentation of osgText::Text::setBackdropType()
-  virtual osgText::Text::BackdropType backdropType() const;
+  osgText::Text::BackdropType backdropType() const override;
   /// Sets the backdrop offset; see documentation of osgText::Text::setBackdropOffset()
-  virtual void setBackdropOffset(float backdropOffset);
+  void setBackdropOffset(float backdropOffset) override;
   /// Retrieves the backdrop offset; see documentation of osgText::Text::setBackdropOffset()
-  virtual float backdropOffset() const;
+  float backdropOffset() const override;
 
   /// Returns the text width and height in pixels of the last rendered text
-  virtual void textSize(int& width, int& height) const;
+  void textSize(int& width, int& height) const override;
 
   /// Returns true if the text is visible
-  virtual bool visible() const;
+  bool visible() const override;
   /// Sets if the text is visible
-  virtual void setVisible(bool value);
+  void setVisible(bool value) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "HudTextAdapter"; }
+  const char* className() const override { return "HudTextAdapter"; }
 
 protected:
   class TextExtent;
@@ -315,15 +315,15 @@ public:
 protected:
   virtual ~HudRowText();
 
-  virtual void tokenize_(const std::string& line, std::vector<std::string>& tokens) const;
-  virtual void initializeText_(osgText::Text* text);
-  virtual void positionText_(int index, osgText::Text* text);
+  void tokenize_(const std::string& line, std::vector<std::string>& tokens) const override;
+  void initializeText_(osgText::Text* text) override;
+  void positionText_(int index, osgText::Text* text) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "HudRowText"; }
+  const char* className() const override { return "HudRowText"; }
 
 private:
   float initialX_;  ///< The lower left start location in pixels
@@ -343,15 +343,15 @@ public:
 protected:
   virtual ~HudColumnText();
 
-  virtual void tokenize_(const std::string& line, std::vector<std::string>& tokens) const;
-  virtual void initializeText_(osgText::Text* text);
-  virtual void positionText_(int index, osgText::Text* text);
+  void tokenize_(const std::string& line, std::vector<std::string>& tokens) const override;
+  void initializeText_(osgText::Text* text) override;
+  void positionText_(int index, osgText::Text* text) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "HudColumnText"; }
+  const char* className() const override { return "HudColumnText"; }
 
 private:
   float initialX_;  ///< The lower left start location in pixels
@@ -431,10 +431,10 @@ public:
   osg::Vec4f color() const;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "HudImage"; }
+  const char* className() const override { return "HudImage"; }
 
 protected:
   virtual ~HudImage();
@@ -474,6 +474,9 @@ public:
    */
   HudManager(osgViewer::View* view, osg::Group* parentNode);
   virtual ~HudManager();
+
+  /// Declare to keep cppCheck warning free, but not implemented since it is not needed
+  HudManager(HudManager& noCopyConstructor) = delete;
 
   /**
    * Creates and returns a HudText for display overlay text.  Percentages are from 0 to 100.
@@ -564,9 +567,6 @@ private:
   class ResizeHandler;
   /// Called by osgGA::GUIEventHandler when the window re-sizes
   void resize_(int width, int height);
-
-  /// Declare to keep cppCheck warning free, but not implemented since it is not needed
-  HudManager(HudManager& noCopyConstructor);
 
   HudRenderLevel renderLevel_; ///< render level to draw this hud manager and its hud items
   osg::ref_ptr<osg::Group> group_;  ///< group node that holds all the hud text and images

@@ -32,9 +32,9 @@ namespace simCore { namespace Deprecated {
 class SDKCORE_EXPORT DDD_HHMMSS_YYYY_Formatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
 private:
   /** Retrieves the components of the string, returning 0 on success */
@@ -45,9 +45,9 @@ private:
 class SDKCORE_EXPORT DDD_HHMMSS_Formatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
 private:
   /** Retrieves the components of the string, returning 0 on success */
@@ -58,9 +58,9 @@ private:
 class SDKCORE_EXPORT MON_MD_HHMMSS_YYYY_Formatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
 private:
   /** Retrieves the components of the string, returning 0 on success */
@@ -71,9 +71,9 @@ private:
 class SDKCORE_EXPORT MD_MON_YYYY_HHMMSS_Formatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
 private:
   /** Retrieves the components of the string, returning 0 on success */
@@ -84,9 +84,9 @@ private:
 class SDKCORE_EXPORT WKD_MON_MD_HHMMSS_YYYY_Formatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
   /** Converts a TimeStamp value to an output string for an ostream. */
   static void toStream(std::ostream& os, const simCore::TimeStamp& timeStamp, unsigned short precision);
@@ -104,9 +104,9 @@ private:
 class SDKCORE_EXPORT WKD_MON_MD_HHMMSS_Formatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
 private:
   /** Retrieves the components of the string, returning 0 on success */

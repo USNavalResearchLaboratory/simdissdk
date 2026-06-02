@@ -38,7 +38,7 @@ namespace DataTableViewTest
   {
   public:
     ColumnVisitor(){}
-    virtual void visit(simData::TableColumn* column)
+    void visit(simData::TableColumn* column) override
     {
       columns_.push_back(column);
     }
@@ -59,47 +59,47 @@ namespace DataTableViewTest
   {
   public:
     explicit CellVisitor(QTreeWidgetItem* item) : item_(item) {}
-    virtual void visit(simData::TableColumnId columnId, uint8_t value)
+    void visit(simData::TableColumnId columnId, uint8_t value) override
     {
       addItemData_(columnId, QVariant(value));
     }
-    virtual void visit(simData::TableColumnId columnId, int8_t value)
+    void visit(simData::TableColumnId columnId, int8_t value) override
     {
       addItemData_(columnId, QVariant(value));
     }
-    virtual void visit(simData::TableColumnId columnId, uint16_t value)
+    void visit(simData::TableColumnId columnId, uint16_t value) override
     {
       addItemData_(columnId, QVariant(value));
     }
-    virtual void visit(simData::TableColumnId columnId, int16_t value)
+    void visit(simData::TableColumnId columnId, int16_t value) override
     {
       addItemData_(columnId, QVariant(value));
     }
-    virtual void visit(simData::TableColumnId columnId, uint32_t value)
+    void visit(simData::TableColumnId columnId, uint32_t value) override
     {
       addItemData_(columnId, QVariant(value));
     }
-    virtual void visit(simData::TableColumnId columnId, int32_t value)
+    void visit(simData::TableColumnId columnId, int32_t value) override
     {
       addItemData_(columnId, QVariant(value));
     }
-    virtual void visit(simData::TableColumnId columnId, uint64_t value)
+    void visit(simData::TableColumnId columnId, uint64_t value) override
     {
       addItemData_(columnId, QVariant(static_cast<unsigned long long>(value)));
     }
-    virtual void visit(simData::TableColumnId columnId, int64_t value)
+    void visit(simData::TableColumnId columnId, int64_t value) override
     {
       addItemData_(columnId, QVariant(static_cast<long long>(value)));
     }
-    virtual void visit(simData::TableColumnId columnId, float value)
+    void visit(simData::TableColumnId columnId, float value) override
     {
       addItemData_(columnId, QVariant(value));
     }
-    virtual void visit(simData::TableColumnId columnId, double value)
+    void visit(simData::TableColumnId columnId, double value) override
     {
       addItemData_(columnId, QVariant(value));
     }
-    virtual void visit(simData::TableColumnId columnId, const std::string& value)
+    void visit(simData::TableColumnId columnId, const std::string& value) override
     {
       addItemData_(columnId, QVariant(value.c_str()));
     }
@@ -119,7 +119,7 @@ namespace DataTableViewTest
   {
   public:
     explicit RowVisitor(QTreeWidget* tree) : tree_(tree) {}
-    virtual VisitReturn visit(const simData::TableRow& row)
+    VisitReturn visit(const simData::TableRow& row) override
     {
       QTreeWidgetItem* item = new QTreeWidgetItem();
       tree_->addTopLevelItem(item);

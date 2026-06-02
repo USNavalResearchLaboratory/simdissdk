@@ -69,13 +69,13 @@ namespace simVis
     const simData::LocalGridPrefs& getPrefs() const { return lastPrefs_; }
 
     /** Return the proper library name */
-    virtual const char* libraryName() const { return "simVis"; }
+    const char* libraryName() const override { return "simVis"; }
 
     /** Return the class name */
-    virtual const char* className() const { return "LocalGridNode"; }
+    const char* className() const override { return "LocalGridNode"; }
 
   public: // LocatorNode interface
-    virtual void syncWithLocator(); //override
+    void syncWithLocator() override; //override
 
   protected: // methods
 

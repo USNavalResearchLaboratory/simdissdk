@@ -147,9 +147,7 @@ protected:
   }
 
   /** Protected virtual destructor due to osg::Referenced derivation */
-  virtual ~SilverLiningValueT()
-  {
-  }
+  virtual ~SilverLiningValueT() = default;
 
 private:
   T value_;
@@ -201,7 +199,7 @@ class [[deprecated("Deprecated, no longer available")]] SDKUTIL_EXPORT SetCondit
 {
 public:
   SetConditionPresetEventHandler(SilverLiningConditionPreset* preset, int value);
-  virtual void onClick(osgEarth::Util::Controls::Control* c);
+  void onClick(osgEarth::Util::Controls::Control* c) override;
 protected:
   virtual ~SetConditionPresetEventHandler();
 private:
@@ -321,14 +319,14 @@ public:
   void setWet(bool isWet, bool forceApply = false);
 
   /** Always initialize the currently set wind values. */
-  virtual void initialize(osgEarth::SilverLining::Atmosphere& atmosphere);
+  void initialize(osgEarth::SilverLining::Atmosphere& atmosphere) override;
 
 protected:
   /** osg::Referenced classes should have a protected destructor. */
   virtual ~SilverLiningSnowRate();
 
   /** Applies the snow values to a valid atmosphere */
-  virtual void apply_(osgEarth::SilverLining::Atmosphere& atmosphere);
+  void apply_(osgEarth::SilverLining::Atmosphere& atmosphere) override;
 
 private:
   double rate_;
@@ -368,14 +366,14 @@ public:
   void setSpeed(double speedMs, bool forceApply = false);
 
   /** Always initialize the currently set wind values. */
-  virtual void initialize(osgEarth::SilverLining::Atmosphere& atmosphere);
+  void initialize(osgEarth::SilverLining::Atmosphere& atmosphere) override;
 
 protected:
   /** osg::Referenced classes should have a protected destructor. */
   virtual ~SilverLiningWind();
 
   /** Applies the wind values to a valid atmosphere */
-  virtual void apply_(osgEarth::SilverLining::Atmosphere& atmosphere);
+  void apply_(osgEarth::SilverLining::Atmosphere& atmosphere) override;
 
 private:
   double directionDeg_;
@@ -400,27 +398,27 @@ public:
   virtual unsigned long getMilliseconds() const = 0;
 
 protected:
-  virtual ~SilverLiningTimeStrategy() {}
+  virtual ~SilverLiningTimeStrategy() = default;
 };
 
 /** Use the default SilverLining time, based on an ever-increasing real-time timer */
 class SDKUTIL_EXPORT SLAlwaysRealTime : public SilverLiningTimeStrategy
 {
 public:
-  virtual unsigned long getMilliseconds() const;
+  unsigned long getMilliseconds() const override;
 
 protected:
-  virtual ~SLAlwaysRealTime() {}
+  virtual ~SLAlwaysRealTime() = default;
 };
 
 /** Use the scenario time as indicated by the simCore Clock, falling back to system clock if undefined */
 class SDKUTIL_EXPORT SLRegistryClockTime : public SilverLiningTimeStrategy
 {
 public:
-  virtual unsigned long getMilliseconds() const;
+  unsigned long getMilliseconds() const override;
 
 protected:
-  virtual ~SLRegistryClockTime() {}
+  virtual ~SLRegistryClockTime() = default;
 };
 
 /**
@@ -441,11 +439,11 @@ public:
   void setTimeStrategy(SilverLiningTimeStrategy* timeStrategy);
 
   /** Implement the callback to initialize all registered values */
-  virtual void onInitialize(osgEarth::SilverLining::Atmosphere& atmosphere);
+  void onInitialize(osgEarth::SilverLining::Atmosphere& atmosphere) override;
   /** Implement the callback to apply all variable states */
-  virtual void onDrawSky(osgEarth::SilverLining::Atmosphere& atmosphere);
+  void onDrawSky(osgEarth::SilverLining::Atmosphere& atmosphere) override;
   /** Implement the callback to return an elapsed time for cloud synchronization */
-  virtual unsigned long getMilliseconds() const;
+  unsigned long getMilliseconds() const override;
 
 protected:
   /** Destroy the callback */

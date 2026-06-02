@@ -77,13 +77,13 @@ public:
 
 protected:
   // From osgQOpenGLWindow:
-  virtual void resizeGL(int logicalWidth, int logicalHeight) override
+  void resizeGL(int logicalWidth, int logicalHeight) override
   {
     osgQOpenGLWindow::resizeGL(logicalWidth, logicalHeight);
     if (notifyResize_) [[likely]]
       notifyResize_(logicalWidth, logicalHeight, devicePixelRatio());
   }
-  virtual void paintGL() override
+  void paintGL() override
   {
     if (notifyPrePaint_) [[likely]]
       notifyPrePaint_();
@@ -131,13 +131,13 @@ public:
 
 protected:
   // From osgQOpenGLWidget:
-  virtual void resizeGL(int logicalWidth, int logicalHeight) override
+  void resizeGL(int logicalWidth, int logicalHeight) override
   {
     osgQOpenGLWidget::resizeGL(logicalWidth, logicalHeight);
     if (notifyResize_) [[likely]]
       notifyResize_(logicalWidth, logicalHeight, this->devicePixelRatio());
   }
-  virtual void paintGL() override
+  void paintGL() override
   {
     if (notifyPrePaint_) [[likely]]
       notifyPrePaint_();
@@ -216,7 +216,7 @@ public:
 
 protected:
   // From QObject:
-  virtual bool eventFilter(QObject* watched, QEvent* event) override
+  bool eventFilter(QObject* watched, QEvent* event) override
   {
     if (lambda_)
     {
@@ -286,31 +286,31 @@ public:
   virtual ~GlWindowPlatform();
   SDK_DISABLE_COPY_MOVE(GlWindowPlatform);
 
-  virtual QWidget* widget() const override;
-  virtual QOpenGLWidget* glWidget() const override;
-  virtual QOpenGLWindow* glWindow() const override;
-  virtual QOpenGLContext* qtGraphicsContext() const override;
-  virtual QSurfaceFormat format() const override;
-  virtual void setFormat(const QSurfaceFormat& format) override;
-  virtual void makeCurrent() override;
-  virtual void doneCurrent() override;
-  virtual bool isValid() const override;
-  virtual void create() override;
+  QWidget* widget() const override;
+  QOpenGLWidget* glWidget() const override;
+  QOpenGLWindow* glWindow() const override;
+  QOpenGLContext* qtGraphicsContext() const override;
+  QSurfaceFormat format() const override;
+  void setFormat(const QSurfaceFormat& format) override;
+  void makeCurrent() override;
+  void doneCurrent() override;
+  bool isValid() const override;
+  void create() override;
 
-  virtual osg::GraphicsContext* getGraphicsContext() const override;
-  virtual osgViewer::GraphicsWindow* getGraphicsWindow() const override;
-  virtual osgViewer::ViewerBase* getOsgViewer() const override;
-  virtual void setOsgViewer(osgViewer::ViewerBase* viewer) override;
-  virtual void setRenderFunction(const std::function<void(double simulationTime)>& renderFunc) override;
-  virtual void setTimerInterval(int intervalMs) override;
-  virtual void installEventFilter(QObject* filter) override;
+  osg::GraphicsContext* getGraphicsContext() const override;
+  osgViewer::GraphicsWindow* getGraphicsWindow() const override;
+  osgViewer::ViewerBase* getOsgViewer() const override;
+  void setOsgViewer(osgViewer::ViewerBase* viewer) override;
+  void setRenderFunction(const std::function<void(double simulationTime)>& renderFunc) override;
+  void setTimerInterval(int intervalMs) override;
+  void installEventFilter(QObject* filter) override;
 
-  virtual void setResizeSignal(const std::function<void(int, int, double)>& resize) override;
-  virtual void setPrePaintSignal(const std::function<void()>& prePaint) override;
-  virtual void setPostPaintSignal(const std::function<void()>& postPaint) override;
-  virtual void connectToFrameSwappedSignal(const std::function<void()>& frameSwapped) override;
-  virtual void connectToInitializedSignal(const std::function<void()>& initialized) override;
-  virtual void connectToAboutToRenderFirstFrameSignal(const std::function<void()>& aboutToRenderFirstFrame) override;
+  void setResizeSignal(const std::function<void(int, int, double)>& resize) override;
+  void setPrePaintSignal(const std::function<void()>& prePaint) override;
+  void setPostPaintSignal(const std::function<void()>& postPaint) override;
+  void connectToFrameSwappedSignal(const std::function<void()>& frameSwapped) override;
+  void connectToInitializedSignal(const std::function<void()>& initialized) override;
+  void connectToAboutToRenderFirstFrameSignal(const std::function<void()>& aboutToRenderFirstFrame) override;
 
 private:
   SignalingGlWindow* glWindow_ = nullptr;
@@ -326,31 +326,31 @@ public:
   virtual ~GlWidgetPlatform() override;
   SDK_DISABLE_COPY_MOVE(GlWidgetPlatform);
 
-  virtual QWidget* widget() const override;
-  virtual QOpenGLWidget* glWidget() const override;
-  virtual QOpenGLWindow* glWindow() const override;
-  virtual QOpenGLContext* qtGraphicsContext() const override;
-  virtual QSurfaceFormat format() const override;
-  virtual void setFormat(const QSurfaceFormat& format) override;
-  virtual void makeCurrent() override;
-  virtual void doneCurrent() override;
-  virtual bool isValid() const override;
-  virtual void create() override;
+  QWidget* widget() const override;
+  QOpenGLWidget* glWidget() const override;
+  QOpenGLWindow* glWindow() const override;
+  QOpenGLContext* qtGraphicsContext() const override;
+  QSurfaceFormat format() const override;
+  void setFormat(const QSurfaceFormat& format) override;
+  void makeCurrent() override;
+  void doneCurrent() override;
+  bool isValid() const override;
+  void create() override;
 
-  virtual osg::GraphicsContext* getGraphicsContext() const override;
-  virtual osgViewer::GraphicsWindow* getGraphicsWindow() const override;
-  virtual osgViewer::ViewerBase* getOsgViewer() const override;
-  virtual void setOsgViewer(osgViewer::ViewerBase* viewer) override;
-  virtual void setRenderFunction(const std::function<void(double simulationTime)>& renderFunc) override;
-  virtual void setTimerInterval(int intervalMs) override;
-  virtual void installEventFilter(QObject* filter) override;
+  osg::GraphicsContext* getGraphicsContext() const override;
+  osgViewer::GraphicsWindow* getGraphicsWindow() const override;
+  osgViewer::ViewerBase* getOsgViewer() const override;
+  void setOsgViewer(osgViewer::ViewerBase* viewer) override;
+  void setRenderFunction(const std::function<void(double simulationTime)>& renderFunc) override;
+  void setTimerInterval(int intervalMs) override;
+  void installEventFilter(QObject* filter) override;
 
-  virtual void setResizeSignal(const std::function<void(int, int, double)>& resize) override;
-  virtual void setPrePaintSignal(const std::function<void()>& prePaint) override;
-  virtual void setPostPaintSignal(const std::function<void()>& postPaint) override;
-  virtual void connectToFrameSwappedSignal(const std::function<void()>& frameSwapped) override;
-  virtual void connectToInitializedSignal(const std::function<void()>& initialized) override;
-  virtual void connectToAboutToRenderFirstFrameSignal(const std::function<void()>& aboutToRenderFirstFrame) override;
+  void setResizeSignal(const std::function<void(int, int, double)>& resize) override;
+  void setPrePaintSignal(const std::function<void()>& prePaint) override;
+  void setPostPaintSignal(const std::function<void()>& postPaint) override;
+  void connectToFrameSwappedSignal(const std::function<void()>& frameSwapped) override;
+  void connectToInitializedSignal(const std::function<void()>& initialized) override;
+  void connectToAboutToRenderFirstFrameSignal(const std::function<void()>& aboutToRenderFirstFrame) override;
 
 private:
   SignalingGlWidget* adaptedWidget_ = nullptr;
@@ -841,6 +841,8 @@ void ViewerWidgetAdapter::initializeSurfaceFormat_()
   surfaceFormat.setVersion(3, 3);
   surfaceFormat.setProfile(QSurfaceFormat::CoreProfile);
 #endif
+  // Need to specify depth, else Linux in particular might give a bad surface
+  surfaceFormat.setDepthBufferSize(24);
   surfaceFormat.setSwapInterval(1); // vsync
   surfaceFormat.setRenderableType(QSurfaceFormat::OpenGL);
   surfaceFormat = simQt::Gl3FormatGuesser::getSurfaceFormat(surfaceFormat);

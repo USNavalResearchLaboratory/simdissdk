@@ -115,13 +115,13 @@ public:
   }
 
   // Inherits parent's documentation
-  virtual TableCell* clone() const
+  TableCell* clone() const override
   {
     return new TableCellT<ValueType>(value_);
   }
 
   // Inherits parent's documentation
-  virtual bool equals(const TableCell& b) const
+  bool equals(const TableCell& b) const override
   {
     const TableCellT<ValueType>* cellThisType = dynamic_cast<const TableCellT<ValueType>*>(&b);
     if (cellThisType == nullptr)
@@ -132,33 +132,33 @@ public:
   }
 
   // obtains a cell value
-  virtual TableStatus value(uint8_t& val) const { getValue_(val); return TableStatus::Success(); }
-  virtual TableStatus value(int8_t& val) const { getValue_(val); return TableStatus::Success(); }
-  virtual TableStatus value(uint16_t& val) const { getValue_(val); return TableStatus::Success(); }
-  virtual TableStatus value(int16_t& val) const { getValue_(val); return TableStatus::Success(); }
-  virtual TableStatus value(uint32_t& val) const { getValue_(val); return TableStatus::Success(); }
-  virtual TableStatus value(int32_t& val) const { getValue_(val); return TableStatus::Success(); }
-  virtual TableStatus value(uint64_t& val) const { getValue_(val); return TableStatus::Success(); }
-  virtual TableStatus value(int64_t& val) const { getValue_(val); return TableStatus::Success(); }
-  virtual TableStatus value(float& val) const { getValue_(val); return TableStatus::Success(); }
-  virtual TableStatus value(double& val) const { getValue_(val); return TableStatus::Success(); }
-  virtual TableStatus value(std::string& val) const { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(uint8_t& val) const override { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(int8_t& val) const override { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(uint16_t& val) const override { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(int16_t& val) const override { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(uint32_t& val) const override { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(int32_t& val) const override { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(uint64_t& val) const override { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(int64_t& val) const override { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(float& val) const override { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(double& val) const override { getValue_(val); return TableStatus::Success(); }
+  TableStatus value(std::string& val) const override { getValue_(val); return TableStatus::Success(); }
 
   // sets a cell value
-  virtual TableStatus setValue(uint8_t value) { setValue_(value); return TableStatus::Success(); }
-  virtual TableStatus setValue(int8_t value) { setValue_(value); return TableStatus::Success(); }
-  virtual TableStatus setValue(uint16_t value) { setValue_(value); return TableStatus::Success(); }
-  virtual TableStatus setValue(int16_t value) { setValue_(value); return TableStatus::Success(); }
-  virtual TableStatus setValue(uint32_t value) { setValue_(value); return TableStatus::Success(); }
-  virtual TableStatus setValue(int32_t value) { setValue_(value); return TableStatus::Success(); }
-  virtual TableStatus setValue(uint64_t value) { setValue_(value); return TableStatus::Success(); }
-  virtual TableStatus setValue(int64_t value) { setValue_(value); return TableStatus::Success(); }
-  virtual TableStatus setValue(float value) { setValue_(value); return TableStatus::Success(); }
-  virtual TableStatus setValue(double value) { setValue_(value); return TableStatus::Success(); }
-  virtual TableStatus setValue(const std::string& value) { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(uint8_t value) override { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(int8_t value) override { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(uint16_t value) override { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(int16_t value) override { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(uint32_t value) override { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(int32_t value) override { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(uint64_t value) override { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(int64_t value) override { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(float value) override { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(double value) override { setValue_(value); return TableStatus::Success(); }
+  TableStatus setValue(const std::string& value) override { setValue_(value); return TableStatus::Success(); }
 
   // Inherits parent's documentation
-  virtual void accept(TableColumnId asColumnId, TableRow::CellVisitor& toVisitor) const
+  void accept(TableColumnId asColumnId, TableRow::CellVisitor& toVisitor) const override
   {
     toVisitor.visit(asColumnId, value_);
   }
@@ -261,7 +261,7 @@ TableRow& TableRow::operator=(const TableRow& copy)
     time_ = copy.time_;
     for (std::vector<ColumnCellPair>::const_iterator i = copy.cells_.begin(); i != copy.cells_.end(); ++i)
     {
-      cells_.push_back(std::make_pair(i->first, i->second->clone()));
+      cells_.emplace_back(i->first, i->second->clone());
     }
   }
   return *this;

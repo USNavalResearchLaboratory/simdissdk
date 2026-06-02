@@ -103,7 +103,7 @@ public:
 
   protected:
     /// osg::Referenced-derived
-    virtual ~Callback() {}
+    virtual ~Callback() = default;
   };
 
   /** Lambda callback; particularly useful when you register and don't need to unregister. */
@@ -119,11 +119,11 @@ public:
      * </code>
      */
     explicit LambdaCallback(const std::function<void(simVis::View*, Callback::EventType)>& func) : func_(func) { }
-    virtual void operator()(simVis::View* inset, const EventType& e) override { func_(inset, e); }
+    void operator()(simVis::View* inset, const EventType& e) override { func_(inset, e); }
 
   protected:
     /// osg::Referenced-derived
-    virtual ~LambdaCallback() {}
+    virtual ~LambdaCallback() = default;
 
   private:
     std::function<void(simVis::View*, Callback::EventType)> func_;
@@ -137,7 +137,7 @@ public:
 
   protected:
     /// osg::Referenced-derived
-    virtual ~PostCameraEventHandler() {}
+    virtual ~PostCameraEventHandler() = default;
   };
 
   /** Constructs a new view manager. */
@@ -252,7 +252,7 @@ private:
   struct RemoveView : public osg::Operation
   {
     RemoveView(ViewManager*, View*);
-    void operator()(osg::Object*);
+    void operator()(osg::Object*) override;
     osg::ref_ptr<View>             view_;
     osg::observer_ptr<ViewManager> viewman_;
   };
@@ -283,7 +283,7 @@ public:
   void removeFromViews(const simVis::ViewManager& viewManager);
 
   /** Add or remove the event handler (override from Callback) */
-  virtual void operator()(simVis::View* inset, const EventType& e);
+  void operator()(simVis::View* inset, const EventType& e) override;
 
 protected:
   /** Derived from osg::Referenced */

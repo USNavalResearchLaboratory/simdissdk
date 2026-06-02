@@ -80,7 +80,7 @@ private:
 class PlatformTspiFilter
 {
 public:
-  virtual ~PlatformTspiFilter() {}
+  virtual ~PlatformTspiFilter() = default;
 
   /// Returns true if the filter might modify the TSPI data; used to help avoid an ECEF/LLA conversion
   virtual bool isApplicable(const simData::PlatformPrefs& prefs) const = 0;

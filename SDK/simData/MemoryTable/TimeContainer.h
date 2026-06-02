@@ -62,12 +62,7 @@ public:
     {
     }
     /// Copies a time and index
-    IteratorData(const IteratorData& copy)
-      : time_(copy.time_),
-        index_(copy.index_),
-        isFreshBin_(copy.isFreshBin_)
-    {
-    }
+    IteratorData(const IteratorData& copy) = default;
     /// Converts a pair of time/size to an IteratorData
     explicit IteratorData(const std::pair<double, size_t>& p, bool isFreshBin)
       : time_(p.first),
@@ -118,7 +113,7 @@ public:
   /// TimeContainer::Iterator lets users iterate over time/index values in-order
   typedef GenericIterator<IteratorData> Iterator;
 
-  virtual ~TimeContainer() {}
+  virtual ~TimeContainer() = default;
 
   /** Copies the time container and its internal data. */
   virtual TimeContainer* clone() const = 0;

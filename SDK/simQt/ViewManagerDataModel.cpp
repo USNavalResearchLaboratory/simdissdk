@@ -42,7 +42,7 @@ public:
     // nullptr Data model is not supported (doesn't make sense here)
     assert(dataModel_ != nullptr);
   }
-  virtual void operator()(simVis::View* inset, const EventType& e)
+  void operator()(simVis::View* inset, const EventType& e) override
   {
     switch (e)
     {
@@ -76,7 +76,7 @@ public:
     // nullptr Data model is not supported (doesn't make sense here)
     assert(dataModel_ != nullptr);
   }
-  virtual void operator()(simVis::View* view, const EventType& e)
+  void operator()(simVis::View* view, const EventType& e) override
   {
     switch (e)
     {

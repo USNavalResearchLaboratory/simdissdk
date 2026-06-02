@@ -44,7 +44,7 @@ public:
   /** Constructor */
   explicit EntitySettingsObserver(EntityTreeWidget* parent) : parent_(parent) {}
   virtual ~EntitySettingsObserver() {}
-  virtual void onSettingChange(const QString& name, const QVariant& value)
+  void onSettingChange(const QString& name, const QVariant& value) override
   {
     parent_->toggleTreeView(value.toBool());
   }
@@ -204,7 +204,7 @@ void EntityTreeWidget::captureVisible_()
     if (!rect.isValid() || (rect.bottom() < 0)  || (rect.top() > height))
       continue;
 
-    entries.push_back(Entry(rect, index));
+    entries.emplace_back(rect, index);
   }
 
   std::sort(entries.begin(), entries.end());

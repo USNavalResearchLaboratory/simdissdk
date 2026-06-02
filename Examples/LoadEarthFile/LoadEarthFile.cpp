@@ -68,7 +68,7 @@ public:
   {
   }
 #endif
-  virtual void mouseOverLatLon(double lat, double lon, double elev)
+  void mouseOverLatLon(double lat, double lon, double elev) override
   {
     if (!showLatLonElevation_)
       return;
@@ -297,7 +297,7 @@ int main(int argc, char** argv)
 
 #ifdef HAVE_IMGUI
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
   gui->add(new ControlPanel(viewer.get(), createInsetsHandler.get(), mouseDispatcher.get()));
 #endif
 

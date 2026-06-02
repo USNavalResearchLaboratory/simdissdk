@@ -47,36 +47,36 @@ public:
   }
 
   /// new entity has been added, with the given id and type
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot) override
+  void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot) override
   {
     parent_->queueAdd_(newId);
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) override
+  void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) override
   {
     parent_->queueRemoval_(removedId);
   }
 
   /// entity name has changed
-  virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId) override
+  void onNameChange(simData::DataStore *source, simData::ObjectId changeId) override
   {
     parent_->queueNameChange_(changeId);
   }
 
   /// something has changed in the entity category data
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot) override
+  void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot) override
   {
     parent_->queueCategoryDataChange_(changedId);
   }
 
   /// The scenario is about to be deleted
-  virtual void onScenarioDelete(simData::DataStore* source) override
+  void onScenarioDelete(simData::DataStore* source) override
   {
     parent_->removeAllEntities_();
   }
 
-  virtual void onChange(simData::DataStore* source) override
+  void onChange(simData::DataStore* source) override
   {
     parent_->commitAllDelayed_();
   }

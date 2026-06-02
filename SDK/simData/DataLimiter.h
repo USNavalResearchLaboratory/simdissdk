@@ -59,9 +59,7 @@ template<typename StlContainer>
 class DataLimiter
 {
 public:
-  virtual ~DataLimiter()
-  {
-  }
+  virtual ~DataLimiter() = default;
 
   /** Limit a container to the given number of points */
   void limitDataPoints(StlContainer &container, size_t limitPoints) const

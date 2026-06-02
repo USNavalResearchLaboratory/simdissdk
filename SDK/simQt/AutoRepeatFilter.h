@@ -57,7 +57,7 @@ public:
 
 protected:
   // From QObject:
-  virtual bool eventFilter(QObject* obj, QEvent* evt) override;
+  bool eventFilter(QObject* obj, QEvent* evt) override;
 
 private:
   bool enabled_ = true;

@@ -76,23 +76,23 @@ public:
   SegmentedTexts* line() const { return completeLine_; }
 
   /// The routine handles when the user presses tab or back tab
-  virtual bool event(QEvent *e);
+  bool event(QEvent *e) override;
   /// The routine handles when the user clicks the up or down arrow
-  virtual void stepBy(int steps);
+  void stepBy(int steps) override;
   /// Necessary over-ride to always return a bogus value
-  virtual int valueFromText(const QString &text) const;
+  int valueFromText(const QString &text) const override;
   /// Necessary over-ride that returns the time string and ignores the passed in value
-  virtual QString textFromValue(int value) const;
+  QString textFromValue(int value) const override;
   /// Necessary over-ride that always returns QValidator::Acceptable since other code verifies the text
-  virtual QValidator::State validate(QString& text, int& pos) const;
+  QValidator::State validate(QString& text, int& pos) const override;
   /// Need to calculate the size of the spinner to overcome the Qt limitation of 18 characters for a spinner
-  virtual QSize	sizeHint() const;
+  QSize	sizeHint() const override;
 
 protected:
   /// Monitor input focus to keep track of time changes
-  virtual void focusInEvent(QFocusEvent* e);
+  void focusInEvent(QFocusEvent* e) override;
   /// Perform updates now that user has stopped input
-  virtual void focusOutEvent(QFocusEvent* e);
+  void focusOutEvent(QFocusEvent* e) override;
 
 private Q_SLOTS:
   /// Applies timestamp entered by user

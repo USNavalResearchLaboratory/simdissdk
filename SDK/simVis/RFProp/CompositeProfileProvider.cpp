@@ -94,7 +94,7 @@ unsigned int CompositeProfileProvider::getNumProviders() const
 
 void CompositeProfileProvider::addProvider(ProfileDataProvider* provider)
 {
-  providers_.push_back(provider);
+  providers_.emplace_back(provider);
   if (providers_.size() == 1)
   {
     setActiveProvider(0);

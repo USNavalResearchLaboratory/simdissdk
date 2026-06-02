@@ -48,7 +48,7 @@ namespace simUtil {
 class SDKUTIL_EXPORT MouseManipulator
 {
 public:
-  virtual ~MouseManipulator() {}
+  virtual ~MouseManipulator() = default;
 
   /** Mouse button pushed, returns non-zero on handled */
   virtual int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) = 0;
@@ -104,19 +104,22 @@ public:
   explicit MouseManipulatorAdapter(osgGA::GUIEventHandler* handler=nullptr, bool touchEmulatesMouse=true);
   virtual ~MouseManipulatorAdapter();
 
+  // Not implemented
+  MouseManipulatorAdapter(const MouseManipulatorAdapter& rhs) = delete;
+
   // From MouseManipulator:
-  virtual int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual void activate() override;
-  virtual void deactivate() override;
+  int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  void activate() override;
+  void deactivate() override;
 
   /** Retrieves the underlying GUI Event Handler that, if non-nullptr, defines the default behavior for adapter. */
   osgGA::GUIEventHandler* handler() const;
@@ -129,9 +132,6 @@ public:
   bool touchEmulatesMouse() const;
 
 private:
-  // Not implemented
-  MouseManipulatorAdapter(const MouseManipulatorAdapter& rhs);
-
   osg::ref_ptr<osgGA::GUIEventHandler> handler_;
   bool touchEmulatesMouse_;
 };
@@ -148,11 +148,11 @@ public:
   }
 
   // From MouseManipulatorAdapter:
-  virtual void activate() override
+  void activate() override
   {
     static_cast<T*>(handler())->setEnabled(true);
   }
-  virtual void deactivate() override
+  void deactivate() override
   {
     static_cast<T*>(handler())->setEnabled(false);
   }
@@ -169,18 +169,18 @@ public:
   explicit MouseManipulatorProxy(const MouseManipulatorPtr& realManipulator);
 
   // From MouseManipulator:
-  virtual int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual void activate() override;
-  virtual void deactivate() override;
+  int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  void activate() override;
+  void deactivate() override;
 
   /** Retrieves the real subject of the Proxy */
   MouseManipulatorPtr subject() const;

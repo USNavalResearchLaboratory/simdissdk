@@ -146,9 +146,7 @@ protected:
   }
 
   /** Protected virtual destructor due to osg::Referenced derivation */
-  virtual ~TritonValueT()
-  {
-  }
+  virtual ~TritonValueT() = default;
 
 private:
   T value_;
@@ -255,14 +253,14 @@ public:
   void setSeaState(double seaState, bool forceApply = false);
 
   /** Always initialize the currently set sea state. */
-  virtual void initialize(osgEarth::Triton::Environment& env, osgEarth::Triton::Ocean& ocean);
+  void initialize(osgEarth::Triton::Environment& env, osgEarth::Triton::Ocean& ocean) override;
 
 protected:
   /** osg::Referenced classes should have a protected destructor. */
   virtual ~TritonSeaState();
 
   /** Applies the sea state to a valid environment and ocean */
-  virtual void apply_(osgEarth::Triton::Environment& env, osgEarth::Triton::Ocean& ocean);
+  void apply_(osgEarth::Triton::Environment& env, osgEarth::Triton::Ocean& ocean) override;
 
 private:
   double seaState_;
@@ -284,9 +282,9 @@ public:
   void removeValue(simUtil::TritonValue* value);
 
   /** Implement the callback to initialize all registered values */
-  virtual void onInitialize(osgEarth::Triton::Environment& env, osgEarth::Triton::Ocean& ocean);
+  void onInitialize(osgEarth::Triton::Environment& env, osgEarth::Triton::Ocean& ocean) override;
   /** Implement the callback to apply all variable states */
-  virtual void onDrawOcean(osgEarth::Triton::Environment& env, osgEarth::Triton::Ocean& ocean);
+  void onDrawOcean(osgEarth::Triton::Environment& env, osgEarth::Triton::Ocean& ocean) override;
 
 protected:
   /** Destroy the callback */

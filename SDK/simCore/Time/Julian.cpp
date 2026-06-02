@@ -35,7 +35,7 @@ int simCore::julianDay()
 
   // get the current system time, using timezone value of 0
   // returns UTC time
-  gettimeofday(&tp, 0);
+  gettimeofday(&tp, nullptr);
 
   // put system time into a tm struct
   time_t t(tp.tv_sec);

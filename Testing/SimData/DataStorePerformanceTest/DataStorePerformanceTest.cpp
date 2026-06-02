@@ -74,37 +74,37 @@ public:
   }
 
   /// new entity has been added, with the given id and type
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot) override
   {
     counters_->add++;
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
+  void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) override
   {
     counters_->remove++;
   }
 
   /// prefs for the given entity have been changed
-  virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id)
+  void onPrefsChange(simData::DataStore *source, simData::ObjectId id) override
   {
     counters_->pref++;
   }
 
   /// data store has changed
-  virtual void onChange(simData::DataStore *source)
+  void onChange(simData::DataStore *source) override
   {
     counters_->time++;
   }
 
   /// something has changed in the entity category data
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
+  void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot) override
   {
     counters_->category++;
   }
 
   /// entity name has changed
-  virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId)
+  void onNameChange(simData::DataStore *source, simData::ObjectId changeId) override
   {
     counters_->name++;
   }
@@ -234,7 +234,7 @@ public:
         : time_(time),
           rowModulus_(rowModulus)
       {}
-      virtual void visit(simData::DataTable* table)
+      void visit(simData::DataTable* table) override
       {
         addRow_(table);
       }
@@ -366,19 +366,19 @@ class Platforms : public Entity
 public:
   explicit Platforms(simUtil::DataStoreTestHelper& helper) : Entity(helper) {};
   virtual ~Platforms() {}
-  virtual void addEntity(uint64_t id) override
+  void addEntity(uint64_t id) override
   {
     helper_.addPlatform();
   }
 
-  virtual void addDataLimit(uint64_t id) override
+  void addDataLimit(uint64_t id) override
   {
     simData::PlatformPrefs prefs;
     setLimits_(prefs.mutable_commonprefs());
     helper_.updatePlatformPrefs(prefs, id);
   }
 
-  virtual void addColor(uint64_t id, double time) override
+  void addColor(uint64_t id, double time) override
   {
     simData::PlatformCommand cmd;
     cmd.set_time(time);
@@ -386,7 +386,7 @@ public:
     helper_.addPlatformCommand(cmd, id);
   }
 
-  virtual void addUpdate(uint64_t id, double time) override
+  void addUpdate(uint64_t id, double time) override
   {
     helper_.addPlatformUpdate(time, id);
   };
@@ -399,19 +399,19 @@ public:
   explicit Beams(simUtil::DataStoreTestHelper& helper) : Entity(helper) {};
   virtual ~Beams() {}
 
-  virtual void addEntity(uint64_t id) override
+  void addEntity(uint64_t id) override
   {
     helper_.addBeam(id);
   }
 
-  virtual void addDataLimit(uint64_t id) override
+  void addDataLimit(uint64_t id) override
   {
     simData::BeamPrefs prefs;
     setLimits_(prefs.mutable_commonprefs());
     helper_.updateBeamPrefs(prefs, id);
   }
 
-  virtual void addColor(uint64_t id, double time) override
+  void addColor(uint64_t id, double time) override
   {
     simData::BeamCommand cmd;
     cmd.set_time(time);
@@ -419,7 +419,7 @@ public:
     helper_.addBeamCommand(cmd, id);
   }
 
-  virtual void addUpdate(uint64_t id, double time) override
+  void addUpdate(uint64_t id, double time) override
   {
     helper_.addBeamUpdate(time, id);
   };
@@ -432,19 +432,19 @@ public:
   explicit Gates(simUtil::DataStoreTestHelper& helper) : Entity(helper) {};
   virtual ~Gates() {}
 
-  virtual void addEntity(uint64_t id) override
+  void addEntity(uint64_t id) override
   {
     helper_.addGate(id);
   }
 
-  virtual void addDataLimit(uint64_t id) override
+  void addDataLimit(uint64_t id) override
   {
     simData::GatePrefs prefs;
     setLimits_(prefs.mutable_commonprefs());
     helper_.updateGatePrefs(prefs, id);
   }
 
-  virtual void addColor(uint64_t id, double time) override
+  void addColor(uint64_t id, double time) override
   {
     simData::GateCommand cmd;
     cmd.set_time(time);
@@ -452,7 +452,7 @@ public:
     helper_.addGateCommand(cmd, id);
   }
 
-  virtual void addUpdate(uint64_t id, double time) override
+  void addUpdate(uint64_t id, double time) override
   {
     helper_.addGateUpdate(time, id);
   };
@@ -465,19 +465,19 @@ public:
   explicit Lasers(simUtil::DataStoreTestHelper& helper) : Entity(helper) {};
   virtual ~Lasers() {}
 
-  virtual void addEntity(uint64_t id) override
+  void addEntity(uint64_t id) override
   {
     helper_.addLaser(id);
   }
 
-  virtual void addDataLimit(uint64_t id) override
+  void addDataLimit(uint64_t id) override
   {
     simData::LaserPrefs prefs;
     setLimits_(prefs.mutable_commonprefs());
     helper_.updateLaserPrefs(prefs, id);
   }
 
-  virtual void addColor(uint64_t id, double time) override
+  void addColor(uint64_t id, double time) override
   {
     simData::LaserCommand cmd;
     cmd.set_time(time);
@@ -485,7 +485,7 @@ public:
     helper_.addLaserCommand(cmd, id);
   }
 
-  virtual void addUpdate(uint64_t id, double time) override
+  void addUpdate(uint64_t id, double time) override
   {
     helper_.addLaserUpdate(time, id);
   };
@@ -498,19 +498,19 @@ public:
   explicit LobGroups(simUtil::DataStoreTestHelper& helper) : Entity(helper) {};
   virtual ~LobGroups() {}
 
-  virtual void addEntity(uint64_t id) override
+  void addEntity(uint64_t id) override
   {
     helper_.addLOB(id);
   }
 
-  virtual void addDataLimit(uint64_t id) override
+  void addDataLimit(uint64_t id) override
   {
     simData::LobGroupPrefs prefs;
     setLimits_(prefs.mutable_commonprefs());
     helper_.updateLOBPrefs(prefs, id);
   }
 
-  virtual void addColor(uint64_t id, double time) override
+  void addColor(uint64_t id, double time) override
   {
     simData::LobGroupCommand cmd;
     cmd.set_time(time);
@@ -518,7 +518,7 @@ public:
     helper_.addLOBCommand(cmd, id);
   }
 
-  virtual void addUpdate(uint64_t id, double time) override
+  void addUpdate(uint64_t id, double time) override
   {
     helper_.addLOBUpdate(time, id);
   };

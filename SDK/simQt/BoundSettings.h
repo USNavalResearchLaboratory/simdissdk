@@ -148,7 +148,7 @@ Q_SIGNALS:
 
 private:
   /** Called by observer to update the value */
-  virtual void updateValue_(const QVariant& newValue);
+  void updateValue_(const QVariant& newValue) override;
   /** Cache of the settings value */
   bool value_ = false;
 };
@@ -206,7 +206,7 @@ Q_SIGNALS:
 
 private:
   /** Called by observer to update the value */
-  virtual void updateValue_(const QVariant& newValue);
+  void updateValue_(const QVariant& newValue) override;
   /** Populates a combo box with enumerated values */
   int populateCombo_(const Settings::MetaData& metaData, QComboBox* comboBox) const;
   /** Cache of the settings value */
@@ -244,7 +244,7 @@ Q_SIGNALS:
 
 private:
   /** Called by observer to update the value */
-  virtual void updateValue_(const QVariant& newValue);
+  void updateValue_(const QVariant& newValue) override;
   /** Cache of the settings value */
   double value_ = 0.0;
 };
@@ -279,7 +279,7 @@ Q_SIGNALS:
 
 private:
   /** Called by observer to update the value */
-  virtual void updateValue_(const QVariant& newValue);
+  void updateValue_(const QVariant& newValue) override;
   /** Convenience method to convert QVariant to QColor (there is no toColor()) */
   QColor toColor_(const QVariant& value) const;
   /** Convenience method to convert from QColor to QVariant */
@@ -325,7 +325,7 @@ Q_SIGNALS:
 
 private:
   /** Called by observer to update the value */
-  virtual void updateValue_(const QVariant& newValue);
+  void updateValue_(const QVariant& newValue) override;
   /** Cache of the settings value */
   QString value_;
 };
@@ -353,7 +353,7 @@ Q_SIGNALS:
 
 private:
   /** Called by observer to update the value */
-  virtual void updateValue_(const QVariant& newValue);
+  void updateValue_(const QVariant& newValue) override;
   /** Cache of the settings value */
   QStringList value_;
 };
@@ -383,7 +383,7 @@ Q_SIGNALS:
 
 private:
   /** Called by observer to update the value */
-  virtual void updateValue_(const QVariant& newValue);
+  void updateValue_(const QVariant& newValue) override;
   /** Cache of the settings value */
   QMap<QString, QVariant> value_;
 };

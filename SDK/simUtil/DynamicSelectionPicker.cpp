@@ -47,7 +47,7 @@ public:
   {
   }
 
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
   {
     switch (ea.getEventType())
     {

@@ -46,15 +46,20 @@ namespace simCore
   inline double angFix2PI(double in)
   {
     // According to the Intel HotSpot, the call to fmod is expensive, so only make the call if necessary
-    if ((in < 0.0) || (in >= M_TWOPI))
+    if ((in > -M_PI) && (in < M_TWOPI)) [[likely]]
     {
-      in = fmod(in, M_TWOPI);
-
-      if (fabs(in) < 1e-10) // If really close to zero than return zero instead of M_TWOPI
-        in = 0.0;
-      else if (in < 0.0)
+      if (in < 0.0)
         in += M_TWOPI;
+
+      return in;
     }
+
+    in = fmod(in, M_TWOPI);
+    if (fabs(in) < 1e-10) // If really close to zero than return zero
+      return 0.0;
+    else if (in < 0.0)
+      in += M_TWOPI;
+
     return in;
   }
 

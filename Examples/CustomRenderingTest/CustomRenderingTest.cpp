@@ -132,7 +132,7 @@ public:
   LabelCallback() {}
 
   /** Override the Custom Rendering version of the string to create a custom label. */
-  virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields)
+  std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields) override
   {
     // The default implementation for a Custom Rendering node's Entity Callback only shows
     // the name pref.  This implementation shows a custom string instead.  You can query
@@ -176,7 +176,7 @@ public:
    * tables for the entity and piece together either new graphics or modify existing
    * graphics that this Render Engine is maintaining.
    */
-  virtual bool update(const simData::DataSliceBase* updateSlice, bool force = false)
+  bool update(const simData::DataSliceBase* updateSlice, bool force = false) override
   {
     // Break out if the node isn't currently valid
     if (!node_.valid())
@@ -305,7 +305,7 @@ public:
   {
   }
 
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot) override
   {
     // Break out if not a custom rendering; we don't care about those entities here
     if (!manager_.valid() || ot != simData::CUSTOM_RENDERING)

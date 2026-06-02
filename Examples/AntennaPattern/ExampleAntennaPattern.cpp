@@ -242,11 +242,11 @@ private:
   void update_()
   {
     std::vector<std::pair<simData::AntennaPatterns::Algorithm, std::string> > algs;
-    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::PEDESTAL, "PEDESTAL"));
-    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::GAUSS, "GAUSS"));
-    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::CSCSQ, "CSCSQ"));
-    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::SINXX, "SINXX"));
-    algs.push_back(std::make_pair(simData::AntennaPatterns::Algorithm::OMNI, "OMNI"));
+    algs.emplace_back(simData::AntennaPatterns::Algorithm::PEDESTAL, "PEDESTAL");
+    algs.emplace_back(simData::AntennaPatterns::Algorithm::GAUSS, "GAUSS");
+    algs.emplace_back(simData::AntennaPatterns::Algorithm::CSCSQ, "CSCSQ");
+    algs.emplace_back(simData::AntennaPatterns::Algorithm::SINXX, "SINXX");
+    algs.emplace_back(simData::AntennaPatterns::Algorithm::OMNI, "OMNI");
 
     simData::DataStore::Transaction xaction;
     simData::BeamPrefs* prefs = ds_.mutable_beamPrefs(beamId_, &xaction);
@@ -334,7 +334,7 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_IMGUI
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
 
   simData::MemoryDataStore ds;
   simData::ObjectId platformId;

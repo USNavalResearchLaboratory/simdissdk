@@ -68,7 +68,7 @@ public:
   }
 
   /** @see osgDB::ReadFileCallback::openArchive() */
-  virtual osgDB::ReaderWriter::ReadResult openArchive(const std::string& filename, osgDB::ReaderWriter::ArchiveStatus status, unsigned int indexBlockSizeHint, const osgDB::Options* useObjectCache)
+  osgDB::ReaderWriter::ReadResult openArchive(const std::string& filename, osgDB::ReaderWriter::ArchiveStatus status, unsigned int indexBlockSizeHint, const osgDB::Options* useObjectCache) override
   {
     if (blockNetwork_ && osgDB::containsServerAddress(filename))
       return osgDB::ReaderWriter::ReadResult::FILE_NOT_FOUND;
@@ -76,7 +76,7 @@ public:
   }
 
   /** @see osgDB::ReadFileCallback::readObject() */
-  virtual osgDB::ReaderWriter::ReadResult readObject(const std::string& filename, const osgDB::Options* options)
+  osgDB::ReaderWriter::ReadResult readObject(const std::string& filename, const osgDB::Options* options) override
   {
     if (blockNetwork_ && osgDB::containsServerAddress(filename))
       return osgDB::ReaderWriter::ReadResult::FILE_NOT_FOUND;
@@ -84,7 +84,7 @@ public:
   }
 
   /** @see osgDB::ReadFileCallback::readImage() */
-  virtual osgDB::ReaderWriter::ReadResult readImage(const std::string& filename, const osgDB::Options* options)
+  osgDB::ReaderWriter::ReadResult readImage(const std::string& filename, const osgDB::Options* options) override
   {
     if (blockNetwork_ && osgDB::containsServerAddress(filename))
       return osgDB::ReaderWriter::ReadResult::FILE_NOT_FOUND;
@@ -92,7 +92,7 @@ public:
   }
 
   /** @see osgDB::ReadFileCallback::readHeightField() */
-  virtual osgDB::ReaderWriter::ReadResult readHeightField(const std::string& filename, const osgDB::Options* options)
+  osgDB::ReaderWriter::ReadResult readHeightField(const std::string& filename, const osgDB::Options* options) override
   {
     if (blockNetwork_ && osgDB::containsServerAddress(filename))
       return osgDB::ReaderWriter::ReadResult::FILE_NOT_FOUND;
@@ -100,7 +100,7 @@ public:
   }
 
   /** @see osgDB::ReadFileCallback::readNode() */
-  virtual osgDB::ReaderWriter::ReadResult readNode(const std::string& filename, const osgDB::Options* options)
+  osgDB::ReaderWriter::ReadResult readNode(const std::string& filename, const osgDB::Options* options) override
   {
     if (blockNetwork_ && osgDB::containsServerAddress(filename))
       return osgDB::ReaderWriter::ReadResult::FILE_NOT_FOUND;
@@ -108,7 +108,7 @@ public:
   }
 
   /** @see osgDB::ReadFileCallback::readShader() */
-  virtual osgDB::ReaderWriter::ReadResult readShader(const std::string& filename, const osgDB::Options* options)
+  osgDB::ReaderWriter::ReadResult readShader(const std::string& filename, const osgDB::Options* options) override
   {
     if (blockNetwork_ && osgDB::containsServerAddress(filename))
       return osgDB::ReaderWriter::ReadResult::FILE_NOT_FOUND;
@@ -135,7 +135,7 @@ public:
   {
   }
 
-  virtual std::string findDataFile(const std::string& filename, const osgDB::Options* options, osgDB::CaseSensitivity caseSensitivity)
+  std::string findDataFile(const std::string& filename, const osgDB::Options* options, osgDB::CaseSensitivity caseSensitivity) override
   {
     std::string rv;
     // Search the original one (presumably faster) first
@@ -148,7 +148,7 @@ public:
     return rv;
   }
 
-  virtual std::string findLibraryFile(const std::string& filename, const osgDB::Options* options, osgDB::CaseSensitivity caseSensitivity)
+  std::string findLibraryFile(const std::string& filename, const osgDB::Options* options, osgDB::CaseSensitivity caseSensitivity) override
   {
     return osgDB::Registry::instance()->findLibraryFileImplementation(filename, options, caseSensitivity);
   }
@@ -186,16 +186,16 @@ simVis::Registry::Registry()
 
   // models may be specified without extension, use this list to attempt to resolve.
   // these should be reconciled with list in simVis::isImageFile (Utils.cpp)
-  modelExtensions_.push_back("3db");
-  modelExtensions_.push_back("opt");
-  modelExtensions_.push_back("ive");
-  modelExtensions_.push_back("flt");
-  modelExtensions_.push_back("fbx");
+  modelExtensions_.emplace_back("3db");
+  modelExtensions_.emplace_back("opt");
+  modelExtensions_.emplace_back("ive");
+  modelExtensions_.emplace_back("flt");
+  modelExtensions_.emplace_back("fbx");
 
   // these may be used for models, but are not model-specific formats
-  modelExtensions_.push_back("png");
-  modelExtensions_.push_back("bmp");
-  modelExtensions_.push_back("jpg");
+  modelExtensions_.emplace_back("png");
+  modelExtensions_.emplace_back("bmp");
+  modelExtensions_.emplace_back("jpg");
 
   // Known OSG and SIMDIS pseudo loaders
   pseudoLoaderExtensions_.insert("osgs"); // encode OSG file as filename
@@ -284,7 +284,7 @@ namespace {
   class RewriteToEmptyString : public osgEarth::URLRewriter
   {
   public:
-    virtual std::string rewrite(const std::string& url)
+    std::string rewrite(const std::string& url) override
     {
       return "";
     }

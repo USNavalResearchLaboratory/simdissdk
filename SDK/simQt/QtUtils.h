@@ -24,9 +24,12 @@
 #define SIMQT_QTUTILS_HH
 
 #include <QObject>
+#include <QPointer>
 #include <QRect>
 #include "simCore/Common/Export.h"
 
+class QTabBar;
+class QTabWidget;
 class QWidget;
 
 namespace simQt {
@@ -66,11 +69,20 @@ public:
   static bool hasAccentColorProblems();
 
   /**
-  * Get the QMainWindow parent widget for the specified widget, simply returns the input if no QMainWindow parent is found.
-  * @param widget input widget to search parent tree for a QMainWidget
-  * @return the QMainWidget if found, otherwise returns the input widget
+  * Get the QMainWindow or Modal QDialog parent widget for the specified widget, simply returns the input if no relevant parent is found.
+  * @param widget input widget to search parent tree for a QMainWidget or Modal QDialog
+  * @return the QMainWidget or earliest Model QDialog parent if found, otherwise returns the input widget
   */
   static QWidget* getMainWindowParent(QWidget* widget);
+
+  /**
+   * Given a tab widget, creates OverrideShortcuts (immune to Ambiguity errors) for selecting
+   * tabs using common hot keys: Ctrl+1 through Ctrl+9 for selecting a tab; Ctrl+Tab or Ctrl+PgDn
+   * for new tab; Ctrl+Shift+Tab (Ctrl+Backtab) or Ctrl+PgUp for previous tab.
+   * @param tabs Holds the tab widget, and impacted by the hot keys.
+   * @param parentScope Parent of the override shortcuts; shortcuts activate as children of this.
+   */
+  static void addTabShortcuts(QTabWidget& tabs, QWidget& parentScope);
 };
 
 }

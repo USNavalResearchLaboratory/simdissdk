@@ -262,25 +262,25 @@ public:
   }
 
   /// Invoked when a new category is added
-  virtual void onAddCategory(int categoryIndex)
+  void onAddCategory(int categoryIndex) override
   {
     counters_->addCategory++;
   }
 
   /// Invoked when a new value is added to a category
-  virtual void onAddValue(int categoryIndex, int valueIndex)
+  void onAddValue(int categoryIndex, int valueIndex) override
   {
     counters_->addValue++;
   }
 
   /// Invoked when a new value is added to a category
-  virtual void onClear()
+  void onClear() override
   {
     counters_->clear++;
   }
 
   /// Invoked when all listeners have received onClear()
-  virtual void doneClearing()
+  void doneClearing() override
   {
     // noop
   }
@@ -757,7 +757,7 @@ public:
   explicit CDListener(unsigned int& cdChangeCounter) : cdChangeCounter_(cdChangeCounter)
   {}
 
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
+  void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot) override
   {
     ++cdChangeCounter_;
   }

@@ -854,7 +854,7 @@ int testModify()
     {
     }
 
-    virtual int modify(simData::FieldList& message) override
+    int modify(simData::FieldList& message) override
     {
       auto command = dynamic_cast<simData::PlatformCommand*>(&message);
       // Wrong message was passed in
@@ -886,7 +886,7 @@ int testModify()
     {
     }
 
-    virtual int modify(simData::FieldList& message) override
+    int modify(simData::FieldList& message) override
     {
       auto command = dynamic_cast<simData::PlatformCommand*>(&message);
       // Wrong message was passed in

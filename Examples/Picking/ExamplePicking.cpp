@@ -121,7 +121,7 @@ public:
   }
 
   /// callback to process user input
-  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
+  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa) override
   {
     // Handle key presses
     if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
@@ -275,7 +275,7 @@ public:
 #endif
 
   /** Update the label when new items are picked */
-  virtual void pickChanged(unsigned int pickedId, osg::Referenced* picked) override
+  void pickChanged(unsigned int pickedId, osg::Referenced* picked) override
   {
     osg::Node* node = dynamic_cast<osg::Node*>(picked);
     simVis::EntityNode* entity = osgEarth::findFirstParentOfType<simVis::EntityNode>(node);
@@ -301,7 +301,7 @@ public:
   }
 
   /** Empty function to satisfy interface. If we wanted to get all entities under mouse instead of the best match, we would use this signature */
-  virtual void pickChanged(const std::vector<simVis::Picker::PickedEntity>& picked) override
+  void pickChanged(const std::vector<simVis::Picker::PickedEntity>& picked) override
   {
     // noop
   }

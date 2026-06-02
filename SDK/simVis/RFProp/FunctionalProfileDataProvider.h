@@ -48,28 +48,28 @@ public:
   FunctionalProfileDataProvider(const ProfileDataProvider *templateProvider);
 
   /** Gets the number of range values */
-  virtual unsigned int getNumRanges() const;
+  unsigned int getNumRanges() const override;
 
   /** Gets the spacing between range samples, in meters */
-  virtual double getRangeStep() const;
+  double getRangeStep() const override;
 
   /** Gets the min range, in meters */
-  virtual double getMinRange() const;
+  double getMinRange() const override;
 
   /** Gets the max range, in meters */
-  virtual double getMaxRange() const;
+  double getMaxRange() const override;
 
   /** Gets the number of height values */
-  virtual unsigned int getNumHeights() const;
+  unsigned int getNumHeights() const override;
 
   /** Gets the min height, in meters */
-  virtual double getMinHeight() const;
+  double getMinHeight() const override;
 
   /** Gets the max height, in meters */
-  virtual double getMaxHeight() const;
+  double getMaxHeight() const override;
 
   /** Gets the spacing between height samples, in meters */
-  virtual double getHeightStep() const;
+  double getHeightStep() const override;
 
 protected:
   /// osg::Referenced-derived

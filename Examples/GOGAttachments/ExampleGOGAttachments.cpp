@@ -245,7 +245,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     auto gog = gogs.front();
     gog->osgNode()->setName("Arc");
 
-    s_attachments.push_back(gog->osgNode());
+    s_attachments.emplace_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
   }
 
@@ -267,7 +267,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     auto gog = gogs.front();
     gog->osgNode()->setName("Circle");
 
-    s_attachments.push_back(gog->osgNode());
+    s_attachments.emplace_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
 
   }
@@ -292,7 +292,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     auto gog = gogs.front();
     gog->osgNode()->setName("Cylinder");
 
-    s_attachments.push_back(gog->osgNode());
+    s_attachments.emplace_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
   }
 
@@ -315,7 +315,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     auto gog = gogs.front();
     gog->osgNode()->setName("Ellipse");
 
-    s_attachments.push_back(gog->osgNode());
+    s_attachments.emplace_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
   }
 
@@ -336,7 +336,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     auto gog = gogs.front();
     gog->osgNode()->setName("Hemisphere");
 
-    s_attachments.push_back(gog->osgNode());
+    s_attachments.emplace_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
   }
 
@@ -363,7 +363,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     auto gog = gogs.front();
     gog->osgNode()->setName("Line");
 
-    s_attachments.push_back(gog->osgNode());
+    s_attachments.emplace_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
   }
 
@@ -389,7 +389,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     auto gog = gogs.front();
     gog->osgNode()->setName("LineSegs");
 
-    s_attachments.push_back(gog->osgNode());
+    s_attachments.emplace_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
   }
 
@@ -415,7 +415,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     auto gog = gogs.front();
     gog->osgNode()->setName("Points");
 
-    s_attachments.push_back(gog->osgNode());
+    s_attachments.emplace_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
   }
 
@@ -437,7 +437,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     loader.loadShape(def, "", 8, true, gogs);
 
     auto gog = gogs.front();
-    s_attachments.push_back(gog->osgNode());
+    s_attachments.emplace_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
   }
 
@@ -459,7 +459,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     auto gog = gogs.front();
     gog->osgNode()->setName("Sphere");
 
-    s_attachments.push_back(gog->osgNode());
+    s_attachments.emplace_back(gog->osgNode());
     s_overlayNodes.push_back(gog);
   }
 
@@ -515,7 +515,7 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_IMGUI
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
   gui->add(new ControlPanel());
 #endif
 

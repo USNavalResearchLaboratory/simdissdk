@@ -55,28 +55,28 @@ public:
   }
 
   /// Invoked when a new category is added
-  virtual void onAddCategory(int categoryIndex)
+  void onAddCategory(int categoryIndex) override
   {
     parent_->checksAutoUpdated_ = true;
     parent_->addCategoryName_(categoryIndex);
   }
 
   /// Invoked when a new value is added to a category
-  virtual void onAddValue(int categoryIndex, int valueIndex)
+  void onAddValue(int categoryIndex, int valueIndex) override
   {
     parent_->checksAutoUpdated_ = true;
     parent_->addCategoryValue_(categoryIndex, valueIndex);
   }
 
   /// Invoked when all data is cleared
-  virtual void onClear()
+  void onClear() override
   {
     parent_->checksAutoUpdated_ = true;
     parent_->clear_();
   }
 
   /// Invoked when all listeners have received onClear()
-  virtual void doneClearing()
+  void doneClearing() override
   {
     // noop
   }

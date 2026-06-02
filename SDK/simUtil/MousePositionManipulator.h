@@ -54,7 +54,7 @@ public:
   class Listener
   {
   public:
-    virtual ~Listener(){}
+    virtual ~Listener()= default;
     /// Called whenever the mouse moves and is at the passed in lat/lon (degrees) and alt (meters). Notification also happens in the FRAME event, for pending elevation queries.
     virtual void mouseOverLatLon(double lat, double lon, double alt) = 0;
   };
@@ -65,13 +65,13 @@ public:
   virtual ~MousePositionManipulator();
 
   /** Mouse button released, returns non-zero on handled */
-  virtual int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
   /** Mouse being moved, returns non-zero on handled */
-  virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
   /** Mouse being dragged, returns non-zero on handled */
-  virtual int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
   /** Frame event, returns non-zero on handled */
-  virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
 
   /// Sets the map node
   void setMapNode(osgEarth::MapNode* mapNode);

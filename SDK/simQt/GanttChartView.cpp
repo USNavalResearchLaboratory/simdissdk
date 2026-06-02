@@ -108,10 +108,10 @@ QModelIndex GanttChartView::indexAt(const QPoint &point) const
       }
 
       QModelIndex beginIndex = model()->index(itemInLayer, beginTimeColumn_, layerIndex);
-      double begin = model()->data(beginIndex, beginTimeRole_).toDouble(0);
+      double begin = model()->data(beginIndex, beginTimeRole_).toDouble();
 
       QModelIndex endIndex = model()->index(itemInLayer, endTimeColumn_, layerIndex);
-      double end = model()->data(endIndex, endTimeRole_).toDouble(0);
+      double end = model()->data(endIndex, endTimeRole_).toDouble();
 
       // Handle cases where the beginning is after the end
       if (begin > end)
@@ -287,7 +287,7 @@ void GanttChartView::setCurrentTime(double newTime)
   viewport()->update();
 }
 
-void GanttChartView::dataChanged(const QModelIndex & topLeft, const QModelIndex & bottomRight)
+void GanttChartView::dataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles)
 {
   viewport()->update();
 }
@@ -408,10 +408,10 @@ void GanttChartView::paintEvent(QPaintEvent* event)
       QIcon icon = model()->data(itemIndex, Qt::DecorationRole).value<QIcon>();
 
       QModelIndex beginIndex = model()->index(itemInLayer, beginTimeColumn_, parentIndex);
-      double begin = model()->data(beginIndex, beginTimeRole_).toDouble(0);
+      double begin = model()->data(beginIndex, beginTimeRole_).toDouble();
 
       QModelIndex endIndex = model()->index(itemInLayer, endTimeColumn_, parentIndex);
-      double end = model()->data(endIndex, endTimeRole_).toDouble(0);
+      double end = model()->data(endIndex, endTimeRole_).toDouble();
 
       // Handle cases where the beginning is after the end
       if (begin > end)
@@ -583,10 +583,10 @@ void GanttChartView::updateEndpoints_()
       for (int itemInLayer = 0; itemInLayer < model()->rowCount(layerIndex); itemInLayer++)
       {
         QModelIndex beginIndex = model()->index(itemInLayer, 1, layerIndex);
-        double begin = model()->data(beginIndex, Qt::DisplayRole).toDouble(0);
+        double begin = model()->data(beginIndex, Qt::DisplayRole).toDouble();
 
         QModelIndex endIndex = model()->index(itemInLayer, 2, layerIndex);
-        double end = model()->data(endIndex, Qt::DisplayRole).toDouble(0);
+        double end = model()->data(endIndex, Qt::DisplayRole).toDouble();
 
         // Handle cases where the beginning is after the end
         if (begin > end)
@@ -670,10 +670,10 @@ void GanttChartView::drawItem_(int itemLayer, double layerHeight, int indexInLay
   QIcon icon = model()->data(itemIndex, Qt::DecorationRole).value<QIcon>();
 
   QModelIndex beginIndex = model()->index(indexInLayer, beginTimeColumn_, parent);
-  double begin = model()->data(beginIndex, beginTimeRole_).toDouble(0);
+  double begin = model()->data(beginIndex, beginTimeRole_).toDouble();
 
   QModelIndex endIndex = model()->index(indexInLayer, endTimeColumn_, parent);
-  double end = model()->data(endIndex, endTimeRole_).toDouble(0);
+  double end = model()->data(endIndex, endTimeRole_).toDouble();
 
   painter.fillRect((begin - firstBegin_) * (scale_ * zoom_), layerHeight * itemLayer, (end - begin) * (scale_ * zoom_), layerHeight, color);
 

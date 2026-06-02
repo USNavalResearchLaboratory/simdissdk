@@ -150,7 +150,7 @@ void initializePython3(const std::string python3Version)
   // initializePython3 can be called twice if invoked via StartSIMDIS app, so avoid redundant addition.
   // SIMDIS paths must be at the front, else we override whatever was there. If SIMDIS paths
   // were at the front, then we don't need to set PYTHONPATH at all, it was already good.
-  if (oldPythonPath.find(pythonPath) != 0)
+  if (!oldPythonPath.starts_with(pythonPath))
   {
     pythonPath += VARSEP_STR + oldPythonPath;
     simCore::setEnvVar(PYTHONPATH, pythonPath, true);

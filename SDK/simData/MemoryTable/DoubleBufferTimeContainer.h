@@ -53,23 +53,23 @@ public:
   DoubleBufferTimeContainer(const DoubleBufferTimeContainer& copyFrom);
   virtual ~DoubleBufferTimeContainer();
 
-  virtual TimeContainer* clone() const;
-  virtual size_t size() const;
-  virtual bool empty() const;
-  virtual TimeContainer::Iterator begin();
-  virtual TimeContainer::Iterator end();
-  virtual TimeContainer::Iterator lower_bound(double timeValue);
-  virtual TimeContainer::Iterator upper_bound(double timeValue);
-  virtual TimeContainer::Iterator findTimeAtOrBeforeGivenTime(double timeValue);
-  virtual TimeContainer::Iterator find(double timeValue);
-  virtual TimeContainer::Iterator findOrAddTime(double timeValue, bool* exactMatch=nullptr);
-  virtual void erase(Iterator iter, EraseBehavior eraseBehavior);
-  virtual DelayedFlushContainerPtr flush();
-  virtual void flush(const std::vector<DataColumn*>& columns, double startTime, double endTime);
+  TimeContainer* clone() const override;
+  size_t size() const override;
+  bool empty() const override;
+  TimeContainer::Iterator begin() override;
+  TimeContainer::Iterator end() override;
+  TimeContainer::Iterator lower_bound(double timeValue) override;
+  TimeContainer::Iterator upper_bound(double timeValue) override;
+  TimeContainer::Iterator findTimeAtOrBeforeGivenTime(double timeValue) override;
+  TimeContainer::Iterator find(double timeValue) override;
+  TimeContainer::Iterator findOrAddTime(double timeValue, bool* exactMatch=nullptr) override;
+  void erase(Iterator iter, EraseBehavior eraseBehavior) override;
+  DelayedFlushContainerPtr flush() override;
+  void flush(const std::vector<DataColumn*>& columns, double startTime, double endTime) override;
 
   /// @copydoc TimeContainer::limitData()
-  virtual void limitData(size_t maxPoints, double latestInvalidTime, const std::vector<DataColumn*>& columns,
-    DataTable* table, const std::vector<DataTable::TableObserverPtr>& observers);
+  void limitData(size_t maxPoints, double latestInvalidTime, const std::vector<DataColumn*>& columns,
+    DataTable* table, const std::vector<DataTable::TableObserverPtr>& observers) override;
 
   /**
    * Returns the begin and end time of the column
@@ -77,7 +77,7 @@ public:
    * @param end Returns the end time
    * @returns 0 if begin and end are set
    */
-  virtual int getTimeRange(double& begin, double& end) const;
+  int getTimeRange(double& begin, double& end) const override;
 
   /** Swaps the fresh to stale, stale to fresh, and clears out the fresh vector; announces all items removed */
   void swapFreshStaleData(DataTable* table, const std::vector<DataTable::TableObserverPtr>& observers);

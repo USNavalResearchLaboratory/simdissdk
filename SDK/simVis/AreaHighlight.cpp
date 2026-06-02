@@ -399,7 +399,7 @@ void LineDrawableHighlightNode::resetLines_(size_t newLineCount, int glMode)
     if (!lines_.empty())
       line->setColor(lines_[0]->getColor());
     billboard_->addChild(line);
-    lines_.push_back(line);
+    lines_.emplace_back(line);
   }
 }
 

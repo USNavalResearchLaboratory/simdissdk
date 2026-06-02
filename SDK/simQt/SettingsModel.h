@@ -66,68 +66,68 @@ public:
   // from  QAbstractItemModel
 
   ///@return the index for the given row and column
-  virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
+  QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
   ///@return the index of the parent of the item given by index
-  virtual QModelIndex parent(const QModelIndex &child) const override;
+  QModelIndex parent(const QModelIndex &child) const override;
   ///@return the number of rows in the data
-  virtual int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   ///@return number of columns needed to hold data
-  virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override;
   ///@return data for given item
-  virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
   ///@return the header data for given section
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
   ///@return the flags on the given item
-  virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
+  Qt::ItemFlags flags(const QModelIndex& index) const override;
   /// set the value of the given item
-  virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
+  bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
 
   // from Settings
 
   /// Removes all the entries including metadata and callbacks
-  virtual void clear() override;
+  void clear() override;
   /// Reset factory default value for all settings
-  virtual void resetDefaults() override;
+  void resetDefaults() override;
   /// Reset factory default values for settings of a single group and its sub-groups
-  virtual void resetDefaults(const QString& name) override;
+  void resetDefaults(const QString& name) override;
   /// Set value; will create if does not exist
-  virtual void setValue(const QString& name, const QVariant& value) override;
+  void setValue(const QString& name, const QVariant& value) override;
   /// Set value; will create if does not exist; updates the metaData and observer, will not add a duplicate observer
-  virtual void setValue(const QString& name, const QVariant& value, const MetaData& metaData, ObserverPtr observer=simQt::Settings::ObserverPtr()) override;
+  void setValue(const QString& name, const QVariant& value, const MetaData& metaData, ObserverPtr observer=simQt::Settings::ObserverPtr()) override;
   /// Set value; will create if does not exist; updates the metaData; will not call the specified observer to prevent a feedback loop
-  virtual void setValue(const QString& name, const QVariant& value, ObserverPtr skipThisObserver) override;
+  void setValue(const QString& name, const QVariant& value, ObserverPtr skipThisObserver) override;
   /// Returns value for specified name; will return QVariant::Invalid if name does not exist
-  virtual QVariant value(const QString& name) const override;
+  QVariant value(const QString& name) const override;
   /// Returns value for specified name; will create if it does not exist and return default value in MetaData
-  virtual QVariant value(const QString& name, const MetaData& metaData, ObserverPtr observer=simQt::Settings::ObserverPtr()) override;
+  QVariant value(const QString& name, const MetaData& metaData, ObserverPtr observer=simQt::Settings::ObserverPtr()) override;
   /// Returns value for specified name; will create if it does not exist and use default value in MetaData
-  virtual QVariant value(const QString& name, ObserverPtr observer) override;
+  QVariant value(const QString& name, ObserverPtr observer) override;
   /// Returns true if the name exists
-  virtual bool contains(const QString& name) const override;
+  bool contains(const QString& name) const override;
   /// Saves widget info, see Settings.h for details
-  virtual void saveWidget(QWidget* widget) override;
+  void saveWidget(QWidget* widget) override;
   /// Loads widget info, see Settings.h for details
-  virtual void loadWidget(QWidget* widget) override;
+  void loadWidget(QWidget* widget) override;
   /// Returns all names
-  virtual QStringList allNames() const override;
+  QStringList allNames() const override;
 
   /// Get/Set Metadata
-  virtual int setMetaData(const QString& name, const MetaData& metaData) override;
-  virtual int metaData(const QString& name, MetaData& metaData) const override;
+  int setMetaData(const QString& name, const MetaData& metaData) override;
+  int metaData(const QString& name, MetaData& metaData) const override;
 
   /// Local Observers; only when this entry changes do a callback
-  virtual int addObserver(const QString& name, ObserverPtr observer) override;
-  virtual int removeObserver(const QString& name, ObserverPtr observer) override;
+  int addObserver(const QString& name, ObserverPtr observer) override;
+  int removeObserver(const QString& name, ObserverPtr observer) override;
 
   /// Global Observers; if any entry changes do a callback
-  virtual void addObserver(ObserverPtr observer) override;
-  virtual int removeObserver(ObserverPtr observer) override;
+  void addObserver(ObserverPtr observer) override;
+  int removeObserver(ObserverPtr observer) override;
 
   /// Retrieves the path to the underlying storage; on Windows if using NativeFormat, this could be a registry path and not a file path; might be empty
-  virtual QString fileName() const override;
+  QString fileName() const override;
 
   /// Creates a memento for saving and restoring state (keys and values only)
-  virtual Memento* createMemento() const override;
+  Memento* createMemento() const override;
 
   // Misc.
 

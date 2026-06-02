@@ -73,7 +73,7 @@ public:
 
 public: // MouseManipulator interface
   // internal - override
-  virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
 
 private:
   /// timer class to listen for FRAME events to update the popup

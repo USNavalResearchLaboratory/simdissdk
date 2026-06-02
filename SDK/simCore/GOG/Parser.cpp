@@ -45,7 +45,7 @@ namespace
 /// Returns true if the specified token starts with the specified start string
 bool startsWith(const std::string& token, const std::string& start)
 {
-  return token.substr(0, start.size()) == start;
+  return token.starts_with(start);
 }
 
 /** List of tokens that are case sensitive and shouldn't be lowercase'd for parsing */
@@ -699,9 +699,11 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
         current.set(ShapeParameter::SCALEX, tokens[1]);
         current.set(ShapeParameter::SCALEY, tokens[2]);
         current.set(ShapeParameter::SCALEZ, tokens[3]);
+        if (tokens.size() > 4)
+          printError_(filename, lineNumber, "scale command requires 3 arguments (got " + std::to_string(tokens.size() - 1) + ")");
       }
       else
-        printError_(filename, lineNumber, "scale command requires 3 arguments");
+        printError_(filename, lineNumber, "scale command requires 3 arguments (got " + std::to_string(tokens.size() - 1) + ")");
     }
     else if (tokens[0] == "orient")
     {
@@ -755,6 +757,11 @@ void Parser::parse(std::istream& input, const std::string& filename, std::vector
       }
       else
         printError_(filename, lineNumber, "3d command requires at least 2 arguments: " + line);
+    }
+    else if (startsWith(line, "3d edit"))
+    {
+      // Default to "on"
+      current.set(ShapeParameter::EDIT, tokens.size() > 2 ? tokens[2] : "on");
     }
     else if (startsWith(line, "extrude"))
     {
@@ -1040,7 +1047,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       break;
     }
     std::unique_ptr<Points> points(new Points(relative));
-    for (PositionStrings pos : positions)
+    for (const PositionStrings& pos : positions)
     {
       simCore::Vec3 position;
       if (getPosition_(pos, relative, units, position) == 0)
@@ -1227,6 +1234,17 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
   if (parsed.hasValue(ShapeParameter::DRAW))
     rv->setDrawn(parsed.boolValue(ShapeParameter::DRAW, true));
 
+  if (parsed.hasValue(ShapeParameter::EDIT))
+  {
+    const std::string& editString = parsed.stringValue(ShapeParameter::EDIT);
+    if (simCore::stringIsTrueToken(editString))
+      rv->setEditMode(EditMode::GLOBAL);
+    else if (simCore::caseCompare(editString, "never") == 0)
+      rv->setEditMode(EditMode::LOCKED);
+    else
+      rv->setEditMode(EditMode::EXPLICIT_ONLY);
+  }
+
   if (parsed.hasValue(ShapeParameter::DEPTHBUFFER))
     rv->setDepthBufferActive(parsed.boolValue(ShapeParameter::DEPTHBUFFER, false));
 
@@ -1272,22 +1290,29 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
       printError_(parsed.filename(), parsed.lineNumber(), "Invalid referencepoint: " + parsed.stringValue(ShapeParameter::REF_LLA) + " for " + name);
 
   }
+
   // if SCALEX exists, so should the others
   if (parsed.hasValue(ShapeParameter::SCALEX))
   {
     // parsing error, should not have only one of the scale components set
-    if (parsed.hasValue(ShapeParameter::SCALEY) && parsed.hasValue(ShapeParameter::SCALEZ))
-      printError_(parsed.filename(), parsed.lineNumber(), "Invalid scale: scalex, scaley, and scalez must be used together to take effect");
-    double scaleX = 1.;
-    double scaleY = 1.;
-    double scaleZ = 1.;
-    bool validX = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEX), "scale x", name, parsed, scaleX) == 0);
-    bool validY = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEY), "scale y", name, parsed, scaleY) == 0);
-    bool validZ = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEZ), "scale z", name, parsed, scaleZ) == 0);
-    // only need one valid value, using scale default of 1 otherwise
-    if (validX || validY || validZ)
-      rv->setScale(simCore::Vec3(scaleX, scaleY, scaleZ));
+    if (!parsed.hasValue(ShapeParameter::SCALEY) || !parsed.hasValue(ShapeParameter::SCALEZ))
+      printError_(parsed.filename(), parsed.lineNumber(), "Invalid scale: scalex, scaley, and scalez must be specified at once to take effect");
+    else
+    {
+      double scaleX = 1.;
+      double scaleY = 1.;
+      double scaleZ = 1.;
+      const bool validX = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEX), "scale x", name, parsed, scaleX) == 0);
+      const bool validY = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEY), "scale y", name, parsed, scaleY) == 0);
+      const bool validZ = (validateDouble_(parsed.stringValue(ShapeParameter::SCALEZ), "scale z", name, parsed, scaleZ) == 0);
+      // only need one valid value, using scale default of 1 otherwise
+      if (validX || validY || validZ)
+        rv->setScale(simCore::Vec3(scaleX, scaleY, scaleZ));
+    }
   }
+  // ScaleX does not exist -- so scaleY and scaleZ should also not exist
+  else if (parsed.hasValue(ShapeParameter::SCALEY) || parsed.hasValue(ShapeParameter::SCALEZ))
+    printError_(parsed.filename(), parsed.lineNumber(), "Invalid scale: scalex, scaley, and scalez must be specified at once to take effect");
 
   if (parsed.hasValue(ShapeParameter::FOLLOW))
   {
@@ -1382,7 +1407,7 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     }
   }
 
-  for (std::string comment : parsed.comments())
+  for (const std::string& comment : parsed.comments())
   {
     rv->addComment(comment);
   }
@@ -1494,7 +1519,7 @@ int Parser::parsePointBased_(const ParsedShape& parsed, bool relative, const std
     printError_(parsed.filename(), parsed.lineNumber(), shapeTypeName + (name.empty() ? "" : " " + name) + " has less than the required number of points, cannot create shape");
     return 1;
   }
-  for (PositionStrings pos : positions)
+  for (const PositionStrings& pos : positions)
   {
     simCore::Vec3 position;
     if (getPosition_(pos, relative, units, position) == 0)

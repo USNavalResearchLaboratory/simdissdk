@@ -216,7 +216,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
   }
 
   /// callback to process user input
-  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
+  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa) override
   {
     /// only handle key down
     if (ea.getEventType() != osgGA::GUIEventAdapter::KEYDOWN)
@@ -911,7 +911,7 @@ struct MyPopupCallback : public simVis::PopupContentCallback
 {
   explicit MyPopupCallback(const SpatialReference* srs) : srs_(srs) { }
 
-  std::string createString(simVis::PlatformNode* platform)
+  std::string createString(simVis::PlatformNode* platform) override
   {
     simCore::Vec3 lla;
     platform->getLocator()->getLocatorPosition(&lla, simCore::COORD_SYS_LLA);
@@ -1050,7 +1050,7 @@ int main(int argc, char **argv)
   ControlPanel* controlPanel = new ControlPanel();
   menuHandler->setImGuiControlPanel(controlPanel);
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
   gui->add(controlPanel);
 #endif
 

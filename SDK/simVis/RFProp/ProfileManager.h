@@ -234,10 +234,10 @@ public:
 
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simRF"; }
+  const char* libraryName() const override { return "simRF"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "ProfileManager"; }
+  const char* className() const override { return "ProfileManager"; }
 
 protected:
   virtual ~ProfileManager();

@@ -60,9 +60,7 @@ struct SDKVIS_EXPORT EntityState
     hostId_(0)
   {
   }
-  virtual ~EntityState()
-  {
-  }
+  virtual ~EntityState() = default;
 };
 
 /**

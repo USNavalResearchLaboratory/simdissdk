@@ -46,7 +46,7 @@ public:
   }
 
   // Check for time values in config, add to watched layers if any are found
-  virtual void onLayerAdded(osgEarth::Layer *layer, unsigned int index)
+  void onLayerAdded(osgEarth::Layer *layer, unsigned int index) override
   {
     osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
     if (imageLayer == nullptr)
@@ -55,7 +55,7 @@ public:
     parent_.setTime_(parent_.currTime_);
   }
 
-  virtual void onLayerRemoved(osgEarth::Layer *layer, unsigned int index)
+  void onLayerRemoved(osgEarth::Layer *layer, unsigned int index) override
   {
     osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
     if (imageLayer == nullptr)
@@ -126,17 +126,17 @@ public:
   {
   }
 
-  virtual void onSetTime(const simCore::TimeStamp &t, bool isJump)
+  void onSetTime(const simCore::TimeStamp &t, bool isJump) override
   {
     parent_.setTime_(t);
   }
 
-  virtual void onTimeLoop()
+  void onTimeLoop() override
   {
     // No-op
   }
 
-  virtual void adjustTime(const simCore::TimeStamp &oldTime, simCore::TimeStamp& newTime)
+  void adjustTime(const simCore::TimeStamp &oldTime, simCore::TimeStamp& newTime) override
   {
     // No-op
   }
@@ -157,7 +157,7 @@ public:
   }
 
   /* Reimplemented from MapNodeObserver */
-  virtual void setMapNode(osgEarth::MapNode* mapNode)
+  void setMapNode(osgEarth::MapNode* mapNode) override
   {
     if (map_ == mapNode)
       return;
@@ -166,15 +166,15 @@ public:
   }
 
   /* Reimplemented from MapNodeObserver */
-  virtual osgEarth::MapNode* getMapNode()
+  osgEarth::MapNode* getMapNode() override
   {
     return (map_.valid() ? map_.get() : nullptr);
   }
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simQt"; }
+  const char* libraryName() const override { return "simQt"; }
   /** Return the class name */
-  virtual const char* className() const { return "TimestampedLayerManager::MapChangeObserver"; }
+  const char* className() const override { return "TimestampedLayerManager::MapChangeObserver"; }
 
 protected:
   /* Descendants of osg::referenced need protected destructor */

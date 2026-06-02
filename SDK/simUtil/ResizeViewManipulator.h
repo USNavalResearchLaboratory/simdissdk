@@ -43,13 +43,13 @@ public:
   virtual ~ResizeViewManipulator();
 
   /// Override simUtil::MouseManipulatorAdapter::push()
-  virtual int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
   /// Override simUtil::MouseManipulatorAdapter::release()
-  virtual int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
   /// Override simUtil::MouseManipulatorAdapter::move()
-  virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
   /// Override simUtil::MouseManipulatorAdapter::drag()
-  virtual int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
 
   /// Note that the order matches the entries in the colors_ mask in rubber band
   enum DragPoint
@@ -77,7 +77,7 @@ public:
   class Listener
   {
   public:
-    virtual ~Listener() {}
+    virtual ~Listener() = default;
     /** Fired off when the drag point of the resize view manipulator changes */
     virtual void dragPointChanged(DragPoint dragPoint) = 0;
   };

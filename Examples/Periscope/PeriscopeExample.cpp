@@ -96,7 +96,7 @@ namespace
 
   struct ViewControls : public osgGA::GUIEventHandler
   {
-    bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+    bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
     {
       if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
       {

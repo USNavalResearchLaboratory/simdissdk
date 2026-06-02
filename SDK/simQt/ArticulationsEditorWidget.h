@@ -70,13 +70,13 @@ public:
   ArticulationsVisitor();
 
   /** Override the apply() method to traverse the node and subgraph */
-  virtual void apply(osg::Node& node);
+  void apply(osg::Node& node) override;
   /** Retrieve articulation info collected from the model. */
   const simQt::ArticulationMap& getMap();
 
 protected:
   /** Protect osg::Referenced-derived destructor */
-  virtual ~ArticulationsVisitor() {}
+  virtual ~ArticulationsVisitor() = default;
 
 private:
   /** Stores sequence node name and type to map. */

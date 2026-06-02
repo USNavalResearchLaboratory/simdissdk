@@ -518,7 +518,7 @@ namespace
     {
       vertexArray_->push_back(osg::Vec3());
       normalArray_->push_back(osg::Vec3());
-      vertexMetaData.push_back(SVMeta(USAGE_NEAR, 0.f, 0.f, osg::Vec3(), 0.0f));
+      vertexMetaData.emplace_back(USAGE_NEAR, 0.f, 0.f, osg::Vec3(), 0.0f);
     }
   }
 
@@ -576,7 +576,7 @@ namespace
         const osg::Vec3 p = unit * r;
         vertexArray_->push_back(p);
         normalArray_->push_back(unit * normalDir);
-        vertexMetaData.push_back(SVMeta(usage, angleX_rad, angleZ_rad, unitUnrot, ratio));
+        vertexMetaData.emplace_back(usage, angleX_rad, angleZ_rad, unitUnrot, ratio);
       }
     }
 
@@ -669,7 +669,7 @@ namespace
             vertexArray_->push_back(vert);
             // normal should be the unit vector rotated 90deg around x axis
             normalArray_->push_back(osg::Vec3(unit.x(), unit.z(), -unit.y()));
-            vertexMetaData.push_back(SVMeta(USAGE_BOTTOM, metafoff.anglex_, metafoff.anglez_, unit, w));
+            vertexMetaData.emplace_back(USAGE_BOTTOM, metafoff.anglex_, metafoff.anglez_, unit, w);
 
             strip->setElement(2 * q + i, vertexArray_->size() - 1);
           }
@@ -706,7 +706,7 @@ namespace
             vertexArray_->push_back(vert);
             // normal should be the unit vector rotated 90deg around z axis
             normalArray_->push_back(osg::Vec3(unit.y(), -unit.x(), unit.z()));
-            vertexMetaData.push_back(SVMeta(USAGE_RIGHT, metafoff.anglex_, metafoff.anglez_, unit, w));
+            vertexMetaData.emplace_back(USAGE_RIGHT, metafoff.anglex_, metafoff.anglez_, unit, w);
 
             strip->setElement(2 * q + i, vertexArray_->size() - 1);
           }
@@ -744,7 +744,7 @@ namespace
             vertexArray_->push_back(vert);
             // normal should be the unit vector rotated -90deg around x axis
             normalArray_->push_back(osg::Vec3(unit.x(), -unit.z(), unit.y()));
-            vertexMetaData.push_back(SVMeta(USAGE_TOP, metafoff.anglex_, metafoff.anglez_, unit, w));
+            vertexMetaData.emplace_back(USAGE_TOP, metafoff.anglex_, metafoff.anglez_, unit, w);
 
             strip->setElement(2 * q + i, vertexArray_->size() - 1);
           }
@@ -778,7 +778,7 @@ namespace
             vertexArray_->push_back(vert);
             // normal should be the unit vector rotated -90deg around z axis
             normalArray_->push_back(osg::Vec3(-unit.y(), unit.x(), unit.z()));
-            vertexMetaData.push_back(SVMeta(USAGE_LEFT, metafoff.anglex_, metafoff.anglez_, unit, w));
+            vertexMetaData.emplace_back(USAGE_LEFT, metafoff.anglex_, metafoff.anglez_, unit, w);
 
             strip->setElement(2 * q + i, vertexArray_->size() - 1);
           }

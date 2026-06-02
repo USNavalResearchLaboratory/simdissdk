@@ -39,23 +39,23 @@ public:
   explicit ColorWidgetDelegate(bool showAlpha, QObject* parent = nullptr);
 
   /** Creates the ColorWidget the user can interact with to change the color */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
   /** Sets the current value of the ColorWidget based on the selected index's data */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
 
   /**
     * Renders the QStyledItemDelegate. We need to override this method so that
     * the ColorWidget is always shown, as opposed to overriding createEditor()
     * which only shows after the user has clicked into the column.
     */
-  virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
   /** User has made a change and now the value needs to be passed to data model */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
 
   /** Resizes the widget based on the size of cell */
-  virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 private Q_SLOTS:
   /** Triggered when editing is finished in the ColorWidget's dialog. Forces the model to update */

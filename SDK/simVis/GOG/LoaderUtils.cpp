@@ -172,15 +172,16 @@ void LoaderUtils::setScale(const simCore::GOG::GogShape& shape, osg::Node* node)
   simCore::Vec3 scale;
   if (shape.getScale(scale) != 0)
     return;
+
+  // Find the osgEarth AnnotationNode (which is likely a GeoPositionNode). Note, this is
+  // NOT the same as a GOG annotation (text string). Most shapes are AnnotationNodes.
   osgEarth::AnnotationNode* anno = osgEarth::findTopMostNodeOfType<osgEarth::AnnotationNode>(node);
   if (!anno)
     return;
 
-  if (dynamic_cast<osgEarth::GeoPositionNode*>(anno))
-  {
-    osgEarth::GeoPositionNode* local = static_cast<osgEarth::GeoPositionNode*>(anno);
+  // Cast to a GeoPositionNode and apply the scale value
+  if (auto* local = dynamic_cast<osgEarth::GeoPositionNode*>(anno))
     local->setScale(osg::Vec3f(static_cast<float>(scale.x()), static_cast<float>(scale.y()), static_cast<float>(scale.z())));
-  }
 }
 osgEarth::SpatialReference* LoaderUtils::getSrs(const std::string vdatum)
 {

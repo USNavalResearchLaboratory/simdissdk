@@ -76,7 +76,7 @@ public:
   class Observer
   {
   public:
-    virtual ~Observer() {}
+    virtual ~Observer() = default;
     /** Manipulator has changed.  May be nullptr. */
     virtual void activeExclusiveManipulatorChanged(MouseManipulatorPtr active, MouseManipulatorPtr oldActive) = 0;
   };
@@ -105,12 +105,12 @@ private:
     /** Constructor */
     explicit EventHandler(const MouseDispatcher& dispatch);
     /** Handle events, return true if handled, false otherwise. */
-    virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object* object, osg::NodeVisitor* nv);
+    bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object* object, osg::NodeVisitor* nv) override;
 
     /** Return the proper library name */
-    virtual const char* libraryName() const { return "simUtil"; }
+    const char* libraryName() const override { return "simUtil"; }
     /** Return the class name */
-    virtual const char* className() const { return "MouseDispatcher::EventHandler"; }
+    const char* className() const override { return "MouseDispatcher::EventHandler"; }
 
   protected:
     /** Derived from osg::Referenced */

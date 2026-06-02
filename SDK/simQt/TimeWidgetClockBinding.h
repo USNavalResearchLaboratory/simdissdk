@@ -124,7 +124,7 @@ public:
   ReferenceYearCache(simData::DataStore *dataStore=nullptr);
 
   /** Checks on reference year change and emits signal if needed */
-  virtual void onScenarioPropertiesChange(simData::DataStore* source);
+  void onScenarioPropertiesChange(simData::DataStore* source) override;
   /** Returns the current reference year */
   int referenceYear() const;
 

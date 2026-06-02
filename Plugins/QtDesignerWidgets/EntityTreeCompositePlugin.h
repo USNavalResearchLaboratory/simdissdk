@@ -33,19 +33,19 @@ class EntityTreeCompositePlugin : public QObject, public QDesignerCustomWidgetIn
   Q_INTERFACES(QDesignerCustomWidgetInterface)
 
 public:
-  explicit EntityTreeCompositePlugin(QObject *parent = 0);
+  explicit EntityTreeCompositePlugin(QObject *parent = nullptr);
 
-  bool isContainer() const;
-  bool isInitialized() const;
-  QIcon icon() const;
-  QString domXml() const;
-  QString group() const;
-  QString includeFile() const;
-  QString name() const;
-  QString toolTip() const;
-  QString whatsThis() const;
-  QWidget *createWidget(QWidget *parent);
-  void initialize(QDesignerFormEditorInterface *core);
+  bool isContainer() const override;
+  bool isInitialized() const override;
+  QIcon icon() const override;
+  QString domXml() const override;
+  QString group() const override;
+  QString includeFile() const override;
+  QString name() const override;
+  QString toolTip() const override;
+  QString whatsThis() const override;
+  QWidget *createWidget(QWidget *parent) override;
+  void initialize(QDesignerFormEditorInterface *core) override;
 
 private:
   bool initialized;
@@ -58,39 +58,39 @@ class QtDesignerDisplayTree : public simQt::AbstractEntityTreeModel
 
 public:
   explicit QtDesignerDisplayTree(QObject* parent);
-  virtual ~QtDesignerDisplayTree() {}
+  virtual ~QtDesignerDisplayTree() = default;
 
 
   /** Remove an entity from the tree via its ID */
   virtual void removeTreeItem(uint64_t id) {}
 
-  virtual int columnCount(const QModelIndex &parent) const { return 3; }
-  virtual QVariant data(const QModelIndex &index, int role) const { return ""; }
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  virtual QModelIndex index(int row, int column, const QModelIndex &parent) const { return QModelIndex(); }
-  virtual QModelIndex index(uint64_t id) const { return QModelIndex(); }
-  virtual QModelIndex index(uint64_t id) { return QModelIndex(); }
-  virtual uint64_t uniqueId(const QModelIndex &index) const { return 0; }
-  virtual QModelIndex parent(const QModelIndex &index) const { return QModelIndex(); }
-  virtual int rowCount(const QModelIndex &parent) const { return 0; }
-  virtual bool useEntityIcons() const { return useEntityIcons_; }
-  virtual int countEntityTypes(simData::ObjectType type) const { return 0; }
+  int columnCount(const QModelIndex &parent) const override { return 3; }
+  QVariant data(const QModelIndex &index, int role) const override { return ""; }
+  QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+  QModelIndex index(int row, int column, const QModelIndex &parent) const override { return QModelIndex(); }
+  QModelIndex index(uint64_t id) const override { return QModelIndex(); }
+  QModelIndex index(uint64_t id) override { return QModelIndex(); }
+  uint64_t uniqueId(const QModelIndex &index) const override { return 0; }
+  QModelIndex parent(const QModelIndex &index) const override { return QModelIndex(); }
+  int rowCount(const QModelIndex &parent) const override { return 0; }
+  bool useEntityIcons() const override { return useEntityIcons_; }
+  int countEntityTypes(simData::ObjectType type) const override { return 0; }
   virtual QAbstractItemView::SelectionMode selectionMode() const { return selectionMode_; }
   virtual bool useCenterAction() const { return useCenterAction_; }
   virtual bool expandsOnDoubleClick() const { return expandsOnDoubleClick_; }
 
 public Q_SLOTS:
   /** Swaps the view to the hierarchy tree */
-  virtual void setToTreeView() {}
+  void setToTreeView() override {}
   /** Swaps the view to a non-hierarchical list */
-  virtual void setToListView() {}
+  void setToListView() override {}
   /** Swaps between tree and list view based on a Boolean */
-  virtual void toggleTreeView(bool useTree) {}
+  void toggleTreeView(bool useTree) override {}
   /** Updates the contents of the frame */
-  virtual void forceRefresh() {}
+  void forceRefresh() override {}
 
   /** Turns on or off entity icons */
-  virtual void setUseEntityIcons(bool useIcons) { useEntityIcons_ = useIcons; }
+  void setUseEntityIcons(bool useIcons) override { useEntityIcons_ = useIcons; }
 
 private:
   bool useEntityIcons_;

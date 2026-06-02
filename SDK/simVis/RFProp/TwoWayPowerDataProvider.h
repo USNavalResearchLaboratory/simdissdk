@@ -54,10 +54,10 @@ public:
   TwoWayPowerDataProvider(const ProfileDataProvider* templateProvider, const RadarParametersPtr radarParameters);
 
   /** @copydoc simRF::ProfileDataProvider::getValueByIndex() */
-  virtual double getValueByIndex(unsigned int heightIndex, unsigned int rangeIndex) const;
+  double getValueByIndex(unsigned int heightIndex, unsigned int rangeIndex) const override;
 
   /** @copydoc simRF::ProfileDataProvider::interpolateValue() */
-  virtual double interpolateValue(double hgtMeters, double gndRngMeters) const;
+  double interpolateValue(double hgtMeters, double gndRngMeters) const override;
 
   /**
   * Gets the two-way-power value for the specified parameters, in dB
@@ -73,7 +73,7 @@ public:
 
 protected:
   /// osg::Referenced-derived
-  virtual ~TwoWayPowerDataProvider() {}
+  virtual ~TwoWayPowerDataProvider() = default;
 
 private:
   const RadarParametersPtr radarParameters_;

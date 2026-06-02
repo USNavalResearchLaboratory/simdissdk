@@ -37,14 +37,14 @@ namespace simVis
 class SDKVIS_EXPORT HorizonFormatter : public ValueFormatter
 {
 public:
-  virtual ~HorizonFormatter() {}
+  virtual ~HorizonFormatter() = default;
   /**
   * Formats the value into a string
   * @param value The value that needs to be converted into a string.
   * @param precision Ignored
   * @return The value as a string
   */
-  virtual std::string stringValue(double value, int precision) const;
+  std::string stringValue(double value, int precision) const override;
 };
 
 
@@ -62,7 +62,7 @@ public:
 
 protected:
   /// osg::Referenced-derived
-  virtual ~RfMeasurement() {}
+  virtual ~RfMeasurement() = default;
   /**
   * Calculates RF parameters from the given state
   * @param state State information for both the begin and end entities
@@ -85,12 +85,12 @@ class SDKVIS_EXPORT RFGainMeasurement : public RelOriMeasurement
 {
 public:
   RFGainMeasurement();
-  virtual double value(RangeToolState& state) const;
-  virtual bool willAccept(const RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
+  bool willAccept(const RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~RFGainMeasurement() {}
+  virtual ~RFGainMeasurement() = default;
 };
 
 /// Received Power
@@ -98,12 +98,12 @@ class SDKVIS_EXPORT RFPowerMeasurement : public RfMeasurement
 {
 public:
   RFPowerMeasurement();
-  virtual double value(RangeToolState& state) const;
-  virtual bool willAccept(const RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
+  bool willAccept(const RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~RFPowerMeasurement() {}
+  virtual ~RFPowerMeasurement() = default;
 };
 
 /// One-Way Power
@@ -111,12 +111,12 @@ class SDKVIS_EXPORT RFOneWayPowerMeasurement : public RfMeasurement
 {
 public:
   RFOneWayPowerMeasurement();
-  virtual double value(RangeToolState& state) const;
-  virtual bool willAccept(const RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
+  bool willAccept(const RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~RFOneWayPowerMeasurement() {}
+  virtual ~RFOneWayPowerMeasurement() = default;
 };
 
 /// Base class for Horizon calculations
@@ -131,7 +131,7 @@ public:
   * @param units The units.
   */
   HorizonMeasurement(const std::string &typeName, const std::string &typeAbbr, const simCore::Units &units);
-  virtual bool willAccept(const RangeToolState& state) const;
+  bool willAccept(const RangeToolState& state) const override;
 
   /**
   * Set effective Earth radius scalars for optical and rf horizon measurement.
@@ -142,7 +142,7 @@ public:
 
 protected:
   /// osg::Referenced-derived
-  virtual ~HorizonMeasurement() {}
+  virtual ~HorizonMeasurement() = default;
 
   /**
   * Calculates if the end entity is above or below the horizon
@@ -162,11 +162,11 @@ class SDKVIS_EXPORT RadioHorizonMeasurement : public HorizonMeasurement
 {
 public:
   RadioHorizonMeasurement();
-  virtual double value(RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~RadioHorizonMeasurement() {}
+  virtual ~RadioHorizonMeasurement() = default;
 };
 
 /// Optical Horizon
@@ -174,11 +174,11 @@ class SDKVIS_EXPORT OpticalHorizonMeasurement : public HorizonMeasurement
 {
 public:
   OpticalHorizonMeasurement();
-  virtual double value(RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~OpticalHorizonMeasurement() {}
+  virtual ~OpticalHorizonMeasurement() = default;
 };
 
 /// Probability of Detection (PoD)
@@ -186,12 +186,12 @@ class SDKVIS_EXPORT PodMeasurement : public RfMeasurement
 {
 public:
   PodMeasurement();
-  virtual double value(RangeToolState& state) const;
-  virtual bool willAccept(const RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
+  bool willAccept(const RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~PodMeasurement() {}
+  virtual ~PodMeasurement() = default;
 };
 
 /// Propagation Loss
@@ -199,12 +199,12 @@ class SDKVIS_EXPORT LossMeasurement : public RfMeasurement
 {
 public:
   LossMeasurement();
-  virtual double value(RangeToolState& state) const;
-  virtual bool willAccept(const RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
+  bool willAccept(const RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~LossMeasurement() {}
+  virtual ~LossMeasurement() = default;
 };
 
 /// Pattern Propagation Factor (PPF)
@@ -212,12 +212,12 @@ class SDKVIS_EXPORT PpfMeasurement : public RfMeasurement
 {
 public:
   PpfMeasurement();
-  virtual double value(RangeToolState& state) const;
-  virtual bool willAccept(const RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
+  bool willAccept(const RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~PpfMeasurement() {}
+  virtual ~PpfMeasurement() = default;
 };
 
 /// Signal to Noise (SNR)
@@ -225,12 +225,12 @@ class SDKVIS_EXPORT SnrMeasurement : public RfMeasurement
 {
 public:
   SnrMeasurement();
-  virtual double value(RangeToolState& state) const;
-  virtual bool willAccept(const RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
+  bool willAccept(const RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~SnrMeasurement() {}
+  virtual ~SnrMeasurement() = default;
 };
 
 /// Clutter to Noise (CNR)
@@ -239,12 +239,12 @@ class SDKVIS_EXPORT CnrMeasurement : public RfMeasurement
 public:
   CnrMeasurement();
   //unlike other RF - related calculations, CNR doesn't have a height component
-  virtual double value(RangeToolState& state) const;
-  virtual bool willAccept(const RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
+  bool willAccept(const RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~CnrMeasurement() {}
+  virtual ~CnrMeasurement() = default;
 };
 
 /// Radar Cross Section (RCS)
@@ -252,12 +252,12 @@ class SDKVIS_EXPORT RcsMeasurement : public RfMeasurement
 {
 public:
   RcsMeasurement();
-  virtual double value(RangeToolState& state) const;
-  virtual bool willAccept(const RangeToolState& state) const;
+  double value(RangeToolState& state) const override;
+  bool willAccept(const RangeToolState& state) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~RcsMeasurement() {}
+  virtual ~RcsMeasurement() = default;
 };
 
 }

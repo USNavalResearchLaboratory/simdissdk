@@ -45,7 +45,7 @@ namespace simVis
 
   protected:
     /// osg::Referenced-derived
-    virtual ~Tool() {}
+    virtual ~Tool() = default;
   };
 
 
@@ -59,10 +59,10 @@ namespace simVis
   class /* SDKVIS_EXPORT */ ScenarioTool : public Tool
   {
   protected:
-    ScenarioTool() { }
+    ScenarioTool() = default;
 
     /// osg::Referenced-derived
-    virtual ~ScenarioTool() {}
+    virtual ~ScenarioTool() = default;
 
   public:
 

@@ -44,7 +44,7 @@ public:
   /**  Constructor  */
   explicit SettingsObserver(BoundSetting& setting) : setting_(setting) {}
   /// @copydoc simQt::Settings::Observer::onSettingChange()
-  virtual void onSettingChange(const QString& name, const QVariant& value)
+  void onSettingChange(const QString& name, const QVariant& value) override
   {
     setting_.updateValue_(value);
   }

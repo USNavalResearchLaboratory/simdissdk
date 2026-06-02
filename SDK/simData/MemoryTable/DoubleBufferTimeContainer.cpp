@@ -166,7 +166,7 @@ public:
   * @return Element after original iterator position,
   * or INVALID_VALUE if no such element
   */
-  virtual const IteratorData next()
+  const IteratorData next() override
   {
     if (!isValid_())
       return INVALID_VALUE;
@@ -200,7 +200,7 @@ public:
     return returnValue;
   }
   /** Retrieves next element and does not change iterator position */
-  virtual const IteratorData peekNext() const
+  const IteratorData peekNext() const override
   {
     if (!isValid_())
       return INVALID_VALUE;
@@ -220,7 +220,7 @@ public:
   * @return Element before original iterator position,
   * or INVALID_VALUE if no such element
   */
-  virtual const IteratorData previous()
+  const IteratorData previous() override
   {
     if (!isValid_())
       return INVALID_VALUE;
@@ -229,7 +229,7 @@ public:
   }
 
   /** Retrieves previous element and does not change iterator position */
-  virtual const IteratorData peekPrevious() const
+  const IteratorData peekPrevious() const override
   {
     if (!isValid_())
       return INVALID_VALUE;
@@ -240,7 +240,7 @@ public:
   }
 
   /** Resets the iterator to the front of the data structure, before the first element */
-  virtual void toFront()
+  void toFront() override
   {
     if (!isValid_())
       return;
@@ -248,7 +248,7 @@ public:
     staleIter_() = staleTimes_()->begin();
   }
   /** Sets the iterator to the end of the data structure, after the last element */
-  virtual void toBack()
+  void toBack() override
   {
     if (!isValid_())
       return;
@@ -257,7 +257,7 @@ public:
   }
 
   /** Returns true if next() / peekNext() will be a valid entry in the data slice */
-  virtual bool hasNext() const
+  bool hasNext() const override
   {
     if (!isValid_())
       return false;
@@ -266,7 +266,7 @@ public:
       staleIter_() != staleTimes_()->end();
   }
   /** Returns true if previous() / peekPrevious() will be a valid entry in the data slice */
-  virtual bool hasPrevious() const
+  bool hasPrevious() const override
   {
     if (!isValid_())
       return false;
@@ -275,7 +275,7 @@ public:
   }
 
   /** Create a copy of the actual implementation */
-  virtual GenericIteratorImpl<IteratorData>* clone() const
+  GenericIteratorImpl<IteratorData>* clone() const override
   {
     return new DoubleBufferIterator(*this);
   }

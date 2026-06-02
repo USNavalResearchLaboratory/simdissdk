@@ -45,7 +45,7 @@ class SDKCORE_EXPORT UnitContext
 {
 public:
   /** Inherit a virtual destructor */
-  virtual ~UnitContext() {}
+  virtual ~UnitContext() = default;
 
   ///@{
   /// Getters for various unit types and formats
@@ -105,46 +105,46 @@ public:
 
   ///@{
   /// Getters for various unit types and formats
-  virtual TimeFormat timeFormat() const;
-  virtual unsigned int timePrecision() const;
-  virtual GeodeticFormat geodeticFormat() const;
-  virtual unsigned int geodeticPrecision() const;
-  virtual const Units& distanceUnits() const;
-  virtual unsigned int distancePrecision() const;
-  virtual const Units& altitudeUnits() const;
-  virtual unsigned int altitudePrecision() const;
-  virtual const Units& angleUnits() const;
-  virtual unsigned int anglePrecision() const;
-  virtual const Units& speedUnits() const;
-  virtual unsigned int speedPrecision() const;
-  virtual unsigned int genericPrecision() const;
-  virtual CoordinateSystem coordinateSystem() const;
-  virtual MagneticVariance magneticVariance() const;
-  virtual VerticalDatum verticalDatum() const;
-  virtual int referenceYear() const;
-  virtual DatumConvertPtr datumConvert() const;
+  TimeFormat timeFormat() const override;
+  unsigned int timePrecision() const override;
+  GeodeticFormat geodeticFormat() const override;
+  unsigned int geodeticPrecision() const override;
+  const Units& distanceUnits() const override;
+  unsigned int distancePrecision() const override;
+  const Units& altitudeUnits() const override;
+  unsigned int altitudePrecision() const override;
+  const Units& angleUnits() const override;
+  unsigned int anglePrecision() const override;
+  const Units& speedUnits() const override;
+  unsigned int speedPrecision() const override;
+  unsigned int genericPrecision() const override;
+  CoordinateSystem coordinateSystem() const override;
+  MagneticVariance magneticVariance() const override;
+  VerticalDatum verticalDatum() const override;
+  int referenceYear() const override;
+  DatumConvertPtr datumConvert() const override;
   ///@}
 
   ///@{
   /// Setters for various unit types and formats
-  virtual void setTimeFormat(TimeFormat unit);
-  virtual void setTimePrecision(unsigned int prec);
-  virtual void setGeodeticFormat(GeodeticFormat unit);
-  virtual void setGeodeticPrecision(unsigned int prec);
-  virtual void setDistanceUnits(const Units& unit);
-  virtual void setDistancePrecision(unsigned int prec);
-  virtual void setAltitudeUnits(const Units& unit);
-  virtual void setAltitudePrecision(unsigned int prec);
-  virtual void setAngleUnits(const Units& unit);
-  virtual void setAnglePrecision(unsigned int prec);
-  virtual void setSpeedUnits(const Units& unit);
-  virtual void setSpeedPrecision(unsigned int prec);
-  virtual void setGenericPrecision(unsigned int prec);
-  virtual void setCoordinateSystem(CoordinateSystem coordSys);
-  virtual void setMagneticVariance(MagneticVariance mv);
-  virtual void setVerticalDatum(VerticalDatum vd);
-  virtual void setReferenceYear(int refYear);
-  virtual void setDatumConvert(DatumConvertPtr convert);
+  void setTimeFormat(TimeFormat unit) override;
+  void setTimePrecision(unsigned int prec) override;
+  void setGeodeticFormat(GeodeticFormat unit) override;
+  void setGeodeticPrecision(unsigned int prec) override;
+  void setDistanceUnits(const Units& unit) override;
+  void setDistancePrecision(unsigned int prec) override;
+  void setAltitudeUnits(const Units& unit) override;
+  void setAltitudePrecision(unsigned int prec) override;
+  void setAngleUnits(const Units& unit) override;
+  void setAnglePrecision(unsigned int prec) override;
+  void setSpeedUnits(const Units& unit) override;
+  void setSpeedPrecision(unsigned int prec) override;
+  void setGenericPrecision(unsigned int prec) override;
+  void setCoordinateSystem(CoordinateSystem coordSys) override;
+  void setMagneticVariance(MagneticVariance mv) override;
+  void setVerticalDatum(VerticalDatum vd) override;
+  void setReferenceYear(int refYear) override;
+  void setDatumConvert(DatumConvertPtr convert) override;
   ///@}
 
 private:

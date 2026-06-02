@@ -38,7 +38,7 @@ class Vec3;
 class SDKCORE_EXPORT DatumConvert
 {
 public:
-  virtual ~DatumConvert() {}
+  virtual ~DatumConvert() = default;
 
   /**
    * Returns a modified bearing based on location, time, requested conversion and optional offset.
@@ -69,13 +69,12 @@ public:
   virtual double convertVerticalDatum(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem,
     VerticalDatum inputDatum, VerticalDatum outputDatum, double userOffset) = 0;
 
-protected:
-  DatumConvert() {}
-
-private:
   /** Not implemented */
-  DatumConvert& operator=(const DatumConvert& other);
-  DatumConvert(const DatumConvert& other);
+  DatumConvert& operator=(const DatumConvert& other) = delete;
+  DatumConvert(const DatumConvert& other) = delete;
+
+protected:
+  DatumConvert() = default;
 };
 
 /** Typedef for a shared pointer to a datum convert instance */
@@ -93,19 +92,18 @@ public:
   MagneticDatumConvert();
   virtual ~MagneticDatumConvert();
 
+  /** Not implemented */
+  MagneticDatumConvert& operator=(const MagneticDatumConvert& other) = delete;
+  MagneticDatumConvert(const MagneticDatumConvert& other) = delete;
+
   /// Converts Magnetic Datum
-  virtual double convertMagneticDatum(const Vec3& lla, const TimeStamp& timeStamp, double bearingRad,
+  double convertMagneticDatum(const Vec3& lla, const TimeStamp& timeStamp, double bearingRad,
     CoordinateSystem coordSystem, MagneticVariance inputDatum, MagneticVariance outputDatum,
-    double userOffset) const;
+    double userOffset) const override;
 
   /// Note: Does not support EGM96 (MSL)
-  virtual double convertVerticalDatum(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem,
-    VerticalDatum inputDatum, VerticalDatum outputDatum, double userOffset);
-
-private:
-  /** Not implemented */
-  MagneticDatumConvert& operator=(const MagneticDatumConvert& other);
-  MagneticDatumConvert(const MagneticDatumConvert& other);
+  double convertVerticalDatum(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem,
+    VerticalDatum inputDatum, VerticalDatum outputDatum, double userOffset) override;
 
   WorldMagneticModel* wmm_;
 };

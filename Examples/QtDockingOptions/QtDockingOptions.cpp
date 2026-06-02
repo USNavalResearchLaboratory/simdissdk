@@ -1,0 +1,242 @@
+/* -*- mode: c++ -*- */
+/****************************************************************************
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling & Simulation, Code 5773
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * License for source code is in accompanying LICENSE.txt file. If you did
+ * not receive a LICENSE.txt with this code, email simdis@us.navy.mil.
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
+#include "osgEarth/Registry"
+
+#include "simNotify/Notify.h"
+#include "simCore/Common/Version.h"
+#include "simCore/Common/HighPerformanceGraphics.h"
+#include "simCore/System/Utils.h"
+#include "simQt/ViewerWidgetAdapter.h"
+#include "simQt/DockWidget.h"
+#include "simUtil/ExampleResources.h"
+
+#include "simVis/ViewManager.h"
+#include "simVis/View.h"
+#include "simVis/SceneManager.h"
+
+#include <QAction>
+#include <QApplication>
+#include <QDialog>
+#include <QDockWidget>
+#include <QLayout>
+#include <QMainWindow>
+#include <QStyleHints>
+#include <QToolBar>
+#include <QToolButton>
+#include <QWindow>
+
+#include "MyMainWindow.h"
+
+int usage(char** argv)
+{
+  SIM_NOTICE << argv[0] << "\n"
+    << "    --framerate [n]     : set the framerate"
+    << std::endl;
+
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////
+MyMainWindow::MyMainWindow(int framerate)
+  : timerInterval_(1000 / std::max(1, framerate)),
+  viewManager_(new simVis::ViewManager)
+{
+  setWindowTitle(tr("Qt Docking Examples"));
+  setWindowIcon(QIcon(":/QtDocking/simdisLogo.png")); 
+  // View Manager will support multiple top level CompositeViewer instances for osgQOpenGL
+  viewManager_->setUseMultipleViewers(true);
+
+  // create toolbar
+  QToolBar* toolbar = new QToolBar(this);
+  QAction* simDockableAction = new QAction(tr("New simQt Dockable"), this);
+  QAction* qDockableAction = new QAction(tr("New Qt Dockable"), this);
+  toolbar->addAction(simDockableAction);
+  toolbar->addAction(qDockableAction);
+  addToolBar(Qt::TopToolBarArea, toolbar);
+
+  // set a blank central widget
+  QWidget* center = new QWidget(this);
+  center->setLayout(new QHBoxLayout());
+  center->layout()->setContentsMargins(0, 0, 0, 0);
+  setCentralWidget(center);
+
+  // we need a map.
+  osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
+
+  // A scene manager that all our views will share.
+  sceneMan_ = new simVis::SceneManager();
+  sceneMan_->setMap(map.get());
+
+  // add sky node
+  simExamples::addDefaultSkyNode(sceneMan_.get());
+
+  // create our first widget, seems to be required on startup
+  createSimQtDockable_();
+  createMainView_();
+
+  // connect actions to our slots
+  connect(simDockableAction, &QAction::triggered, this, &MyMainWindow::createSimQtDockable_);
+  connect(qDockableAction, &QAction::triggered, this, &MyMainWindow::createQDockable_);
+
+}
+
+MyMainWindow::~MyMainWindow()
+{
+  for (auto dockable : dockables_)
+    delete dockable;
+}
+
+simQt::ViewerWidgetAdapter* MyMainWindow::newWidget_(const QString& viewName)
+{
+  osg::ref_ptr<simVis::View> view = createView_(*viewManager_, viewName);
+
+  simQt::ViewerWidgetAdapter* viewWidget = new simQt::ViewerWidgetAdapter(simQt::GlImplementation::Window, this);
+  viewWidget->setViewer(viewManager_->getViewer(view.get()));
+  viewWidget->setTimerInterval(timerInterval_);
+  viewWidget->setMinimumSize(2, 2);
+  viewWidget->resize(100, 100);
+  return viewWidget;
+}
+
+QWidget* makeWidget(QDockWidget* dockable)
+{
+  QWidget* widget = new QWidget();
+  auto vLayout = new QVBoxLayout(widget);
+  auto dialogButton = new QToolButton(widget);
+  dialogButton->setText(QObject::tr("Make new dialog"));
+  dialogButton->setAutoRaise(true);
+  QObject::connect(dialogButton, &QToolButton::clicked, [dockable]() {auto dialog = new QDialog(dockable); dialog->show(); });
+  vLayout->addWidget(dialogButton);
+  auto modalButton = new QToolButton(widget);
+  modalButton->setText(QObject::tr("Make new modal"));
+  modalButton->setAutoRaise(true);
+  QObject::connect(modalButton, &QToolButton::clicked, [dockable]() {auto modal = new QDialog(dockable); modal->setModal(true); modal->exec(); });
+  vLayout->addWidget(modalButton);
+  return widget;
+}
+
+void MyMainWindow::createSimQtDockable_()
+{
+  const QString viewName = tr("simQt Dockable View %1").arg(viewCounter_++);
+
+  // now create a dock widget for each inset
+  simQt::DockWidget* dockable = new simQt::DockWidget(this);
+  dockable->setWindowTitle(viewName);
+  dockable->resize(100, 100);
+  dockable->setWidget(makeWidget(dockable));
+  dockable->setFloating(false); // Not sure why I have to call this, when QDockWidget doesn't
+  addDockWidget(Qt::RightDockWidgetArea, dockable);
+
+  dockables_.push_back(dockable); // Need to delete simQt::DockWidgets before MainWindow is closed to avoid bad pointer access
+}
+
+void MyMainWindow::createQDockable_()
+{
+  const QString viewName = tr("Qt Dockable View %1").arg(viewCounter_++);
+
+  // now create a dock widget for each inset
+  QDockWidget* dockable = new QDockWidget(this);
+  dockable->setWidget(newWidget_(viewName));
+  dockable->setWindowTitle(viewName);
+  dockable->resize(100, 100);
+  dockable->setWidget(makeWidget(dockable));
+
+  addDockWidget(Qt::LeftDockWidgetArea, dockable);
+}
+void MyMainWindow::createMainView_()
+{
+  // Make a main view, hook it up, and add it to the view manager.
+  const QString viewName = tr("Main View %1").arg(viewCounter_++);
+
+  // Make a Qt Widget to hold our view, and add that widget to the main window.
+  centralWidget()->layout()->addWidget(newWidget_(viewName));
+}
+
+simVis::View* MyMainWindow::createView_(simVis::ViewManager& viewManager, const QString& name) const
+{
+  simVis::View* view = new simVis::View();
+  view->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
+  view->setName(name.toStdString());
+
+  // attach the scene manager and add it to the view manager.
+  view->setSceneManager(sceneMan_.get());
+  viewManager.addView(view);
+  view->installDebugHandlers();
+
+  // by default, the database pager unreferenced image objects once it downloads them
+  // the driver. In composite viewer mode we don't want that since we may be adding
+  // and removing views.  This may use more memory, but it's a requirement for multiple GCs.
+  view->getScene()->getDatabasePager()->setUnrefImageDataAfterApplyPolicy(true, false);
+
+  return view;
+}
+////////////////////////////////////////////////////////////////////
+
+void warningMessageFilter(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+  // Block spammed warning message from setGeometry() calls caused when manually resizing a QDialog.
+  // This is a known Qt bug in Qt 5.15 that is unresolved: https://bugreports.qt.io/browse/QTBUG-73258
+#ifndef NDEBUG
+  if (type != QtWarningMsg || !msg.startsWith("QWindowsWindow::setGeometry"))
+#endif
+  {
+    QByteArray localMsg = msg.toLocal8Bit();
+    fprintf(stdout, "%s", localMsg.constData());
+  }
+
+}
+
+int main(int argc, char** argv)
+{
+  simCore::initializeSimdisEnvironmentVariables();
+  simCore::checkVersionThrow();
+  osg::ArgumentParser arguments(&argc, argv);
+  simExamples::configureSearchPaths();
+
+  if (arguments.read("--help"))
+    return usage(argv);
+
+  // Need to turn off the un-ref image data after apply, else the multiple graphics
+  // contexts will attempt to grab images that no longer exist.  This should be called
+  // if you expect multiple graphics contexts rendering the same scene.
+  osgEarth::Registry::instance()->unRefImageDataAfterApply() = false;
+
+  // read the framerate
+  int framerate = 20;
+  arguments.read("--framerate", framerate);
+  if (framerate <= 0)
+    framerate = 20;
+
+  // OK, time to set up the Qt Application and windows.
+  qInstallMessageHandler(warningMessageFilter);
+  QApplication qapp(argc, argv);
+
+  // Our custom main window contains a ViewManager.
+  MyMainWindow win(framerate);
+  win.setGeometry(200, 400, 400, 400);
+
+  // fire up the GUI.
+  win.show();
+  qapp.exec();
+  return 0;
+}

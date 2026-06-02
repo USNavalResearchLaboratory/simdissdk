@@ -71,7 +71,7 @@ template<typename ValueTypeT>
 class SDKQT_EXPORT ValueMerge
 {
 public:
-  virtual ~ValueMerge() {}
+  virtual ~ValueMerge() = default;
 
   /**
    * Checks values from all entries in the provided container

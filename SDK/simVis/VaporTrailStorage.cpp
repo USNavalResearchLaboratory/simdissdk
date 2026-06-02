@@ -41,7 +41,7 @@ public:
   }
 
   /** Removes the vaporTrails from storage when the entity is removed from data store */
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
+  void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) override
   {
     storage_.removeVaporTrailsForPlatform(removedId);
   }

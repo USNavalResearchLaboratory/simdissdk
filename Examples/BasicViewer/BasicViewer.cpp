@@ -49,7 +49,7 @@
 // view events.
 struct ViewReportCallback : public simVis::ViewManager::Callback
 {
-  void operator()(simVis::View* view, const EventType& e)
+  void operator()(simVis::View* view, const EventType& e) override
   {
     switch (e)
     {
@@ -201,7 +201,7 @@ int main(int argc, char** argv)
 
 #ifdef HAVE_IMGUI
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
-  mainView->getEventHandlers().push_front(gui);
+  mainView->getEventHandlers().emplace_front(gui);
 
   gui->add(new ControlPanel(viewer.get(), insetFocusHandler.get(), createInsetsHandler.get()));
 #endif

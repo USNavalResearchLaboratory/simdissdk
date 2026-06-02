@@ -56,7 +56,7 @@ struct PopupContentCallback : public osg::Referenced
 
 protected:
   /// osg::Referenced-derived
-  virtual ~PopupContentCallback() {}
+  virtual ~PopupContentCallback() = default;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,9 +110,9 @@ public:
   void setPopupLocation(PopupLocation location);
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
   /** Return the class name */
-  virtual const char* className() const { return "EntityPopup"; }
+  const char* className() const override { return "EntityPopup"; }
 
 protected:
   virtual ~EntityPopup();
@@ -125,7 +125,7 @@ private:
     explicit WindowResizeHandler(EntityPopup* parent);
 
     /** Checks for resize events */
-    bool virtual handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*) override;
+    bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*) override;
     /** Retrieves the last window size seen */
     osg::Vec2f windowSize() const;
 
@@ -236,13 +236,13 @@ public:
 
 public: // GUIEventHandler interface
   /// internal - override handle() to detect when we draw the popup
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "PopupHandler"; }
+  const char* className() const override { return "PopupHandler"; }
 
 private: // methods
   virtual ~PopupHandler(); // reference counted object

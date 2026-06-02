@@ -136,7 +136,7 @@ public:
   virtual ~DockWidget();
 
   /** Override setVisible() to raise() the dock widget when needed */
-  virtual void setVisible(bool fl);
+  void setVisible(bool fl) override;
 
   /**
    * Set the widget that the dock widget will display.
@@ -257,15 +257,15 @@ protected Q_SLOTS:
 
 protected:
   /** Override closeEvent to emit the closedGui signal */
-  virtual void closeEvent(QCloseEvent* evt);
+  void closeEvent(QCloseEvent* evt) override;
   /** Override resizeEvent to update the title bar when maximized */
-  virtual void resizeEvent(QResizeEvent* evt);
+  void resizeEvent(QResizeEvent* evt) override;
   /** Override resizeEvent to update the title bar when maximized windows move */
-  virtual void moveEvent(QMoveEvent* evt);
+  void moveEvent(QMoveEvent* evt) override;
   /** Override keyPressEvent() to handle 'escape' key */
-  virtual void keyPressEvent(QKeyEvent* evt);
+  void keyPressEvent(QKeyEvent* evt) override;
   /** Override show event to focus the window */
-  virtual void showEvent(QShowEvent* evt);
+  void showEvent(QShowEvent* evt) override;
 
   /** Restores the dock widget, placing it in a good position if restoration fails; uses mainWindow_ */
   void restoreFloating_(const QByteArray& geometryBytes);

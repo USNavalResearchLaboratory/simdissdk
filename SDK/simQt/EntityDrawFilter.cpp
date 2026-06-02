@@ -44,22 +44,22 @@ public:
     : parent_(parent)
   {};
 
-  virtual void onAddEntity(simData::DataStore* source, simData::ObjectId newId, simData::ObjectType ot) override
+  void onAddEntity(simData::DataStore* source, simData::ObjectId newId, simData::ObjectType ot) override
   {
     parent_.checkDrawState_(newId);
   }
 
-  virtual void onRemoveEntity(simData::DataStore* source, simData::ObjectId removedId, simData::ObjectType ot) override
+  void onRemoveEntity(simData::DataStore* source, simData::ObjectId removedId, simData::ObjectType ot) override
   {
     parent_.entityDrawStates_.erase(removedId);
   }
 
-  virtual void onPrefsChange(simData::DataStore* source, simData::ObjectId id) override
+  void onPrefsChange(simData::DataStore* source, simData::ObjectId id) override
   {
     parent_.checkDrawState_(id);
   }
 
-  virtual void onChange(simData::DataStore* source) override
+  void onChange(simData::DataStore* source) override
   {
     parent_.checkDirty_();
   }

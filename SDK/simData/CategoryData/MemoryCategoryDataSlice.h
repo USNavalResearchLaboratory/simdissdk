@@ -69,10 +69,10 @@ public:
   virtual bool removePoint(double time, int catNameInt, int valueInt);
 
   ///@return last update time
-  virtual double lastUpdateTime() const;
+  double lastUpdateTime() const override;
 
   ///@return true if the category data changes
-  virtual bool update(double time);
+  bool update(double time) override;
 
   /**
    * Returns true if the category data changes.  Also returns the time span of the category state for the given time
@@ -90,21 +90,21 @@ public:
   virtual void limitByPrefs(const CommonPrefs &prefs);
 
   /// receive all the category data for the last update time
-  virtual void visit(Visitor *visitor) const;
+  void visit(Visitor *visitor) const override;
 
   ///@return an iterator for the current data
-  virtual Iterator current() const;
+  Iterator current() const override;
 
   /// retrieve all
   ///@{
-  virtual void allNames(std::vector<std::string> &nameVec) const;
-  virtual void allValues(std::vector<std::string> &valueVec) const;
-  virtual void allStrings(std::vector<std::pair<std::string, std::string> > &nameValueVec) const;
+  void allNames(std::vector<std::string> &nameVec) const override;
+  void allValues(std::vector<std::string> &valueVec) const override;
+  void allStrings(std::vector<std::pair<std::string, std::string> > &nameValueVec) const override;
 
-  virtual void allNameInts(std::vector<int> &nameIntVec) const;
-  virtual void allValueInts(std::vector<int> &valueIntVec) const;
-  virtual void allInts(std::vector<std::pair<int, int> > &nameValueIntVec) const;
-  virtual void allInts(std::map<int, int> &nameValueIntMap) const;
+  void allNameInts(std::vector<int> &nameIntVec) const override;
+  void allValueInts(std::vector<int> &valueIntVec) const override;
+  void allInts(std::vector<std::pair<int, int> > &nameValueIntVec) const override;
+  void allInts(std::map<int, int> &nameValueIntMap) const override;
 
   ///@}
 
@@ -234,7 +234,7 @@ private: // methods
   void limitByTime_(double timeLimit);
 
   //--- from CategoryDataSlice
-  virtual std::unique_ptr<IteratorImpl> iterator_() const;
+  std::unique_ptr<IteratorImpl> iterator_() const override;
 
 private: // data
   EntityData data_;

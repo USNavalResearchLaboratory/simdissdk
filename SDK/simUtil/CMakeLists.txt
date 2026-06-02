@@ -29,11 +29,14 @@ set(UTIL_HEADERS
     ${UTIL_INC}ExampleControls.h
     ${UTIL_INC}ExampleResources.h
     ${UTIL_INC}GestureProcessor.h
+    ${UTIL_INC}GogManipulator.h
+    ${UTIL_INC}GogManipulatorController.h
     ${UTIL_INC}GogManager.h
     ${UTIL_INC}GridTransform.h
     ${UTIL_INC}HudManager.h
     ${UTIL_INC}HudPositionEditor.h
     ${UTIL_INC}HudPositionManager.h
+    ${UTIL_INC}IconDragger.h
     ${UTIL_INC}IdMapper.h
     ${UTIL_INC}LayerFactory.h
     ${UTIL_INC}LineGraphic.h
@@ -65,11 +68,14 @@ set(UTIL_SOURCES
     ${UTIL_SRC}ExampleControls.cpp
     ${UTIL_SRC}ExampleResources.cpp
     ${UTIL_SRC}GestureProcessor.cpp
+    ${UTIL_SRC}GogManipulator.cpp
+    ${UTIL_SRC}GogManipulatorController.cpp
     ${UTIL_SRC}GogManager.cpp
     ${UTIL_SRC}GridTransform.cpp
     ${UTIL_SRC}HudManager.cpp
     ${UTIL_SRC}HudPositionEditor.cpp
     ${UTIL_SRC}HudPositionManager.cpp
+    ${UTIL_SRC}IconDragger.cpp
     ${UTIL_SRC}IdMapper.cpp
     ${UTIL_SRC}LayerFactory.cpp
     ${UTIL_SRC}LineGraphic.cpp
@@ -92,7 +98,7 @@ set(UTIL_SOURCES
     ${UTIL_SRC}ViewpointPositions.cpp
 )
 
-if(TARGET SQLite::SQLite3)
+if(TARGET SQLite3::SQLite3 OR TARGET SQLite::SQLite3)
     list(APPEND UTIL_HEADERS ${UTIL_INC}DbConfigurationFile.h)
     list(APPEND UTIL_SOURCES ${UTIL_SRC}DbConfigurationFile.cpp)
     set(SIMUTIL_HAVE_SQLITE3 ON)
@@ -171,7 +177,7 @@ endif()
 if(TARGET osgEarth::osgEarthSilverLining)
     target_link_libraries(simUtil PRIVATE osgEarth::osgEarthSilverLining)
 endif()
-if(TARGET SQLite::SQLite3)
+if(TARGET SQLite3::SQLite3 OR TARGET SQLite::SQLite3)
     target_compile_definitions(simUtil PRIVATE SIM_HAVE_DB_SUPPORT)
 endif()
 if(TARGET GDAL::GDAL AND TARGET OpenGL::GL)

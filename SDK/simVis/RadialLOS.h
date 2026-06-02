@@ -56,7 +56,7 @@ public:
     Sample(const Sample& rhs);
 
     /** dtor */
-    virtual ~Sample() { }
+    virtual ~Sample() = default;
 
     /** Indicates whether sample is valid */
     bool     valid_;

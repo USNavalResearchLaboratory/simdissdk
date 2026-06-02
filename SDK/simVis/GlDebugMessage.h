@@ -53,7 +53,7 @@ public:
     GLenum severity, const std::string& message) = 0;
 
 protected:
-  virtual ~GlDebugMessageCallback() {}
+  virtual ~GlDebugMessageCallback() = default;
 };
 
 /**
@@ -149,8 +149,8 @@ public:
   void setMinimumSeverity(Severity minSeverity);
 
   /** Implementation of handleMessage() that filters based on severity and prints to std::cerr. */
-  virtual void handleMessage(GLenum source, GLenum type, GLuint id,
-    GLenum severity, const std::string& message);
+  void handleMessage(GLenum source, GLenum type, GLuint id,
+    GLenum severity, const std::string& message) override;
 
 private:
   /** Convert the Severity GLenum to an enumerated and sorted value. */

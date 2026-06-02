@@ -243,7 +243,7 @@ void SilverLiningSettingsCallback::addValue(SilverLiningValue* value)
 {
   if (!timeStrategy_.valid())
     timeStrategy_ = new SLRegistryClockTime;
-  values_.push_back(value);
+  values_.emplace_back(value);
 }
 
 void SilverLiningSettingsCallback::removeValue(SilverLiningValue* value)

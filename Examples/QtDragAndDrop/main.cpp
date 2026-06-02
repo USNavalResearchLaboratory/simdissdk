@@ -125,7 +125,7 @@ public:
   }
 
 protected:
-  virtual void dragEnterEvent(QDragEnterEvent* event) override
+  void dragEnterEvent(QDragEnterEvent* event) override
   {
     if (event->mimeData()->hasUrls())
     {
@@ -139,13 +139,13 @@ protected:
     }
   }
 
-  virtual void dragLeaveEvent(QDragLeaveEvent* event) override
+  void dragLeaveEvent(QDragLeaveEvent* event) override
   {
     label_->setStyleSheet(DEFAULT_DROP_BOX_STYLE); // Reset style
     setLabelText_("Drop files here");
   }
 
-  virtual void dropEvent(QDropEvent* event) override
+  void dropEvent(QDropEvent* event) override
   {
     const QMimeData* mimeData = event->mimeData();
     if (mimeData->hasUrls())

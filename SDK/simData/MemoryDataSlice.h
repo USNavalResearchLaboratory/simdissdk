@@ -101,26 +101,26 @@ public:
   VectorIterator(const std::deque<T *>* vec);
 
   /** Retrieves next item and increments iterator to next element */
-  virtual const T* const next();
+  const T* const next() override;
   /** Retrieves next item and does not increment iterator to next element */
-  virtual const T* const peekNext() const;
+  const T* const peekNext() const override;
   /** Retrieves previous item and increments iterator to next element */
-  virtual const T* const previous();
+  const T* const previous() override;
   /** Retrieves previous item and does not increment iterator to next element */
-  virtual const T* const peekPrevious() const;
+  const T* const peekPrevious() const override;
 
   /** Resets the iterator to the front of the data structure */
-  virtual void toFront();
+  void toFront() override;
   /** Sets the iterator to the end of the data structure */
-  virtual void toBack();
+  void toBack() override;
 
   /** Returns true if next() / peekNext() will be a valid entry in the data slice */
-  virtual bool hasNext() const;
+  bool hasNext() const override;
   /** Returns true if previous() / peekPrevious() will be a valid entry in the data slice */
-  virtual bool hasPrevious() const;
+  bool hasPrevious() const override;
 
   /** Create a copy of the iterator */
-  virtual typename DataSlice<T>::IteratorImpl* clone() const;
+  typename DataSlice<T>::IteratorImpl* clone() const override;
 
   /** Access to the pointer to data, for use by implementers */
   void set(size_t idx);
@@ -151,7 +151,7 @@ public:
    * @param timeValue
    * @return Iterator
    */
-  virtual typename DataSlice<T>::Iterator lower_bound(double timeValue) const;
+  typename DataSlice<T>::Iterator lower_bound(double timeValue) const override;
 
   /**
    * Returns an iterator pointing to the last update whose timestamp is
@@ -159,47 +159,47 @@ public:
    * @param timeValue
    * @return Iterator
    */
-  virtual typename DataSlice<T>::Iterator upper_bound(double timeValue) const;
+  typename DataSlice<T>::Iterator upper_bound(double timeValue) const override;
 
   /**
    * Total number of items in this data slice
    * @return size_t number of items
    */
-  virtual size_t numItems() const;
+  size_t numItems() const override;
 
   /**
    *modified during last DataStore::update
    * @return bool
    */
-  virtual bool hasChanged() const;
+  bool hasChanged() const override;
 
   ///@return true if the slice has been modified since last DataStore::update
-  virtual bool isDirty() const;
+  bool isDirty() const override;
 
   /**
    * Retrieve the current update
    * @return data update
    */
-  virtual const T *current() const;
+  const T *current() const override;
 
   /// Process update range
-  virtual void visit(typename DataSlice<T>::Visitor *visitor) const;
+  void visit(typename DataSlice<T>::Visitor *visitor) const override;
 
   /// @copydoc simData::VisitableDataSlice::modify
-  virtual void modify(typename DataSlice<T>::Modifier *modifier);
+  void modify(typename DataSlice<T>::Modifier *modifier) override;
 
   /**
    * Determine if current update is an actual data value or if
    * it was interpolated from actual data values
    */
-  virtual bool isInterpolated() const;
+  bool isInterpolated() const override;
 
   /**
    * Retrieve the bounds used to compute the interpolated value
    * The bounds are represented as a std::pair containing const pointers
    * If the value is not interpolated, the values in the pair could be null
    */
-  virtual typename DataSlice<T>::Bounds interpolationBounds() const;
+  typename DataSlice<T>::Bounds interpolationBounds() const override;
 
   // these next two functions should not be public
   // it would be nice if these two functions could have access limited to this class and MemoryDataStore
@@ -270,20 +270,20 @@ public:
   virtual void limitByPrefs(const CommonPrefs &prefs);
 
   /** Retrieves the earliest time stored in this slice */
-  virtual double firstTime() const;
+  double firstTime() const override;
 
   /** Retrieves the latest time stored in this slice */
-  virtual double lastTime() const;
+  double lastTime() const override;
 
   /** The time delta between the given time and the data point before the given time; return -1 if no previous point */
-  virtual double deltaTime(double time) const;
+  double deltaTime(double time) const override;
 
   /** Retrieves the current interpolated T, or nullptr if none */
   T* currentInterpolated();
 
 protected:
   /// Helper function to return an iterator to first index
-  virtual typename DataSlice<T>::IteratorImpl* iterator_() const;
+  typename DataSlice<T>::IteratorImpl* iterator_() const override;
 
 protected:
   /// used to mark if time update or changes to the slice have resulted in a change to the current update
@@ -323,16 +323,16 @@ public:
    * Retrieve the current update
    * @return CommandType
    */
-  virtual const CommandType* current() const;
+  const CommandType* current() const override;
 
   /**
    * Process update range
    * @param visitor
    */
-  virtual void visit(typename DataSlice<CommandType>::Visitor *visitor) const;
+  void visit(typename DataSlice<CommandType>::Visitor *visitor) const override;
 
   /// @copydoc simData::VisitableDataSlice::modify
-  virtual void modify(typename DataSlice<CommandType>::Modifier *modifier);
+  void modify(typename DataSlice<CommandType>::Modifier *modifier) override;
 
   /// remove all data in the slice
   void flush();
@@ -345,10 +345,10 @@ public:
    * modified during last DataStore::update
    * @return bool
    */
-  virtual bool hasChanged() const;
+  bool hasChanged() const override;
 
   /// this feature is not implemented for MemoryCommandSlice
-  virtual bool isDirty() const;
+  bool isDirty() const override;
 
   //--- effectively required interface
   /**
@@ -408,35 +408,35 @@ public:
    * @param timeValue
    * @return Iterator
    */
-  virtual typename DataSlice<CommandType>::Iterator lower_bound(double timeValue) const;
+  typename DataSlice<CommandType>::Iterator lower_bound(double timeValue) const override;
 
   /**
    * Returns the first iterator after the time value
    * @param timeValue
    * @return data slice iterator
    */
-  virtual typename DataSlice<CommandType>::Iterator upper_bound(double timeValue) const;
+  typename DataSlice<CommandType>::Iterator upper_bound(double timeValue) const override;
 
   /**
    * Total number of items in this data slice
    * @return size_t number of items
    */
-  virtual size_t numItems() const;
+  size_t numItems() const override;
 
   /**
    * Get first time value in data slice
    * @return double first time
    */
-  virtual double firstTime() const;
+  double firstTime() const override;
 
   /**
    * Get last time value in data slice
    * @return double last time
    */
-  virtual double lastTime() const;
+  double lastTime() const override;
 
   /// Not Implemented; always returns -1;
-  virtual double deltaTime(double time) const;
+  double deltaTime(double time) const override;
 
 protected: // methods
   /**
@@ -489,7 +489,7 @@ protected: // methods
   void clearCommand_(PrefType* prefs, const PrefType& commandPref);
 
   /// Helper function to return an iterator to first index
-  virtual typename DataSlice<CommandType>::IteratorImpl* iterator_() const;
+  typename DataSlice<CommandType>::IteratorImpl* iterator_() const override;
 
 protected: // data
   /// list of state updates
@@ -524,7 +524,7 @@ public:
   * @param time the time up to (and including) which to execute commands
   * @param results Returns the results of the update
   */
-  virtual void update(DataStore *ds, ObjectId id, double time, DataStore::CommitResult& results);
+  void update(DataStore *ds, ObjectId id, double time, DataStore::CommitResult& results) override;
 };
 
 /**
@@ -543,7 +543,7 @@ public:
   * @param time the time up to (and including) which to execute commands
   * @param results Returns the results of the update
   */
-  virtual void update(DataStore*ds, ObjectId id, double time, DataStore::CommitResult& results);
+  void update(DataStore*ds, ObjectId id, double time, DataStore::CommitResult& results) override;
 };
 
 /**
@@ -566,7 +566,7 @@ public:
   * maxDataSeconds values, based on the new current time passed in
   * @param time the new current time
   */
-  virtual void update(double time);
+  void update(double time) override;
 
   /**
   * Overrides the MemoryDataSlice method.  Since LobGroup can have multiple data points
@@ -574,13 +574,13 @@ public:
   * the same time.  Ensures that all points in the data record have the same time as data
   * @param data the new update data
   */
-  virtual void insert(LobGroupUpdate *data);
+  void insert(LobGroupUpdate *data) override;
 
   /// remove all data in the slice
-  virtual void flush(bool keepStatic = true);
+  void flush(bool keepStatic = true) override;
 
   /// remove points in the given time range; up to but not including endTime
-  virtual void flush(double startTime, double endTime);
+  void flush(double startTime, double endTime) override;
 
   /**
   * Set the maximum number of data points times for current data slice, recalculates the current data slice if changed

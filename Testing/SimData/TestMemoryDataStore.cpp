@@ -88,13 +88,13 @@ public:
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
+  void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) override
   {
     ++remove_;
   }
 
   /// The scenario is about to be deleted
-  virtual void onScenarioDelete(simData::DataStore* source)
+  void onScenarioDelete(simData::DataStore* source) override
   {
     ++delete_;
   }
@@ -135,7 +135,7 @@ void testPlatform_insert()
   struct PlatformSliceCopy : public simData::PlatformUpdateSlice::Visitor
   {
     std::vector<simData::PlatformUpdate> updates;
-    virtual void operator()(const simData::PlatformUpdate *update)
+    void operator()(const simData::PlatformUpdate *update) override
     {
       updates.push_back(*update);
     }
@@ -196,7 +196,7 @@ void testPlatform_insertStatic()
 class NewLobListener : public simData::DataStore::DefaultListener
 {
 public:
-  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot) override
   {
     if (ot != simData::LOB_GROUP)
       return;
@@ -214,7 +214,7 @@ public:
 // callback when lob prefs updated
 struct LobPrefListener : public simData::DataStore::DefaultListener
 {
-  void onPrefsChange(simData::DataStore *source, simData::ObjectId id)
+  void onPrefsChange(simData::DataStore *source, simData::ObjectId id) override
   {
     if (source->objectType(id) != simData::LOB_GROUP)
       return;
@@ -406,7 +406,7 @@ void testLobGroup_insert()
   struct LobGroupSliceCopy : public simData::LobGroupUpdateSlice::Visitor
   {
     std::vector<simData::LobGroupUpdate> updates;
-    virtual void operator()(const simData::LobGroupUpdate *update)
+    void operator()(const simData::LobGroupUpdate *update) override
     {
       updates.push_back(*update);
     }
@@ -696,7 +696,7 @@ void testGenericData_insert()
   struct GenericDataSliceCopy : public simData::GenericDataSlice::Visitor
   {
     std::vector<simData::GenericData_Entry> entries;
-    virtual void operator()(const simData::GenericData *update)
+    void operator()(const simData::GenericData *update) override
     {
       if (update == nullptr)
         return;
@@ -1013,7 +1013,7 @@ int testCategoryData_insert()
   struct CategoryDataSliceCopy : public simData::CategoryDataSlice::Visitor
   {
     std::vector<simData::CategoryData> updates;
-    virtual void operator()(const simData::CategoryData *update)
+    void operator()(const simData::CategoryData *update) override
     {
       updates.push_back(*update);
     }
@@ -1163,7 +1163,7 @@ public:
   {
   }
 
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
+  void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot) override
   {
     ++counter_;
   }
@@ -1390,7 +1390,7 @@ public:
   {
   }
 
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
+  void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot) override
   {
     ++numberOfChanges_;
   }

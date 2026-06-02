@@ -154,7 +154,7 @@ public:
   class Observer
   {
   public:
-    virtual ~Observer() {}
+    virtual ~Observer() = default;
     /** Settings value has changed.  Includes the fully qualified name, and the new value. */
     virtual void onSettingChange(const QString& name, const QVariant& value) = 0;
   };
@@ -162,7 +162,7 @@ public:
   /// Shared pointer for Observer
   typedef std::shared_ptr<Observer> ObserverPtr;
 
-  virtual ~Settings() {}
+  virtual ~Settings() = default;
 
   /// Removes all the entries including metadata and callbacks
   virtual void clear() = 0;
@@ -234,7 +234,7 @@ public:
   class Memento
   {
   public:
-    virtual ~Memento() {}
+    virtual ~Memento() = default;
 
     /** Restores the state of the memento into the provided settings object; returns 0 on success */
     virtual int restore(Settings& settings) const = 0;

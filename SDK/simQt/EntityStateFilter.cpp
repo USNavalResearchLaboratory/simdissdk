@@ -39,16 +39,16 @@ public:
   {
   }
 
-  virtual void onSetTime(const simCore::TimeStamp &t, bool isJump)
+  void onSetTime(const simCore::TimeStamp &t, bool isJump) override
   {
     parent_.newTime_();
   }
 
-  virtual void onTimeLoop()
+  void onTimeLoop() override
   {
   }
 
-  virtual void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime)
+  void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime) override
   {
   }
 

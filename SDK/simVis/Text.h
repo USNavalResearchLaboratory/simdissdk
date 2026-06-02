@@ -42,11 +42,11 @@ namespace simVis
     Text() : osgText::Text(), x_(0.0f), y_(0.0f) { }
     Text(const Text& text, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY) : osgText::Text(text, copyop), x_(0.0f), y_(0.0f) { }
 
-    virtual osg::Object* cloneType() const { return new Text(); }
-    virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new Text(*this,copyop); }
-    virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const Text*>(obj)!=nullptr; }
-    virtual const char* className() const { return "Text"; }
-    virtual const char* libraryName() const { return "simVis"; }
+    osg::Object* cloneType() const override { return new Text(); }
+    osg::Object* clone(const osg::CopyOp& copyop) const override { return new Text(*this,copyop); }
+    bool isSameKindAs(const osg::Object* obj) const override { return dynamic_cast<const Text*>(obj)!=nullptr; }
+    const char* className() const override { return "Text"; }
+    const char* libraryName() const override { return "simVis"; }
 
     /**
      * Adds an offset, in screen coordinates, to text
@@ -61,7 +61,7 @@ namespace simVis
 #endif
 
   protected:
-    virtual ~Text() { }
+    virtual ~Text() = default;
 
   private:
     float x_;

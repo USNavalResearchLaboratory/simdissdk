@@ -28,7 +28,6 @@
 #include <osgEarth/Version>
 
 namespace osg { class Camera; }
-namespace osgEarth { namespace GUI { class BaseGUI; } }
 namespace osgEarth { class ImGuiPanel; }
 
 struct ImFont;
@@ -37,14 +36,12 @@ struct ImGuiSettingsHandler;
 // TODO: update namespace to SimExamples
 namespace GUI {
 
-class BaseGui;
-
 class OsgImGuiHandler : public osgGA::GUIEventHandler
 {
 public:
   OsgImGuiHandler();
 
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
 
   /** Add a GUI to the manager */
 #if OSGEARTH_SOVERSION >= 159
@@ -52,9 +49,6 @@ public:
 #else
   void add(osgEarth::GUI::BaseGUI* gui);
 #endif
-
-  /** Add deprecated GUI to the manager. TODO: Remove once ::GUI::BaseGUI is removed */
-  void add(::GUI::BaseGui* gui);
 
   /** Get a pointer to the default font, may be NULL */
   ImFont* getDefaultFont() const;
@@ -90,8 +84,6 @@ private:
 #else
   std::map<std::string, std::vector<std::unique_ptr<osgEarth::GUI::BaseGUI> > > menus_;
 #endif
-
-  std::vector<std::unique_ptr<::GUI::BaseGui> > deprecatedGuis_;
 
   ImFont* defaultFont_;
   ImFont* largeFont_;

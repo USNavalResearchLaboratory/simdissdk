@@ -162,7 +162,7 @@ public:
   int numVisits;
   int numErrors;
   TestVisit() : numVisits(0), numErrors(0) {}
-  virtual void operator()(const simData::PlatformUpdate *update)
+  void operator()(const simData::PlatformUpdate *update) override
   {
     // The following line will trip if the time is out-of-order, or in case of duplicates
     numErrors += SDK_ASSERT(update->time() == numVisits);
@@ -393,7 +393,7 @@ int commandIterateTest(simData::DataStore* dataStore)
       rv_ = returnValue;
       index_ = 0;
     }
-    virtual void operator()(const simData::PlatformCommand *command)
+    void operator()(const simData::PlatformCommand *command) override
     {
       *rv_ += SDK_ASSERT(command->time() == static_cast<double>(index_));
       *rv_ += SDK_ASSERT(command->updateprefs().commonprefs().datadraw() == ((index_ % 2) == 1));
@@ -433,7 +433,7 @@ int genericIterateTest(simData::DataStore* dataStore)
         numErrors_(0)
     {
     }
-    virtual void operator()(const simData::GenericData *command)
+    void operator()(const simData::GenericData *command) override
     {
       index_ += command->entry_size();
     }

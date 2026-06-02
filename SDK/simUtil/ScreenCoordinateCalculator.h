@@ -81,8 +81,8 @@ public:
 
 private:
   osg::Vec3 position_;
-  bool isOffScreen_;
-  bool isOverHorizon_;
+  bool isOffScreen_ = false;
+  bool isOverHorizon_ = false;
 };
 
 /**
@@ -102,6 +102,7 @@ class SDKUTIL_EXPORT ScreenCoordinateCalculator
 public:
   ScreenCoordinateCalculator();
   virtual ~ScreenCoordinateCalculator();
+  SDK_DISABLE_COPY_MOVE(ScreenCoordinateCalculator);
 
   /** Update the internal projection matrix based on the view.  Call whenever view, projection, or window matrix changes */
   void updateMatrix(const simVis::View& view);
@@ -122,7 +123,7 @@ private:
   /// Combined View matrix * projection matrix * window matrix
   osg::Matrix viewProjectionWindow_;
   /// Flags true when the VPW is dirty.  Used to avoid unnecessary recalculations
-  bool dirtyMatrix_;
+  bool dirtyMatrix_ = true;
   /// Pointer to the viewport for the current view
   osg::observer_ptr<const simVis::View> view_;
   /// Horizon calculator

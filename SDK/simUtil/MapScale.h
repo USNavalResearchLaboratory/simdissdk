@@ -65,7 +65,7 @@ public:
 
   protected:
     /** Derived from osg::Referenced */
-    virtual ~UnitsProvider() {}
+    virtual ~UnitsProvider() = default;
   };
 
   /** Default constructor. */
@@ -204,13 +204,13 @@ public:
   }
 
   // Override from MapScaleUnitsProvider
-  virtual const simCore::Units& units(double maxRangeM) const
+  const simCore::Units& units(double maxRangeM) const override
   {
     return units_;
   }
 
 protected:
-  virtual ~MapScaleOneUnitProvider() {}
+  virtual ~MapScaleOneUnitProvider() = default;
 
 private:
   const simCore::Units& units_;
@@ -233,7 +233,7 @@ public:
   }
 
   // Override from MapScaleUnitsProvider
-  virtual const simCore::Units& units(double maxRangeM) const
+  const simCore::Units& units(double maxRangeM) const override
   {
     if (maxRangeM < cutoffM_)
       return smallUnits_;
@@ -241,7 +241,7 @@ public:
   }
 
 protected:
-  virtual ~MapScaleTwoUnitsProvider() {}
+  virtual ~MapScaleTwoUnitsProvider() = default;
 
 private:
   const simCore::Units& smallUnits_;

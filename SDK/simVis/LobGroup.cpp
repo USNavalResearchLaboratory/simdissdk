@@ -166,8 +166,8 @@ public:
       {
         const simCore::Vec3 firstPos = first.ecefCoordinate().position();
         const simCore::Vec3 secondPos = second.ecefCoordinate().position();
-        ecefVec.push_back(osg::Vec3d(firstPos.x(), firstPos.y(), firstPos.z()));
-        ecefVec.push_back(osg::Vec3d(secondPos.x(), secondPos.y(), secondPos.z()));
+        ecefVec.emplace_back(firstPos.x(), firstPos.y(), firstPos.z());
+        ecefVec.emplace_back(secondPos.x(), secondPos.y(), secondPos.z());
       }
     }
   }

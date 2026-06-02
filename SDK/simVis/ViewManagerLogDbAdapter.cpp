@@ -53,7 +53,7 @@ public:
 
 public: // osg::NodeCallback
   /** Override near/far ratio */
-  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  void operator()(osg::Node* node, osg::NodeVisitor* nv) override
   {
     osg::Camera* camera = static_cast<osg::Camera*>(node);
     double vfov, ar, n, f;
@@ -85,7 +85,7 @@ public:
   }
 
   /** Each time view is added or removed, install/uninstall the LDB */
-  virtual void operator()(simVis::View* view, const EventType& e)
+  void operator()(simVis::View* view, const EventType& e) override
   {
     switch (e)
     {
@@ -146,7 +146,7 @@ void ViewManagerLogDbAdapter::install(simVis::ViewManager* viewManager)
   }
   // Remember the manager
   viewManager->addCallback(installCallback_.get());
-  viewManagers_.push_back(viewManager);
+  viewManagers_.emplace_back(viewManager);
 }
 
 void ViewManagerLogDbAdapter::uninstall(simVis::ViewManager* viewManager)

@@ -81,7 +81,7 @@ public:
   {
   }
 
-  virtual bool run(osg::Object* object, osg::Object* data)
+  bool run(osg::Object* object, osg::Object* data) override
   {
     AxisVector* vector = dynamic_cast<AxisVector*>(object);
     if (vector != nullptr && platform_.valid())
@@ -110,7 +110,7 @@ public:
   {
   }
 
-  virtual bool run(osg::Object* object, osg::Object* data)
+  bool run(osg::Object* object, osg::Object* data) override
   {
     CompositeHighlightNode* area = dynamic_cast<CompositeHighlightNode*>(object);
     if (area != nullptr && platform_.valid())
@@ -142,7 +142,7 @@ public:
   {
   }
 
-  virtual void operator()(simVis::PlatformModelNode* model, Callback::EventType eventType)
+  void operator()(simVis::PlatformModelNode* model, Callback::EventType eventType) override
   {
     if (eventType == Callback::BOUNDS_CHANGED)
     {

@@ -44,9 +44,9 @@ public:
 
 protected:
   /** Protected Constructor */
-  GeoFence() { }
+  GeoFence() = default;
   /** Protected Destructor */
-  virtual ~GeoFence() { }
+  virtual ~GeoFence() = default;
 };
 
 
@@ -62,10 +62,10 @@ public:
 
   // GeoFence interface
   /** Returns true if the ECEF point p is visible relative to horizon */
-  virtual bool contains(const osg::Vec3d& p) const;
+  bool contains(const osg::Vec3d& p) const override;
 
 protected:
-  virtual ~HorizonGeoFence() { }
+  virtual ~HorizonGeoFence() = default;
 
   /** ECEF position of the reference point in meters */
   osg::Vec3d ecef_;

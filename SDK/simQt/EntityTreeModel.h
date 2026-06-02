@@ -42,7 +42,7 @@ public:
   virtual ~EntityTreeItem();
 
   /// Returns the Unique ID for the item
-  virtual uint64_t id() const;
+  uint64_t id() const override;
 
   /// Returns the type for the item
   simData::ObjectType type() const;
@@ -114,30 +114,30 @@ public:
   virtual ~EntityTreeModel();
 
   /// Return number of columns needed to hold data
-  virtual int columnCount(const QModelIndex &parent) const;
+  int columnCount(const QModelIndex &parent) const override;
   /// Return data for given item
-  virtual QVariant data(const QModelIndex &index, int role) const;
+  QVariant data(const QModelIndex &index, int role) const override;
   /// Return the header data for given section
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
   /// Return the index for the given row and column
-  virtual QModelIndex index(int row, int column, const QModelIndex &parent) const;
+  QModelIndex index(int row, int column, const QModelIndex &parent) const override;
   /// Return the index for the given id
-  virtual QModelIndex index(uint64_t id) const;
+  QModelIndex index(uint64_t id) const override;
   /// Return an Index based on the entity's ID; if necessary, process any pending adds
-  virtual QModelIndex index(uint64_t id);
+  QModelIndex index(uint64_t id) override;
   /// Return the index of the parent of the item given by index
-  virtual QModelIndex parent(const QModelIndex &index) const;
+  QModelIndex parent(const QModelIndex &index) const override;
   /// Return the number of rows in the data
-  virtual int rowCount(const QModelIndex &parent) const;
+  int rowCount(const QModelIndex &parent) const override;
 
   /// Return the unique id for the given index; return 0 on error
-  virtual uint64_t uniqueId(const QModelIndex &index) const;
+  uint64_t uniqueId(const QModelIndex &index) const override;
 
   /** Returns whether we use an entity icon or type abbreviation for the entity type column */
-  virtual bool useEntityIcons() const;
+  bool useEntityIcons() const override;
 
   /** Returns the number of entities that match the given type(s) */
-  virtual int countEntityTypes(simData::ObjectType type) const;
+  int countEntityTypes(simData::ObjectType type) const override;
 
   /// Return the dataStore
   simData::DataStore* dataStore() const;
@@ -154,13 +154,13 @@ public:
 
 public Q_SLOTS:
   /** Swaps the view to the hierarchy tree */
-  virtual void setToTreeView();
+  void setToTreeView() override;
   /** Swaps the view to a non-hierarchical list */
-  virtual void setToListView();
+  void setToListView() override;
   /** Swaps between tree and list view based on a Boolean */
-  virtual void toggleTreeView(bool useTree);
+  void toggleTreeView(bool useTree) override;
   /** Updates the contents of the frame */
-  virtual void forceRefresh();
+  void forceRefresh() override;
   /** Stop all model updates */
   void beginExtendedChange(bool causedByTimeChanges);
   /** Updates the model with queued changes, may reset the model. */
@@ -176,7 +176,7 @@ public Q_SLOTS:
   void setActiveCategoryFilter(bool active);
 
   /** Turns on or off entity icons */
-  virtual void setUseEntityIcons(bool useIcons);
+  void setUseEntityIcons(bool useIcons) override;
 
   /** Changes out the data store pointers, unregistering and re-registering observers */
   void setDataStore(simData::DataStore* dataStore);

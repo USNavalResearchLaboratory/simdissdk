@@ -62,7 +62,7 @@ namespace simNotify
     *
     * @param[in ] message the message to be written.
     */
-    virtual void notify(const std::string &message) override;
+    void notify(const std::string &message) override;
   };
 
   /**
@@ -93,7 +93,7 @@ namespace simNotify
     * The following severity levels will cause messages to be written to stdout:
     *   NOTICE, INFO, DEBUG_INFO, DEBUG_FP
     */
-    virtual void notifyPrefix() override;
+    void notifyPrefix() override;
   };
 
   /**
@@ -113,7 +113,7 @@ namespace simNotify
     *
     * @param[in ] message the message to be written.
     */
-    virtual void notify(const std::string &message) override;
+    void notify(const std::string &message) override;
   };
 
   /**
@@ -133,7 +133,7 @@ namespace simNotify
     *
     * @param[in ] message the message to be written.
     */
-    virtual void notify(const std::string &message) override;
+    void notify(const std::string &message) override;
   };
 
   /**
@@ -175,7 +175,7 @@ namespace simNotify
     *
     * @param[in ] message the message to be written.
     */
-    virtual void notify(const std::string &message) override;
+    void notify(const std::string &message) override;
 
   private:
     std::fstream file_;
@@ -209,7 +209,7 @@ namespace simNotify
     *
     * @param[in ] message the message to be written.
     */
-    virtual void notify(const std::string &message) override;
+    void notify(const std::string &message) override;
 
   private:
     std::ostream& os_;
@@ -226,8 +226,8 @@ namespace simNotify
   {
   public:
     // From NotifyHandler:
-    virtual void notifyPrefix() override;
-    virtual void notify(const std::string& message) override;
+    void notifyPrefix() override;
+    void notify(const std::string& message) override;
 
     /** Empties the cache of messages */
     void clear();
@@ -261,8 +261,8 @@ namespace simNotify
   {
   public:
     // From NotifyHandler:
-    virtual void notifyPrefix() override;
-    virtual void notify(const std::string& message) override;
+    void notifyPrefix() override;
+    void notify(const std::string& message) override;
 
     /** Adds a handler to process messages. Returns 0 on success. */
     int addHandler(simNotify::NotifyHandlerPtr handler);

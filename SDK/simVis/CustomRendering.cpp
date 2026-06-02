@@ -332,7 +332,7 @@ void CustomRenderingNode::getPickingPoints(std::vector<osg::Vec3d>& ecefVec) con
   if (getPosition(&locatorNodeEcef, simCore::COORD_SYS_ECEF) != 0)
     return;
 
-  ecefVec.push_back(osg::Vec3d(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z()));
+  ecefVec.emplace_back(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z());
 }
 
 }

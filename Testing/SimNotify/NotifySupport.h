@@ -35,9 +35,9 @@ public:
   virtual ~StringStreamNotify();
 
   // Prefix looks like [Date] [Time] [WARN]
-  virtual void notifyPrefix();
+  void notifyPrefix() override;
 
-  virtual void notify(const std::string &message);
+  void notify(const std::string &message) override;
 
   // Retrieve the last message sent to notification
   std::string lastLine() const;

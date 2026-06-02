@@ -51,8 +51,8 @@ public:
   /** Copy constructor using CopyOp to manage deep vs shallow copy. */
   PlatformInertialTransform(const PlatformInertialTransform& rhs, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
 
-  virtual bool computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor*) const;
-  virtual bool computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor*) const;
+  bool computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor*) const override;
+  bool computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor*) const override;
 
   /** Changes the locator used to determine the inverse rotation required for correct orientation */
   void setLocator(simVis::Locator* locator);
@@ -63,7 +63,7 @@ public:
 protected:
   virtual ~PlatformInertialTransform();
   /** Override childInserted() to call syncWithLocator() when needed */
-  virtual void childInserted(unsigned int pos);
+  void childInserted(unsigned int pos) override;
 
 private:
   /** Computed entity rotation matrix for the locator, inverted to back out the rotation */

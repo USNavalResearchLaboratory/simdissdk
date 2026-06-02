@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class Hemisphere; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Hemisphere */
 class SDKVIS_EXPORT Hemisphere
 {
 public:
-  /** Create the hemisphere from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the hemisphere from the shape object */
   static GogNodeInterface* createHemisphere(const simCore::GOG::Hemisphere& hemi, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

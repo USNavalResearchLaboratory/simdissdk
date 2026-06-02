@@ -57,17 +57,17 @@ namespace simQt {
 
     // from QAbstractItemModel
     /** @return number of columns in the data table */
-    virtual int columnCount(const QModelIndex & parent = QModelIndex()) const;
+    int columnCount(const QModelIndex & parent = QModelIndex()) const override;
     /** @return data for given item */
-    virtual QVariant data(const QModelIndex &index, int role) const;
+    QVariant data(const QModelIndex &index, int role) const override;
     /** @return the header data for given section */
-    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
     /** @return the index for the given row and column */
-    virtual QModelIndex index(int row, int column, const QModelIndex &parent) const;
+    QModelIndex index(int row, int column, const QModelIndex &parent) const override;
     /** @return the index of the parent of the item given by index */
-    virtual QModelIndex parent(const QModelIndex &index) const;
+    QModelIndex parent(const QModelIndex &index) const override;
     /** @return number of rows currently loaded in the model */
-    virtual int rowCount(const QModelIndex & parent = QModelIndex()) const;
+    int rowCount(const QModelIndex & parent = QModelIndex()) const override;
 
     /**
     * Get time associated with this index, uses row value to find time.  Returns INVALID_TIME if row index not valid

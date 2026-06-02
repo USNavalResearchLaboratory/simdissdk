@@ -90,16 +90,16 @@ public:
   /** @name data access
    * @{
    */
-  virtual unsigned int getNumRanges() const;
-  virtual double getRangeStep() const;
-  virtual double getMinRange() const;
-  virtual double getMaxRange() const;
+  unsigned int getNumRanges() const override;
+  double getRangeStep() const override;
+  double getMinRange() const override;
+  double getMaxRange() const override;
 
-  virtual unsigned int getNumHeights() const;
-  virtual double getMinHeight() const;
-  virtual double getMaxHeight() const;
-  virtual double getHeightStep() const;
-  virtual double getValueByIndex(unsigned int heightIndex, unsigned int rangeIndex) const;
+  unsigned int getNumHeights() const override;
+  double getMinHeight() const override;
+  double getMaxHeight() const override;
+  double getHeightStep() const override;
+  double getValueByIndex(unsigned int heightIndex, unsigned int rangeIndex) const override;
   ///@}
 
   /**
@@ -108,14 +108,14 @@ public:
   * @param gndRngMeters The range of the desired sample, in meters
   * @return value at the specified height and range
   */
-  virtual double interpolateValue(double hgtMeters, double gndRngMeters) const;
+  double interpolateValue(double hgtMeters, double gndRngMeters) const override;
 
   /** Adds a ProfileDataProvider to this CompositeProfileProvider; if it is the first, make it the active provider */
   void addProvider(ProfileDataProvider* provider);
 
 protected:
   /// osg::Referenced-derived
-  virtual ~CompositeProfileProvider() {}
+  virtual ~CompositeProfileProvider() = default;
 
 protected:
   /** Index into providers_ that represents the current profile provider */

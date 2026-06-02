@@ -34,20 +34,20 @@ class CategoryFilterWidgetPlugin : public QObject, public QDesignerCustomWidgetI
   Q_INTERFACES(QDesignerCustomWidgetInterface)
 
 public:
-  explicit CategoryFilterWidgetPlugin(QObject *parent = 0);
+  explicit CategoryFilterWidgetPlugin(QObject *parent = nullptr);
   virtual ~CategoryFilterWidgetPlugin();
 
-  bool isContainer() const;
-  bool isInitialized() const;
-  QIcon icon() const;
-  QString domXml() const;
-  QString group() const;
-  QString includeFile() const;
-  QString name() const;
-  QString toolTip() const;
-  QString whatsThis() const;
-  QWidget *createWidget(QWidget *parent);
-  void initialize(QDesignerFormEditorInterface *core);
+  bool isContainer() const override;
+  bool isInitialized() const override;
+  QIcon icon() const override;
+  QString domXml() const override;
+  QString group() const override;
+  QString includeFile() const override;
+  QString name() const override;
+  QString toolTip() const override;
+  QString whatsThis() const override;
+  QWidget *createWidget(QWidget *parent) override;
+  void initialize(QDesignerFormEditorInterface *core) override;
 
   /** Creates a set of category names and values for testing/display purposes */
   static void createDefaultCategories(simData::DataStore& dataStore);

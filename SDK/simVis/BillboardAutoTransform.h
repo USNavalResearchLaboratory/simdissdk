@@ -59,7 +59,7 @@ public:
   double getScreenSpaceRotation() const;
 
   /** Rotate the node to face the screen appropriately on cull traversal */
-  virtual void accept(osg::NodeVisitor& nv);
+  void accept(osg::NodeVisitor& nv) override;
 
 private:
   bool   dirty_;

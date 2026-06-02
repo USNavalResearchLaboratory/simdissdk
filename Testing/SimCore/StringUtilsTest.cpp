@@ -390,7 +390,7 @@ class TestUndefinedHelper : public simCore::TextReplacer::UndefinedVariableHandl
 {
 public:
   // Add extra percent signs so that incoming value's percent signs get interpreted as text, not variable markers.
-  virtual std::string getText(const std::string& varName) const { return "-%" + varName + "%-"; }
+  std::string getText(const std::string& varName) const override { return "-%" + varName + "%-"; }
 };
 
 int testTextReplacer()
@@ -404,8 +404,8 @@ int testTextReplacer()
         textValue_(textValue)
     {
     }
-    virtual std::string getText() const { return textValue_; }
-    virtual std::string getVariableName() const { return varName_; }
+    std::string getText() const override { return textValue_; }
+    std::string getVariableName() const override { return varName_; }
   private:
     std::string varName_;
     std::string textValue_;

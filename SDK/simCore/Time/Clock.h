@@ -38,7 +38,7 @@ namespace simCore
 class SDKCORE_EXPORT Clock
 {
 public:
-  virtual ~Clock() {}
+  virtual ~Clock() = default;
 
   /// Control how time advances
   enum Mode
@@ -143,7 +143,7 @@ public:
   class TimeObserver
   {
   public:
-    virtual ~TimeObserver() {}
+    virtual ~TimeObserver() = default;
 
     /** Notification fired when time has been changed
      * @param t TimeStamp with new time
@@ -170,7 +170,7 @@ public:
   class ModeChangeObserver
   {
   public:
-    virtual ~ModeChangeObserver() {}
+    virtual ~ModeChangeObserver() = default;
 
     /**@name callbacks for each event type
      *@{

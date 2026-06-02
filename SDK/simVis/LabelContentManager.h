@@ -99,7 +99,7 @@ namespace simVis
     virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields) = 0;
 
   protected:
-    virtual ~LabelContentCallback() {}
+    virtual ~LabelContentCallback() = default;
   };
 
   /** Abstract class for creating callbacks for the different entity types */
@@ -111,67 +111,67 @@ namespace simVis
     virtual LabelContentCallback* createLabelContentCallback(simData::ObjectId id) = 0;
 
   protected:
-    virtual ~LabelContentManager() {}
+    virtual ~LabelContentManager() = default;
   };
 
   /** Returns "" for platform  */
   class NullEntityCallback : public simVis::LabelContentCallback
   {
   public:
-    NullEntityCallback() {}
+    NullEntityCallback() = default;
 
-    virtual std::string createString(const simData::PlatformPrefs& prefs, const simData::PlatformUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::PlatformPrefs& prefs, const simData::PlatformUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(const simData::BeamPrefs& prefs, const simData::BeamUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::BeamPrefs& prefs, const simData::BeamUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(const simData::GatePrefs& prefs, const simData::GateUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::GatePrefs& prefs, const simData::GateUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(const simData::LaserPrefs& prefs, const simData::LaserUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::LaserPrefs& prefs, const simData::LaserUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(const simData::LobGroupPrefs& prefs, const simData::LobGroupUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::LobGroupPrefs& prefs, const simData::LobGroupUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
-    virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields) override
+    std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields) override
     {
       return "";
     }
 
   protected:
-    virtual ~NullEntityCallback() {}
+    virtual ~NullEntityCallback() = default;
   };
 
   /** Null object implementation for Null Label Content Manager */
   class NullLabelContentManager : public simVis::LabelContentManager
   {
   public:
-    NullLabelContentManager() {}
+    NullLabelContentManager() = default;
 
-    virtual simVis::LabelContentCallback* createLabelContentCallback(simData::ObjectId id) override
+    simVis::LabelContentCallback* createLabelContentCallback(simData::ObjectId id) override
     {
       return new NullEntityCallback();
     }
 
   protected:
-    virtual ~NullLabelContentManager() {}
+    virtual ~NullLabelContentManager() = default;
 
   };
 }

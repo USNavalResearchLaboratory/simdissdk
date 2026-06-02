@@ -49,7 +49,7 @@ public:
   /**
    * Gets the display color mode
    */
-  virtual ColorMode getMode() const;
+  ColorMode getMode() const override;
 
   /**
    * Sets the display color mode
@@ -122,17 +122,17 @@ public:
   /**
    * Installs this color provider from the given state set
    */
-  virtual void install(osg::StateSet* stateset);
+  void install(osg::StateSet* stateset) override;
 
   /**
    * Uninstall this color provider from the given state set
    */
-  virtual void uninstall(osg::StateSet* stateset);
+  void uninstall(osg::StateSet* stateset) override;
 
 protected:
 
   /// osg::Referenced-derived
-  virtual ~CompositeColorProvider() {}
+  virtual ~CompositeColorProvider() = default;
 
 private:
   /// update the gradient color provider's color map

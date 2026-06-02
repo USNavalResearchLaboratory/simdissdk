@@ -85,7 +85,7 @@ public:
   {
   }
 
-  virtual void apply(osg::Drawable& drawable)
+  void apply(osg::Drawable& drawable) override
   {
     osgEarth::LineDrawable* line = dynamic_cast<osgEarth::LineDrawable*>(&drawable);
     if (line)

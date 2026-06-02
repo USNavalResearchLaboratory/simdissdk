@@ -46,26 +46,26 @@ public:
   }
 
   // Inherits parent's documentation
-  virtual size_t tableCount() const
+  size_t tableCount() const override
   {
     return tables_.size();
   }
 
   // Inherits parent's documentation
-  virtual simData::ObjectId ownerId() const
+  simData::ObjectId ownerId() const override
   {
     return ownerId_;
   }
 
   // Inherits parent's documentation
-  virtual DataTable* findTable(const std::string& tableName) const
+  DataTable* findTable(const std::string& tableName) const override
   {
     std::map<std::string, simData::DataTable*>::const_iterator i = tables_.find(tableName);
     return (i == tables_.end()) ? nullptr : i->second;
   }
 
   // Inherits parent's documentation
-  virtual void accept(TableList::Visitor& visitor) const
+  void accept(TableList::Visitor& visitor) const override
   {
     for (std::map<std::string, simData::DataTable*>::const_iterator i = tables_.begin(); i != tables_.end(); ++i)
     {
@@ -266,7 +266,7 @@ public:
     : tablesById_(tablesById)
   {
   }
-  virtual void visit(DataTable* table)
+  void visit(DataTable* table) override
   {
     std::map<TableId, DataTable*>::iterator i = tablesById_.find(table->tableId());
     // Assertion failure indicates sync failure in list/map

@@ -38,7 +38,7 @@ public:
   class Replaceable
   {
   public:
-    virtual ~Replaceable() {}
+    virtual ~Replaceable() = default;
     /**
      * Returns the replacement string that matches the variable string
      * @return String that will replace the variable string
@@ -55,7 +55,7 @@ public:
   class UndefinedVariableHandler
   {
   public:
-    virtual ~UndefinedVariableHandler() {}
+    virtual ~UndefinedVariableHandler() = default;
     /** Returns the string to use for the undefined variable string, such as "%TIME%".  Guaranteed to have surrounding % marks */
     virtual std::string getText(const std::string& varName) const = 0;
   };
@@ -119,7 +119,7 @@ private:
 class IgnoreUndefinedVariables : public TextReplacer::UndefinedVariableHandler
 {
 public:
-  virtual std::string getText(const std::string& varName) const { return varName; }
+  std::string getText(const std::string& varName) const override { return varName; }
 };
 
 /// Shared pointer to a TextReplacer

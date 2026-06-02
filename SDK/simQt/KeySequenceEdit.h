@@ -70,10 +70,10 @@ protected:
    * ActionItemModelDelegate, the eventFilter() code forwards key events to acceptKey()
    * directly in order to bypass filtering of these special keys.
    */
-  virtual void keyPressEvent(QKeyEvent* keyEvent);
+  void keyPressEvent(QKeyEvent* keyEvent) override;
 
   /** Override event() to ignore Shortcut and ShortcutOverride events */
-  virtual bool event(QEvent* evt);
+  bool event(QEvent* evt) override;
 
 Q_SIGNALS:
   /// Hot key has been changed; newKey.isEmpty() means the key was removed

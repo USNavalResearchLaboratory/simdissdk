@@ -54,7 +54,7 @@ void AveragePositionNode::addTrackedNode(EntityNode* node)
     addUpdateCallback(callback_);
 
   if (std::find(nodes_.begin(), nodes_.end(), node) == nodes_.end())
-    nodes_.push_back(node);
+    nodes_.emplace_back(node);
 }
 
 void AveragePositionNode::removeTrackedNode(EntityNode* node)

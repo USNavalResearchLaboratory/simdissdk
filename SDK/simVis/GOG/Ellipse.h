@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class Ellipse; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Ellipse */
 class SDKVIS_EXPORT Ellipse
 {
 public:
-  /** Create the ellipse from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the ellipse from the shape object */
   static GogNodeInterface* createEllipse(const simCore::GOG::Ellipse& ellipse, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

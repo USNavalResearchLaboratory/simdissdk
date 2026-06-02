@@ -404,8 +404,13 @@ double OpticalHorizonMeasurement::value(RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 PodMeasurement::PodMeasurement()
-  : RfMeasurement("POD", "POD", PERCENTAGE)
-{ }
+  : RfMeasurement("POD", "PoD", PERCENTAGE)
+{
+  // Note that "POD" (first argument) is used as a key in various places, like
+  // SIMDIS Range Tool Template (rtt) and Range Tool XML files. PoD is a user-
+  // facing string that is shown in various GUI elements. Changing "POD" may
+  // break backwards compatibility with old files.
+}
 
 double PodMeasurement::value(RangeToolState& state) const
 {

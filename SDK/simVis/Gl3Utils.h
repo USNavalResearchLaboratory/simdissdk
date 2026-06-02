@@ -115,7 +115,7 @@ inline void applyMesaGeometryShaderFix(osg::GraphicsContext* graphicsContext)
   // now until it can be shown that this issue impacts other drivers too.
   const unsigned int contextId = graphicsContext->getState()->getContextID();
   osg::ref_ptr<osg::GLExtensions> glExtensions = osg::GLExtensions::Get(contextId, true);
-  if (strstr(glVersionString, "Mesa") != 0 && glExtensions.valid())
+  if (strstr(glVersionString, "Mesa") != nullptr && glExtensions.valid())
   {
     // Disable geometry shader support until GL 4.1, or explicit support for shader4
     if (glExtensions->isGeometryShader4Supported &&
@@ -186,7 +186,7 @@ public:
   }
 
   /** Detect mesa Geometry Shader bug with GL3 and disable geometry portions if present */
-  virtual void operator()(osg::Object* obj) override
+  void operator()(osg::Object* obj) override
   {
     osg::GraphicsContext* gc = dynamic_cast<osg::GraphicsContext*>(obj);
     simVis::applyCoreProfileValidity(gc);
@@ -196,9 +196,7 @@ public:
   }
 
 protected:
-  virtual ~Gl3RealizeOperation()
-  {
-  }
+  virtual ~Gl3RealizeOperation() = default;
 
 private:
   osg::ref_ptr<osg::Operation> nested_;

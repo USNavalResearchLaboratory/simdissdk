@@ -87,27 +87,27 @@ public:
   /**@name accessors
    *@{
    */
-  virtual QString title() const { return name_; }
-  virtual QVariant text(int col) const { return (col == COL_ACTION) ? QVariant(title()) : QVariant(); }
-  virtual QVariant decoration(int col) const { return QVariant(); }
-  virtual Qt::ItemFlags flags(int col) const { return Qt::ItemIsEnabled; }
+  QString title() const override { return name_; }
+  QVariant text(int col) const override { return (col == COL_ACTION) ? QVariant(title()) : QVariant(); }
+  QVariant decoration(int col) const override { return QVariant(); }
+  Qt::ItemFlags flags(int col) const override { return Qt::ItemIsEnabled; }
 
-  virtual int row() const { return model_->groups_.indexOf(const_cast<GroupItem*>(this)); }
-  virtual int numColumns() const { return 1; }
+  int row() const override { return model_->groups_.indexOf(const_cast<GroupItem*>(this)); }
+  int numColumns() const override { return 1; }
 
   /// Like QAbstractItemModel::setData(), returns true on successful handle
-  virtual bool setData(int col, const QVariant& value) { return false; }
+  bool setData(int col, const QVariant& value) override { return false; }
   ///@}
 
   /**@name tree actions
    *@{
    */
-  virtual TreeItem* parent() const { return nullptr; }
-  virtual TreeItem* child(int row) const { return children_[row]; }
-  virtual int indexOf(TreeItem* child) const { return children_.indexOf(child); }
-  virtual int numChildren() const { return children_.size(); }
+  TreeItem* parent() const override { return nullptr; }
+  TreeItem* child(int row) const override { return children_[row]; }
+  int indexOf(TreeItem* child) const override { return children_.indexOf(child); }
+  int numChildren() const override { return children_.size(); }
 
-  virtual void deleteChild(TreeItem* child)
+  void deleteChild(TreeItem* child) override
   {
     children_.removeOne(child);
     delete child;
@@ -115,7 +115,7 @@ public:
   ///@}
 
   /// find an item corresponding to the given action
-  virtual TreeItem* find(const Action* action) const
+  TreeItem* find(const Action* action) const override
   {
     if (action != nullptr && action->group() == name_)
     { // Search children
@@ -197,8 +197,8 @@ public:
   /**@name accessors
    *@{
    */
-  virtual QString title() const { return action_->description(); }
-  virtual QVariant text(int col) const
+  QString title() const override { return action_->description(); }
+  QVariant text(int col) const override
   {
     switch (col)
     {
@@ -215,23 +215,23 @@ public:
     }
     return QVariant();
   }
-  virtual QVariant decoration(int col) const
+  QVariant decoration(int col) const override
   {
     if (col == COL_ACTION && action_->action() != nullptr)
       return action_->action()->icon();
     return QVariant();
   }
-  virtual Qt::ItemFlags flags(int col) const
+  Qt::ItemFlags flags(int col) const override
   {
     if (col == COL_PRIMARY || col == COL_SECONDARY)
       return Qt::ItemIsEnabled | Qt::ItemIsEditable;
     return Qt::ItemIsEnabled;
   }
-  virtual int row() const { return parent()->indexOf(const_cast<ActionItem*>(this)); }
-  virtual int numColumns() const { return NUM_COLUMNS; }
+  int row() const override { return parent()->indexOf(const_cast<ActionItem*>(this)); }
+  int numColumns() const override { return NUM_COLUMNS; }
 
   /// Like QAbstractItemModel::setData(), returns true on successful handle
-  virtual bool setData(int col, const QVariant& value)
+  bool setData(int col, const QVariant& value) override
   {
     if (col != COL_PRIMARY && col != COL_SECONDARY)
       return false;
@@ -260,16 +260,16 @@ public:
   /**@name tree actions
    *@{
    */
-  virtual TreeItem* parent() const { return parent_; }
-  virtual TreeItem* child(int row) const { return nullptr; }
-  virtual int indexOf(TreeItem* child) const { return -1; }
-  virtual int numChildren() const { return 0; }
+  TreeItem* parent() const override { return parent_; }
+  TreeItem* child(int row) const override { return nullptr; }
+  int indexOf(TreeItem* child) const override { return -1; }
+  int numChildren() const override { return 0; }
 
-  virtual void deleteChild(TreeItem* child) {}
+  void deleteChild(TreeItem* child) override {}
   ///@}
 
   /// find an item corresponding to the given action
-  virtual TreeItem* find(const Action* action) const { return (action == action_) ? const_cast<ActionItem*>(this) : nullptr; }
+  TreeItem* find(const Action* action) const override { return (action == action_) ? const_cast<ActionItem*>(this) : nullptr; }
 
   /** Add an alias to the Action Item */
   void addAlias(const QString& newAlias)

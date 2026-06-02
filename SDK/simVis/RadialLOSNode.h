@@ -124,10 +124,10 @@ public:
 public: // GeoPositionNode
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "RadialLOSNode"; }
+  const char* className() const override { return "RadialLOSNode"; }
 
 public: // TerrainCallback
 
@@ -137,7 +137,7 @@ public: // TerrainCallback
 public: // MapNodeObserver
 
   /** Sets the map node, used for positioning */
-  virtual void setMapNode(osgEarth::MapNode* mapNode);
+  void setMapNode(osgEarth::MapNode* mapNode) override;
 
 protected:
   /** dtor */
@@ -164,7 +164,7 @@ private:
   {
     osg::observer_ptr<RadialLOSNode> node_;
     TerrainCallbackHook(RadialLOSNode* node) : node_(node) {}
-    void onTileAdded(const osgEarth::TileKey& key, osg::Node* tile, osgEarth::TerrainCallbackContext&)
+    void onTileAdded(const osgEarth::TileKey& key, osg::Node* tile, osgEarth::TerrainCallbackContext&) override
     {
       if (node_.valid()) node_->onTileAdded_(key, tile);
     }

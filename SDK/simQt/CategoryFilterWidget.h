@@ -64,11 +64,11 @@ public:
   virtual ~CategoryTreeItemDelegate();
 
   /** Overrides from QStyledItemDelegate */
-  virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-  virtual bool editorEvent(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index);
+  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+  bool editorEvent(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index) override;
 
   /** Overrides from QAbstractItemDelegate */
-  virtual bool helpEvent(QHelpEvent* evt, QAbstractItemView* view, const QStyleOptionViewItem& option, const QModelIndex& index);
+  bool helpEvent(QHelpEvent* evt, QAbstractItemView* view, const QStyleOptionViewItem& option, const QModelIndex& index) override;
 
 Q_SIGNALS:
   /** User clicked on the custom expand button and index needs to be expanded/collapsed. */
@@ -122,7 +122,7 @@ class SDKQT_EXPORT CategoryFilterWidget : public QWidget
   Q_PROPERTY(bool showEntityCount READ showEntityCount WRITE setShowEntityCount);
 
 public:
-  explicit CategoryFilterWidget(QWidget* parent = 0);
+  explicit CategoryFilterWidget(QWidget* parent = nullptr);
   virtual ~CategoryFilterWidget();
 
   /** Sets the data store, updating the category tree based on changes to that data store. */

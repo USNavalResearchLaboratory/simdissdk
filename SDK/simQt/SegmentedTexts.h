@@ -41,9 +41,7 @@ public:
     : tabStop_(tabStop)
   {
   }
-  virtual ~SegmentedText()
-  {
-  }
+  virtual ~SegmentedText() = default;
 
   /// Returns true if the segment should be a tab stop
   bool tabStop() const { return tabStop_; }
@@ -83,12 +81,12 @@ public:
   SeparatorText(QString separator, bool optional);
   virtual ~SeparatorText();
 
-  virtual size_t numberOfCharacters() const;
-  virtual size_t spaceLeft() const;
-  virtual void stepBy(int amount);
-  virtual QString text() const;
-  virtual size_t setText(const QString& text, size_t startLocation, QValidator::State& state);
-  virtual size_t validateText(const QString& text, size_t startLocation, QValidator::State& state) const;
+  size_t numberOfCharacters() const override;
+  size_t spaceLeft() const override;
+  void stepBy(int amount) override;
+  QString text() const override;
+  size_t setText(const QString& text, size_t startLocation, QValidator::State& state) override;
+  size_t validateText(const QString& text, size_t startLocation, QValidator::State& state) const override;
 
 protected:
   QString separator_; ///< separator string
@@ -117,15 +115,15 @@ public:
   /// Set the number
   void setValue(int value);
   /// The number of characters in the number
-  virtual size_t numberOfCharacters() const;
+  size_t numberOfCharacters() const override;
   /// the number of digits the user can add to the number
-  virtual size_t spaceLeft() const;
+  size_t spaceLeft() const override;
   /// Changes the segment value by amount
-  virtual void stepBy(int amount);
+  void stepBy(int amount) override;
   /// Returns the segment as a text
-  virtual QString text() const;
-  virtual size_t setText(const QString& text, size_t startLocation, QValidator::State& state);
-  virtual size_t validateText(const QString& text, size_t startLocation, QValidator::State& state) const;
+  QString text() const override;
+  size_t setText(const QString& text, size_t startLocation, QValidator::State& state) override;
+  size_t validateText(const QString& text, size_t startLocation, QValidator::State& state) const override;
 
 protected:
   ///@return the string representation of the given value
@@ -154,12 +152,12 @@ public:
   void setIntValue(int monthNum);
 
   // from SegmentedText
-  virtual size_t numberOfCharacters() const;
-  virtual size_t spaceLeft() const;
-  virtual void stepBy(int amount);
-  virtual QString text() const;
-  virtual size_t setText(const QString& line, size_t startLocation, QValidator::State& state);
-  virtual size_t validateText(const QString& line, size_t startLocation, QValidator::State& state) const;
+  size_t numberOfCharacters() const override;
+  size_t spaceLeft() const override;
+  void stepBy(int amount) override;
+  QString text() const override;
+  size_t setText(const QString& line, size_t startLocation, QValidator::State& state) override;
+  size_t validateText(const QString& line, size_t startLocation, QValidator::State& state) const override;
 
 private:
   // increase by one month
@@ -297,17 +295,17 @@ public:
   SecondsTexts();
 
   virtual ~SecondsTexts();
-  virtual simCore::TimeStamp timeStamp() const;
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
-  virtual void valueEdited();
-  virtual void valueChanged();
-  virtual QValidator::State validateText(const QString& text) const;
+  simCore::TimeStamp timeStamp() const override;
+  void setTimeStamp(const simCore::TimeStamp& value) override;
+  void valueEdited() override;
+  void valueChanged() override;
+  QValidator::State validateText(const QString& text) const override;
   // Seconds texts does not support timezone offset
-  virtual void setTimeZone(simCore::TimeZone) { }
-  virtual simCore::TimeZone timeZone() const { return simCore::TIMEZONE_UTC; }
+  void setTimeZone(simCore::TimeZone) override { }
+  simCore::TimeZone timeZone() const override { return simCore::TIMEZONE_UTC; }
 
 protected:
-  virtual void makeSegments_();
+  void makeSegments_() override;
 
 private:
   NumberText* seconds_;  // Displays the seconds
@@ -322,17 +320,17 @@ public:
   MinutesTexts();
 
   virtual ~MinutesTexts();
-  virtual simCore::TimeStamp timeStamp() const;
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
-  virtual void valueEdited();
-  virtual void valueChanged();
-  virtual QValidator::State validateText(const QString& text) const;
+  simCore::TimeStamp timeStamp() const override;
+  void setTimeStamp(const simCore::TimeStamp& value) override;
+  void valueEdited() override;
+  void valueChanged() override;
+  QValidator::State validateText(const QString& text) const override;
   // Minutes texts does not support timezone offset
-  virtual void setTimeZone(simCore::TimeZone) { }
-  virtual simCore::TimeZone timeZone() const { return simCore::TIMEZONE_UTC; }
+  void setTimeZone(simCore::TimeZone) override { }
+  simCore::TimeZone timeZone() const override { return simCore::TIMEZONE_UTC; }
 
 protected:
-  virtual void makeSegments_();
+  void makeSegments_() override;
 
 private:
   NumberText* minutes_; // Displays the minutes
@@ -348,17 +346,17 @@ public:
   HoursTexts();
   virtual ~HoursTexts();
 
-  virtual simCore::TimeStamp timeStamp() const;
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
-  virtual void valueEdited();
-  virtual void valueChanged();
-  virtual QValidator::State validateText(const QString& text) const;
+  simCore::TimeStamp timeStamp() const override;
+  void setTimeStamp(const simCore::TimeStamp& value) override;
+  void valueEdited() override;
+  void valueChanged() override;
+  QValidator::State validateText(const QString& text) const override;
   // Hours texts does not support timezone offset
-  virtual void setTimeZone(simCore::TimeZone) { }
-  virtual simCore::TimeZone timeZone() const { return simCore::TIMEZONE_UTC; }
+  void setTimeZone(simCore::TimeZone) override { }
+  simCore::TimeZone timeZone() const override { return simCore::TIMEZONE_UTC; }
 
 protected:
-  virtual void makeSegments_();
+  void makeSegments_() override;
 
 private:
   NumberText* hours_;  // Displays the hours
@@ -375,16 +373,16 @@ public:
   OrdinalTexts();
   virtual ~OrdinalTexts();
 
-  virtual simCore::TimeStamp timeStamp() const;
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
-  virtual void valueEdited();
-  virtual void valueChanged();
-  virtual QValidator::State validateText(const QString& text) const;
-  virtual void setTimeZone(simCore::TimeZone zone);
-  virtual simCore::TimeZone timeZone() const;
+  simCore::TimeStamp timeStamp() const override;
+  void setTimeStamp(const simCore::TimeStamp& value) override;
+  void valueEdited() override;
+  void valueChanged() override;
+  QValidator::State validateText(const QString& text) const override;
+  void setTimeZone(simCore::TimeZone zone) override;
+  simCore::TimeZone timeZone() const override;
 
 protected:
-  virtual void makeSegments_();
+  void makeSegments_() override;
 
 private:
   NumberText* days_;  // Displays the day of year
@@ -404,13 +402,13 @@ public:
   virtual ~MonthDayYearTexts();
 
   // from SegmentedTexts
-  virtual simCore::TimeStamp timeStamp() const;
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
-  virtual void valueEdited();
-  virtual void valueChanged();
-  virtual QValidator::State validateText(const QString& text) const;
-  virtual void setTimeZone(simCore::TimeZone zone);
-  virtual simCore::TimeZone timeZone() const;
+  simCore::TimeStamp timeStamp() const override;
+  void setTimeStamp(const simCore::TimeStamp& value) override;
+  void valueEdited() override;
+  void valueChanged() override;
+  QValidator::State validateText(const QString& text) const override;
+  void setTimeZone(simCore::TimeZone zone) override;
+  simCore::TimeZone timeZone() const override;
 
   /** Returns four digit year */
   int year() const;
@@ -420,7 +418,7 @@ public:
   int day() const;
 
 protected:
-  virtual void makeSegments_();
+  void makeSegments_() override;
 
 private:
   MonthText* month_; // Displays the month
@@ -441,13 +439,13 @@ public:
   Iso8601Texts();
   virtual ~Iso8601Texts();
 
-  virtual simCore::TimeStamp timeStamp() const;
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
-  virtual void valueEdited();
-  virtual void valueChanged();
-  virtual QValidator::State validateText(const QString& text) const;
-  virtual void setTimeZone(simCore::TimeZone zone);
-  virtual simCore::TimeZone timeZone() const;
+  simCore::TimeStamp timeStamp() const override;
+  void setTimeStamp(const simCore::TimeStamp& value) override;
+  void valueEdited() override;
+  void valueChanged() override;
+  QValidator::State validateText(const QString& text) const override;
+  void setTimeZone(simCore::TimeZone zone) override;
+  simCore::TimeZone timeZone() const override;
 
   /** Returns four digit year */
   int year() const;
@@ -457,7 +455,7 @@ public:
   int day() const;
 
 protected:
-  virtual void makeSegments_();
+  void makeSegments_() override;
 
 private:
   NumberText* years_;  // Displays the year

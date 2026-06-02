@@ -56,7 +56,7 @@ public:
   int textAlignment() const;
 
   /** Don't permit splash screen to hide until the destructor. (Avoids click-to-close behavior) */
-  virtual void setVisible(bool showIt);
+  void setVisible(bool showIt) override;
 
 public Q_SLOTS:
   /** Sets the text foreground color; only affects future showMessage() calls */

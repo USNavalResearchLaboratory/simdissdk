@@ -58,12 +58,12 @@ public:
   // osgGA::GUIEventHandler
 
   /** Manages dragging for creating insets using the mouse */
-  virtual bool handle(const osgGA::GUIEventAdapter& evnt, osgGA::GUIActionAdapter& view);
+  bool handle(const osgGA::GUIEventAdapter& evnt, osgGA::GUIActionAdapter& view) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
   /** Return the class name */
-  virtual const char* className() const { return "CreateInsetEventHandler"; }
+  const char* className() const override { return "CreateInsetEventHandler"; }
 
 protected:
   virtual ~CreateInsetEventHandler();
@@ -125,12 +125,12 @@ public:
   // osgGA::GUIEventHandler
 
   /** Manages dragging for creating insets using the mouse */
-  virtual bool handle(const osgGA::GUIEventAdapter& evnt, osgGA::GUIActionAdapter& view);
+  bool handle(const osgGA::GUIEventAdapter& evnt, osgGA::GUIActionAdapter& view) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
   /** Return the class name */
-  virtual const char* className() const { return "InsetViewEventHandler"; }
+  const char* className() const override { return "InsetViewEventHandler"; }
 
 protected:
   virtual ~InsetViewEventHandler();

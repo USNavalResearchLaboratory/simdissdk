@@ -45,9 +45,7 @@ class CategoryDataPair
 {
 public:
 
-  virtual ~CategoryDataPair()
-  {
-  }
+  virtual ~CategoryDataPair() = default;
 
   ///@return Time of validity for the category data pair
   virtual double time() const = 0;
@@ -77,7 +75,7 @@ protected: // types
   class IteratorImpl
   {
   public:
-    virtual ~IteratorImpl() {}
+    virtual ~IteratorImpl() = default;
     /** Retrieves next item and increments iterator to next element */
     virtual std::shared_ptr<CategoryDataPair> next() = 0;
     /** Retrieves next item and does not increment iterator to next element */
@@ -109,7 +107,7 @@ public: // types
     /// called by CategoryDataSlice::visit()
     virtual void operator()(const CategoryData *update) = 0;
 
-    virtual ~Visitor() {}
+    virtual ~Visitor() = default;
   };
 
   /** Iterator for category data, modeled after Qt and Java iteration
@@ -139,7 +137,7 @@ public: // types
     {
     }
 
-    virtual ~Iterator() {}
+    virtual ~Iterator() = default;
 
     /** Retrieves next item and increments iterator to next element */
     const std::shared_ptr<CategoryDataPair> next() {return impl_->next();}
@@ -166,9 +164,7 @@ public: // types
   };
 
 public:
-  virtual ~CategoryDataSlice()
-  {
-  }
+  virtual ~CategoryDataSlice() = default;
 
   ///@return last update time
   virtual double lastUpdateTime() const = 0;

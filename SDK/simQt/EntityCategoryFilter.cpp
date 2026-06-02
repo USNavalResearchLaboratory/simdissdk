@@ -45,25 +45,25 @@ public:
   }
 
   /// Invoked when a new category is added
-  virtual void onAddCategory(int categoryIndex) override
+  void onAddCategory(int categoryIndex) override
   {
     // noop
   }
 
   /// Invoked when a new value is added to a category
-  virtual void onAddValue(int categoryIndex, int valueIndex) override
+  void onAddValue(int categoryIndex, int valueIndex) override
   {
     // noop
   }
 
   /// Invoked when all data is cleared
-  virtual void onClear() override
+  void onClear() override
   {
     parent_->fireActiveChange_(false);
   }
 
   /// Invoked when all listeners have received onClear()
-  virtual void doneClearing() override
+  void doneClearing() override
   {
     // noop
   }

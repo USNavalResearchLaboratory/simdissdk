@@ -412,7 +412,7 @@ void test_5743()
   struct GenericDataSliceCopy : public simData::GenericDataSlice::Visitor
   {
     std::vector<simData::GenericData_Entry> entries;
-    virtual void operator()(const simData::GenericData *update)
+    void operator()(const simData::GenericData *update) override
     {
       if (update == nullptr)
         return;

@@ -57,23 +57,23 @@ public:
   bool isPitchLocked() const;
 
   /** @see osgEarth::Util::EarthManipulator::pan() */
-  virtual void pan(double dx, double dy);
+  void pan(double dx, double dy) override;
   /** @see osgEarth::Util::EarthManipulator::rotate() */
-  virtual void rotate(double dx, double dy);
+  void rotate(double dx, double dy) override;
   /** @see osgEarth::Util::EarthManipulator::zoom() */
-  virtual void zoom(double dx, double dy, osg::View* view);
+  void zoom(double dx, double dy, osg::View* view) override;
 
   /** @see osgEarth::Util::EarthManipulator::handleMovementAction() */
-  virtual void handleMovementAction(const ActionType& type, double dx, double dy, osg::View* view);
+  void handleMovementAction(const ActionType& type, double dx, double dy, osg::View* view) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "EarthManipulator"; }
+  const char* className() const override { return "EarthManipulator"; }
 
   /** Attach a node to the manipulator. Need to override so we maintain the original FOV value */
-  virtual void setNode(osg::Node* node);
+  void setNode(osg::Node* node) override;
 
 private:
   bool lockHeading_;

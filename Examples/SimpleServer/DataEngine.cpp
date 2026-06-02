@@ -48,7 +48,7 @@ public:
   {
   }
 
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
   {
     if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
     {
@@ -110,8 +110,8 @@ void DataEngine::generateData_()
     std::stringstream name;
     name << platforms_.size() + 1 << " p-3c_orion_nrl";
     newPlatform->create(name.str());
-    platforms_.push_back(newPlatform);
-    generators_.push_back(newPlatform);
+    platforms_.emplace_back(newPlatform);
+    generators_.emplace_back(newPlatform);
 
     // Create a cycling animated line between entities 4 and 3/5
     if (platforms_.size() == 5)
@@ -120,7 +120,7 @@ void DataEngine::generateData_()
       line->setAnchor(platforms_[3]->id());
       line->addTarget(platforms_[2]->id());
       line->addTarget(platforms_[4]->id());
-      generators_.push_back(line);
+      generators_.emplace_back(line);
     }
 
     // Toggle the 2nd platform icon between normal and a 2D icon
@@ -140,7 +140,7 @@ void DataEngine::generateData_()
       for (size_t k = 0; k < 3; ++k)
         targetBeam_->addTarget(platforms_[k]->id());
       beamId = targetBeam_->id();
-      generators_.push_back(targetBeam_);
+      generators_.emplace_back(targetBeam_);
     }
     else
     {
@@ -149,7 +149,7 @@ void DataEngine::generateData_()
       RotatingBeam* beam = new RotatingBeam(dataStore_);
       beam->create(platforms_.back()->id(), beamName.str());
       beamId = beam->id();
-      generators_.push_back(beam);
+      generators_.emplace_back(beam);
     }
     // For the beam, toggle draw every few seconds and cycle the colors
     generators_.push_back(new ToggleDrawState(dataStore_, beamId, 5.0));
@@ -161,7 +161,7 @@ void DataEngine::generateData_()
     gateName << "Gate " << platforms_.size() + 1;
     RotatingGate* gate = new RotatingGate(dataStore_);
     gate->create(beamId, gateName.str());
-    generators_.push_back(gate);
+    generators_.emplace_back(gate);
     // For the gate, toggle draw every few seconds and cycle the colors
     generators_.push_back(new ToggleDrawState(dataStore_, gate->id(), 5.0));
     generators_.push_back(new CycleColor(dataStore_, gate->id(), platforms_.size() * 13 + 5, 2.0));
@@ -184,7 +184,7 @@ void DataEngine::generateData_()
       missilePrefs->set_lighted(true);
       missilePrefs->set_brightness(64);
       txn.complete(&missilePrefs);
-      generators_.push_back(missile);
+      generators_.emplace_back(missile);
     }
   }
 

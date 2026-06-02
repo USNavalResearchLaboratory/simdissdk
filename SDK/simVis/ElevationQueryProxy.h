@@ -88,7 +88,7 @@ public:
    * @param blocking true if the call should block until it gets the elevation value. Note that using osgEarth API prior to 3/2017 will always block
    * @return True if the query succeeded, false upon failure.
    */
-  bool getElevation(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution = 0.0, double* out_actualResolution = 0L, bool blocking = true);
+  bool getElevation(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution = 0.0, double* out_actualResolution = nullptr, bool blocking = true);
 
   /**
    * Get elevation from a pending query initiated by a non-blocking getElevation() call. Will fill in the passed in values if there
@@ -101,7 +101,7 @@ public:
    *      Resolution of the resulting elevation value (if the method returns true).
    * @return true if pending query was available, false otherwise
   */
-  bool getPendingElevation(double& out_elevation, double* out_actualResolution = 0L);
+  bool getPendingElevation(double& out_elevation, double* out_actualResolution = nullptr);
 
   /** Changes the MapNode that is associated with the query. */
   void setMap(const osgEarth::Map* map);

@@ -21,6 +21,7 @@
  *
  */
 #include <QApplication>
+#include <QDialog>
 #include <QMainWindow>
 #include <QScreen>
 #ifdef WIN32
@@ -28,7 +29,10 @@
 #include <QStyleHints>
 #endif
 #endif
+#include <QTabBar>
+#include <QTabWidget>
 #include <QWidget>
+#include "simQt/OverrideShortcut.h"
 #include "simQt/QtUtils.h"
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
@@ -137,12 +141,67 @@ QWidget* QtUtils::getMainWindowParent(QWidget* widget)
   if (!widget)
     return widget;
 
+  // SIM-19177: When docking a QDockWidget that has spawned other dialogs, having them parented to the QDockWidget
+  // causes odd behavior resulting in them being hidden behind the MainWindow and not closing when the application is exited.
+  // However, if a modal dialog creates another dialog and the latter is parented to the MainWindow, then it becomes unusable
+  // and is hidden behind the "parent" modal dialog.
+  // These behavioral issues seem to stem from bugs in Qt6, so we're working around them and keeping our eye on it.
   for (QWidget* rv = dynamic_cast<QWidget*>(widget->parent()); rv != nullptr; rv = dynamic_cast<QWidget*>(rv->parent()))
   {
+    if (auto dialog = dynamic_cast<QDialog*>(rv); dialog != nullptr && dialog->isModal())
+      return rv;
     if (dynamic_cast<QMainWindow*>(rv) != nullptr)
       return rv;
   }
   return widget;
+}
+
+void QtUtils::addTabShortcuts(QTabWidget& tabs, QWidget& parentScope)
+{
+  // create a temporary QPointer, that can record when the tabs get destroyed
+  QPointer<QTabWidget> tabWidget = &tabs;
+
+  // Numbered Tabs (Ctrl + 1..9)
+  for (int i = 0; i < 9; ++i)
+  {
+    const QKeySequence seq(Qt::CTRL | (Qt::Key_1 + i));
+    OverrideShortcut* numShortcut = new OverrideShortcut(seq, &parentScope);
+    QObject::connect(numShortcut, &OverrideShortcut::activated, &tabs, [tabWidget, i]() {
+      if (tabWidget && i < tabWidget->count()) {
+        tabWidget->setCurrentIndex(i);
+      }
+      });
+  }
+
+  // Next Tab (Ctrl + PageDown, Ctrl + Tab)
+  const std::vector<QKeySequence> nextKeys = {
+    QKeySequence(Qt::CTRL | Qt::Key_PageDown),
+    QKeySequence(Qt::CTRL | Qt::Key_Tab)
+  };
+  OverrideShortcut* nextShortcut = new OverrideShortcut(nextKeys, &parentScope);
+  QObject::connect(nextShortcut, &OverrideShortcut::activated, &tabs, [tabWidget]() {
+    if (tabWidget && tabWidget->count() > 0)
+    {
+      const int nextIdx = (tabWidget->currentIndex() + 1) % tabWidget->count();
+      tabWidget->setCurrentIndex(nextIdx);
+    }
+    });
+
+  // Prev Tab (Ctrl + PageUp, Ctrl + Shift + Tab, Ctrl + Backtab)
+  std::vector<QKeySequence> prevKeys = {
+    QKeySequence(Qt::CTRL | Qt::Key_PageUp),
+    QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Tab),
+    QKeySequence(Qt::CTRL | Qt::Key_Backtab)
+  };
+  OverrideShortcut* prevShortcut = new OverrideShortcut(prevKeys, &parentScope);
+  QObject::connect(prevShortcut, &OverrideShortcut::activated, &tabs, [tabWidget]() {
+    if (tabWidget && tabWidget->count() > 0)
+    {
+      const int count = tabWidget->count();
+      const int prevIdx = (tabWidget->currentIndex() - 1 + count) % count;
+      tabWidget->setCurrentIndex(prevIdx);
+    }
+    });
 }
 
 }

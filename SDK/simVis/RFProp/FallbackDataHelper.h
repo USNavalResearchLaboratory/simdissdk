@@ -36,7 +36,7 @@ namespace simRF
 class FallbackDataHelper
 {
 public:
-  virtual ~FallbackDataHelper() {}
+  virtual ~FallbackDataHelper() = default;
 
   /**
    * Indicates whether the DataHelper can provide a result for the given beam.
@@ -51,7 +51,7 @@ public:
 class NullDataHelper : public FallbackDataHelper
 {
 public:
-  NullDataHelper() {}
+  NullDataHelper() = default;
 
   /**
    * Indicates whether the DataHelper can provide a result for the given beam.
@@ -60,7 +60,7 @@ public:
    * @param hgtMeters Height, above surface referenced to HAE, meters
    * @return -300 on success, valid value otherwise
    */
-  virtual double value(double azimRad, double gndRngMeters, double hgtMeters) override
+  double value(double azimRad, double gndRngMeters, double hgtMeters) override
   {
     return simCore::SMALL_DB_VAL;
   }

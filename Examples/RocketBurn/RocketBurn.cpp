@@ -50,7 +50,7 @@ public:
   }
 
   /// data store has changed
-  virtual void onChange(simData::DataStore *source)
+  void onChange(simData::DataStore *source) override
   {
     rbStorage_.update(source->updateTime());
     vtStorage_.update(source->updateTime());

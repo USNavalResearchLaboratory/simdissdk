@@ -140,7 +140,7 @@ public:
   Polytope(const Polytope& rhs);
 
   /// dtor
-  virtual ~Polytope() { }
+  virtual ~Polytope() = default;
 
   /**
    * Adds a bounding plane to the polytope. The "inside" of the plane

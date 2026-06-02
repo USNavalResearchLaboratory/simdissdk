@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class Arc; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Arc */
 class SDKVIS_EXPORT Arc
 {
 public:
-  /** Create the arc from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the arc from the shape object */
   static GogNodeInterface* createArc(const simCore::GOG::Arc& arc, const std::string& filename, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

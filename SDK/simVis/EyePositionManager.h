@@ -171,28 +171,28 @@ public:
 class NullEyePositionManager : public simVis::EyePositionManager
 {
 public:
-  virtual void reset() {}
-  virtual void addCallback(EyePositionCallbackPtr cb) { }
-  virtual void removeCallback(EyePositionCallbackPtr cb) { }
-  virtual void createEyePosition(const std::string &viewString) { }
-  virtual int applyEyePosition(const std::string &viewString, simVis::View *viewport) { return 1; }
-  virtual int loadFile(const std::string& fileName) { return 1; }
-  virtual int loadFile(std::istream& is) { return 1; }
-  virtual int saveFile(const std::string& fileName) { return 1; }
-  virtual int saveFile(std::ostream& os, bool includeEyePositions) { return 1; }
-  virtual std::string eyePositionString(simVis::View *viewport) { return ""; }
-  virtual std::string insetString(simVis::View *viewport) { return ""; }
-  virtual void cycleEyeView(simVis::View *viewport, bool forwardCycle) { }
+  void reset() override {}
+  void addCallback(EyePositionCallbackPtr cb) override { }
+  void removeCallback(EyePositionCallbackPtr cb) override { }
+  void createEyePosition(const std::string &viewString) override { }
+  int applyEyePosition(const std::string &viewString, simVis::View *viewport) override { return 1; }
+  int loadFile(const std::string& fileName) override { return 1; }
+  int loadFile(std::istream& is) override { return 1; }
+  int saveFile(const std::string& fileName) override { return 1; }
+  int saveFile(std::ostream& os, bool includeEyePositions) override { return 1; }
+  std::string eyePositionString(simVis::View *viewport) override { return ""; }
+  std::string insetString(simVis::View *viewport) override { return ""; }
+  void cycleEyeView(simVis::View *viewport, bool forwardCycle) override { }
   // Treated as an opaque pointer by consumers
-  virtual simVis::EyePosition* eyePositionByName(const std::string &eyePositionName) { return nullptr; }
-  virtual void applyEyePositionToPort(simVis::EyePosition *eyePosition, simVis::View *viewport) { }
-  virtual void removeEyePosition(simVis::EyePosition *eyePosition) { }
-  virtual void removeEyePosition(const std::string& name) { }
+  simVis::EyePosition* eyePositionByName(const std::string &eyePositionName) override { return nullptr; }
+  void applyEyePositionToPort(simVis::EyePosition *eyePosition, simVis::View *viewport) override { }
+  void removeEyePosition(simVis::EyePosition *eyePosition) override { }
+  void removeEyePosition(const std::string& name) override { }
   virtual void renameEyePosition(simVis::EyePosition* eyePosition, const std::string& newName) { }
-  virtual void moveToEyePosition(simVis::EyePosition *eyePosition, simVis::View *viewport, double duration) { }
-  virtual void getEyePositions(std::vector<simVis::EyePosition*>& eyePositions) const { }
-  virtual std::vector<std::string> tetherNames(const simVis::EyePosition& eyePos) const { return std::vector<std::string>(); }
-  virtual std::string watchName(const simVis::EyePosition& eyePos) const { return ""; }
+  void moveToEyePosition(simVis::EyePosition *eyePosition, simVis::View *viewport, double duration) override { }
+  void getEyePositions(std::vector<simVis::EyePosition*>& eyePositions) const override { }
+  std::vector<std::string> tetherNames(const simVis::EyePosition& eyePos) const override { return std::vector<std::string>(); }
+  std::string watchName(const simVis::EyePosition& eyePos) const override { return ""; }
 };
 
 } // simVis

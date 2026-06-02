@@ -49,7 +49,7 @@ struct LocatorCallback : public osg::Referenced
 
 protected:
   /// osg::Referenced-derived
-  virtual ~LocatorCallback() {}
+  virtual ~LocatorCallback() = default;
 };
 
 /** Function pointer to a LocatorCallback method that takes a Locator parameter (e.g. LocatorCallback::operator()) */
@@ -66,11 +66,11 @@ struct SyncLocatorCallback : public LocatorCallback
   SyncLocatorCallback(T *node) : node_(node) {}
 
   /** Calls syncWithLocator() on the node */
-  void operator()(const class Locator* locator) { node_->syncWithLocator(); }
+  void operator()(const class Locator* locator) override { node_->syncWithLocator(); }
 
 protected:
   /// osg::Referenced-derived
-  virtual ~SyncLocatorCallback() {}
+  virtual ~SyncLocatorCallback() = default;
 
 public: // data
   /** Node pointer */
@@ -342,7 +342,7 @@ public:
 
 protected:
   /// osg::Referenced-derived
-  virtual ~Locator() {}
+  virtual ~Locator() = default;
 
   /**
   * Returns the base position of this locator after specified inheritance components are applied to it
@@ -447,7 +447,7 @@ public:
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
-  virtual bool getLocatorPosition(simCore::Vec3* out_position,
+  bool getLocatorPosition(simCore::Vec3* out_position,
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const override;
 
   /**
@@ -460,11 +460,11 @@ public:
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
-  virtual bool getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+  bool getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const override;
 protected:
   /// osg::Referenced-derived
-  virtual ~CachingLocator() {}
+  virtual ~CachingLocator() = default;
 
 private:
   // cache frequently used LLA position and orientation
@@ -494,14 +494,14 @@ public:
   ResolvedPositionOrientationLocator(Locator* parentLoc, unsigned int inheritMask);
 protected:
   /// osg::Referenced-derived
-  virtual ~ResolvedPositionOrientationLocator() {}
+  virtual ~ResolvedPositionOrientationLocator() = default;
 private:
   /** @copydoc Locator::getPosition_() */
-  virtual bool getPosition_(osg::Vec3d& pos, unsigned int comps) const override;
+  bool getPosition_(osg::Vec3d& pos, unsigned int comps) const override;
   /** @copydoc Locator::getRotation_() */
-  virtual bool getRotation_(osg::Matrixd& rotation) const override;
+  bool getRotation_(osg::Matrixd& rotation) const override;
   /** @copydoc Locator::applyOffsets_() */
-  virtual void applyOffsets_(osg::Matrixd& output, unsigned int comps) const override;
+  void applyOffsets_(osg::Matrixd& output, unsigned int comps) const override;
 };
 
 /**
@@ -520,10 +520,10 @@ public:
   ResolvedPositionLocator(Locator* parentLoc, unsigned int inheritMask);
 protected:
   /// osg::Referenced-derived
-  virtual ~ResolvedPositionLocator() {}
+  virtual ~ResolvedPositionLocator() = default;
 private:
   /** @copydoc Locator::getOrientation_() */
-  virtual bool getOrientation_(osg::Matrixd& ori, unsigned int comps) const override;
+  bool getOrientation_(osg::Matrixd& ori, unsigned int comps) const override;
 };
 }
 

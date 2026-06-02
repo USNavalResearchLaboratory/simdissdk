@@ -44,27 +44,27 @@ public:
   virtual ~TableManager();
 
   /** Adds a data table to the owner specified, with name specified. */
-  virtual TableStatus addDataTable(ObjectId ownerId, const std::string& tableName, DataTable** newTable);
+  TableStatus addDataTable(ObjectId ownerId, const std::string& tableName, DataTable** newTable) override;
   /** Deletes a table referenced by ID. */
-  virtual TableStatus deleteTable(TableId tableId);
+  TableStatus deleteTable(TableId tableId) override;
   /** Deletes all the tables associated with a particular owner. */
-  virtual void deleteTablesByOwner(simData::ObjectId ownerId);
+  void deleteTablesByOwner(simData::ObjectId ownerId) override;
 
   /** Total number of tables managed. */
-  virtual size_t tableCount() const;
+  size_t tableCount() const override;
   /** List of all tables associated with an entity ID. */
-  virtual const TableList* tablesForOwner(simData::ObjectId ownerId) const;
+  const TableList* tablesForOwner(simData::ObjectId ownerId) const override;
   /** Retrieves the table with the given ID. */
-  virtual DataTable* getTable(TableId tableId) const;
+  DataTable* getTable(TableId tableId) const override;
   /** Finds a table by name. */
-  virtual DataTable* findTable(ObjectId ownerId, const std::string& tableName) const;
+  DataTable* findTable(ObjectId ownerId, const std::string& tableName) const override;
 
   /** Add an observer for notification of new or removed tables */
-  virtual void addObserver(ManagerObserverPtr callback);
+  void addObserver(ManagerObserverPtr callback) override;
   /** Remove an observer */
-  virtual void removeObserver(ManagerObserverPtr callback);
+  void removeObserver(ManagerObserverPtr callback) override;
   /** Retrieve the observers for this table manager */
-  virtual void getObservers(std::vector<ManagerObserverPtr>& observers);
+  void getObservers(std::vector<ManagerObserverPtr>& observers) override;
 
   /** Removes a table from internal lists without removing it; used by simData::MemoryTable::~Table() */
   void removeTable(Table* table);
@@ -73,7 +73,7 @@ public:
   class NewRowDataListener
   {
   public:
-    virtual ~NewRowDataListener() {}
+    virtual ~NewRowDataListener() = default;
 
     /// New row was processed for the entity ID provided, at the time provided.  Query the table for contents of update.
     virtual void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime) = 0;
@@ -86,7 +86,7 @@ public:
   {
   public:
     /// Implemented as Noop
-    virtual void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime) {}
+    void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime) override {}
   };
 
   /** Sets the new-row data listener for when new table rows are added; use nullptr to remove. */

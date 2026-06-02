@@ -66,10 +66,7 @@ struct NewRegistry
     delete pluginManager;
     delete help;
   }
-
-private:
-  /** Not implemented */
-  NewRegistry(const NewRegistry& noCopyConstructor);
+  NewRegistry(const NewRegistry& noCopyConstructor) = delete;
 };
 
 int testFind()

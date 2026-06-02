@@ -37,7 +37,7 @@ namespace simUtil {
 class SDKUTIL_EXPORT IdMapper
 {
 public:
-  virtual ~IdMapper() {}
+  virtual ~IdMapper() = default;
 
   /**
    * Map ID value to local system; returns 0 on not-found.
@@ -99,7 +99,7 @@ public:
   void clearMappings();
 
   /** Provides an ID mapping from Remote IDs to local ID */
-  virtual uint64_t map(uint64_t id);
+  uint64_t map(uint64_t id) override;
 
 private:
   /** Attempts to resolve the ID to a known ID on our side, returns 0 on not-found */

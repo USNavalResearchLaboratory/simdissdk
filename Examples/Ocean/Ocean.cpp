@@ -139,7 +139,7 @@ public:
     //  triton_->removeIntersections(isect_.get());
   }
 
-  void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  void operator()(osg::Node* node, osg::NodeVisitor* nv) override
   {
     if (enabled_ || reset_)
     {
@@ -190,7 +190,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
     scene_(scene)
   { }
 
-  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
   {
     bool handled = false;
 
@@ -304,7 +304,7 @@ namespace
     virtual ~CloudManager() {}
 
     /** Clears out then applies clouds as needed */
-    virtual void apply_(osgEarth::SilverLining::Atmosphere& atmosphere)
+    void apply_(osgEarth::SilverLining::Atmosphere& atmosphere) override
     {
       if (clearClouds_.isSet())
       {
@@ -778,6 +778,10 @@ namespace
 
 int main(int argc, char** argv)
 {
+  int rv = 0;
+  // Create an artificial scope for clean-up, so we can use _exit() at
+  // the end, to avoid osgEarth Linux crashes with HTTP static objects.
+  {
   simCore::checkVersionThrow();
 
   // check for ocean and sky options.
@@ -915,12 +919,16 @@ int main(int argc, char** argv)
 
 #ifdef HAVE_IMGUI
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
   gui->add(new ControlPanel(simpleOceanLayer.get(), tritonLayer.get(), buoyancyCallback.get(),
     sky.get(), viewer->getMainView(), useTriton, useSilverLining));
   viewer->addEventHandler(new MenuHandler(viewer.get(), scene.get()));
 #endif
 
   viewer->installDebugHandlers();
-  return viewer->run();
+  rv = viewer->run();
+  } // Close up scope for cleanup
+  // Avoid static initialization crashes
+  _exit(rv);
+  return rv;
 }

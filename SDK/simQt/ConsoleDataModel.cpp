@@ -65,7 +65,7 @@ public:
    * @param severity Severity level with which to push out text
    * @param text Text string to push out to all observers; should be completely formed (buffered) message
    */
-  virtual void addText(simNotify::NotifySeverity severity, const QString& text)
+  void addText(simNotify::NotifySeverity severity, const QString& text) override
   {
     if (dataModel_ == nullptr)
       return;
@@ -85,7 +85,7 @@ public:
   }
 
   /** Returns the name of the channel */
-  virtual const QString& name() const
+  const QString& name() const override
   {
     return name_;
   }
@@ -298,8 +298,9 @@ void ConsoleDataModel::addEntry(simNotify::NotifySeverity severity, const QStrin
   for (auto it = split.begin(); it != split.end(); ++it)
   {
     QString& str = *it;
-    // Remove instances of carriage return before adding text
+    // Remove instances of carriage return and excess null terminators before adding text
     str.remove('\r');
+    str.remove('\0');
     if (!str.isEmpty())
       addPlainEntry_(severity, channel, str);
   }
@@ -644,24 +645,24 @@ void SimpleConsoleTextFilter::addCommonQtPngFilters()
 {
   // Matches error messages from SIM-4260, like:
   // QOpenGLContext::swapBuffers() called with non-exposed window, behavior is undefined
-  filters_.push_back("swapBuffers() called with non-exposed window, behavior is undefined");
+  filters_.emplace_back("swapBuffers() called with non-exposed window, behavior is undefined");
 
   // Matches error messages from SIM-4433, like:
   // QWindowsWindow::setGeometryDp: Attempt to set a size (283x177) violating the constraints(283x295 - 524287x524287) on window QWidgetWindow/'Super FormWindow'
-  filters_.push_back("QWindowsWindow::setGeometryDp: Attempt to set a size (");
+  filters_.emplace_back("QWindowsWindow::setGeometryDp: Attempt to set a size (");
 
   // Matches error messages from Intel 4600 on start-up from SIM-4703, like:
   // Warning: detected OpenGL error 'invalid enumerant' at After Renderer::compile
   // Warning: detected OpenGL error 'invalid enumerant' at after RenderBin::draw(..)
-  filters_.push_back("Warning: detected OpenGL error 'invalid enumerant' at ");
+  filters_.emplace_back("Warning: detected OpenGL error 'invalid enumerant' at ");
 
   // Matches error messages from MSVC 2015 with Qt 5.5 which uses PNG 1.6, like:
   // "libpng warning: iCCP: known incorrect sRGB profile"
-  filters_.push_back("libpng warning: iCCP: known incorrect sRGB profile");
+  filters_.emplace_back("libpng warning: iCCP: known incorrect sRGB profile");
 
   // Matches PNG 1.6 from GDAL:
   // "PNG lib warning : Interlace handling should be turned on when using png_read_image"
-  filters_.push_back("Interlace handling should be turned on when using png_read_image");
+  filters_.emplace_back("Interlace handling should be turned on when using png_read_image");
 
   // Matches error messages from Qt about untested version of Windows:
   // "libpng warning: iCCP: known incorrect sRGB profile"
@@ -671,7 +672,7 @@ void SimpleConsoleTextFilter::addCommonQtPngFilters()
 
   // Errors displayed in Red Hat at start up
 #ifndef WIN32
-  filters_.push_back("QXcbConnection: XCB error: 8 (BadMatch),");
+  filters_.emplace_back("QXcbConnection: XCB error: 8 (BadMatch),");
 #endif
 }
 
@@ -679,12 +680,12 @@ void SimpleConsoleTextFilter::addCommonOsgEarthFilters()
 {
   // osgEarth warnings from MGRS grid that we can't do anything about, like:
   // "[osgEarth]* [MGRSGraticule] Empty SQID geom at 10W DE"
-  filters_.push_back("[osgEarth]* [MGRSGraticule] Empty SQID geom at ");
+  filters_.emplace_back("[osgEarth]* [MGRSGraticule] Empty SQID geom at ");
   // "[osgEarth]  SQID100kmCell SW=6.30464349477,0 NE=7.20284692297,0.904282609865, SRS=WGS 84"
-  filters_.push_back("[osgEarth]  SQID100kmCell SW=");
+  filters_.emplace_back("[osgEarth]  SQID100kmCell SW=");
   // Hide osg notification
   // "osg::Registry::addImageProcessor(ImageProcessor)"
-  filters_.push_back("osg::Registry::addImageProcessor(ImageProcessor)");
+  filters_.emplace_back("osg::Registry::addImageProcessor(ImageProcessor)");
 }
 
 bool SimpleConsoleTextFilter::acceptEntry(ConsoleDataModel::ConsoleEntry& entry) const

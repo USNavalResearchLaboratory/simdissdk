@@ -53,40 +53,40 @@ public:
   virtual ~Table();
 
   /** Unique ID of the table (unique within the table manager).  Assigned by the table manager. */
-  virtual TableId tableId() const;
+  TableId tableId() const override;
   /** Name of the table (unique within a given entity's table list) */
-  virtual std::string tableName() const;
+  std::string tableName() const override;
   /** Unique ID of the owning entity. */
-  virtual ObjectId ownerId() const;
+  ObjectId ownerId() const override;
   /**
    * If the table has no null values, the routine will return the number of rows in the table.
    * If the table has null values the routine will return the number of rows in the largest sub-table.
    */
-  virtual size_t maxSubTableRow() const;
+  size_t maxSubTableRow() const override;
   /** Number of columns in this table. */
-  virtual size_t columnCount() const;
+  size_t columnCount() const override;
   /** Retrieves column by ID */
-  virtual TableColumn* column(TableColumnId id) const;
+  TableColumn* column(TableColumnId id) const override;
   /** Retrieves column by name. */
-  virtual TableColumn* column(const std::string& name) const;
+  TableColumn* column(const std::string& name) const override;
   /** Adds a new data column, returning a pointer to the table interface. */
-  virtual TableStatus addColumn(const std::string& columnName, VariableType storageType, UnitType unitType, TableColumn** newColumn);
+  TableStatus addColumn(const std::string& columnName, VariableType storageType, UnitType unitType, TableColumn** newColumn) override;
   /** Removes a data column */
-  virtual TableStatus removeColumn(const std::string& columnName);
+  TableStatus removeColumn(const std::string& columnName) override;
   /** Visitor pattern to access all rows in the table. */
-  virtual void accept(double beginTime, double endTime, DataTable::RowVisitor& visitor) const;
+  void accept(double beginTime, double endTime, DataTable::RowVisitor& visitor) const override;
   /** Visitor pattern to access all columns in the table. */
-  virtual void accept(DataTable::ColumnVisitor& visitor) const;
+  void accept(DataTable::ColumnVisitor& visitor) const override;
   /** Adds a row to the table. */
-  virtual TableStatus addRow(const TableRow& row);
+  TableStatus addRow(const TableRow& row) override;
   /** Clears data out of the given column or all columns if given -1 */
-  virtual DelayedFlushContainerPtr flush(TableColumnId id = -1);
+  DelayedFlushContainerPtr flush(TableColumnId id = -1) override;
   /** Remove rows in the given time range; up to but not including endTime */
-  virtual void flush(double startTime, double endTime);
+  void flush(double startTime, double endTime) override;
   /** Add an observer for notification when rows or columns are added or removed */
-  virtual void addObserver(TableObserverPtr callback);
+  void addObserver(TableObserverPtr callback) override;
   /** Remove an observer */
-  virtual void removeObserver(TableObserverPtr callback);
+  void removeObserver(TableObserverPtr callback) override;
 
 private:
   /** Retrieves the subtable for the given column */

@@ -55,22 +55,22 @@ public:
    * @{
    */
   /// allocate a new memento for this internals (caller deletes)
-  virtual InternalsMemento* createInternalsMemento() const override;
+  InternalsMemento* createInternalsMemento() const override;
 
   /// update all data slices to reflect current 'time'
-  virtual void update(double time) override;
+  void update(double time) override;
 
   /// returns the last value sent to update(double), relative to current reference year
-  virtual double updateTime() const override;
+  double updateTime() const override;
 
   /// data store reference year (without transaction cost); intended to be cached locally for performance.
-  virtual int referenceYear() const override;
+  int referenceYear() const override;
 
   /// store a reference to current clock, for time/data mode
-  virtual void bindToClock(simCore::Clock* clock) override;
+  void bindToClock(simCore::Clock* clock) override;
 
   /// fetches a currently bound clock
-  virtual simCore::Clock* getBoundClock() const override;
+  simCore::Clock* getBoundClock() const override;
 
   /**
   * set data limiting in the data store.  This sets a flag in the
@@ -79,95 +79,95 @@ public:
   * DataSlice::limitByPrefs, passing in the CommonPrefs record
   * @param[in] dataLimiting
   */
-  virtual void setDataLimiting(bool dataLimiting) override;
+  void setDataLimiting(bool dataLimiting) override;
 
   /// returns flag indicating if data limiting is set
-  virtual bool dataLimiting() const override;
+  bool dataLimiting() const override;
 
   /// flush all the updates, command, category data and generic data for the specified id,
   /// if 0 is passed in flushes the entire scenario, except for static entities
   [[deprecated("Use flush(ObjectId, FlushScope, FlushFields) instead.")]]
-  virtual void flush(ObjectId flushId, FlushType type = NON_RECURSIVE) override;
+  void flush(ObjectId flushId, FlushType type = NON_RECURSIVE) override;
 
   /** Removes all the specified data */
-  virtual int flush(ObjectId id, FlushScope scope, FlushFields fields) override;
+  int flush(ObjectId id, FlushScope scope, FlushFields fields) override;
 
   /** Removes a range of data from startTime up to but not including the endTime */
-  virtual int flush(ObjectId id, FlushScope scope, FlushFields fields, double startTime, double endTime) override;
+  int flush(ObjectId id, FlushScope scope, FlushFields fields, double startTime, double endTime) override;
 
   /** clear out the data store of all scenario specific data, including all entities and category data names. */
-  virtual void clear() override;
+  void clear() override;
 
   /**@name Interpolation
    *@{
    */
   /// implementation supports interpolation for updates
-  virtual bool canInterpolate() const override;
+  bool canInterpolate() const override;
 
   /** Enable or disable interpolation, if supported
    *
    * @note (Will only succeed if implementation supports interpolation
    * and contains a valid interpolator object)
    */
-  virtual bool enableInterpolation(bool state) override;
+  bool enableInterpolation(bool state) override;
 
   /// interpolation is enabled
-  virtual bool isInterpolationEnabled() const override;
+  bool isInterpolationEnabled() const override;
 
   /// Specify the interpolator to use
-  virtual void setInterpolator(Interpolator *interpolator) override;
+  void setInterpolator(Interpolator *interpolator) override;
 
   /// Get the current interpolator (nullptr if disabled)
-  virtual Interpolator* interpolator() const override;
+  Interpolator* interpolator() const override;
   ///@}
 
   /// Sets the interpolation state; returns true if interpolation is enabled
-  virtual bool enableInterpolation(InterpolatorState state) override;
+  bool enableInterpolation(InterpolatorState state) override;
 
   /// Returns the interpolation state
-  virtual InterpolatorState interpolatorState() const override;
+  InterpolatorState interpolatorState() const override;
 
   /**@name ID Lists
    * @{
    */
    /// Retrieves the number of objects of 'type'
-  virtual size_t idCount(simData::ObjectType type = simData::ALL) const override;
+  size_t idCount(simData::ObjectType type = simData::ALL) const override;
 
   /// Retrieve a list of IDs for objects of 'type'
-  virtual void idList(IdList* ids, simData::ObjectType type = simData::ALL) const override;
+  void idList(IdList* ids, simData::ObjectType type = simData::ALL) const override;
 
   /// Retrieve a list of IDs for objects of 'type' with the given name
-  virtual void idListByName(const std::string& name, IdList* ids, simData::ObjectType type = simData::ALL) const override;
+  void idListByName(const std::string& name, IdList* ids, simData::ObjectType type = simData::ALL) const override;
 
   /// Retrieve a list of IDs for objects with the given original id
-  virtual void idListByOriginalId(IdList *ids, uint64_t originalId, simData::ObjectType type = simData::ALL) const override;
+  void idListByOriginalId(IdList *ids, uint64_t originalId, simData::ObjectType type = simData::ALL) const override;
 
   /// Retrieve a list of IDs for all beams associated with a platform
-  virtual void beamIdListForHost(ObjectId hostid, IdList *ids) const override;
+  void beamIdListForHost(ObjectId hostid, IdList *ids) const override;
 
   /// Retrieve a list of IDs for all gates associated with a beam
-  virtual void gateIdListForHost(ObjectId hostid, IdList *ids) const override;
+  void gateIdListForHost(ObjectId hostid, IdList *ids) const override;
 
   /// Retrieve a list of IDs for all lasers associated with a platform
-  virtual void laserIdListForHost(ObjectId hostid, IdList *ids) const override;
+  void laserIdListForHost(ObjectId hostid, IdList *ids) const override;
 
   /// Retrieve a list of IDs for all projectors associated with a platform
-  virtual void projectorIdListForHost(ObjectId hostid, IdList *ids) const override;
+  void projectorIdListForHost(ObjectId hostid, IdList *ids) const override;
 
   /// Retrieve a list of IDs for all lobGroups associated with a platform
-  virtual void lobGroupIdListForHost(ObjectId hostid, IdList *ids) const override;
+  void lobGroupIdListForHost(ObjectId hostid, IdList *ids) const override;
 
   /// Retrieve a list of IDs for all customs associated with a platform
-  virtual void customRenderingIdListForHost(ObjectId hostid, IdList *ids) const override;
+  void customRenderingIdListForHost(ObjectId hostid, IdList *ids) const override;
 
   ///Retrieves the ObjectType for a particular ID
-  virtual simData::ObjectType objectType(ObjectId id) const override;
+  simData::ObjectType objectType(ObjectId id) const override;
 
   /// Retrieves the host entity ID for a particular ID (i.e. a beam, given a gate ID; a platform, given a LOB ID)
-  virtual ObjectId entityHostId(ObjectId childId) const override;
+  ObjectId entityHostId(ObjectId childId) const override;
 
   /// Retrieves the time bounds for a particular entity ID (first point, last point)
-  virtual std::pair<double, double> timeBounds(ObjectId entityId) const override;
+  std::pair<double, double> timeBounds(ObjectId entityId) const override;
   /// Retrieves the scenario time bounds (first point, last point); scenario (ID 0) implementation
   std::pair<double, double> timeBounds() const;
   ///@}
@@ -176,37 +176,37 @@ public:
    * @note should always return a valid object (never nullptr)
    * @{
    */
-  virtual const ScenarioProperties *scenarioProperties(Transaction *transaction) const override;
-  virtual const PlatformProperties *platformProperties(ObjectId id, Transaction *transaction) const override;
-  virtual const BeamProperties *beamProperties(ObjectId id, Transaction *transaction) const override;
-  virtual const GateProperties *gateProperties(ObjectId id, Transaction *transaction) const override;
-  virtual const LaserProperties *laserProperties(ObjectId id, Transaction *transaction) const override;
-  virtual const ProjectorProperties *projectorProperties(ObjectId id, Transaction *transaction) const override;
-  virtual const LobGroupProperties *lobGroupProperties(ObjectId id, Transaction *transaction) const override;
-  virtual const CustomRenderingProperties* customRenderingProperties(ObjectId id, Transaction *transaction) const override;
+  const ScenarioProperties *scenarioProperties(Transaction *transaction) const override;
+  const PlatformProperties *platformProperties(ObjectId id, Transaction *transaction) const override;
+  const BeamProperties *beamProperties(ObjectId id, Transaction *transaction) const override;
+  const GateProperties *gateProperties(ObjectId id, Transaction *transaction) const override;
+  const LaserProperties *laserProperties(ObjectId id, Transaction *transaction) const override;
+  const ProjectorProperties *projectorProperties(ObjectId id, Transaction *transaction) const override;
+  const LobGroupProperties *lobGroupProperties(ObjectId id, Transaction *transaction) const override;
+  const CustomRenderingProperties* customRenderingProperties(ObjectId id, Transaction *transaction) const override;
 
-  virtual ScenarioProperties *mutable_scenarioProperties(Transaction *transaction) override;
-  virtual PlatformProperties *mutable_platformProperties(ObjectId id, Transaction *transaction) override;
-  virtual BeamProperties *mutable_beamProperties(ObjectId id, Transaction *transaction) override;
-  virtual GateProperties *mutable_gateProperties(ObjectId id, Transaction *transaction) override;
-  virtual LaserProperties *mutable_laserProperties(ObjectId id, Transaction *transaction) override;
-  virtual ProjectorProperties *mutable_projectorProperties(ObjectId id, Transaction *transaction) override;
-  virtual LobGroupProperties *mutable_lobGroupProperties(ObjectId id, Transaction *transaction) override;
-  virtual CustomRenderingProperties* mutable_customRenderingProperties(ObjectId id, Transaction *transaction) override;
+  ScenarioProperties *mutable_scenarioProperties(Transaction *transaction) override;
+  PlatformProperties *mutable_platformProperties(ObjectId id, Transaction *transaction) override;
+  BeamProperties *mutable_beamProperties(ObjectId id, Transaction *transaction) override;
+  GateProperties *mutable_gateProperties(ObjectId id, Transaction *transaction) override;
+  LaserProperties *mutable_laserProperties(ObjectId id, Transaction *transaction) override;
+  ProjectorProperties *mutable_projectorProperties(ObjectId id, Transaction *transaction) override;
+  LobGroupProperties *mutable_lobGroupProperties(ObjectId id, Transaction *transaction) override;
+  CustomRenderingProperties* mutable_customRenderingProperties(ObjectId id, Transaction *transaction) override;
   ///@}
 
   /**@name Object Preferences
    * @note will return nullptr if no object is associated with the specified id
    * @{
    */
-  virtual const PlatformPrefs *platformPrefs(ObjectId id, Transaction *transaction) const override;
-  virtual const BeamPrefs *beamPrefs(ObjectId id, Transaction *transaction) const override;
-  virtual const GatePrefs *gatePrefs(ObjectId id, Transaction *transaction) const override;
-  virtual const LaserPrefs *laserPrefs(ObjectId id, Transaction *transaction) const override;
-  virtual const ProjectorPrefs *projectorPrefs(ObjectId id, Transaction *transaction) const override;
-  virtual const LobGroupPrefs *lobGroupPrefs(ObjectId id, Transaction *transaction) const override;
-  virtual const CommonPrefs *commonPrefs(ObjectId id, Transaction* transaction) const override;
-  virtual const CustomRenderingPrefs *customRenderingPrefs(ObjectId id, Transaction *transaction) const override;
+  const PlatformPrefs *platformPrefs(ObjectId id, Transaction *transaction) const override;
+  const BeamPrefs *beamPrefs(ObjectId id, Transaction *transaction) const override;
+  const GatePrefs *gatePrefs(ObjectId id, Transaction *transaction) const override;
+  const LaserPrefs *laserPrefs(ObjectId id, Transaction *transaction) const override;
+  const ProjectorPrefs *projectorPrefs(ObjectId id, Transaction *transaction) const override;
+  const LobGroupPrefs *lobGroupPrefs(ObjectId id, Transaction *transaction) const override;
+  const CommonPrefs *commonPrefs(ObjectId id, Transaction* transaction) const override;
+  const CustomRenderingPrefs *customRenderingPrefs(ObjectId id, Transaction *transaction) const override;
 
   /**
    * The mutable_* routines have two modes of operation, one for external users and one for internal users.  External users should
@@ -218,14 +218,14 @@ public:
    * should always set results to nullptr.
    */
 
-  virtual PlatformPrefs *mutable_platformPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
-  virtual BeamPrefs *mutable_beamPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
-  virtual GatePrefs *mutable_gatePrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
-  virtual LaserPrefs *mutable_laserPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
-  virtual ProjectorPrefs *mutable_projectorPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
-  virtual LobGroupPrefs *mutable_lobGroupPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
-  virtual CustomRenderingPrefs *mutable_customRenderingPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
-  virtual CommonPrefs *mutable_commonPrefs(ObjectId id, Transaction* transaction) override;
+  PlatformPrefs *mutable_platformPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  BeamPrefs *mutable_beamPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  GatePrefs *mutable_gatePrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  LaserPrefs *mutable_laserPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  ProjectorPrefs *mutable_projectorPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  LobGroupPrefs *mutable_lobGroupPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  CustomRenderingPrefs *mutable_customRenderingPrefs(ObjectId id, Transaction *transaction, CommitResult* results = nullptr) override;
+  CommonPrefs *mutable_commonPrefs(ObjectId id, Transaction* transaction) override;
   ///@}
 
   /**@name Add a platform, beam, gate, laser, projector, or lobGroup
@@ -234,16 +234,16 @@ public:
    *  The original id field should be used for any user generated ids.
    * @{
    */
-  virtual PlatformProperties *addPlatform(Transaction *transaction) override;
-  virtual BeamProperties *addBeam(Transaction *transaction) override;
-  virtual GateProperties *addGate(Transaction *transaction) override;
-  virtual LaserProperties *addLaser(Transaction *transaction) override;
-  virtual ProjectorProperties *addProjector(Transaction *transaction) override;
-  virtual LobGroupProperties *addLobGroup(Transaction *transaction) override;
-  virtual CustomRenderingProperties *addCustomRendering(Transaction *transaction) override;
+  PlatformProperties *addPlatform(Transaction *transaction) override;
+  BeamProperties *addBeam(Transaction *transaction) override;
+  GateProperties *addGate(Transaction *transaction) override;
+  LaserProperties *addLaser(Transaction *transaction) override;
+  ProjectorProperties *addProjector(Transaction *transaction) override;
+  LobGroupProperties *addLobGroup(Transaction *transaction) override;
+  CustomRenderingProperties *addCustomRendering(Transaction *transaction) override;
   ///@}
 
-  virtual void removeEntity(ObjectId id) override;
+  void removeEntity(ObjectId id) override;
 
   /**
    * remove a category data point
@@ -253,7 +253,7 @@ public:
    * @param valueInt integer id of the category value string
    * @return 0 if a point was actually removed
    */
-  virtual int removeCategoryDataPoint(ObjectId id, double time, int catNameInt, int valueInt) override;
+  int removeCategoryDataPoint(ObjectId id, double time, int catNameInt, int valueInt) override;
 
   /**
    * remove all the generic data associated with a tag
@@ -261,98 +261,98 @@ public:
    * @param tag The generic data to remove
    * @return 0 if a tag was actually removed
    */
-  virtual int removeGenericDataTag(ObjectId id, const std::string& tag) override;
+  int removeGenericDataTag(ObjectId id, const std::string& tag) override;
 
   /**@name Add data update, command, generic data, or category data
    *@note Returns nullptr if platform for specified ID does not exist
    * @{
    */
-  virtual PlatformUpdate *addPlatformUpdate(ObjectId id, Transaction *transaction) override;
-  virtual BeamUpdate *addBeamUpdate(ObjectId id, Transaction *transaction) override;
-  virtual BeamCommand *addBeamCommand(ObjectId id, Transaction *transaction) override;
-  virtual GateUpdate  *addGateUpdate(ObjectId id, Transaction *transaction) override;
-  virtual GateCommand *addGateCommand(ObjectId id, Transaction *transaction) override;
-  virtual LaserUpdate *addLaserUpdate(ObjectId id, Transaction *transaction) override;
-  virtual LaserCommand *addLaserCommand(ObjectId id, Transaction *transaction) override;
-  virtual PlatformCommand *addPlatformCommand(ObjectId id, Transaction *transaction) override;
-  virtual ProjectorUpdate *addProjectorUpdate(ObjectId id, Transaction *transaction) override;
-  virtual ProjectorCommand *addProjectorCommand(ObjectId id, Transaction *transaction) override;
-  virtual LobGroupUpdate *addLobGroupUpdate(ObjectId id, Transaction *transaction) override;
-  virtual LobGroupCommand *addLobGroupCommand(ObjectId id, Transaction *transaction) override;
-  virtual CustomRenderingCommand *addCustomRenderingCommand(ObjectId id, Transaction *transaction) override;
-  virtual GenericData *addGenericData(ObjectId id, Transaction *transaction) override;
-  virtual CategoryData *addCategoryData(ObjectId id, Transaction *transaction) override;
+  PlatformUpdate *addPlatformUpdate(ObjectId id, Transaction *transaction) override;
+  BeamUpdate *addBeamUpdate(ObjectId id, Transaction *transaction) override;
+  BeamCommand *addBeamCommand(ObjectId id, Transaction *transaction) override;
+  GateUpdate  *addGateUpdate(ObjectId id, Transaction *transaction) override;
+  GateCommand *addGateCommand(ObjectId id, Transaction *transaction) override;
+  LaserUpdate *addLaserUpdate(ObjectId id, Transaction *transaction) override;
+  LaserCommand *addLaserCommand(ObjectId id, Transaction *transaction) override;
+  PlatformCommand *addPlatformCommand(ObjectId id, Transaction *transaction) override;
+  ProjectorUpdate *addProjectorUpdate(ObjectId id, Transaction *transaction) override;
+  ProjectorCommand *addProjectorCommand(ObjectId id, Transaction *transaction) override;
+  LobGroupUpdate *addLobGroupUpdate(ObjectId id, Transaction *transaction) override;
+  LobGroupCommand *addLobGroupCommand(ObjectId id, Transaction *transaction) override;
+  CustomRenderingCommand *addCustomRenderingCommand(ObjectId id, Transaction *transaction) override;
+  GenericData *addGenericData(ObjectId id, Transaction *transaction) override;
+  CategoryData *addCategoryData(ObjectId id, Transaction *transaction) override;
   ///@}
 
   /**@name Retrieving read-only data slices
    * @note No locking performed for read-only update slice objects
    * @{
    */
-  virtual const PlatformUpdateSlice *platformUpdateSlice(ObjectId id) const override;
-  virtual const PlatformCommandSlice *platformCommandSlice(ObjectId id) const override;
+  const PlatformUpdateSlice *platformUpdateSlice(ObjectId id) const override;
+  const PlatformCommandSlice *platformCommandSlice(ObjectId id) const override;
 
-  virtual const BeamUpdateSlice *beamUpdateSlice(ObjectId id) const override;
-  virtual const BeamCommandSlice *beamCommandSlice(ObjectId id) const override;
+  const BeamUpdateSlice *beamUpdateSlice(ObjectId id) const override;
+  const BeamCommandSlice *beamCommandSlice(ObjectId id) const override;
 
-  virtual const GateUpdateSlice *gateUpdateSlice(ObjectId id) const override;
-  virtual const GateCommandSlice *gateCommandSlice(ObjectId id) const override;
+  const GateUpdateSlice *gateUpdateSlice(ObjectId id) const override;
+  const GateCommandSlice *gateCommandSlice(ObjectId id) const override;
 
-  virtual const LaserUpdateSlice *laserUpdateSlice(ObjectId id) const override;
-  virtual const LaserCommandSlice *laserCommandSlice(ObjectId id) const override;
+  const LaserUpdateSlice *laserUpdateSlice(ObjectId id) const override;
+  const LaserCommandSlice *laserCommandSlice(ObjectId id) const override;
 
-  virtual const ProjectorUpdateSlice *projectorUpdateSlice(ObjectId id) const override;
-  virtual const ProjectorCommandSlice *projectorCommandSlice(ObjectId id) const override;
+  const ProjectorUpdateSlice *projectorUpdateSlice(ObjectId id) const override;
+  const ProjectorCommandSlice *projectorCommandSlice(ObjectId id) const override;
 
-  virtual const LobGroupUpdateSlice *lobGroupUpdateSlice(ObjectId id) const override;
-  virtual const LobGroupCommandSlice *lobGroupCommandSlice(ObjectId id) const override;
+  const LobGroupUpdateSlice *lobGroupUpdateSlice(ObjectId id) const override;
+  const LobGroupCommandSlice *lobGroupCommandSlice(ObjectId id) const override;
 
-  virtual const CustomRenderingCommandSlice *customRenderingCommandSlice(ObjectId id) const override;
+  const CustomRenderingCommandSlice *customRenderingCommandSlice(ObjectId id) const override;
 
-  virtual const GenericDataSlice *genericDataSlice(ObjectId id) const override;
+  const GenericDataSlice *genericDataSlice(ObjectId id) const override;
 
-  virtual const CategoryDataSlice *categoryDataSlice(ObjectId id) const override;
+  const CategoryDataSlice *categoryDataSlice(ObjectId id) const override;
   ///@}
 
   /// @copydoc simData::DataStore::installSliceTimeRangeMonitor
-  virtual void installSliceTimeRangeMonitor(ObjectId id, std::function<void(double startTime, double endTime)> fn) override;
+  void installSliceTimeRangeMonitor(ObjectId id, std::function<void(double startTime, double endTime)> fn) override;
 
   /// @copydoc simData::DataStore::modifyPlatformCommandSlice
-  virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) override;
+  int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) override;
 
   /// @copydoc simData::DataStore::modifyProjectorCommandSlice
-  virtual int modifyProjectorCommandSlice(ObjectId id, VisitableDataSlice<ProjectorCommand>::Modifier* modifier) override;
+  int modifyProjectorCommandSlice(ObjectId id, VisitableDataSlice<ProjectorCommand>::Modifier* modifier) override;
 
   /// @copydoc simData::DataStore::modifyCustomRenderingCommandSlice
-  virtual int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier) override;
+  int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier) override;
 
   /**@name Listeners
    * @{
    */
   /// Add or remove a listener for event messages
-  virtual void addListener(ListenerPtr callback) override;
-  virtual void removeListener(ListenerPtr callback) override;
+  void addListener(ListenerPtr callback) override;
+  void removeListener(ListenerPtr callback) override;
   ///@}
 
   /**@name ScenarioListeners
    * @{
    */
   /// Add or remove a listener for scenario event messages
-  virtual void addScenarioListener(ScenarioListenerPtr callback) override;
-  virtual void removeScenarioListener(ScenarioListenerPtr callback) override;
+  void addScenarioListener(ScenarioListenerPtr callback) override;
+  void removeScenarioListener(ScenarioListenerPtr callback) override;
   ///@}
 
   /**@name NewUpdatesListener
   * @{
   */
   /// Add or remove a listener for when entity updates are added
-  virtual void addNewUpdatesListener(NewUpdatesListenerPtr callback) override;
-  virtual void removeNewUpdatesListener(NewUpdatesListenerPtr callback) override;
+  void addNewUpdatesListener(NewUpdatesListenerPtr callback) override;
+  void removeNewUpdatesListener(NewUpdatesListenerPtr callback) override;
   ///@}
 
   /**@name Get a handle to the CategoryNameManager
    * @{
    */
-  virtual CategoryNameManager& categoryNameManager() const override;
+  CategoryNameManager& categoryNameManager() const override;
   ///@}
 
   /**
@@ -361,7 +361,7 @@ public:
    * iterate through tables, and add data to existing tables.
    * @return Pointer to the data table manager.
    */
-  virtual DataTableManager& dataTableManager() const override;
+  DataTableManager& dataTableManager() const override;
 
 protected:
   /// generate a unique id
@@ -440,9 +440,9 @@ private:
   class NullTransactionImpl : public TransactionImpl
   {
   public:
-    virtual void commit() override {}
+    void commit() override {}
 
-    virtual void release() override {}
+    void release() override {}
   };
 
   /// Perform transactions that modify preferences
@@ -459,10 +459,10 @@ private:
 
     /// Check for changes to preference object and copy them
     /// to the internal data structure
-    virtual void commit() override;
+    void commit() override;
 
     /// No resources to be released here (resource locks/DB handles/etc)
-    virtual void release() override;
+    void release() override;
 
     /// If the transaction was not committed, will deallocate the properties
     /// object which has not been transferred
@@ -495,10 +495,10 @@ private:
 
     /// Check for changes to property object and copy them
     /// to the internal data structure
-    virtual void commit() override;
+    void commit() override;
 
     /// No resources to be released here (resource locks/DB handles/etc)
-    virtual void release() override;
+    void release() override;
 
     /// If the transaction was not committed, will deallocate the properties
     /// object which has not been transferred
@@ -527,10 +527,10 @@ private:
 
     /// Check for changes to preference object and copy them
     /// to the internal data structure
-    virtual void commit() override;
+    void commit() override;
 
     /// No resources to be released here (resource locks/DB handles/etc)
-    virtual void release() override;
+    void release() override;
 
     /// If the transaction was not committed, will deallocate the properties
     /// object which has not been transferred
@@ -565,10 +565,10 @@ private:
 
     /// Transfers ownership of the entry object to the MemoryDataStore
     /// internal data structures
-    virtual void commit() override;
+    void commit() override;
 
     /// No resources to be released here (resource locks/DB handles/etc)
-    virtual void release() override;
+    void release() override;
 
     /// If the transaction was not committed, will deallocate memory for the
     /// entry that was not added to the memoryDataStore internal data structures
@@ -601,10 +601,10 @@ private:
 
     /// Transfers ownership of the update object to the MemoryDataStore
     /// internal data structures
-    virtual void commit() override;
+    void commit() override;
 
     /// No resources to be released here (resource locks/DB handles/etc)
-    virtual void release() override;
+    void release() override;
 
     /// If the transaction was not committed, will deallocate the properties
     /// object which has not been transferred
@@ -640,10 +640,10 @@ private:
 
     /// Transfers ownership of the update object to the MemoryDataStore
     /// internal data structures
-    virtual void commit() override;
+    void commit() override;
 
     /// No resources to be released here (resource locks/DB handles/etc)
-    virtual void release() override;
+    void release() override;
 
     /// If the transaction was not committed, will deallocate the properties
     /// object which has not been transferred
@@ -705,16 +705,16 @@ private:
   void sendFlushToListeners_(ObjectId id);
 
   /// Initialize the default prefs objects
-  virtual void setDefaultPrefs(const PlatformPrefs& platformPrefs,
+  void setDefaultPrefs(const PlatformPrefs& platformPrefs,
     const BeamPrefs& beamPrefs,
     const GatePrefs& gatePrefs,
     const LaserPrefs& laserPrefs,
     const LobGroupPrefs& lobPrefs,
     const ProjectorPrefs& projectorPrefs) override;
   /** @see simData::DataStore::defaultPlatformPrefs() */
-  virtual void setDefaultPrefs(const PlatformPrefs& platformPrefs) override;
+  void setDefaultPrefs(const PlatformPrefs& platformPrefs) override;
   /** @see simData::DataStore::defaultPlatformPrefs() */
-  virtual PlatformPrefs defaultPlatformPrefs() const override;
+  PlatformPrefs defaultPlatformPrefs() const override;
 
   ObjectId baseId_;          // Used for unique ID generation
   double   lastUpdateTime_;  // Last time sent to update(double)

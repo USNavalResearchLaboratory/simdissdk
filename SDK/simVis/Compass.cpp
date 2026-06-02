@@ -79,7 +79,7 @@ public:
   explicit FocusCallback(CompassFocusManagerAdapter* adapter) : adapter_(adapter)
   {}
   /** Changes the compass to start monitoring a new view when view focus changes */
-  virtual void operator()(simVis::View *view, const simVis::FocusManager::Callback::EventType &e)
+  void operator()(simVis::View *view, const simVis::FocusManager::Callback::EventType &e) override
   {
     // if a focus event, update our state
     if (e == simVis::FocusManager::Callback::VIEW_FOCUSED)
@@ -393,7 +393,7 @@ public:
   }
 
   /** Handle frame updates, searching for viewport size changes for repositioning */
-  virtual bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
+  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa) override
   {
     if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
     {

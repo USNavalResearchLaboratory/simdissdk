@@ -21,7 +21,7 @@ macro(mrsid_install_library PATH NAME)
         # Pull out all the share links too
         get_symlinks("${MRSID_RELEASE_LIB}" RELEASE_LIBS)
         install(PROGRAMS ${RELEASE_LIBS}
-            DESTINATION "${INSTALLSETTINGS_SHARED_LIBRARY_DIR}"
+            DESTINATION "${PROJECT_INSTALL_SHARED_DIR}"
             COMPONENT ${${LIBRARYNAME}_INSTALL_COMPONENT}
         )
     else()
@@ -51,7 +51,7 @@ if(MRSID_LIDAR_DIR AND IS_DIRECTORY "${MRSID_LIDAR_DIR}")
     if(WIN32)
         mrsid_install_library(MRSID_LIDAR_DIR lti_lidar_dsdk_1.1.dll)
     else()
-         mrsid_install_library(MRSID_LIDAR_DIR liblti_lidar_dsdk.so)
+        mrsid_install_library(MRSID_LIDAR_DIR liblti_lidar_dsdk.so)
     endif()
     mark_as_advanced(FORCE MRSID_LIDAR_DIR)
 else()

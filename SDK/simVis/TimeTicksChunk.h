@@ -62,10 +62,10 @@ public:
   bool addPoint(const Locator& tickLocator, double t, const osg::Vec4& color, bool large);
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "TimeTicksChunk"; }
+  const char* className() const override { return "TimeTicksChunk"; }
 
 protected:
   virtual ~TimeTicksChunk();
@@ -77,9 +77,9 @@ private:
   /// Appends a new local point to each geometry set.
   void append_(const osg::Matrixd& matrix, const osg::Vec4f& color, bool large);
 
-  virtual void fixGraphicsAfterRemoval_();
+  void fixGraphicsAfterRemoval_() override;
   /// Update the offset and count on each primitive set to draw the proper data.
-  virtual void updatePrimitiveSets_();
+  void updatePrimitiveSets_() override;
 
 private:
   /// draw type

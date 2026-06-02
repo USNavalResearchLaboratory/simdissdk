@@ -63,7 +63,7 @@ class SDKCORE_EXPORT UnitsState
 public:
   /// Construct the units state
   UnitsState();
-  virtual ~UnitsState() {}
+  virtual ~UnitsState() = default;
 
   /// Get the current altitude units, returns default units if not set
   const simCore::Units& altitudeUnits() const;

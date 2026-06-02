@@ -64,7 +64,7 @@ struct UpdateGeometryAdapter : public simVis::TargetDelegation::UpdateGeometryCa
 {
   simVis::PlanetariumViewTool* tool_;
   explicit UpdateGeometryAdapter(simVis::PlanetariumViewTool* tool) : tool_(tool) { }
-  void operator()(osg::MatrixTransform* xform, const osg::Vec3d& ecef)
+  void operator()(osg::MatrixTransform* xform, const osg::Vec3d& ecef) override
   {
     tool_->updateTargetGeometry(xform, ecef);
   }
@@ -486,7 +486,7 @@ public:
   {
   }
 
-  virtual void onPrefsChange(simData::DataStore* source, simData::ObjectId id)
+  void onPrefsChange(simData::DataStore* source, simData::ObjectId id) override
   {
     if (id == idOfInterest_)
       lambda_();
@@ -653,7 +653,7 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host, simData::DataStore&
   family_.reset();
   // Add all initial textures
   for (int k = 0; k <= static_cast<int>(TextureUnit::UNIT3); ++k)
-    textures_.push_back(TextureData());
+    textures_.emplace_back();
 
   // the geofence will filter out visible objects
   fence_ = new HorizonGeoFence();
@@ -1005,7 +1005,7 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
 
   lastUpdateTime_ = timeStamp.secondsSinceRefYear();
 
-  for (auto entityNode : updates)
+  for (const auto& entityNode : updates)
   {
     // Update beam node history
     BeamNode* beam = dynamic_cast<BeamNode*>(entityNode.get());
@@ -1165,7 +1165,7 @@ void PlanetariumViewTool::updateDome_()
 
 void PlanetariumViewTool::applyOverrides_(bool enable)
 {
-  for (auto entityObsPtr : family_.members())
+  for (const auto& entityObsPtr : family_.members())
   {
     if (entityObsPtr.valid())
       applyOverrides_(entityObsPtr.get(), enable);

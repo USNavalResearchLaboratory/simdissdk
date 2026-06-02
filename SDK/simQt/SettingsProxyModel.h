@@ -40,13 +40,13 @@ public:
   SettingsSearchFilter(QAbstractItemModel* settingsModel, QWidget* parent=nullptr);
 
   /** Implements the QSortFilterProxyModel method to apply filtering to the row */
-  virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+  bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
   /** Returns the current filter text */
   QString filterText() const;
 
   /** Implements the QAbstractItemModel method to find items matching a given value.  Flags argument is ignored */
-  virtual QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int hits = 1,
-    Qt::MatchFlags flags = Qt::MatchFlags(Qt::MatchStartsWith | Qt::MatchWrap)) const;
+  QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int hits = 1,
+    Qt::MatchFlags flags = Qt::MatchFlags(Qt::MatchStartsWith | Qt::MatchWrap)) const override;
 
 public Q_SLOTS:
   /** Changes the filter text */
@@ -65,7 +65,7 @@ public:
   SettingsDataLevelFilter(QAbstractItemModel* settingsModel, QWidget* parent=nullptr);
 
   /** Implements the QSortFilterProxyModel method to apply filtering to the row  */
-  virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+  bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
 
   /** Set the show advanced filter, which will show settings with the ADVANCED data level settings if true */
   void setShowAdvanced(bool showAdvanced);
@@ -103,7 +103,7 @@ public:
   SettingsNoEmptyFoldersFilter(QAbstractItemModel* settingsModel, QWidget* parent=nullptr);
 
   /** Implements the QSortFilterProxyModel method to apply filtering to the row */
-  virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+  bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
 
 private:
   /** True when the source parent provided actually has a child */
@@ -127,8 +127,8 @@ public:
   virtual ~SettingsProxyModel();
 
   /** Implements the QAbstractItemModel method to find items matching a given value.  Flags argument is ignored */
-  virtual QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int hits = 1,
-    Qt::MatchFlags flags = Qt::MatchFlags(Qt::MatchStartsWith | Qt::MatchWrap)) const;
+  QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int hits = 1,
+    Qt::MatchFlags flags = Qt::MatchFlags(Qt::MatchStartsWith | Qt::MatchWrap)) const override;
 
 public Q_SLOTS:
   /** Set the show advanced filter, which will show settings with the ADVANCED data level settings if true */

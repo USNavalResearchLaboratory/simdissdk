@@ -43,6 +43,7 @@
 #include "simVis/Gate.h"
 #include "simVis/CustomRendering.h"
 #include "simVis/FragmentEffect.h"
+#include "simVis/HeatMapSystem.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
@@ -84,7 +85,7 @@ struct SetHorizonCullCallback : public osg::NodeCallback
   {
   }
 
-  void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  void operator()(osg::Node* node, osg::NodeVisitor* nv) override
   {
     // Do not move this declaration inside the if() statement.  The osgEarth::ObjectStorage::set()
     // solution stores the pointer in an osg::observer_ptr, so when horizon falls out of scope it
@@ -114,7 +115,7 @@ public:
   {
   }
 
-  virtual void operator()(simVis::PlatformModelNode* model, Callback::EventType eventType)
+  void operator()(simVis::PlatformModelNode* model, Callback::EventType eventType) override
   {
     if (eventType == Callback::BOUNDS_CHANGED && model && model->getNumParents() > 0)
     {
@@ -276,13 +277,13 @@ public:
   }
 
   /** Returns true if surface clamping should be applied */
-  virtual bool isApplicable(const simData::PlatformPrefs& prefs) const
+  bool isApplicable(const simData::PlatformPrefs& prefs) const override
   {
     return prefs.surfaceclamping() && coordSurfaceClamping_.isValid();
   }
 
   /** Applies coordinate surface clamping to the LLA coordinate */
-  virtual PlatformTspiFilterManager::FilterResponse filter(simCore::Coordinate& llaCoord, const simData::PlatformPrefs& prefs, const simData::PlatformProperties& props)
+  PlatformTspiFilterManager::FilterResponse filter(simCore::Coordinate& llaCoord, const simData::PlatformPrefs& prefs, const simData::PlatformProperties& props) override
   {
     if (!prefs.surfaceclamping() || !coordSurfaceClamping_.isValid())
       return PlatformTspiFilterManager::POINT_UNCHANGED;
@@ -333,13 +334,13 @@ public:
   }
 
   /** Returns true if surface clamping should be applied */
-  virtual bool isApplicable(const simData::PlatformPrefs& prefs) const
+  bool isApplicable(const simData::PlatformPrefs& prefs) const override
   {
     return prefs.abovesurfaceclamping() && mapNode_.valid();
   }
 
   /** Applies coordinate surface clamping to the LLA coordinate */
-  virtual PlatformTspiFilterManager::FilterResponse filter(simCore::Coordinate& llaCoord, const simData::PlatformPrefs& prefs, const simData::PlatformProperties& props)
+  PlatformTspiFilterManager::FilterResponse filter(simCore::Coordinate& llaCoord, const simData::PlatformPrefs& prefs, const simData::PlatformProperties& props) override
   {
     if (!prefs.abovesurfaceclamping() || !mapNode_.valid())
       return PlatformTspiFilterManager::POINT_UNCHANGED;
@@ -409,7 +410,7 @@ public:
     map_ = map;
   }
 
-  virtual RadialLOSNode* newLosNode()
+  RadialLOSNode* newLosNode() override
   {
     if (map_.valid())
       return new RadialLOSNode(map_.get());
@@ -438,7 +439,7 @@ public:
     currTime_ = currTime;
   }
 
-  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv) override
+  void operator()(osg::Node* node, osg::NodeVisitor* nv) override
   {
     // simCore::Timestamp can't be stored directly.  Separate it into constituent elements and recombine where needed
     nv->setUserValue("simVis.ScenarioManager.RefYear", currTime_.referenceYear());
@@ -465,7 +466,8 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   projectorManager_(projMan),
   labelContentManager_(new NullLabelContentManager()),
   rfManager_(new simRF::NullRFPropagationManager()),
-  losCreator_(new ScenarioLosCreator())
+  losCreator_(new ScenarioLosCreator()),
+  heatMapSystem_(new HeatMapSystem)
 {
   root_->setName("root");
   root_->addChild(entityGraph_->node());
@@ -521,6 +523,10 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   PolygonStipple::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
   stateSet->getOrCreateUniform(SCENE_RENDER_STAGE_UNIFORM, osg::Uniform::INT)->set(SCENE_RENDER_STAGE_GLOBAL);
+
+  // Set up the shaders on the heat map and configure it in an update callback
+  heatMapSystem_->installShaders(this);
+  addUpdateCallback(new simVis::LambdaOsgCallback([this]() { heatMapSystem_->update(); }));
 
   scenarioEciLocator_ = new Locator();
 }
@@ -1251,7 +1257,7 @@ void ScenarioManager::addTool(ScenarioTool* tool)
       SIM_WARN << LC << "WARNING: adding a tool that is already installed!" << std::endl;
     }
 
-    scenarioTools_.push_back(tool);
+    scenarioTools_.emplace_back(tool);
     tool->onInstall(*this);
     root_->addChild(tool->getNode());
   }
@@ -1335,7 +1341,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
     // Note that entity classes decide how to process 'force' and record->updateSlice_->hasChanged()
     if (record->updateFromDataStore(force))
     {
-      updates.push_back(record->getEntityNode());
+      updates.emplace_back(record->getEntityNode());
       appliedUpdate = true;
     }
 
@@ -1424,7 +1430,7 @@ void ScenarioManager::getAllEntities(EntityVector& output) const
 
   for (EntityRepo::const_iterator i = entities_.begin(); i != entities_.end(); ++i)
   {
-    output.push_back(i->second->getEntityNode());
+    output.emplace_back(i->second->getEntityNode());
   }
 }
 
@@ -1445,4 +1451,10 @@ osg::Group* ScenarioManager::getOrCreateAttachPoint(const std::string& name)
   }
   return result;
 }
+
+HeatMapSystem* ScenarioManager::heatMapSystem() const
+{
+  return heatMapSystem_.get();
+}
+
 }

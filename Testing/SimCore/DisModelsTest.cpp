@@ -92,21 +92,21 @@ int testEntityString()
   // Test that any vector with less than 7 parts will return an empty string
   std::vector<std::string> parts;
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 0) == "");
-  parts.push_back("1");
+  parts.emplace_back("1");
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 1) == "");
-  parts.push_back("2");
+  parts.emplace_back("2");
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 2) == "");
-  parts.push_back("3");
+  parts.emplace_back("3");
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 3) == "");
-  parts.push_back("4");
+  parts.emplace_back("4");
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 4) == "");
-  parts.push_back("5");
+  parts.emplace_back("5");
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 5) == "");
-  parts.push_back("6");
+  parts.emplace_back("6");
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 6) == "");
 
   // Test getting the full string without any wildcards
-  parts.push_back("7");
+  parts.emplace_back("7");
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 0) == "1.2.3.4.5.6.7");
   // Test wildcard levels up to 6
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 1) == "1.2.3.4.5.6.0");
@@ -123,7 +123,7 @@ int testEntityString()
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 9999) == "1.0.0.0.0.0.0");
 
   // Test that any vector with more than 7 parts will return an empty string
-  parts.push_back("8");
+  parts.emplace_back("8");
   rv += SDK_ASSERT(simCore::DisModels::entityTypeString(parts, 8) == "");
 
   return rv;

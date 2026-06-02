@@ -107,7 +107,7 @@ public:
 
 protected:
   /// osg::Referenced-derived
-  virtual ~ProfileDataProvider() {}
+  virtual ~ProfileDataProvider() = default;
 
   /** Sets the threshold type value */
   virtual void setType_(ThresholdType type) { type_ = type; }

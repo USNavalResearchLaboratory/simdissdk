@@ -59,7 +59,6 @@
 #include "simVis/Utils.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/LoaderUtils.h"
-#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/GogNodeInterface.h"
 
 #ifndef GL_CLIP_DISTANCE0
@@ -68,73 +67,109 @@
 
 namespace {
 
-  /**
-  * Calculates the position of the node (GeoPositionNode) passed in, applying the offset if it has one.
-  * Will use the referencePosition if it is provided, otherwise uses the node's internal position.
-  * If useLocalOffset is specified, will use the node's local offset, otherwise uses the center of the bounding sphere
-  * Returns 0 on success, non-zero if no position could be found
-  */
-  template<class T>
-  int findLocalGeometryPosition(T* node, osgEarth::GeoPoint* referencePosition, osg::Vec3d& position, bool useLocalOffset)
+/**
+ * Calculates the position of the node (GeoPositionNode) passed in, applying the offset if it has one.
+ * Will use the referencePosition if it is provided, otherwise uses the node's internal position.
+ * If useLocalOffset is specified, will use the node's local offset, otherwise uses the center of the bounding sphere
+ * Returns 0 on success, non-zero if no position could be found
+ */
+template<class T>
+int findLocalGeometryPosition(T* node, osgEarth::GeoPoint* referencePosition, osg::Vec3d& position, bool useLocalOffset)
+{
+  if (!node || (!referencePosition && !node->getPosition().isValid()))
+    return 1;
+  // use reference point if it's valid, otherwise use the node's position
+  osgEarth::GeoPoint refPosition = referencePosition != nullptr ? *referencePosition : node->getPosition();
+
+  osg::Vec3d centerPoint;
+
+  if (useLocalOffset)
   {
-    if (!node || (!referencePosition && !node->getPosition().isValid()))
-      return 1;
-    // use reference point if it's valid, otherwise use the node's position
-    osgEarth::GeoPoint refPosition = referencePosition != nullptr ? *referencePosition : node->getPosition();
-
-    osg::Vec3d centerPoint;
-
-    if (useLocalOffset)
+    centerPoint = node->getLocalOffset();
+    // if the offsets are 0, just pass back the position
+    if (centerPoint == osg::Vec3d(0.0, 0.0, 0.0))
     {
-      centerPoint = node->getLocalOffset();
-      // if the offsets are 0, just pass back the position
-      if (centerPoint == osg::Vec3d(0.0, 0.0, 0.0))
-      {
-        position = refPosition.vec3d();
-        return 0;
-      }
+      position = refPosition.vec3d();
+      return 0;
     }
-    else // use bounding sphere for center
-      centerPoint = node->getBound().center();
+  }
+  else // use bounding sphere for center
+    centerPoint = node->getBound().center();
 
-    simCore::Coordinate llaCoord;
-    // apply the offset to the ref position if using the local offset or if the map node is nullptr which indicates this is a hosted node (relative to ref position)
-    if (useLocalOffset || node->getMapNode() == nullptr)
-    {
-      // if the offsets are non-zero, apply the offsets to our reference position
-      simCore::CoordinateConverter converter;
-      converter.setReferenceOrigin(refPosition.y() * simCore::DEG2RAD, refPosition.x() * simCore::DEG2RAD, refPosition.z());
-      simCore::Coordinate xEastCoord(simCore::COORD_SYS_XEAST, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
-      converter.convert(xEastCoord, llaCoord, simCore::COORD_SYS_LLA);
-    }
-    else // convert from absolute center, ECEF to LLA
-    {
-      const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
-      simCore::CoordinateConverter converter;
-      converter.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
-    }
-
-    position = osg::Vec3d(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, llaCoord.alt());
-    return 0;
+  simCore::Coordinate llaCoord;
+  // apply the offset to the ref position if using the local offset or if the map node is nullptr which indicates this is a hosted node (relative to ref position)
+  if (useLocalOffset || node->getMapNode() == nullptr)
+  {
+    // if the offsets are non-zero, apply the offsets to our reference position
+    simCore::CoordinateConverter converter;
+    converter.setReferenceOrigin(refPosition.y() * simCore::DEG2RAD, refPosition.x() * simCore::DEG2RAD, refPosition.z());
+    simCore::Coordinate xEastCoord(simCore::COORD_SYS_XEAST, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
+    converter.convert(xEastCoord, llaCoord, simCore::COORD_SYS_LLA);
+  }
+  else // convert from absolute center, ECEF to LLA
+  {
+    const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
+    simCore::CoordinateConverter converter;
+    converter.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
   }
 
-  /// Apply the orientation offsets from the specified shape to the local rotation of the specified node
-  void applyOrientationOffsetsToNode_(const simCore::GOG::GogShape& shape, osgEarth::LocalGeometryNode* node)
-  {
-    if (node == nullptr)
-      return;
+  position = osg::Vec3d(llaCoord.lon() * simCore::RAD2DEG, llaCoord.lat() * simCore::RAD2DEG, llaCoord.alt());
+  return 0;
+}
 
-    double yawOffset = 0.;
-    shape.getYawOffset(yawOffset);
-    osg::Quat yaw(yawOffset, -osg::Vec3(0, 0, 1));
-    double pitchOffset = 0.;
-    shape.getPitchOffset(pitchOffset);
-    osg::Quat pitch(pitchOffset, osg::Vec3(1, 0, 0));
-    double rollOffset = 0.;
-    shape.getRollOffset(rollOffset);
-    osg::Quat roll(rollOffset, osg::Vec3(0, 1, 0));
-    node->setLocalRotation(roll * pitch * yaw);
-  }
+/// Apply the orientation offsets from the specified shape to the local rotation of the specified node
+inline
+void applyOrientationOffsetsToNode_(const simCore::GOG::GogShape& shape, osgEarth::LocalGeometryNode* node)
+{
+  if (node == nullptr)
+    return;
+
+  double yawOffset = 0.;
+  shape.getYawOffset(yawOffset);
+  osg::Quat yaw(yawOffset, -osg::Vec3(0, 0, 1));
+  double pitchOffset = 0.;
+  shape.getPitchOffset(pitchOffset);
+  osg::Quat pitch(pitchOffset, osg::Vec3(1, 0, 0));
+  double rollOffset = 0.;
+  shape.getRollOffset(rollOffset);
+  osg::Quat roll(rollOffset, osg::Vec3(0, 1, 0));
+  node->setLocalRotation(roll * pitch * yaw);
+}
+
+/// Retrieve the reference position, given a Geo Position Node
+int getReferencePosition_(osg::Vec3d& referencePosition, const osgEarth::GeoPositionNode& localNode, double altitudeM)
+{
+  const osgEarth::GeoPoint& refPoint = localNode.getPosition();
+  // If attached, the SRS is unset. The reference position returned is the Shape's (from GogNodeInterface)
+  if (!refPoint.getSRS())
+    return 1;
+
+  // Extract from the local node's position
+  referencePosition.x() = refPoint.x(); // note this is lon, in degrees
+  referencePosition.y() = refPoint.y(); // note this is lat, in degrees
+  referencePosition.z() = altitudeM; // always use original altitude, since an altitude offset may have been applied
+  return 0;
+}
+
+/// Retrieve the reference position, given a Geo Position Node
+int setReferencePosition_(const osg::Vec3d& referencePos, osgEarth::GeoPositionNode& localNode)
+{
+  auto* srs = localNode.getPosition().getSRS();
+  // Don't permit changing the actual on-screen reference position for attached GOG
+  if (!srs)
+    return 1;
+
+  // Create a GeoPoint and feed it to the Local Node's position
+  const osgEarth::GeoPoint newReference(srs, referencePos);
+  localNode.setPosition(newReference);
+  return 0;
+}
+
+bool isAttached_(const simVis::GOG::GogNodeInterface& iface, const osgEarth::GeoPositionNode& localNode)
+{
+  return iface.isRelative() && localNode.getPosition().getSRS() == nullptr;
+}
+
 }
 
 namespace simVis { namespace GOG {
@@ -407,182 +442,9 @@ void GogNodeInterface::revertToDefaultStyle()
   }
 }
 
-void GogNodeInterface::applyToStyle(const ParsedShape& parent, const UnitsState& units)
-{
-  // for performance reasons, cache all style updates, apply once when done
-  beginStyleUpdates_();
-
-  metaData_.allowSetExplicitly(false);  // setFields will incorrectly respond to defaults here, so cache the correct value and restore it at the end
-  metaData_.altitudeUnits_ = units.altitudeUnits_; // need to cache altitude units here, since some altitude values can be changed
-  const std::string& key = parent.shape();
-  const simVis::GOG::GogShape gogShape = metaData_.shape;
-  bool is3dShape = (gogShape == GOG_SPHERE || gogShape == GOG_ELLIPSOID || gogShape == GOG_HEMISPHERE ||
-    gogShape == GOG_CYLINDER || gogShape == GOG_LATLONALTBOX || gogShape == GOG_CONE);
-
-  // do we need an ExtrusionSymbol? Note that 3D shapes cannot be extruded
-  bool isExtruded = simCore::stringIsTrueToken(parent.stringValue(GOG_EXTRUDE)) && !is3dShape;
-
-  // do we need a PolygonSymbol?
-  bool isFillable = isExtruded || key == "poly" || key == "polygon" || key == "ellipse" || key == "circle" || key == "arc" || key == "orbit" || is3dShape;
-  bool isFilled   = isFillable && simCore::stringIsTrueToken(parent.stringValue(GOG_FILLED));
-
-  // do we need a LineSymbol?
-  bool isOutlined = simCore::stringIsTrueToken(parent.stringValue(GOG_OUTLINE));
-  bool hasLineAttrs = parent.hasValue(GOG_LINECOLOR) || parent.hasValue(GOG_LINEWIDTH) || parent.hasValue(GOG_LINESTYLE) || isOutlined;
-  // Tessellate behaves badly with cirles, arcs, ellipses and 3dShapes, do not apply
-  bool isTessellated = simCore::stringIsTrueToken(parent.stringValue(GOG_TESSELLATE)) && !(is3dShape || key == "circle" || key == "ellipse" || key == "arc");
-  // need to create a LineSymbol if the shape is filled or has some line attributes or is tessellated, since tessellation is handled in the LineSymbol
-  bool isLined = isFilled || hasLineAttrs || isTessellated;
-  bool isText = (key == "annotation");
-
-  // POINT attributes
-  if (gogShape == GOG_POINTS && parent.hasValue(GOG_POINTSIZE))
-    setPointSize(parent.doubleValue(GOG_POINTSIZE, 1));
-
-  // LINE attributes
-  if (isLined)
-  {
-    if (parent.hasValue(GOG_OUTLINE))
-      setOutlineState(isOutlined);
-    else
-      setOutlineState(true);
-
-    if (parent.hasValue(GOG_LINECOLOR))
-      setLineColor(simVis::Color(parent.stringValue(GOG_LINECOLOR)));
-
-    if (parent.hasValue(GOG_LINEWIDTH))
-      setLineWidth(parent.doubleValue(GOG_LINEWIDTH, 1));
-
-    if (parent.hasValue(GOG_LINESTYLE))
-    {
-      const std::string& ls = parent.stringValue(GOG_LINESTYLE);
-      if (simCore::caseCompare(ls, "dash") == 0 || simCore::caseCompare(ls, "dashed") == 0)
-        setLineStyle(Utils::LINE_DASHED);
-      else if (simCore::caseCompare(ls, "dot") == 0 || simCore::caseCompare(ls, "dotted") == 0)
-        setLineStyle(Utils::LINE_DOTTED);
-      else if (simCore::caseCompare(ls, "solid") != 0)
-      {
-        SIM_WARN << "Found invalid linestyle value \"" << ls << "\" while parsing GOG\n";
-      }
-    }
-  }
-
-  // FILL attributes
-  if (isFillable)
-  {
-    if (parent.hasValue(GOG_FILLCOLOR))
-      setFillColor(simVis::Color(parent.stringValue(GOG_FILLCOLOR)));
-    else if (parent.hasValue(GOG_LINECOLOR))
-      setFillColor(simVis::Color(parent.stringValue(GOG_LINECOLOR)));  // Default to the line color if the fill color is not set
-    setFilledState(isFilled);
-  }
-  // only points and annotation do not support the fillcolor keyword
-  else if ((gogShape == GOG_POINTS || gogShape == GOG_ANNOTATION) && parent.hasValue(GOG_FILLCOLOR))
-  {
-    SIM_WARN << "The GOG keyword " << key << " does not support fillcolor.\n";
-  }
-
-  // altitude offset
-  if (parent.hasValue(GOG_3D_OFFSETALT))
-  {
-    double altOffset = parent.doubleValue(GOG_3D_OFFSETALT, 0.);
-    // convert from gog file altitude units to meters; gog file default units are ft, but file can specify different units
-    altOffset = units.altitudeUnits_.convertTo(simCore::Units::METERS, altOffset);
-    setAltOffset(altOffset);
-  }
-  // ALTITUDE mode, handles extrude attribute, which requires a specific AltitudeSymbol
-  AltitudeMode altMode = ALTITUDE_NONE;
-  if (simCore::caseCompare(parent.stringValue(GOG_ALTITUDEMODE), "relativetoground") == 0)
-    altMode = ALTITUDE_GROUND_RELATIVE;
-  else if (simCore::caseCompare(parent.stringValue(GOG_ALTITUDEMODE), "clamptoground") == 0)
-    altMode = ALTITUDE_GROUND_CLAMPED;
-  else if (isExtruded)
-    altMode = ALTITUDE_EXTRUDE;
-  setAltitudeMode(altMode);
-
-  // process extrude height if extrude is set and if an extrude height was specified
-  if (altMode == ALTITUDE_EXTRUDE && parent.hasValue(GOG_EXTRUDE_HEIGHT))
-  {
-    double extrudeHeight = static_cast<double>(parent.doubleValue(GOG_EXTRUDE_HEIGHT, 0));
-    // convert from gog file altitude units to meters; gog file default units are ft, but file can specify different units
-    extrudeHeight = units.altitudeUnits_.convertTo(simCore::Units::METERS, extrudeHeight);
-    setExtrudedHeight(extrudeHeight);
-  }
-
-  // TESSELLATION attribute
-  simVis::GOG::TessellationStyle tessStyle = TESSELLATE_NONE;
-  if (isTessellated)
-  {
-    // default to rhumbline
-    tessStyle = TESSELLATE_RHUMBLINE;
-    if (parent.hasValue(GOG_LINEPROJECTION) && (simCore::caseCompare(parent.stringValue(GOG_LINEPROJECTION), "greatcircle") == 0))
-      tessStyle = TESSELLATE_GREAT_CIRCLE_PROJECTION;
-  }
-  setTessellation(tessStyle);
-
-  // TEXT attributes
-  if (isText)
-  {
-    // default to font arial 15, color red
-    std::string fontName = defaultFont_;
-    int fontSize = defaultTextSize_;
-    osg::Vec4f fontColor = defaultTextColor_;
-    // fonts.
-    if (parent.hasValue(GOG_FONTNAME))
-      fontName = parent.stringValue(GOG_FONTNAME);
-
-    if (parent.hasValue(GOG_FONTSIZE))
-      fontSize = parent.doubleValue(GOG_FONTSIZE, fontSize);
-
-    if (parent.hasValue(GOG_LINECOLOR))
-      fontColor = simVis::Color(parent.stringValue(GOG_LINECOLOR));
-
-    setFont(fontName, fontSize, fontColor);
-
-    osgEarth::Color outlineColor = osgEarth::Color::Black;
-    if (parent.hasValue(GOG_TEXTOUTLINECOLOR))
-      outlineColor = osgEarth::Color(parent.stringValue(GOG_TEXTOUTLINECOLOR));
-
-    simData::TextOutline outlineThickness = simData::TextOutline::TO_THIN;
-    if (parent.hasValue(GOG_TEXTOUTLINETHICKNESS))
-    {
-      std::string thicknessStr = parent.stringValue(GOG_TEXTOUTLINETHICKNESS);
-      if (simCore::caseCompare(thicknessStr, "thick") == 0)
-        outlineThickness = simData::TextOutline::TO_THICK;
-      else if (simCore::caseCompare(thicknessStr, "none") == 0)
-        outlineThickness = simData::TextOutline::TO_NONE;
-      else if (simCore::caseCompare(thicknessStr, "thin") != 0)
-        SIM_WARN << "Found invalid text outline thickness value \"" << thicknessStr << "\" while parsing GOG\n";
-  }
-
-    setTextOutline(outlineColor, outlineThickness);
-  }
-
-  // DEPTH BUFFER attribute
-  // depth buffer defaults to disable to match SIMDIS 9
-  bool depthTest = false;
-  if (parent.hasValue(GOG_DEPTHBUFFER))
-    depthTest = simCore::stringIsTrueToken(parent.stringValue(GOG_DEPTHBUFFER));
-  setDepthBuffer(depthTest);
-
-  // apply backface culling here
-  applyBackfaceCulling();
-
-  metaData_.allowSetExplicitly(true);
-
-  // done deferring style updates; apply them all at once
-  endStyleUpdates_();
-  setStyle_(style_);
-}
-
 osg::Node* GogNodeInterface::osgNode() const
 {
   return osgNode_.get();
-}
-
-simVis::GOG::LoadFormat GogNodeInterface::loadFormat() const
-{
-  return metaData_.loadFormat;
 }
 
 void GogNodeInterface::setRangeUnits(const simCore::Units& units)
@@ -645,6 +507,25 @@ void GogNodeInterface::setRollOffset(double offsetRad)
     applyOrientationOffsets_();
 }
 
+bool GogNodeInterface::isRelative() const
+{
+  if (!shape_)
+    return false;
+  return shape_->isRelative();
+}
+
+bool GogNodeInterface::isAttached() const
+{
+  return false;
+}
+
+simCore::GOG::EditMode GogNodeInterface::editMode() const
+{
+  if (!shape_)
+    return simCore::GOG::EditMode::EXPLICIT_ONLY;
+  return shape_->getEditMode().value_or(simCore::GOG::EditMode::EXPLICIT_ONLY);
+}
+
 size_t GogNodeInterface::lineNumber() const
 {
   return metaData_.lineNumber;
@@ -652,190 +533,9 @@ size_t GogNodeInterface::lineNumber() const
 
 void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
 {
-  // prefer shape if it's set
-  if (shape_)
-  {
-    shape_->serializeToStream(gogOutputStream);
+  if (!shape_)
     return;
-  }
-
-  std::string metaData = metaData_.metadata;
-  simVis::GOG::GogShape shape = metaData_.shape;
-
-  // first add the shape keyword
-  serializeKeyword_(gogOutputStream);
-
-  // check for keyword flags
-  bool serializeGeometry = Utils::canSerializeGeometry_(shape);
-  bool relativeShape = getMetaDataFlag_(simVis::GOG::RelativeShapeKeyword, metaData);
-  bool referencePoint = getMetaDataFlag_(simVis::GOG::ReferencePointKeyword, metaData);
-
-  // add the metadata
-  gogOutputStream << metaData;
-
-  // serialize geometry where it is possible to extract geometry information from the nodes. Otherwise, geometry will have been stored in meta data
-  if (serializeGeometry)
-  {
-    // alt units are meters
-    gogOutputStream << "altitudeunits meters\n";
-
-    // if relative, the xy range units are in meters
-    if (relativeShape)
-    {
-      // if relative shape has a reference position, serialize it, if possible
-      if (referencePoint)
-      {
-        osg::Vec3d position;
-        // note that in osg position syntax, lat is y, lon is x, alt is z
-        if (getReferencePosition(position) == 0)
-          gogOutputStream << "referencepoint " << position.y() << " " << position.x() << " " << position.z() << "\n";
-      }
-      gogOutputStream << "rangeunits meters\n";
-    }
-
-    // try to serialize the geometry
-    serializeGeometry_(relativeShape, gogOutputStream);
-  }
-  // now add the style data
-
-  // draw flag
-  if (!getDraw())
-    gogOutputStream << "off\n";
-
-  // line style
-  int lineWidth = 1;
-  bool outlineState = false;
-  osg::Vec4f lineColor;
-  Utils::LineStyle lineStyle = Utils::LINE_SOLID;
-  if (getLineState(outlineState, lineColor, lineStyle, lineWidth) == 0)
-  {
-    if (metaData_.isSetExplicitly(GOG_LINE_WIDTH_SET))
-      gogOutputStream << "linewidth " << lineWidth << "\n";
-    if (metaData_.isSetExplicitly(GOG_LINE_COLOR_SET))
-      gogOutputStream << "linecolor hex " << Utils::serializeOsgColor(lineColor) << "\n";
-    if (metaData_.isSetExplicitly(GOG_LINE_STYLE_SET))
-      gogOutputStream << "linestyle " << Utils::serializeLineStyle(lineStyle) << "\n";
-    if (outlineState && metaData_.isSetExplicitly(GOG_OUTLINE_SET))
-      gogOutputStream << "outline true\n";
-    else if (!outlineState && metaData_.isSetExplicitly(GOG_OUTLINE_SET))
-      gogOutputStream << "outline false\n";
-  }
-
-  int pointSize;
-  if ((getPointSize(pointSize) == 0) && metaData_.isSetExplicitly(GOG_POINT_SIZE_SET))
-    gogOutputStream << "pointsize" << pointSize << "\n";
-
-  // fill style
-  bool fillState = false;
-  osg::Vec4f fillColor;
-  if ((getFilledState(fillState, fillColor) == 0))
-  {
-    if (metaData_.isSetExplicitly(GOG_FILL_COLOR_SET))
-      gogOutputStream << "fillcolor hex " << Utils::serializeOsgColor(fillColor) << "\n";
-    if (fillState)
-      gogOutputStream << "filled\n";
-  }
-
-  // depth buffer
-  bool depthBuffer = false;
-  if (getDepthBuffer(depthBuffer) == 0 && metaData_.isSetExplicitly(GOG_DEPTH_BUFFER_SET))
-    gogOutputStream << "depthBuffer " << (depthBuffer ? "true" : "false") << "\n";
-
-  // altoffset
-  double altOffset = 0.0;
-  if (getAltOffset(altOffset) == 0 && metaData_.isSetExplicitly(GOG_THREE_D_OFFSET_ALT_SET))
-  {
-    // if not serializing geometry, which always uses meters, convert to the stored altitude units
-    if (!serializeGeometry)
-    {
-      simCore::Units curUnits(simCore::Units::METERS);
-      altOffset = curUnits.convertTo(metaData_.altitudeUnits_, altOffset);
-    }
-    gogOutputStream << "3d offsetalt " << altOffset << "\n";
-  }
-  // font
-  int fontSize;
-  std::string fontFile;
-  osg::Vec4f fontColor;
-  if (getFont(fontFile, fontSize, fontColor) == 0)
-  {
-    // font file is full path, serialize only file name
-    std::string fontFileNoPath = simCore::backslashToFrontslash(fontFile);
-    fontFileNoPath = fontFileNoPath.substr((fontFileNoPath.rfind("/") + 1)); //< increment index so the slash is not saved out with the font name
-    if (metaData_.isSetExplicitly(GOG_FONT_NAME_SET))
-      gogOutputStream << "fontname " << fontFileNoPath << "\n";
-    if (metaData_.isSetExplicitly(GOG_FONT_SIZE_SET))
-      gogOutputStream << "fontsize " << fontSize << "\n";
-    if (metaData_.isSetExplicitly(GOG_LINE_COLOR_SET))
-      gogOutputStream << "linecolor hex " << Utils::serializeOsgColor(fontColor) << "\n";
-  }
-
-  // text outline
-  osg::Vec4f outlineColor;
-  simData::TextOutline outlineThickness;
-  if (getTextOutline(outlineColor, outlineThickness) == 0)
-  {
-    if (metaData_.isSetExplicitly(GOG_TEXT_OUTLINE_COLOR_SET))
-      gogOutputStream << "textoutlinecolor hex " << Utils::serializeOsgColor(outlineColor) << "\n";
-    if (metaData_.isSetExplicitly(GOG_TEXT_OUTLINE_THICKNESS_SET))
-    {
-      std::string outlineThicknessStr;
-      switch (outlineThickness)
-      {
-      case simData::TextOutline::TO_THICK:
-        outlineThicknessStr = "thick";
-        break;
-      case simData::TextOutline::TO_THIN:
-        outlineThicknessStr = "thin";
-        break;
-      case simData::TextOutline::TO_NONE:
-        outlineThicknessStr = "none";
-        break;
-      }
-
-      // Assertion failure means there's an unhandled value in the above switch
-      assert(!outlineThicknessStr.empty());
-      gogOutputStream << "textoutlinethickness " << outlineThicknessStr << "\n";
-    }
-  }
-
-  // extrude
-  bool extruded = false;
-  if ((getExtruded(extruded) == 0) && extruded)
-  {
-    double extrudeHeightM;
-    if (0 == getExtrudedHeight(extrudeHeightM))
-      gogOutputStream << "extrude true " << extrudeHeightM << "\n";
-    else
-      gogOutputStream << "extrude true\n";
-  }
-  else if (metaData_.isSetExplicitly(GOG_EXTRUDE_SET))
-    gogOutputStream << "extrude false\n";
-
-  // tessellate
-  TessellationStyle tessellate = TESSELLATE_NONE;
-  if ((getTessellation(tessellate) == 0) && tessellate != TESSELLATE_NONE)
-  {
-    gogOutputStream << "tessellate true\n";
-    if (metaData_.isSetExplicitly(GOG_LINE_PROJECTION_SET))
-      gogOutputStream << "lineprojection " << (tessellate == TESSELLATE_GREAT_CIRCLE_PROJECTION ? "greatcircle" : "rhumbline") << "\n";
-  }
-  else if (metaData_.isSetExplicitly(GOG_TESSELLATE_SET))
-    gogOutputStream << "tessellate false\n";
-
-  // altitude mode
-  simVis::GOG::AltitudeMode altMode = simVis::GOG::ALTITUDE_NONE;
-  if (getAltitudeMode(altMode) == 0)
-  {
-    if (altMode == simVis::GOG::ALTITUDE_NONE && metaData_.isSetExplicitly(GOG_ALTITUDE_MODE_SET))
-      gogOutputStream << "altitudemode none\n";
-    else if (altMode == simVis::GOG::ALTITUDE_GROUND_RELATIVE)
-      gogOutputStream << "altitudemode relativetoground\n";
-    else if (altMode == simVis::GOG::ALTITUDE_GROUND_CLAMPED)
-      gogOutputStream << "altitudemode clamptoground\n";
-    // simVis::GOG::ALTITUDE_EXTRUDE is covered by the extrude keyword
-  }
-  // Follow data is not currently serialized out
+  shape_->serializeToStream(gogOutputStream);
 }
 
 int GogNodeInterface::getAltitudeMode(AltitudeMode& altMode) const
@@ -968,7 +668,27 @@ int GogNodeInterface::getPointSize(int& pointSize) const
 
 int GogNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
 {
-  return 1;
+  // Fall back on the shape pointer's value
+  if (!shape_)
+    return 1;
+  simCore::Vec3 lla;
+  if (shape_->getReferencePosition(lla) != 0)
+    return 1;
+  referencePosition.set(lla.lon() * simCore::RAD2DEG,
+    lla.lat() * simCore::RAD2DEG,
+    lla.alt());
+  return 0;
+}
+
+int GogNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
+{
+  // Nothing to update here, but use this to set the shape's value
+  if (!shape_)
+    return 1;
+  const simCore::Vec3 llaRad(referencePos.y() * simCore::DEG2RAD,
+    referencePos.x() * simCore::DEG2RAD,
+    referencePos.z());
+  return shape_->setReferencePosition(llaRad);
 }
 
 int GogNodeInterface::getTessellation(TessellationStyle& style) const
@@ -986,6 +706,27 @@ int GogNodeInterface::getTextOutline(osg::Vec4f& outlineColor, simData::TextOutl
 int GogNodeInterface::getOpacity(float& opacity) const
 {
   opacity = opacity_;
+  return 0;
+}
+
+int GogNodeInterface::getScale(osg::Vec3d& scale) const
+{
+  simCore::Vec3 vec(1., 1., 1.);
+  const int rv = (shape_ && shape_->getScale(vec) == 0) ? 0 : 1;
+  scale.set(vec.x(), vec.y(), vec.z());
+  return rv;
+}
+
+int GogNodeInterface::setScale(const osg::Vec3d& scale)
+{
+  if (!shape_)
+    return 1;
+  // Apply to the underlying shape
+  shape_->setScale({ scale.x(), scale.y(), scale.z() });
+  applyScale_(scale);
+  // This ends up calling setGeoPositionAltitude_() which resets the ground-relative data,
+  // which is important when rescaling large GOGs especially clamped or surface relative
+  adjustAltitude_();
   return 0;
 }
 
@@ -1589,16 +1330,6 @@ void GogNodeInterface::applyBackfaceCulling()
 
   setStyle_(style_);
 }
-bool GogNodeInterface::getMetaDataFlag_(const std::string& flag, std::string& metaData)
-{
-  size_t keywordIndex = metaData.find(flag);
-  if (keywordIndex == std::string::npos)
-    return false;
-  // erase our flag keyword
-  metaData.erase(keywordIndex, flag.size());
-  return true;
-}
-
 void GogNodeInterface::initializeAltitudeSymbol_()
 {
   osgEarth::AltitudeSymbol* alt = style_.getOrCreate<osgEarth::AltitudeSymbol>();
@@ -1704,9 +1435,10 @@ bool GogNodeInterface::deferringStyleUpdates_() const
   return deferringStyleUpdate_;
 }
 
-void GogNodeInterface::serializeKeyword_(std::ostream& gogOutputStream) const
+void GogNodeInterface::applyScale_(const osg::Vec3d& scale)
 {
-  gogOutputStream << simVis::GOG::Utils::getKeywordFromShape(metaData_.shape) << "\n";
+  // Default implementation from LoaderUtils
+  LoaderUtils::setScale(*shape_, osgNode_);
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -1999,30 +1731,6 @@ void FeatureNodeInterface::adjustAltitude_()
   // No-op in feature node
 }
 
-void FeatureNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  if (!featureNode_.valid())
-    return;
-
-  osgEarth::Geometry* geometry = featureNode_->getFeature()->getGeometry();
-  if (!geometry)
-    return;
-
-  if (geometry->size() != originalAltitude_.size())
-  {
-    assert(0); // somehow our vector of original altitude values is out of synch with the geometry
-    return;
-  }
-
-  // since we may have applied an altitude offset, get the original altitude values before serializing
-  osg::ref_ptr<osgEarth::Geometry> originalGeometry = geometry->clone();
-  for (size_t i = 0; i < originalGeometry->size(); ++i)
-  {
-    (*originalGeometry)[i].z() = originalAltitude_.at(i);
-  }
-  Utils::serializeShapeGeometry(originalGeometry.get(), relativeShape, gogOutputStream);
-}
-
 void FeatureNodeInterface::markDirty()
 {
   if (featureNode_.valid())
@@ -2104,29 +1812,31 @@ int LocalGeometryNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoP
 
 int LocalGeometryNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
 {
-  if (!localNode_.valid())
+  if (localNode_.valid() && getReferencePosition_(referencePosition, *localNode_, altitude_) == 0)
+    return 0;
+  // Fall back to GogNodeInterface if node inspection fails
+  return GogNodeInterface::getReferencePosition(referencePosition);
+}
+
+int LocalGeometryNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
+{
+  // First, apply to the shape, using the GogNodeInterface methods
+  const int gniRv = GogNodeInterface::setReferencePosition(referencePos);
+  if (gniRv != 0 || !localNode_ || setReferencePosition_(referencePos, *localNode_) != 0)
     return 1;
-  const osgEarth::GeoPoint& refPoint = localNode_->getPosition();
-  referencePosition.x() = refPoint.x(); // note this is lon
-  referencePosition.y() = refPoint.y(); // note this is lat
-  referencePosition.z() = altitude_; // always use original altitude, since an altitude offset may have been applied
+  adjustAltitude_();
   return 0;
+}
+
+bool LocalGeometryNodeInterface::isAttached() const
+{
+  return localNode_.valid() && isAttached_(*this, *localNode_);
 }
 
 void LocalGeometryNodeInterface::adjustAltitude_()
 {
   if (localNode_.valid())
-    setGeoPositionAltitude_(*localNode_.get(), 0.);
-}
-
-void LocalGeometryNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  if (!localNode_.valid())
-    return;
-
-  const osgEarth::Geometry* geometry = localNode_->getGeometry();
-  if (geometry)
-    Utils::serializeShapeGeometry(geometry, relativeShape, gogOutputStream);
+    setGeoPositionAltitude_(*localNode_, 0.);
 }
 
 void LocalGeometryNodeInterface::setStyle_(const osgEarth::Style& style)
@@ -2332,17 +2042,7 @@ void LabelNodeInterface::serializeToStream(std::ostream& gogOutputStream)
 void LabelNodeInterface::adjustAltitude_()
 {
   if (labelNode_.valid())
-    setGeoPositionAltitude_(*labelNode_.get(), 0.);
-}
-
-void LabelNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  // nothing to do, labels don't serialize geometry
-}
-
-void LabelNodeInterface::serializeKeyword_(std::ostream& gogOutputStream) const
-{
-  // nothing to do, labels include the keyword in their text value element
+    setGeoPositionAltitude_(*labelNode_, 0.);
 }
 
 void LabelNodeInterface::setStyle_(const osgEarth::Style& style)
@@ -2358,6 +2058,29 @@ void LabelNodeInterface::setStyle_(const osgEarth::Style& style)
 void LabelNodeInterface::applyOrientationOffsets_()
 {
   // no-op, labels don't respect orientation offsets
+}
+
+int LabelNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  if (labelNode_.valid() && getReferencePosition_(referencePosition, *labelNode_, altitude_) == 0)
+    return 0;
+  // Fall back to GogNodeInterface if node inspection fails
+  return GogNodeInterface::getReferencePosition(referencePosition);
+}
+
+int LabelNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
+{
+  // First, apply to the shape, using the GogNodeInterface methods
+  const int gniRv = GogNodeInterface::setReferencePosition(referencePos);
+  if (gniRv != 0 || !labelNode_.valid() || setReferencePosition_(referencePos, *labelNode_) != 0)
+    return 1;
+  adjustAltitude_();
+  return 0;
+}
+
+bool LabelNodeInterface::isAttached() const
+{
+  return labelNode_.valid() && isAttached_(*this, *labelNode_);
 }
 
 //////////////////////////////////////////////
@@ -2414,16 +2137,11 @@ void CylinderNodeInterface::setAltitudeMode(AltitudeMode altMode)
 void CylinderNodeInterface::adjustAltitude_()
 {
   if (topCapNode_.valid())
-    setGeoPositionAltitude_(*topCapNode_.get(), height_);
+    setGeoPositionAltitude_(*topCapNode_, height_);
   if (sideNode_.valid())
-    setGeoPositionAltitude_(*sideNode_.get(), 0.);
+    setGeoPositionAltitude_(*sideNode_, 0.);
   if (bottomCapNode_.valid())
-    setGeoPositionAltitude_(*bottomCapNode_.get(), 0.);
-}
-
-void CylinderNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  // Cylinder can't serialize its geometry, serialization of center, radius, height is stored in the meta data
+    setGeoPositionAltitude_(*bottomCapNode_, 0.);
 }
 
 void CylinderNodeInterface::setStyle_(const osgEarth::Style& style)
@@ -2474,6 +2192,43 @@ void CylinderNodeInterface::applyOrientationOffsets_()
   applyOrientationOffsetsToNode_(*shapeObject(), sideNode_.get());
 }
 
+int CylinderNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  if (bottomCapNode_.valid() && getReferencePosition_(referencePosition, *bottomCapNode_, altitude_) == 0)
+    return 0;
+  // Fall back to GogNodeInterface if node inspection fails
+  return GogNodeInterface::getReferencePosition(referencePosition);
+}
+
+int CylinderNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
+{
+  // First, apply to the shape, using the GogNodeInterface methods
+  const int gniRv = GogNodeInterface::setReferencePosition(referencePos);
+  if (gniRv != 0 || !bottomCapNode_ || setReferencePosition_(referencePos, *bottomCapNode_) != 0)
+    return 1;
+  if (topCapNode_.valid())
+    setReferencePosition_(referencePos, *topCapNode_);
+  if (sideNode_.valid())
+    setReferencePosition_(referencePos, *sideNode_);
+  adjustAltitude_();
+  return 0;
+}
+
+bool CylinderNodeInterface::isAttached() const
+{
+  return bottomCapNode_.valid() && isAttached_(*this, *bottomCapNode_);
+}
+
+void CylinderNodeInterface::applyScale_(const osg::Vec3d& scale)
+{
+  if (bottomCapNode_.valid())
+    bottomCapNode_->setScale(scale);
+  if (topCapNode_.valid())
+    topCapNode_->setScale(scale);
+  if (sideNode_.valid())
+    sideNode_->setScale(scale);
+}
+
 //////////////////////////////////////////////
 
 ArcNodeInterface::ArcNodeInterface(osg::Group* groupNode, osgEarth::LocalGeometryNode* shapeNode, osgEarth::LocalGeometryNode* fillNode, const simVis::GOG::GogMetaData& metaData)
@@ -2511,9 +2266,9 @@ int ArcNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* refe
 void ArcNodeInterface::adjustAltitude_()
 {
   if (shapeNode_.valid())
-    setGeoPositionAltitude_(*shapeNode_.get(), 0.);
+    setGeoPositionAltitude_(*shapeNode_, 0.);
   if (fillNode_.valid())
-    setGeoPositionAltitude_(*fillNode_.get(), 0.);
+    setGeoPositionAltitude_(*fillNode_, 0.);
 }
 
 void ArcNodeInterface::setFilledState(bool state)
@@ -2528,11 +2283,6 @@ void ArcNodeInterface::setFilledState(bool state)
   simCore::GOG::FillableShape* fillable = dynamic_cast<simCore::GOG::FillableShape*>(shape_.get());
   if (fillable)
     fillable->setFilled(state);
-}
-
-void ArcNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  // Arc can't serialize its geometry, serialization for center and radius is stored in the meta data
 }
 
 void ArcNodeInterface::setStyle_(const osgEarth::Style& style)
@@ -2574,6 +2324,40 @@ void ArcNodeInterface::applyOrientationOffsets_()
   applyOrientationOffsetsToNode_(*shapeObject(), shapeNode_.get());
   applyOrientationOffsetsToNode_(*shapeObject(), fillNode_.get());
 }
+
+int ArcNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  if (shapeNode_.valid() && getReferencePosition_(referencePosition, *shapeNode_, altitude_) == 0)
+    return 0;
+  // Fall back to GogNodeInterface if node inspection fails
+  return GogNodeInterface::getReferencePosition(referencePosition);
+}
+
+int ArcNodeInterface::setReferencePosition(const osg::Vec3& referencePos)
+{
+  // First, apply to the shape, using the GogNodeInterface methods
+  const int gniRv = GogNodeInterface::setReferencePosition(referencePos);
+  if (gniRv != 0 || !shapeNode_ || setReferencePosition_(referencePos, *shapeNode_) != 0)
+    return 1;
+  if (fillNode_.valid())
+    setReferencePosition_(referencePos, *fillNode_);
+  adjustAltitude_();
+  return 0;
+}
+
+bool ArcNodeInterface::isAttached() const
+{
+  return shapeNode_.valid() && isAttached_(*this, *fillNode_);
+}
+
+void ArcNodeInterface::applyScale_(const osg::Vec3d& scale)
+{
+  shapeNode_->setScale(scale);
+  if (fillNode_.valid())
+    fillNode_->setScale(scale);
+}
+
+//////////////////////////////////////////////
 
 SphericalNodeInterface::SphericalNodeInterface(osgEarth::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData)
   : LocalGeometryNodeInterface(localNode, metaData)
@@ -2724,6 +2508,8 @@ void SphericalNodeInterface::setStyle_(const osgEarth::Style& style)
   }
 }
 
+//////////////////////////////////////////////
+
 ConeNodeInterface::ConeNodeInterface(osgEarth::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData)
   : LocalGeometryNodeInterface(localNode, metaData)
 {
@@ -2765,6 +2551,8 @@ void ConeNodeInterface::setFillColor(const osg::Vec4f& color)
   if (fillable)
     fillable->setFillColor(LoaderUtils::convertToCoreColor(color));
 }
+
+//////////////////////////////////////////////
 
 ImageOverlayInterface::ImageOverlayInterface(osgEarth::ImageOverlay* imageNode, const simVis::GOG::GogMetaData& metaData)
   : GogNodeInterface(imageNode, metaData),
@@ -2843,11 +2631,6 @@ void ImageOverlayInterface::adjustAltitude_()
   // no-op
 }
 
-void ImageOverlayInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  // no-op since this is not officially supported in GOG format, the geometry will be part of the meta-data
-}
-
 void ImageOverlayInterface::setStyle_(const osgEarth::Style& style)
 {
   // no-op, can't update style
@@ -2858,14 +2641,25 @@ void ImageOverlayInterface::applyOrientationOffsets_()
   // no-op, this class does not implement relative shapes
 }
 
+int ImageOverlayInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  if (!imageNode_)
+    return GogNodeInterface::getReferencePosition(referencePosition);
+  const osg::Vec2d& lonLat = imageNode_->getCenter();
+  referencePosition.set(lonLat.x(), lonLat.y(), altitude_);
+  return 0;
+}
+
+//////////////////////////////////////////////
+
 LatLonAltBoxInterface::LatLonAltBoxInterface(osg::Group* node, osgEarth::FeatureNode* topNode, osgEarth::FeatureNode* bottomNode, const simVis::GOG::GogMetaData& metaData)
   : FeatureNodeInterface(node, topNode, metaData),
     bottomNode_(bottomNode)
 {
   if (featureNode_.valid())
-    initAltitudes_(*featureNode_.get(), originalAltitude_);
+    initAltitudes_(*featureNode_, originalAltitude_);
   if (bottomNode_.valid())
-    initAltitudes_(*bottomNode_.get(), bottomAltitude_);
+    initAltitudes_(*bottomNode_, bottomAltitude_);
 }
 
 void LatLonAltBoxInterface::setAltOffset(double altOffsetMeters)
@@ -2877,22 +2671,12 @@ void LatLonAltBoxInterface::setAltOffset(double altOffsetMeters)
   altOffset_ = altOffsetMeters;
 
   if (featureNode_.valid())
-    applyAltOffsets_(*featureNode_.get(), originalAltitude_);
+    applyAltOffsets_(*featureNode_, originalAltitude_);
   if (bottomNode_.valid())
-    applyAltOffsets_(*bottomNode_.get(), bottomAltitude_);
+    applyAltOffsets_(*bottomNode_, bottomAltitude_);
 
   if (shape_)
     shape_->setAltitudeOffset(altOffsetMeters);
-}
-
-void LatLonAltBoxInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
-{
-  // no-op, LatLonAltBox corners are stored in the meta data
-}
-
-void LatLonAltBoxInterface::serializeKeyword_(std::ostream& gogOutputStream) const
-{
-  // nothing to do, LLA box includes the keyword in their metadata as part of the corner LLAs
 }
 
 void LatLonAltBoxInterface::setStyle_(const osgEarth::Style& style)

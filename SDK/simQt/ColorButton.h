@@ -72,9 +72,9 @@ Q_SIGNALS:
 
 protected:
   /** Override the paint event to draw the gradient blending alpha if necessary */
-  virtual void paintEvent(QPaintEvent* ev);
+  void paintEvent(QPaintEvent* ev) override;
   /** Override the double click event to send a signal */
-  virtual void mouseDoubleClickEvent(QMouseEvent* evt);
+  void mouseDoubleClickEvent(QMouseEvent* evt) override;
 
 private:
  void paintItemBackground_(QPainter* painter) const;

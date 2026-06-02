@@ -37,13 +37,13 @@ public:
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
+  void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) override
   {
     mapper_.removeLocalId_(removedId);
   }
 
   /// The scenario is about to be deleted
-  virtual void onScenarioDelete(simData::DataStore* source)
+  void onScenarioDelete(simData::DataStore* source) override
   {
     mapper_.clearResolvedIds_();
   }

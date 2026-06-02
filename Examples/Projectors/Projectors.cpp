@@ -234,7 +234,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
   }
 
   /// callback to process user input
-  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
+  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa) override
   {
     /// only handle key down
     if (ea.getEventType() != osgGA::GUIEventAdapter::KEYDOWN)
@@ -575,7 +575,7 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_IMGUI
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
   gui->add(new ControlPanel());
 #endif
 

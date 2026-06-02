@@ -156,7 +156,7 @@ public:
   }
 
   // Overridden from QAbstractTableModel
-  virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
+  int rowCount(const QModelIndex& parent = QModelIndex()) const override
   {
     // Flat table, no parents
     if (parent.isValid())
@@ -164,7 +164,7 @@ public:
     return static_cast<int>(editedGradient_.numControlColors());
   }
 
-  virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override
+  int columnCount(const QModelIndex& parent = QModelIndex()) const override
   {
     // Flat table, no parents
     if (parent.isValid())
@@ -172,7 +172,7 @@ public:
     return COL_LAST; // Value, Color
   }
 
-  virtual Qt::ItemFlags flags(const QModelIndex& index) const override
+  Qt::ItemFlags flags(const QModelIndex& index) const override
   {
     if (!index.isValid())
       return Qt::NoItemFlags;
@@ -183,7 +183,7 @@ public:
     return (Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable);
   }
 
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override
+  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override
   {
     if (orientation != Qt::Horizontal || section >= columnCount())
       return QVariant();
@@ -206,7 +206,7 @@ public:
     return QVariant();
   }
 
-  virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override
+  QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override
   {
     if (!index.isValid())
       return QVariant();
@@ -262,7 +262,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override
+  bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override
   {
     if (!index.isValid() || !value.isValid())
       return false;
@@ -470,7 +470,7 @@ public:
     valueSuffix_ = suffix;
   }
 
-  virtual void paintEvent(QPaintEvent* event) override
+  void paintEvent(QPaintEvent* event) override
   {
     QPainter painter(this);
     auto width = painter.device()->width();
@@ -514,7 +514,7 @@ public:
     }
   }
 
-  virtual void mousePressEvent(QMouseEvent* evt) override
+  void mousePressEvent(QMouseEvent* evt) override
   {
     if (evt->button() != Qt::RightButton && evt->button() != Qt::LeftButton)
       return;
@@ -532,7 +532,7 @@ public:
     dragIndex_ = pickIndex_;
   }
 
-  virtual void mouseReleaseEvent(QMouseEvent* evt) override
+  void mouseReleaseEvent(QMouseEvent* evt) override
   {
     dragIndex_ = QModelIndex();
     // If we start a drag inside, but release it outside, clear our pick
@@ -543,7 +543,7 @@ public:
     }
   }
 
-  virtual void mouseMoveEvent(QMouseEvent* evt) override
+  void mouseMoveEvent(QMouseEvent* evt) override
   {
     if (width() == 0)
       return;
@@ -581,7 +581,7 @@ public:
       this);
   }
 
-  virtual void leaveEvent(QEvent* event) override
+  void leaveEvent(QEvent* event) override
   {
     // Don't worry about dragIndex_. Leaving while dragging will not trigger this,
     // but it will be triggered when a doubleClick spawns the dialog.
@@ -590,7 +590,7 @@ public:
     update();
   }
 
-  virtual void mouseDoubleClickEvent(QMouseEvent* evt) override
+  void mouseDoubleClickEvent(QMouseEvent* evt) override
   {
     if (evt->button() != Qt::LeftButton || width() == 0)
       return;

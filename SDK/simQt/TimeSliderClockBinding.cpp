@@ -38,14 +38,14 @@ public:
     : binding_(binding)
   {
   }
-  virtual void onSetTime(const simCore::TimeStamp &t, bool isJump)
+  void onSetTime(const simCore::TimeStamp &t, bool isJump) override
   {
     binding_->updateSliderTime_(t);
   }
-  virtual void onTimeLoop()
+  void onTimeLoop() override
   { // no-op
   }
-  virtual void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime)
+  void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime) override
   { // no-op
   }
 private:
@@ -62,20 +62,20 @@ public:
   {
   }
   /// clock mode has changed
-  virtual void onModeChange(simCore::Clock::Mode newMode) {}
+  void onModeChange(simCore::Clock::Mode newMode) override {}
   /// direction has changed
-  virtual void onDirectionChange(simCore::TimeDirection newDirection) {}
+  void onDirectionChange(simCore::TimeDirection newDirection) override {}
   /// time scale has changed
-  virtual void onScaleChange(double newValue) {}
+  void onScaleChange(double newValue) override {}
   /// start/end times have changed
-  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end)
+  void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override
   {
     binding_->updateSliderTime_();
   }
   /// canLoop has changed
-  virtual void onCanLoopChange(bool newVal) {}
+  void onCanLoopChange(bool newVal) override {}
   /// Editable state has changed
-  virtual void onUserEditableChanged(bool userCanEdit)
+  void onUserEditableChanged(bool userCanEdit) override
   {
     binding_->fixEnabledState_(userCanEdit);
   }

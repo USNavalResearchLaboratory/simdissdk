@@ -48,19 +48,19 @@ public:
   */
   void setBrightnessContrast(const osg::Vec2f& bc);
   /** Retrieves the brightness (x) and contrast (y) values */
-  osg::Vec2f getBrightnessContrast(void) const;
+  osg::Vec2f getBrightnessContrast() const;
 
   // ColorFilter methods
 
   /** Name of function to call in custom shader */
-  virtual std::string getEntryPointFunctionName() const;
+  std::string getEntryPointFunctionName() const override;
   /** Installs uniforms and bindings required on the provided stateset */
-  virtual void install(osg::StateSet* stateSet) const;
+  void install(osg::StateSet* stateSet) const override;
   /** Serializes into a Config */
-  virtual osgEarth::Config getConfig() const;
+  osgEarth::Config getConfig() const override;
 
 protected:
-  virtual ~BrightnessContrastColorFilter() {} // osg::Referenced object
+  virtual ~BrightnessContrastColorFilter() = default; // osg::Referenced object
 
 private:
   void init_();

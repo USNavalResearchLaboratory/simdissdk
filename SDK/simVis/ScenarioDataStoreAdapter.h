@@ -45,12 +45,12 @@ namespace simVis
     * Constructs a new data store adapter. The adapter won't do anything until
     * you bind it with a call to bind().
     */
-    ScenarioDataStoreAdapter() { }
+    ScenarioDataStoreAdapter() = default;
 
     /**
     * Destructor
     */
-    virtual ~ScenarioDataStoreAdapter() {}
+    virtual ~ScenarioDataStoreAdapter() = default;
 
     /**
     * Constructs a new data store adapter and creates a binding.

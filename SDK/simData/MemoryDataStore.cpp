@@ -176,7 +176,7 @@ public:
   }
 
   /** Retrieves limit values for the table (see parent docs) */
-  virtual TableStatus getLimits(const simData::DataTable& table, size_t& pointsLimit, double& secondsLimit) const
+  TableStatus getLimits(const simData::DataTable& table, size_t& pointsLimit, double& secondsLimit) const override
   {
     // Only provide limits if limiting is enabled
     if (!dataStore_.dataLimiting())
@@ -226,30 +226,30 @@ public:
   {
   }
 
-  virtual void onModeChange(simCore::Clock::Mode newMode) override
+  void onModeChange(simCore::Clock::Mode newMode) override
   {
     // When switching to File mode force an update so that the lifespans of platforms are calculated
     if ((newMode == simCore::Clock::MODE_STEP) || (newMode == simCore::Clock::MODE_REALTIME))
       parent_.hasChanged_ = true;
   }
 
-  virtual void onDirectionChange(simCore::TimeDirection newDirection) override
+  void onDirectionChange(simCore::TimeDirection newDirection) override
   {
   }
 
-  virtual void onScaleChange(double newValue) override
+  void onScaleChange(double newValue) override
   {
   }
 
-  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override
+  void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override
   {
   }
 
-  virtual void onCanLoopChange(bool newVal) override
+  void onCanLoopChange(bool newVal) override
   {
   }
 
-  virtual void onUserEditableChanged(bool userCanEdit) override
+  void onUserEditableChanged(bool userCanEdit) override
   {
   }
 
@@ -275,31 +275,31 @@ public:
     listeners_.push_back(listener);
   }
 
-  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
   {
     for (const auto& listener : listeners_)
       listener->onAddEntity(source, newId, ot);
   }
 
-  virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
+  void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
   {
     for (const auto& listener : listeners_)
       listener->onRemoveEntity(source, removedId, ot);
   }
 
-  virtual void onPropertiesChange(simData::DataStore* source, simData::ObjectId id) override
+  void onPropertiesChange(simData::DataStore* source, simData::ObjectId id) override
   {
     for (const auto& listener : listeners_)
       listener->onPropertiesChange(source, id);
   }
 
-  virtual void onPrefsChange(DataStore* source, ObjectId id) override
+  void onPrefsChange(DataStore* source, ObjectId id) override
   {
     for (const auto& listener : listeners_)
       listener->onPrefsChange(source, id);
   }
 
-  virtual void onScenarioDelete(DataStore* source) override
+  void onScenarioDelete(DataStore* source) override
   {
     for (const auto& listener : listeners_)
       listener->onScenarioDelete(source);
@@ -324,7 +324,7 @@ public:
     assert(hostToChildren_.empty());
   }
 
-  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
   {
     // ignore non-children
     if ((ot == simData::PLATFORM) || (ot == simData::NONE) || (ot == simData::ALL))
@@ -334,7 +334,7 @@ public:
     hostToChildren_.insert(std::pair<IdAndTypeKey, ObjectId>(IdAndTypeKey(hostId, ot), newId));
   }
 
-  virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
+  void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
   {
     // ignore non-children
     if ((ot == simData::PLATFORM) || (ot == simData::NONE) || (ot == simData::ALL))
@@ -356,7 +356,7 @@ public:
     assert(false);
   }
 
-  virtual void onScenarioDelete(DataStore* source) override
+  void onScenarioDelete(DataStore* source) override
   {
     // Do not optimize, must individually remove entities for correct clean up
   }
@@ -391,14 +391,14 @@ public:
     }
   }
 
-  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
   {
     auto originalId = simData::DataStoreHelpers::originalIdFromId(newId, source);
     uniqueIdToOriginalId_[newId] = originalId;
     originalIdToUniqueIds_.insert(std::make_pair(originalId, Entry(newId, ot)));
   }
 
-  virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
+  void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
   {
     auto it = uniqueIdToOriginalId_.find(removedId);
     if (it == uniqueIdToOriginalId_.end())
@@ -418,7 +418,7 @@ public:
     uniqueIdToOriginalId_.erase(it);
   }
 
-  virtual void onPropertiesChange(simData::DataStore* source, simData::ObjectId id) override
+  void onPropertiesChange(simData::DataStore* source, simData::ObjectId id) override
   {
     auto it = uniqueIdToOriginalId_.find(id);
     if (it == uniqueIdToOriginalId_.end())
@@ -446,7 +446,7 @@ public:
     assert(false);
   }
 
-  virtual void onScenarioDelete(DataStore* source) override
+  void onScenarioDelete(DataStore* source) override
   {
     uniqueIdToOriginalId_.clear();
     originalIdToUniqueIds_.clear();
@@ -481,7 +481,7 @@ public:
 
   virtual ~SliceCacheObserver() = default;
 
-  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
   {
     auto categoryIt = mds_.categoryData_.find(newId);
     if (categoryIt == mds_.categoryData_.end())
@@ -583,7 +583,7 @@ public:
     }
   }
 
-  virtual void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
+  void onRemoveEntity(DataStore* source, ObjectId removedId, simData::ObjectType ot) override
   {
     categoryCache_.erase(removedId);
     if (platformCache_.erase(removedId) == 1)
@@ -611,7 +611,7 @@ public:
       return;
   }
 
-  virtual void onPrefsChange(DataStore* source, ObjectId id) override
+  void onPrefsChange(DataStore* source, ObjectId id) override
   {
     // A preference change can affect how a TSPI point is process, so reset
     auto platformIt = platformCache_.find(id);
@@ -619,7 +619,7 @@ public:
       platformIt->second.resetPreferences();
   }
 
-  virtual void onScenarioDelete(DataStore* source) override
+  void onScenarioDelete(DataStore* source) override
   {
     categoryCache_.clear();
     platformCache_.clear();
@@ -1414,7 +1414,7 @@ public:
 
   virtual ~ReflectionObserver() = default;
 
-  virtual void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
+  void onAddEntity(DataStore* source, ObjectId newId, simData::ObjectType ot) override
   {
     if (ot == simData::PLATFORM)
     {
@@ -1518,7 +1518,7 @@ public:
   {
   }
 
-  virtual void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime)
+  void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime) override
   {
     for (const auto& listenerPtr : dataStore_.newUpdatesListeners_)
       listenerPtr->onNewRowData(&dataStore_, table, id, dataTime);
@@ -1561,7 +1561,7 @@ public:
   }
 
   /** Sets the values for the incoming data store to match the values saved in this memento */
-  virtual void apply(DataStore &ds)
+  void apply(DataStore &ds) override
   {
     ds.setInterpolator(interpolator_);
     ds.enableInterpolation(interpolationEnabled_);
@@ -1576,7 +1576,7 @@ public:
     for (ScenarioListenerList::const_iterator iter2 = scenarioListeners_.begin(); iter2 != scenarioListeners_.end(); ++iter2)
       ds.addScenarioListener(*iter2);
 
-    for (auto listener : newUpdatesListeners_)
+    for (const auto& listener : newUpdatesListeners_)
       ds.addNewUpdatesListener(listener);
 
     for (std::vector<DataTableManager::ManagerObserverPtr>::const_iterator iter = dtObservers_.begin(); iter != dtObservers_.end(); ++iter)
@@ -2210,7 +2210,7 @@ void MemoryDataStore::flushDataTables_(ObjectId id)
   {
   public:
     FlushVisitor() {}
-    virtual void visit(simData::DataTable* table)
+    void visit(simData::DataTable* table) override
     {
       table->flush();
     }
@@ -2236,7 +2236,7 @@ void MemoryDataStore::flushDataTables_(ObjectId id, double startTime, double end
     endTime_(endTime)
     {
     }
-    virtual void visit(simData::DataTable* table)
+    void visit(simData::DataTable* table) override
     {
       if ((startTime_ <= 0.0) && (endTime_ == std::numeric_limits<double>::max()))
         table->flush();

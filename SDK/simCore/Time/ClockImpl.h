@@ -38,11 +38,11 @@ namespace simCore
     /**@name callback management
     *@{
     */
-    virtual void registerTimeCallback(Clock::TimeObserverPtr np);
-    virtual void removeTimeCallback(Clock::TimeObserverPtr np);
+    void registerTimeCallback(Clock::TimeObserverPtr np) override;
+    void removeTimeCallback(Clock::TimeObserverPtr np) override;
 
-    virtual void registerModeChangeCallback(Clock::ModeChangeObserverPtr p);
-    virtual void removeModeChangeCallback(Clock::ModeChangeObserverPtr p);
+    void registerModeChangeCallback(Clock::ModeChangeObserverPtr p) override;
+    void removeModeChangeCallback(Clock::ModeChangeObserverPtr p) override;
     ///@}
 
   protected:
@@ -76,43 +76,43 @@ namespace simCore
     /**@name Accessors
     *@{
     */
-    virtual Clock::Mode mode() const;
-    virtual bool isLiveMode() const;
-    virtual simCore::TimeStamp currentTime() const;
-    virtual double timeScale() const;
-    virtual bool realTime() const;
-    virtual simCore::TimeStamp startTime(bool ignoreUserStartTime = false) const;
-    virtual simCore::TimeStamp endTime(bool ignoreUserEndTime = false) const;
-    virtual bool canLoop() const;
-    virtual bool isPlaying() const;
-    virtual simCore::TimeDirection timeDirection() const;
-    virtual bool controlsDisabled() const;
-    virtual bool isUserEditable() const;
-    virtual std::optional<simCore::TimeStamp> userStartTime() const;
-    virtual std::optional<simCore::TimeStamp> userEndTime() const;
+    Clock::Mode mode() const override;
+    bool isLiveMode() const override;
+    simCore::TimeStamp currentTime() const override;
+    double timeScale() const override;
+    bool realTime() const override;
+    simCore::TimeStamp startTime(bool ignoreUserStartTime = false) const override;
+    simCore::TimeStamp endTime(bool ignoreUserEndTime = false) const override;
+    bool canLoop() const override;
+    bool isPlaying() const override;
+    simCore::TimeDirection timeDirection() const override;
+    bool controlsDisabled() const override;
+    bool isUserEditable() const override;
+    std::optional<simCore::TimeStamp> userStartTime() const override;
+    std::optional<simCore::TimeStamp> userEndTime() const override;
 
-    virtual void setMode(Clock::Mode mode);
-    virtual void setMode(Clock::Mode mode, const simCore::TimeStamp& liveStartTime);
-    virtual void setTime(const simCore::TimeStamp& timeVal);
-    virtual void setTimeScale(double scale);
-    virtual void setRealTime(bool fl);
-    virtual void setStartTime(const simCore::TimeStamp& timeVal);
-    virtual void setEndTime(const simCore::TimeStamp& timeVal);
-    virtual void setCanLoop(bool fl);
-    virtual void setControlsDisabled(bool fl);
-    virtual int setUserTimeBounds(const std::optional<simCore::TimeStamp>& start, const std::optional<simCore::TimeStamp>& end);
+    void setMode(Clock::Mode mode) override;
+    void setMode(Clock::Mode mode, const simCore::TimeStamp& liveStartTime) override;
+    void setTime(const simCore::TimeStamp& timeVal) override;
+    void setTimeScale(double scale) override;
+    void setRealTime(bool fl) override;
+    void setStartTime(const simCore::TimeStamp& timeVal) override;
+    void setEndTime(const simCore::TimeStamp& timeVal) override;
+    void setCanLoop(bool fl) override;
+    void setControlsDisabled(bool fl) override;
+    int setUserTimeBounds(const std::optional<simCore::TimeStamp>& start, const std::optional<simCore::TimeStamp>& end) override;
     ///@}
 
     /**@name controls
     *@{
     */
-    virtual void decreaseScale();
-    virtual void stepBackward();
-    virtual void playReverse();
-    virtual void stop();
-    virtual void playForward();
-    virtual void stepForward();
-    virtual void increaseScale();
+    void decreaseScale() override;
+    void stepBackward() override;
+    void playReverse() override;
+    void stop() override;
+    void playForward() override;
+    void stepForward() override;
+    void increaseScale() override;
     ///@}
 
     /// Called to update the current data time
@@ -207,48 +207,48 @@ namespace simCore
     /**@name Accessors
     *@{
     */
-    virtual Clock::Mode mode() const;
-    virtual bool isLiveMode() const;
-    virtual simCore::TimeStamp currentTime() const;
-    virtual double timeScale() const;
-    virtual bool realTime() const;
-    virtual simCore::TimeStamp startTime(bool ignoreUserStartTime = false) const;
-    virtual simCore::TimeStamp endTime(bool ignoreUserEndTime = false) const;
-    virtual bool canLoop() const;
-    virtual bool isPlaying() const;
-    virtual simCore::TimeDirection timeDirection() const;
-    virtual bool controlsDisabled() const;
-    virtual bool isUserEditable() const;
-    virtual std::optional<simCore::TimeStamp> userStartTime() const;
-    virtual std::optional<simCore::TimeStamp> userEndTime() const;
+    Clock::Mode mode() const override;
+    bool isLiveMode() const override;
+    simCore::TimeStamp currentTime() const override;
+    double timeScale() const override;
+    bool realTime() const override;
+    simCore::TimeStamp startTime(bool ignoreUserStartTime = false) const override;
+    simCore::TimeStamp endTime(bool ignoreUserEndTime = false) const override;
+    bool canLoop() const override;
+    bool isPlaying() const override;
+    simCore::TimeDirection timeDirection() const override;
+    bool controlsDisabled() const override;
+    bool isUserEditable() const override;
+    std::optional<simCore::TimeStamp> userStartTime() const override;
+    std::optional<simCore::TimeStamp> userEndTime() const override;
 
-    virtual void setMode(Clock::Mode mode);
-    virtual void setMode(Clock::Mode mode, const simCore::TimeStamp& liveStartTime);
-    virtual void setTime(const simCore::TimeStamp& timeVal);
-    virtual void setTimeScale(double scale);
-    virtual void setRealTime(bool fl);
-    virtual void setStartTime(const simCore::TimeStamp& timeVal);
-    virtual void setEndTime(const simCore::TimeStamp& timeVal);
-    virtual void setCanLoop(bool fl);
-    virtual void setControlsDisabled(bool fl);
-    virtual int setUserTimeBounds(const std::optional<simCore::TimeStamp>& start, const std::optional<simCore::TimeStamp>& end);
+    void setMode(Clock::Mode mode) override;
+    void setMode(Clock::Mode mode, const simCore::TimeStamp& liveStartTime) override;
+    void setTime(const simCore::TimeStamp& timeVal) override;
+    void setTimeScale(double scale) override;
+    void setRealTime(bool fl) override;
+    void setStartTime(const simCore::TimeStamp& timeVal) override;
+    void setEndTime(const simCore::TimeStamp& timeVal) override;
+    void setCanLoop(bool fl) override;
+    void setControlsDisabled(bool fl) override;
+    int setUserTimeBounds(const std::optional<simCore::TimeStamp>& start, const std::optional<simCore::TimeStamp>& end) override;
     ///@}
 
     /**@name controls
     *@{
     */
-    virtual void decreaseScale();
-    virtual void stepBackward();
-    virtual void playReverse();
-    virtual void stop();
-    virtual void playForward();
-    virtual void stepForward();
-    virtual void increaseScale();
+    void decreaseScale() override;
+    void stepBackward() override;
+    void playReverse() override;
+    void stop() override;
+    void playForward() override;
+    void stepForward() override;
+    void increaseScale() override;
     ///@}
 
     // Intercept calls to process VisualizationClockObserver
-    virtual void registerModeChangeCallback(Clock::ModeChangeObserverPtr p);
-    virtual void removeModeChangeCallback(Clock::ModeChangeObserverPtr p);
+    void registerModeChangeCallback(Clock::ModeChangeObserverPtr p) override;
+    void removeModeChangeCallback(Clock::ModeChangeObserverPtr p) override;
 
     /// Called to update the current data time
     void idle();

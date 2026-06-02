@@ -670,13 +670,13 @@ public:
   {
   }
 
-  virtual void onSetTime(const TimeStamp &t, bool isJump)
+  void onSetTime(const TimeStamp &t, bool isJump) override
   {
     if (parent_.lockToDataClock_)
       parent_.notifySetTime_(t, isJump);
   }
 
-  virtual void onTimeLoop()
+  void onTimeLoop() override
   {
     // Dev error, visualization should be off during loop changes
     assert(parent_.lockToDataClock_);
@@ -684,7 +684,7 @@ public:
     parent_.notifyTimeLoop_();
   }
 
-  virtual void adjustTime(const TimeStamp &oldTime, TimeStamp& newTime)
+  void adjustTime(const TimeStamp &oldTime, TimeStamp& newTime) override
   {
     if (parent_.lockToDataClock_)
       parent_.notifyAdjustTime_(oldTime, newTime);
@@ -705,7 +705,7 @@ public:
   {
   }
 
-  virtual void onModeChange(Clock::Mode newMode)
+  void onModeChange(Clock::Mode newMode) override
   {
     // Dev error, visualization should be off during mode changes
     assert(parent_.lockToDataClock_);
@@ -713,7 +713,7 @@ public:
     parent_.notifyModeChange_(newMode);
   }
 
-  virtual void onDirectionChange(simCore::TimeDirection newDirection)
+  void onDirectionChange(simCore::TimeDirection newDirection) override
   {
     // If stopping turn off visualization if on
     if ((newDirection == simCore::STOP) && !parent_.lockToDataClock_)
@@ -725,7 +725,7 @@ public:
     parent_.notifyDirectionChange_(newDirection);
   }
 
-  virtual void onScaleChange(double newValue)
+  void onScaleChange(double newValue) override
   {
     // Dev error, visualization should be off during scale changes
     assert(parent_.lockToDataClock_);
@@ -733,7 +733,7 @@ public:
     parent_.notifyScaleChange_(newValue);
   }
 
-  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end)
+  void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override
   {
     if (parent_.lockToDataClock_)
       parent_.notifyBoundsChange_(start, end);
@@ -744,7 +744,7 @@ public:
     }
   }
 
-  virtual void onCanLoopChange(bool newVal)
+  void onCanLoopChange(bool newVal) override
   {
     // Dev error, visualization should be off during loop changes
     assert(parent_.lockToDataClock_);
@@ -752,7 +752,7 @@ public:
     parent_.notifyCanLoopChange_(newVal);
   }
 
-  virtual void onUserEditableChanged(bool userCanEdit)
+  void onUserEditableChanged(bool userCanEdit) override
   {
     // Dev error, visualization should be off during edit changes
     assert(parent_.lockToDataClock_);
@@ -775,19 +775,19 @@ public:
   {
   }
 
-  virtual void onSetTime(const TimeStamp &t, bool isJump)
+  void onSetTime(const TimeStamp &t, bool isJump) override
   {
     if (!parent_.lockToDataClock_)
       parent_.notifySetTime_(t, isJump);
   }
 
-  virtual void onTimeLoop()
+  void onTimeLoop() override
   {
     if (!parent_.lockToDataClock_)
       parent_.notifyTimeLoop_();
   }
 
-  virtual void adjustTime(const TimeStamp &oldTime, TimeStamp& newTime)
+  void adjustTime(const TimeStamp &oldTime, TimeStamp& newTime) override
   {
     if (!parent_.lockToDataClock_)
       parent_.notifyAdjustTime_(oldTime, newTime);
@@ -808,7 +808,7 @@ public:
   {
   }
 
-  virtual void onModeChange(Clock::Mode newMode)
+  void onModeChange(Clock::Mode newMode) override
   {
     // Dev error, should always be in File Mode
     assert((newMode != MODE_FREEWHEEL) && (newMode != MODE_SIMULATION));
@@ -817,31 +817,31 @@ public:
       parent_.notifyModeChange_(newMode);
   }
 
-  virtual void onDirectionChange(simCore::TimeDirection newDirection)
+  void onDirectionChange(simCore::TimeDirection newDirection) override
   {
     if (!parent_.lockToDataClock_)
       parent_.notifyDirectionChange_(newDirection);
   }
 
-  virtual void onScaleChange(double newValue)
+  void onScaleChange(double newValue) override
   {
     if (!parent_.lockToDataClock_)
       parent_.notifyScaleChange_(newValue);
   }
 
-  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end)
+  void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override
   {
     if (!parent_.lockToDataClock_)
       parent_.notifyBoundsChange_(start, end);
   }
 
-  virtual void onCanLoopChange(bool newVal)
+  void onCanLoopChange(bool newVal) override
   {
     if (!parent_.lockToDataClock_)
       parent_.notifyCanLoopChange_(newVal);
   }
 
-  virtual void onUserEditableChanged(bool userCanEdit)
+  void onUserEditableChanged(bool userCanEdit) override
   {
     if (!parent_.lockToDataClock_)
       parent_.notifyUserEditable_(userCanEdit);
@@ -908,7 +908,7 @@ void VisualizationClock::setLockedToDataClock(bool lock)
     localClock_->setControlsDisabled(false);
   }
 
-  for (auto observer : visClockObservers_)
+  for (const auto& observer : visClockObservers_)
     observer->onLockChanged(lockToDataClock_);
 }
 

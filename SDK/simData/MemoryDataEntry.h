@@ -38,28 +38,28 @@ class MemoryDataEntry : public DataEntry<Properties, Preferences, Updates, Comma
 {
 public:
   /// Retrieve the data entry's properties object defining the reference frame for its state
-  virtual Properties *mutable_properties() { return &properties_; }
+  Properties *mutable_properties() override { return &properties_; }
 
   /// Retrieve the data entry's properties object defining the reference frame for its state
-  virtual const Properties *properties() const { return &properties_; }
+  const Properties *properties() const override { return &properties_; }
 
   /// Retrieve the data entry's preferences object describing its appearance
-  virtual Preferences *mutable_preferences() { return &preferences_; }
+  Preferences *mutable_preferences() override { return &preferences_; }
 
   /// Retrieve the data entry's preferences object describing its appearance
-  virtual const Preferences *preferences() const { return &preferences_; }
+  const Preferences *preferences() const override { return &preferences_; }
 
   /// Retrieve the data entry's DataSlice containing state updates
-  virtual Updates *updates() { return &updates_; }
+  Updates *updates() override { return &updates_; }
 
   /// Retrieve the data entry's DataSlice containing state modifying commands
-  virtual Commands *commands() { return &commands_; }
+  Commands *commands() override { return &commands_; }
 
   /// Retrieve the data entry's DataSlice containing category data describing its type
-  virtual CategoryDataSlice *categoryData() { return &categoryData_; }
+  CategoryDataSlice *categoryData() override { return &categoryData_; }
 
   /// Retrieve the data entry's DataSlice containing user-defined state data (generic data)
-  virtual GenericDataSlice *genericData() { return &genericData_; }
+  GenericDataSlice *genericData() override { return &genericData_; }
 
 private:
   Properties              properties_;

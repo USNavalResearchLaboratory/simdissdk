@@ -58,7 +58,7 @@ public:
   {
   }
 
-  virtual bool run(osg::Object* object, osg::Object* data)
+  bool run(osg::Object* object, osg::Object* data) override
   {
     EphemerisVector* ephemeris = dynamic_cast<EphemerisVector*>(object);
     if (ephemeris != nullptr)

@@ -63,7 +63,7 @@ public:
 
 protected:
   /** Protect osg::Referenced-derived destructor */
-  virtual ~GridLayoutListener() {}
+  virtual ~GridLayoutListener() = default;
 };
 
 /**
@@ -251,7 +251,7 @@ public:
   GridCell* childAt(int row, int column);
 
   /** Override to update layout */
-  virtual void traverse(osg::NodeVisitor& nv);
+  void traverse(osg::NodeVisitor& nv) override;
 
   /** Set the size of the container; children will be resized to fill the space as per configuration. */
   void setSize(float width, float height);
@@ -275,9 +275,9 @@ protected:
   virtual ~GridTransform();
 
   /** Override from osg::Group to dirty layout */
-  virtual void childRemoved(unsigned int pos, unsigned int numChildrenToRemove);
+  void childRemoved(unsigned int pos, unsigned int numChildrenToRemove) override;
   /** Override from osg::Group to dirty layout */
-  virtual void childInserted(unsigned int pos);
+  void childInserted(unsigned int pos) override;
 
 private:
   /** Returns the width of the widest child. Useful for packing by uniform width. */

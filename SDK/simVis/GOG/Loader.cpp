@@ -74,7 +74,7 @@ void Loader::loadGogs(std::istream& input, const std::string& filename, bool att
   std::vector<simCore::GOG::GogShapePtr> gogs;
   parser_.parse(input, filename, gogs);
 
-  for (simCore::GOG::GogShapePtr gog : gogs)
+  for (const simCore::GOG::GogShapePtr& gog : gogs)
   {
     GogNodeInterfacePtr gogNode = buildGogNode_(gog, filename, attached);
     if (gogNode)

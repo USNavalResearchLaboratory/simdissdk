@@ -157,7 +157,7 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
 
       if (std::find(projectors_.begin(), projectors_.end(), node) == projectors_.end())
       {
-        projectors_.push_back(node);
+        projectors_.emplace_back(node);
         return projectors_.size();
       }
       else
@@ -242,7 +242,7 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
     }
 
     //! Prunes the projector list and updates all texgen matrices
-    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    void operator()(osg::Node* node, osg::NodeVisitor* nv) override
     {
       prune();
 
@@ -321,7 +321,7 @@ ProjectorNode::~ProjectorNode()
     hostLocator_->removeCallback(locatorCallback_.get());
 
   auto localCopy = projectedNodes_;
-  for (auto node : localCopy)
+  for (const auto& node : localCopy)
   {
     osg::ref_ptr<osg::Node> lock;
     if (node.first.lock(lock))

@@ -225,7 +225,7 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
     double x = sin(azim_rad);
     double y = cos(azim_rad);
 
-    radials_.push_back(Radial(azim_rad));
+    radials_.emplace_back(azim_rad);
     Radial& radial = radials_.back();
 
     // Track the highest elevation along this azimuth to check for visibility
@@ -281,7 +281,7 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
           visible = true;
         }
 
-        radial.samples_.push_back(Sample(range_m, mapPoint, hamsl, hae, elev, visible));
+        radial.samples_.emplace_back(range_m, mapPoint, hamsl, hae, elev, visible);
         if (!validLos)
         {
           // To be valid there needs to be at least two consecutive points on the same azimuth
@@ -293,7 +293,7 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
       else
       {
         // record an "invalid" sample
-        radial.samples_.push_back(Sample(range_m, mapPoint));
+        radial.samples_.emplace_back(range_m, mapPoint);
         lastSampleValid = false;
       }
     }
@@ -490,7 +490,7 @@ bool RadialLOS::makeRadial_(Radial& out_radial) const
       visible = true;
     }
 
-    out_radial.samples_.push_back(Sample(range, osgEarth::GeoPoint::INVALID, hamsl, hae, dot, visible));
+    out_radial.samples_.emplace_back(range, osgEarth::GeoPoint::INVALID, hamsl, hae, dot, visible);
   }
 
   return true;

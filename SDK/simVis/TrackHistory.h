@@ -58,6 +58,9 @@ class SDKVIS_EXPORT TrackHistoryNode : public osg::Group
 public:
   TrackHistoryNode(const simData::DataStore& ds, Locator* parentLocator, PlatformTspiFilterManager& manager, simData::ObjectId entityId);
 
+  /** Copy constructor, not implemented or available. */
+  TrackHistoryNode(const TrackHistoryNode&) = delete;
+
   /**
     * Before using this class a call to installShaderProgram is required.  This
     * method installs the shader program and default uniform variables for
@@ -102,10 +105,10 @@ public:
   void setPrefs(const simData::PlatformPrefs& platformPrefs, const simData::PlatformProperties& platformProps, bool force = false);
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "TrackHistoryNode"; }
+  const char* className() const override { return "TrackHistoryNode"; }
 
 protected: // methods
   /// osg::Referenced-derived
@@ -115,9 +118,6 @@ private: // methods
 
   class ColorChangeObserver;
   class ColorTableObserver;
-
-  /** Copy constructor, not implemented or available. */
-  TrackHistoryNode(const TrackHistoryNode&);
 
   /**
   * If the color history change is within the time span of the currently displayed track history, redraw all history points

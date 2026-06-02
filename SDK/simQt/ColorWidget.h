@@ -105,7 +105,7 @@ private Q_SLOTS:
 
 protected:
   /** Override change event to know when we're disabled */
-  virtual void changeEvent(QEvent* event);
+  void changeEvent(QEvent* event) override;
 
   /** Retrieve the pointer to the color button */
   simQt::ColorButton* colorButton_() const;

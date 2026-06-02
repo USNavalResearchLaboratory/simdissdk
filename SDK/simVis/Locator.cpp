@@ -563,7 +563,7 @@ int Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg
 
 void Locator::addCallback(LocatorCallback* callback)
 {
-  callbacks_.push_back(callback);
+  callbacks_.emplace_back(callback);
 }
 
 void Locator::removeCallback(LocatorCallback* callback)

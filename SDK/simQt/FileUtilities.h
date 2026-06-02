@@ -33,14 +33,6 @@ class SDKQT_EXPORT FileUtilities
 {
 public:
   /**
-  * Tests the write permissions of fully specified file path; must exist.
-  * @param absoluteFilePath the file path to test
-  * @return true if file path is writable, false if file path not writable
-  */
-  [[deprecated("Use simCore::isPathWritable() instead")]]
-  static bool isPathWritable(const QString& absoluteFilePath);
-
-  /**
   * Tests the write permissions of the specified relative path within an organization folder within
   * the standard OS-specific %APPDATA%/$HOME user folder and creates the path if it is writable.
   * @param[in] relativeFilePath Desired relative file path to create under the home path.

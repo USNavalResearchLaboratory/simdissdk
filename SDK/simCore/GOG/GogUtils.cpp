@@ -38,7 +38,7 @@ std::string GogUtils::processUrl(const std::string& addr)
 {
   std::string candidate = simCore::removeQuotes(simCore::expandEnv(addr));
   // OSG cannot handle "file://" protocol out of the box
-  if (candidate.substr(0, 7) == "file://")
+  if (candidate.starts_with("file://"))
   {
     // Trim file://. This will automatically handle "file://c:/home/loc.png" and "file:///home/user/loc.png"
     candidate = candidate.substr(7);

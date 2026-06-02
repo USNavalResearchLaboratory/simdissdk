@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class Annotation; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Annotation */
 class SDKVIS_EXPORT TextAnnotation
 {
 public:
-  /** Create the annotation from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the annotation from the shape object */
   static GogNodeInterface* createAnnotation(const simCore::GOG::Annotation& anno, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

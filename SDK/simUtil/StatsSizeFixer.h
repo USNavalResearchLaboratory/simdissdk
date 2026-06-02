@@ -53,7 +53,7 @@ public:
   }
 
   /** Override handle() to change the StatsHandler's camera metrics to get text to not change size */
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
   {
     switch (ea.getEventType())
     {

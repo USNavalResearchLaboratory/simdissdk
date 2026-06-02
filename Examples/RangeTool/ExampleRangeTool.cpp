@@ -316,7 +316,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
   }
 
   /// callback to process user input
-  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
+  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa) override
   {
     bool handled = false;
     osgEarth::Util::EarthManipulator* manip = dynamic_cast<osgEarth::Util::EarthManipulator*>(viewer_->getMainView()->getCameraManipulator());
@@ -590,7 +590,7 @@ int main(int argc, char **argv)
   ControlPanel* controlPanel = new ControlPanel();
   menuHandler->setControlPanel(controlPanel);
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
   gui->add(controlPanel);
 #endif
 

@@ -66,6 +66,9 @@ namespace simVis
      */
     SceneManager();
 
+    /** Copy constructor, not implemented or available. */
+    SceneManager(const SceneManager&) = delete;
+
     /**
     * The scene graph node that rendering the earth.
     * @return the MapNode
@@ -141,22 +144,19 @@ namespace simVis
     static void initializeTerrainOptions(osgEarth::MapNode* mapNode);
 
     /** Return the proper library name */
-    virtual const char* libraryName() const { return "simVis"; }
+    const char* libraryName() const override { return "simVis"; }
 
     /** Return the class name */
-    virtual const char* className() const { return "SceneManager"; }
+    const char* className() const override { return "SceneManager"; }
 
   protected:
     /// osg::Referenced-derived
     virtual ~SceneManager();
 
     /// Override and protect addChild().  Most children should be going to the scenario.
-    virtual bool addChild(osg::Node *child);
+    bool addChild(osg::Node *child) override;
 
   private:
-    /** Copy constructor, not implemented or available. */
-    SceneManager(const SceneManager&);
-
     /** Returns true if the sky node is SilverLining. */
     bool isSilverLining_(const osgEarth::SkyNode* skyNode) const;
 

@@ -426,7 +426,7 @@ osgEarth::Status DBImageLayer::openImplementation()
         cubeEx.transform(profile->getSRS()->getGeodeticSRS(), llex[f]);
 
 #if OSGEARTH_SOVERSION >= 142
-        allExtents.push_back(osgEarth::DataExtent(cubeEx, cx.shallowLevel_, cx.deepLevel_));
+        allExtents.emplace_back(cubeEx, cx.shallowLevel_, cx.deepLevel_);
 #else
         dataExtents().push_back(osgEarth::DataExtent(cubeEx, cx.shallowLevel_, cx.deepLevel_));
 #endif
@@ -726,7 +726,7 @@ osgEarth::Status DBElevationLayer::openImplementation()
         cubeEx.transform(profile->getSRS()->getGeodeticSRS(), llex[f]);
 
 #if OSGEARTH_SOVERSION >= 142
-        allExtents.push_back(osgEarth::DataExtent(cubeEx, cx.shallowLevel_, cx.deepLevel_));
+        allExtents.emplace_back(cubeEx, cx.shallowLevel_, cx.deepLevel_);
 #else
         dataExtents().push_back(osgEarth::DataExtent(cubeEx, cx.shallowLevel_, cx.deepLevel_));
 #endif

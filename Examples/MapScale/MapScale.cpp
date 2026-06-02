@@ -188,7 +188,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
   {
   }
 
-  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
   {
     if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN && ea.getKey() == 'o')
     {
@@ -220,7 +220,7 @@ public:
   }
 
   // Override GUIEventHandler
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
   {
     switch (ea.getEventType())
     {
@@ -391,7 +391,7 @@ int main(int argc, char** argv)
 
 #ifdef HAVE_IMGUI
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
-  mainView->getEventHandlers().push_front(gui);
+  mainView->getEventHandlers().emplace_front(gui);
 
   gui->add(new ControlPanel(mapScale));
 #endif

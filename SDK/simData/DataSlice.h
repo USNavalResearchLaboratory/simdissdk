@@ -46,7 +46,7 @@ namespace simData
 class SDKDATA_EXPORT DataSliceBase
 {
 public:
-  virtual ~DataSliceBase() {}
+  virtual ~DataSliceBase() = default;
 
   ///@return true if the slice was modified during last DataStore::update
   virtual bool hasChanged() const = 0;
@@ -67,7 +67,7 @@ public:
     /// called by DataSlice::visit
     virtual void operator()(const T *update) = 0;
 
-    virtual ~Visitor() {}
+    virtual ~Visitor() = default;
   };
 
   /// Visitor for modifying a slice
@@ -81,7 +81,7 @@ public:
      */
     virtual int modify(FieldList& message) = 0;
 
-    virtual ~Modifier() {}
+    virtual ~Modifier() = default;
   };
 
 public:
@@ -126,7 +126,7 @@ public:
   };
 
 public:
-  virtual ~DataSlice() {}
+  virtual ~DataSlice() = default;
 
   /**
    * Returns an iterator into DataSlice, such that the iterator's next() value is
@@ -206,7 +206,7 @@ protected:
 class SDKDATA_EXPORT GenericDataSlice : public VisitableDataSlice<GenericData>
 {
 public:
-  virtual ~GenericDataSlice() {}
+  virtual ~GenericDataSlice() = default;
 
   /// Total number of items in the entire data slice
   virtual size_t numItems() const = 0;

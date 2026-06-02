@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class LineSegs; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Line Segments */
 class SDKVIS_EXPORT LineSegs
 {
 public:
-  /** Create the line segments from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the linesegs from the shape object */
   static GogNodeInterface* createLineSegs(const simCore::GOG::LineSegs& lineSegs, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

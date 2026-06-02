@@ -43,7 +43,7 @@ public:
   explicit DprUpscaleVisitor(double devicePixelRatio);
 
   /** Extracts TextBase */
-  virtual void apply(osg::Drawable& drawable) override;
+  void apply(osg::Drawable& drawable) override;
 
   /** Performs updates on TextBase */
   void applyText(osgText::TextBase& text);

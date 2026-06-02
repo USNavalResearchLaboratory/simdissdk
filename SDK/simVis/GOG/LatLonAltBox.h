@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class LatLonAltBox; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG LatLonAltBox */
 class SDKVIS_EXPORT LatLonAltBox
 {
 public:
-  /** Create the LatLonAltBox from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the LatLonAltBox from the shape object */
   static GogNodeInterface* createLatLonAltBox(const simCore::GOG::LatLonAltBox& llab, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

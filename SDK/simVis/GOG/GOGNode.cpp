@@ -26,15 +26,9 @@
 namespace simVis { namespace GOG
 {
 
-GogFollowData::GogFollowData()
-: locatorFlags(simVis::Locator::COMP_NONE)
-{
-}
-
 GogMetaData::GogMetaData()
  : metadata(""),
    shape(GOG_UNKNOWN),
-   loadFormat(FORMAT_GOG),
    altitudeUnits_(simCore::Units::FEET),
    setFields_(0),
    allowingSetExplicitly_(true)

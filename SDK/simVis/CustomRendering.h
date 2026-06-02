@@ -52,6 +52,9 @@ public:
   CustomRenderingNode(const simData::CustomRenderingProperties& props,
     const simVis::EntityNode* host = nullptr, int referenceYear = 1970);
 
+  /** Copy constructor, not implemented or available. */
+  CustomRenderingNode(const CustomRenderingNode&) = delete;
+
   /**
   * Access the properties object currently representing this custom.
   *
@@ -101,7 +104,7 @@ public:
     virtual bool update(const simData::DataSliceBase* updateSlice, bool force = false) = 0;
 
   protected:
-    virtual ~UpdateCallback() {}
+    virtual ~UpdateCallback() = default;
   };
 
   /** set the update callback */
@@ -113,13 +116,13 @@ public:
   /**
   * Returns a range value (meters) used for visualization.  Will return zero for platforms and projectors.
   */
-  virtual double range() const;
+  double range() const override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "CustomRenderingNode"; }
+  const char* className() const override { return "CustomRenderingNode"; }
 
   // EntityNode interface
   /**
@@ -128,21 +131,21 @@ public:
   * current scenario time, and has not received a command to turn off
   * @return true if active; false if not
   */
-  virtual bool isActive() const;
+  bool isActive() const override;
 
   /**
   * Whether this entity is visible.
   */
-  virtual bool isVisible() const;
+  bool isVisible() const override;
 
   /**
   * Get the object ID of the GPR rendered by this node
   * @return Custom's object ID
   */
-  virtual simData::ObjectId getId() const;
+  simData::ObjectId getId() const override;
 
   /** Get the custom's host's ID.  May be 0 if no host; returns true on success, in which case out_hostId is set */
-  virtual bool getHostId(simData::ObjectId& out_hostId) const;
+  bool getHostId(simData::ObjectId& out_hostId) const override;
 
   /**
   * Returns the entity name. Can be used to get the actual name always or the
@@ -152,14 +155,14 @@ public:
   * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
   * @return actual/alias entity name string
   */
-  virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
+  const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const override;
 
   /// Returns the pop up text based on the label content callback, update and preference
-  virtual std::string popupText() const;
+  std::string popupText() const override;
   /// Returns the hook text based on the label content callback, update and preference
-  virtual std::string hookText() const;
+  std::string hookText() const override;
   /// Returns the legend text based on the label content callback, update and preference
-  virtual std::string legendText() const;
+  std::string legendText() const override;
 
   /**
   * Updates the entity based on the bound data store.
@@ -167,16 +170,16 @@ public:
   * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
   * @return true if update applied, false if not
   */
-  virtual bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force=false);
+  bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force=false) override;
 
   /**
   * Flushes all the entity's data point visualization.
   */
-  virtual void flush();
+  void flush() override;
 
 
   /** This entity type is, at this time, unpickable. */
-  virtual unsigned int objectIndexTag() const;
+  unsigned int objectIndexTag() const override;
 
   /**
   * Gets the world position for this custom's origin. This is a convenience
@@ -185,7 +188,7 @@ public:
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return 0 if the output parameter is populated successfully, nonzero on failure
   */
-  virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+  int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
 
   /**
   * Gets the world position & orientation for this custom's origin. This is a convenience
@@ -195,8 +198,8 @@ public:
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return 0 if the output parameter is populated successfully, nonzero on failure
   */
-  virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
-    simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+  int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+    simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
 
   /**
   * Get the traversal mask for this node type
@@ -223,7 +226,7 @@ public:
   class AbstractPointPicker
   {
   public:
-    virtual ~AbstractPointPicker() {} // no-op
+    virtual ~AbstractPointPicker() = default; // no-op
 
     /// Implement to provide the ECEF points to use when picking
     virtual void getPickingPoints(std::vector<osg::Vec3d>& ecefVec) = 0;
@@ -239,9 +242,6 @@ protected:
   virtual ~CustomRenderingNode();
 
 private:
-  /** Copy constructor, not implemented or available. */
-  CustomRenderingNode(const CustomRenderingNode&);
-
   /**
   * Update the custom label with the specified custom preferences
   * @param prefs the custom preferences to update

@@ -40,9 +40,9 @@ public:
   virtual ~MonospaceItemDelegate();
 
   /** Replaces the font option with our monospace font */
-  virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Returns an appropriate size for the selected font */
-  virtual QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
   /** Set an integer offset to the size, e.g. -1 to shrink text by 1 point */
   void setPointSizeOffset(int offset);

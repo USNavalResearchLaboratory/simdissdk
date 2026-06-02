@@ -169,7 +169,7 @@ public:
 
 protected:
   /** Reference-derived */
-  virtual ~Position() {}
+  virtual ~Position() = default;
 
   /** Helper function that can be used to implement operator==() and operator!=() */
   bool positionEquals_(const Position& other) const;
@@ -197,10 +197,10 @@ public:
   */
   void setLla(const simCore::Vec3& lla);
 
-  virtual bool isValid() const;
-  virtual const simCore::Vec3& lla() const;
-  virtual bool operator==(const Position& other) const;
-  virtual bool operator!=(const Position& other) const;
+  bool isValid() const override;
+  const simCore::Vec3& lla() const override;
+  bool operator==(const Position& other) const override;
+  bool operator!=(const Position& other) const override;
 
 protected:
   /** Reference-derived */
@@ -217,10 +217,10 @@ class SDKUTIL_EXPORT EntityNodePosition : public Position
 public:
   explicit EntityNodePosition(simVis::EntityNode* node);
 
-  virtual bool isValid() const;
-  virtual const simCore::Vec3& lla() const;
-  virtual bool operator==(const Position& other) const;
-  virtual bool operator!=(const Position& other) const;
+  bool isValid() const override;
+  const simCore::Vec3& lla() const override;
+  bool operator==(const Position& other) const override;
+  bool operator!=(const Position& other) const override;
 
   /**
   * Returns the Unique ID of the node

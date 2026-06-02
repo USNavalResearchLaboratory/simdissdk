@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class Ellipsoid; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Ellipsoid */
 class SDKVIS_EXPORT Ellipsoid
 {
 public:
-  /** Create the ellipsoid from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the ellipsoid from the shape object */
   static GogNodeInterface* createEllipsoid(const simCore::GOG::Ellipsoid& ellipsoid, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

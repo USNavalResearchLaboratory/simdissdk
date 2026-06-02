@@ -322,7 +322,7 @@ public:
   {
   }
 
-  virtual void objectDeleted(void* ptr) override
+  void objectDeleted(void* ptr) override
   {
     factory_.notifyRemove_(static_cast<osg::Node*>(ptr));
   }

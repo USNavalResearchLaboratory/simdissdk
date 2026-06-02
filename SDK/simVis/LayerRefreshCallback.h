@@ -58,7 +58,7 @@ public:
   void setMapNode(osgEarth::MapNode* mapNode);
 
   /** Override osg::Callback::run() to check timers and refresh layers if needed */
-  virtual bool run(osg::Object* object, osg::Object* data);
+  bool run(osg::Object* object, osg::Object* data) override;
 
 protected:
   /** osg::Referenced-derived */

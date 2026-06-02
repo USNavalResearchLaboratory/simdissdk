@@ -43,7 +43,7 @@ public: // serialization
     META_LayerOptions(simVis, Options, osgEarth::ImageLayer::Options);
     OE_OPTION(osgEarth::URI, url);
     OE_OPTION(unsigned int, deepestLevel);
-    virtual osgEarth::Config getConfig() const;
+    osgEarth::Config getConfig() const override;
   private:
     void fromConfig(const osgEarth::Config&);
   };
@@ -63,15 +63,15 @@ public:
 public: // Layer
 
   /// Establishes a connection to the database
-  virtual osgEarth::Status openImplementation();
+  osgEarth::Status openImplementation() override;
 
   /// Creates a raster image for the given tile key
-  virtual osgEarth::GeoImage createImageImplementation(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress) const;
+  osgEarth::GeoImage createImageImplementation(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress) const override;
 
 protected: // Layer
 
   /// Called by constructors
-  virtual void init();
+  void init() override;
 
   /// Destructor
   virtual ~DBImageLayer();
@@ -92,7 +92,7 @@ public: // serialization
     META_LayerOptions(simVis, Options, osgEarth::ElevationLayer::Options);
     OE_OPTION(osgEarth::URI, url);
     OE_OPTION(unsigned int, deepestLevel);
-    virtual osgEarth::Config getConfig() const;
+    osgEarth::Config getConfig() const override;
   private:
     void fromConfig(const osgEarth::Config&);
   };
@@ -111,15 +111,15 @@ public:
 public: // Layer
 
   /// Establishes a connection to the database
-  virtual osgEarth::Status openImplementation();
+  osgEarth::Status openImplementation() override;
 
   /// Creates a heightfield for the given tile key
-  virtual osgEarth::GeoHeightField createHeightFieldImplementation(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress) const;
+  osgEarth::GeoHeightField createHeightFieldImplementation(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress) const override;
 
 protected: // Layer
 
   /// Called by constructors
-  virtual void init();
+  void init() override;
 
   /// Destructor
   virtual ~DBElevationLayer();

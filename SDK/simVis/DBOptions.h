@@ -60,11 +60,11 @@ public:
   }
 
   // Virtual destructor for virtual functions
-  virtual ~DBOptions() {}
+  virtual ~DBOptions() = default;
 
   /// get the current configuration
   // (override from osgEarth::TileSourceOptions)
-  virtual osgEarth::Config getConfig() const
+  osgEarth::Config getConfig() const override
   {
     osgEarth::Config conf = osgEarth::Contrib::TileSourceOptions::getConfig();
     conf.set("url", _url);
@@ -75,7 +75,7 @@ protected:
 
   /// add in the settings from 'conf' to current
   // (override from osgEarth::TileSourceOptions)
-  virtual void mergeConfig(const osgEarth::Config& conf)
+  void mergeConfig(const osgEarth::Config& conf) override
   {
     osgEarth::Contrib::TileSourceOptions::mergeConfig(conf);
     fromConfig_(conf);

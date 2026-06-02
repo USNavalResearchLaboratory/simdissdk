@@ -52,7 +52,7 @@ public:
   /**
    * Gets the display mode
    */
-  virtual ColorMode getMode() const;
+  ColorMode getMode() const override;
 
   /**
    * Sets the display mode
@@ -92,12 +92,12 @@ public:
   /**
    * Installs this color provider from the given state set
    */
-  virtual void install(osg::StateSet* stateset);
+  void install(osg::StateSet* stateset) override;
 
   /**
    * Uninstall this color provider from the given state set
    */
-  virtual void uninstall(osg::StateSet* stateset);
+  void uninstall(osg::StateSet* stateset) override;
 
 protected:
 
@@ -105,7 +105,7 @@ protected:
   void init_();
 
   /// osg::Referenced-derived
-  virtual ~ThresholdColorProvider() {}
+  virtual ~ThresholdColorProvider() = default;
 
 protected:
   osg::Vec4f belowColor_; ///< Color for values below threshold

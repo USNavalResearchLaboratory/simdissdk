@@ -37,7 +37,7 @@ public:
   explicit simQtDesignerPlugins(QObject* parent = nullptr);
 
 public: // QDesignerCustomWidgetCollectionInterface API
-  virtual QList<QDesignerCustomWidgetInterface*> customWidgets() const;
+  QList<QDesignerCustomWidgetInterface*> customWidgets() const override;
 
 private:
   QList<QDesignerCustomWidgetInterface*> widgetFactories_;

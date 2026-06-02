@@ -1283,7 +1283,7 @@ int testScenarioProperties()
   rv += SDK_ASSERT(prop.gogfile(0) == "Test");
   prop.clear_gogfile();
   rv += SDK_ASSERT(prop.gogfile_size() == 0);
-  prop.mutable_gogfile()->push_back("Test");
+  prop.mutable_gogfile()->emplace_back("Test");
   rv += SDK_ASSERT(prop.gogfile_size() == 1);
   rv += SDK_ASSERT(prop.gogfile(0) == "Test");
   prop.Clear();

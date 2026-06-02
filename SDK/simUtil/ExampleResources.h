@@ -146,11 +146,11 @@ namespace simExamples
     /** Changes the scene manager */
     void setSceneManager(simVis::SceneManager* mgr);
     /** Update the scene manager's sky node with current clock time */
-    virtual void onSetTime(const simCore::TimeStamp &t, bool isJump);
+    void onSetTime(const simCore::TimeStamp &t, bool isJump) override;
     /** No-op for sky node time updater */
-    virtual void onTimeLoop();
+    void onTimeLoop() override;
     /** No-op for sky node time updater */
-    virtual void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime);
+    void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime) override;
     /** Changes an "hours" offset intended to help adjust daylight */
     void setHoursOffset(double hours);
     /** Retrieves the current hours offset */
@@ -180,7 +180,7 @@ namespace simExamples
     IdleClockCallback(simCore::ClockImpl& clock, simData::DataStore& dataStore);
 
     /** Overrides NodeCallback::operator() to service the callback */
-    virtual void operator()(osg::Node* node, osg::NodeVisitor* nv);
+    void operator()(osg::Node* node, osg::NodeVisitor* nv) override;
 
   private:
     simCore::ClockImpl& clock_;

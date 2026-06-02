@@ -50,21 +50,21 @@ public:
   }
 
   /** Override setMapNode() from MapNodeObserver to inform the MousePositionManipulator. */
-  virtual void setMapNode(osgEarth::MapNode* mapNode)
+  void setMapNode(osgEarth::MapNode* mapNode) override
   {
     manip_.setMapNode(mapNode);
   }
 
   /** Override getMapNode() from MapNodeObserver. */
-  virtual osgEarth::MapNode* getMapNode()
+  osgEarth::MapNode* getMapNode() override
   {
     return manip_.mapNode_.get();
   }
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
   /** Return the class name */
-  virtual const char* className() const { return "MousePositionManipulator::MapChangeListener"; }
+  const char* className() const override { return "MousePositionManipulator::MapChangeListener"; }
 
 protected:
   /** osg::Referenced-derived */

@@ -130,42 +130,42 @@ public:
   virtual ~SecondsContainer();
 
   ///@return the underlying widget
-  virtual QWidget* widget();
+  QWidget* widget() override;
   ///@return true if this has focus
-  virtual bool hasFocus() const;
+  bool hasFocus() const override;
   ///@return current time
-  virtual simCore::TimeStamp timeStamp() const;
+  simCore::TimeStamp timeStamp() const override;
   ///@return current time as text
-  virtual QString timeText() const;
+  QString timeText() const override;
   /// set current time
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
+  void setTimeStamp(const simCore::TimeStamp& value) override;
   /// set begin/end time range
-  virtual void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end);
+  void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end) override;
   /// Returns which time limits are enforced
-  virtual void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const;
+  void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const override;
   /// Sets which time limits to enforced
-  virtual void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd);
+  void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd) override;
 
   ///@return the state of "change color on error"
-  virtual bool colorCode() const;
+  bool colorCode() const override;
   /// set "change color on error"
-  virtual void setColorCode(bool value);
+  void setColorCode(bool value) override;
   /// If true process an Enter key to focus to the next child
-  virtual void setProcessEnterKey(bool process);
+  void setProcessEnterKey(bool process) override;
   /// Set the number of digits after the decimal point
-  virtual void setPrecision(unsigned int digits);
+  void setPrecision(unsigned int digits) override;
   /// get the number of digits after the decimal point
-  virtual unsigned int precision() const;
+  unsigned int precision() const override;
 
   /// Set the time zone to use when displaying text
-  virtual void setTimeZone(simCore::TimeZone zone);
+  void setTimeZone(simCore::TimeZone zone) override;
   /// Get the time zone to use when displaying text
-  virtual simCore::TimeZone timeZone() const;
+  simCore::TimeZone timeZone() const override;
 
   /// Disable tool tip since it can interfere with editing the time
-  virtual void disableToolTip();
+  void disableToolTip() override;
   /// Returns the text for a tool tip
-  virtual QString toolTipText() const;
+  QString toolTipText() const override;
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the time in seconds
@@ -180,42 +180,42 @@ public:
   virtual ~MonthContainer();
 
   ///@return the underlying widget
-  virtual QWidget* widget();
+  QWidget* widget() override;
   ///@return true if this has focus
-  virtual bool hasFocus() const;
+  bool hasFocus() const override;
   ///@return current time
-  virtual simCore::TimeStamp timeStamp() const;
+  simCore::TimeStamp timeStamp() const override;
   ///@return current time as text
-  virtual QString timeText() const;
+  QString timeText() const override;
   /// set current time
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
+  void setTimeStamp(const simCore::TimeStamp& value) override;
   /// set begin/end time range
-  virtual void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end);
+  void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end) override;
   /// Returns which time limits are enforced
-  virtual void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const;
+  void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const override;
   /// Sets which time limits to enforced
-  virtual void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd);
+  void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd) override;
 
   ///@return the state of "change color on error"
-  virtual bool colorCode() const;
+  bool colorCode() const override;
   /// set "change color on error"
-  virtual void setColorCode(bool value);
+  void setColorCode(bool value) override;
   /// If true process an Enter key to focus to the next child
-  virtual void setProcessEnterKey(bool process);
+  void setProcessEnterKey(bool process) override;
   /// Set the number of digits after the decimal point
-  virtual void setPrecision(unsigned int digits);
+  void setPrecision(unsigned int digits) override;
   /// get the number of digits after the decimal point
-  virtual unsigned int precision() const;
+  unsigned int precision() const override;
 
   /// Set the time zone to use when displaying text
-  virtual void setTimeZone(simCore::TimeZone zone);
+  void setTimeZone(simCore::TimeZone zone) override;
   /// Get the time zone to use when displaying text
-  virtual simCore::TimeZone timeZone() const;
+  simCore::TimeZone timeZone() const override;
 
   /// Disable tool tip since it can interfere with editing the time
-  virtual void disableToolTip();
+  void disableToolTip() override;
   /// Returns the text for a tool tip
-  virtual QString toolTipText() const;
+  QString toolTipText() const override;
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the ordinal time
@@ -231,42 +231,42 @@ public:
   virtual ~OrdinalContainer();
 
   ///@return the underlying widget
-  virtual QWidget* widget();
+  QWidget* widget() override;
   ///@return true if this has focus
-  virtual bool hasFocus() const;
+  bool hasFocus() const override;
   ///@return current time
-  virtual simCore::TimeStamp timeStamp() const;
+  simCore::TimeStamp timeStamp() const override;
   ///@return current time as text
-  virtual QString timeText() const;
+  QString timeText() const override;
   /// set current time
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
+  void setTimeStamp(const simCore::TimeStamp& value) override;
   /// set begin/end time range
-  virtual void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end);
+  void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end) override;
   /// Returns which time limits are enforced
-  virtual void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const;
+  void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const override;
   /// Sets which time limits to enforced
-  virtual void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd);
+  void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd) override;
 
   ///@return the state of "change color on error"
-  virtual bool colorCode() const;
+  bool colorCode() const override;
   /// set "change color on error"
-  virtual void setColorCode(bool value);
+  void setColorCode(bool value) override;
   /// If true process an Enter key to focus to the next child
-  virtual void setProcessEnterKey(bool process);
+  void setProcessEnterKey(bool process) override;
   /// Set the number of digits after the decimal point
-  virtual void setPrecision(unsigned int digits);
+  void setPrecision(unsigned int digits) override;
   /// get the number of digits after the decimal point
-  virtual unsigned int precision() const;
+  unsigned int precision() const override;
 
   /// Set the time zone to use when displaying text
-  virtual void setTimeZone(simCore::TimeZone zone);
+  void setTimeZone(simCore::TimeZone zone) override;
   /// Get the time zone to use when displaying text
-  virtual simCore::TimeZone timeZone() const;
+  simCore::TimeZone timeZone() const override;
 
   /// Disable tool tip since it can interfere with editing the time
-  virtual void disableToolTip();
+  void disableToolTip() override;
   /// Returns the text for a tool tip
-  virtual QString toolTipText() const;
+  QString toolTipText() const override;
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the ordinal time
@@ -281,42 +281,42 @@ public:
   virtual ~MinutesContainer();
 
   ///@return the underlying widget
-  virtual QWidget* widget();
+  QWidget* widget() override;
   ///@return true if this has focus
-  virtual bool hasFocus() const;
+  bool hasFocus() const override;
   ///@return current time
-  virtual simCore::TimeStamp timeStamp() const;
+  simCore::TimeStamp timeStamp() const override;
   ///@return current time as text
-  virtual QString timeText() const;
+  QString timeText() const override;
   /// set current time
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
+  void setTimeStamp(const simCore::TimeStamp& value) override;
   /// set begin/end time range
-  virtual void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end);
+  void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end) override;
   /// Returns which time limits are enforced
-  virtual void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const;
+  void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const override;
   /// Sets which time limits to enforced
-  virtual void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd);
+  void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd) override;
 
   ///@return the state of "change color on error"
-  virtual bool colorCode() const;
+  bool colorCode() const override;
   /// set "change color on error"
-  virtual void setColorCode(bool value);
+  void setColorCode(bool value) override;
   /// If true process an Enter key to focus to the next child
-  virtual void setProcessEnterKey(bool process);
+  void setProcessEnterKey(bool process) override;
   /// Set the number of digits after the decimal point
-  virtual void setPrecision(unsigned int digits);
+  void setPrecision(unsigned int digits) override;
   /// get the number of digits after the decimal point
-  virtual unsigned int precision() const;
+  unsigned int precision() const override;
 
   /// Set the time zone to use when displaying text
-  virtual void setTimeZone(simCore::TimeZone zone);
+  void setTimeZone(simCore::TimeZone zone) override;
   /// Get the time zone to use when displaying text
-  virtual simCore::TimeZone timeZone() const;
+  simCore::TimeZone timeZone() const override;
 
   /// Disable tool tip since it can interfere with editing the time
-  virtual void disableToolTip();
+  void disableToolTip() override;
   /// Returns the text for a tool tip
-  virtual QString toolTipText() const;
+  QString toolTipText() const override;
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the minutes
@@ -331,42 +331,42 @@ public:
   virtual ~HoursContainer();
 
   ///@return the underlying widget
-  virtual QWidget* widget();
+  QWidget* widget() override;
   ///@return true if this has focus
-  virtual bool hasFocus() const;
+  bool hasFocus() const override;
   ///@return current time
-  virtual simCore::TimeStamp timeStamp() const;
+  simCore::TimeStamp timeStamp() const override;
   ///@return current time as text
-  virtual QString timeText() const;
+  QString timeText() const override;
   /// set current time
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
+  void setTimeStamp(const simCore::TimeStamp& value) override;
   /// set begin/end time range
-  virtual void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end);
+  void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end) override;
   /// Returns which time limits are enforced
-  virtual void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const;
+  void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const override;
   /// Sets which time limits to enforced
-  virtual void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd);
+  void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd) override;
 
   ///@return the state of "change color on error"
-  virtual bool colorCode() const;
+  bool colorCode() const override;
   /// set "change color on error"
-  virtual void setColorCode(bool value);
+  void setColorCode(bool value) override;
   /// If true process an Enter key to focus to the next child
-  virtual void setProcessEnterKey(bool process);
+  void setProcessEnterKey(bool process) override;
   /// Set the number of digits after the decimal point
-  virtual void setPrecision(unsigned int digits);
+  void setPrecision(unsigned int digits) override;
   /// get the number of digits after the decimal point
-  virtual unsigned int precision() const;
+  unsigned int precision() const override;
 
   /// Set the time zone to use when displaying text
-  virtual void setTimeZone(simCore::TimeZone zone);
+  void setTimeZone(simCore::TimeZone zone) override;
   /// Get the time zone to use when displaying text
-  virtual simCore::TimeZone timeZone() const;
+  simCore::TimeZone timeZone() const override;
 
   /// Disable tool tip since it can interfere with editing the time
-  virtual void disableToolTip();
+  void disableToolTip() override;
   /// Returns the text for a tool tip
-  virtual QString toolTipText() const;
+  QString toolTipText() const override;
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the hours
@@ -381,42 +381,42 @@ public:
   virtual ~Iso8601Container();
 
   ///@return the underlying widget
-  virtual QWidget* widget();
+  QWidget* widget() override;
   ///@return true if this has focus
-  virtual bool hasFocus() const;
+  bool hasFocus() const override;
   ///@return current time
-  virtual simCore::TimeStamp timeStamp() const;
+  simCore::TimeStamp timeStamp() const override;
   ///@return current time as text
-  virtual QString timeText() const;
+  QString timeText() const override;
   /// set current time
-  virtual void setTimeStamp(const simCore::TimeStamp& value);
+  void setTimeStamp(const simCore::TimeStamp& value) override;
   /// set begin/end time range
-  virtual void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end);
+  void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end) override;
   /// Returns which time limits are enforced
-  virtual void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const;
+  void getEnforceLimits(bool& limitBeforeStart, bool& limitAfterEnd) const override;
   /// Sets which time limits to enforced
-  virtual void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd);
+  void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd) override;
 
   ///@return the state of "change color on error"
-  virtual bool colorCode() const;
+  bool colorCode() const override;
   /// set "change color on error"
-  virtual void setColorCode(bool value);
+  void setColorCode(bool value) override;
   /// If true process an Enter key to focus to the next child
-  virtual void setProcessEnterKey(bool process);
+  void setProcessEnterKey(bool process) override;
   /// Set the number of digits after the decimal point
-  virtual void setPrecision(unsigned int digits);
+  void setPrecision(unsigned int digits) override;
   /// get the number of digits after the decimal point
-  virtual unsigned int precision() const;
+  unsigned int precision() const override;
 
   /// Set the time zone to use when displaying text
-  virtual void setTimeZone(simCore::TimeZone zone);
+  void setTimeZone(simCore::TimeZone zone) override;
   /// Get the time zone to use when displaying text
-  virtual simCore::TimeZone timeZone() const;
+  simCore::TimeZone timeZone() const override;
 
   /// Disable tool tip since it can interfere with editing the time
-  virtual void disableToolTip();
+  void disableToolTip() override;
   /// Returns the text for a tool tip
-  virtual QString toolTipText() const;
+  QString toolTipText() const override;
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the ordinal time

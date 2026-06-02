@@ -131,7 +131,7 @@ public:
   class Observer
   {
   public:
-    virtual ~Observer() {}
+    virtual ~Observer() = default;
 
     /**
      * Viewpoints can be tethered to an entity, or to a focal center point.  When the viewpoint changes
@@ -253,29 +253,29 @@ public:
   class ObserverAdapter : public Observer
   {
     /** @see Observer::isTetheredChanged() */
-    virtual void isTetheredChanged(simVis::View* view, bool isTethered) { }
+    void isTetheredChanged(simVis::View* view, bool isTethered) override { }
     /** @see Observer::tetherChanged() */
-    virtual void tetherChanged(simVis::View* view, osg::Node* newTether) { }
+    void tetherChanged(simVis::View* view, osg::Node* newTether) override { }
     /** @see Observer::isWatchingChanged() */
-    virtual void isWatchingChanged(simVis::View* view, bool isWatching) { }
+    void isWatchingChanged(simVis::View* view, bool isWatching) override { }
     /** @see Observer::watchedChanged() */
-    virtual void watchedChanged(simVis::View* view, simVis::EntityNode* watchedNode) { }
+    void watchedChanged(simVis::View* view, simVis::EntityNode* watchedNode) override { }
     /** @see Observer::isOverheadChanged() */
-    virtual void isOverheadChanged(simVis::View* view, bool isOverhead) { }
+    void isOverheadChanged(simVis::View* view, bool isOverhead) override { }
     /** @see Observer::centerLlaChanged() */
-    virtual void centerLlaChanged(simVis::View* view, const simCore::Vec3& lla) { }
+    void centerLlaChanged(simVis::View* view, const simCore::Vec3& lla) override { }
     /** @see Observer::eyeLlaChanged() */
-    virtual void eyeLlaChanged(simVis::View* view, const simCore::Vec3& lla) { }
+    void eyeLlaChanged(simVis::View* view, const simCore::Vec3& lla) override { }
     /** @see Observer::rangeAzElChanged() */
-    virtual void rangeAzElChanged(simVis::View* view, const simCore::Vec3& rangeAzEl) { }
+    void rangeAzElChanged(simVis::View* view, const simCore::Vec3& rangeAzEl) override { }
     /** @see Observer::offsetXyzChanged() */
-    virtual void offsetXyzChanged(simVis::View* view, const simCore::Vec3& xyz) { }
+    void offsetXyzChanged(simVis::View* view, const simCore::Vec3& xyz) override { }
     /** @see Observer::tetherModeChanged() */
-    virtual void tetherModeChanged(simVis::View* view, osgEarth::Util::EarthManipulator::TetherMode tetherMode) { }
+    void tetherModeChanged(simVis::View* view, osgEarth::Util::EarthManipulator::TetherMode tetherMode) override { }
     /** @see Observer::mouseAxisLockChanged() */
-    virtual void mouseAxisLockChanged(simVis::View* view, bool isHeadingLocked, bool isPitchLocked) { }
+    void mouseAxisLockChanged(simVis::View* view, bool isHeadingLocked, bool isPitchLocked) override { }
     /** @see Observer::changed() */
-    virtual void changed(simVis::View* view) { }
+    void changed(simVis::View* view) override { }
   };
 
   /** Add an observer that gets notified when any view parameters change. */

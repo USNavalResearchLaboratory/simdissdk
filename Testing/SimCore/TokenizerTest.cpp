@@ -86,60 +86,60 @@ namespace
 
     // expected cases
     simCore::tokenizeWithQuotes(tokens, "token1 token2");
-    expected.push_back("token1");
-    expected.push_back("token2");
+    expected.emplace_back("token1");
+    expected.emplace_back("token2");
     rv += SDK_ASSERT(checkTokens(tokens, expected) == 0);
 
     simCore::tokenizeWithQuotes(tokens, "name=value token2");
     expected.clear();
-    expected.push_back("name=value");
-    expected.push_back("token2");
+    expected.emplace_back("name=value");
+    expected.emplace_back("token2");
     rv += SDK_ASSERT(checkTokens(tokens, expected) == 0);
 
     simCore::tokenizeWithQuotes(tokens, "name=value \"quoted token\"");
     expected.clear();
-    expected.push_back("name=value");
-    expected.push_back("\"quoted token\"");
+    expected.emplace_back("name=value");
+    expected.emplace_back("\"quoted token\"");
     rv += SDK_ASSERT(checkTokens(tokens, expected) == 0);
 
     // stress tests (spaces - before, after, and middle)
     simCore::tokenizeWithQuotes(tokens, "  token1   token2  ");
     expected.clear();
-    expected.push_back("token1");
-    expected.push_back("token2");
+    expected.emplace_back("token1");
+    expected.emplace_back("token2");
     rv += SDK_ASSERT(checkTokens(tokens, expected) == 0);
 
     simCore::tokenizeWithQuotes(tokens, " \" token1 \"  \"token2 \" ");
     expected.clear();
-    expected.push_back("\" token1 \"");
-    expected.push_back("\"token2 \"");
+    expected.emplace_back("\" token1 \"");
+    expected.emplace_back("\"token2 \"");
     rv += SDK_ASSERT(checkTokens(tokens, expected) == 0);
 
     simCore::tokenizeWithQuotes(tokens, "  \"token1 token2\" ");
     expected.clear();
-    expected.push_back("\"token1 token2\"");
+    expected.emplace_back("\"token1 token2\"");
     rv += SDK_ASSERT(checkTokens(tokens, expected) == 0);
 
     simCore::tokenizeWithQuotes(tokens, "  token1=\"token2\"  token4 ");
     expected.clear();
-    expected.push_back("token1=\"token2\"");
-    expected.push_back("token4");
+    expected.emplace_back("token1=\"token2\"");
+    expected.emplace_back("token4");
     rv += SDK_ASSERT(checkTokens(tokens, expected) == 0);
 
     std::string prefRule = "ruleName=Draw ruleValue=\"yes\"  nameExpression=\".*\"  entityType=PBGLD  categoryFilters=\"piTest2(1)~Unlisted Value(1)~No Value(1)~value1(1)\"";
     simCore::tokenizeWithQuotes(tokens, prefRule);
     expected.clear();
-    expected.push_back("ruleName=Draw");
-    expected.push_back("ruleValue=\"yes\"");
-    expected.push_back("nameExpression=\".*\"");
-    expected.push_back("entityType=PBGLD");
-    expected.push_back("categoryFilters=\"piTest2(1)~Unlisted Value(1)~No Value(1)~value1(1)\"");
+    expected.emplace_back("ruleName=Draw");
+    expected.emplace_back("ruleValue=\"yes\"");
+    expected.emplace_back("nameExpression=\".*\"");
+    expected.emplace_back("entityType=PBGLD");
+    expected.emplace_back("categoryFilters=\"piTest2(1)~Unlisted Value(1)~No Value(1)~value1(1)\"");
     rv += SDK_ASSERT(checkTokens(tokens, expected) == 0);
 
     // mismatched quote
     simCore::tokenizeWithQuotes(tokens, "  \"token1 token2 ");
     expected.clear();
-    expected.push_back("\"token1 token2 ");
+    expected.emplace_back("\"token1 token2 ");
     rv += SDK_ASSERT(checkTokens(tokens, expected) == 0);
     return rv;
   }

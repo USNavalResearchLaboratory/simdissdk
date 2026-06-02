@@ -512,7 +512,7 @@ public:
   }
 
   /** Restores each saved setting value */
-  virtual int restore(Settings& settings) const
+  int restore(Settings& settings) const override
   {
     for (auto iter = values_.begin(); iter != values_.end(); ++iter)
       settings.setValue(iter->first, iter->second.value, iter->second.metaData.value<simQt::Settings::MetaData>());

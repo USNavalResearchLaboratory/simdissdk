@@ -33,7 +33,7 @@ namespace simData
 class SDKDATA_EXPORT Interpolator
 {
 public:
-  virtual ~Interpolator() {}
+  virtual ~Interpolator() = default;
 
   /**
    * Computes an interpolated Platform update for the specified time.

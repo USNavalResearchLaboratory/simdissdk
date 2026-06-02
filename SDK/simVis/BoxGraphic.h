@@ -52,10 +52,10 @@ public:
   BoxGraphic(const BoxGraphic& rhs);
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "BoxGraphic"; }
+  const char* className() const override { return "BoxGraphic"; }
 
   /** Get starting object space coordinate x value, in pixels */
   double x() const;

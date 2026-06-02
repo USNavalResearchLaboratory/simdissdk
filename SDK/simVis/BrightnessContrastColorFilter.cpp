@@ -78,14 +78,14 @@ void BrightnessContrastColorFilter::setBrightnessContrast(const osg::Vec2f& valu
   uniform_->set(value);
 }
 
-osg::Vec2f BrightnessContrastColorFilter::getBrightnessContrast(void) const
+osg::Vec2f BrightnessContrastColorFilter::getBrightnessContrast() const
 {
   osg::Vec2f value;
   uniform_->get(value);
   return (value);
 }
 
-std::string BrightnessContrastColorFilter::getEntryPointFunctionName(void) const
+std::string BrightnessContrastColorFilter::getEntryPointFunctionName() const
 {
   return (osgEarth::Stringify() << BC_FUNCTION_PREFIX << instanceId_);
 }

@@ -36,7 +36,7 @@ class Vec3
 {
 public:
   /// Default constructor gives {0,0,0}
-  Vec3() { }
+  Vec3() = default;
 
   /**
    * Value constructor

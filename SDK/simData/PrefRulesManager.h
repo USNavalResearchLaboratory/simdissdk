@@ -229,25 +229,25 @@ public:
 /** Null object implementation for PrefRulesManager */
 class NullPrefRulesManager : public simData::PrefRulesManager
 {
-  virtual int appendRuleFile(const std::string& ) override { return 1; }
-  virtual int loadRuleFiles(const std::vector<std::string>& , bool, bool ) override { return 1; }
-  virtual int removeAllRules() override { return 1; }
-  virtual std::string serializeRules(const std::vector<simData::PrefRule*>& rules) const override { return ""; }
-  virtual int serializeRules(std::ostream& os) const override { return 1; }
-  virtual int deserializeRules(std::istream& rules) override { return 1; }
-  virtual int addSerializedRule(std::vector<simData::PrefRule*>& rules, const std::string& serializedRule, int fileFormatVersion) override { return 1; }
-  virtual void listRules(std::vector<simData::PrefRule*>& prefRules) const override { }
-  virtual int removeRule(simData::PrefRule* prefRule) override { return 1; }
-  virtual int applyRules(bool force) override { return 1; }
-  virtual int applyRules(uint64_t id) override { return 1; }
-  virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, bool enforce) override { }
-  virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack) const override { return false; }
-  virtual void setRulesEnabled(bool state) override { }
-  virtual bool rulesEnabled() const override { return true; }
-  virtual void setEnforcePrefs(bool enforce) override { }
-  virtual bool isEnforcingPrefs() const override { return true; }
-  virtual void addRuleObserver(RuleChangeObserverPtr observer) override {}
-  virtual void removeRuleObserver(RuleChangeObserverPtr observer) override {}
+  int appendRuleFile(const std::string& ) override { return 1; }
+  int loadRuleFiles(const std::vector<std::string>& , bool, bool ) override { return 1; }
+  int removeAllRules() override { return 1; }
+  std::string serializeRules(const std::vector<simData::PrefRule*>& rules) const override { return ""; }
+  int serializeRules(std::ostream& os) const override { return 1; }
+  int deserializeRules(std::istream& rules) override { return 1; }
+  int addSerializedRule(std::vector<simData::PrefRule*>& rules, const std::string& serializedRule, int fileFormatVersion) override { return 1; }
+  void listRules(std::vector<simData::PrefRule*>& prefRules) const override { }
+  int removeRule(simData::PrefRule* prefRule) override { return 1; }
+  int applyRules(bool force) override { return 1; }
+  int applyRules(uint64_t id) override { return 1; }
+  void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, bool enforce) override { }
+  bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack) const override { return false; }
+  void setRulesEnabled(bool state) override { }
+  bool rulesEnabled() const override { return true; }
+  void setEnforcePrefs(bool enforce) override { }
+  bool isEnforcingPrefs() const override { return true; }
+  void addRuleObserver(RuleChangeObserverPtr observer) override {}
+  void removeRuleObserver(RuleChangeObserverPtr observer) override {}
 };
 
 }

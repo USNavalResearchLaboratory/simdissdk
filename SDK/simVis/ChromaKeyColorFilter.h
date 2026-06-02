@@ -60,14 +60,14 @@ public:
   // ColorFilter methods
 
   /** Name of function to call in custom shader */
-  virtual std::string getEntryPointFunctionName() const;
+  std::string getEntryPointFunctionName() const override;
   /** Installs uniforms and bindings required on the provided stateset */
-  virtual void install(osg::StateSet* stateSet) const;
+  void install(osg::StateSet* stateSet) const override;
   /** Serializes into a Config */
-  virtual osgEarth::Config getConfig() const;
+  osgEarth::Config getConfig() const override;
 
 protected:
-  virtual ~ChromaKeyColorFilter() {} // osg::Referenced object
+  virtual ~ChromaKeyColorFilter() = default; // osg::Referenced object
 
 private:
   void init_();

@@ -107,8 +107,8 @@ public:
   QSize padding() const;
 
   // From osg::Node:
-  virtual const char* libraryName() const override{ return "simQt"; }
-  virtual const char* className() const override { return "HudTextBinManager"; }
+  const char* libraryName() const override{ return "simQt"; }
+  const char* className() const override { return "HudTextBinManager"; }
 
 protected:
   /** Derived from osg::Referenced */

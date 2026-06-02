@@ -71,7 +71,7 @@ public:
 
   protected:
     /** osg::Referenced classes have protected destructors to avoid double delete. */
-    virtual ~RepositionCallback() {}
+    virtual ~RepositionCallback() = default;
   };
 
   /**
@@ -186,7 +186,7 @@ public:
   virtual void setPositionPx(const std::string& name, const osg::Vec2d& positionPx) = 0;
 
   /** Overrides RepositionCallback to convert the percentages to pixels. */
-  virtual void setPosition(const std::string& name, const osg::Vec2d& positionPct);
+  void setPosition(const std::string& name, const osg::Vec2d& positionPct) override;
 
 protected:
   /** osg::Referenced classes have protected destructors to avoid double delete. */
@@ -206,7 +206,7 @@ public:
   explicit RepositionMatrixPxCallback(osg::MatrixTransform* xform);
 
   /** Overrides the Reposition callback to set the matrix translate in pixels. */
-  virtual void setPositionPx(const std::string& name, const osg::Vec2d& positionPx);
+  void setPositionPx(const std::string& name, const osg::Vec2d& positionPx) override;
 
 protected:
   /** osg::Referenced classes have protected destructors to avoid double delete. */

@@ -152,7 +152,7 @@ public:
   class Listener
   {
   public: // methods
-    virtual ~Listener() {}
+    virtual ~Listener() = default;
 
     /// Controls the order that listeners are invoked; higher numbers are invoked later
     virtual int weight() const = 0;
@@ -193,40 +193,40 @@ public:
   class DefaultListener : public Listener
   {
   public: // methods
-    virtual ~DefaultListener() {}
+    virtual ~DefaultListener() = default;
 
     /// Controls the order that listeners are invoked; higher numbers are invoked later
-    virtual int weight() const override { return 0; }
+    int weight() const override { return 0; }
 
     /// new entity has been added, with the given id and type
-    virtual void onAddEntity(DataStore *source, ObjectId newId, simData::ObjectType ot) override {}
+    void onAddEntity(DataStore *source, ObjectId newId, simData::ObjectType ot) override {}
 
     /// entity with the given id and type will be removed after all notifications are processed
-    virtual void onRemoveEntity(DataStore *source, ObjectId removedId, simData::ObjectType ot) override {}
+    void onRemoveEntity(DataStore *source, ObjectId removedId, simData::ObjectType ot) override {}
 
     /// entity with the given id and type has been removed
-    virtual void onPostRemoveEntity(DataStore *source, ObjectId removedId, ObjectType ot) override {}
+    void onPostRemoveEntity(DataStore *source, ObjectId removedId, ObjectType ot) override {}
 
     /// prefs for the given entity have been changed
-    virtual void onPrefsChange(DataStore *source, ObjectId id) override {}
+    void onPrefsChange(DataStore *source, ObjectId id) override {}
 
     /// properties for the given entity have been changed
-    virtual void onPropertiesChange(DataStore *source, ObjectId id) override {}
+    void onPropertiesChange(DataStore *source, ObjectId id) override {}
 
     /// data store has changed
-    virtual void onChange(DataStore *source) override {}
+    void onChange(DataStore *source) override {}
 
     /// something has changed in the entity category data
-    virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, simData::ObjectType ot) override {}
+    void onCategoryDataChange(DataStore *source, ObjectId changedId, simData::ObjectType ot) override {}
 
     /// entity name or alias has changed
-    virtual void onNameChange(DataStore *source, ObjectId changeId) override {}
+    void onNameChange(DataStore *source, ObjectId changeId) override {}
 
     /// entity's data was flushed, 0 means entire scenario was flushed
-    virtual void onFlush(DataStore *source, ObjectId flushedId) override {}
+    void onFlush(DataStore *source, ObjectId flushedId) override {}
 
     /// The scenario is about to be deleted
-    virtual void onScenarioDelete(DataStore* source) override {}
+    void onScenarioDelete(DataStore* source) override {}
   };
 
   /// Managed pointer to be used when holding a pointer to a Listener object.
@@ -237,7 +237,7 @@ public:
   class ScenarioListener
   {
   public: // methods
-    virtual ~ScenarioListener() {}
+    virtual ~ScenarioListener() = default;
 
     /// Scenario Property changed
     virtual void onScenarioPropertiesChange(DataStore *source) = 0;
@@ -247,7 +247,7 @@ public:
   class SDKDATA_EXPORT NewUpdatesListener
   {
   public:
-    virtual ~NewUpdatesListener() {}
+    virtual ~NewUpdatesListener() = default;
 
     /// New update was added for the entity ID provided, at the time provided.  Query the data store for the contents of the update.
     virtual void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime) = 0;
@@ -264,11 +264,11 @@ public:
   {
   public:
     /// New update was added for the entity ID provided, at the time provided.  Query the data store for the contents of the update.
-    virtual void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime) override {}
+    void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime) override {}
     /// New table row was added for the entity ID provided, at the time provided.  Query the data table for contents of the row.
-    virtual void onNewRowData(simData::DataStore* source, simData::DataTable& table, simData::ObjectId id, double dataTime) override {}
+    void onNewRowData(simData::DataStore* source, simData::DataTable& table, simData::ObjectId id, double dataTime) override {}
     /// Notification of flush, which may interleave other entity updates.  @see simData::DataStore::Listener::onFlush()
-    virtual void onFlush(simData::DataStore* source, simData::ObjectId flushedId) override {}
+    void onFlush(simData::DataStore* source, simData::ObjectId flushedId) override {}
   };
 
   /// opaque class used to store internals when swapping data stores
@@ -743,7 +743,7 @@ protected:
   class TransactionImpl
   {
   public:
-    virtual ~TransactionImpl() {}
+    virtual ~TransactionImpl() = default;
 
     virtual void  commit() = 0; ///< accept the updates connected to this transaction
     virtual void release() = 0; ///< reject the updates connected to this transaction

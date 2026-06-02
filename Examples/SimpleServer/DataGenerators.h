@@ -103,7 +103,7 @@ public:
   simData::ObjectId id() const;
 
 protected:
-  virtual void generate_(double scenarioTime);
+  void generate_(double scenarioTime) override;
 
 private:
   simData::DataStore& dataStore_;
@@ -130,7 +130,7 @@ public:
   simData::ObjectId id() const;
 
 protected:
-  virtual void generate_(double scenarioTime);
+  void generate_(double scenarioTime) override;
 
 private:
   simData::DataStore& dataStore_;
@@ -154,7 +154,7 @@ public:
   simData::ObjectId id() const;
 
 protected:
-  virtual void generate_(double scenarioTime);
+  void generate_(double scenarioTime) override;
 
 private:
   simData::DataStore& dataStore_;
@@ -178,7 +178,7 @@ public:
   simData::ObjectId id() const;
 
 protected:
-  virtual void generate_(double scenarioTime);
+  void generate_(double scenarioTime) override;
 
 private:
   simData::DataStore& dataStore_;
@@ -199,7 +199,7 @@ public:
   void addTarget(simData::ObjectId target);
 
 protected:
-  virtual void generate_(double scenarioTime);
+  void generate_(double scenarioTime) override;
 
 private:
   simVis::ScenarioManager& scenario_;
@@ -216,7 +216,7 @@ public:
   ToggleIcon(simData::DataStore& dataStore, simData::ObjectId id, const std::string& altIcon, double genInt=3.0);
 
 protected:
-  virtual void generate_(double scenarioTime);
+  void generate_(double scenarioTime) override;
 
 private:
   simData::DataStore& dataStore_;
@@ -232,7 +232,7 @@ class ToggleDrawState : public DataGenerator
 public:
   ToggleDrawState(simData::DataStore& dataStore, simData::ObjectId id, double genInt=3.0);
 protected:
-  virtual void generate_(double scenarioTime);
+  void generate_(double scenarioTime) override;
 
 private:
   simData::DataStore& dataStore_;
@@ -246,7 +246,7 @@ class CycleColor : public DataGenerator
 public:
   CycleColor(simData::DataStore& dataStore, simData::ObjectId id, size_t startIndex, double genInt=3.0);
 protected:
-  virtual void generate_(double scenarioTime);
+  void generate_(double scenarioTime) override;
 
 private:
   simData::DataStore& dataStore_;
@@ -272,7 +272,7 @@ public:
   void create(const std::string& name);
 
 protected:
-  virtual void generate_(double scenarioTime);
+  void generate_(double scenarioTime) override;
 
 private:
   simData::DataStore& dataStore_;

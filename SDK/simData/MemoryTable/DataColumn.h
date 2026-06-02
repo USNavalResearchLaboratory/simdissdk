@@ -70,42 +70,42 @@ public:
   /** Clears out the contents of the data container */
   simData::DelayedFlushContainerPtr flush();
   /** Retrieves the number of entries in the data column */
-  virtual size_t size() const;
+  size_t size() const override;
   /** Returns true if there is no data in the data column */
-  virtual bool empty() const;
+  bool empty() const override;
 
   /** Retrieves the ID of the table that owns this column. */
-  virtual TableId tableId() const;
+  TableId tableId() const override;
   /** Retrieves the designated column ID for this data column. */
-  virtual TableColumnId columnId() const;
+  TableColumnId columnId() const override;
   /** Retrieves the name of this column. */
-  virtual std::string name() const;
+  std::string name() const override;
   /** Retrieves the variable type associated with this column's data. */
-  virtual VariableType variableType() const;
+  VariableType variableType() const override;
   /** Retrieves the unit type associated with the values in the column. */
-  virtual UnitType unitType() const;
+  UnitType unitType() const override;
   /** Changes the unit type for the column data. */
-  virtual void setUnitType(UnitType units);
+  void setUnitType(UnitType units) override;
 
   /** Interpolates a double value at a given time, using a custom interpolator. */
-  virtual TableStatus interpolate(double& value, double time, const Interpolator* interpolator) const;
+  TableStatus interpolate(double& value, double time, const Interpolator* interpolator) const override;
 
   /** Start iteration at the beginning of the container (smallest time). */
-  virtual Iterator begin() const;
+  Iterator begin() const override;
   /** Iterator representing the back of the container (largest time). */
-  virtual Iterator end() const;
+  Iterator end() const override;
 
   /**
    * Returns lower_bound() iterator into container; see DataSlice::lower_bound()
    * for detailed examples and description of lower_bound() functionality.
    */
-  virtual Iterator lower_bound(double timeValue) const;
+  Iterator lower_bound(double timeValue) const override;
 
   /**
    * Returns upper_bound() iterator into container; see DataSlice::upper_bound()
    * for detailed examples and description of upper_bound() functionality.
    */
-  virtual Iterator upper_bound(double timeValue) const;
+  Iterator upper_bound(double timeValue) const override;
 
   /**
    * Retrieves an iterator such that next() is the time at or immediately before
@@ -115,7 +115,7 @@ public:
    * @return Iterator whose next() is at or before the given time, or end() if
    *   there is no such iterator.
    */
-  virtual Iterator findAtOrBeforeTime(double timeValue) const;
+  Iterator findAtOrBeforeTime(double timeValue) const override;
 
   /// Fixes the time container, i.e. after a split.  Responsibility of SubTable to keep up to date
   void replaceTimeContainer(TimeContainer* newTimes);
@@ -132,7 +132,7 @@ public:
    * @param end Returns the end time
    * @returns 0 if begin and end are set
    */
-  virtual int getTimeRange(double& begin, double& end) const;
+  int getTimeRange(double& begin, double& end) const override;
 
 private:
   /// Allocates a new data container based on the data storage type

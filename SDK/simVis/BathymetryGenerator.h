@@ -65,10 +65,10 @@ public:
 
 public: // osgEarth::TerrainEffect
   /** Called by the terrain engine when you install the effect */
-  void onInstall(osgEarth::TerrainEngineNode* engine);
+  void onInstall(osgEarth::TerrainEngineNode* engine) override;
 
   /** Called by the terrain engine when you uninstall the effect */
-  void onUninstall(osgEarth::TerrainEngineNode* engine);
+  void onUninstall(osgEarth::TerrainEngineNode* engine) override;
 
 public: // osg::Object
   /** Return the proper library name */

@@ -94,7 +94,7 @@ namespace simCore
     Seconds(int64_t sec, double frac) { convert_(frac); seconds_ += sec; }
 
     /// Copy constructor
-    Seconds(const Seconds& time) : seconds_(time.seconds_), fraction_(time.fraction_) {}
+    Seconds(const Seconds& time) = default;
 
     /**
      * Returns a new Seconds value, rounded to the precision requested.  For example, 4.5 rounded

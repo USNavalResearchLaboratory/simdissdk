@@ -53,17 +53,17 @@ void ModKeyHandler::setModKeys(int modKeyMask)
 {
   modKeys_.clear();
   if (modKeyMask & osgGA::GUIEventAdapter::MODKEY_CTRL)
-    modKeys_.push_back(std::make_pair(osgGA::GUIEventAdapter::MODKEY_LEFT_CTRL, osgGA::GUIEventAdapter::MODKEY_RIGHT_CTRL));
+    modKeys_.emplace_back(osgGA::GUIEventAdapter::MODKEY_LEFT_CTRL, osgGA::GUIEventAdapter::MODKEY_RIGHT_CTRL);
   if (modKeyMask & osgGA::GUIEventAdapter::MODKEY_SHIFT)
-    modKeys_.push_back(std::make_pair(osgGA::GUIEventAdapter::MODKEY_LEFT_SHIFT, osgGA::GUIEventAdapter::MODKEY_RIGHT_SHIFT));
+    modKeys_.emplace_back(osgGA::GUIEventAdapter::MODKEY_LEFT_SHIFT, osgGA::GUIEventAdapter::MODKEY_RIGHT_SHIFT);
   if (modKeyMask & osgGA::GUIEventAdapter::MODKEY_ALT)
-    modKeys_.push_back(std::make_pair(osgGA::GUIEventAdapter::MODKEY_LEFT_ALT, osgGA::GUIEventAdapter::MODKEY_RIGHT_ALT));
+    modKeys_.emplace_back(osgGA::GUIEventAdapter::MODKEY_LEFT_ALT, osgGA::GUIEventAdapter::MODKEY_RIGHT_ALT);
   if (modKeyMask & osgGA::GUIEventAdapter::MODKEY_META)
-    modKeys_.push_back(std::make_pair(osgGA::GUIEventAdapter::MODKEY_LEFT_META, osgGA::GUIEventAdapter::MODKEY_RIGHT_META));
+    modKeys_.emplace_back(osgGA::GUIEventAdapter::MODKEY_LEFT_META, osgGA::GUIEventAdapter::MODKEY_RIGHT_META);
   if (modKeyMask & osgGA::GUIEventAdapter::MODKEY_SUPER)
-    modKeys_.push_back(std::make_pair(osgGA::GUIEventAdapter::MODKEY_LEFT_SUPER, osgGA::GUIEventAdapter::MODKEY_RIGHT_SUPER));
+    modKeys_.emplace_back(osgGA::GUIEventAdapter::MODKEY_LEFT_SUPER, osgGA::GUIEventAdapter::MODKEY_RIGHT_SUPER);
   if (modKeyMask & osgGA::GUIEventAdapter::MODKEY_HYPER)
-    modKeys_.push_back(std::make_pair(osgGA::GUIEventAdapter::MODKEY_LEFT_HYPER, osgGA::GUIEventAdapter::MODKEY_RIGHT_HYPER));
+    modKeys_.emplace_back(osgGA::GUIEventAdapter::MODKEY_LEFT_HYPER, osgGA::GUIEventAdapter::MODKEY_RIGHT_HYPER);
 }
 
 }

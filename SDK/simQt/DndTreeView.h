@@ -47,7 +47,7 @@ public:
 
 protected:
   /** Override to circumvent a Drag and Drop bug */
-  virtual void dragEnterEvent(QDragEnterEvent* event);
+  void dragEnterEvent(QDragEnterEvent* event) override;
 };
 
 }

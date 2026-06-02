@@ -50,12 +50,12 @@ public:
   int setStatusSpec(const std::string& statusSpec, const osg::Vec4f& color = simVis::Color::White, double fontSize = 12.0, const std::string& font = "arial.ttf");
 
   /** Override from osg::MatrixTransform to call update_() */
-  virtual void traverse(osg::NodeVisitor& nv);
+  void traverse(osg::NodeVisitor& nv) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
   /** Return the class name */
-  virtual const char* className() const { return "StatusTextNode"; }
+  const char* className() const override { return "StatusTextNode"; }
 
 protected:
   /** Destructor */
@@ -93,9 +93,9 @@ public:
   void removeFromView();
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
   /** Return the class name */
-  virtual const char* className() const { return "StatusText"; }
+  const char* className() const override { return "StatusText"; }
 
 protected:
   /** Destructor */
@@ -110,7 +110,7 @@ private:
   void resize_(int widthPx, int heightPx);
 
   /** Build the status text object, positioned based on window coords */
-  virtual void create_(const std::string& status, const osg::Vec4f& color, const std::string& font, double fontSize);
+  void create_(const std::string& status, const osg::Vec4f& color, const std::string& font, double fontSize) override;
 
 private:
   osg::observer_ptr<simVis::View> view_;                ///< Pointer to the view in which the status will be displayed

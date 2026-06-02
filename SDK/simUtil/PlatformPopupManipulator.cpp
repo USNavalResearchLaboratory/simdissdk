@@ -38,7 +38,7 @@ public:
   {}
 
   /** implement the handle method to update on FRAME events */
-  virtual bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
+  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa) override
   {
     if (ea.getEventType() == ea.FRAME)
       parent_->updatePopupHandler_();
@@ -46,10 +46,10 @@ public:
   }
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "PlatformPopupManipulator::FrameTimer"; }
+  const char* className() const override { return "PlatformPopupManipulator::FrameTimer"; }
 
 private:
   PlatformPopupManipulator* parent_;

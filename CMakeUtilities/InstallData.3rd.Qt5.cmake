@@ -18,14 +18,14 @@ function(vsi_install_qt5_lib LIBNAME)
         get_target_property(DEBUG_DLL Qt5::${LIBNAME} LOCATION_Debug)
         if(RELEASE_DLL)
             INSTALL(FILES ${RELEASE_DLL}
-                DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
+                DESTINATION ${PROJECT_INSTALL_SHARED_DIR}
                 CONFIGURATIONS Release
                 COMPONENT ThirdPartyLibs
             )
         endif()
         if(DEBUG_DLL)
             INSTALL(FILES ${DEBUG_DLL}
-                DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
+                DESTINATION ${PROJECT_INSTALL_SHARED_DIR}
                 CONFIGURATIONS Debug
                 COMPONENT ThirdPartyLibs
             )
@@ -33,13 +33,13 @@ function(vsi_install_qt5_lib LIBNAME)
     else()
         set(_QT_LIBRARY_DIR "${Qt5Core_DIR}/../..")
         INSTALL(FILES ${_QT_LIBRARY_DIR}/libQt5${LIBNAME}.so.${Qt5Core_VERSION_MAJOR}
-            DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
+            DESTINATION ${PROJECT_INSTALL_SHARED_DIR}
             CONFIGURATIONS Release
             COMPONENT ThirdPartyLibs
             OPTIONAL
         )
         INSTALL(FILES ${_QT_LIBRARY_DIR}/libQt5${LIBNAME}.so.${Qt5Core_VERSION}
-            DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
+            DESTINATION ${PROJECT_INSTALL_SHARED_DIR}
             CONFIGURATIONS Release
             COMPONENT ThirdPartyLibs
             OPTIONAL
@@ -54,14 +54,14 @@ function(vsi_install_qtplugins dir)
     endif()
     if(WIN32)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
-            DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
+            DESTINATION ${CMAKE_INSTALL_BINDIR}/
             OPTIONAL
             COMPONENT ThirdPartyLibs
             CONFIGURATIONS Release RelWithDebInfo
             FILES_MATCHING PATTERN *.dll
             PATTERN *d.dll EXCLUDE)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
-            DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
+            DESTINATION ${CMAKE_INSTALL_BINDIR}/
             OPTIONAL
             COMPONENT ThirdPartyLibs
             CONFIGURATIONS Debug
@@ -69,7 +69,7 @@ function(vsi_install_qtplugins dir)
     else()
         # Note that Qt requires the Linux shared objects in the executable's subdirectory (e.g. bin)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
-            DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
+            DESTINATION ${CMAKE_INSTALL_BINDIR}/
             OPTIONAL
             COMPONENT ThirdPartyLibs
             FILES_MATCHING PATTERN *.so)

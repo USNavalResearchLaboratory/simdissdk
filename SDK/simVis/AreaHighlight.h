@@ -60,8 +60,8 @@ public:
   virtual void setScreenRotation(float rotateRad) = 0;
 
   // From osg::Node:
-  virtual const char* libraryName() const { return "simVis"; }
-  virtual const char* className() const { return "HighlightNode"; }
+  const char* libraryName() const override { return "simVis"; }
+  const char* className() const override { return "HighlightNode"; }
 
 protected:
   /// osg::Referenced-derived
@@ -78,10 +78,10 @@ public:
   AreaHighlightNode(const AreaHighlightNode& rhs, const osg::CopyOp& copyOp=osg::CopyOp::SHALLOW_COPY);
 
   // From HighlightNode:
-  virtual void setColor(const osg::Vec4f& rgba);
-  virtual void setRadius(float radius);
-  virtual void setAutoRotate(bool autoRotate) {}
-  virtual void setScreenRotation(float yawRad) {}
+  void setColor(const osg::Vec4f& rgba) override;
+  void setRadius(float radius) override;
+  void setAutoRotate(bool autoRotate) override {}
+  void setScreenRotation(float yawRad) override {}
 
 protected:
   /// osg::Referenced-derived
@@ -116,10 +116,10 @@ public:
   void makeCoffin();
 
   // From HighlightNode:
-  virtual void setColor(const osg::Vec4f& rgba);
-  virtual void setRadius(float radius);
-  virtual void setAutoRotate(bool autoRotate);
-  virtual void setScreenRotation(float rotateRad);
+  void setColor(const osg::Vec4f& rgba) override;
+  void setRadius(float radius) override;
+  void setAutoRotate(bool autoRotate) override;
+  void setScreenRotation(float rotateRad) override;
 
 protected:
   /// osg::Referenced-derived
@@ -150,10 +150,10 @@ public:
   void setShape(simData::CircleHilightShape shape);
 
   // From HighlightNode:
-  virtual void setColor(const osg::Vec4f& rgba);
-  virtual void setRadius(float radius);
-  virtual void setAutoRotate(bool autoRotate);
-  virtual void setScreenRotation(float rotateRad);
+  void setColor(const osg::Vec4f& rgba) override;
+  void setRadius(float radius) override;
+  void setAutoRotate(bool autoRotate) override;
+  void setScreenRotation(float rotateRad) override;
 
 protected:
   /// osg::Referenced-derived

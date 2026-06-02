@@ -84,7 +84,7 @@ class SDKQT_EXPORT CategoryProxyModel : public QSortFilterProxyModel
 
 public:
   /// constructor passes parent to QSortFilterProxyModel
-  explicit CategoryProxyModel(QObject *parent = 0);
+  explicit CategoryProxyModel(QObject *parent = nullptr);
   virtual ~CategoryProxyModel();
 
 public Q_SLOTS:
@@ -95,7 +95,7 @@ public Q_SLOTS:
 
 protected:
   /// filtering function
-  virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+  bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
 
 private:
   /// string to filter against
@@ -127,14 +127,14 @@ public:
   };
 
   // QAbstractItemModel overrides
-  virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
-  virtual QModelIndex parent(const QModelIndex &child) const;
-  virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
-  virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
-  virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-  virtual Qt::ItemFlags flags(const QModelIndex& index) const;
-  virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
+  QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
+  QModelIndex parent(const QModelIndex &child) const override;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+  Qt::ItemFlags flags(const QModelIndex& index) const override;
+  bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
 
   /// data role for obtaining names that are remapped to force "Unlisted Value" and "No Value" to the top
   static const int SortRole = Qt::UserRole + 1;

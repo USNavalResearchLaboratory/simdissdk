@@ -104,7 +104,7 @@ class SDKQT_EXPORT MapDataModel : public QAbstractItemModel
   Q_OBJECT;
 public:
   /** Constructor */
-  explicit MapDataModel(QObject* parent=0);
+  explicit MapDataModel(QObject* parent=nullptr);
   virtual ~MapDataModel();
 
   /// Changes the underlying Map pointer (nullptr is tolerated)
@@ -116,19 +116,19 @@ public:
   QModelIndex layerIndex(const osgEarth::Layer* layer) const;
 
   ///@return the index for the given row and column
-  virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
+  QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
   ///@return the index of the parent of the item given by index
-  virtual QModelIndex parent(const QModelIndex& child) const override;
+  QModelIndex parent(const QModelIndex& child) const override;
   ///@return the number of rows in the data
-  virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+  int rowCount(const QModelIndex& parent = QModelIndex()) const override;
   ///@return number of columns needed to hold data
-  virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override;
+  int columnCount(const QModelIndex& parent = QModelIndex()) const override;
   ///@return data for given item
-  virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+  QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
   ///@return the header data for given section
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
   ///@return the flags on the given item
-  virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
+  Qt::ItemFlags flags(const QModelIndex& index) const override;
 
   /// Map is the top level node; it has 4 children: Image, Elevation, Feature, and Other
   enum MapChildren

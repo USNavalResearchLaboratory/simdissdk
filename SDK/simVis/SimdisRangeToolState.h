@@ -68,7 +68,7 @@ struct SDKVIS_EXPORT SimdisRangeToolState : public RangeToolState
   * @param coord the type value to calculate and cache
   * @return the requested values, the type of values detailed in Coord
   */
-  virtual osg::Vec3d coord(Coord coord);
+  osg::Vec3d coord(Coord coord) override;
 };
 
 }

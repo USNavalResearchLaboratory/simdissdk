@@ -36,7 +36,7 @@ public:
   {
   }
   // Strip the prefix off the name and redo the callback
-  virtual void onSettingChange(const QString& name, const QVariant& value)
+  void onSettingChange(const QString& name, const QVariant& value) override
   {
     if (name.startsWith(prefix_))
     {
@@ -69,7 +69,7 @@ public:
   }
 
   // If the prefix matches, strip the prefix off the name and redo the callback
-  virtual void onSettingChange(const QString& name, const QVariant& value)
+  void onSettingChange(const QString& name, const QVariant& value) override
   {
     if (name.startsWith(prefix_))
     {
@@ -397,7 +397,7 @@ public:
     }
   }
 
-  virtual int restore(Settings& settings) const
+  int restore(Settings& settings) const override
   {
     for (auto iter = values_.begin(); iter != values_.end(); ++iter)
       settings.setValue(iter->first, iter->second);

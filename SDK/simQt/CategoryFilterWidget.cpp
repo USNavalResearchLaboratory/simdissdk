@@ -596,15 +596,15 @@ public:
     : parent_(parent)
   {};
 
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot) override
   {
     parent_.setEntityCountDirty();
   }
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  void onRemoveEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot) override
   {
     parent_.setEntityCountDirty();
   }
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
+  void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot) override
   {
     parent_.setEntityCountDirty();
   }

@@ -51,7 +51,7 @@ class SDKQT_EXPORT TimeWidget : public QWidget
 
 public:
   /** constructor */
-  TimeWidget(QWidget* parent = 0);
+  TimeWidget(QWidget* parent = nullptr);
   virtual ~TimeWidget();
 
   /** Get label to the left of the spin box */

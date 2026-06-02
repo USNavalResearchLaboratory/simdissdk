@@ -42,11 +42,6 @@ std::string Color::serialize() const
 
 
 GogShape::GogShape()
-  : canExtrude_(false),
-    canFollow_(false),
-    relative_(false),
-    serializeName_(true),
-    lineNumber_(0)
 {}
 
 GogShape::~GogShape()
@@ -79,6 +74,16 @@ int GogShape::getIsDrawn(bool& draw) const
 void GogShape::setDrawn(bool draw)
 {
   draw_ = draw;
+}
+
+std::optional<EditMode> GogShape::getEditMode() const
+{
+  return editMode_;
+}
+
+void GogShape::setEditMode(EditMode editMode)
+{
+  editMode_ = editMode;
 }
 
 int GogShape::getIsDepthBufferActive(bool& depthBuffer) const
@@ -133,11 +138,18 @@ int GogShape::getReferencePosition(simCore::Vec3& refPos) const
   return (referencePosition_.has_value() ? 0 : 1);
 }
 
-void GogShape::setReferencePosition(const simCore::Vec3& refPos)
+int GogShape::setReferencePosition(const simCore::Vec3& refPos)
 {
+  // Reference position is in radians with latitude on the X. Try to catch degrees
+  // issues and issues with swapping lat/lon (e.g. from GeoPoint). Accept "wrapped"
+  // values from -360 to +360 on longitude to account for possible wrapping on input.
+  assert(simCore::isBetween(refPos.x(), -M_PI_2, M_PI_2)); // -90 to +90
+  assert(simCore::isBetween(refPos.y(), -M_TWOPI, M_TWOPI)); // -360 to +360
   // reference position is only valid for relative shapes
-  if (relative_)
-    referencePosition_ = refPos;
+  if (!relative_)
+    return 1;
+  referencePosition_ = refPos;
+  return 0;
 }
 
 void GogShape::clearReferencePosition()
@@ -386,7 +398,7 @@ void GogShape::serializeToStream(std::ostream& gogOutputStream) const
 {
   gogOutputStream << "start\n";
   // comments should be serialized first
-  for (std::string comment : comments_)
+  for (const auto& comment : comments_)
     gogOutputStream << comment << "\n";
 
   // first call implementation methods
@@ -398,6 +410,17 @@ void GogShape::serializeToStream(std::ostream& gogOutputStream) const
   // serialize out draw state only if it's specifically set to 'off'
   if (draw_.has_value() && !draw_.value_or(true))
     gogOutputStream << "off\n";
+
+  // Serialize edit state only if it's set, else use default
+  if (editMode_.has_value())
+  {
+    switch (*editMode_)
+    {
+    case EditMode::EXPLICIT_ONLY: gogOutputStream << "3d edit off\n"; break;
+    case EditMode::GLOBAL:        gogOutputStream << "3d edit on\n"; break;
+    case EditMode::LOCKED:        gogOutputStream << "3d edit never\n"; break;
+    }
+  }
 
   simCore::Units altUnits(simCore::Units::METERS);
 
@@ -960,7 +983,7 @@ void Orbit::createOrbitShape(double azimuthRad, double lengthM, double radiusM, 
     const double angle = simCore::angFix2PI(startRad + step * static_cast<double>(i));
     const double x = ctrX + sin(angle) * radiusM;
     const double y = ctrY + cos(angle) * radiusM;
-    xyz.push_back({ x, y, altitudeM });
+    xyz.emplace_back( x, y, altitudeM );
   }
 
   // calculate center point on other end of orbit
@@ -973,7 +996,7 @@ void Orbit::createOrbitShape(double azimuthRad, double lengthM, double radiusM, 
     const double angle = simCore::angFix2PI(endRad + step * static_cast<double>(i));
     const double x = ctrX + sin(angle) * radiusM;
     const double y = ctrY + cos(angle) * radiusM;
-    xyz.push_back({ x, y, altitudeM });
+    xyz.emplace_back( x, y, altitudeM );
   }
   // add back in first point to close the shape
   xyz.push_back(xyz.front());
@@ -1369,12 +1392,7 @@ void Annotation::serializeToStream_(std::ostream& gogOutputStream) const
 }
 
 LatLonAltBox::LatLonAltBox()
-  : FillableShape(),
-    north_(0.),
-    south_(0.),
-    east_(0.),
-    west_(0.),
-    altitude_(0.)
+  : FillableShape()
 {
   setCanExtrude_(false);
   setCanFollow_(false);
@@ -1458,12 +1476,7 @@ void LatLonAltBox::serializeToStream_(std::ostream& gogOutputStream) const
 }
 
 ImageOverlay::ImageOverlay()
-  : GogShape(),
-    north_(0.),
-    south_(0.),
-    east_(0.),
-    west_(0.),
-    rotation_(0.)
+  : GogShape()
 {
   setCanExtrude_(false);
   setCanFollow_(false);

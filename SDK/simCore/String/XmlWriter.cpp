@@ -121,7 +121,7 @@ void XmlWriter::prepareAttribute(const std::string& attr, const std::string& val
     SIM_ERROR << "XmlWriter::prepareAttribute, invalid attribute string: " << attr << std::endl;
     return;
   }
-  attribs_.push_back(NameValue(attr, convertAsciiToUtf8_(value)));
+  attribs_.emplace_back(attr, convertAsciiToUtf8_(value));
 }
 
 void XmlWriter::startBlock(const std::string& tag, const std::string& comment, const std::string& attr)

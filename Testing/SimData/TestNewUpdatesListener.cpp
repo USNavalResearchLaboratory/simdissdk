@@ -33,19 +33,19 @@ class TimeCollector : public simData::DataStore::NewUpdatesListener
 {
 public:
   /** Record the time value of entity update */
-  virtual void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime)
+  void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime) override
   {
     allData_[id].insert(dataTime);
   }
 
   /** Record the time value of the new row for the entity, same as onEntityUpdate(). */
-  virtual void onNewRowData(simData::DataStore* source, simData::DataTable& table, simData::ObjectId id, double dataTime)
+  void onNewRowData(simData::DataStore* source, simData::DataTable& table, simData::ObjectId id, double dataTime) override
   {
     allData_[id].insert(dataTime);
   }
 
   /** Clear out the updates for the given entity and record the flush */
-  virtual void onFlush(simData::DataStore* source, simData::ObjectId flushedId)
+  void onFlush(simData::DataStore* source, simData::ObjectId flushedId) override
   {
     if (flushedId == 0)
     {

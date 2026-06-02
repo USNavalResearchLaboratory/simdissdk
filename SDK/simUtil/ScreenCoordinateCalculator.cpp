@@ -74,7 +74,6 @@ static const ScreenCoordinate INVALID_COORDINATE(osg::Vec3(-1, -1, 0), true, tru
 }
 
 ScreenCoordinateCalculator::ScreenCoordinateCalculator()
-  : dirtyMatrix_(true)
 {
   // 11km is rough depth of Mariana Trench; decrease radius to help horizon culling work underwater
 #if OSGEARTH_SOVERSION >= 110

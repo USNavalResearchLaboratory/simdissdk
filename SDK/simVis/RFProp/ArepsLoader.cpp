@@ -226,7 +226,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
             simCore::stringTokenizer(pdVec, simCore::StringUtils::substitute(st, "\"", ""));
             if (pdVec.size() != 10)
             {
-              SIM_ERROR << "Bad formatting of POD data for AREPS file: " << arepsFile << std::endl;
+              SIM_ERROR << "Bad formatting of PoD data for AREPS file: " << arepsFile << std::endl;
               return 1;
             }
 
@@ -235,9 +235,9 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
               float pdVal = 0.0;
               if (!simCore::isValidNumber(pdVec[j], pdVal) || pdVal < 0)
               {
-                // if assert fails, the AREPS file contains negative POD thresholds.
+                // if assert fails, the AREPS file contains negative PoD thresholds.
                 assert(pdVal >= 0);
-                SIM_ERROR << "Invalid data in POD data for AREPS file: " << arepsFile << std::endl;
+                SIM_ERROR << "Invalid data in PoD data for AREPS file: " << arepsFile << std::endl;
                 return 1;
               }
               podVector.push_back(pdVal);
@@ -245,12 +245,12 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
           }
           if (podVector.size() != PODProfileDataProvider::POD_VECTOR_SIZE)
           {
-            SIM_ERROR << "Invalid POD data for AREPS file: " << arepsFile << std::endl;
+            SIM_ERROR << "Invalid PoD data for AREPS file: " << arepsFile << std::endl;
             return 1;
           }
           if (0 != beamHandler_->setPODLossThreshold(podVector))
           {
-            SIM_ERROR << "Error saving POD data for AREPS file: " << arepsFile << std::endl;
+            SIM_ERROR << "Error saving PoD data for AREPS file: " << arepsFile << std::endl;
             return 1;
           }
         }
@@ -429,7 +429,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
   else if (!lossProvider)
   {
     missingData = "loss";
-    missingCalcs = "loss, POD";
+    missingCalcs = "loss, PoD";
   }
 
   // create providers that depend on the PPF provider

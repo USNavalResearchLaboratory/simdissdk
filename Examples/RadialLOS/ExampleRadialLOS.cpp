@@ -343,6 +343,10 @@ private:
 
 int main(int argc, char **argv)
 {
+  int rv = 0;
+  // Create an artificial scope for clean-up, so we can use _exit() at
+  // the end, to avoid osgEarth Linux crashes with HTTP static objects.
+  {
   // Set up the scene:
   simCore::checkVersionThrow();
   simExamples::configureSearchPaths();
@@ -382,12 +386,16 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_IMGUI
   ::GUI::OsgImGuiHandler* gui = new ::GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
   gui->add(new ControlPanel(app));
 #endif
 
   // add some stock OSG handlers and go
   viewer->installDebugHandlers();
-  return viewer->run();
+  rv = viewer->run();
+  } // Close up scope for cleanup
+  // Avoid static initialization crashes
+  _exit(rv);
+  return rv;
 }
 

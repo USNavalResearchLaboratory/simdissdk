@@ -282,7 +282,7 @@ PlatformSimulatorManager::PlatformSimulatorManager(simData::DataStore* datastore
 
 void PlatformSimulatorManager::addSimulator(simUtil::PlatformSimulator* simulator)
 {
-  simulators_.push_back(simulator);
+  simulators_.emplace_back(simulator);
 }
 
 void PlatformSimulatorManager::play(double time)

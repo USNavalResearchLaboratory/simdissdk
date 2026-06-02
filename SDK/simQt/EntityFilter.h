@@ -54,7 +54,7 @@ namespace simQt {
   public:
 
     /** Destructor */
-    virtual ~EntityFilter(){}
+    virtual ~EntityFilter()= default;
 
     /**
     * Determine if this entity id passes the entity filter

@@ -65,10 +65,10 @@ public:
   StatsType statsType() const;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "StatsHandler"; }
+  const char* className() const override { return "StatsHandler"; }
 
 private:
   /** Safely bounds the enum to [0,LAST) */

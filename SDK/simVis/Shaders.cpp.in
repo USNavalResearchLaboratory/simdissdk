@@ -37,6 +37,7 @@ Shaders::Shaders()
   add(disableDepthOnAlphaFragment(), @DisableDepthOnAlpha.frag.glsl@);
   add(flashingFragment(), @Flashing.frag.glsl@);
   add(fragmentEffect(), @FragmentEffect.glsl@);
+  add(heatMapSystem(), @HeatMapSystem.glsl@);
   add(overheadModeVertex(), @OverheadMode.vert.glsl@);
   add(overrideColorFragment(), @OverrideColor.frag.glsl@);
   add(pickerVertex(), @Picker.vert.glsl@);
@@ -207,6 +208,11 @@ std::string Shaders::pickerFragment() const
 std::string Shaders::polygonStippleFragment() const
 {
   return "PolygonStipple.frag.glsl";
+}
+
+std::string Shaders::heatMapSystem() const
+{
+  return "HeatMapSystem.glsl";
 }
 
 }

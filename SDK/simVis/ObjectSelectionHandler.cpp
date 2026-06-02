@@ -203,7 +203,7 @@ bool ObjectSelectionHandler::select_(float mx, float my, osg::View *aaView)
       {
         if (acceptor_->isSelectable(*(*n)))
         {
-          results.push_back(*n);
+          results.emplace_back(*n);
           break;
         }
       }

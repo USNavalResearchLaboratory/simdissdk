@@ -39,7 +39,7 @@ namespace simQt {
 class DetermineRemovable
 {
 public:
-  virtual ~DetermineRemovable() {}
+  virtual ~DetermineRemovable() = default;
   ///All possible file are given by files and files to remove are returned by removableFiles
   virtual void calculate(const QDir& files, QStringList& removableFiles) const = 0;
 };

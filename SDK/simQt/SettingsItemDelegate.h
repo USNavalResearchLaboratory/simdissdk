@@ -39,15 +39,15 @@ public:
   SettingsColorItemDelegate(QObject* parent = nullptr);
 
   /** Paints a box with the color against a black and a white background. */
-  virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Creates a color editor window */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Sets the color editor window's color data */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   /** Updates the data model provided with the editor's data */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
   /** Update the editor's geometry */
-  virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 private Q_SLOTS:
   /** Called on acceptance of the color GUI */
@@ -74,13 +74,13 @@ public:
   virtual ~SettingsDirectorySelectorDelegate();
 
   /** Creates a color editor window */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Sets the color editor window's color data */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   /** Updates the data model provided with the editor's data */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
   /** Update the editor's geometry */
-  virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 private Q_SLOTS:
   /** Called on acceptance of the pop up file GUI */
@@ -95,11 +95,11 @@ public:
   SettingsIntegerSpinBoxDelegate(QObject* parent = nullptr);
 
   /** Creates an integer spin box editor window */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Sets the integer spin box editor window's numeric data */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   /** Updates the data model provided with the editor's data */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
 };
 
 /** Delegate helper for DOUBLE items, using a QDoubleSpinBox as the text editor */
@@ -110,11 +110,11 @@ class SDKQT_EXPORT SettingsDoubleSpinBoxDelegate : public QStyledItemDelegate
   SettingsDoubleSpinBoxDelegate(QObject* parent = nullptr);
 
   /** Creates a double spin box editor window */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Sets the double spin box editor window's numeric data */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   /** Updates the data model provided with the editor's data */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
 };
 
 /** Delegate helper for FILENAME items, using a FileSelectorWidget as the text editor */
@@ -127,13 +127,13 @@ class SDKQT_EXPORT SettingsFileSelectorDelegate : public QStyledItemDelegate
   virtual ~SettingsFileSelectorDelegate();
 
   /** Creates a file selector editor window */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Sets the file selector editor window's filename data */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   /** Updates the data model provided with the editor's data */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
   /** Update the editor's geometry */
-  virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 private Q_SLOTS:
   /** Called on acceptance of the pop up file GUI */
@@ -149,15 +149,15 @@ class SDKQT_EXPORT SettingsEnumerationDelegate : public QStyledItemDelegate
   SettingsEnumerationDelegate(QObject* parent = nullptr);
 
   /** Creates a file selector editor window */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Sets the file selector editor window's combo box data */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   /** Updates the data model provided with the editor's data */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
   /** Update the editor's geometry */
-  virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Override paint() to correct the text display. */
-  virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 };
 
 /** Delegate helper for FONT items, using a FontWidget as the text editor. Only provides option to edit font file */
@@ -170,13 +170,13 @@ class SDKQT_EXPORT SettingsFontSelectorDelegate : public QStyledItemDelegate
   virtual ~SettingsFontSelectorDelegate();
 
   /** Creates a file selector editor window */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Sets the file selector editor window's filename data */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   /** Updates the data model provided with the editor's data */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
   /** Update the editor's geometry */
-  virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 private Q_SLOTS:
   /** Called on acceptance of the pop up file GUI */
@@ -193,13 +193,13 @@ public:
   virtual ~SettingsQFontSelectorDelegate();
 
   /** Creates a file selector editor window */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Sets the file selector editor window's data */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   /** Updates the data model provided with the editor's data */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
   /** Update the editor's geometry */
-  virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 private Q_SLOTS:
   /** Called on acceptance of the GUI */
@@ -216,13 +216,13 @@ public:
   SettingsHexEditDelegate(QObject* parent = nullptr);
 
   /** Creates an hex formatted line edit editor window */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Sets the line edit's hex data */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   /** Updates the data model provided with the editor's data */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
   /** Override paint() to correct the text display. */
-  virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 private:
   int maxCharCount_(const QModelIndex& index) const;
@@ -234,8 +234,8 @@ class SettingsHexEditValidator : public QValidator
 public:
   SettingsHexEditValidator(unsigned int min, unsigned int max, QObject* parent=nullptr);
   virtual ~SettingsHexEditValidator();
-  virtual void fixup(QString& input) const;
-  virtual QValidator::State validate(QString& input, int& pos) const;
+  void fixup(QString& input) const override;
+  QValidator::State validate(QString& input, int& pos) const override;
 private:
   unsigned int min_;
   unsigned int max_;
@@ -250,18 +250,18 @@ public:
   virtual ~SettingsItemDelegate();
 
   /** Overrides QStyledItemDelegate::paint() to delegate to proper data type delegate. */
-  virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Overrides QStyledItemDelegate::createEditor() to delegate to proper data type delegate. */
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /** Overrides QStyledItemDelegate::setEditorData() to delegate to proper data type delegate. */
-  virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+  void setEditorData(QWidget* editor, const QModelIndex& index) const override;
   /** Overrides QStyledItemDelegate::setModelData() to delegate to proper data type delegate. */
-  virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
   /** Overrides QStyledItemDelegate::updateEditorGeometry() to delegate to proper data type delegate. */
-  virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
   /** Overrides QStyledItemDelegate::eventFilter() to ignore window-hiding as a cue for saving data */
-  virtual bool eventFilter(QObject *object, QEvent *event);
+  bool eventFilter(QObject *object, QEvent *event) override;
 
 private:
   /** Returns the appropriate delegate, or nullptr if none */

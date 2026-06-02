@@ -180,7 +180,7 @@ Picker::~Picker()
 
 void Picker::addCallback(Callback* callback)
 {
-  callbacks_.push_back(callback);
+  callbacks_.emplace_back(callback);
 }
 
 void Picker::removeCallback(Callback* callback)
@@ -280,7 +280,7 @@ public:
   {
   }
 
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
   {
     switch (ea.getEventType())
     {
@@ -403,7 +403,7 @@ public:
     view->removeEventHandler(picker_.get());
   }
 
-  virtual void operator()(simVis::View* inset, const EventType& e)
+  void operator()(simVis::View* inset, const EventType& e) override
   {
     switch (e)
     {
@@ -431,17 +431,17 @@ public:
   {
   }
 
-  void onHit(osgEarth::ObjectID id)
+  void onHit(osgEarth::ObjectID id) override
   {
     picker_.setPickedId(id);
   }
 
-  void onMiss()
+  void onMiss() override
   {
     picker_.setPickedId(0);
   }
 
-  bool accept(const osgGA::GUIEventAdapter& ea, const osgGA::GUIActionAdapter& aa)
+  bool accept(const osgGA::GUIEventAdapter& ea, const osgGA::GUIActionAdapter& aa) override
   {
     switch (ea.getEventType())
     {
@@ -522,7 +522,7 @@ void RTTPicker::setUpViewWithDebugTexture(osgViewer::View* intoView, simVis::Vie
   if (!rttTex)
     return;
 
-  intoView->setCameraManipulator(0L);
+  intoView->setCameraManipulator(nullptr);
   intoView->getCamera()->setName("RTT view");
   intoView->getCamera()->setViewport(0, 0, 256, 256);
   intoView->getCamera()->setClearColor(simVis::Color::White);

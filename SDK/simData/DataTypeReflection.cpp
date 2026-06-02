@@ -1677,7 +1677,7 @@ Reflection::TagStack Reflection::getPreferencesTagStack(const std::string& path,
     // Might be asking for FieldList
     for (const auto& [key, tagStack] : tags)
     {
-      if (key.substr(0, path.size()) == path)
+      if (key.starts_with(path))
       {
         auto rv = tagStack;
         rv.pop_back();

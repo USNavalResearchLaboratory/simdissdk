@@ -662,7 +662,7 @@ bool Iso8601Container::colorCode() const
 
 void Iso8601Container::setColorCode(bool value)
 {
-  return widget_->setColorCode(value);
+  widget_->setColorCode(value);
 }
 
 void Iso8601Container::setProcessEnterKey(bool process)

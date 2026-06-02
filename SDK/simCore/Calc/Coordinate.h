@@ -49,7 +49,7 @@ namespace simCore
     Coordinate(CoordinateSystem system, const Vec3 &pos, const Vec3 &ori, const Vec3 &vel, const Vec3 &acc, double elapsedECITime = 0.0);
     /// copy constructor
     Coordinate(const Coordinate &coord);
-    virtual ~Coordinate() {}
+    virtual ~Coordinate() = default;
 
     /// assignment operator
     Coordinate& operator=(const Coordinate &coord);

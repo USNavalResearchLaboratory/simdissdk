@@ -62,7 +62,7 @@ namespace
   {
     simVis::PlatformAzimElevViewTool* tool_;
     explicit UpdateTargetGeometryAdapter(simVis::PlatformAzimElevViewTool* tool) : tool_(tool) { }
-    void operator()(osg::MatrixTransform* xform, const osg::Vec3d& ecef)
+    void operator()(osg::MatrixTransform* xform, const osg::Vec3d& ecef) override
     {
       tool_->updateTargetGeometry(xform, ecef);
     }

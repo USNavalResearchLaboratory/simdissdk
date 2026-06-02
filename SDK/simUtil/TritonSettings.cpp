@@ -159,7 +159,7 @@ TritonSettingsCallback::~TritonSettingsCallback()
 
 void TritonSettingsCallback::addValue(TritonValue* value)
 {
-  values_.push_back(value);
+  values_.emplace_back(value);
 }
 
 void TritonSettingsCallback::removeValue(TritonValue* value)

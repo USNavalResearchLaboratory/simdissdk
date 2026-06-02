@@ -40,7 +40,7 @@ class RegExpFilter
 {
 public:
   /** Destructor */
-  virtual ~RegExpFilter() {}
+  virtual ~RegExpFilter() = default;
 
   /**
   * Returns true if the test string matches anything in the regular expression
@@ -62,7 +62,7 @@ class RegExpFilterFactory
 {
 public:
 
-  virtual ~RegExpFilterFactory() {}
+  virtual ~RegExpFilterFactory() = default;
   /** create a new RegExpFilter object based on the specified expression. */
   virtual RegExpFilterPtr createRegExpFilter(const std::string& expression) = 0;
 };

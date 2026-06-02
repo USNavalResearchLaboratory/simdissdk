@@ -41,7 +41,7 @@ public:
   }
 
   /** Returns a sun light (supports after 2.8, when signature on pure virtual was changed */
-  virtual osg::Light* getSunLight() const
+  osg::Light* getSunLight() const override
   {
     return light_.get();
   }
@@ -53,10 +53,10 @@ public:
   }
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "NullSkyModel"; }
+  const char* className() const override { return "NullSkyModel"; }
 
 private:
   // Need a light to avoid crash in some osgEarth versions

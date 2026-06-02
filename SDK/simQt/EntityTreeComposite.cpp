@@ -110,6 +110,10 @@ public:
     button_.setMenu(menu);
   }
 
+  /** Declared but not defined to keep cppCheck warning free */
+  ButtonActions(const ButtonActions& rhs) = delete;
+  ButtonActions& operator=(ButtonActions& rhs) = delete;
+
   QToolButton& button() const
   {
     return button_;
@@ -171,10 +175,6 @@ public:
   }
 
 private:
-  /** Declared but not defined to keep cppCheck warning free */
-  ButtonActions(const ButtonActions& rhs);
-  ButtonActions& operator=(ButtonActions& rhs);
-
   /** Sets the text and tooltip on the "Load" button */
   void setLoadTextAndTooltips_(const QString& filterName)
   {
@@ -213,7 +213,7 @@ public:
   {
   }
 
-  virtual void onSettingChange(const QString& name, const QVariant& value)
+  void onSettingChange(const QString& name, const QVariant& value) override
   {
     ButtonActions* actions = nullptr;
     for (size_t index = 0; index < parent_.buttonActions_.size(); ++index)
@@ -679,7 +679,7 @@ void EntityTreeComposite::showFilters_()
     return;
   }
   // create a new filter dialog, using the filter widgets from the EntityTreeWidget's proxy model
-  // Qt6 has problems with QDialogs that aren't parented to the QMainWindow, so attempt to set main window as the parent
+  // SIM-19177: Qt6 has problems with QDialogs that aren't parented to the QMainWindow, so attempt to set main window as the parent
   filterDialog_ = new FilterDialog(settings_, QtUtils::getMainWindowParent(this));
   QList<QWidget*> filterWidgets = entityTreeWidget_->filterWidgets(filterDialog_);
   filterDialog_->setMinimumWidth(200);

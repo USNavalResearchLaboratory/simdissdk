@@ -143,7 +143,7 @@ public:
 
   protected:
     /// osg::Referenced-derived
-    virtual ~Callback() {}
+    virtual ~Callback() = default;
   };
 
 public:
@@ -574,7 +574,7 @@ public:
   bool isVisible() const;
 
   /** Set the name of object using C++ style string. (override from osg::Object) */
-  virtual void setName(const std::string& name);
+  void setName(const std::string& name) override;
 
   /**
     * Install a callback that will be notified on view events.
@@ -650,10 +650,10 @@ public:
   simVis::EntityNode* getEntityNode(osg::Node* node) const;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "View"; }
+  const char* className() const override { return "View"; }
 
 protected: // methods
 
@@ -781,7 +781,7 @@ class InsetAddDelete : public simVis::ViewManager::Callback
 public:
   InsetAddDelete(FocusManager& parent);
 
-  virtual void operator()(simVis::View* inset, const EventType& e);
+  void operator()(simVis::View* inset, const EventType& e) override;
 
 protected:
   virtual ~InsetAddDelete();
@@ -797,7 +797,7 @@ public:
   /** Constructor */
   InsetChange(FocusManager& parent);
 
-  virtual void operator()(simVis::View* inset, const EventType& e);
+  void operator()(simVis::View* inset, const EventType& e) override;
 
 protected:
   virtual ~InsetChange();
@@ -828,7 +828,7 @@ public:
 
   protected:
     /// osg::Referenced-derived
-    virtual ~Callback() {}
+    virtual ~Callback() = default;
   };
 
   /** Construct a FocusManager. */

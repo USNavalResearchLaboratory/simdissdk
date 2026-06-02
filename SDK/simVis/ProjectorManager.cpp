@@ -77,7 +77,7 @@ public:
     //nop
   }
 
-  void operator()(osg::Node* node, osg::NodeVisitor* nv) const
+  void operator()(osg::Node* node, osg::NodeVisitor* nv) const override
   {
     osg::ref_ptr<ProjectorNode> proj;
     if (!proj_.lock(proj) || !proj.valid())
@@ -109,7 +109,7 @@ public:
     : manager_(manager)
   {}
 
-  virtual void onLayerAdded(osgEarth::Layer *layer, unsigned int index) override
+  void onLayerAdded(osgEarth::Layer *layer, unsigned int index) override
   {
     // Can't reorder layers in the middle of an insert, so queue it instead
     manager_.needReorderProjectorLayers_ = true;
@@ -219,7 +219,7 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
     return;
   }
 
-  projectors_.push_back(proj);
+  projectors_.emplace_back(proj);
 
   ProjectorLayer* layer = new ProjectorLayer(proj->getId());
   layer->setName("SIMSDK Projector");

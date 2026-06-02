@@ -54,7 +54,7 @@ public:
   virtual ~FilterDialog();
 
   /** Override the QDialog close event to emit the closedGui signal */
-  virtual void closeEvent(QCloseEvent*);
+  void closeEvent(QCloseEvent*) override;
 
 Q_SIGNALS:
   /** Signal emitted when this dialog is closed */
@@ -293,8 +293,6 @@ private:
 
   SettingsPtr settings_;
   simQt::Settings::ObserverPtr observer_;
-
-  class ButtonActions;
   std::vector<ButtonActions*> buttonActions_;
 
   /// Whether or not to use the entity icons, vs the names

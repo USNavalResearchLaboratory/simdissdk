@@ -130,7 +130,7 @@ namespace simCore
     CoordinateConverter();
     /// copy constructor
     CoordinateConverter(const CoordinateConverter& other);
-    virtual ~CoordinateConverter() {}
+    virtual ~CoordinateConverter() = default;
 
     /**
     * @brief Copies a coordinate convert to another coordinate convert

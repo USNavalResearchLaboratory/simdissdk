@@ -12,7 +12,7 @@ if(NOT INSTALL_SIMDIS_SDK_LIBRARIES)
 endif()
 
 # Configure the directory where CMake files are installed
-set(SDK_LIB_CMAKE_PATH ${INSTALLSETTINGS_LIBRARY_DIR}/cmake)
+set(SDK_LIB_CMAKE_PATH ${CMAKE_INSTALL_LIBDIR}/cmake)
 
 # Gather a list of all possible imported libraries
 set(IMPLIBS)

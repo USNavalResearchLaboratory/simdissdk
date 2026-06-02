@@ -269,7 +269,7 @@ int testGeoFence2DPolygon()
 
     // only one vertex, should fail
     std::vector<simCore::Vec3> vertices;
-    vertices.push_back(simCore::Vec3(origin[0], origin[1], 0.0));
+    vertices.emplace_back(origin[0], origin[1], 0.0);
     geoFence.set(vertices, simCore::COORD_SYS_LLA);
     // not enough vertices
     rv += SDK_ASSERT(!geoFence.valid());
@@ -280,7 +280,7 @@ int testGeoFence2DPolygon()
     simCore::GeoFence geoFence;
     std::vector<simCore::Vec3> vertices;
     for (size_t i = 0; i < 2; ++i)
-      vertices.push_back(simCore::Vec3(pnt[i][0], pnt[i][1], 0.0));
+      vertices.emplace_back(pnt[i][0], pnt[i][1], 0.0);
     geoFence.set(vertices, simCore::COORD_SYS_LLA);
     // not enough vertices
     rv += SDK_ASSERT(!geoFence.valid());
@@ -291,8 +291,8 @@ int testGeoFence2DPolygon()
     simCore::GeoFence geoFence;
     std::vector<simCore::Vec3> vertices;
     for (size_t i = 0; i < 4; ++i)
-      vertices.push_back(simCore::Vec3(pnt[i][0], pnt[i][1], 0.0));
-    vertices.push_back(simCore::Vec3(pnt[0][0], pnt[0][1], 0.0));
+      vertices.emplace_back(pnt[i][0], pnt[i][1], 0.0);
+    vertices.emplace_back(pnt[0][0], pnt[0][1], 0.0);
     geoFence.set(vertices, simCore::COORD_SYS_LLA);
     rv += SDK_ASSERT(geoFence.valid());
   }
@@ -302,10 +302,10 @@ int testGeoFence2DPolygon()
   {
     simCore::GeoFence geoFence;
     std::vector<simCore::Vec3> vertices;
-    vertices.push_back(simCore::Vec3(origin[0], origin[1], 0.0));
+    vertices.emplace_back(origin[0], origin[1], 0.0);
     for (size_t i = 0; i < 3; ++i)
-      vertices.push_back(simCore::Vec3(pnt[i][0], pnt[i][1], 0.0));
-    vertices.push_back(simCore::Vec3(origin[0], origin[1], 0.0));
+      vertices.emplace_back(pnt[i][0], pnt[i][1], 0.0);
+    vertices.emplace_back(origin[0], origin[1], 0.0);
     geoFence.set(vertices, simCore::COORD_SYS_LLA);
 
     // passes convex test
@@ -321,11 +321,11 @@ int testGeoFence2DPolygon()
   {
     simCore::GeoFence geoFence;
     std::vector<simCore::Vec3> vertices;
-    vertices.push_back(simCore::Vec3(origin[0], origin[1], 0.0));
-    vertices.push_back(simCore::Vec3(pnt[3][0], pnt[3][1], 0.0));
-    vertices.push_back(simCore::Vec3(pnt[0][0], pnt[0][1], 0.0));
-    vertices.push_back(simCore::Vec3(pnt[1][0], pnt[1][1], 0.0));
-    vertices.push_back(simCore::Vec3(origin[0], origin[1], 0.0));
+    vertices.emplace_back(origin[0], origin[1], 0.0);
+    vertices.emplace_back(pnt[3][0], pnt[3][1], 0.0);
+    vertices.emplace_back(pnt[0][0], pnt[0][1], 0.0);
+    vertices.emplace_back(pnt[1][0], pnt[1][1], 0.0);
+    vertices.emplace_back(origin[0], origin[1], 0.0);
     geoFence.set(vertices, simCore::COORD_SYS_LLA);
 
     // passes convex test
@@ -363,8 +363,8 @@ int testGeoFilter2DPolygonZeroDeg()
   std::vector<simCore::Vec3> vertices;
 
   for (size_t i = 0; i < 4; ++i)
-    vertices.push_back(simCore::Vec3(pnt[i][0], pnt[i][1], 0.0));
-  vertices.push_back(simCore::Vec3(pnt[0][0], pnt[0][1], 0.0));
+    vertices.emplace_back(pnt[i][0], pnt[i][1], 0.0);
+  vertices.emplace_back(pnt[0][0], pnt[0][1], 0.0);
   geoFence.set(vertices, simCore::COORD_SYS_LLA);
   rv += SDK_ASSERT(geoFence.valid());
 
@@ -457,8 +457,8 @@ int testGeoFilter2DPolygonDateline()
   simCore::GeoFence geoFence;
   std::vector<simCore::Vec3> vertices;
   for (size_t i = 0; i < 4; ++i)
-    vertices.push_back(simCore::Vec3(pnt[i][0], pnt[i][1], 0.0));
-  vertices.push_back(simCore::Vec3(pnt[0][0], pnt[0][1], 0.0));
+    vertices.emplace_back(pnt[i][0], pnt[i][1], 0.0);
+  vertices.emplace_back(pnt[0][0], pnt[0][1], 0.0);
   geoFence.set(vertices, simCore::COORD_SYS_LLA);
   rv += SDK_ASSERT(geoFence.valid());
 
@@ -559,8 +559,8 @@ int testGeoFilter2DPolygonNPole()
     simCore::GeoFence geoFence;
     std::vector<simCore::Vec3> vertices;
     for (size_t i = 0; i < 4; ++i)
-      vertices.push_back(simCore::Vec3(pnt[i][0], pnt[i][1], 0.0));
-    vertices.push_back(simCore::Vec3(pnt[0][0], pnt[0][1], 0.0));
+      vertices.emplace_back(pnt[i][0], pnt[i][1], 0.0);
+    vertices.emplace_back(pnt[0][0], pnt[0][1], 0.0);
     geoFence.set(vertices, simCore::COORD_SYS_LLA);
     rv += SDK_ASSERT(geoFence.valid());
 
@@ -624,8 +624,8 @@ int testGeoFilter2DPolygonNPole()
     simCore::GeoFence geoFence;
     std::vector<simCore::Vec3> vertices;
     for (size_t i = 0; i < 4; ++i)
-      vertices.push_back(simCore::Vec3(pnt[i][0], pnt[i][1], 0.0));
-    vertices.push_back(simCore::Vec3(pnt[0][0], pnt[0][1], 0.0));
+      vertices.emplace_back(pnt[i][0], pnt[i][1], 0.0);
+    vertices.emplace_back(pnt[0][0], pnt[0][1], 0.0);
     geoFence.set(vertices, simCore::COORD_SYS_LLA);
     rv += SDK_ASSERT(geoFence.valid());
 

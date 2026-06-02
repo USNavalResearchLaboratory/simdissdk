@@ -39,21 +39,21 @@ public:
   }
 
   /** @see simCore::Clock::ModeChangeObserver::onModeChange() */
-  virtual void onModeChange(simCore::Clock::Mode newMode)
+  void onModeChange(simCore::Clock::Mode newMode) override
   {
     // Mode change can affect real-time checkbox
     w_->updateCheckedState_();
   }
 
   /** @see simCore::Clock::ModeChangeObserver::onDirectionChange() */
-  virtual void onDirectionChange(simCore::TimeDirection newDirection)
+  void onDirectionChange(simCore::TimeDirection newDirection) override
   {
     // Direction change affects which play/stop buttons are pressed in
     w_->updateCheckedState_();
   }
 
   /** @see simCore::Clock::ModeChangeObserver::onUserEditableChanged() */
-  virtual void onUserEditableChanged(bool userCanEdit)
+  void onUserEditableChanged(bool userCanEdit) override
   {
     // A change in editable state could be the result of changing between data clock and visualization clock
     w_->updateCheckedState_();
@@ -62,17 +62,17 @@ public:
   }
 
   /** @see simCore::Clock::ModeChangeObserver::onCanLoopChange() */
-  virtual void onCanLoopChange(bool newVal)
+  void onCanLoopChange(bool newVal) override
   {
     // Can change whether Loop is checked or not
     w_->updateCheckedState_();
   }
 
   /** @see simCore::Clock::ModeChangeObserver::onScaleChange() */
-  virtual void onScaleChange(double newValue) {}
+  void onScaleChange(double newValue) override {}
 
   /** @see simCore::Clock::ModeChangeObserver::onBoundsChange() */
-  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) {}
+  void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override {}
 
 private:
   simQt::ButtonActions *w_;

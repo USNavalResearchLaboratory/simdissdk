@@ -45,12 +45,12 @@ public:
   {
   }
 
-  virtual bool isApplicable(const simData::PlatformPrefs& prefs) const
+  bool isApplicable(const simData::PlatformPrefs& prefs) const override
   {
     return prefs.useclampalt();
   }
 
-  virtual PlatformTspiFilterManager::FilterResponse filter(simCore::Coordinate& llaCoord, const simData::PlatformPrefs& prefs, const simData::PlatformProperties& props)
+  PlatformTspiFilterManager::FilterResponse filter(simCore::Coordinate& llaCoord, const simData::PlatformPrefs& prefs, const simData::PlatformProperties& props) override
   {
     PlatformTspiFilterManager::FilterResponse modified = PlatformTspiFilterManager::POINT_UNCHANGED;
 
@@ -88,12 +88,12 @@ public:
   {
   }
 
-  virtual bool isApplicable(const simData::PlatformPrefs& prefs) const
+  bool isApplicable(const simData::PlatformPrefs& prefs) const override
   {
     return prefs.useclampyaw() || prefs.useclamppitch() || prefs.useclamproll() || prefs.clamporientationatlowvelocity();
   }
 
-  virtual PlatformTspiFilterManager::FilterResponse filter(simCore::Coordinate& llaCoord, const simData::PlatformPrefs& prefs, const simData::PlatformProperties& props)
+  PlatformTspiFilterManager::FilterResponse filter(simCore::Coordinate& llaCoord, const simData::PlatformPrefs& prefs, const simData::PlatformProperties& props) override
   {
     bool autoClamp = false;
     if (prefs.clamporientationatlowvelocity())

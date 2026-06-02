@@ -38,7 +38,7 @@ namespace simQt {
   class AbstractEntityTreeItem
   {
   public:
-    virtual ~AbstractEntityTreeItem() {}
+    virtual ~AbstractEntityTreeItem() = default;
 
     /** Needs to return the entity's unique ID */
     virtual uint64_t id() const = 0;
@@ -52,10 +52,10 @@ namespace simQt {
   public:
     /** Constructor requires parent object */
     AbstractEntityTreeModel(QObject* parent) : QAbstractItemModel(parent) {}
-    virtual ~AbstractEntityTreeModel() {}
+    virtual ~AbstractEntityTreeModel() = default;
 
     /** QAbstractItemModel interface */
-    virtual QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex()) const = 0;
+    QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex()) const override = 0;
 
     /** Return an Index based on the entity's ID */
     virtual QModelIndex index(uint64_t id) const = 0;

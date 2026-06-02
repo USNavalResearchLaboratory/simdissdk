@@ -77,7 +77,7 @@ public:
   {
   }
 
-  virtual bool run(osg::Object* object, osg::Object* data)
+  bool run(osg::Object* object, osg::Object* data) override
   {
     // update the sphere transform
     const double r = app_.centroidNode->boundingSphereRadius();
@@ -373,7 +373,7 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_IMGUI
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
-  app.mainView->getEventHandlers().push_front(gui);
+  app.mainView->getEventHandlers().emplace_front(gui);
   gui->add(new ControlPanel(app));
 #endif
 

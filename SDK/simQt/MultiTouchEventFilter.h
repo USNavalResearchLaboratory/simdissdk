@@ -78,7 +78,7 @@ public:
 
 protected:
   // From QObject:
-  virtual bool eventFilter(QObject* obj, QEvent* evt) override;
+  bool eventFilter(QObject* obj, QEvent* evt) override;
 
   /** Touch operation begins. If return value is true, then event is filtered/blocked. */
   virtual bool touchBeginEvent_(QTouchEvent* evt);

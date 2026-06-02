@@ -181,13 +181,13 @@ namespace simVis
     simData::AnimatedLineBend getLineBending() const;
 
     /** Return the proper library name */
-    virtual const char* libraryName() const { return "simVis"; }
+    const char* libraryName() const override { return "simVis"; }
 
     /** Return the class name */
-    virtual const char* className() const { return "AnimatedLineNode"; }
+    const char* className() const override { return "AnimatedLineNode"; }
 
     /** On the UPDATE_VISITOR traversal, calls update_() to animate the line */
-    virtual void traverse(osg::NodeVisitor& nv);
+    void traverse(osg::NodeVisitor& nv) override;
 
   protected:
     /// osg::Referenced-derived

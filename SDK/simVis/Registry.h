@@ -57,6 +57,10 @@ class SequenceTimeUpdater;
 class SDKVIS_EXPORT Registry
 {
 public:
+  /** Disable copy constructor */
+  Registry(const Registry& rhs) = delete;
+  /** Disable copy operator */
+  Registry& operator=(const Registry& rhs) = delete;
 
   /**
   * Enable "NO NETWORK" mode, in which the application will never attempt
@@ -219,11 +223,6 @@ protected:
 private:
   /** Constructor for the registry is private.  Use instance() to access. */
   Registry();
-
-  /** Hide copy constructor */
-  Registry(const Registry& rhs);
-  /** Hide copy operator */
-  Registry& operator=(const Registry& rhs);
 
   /// use the fileSearch_ to find the specified file. Returns the passed in filename if fileSearch_ is not set. This method is thread safe
   std::string findFile_(const std::string& filename, simCore::FileSearch::SearchFileType fileType) const;

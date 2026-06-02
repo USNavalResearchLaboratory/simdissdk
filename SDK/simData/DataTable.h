@@ -112,7 +112,7 @@ static const std::string INTERNAL_LOB_FLASH_COLUMN = "Flash";
 class SDKDATA_EXPORT DataTableManager
 {
 public:
-  virtual ~DataTableManager() {}
+  virtual ~DataTableManager() = default;
 
   /**
    * Creates a data table with the given name under the owner provided, returning existing tables
@@ -181,7 +181,7 @@ public:
   class ManagerObserver
   {
   public:
-    virtual ~ManagerObserver() {}
+    virtual ~ManagerObserver() = default;
     /**
     * Called in the DataTableManager::addDataTable, after new DataTable has been created.
     * Table will be in the TableList when this is called
@@ -219,13 +219,13 @@ public:
 class TableList
 {
 public:
-  virtual ~TableList() {}
+  virtual ~TableList() = default;
 
   /** Provides a method to iterate over all entries following a Visitor pattern. */
   class Visitor
   {
   public:
-    virtual ~Visitor() {}
+    virtual ~Visitor() = default;
 
     /**
      * Perform a function on the table provided, which is a member of this list.
@@ -253,9 +253,7 @@ class DelayedFlushContainer
 {
 public:
   /** Virtual destructor deletes the memory held by this container */
-  virtual ~DelayedFlushContainer()
-  {
-  }
+  virtual ~DelayedFlushContainer() = default;
 };
 /** Shared pointer for a DelayedFlushedContainer */
 typedef std::shared_ptr<DelayedFlushContainer> DelayedFlushContainerPtr;
@@ -267,9 +265,7 @@ typedef std::shared_ptr<DelayedFlushContainer> DelayedFlushContainerPtr;
 class DelayedFlushContainerComposite : public DelayedFlushContainer
 {
 public:
-  virtual ~DelayedFlushContainerComposite()
-  {
-  }
+  virtual ~DelayedFlushContainerComposite() = default;
   /** Saves a flush container for later deletion. */
   void push_back(DelayedFlushContainerPtr ptr)
   {
@@ -289,13 +285,13 @@ private:
 class SDKDATA_EXPORT DataTable
 {
 public:
-  virtual ~DataTable() {}
+  virtual ~DataTable() = default;
 
   /** Provides a method to iterate over all row entries following a Visitor pattern. */
   class RowVisitor
   {
   public:
-    virtual ~RowVisitor() {}
+    virtual ~RowVisitor() = default;
 
     /// Return value from your visit() function; use this to stop early
     enum VisitReturn
@@ -319,7 +315,7 @@ public:
   class ColumnVisitor
   {
   public:
-    virtual ~ColumnVisitor() {}
+    virtual ~ColumnVisitor() = default;
 
     /**
      * Perform a function on the column provided, which is a member of this data table.
@@ -445,7 +441,7 @@ public:
   class TableObserver
   {
   public:
-    virtual ~TableObserver() {}
+    virtual ~TableObserver() = default;
 
     /**
     * Called after a new TableColumn is added, in DataTable::addColumn.  New column will be
@@ -497,7 +493,7 @@ public:
 class TableColumn
 {
 public:
-  virtual ~TableColumn() {}
+  virtual ~TableColumn() = default;
 
   /**
    * Class returned by iterator access into the column
@@ -505,7 +501,7 @@ public:
   class IteratorData
   {
   public:
-    virtual ~IteratorData() {}
+    virtual ~IteratorData() = default;
 
     /** Retrieves the data time of the cell */
     virtual double time() const = 0;
@@ -562,7 +558,7 @@ public:
   class Interpolator
   {
   public:
-    virtual ~Interpolator() {}
+    virtual ~Interpolator() = default;
 
     /** Interpolates value of column at time tVal, given lowVal at time tLow and highVal at tHigh. */
     virtual double interpolate(const TableColumn* column, double lowVal, double highVal, double tLow, double tVal, double tHigh) const = 0;
@@ -691,7 +687,7 @@ public:
   class CellVisitor
   {
   public:
-    virtual ~CellVisitor() {}
+    virtual ~CellVisitor() = default;
 
     /**@name Cell Visitor visit() methods
      * @{

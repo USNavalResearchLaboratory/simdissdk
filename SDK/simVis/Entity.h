@@ -58,7 +58,7 @@ namespace simVis
     /** Gets the mask of components to inherit (see Locator::Components) */
     virtual unsigned int getLocatorComponents() const = 0;
 
-    virtual ~EntityAttachable() {}
+    virtual ~EntityAttachable() = default;
   };
 
   /** Helper class for entity's to help clamp coordinate points to map surface */
@@ -107,6 +107,9 @@ namespace simVis
     EntityNode(simData::ObjectType type, Locator* locator = nullptr);
 
   public:
+    /** Copy constructor, not implemented or available. */
+    EntityNode(const EntityNode&) = delete;
+
     /** Enumerates different name types for the label */
     enum NameType {
       REAL_NAME,  ///< Real entity name
@@ -306,9 +309,9 @@ namespace simVis
     void setNodeGetter(std::function<EntityNode* (simData::ObjectId)> getter);
 
     /** Return the proper library name */
-    virtual const char* libraryName() const { return "simVis"; }
+    const char* libraryName() const override { return "simVis"; }
     /** Return the class name */
-    virtual const char* className() const { return "EntityNode"; }
+    const char* className() const override { return "EntityNode"; }
 
   protected:
     virtual ~EntityNode();
@@ -334,9 +337,6 @@ namespace simVis
     int acceptProjectors_(osg::Node* attachmentPoint, const std::vector<ProjectorNode*>& projectors);
 
   private:
-    /** Copy constructor, not implemented or available. */
-    EntityNode(const EntityNode&);
-
     simData::ObjectType type_;
     osg::ref_ptr<Locator> locator_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;

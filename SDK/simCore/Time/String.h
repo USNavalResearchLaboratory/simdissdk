@@ -41,7 +41,7 @@ class Seconds;
 class SDKCORE_EXPORT TimeFormatter
 {
 public:
-  virtual ~TimeFormatter() {}
+  virtual ~TimeFormatter() = default;
 
   /**
    * Converts the time stamp to a string.  In cases where applicable, the reference year provides an
@@ -92,18 +92,18 @@ public:
 class SDKCORE_EXPORT NullTimeFormatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 };
 
 /** Formatter for simCore::TimeStamp's TIMEFORMAT_SECONDS */
 class SDKCORE_EXPORT SecondsTimeFormatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
   /** Converts a Seconds value to a seconds string for an ostream. */
   static void toStream(std::ostream& os, const simCore::Seconds& seconds, unsigned short precision);
@@ -115,9 +115,9 @@ public:
 class SDKCORE_EXPORT MinutesTimeFormatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
   /** Converts a Seconds value to a minutes string for an ostream. */
   static void toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision);
@@ -129,7 +129,7 @@ public:
 class SDKCORE_EXPORT MinutesWrappedTimeFormatter : public MinutesTimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision = 5) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision = 5) const override;
   /** Converts a Seconds value to a minutes string for an ostream. */
   static void toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision);
 };
@@ -138,9 +138,9 @@ public:
 class SDKCORE_EXPORT HoursTimeFormatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
   /** Converts a Seconds value to an hours string for an ostream. */
   static void toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision);
@@ -159,7 +159,7 @@ public:
 class SDKCORE_EXPORT HoursWrappedTimeFormatter : public HoursTimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision = 5) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision = 5) const override;
   /** Converts a Seconds value to an hours string for an ostream. */
   static void toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision);
 };
@@ -168,9 +168,9 @@ public:
 class SDKCORE_EXPORT OrdinalTimeFormatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
   /** Converts a Seconds value to an hours string for an ostream. */
   static void toStream(std::ostream& os, const simCore::TimeStamp& timeStamp, unsigned short precision);
@@ -192,9 +192,9 @@ public:
 class SDKCORE_EXPORT MonthDayTimeFormatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 
   /** Converts a month string to a [0-11] month value; returns -1 on erroneous input. */
   static int monthStringToInt(const std::string& monthString);
@@ -219,9 +219,9 @@ public:
 class SDKCORE_EXPORT DtgTimeFormatter : public TimeFormatter
 {
 public:
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const;
-  virtual bool canConvert(const std::string& timeString) const;
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=5) const override;
+  bool canConvert(const std::string& timeString) const override;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 };
 
 /**
@@ -255,7 +255,7 @@ public:
    * @return Time string of the value passed in, in the formatter's text format.  If for some reason the
    *   formatter cannot convert the value, an empty string might be returned.
    */
-  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=0) const;
+  std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision=0) const override;
 
   /**
    * Returns true if the passed-in time string matches this formatter's style.  This is a check of
@@ -269,7 +269,7 @@ public:
    * @return True, if this converter will be able to convert the value properly.  False if the
    *   formatter knows that the fromString() will fail for this input string.
    */
-  virtual bool canConvert(const std::string& timeString) const;
+  bool canConvert(const std::string& timeString) const override;
 
   /**
    * Converts a time string to a time stamp.  This is the inverse of the toString() function.
@@ -286,7 +286,7 @@ public:
    * @return 0 on successful conversion, and timeStamp will be filled with the valid time stamp.  Non-zero
    *   on error, and timeStamp will be set to simCore::TimeStamp(1970, 0).
    */
-  virtual int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const;
+  int fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const override;
 };
 
 

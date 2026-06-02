@@ -41,14 +41,14 @@ public:
   PPFDataProvider(const ProfileDataProvider* templateProvider, const RadarParametersPtr radarParameters);
 
   /** @copydoc simRF::ProfileDataProvider::getValueByIndex() */
-  virtual double getValueByIndex(unsigned int heightIndex, unsigned int rangeIndex) const;
+  double getValueByIndex(unsigned int heightIndex, unsigned int rangeIndex) const override;
 
   /** @copydoc simRF::ProfileDataProvider::interpolateValue() */
-  virtual double interpolateValue(double hgtMeters, double gndRngMeters) const;
+  double interpolateValue(double hgtMeters, double gndRngMeters) const override;
 
 protected:
   /// osg::Referenced-derived
-  virtual ~PPFDataProvider() {}
+  virtual ~PPFDataProvider() = default;
 
 private:
   /**

@@ -92,17 +92,17 @@ struct AppData
      view_(nullptr),
      platformModel_(nullptr)
   {
-    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::OFF,    "OFF"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::POINT,  "POINT"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::LINE,   "LINE"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::RIBBON, "RIBBON"));
-    modes_.push_back(std::make_pair(simData::TrackPrefs::Mode::BRIDGE, "BRIDGE"));
+    modes_.emplace_back(simData::TrackPrefs::Mode::OFF,    "OFF");
+    modes_.emplace_back(simData::TrackPrefs::Mode::POINT,  "POINT");
+    modes_.emplace_back(simData::TrackPrefs::Mode::LINE,   "LINE");
+    modes_.emplace_back(simData::TrackPrefs::Mode::RIBBON, "RIBBON");
+    modes_.emplace_back(simData::TrackPrefs::Mode::BRIDGE, "BRIDGE");
 
-    colors_.push_back(std::make_pair(simVis::Color::White, "White"));
-    colors_.push_back(std::make_pair(simVis::Color::Lime,  "Green"));
-    colors_.push_back(std::make_pair(simVis::Color::Red,   "Red"));
-    colors_.push_back(std::make_pair(simVis::Color::Cyan,  "Cyan"));
-    colors_.push_back(std::make_pair(simVis::Color::Orange, "Orange"));
+    colors_.emplace_back(simVis::Color::White, "White");
+    colors_.emplace_back(simVis::Color::Lime,  "Green");
+    colors_.emplace_back(simVis::Color::Red,   "Red");
+    colors_.emplace_back(simVis::Color::Cyan,  "Cyan");
+    colors_.emplace_back(simVis::Color::Orange, "Orange");
   }
 
   void apply()
@@ -476,7 +476,7 @@ int main(int argc, char **argv)
   /// show the instructions overlay
 #ifdef HAVE_IMGUI
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
   gui->add(new ControlPanel(app));
 #endif
   app.apply();

@@ -85,22 +85,22 @@ public:
   int removeTag(const std::string& tag);
 
   /// Returns true if the slice was modified during last DataStore::update
-  virtual bool hasChanged() const;
+  bool hasChanged() const override;
 
   /// this feature is not implemented for MemoryGenericDataSlice
-  virtual bool isDirty() const;
+  bool isDirty() const override;
 
   /// Process update range
-  virtual void visit(Visitor *visitor) const;
+  void visit(Visitor *visitor) const override;
 
   /// @copydoc simData::VisitableDataSlice::modify
-  virtual void modify(Modifier* modifier);
+  void modify(Modifier* modifier) override;
 
   /// Gets the active generic data at current time.
-  virtual const GenericData* current() const;
+  const GenericData* current() const override;
 
   /// Retrieve total number of items in the data slice
-  virtual size_t numItems() const;
+  size_t numItems() const override;
 
 private:
   /// Holds the data for individual generic data keys

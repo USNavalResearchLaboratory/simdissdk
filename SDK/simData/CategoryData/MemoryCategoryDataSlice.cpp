@@ -123,7 +123,7 @@ void MemoryCategoryDataSlice::TimeValues::insert(double time, int value)
   // First do initial condition
   if (entries_.empty())
   {
-    entries_.push_back(TimeValuePair(time, value));
+    entries_.emplace_back(time, value);
     invalidateLastPosTime_();
     return;
   }
@@ -131,7 +131,7 @@ void MemoryCategoryDataSlice::TimeValues::insert(double time, int value)
   // Second so the common case of appending to the end
   if (entries_.back().time < time)
   {
-    entries_.push_back(TimeValuePair(time, value));
+    entries_.emplace_back(time, value);
     invalidateLastPosTime_();
     return;
   }
@@ -401,31 +401,31 @@ public:
   }
 
   ///@return Time of validity for the category data pair
-  virtual double time() const override
+  double time() const override
   {
     return time_;
   }
 
   ///@return the category name as a string
-  virtual std::string name() const override
+  std::string name() const override
   {
     return categoryNameManager_.nameIntToString(catInt_);
   }
 
   ///@return the string value for the current category
-  virtual std::string value() const override
+  std::string value() const override
   {
     return categoryNameManager_.valueIntToString(valInt_);
   }
 
   ///@return the integer key for the category name
-  virtual int nameInt() const override
+  int nameInt() const override
   {
     return catInt_;
   }
 
   ///@return the integer key for the value for the current category
-  virtual int valueInt() const override
+  int valueInt() const override
   {
     return valInt_;
   }
@@ -456,7 +456,7 @@ public:
   }
 
   /** Retrieves next item and increments iterator to next element */
-  virtual std::shared_ptr<CategoryDataPair> next()
+  std::shared_ptr<CategoryDataPair> next() override
   {
     if (!hasNext())
     {
@@ -477,7 +477,7 @@ public:
   }
 
   /** Retrieves next item and does not increment iterator to next element */
-  virtual std::shared_ptr<CategoryDataPair> peekNext() const
+  std::shared_ptr<CategoryDataPair> peekNext() const override
   {
     if (!hasNext())
     {
@@ -489,7 +489,7 @@ public:
   }
 
   /** Retrieves previous item and decrements iterator to prev element */
-  virtual std::shared_ptr<CategoryDataPair> previous()
+  std::shared_ptr<CategoryDataPair> previous() override
   {
     if (!hasPrevious())
     {
@@ -507,7 +507,7 @@ public:
   }
 
   /** Retrieves previous item and does not decrement iterator to prev element */
-  virtual std::shared_ptr<CategoryDataPair> peekPrevious() const
+  std::shared_ptr<CategoryDataPair> peekPrevious() const override
   {
     if (!hasPrevious())
     {
@@ -523,25 +523,25 @@ public:
   }
 
   /** Resets the iterator to the front of the data structure */
-  virtual void toFront()
+  void toFront() override
   {
     current_ = parent_.data_.begin();
   }
 
   /** Sets the iterator to the end of the data structure */
-  virtual void toBack()
+  void toBack() override
   {
     current_ = parent_.data_.end();
   }
 
   /** Returns true if next() / peekNext() will be a valid entry in the data slice */
-  virtual bool hasNext() const
+  bool hasNext() const override
   {
     return current_ != parent_.data_.end();
   }
 
   /** Returns true if previous() / peekPrevious() will be a valid entry in the data slice */
-  virtual bool hasPrevious() const
+  bool hasPrevious() const override
   {
     if (current_ == parent_.data_.begin())
       return false; // nowhere to go
@@ -556,7 +556,7 @@ public:
   }
 
   /** Create a copy of the actual implementation */
-  virtual IteratorImpl* clone() const
+  IteratorImpl* clone() const override
   {
     return new Iterator(*this);
   }
@@ -980,8 +980,8 @@ void MemoryCategoryDataSlice::allStrings(std::vector<std::pair<std::string, std:
 
     --j;
 
-    nameValueVec.push_back(std::make_pair(categoryNameManager_->nameIntToString(i->first),
-      categoryNameManager_->valueIntToString(j->value)));
+    nameValueVec.emplace_back(categoryNameManager_->nameIntToString(i->first),
+      categoryNameManager_->valueIntToString(j->value));
   }
 }
 
@@ -998,7 +998,7 @@ void MemoryCategoryDataSlice::allInts(std::vector<std::pair<int, int> > &nameVal
 
     --j;
 
-    nameValueIntVec.push_back(std::make_pair(i->first, j->value));
+    nameValueIntVec.emplace_back(i->first, j->value);
   }
 }
 

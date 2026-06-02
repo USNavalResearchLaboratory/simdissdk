@@ -261,9 +261,9 @@ public:
   BeamCenterLine();
   SDK_DISABLE_COPY(BeamCenterLine);
   /** Return the proper library name */
-  virtual const char* libraryName() const override  { return "simVis"; }
+  const char* libraryName() const override  { return "simVis"; }
   /** Return the class name */
-  virtual const char* className() const override  { return "BeamCenterLine"; }
+  const char* className() const override  { return "BeamCenterLine"; }
 
   /// update the beam line for range and color from update and prefs
   void update(const simData::BeamUpdate& update, const simData::BeamPrefs& activePrefs);
@@ -1127,12 +1127,12 @@ void BeamNode::getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const
   simCore::Vec3 startEcef;
   if (0 != getPosition(&startEcef, simCore::COORD_SYS_ECEF))
     return;
-  ecefVec.push_back({ startEcef.x(), startEcef.y(), startEcef.z() });
+  ecefVec.emplace_back( startEcef.x(), startEcef.y(), startEcef.z() );
 
   // Convert end point into ECEF
   simCore::Vec3 endEcef;
   simCore::CoordinateConverter::convertGeodeticPosToEcef(endPosition, endEcef);
-  ecefVec.push_back({ endEcef.x(), endEcef.y(), endEcef.z() });
+  ecefVec.emplace_back( endEcef.x(), endEcef.y(), endEcef.z() );
 }
 
 unsigned int BeamNode::objectIndexTag() const

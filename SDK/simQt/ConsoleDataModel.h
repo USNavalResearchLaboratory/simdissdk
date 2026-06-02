@@ -59,7 +59,7 @@ public:
   class EntryFilter
   {
   public:
-    virtual ~EntryFilter() {}
+    virtual ~EntryFilter() = default;
     /**
      * Return false to reject the ConsoleEntry so that it does not enter the data
      * model.  Note that entry values can be edited.  Only called for new entries.
@@ -96,19 +96,19 @@ public:
   virtual ~ConsoleDataModel();
 
   /** From QAbstractItemModel::data */
-  virtual QVariant data(const QModelIndex& idx, int role) const;
+  QVariant data(const QModelIndex& idx, int role) const override;
   /** From QAbstractItemModel::headerData */
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
   /** From QAbstractItemModel::flags */
-  virtual Qt::ItemFlags flags(const QModelIndex& index) const;
+  Qt::ItemFlags flags(const QModelIndex& index) const override;
   /** From QAbstractItemModel::columnCount */
-  virtual int columnCount(const QModelIndex &parent) const;
+  int columnCount(const QModelIndex &parent) const override;
   /** From QAbstractItemModel::rowCount */
-  virtual int rowCount(const QModelIndex &parent) const;
+  int rowCount(const QModelIndex &parent) const override;
   /** From QAbstractItemModel::parent */
-  virtual QModelIndex parent(const QModelIndex &child) const;
+  QModelIndex parent(const QModelIndex &child) const override;
   /** From QAbstractItemModel::index */
-  virtual QModelIndex index(int row, int column, const QModelIndex &parent) const;
+  QModelIndex index(int row, int column, const QModelIndex &parent) const override;
 
   /** Define a shared pointer to a console channel */
   typedef std::shared_ptr<ConsoleChannel> ConsoleChannelPtr;
@@ -248,7 +248,7 @@ public:
   void setShowInDebugMode(bool showInDebug);
 
   /** Rejects messages with the substrings added in addFilter() */
-  virtual bool acceptEntry(ConsoleDataModel::ConsoleEntry& entry) const;
+  bool acceptEntry(ConsoleDataModel::ConsoleEntry& entry) const override;
 
 private:
   std::vector<QString> filters_;

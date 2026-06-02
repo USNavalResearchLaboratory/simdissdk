@@ -44,8 +44,8 @@ class SDKUTIL_EXPORT TimeVariable : public simCore::TextReplacer::Replaceable
 public:
   /** Constructor */
   TimeVariable(const simCore::Clock& clock);
-  virtual std::string getText() const;
-  virtual std::string getVariableName() const;
+  std::string getText() const override;
+  std::string getVariableName() const override;
 
   /** Sets the time format for display */
   void setFormat(simCore::TimeFormat timeFormat);
@@ -66,8 +66,8 @@ class SDKUTIL_EXPORT AzimuthVariable : public simCore::TextReplacer::Replaceable
 public:
   /** Constructor */
   AzimuthVariable(simVis::View* mainView);
-  virtual std::string getText() const;
-  virtual std::string getVariableName() const;
+  std::string getText() const override;
+  std::string getVariableName() const override;
 private:
   std::string format_(double value) const;
 private:
@@ -80,8 +80,8 @@ class SDKUTIL_EXPORT ElevationVariable : public simCore::TextReplacer::Replaceab
 public:
   /** Constructor */
   ElevationVariable(simVis::View* mainView);
-  virtual std::string getText() const;
-  virtual std::string getVariableName() const;
+  std::string getText() const override;
+  std::string getVariableName() const override;
 private:
   std::string format_(double value) const;
 private:
@@ -94,8 +94,8 @@ class SDKUTIL_EXPORT LatitudeVariable : public simCore::TextReplacer::Replaceabl
 public:
   /** Constructor */
   LatitudeVariable(simVis::View* mainView, int precision=2);
-  virtual std::string getText() const;
-  virtual std::string getVariableName() const;
+  std::string getText() const override;
+  std::string getVariableName() const override;
 private:
   std::string format_(double value) const;
 private:
@@ -109,8 +109,8 @@ class SDKUTIL_EXPORT LongitudeVariable : public simCore::TextReplacer::Replaceab
 public:
   /** Constructor */
   LongitudeVariable(simVis::View* mainView, int precision=2);
-  virtual std::string getText() const;
-  virtual std::string getVariableName() const;
+  std::string getText() const override;
+  std::string getVariableName() const override;
 private:
   std::string format_(double value) const;
 private:
@@ -124,8 +124,8 @@ class SDKUTIL_EXPORT AltitudeVariable : public simCore::TextReplacer::Replaceabl
 public:
   /** Constructor */
   AltitudeVariable(simVis::View* mainView);
-  virtual std::string getText() const;
-  virtual std::string getVariableName() const;
+  std::string getText() const override;
+  std::string getVariableName() const override;
 private:
   std::string format_(double value) const;
 private:
@@ -138,8 +138,8 @@ class SDKUTIL_EXPORT CenteredVariable : public simCore::TextReplacer::Replaceabl
 public:
   /** Constructor */
   CenteredVariable(simVis::View* mainView);
-  virtual std::string getText() const;
-  virtual std::string getVariableName() const;
+  std::string getText() const override;
+  std::string getVariableName() const override;
 private:
   osg::observer_ptr<simVis::View> mainView_;
 };
@@ -150,8 +150,8 @@ class SDKUTIL_EXPORT WatchedVariable : public simCore::TextReplacer::Replaceable
 public:
   /** Constructor */
   WatchedVariable(simVis::View* mainView);
-  virtual std::string getText() const;
-  virtual std::string getVariableName() const;
+  std::string getText() const override;
+  std::string getVariableName() const override;
 private:
   osg::observer_ptr<simVis::View> mainView_;
 };

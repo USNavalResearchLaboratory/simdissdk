@@ -72,8 +72,8 @@ public:
   /** Copy constructor using CopyOp to manage deep vs shallow copy. */
   DynamicScaleTransform(const DynamicScaleTransform&,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
 
-  virtual bool computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor*) const;
-  virtual bool computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor*) const;
+  bool computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor*) const override;
+  bool computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor*) const override;
 
   /** Sets the node to use for determining scaling factor; defaults to first child if not set. */
   void setSizingNode(osg::Node* node);
@@ -117,13 +117,13 @@ public:
   void clearOverrideScale();
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "DynamicScaleTransform"; }
+  const char* className() const override { return "DynamicScaleTransform"; }
 
   /** Override accept() to compute per-view bounds */
-  virtual void accept(osg::NodeVisitor& nv);
+  void accept(osg::NodeVisitor& nv) override;
 
   /**
    * Given a camera, iterates through the scene and recalculates the bounding spheres on

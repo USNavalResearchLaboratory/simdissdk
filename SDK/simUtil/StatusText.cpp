@@ -97,7 +97,7 @@ public:
   {
   }
   /** Handles frame updates and returns false so other handlers can process as well */
-  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
+  bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa) override
   {
     if (!parent_.valid())
       return false;
@@ -122,9 +122,9 @@ public:
     return false;
   }
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
   /** Return the class name */
-  virtual const char* className() const { return "StatusText::FrameEventHandler"; }
+  const char* className() const override { return "StatusText::FrameEventHandler"; }
 
 protected:
   /** Protect osg::Referenced-derived destructor */

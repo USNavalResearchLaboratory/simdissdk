@@ -45,11 +45,11 @@ DirectorySelectorWidget::DirectorySelectorWidget(QWidget* parent)
   ui_->setupUi(this);
   connect(ui_->directoryButton, SIGNAL(clicked()), this, SLOT(loadButton_()));
   ui_->directoryButton->setToolTip(tr("Display File Browser to select a directory."));
-  connect(ui_->directoryText, SIGNAL(textEdited(const QString&)), this, SLOT(textEdited_()));
-  connect(ui_->directoryText, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
 
 #ifndef NDEBUG
   ui_->directoryText->setReadOnly(false);  // Only allows developers to type in a directory name; users must use the file browser
+  connect(ui_->directoryText, SIGNAL(textEdited(const QString&)), this, SLOT(textEdited_()));
+  connect(ui_->directoryText, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
 #else
   ui_->directoryText->setReadOnly(true);  // Normal use - users must use the file browser
 #endif

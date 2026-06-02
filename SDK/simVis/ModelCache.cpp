@@ -71,7 +71,7 @@ public:
   {
   }
 
-  void apply(osg::Sequence& sequence)
+  void apply(osg::Sequence& sequence) override
   {
     sequence.addUpdateCallback(callback_);
     traverse(sequence);
@@ -93,7 +93,7 @@ public:
     setNodeMaskOverride(~0);
   }
 
-  virtual void apply(osg::Node& node) override
+  void apply(osg::Node& node) override
   {
     osg::StateSet* ss = node.getStateSet();
     // Catch Creator's Superface/Subface condition, where they use POLYGONOFFSET and render bin
@@ -120,7 +120,7 @@ public:
     setNodeMaskOverride(~0);
   }
 
-  virtual void apply(osg::Node& node) override
+  void apply(osg::Node& node) override
   {
 #ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
     // osgSim::LightPointNode is not supported in GLCORE, turn it off to prevent warning spam from OSG
@@ -168,7 +168,7 @@ public:
     traverse(node);
   }
 
-  virtual void apply(osg::Drawable& drawable) override
+  void apply(osg::Drawable& drawable) override
   {
     apply(static_cast<osg::Node&>(drawable));
 
@@ -269,7 +269,7 @@ public:
   }
 
   /** Called by OSG when a filename is requested to be read into a node. */
-  virtual ReadResult readNode(const std::string& filename, const osgDB::ReaderWriter::Options* options) const override
+  ReadResult readNode(const std::string& filename, const osgDB::ReaderWriter::Options* options) const override
   {
     const std::string ext = osgDB::getLowerCaseFileExtension(filename);
     if (!acceptsExtension(ext))
@@ -517,7 +517,7 @@ public:
 
     // Create a new request record
     CallbackVector& callbacks = requests_[uri];
-    callbacks.push_back(callback);
+    callbacks.emplace_back(callback);
     // Return early if there's already another active request
     if (callbacks.size() != 1)
       return;
@@ -542,7 +542,7 @@ public:
     addChild(proxy);
   }
 
-  virtual void traverse(osg::NodeVisitor& nv) override
+  void traverse(osg::NodeVisitor& nv) override
   {
     // Check for proxy node children with children -- they just finished loading.
     unsigned int childIndex = 0;
@@ -588,9 +588,9 @@ public:
   }
 
   /** Return the proper library name */
-  virtual const char* libraryName() const override { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
   /** Return the class name */
-  virtual const char* className() const override { return "ModelCache::LoaderNode"; }
+  const char* className() const override { return "ModelCache::LoaderNode"; }
 
 private:
   /** Loading on a URI completed.  Alert everyone who cares. */

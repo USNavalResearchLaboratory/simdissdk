@@ -28,6 +28,7 @@ set(SHADER_FILES
     DisableDepthOnAlpha.frag.glsl
     FragmentEffect.glsl
     Flashing.frag.glsl
+    HeatMapSystem.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl
     Picker.vert.glsl
@@ -91,6 +92,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}GlDebugMessage.h
     ${VIS_INC}GradientShader.h
     ${VIS_INC}Headless.h
+    ${VIS_INC}HeatMapSystem.h
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
@@ -199,7 +201,6 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/Cylinder.h
     ${VIS_INC}GOG/Ellipse.h
     ${VIS_INC}GOG/Ellipsoid.h
-    ${VIS_INC}GOG/ErrorHandler.h
     ${VIS_INC}GOG/GOGNode.h
     ${VIS_INC}GOG/GogNodeInterface.h
     ${VIS_INC}GOG/Hemisphere.h
@@ -211,7 +212,6 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/Loader.h
     ${VIS_INC}GOG/LoaderUtils.h
     ${VIS_INC}GOG/Orbit.h
-    ${VIS_INC}GOG/ParsedShape.h
     ${VIS_INC}GOG/Points.h
     ${VIS_INC}GOG/Polygon.h
     ${VIS_INC}GOG/Sphere.h
@@ -255,6 +255,7 @@ set(VIS_SOURCES_CORE
     ${VIS_INC}GlDebugMessage.cpp
     ${VIS_SRC}GradientShader.cpp
     ${VIS_SRC}Headless.cpp
+    ${VIS_SRC}HeatMapSystem.cpp
     ${VIS_SRC}InsetViewEventHandler.cpp
     ${VIS_SRC}Laser.cpp
     ${VIS_SRC}LayerRefreshCallback.cpp
@@ -359,7 +360,6 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/Loader.cpp
     ${VIS_SRC}GOG/LoaderUtils.cpp
     ${VIS_SRC}GOG/Orbit.cpp
-    ${VIS_SRC}GOG/ParsedShape.cpp
     ${VIS_SRC}GOG/Points.cpp
     ${VIS_SRC}GOG/Polygon.cpp
     ${VIS_SRC}GOG/Sphere.cpp
@@ -403,7 +403,7 @@ set(VIS_HEADERS ${VIS_HEADERS_CORE} ${VIS_HEADERS_RFPROP} ${VIS_HEADERS_GOG})
 set(VIS_SOURCES ${VIS_SOURCES_CORE} ${VIS_SOURCES_RFPROP} ${VIS_SOURCES_GOG} ${VIS_SHADER_FILES})
 
 # Add DB Format support to right MSVC folders and headers for installation
-if(TARGET SQLite::SQLite3)
+if(TARGET SQLite3::SQLite3 OR TARGET SQLite::SQLite3)
     source_group(Headers FILES ${VIS_HEADERS_DB})
     source_group(Headers\\DB FILES ${VIS_HEADERS_DB_PRIVATE})
     source_group("Source Files\\DB" FILES ${VIS_SOURCES_DB})
@@ -443,8 +443,12 @@ target_include_directories(simVis PUBLIC
 target_link_libraries(simVis PUBLIC simData simCore simNotify osgEarth::osgEarth)
 target_link_libraries(simVis PRIVATE OpenGL::GL ${OPENSCENEGRAPH_LIBRARIES})
 
-if(TARGET SQLite::SQLite3)
-    target_link_libraries(simVis PRIVATE SQLite::SQLite3)
+if(TARGET SQLite3::SQLite3 OR TARGET SQLite::SQLite3)
+    if(TARGET SQLite3::SQLite3)
+        target_link_libraries(simVis PRIVATE SQLite3::SQLite3)
+    else()
+        target_link_libraries(simVis PRIVATE SQLite::SQLite3)
+    endif()
     if(SDK_BIG_ENDIAN)
         target_compile_definitions(simVis PRIVATE SIM_BIG_ENDIAN)
     else()

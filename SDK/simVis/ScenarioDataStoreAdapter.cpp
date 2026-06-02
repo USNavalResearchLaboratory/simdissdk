@@ -44,7 +44,7 @@ public:
   }
 
   /// new entity has been added, with the given id and type
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot) override
   {
     switch (ot)
     {
@@ -62,14 +62,14 @@ public:
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
+  void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) override
   {
     if (scenarioManager_.valid())
       scenarioManager_->removeEntity(removedId);
   }
 
   /// prefs for the given entity have been changed
-  virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id)
+  void onPrefsChange(simData::DataStore *source, simData::ObjectId id) override
   {
     switch (source->objectType(id))
     {
@@ -87,14 +87,14 @@ public:
   }
 
   /// current time has been changed
-  virtual void onChange(simData::DataStore *source)
+  void onChange(simData::DataStore *source) override
   {
     if (scenarioManager_.valid())
       scenarioManager_->update(source);
   }
 
   /// entity's data was flushed, 0 means entire scenario was flushed
-  virtual void onFlush(simData::DataStore *source, simData::ObjectId flushedId)
+  void onFlush(simData::DataStore *source, simData::ObjectId flushedId) override
   {
     if (scenarioManager_.valid())
       scenarioManager_->flush(flushedId);
@@ -307,32 +307,32 @@ public:
 
 public: // ModeChangeObserver interface
 
-  virtual void onModeChange(simCore::Clock::Mode newMode)
+  void onModeChange(simCore::Clock::Mode newMode) override
   {
     scenarioManager_->notifyOfClockChange(clock_);
   }
 
-  virtual void onDirectionChange(simCore::TimeDirection newDirection)
+  void onDirectionChange(simCore::TimeDirection newDirection) override
   {
     scenarioManager_->notifyOfClockChange(clock_);
   }
 
-  virtual void onScaleChange(double newValue)
+  void onScaleChange(double newValue) override
   {
     scenarioManager_->notifyOfClockChange(clock_);
   }
 
-  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end)
+  void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override
   {
     scenarioManager_->notifyOfClockChange(clock_);
   }
 
-  virtual void onCanLoopChange(bool newVal)
+  void onCanLoopChange(bool newVal) override
   {
     scenarioManager_->notifyOfClockChange(clock_);
   }
 
-  virtual void onUserEditableChanged(bool userCanEdit)
+  void onUserEditableChanged(bool userCanEdit) override
   {
     scenarioManager_->notifyOfClockChange(clock_);
   }

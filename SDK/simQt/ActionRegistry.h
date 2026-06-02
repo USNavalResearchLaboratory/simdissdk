@@ -164,7 +164,7 @@ public:
   class SettingsMemento
   {
   public:
-    virtual ~SettingsMemento() {}
+    virtual ~SettingsMemento() = default;
     /** Restore the memento to an action registry */
     virtual int restore(ActionRegistry& registry) const = 0;
   };

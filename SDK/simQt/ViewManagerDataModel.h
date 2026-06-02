@@ -58,21 +58,21 @@ public:
   void unbind();
 
   ///@return the index for the given row and column
-  virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+  QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
   ///@return the index of the parent of the item given by index
-  virtual QModelIndex parent(const QModelIndex &child) const;
+  QModelIndex parent(const QModelIndex &child) const override;
   ///@return the number of rows in the data
-  virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   ///@return number of columns needed to hold data
-  virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override;
   ///@return data for given item
-  virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
   ///@return the header data for given section
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
   ///@return the flags on the given item
-  virtual Qt::ItemFlags flags(const QModelIndex& index) const;
+  Qt::ItemFlags flags(const QModelIndex& index) const override;
   /// set the value of the given item
-  virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
+  bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
 
   /// Returns true when hierarchical option is on, false when flat
   bool isHierarchical() const;

@@ -137,7 +137,7 @@ private:
   bool showOpenDirectoryButton_ = false;
 
   /** Re-implement eventFilter() */
-  virtual bool eventFilter(QObject* obj, QEvent* evt);
+  bool eventFilter(QObject* obj, QEvent* evt) override;
 
 };
 

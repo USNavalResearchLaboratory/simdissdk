@@ -1032,7 +1032,7 @@ int RCSLUT::loadSADMRCSFile_(std::istream &inFile)
 
   int numFreq = 0;
   std::vector<std::string> elevVec;
-  RCSTable *rcsTable = 0;
+  RCSTable *rcsTable = nullptr;
   int i, j;
   if (!getTokens(inFile, vec, 3) || checkTokens_(vec.size(), 3, "RCS_N_AZ or RCS_N_FREQ")) return 1;
 

@@ -90,21 +90,21 @@ public: // EntityNode interface
   * current scenario time, and has not received a command to turn off
   * @return true if active; false if not
   */
-  virtual bool isActive() const override;
+  bool isActive() const override;
 
   /**
   * Whether this entity is visible.
   */
-  virtual bool isVisible() const override;
+  bool isVisible() const override;
 
   /**
   * Get the object ID of the entity rendered by this node
   * @return Object ID
   */
-  virtual simData::ObjectId getId() const override;
+  simData::ObjectId getId() const override;
 
   /** Get the laser's host's ID */
-  virtual bool getHostId(simData::ObjectId& out_hostId) const override;
+  bool getHostId(simData::ObjectId& out_hostId) const override;
 
   /**
   * Returns the entity name. Can be used to get the actual name always or the
@@ -114,14 +114,14 @@ public: // EntityNode interface
   * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
   * @return    actual/alias entity name string
   */
-  virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const override;
+  const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const override;
 
   /// Returns the pop up text based on the label content callback, update and preference
-  virtual std::string popupText() const override;
+  std::string popupText() const override;
   /// Returns the hook text based on the label content callback, update and preference
-  virtual std::string hookText() const override;
+  std::string hookText() const override;
   /// Returns the legend text based on the label content callback, update and preference
-  virtual std::string legendText() const override;
+  std::string legendText() const override;
 
   /**
   * Updates the entity based on the bound data store.
@@ -129,20 +129,20 @@ public: // EntityNode interface
   * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
   * @return true if update applied, false if not
   */
-  virtual bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force = false) override;
+  bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force = false) override;
 
   /**
   * Flushes all the entity's data point visualization.
   */
-  virtual void flush() override;
+  void flush() override;
 
   /**
   * Returns a range value (meters) used for visualization.
   */
-  virtual double range() const override;
+  double range() const override;
 
   /** This entity type is, at this time, unpickable. */
-  virtual unsigned int objectIndexTag() const override;
+  unsigned int objectIndexTag() const override;
 
   /**
   * Gets the world position for this laser's origin. This is a convenience
@@ -151,7 +151,7 @@ public: // EntityNode interface
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return 0 if the output parameter is populated successfully, nonzero on failure
   */
-  virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
+  int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
 
   /**
   * Gets the world position & orientation for this laser. This is a convenience
@@ -161,7 +161,7 @@ public: // EntityNode interface
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return 0 if the output parameter is populated successfully, nonzero on failure
   */
-  virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+  int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
     simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
 
   /**
@@ -171,10 +171,10 @@ public: // EntityNode interface
   static unsigned int getMask() { return simVis::DISPLAY_MASK_LASER; }
 
   /** Return the proper library name */
-  virtual const char* libraryName() const override { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const override { return "LaserNode"; }
+  const char* className() const override { return "LaserNode"; }
 
 protected:
   /// osg::Referenced-derived; destructor body needs to be in the .cpp

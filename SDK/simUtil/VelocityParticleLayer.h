@@ -85,7 +85,7 @@ public:
     OE_OPTION(simVis::GradientShader, gradient);
 
     /** Create the Config from this options structure. */
-    virtual osgEarth::Config getConfig() const override;
+    osgEarth::Config getConfig() const override;
 
   private:
     /** Called by constructors to initialize options */
@@ -154,16 +154,16 @@ public:
   void setTexelToVelocityFragment(const std::string& glslFragment);
 
   // From ImageLayer:
-  virtual osgEarth::Status openImplementation() override;
+  osgEarth::Status openImplementation() override;
 
   // From Layer:
-  virtual osg::Node* getNode() const override;
+  osg::Node* getNode() const override;
 
 protected:
   virtual ~VelocityParticleLayer();
 
   // From ImageLayer:
-  virtual void init() override;
+  void init() override;
 
 private:
   /** Helper function to cast node_; due to ref_ptr issues, can't store node_ as a VelocityTextureNode */

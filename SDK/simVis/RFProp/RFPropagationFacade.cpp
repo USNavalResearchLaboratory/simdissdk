@@ -65,7 +65,7 @@ std::string dataTypeToString(simRF::ProfileDataProvider::ThresholdType dataType)
   switch (dataType)
   {
   case simRF::ProfileDataProvider::THRESHOLDTYPE_POD:
-    return "POD";
+    return "PoD";
   case simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS:
     return "Loss";
   case simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR:

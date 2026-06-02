@@ -69,7 +69,7 @@ public:
   class AddRowTransaction
   {
   public:
-    virtual ~AddRowTransaction() {}
+    virtual ~AddRowTransaction() = default;
 
     /**@name SubTable AddRowTransaction setCellValue() methods
      * @{
@@ -95,7 +95,7 @@ public:
   class SplitObserver
   {
   public:
-    virtual ~SplitObserver() {}
+    virtual ~SplitObserver() = default;
 
     /** Called when a subtable splits into a new table due to time differences (i.e. to maintain null-less subtable) */
     virtual void notifySplit(SubTable* originalTable, SubTable* newTable, const std::vector<TableColumnId>& splitColumns) = 0;

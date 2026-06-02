@@ -74,7 +74,7 @@ public:
       ignoreResult_(false)
   {
   }
-  virtual void loadFinished(const osg::ref_ptr<osg::Node>& model, bool isImage, const std::string& uri)
+  void loadFinished(const osg::ref_ptr<osg::Node>& model, bool isImage, const std::string& uri) override
   {
     osg::ref_ptr<PlatformModelNode> refPlatform;
     if (platform_.lock(refPlatform) && !ignoreResult_)
@@ -641,7 +641,7 @@ int PlatformModelNode::updateModelBounds_()
   osg::NodeList children;
   for (unsigned int i = 0; i < numChildren; i++)
   {
-    children.push_back(offsetXform_->getChild(i));
+    children.emplace_back(offsetXform_->getChild(i));
   }
   // now remove all children except the model
   offsetXform_->removeChildren(0, numChildren);
@@ -1151,7 +1151,7 @@ void PlatformModelNode::warnOnInvalidOffsets_(const simData::PlatformPrefs& pref
 void PlatformModelNode::addCallback(Callback* value)
 {
   if (value)
-    callbacks_.push_back(value);
+    callbacks_.emplace_back(value);
 }
 
 void PlatformModelNode::removeCallback(Callback* value)

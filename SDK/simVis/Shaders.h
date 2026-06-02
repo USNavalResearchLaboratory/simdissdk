@@ -114,6 +114,9 @@ public:
 
   /** Polygon stipple fragment shader */
   std::string polygonStippleFragment() const;
+
+  /** Name of vertex/fragment shader combo that is for the heat map system. */
+  std::string heatMapSystem() const;
 };
 
 }

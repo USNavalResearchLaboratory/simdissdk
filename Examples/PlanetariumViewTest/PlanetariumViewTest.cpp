@@ -81,11 +81,11 @@ struct AppData
 
   AppData()
   {
-    colors.push_back(std::make_pair(simVis::Color(0xffffff3fu), "White"));
-    colors.push_back(std::make_pair(simVis::Color(0x00ff003fu), "Green"));
-    colors.push_back(std::make_pair(simVis::Color(0xff7f003fu), "Orange"));
-    colors.push_back(std::make_pair(simVis::Color(0xffffff00u), "Invisible"));
-    colors.push_back(std::make_pair(simVis::Color(0xffff003fu), "Yellow"));
+    colors.emplace_back(simVis::Color(0xffffff3fu), "White");
+    colors.emplace_back(simVis::Color(0x00ff003fu), "Green");
+    colors.emplace_back(simVis::Color(0xff7f003fu), "Orange");
+    colors.emplace_back(simVis::Color(0xffffff00u), "Invisible");
+    colors.emplace_back(simVis::Color(0xffff003fu), "Yellow");
     colorIndex = colors.size()-1;
   }
 
@@ -635,7 +635,7 @@ int main(int argc, char** argv)
   osg::observer_ptr<simVis::View> view = viewer->getMainView();
 #ifdef HAVE_IMGUI
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
-  viewer->getMainView()->getEventHandlers().push_front(gui);
+  viewer->getMainView()->getEventHandlers().emplace_front(gui);
   gui->add(new ControlPanel(app));
 #endif
   if (view.valid())

@@ -35,7 +35,7 @@ class ObserverCounter : public simQt::Settings::Observer
 public:
   ObserverCounter() : counter_(0) {};
   virtual ~ObserverCounter() {};
-  virtual void onSettingChange(const QString& name, const QVariant& value)
+  void onSettingChange(const QString& name, const QVariant& value) override
   {
     counter_++;
   }
@@ -50,7 +50,7 @@ class ObserverNameCheck : public simQt::Settings::Observer
 public:
   ObserverNameCheck(const QString& expectedName, const QVariant& value) : expectedName_(expectedName), expectedValue_(value), result_(false) {};
   virtual ~ObserverNameCheck() {};
-  virtual void onSettingChange(const QString& name, const QVariant& value)
+  void onSettingChange(const QString& name, const QVariant& value) override
   {
     result_ = ((name == expectedName_) && (value == expectedValue_));
   }

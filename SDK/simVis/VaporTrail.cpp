@@ -454,7 +454,7 @@ void VaporTrail::processTextures_(const std::vector< osg::ref_ptr<osg::Texture2D
     if (vaporTrailData_.isWake)
     {
       osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-      createTexture_(*(geode.get()), (*it).get());
+      createTexture_(*(geode), (*it).get());
       // show back facing texture so that wake can be seen from under water
       geode->getOrCreateStateSet()->setAttributeAndModes(new osg::CullFace(osg::CullFace::BACK), osg::StateAttribute::OFF);
       textures_.push_back(geode);
@@ -463,8 +463,8 @@ void VaporTrail::processTextures_(const std::vector< osg::ref_ptr<osg::Texture2D
     {
       osg::ref_ptr<osg::Billboard> billboard = new osg::Billboard();
       billboard->setMode(osg::Billboard::POINT_ROT_EYE);
-      createTexture_(*(billboard.get()), (*it).get());
-      textures_.push_back(billboard);
+      createTexture_(*(billboard), (*it).get());
+      textures_.emplace_back(billboard);
     }
   }
 }

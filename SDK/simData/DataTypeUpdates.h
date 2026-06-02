@@ -389,7 +389,7 @@ public:
   /// Mutable version of the points
   std::vector<LobGroupUpdatePoint>* mutable_datapoints() { return &dataPoints_; }
   /// Add a data point
-  LobGroupUpdatePoint* add_datapoints() { dataPoints_.push_back(LobGroupUpdatePoint()); return &dataPoints_.back(); }
+  LobGroupUpdatePoint* add_datapoints() { dataPoints_.emplace_back(); return &dataPoints_.back(); }
 
 private:
   /// Seconds since scenario reference year for the data posit time
@@ -429,7 +429,7 @@ public:
   /// Returns the requested entry;
   const Entry& entry(int index) const { return entries_[index]; }
   /// Add an entry
-  Entry* add_entry() { entries_.push_back(Entry()); return &entries_.back(); }
+  Entry* add_entry() { entries_.emplace_back(); return &entries_.back(); }
 
 private:
   /// Seconds since scenario reference year for the data posit time
@@ -484,7 +484,7 @@ public:
   /// Remove all entries
   void clear_entry() { entries_.clear(); }
   /// Add an entry
-  Entry* add_entry() { entries_.push_back(Entry()); return &entries_.back(); }
+  Entry* add_entry() { entries_.emplace_back(); return &entries_.back(); }
 
 private:
   /// Seconds since scenario reference year for the data posit time

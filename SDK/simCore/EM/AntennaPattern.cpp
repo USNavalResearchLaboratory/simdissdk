@@ -1412,7 +1412,7 @@ int AntennaPatternCRUISE::readPat_(std::istream& fp)
   if ((azimLen_ != elevLen_ && tmpFreq != freqLen_))
   {
     delete [] elevData_;
-    elevData_ = 0;
+    elevData_ = nullptr;
     SIM_ERROR << "CRUISE azimLen_(" << azimLen_ << ") != elevLen_(" << elevLen_ << ") or freqLen_s (" << tmpFreq << ", "<< freqLen_ << ") do not match!" << std::endl;
     return 1;
   }

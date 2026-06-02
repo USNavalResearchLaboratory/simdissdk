@@ -47,6 +47,11 @@ public:
   ModelCache();
   virtual ~ModelCache();
 
+  /// Copy constructor not permitted
+  ModelCache(const ModelCache& rhs) = delete;
+  /// Assignment operator not permitted
+  ModelCache& operator=(const ModelCache& rhs) = delete;
+
   /** Retrieves a pointer to a generic box icon used for blank models */
   osg::Node* boxNode() const;
 
@@ -123,7 +128,7 @@ public:
     virtual void loadFinished(const osg::ref_ptr<osg::Node>& model, bool isImage, const std::string& uri) = 0;
   protected:
     /** Protected destructor due to Referenced derived class. */
-    virtual ~ModelReadyCallback() {}
+    virtual ~ModelReadyCallback() = default;
   };
 
   /**
@@ -142,11 +147,6 @@ public:
   static bool isAnimated(osg::Node* node);
 
 private:
-  /// Copy constructor not permitted
-  ModelCache(const ModelCache& rhs);
-  /// Assignment operator not permitted
-  ModelCache& operator=(const ModelCache& rhs);
-
   /// Saves the given URI into the cache
   void saveToCache_(const std::string& uri, osg::Node* node, bool isArticulated, bool isAnimated, bool isImage);
 
@@ -199,7 +199,7 @@ public:
   explicit ReplaceChildReadyCallback(osg::Group* parent, unsigned int childIndex = 0);
 
   /** Callback virtual method. */
-  virtual void loadFinished(const osg::ref_ptr<osg::Node>& model, bool isImage, const std::string& filename);
+  void loadFinished(const osg::ref_ptr<osg::Node>& model, bool isImage, const std::string& filename) override;
 
 private:
   osg::observer_ptr<osg::Group> parent_;

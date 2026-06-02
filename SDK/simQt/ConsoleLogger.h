@@ -59,7 +59,7 @@ public:
   * @param files Possible files to delete
   * @param removableFiles Files to remove; maybe empty
   */
-  virtual void calculate(const QDir& files, QStringList& removableFiles) const;
+  void calculate(const QDir& files, QStringList& removableFiles) const override;
 
 private:
   bool enableMaxSeconds_;

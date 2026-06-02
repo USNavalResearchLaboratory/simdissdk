@@ -69,7 +69,7 @@ namespace simCore
   * @return maximum of the two values
   */
   template<typename T>
-  T sdkMax(const T &a, const T& b)
+  T sdkMax(const T a, const T b)
   {
     return (a > b) ? a : b;
   }
@@ -81,7 +81,7 @@ namespace simCore
   * @return minimum of the two values
   */
   template<typename T>
-  T sdkMin(const T &a, const T& b)
+  T sdkMin(const T a, const T b)
   {
     return (a < b) ? a : b;
   }
@@ -168,7 +168,7 @@ namespace simCore
   * @return square of the input
   */
   template<typename T>
-  T square(const T &in)
+  T square(const T in)
   {
     return in * in;
   }
@@ -179,7 +179,7 @@ namespace simCore
   * @return sign, 0: no sign, 1: positive, -1: negative
   */
   template<typename T>
-  T sign(const T &in)
+  T sign(const T in)
   {
     return in >= 0 ? (in == 0 ? 0 : 1) : -1;
   }

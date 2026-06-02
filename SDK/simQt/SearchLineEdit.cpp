@@ -41,7 +41,7 @@ static const int ICON_SIZE_BUFFER = 3;
 class NoDisabledStyle : public QProxyStyle
 {
   public:
-    virtual QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap& pixmap, const QStyleOption* option) const Q_DECL_OVERRIDE
+    QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap& pixmap, const QStyleOption* option) const Q_DECL_OVERRIDE
     {
       if (iconMode == QIcon::Disabled || !baseStyle())
         return pixmap;

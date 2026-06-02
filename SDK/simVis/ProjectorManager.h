@@ -72,21 +72,21 @@ public:
 public: // MapNodeObserver
 
   /** Gets the map node */
-  virtual osgEarth::MapNode* getMapNode() override { return mapNode_.get(); }
+  osgEarth::MapNode* getMapNode() override { return mapNode_.get(); }
 
   /** Sets the map node */
-  virtual void setMapNode(osgEarth::MapNode* mapNode) override;
+  void setMapNode(osgEarth::MapNode* mapNode) override;
 
 public: // osg::Node
 
   /** Override in order to limit node traversals to cull visitor only */
-  void traverse(osg::NodeVisitor& nv);
+  void traverse(osg::NodeVisitor& nv) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "ProjectorManager"; }
+  const char* className() const override { return "ProjectorManager"; }
 
 protected:
   /// osg::Referenced-derived; destructor body needs to be in the .cpp

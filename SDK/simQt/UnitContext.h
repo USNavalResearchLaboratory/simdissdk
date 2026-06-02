@@ -38,7 +38,7 @@ class UnitContext : public QObject, public simCore::UnitContext
   Q_OBJECT;
 public:
   /** Inherit a virtual destructor */
-  virtual ~UnitContext() {}
+  virtual ~UnitContext() = default;
 
 Q_SIGNALS:
   /** One of the values in the provided unit context has changed.  Emitted after individual changes. */
@@ -76,45 +76,45 @@ public:
   virtual ~UnitContextAdapter();
 
   // Getters for various unit types
-  virtual simCore::TimeFormat timeFormat() const;
-  virtual unsigned int timePrecision() const;
-  virtual simCore::GeodeticFormat geodeticFormat() const;
-  virtual unsigned int geodeticPrecision() const;
-  virtual const simCore::Units& distanceUnits() const;
-  virtual unsigned int distancePrecision() const;
-  virtual const simCore::Units& altitudeUnits() const;
-  virtual unsigned int altitudePrecision() const;
-  virtual const simCore::Units& angleUnits() const;
-  virtual unsigned int anglePrecision() const;
-  virtual const simCore::Units& speedUnits() const;
-  virtual unsigned int speedPrecision() const;
-  virtual unsigned int genericPrecision() const;
-  virtual simCore::CoordinateSystem coordinateSystem() const;
-  virtual simCore::MagneticVariance magneticVariance() const;
-  virtual simCore::VerticalDatum verticalDatum() const;
-  virtual int referenceYear() const;
-  virtual simCore::DatumConvertPtr datumConvert() const;
+  simCore::TimeFormat timeFormat() const override;
+  unsigned int timePrecision() const override;
+  simCore::GeodeticFormat geodeticFormat() const override;
+  unsigned int geodeticPrecision() const override;
+  const simCore::Units& distanceUnits() const override;
+  unsigned int distancePrecision() const override;
+  const simCore::Units& altitudeUnits() const override;
+  unsigned int altitudePrecision() const override;
+  const simCore::Units& angleUnits() const override;
+  unsigned int anglePrecision() const override;
+  const simCore::Units& speedUnits() const override;
+  unsigned int speedPrecision() const override;
+  unsigned int genericPrecision() const override;
+  simCore::CoordinateSystem coordinateSystem() const override;
+  simCore::MagneticVariance magneticVariance() const override;
+  simCore::VerticalDatum verticalDatum() const override;
+  int referenceYear() const override;
+  simCore::DatumConvertPtr datumConvert() const override;
 
 public Q_SLOTS:
   // Setters for various unit types
-  virtual void setTimeFormat(simCore::TimeFormat unit);
-  virtual void setTimePrecision(unsigned int prec);
-  virtual void setGeodeticFormat(simCore::GeodeticFormat unit);
-  virtual void setGeodeticPrecision(unsigned int prec);
-  virtual void setDistanceUnits(const simCore::Units& unit);
-  virtual void setDistancePrecision(unsigned int prec);
-  virtual void setAltitudeUnits(const simCore::Units& unit);
-  virtual void setAltitudePrecision(unsigned int prec);
-  virtual void setAngleUnits(const simCore::Units& unit);
-  virtual void setAnglePrecision(unsigned int prec);
-  virtual void setSpeedUnits(const simCore::Units& unit);
-  virtual void setSpeedPrecision(unsigned int prec);
-  virtual void setGenericPrecision(unsigned int prec);
-  virtual void setCoordinateSystem(simCore::CoordinateSystem coordSys);
-  virtual void setMagneticVariance(simCore::MagneticVariance mv);
-  virtual void setVerticalDatum(simCore::VerticalDatum vd);
-  virtual void setReferenceYear(int refYear);
-  virtual void setDatumConvert(simCore::DatumConvertPtr convert);
+  void setTimeFormat(simCore::TimeFormat unit) override;
+  void setTimePrecision(unsigned int prec) override;
+  void setGeodeticFormat(simCore::GeodeticFormat unit) override;
+  void setGeodeticPrecision(unsigned int prec) override;
+  void setDistanceUnits(const simCore::Units& unit) override;
+  void setDistancePrecision(unsigned int prec) override;
+  void setAltitudeUnits(const simCore::Units& unit) override;
+  void setAltitudePrecision(unsigned int prec) override;
+  void setAngleUnits(const simCore::Units& unit) override;
+  void setAnglePrecision(unsigned int prec) override;
+  void setSpeedUnits(const simCore::Units& unit) override;
+  void setSpeedPrecision(unsigned int prec) override;
+  void setGenericPrecision(unsigned int prec) override;
+  void setCoordinateSystem(simCore::CoordinateSystem coordSys) override;
+  void setMagneticVariance(simCore::MagneticVariance mv) override;
+  void setVerticalDatum(simCore::VerticalDatum vd) override;
+  void setReferenceYear(int refYear) override;
+  void setDatumConvert(simCore::DatumConvertPtr convert) override;
 
 private:
   simCore::TimeFormat timeFormat_ = simCore::TIMEFORMAT_MONTHDAY;
@@ -155,45 +155,45 @@ public:
   simQt::UnitContext* subject() const;
 
   // Getters for various unit types
-  virtual simCore::TimeFormat timeFormat() const;
-  virtual unsigned int timePrecision() const;
-  virtual simCore::GeodeticFormat geodeticFormat() const;
-  virtual unsigned int geodeticPrecision() const;
-  virtual const simCore::Units& distanceUnits() const;
-  virtual unsigned int distancePrecision() const;
-  virtual const simCore::Units& altitudeUnits() const;
-  virtual unsigned int altitudePrecision() const;
-  virtual const simCore::Units& angleUnits() const;
-  virtual unsigned int anglePrecision() const;
-  virtual const simCore::Units& speedUnits() const;
-  virtual unsigned int speedPrecision() const;
-  virtual unsigned int genericPrecision() const;
-  virtual simCore::CoordinateSystem coordinateSystem() const;
-  virtual simCore::MagneticVariance magneticVariance() const;
-  virtual simCore::VerticalDatum verticalDatum() const;
-  virtual int referenceYear() const;
-  virtual simCore::DatumConvertPtr datumConvert() const;
+  simCore::TimeFormat timeFormat() const override;
+  unsigned int timePrecision() const override;
+  simCore::GeodeticFormat geodeticFormat() const override;
+  unsigned int geodeticPrecision() const override;
+  const simCore::Units& distanceUnits() const override;
+  unsigned int distancePrecision() const override;
+  const simCore::Units& altitudeUnits() const override;
+  unsigned int altitudePrecision() const override;
+  const simCore::Units& angleUnits() const override;
+  unsigned int anglePrecision() const override;
+  const simCore::Units& speedUnits() const override;
+  unsigned int speedPrecision() const override;
+  unsigned int genericPrecision() const override;
+  simCore::CoordinateSystem coordinateSystem() const override;
+  simCore::MagneticVariance magneticVariance() const override;
+  simCore::VerticalDatum verticalDatum() const override;
+  int referenceYear() const override;
+  simCore::DatumConvertPtr datumConvert() const override;
 
 public Q_SLOTS:
   // Setters for various unit types
-  virtual void setTimeFormat(simCore::TimeFormat unit);
-  virtual void setTimePrecision(unsigned int prec);
-  virtual void setGeodeticFormat(simCore::GeodeticFormat unit);
-  virtual void setGeodeticPrecision(unsigned int prec);
-  virtual void setDistanceUnits(const simCore::Units& unit);
-  virtual void setDistancePrecision(unsigned int prec);
-  virtual void setAltitudeUnits(const simCore::Units& unit);
-  virtual void setAltitudePrecision(unsigned int prec);
-  virtual void setAngleUnits(const simCore::Units& unit);
-  virtual void setAnglePrecision(unsigned int prec);
-  virtual void setSpeedUnits(const simCore::Units& unit);
-  virtual void setSpeedPrecision(unsigned int prec);
-  virtual void setGenericPrecision(unsigned int prec);
-  virtual void setCoordinateSystem(simCore::CoordinateSystem coordSys);
-  virtual void setMagneticVariance(simCore::MagneticVariance mv);
-  virtual void setVerticalDatum(simCore::VerticalDatum vd);
-  virtual void setReferenceYear(int refYear);
-  virtual void setDatumConvert(simCore::DatumConvertPtr convert);
+  void setTimeFormat(simCore::TimeFormat unit) override;
+  void setTimePrecision(unsigned int prec) override;
+  void setGeodeticFormat(simCore::GeodeticFormat unit) override;
+  void setGeodeticPrecision(unsigned int prec) override;
+  void setDistanceUnits(const simCore::Units& unit) override;
+  void setDistancePrecision(unsigned int prec) override;
+  void setAltitudeUnits(const simCore::Units& unit) override;
+  void setAltitudePrecision(unsigned int prec) override;
+  void setAngleUnits(const simCore::Units& unit) override;
+  void setAnglePrecision(unsigned int prec) override;
+  void setSpeedUnits(const simCore::Units& unit) override;
+  void setSpeedPrecision(unsigned int prec) override;
+  void setGenericPrecision(unsigned int prec) override;
+  void setCoordinateSystem(simCore::CoordinateSystem coordSys) override;
+  void setMagneticVariance(simCore::MagneticVariance mv) override;
+  void setVerticalDatum(simCore::VerticalDatum vd) override;
+  void setReferenceYear(int refYear) override;
+  void setDatumConvert(simCore::DatumConvertPtr convert) override;
 
 Q_SIGNALS:
   /** Emitted once the subject of the proxy has changed. */

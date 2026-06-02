@@ -39,6 +39,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}GanttChartView.h
     ${SIMQT_INC}KeySequenceEdit.h
     ${SIMQT_INC}MruList.h
+    ${SIMQT_INC}OverrideShortcut.h
     ${SIMQT_INC}PersistentFileLogger.h
     ${SIMQT_INC}SearchLineEdit.h
     ${SIMQT_INC}SegmentedSpinBox.h
@@ -189,9 +190,10 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}FileUtilities.cpp
     ${SIMQT_SRC}FontWidget.cpp
     ${SIMQT_SRC}GanttChartView.cpp
-    ${SIMQT_INC}KeySequenceEdit.cpp
+    ${SIMQT_SRC}KeySequenceEdit.cpp
     ${SIMQT_SRC}MonospaceItemDelegate.cpp
     ${SIMQT_SRC}MruList.cpp
+    ${SIMQT_SRC}OverrideShortcut.cpp
     ${SIMQT_SRC}PersistentFileLogger.cpp
     ${SIMQT_SRC}QtUtils.cpp
     ${SIMQT_SRC}ResourceInitializer.cpp

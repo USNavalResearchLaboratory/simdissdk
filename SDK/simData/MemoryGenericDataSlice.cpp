@@ -88,7 +88,7 @@ public:
       // verify that indexOffset_ is updated correctly; dev error if assert
       assert((index >= 0) && (index < static_cast<int>(values_.size())));
       const ValueIndex& cacheValue = values_[index];
-      remainingValues.push_back(TimeValuePair(timeIndex.time, cacheValue.value));
+      remainingValues.emplace_back(timeIndex.time, cacheValue.value);
     }
 
     // clear
@@ -247,7 +247,7 @@ public:
     // If not handled added
     if (valueIndex == -1)
     {
-      values_.push_back(ValueIndex(value, 1));
+      values_.emplace_back(value, 1);
       valueIndex = static_cast<int>(values_.size()) - 1 + indexOffset_;
     }
 
@@ -551,7 +551,7 @@ void MemoryGenericDataSlice::visit(Visitor *visitor) const
   // Make a helper class for each key
   std::deque<Collector> keys;
   for (GenericDataMap::const_iterator it = genericData_.begin(); it != genericData_.end(); ++it)
-    keys.push_back(Collector(*(it->second)));
+    keys.emplace_back(*(it->second));
 
   // Process until all keys report done
   while (true)

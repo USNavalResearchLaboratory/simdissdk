@@ -43,12 +43,12 @@ class SDKQT_EXPORT EntityProxyModel : public QSortFilterProxyModel
 
 public:
   /// constructor passes parent to QSortFilterProxyModel
-  EntityProxyModel(QObject *parent = 0);
+  EntityProxyModel(QObject *parent = nullptr);
   virtual ~EntityProxyModel();
 
   /// QAbstractItemModel interface
-  virtual void setSourceModel(QAbstractItemModel *sourceModel);
-  virtual QVariant data(const QModelIndex & index, int role) const;
+  void setSourceModel(QAbstractItemModel *sourceModel) override;
+  QVariant data(const QModelIndex & index, int role) const override;
 
   /** Adds an entity filter to the proxy model.  NOTE: the proxy model takes ownership of the memory */
   void addEntityFilter(EntityFilter* entityFilter);
@@ -71,7 +71,7 @@ Q_SIGNALS:
 
 protected:
   /// filtering function
-  virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+  bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
   /**
     * sorting function
     * Accounts for embedded integers in the entity name.   Example:
@@ -79,7 +79,7 @@ protected:
     *  Platform 2
     *  Platform 10
     */
-  virtual bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
+  bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;
 
 private Q_SLOTS:
   /// Responds to the filters changing

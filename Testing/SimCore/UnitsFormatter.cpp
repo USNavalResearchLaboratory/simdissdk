@@ -86,7 +86,7 @@ int testUnitsProviderAdapter()
 
 bool latLonStringEquals(const std::string& latLon, const std::string& beforeDeg, const std::string& afterDeg)
 {
-  return (latLon.find(beforeDeg) == 0 && latLon.find(afterDeg) == latLon.length() - afterDeg.length());
+  return (latLon.starts_with(beforeDeg) && latLon.find(afterDeg) == latLon.length() - afterDeg.length());
 }
 
 int testLatitudes(const simCore::TextFormatter* fmt, simCore::DegreeSymbolFormat degreeFormat, simCore::UnitContextAdapter* units)

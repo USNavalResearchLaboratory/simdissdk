@@ -64,7 +64,7 @@ private:
 class FieldList
 {
 public:
-  virtual ~FieldList() {}
+  virtual ~FieldList() = default;
 
   bool operator==(const FieldList& rhs) const = default;
   bool operator!=(const FieldList& rhs) const = default;
@@ -340,7 +340,7 @@ private: \
   const std::vector<type>& className::fieldName() const { return variableName; } \
   const type& className::fieldName(int index) const { return variableName[index]; } \
   std::vector<type>* className::mutable_##fieldName() { return &variableName; } \
-  type* className::add_##fieldName() { variableName.push_back(type()); return &variableName.back(); } \
+  type* className::add_##fieldName() { variableName.emplace_back(); return &variableName.back(); } \
   void className::add_##fieldName(const type& value) { variableName.push_back(value); } \
 
 /**

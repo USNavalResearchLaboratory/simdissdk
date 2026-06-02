@@ -64,10 +64,10 @@ public:
   void centerViewOn(const std::vector<EntityNode*>& nodes, View* view);
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "CentroidManager"; }
+  const char* className() const override { return "CentroidManager"; }
 
 protected:
   /** Protect osg::Referenced-derived destructor */

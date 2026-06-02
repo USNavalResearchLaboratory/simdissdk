@@ -262,7 +262,7 @@ void ViewerApp::init_(osg::ArgumentParser& args)
 
 #ifdef HAVE_IMGUI
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
-  mainView->getEventHandlers().push_front(gui);
+  mainView->getEventHandlers().emplace_front(gui);
 
   gui->add(new TestPanel(*this));
 #endif
@@ -429,7 +429,7 @@ int ViewerApp::loadGog_(const std::string& filename)
 
   simVis::GOG::Loader::GogNodeVector gogs;
   loader.loadGogs(is, filename, false, gogs);
-  for (auto gog : gogs)
+  for (const auto& gog : gogs)
     sceneManager_->getScenario()->addChild(gog->osgNode());
 
   return 1;

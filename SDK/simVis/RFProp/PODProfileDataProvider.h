@@ -55,7 +55,7 @@ public:
    * @param rangeIndex The range index of the desired sample
    * @return POD value at the specified height and range, a probability between 0 and 99.9
    */
-  virtual double getValueByIndex(unsigned int heightIndex, unsigned int rangeIndex) const;
+  double getValueByIndex(unsigned int heightIndex, unsigned int rangeIndex) const override;
 
   /**
    * Gets the value on this Profile
@@ -63,7 +63,7 @@ public:
    * @param range The range of the desired sample, in meters
    * @return POD value at the specified height and range, a probability between 0 and 99.9
    */
-  virtual double interpolateValue(double height, double range) const;
+  double interpolateValue(double height, double range) const override;
 
   /**
   * Gets the POD value corresponding to a loss in dB

@@ -73,7 +73,7 @@ public:
 
 protected:
   /** Override the QDialog close event to emit the closedGui signal */
-  virtual void closeEvent(QCloseEvent* ev);
+  void closeEvent(QCloseEvent* ev) override;
 
 Q_SIGNALS:
   /** Signal emitted when the user selects an entity */
@@ -164,7 +164,7 @@ Q_SIGNALS:
 
 protected:
   /** Re-implement eventFilter() to allow a double click to display the dialog */
-  virtual bool eventFilter(QObject* obj, QEvent* evt);
+  bool eventFilter(QObject* obj, QEvent* evt) override;
 
 private Q_SLOTS:
   /** Called when the user clicks the button for showing the Entity Tree Composite dialog */

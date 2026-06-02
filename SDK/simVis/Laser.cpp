@@ -450,7 +450,7 @@ void LaserNode::getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const
   // Pull the origin node from the locator node. This is more efficient than a matrix multiply
   simCore::Vec3 firstPos;
   locatorNode_->getPosition(&firstPos, simCore::COORD_SYS_ECEF);
-  ecefVec.push_back(osg::Vec3d(firstPos.x(), firstPos.y(), firstPos.z()));
+  ecefVec.emplace_back(firstPos.x(), firstPos.y(), firstPos.z());
 
   // Use the full matrix of the locator node to calculate the correctly-oriented end point
   const float length = lastPrefs_.maxrange();

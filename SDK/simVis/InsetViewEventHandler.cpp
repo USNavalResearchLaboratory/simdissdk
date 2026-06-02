@@ -64,7 +64,7 @@ namespace
       : focusMan_(focusMan), handler_(handler) { }
 
     /// process events.
-    bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+    bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
     {
       if (focusMan_.valid() && handler_.valid())
       {
@@ -98,10 +98,10 @@ namespace
     };
 
     /** Return the proper library name */
-    virtual const char* libraryName() const { return "simVis"; }
+    const char* libraryName() const override { return "simVis"; }
 
     /** Return the class name */
-    virtual const char* className() const { return "FocusDetector"; }
+    const char* className() const override { return "FocusDetector"; }
 
     /** Focus manager */
     osg::observer_ptr<simVis::FocusManager>          focusMan_;
@@ -119,7 +119,7 @@ namespace
     explicit ViewListener(osgGA::GUIEventHandler* focusDetector) : focusDetector_(focusDetector) { }
 
     /** Adds or removes a focus detector when a view is created in the View Manager */
-    void operator()(simVis::View* view, const EventType& e)
+    void operator()(simVis::View* view, const EventType& e) override
     {
       if (focusDetector_.valid())
       {

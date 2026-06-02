@@ -180,7 +180,7 @@ simVis::ViewManager* MainWindow::getViewManager() const
 void MainWindow::addMainView(simVis::View* mainView)
 {
   mainView->setName("Main View");
-  mainViews_.push_back(mainView);
+  mainViews_.emplace_back(mainView);
 }
 
 void MainWindow::addView()

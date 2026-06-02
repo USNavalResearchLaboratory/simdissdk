@@ -76,7 +76,7 @@ public:
   }
 
   // Build up a list of transforms along the node path
-  virtual void apply(osg::Transform& xform)
+  void apply(osg::Transform& xform) override
   {
     // Presumption/Optimization: We only fix the top DST in the node path
     simVis::DynamicScaleTransform* dst = dynamic_cast<simVis::DynamicScaleTransform*>(&xform);

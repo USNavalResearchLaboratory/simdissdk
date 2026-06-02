@@ -70,10 +70,10 @@ int testJoin()
 
   std::vector<Simple> simpleVector;
   rv += SDK_ASSERT(simCore::join(simpleVector, ".") == "");
-  simpleVector.push_back(Simple('a'));
-  simpleVector.push_back(Simple('b'));
-  simpleVector.push_back(Simple('c'));
-  simpleVector.push_back(Simple('d'));
+  simpleVector.emplace_back('a');
+  simpleVector.emplace_back('b');
+  simpleVector.emplace_back('c');
+  simpleVector.emplace_back('d');
   rv += SDK_ASSERT(simCore::join(simpleVector, ".") == "a.b.c.d");
 
   return rv;

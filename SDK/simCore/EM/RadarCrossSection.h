@@ -41,7 +41,7 @@ namespace simCore
   {
   public:
     RadarCrossSection() : filename_("") {}
-    virtual ~RadarCrossSection() {}
+    virtual ~RadarCrossSection() = default;
 
     /**
     * This method returns the type of radar cross section
@@ -115,7 +115,7 @@ namespace simCore
   {
   public:
     RCSTable();
-    virtual ~RCSTable() {}
+    virtual ~RCSTable() = default;
 
     /**
     * This method retrieves the radar cross section value for the requested azimuth
@@ -185,7 +185,7 @@ namespace simCore
   struct SDKCORE_EXPORT ELEVMAP
   {
     ELEV_RCSTABLE_MAP eMap;   ///< Container of RCS tables keyed on host body elevation (rad)
-    ELEVMAP() {}
+    ELEVMAP() = default;
     ~ELEVMAP();
   };
 
@@ -196,7 +196,7 @@ namespace simCore
   struct SDKCORE_EXPORT FREQMAP
   {
     FREQ_ELEV_MAP freqMap;   ///< Container of ELEVMAPs keyed on frequency
-    FREQMAP() {}
+    FREQMAP() = default;
     ~FREQMAP();
   };
 
@@ -228,7 +228,7 @@ namespace simCore
     * @param[in ] fname Input file name
     * @return 0 on success.
     */
-    virtual int loadRCSFile(const std::string& fname);
+    int loadRCSFile(const std::string& fname) override;
 
     /**
      * Stream version of RCSLUT::loadRCSFile().  Loads RCS from a stream.  RCS type is determined
@@ -242,7 +242,7 @@ namespace simCore
     * This method returns the type of radar cross section
     * @return radar cross section type
     */
-    virtual RCSType type() const { return RCS_LUT; }
+    RCSType type() const override { return RCS_LUT; }
 
     /**
     * This method computes the RCS value in square meters for the requested parameters
@@ -252,7 +252,7 @@ namespace simCore
     * @param[in ] pol Radar polarity
     * @return RCS value (square meters)
     */
-    virtual float RCSsm(float freq, double azim, double elev, PolarityType pol=POLARITY_UNKNOWN);
+    float RCSsm(float freq, double azim, double elev, PolarityType pol=POLARITY_UNKNOWN) override;
 
     /**
     * This method computes the RCS value in dB for the requested parameters
@@ -262,7 +262,7 @@ namespace simCore
     * @param[in ] pol Radar polarity
     * @return RCS value (dB)
     */
-    virtual float RCSdB(float freq, double azim, double elev, PolarityType pol=POLARITY_UNKNOWN);
+    float RCSdB(float freq, double azim, double elev, PolarityType pol=POLARITY_UNKNOWN) override;
 
     /**
     * This method sets the radar cross section modulation value

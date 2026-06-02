@@ -46,12 +46,12 @@ public:
     numErrors_(0),
     tableName_(tableName)
   {}
-  virtual void onAddTable(simData::DataTable* table)
+  void onAddTable(simData::DataTable* table) override
   {
     if (active_)
       numErrors_ += SDK_ASSERT(table->tableName() == tableName_);
   }
-  virtual void onPreRemoveTable(simData::DataTable* table)
+  void onPreRemoveTable(simData::DataTable* table) override
   {
     if (active_)
       numErrors_ += SDK_ASSERT(table->tableName() == tableName_ || table->ownerId() == ownerId_);
@@ -84,25 +84,25 @@ public:
      table_(table)
   {}
 
-  virtual void onAddColumn(simData::DataTable& table, const simData::TableColumn& column)
+  void onAddColumn(simData::DataTable& table, const simData::TableColumn& column) override
   {
     if (active_)
       numErrors_ += SDK_ASSERT(table_.tableId() == table.tableId() && column.name() == columnName_);
   }
 
-  virtual void onAddRow(simData::DataTable& table, const simData::TableRow& row)
+  void onAddRow(simData::DataTable& table, const simData::TableRow& row) override
   {
     if (active_)
       numErrors_ += SDK_ASSERT(table_.tableId() == table.tableId() && row.time() == rowTime_);
   }
 
-  virtual void onPreRemoveColumn(simData::DataTable& table, const simData::TableColumn& column)
+  void onPreRemoveColumn(simData::DataTable& table, const simData::TableColumn& column) override
   {
     if (active_)
       numErrors_ += SDK_ASSERT(table_.tableId() == table.tableId() && column.name() == columnName_);
   }
 
-  virtual void onPreRemoveRow(simData::DataTable& table, double rowTime)
+  void onPreRemoveRow(simData::DataTable& table, double rowTime) override
   {
     if (active_)
     {
@@ -874,7 +874,7 @@ int flushTest(simData::DataTable& table)
   {
   public:
     SizeCounter() : size_(0), numColumns_(0) {}
-    virtual void visit(simData::TableColumn* column)
+    void visit(simData::TableColumn* column) override
     {
       numColumns_++;
       size_ += column->size();
@@ -1365,7 +1365,7 @@ int subTableIterationTest(simData::MemoryTable::TimeContainer* newTimeContainer)
   {
   public:
     NoSplit() : gotSplit(false) {}
-    virtual void notifySplit(SubTable* originalTable, SubTable* newTable, const std::vector<simData::TableColumnId>& splitColumns) override
+    void notifySplit(SubTable* originalTable, SubTable* newTable, const std::vector<simData::TableColumnId>& splitColumns) override
     {
       gotSplit = true;
     }
@@ -1479,7 +1479,7 @@ public:
       allowStops_(true)
   {
   }
-  virtual VisitReturn visit(const simData::TableRow& row)
+  VisitReturn visit(const simData::TableRow& row) override
   {
     numErrors_ += SDK_ASSERT(!hasTime(row.time()));
     timesVisited_.insert(row.time());

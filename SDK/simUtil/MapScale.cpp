@@ -50,7 +50,7 @@ public:
   }
 
   // Override from Callback
-  virtual void operator()(simVis::View* view, const EventType& evt)
+  void operator()(simVis::View* view, const EventType& evt) override
   {
     if (evt == VIEW_FOCUSED)
     {
@@ -75,7 +75,7 @@ public:
   {
   }
 
-  virtual bool run(osg::Object* object, osg::Object* data)
+  bool run(osg::Object* object, osg::Object* data) override
   {
     osg::ref_ptr<MapScale> scale;
     if (scale_.lock(scale))

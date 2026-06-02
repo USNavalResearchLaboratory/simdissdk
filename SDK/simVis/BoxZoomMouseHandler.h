@@ -53,7 +53,7 @@ public:
   BoxMouseHandler();
 
   /** Handle mouse events to apply selecting area on click and drag, then applying area to view on mouse release */
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
 
   /** Button Mask to test against.  Default is osgGA::GUIEVentAdapter::LEFT_MOUSE_BUTTON. */
   void setButtonMask(int buttonMask);
@@ -103,8 +103,8 @@ protected:
   virtual ~BoxZoomMouseHandler();
 
   /** Overrides from BoxMouseHandler */
-  virtual bool validateView_(const simVis::View& view) const;
-  virtual void processGeometry_(double originX, double originY, double widthPixels, double heightPixels);
+  bool validateView_(const simVis::View& view) const override;
+  void processGeometry_(double originX, double originY, double widthPixels, double heightPixels) override;
 
 private:
   /** Calculates an LLA GeoPoint based on the screen x and y coordinates provided. If the resulting GeoPoint is valid, it gets added to the provided points vector */

@@ -36,7 +36,7 @@ template<typename Properties, typename Preferences, typename Updates, typename C
 class DataEntry
 {
 public:
-  virtual ~DataEntry() { }
+  virtual ~DataEntry() = default;
 
   /// Retrieve the data entry's properties object defining the reference frame for its state
   virtual Properties *mutable_properties() = 0;

@@ -78,7 +78,7 @@ public:
 
   // from Notify
   /// time has been changed
-  virtual void onSetTime(const simCore::TimeStamp &t, bool isJump)
+  void onSetTime(const simCore::TimeStamp &t, bool isJump) override
   {
     SDK_ASSERT(!expectTime_.empty());
     SDK_ASSERT(!expectJump_.empty());
@@ -101,13 +101,13 @@ public:
   }
 
   /// time has looped
-  virtual void onTimeLoop()
+  void onTimeLoop() override
   {
     errorCount_ += SDK_ASSERT(expectLoop_);
     expectLoop_ = false;
   }
 
-  virtual void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime)
+  void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime) override
   { // no-op
   }
 
@@ -207,12 +207,12 @@ int observerTest()
 class Empty : public simCore::Clock::ModeChangeObserver
 {
 public:
-  virtual void onModeChange(simCore::Clock::Mode newMode) {}
-  virtual void onDirectionChange(simCore::TimeDirection newDirection) {}
-  virtual void onScaleChange(double newValue) {}
-  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) {}
-  virtual void onCanLoopChange(bool newVal) {}
-  virtual void onUserEditableChanged(bool userCanEdit) {}
+  void onModeChange(simCore::Clock::Mode newMode) override {}
+  void onDirectionChange(simCore::TimeDirection newDirection) override {}
+  void onScaleChange(double newValue) override {}
+  void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override {}
+  void onCanLoopChange(bool newVal) override {}
+  void onUserEditableChanged(bool userCanEdit) override {}
 };
 
 /// A class that removes some else during a mode change
@@ -224,12 +224,12 @@ public:
       empty_(empty)
   {
   }
-  virtual void onModeChange(simCore::Clock::Mode newMode) { t_.removeModeChangeCallback(empty_); }
-  virtual void onDirectionChange(simCore::TimeDirection newDirection) {}
-  virtual void onScaleChange(double newValue) {}
-  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) {}
-  virtual void onCanLoopChange(bool newVal) {}
-  virtual void onUserEditableChanged(bool userCanEdit) {}
+  void onModeChange(simCore::Clock::Mode newMode) override { t_.removeModeChangeCallback(empty_); }
+  void onDirectionChange(simCore::TimeDirection newDirection) override {}
+  void onScaleChange(double newValue) override {}
+  void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override {}
+  void onCanLoopChange(bool newVal) override {}
+  void onUserEditableChanged(bool userCanEdit) override {}
 private:
   simCore::ClockImpl& t_;
   std::shared_ptr<Empty> empty_;
@@ -244,12 +244,12 @@ public:
     empty_(empty)
   {
   }
-  virtual void onModeChange(simCore::Clock::Mode newMode) { t_.registerModeChangeCallback(empty_); }
-  virtual void onDirectionChange(simCore::TimeDirection newDirection) {}
-  virtual void onScaleChange(double newValue) {}
-  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) {}
-  virtual void onCanLoopChange(bool newVal) {}
-  virtual void onUserEditableChanged(bool userCanEdit) {}
+  void onModeChange(simCore::Clock::Mode newMode) override { t_.registerModeChangeCallback(empty_); }
+  void onDirectionChange(simCore::TimeDirection newDirection) override {}
+  void onScaleChange(double newValue) override {}
+  void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) override {}
+  void onCanLoopChange(bool newVal) override {}
+  void onUserEditableChanged(bool userCanEdit) override {}
 private:
   simCore::ClockImpl& t_;
   std::shared_ptr<Empty> empty_;
@@ -756,7 +756,7 @@ public:
     return rv;
   }
 
-  virtual void onSetTime(const simCore::TimeStamp &t, bool isJump)
+  void onSetTime(const simCore::TimeStamp &t, bool isJump) override
   {
     if (isJump || pauseTimes_.empty())
       return;
@@ -775,11 +775,11 @@ public:
       ++breakCount_;
   }
 
-  virtual void onTimeLoop()
+  void onTimeLoop() override
   {
   }
 
-  virtual void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime)
+  void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime) override
   {
     ++callbackCount_;
     // Make sure there is something to do

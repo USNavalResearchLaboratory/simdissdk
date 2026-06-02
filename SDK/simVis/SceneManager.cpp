@@ -71,7 +71,7 @@ static const std::string SCENARIO_OBJECT_ID = "scenid";
 /** Debugging callback that will dump the culling results each frame -- useful for debugging render order */
 struct DebugCallback : public osg::NodeCallback
 {
-  void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  void operator()(osg::Node* node, osg::NodeVisitor* nv) override
   {
     traverse(node, nv);
     osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);

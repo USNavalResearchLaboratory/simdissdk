@@ -40,7 +40,6 @@
 #include "simCore/String/Utils.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Loader.h"
-#include "simVis/GOG/ParsedShape.h"
 #include "simVis/Headless.h"
 #include "simVis/Registry.h"
 
@@ -205,8 +204,8 @@ int testShapes()
 
     // test geometry, osgEarth positions are (lon,lat,alt)
     std::vector<osg::Vec3d> points;
-    points.push_back(osg::Vec3d(44.3, 24.1, 0.0));
-    points.push_back(osg::Vec3d(55.0, 26.0, 8.0));
+    points.emplace_back(44.3, 24.1, 0.0);
+    points.emplace_back(55.0, 26.0, 8.0);
     rv += testFeatureGeometry(pointGog->osgNode(), points);
   }
 
@@ -230,8 +229,8 @@ int testShapes()
 
     // test geometry
     std::vector<osg::Vec3d> points;
-    points.push_back(osg::Vec3d(100.0, 200.0, 0.0));
-    points.push_back(osg::Vec3d(-100.0, 9, 0.0));
+    points.emplace_back(100.0, 200.0, 0.0);
+    points.emplace_back(-100.0, 9, 0.0);
     rv += testLocalGeometry(pointRelGog->osgNode(), points);
   }
 
@@ -257,8 +256,8 @@ int testShapes()
 
     // test geometry, osgEarth positions are (lon,lat,alt)
     std::vector<osg::Vec3d> points;
-    points.push_back(osg::Vec3d(55.28, 26.13568698, 5000.0));
-    points.push_back(osg::Vec3d(55.0, 26.0, 5000.0));
+    points.emplace_back(55.28, 26.13568698, 5000.0);
+    points.emplace_back(55.0, 26.0, 5000.0);
     rv += testFeatureGeometry(lineGog->osgNode(), points);
   }
 
@@ -278,8 +277,8 @@ int testShapes()
 
     // test geometry
     std::vector<osg::Vec3d> points;
-    points.push_back(osg::Vec3d(500.0, 500.0, 0.0));
-    points.push_back(osg::Vec3d(-500.0, 50.0, 0.0));
+    points.emplace_back(500.0, 500.0, 0.0);
+    points.emplace_back(-500.0, 50.0, 0.0);
     rv += testLocalGeometry(lineRelGog->osgNode(), points);
   }
 
@@ -298,9 +297,9 @@ int testShapes()
 
     // test geometry, osgEarth positions are (lon,lat,alt)
     std::vector<osg::Vec3d> points;
-    points.push_back(osg::Vec3d(53.2, 25.2, 10.0));
-    points.push_back(osg::Vec3d(54.1, 22.3, 10.0));
-    points.push_back(osg::Vec3d(53.8, 24.1, 10.0));
+    points.emplace_back(53.2, 25.2, 10.0);
+    points.emplace_back(54.1, 22.3, 10.0);
+    points.emplace_back(53.8, 24.1, 10.0);
     rv += testFeatureGeometry(polyGog->osgNode(), points);
   }
 
@@ -319,9 +318,9 @@ int testShapes()
 
     // test geometry
     std::vector<osg::Vec3d> points;
-    points.push_back(osg::Vec3d(100.0, 200.0, 0.0));
-    points.push_back(osg::Vec3d(-100.0, 100.0, 0.0));
-    points.push_back(osg::Vec3d(-100.0, -200., 0.0));
+    points.emplace_back(100.0, 200.0, 0.0);
+    points.emplace_back(-100.0, 100.0, 0.0);
+    points.emplace_back(-100.0, -200., 0.0);
     rv += testLocalGeometry(polyRelGog->osgNode(), points);
   }
 
@@ -782,10 +781,10 @@ int testShapes()
       if (gogNode)
       {
         std::vector<osg::Vec3d> points;
-        points.push_back(osg::Vec3d(55.27931357, 26.13568698, 0.));
-        points.push_back(osg::Vec3d(55.27, 26.13568698, 0.));
-        points.push_back(osg::Vec3d(55.27931357, 26.13, 0.));
-        points.push_back(osg::Vec3d(55.27, 26.13, 0.));
+        points.emplace_back(55.27931357, 26.13568698, 0.);
+        points.emplace_back(55.27, 26.13568698, 0.);
+        points.emplace_back(55.27931357, 26.13, 0.);
+        points.emplace_back(55.27, 26.13, 0.);
 
         size_t numPoints = 0;
         osgEarth::Geometry* geom = gogNode->getFeature()->getGeometry();
@@ -819,7 +818,7 @@ int testItemsInSerialization(const std::string& serialized, const std::vector<st
 {
   int rv = 0;
   // verify all the expected items are present in the serialized shape
-  for (std::string item : items)
+  for (const std::string& item : items)
   {
     rv += SDK_ASSERT(serialized.find(item) != std::string::npos);
     if (serialized.find(item) == std::string::npos)
@@ -844,10 +843,10 @@ int testLineDynamicEdits(simVis::GOG::GogNodeInterface& gog, std::vector<std::st
   gog.setLineWidth(5);
   gog.setOutlineState(false);
 
-  shapeItems.push_back("linestyle dotted\n");
-  shapeItems.push_back("linecolor hex 0xff00ffff\n");
-  shapeItems.push_back("linewidth 5\n");
-  shapeItems.push_back("outline false\n");
+  shapeItems.emplace_back("linestyle dotted\n");
+  shapeItems.emplace_back("linecolor hex 0xff00ffff\n");
+  shapeItems.emplace_back("linewidth 5\n");
+  shapeItems.emplace_back("outline false\n");
 
   std::ostringstream os;
   gog.serializeToStream(os);
@@ -859,8 +858,8 @@ int testFillDynamicEdits(simVis::GOG::GogNodeInterface& gog, std::vector<std::st
   gog.setFilledState(true);
   gog.setFillColor(osg::Vec4f(0, 1.0, 1.0, 1.0));
 
-  shapeItems.push_back("filled\n");
-  shapeItems.push_back("fillcolor hex 0xffffff00\n");
+  shapeItems.emplace_back("filled\n");
+  shapeItems.emplace_back("fillcolor hex 0xffffff00\n");
 
   std::ostringstream os;
   gog.serializeToStream(os);
@@ -875,11 +874,11 @@ int testGeneralDynamicEdits(simVis::GOG::GogNodeInterface& gog, std::vector<std:
   gog.setDepthBuffer(true);
   gog.setDrawState(false);
 
-  shapeItems.push_back("altitudemode clamptoground\n");
+  shapeItems.emplace_back("altitudemode clamptoground\n");
   // note altitude units are in feet
-  shapeItems.push_back("3d offsetalt 820.21\n");
-  shapeItems.push_back("depthbuffer true\n");
-  shapeItems.push_back("off\n");
+  shapeItems.emplace_back("3d offsetalt 820.21\n");
+  shapeItems.emplace_back("depthbuffer true\n");
+  shapeItems.emplace_back("off\n");
 
   std::ostringstream os;
   gog.serializeToStream(os);
@@ -895,10 +894,10 @@ int testFollowDynamicEdits(simVis::GOG::GogNodeInterface& gog, std::vector<std::
   gog.setPitchOffset(0.31 * simCore::DEG2RAD);
   gog.setRollOffset(22.3 * simCore::DEG2RAD);
 
-  shapeItems.push_back("3d follow cr\n");
-  shapeItems.push_back("3d offsetcourse 45.1\n");
-  shapeItems.push_back("3d offsetpitch 0.31\n");
-  shapeItems.push_back("3d offsetroll 22.3\n");
+  shapeItems.emplace_back("3d follow cr\n");
+  shapeItems.emplace_back("3d offsetcourse 45.1\n");
+  shapeItems.emplace_back("3d offsetpitch 0.31\n");
+  shapeItems.emplace_back("3d offsetroll 22.3\n");
 
   std::ostringstream os;
   gog.serializeToStream(os);
@@ -915,11 +914,11 @@ int testBasicGog(std::vector<std::string>& shapeItems, bool testLined, bool test
 
   std::stringstream gogStr;
   gogStr << "start\n";
-  for (std::string item : shapeItems)
+  for (const std::string& item : shapeItems)
     gogStr << item;
   gogStr << "end\n";
-  shapeItems.push_back("start\n");
-  shapeItems.push_back("end\n");
+  shapeItems.emplace_back("start\n");
+  shapeItems.emplace_back("end\n");
   loader.loadGogs(gogStr, "", false, gogs);
   rv += SDK_ASSERT(gogs.size() == 1);
   if (!gogs.empty())
@@ -946,73 +945,73 @@ int testDynamicEdits()
   int rv = 0;
   {
     std::vector<std::string> shapeItems;
-    shapeItems.push_back("circle\n");
+    shapeItems.emplace_back("circle\n");
     rv += testBasicGog(shapeItems, true, true);
   }
   {
     std::vector<std::string> shapeItems;
-    shapeItems.push_back("arc\n");
-    shapeItems.push_back("anglestart 0\n");
-    shapeItems.push_back("angledeg 1\n");
+    shapeItems.emplace_back("arc\n");
+    shapeItems.emplace_back("anglestart 0\n");
+    shapeItems.emplace_back("angledeg 1\n");
     rv += testBasicGog(shapeItems, true, true);
   }
   {
     std::vector<std::string> shapeItems;
-    shapeItems.push_back("ellipse\n");
+    shapeItems.emplace_back("ellipse\n");
     rv += testBasicGog(shapeItems, true, true);
   }
   {
     std::vector<std::string> shapeItems;
-    shapeItems.push_back("cylinder\n");
+    shapeItems.emplace_back("cylinder\n");
     rv += testBasicGog(shapeItems, true, true);
   }
 
   std::vector<std::string> pointItems;
-  pointItems.push_back("lla 23.1 123 0\n");
-  pointItems.push_back("lla 23.2 123.1 0\n");
-  pointItems.push_back("lla 23.3 123 0\n");
-  pointItems.push_back("lla 23.4 123.4 0\n");
+  pointItems.emplace_back("lla 23.1 123 0\n");
+  pointItems.emplace_back("lla 23.2 123.1 0\n");
+  pointItems.emplace_back("lla 23.3 123 0\n");
+  pointItems.emplace_back("lla 23.4 123.4 0\n");
 
   {
     std::vector<std::string> shapeItems = pointItems;
-    shapeItems.push_back("line\n");
+    shapeItems.emplace_back("line\n");
     rv += testBasicGog(shapeItems, true, false);
   }
   {
     std::vector<std::string> shapeItems = pointItems;
-    shapeItems.push_back("linesegs\n");
+    shapeItems.emplace_back("linesegs\n");
     rv += testBasicGog(shapeItems, true, false);
   }
   {
     std::vector<std::string> shapeItems = pointItems;
-    shapeItems.push_back("polygon\n");
+    shapeItems.emplace_back("polygon\n");
     rv += testBasicGog(shapeItems, true, false);
   }
   {
     std::vector<std::string> shapeItems;
-    shapeItems.push_back("sphere\n");
+    shapeItems.emplace_back("sphere\n");
     rv += testBasicGog(shapeItems, false, true);
   }
   {
     std::vector<std::string> shapeItems;
-    shapeItems.push_back("hemisphere\n");
+    shapeItems.emplace_back("hemisphere\n");
     rv += testBasicGog(shapeItems, false, true);
   }
   {
     std::vector<std::string> shapeItems;
-    shapeItems.push_back("ellipsoid\n");
+    shapeItems.emplace_back("ellipsoid\n");
     rv += testBasicGog(shapeItems, false, true);
   }
   {
     std::vector<std::string> shapeItems;
-    shapeItems.push_back("cone\n");
+    shapeItems.emplace_back("cone\n");
     rv += testBasicGog(shapeItems, false, true);
   }
   {
     std::vector<std::string> shapeItems;
-    shapeItems.push_back("orbit\n");
-    shapeItems.push_back("centerlla 24.2 45.2 0\n");
-    shapeItems.push_back("centerll2 24.3 45.1\n");
+    shapeItems.emplace_back("orbit\n");
+    shapeItems.emplace_back("centerlla 24.2 45.2 0\n");
+    shapeItems.emplace_back("centerll2 24.3 45.1\n");
     rv += testBasicGog(shapeItems, false, true);
   }
 
@@ -1022,9 +1021,9 @@ int testDynamicEdits()
 
   // test annotation
   std::vector<std::string> annoItems;
-  annoItems.push_back("start\n");
-  annoItems.push_back("end\n");
-  annoItems.push_back("annotation some text\n");
+  annoItems.emplace_back("start\n");
+  annoItems.emplace_back("end\n");
+  annoItems.emplace_back("annotation some text\n");
   std::stringstream annoGog;
   annoGog << "start\n annotation some text\n end\n";
   loader.loadGogs(annoGog, "", false, gogs);
@@ -1039,16 +1038,16 @@ int testDynamicEdits()
     rv += testItemsInSerialization(blank.str(), annoItems);
 
     gog->setFont("georgia.ttf", 32, osg::Vec4f(.6, 1., 0., 1.));
-    annoItems.push_back("fontname georgia.ttf\n");
-    annoItems.push_back("fontsize 32\n");
-    annoItems.push_back("linecolor hex 0xff00ff99\n");
+    annoItems.emplace_back("fontname georgia.ttf\n");
+    annoItems.emplace_back("fontsize 32\n");
+    annoItems.emplace_back("linecolor hex 0xff00ff99\n");
     std::stringstream annoGog1;
     gog->serializeToStream(annoGog1);
     rv += testItemsInSerialization(annoGog1.str(), annoItems);
 
     gog->setTextOutline(osg::Vec4f(1.0, 1.0, 0, 0), simData::TextOutline::TO_THICK);
-    annoItems.push_back("textoutlinecolor hex 0x0000ffff\n");
-    annoItems.push_back("textoutlinethickness thick\n");
+    annoItems.emplace_back("textoutlinecolor hex 0x0000ffff\n");
+    annoItems.emplace_back("textoutlinethickness thick\n");
     std::stringstream annoGog2;
     gog->serializeToStream(annoGog2);
     rv += testItemsInSerialization(annoGog2.str(), annoItems);
@@ -1059,9 +1058,9 @@ int testDynamicEdits()
 
   // test latlonaltbox
   std::vector<std::string> llabItems;
-  llabItems.push_back("start\n");
-  llabItems.push_back("end\n");
-  llabItems.push_back("latlonaltbox 24.2 23.4 55.6 55.2 0\n");
+  llabItems.emplace_back("start\n");
+  llabItems.emplace_back("end\n");
+  llabItems.emplace_back("latlonaltbox 24.2 23.4 55.6 55.2 0\n");
   std::stringstream llabGog;
   llabGog << "start\n latlonaltbox 24.2 23.4 55.6 55.2 0\n end\n";
   loader.loadGogs(llabGog, "", false, gogs);

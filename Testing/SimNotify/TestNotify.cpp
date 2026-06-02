@@ -46,7 +46,7 @@ public:
   explicit AssertionException(const std::string &message) : message_(message) { }
   ~AssertionException() throw() {}
 
-  virtual const char *what() const throw() override
+  const char *what() const throw() override
   {
     return message_.c_str();
   }
@@ -134,7 +134,7 @@ public:
 
   void clearBuffer() { buffer_.clear(); }
 
-  virtual void notify(const std::string &message) override
+  void notify(const std::string &message) override
   {
     buffer_ += message;
   }

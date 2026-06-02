@@ -207,7 +207,7 @@ public:
   }
 
   /** Override publicly accessible memento function to restore data */
-  virtual int restore(ActionRegistry& registry) const
+  int restore(ActionRegistry& registry) const override
   {
     return MementoImpl::restoreDestructive_(registry, data_);
   }
@@ -429,6 +429,10 @@ Action* ActionRegistry::registerAction(const QString &group, const QString &desc
     mainWindow_->addAction(action);
     assert(mainWindow_->actions().count(action) == 1);
   }
+
+  // Save the description onto the action itself
+  action->setProperty("description", description);
+
   Q_EMIT(actionAdded(newAct));
 
   // Validate the actions are valid

@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class Polygon; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Polygon */
 class SDKVIS_EXPORT Polygon
 {
 public:
-  /** Create the polygon from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the polygon from the shape object */
   static GogNodeInterface* createPolygon(const simCore::GOG::Polygon& polygon, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

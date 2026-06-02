@@ -110,7 +110,7 @@ public:
   virtual ~FrameResizeCallback(){}
 
   /** Updates banner positions when the screen size changes */
-  virtual void operator()(osg::Node *node, osg::NodeVisitor *nv)
+  void operator()(osg::Node *node, osg::NodeVisitor *nv) override
   {
     if (nv->getVisitorType() != osg::NodeVisitor::CULL_VISITOR)
     {

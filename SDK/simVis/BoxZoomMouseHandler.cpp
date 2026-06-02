@@ -257,7 +257,7 @@ void BoxZoomMouseHandler::calculateGeoPointFromScreenXY_(double x, double y, sim
   osgUtil::LineSegmentIntersector::Intersections results;
   osg::NodePath mapNodePath;
   mapNodePath.push_back(mapNodeForView_(*view_));
-  if (view.computeIntersections(*ea.get(), mapNodePath, results))
+  if (view.computeIntersections(*ea, mapNodePath, results))
   {
     // find the first hit under the mouse:
     osgUtil::LineSegmentIntersector::Intersection first = *(results.begin());

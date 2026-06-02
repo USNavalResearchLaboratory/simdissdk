@@ -38,7 +38,7 @@ public:
   {
   }
 
-  virtual void operator()(simVis::View* inset, const EventType& e)
+  void operator()(simVis::View* inset, const EventType& e) override
   {
     switch (e)
     {

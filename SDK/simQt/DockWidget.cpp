@@ -159,7 +159,7 @@ public:
 
 protected:
   /** Overridden from QFrame */
-  virtual void mouseDoubleClickEvent(QMouseEvent* evt)
+  void mouseDoubleClickEvent(QMouseEvent* evt) override
   {
     // If it's docked we let Qt deal with the message (i.e. it will undock via Qt mechanisms).
     // If it's floating, we intercept and remap to maximize or restore as appropriate
@@ -197,7 +197,7 @@ public:
 
 protected:
   /** Overridden from QLabel */
-  virtual void mouseDoubleClickEvent(QMouseEvent* evt)
+  void mouseDoubleClickEvent(QMouseEvent* evt) override
   {
     // If upper left corner is double clicked, close window
     dockWidget_.closeWindow_();
@@ -227,7 +227,7 @@ public:
       tabBar_->installEventFilter(this);
   }
 
-  bool eventFilter(QObject* object, QEvent* event)
+  bool eventFilter(QObject* object, QEvent* event) override
   {
     if (object != tabBar_ || !tabBar_)
       return false;
@@ -410,7 +410,7 @@ public:
   }
 
 protected:
-  virtual void paintEvent(QPaintEvent* evt) override
+  void paintEvent(QPaintEvent* evt) override
   {
     QFrame::paintEvent(evt);
 

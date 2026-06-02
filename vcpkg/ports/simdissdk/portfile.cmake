@@ -1,14 +1,14 @@
-#vcpkg_from_github(
-#    OUT_SOURCE_PATH SOURCE_PATH
-#    REPO USNavalResearchLaboratory/simdissdk
-#    HEAD_REF main
-#    REF "261d58c"
-#    SHA512 ee69403fea2fbc56476043fbb10d4a21519289cce9c5b735a427a4c354a3c395ceef896e68b8df9eacbe6ab5ac3ea680d83c11d09f132476bfc0967546cff9a9
-#    PATCHES
-#)
+vcpkg_from_github(
+    OUT_SOURCE_PATH SOURCE_PATH
+    REPO USNavalResearchLaboratory/simdissdk
+    HEAD_REF main
+    REF a4136288
+    SHA512 bede62fc6fc966b2af3403798ad7fed411563fca5e7cbaa327bf78f7052cd850c0485e962b3d9fd05fcda06501e162889d4533e79efd8e4f76b9538c6c54c2c9
+    PATCHES
+)
 
 # Moving up from vcpkg/ports/simdissdk/ to the project root
-get_filename_component(SOURCE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+#get_filename_component(SOURCE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
@@ -26,16 +26,16 @@ else()
     list(APPEND FEATURE_OPTIONS "-DCMAKE_DISABLE_FIND_PACKAGE_EnTT=ON")
 endif()
 
-# If the 'osg-qt' feature was NOT enabled, we tell CMake to hide it
-if("osg-qt" IN_LIST FEATURES)
+# If the 'osgqopengl' feature was NOT enabled, we tell CMake to hide it
+if("osgqopengl" IN_LIST FEATURES)
     list(APPEND FEATURE_OPTIONS
-        "-DCMAKE_DISABLE_FIND_PACKAGE_osgQOpenGL-qt5=OFF"
-        "-DCMAKE_DISABLE_FIND_PACKAGE_osgQOpenGL-qt6=OFF"
+        "-DCMAKE_DISABLE_FIND_PACKAGE_osgQOpenGL=OFF"
+        "-DCMAKE_DISABLE_FIND_PACKAGE_osgQOpenGL=OFF"
     )
 else()
     list(APPEND FEATURE_OPTIONS
-        "-DCMAKE_DISABLE_FIND_PACKAGE_osgQOpenGL-qt5=ON"
-        "-DCMAKE_DISABLE_FIND_PACKAGE_osgQOpenGL-qt6=ON"
+        "-DCMAKE_DISABLE_FIND_PACKAGE_osgQOpenGL=ON"
+        "-DCMAKE_DISABLE_FIND_PACKAGE_osgQOpenGL=ON"
     )
 endif()
 
@@ -57,6 +57,7 @@ vcpkg_cmake_configure(
         -DSIMVIS_SHARED=${_SDK_SHARED}
         -DSIMUTIL_SHARED=${_SDK_SHARED}
         -DSIMQT_SHARED=${_SDK_SHARED}
+        -DPROJECT_INSTALL_OSGPLUGINS_DIR=plugins
     OPTIONS_DEBUG
     MAYBE_UNUSED_VARIABLES
         CMAKE_DISABLE_FIND_PACKAGE_osgQOpenGL-qt5

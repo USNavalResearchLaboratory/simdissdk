@@ -109,7 +109,7 @@ public:
   }
 
   /** Override operator<() to sort based on the unique role, presumably externally set. */
-  virtual bool operator<(const QListWidgetItem& other) const
+  bool operator<(const QListWidgetItem& other) const override
   {
     return data(ROLE_SORT_STRING).toString() < other.data(ROLE_SORT_STRING).toString();
   }
@@ -328,25 +328,25 @@ public:
   }
 
   /// Invoked when a new category is added
-  virtual void onAddCategory(int categoryIndex)
+  void onAddCategory(int categoryIndex) override
   {
     // noop
   }
 
   /// Invoked when a new value is added to a category
-  virtual void onAddValue(int categoryIndex, int valueIndex)
+  void onAddValue(int categoryIndex, int valueIndex) override
   {
     // noop
   }
 
   /// Invoked when all data is cleared
-  virtual void onClear()
+  void onClear() override
   {
     parent_.rebuildList_();
   }
 
   /// Invoked when all listeners have received onClear()
-  virtual void doneClearing()
+  void doneClearing() override
   {
     // noop
   }

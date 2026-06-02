@@ -64,14 +64,14 @@ public:
   void setRegistry(ActionRegistry* registry);
 
   // QAbstractItemModel overrides
-  virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
-  virtual QModelIndex parent(const QModelIndex &child) const;
-  virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
-  virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
-  virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-  virtual Qt::ItemFlags flags(const QModelIndex& index) const;
-  virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
+  QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
+  QModelIndex parent(const QModelIndex &child) const override;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+  Qt::ItemFlags flags(const QModelIndex& index) const override;
+  bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
 
 Q_SIGNALS:
   /// Emitted when a new group is added; useful for connecting to an expand() slot
@@ -121,15 +121,15 @@ public:
   virtual ~ActionItemModelDelegate();
 
   /// Override createEditor() to return our KeySequenceEdit
-  virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   /// Sets the editor data based on the given index
-  virtual void setEditorData(QWidget* editWidget, const QModelIndex& index) const;
+  void setEditorData(QWidget* editWidget, const QModelIndex& index) const override;
   /// Called to actually set the data into the data model
-  virtual void setModelData(QWidget* editWidget, QAbstractItemModel* model, const QModelIndex& index) const;
+  void setModelData(QWidget* editWidget, QAbstractItemModel* model, const QModelIndex& index) const override;
 
 protected:
   /// Override the default event filter to permit esc, tab, etc. to pass through to editor
-  virtual bool eventFilter(QObject* editor, QEvent* evt);
+  bool eventFilter(QObject* editor, QEvent* evt) override;
 
 private Q_SLOTS:
   /// Helper to emit signals for commit/close in order

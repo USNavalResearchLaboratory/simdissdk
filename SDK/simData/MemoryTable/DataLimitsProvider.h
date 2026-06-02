@@ -31,7 +31,7 @@ namespace simData { namespace MemoryTable {
 class DataLimitsProvider
 {
 public:
-  virtual ~DataLimitsProvider() {}
+  virtual ~DataLimitsProvider() = default;
 
   /**
    * Retrieves the data limits for a given table in points and seconds.

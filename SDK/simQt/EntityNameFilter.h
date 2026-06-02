@@ -56,20 +56,20 @@ public:
   * @param id  entity id to test
   * @return bool  true if the entity passed this filter
   */
-  virtual bool acceptEntity(simData::ObjectId id) const;
+  bool acceptEntity(simData::ObjectId id) const override;
 
   /**
   * Inherited from EntityFilter, always returns nullptr, as this class currently doesn't create a widget
   * @param newWidgetParent QWidget parent, useful for memory management purposes; may be nullptr if desired
   * @return QWidget used for changing filter settings
   */
-  virtual QWidget* widget(QWidget* newWidgetParent) const;
+  QWidget* widget(QWidget* newWidgetParent) const override;
 
   /** @copydoc EntityFilter::getFilterSettings() */
-  virtual void getFilterSettings(QMap<QString, QVariant>& settings) const;
+  void getFilterSettings(QMap<QString, QVariant>& settings) const override;
 
   /** @copydoc EntityFilter::setFilterSettings() */
-  virtual void setFilterSettings(const QMap<QString, QVariant>& settings);
+  void setFilterSettings(const QMap<QString, QVariant>& settings) override;
 
   /** Returns the filter's QRegExp*/
   std::tuple<QString, Qt::CaseSensitivity, RegExpImpl::PatternSyntax> regExp() const;

@@ -73,10 +73,10 @@ namespace simVis
     float PatternGain(float azim, float elev, simCore::PolarityType polarity) const;
 
     /** Return the proper library name */
-    virtual const char* libraryName() const { return "simVis"; }
+    const char* libraryName() const override { return "simVis"; }
 
     /** Return the class name */
-    virtual const char* className() const { return "AntennaNode"; }
+    const char* className() const override { return "AntennaNode"; }
 
   protected:
     /// osg::Referenced-derived

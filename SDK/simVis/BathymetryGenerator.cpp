@@ -51,7 +51,7 @@ public:
   }
 
   /** From ModifyTileBoundingBoxCallback, increase bounding box size by the bathymetry offset */
-  virtual void modifyBoundingBox(const osgEarth::TileKey& key, osg::BoundingBox& box) const
+  void modifyBoundingBox(const osgEarth::TileKey& key, osg::BoundingBox& box) const override
   {
     box.zMin() += offset_;
   }

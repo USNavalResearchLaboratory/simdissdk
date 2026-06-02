@@ -142,7 +142,7 @@ QsErrorType SQLiteDataBaseReadUtil::openDatabaseFile(const std::string& dbFileNa
 
   // Attempts to open the database file
   int errorCode = sqlite3_open_v2(dbFileName.c_str(), sqlite3Db, flags, nullptr);
-  if ((*sqlite3Db == 0) || (errorCode != SQLITE_OK))
+  if ((*sqlite3Db == nullptr) || (errorCode != SQLITE_OK))
   {
     if ((errorCode == SQLITE_BUSY) ||
       (errorCode == SQLITE_LOCKED))
@@ -207,7 +207,7 @@ QsErrorType SQLiteDataBaseReadUtil::readDataBuffer(sqlite3* sqlite3Db,
   sqlCommand.append(textureSetSelectFileCommand2_);
 
   // prepares the statement
-  sqlite3_stmt* stmt = 0;
+  sqlite3_stmt* stmt = nullptr;
   returnValue = sqlite3_prepare_v2(sqlite3Db, sqlCommand.c_str(), static_cast<int>(sqlCommand.length()), &stmt, nullptr);
   if (returnValue != SQLITE_OK)
   {
@@ -303,7 +303,7 @@ QsErrorType SQLiteDataBaseReadUtil::getSetFromListOfSetsTable(sqlite3* sqlite3Db
   QsErrorType otherReturnValue;
 
   // prepares the statement
-  sqlite3_stmt* stmt = 0;
+  sqlite3_stmt* stmt = nullptr;
   returnValue = sqlite3_prepare_v2(sqlite3Db, textureSetSelectCommand_.c_str(), static_cast<int>(textureSetSelectCommand_.length()), &stmt, nullptr);
   if (returnValue != SQLITE_OK)
   {

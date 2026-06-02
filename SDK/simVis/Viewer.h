@@ -170,7 +170,7 @@ namespace simVis
     /**
      * Run the frame loop continuously.
      */
-    virtual int run();
+    int run() override;
 
   protected:
     /// osg::Referenced-derived; destructor body needs to be in the .cpp

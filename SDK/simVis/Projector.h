@@ -67,7 +67,7 @@ public:
 
 protected:
 
-  virtual ~ProjectorTexture() { }
+  virtual ~ProjectorTexture() = default;
 };
 
 /** Projector-video interface on the ProjectorNode side */
@@ -80,14 +80,14 @@ public:
   ProjectorTextureImpl();
 
   /** Set image to the texture */
-  virtual void setImage(osg::Image *image);
+  void setImage(osg::Image *image) override;
 
   /** Set texture from projector node */
   void setTexture(osg::Texture2D *texture);
 
 protected:
 
-  virtual ~ProjectorTextureImpl() { }
+  virtual ~ProjectorTextureImpl() = default;
 
 private:
   osg::observer_ptr<osg::Texture2D> texture_;
@@ -103,6 +103,9 @@ public:
   ProjectorNode(const simData::ProjectorProperties& props,
     simVis::Locator* hostLocator,
     const simVis::EntityNode* host = nullptr);
+
+  /** Copy constructor, not implemented or available. */
+  ProjectorNode(const ProjectorNode&) = delete;
 
   /**
   * Gets the last known properties of this object
@@ -171,11 +174,11 @@ public:
   void syncWithLocator();
 
   /** Traverse the node during visitor pattern */
-  virtual void traverse(osg::NodeVisitor& nv) override;
+  void traverse(osg::NodeVisitor& nv) override;
 
   /// Override from MapNodeObserver
-  virtual void setMapNode(osgEarth::MapNode*) override;
-  virtual osgEarth::MapNode* getMapNode() override;
+  void setMapNode(osgEarth::MapNode*) override;
+  osgEarth::MapNode* getMapNode() override;
 
 public: // EntityNode interface
   /**
@@ -184,12 +187,12 @@ public: // EntityNode interface
   * current scenario time, and has not received a command to turn off
   * @return true if active; false if not
   */
-  virtual bool isActive() const override;
+  bool isActive() const override;
 
   /**
   * Whether this entity is visible.
   */
-  virtual bool isVisible() const override;
+  bool isVisible() const override;
 
   /**
   * Returns the entity name. Can be used to get the actual name always or the
@@ -199,33 +202,33 @@ public: // EntityNode interface
   * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
   * @return    actual/alias entity name string
   */
-  virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const override;
+  const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const override;
 
   /// Returns the pop up text based on the label content callback, update and preference
-  virtual std::string popupText() const override;
+  std::string popupText() const override;
   /// Returns the hook text based on the label content callback, update and preference
-  virtual std::string hookText() const override;
+  std::string hookText() const override;
   /// Returns the legend text based on the label content callback, update and preference
-  virtual std::string legendText() const override;
+  std::string legendText() const override;
 
   /** Retrieve the object index tag for picking this projector. */
-  virtual unsigned int objectIndexTag() const override;
+  unsigned int objectIndexTag() const override;
 
   /** @copydoc EntityNode::getPosition() */
-  virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
+  int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
 
   /** @copydoc EntityNode::getPositionOrientation() */
-  virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+  int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
     simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
 
   /**
   * Get the object ID of the beam rendered by this node
   * @return object ID
   */
-  virtual simData::ObjectId getId() const override;
+  simData::ObjectId getId() const override;
 
   /** Get the projector's host's ID */
-  virtual bool getHostId(simData::ObjectId& out_hostId) const override;
+  bool getHostId(simData::ObjectId& out_hostId) const override;
 
   /**
   * Updates the entity based on the bound data store.
@@ -233,31 +236,28 @@ public: // EntityNode interface
   * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
   * @return true if update applied, false if not
   */
-  virtual bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force = false) override;
+  bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force = false) override;
 
   /**
   * Flushes all the entity's data point visualization.
   */
-  virtual void flush() override;
+  void flush() override;
 
   /**
   * Returns a range value (meters) used for visualization.  Will return zero for platforms and projectors.
   */
-  virtual double range() const override;
+  double range() const override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const override { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
   /** Return the class name */
-  virtual const char* className() const override { return "ProjectorNode"; }
+  const char* className() const override { return "ProjectorNode"; }
 
 protected:
   /// osg::Referenced-derived; destructor body needs to be in the .cpp
   virtual ~ProjectorNode();
 
 private:
-  /** Copy constructor, not implemented or available. */
-  ProjectorNode(const ProjectorNode&);
-
   void init_();
 
   /// Read video file

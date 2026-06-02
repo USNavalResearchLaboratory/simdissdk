@@ -214,7 +214,7 @@ public:
   }
 
   // From osg::Operation:
-  virtual void operator()(osg::Object*) override
+  void operator()(osg::Object*) override
   {
     app_.setSkyModel(model_);
   }
@@ -333,7 +333,7 @@ int main(int argc, char** argv)
 
 #ifdef HAVE_IMGUI
   GUI::OsgImGuiHandler* gui = new GUI::OsgImGuiHandler();
-  mainView->getEventHandlers().push_front(gui);
+  mainView->getEventHandlers().emplace_front(gui);
   gui->add(new ControlPanel(app));
 #endif
 

@@ -77,12 +77,12 @@ public:
   std::string intersect(const osg::Vec3d& mousePx, osg::Vec3d& offsetFromAnchorPx) const;
 
   /** Override traverse() to detect screen resizes in FRAME events */
-  virtual void traverse(osg::NodeVisitor& nv);
+  void traverse(osg::NodeVisitor& nv) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
   /** Return the class name */
-  virtual const char* className() const { return "HudEditorGui"; }
+  const char* className() const override { return "HudEditorGui"; }
 
 protected:
   /** Prevent double delete from ref_ptr */
@@ -120,7 +120,7 @@ private:
 class SDKUTIL_EXPORT HudEditorRightClickCallback
 {
 public:
-  virtual ~HudEditorRightClickCallback() {}
+  virtual ~HudEditorRightClickCallback() = default;
 
   /** Called when a window named windowName is right clicked. */
   virtual void rightClicked(const std::string& windowName) = 0;
@@ -143,18 +143,18 @@ public:
   HudEditorMouse(simUtil::HudPositionManager* hud, simUtil::HudEditorGui* gui);
 
   // From MouseManipulator:
-  virtual int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual int touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
-  virtual void activate() override;
-  virtual void deactivate() override;
+  int push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int touchBegan(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int touchMoved(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  int touchEnded(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
+  void activate() override;
+  void deactivate() override;
 
   /** Set a pointer to the right click callback to be used by the mouse manipulator. */
   void setRightClickCallback(std::shared_ptr<simUtil::HudEditorRightClickCallback> cb);

@@ -96,7 +96,7 @@ public:
     : azim_(az), elev_(el), polarity_(pol), hbw_(hbw), vbw_(vbw), refGain_(gain),
     firstLobe_(firstLobe), backLobe_(backLobe), freq_(freq),
     weighting_(weight), delta_(delta) {}
-  ~AntennaGainParameters() {}
+  ~AntennaGainParameters() = default;
 };
 
 // ----------------------------------------------------------------------------
@@ -113,7 +113,7 @@ public:
     filename_("") {};
 
   /** AntennaPattern destructor */
-  virtual ~AntennaPattern() {}
+  virtual ~AntennaPattern() = default;
 
   /**
   * This method returns the type of antenna pattern
@@ -176,16 +176,16 @@ class SDKCORE_EXPORT AntennaPatternGauss : public AntennaPattern
 {
 public:
   AntennaPatternGauss();
-  virtual ~AntennaPatternGauss() {}
+  virtual ~AntennaPatternGauss() = default;
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_GAUSS; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_GAUSS; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
 protected:
   float lastVbw_;             ///< Last vertical beam width used to calculate min & max gains
@@ -198,16 +198,16 @@ class SDKCORE_EXPORT AntennaPatternCscSq : public AntennaPattern
 {
 public:
   AntennaPatternCscSq();
-  virtual ~AntennaPatternCscSq() {}
+  virtual ~AntennaPatternCscSq() = default;
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_CSCSQ; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_CSCSQ; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
 protected:
   float lastVbw_;             ///< Last vertical beam width used to calculate min & max gains
@@ -220,16 +220,16 @@ class SDKCORE_EXPORT AntennaPatternSinXX : public AntennaPattern
 {
 public:
   AntennaPatternSinXX();
-  virtual ~AntennaPatternSinXX() {}
+  virtual ~AntennaPatternSinXX() = default;
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_SINXX; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_SINXX; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
 protected:
   float lastVbw_;             ///< Last vertical beam width used to calculate min & max gains
@@ -243,16 +243,16 @@ class SDKCORE_EXPORT AntennaPatternPedestal : public AntennaPattern
 {
 public:
   AntennaPatternPedestal();
-  virtual ~AntennaPatternPedestal() {}
+  virtual ~AntennaPatternPedestal() = default;
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_PEDESTAL; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_PEDESTAL; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
 protected:
   float lastVbw_;             ///< Last vertical beam width used to calculate min & max gains
@@ -267,16 +267,16 @@ class SDKCORE_EXPORT AntennaPatternOmni : public AntennaPattern
 {
 public:
   AntennaPatternOmni();
-  virtual ~AntennaPatternOmni() {}
+  virtual ~AntennaPatternOmni() = default;
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_OMNI; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_OMNI; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 };
 
 // ----------------------------------------------------------------------------
@@ -310,16 +310,16 @@ class SDKCORE_EXPORT AntennaPatternTable : public AntennaPattern
 {
 public:
   AntennaPatternTable(bool type = false);
-  virtual ~AntennaPatternTable() {}
+  virtual ~AntennaPatternTable() = default;
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_TABLE; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_TABLE; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
   /**
   * This method checks the incoming antenna pattern data filename, opens a file stream and calls readPat
@@ -387,13 +387,13 @@ public:
   virtual ~AntennaPatternCRUISE() {reset_();}
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_CRUISE; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_CRUISE; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
   /**
   * This method checks the incoming antenna pattern data filename, opens a file stream and calls readPat_
@@ -435,16 +435,16 @@ class SDKCORE_EXPORT AntennaPatternRelativeTable : public AntennaPattern
 {
 public:
   AntennaPatternRelativeTable();
-  virtual ~AntennaPatternRelativeTable() {}
+  virtual ~AntennaPatternRelativeTable() = default;
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_RELATIVE; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_RELATIVE; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
   /**
   * This method checks the incoming antenna pattern data filename, opens a file stream and calls readPat_
@@ -512,13 +512,13 @@ public:
   virtual ~AntennaPatternMonopulse();
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_MONOPULSE; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_MONOPULSE; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
   /**
   * This method checks the incoming antenna pattern data filename, opens a file stream and calls readPat_
@@ -596,13 +596,13 @@ public:
   virtual ~AntennaPatternBiLinear();
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_BILINEAR; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_BILINEAR; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
   /**
   * This method checks the incoming antenna pattern data filename, opens a file stream and calls readPat_
@@ -630,16 +630,16 @@ class SDKCORE_EXPORT AntennaPatternNSMA : public AntennaPattern
 public:
 
   AntennaPatternNSMA();
-  virtual ~AntennaPatternNSMA() {}
+  virtual ~AntennaPatternNSMA() = default;
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_NSMA; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_NSMA; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
   /**
   * This method checks the incoming antenna pattern data filename, opens a file stream and calls readPat_
@@ -703,16 +703,16 @@ class SDKCORE_EXPORT AntennaPatternEZNEC : public AntennaPattern
 {
 public:
   AntennaPatternEZNEC();
-  virtual ~AntennaPatternEZNEC() {}
+  virtual ~AntennaPatternEZNEC() = default;
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_EZNEC; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_EZNEC; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
   /**
   * This method checks the incoming antenna pattern data filename, opens a file stream and calls readPat_
@@ -748,16 +748,16 @@ class SDKCORE_EXPORT AntennaPatternXFDTD : public AntennaPattern
 {
 public:
   AntennaPatternXFDTD();
-  virtual ~AntennaPatternXFDTD() {}
+  virtual ~AntennaPatternXFDTD() = default;
 
   /** @copydoc AntennaPattern::type */
-  virtual AntennaPatternType type() const { return ANTENNA_PATTERN_XFDTD; }
+  AntennaPatternType type() const override { return ANTENNA_PATTERN_XFDTD; }
 
   /** @copydoc AntennaPattern::gain */
-  virtual float gain(const AntennaGainParameters &params);
+  float gain(const AntennaGainParameters &params) override;
 
   /** @copydoc AntennaPattern::minMaxGain */
-  virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
+  void minMaxGain(float *min, float *max, const AntennaGainParameters &params) override;
 
   /**
   * This method checks the incoming antenna pattern data filename, opens a file stream and calls readPat_

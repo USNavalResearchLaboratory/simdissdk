@@ -65,7 +65,7 @@ public:
 
   protected:
     /// osg::Referenced-derived
-    virtual ~Callback() {}
+    virtual ~Callback() = default;
   };
 
 public:
@@ -74,6 +74,8 @@ public:
    * @param locator Parent locator from which to inherit position/orientation
    */
   PlatformModelNode(Locator* locator = nullptr);
+  PlatformModelNode(const PlatformModelNode& rhs) = delete; // not implemented
+  PlatformModelNode& operator=(const PlatformModelNode& rhs) = delete; // not implemented
 
   /**
   * Gets the bounds of the 3D model, possible scaled
@@ -157,21 +159,18 @@ public: // PlatformAttachment interface
 public: // LocatorNode interface
 
   /** Override to keep image icons rotated toward eye */
-  virtual void syncWithLocator(); //override
+  void syncWithLocator() override; //override
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "PlatformModelNode"; }
+  const char* className() const override { return "PlatformModelNode"; }
 
 protected:
   virtual ~PlatformModelNode();
 
 private:
-  PlatformModelNode(const PlatformModelNode& rhs); // not implemented
-  PlatformModelNode& operator=(const PlatformModelNode& rhs); // not implemented
-
   /// Callback to the Model Cache that will set our platform model on asynchronous load
   class SetModelCallback;
   /// Member pointer to the most recent set-model-callback

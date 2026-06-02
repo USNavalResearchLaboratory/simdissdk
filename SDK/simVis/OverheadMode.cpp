@@ -78,7 +78,7 @@ namespace
   // used in the SDK by the EntityLabelNode and the TextAnnotation GOG, for example.
   struct ClampMatrixCallback : public osgEarth::GeoTransform::ComputeMatrixCallback
   {
-    virtual bool computeLocalToWorldMatrix(const osgEarth::GeoTransform* xform, osg::Matrix& m, osg::NodeVisitor* nv) const
+    bool computeLocalToWorldMatrix(const osgEarth::GeoTransform* xform, osg::Matrix& m, osg::NodeVisitor* nv) const override
     {
       osg::Matrix matrix = xform->getMatrix();
 
@@ -102,7 +102,7 @@ namespace
   // whereby the dirty is happening before the matrix selection changes. Not sure.
   struct DirtyBoundVisitor : public osg::NodeVisitor
   {
-    void apply(osg::Node& node)
+    void apply(osg::Node& node) override
     {
       simVis::LocatorNode* locatorNode = dynamic_cast<simVis::LocatorNode*>(&node);
       if (locatorNode)
@@ -148,7 +148,7 @@ namespace
       _stateset->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
     }
 
-    void operator()(osg::Node* node, osg::NodeVisitor* nv) const
+    void operator()(osg::Node* node, osg::NodeVisitor* nv) const override
     {
       if (simVis::OverheadMode::isActive(nv))
       {
@@ -260,7 +260,7 @@ void OverheadMode::enableGeoTransformClamping(bool value, osgEarth::GeoTransform
 {
   if (xform)
   {
-    xform->setComputeMatrixCallback(value ? new ClampMatrixCallback() : 0L);
+    xform->setComputeMatrixCallback(value ? new ClampMatrixCallback() : nullptr);
   }
 }
 

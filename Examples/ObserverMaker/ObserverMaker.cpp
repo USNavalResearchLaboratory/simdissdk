@@ -44,7 +44,7 @@ using namespace simData;
 class BasicAdd : public simData::DataStore::DefaultListener
 {
 public:
-  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot) override
   {
     if (ot != simData::PLATFORM)
       return;
@@ -69,7 +69,7 @@ public:
   {
   }
 
-  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot) override
   {
     if (ot != simData::PLATFORM)
       return;
@@ -101,7 +101,7 @@ public: // types
     {
     }
 
-    void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
+    void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot) override
     {
       if (ot == simData::PLATFORM)
         sceneManager_->addPlatform(id, source);
@@ -120,7 +120,7 @@ public: // types
     {
     }
 
-    void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
+    void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot) override
     {
       if (ot == simData::PLATFORM)
         sceneManager_->addPlatformAsChild(id, source, arg_.get());
@@ -162,7 +162,7 @@ public: // methods
 /// Function to report changes to a platform's preference settings
 struct PlatformPrefListener : public simData::DataStore::DefaultListener
 {
-  void onPrefsChange(DataStore *source, simData::ObjectId id)
+  void onPrefsChange(DataStore *source, simData::ObjectId id) override
   {
     if (source->objectType(id) != simData::PLATFORM)
       return;

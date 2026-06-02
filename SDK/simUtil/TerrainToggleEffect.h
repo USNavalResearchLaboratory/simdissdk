@@ -45,8 +45,8 @@ public:
   bool isEnabled() const;
 
   // Override TerrainEffect methods
-  virtual void onInstall(osgEarth::TerrainEngineNode* engine);
-  virtual void onUninstall(osgEarth::TerrainEngineNode* engine);
+  void onInstall(osgEarth::TerrainEngineNode* engine) override;
+  void onUninstall(osgEarth::TerrainEngineNode* engine) override;
 
 protected:
   /** osg::Referenced-derived */

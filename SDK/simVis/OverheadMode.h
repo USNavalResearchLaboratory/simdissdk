@@ -108,7 +108,7 @@ public:
     void setEnabled(bool value);
 
     /** Callback operator will configure the appropriate overhead mode token */
-    virtual void operator()(osg::Node* node, osg::NodeVisitor* nv);
+    void operator()(osg::Node* node, osg::NodeVisitor* nv) override;
 
   protected:
     /** osg::Referenced-derived has protected destructor */
@@ -135,7 +135,7 @@ public:
 
 public: // osgGA::GUIEventHandler
   /** Toggle overhead mode if key is pressed */
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override;
 
 protected:
   /** osg::Referenced-derived has protected destructor */

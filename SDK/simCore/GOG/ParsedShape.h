@@ -39,9 +39,7 @@ struct /* HEADER-ONLY */ PositionStrings
 {
 public:
   /** Construct the position without any values. */
-  PositionStrings()
-  {
-  }
+  PositionStrings() = default;
 
   /** Construct the position with an XY or LL point. */
   PositionStrings(const std::string& xVal, const std::string& yVal)
@@ -93,6 +91,7 @@ enum class ShapeParameter
 {
   // GOG Structure Commands
   DRAW = 0, // Maps to "off"
+  EDIT,     // Opt-in to edit features
 
   // GOG Type Commands
   LLABOX_E = 20, // LatLonAltBox

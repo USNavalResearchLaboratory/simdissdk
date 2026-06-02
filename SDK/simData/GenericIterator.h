@@ -33,7 +33,7 @@ template <typename ValueType>
 class GenericIteratorImpl
 {
 public:
-  virtual ~GenericIteratorImpl() {}
+  virtual ~GenericIteratorImpl() = default;
   /** Retrieves next element and increments iterator to position after that element
   * @return Element after original iterator position,
   * or nullptr if no such element
@@ -74,21 +74,21 @@ class NullIteratorImpl : public GenericIteratorImpl<ValueType>
 {
 public:
   // Return a default-constructible instance of ValueType
-  virtual const ValueType next() { return ValueType(); }
-  virtual const ValueType peekNext() const { return ValueType(); }
-  virtual const ValueType previous() { return ValueType(); }
-  virtual const ValueType peekPrevious() const { return ValueType(); }
+  const ValueType next() override { return ValueType(); }
+  const ValueType peekNext() const override { return ValueType(); }
+  const ValueType previous() override { return ValueType(); }
+  const ValueType peekPrevious() const override { return ValueType(); }
 
   // Noop, cannot move to front or back
-  virtual void toFront() {}
-  virtual void toBack() {}
+  void toFront() override {}
+  void toBack() override {}
 
   // No next, no previous
-  virtual bool hasNext() const { return false; }
-  virtual bool hasPrevious() const { return false; }
+  bool hasNext() const override { return false; }
+  bool hasPrevious() const override { return false; }
 
   // Clone another NullIteratorImpl
-  virtual GenericIteratorImpl<ValueType>* clone() const { return new NullIteratorImpl<ValueType>(); }
+  GenericIteratorImpl<ValueType>* clone() const override { return new NullIteratorImpl<ValueType>(); }
 };
 
 /** Iterator for containers, modeled after Qt and Java iteration, returns time values */
@@ -107,7 +107,7 @@ public:
   {
   }
   /// Virtual destructor
-  virtual ~GenericIterator() {}
+  virtual ~GenericIterator() = default;
 
   /** Retrieves next element and increments iterator to position after that element
   * @return Element after original iterator position,

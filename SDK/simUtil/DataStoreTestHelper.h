@@ -45,6 +45,11 @@ public:
   /** Deletes data store if data store was created inside constructor */
   virtual ~DataStoreTestHelper();
 
+  /// Copy constructor to prevent static analysis hits; not implemented
+  DataStoreTestHelper(const DataStoreTestHelper& noCopyConstr) = delete;
+  /// Copy operator to prevent static analysis hits; not implemented
+  DataStoreTestHelper& operator=(const DataStoreTestHelper& noCopyOperator) = delete;
+
   /** get a reference to the data store */
   simData::DataStore* dataStore();
 
@@ -281,11 +286,6 @@ private:
   bool ownDataStore_; ///< flag to determine if the reference to the data store should be deleted
   std::set<uint64_t> entityIds_; ///< holds the entityIds to ensure uniqueness of generated ids
   uint64_t tableId_; ///< Used to give tables unique names
-
-  /// Private copy constructor to prevent static analysis hits; not implemented
-  DataStoreTestHelper(const DataStoreTestHelper& noCopyConstr);
-  /// Private copy operator to prevent static analysis hits; not implemented
-  DataStoreTestHelper& operator=(const DataStoreTestHelper& noCopyOperator);
 };
 
 }

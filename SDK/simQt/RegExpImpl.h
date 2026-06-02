@@ -83,13 +83,13 @@ public:
   * @param[in] test String to test
   * @return true if test string matches
   */
-  virtual bool match(const std::string& test) const;
+  bool match(const std::string& test) const override;
 
   /**
   * Returns the regex pattern string
   * @return the regex pattern
   */
-  virtual std::string pattern() const;
+  std::string pattern() const override;
 
   /**
   * Sets the regex pattern string
@@ -162,7 +162,7 @@ class SDKQT_EXPORT RegExpFilterFactoryImpl : public simData::RegExpFilterFactory
 public:
   RegExpFilterFactoryImpl();
   virtual ~RegExpFilterFactoryImpl();
-  virtual simData::RegExpFilterPtr createRegExpFilter(const std::string& expression);
+  simData::RegExpFilterPtr createRegExpFilter(const std::string& expression) override;
 };
 
 }

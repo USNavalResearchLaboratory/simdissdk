@@ -96,21 +96,21 @@ namespace simVis
      *
      * Failure to match this signature will result in a shader compilation error.
      */
-    virtual std::string getEntryPointFunctionName() const override;
+    std::string getEntryPointFunctionName() const override;
 
     /**
      * Installs any uniforms or other bindings required by this filter on the
      * provided state set.
      */
-    virtual void install(osg::StateSet* stateSet) const override;
+    void install(osg::StateSet* stateSet) const override;
 
     /**
      * Serializes this object to a Config (optional).
      */
-    virtual osgEarth::Config getConfig() const override;
+    osgEarth::Config getConfig() const override;
 
   protected:
-    virtual ~AlphaColorFilter() {} // osg::Referenced object
+    virtual ~AlphaColorFilter() = default; // osg::Referenced object
 
   private:
     void init_();

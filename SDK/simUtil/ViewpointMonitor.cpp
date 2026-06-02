@@ -193,7 +193,7 @@ public:
   }
 
   /** Add and remove views */
-  virtual void operator()(simVis::View* inset, const simVis::ViewManager::Callback::EventType& e)
+  void operator()(simVis::View* inset, const simVis::ViewManager::Callback::EventType& e) override
   {
     switch (e)
     {
@@ -252,7 +252,7 @@ public:
   }
 
   /** Handles frame updates and returns false so other handlers can process as well */
-  virtual bool handle(const osgGA::GUIEventAdapter& eventAdapter, osgGA::GUIActionAdapter& actionAdapter)
+  bool handle(const osgGA::GUIEventAdapter& eventAdapter, osgGA::GUIActionAdapter& actionAdapter) override
   {
     if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::FRAME)
       vpMonitor_.detectAllChanges_();
@@ -261,10 +261,10 @@ public:
   }
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  const char* libraryName() const override { return "simUtil"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "ViewpointMonitor::RedrawHandler"; }
+  const char* className() const override { return "ViewpointMonitor::RedrawHandler"; }
 
 private:
   ViewpointMonitor& vpMonitor_;

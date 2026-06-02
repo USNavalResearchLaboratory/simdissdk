@@ -64,17 +64,17 @@ public:
     splitIfNeeded_();
   }
 
-  virtual TableStatus setCellValue(TableColumnId columnId, uint8_t value) { return setCellValue_(columnId, value); }
-  virtual TableStatus setCellValue(TableColumnId columnId, int8_t value) { return setCellValue_(columnId, value); }
-  virtual TableStatus setCellValue(TableColumnId columnId, uint16_t value) { return setCellValue_(columnId, value); }
-  virtual TableStatus setCellValue(TableColumnId columnId, int16_t value) { return setCellValue_(columnId, value); }
-  virtual TableStatus setCellValue(TableColumnId columnId, uint32_t value) { return setCellValue_(columnId, value); }
-  virtual TableStatus setCellValue(TableColumnId columnId, int32_t value) { return setCellValue_(columnId, value); }
-  virtual TableStatus setCellValue(TableColumnId columnId, uint64_t value) { return setCellValue_(columnId, value); }
-  virtual TableStatus setCellValue(TableColumnId columnId, int64_t value) { return setCellValue_(columnId, value); }
-  virtual TableStatus setCellValue(TableColumnId columnId, float value) { return setCellValue_(columnId, value); }
-  virtual TableStatus setCellValue(TableColumnId columnId, double value) { return setCellValue_(columnId, value); }
-  virtual TableStatus setCellValue(TableColumnId columnId, const std::string& value) { const std::string cleanup = simCore::StringUtils::removeEscapeSlashes(value); return setCellValue_(columnId, cleanup); }
+  TableStatus setCellValue(TableColumnId columnId, uint8_t value) override { return setCellValue_(columnId, value); }
+  TableStatus setCellValue(TableColumnId columnId, int8_t value) override { return setCellValue_(columnId, value); }
+  TableStatus setCellValue(TableColumnId columnId, uint16_t value) override { return setCellValue_(columnId, value); }
+  TableStatus setCellValue(TableColumnId columnId, int16_t value) override { return setCellValue_(columnId, value); }
+  TableStatus setCellValue(TableColumnId columnId, uint32_t value) override { return setCellValue_(columnId, value); }
+  TableStatus setCellValue(TableColumnId columnId, int32_t value) override { return setCellValue_(columnId, value); }
+  TableStatus setCellValue(TableColumnId columnId, uint64_t value) override { return setCellValue_(columnId, value); }
+  TableStatus setCellValue(TableColumnId columnId, int64_t value) override { return setCellValue_(columnId, value); }
+  TableStatus setCellValue(TableColumnId columnId, float value) override { return setCellValue_(columnId, value); }
+  TableStatus setCellValue(TableColumnId columnId, double value) override { return setCellValue_(columnId, value); }
+  TableStatus setCellValue(TableColumnId columnId, const std::string& value) override { const std::string cleanup = simCore::StringUtils::removeEscapeSlashes(value); return setCellValue_(columnId, cleanup); }
 
 private:
   SubTable& subTable_;
@@ -180,47 +180,47 @@ public:
   {
   }
 
-  virtual const IteratorData next()
+  const IteratorData next() override
   {
     return IteratorData(owner_, timeIter_.next());
   }
 
-  virtual const IteratorData peekNext() const
+  const IteratorData peekNext() const override
   {
     return IteratorData(owner_, timeIter_.peekNext());
   }
 
-  virtual const IteratorData previous()
+  const IteratorData previous() override
   {
     return IteratorData(owner_, timeIter_.previous());
   }
 
-  virtual const IteratorData peekPrevious() const
+  const IteratorData peekPrevious() const override
   {
     return IteratorData(owner_, timeIter_.peekPrevious());
   }
 
-  virtual void toFront()
+  void toFront() override
   {
     timeIter_.toFront();
   }
 
-  virtual void toBack()
+  void toBack() override
   {
     timeIter_.toBack();
   }
 
-  virtual bool hasNext() const
+  bool hasNext() const override
   {
     return timeIter_.hasNext();
   }
 
-  virtual bool hasPrevious() const
+  bool hasPrevious() const override
   {
     return timeIter_.hasPrevious();
   }
 
-  virtual GenericIteratorImpl<IteratorData>* clone() const
+  GenericIteratorImpl<IteratorData>* clone() const override
   {
     return new IteratorImpl(owner_, timeIter_);
   }

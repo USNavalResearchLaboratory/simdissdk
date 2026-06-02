@@ -45,7 +45,7 @@ int simCore::currentYear()
 
   // get the current system time, using timezone value of 0
   // returns UTC time
-  gettimeofday(&tp, 0);
+  gettimeofday(&tp, nullptr);
 
   // put system time into a tm struct
   const time_t t(tp.tv_sec);
@@ -66,7 +66,7 @@ double simCore::getSystemTime()
 
   // get the current system time, using timezone value of 0
   // returns UTC time
-  gettimeofday(&tp, 0);
+  gettimeofday(&tp, nullptr);
 
   return tp.tv_sec + tp.tv_usec * 1e-06;
 }
@@ -79,7 +79,7 @@ double simCore::systemTimeToSecsBgnYr()
 
   // get the current system time, using timezone value of 0
   // returns UTC time
-  gettimeofday(&tp, 0);
+  gettimeofday(&tp, nullptr);
 
   // put system time into a tm struct
   const time_t t(tp.tv_sec);
@@ -105,7 +105,7 @@ void simCore::systemTimeToSecsBgnYr(unsigned int &pSecs, unsigned short &pMillis
 
   // get the current system time, using timezone value of 0
   // returns UTC time
-  gettimeofday(&tp, 0);
+  gettimeofday(&tp, nullptr);
 
   // put system time into a tm struct
   const time_t t(tp.tv_sec);
@@ -136,7 +136,7 @@ double simCore::systemTimeToSecsBgnDay()
 
   // get the current system time, using timezone value of 0
   // returns UTC time
-  gettimeofday(&tp, 0);
+  gettimeofday(&tp, nullptr);
 
   // put system time into a tm struct
   time_t t(tp.tv_sec);

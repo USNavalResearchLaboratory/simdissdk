@@ -83,9 +83,9 @@ public:
   virtual ~CloseableItemDelegate();
 
   /** Overrides from QStyledItemDelegate */
-  virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-  virtual QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const;
-  virtual bool editorEvent(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index);
+  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+  QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+  bool editorEvent(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index) override;
 
   /** Non-const accessor to the style */
   Style& style();
@@ -159,8 +159,8 @@ public:
   virtual ~CategoryDataBreadcrumbs();
 
   /** Override to return a reasonable minimum height based on content */
-  virtual QSize minimumSizeHint() const;
-  virtual QSize sizeHint() const;
+  QSize minimumSizeHint() const override;
+  QSize sizeHint() const override;
 
   // Property accessors
   qreal rectangleRadiusX() const;
@@ -235,7 +235,7 @@ private Q_SLOTS:
 
 protected:
   /** Override resize event to recalculate the flow and adjust minimum height */
-  virtual void resizeEvent(QResizeEvent* evt);
+  void resizeEvent(QResizeEvent* evt) override;
 
 private:
   /** Adds items to the breadcrumb list for the given name */

@@ -31,22 +31,11 @@ namespace simCore { namespace GOG { class Cone; } }
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
-class ParsedShape;
-class ParserData;
 
 /** Display GOG Cone */
 class SDKVIS_EXPORT Cone
 {
 public:
-  /** Create the cone from the parser data and GOG meta data */
-  GogNodeInterface* deserialize(
-    const ParsedShape&       parsedShape,
-    simVis::GOG::ParserData& p,
-    const GOGNodeType&       nodeType,
-    const GOGContext&        context,
-    const GogMetaData&       metaData,
-    osgEarth::MapNode*       mapNode);
-
   /** Create the cone from the shape object */
   static GogNodeInterface* createCone(const simCore::GOG::Cone& cone, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode);
 };

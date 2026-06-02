@@ -144,13 +144,13 @@ public:
   CategoryItem(const simData::CategoryNameManager& nameManager, int nameInt);
 
   /** TreeItem Overrides */
-  virtual Qt::ItemFlags flags() const;
-  virtual QVariant data(int role) const;
-  virtual bool setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged);
-  virtual QString categoryName() const;
-  virtual int nameInt() const;
-  virtual bool isUnlistedValueChecked() const;
-  virtual bool isRegExpApplied() const;
+  Qt::ItemFlags flags() const override;
+  QVariant data(int role) const override;
+  bool setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged) override;
+  QString categoryName() const override;
+  int nameInt() const override;
+  bool isUnlistedValueChecked() const override;
+  bool isRegExpApplied() const override;
 
   /** Recalculates the "contributes to filter" flag, returning true if it changes (like setData()) */
   bool recalcContributionTo(const simData::CategoryFilter& filter);
@@ -202,13 +202,13 @@ public:
   ValueItem(const simData::CategoryNameManager& nameManager, int nameInt, int valueInt);
 
   /** TreeItem Overrides */
-  virtual Qt::ItemFlags flags() const;
-  virtual QVariant data(int role) const;
-  virtual bool setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged);
-  virtual QString categoryName() const;
-  virtual int nameInt() const;
-  virtual bool isUnlistedValueChecked() const;
-  virtual bool isRegExpApplied() const;
+  Qt::ItemFlags flags() const override;
+  QVariant data(int role) const override;
+  bool setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged) override;
+  QString categoryName() const override;
+  int nameInt() const override;
+  bool isUnlistedValueChecked() const override;
+  bool isRegExpApplied() const override;
 
   /** Returns the value integer for this item */
   int valueInt() const;
@@ -849,25 +849,25 @@ public:
   }
 
   /// Invoked when a new category is added
-  virtual void onAddCategory(int categoryIndex)
+  void onAddCategory(int categoryIndex) override
   {
     parent_.addName_(categoryIndex);
   }
 
   /// Invoked when a new value is added to a category
-  virtual void onAddValue(int categoryIndex, int valueIndex)
+  void onAddValue(int categoryIndex, int valueIndex) override
   {
     parent_.addValue_(categoryIndex, valueIndex);
   }
 
   /// Invoked when all data is cleared
-  virtual void onClear()
+  void onClear() override
   {
     parent_.clearTree_();
   }
 
   /// Invoked when all listeners have received onClear()
-  virtual void doneClearing()
+  void doneClearing() override
   {
     // noop
   }

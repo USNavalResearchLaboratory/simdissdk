@@ -168,7 +168,7 @@ namespace simCore
     RandomVariable() { seeds_ = 0; }
 
     /// CRandomVariable destructor
-    virtual ~RandomVariable() {}
+    virtual ~RandomVariable() = default;
 
   protected:
     double seeds_;  /**< seed for random number generator */
@@ -201,7 +201,7 @@ namespace simCore
     ComplexRandomVariable() { seeds_ = 0; }
 
     /// CComplexRandomVariable destructor
-    virtual ~ComplexRandomVariable() {}
+    virtual ~ComplexRandomVariable() = default;
 
   protected:
     double seeds_;  /**< seed for random number generator */
@@ -219,13 +219,13 @@ namespace simCore
     {}
 
     /// CNormalVariable destructor
-    virtual ~NormalVariable() {}
+    virtual ~NormalVariable() = default;
 
     /**
     * This method overrides the () operator to generate a normal(Gaussian) distribution
     * @return normal(Gaussian) distribution
     */
-    double operator()();
+    double operator()() override;
 
     /**
     * This method sets the mean value for the distribution
@@ -270,13 +270,13 @@ namespace simCore
     {}
 
     /// CGaussianVariable destructor
-    virtual ~GaussianVariable() {}
+    virtual ~GaussianVariable() = default;
 
     /**
     * This method overrides the () operator to generate a complex(Gaussian) distribution
     * @return complex(Gaussian) distribution
     */
-    Complex operator()();
+    Complex operator()() override;
 
     /**
     * This method sets the mean value for the distribution
@@ -318,13 +318,13 @@ namespace simCore
     {}
 
     /// CUniformVariable destructor
-    virtual ~UniformVariable() {}
+    virtual ~UniformVariable() = default;
 
     /**
     * This method overrides the () operator to generate a uniform distribution
     * @return uniform distribution
     */
-    double operator()();
+    double operator()() override;
 
     /**
     * This method sets the min and max values of the uniform distribution
@@ -364,13 +364,13 @@ namespace simCore
     {}
 
     /// ExponentialVariable destructor
-    virtual ~ExponentialVariable() {}
+    virtual ~ExponentialVariable() = default;
 
     /**
     * This method overrides the () operator to generate an exponential distribution
     * @return exponential distribution
     */
-    double operator()();
+    double operator()() override;
 
     /**
     * This method sets the mean value for the distribution
@@ -415,7 +415,7 @@ namespace simCore
     DiscreteRandomVariable() { seeds_=0; }
 
     /// CDiscreteRandomVariable destructor
-    virtual ~DiscreteRandomVariable() {}
+    virtual ~DiscreteRandomVariable() = default;
 
   protected:
     double seeds_;  /**< seed for random number generator */
@@ -433,13 +433,13 @@ namespace simCore
     PoissonVariable(double mean = 1.0);
 
     /// CPoissonVariable destructor
-    virtual ~PoissonVariable() {}
+    virtual ~PoissonVariable() = default;
 
     /**
     * This method overrides the () operator to generate a Poisson distribution
     * @return Poisson distribution
     */
-    int operator()();
+    int operator()() override;
 
     /**
     * This method sets the mean value for the distribution
@@ -469,13 +469,13 @@ namespace simCore
     GeometricVariable(double beta = 0.5);
 
     /// GeometricVariable destructor
-    virtual ~GeometricVariable() {}
+    virtual ~GeometricVariable() = default;
 
     /**
     * This method overrides the () operator to generate an Geometric distribution
     * @return Geometric distribution
     */
-    int operator()();
+    int operator()() override;
 
     /**
     * This method sets the beta value for the distribution
@@ -508,13 +508,13 @@ namespace simCore
     { }
 
     /// CExponentialVariable destructor
-    virtual ~BinomialVariable() {}
+    virtual ~BinomialVariable() = default;
 
     /**
     * This method overrides the () operator to generate an binomial distribution
     * @return binomial distribution
     */
-    int operator()();
+    int operator()() override;
 
     /**
     * This method sets the number of trials and probability for the binomial distribution
@@ -555,13 +555,13 @@ namespace simCore
     { }
 
     /// CDiscreteUniformVariable destructor
-    virtual ~DiscreteUniformVariable() {}
+    virtual ~DiscreteUniformVariable() = default;
 
     /**
     * This method overrides the () operator to generate a discrete uniform distribution
     * @return discrete uniform distribution
     */
-    int operator()();
+    int operator()() override;
 
     /**
     * This method sets the min and max values of the discrete uniform distribution

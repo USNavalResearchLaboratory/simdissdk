@@ -77,8 +77,8 @@ public:
   QString text() const;
 
   // From osg::Node:
-  virtual const char* libraryName() const override { return "simQt"; }
-  virtual const char* className() const override { return "TextBoxRenderer"; }
+  const char* libraryName() const override { return "simQt"; }
+  const char* className() const override { return "TextBoxRenderer"; }
 
 protected:
   /** Derived from osg::Referenced */

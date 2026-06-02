@@ -248,7 +248,7 @@ private:
   QString filename_;
 
   /** Re-implement eventFilter() */
-  virtual bool eventFilter(QObject* obj, QEvent* evt);
+  bool eventFilter(QObject* obj, QEvent* evt) override;
 
   /** Converts the filter option enum to a readable text */
   QString filterOptions2QString_(FileSelectorWidget::FilterOptions option) const;

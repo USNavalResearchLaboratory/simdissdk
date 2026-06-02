@@ -65,7 +65,7 @@ public:
   }
 
   // From GUIEventHandler:
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
   {
     if (mainWindow_)
       mainWindow_->processOsgEvent(ea);
@@ -131,7 +131,7 @@ void MainWindow::addTouchDevicesDock_()
   model->setHeaderData(0, Qt::Horizontal, tr("Name"), Qt::DisplayRole);
   model->setHeaderData(1, Qt::Horizontal, tr("Type"), Qt::DisplayRole);
   model->setHeaderData(2, Qt::Horizontal, tr("#Points"), Qt::DisplayRole);
-  for (int rowNum = 0; rowNum < touchDevices.size(); ++rowNum)
+  for (int rowNum = 0; rowNum < static_cast<int>(touchDevices.size()); ++rowNum)
   {
     const auto& device = touchDevices[rowNum];
     if (device->name().isEmpty())

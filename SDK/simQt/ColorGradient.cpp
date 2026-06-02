@@ -158,7 +158,7 @@ size_t ColorGradient::addControlColor(float zeroToOne, const QColor& color)
 
 size_t ColorGradient::addControlColor(float zeroToOne, const osg::Vec4& color)
 {
-  controlColors_.emplace_back(std::make_pair(simCore::clamp(zeroToOne, 0.f, 1.f), color));
+  controlColors_.emplace_back(simCore::clamp(zeroToOne, 0.f, 1.f), color);
   updateTransferFunc_();
   return controlColors_.size() - 1;
 }
@@ -245,13 +245,13 @@ void ColorGradient::importColorMap(const std::map<float, QColor>& colors)
   iter = colors.upper_bound(1.f);
   if (iter != colors.begin())
     --iter;
-  controlColors_.emplace_back(std::make_pair(1.f, simQt::getOsgColorFromQt(iter->second)));
+  controlColors_.emplace_back(1.f, simQt::getOsgColorFromQt(iter->second));
 
   // Add all points between 0 and 1 as control points. this allows for compression later if desired
   for (const auto& pctColor : colors)
   {
     if (simCore::isBetween(pctColor.first, 0.f, 1.f))
-      controlColors_.emplace_back(std::make_pair(pctColor.first, simQt::getOsgColorFromQt(pctColor.second)));
+      controlColors_.emplace_back(pctColor.first, simQt::getOsgColorFromQt(pctColor.second));
   }
   updateTransferFunc_();
 }
@@ -271,7 +271,7 @@ void ColorGradient::importColorVector(const std::vector<std::pair<float, QColor>
     const osg::Vec4& osgColor = simQt::getOsgColorFromQt(pctColor.second);
     overwriteMap[pctColor.first] = osgColor;
     // std::map::emplace will not overwrite existing entries
-    noOverwriteMap.emplace(std::make_pair(pctColor.first, osgColor));
+    noOverwriteMap.emplace(pctColor.first, osgColor);
   }
 
   // Avoid noop
@@ -283,8 +283,8 @@ void ColorGradient::importColorVector(const std::vector<std::pair<float, QColor>
 
   // Extract the 0% color and 100% color
   controlColors_.clear();
-  controlColors_.emplace_back(std::make_pair(0.f, noOverwriteMap.begin()->second));
-  controlColors_.emplace_back(std::make_pair(1.f, noOverwriteMap.rbegin()->second));
+  controlColors_.emplace_back(0.f, noOverwriteMap.begin()->second);
+  controlColors_.emplace_back(1.f, noOverwriteMap.rbegin()->second);
 
   // Add all other control colors in order
   for (const auto& pctColor : overwriteMap)
@@ -335,7 +335,7 @@ ColorGradient ColorGradient::compress(float lowPercent, float highPercent) const
   {
     const float newPct = simCore::linearInterpolate(lowPercent, highPercent,
       0.0, controlColors_[k].first, 1.0);
-    rv.controlColors_.emplace_back(std::make_pair(newPct, controlColors_[k].second));
+    rv.controlColors_.emplace_back(newPct, controlColors_[k].second);
   }
 
   // If low is greater than high, then swap the colors on the 0% and 100% too

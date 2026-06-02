@@ -58,7 +58,7 @@ public:
   class GogObjectObserver
   {
   public:
-    virtual ~GogObjectObserver() {}
+    virtual ~GogObjectObserver() = default;
     /** Passes the gog that was changed */
     virtual void propertyChanged(const GogObject& gogObject) = 0;
     /** Passes the gog whose draw state changed */
@@ -68,7 +68,7 @@ public:
   /** Shared pointer to GOG Object Observer */
   typedef std::shared_ptr<GogObjectObserver> GogObjectObserverPtr;
 
-  virtual ~GogObject() {}
+  virtual ~GogObject() = default;
 
   /**
   * Add a GogObjectObserver to be notified of GOG Object changes
@@ -197,7 +197,7 @@ public:
   class GogChangeObserver
   {
   public:
-    virtual ~GogChangeObserver() {}
+    virtual ~GogChangeObserver() = default;
     /** Passes newly added GOGs */
     virtual void addGogs(const std::vector<GogObjectPtr>& addedGogs) = 0;
     /** Passes GOGs about to be removed. The GogObject pointers are still valid memory when this is called */
@@ -211,7 +211,7 @@ public:
   /** Shared pointer to GOG Change Observer */
   typedef std::shared_ptr<GogChangeObserver> GogChangeObserverPtr;
 
-  virtual ~GogManager() {}
+  virtual ~GogManager() = default;
 
   /**
   * Retrieve the GogObject that defines the specified gogFile, if it exists in the GogManager. GOG may be attached or absolute.

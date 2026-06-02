@@ -195,27 +195,27 @@ public:
 public: // ScenarioTool
 
   /** @see ScenarioTool::onInstall() */
-  virtual void onInstall(const ScenarioManager& scenario) override;
+  void onInstall(const ScenarioManager& scenario) override;
 
   /** @see ScenarioTool::onUninstall() */
-  virtual void onUninstall(const ScenarioManager& scenario) override;
+  void onUninstall(const ScenarioManager& scenario) override;
 
   /** @see ScenarioTool::onEntityAdd() */
-  virtual void onEntityAdd(const ScenarioManager& scenario, EntityNode* entity) override;
+  void onEntityAdd(const ScenarioManager& scenario, EntityNode* entity) override;
 
   /** @see ScenarioTool::onEntityRemove() */
-  virtual void onEntityRemove(const ScenarioManager& scenario, EntityNode* entity) override;
+  void onEntityRemove(const ScenarioManager& scenario, EntityNode* entity) override;
 
   /** @see ScenarioTool::onUpdate() */
-  virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates) override;
+  void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates) override;
 
   /** @see ScenarioTool::onFlush() */
-  virtual void onFlush(const ScenarioManager& scenario, simData::ObjectId flushedId) override;
+  void onFlush(const ScenarioManager& scenario, simData::ObjectId flushedId) override;
 
 public: // Tool
 
   /// returns the node to display in the scenario graph
-  osg::Node* getNode() const;
+  osg::Node* getNode() const override;
 
 public: // internal
 

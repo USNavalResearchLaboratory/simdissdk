@@ -52,7 +52,7 @@ public:
       completeLine_(completeLine)
   {}
 
-  virtual bool eventFilter(QObject* obj, QEvent* e)
+  bool eventFilter(QObject* obj, QEvent* e) override
   {
     // set selection based on mouse release
     if (e->type() == QEvent::MouseButtonRelease)

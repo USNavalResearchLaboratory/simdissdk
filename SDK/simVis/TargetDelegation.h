@@ -71,10 +71,10 @@ public:
   void removeAll();
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "TargetDelegation"; }
+  const char* className() const override { return "TargetDelegation"; }
 
 public:
   /// Callback that will create or update geometry when the

@@ -63,6 +63,11 @@ public:
                CoordSurfaceClamping*              surfaceClamping,
                simData::DataStore&                ds);
 
+  /** Copy constructor, not implemented or available. */
+  LobGroupNode(const LobGroupNode&) = delete;
+  /** Assignment operator, not implemented or available. */
+  LobGroupNode& operator=(const LobGroupNode&) = delete;
+
   /**
     * Installs the global LOB shader program and initializes the default uniform variables
     * for the shader into the StateSet provided.  This is required in the scene graph somewhere
@@ -99,7 +104,7 @@ public: // EntityNode interface
   * current scenario time, and has not received a command to turn off
   * @return true if active; false if not
   */
-  virtual bool isActive() const override;
+  bool isActive() const override;
 
   /**
   * Returns the entity name. Can be used to get the actual name always or the
@@ -109,23 +114,23 @@ public: // EntityNode interface
   * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
   * @return    actual/alias entity name string
   */
-  virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const override;
+  const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const override;
 
   /// Returns the pop up text based on the label content callback, update and preference
-  virtual std::string popupText() const override;
+  std::string popupText() const override;
   /// Returns the hook text based on the label content callback, update and preference
-  virtual std::string hookText() const override;
+  std::string hookText() const override;
   /// Returns the legend text based on the label content callback, update and preference
-  virtual std::string legendText() const override;
+  std::string legendText() const override;
 
   /**
   * Gets the unique ID of the database entity underlying this node.
   * @return The object ID
   */
-  virtual simData::ObjectId getId() const override;
+  simData::ObjectId getId() const override;
 
   /** Get the lob's host's ID */
-  virtual bool getHostId(simData::ObjectId& out_hostId) const override;
+  bool getHostId(simData::ObjectId& out_hostId) const override;
 
   /**
   * Update this based on the slice from the data store.
@@ -133,36 +138,31 @@ public: // EntityNode interface
   * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
   * @return true if update applied, false if not
   */
-  virtual bool updateFromDataStore(const simData::DataSliceBase *updateSlice, bool force=false) override;
+  bool updateFromDataStore(const simData::DataSliceBase *updateSlice, bool force=false) override;
 
   /**
   * Flushes all the entity's data point visualization
   */
-  virtual void flush() override;
+  void flush() override;
 
   /**
   * Returns a range value used for visualization.  Will return zero for platforms and projectors.
   */
-  virtual double range() const override;
+  double range() const override;
 
   /** This entity type is, at this time, unpickable. */
-  virtual unsigned int objectIndexTag() const override;
+  unsigned int objectIndexTag() const override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const  override { return "simVis"; }
+  const char* libraryName() const  override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const  override { return "LobGroupNode"; }
+  const char* className() const  override { return "LobGroupNode"; }
 
 private: // types
   class Cache;
 
 private: // methods
-  /** Copy constructor, not implemented or available. */
-  LobGroupNode(const LobGroupNode&);
-  /** Assignment operator, not implemented or available. */
-  LobGroupNode& operator=(const LobGroupNode&);
-
   /// osg::Referenced-derived
   virtual ~LobGroupNode();
 

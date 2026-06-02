@@ -37,13 +37,13 @@ public:
   explicit TableManagerObserver(DataTableComboBox* parent) : parent_(parent){}
 
   /** @copydoc simData::DataTableManager::ManagerObserver::onPreRemoveTable */
-  virtual void onAddTable(simData::DataTable* table)
+  void onAddTable(simData::DataTable* table) override
   {
     parent_->addTable_(table);
   }
 
   /** @copydoc simData::DataTableManager::ManagerObserver::onPreRemoveTable */
-  virtual void onPreRemoveTable(simData::DataTable* table)
+  void onPreRemoveTable(simData::DataTable* table) override
   {
     parent_->removeTable_(table);
   }
@@ -60,7 +60,7 @@ public:
   explicit TableListVisitor(QComboBox* comboBox) : comboBox_(comboBox) {}
 
   /** @copydoc simData::TableList::Visitor::visit */
-  virtual void visit(simData::DataTable* table)
+  void visit(simData::DataTable* table) override
   {
     comboBox_->addItem(table->tableName().c_str(), (unsigned long long)table);
   }

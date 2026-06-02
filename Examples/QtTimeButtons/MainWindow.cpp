@@ -46,13 +46,13 @@ public:
   }
 
   /// time has been changed
-  virtual void onSetTime(const simCore::TimeStamp &t, bool isJump) override
+  void onSetTime(const simCore::TimeStamp &t, bool isJump) override
   {
     dataStore_.update(t.secondsSinceRefYear());
   }
 
-  virtual void onTimeLoop() override {}
-  virtual void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime) override {}
+  void onTimeLoop() override {}
+  void adjustTime(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime) override {}
 
 protected:
   simData::DataStore &dataStore_;

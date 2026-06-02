@@ -20,28 +20,47 @@
  * disclose, or release this software.
  *
  */
-#ifndef SIMVIS_GOG_ERRORHANDLER_H
-#define SIMVIS_GOG_ERRORHANDLER_H
+#ifndef QTDOCKINGOPTIONS_MAINWINDOW_H
+#define QTDOCKINGOPTIONS_MAINWINDOW_H
 
-#include <string>
+#include <memory>
+#include <QMainWindow>
+#include "osg/ref_ptr"
 
-namespace simVis { namespace GOG {
+class QDockWidget;
+
+namespace simVis {
+  class SceneManager;
+  class ViewManager;
+  class View;
+}
+namespace simQt { class ViewerWidgetAdapter; }
 
 /**
- * Implement your own ErrorHandler for custom error message reporting or output.  @see simVis::Parser::setErrorHandler().
- * @deprecated This is only used in the now-deprecated simVis::GOG::Parser
+ * A simple MainWindow derivative that provides a showcase for simQt::DockWidgets vs baseline Qt Docking options,
+ * in addition to demonstrating the behavior of children spawned by those dock widgets
  */
-class ErrorHandler
+class MyMainWindow : public QMainWindow
 {
+  Q_OBJECT;
 public:
-  virtual ~ErrorHandler() {}
+  explicit MyMainWindow(int framerate);
+  virtual ~MyMainWindow();
 
-  /** Print a warning about the GOG being parsed */
-  virtual void printWarning(size_t lineNumber, const std::string& warningText) = 0;
-  /** Print an error about the GOG being parsed */
-  virtual void printError(size_t lineNumber, const std::string& errorText) = 0;
+private Q_SLOTS:
+  void createSimQtDockable_();
+  void createQDockable_();
+
+private:
+  void createMainView_();
+  simVis::View* createView_(simVis::ViewManager& viewManager, const QString& name) const;
+  simQt::ViewerWidgetAdapter* newWidget_(const QString& viewName);
+
+  int viewCounter_ = 1;
+  int timerInterval_ = 33;
+  osg::ref_ptr<simVis::ViewManager> viewManager_;
+  osg::ref_ptr<simVis::SceneManager> sceneMan_;
+  std::vector<QDockWidget*> dockables_;
 };
 
-} }
-
-#endif /* SIMVIS_GOG_ERRORHANDLER_H */
+#endif

@@ -74,7 +74,7 @@ public:
 
 protected:
   /// osg::Referenced-derived
-  virtual ~ColorProvider() {}
+  virtual ~ColorProvider() = default;
 };
 }
 

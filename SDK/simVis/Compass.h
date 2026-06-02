@@ -68,7 +68,7 @@ public:
   explicit UpdateWindVaneListener(simVis::CompassNode* compass);
 
   /** Override to pass along wind values */
-  virtual void onScenarioPropertiesChange(simData::DataStore* source);
+  void onScenarioPropertiesChange(simData::DataStore* source) override;
 
 private:
   osg::observer_ptr<simVis::CompassNode> compass_;
@@ -116,7 +116,7 @@ public:
   void setWindParameters(double angleRad, double speedMs);
 
   /// Override traverse() to update the compass based on the view
-  virtual void traverse(osg::NodeVisitor& nv);
+  void traverse(osg::NodeVisitor& nv) override;
 
 protected:
   /** Protect destructor to avoid ref_ptr double delete issue */
@@ -156,8 +156,8 @@ private:
 class SDKVIS_EXPORT CompassUpdateListener
 {
 public:
-  CompassUpdateListener() {}
-  virtual ~CompassUpdateListener() {}
+  CompassUpdateListener() = default;
+  virtual ~CompassUpdateListener() = default;
 
   /** Executed when the compass heading changes, passes in heading in degrees */
   virtual void onUpdate(double heading) = 0;
@@ -211,14 +211,14 @@ public:
   simVis::View* drawView() const;
 
   /// Override traverse() to adjust the active view in some cases
-  virtual void traverse(osg::NodeVisitor& nv);
+  void traverse(osg::NodeVisitor& nv) override;
 
 protected:
   /** Destructor */
   virtual ~Compass();
 
   /** Override to fire off callbacks. */
-  virtual void updateCompass_();
+  void updateCompass_() override;
 
 private:
   class RepositionEventHandler;

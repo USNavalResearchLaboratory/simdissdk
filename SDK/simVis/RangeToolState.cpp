@@ -106,7 +106,7 @@ void RangeToolState::intermediatePoints(const simCore::Vec3& lla0, const simCore
     double lat = 0.0;
     double lon = 0.0;
     simCore::sodanoDirect(lla0.lat(), lla0.lon(), lla0.alt(), distance * portionOfFull, azimuth, &lat, &lon);
-    llaPointsOut.push_back(simCore::Vec3(lat, lon, 0));
+    llaPointsOut.emplace_back(lat, lon, 0);
   }
 }
 

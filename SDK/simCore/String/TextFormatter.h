@@ -41,7 +41,7 @@ class SDKCORE_EXPORT TextFormatter
 {
 public:
   /** Inherit a virtual destructor */
-  virtual ~TextFormatter() {}
+  virtual ~TextFormatter() = default;
 
   /** Converts a latitude value into a string; input is in radians */
   virtual std::string formatLatitude(double val, DegreeSymbolFormat format=DEG_SYM_NONE, bool allNumerics=false) const = 0;

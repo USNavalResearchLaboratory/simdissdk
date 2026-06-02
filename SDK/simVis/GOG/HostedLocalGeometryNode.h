@@ -49,7 +49,7 @@ public:
   }
 
   /// Override setMapNode to ignore values
-  virtual void setMapNode(osgEarth::MapNode* mapNode)
+  void setMapNode(osgEarth::MapNode* mapNode) override
   {
     // No-op
   }

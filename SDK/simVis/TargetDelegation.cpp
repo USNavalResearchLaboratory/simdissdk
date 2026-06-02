@@ -44,7 +44,7 @@ void TargetDelegation::setGeoFence(const GeoFence* fence)
 
 void TargetDelegation::addUpdateGeometryCallback(UpdateGeometryCallback* cb)
 {
-  updateGeometryCallbacks_.push_back(cb);
+  updateGeometryCallbacks_.emplace_back(cb);
 }
 
 void TargetDelegation::updateGeometry_(osg::MatrixTransform* xform, const osg::Vec3d& ecef)

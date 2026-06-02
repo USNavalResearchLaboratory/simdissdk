@@ -52,7 +52,7 @@ public:
 
   protected:
     /// osg::Referenced-derived
-    virtual ~SelectCallback() {}
+    virtual ~SelectCallback() = default;
   };
 
 public:
@@ -127,17 +127,17 @@ public:
 
 public: // osgGA::GUIEventHandler
   /** Detects mouse clicks on entities in order to select the items */
-  virtual bool handle(const osgGA::GUIEventAdapter &ev, osgGA::GUIActionAdapter &aa);
+  bool handle(const osgGA::GUIEventAdapter &ev, osgGA::GUIActionAdapter &aa) override;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "ObjectSelectionHandler"; }
+  const char* className() const override { return "ObjectSelectionHandler"; }
 
 protected:
   /// osg::Referenced-derived
-  virtual ~ObjectSelectionHandler() {}
+  virtual ~ObjectSelectionHandler() = default;
 
 private: // methods
   bool isMouseClick_(const osgGA::GUIEventAdapter &ev);

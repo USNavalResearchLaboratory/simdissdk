@@ -80,10 +80,10 @@ public:
   double boundingSphereRadius() const;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "AveragePositionNode"; }
+  const char* className() const override { return "AveragePositionNode"; }
 
 protected:
   /** Protect osg::Referenced-derived destructor */
@@ -99,7 +99,7 @@ private:
     {
     }
 
-    virtual bool run(osg::Object* object, osg::Object* data)
+    bool run(osg::Object* object, osg::Object* data) override
     {
       avgNode_.updateAveragePosition_();
       return traverse(object, data);

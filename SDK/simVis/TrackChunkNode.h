@@ -103,7 +103,7 @@ public:
   void reset();
 
 protected:
-  virtual ~TrackPointsChunk() {}
+  virtual ~TrackPointsChunk() = default;
 
   /// Is this chunk empty?
   bool isEmpty_() const;
@@ -155,19 +155,19 @@ public:
   bool getNewestData(osg::Matrix& out_matrix, double& out_time) const;
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  const char* libraryName() const override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "TrackChunkNode"; }
+  const char* className() const override { return "TrackChunkNode"; }
 
 protected:
   virtual ~TrackChunkNode();
 
   /// Update the offset and count on each primitive set to draw the proper data.
-  virtual void updatePrimitiveSets_();
+  void updatePrimitiveSets_() override;
 
   /// Fix the ribbon visual after points deletion to not show links to deleted point
-  virtual void fixGraphicsAfterRemoval_();
+  void fixGraphicsAfterRemoval_() override;
 
 private:
   /// Allocate the graphical elements for this chunk.
