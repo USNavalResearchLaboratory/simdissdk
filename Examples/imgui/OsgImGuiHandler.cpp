@@ -382,7 +382,7 @@ bool OsgImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
     }
   }
 
-  // SIM-12345678: It's possible to enter here, before the first FRAME event,
+  // SIM-19436: It's possible to enter here, before the first FRAME event,
   // and after initialization of the setCameraCallbacks. We could either return
   // in that case to avoid an invalid GetIO(), or just initialize early. If we
   // initialize early outside of a FRAME, the GL context won't initialize
