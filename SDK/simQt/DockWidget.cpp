@@ -925,6 +925,13 @@ void DockWidget::restore_()
     normalGeometry_ = geometry();
     setFloating(true);
   }
+  else if (normalGeometry_.height() == 30 && normalGeometry_.width() == 100)
+  {
+    // 100x30 is an init value, not usable. should only occur for startup with main view in maximized or full-screen.
+    // use current max/fs geometry to guide restore to smaller floating window on same screen
+    const auto& center = geometry().center();
+    normalGeometry_.setRect(center.x() - 200, center.y() - 200, 400, 400);
+  }
 
   // We already have a saved decent geometry, restore to it
   setGeometry(normalGeometry_);
