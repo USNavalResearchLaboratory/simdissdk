@@ -137,9 +137,9 @@ simVis::EntityNode* CenterEntity::getViewCenterableNode(uint64_t id) const
 
 BindCenterEntityToEntityTreeComposite::BindCenterEntityToEntityTreeComposite(CenterEntity& centerEntity, EntityTreeComposite& tree, simData::DataStore& dataStore, QObject* parent)
   : QObject(parent),
-    centerEntity_(centerEntity),
     tree_(tree),
     dataStore_(dataStore),
+    centerEntity_(centerEntity),
     timeFormatter_(new simCore::TimeFormatterRegistry),
     newTime_(INVALID_TIME)
 {
