@@ -188,64 +188,60 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
   for (auto it = ids.begin(); it != ids.end(); ++it)
   {
     auto node = centerEntity_.getViewCenterableNode(*it);
-    if ((node == nullptr) || (node->isActive() && !node->isVisible()))
+    if ((node == nullptr))
     {
       tree_.setUseCenterAction(false, reason);
       return;
     }
 
-    // If there is one selected entity look for a time to make the center command valid
-    if (!node->isActive())
+    // If more than one entity is selected don't try to find a time where all are active
+    if (ids.size() != 1)
     {
-      // If more than one entity is selected don't try to find a time where all are active
-      if (ids.size() != 1)
-      {
-        tree_.setUseCenterAction(false, reason);
-        return;
-      }
+      tree_.setUseCenterAction(false, reason);
+      return;
+    }
 
-      // Make sure time controls are enabled and that the scenario is in file mode
-      if ((dataStore_.getBoundClock() == nullptr) || dataStore_.getBoundClock()->controlsDisabled() || dataStore_.getBoundClock()->isLiveMode())
-      {
-        tree_.setUseCenterAction(false, reason);
-        return;
-      }
+    // Make sure time controls are enabled and that the scenario is in file mode
+    if ((dataStore_.getBoundClock() == nullptr) || dataStore_.getBoundClock()->controlsDisabled() || dataStore_.getBoundClock()->isLiveMode())
+    {
+      tree_.setUseCenterAction(false, reason);
+      return;
+    }
 
-      const auto time = dataStore_.updateTime();
-      auto id = ids.front();
-      switch (dataStore_.objectType(id))
-      {
-      case simData::PLATFORM:
-        std::tie(newTime_, reason) = getPlatformNearestTime_(time, id);
-        break;
-      case simData::CUSTOM_RENDERING:
-        std::tie(newTime_, reason) = getCustomRenderingNearestTime_(time, id);
-        break;
-      case simData::BEAM:
-        std::tie(newTime_, reason) = getBeamNearestTime_(time, id);
-        break;
-      case simData::GATE:
-        std::tie(newTime_, reason) = getGateNearestTime_(time, id);
-        break;
-      case simData::LASER:
-        std::tie(newTime_, reason) = getLaserNearestTime_(time, id);
-        break;
-      case simData::LOB_GROUP:
-        std::tie(newTime_, reason) = getLobGroupNearestTime_(time, id);
-        break;
-      case simData::PROJECTOR:
-        std::tie(newTime_, reason) = getProjectorNearestTime_(time, id);
-        break;
-      case simData::NONE:
-      case simData::ALL:
-        break;
-      }
+    const auto time = dataStore_.updateTime();
+    auto id = ids.front();
+    switch (dataStore_.objectType(id))
+    {
+    case simData::PLATFORM:
+      std::tie(newTime_, reason) = getPlatformNearestTime_(time, id);
+      break;
+    case simData::CUSTOM_RENDERING:
+      std::tie(newTime_, reason) = getCustomRenderingNearestTime_(time, id);
+      break;
+    case simData::BEAM:
+      std::tie(newTime_, reason) = getBeamNearestTime_(time, id);
+      break;
+    case simData::GATE:
+      std::tie(newTime_, reason) = getGateNearestTime_(time, id);
+      break;
+    case simData::LASER:
+      std::tie(newTime_, reason) = getLaserNearestTime_(time, id);
+      break;
+    case simData::LOB_GROUP:
+      std::tie(newTime_, reason) = getLobGroupNearestTime_(time, id);
+      break;
+    case simData::PROJECTOR:
+      std::tie(newTime_, reason) = getProjectorNearestTime_(time, id);
+      break;
+    case simData::NONE:
+    case simData::ALL:
+      break;
+    }
 
-      if (newTime_ == INVALID_TIME)
-      {
-        tree_.setUseCenterAction(false, reason);
-        return;
-      }
+    if (newTime_ == INVALID_TIME)
+    {
+      tree_.setUseCenterAction(false, reason);
+      return;
     }
   }
 
@@ -291,16 +287,18 @@ std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getPlatformNe
   auto pref = dataStore_.platformPrefs(id, &trans);
   if (pref == nullptr)
     return { INVALID_TIME, tr("Invalid platform") };
-  if (!pref->commonprefs().draw())
-    return { INVALID_TIME, tr("Draw flag off") };
   if (!pref->commonprefs().datadraw())
     return { INVALID_TIME, tr("Data draw flag off") };
-  trans.release(&pref);
 
   // Next check data points
   auto slice = dataStore_.platformUpdateSlice(id);
   if ((slice == nullptr) || (slice->numItems() == 0))
     return { INVALID_TIME, tr("No TSPI points") };
+
+  // Check draw flag last because a subclass does further processing if draw flag is off and the above tests pass
+  if (!pref->commonprefs().draw())
+    return { INVALID_TIME, tr("Draw flag off") };
+  trans.release(&pref);
 
   auto iter = slice->upper_bound(time);
 

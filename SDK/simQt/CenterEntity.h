@@ -130,13 +130,23 @@ public Q_SLOTS:
   /** The digits after the decimal point in the time format */
   void setTimePrecision(unsigned int precision);
 
+protected Q_SLOTS:
+  virtual void updateCenterEnable_();
+
 private Q_SLOTS:
-  void updateCenterEnable_();
   void centerOnEntity_(uint64_t id);
 
-private:
+protected:
   /** Returns the closest TSPI time to the given time if the platform is active and has TSPI points.  Returns -1.0 on error. */
-  std::tuple<double, QString> getPlatformNearestTime_(double time, uint64_t id) const;
+  virtual std::tuple<double, QString> getPlatformNearestTime_(double time, uint64_t id) const;
+
+  /** Returns the time closest to searchTime;  returns INVALID if both earlierTime and laterTime are invalid */
+  double getNearestTime_(double searchTime, double earlierTime, double laterTime) const;
+
+  EntityTreeComposite& tree_;
+  simData::DataStore& dataStore_;
+
+private:
   /** Returns the closest draw data time to the given time if the custom rendering is active.  Returns -1.0 on error. */
   std::tuple<double, QString> getCustomRenderingNearestTime_(double time, uint64_t id) const;
   /** The valid time at or before the search time; returns -1.0 on error */
@@ -158,8 +168,6 @@ private:
   /** Returns the closest time in update with data draw on */
   template<typename CommandSlice, typename UpdateSlice>
   std::tuple<double, QString> getNearestDrawTime_(double time, uint64_t id, const CommandSlice* commands, const UpdateSlice* updates) const;
-  /** Returns the time closest to searchTime;  returns INVALID if both earlierTime and laterTime are invalid */
-  double getNearestTime_(double searchTime, double earlierTime, double laterTime) const;
 
   /** Gets the draw state of host of id; returns 0 on success. */
   int getHostDrawState_(uint64_t id, std::map<double, bool>& hostDrawState) const;
@@ -190,8 +198,6 @@ private:
   void setBoundClockToNewTime_();
 
   CenterEntity& centerEntity_;
-  EntityTreeComposite& tree_;
-  simData::DataStore& dataStore_;
   std::unique_ptr<simCore::TimeFormatterRegistry> timeFormatter_;
   simCore::TimeFormat timeFormat_ = simCore::TIMEFORMAT_ORDINAL;
   unsigned short precision_ = 3;
