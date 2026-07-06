@@ -688,12 +688,6 @@ float AntennaPatternTable::gain(const AntennaGainParameters &params)
 
 int AntennaPatternTable::readPat(std::istream& fp)
 {
-  int i, j;
-  short symmetry;
-  short tableSize[4];
-  float *value[4];
-  float *gain[4];
-  float azim, elev;
   valid_ = false;
   std::string st;
   std::vector<std::string> tmpvec;
@@ -715,18 +709,12 @@ int AntennaPatternTable::readPat(std::istream& fp)
     SIM_ERROR << "Invalid number of tokens for antenna pattern table type and symmetry" << std::endl;
     return 1;
   }
-  short type = 0;
+  int type = 0;
   if (!isValidNumber(tmpvec[0], type))
   {
     SIM_ERROR << "Encountered invalid number for antenna pattern table type" << std::endl;
     return 1;
   }
-  if (!isValidNumber(tmpvec[1], symmetry))
-  {
-    SIM_ERROR << "Encountered invalid number for antenna pattern table symmetry" << std::endl;
-    return 1;
-  }
-
   if (!(type == 1 || type == 0))
   {
     SIM_ERROR << "Antenna Table Type must be 0 or 1 : " << type << std::endl;
@@ -734,15 +722,23 @@ int AntennaPatternTable::readPat(std::istream& fp)
   }
   beamWidthType_ = (type != 0);
 
+  int symmetry = 0;
+  if (!isValidNumber(tmpvec[1], symmetry))
+  {
+    SIM_ERROR << "Encountered invalid number for antenna pattern table symmetry" << std::endl;
+    return 1;
+  }
   if (!(symmetry == 1 || symmetry == 2 || symmetry == 4))
   {
     SIM_ERROR << "Antenna Table Symmetry must be 1, 2 or 4 : " << symmetry << std::endl;
     return 1;
   }
 
+  using TablePair = std::pair<float, float>;
+  std::map<int, std::vector<TablePair>> table;
+
   // Read in pattern tables
-  double dblVal=0;
-  for (i = 0; i < symmetry; i++)
+  for (int i = 0; i < symmetry; i++)
   {
     //  Read table size
     if (!getStrippedLine(fp, st))
@@ -757,16 +753,16 @@ int AntennaPatternTable::readPat(std::istream& fp)
       SIM_ERROR << "Invalid number of tokens for antenna pattern table size" << std::endl;
       return 1;
     }
-    if (!isValidNumber(tmpvec[0], tableSize[i]))
+    int tableSize = 0;
+    if (!isValidNumber(tmpvec[0], tableSize) || tableSize <= 0)
     {
       SIM_ERROR << "Encountered invalid number for antenna table size" << std::endl;
       return 1;
     }
-    value[i] = new float[tableSize[i]];
-    gain[i] = new float[tableSize[i]];
-    for (j = 0; j < tableSize[i]; j++)
+
+    table[i].reserve(tableSize);
+    for (int j = 0; j < tableSize; j++)
     {
-      dblVal=0;
       if (!getStrippedLine(fp, st))
       {
         SIM_ERROR << "Antenna Table EOF reached while reading data" << std::endl;
@@ -779,22 +775,24 @@ int AntennaPatternTable::readPat(std::istream& fp)
         SIM_ERROR << "Invalid number of tokens for antenna pattern table angle and gain" << std::endl;
         return 1;
       }
-      if (!isValidNumber(tmpvec[0], dblVal))
+      double azElVal = 0.;
+      if (!isValidNumber(tmpvec[0], azElVal))
       {
         SIM_ERROR << "Encountered invalid number for antenna table angle" << std::endl;
         return 1;
       }
-      if (!isValidNumber(tmpvec[1], gain[i][j]))
+      // if az/el specified in degrees (not specified in units of beamWidth), convert degrees to radians
+      if (beamWidthType_ == false)
+      {
+        azElVal = DEG2RAD * (azElVal);
+      }
+      float gainVal = 0.;
+      if (!isValidNumber(tmpvec[1], gainVal))
       {
         SIM_ERROR << "Encountered invalid number for antenna table gain" << std::endl;
         return 1;
       }
-
-      // convert degrees to radians
-      if (beamWidthType_ == false)
-      {
-        value[i][j] = static_cast<float>(DEG2RAD*(dblVal));
-      }
+      table[i].emplace_back(static_cast<float>(azElVal), gainVal);
     }
   }
 
@@ -812,18 +810,17 @@ int AntennaPatternTable::readPat(std::istream& fp)
     // Elevation data [-PI/2, PI/2] will match azimuth data in [-PI/2, PI/2].
   case 1:
     {
-      for (i = 0; i < tableSize[0]; i++)
+      for (const TablePair& pair : table[0])
       {
-        const float angFixPi = static_cast<float>(angFixPI(value[0][i]));
-        const float gainVal = gain[0][i];
-        azimData_[angFixPi] = gainVal;
-        azimData_[-angFixPi] = gainVal;
+        const float angFixPi = static_cast<float>(angFixPI(pair.first));
+        azimData_[angFixPi] = pair.second;
+        azimData_[-angFixPi] = pair.second;
 
         // transfer only values within (-pi/2, pi/2) to elev table; do not clamp angle values outside of that into elev table.
         if (angFixPi > -m_pi_2 && angFixPi < m_pi_2)
         {
-          elevData_[angFixPi] = gainVal;
-          elevData_[-angFixPi] = gainVal;
+          elevData_[angFixPi] = pair.second;
+          elevData_[-angFixPi] = pair.second;
         }
       }
       // ensure that elev table gets entries for -M_PI_2 and M_PI_2, if those values exist
@@ -841,22 +838,22 @@ int AntennaPatternTable::readPat(std::istream& fp)
     // azimuth, and elevation tables.
   case 2:
     {
-      for (i = 0; i < tableSize[0]; i++)
+      for (const TablePair& pair : table[0])
       {
-        azim = static_cast<float>(angFixPI(value[0][i]));
-        azimData_[azim] = gain[0][i];
+        const float azimFixPi = static_cast<float>(angFixPI(pair.first));
+        azimData_[azimFixPi] = pair.second;
         // mirror missing data
-        azimData_[-azim] = gain[0][i];
+        azimData_[-azimFixPi] = pair.second;
       }
-      for (i = 0; i < tableSize[1]; i++)
+      for (const TablePair& pair : table[1])
       {
-        elev = static_cast<float>(angFixPI(value[1][i]));
+        const float elevFixPi = static_cast<float>(angFixPI(pair.first));
         // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored
-        if (elev >= -m_pi_2 && elev <= m_pi_2)
+        if (elevFixPi >= -m_pi_2 && elevFixPi <= m_pi_2)
         {
-          elevData_[elev] = gain[1][i];
+          elevData_[elevFixPi] = pair.second;
           // mirror missing data
-          elevData_[-elev] = gain[1][i];
+          elevData_[-elevFixPi] = pair.second;
         }
       }
     }
@@ -865,42 +862,36 @@ int AntennaPatternTable::readPat(std::istream& fp)
     // If the symmetry is 4, the user will provide all four azimuth and elevation tables.
   case 4:
     {
-      for (i = 0; i < tableSize[0]; i++)
+      for (const TablePair& pair : table[0])
       {
         // this table is supposed to contain the negative azim angle values, but not strictly enforced
-        azim = static_cast<float>(angFixPI(value[0][i]));
-        azimData_[azim] = gain[0][i];
+        const float azimFixPi = static_cast<float>(angFixPI(pair.first));
+        azimData_[azimFixPi] = pair.second;
       }
-      for (i = 0; i < tableSize[1]; i++)
+      for (const TablePair& pair : table[1])
       {
         // this table is supposed to contain the positive azim angle values, but not strictly enforced
-        azim = static_cast<float>(angFixPI(value[1][i]));
-        azimData_[azim] = gain[1][i];
+        const float azimFixPi = static_cast<float>(angFixPI(pair.first));
+        azimData_[azimFixPi] = pair.second;
       }
-      for (i = 0; i < tableSize[2]; i++)
+      for (const TablePair& pair : table[2])
       {
         // this table is supposed to contain the negative elev angle values, but not strictly enforced
-        elev = static_cast<float>(angFixPI(value[2][i]));
+        const float elevFixPi = static_cast<float>(angFixPI(pair.first));
         // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored
-        if (elev >= -m_pi_2 && elev <= m_pi_2)
-          elevData_[elev] = gain[2][i];
+        if (elevFixPi >= -m_pi_2 && elevFixPi <= m_pi_2)
+          elevData_[elevFixPi] = pair.second;
       }
-      for (i = 0; i < tableSize[3]; i++)
+      for (const TablePair& pair : table[3])
       {
         // this table is supposed to contain the positive elev angle values, but not strictly enforced
-        elev = static_cast<float>(angFixPI(value[3][i]));
+        const float elevFixPi = static_cast<float>(angFixPI(pair.first));
         // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored
-        if (elev >= -m_pi_2 && elev <= m_pi_2)
-          elevData_[elev] = gain[3][i];
+        if (elevFixPi >= -m_pi_2 && elevFixPi <= m_pi_2)
+          elevData_[elevFixPi] = pair.second;
       }
     }
     break;
-  }
-
-  for (i = 0; i < symmetry; i++)
-  {
-    delete [] value[i];
-    delete [] gain[i];
   }
 
   valid_ = true;
