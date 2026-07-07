@@ -549,20 +549,25 @@ namespace
       // the first element in the map, so an interpolated angle between
       // the current element and the previous element will be used
       const float hiGain = iter->second;
+      if (hiGain == SMALL_DB_VAL) // values specified as -300 are No-Data / not-valid, not interpolating
+        return SMALL_DB_VAL;
       const float hiAng = iter->first;
+
       --iter;
       const float loGain = iter->second;
+      if (loGain == SMALL_DB_VAL) // values specified as -300 are No-Data / not-valid, not interpolating
+        return SMALL_DB_VAL;
       const float loAng = iter->first;
       // linearInterpolate casts to double as needed to avoid loss of precision
       return linearInterpolate(loGain, hiGain, loAng, angle, hiAng);
     }
 
     // if not found in table, double-check, possibly missed due to rounding errors due to casting
-    iter = table.begin();
+    iter = table.cbegin();
     if (areEqual(angle, iter->first))
       return iter->second;
 
-    const std::map<float, float>::const_reverse_iterator riter = table.rbegin();
+    const auto riter = table.crbegin();
     if (areEqual(angle, riter->first))
       return riter->second;
 
@@ -582,7 +587,11 @@ float calculateGain(const std::map<float, float> *azimData,
   float maxGain,
   bool applyWeight)
 {
-  if (!azimData || azimData->size() == 0 || !elevData || elevData->size() == 0)
+  if (!azimData || azimData->empty() || !elevData || elevData->empty())
+    return SMALL_DB_VAL;
+  if (azim < azimData->cbegin()->first || azim > azimData->crbegin()->first)
+    return SMALL_DB_VAL;
+  if (elev < elevData->cbegin()->first || elev > elevData->crbegin()->first)
     return SMALL_DB_VAL;
 
   if (hbw == 0.f || vbw == 0.f)
@@ -917,23 +926,24 @@ void AntennaPatternTable::minMaxGain(float *min, float *max, const AntennaGainPa
   minGain_ = -SMALL_DB_VAL;
   maxGain_ = SMALL_DB_VAL;
   // determine min & max values
-  float radius;
   AntennaGainParameters agp(params);
   agp.weighting_ = false;
-  for (int ii = -180; ii <= 180; ++ii)
+
+  // iterating only over values in table
+  for (const auto& [azim, tablegain] : azimData_)
   {
-    agp.azim_ = static_cast<float>(DEG2RAD*(ii));
-    for (int jj = -90; jj <= 90; ++jj)
+    agp.azim_ = azim;
+    for (const auto& [elev, tablegain] : elevData_)
     {
-      agp.elev_ = static_cast<float>(DEG2RAD*(jj));
-      radius = gain(agp);
+      agp.elev_ = elev;
+      const float radius = gain(agp);
       if (radius > SMALL_DB_COMPARE)
-      {
         minGain_ = sdkMin(minGain_, radius);
-      }
+
       maxGain_ = sdkMax(maxGain_, radius);
-    } // end for jj
-  } // end for ii
+    } // elev
+  } // azim
+
   *min = minGain_;
   *max = maxGain_;
 }
