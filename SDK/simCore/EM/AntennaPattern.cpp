@@ -632,12 +632,12 @@ float calculateGain(const std::map<float, float> *azimData,
   if (!applyWeight)
     return gain;
 
-  const double azim_ang = sdkMin(phi * hbw, M_PI);
+  const double azim_ang = (azim < 0) ? sdkMax(-1 * phi * hbw, -M_PI) : sdkMin(phi * hbw, M_PI);
   const float az_gain = gainAtAngle(static_cast<float>(azim_ang), *azimData);
   if (az_gain == SMALL_DB_VAL)
     return SMALL_DB_VAL;
 
-  const double elev_ang = sdkMin(phi * vbw, M_PI_2);
+  const double elev_ang = (elev < 0) ? sdkMax(-1 * phi * vbw, -M_PI_2) : sdkMin(phi * vbw, M_PI_2);
   const float el_gain = gainAtAngle(static_cast<float>(elev_ang), *elevData);
   if (el_gain == SMALL_DB_VAL)
     return SMALL_DB_VAL;
@@ -805,6 +805,8 @@ int AntennaPatternTable::readPat(std::istream& fp)
     }
   }
 
+  // SIM-19910: not correctly implementing the beamWidthType_ true / Antenna Table Type 1, in which angles are specified in units of beamwidth
+  // probably would need to convert from beamwidths to angles here. but beamwidth is a pref that can be changed.
   if (beamWidthType_)
     beamWidthType_ = false;
 
