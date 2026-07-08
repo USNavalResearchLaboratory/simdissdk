@@ -187,61 +187,64 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
   // Make sure all entities are active
   for (auto it = ids.begin(); it != ids.end(); ++it)
   {
-    auto node = centerEntity_.getViewCenterableNode(*it);
-    if ((node == nullptr))
+    const auto node = centerEntity_.getViewCenterableNode(*it);
+    if (node == nullptr)
     {
       tree_.setUseCenterAction(false, reason);
       return;
     }
-
-    // If more than one entity is selected don't try to find a time where all are active
-    if (ids.size() != 1)
+    // If entity is not active or not drawn, look for a reason and a time to make the center command valid
+    if (!node->isActive() || !node->isVisible())
     {
-      tree_.setUseCenterAction(false, reason);
-      return;
-    }
+      // If more than one entity is selected don't try to find a time where all are active
+      if (ids.size() != 1)
+      {
+        tree_.setUseCenterAction(false, reason);
+        return;
+      }
 
-    // Make sure time controls are enabled and that the scenario is in file mode
-    if ((dataStore_.getBoundClock() == nullptr) || dataStore_.getBoundClock()->controlsDisabled() || dataStore_.getBoundClock()->isLiveMode())
-    {
-      tree_.setUseCenterAction(false, reason);
-      return;
-    }
+      // Make sure time controls are enabled and that the scenario is in file mode
+      if ((dataStore_.getBoundClock() == nullptr) || dataStore_.getBoundClock()->controlsDisabled() || dataStore_.getBoundClock()->isLiveMode())
+      {
+        tree_.setUseCenterAction(false, reason);
+        return;
+      }
 
-    const auto time = dataStore_.updateTime();
-    auto id = ids.front();
-    switch (dataStore_.objectType(id))
-    {
-    case simData::PLATFORM:
-      std::tie(newTime_, reason) = getPlatformNearestTime_(time, id);
-      break;
-    case simData::CUSTOM_RENDERING:
-      std::tie(newTime_, reason) = getCustomRenderingNearestTime_(time, id);
-      break;
-    case simData::BEAM:
-      std::tie(newTime_, reason) = getBeamNearestTime_(time, id);
-      break;
-    case simData::GATE:
-      std::tie(newTime_, reason) = getGateNearestTime_(time, id);
-      break;
-    case simData::LASER:
-      std::tie(newTime_, reason) = getLaserNearestTime_(time, id);
-      break;
-    case simData::LOB_GROUP:
-      std::tie(newTime_, reason) = getLobGroupNearestTime_(time, id);
-      break;
-    case simData::PROJECTOR:
-      std::tie(newTime_, reason) = getProjectorNearestTime_(time, id);
-      break;
-    case simData::NONE:
-    case simData::ALL:
-      break;
-    }
+      const auto time = dataStore_.updateTime();
+      auto id = ids.front();
+      switch (dataStore_.objectType(id))
+      {
+      case simData::PLATFORM:
+        std::tie(newTime_, reason) = getPlatformNearestTime_(time, id);
+        break;
+      case simData::CUSTOM_RENDERING:
+        std::tie(newTime_, reason) = getCustomRenderingNearestTime_(time, id);
+        break;
+      case simData::BEAM:
+        std::tie(newTime_, reason) = getBeamNearestTime_(time, id);
+        break;
+      case simData::GATE:
+        std::tie(newTime_, reason) = getGateNearestTime_(time, id);
+        break;
+      case simData::LASER:
+        std::tie(newTime_, reason) = getLaserNearestTime_(time, id);
+        break;
+      case simData::LOB_GROUP:
+        std::tie(newTime_, reason) = getLobGroupNearestTime_(time, id);
+        break;
+      case simData::PROJECTOR:
+        std::tie(newTime_, reason) = getProjectorNearestTime_(time, id);
+        break;
+      case simData::NONE:
+      case simData::ALL:
+        break;
+      }
 
-    if (newTime_ == INVALID_TIME)
-    {
-      tree_.setUseCenterAction(false, reason);
-      return;
+      if (newTime_ == INVALID_TIME)
+      {
+        tree_.setUseCenterAction(false, reason);
+        return;
+      }
     }
   }
 
