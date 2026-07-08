@@ -727,12 +727,12 @@ int AntennaPatternTable::readPat(std::istream& fp)
     SIM_ERROR << "Encountered invalid number for antenna pattern table type" << std::endl;
     return 1;
   }
-  if (!(type == 1 || type == 0))
+  if (!(type == 0))
   {
-    SIM_ERROR << "Antenna Table Type must be 0 or 1 : " << type << std::endl;
+    SIM_ERROR << "Only Antenna Table Type 0 is currently supported : \n";
     return 1;
   }
-  beamWidthType_ = (type != 0);
+  beamWidthType_ = false;
 
   int symmetry = 0;
   if (!isValidNumber(tmpvec[1], symmetry))
@@ -1166,20 +1166,22 @@ void AntennaPatternRelativeTable::minMaxGain(float *min, float *max, const Anten
   float radius;
   AntennaGainParameters agp(params);
   agp.weighting_ = false;
-  for (int ii = -180; ii <= 180; ++ii)
+
+  // iterating only over values in table
+  for (const auto& [azim, tablegain] : azimData_)
   {
-    agp.azim_ = static_cast<float>(DEG2RAD*(ii));
-    for (int jj = -90; jj <= 90; ++jj)
+    agp.azim_ = azim;
+    for (const auto& [elev, tablegain] : elevData_)
     {
-      agp.elev_ = static_cast<float>(DEG2RAD*(jj));
-      radius = gain(agp);
+      agp.elev_ = elev;
+      const float radius = gain(agp);
       if (radius > SMALL_DB_COMPARE)
-      {
         minGain_ = sdkMin(minGain_, radius);
-      }
+
       maxGain_ = sdkMax(maxGain_, radius);
-    } // end for jj
-  } // end for ii
+    } // elev
+  } // azim
+
   *min = minGain_;
   *max = maxGain_;
 }
