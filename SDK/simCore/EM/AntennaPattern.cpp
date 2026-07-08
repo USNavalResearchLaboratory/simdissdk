@@ -536,6 +536,9 @@ namespace
   */
   float gainAtAngle(float angle, const std::map<float, float>& table)
   {
+    if (table.empty())
+      return SMALL_DB_VAL;
+
     // gets the first element in map with an angle >= input angle
     std::map<float, float>::const_iterator iter = table.lower_bound(angle);
     if (iter != table.end())
