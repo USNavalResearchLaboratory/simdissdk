@@ -2282,4 +2282,158 @@ void CoordinateConverter::convertGeodeticOriToEcef(const Vec3 &llaPos, const Vec
   d3DCMtoEuler(BE, ecefOri);
 }
 
+// Modern overloads for convenience
+
+std::optional<Coordinate> CoordinateConverter::convert(const Coordinate& inCoord, CoordinateSystem outSys) const
+{
+  Coordinate outCoord;
+
+  if (convert(inCoord, outCoord, outSys) != 0)
+    return std::nullopt;
+  return outCoord;
+}
+
+Vec3 CoordinateConverter::swapNedEnu(const Vec3& inVec)
+{
+  Vec3 outVec;
+  swapNedEnu(inVec, outVec);
+  return outVec;
+}
+
+std::optional<Coordinate> CoordinateConverter::swapNedEnu(const Coordinate& inCoord)
+{
+  Coordinate outCoord;
+
+  if (swapNedEnu(inCoord, outCoord) != 0)
+    return std::nullopt;
+  return outCoord;
+}
+
+Vec3 CoordinateConverter::swapNedNwu(const Vec3& inVec)
+{
+  Vec3 outVec;
+  swapNedNwu(inVec, outVec);
+  return outVec;
+}
+
+std::optional<Coordinate> CoordinateConverter::swapNedNwu(const Coordinate& inCoord)
+{
+  Coordinate outCoord;
+
+  if (swapNedNwu(inCoord, outCoord) != 0)
+    return std::nullopt;
+  return outCoord;
+}
+
+Vec3 CoordinateConverter::convertEnuToNwu(const Vec3& inVec)
+{
+  Vec3 outVec;
+  convertEnuToNwu(inVec, outVec);
+  return outVec;
+}
+
+std::optional<Coordinate> CoordinateConverter::convertEnuToNwu(const Coordinate& inCoord)
+{
+  Coordinate outCoord;
+
+  if (convertEnuToNwu(inCoord, outCoord) != 0)
+    return std::nullopt;
+  return outCoord;
+}
+
+Vec3 CoordinateConverter::convertNwuToEnu(const Vec3& inVec)
+{
+  Vec3 outVec;
+  convertNwuToEnu(inVec, outVec);
+  return outVec;
+}
+
+std::optional<Coordinate> CoordinateConverter::convertNwuToEnu(const Coordinate& inCoord)
+{
+  Coordinate outCoord;
+
+  if (convertNwuToEnu(inCoord, outCoord) != 0)
+    return std::nullopt;
+  return outCoord;
+}
+
+std::optional<Coordinate> CoordinateConverter::convertGeodeticToEcef(const Coordinate& inCoord, LocalLevelFrame localLevelFrame)
+{
+  Coordinate outCoord;
+
+  if (convertGeodeticToEcef(inCoord, outCoord, localLevelFrame) != 0)
+    return std::nullopt;
+  return outCoord;
+}
+
+std::optional<Coordinate> CoordinateConverter::convertEcefToGeodetic(const Coordinate& inCoord, LocalLevelFrame localLevelFrame)
+{
+  Coordinate outCoord;
+
+  if (convertEcefToGeodetic(inCoord, outCoord, localLevelFrame) != 0)
+    return std::nullopt;
+  return outCoord;
+}
+
+std::optional<Coordinate> CoordinateConverter::convertEciToEcef(const Coordinate& inCoord)
+{
+  Coordinate outCoord;
+
+  if (convertEciToEcef(inCoord, outCoord) != 0)
+    return std::nullopt;
+  return outCoord;
+}
+
+std::optional<Coordinate> CoordinateConverter::convertEcefToEci(const Coordinate& inCoord)
+{
+  Coordinate outCoord;
+
+  if (convertEcefToEci(inCoord, outCoord) != 0)
+    return std::nullopt;
+  return outCoord;
+}
+
+Vec3 CoordinateConverter::convertGeodeticPosToEcef(const Vec3& inPos, double semiMajor, double eccentricitySquared)
+{
+  Vec3 outPos;
+  convertGeodeticPosToEcef(inPos, outPos, semiMajor, eccentricitySquared);
+  return outPos;
+}
+
+Vec3 CoordinateConverter::convertGeodeticOriToEcef(const Vec3& llaPos, const Vec3& llaOri, LocalLevelFrame localLevelFrame)
+{
+  Vec3 outOri;
+  convertGeodeticOriToEcef(llaPos, llaOri, outOri, localLevelFrame);
+  return outOri;
+}
+
+std::optional<Vec3> CoordinateConverter::convertEcefToGeodeticPos(const Vec3& inPos)
+{
+  Vec3 outPos;
+  if (convertEcefToGeodeticPos(inPos, outPos) != 0)
+    return std::nullopt;
+  return outPos;
+}
+
+Vec3 CoordinateConverter::convertEcefToGeodeticOri(const Vec3& llaPos, const Vec3& ecefOri, LocalLevelFrame localLevelFrame)
+{
+  Vec3 outOri;
+  convertEcefToGeodeticOri(llaPos, ecefOri, outOri, localLevelFrame);
+  return outOri;
+}
+
+Vec3 CoordinateConverter::convertEcefToGeodeticVel(const Vec3& llaPos, const Vec3& ecefVel, LocalLevelFrame localLevelFrame)
+{
+  Vec3 outVel;
+  convertEcefToGeodeticVel(llaPos, ecefVel, outVel, localLevelFrame);
+  return outVel;
+}
+
+Vec3 CoordinateConverter::convertEcefToGeodeticAccel(const Vec3& llaPos, const Vec3& ecefAcc, LocalLevelFrame localLevelFrame)
+{
+  Vec3 outAccel;
+  convertEcefToGeodeticAccel(llaPos, ecefAcc, outAccel, localLevelFrame);
+  return outAccel;
+}
+
 } // namespace simCore
