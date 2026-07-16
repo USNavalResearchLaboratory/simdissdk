@@ -1835,7 +1835,6 @@ int testNewConvenienceMethods()
   coords.push_back(simCore::COORD_SYS_ENU);
   coords.push_back(simCore::COORD_SYS_LLA);
   coords.push_back(simCore::COORD_SYS_ECEF);
-  coords.push_back(simCore::COORD_SYS_XEAST);
 
   simCore::Coordinate inCoord = simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3(1, 2, 3), simCore::Vec3(4, 5, 6), simCore::Vec3(7, 8, 9), simCore::Vec3(10, 11, 12));
 
@@ -2049,6 +2048,26 @@ int testNewConvenienceMethods()
       rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
 
       break;
+    case simCore::COORD_SYS_ECI:
+      // convertEciToEcef
+      tempOpt = simCore::CoordinateConverter::convertEciToEcef(resultCoord);
+      rv += SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::convertEciToEcef(resultCoord, tempCoord);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+
+      break;
+
+    case simCore::COORD_SYS_XEAST:
+    case simCore::COORD_SYS_GTP:
+    case simCore::COORD_SYS_NONE:
+    case simCore::COORD_SYS_MAX:
+      // unreachable
+      return 1;
     }
   }
 

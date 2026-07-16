@@ -2303,7 +2303,6 @@ Vec3 CoordinateConverter::swapNedEnu(const Vec3& inVec)
 std::optional<Coordinate> CoordinateConverter::swapNedEnu(const Coordinate& inCoord)
 {
   Coordinate outCoord;
-
   if (swapNedEnu(inCoord, outCoord) != 0)
     return std::nullopt;
   return outCoord;
