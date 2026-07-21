@@ -313,7 +313,7 @@ double calculateGroundDist(const Vec3 &fromLla, const Vec3 &toLla, const EarthMo
   }
   else if (coordConv)
   {
-    if (!model == FLAT_EARTH || !coordConv->hasReferenceOrigin())
+    if (model != FLAT_EARTH || !coordConv->hasReferenceOrigin())
     {
       SIM_WARN << "Could not calculate \"ground\" distance: " << __LINE__ << std::endl;
       assert(false);
