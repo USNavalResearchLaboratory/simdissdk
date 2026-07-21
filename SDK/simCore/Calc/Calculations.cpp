@@ -66,33 +66,50 @@ void calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &t
     return;
   }
 
-  Coordinate toPos;
   if (model == TANGENT_PLANE_WGS_84 || model == WGS_84)
   {
     const CoordinateConverter& cc = initConverter(coordConv, fromLla);
-    cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
-    calculateRelAng(toPos.position(), fromOriLla, azim, elev, cmp);
+    std::optional<simCore::Coordinate> xeastOpt = cc.convert(Coordinate(COORD_SYS_LLA, toLla), COORD_SYS_XEAST);
+    if (!xeastOpt)
+    {
+      SIM_WARN << "Could not calculate relative angles, Coordinate conversion failed: " << __LINE__ << std::endl;
+      assert(false); // Should never be reached, input coord guaranteed to be in LLA, reference origin guaranteed to exist, and input coord guaranteed to not be equal to output coord
+      if (azim) *azim = 0.0;
+      if (elev) *elev = 0.0;
+      if (cmp) *cmp = 0.0;
+      return;
+    }
+    calculateRelAng(xeastOpt->position(), fromOriLla, azim, elev, cmp);
   }
   else if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
   {
     const Coordinate cvTo(COORD_SYS_LLA, fromLla);
-    Coordinate fromPos;
-    coordConv->convert(cvTo, fromPos, COORD_SYS_ENU);
-    coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
-    const Vec3& ENUDelta = toPos.position() - fromPos.position();
+    const std::optional<simCore::Coordinate> fromEnuOpt = coordConv->convert(cvTo, COORD_SYS_ENU);
+    const std::optional<simCore::Coordinate> toEnuOpt = coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), COORD_SYS_ENU);
+
+    if (!fromEnuOpt || !toEnuOpt)
+    {
+      SIM_WARN << "Could not calculate relative angles, Coordinate conversion failed (toLla or fromLla not in LLA): " << __LINE__ << std::endl;
+      assert(false); // Should never be reached, input guaranteed to be LLA, ref origin guaranteed, input guaranteed to not be output
+      if (azim) *azim = 0.0;
+      if (elev) *elev = 0.0;
+      if (cmp) *cmp = 0.0;
+      return;
+    }
+
+    const Vec3& ENUDelta = toEnuOpt->position() - fromEnuOpt->position();
     calculateRelAng(ENUDelta, fromOriLla, azim, elev, cmp);
   }
   else
   {
     SIM_WARN << "Could not calculate relative angles: " << __LINE__ << std::endl;
     assert(false);
-
     if (azim) *azim = 0.0;
     if (elev) *elev = 0.0;
     if (cmp) *cmp = 0.0;
-
     return;
   }
+
 }
 
 /**
@@ -115,15 +132,36 @@ void calculateAbsAzEl(const Vec3 &fromLla, const Vec3 &toLla, double *azim, doub
   {
     //create a tangent plane referenced to the fromLla platform
     const CoordinateConverter& cc = initConverter(coordConv, fromLla);
-    cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
-    ENUDelta = toPos.position();
+    const std::optional<simCore::Coordinate> xeastCoordOpt = cc.convert(Coordinate(COORD_SYS_LLA, toLla), COORD_SYS_XEAST);
+    if (!xeastCoordOpt)
+    {
+      SIM_WARN << "Could not calculate true angles, Coordinate conversion failed: " << __LINE__ << std::endl;
+      assert(false); // Should never be reached, convert should be guaranteed to succeed with this setup. See above asserts if necessary
+
+      if (azim) *azim = 0.0;
+      if (elev) *elev = 0.0;
+      if (cmp) *cmp = 0.0;
+      return;
+    }
+
+    ENUDelta = xeastCoordOpt->position();
   }
   else if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
   {
     Coordinate fromPos;
-    coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
-    coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
-    ENUDelta = toPos.position() - fromPos.position();
+    const std::optional<simCore::Coordinate> fromPosOpt = coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), COORD_SYS_ENU);
+    const std::optional<simCore::Coordinate> toPosOpt = coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), COORD_SYS_ENU);
+    if (!fromPosOpt || !toPosOpt)
+    {
+      SIM_WARN << "Could not calculate true angles: " << __LINE__ << std::endl;
+      assert(false); // Should never be reached, convert should be guaranteed to succeed
+      if (azim) *azim = 0.0;
+      if (elev) *elev = 0.0;
+      if (cmp) *cmp = 0.0;
+      return;
+    }
+
+    ENUDelta = toPosOpt->position() - fromPosOpt->position();
   }
   else if (model == PERFECT_SPHERE)
   {
@@ -169,16 +207,36 @@ double calculateSlant(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCa
   {
   case WGS_84:
     {
-      CoordinateConverter::convertGeodeticToEcef(Coordinate(COORD_SYS_LLA, fromLla), fromPos);
-      CoordinateConverter::convertGeodeticToEcef(Coordinate(COORD_SYS_LLA, toLla), toPos);
+      const std::optional<simCore::Coordinate> fromPosOpt = CoordinateConverter::convertGeodeticToEcef(Coordinate(COORD_SYS_LLA, fromLla));
+      const std::optional<simCore::Coordinate> toPosOpt = CoordinateConverter::convertGeodeticToEcef(Coordinate(COORD_SYS_LLA, toLla));
+
+      if (!fromPosOpt || !toPosOpt)
+      {
+        SIM_WARN << "Could not calculate \"slant range\", Coordinate conversion failed: " << __LINE__ << std::endl;
+        assert(false); // Should never be reached, conversion should always succeed
+        return 0;
+      }
+
+      fromPos = *fromPosOpt;
+      toPos = *toPosOpt;
     }
     break;
 
   case TANGENT_PLANE_WGS_84:
     {
       const CoordinateConverter& cc = initConverter(coordConv, fromLla);
-      cc.convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_XEAST);
-      cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
+      const std::optional<simCore::Coordinate> fromPosOpt = cc.convert(Coordinate(COORD_SYS_LLA, fromLla), COORD_SYS_XEAST);
+      const std::optional<simCore::Coordinate> toPosOpt = cc.convert(Coordinate(COORD_SYS_LLA, toLla), COORD_SYS_XEAST);
+
+      if (!fromPosOpt || !toPosOpt)
+      {
+        SIM_WARN << "Could not calculate \"slant range\", Coordinate conversion failed: " << __LINE__ << std::endl;
+        assert(false); // Should never be reached, convert should be guaranteed to succeed
+        return 0;
+      }
+
+      fromPos = *fromPosOpt;
+      toPos = *toPosOpt;
     }
     break;
 
@@ -190,8 +248,18 @@ double calculateSlant(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCa
         assert(false);
         return 0;
       }
-      coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
-      coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
+      const std::optional<simCore::Coordinate> fromPosOpt = coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), COORD_SYS_ENU);
+      const std::optional<simCore::Coordinate> toPosOpt = coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), COORD_SYS_ENU);
+
+      if (!fromPosOpt || !toPosOpt)
+      {
+        SIM_WARN << "Could not calculate \"slant range\", Coordinate conversion failed: " << __LINE__ << std::endl;
+        assert(false); // Should never be reached, convert should be guaranteed to succeed
+        return 0;
+      }
+
+      fromPos = *fromPosOpt;
+      toPos = *toPosOpt;
     }
     break;
 
@@ -228,35 +296,42 @@ double calculateGroundDist(const Vec3 &fromLla, const Vec3 &toLla, const EarthMo
   }
   else if (model == TANGENT_PLANE_WGS_84)
   {
-    Coordinate fromPos;
-    Coordinate toPos;
     const CoordinateConverter& cc = initConverter(coordConv, fromLla);
-    cc.convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_XEAST);
-    cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
+    const std::optional<simCore::Coordinate> fromPosOpt = cc.convert(Coordinate(COORD_SYS_LLA, fromLla), COORD_SYS_XEAST);
+    const std::optional<simCore::Coordinate> toPosOpt = cc.convert(Coordinate(COORD_SYS_LLA, toLla), COORD_SYS_XEAST);
 
-    const Vec3 &toVal = toPos.position();
-    const Vec3 &fromVal = fromPos.position();
+    if (!fromPosOpt || !toPosOpt)
+    {
+      SIM_WARN << "Could not calculate \"ground\" distance, Coordinate conversion failed: " << __LINE__ << std::endl;
+      assert(false); // convert should be guaranteed to succeed
+      return 0;
+    }
+
+    const Vec3 &toVal = toPosOpt->position();
+    const Vec3 &fromVal = fromPosOpt->position();
     return sqrt(square(toVal[0]- fromVal[0]) + square(toVal[1]- fromVal[1]));
   }
   else if (coordConv)
   {
-    Coordinate fromPos;
-    Coordinate toPos;
-
-    if (model == FLAT_EARTH && coordConv->hasReferenceOrigin())
-    {
-      coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
-      coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
-    }
-    else
+    if (!model == FLAT_EARTH || !coordConv->hasReferenceOrigin())
     {
       SIM_WARN << "Could not calculate \"ground\" distance: " << __LINE__ << std::endl;
       assert(false);
       return 0;
     }
 
-    const Vec3 &toVal = toPos.position();
-    const Vec3 &fromVal = fromPos.position();
+    const std::optional<simCore::Coordinate> fromPosOpt = coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), COORD_SYS_ENU);
+    const std::optional<simCore::Coordinate> toPosOpt = coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), COORD_SYS_ENU);
+
+    if (!fromPosOpt || !toPosOpt)
+    {
+      SIM_WARN << "Could not calculate \"ground\" distance, Coordinate conversion failed: " << __LINE__ << std::endl;
+      assert(false); // convert should always succeed since it must have a reference origin
+      return 0;
+    }
+
+    const Vec3 &toVal = toPosOpt->position();
+    const Vec3 &fromVal = fromPosOpt->position();
     return sqrt(square(toVal[0] - fromVal[0]) + square(toVal[1] - fromVal[1]));
   }
 
@@ -278,20 +353,33 @@ double calculateAltitude(const Vec3 &fromLla, const Vec3 &toLla, const EarthMode
 
   if (model == TANGENT_PLANE_WGS_84)
   {
-    Coordinate fromPos;
-    Coordinate toPos;
     const CoordinateConverter& cc = initConverter(coordConv, fromLla);
-    cc.convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_XEAST);
-    cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
-    return toPos.z() - fromPos.z();
+    const std::optional<simCore::Coordinate> fromPosOpt = cc.convert(Coordinate(COORD_SYS_LLA, fromLla), COORD_SYS_XEAST);
+    const std::optional<simCore::Coordinate> toPosOpt = cc.convert(Coordinate(COORD_SYS_LLA, toLla), COORD_SYS_XEAST);
+
+    if (!fromPosOpt || !toPosOpt)
+    {
+      SIM_WARN << "Could not calculate altitude: " << __LINE__ << std::endl;
+      assert(false); // Convert guaranteed to succeed
+      return 0.0;
+    }
+
+    return toPosOpt->z() - fromPosOpt->z();
   }
   if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
   {
-    Coordinate fromPos;
-    Coordinate toPos;
-    coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
-    coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
-    return toPos.z() - fromPos.z();
+    const CoordinateConverter& cc = initConverter(coordConv, fromLla);
+    const std::optional<simCore::Coordinate> fromPosOpt = cc.convert(Coordinate(COORD_SYS_LLA, fromLla), COORD_SYS_ENU);
+    const std::optional<simCore::Coordinate> toPosOpt = cc.convert(Coordinate(COORD_SYS_LLA, toLla), COORD_SYS_ENU);
+
+    if (!fromPosOpt || !toPosOpt)
+    {
+      SIM_WARN << "Could not calculate altitude: " << __LINE__ << std::endl;
+      assert(false); // Convert guaranteed to succeed
+      return 0.0;
+    }
+
+    return toPosOpt->z() - fromPosOpt->z();
   }
   else
   {
@@ -457,10 +545,8 @@ double calculateAspectAngle(const Vec3 &fromLla, const Vec3 &toLla, const Vec3 &
   d3MTv3Mult(LE, bodyVec, bodyUnitVecX);
 
   // Compute line of sight (LOS) vector in ECEF, relative to 'from' entity
-  Vec3 fromPosECEF;
-  CoordinateConverter::convertGeodeticPosToEcef(fromLla, fromPosECEF);
-  Vec3 toPosECEF;
-  CoordinateConverter::convertGeodeticPosToEcef(toLla, toPosECEF);
+  const simCore::Vec3 fromPosECEF = CoordinateConverter::convertGeodeticPosToEcef(fromLla);
+  const simCore::Vec3 toPosECEF = CoordinateConverter::convertGeodeticPosToEcef(toLla);
   const Vec3& losECEF = toPosECEF - fromPosECEF;
 
   // normalize prior to computing aspect angle
@@ -846,18 +932,17 @@ double calculateEarthRadius(const double latitude)
 
 Vec3 clampEcefPointToGeodeticSurface(const Vec3& p)
 {
-  Vec3 lla;
-  CoordinateConverter::convertEcefToGeodeticPos(p, lla);
+  std::optional<simCore::Vec3> llaOpt = CoordinateConverter::convertEcefToGeodeticPos(p);
+  if (!llaOpt)
+    return p;
   // If we are near the surface, we are done
   // Value of 5 mm is based on a 4.4e-3 precision resolution comment
   // in a SDK ECEF to LLA CoordConvertLibTest unit test
-  if (areEqual(lla.alt(), 0.0, 5.0e-3))
+  if (areEqual(llaOpt->alt(), 0.0, 5.0e-3))
     return p;
   // Otherwise, clamp to surface and convert back to ECEF
-  lla.setAlt(0.0);
-  Vec3 ecef;
-  CoordinateConverter::convertGeodeticPosToEcef(lla, ecef);
-  return ecef;
+  llaOpt->setAlt(0.0);
+  return CoordinateConverter::convertGeodeticPosToEcef(*llaOpt);
 }
 
 /**
@@ -917,8 +1002,17 @@ bool convertLocations(const Coordinate &fromState, const Coordinate &toState, co
         return false;
       }
 
-      coordConv->convert(fromState, fromPos, COORD_SYS_ECEF);
-      coordConv->convert(toState, toPos, COORD_SYS_ECEF);
+      const std::optional<simCore::Coordinate> fromOpt = coordConv->convert(fromState, COORD_SYS_ECEF);
+      const std::optional<simCore::Coordinate> toOpt = coordConv->convert(toState, COORD_SYS_ECEF);
+      if (!fromOpt || !toOpt)
+      {
+        SIM_WARN << "Could not convert location, Coordinate conversion(s) failed: " << __LINE__ << std::endl;
+        assert(false); // Convert guaranteed to succeed
+        return false;
+      }
+
+      fromPos = *fromOpt;
+      toPos = *toOpt;
     }
     break;
 
@@ -927,8 +1021,18 @@ bool convertLocations(const Coordinate &fromState, const Coordinate &toState, co
       CoordinateConverter cc;
       cc.setReferenceOrigin(fromState.position());
 
-      cc.convert(fromState, fromPos, COORD_SYS_XEAST);
-      cc.convert(toState, toPos, COORD_SYS_XEAST);
+      const std::optional<simCore::Coordinate> fromOpt = cc.convert(fromState, COORD_SYS_XEAST);
+      const std::optional<simCore::Coordinate> toOpt = cc.convert(toState, COORD_SYS_XEAST);
+
+      if (!fromOpt || !toOpt)
+      {
+        SIM_WARN << "Could not convert location, Coordinate conversion(s) failed: " << __LINE__ << std::endl;
+        assert(false); // Convert guaranteed to succeed
+        return false;
+      }
+
+      fromPos = *fromOpt;
+      toPos = *toOpt;
     }
     break;
 
@@ -941,8 +1045,18 @@ bool convertLocations(const Coordinate &fromState, const Coordinate &toState, co
         return false;
       }
 
-      coordConv->convert(fromState, fromPos, COORD_SYS_ENU);
-      coordConv->convert(toState, toPos, COORD_SYS_ENU);
+      const std::optional<simCore::Coordinate> fromOpt = coordConv->convert(fromState, COORD_SYS_ENU);
+      const std::optional<simCore::Coordinate> toOpt = coordConv->convert(toState, COORD_SYS_ENU);
+
+      if (!fromOpt || !toOpt)
+      {
+        SIM_WARN << "Could not convert location, Coordinate conversion(s) failed: " << __LINE__ << std::endl;
+        assert(false); // Convert guaranteed to succeed
+        return false;
+      }
+
+      toPos = *toOpt;
+      fromPos = *fromOpt;
     }
     break;
 
@@ -1205,13 +1319,18 @@ void calculateVelFromGeodeticPos(const Vec3 &currPos, const Vec3 &prevPos, const
   CoordinateConverter cc;
   cc.setReferenceOrigin(currPos);
 
-  Coordinate pnt1;
-  cc.convert(Coordinate(COORD_SYS_LLA, currPos), pnt1, COORD_SYS_XEAST);
+  const std::optional<simCore::Coordinate> firstPoint = cc.convert(Coordinate(COORD_SYS_LLA, currPos), COORD_SYS_XEAST);
 
-  Coordinate pnt2;
-  cc.convert(Coordinate(COORD_SYS_LLA, prevPos), pnt2, COORD_SYS_XEAST);
+  const std::optional<simCore::Coordinate> secondPoint = cc.convert(Coordinate(COORD_SYS_LLA, prevPos), COORD_SYS_XEAST);
 
-  const Vec3& posDiff = pnt1.position() - pnt2.position();
+  if (!firstPoint || !secondPoint)
+  {
+    SIM_WARN << "Cannot calculate velocity, Coordinate conversion(s) failed: " << __LINE__ << std::endl;
+    assert(false); // Convert guaranteed to succeed
+    return;
+  }
+
+  const Vec3& posDiff = firstPoint->position() - secondPoint->position();
   velVec = posDiff * (1.0 / deltaTime);
 }
 
@@ -1233,10 +1352,15 @@ bool calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, const doub
 
   case COORD_SYS_ECEF:
     {
-      simCore::Vec3 posLla1;
-      simCore::CoordinateConverter::convertEcefToGeodeticPos(currPos, posLla1);
-      CoordinateConverter::convertEcefToGeodetic(Coordinate(COORD_SYS_ECEF, prevPos), lla2);
-      calculateVelFromGeodeticPos(posLla1, lla2.position(), deltaTime, velVec);
+      const std::optional<simCore::Vec3> geoCurrPos = CoordinateConverter::convertEcefToGeodeticPos(currPos);
+      const std::optional<simCore::Coordinate> geoPrevCoord = CoordinateConverter::convertEcefToGeodetic(Coordinate(COORD_SYS_ECEF, prevPos));
+      if (!geoCurrPos || !geoPrevCoord)
+      {
+        SIM_WARN << "Could not calculate velocity/orientation, Coordinate conversion failed: " << __LINE__ << std::endl;
+        assert(false); // Conversions guaranteed to succeed
+        return false;
+      }
+      calculateVelFromGeodeticPos(*geoCurrPos, geoPrevCoord->position(), deltaTime, velVec);
     }
     break;
 
@@ -1250,10 +1374,8 @@ bool calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, const doub
 
   case COORD_SYS_NED:
     {
-      Vec3 enu1;
-      Vec3 enu2;
-      CoordinateConverter::swapNedEnu(currPos, enu1);
-      CoordinateConverter::swapNedEnu(prevPos, enu2);
+      const Vec3 enu1 = CoordinateConverter::swapNedEnu(currPos);
+      const Vec3 enu2 = CoordinateConverter::swapNedEnu(prevPos);
       const Vec3& posDiff = enu1 - enu2;
       velVec = posDiff * (1.0 / deltaTime);
     }
@@ -1261,10 +1383,8 @@ bool calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, const doub
 
   case COORD_SYS_NWU:
     {
-      Vec3 enu2;
-      Vec3 enu1;
-      CoordinateConverter::convertNwuToEnu(currPos, enu1);
-      CoordinateConverter::convertNwuToEnu(prevPos, enu2);
+      const Vec3 enu1 = CoordinateConverter::convertNwuToEnu(currPos);
+      const Vec3 enu2 = CoordinateConverter::convertNwuToEnu(prevPos);
       const Vec3& posDiff = enu1 - enu2;
       velVec = posDiff * (1.0 / deltaTime);
     }
@@ -1300,25 +1420,38 @@ bool calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, const doub
     {
       CoordinateConverter cc;
       cc.setReferenceOrigin(refLLA);
-      cc.convert(Coordinate(sysIn, prevPos), lla2, COORD_SYS_LLA);
+      const std::optional<simCore::Coordinate> lla2Opt = cc.convert(Coordinate(sysIn, prevPos), COORD_SYS_LLA);
+      if (!lla2Opt)
+      {
+        SIM_WARN << "Could not calculate velocity/orientation, Coordinate conversion failed: " << __LINE__ << std::endl;
+        assert(false); // Conversion guaranteed to succeed
+        return false;
+      }
+
+      lla2 = *lla2Opt;
     }
     // Put in the orientation and velocity, and convert out
     lla2.setOrientation(cprVec);
     lla2.setVelocity(velVec);
-    simCore::Coordinate ecefCoordinate;
-    CoordinateConverter::convertGeodeticToEcef(lla2, ecefCoordinate);
-    velOut.set(ecefCoordinate.velocity());
-    oriOut.set(ecefCoordinate.orientation());
+    const std::optional<simCore::Coordinate> ecefOpt = CoordinateConverter::convertGeodeticToEcef(lla2);
+    if (!ecefOpt)
+    {
+      SIM_WARN << "Could not calculate velocity/orientation, Coordinate conversion failed: " << __LINE__ << std::endl;
+      assert(false); // Convert guaranteed to succeed
+      return false;
+    }
+    velOut.set(ecefOpt->velocity());
+    oriOut.set(ecefOpt->orientation());
     break;
   }
 
   case COORD_SYS_NED:
-    CoordinateConverter::swapNedEnu(velVec, velOut);
+    velOut.set(CoordinateConverter::swapNedEnu(velVec));
     oriOut.set(cprVec);
     break;
 
   case COORD_SYS_NWU:
-    CoordinateConverter::convertEnuToNwu(velVec, velOut);
+    velOut.set(CoordinateConverter::convertEnuToNwu(velVec));
     oriOut.set(cprVec);
     break;
 
@@ -1372,12 +1505,18 @@ void calculateGeodeticOffsetPos(const simCore::Vec3& llaBgnPos, const simCore::V
   simCore::d3MTv3Mult(localToEarth, geoVec, geoOffVec);
 
   // convert LLA to ECEF
-  simCore::Vec3 originGeo;
-  simCore::CoordinateConverter::convertGeodeticPosToEcef(llaBgnPos, originGeo);
+  const simCore::Vec3 originGeoVec = CoordinateConverter::convertGeodeticPosToEcef(llaBgnPos);
 
   // compute offset, then convert geocentric back to geodetic
-  const simCore::Vec3& offsetGeo = originGeo + geoOffVec;
-  simCore::CoordinateConverter::convertEcefToGeodeticPos(offsetGeo, offsetLla);
+  const simCore::Vec3& offsetGeo = originGeoVec + geoOffVec;
+  const std::optional<simCore::Vec3> offsetLlaOpt = CoordinateConverter::convertEcefToGeodeticPos(offsetGeo);
+  if (!offsetLlaOpt)
+  {
+    SIM_WARN << "Could not complete calculation, Coordinate conversion failed: " << __LINE__ << std::endl;
+    assert(false); // Conversion guaranteed to succeed
+    return;
+  }
+  offsetLla.set(*offsetLlaOpt);
 }
 
 /// Calculates the geodetic end point of a vector based on a specified azimuth, elevation and range from a given geodetic position
@@ -1505,7 +1644,6 @@ void calculateAoaSideslipTotalAoa(const Vec3& enuVel, const Vec3& ypr, const boo
 double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLla, const simCore::Vec3& toLLA_, simCore::Vec3& closestLLa)
 {
   simCore::Coordinate cvIn;
-  simCore::Coordinate cvOut;
   simCore::CoordinateConverter tempFromECEF;
 
   // create direction vector for line segment, since begin point of line segment is the origin of
@@ -1513,9 +1651,17 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   tempFromECEF.setReferenceOrigin(startLla);
   cvIn.setCoordinateSystem(simCore::COORD_SYS_LLA);
   cvIn.setPosition(endLla);
-  tempFromECEF.convert(cvIn, cvOut, simCore::COORD_SYS_XEAST);
+  std::optional<simCore::Coordinate> cvOutOpt = tempFromECEF.convert(cvIn, simCore::COORD_SYS_XEAST);
+
+  if (!cvOutOpt)
+  {
+    SIM_WARN << "Could not get closest point, Coordinate conversion failed: " << __LINE__ << std::endl;
+    assert(false); // Conversion guaranteed to succeed
+    return 0.0;
+  }
+
   // NOTE: this is also the direction vector for line segment; need a copy since cvOut will be reused
-  const simCore::Vec3 pointingVector = cvOut.position();
+  const simCore::Vec3 pointingVector = cvOutOpt->position();
 
   // ------------------------------------------------
   // gets the length (along the line segment pointing vector)
@@ -1529,10 +1675,16 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   // create reference point in XEAST to determine closest point along line segment
   cvIn.setPosition(toLLA_);
   cvIn.setCoordinateSystem(simCore::COORD_SYS_LLA);
-  cvOut.clear();
-  tempFromECEF.convert(cvIn, cvOut, simCore::COORD_SYS_XEAST);
+  cvOutOpt->clear();
+  cvOutOpt = tempFromECEF.convert(cvIn, simCore::COORD_SYS_XEAST);
+  if (!cvOutOpt)
+  {
+    SIM_WARN << "Could not get closest point, Coordinate conversion failed: " << __LINE__ << std::endl;
+    assert(false);
+    return 0.0;
+  }
   // hold a copy, since cvOut will be reused
-  const simCore::Vec3 enuDelta = cvOut.position();
+  const simCore::Vec3 enuDelta = cvOutOpt->position();
   const double angle = simCore::v3Angle(pointingVector, enuDelta);
   double length = 0.;
   if (angle <= M_PI_2)
@@ -1546,11 +1698,17 @@ double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLl
   const simCore::Vec3& closestPnt = pointingVector * (length / actualLength);
 
   // convert closest point on line segment to a LLA value
-  cvOut.clear();
+  cvOutOpt->clear();
   cvIn.setPosition(closestPnt);
   cvIn.setCoordinateSystem(simCore::COORD_SYS_XEAST);
-  tempFromECEF.convert(cvIn, cvOut, simCore::COORD_SYS_LLA);
-  closestLLa = cvOut.position();
+  cvOutOpt = tempFromECEF.convert(cvIn, simCore::COORD_SYS_LLA);
+  if (!cvOutOpt)
+  {
+    SIM_WARN << "Could not get closest point, Coordinate conversion failed: " << __LINE__ << std::endl;
+    assert(false);
+    return 0.0;
+  }
+  closestLLa = cvOutOpt->position();
 
   const simCore::Vec3& delta = enuDelta - closestPnt;
   return delta.length();

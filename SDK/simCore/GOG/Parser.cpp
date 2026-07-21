@@ -32,7 +32,6 @@
 #include "simCore/String/ValidNumber.h"
 #include "simCore/Time/String.h"
 #include "simCore/Calc/Angle.h"
-#include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Mgrs.h"
 #include "simCore/Calc/Units.h"

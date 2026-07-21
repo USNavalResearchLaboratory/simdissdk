@@ -21,6 +21,7 @@
  *
  */
 #include <limits>
+#include "simNotify/Notify.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/CoordinateSystem.h"
@@ -72,12 +73,13 @@ void GeoFence::set(const std::vector<simCore::Vec3>& pts, simCore::CoordinateSys
 
   // Convert to ECEF
   simCore::CoordinateConverter cc;
-  simCore::Coordinate output;
   std::vector<simCore::Vec3> ecef;
   for (const auto& pt : pts)
   {
-    cc.convert(Coordinate(coordSys, pt), output, simCore::COORD_SYS_ECEF);
-    ecef.push_back(output.position());
+    if (auto outputOpt = cc.convert(Coordinate(coordSys, pt), simCore::COORD_SYS_ECEF))
+      ecef.push_back(outputOpt->position());
+    else
+      SIM_WARN << "simCore::GeoFence::set(), Failed to convert GeoFence vertex to ECEF: " << __LINE__ << std::endl;
   }
   setPointsEcef_(ecef);
 }
@@ -110,10 +112,12 @@ bool GeoFence::contains(const simCore::Coordinate& coord) const
 {
   if (coord.coordinateSystem() == simCore::COORD_SYS_ECEF)
     return contains(coord.position());
-  simCore::Coordinate ecef;
   simCore::CoordinateConverter cc;
-  cc.convert(coord, ecef, simCore::COORD_SYS_ECEF);
-  return contains(ecef.position());
+  auto ecefOpt = cc.convert(coord, simCore::COORD_SYS_ECEF);
+  // Coordinate cannot be converted
+  if (!ecefOpt)
+    return false;
+  return contains(ecefOpt->position());
 }
 
 bool GeoFence::contains(const simCore::Vec3& ecef) const
