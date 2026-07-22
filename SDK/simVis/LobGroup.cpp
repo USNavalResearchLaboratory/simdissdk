@@ -689,7 +689,7 @@ void LobGroupNode::applyEndpointCoordClamping_(simCore::Coordinate& endpointCoor
     return;
 
   // convert to lla for surface clamping call
-  auto endLlaOpt = coordConverter_->convert(endpointCoord, simCore::COORD_SYS_LLA);
+  std::optional<simCore::Coordinate> endLlaOpt = coordConverter_->convert(endpointCoord, simCore::COORD_SYS_LLA);
   if (!endLlaOpt)
   {
     assert(false); // coordinate is not xeast, as assumed

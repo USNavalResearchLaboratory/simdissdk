@@ -23,7 +23,6 @@
 #include "osgEarth/GeoMath"
 #include "osgEarth/LabelNode"
 #include "simCore/Calc/Angle.h"
-#include "simCore/Calc/CoordinateConverter.h"
 #include "simVis/Types.h"
 #include "simVis/CustomRendering.h"
 #include "simVis/Constants.h"

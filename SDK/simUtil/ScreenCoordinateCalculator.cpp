@@ -123,9 +123,8 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simVis::EntityNode&
   if (0 != entity.getPosition(&lla, simCore::COORD_SYS_LLA))
     return INVALID_COORDINATE;
   lla.setAlt(0.0);
-  simCore::Vec3 ecefOut;
-  simCore::CoordinateConverter::convertGeodeticPosToEcef(lla, ecefOut);
-  return matrixCalculate_(osg::Vec3d(ecefOut.x(), ecefOut.y(), ecefOut.z()));
+  std::optional<simCore::Vec3> ecefOutOpt = simCore::CoordinateConverter::convertGeodeticPosToEcef(lla);
+  return matrixCalculate_(osg::Vec3d(ecefOutOpt->x(), ecefOutOpt->y(), ecefOutOpt->z()));
 }
 
 ScreenCoordinate ScreenCoordinateCalculator::calculateLla(const simCore::Vec3& lla)
@@ -135,9 +134,9 @@ ScreenCoordinate ScreenCoordinateCalculator::calculateLla(const simCore::Vec3& l
     return INVALID_COORDINATE;
   simCore::Vec3 ecefOut;
   if (!view_.valid() || !view_->isOverheadEnabled())
-    simCore::CoordinateConverter::convertGeodeticPosToEcef(lla, ecefOut);
+    ecefOut = simCore::CoordinateConverter::convertGeodeticPosToEcef(lla);
   else
-    simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lla.lat(), lla.lon(), 0.0), ecefOut);
+    ecefOut = simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lla.lat(), lla.lon(), 0.0));
   return matrixCalculate_(osg::Vec3d(ecefOut.x(), ecefOut.y(), ecefOut.z()));
 }
 
@@ -150,12 +149,11 @@ ScreenCoordinate ScreenCoordinateCalculator::calculateEcef(const simCore::Vec3& 
     return matrixCalculate_(osg::Vec3d(ecef.x(), ecef.y(), ecef.z()));
 
   // Clamping is required in overhead mode, so we need to convert to LLA
-  simCore::Vec3 llaPos;
-  if (simCore::CoordinateConverter::convertEcefToGeodeticPos(ecef, llaPos) != 0)
+  std::optional<simCore::Vec3> llaPosOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(ecef);
+  if (!llaPosOpt)
     return INVALID_COORDINATE;
-  llaPos.setAlt(0.0);
-  simCore::Vec3 clampedEcef;
-  simCore::CoordinateConverter::convertGeodeticPosToEcef(llaPos, clampedEcef);
+  llaPosOpt->setAlt(0.0);
+  simCore::Vec3 clampedEcef = simCore::CoordinateConverter::convertGeodeticPosToEcef(*llaPosOpt);
   return matrixCalculate_(osg::Vec3d(clampedEcef.x(), clampedEcef.y(), clampedEcef.z()));
 }
 

@@ -48,17 +48,25 @@ bool LinearInterpolator::interpolate(double time, const PlatformUpdate &prev, co
   if (prev.has_velocity() && next.has_velocity())
     prevEcef.setVelocity(simCore::Vec3(prev.vx(), prev.vy(), prev.vz()));
 
-  simCore::Coordinate prevLla;
-  simCore::CoordinateConverter::convertEcefToGeodetic(prevEcef, prevLla);
+  const std::optional<simCore::Coordinate> prevLlaOpt = simCore::CoordinateConverter::convertEcefToGeodetic(prevEcef);
+  if (!prevLlaOpt)
+  {
+    assert(false); // Cannot fail, prevEcef guaranteed to be ecef
+    return false;
+  }
 
   simCore::Coordinate nextEcef(simCore::COORD_SYS_ECEF, simCore::Vec3(next.x(), next.y(), next.z()));
   if (prev.has_orientation() && next.has_orientation())
     nextEcef.setOrientation(simCore::Vec3(next.psi(), next.theta(), next.phi()));
   if (prev.has_velocity() && next.has_velocity())
     nextEcef.setVelocity(simCore::Vec3(next.vx(), next.vy(), next.vz()));
-  simCore::Coordinate nextLla;
-  simCore::CoordinateConverter::convertEcefToGeodetic(nextEcef, nextLla);
 
+  const std::optional<simCore::Coordinate> nextLlaOpt = simCore::CoordinateConverter::convertEcefToGeodetic(nextEcef);
+  if (!nextLlaOpt)
+  {
+    assert(false); // Cannot fail, nextEcef guaranteed to be ecef
+    return false;
+  }
 
   // do the interpolation in geocentric, this way the
   // interpolation is correct at N/S and E/W transitions
@@ -66,22 +74,26 @@ bool LinearInterpolator::interpolate(double time, const PlatformUpdate &prev, co
                     simCore::linearInterpolate(prev.y(), next.y(), factor),
                     simCore::linearInterpolate(prev.z(), next.z(), factor));
 
-  simCore::Vec3 lla;
-  simCore::CoordinateConverter::convertEcefToGeodeticPos(xyz, lla);
+  std::optional<simCore::Vec3> llaPosOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(xyz);
+  if (!llaPosOpt)
+  {
+    assert(false); // guaranteed to be safe by wrapper
+    return false;
+  }
 
   // Use interpolated geodetic altitude to prevent short cuts through the earth
   simCore::Coordinate resultsLla;
   resultsLla.setCoordinateSystem(simCore::COORD_SYS_LLA);
-  resultsLla.setPositionLLA(lla.lat(), lla.lon(), simCore::linearInterpolate(prevLla.z(), nextLla.z(), factor));
+  resultsLla.setPositionLLA(llaPosOpt->lat(), llaPosOpt->lon(), simCore::linearInterpolate(prevLlaOpt->z(), nextLlaOpt->z(), factor));
 
   if (prev.has_orientation() && next.has_orientation())
   {
-    double l_yaw = (simCore::angFix2PI(prevLla.yaw()));
-    double l_pitch = (simCore::angFix2PI(prevLla.pitch()));
-    double l_roll = (simCore::angFix2PI(prevLla.roll()));
-    double h_yaw = (simCore::angFix2PI(nextLla.yaw()));
-    double h_pitch = (simCore::angFix2PI(nextLla.pitch()));
-    double h_roll = (simCore::angFix2PI(nextLla.roll()));
+    double l_yaw = (simCore::angFix2PI(prevLlaOpt->yaw()));
+    double l_pitch = (simCore::angFix2PI(prevLlaOpt->pitch()));
+    double l_roll = (simCore::angFix2PI(prevLlaOpt->roll()));
+    double h_yaw = (simCore::angFix2PI(nextLlaOpt->yaw()));
+    double h_pitch = (simCore::angFix2PI(nextLlaOpt->pitch()));
+    double h_roll = (simCore::angFix2PI(nextLlaOpt->roll()));
 
     // orientations assumed to be between 0 and 360
     double delta_yaw = (h_yaw - l_yaw);
@@ -133,32 +145,36 @@ bool LinearInterpolator::interpolate(double time, const PlatformUpdate &prev, co
 
   if (prev.has_velocity() && next.has_velocity())
   {
-    resultsLla.setVelocity(simCore::linearInterpolate(prevLla.vx(), nextLla.vx(), factor),
-                           simCore::linearInterpolate(prevLla.vy(), nextLla.vy(), factor),
-                           simCore::linearInterpolate(prevLla.vz(), nextLla.vz(), factor));
+    resultsLla.setVelocity(simCore::linearInterpolate(prevLlaOpt->vx(), nextLlaOpt->vx(), factor),
+                           simCore::linearInterpolate(prevLlaOpt->vy(), nextLlaOpt->vy(), factor),
+                           simCore::linearInterpolate(prevLlaOpt->vz(), nextLlaOpt->vz(), factor));
   }
 
-  simCore::Coordinate resultsEcef;
-  simCore::CoordinateConverter::convertGeodeticToEcef(resultsLla, resultsEcef);
+  std::optional<simCore::Coordinate> resultsEcefOpt = simCore::CoordinateConverter::convertGeodeticToEcef(resultsLla);
+  if (!resultsEcefOpt)
+  {
+    assert(false); // must succeed, resultsLla known to be in LLA
+    return false;
+  }
 
   result->set_time(time);
 
-  result->set_x(resultsEcef.x());
-  result->set_y(resultsEcef.y());
-  result->set_z(resultsEcef.z());
+  result->set_x(resultsEcefOpt->x());
+  result->set_y(resultsEcefOpt->y());
+  result->set_z(resultsEcefOpt->z());
 
-  if (resultsEcef.hasVelocity())
+  if (resultsEcefOpt->hasVelocity())
   {
-    result->set_vx(resultsEcef.vx());
-    result->set_vy(resultsEcef.vy());
-    result->set_vz(resultsEcef.vz());
+    result->set_vx(resultsEcefOpt->vx());
+    result->set_vy(resultsEcefOpt->vy());
+    result->set_vz(resultsEcefOpt->vz());
   }
 
-  if (resultsEcef.hasOrientation())
+  if (resultsEcefOpt->hasOrientation())
   {
-    result->set_psi(resultsEcef.psi());
-    result->set_theta(resultsEcef.theta());
-    result->set_phi(resultsEcef.phi());
+    result->set_psi(resultsEcefOpt->psi());
+    result->set_theta(resultsEcefOpt->theta());
+    result->set_phi(resultsEcefOpt->phi());
   }
 
   return true;
