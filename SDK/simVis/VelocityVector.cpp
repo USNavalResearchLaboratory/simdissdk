@@ -25,9 +25,9 @@
 
 #include "osgEarth/LineDrawable"
 
+#include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
-#include "simNotify/Notify.h"
 
 #include "simVis/Constants.h"
 #include "simVis/Locator.h"
@@ -165,8 +165,14 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   ecef.setCoordinateSystem(simCore::COORD_SYS_ECEF);
   ecef.setPosition(lastUpdate_.x(), lastUpdate_.y(), lastUpdate_.z());
   ecef.setVelocity(lastUpdate_.vx(), lastUpdate_.vy(), lastUpdate_.vz());
-  simCore::Coordinate lla;
-  simCore::CoordinateConverter::convertEcefToGeodetic(ecef, lla);
+  const std::optional<simCore::Coordinate> llaOpt = simCore::CoordinateConverter::convertEcefToGeodetic(ecef);
+  if (!llaOpt)
+  {
+    SIM_ERROR << "Internal error: Could not create velocity vector, Coordinate conversion failed: " << __LINE__ << std::endl;
+    assert(false); // cannot fail, ecef guaranteed to be in ECEF
+    return;
+  }
+  simCore::Coordinate lla = *llaOpt;
 
   simCore::Vec3 velocity;
   double scale;

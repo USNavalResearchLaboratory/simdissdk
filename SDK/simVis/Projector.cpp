@@ -936,13 +936,14 @@ void ProjectorNode::syncWithLocator()
 
   const osg::Vec3d& hostPosEcef = locatorMat.getTrans();
   simCore::Vec3 hostPosLla;
-  if (0 == simCore::CoordinateConverter::convertEcefToGeodeticPos(convertToSim(hostPosEcef), hostPosLla))
+  const std::optional<simCore::Vec3> hostPosLlaOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(convertToSim(hostPosEcef));
+  if (hostPosLlaOpt)
   {
     // extend the projector vector at least as far as the earth surface to guarantee an intersection
-    const osg::Vec3d& vector = osg::Vec3d(cen - eye) * 2.0 * hostPosLla.alt();
+    const osg::Vec3d& vector = osg::Vec3d(cen - eye) * 2.0 * hostPosLlaOpt->alt();
     const osg::Vec3d& endpoint = eye + vector;
     osg::Vec3d ellipsoidIntersection;
-    if (calculateEarthIntersection(hostPosLla.lat(), eye, endpoint, ellipsoidIntersection))
+    if (calculateEarthIntersection(hostPosLlaOpt->lat(), eye, endpoint, ellipsoidIntersection))
     {
       // if ellipsoid intersection can be calculated, use that result as the projector position
       const simCore::Vec3& intersection = convertToSim(ellipsoidIntersection);

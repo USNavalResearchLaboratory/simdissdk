@@ -135,7 +135,13 @@ void Locator::setCoordinate(const simCore::Coordinate& coord, double timestamp, 
     // Ignore whatever is in the coordinate's ECI time and instead use the internal reference time and timestamp
     temp.setElapsedEciTime(getElapsedEciTime());
     simCore::CoordinateConverter conv;
-    conv.convert(temp, ecefCoord_, simCore::COORD_SYS_ECEF);
+    const std::optional<simCore::Coordinate> ecefCoordOpt = conv.convert(temp, simCore::COORD_SYS_ECEF);
+    if (!ecefCoordOpt)
+    {
+      assert(false); // coord must be ECEF, LLA, or ECI. failure means coordinate was passed in with incorrect coordinate system
+      return;
+    }
+    ecefCoord_ = *ecefCoordOpt;
   }
   else
   {
@@ -210,7 +216,15 @@ bool Locator::getCoordinate(simCore::Coordinate* out_coord, const simCore::Coord
   if (coordsys != ecefCoord_.coordinateSystem())
   {
     simCore::CoordinateConverter conv;
-    conv.convert(temp, *out_coord, coordsys);
+    const std::optional<simCore::Coordinate> outCoordOpt = conv.convert(temp, coordsys);
+    if (!outCoordOpt)
+    {
+      // expected to only be used with ECEF, LLA, or ECI. Failure possibly due to missing ref origin, means unexpected coordinate system input
+      // used in scene graph, no use for TP coordinates
+      assert(false);
+      return false;
+    }
+    *out_coord = *outCoordOpt;
   }
   else
   {
@@ -306,14 +320,22 @@ bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::Coo
   }
   if (coordsys == simCore::COORD_SYS_LLA)
   {
-    return (simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), *out_position) == 0);
+    const std::optional<simCore::Vec3> geodeticCoordOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()));
+    if (!geodeticCoordOpt)
+      return false;
+    *out_position = *geodeticCoordOpt;
+    return true;
   }
   if (coordsys == simCore::COORD_SYS_ECI)
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), getElapsedEciTime());
-    simCore::Coordinate out;
-    simCore::CoordinateConverter::convertEcefToEci(in, out);
-    *out_position = out.position();
+    const std::optional<simCore::Coordinate> eciOutOpt = simCore::CoordinateConverter::convertEcefToEci(in);
+    if (!eciOutOpt)
+    {
+      assert(false); // no valid failure case
+      return false;
+    }
+    *out_position = eciOutOpt->position();
     return true;
   }
   // unsupported coordsys
@@ -338,19 +360,27 @@ bool Locator::getLocatorPositionOrientation(simCore::Vec3* out_position, simCore
   if (coordsys == simCore::COORD_SYS_LLA)
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, *out_orientation);
-    simCore::Coordinate out;
-    simCore::CoordinateConverter::convertEcefToGeodetic(in, out);
-    *out_position = out.position();
-    *out_orientation = out.orientation();
+    const std::optional<simCore::Coordinate> geodeticOutOpt = simCore::CoordinateConverter::convertEcefToGeodetic(in);
+    if (!geodeticOutOpt)
+    {
+      assert(false); // cannot fail, `in` guaranteed to be ECEF
+      return false;
+    }
+    *out_position = geodeticOutOpt->position();
+    *out_orientation = geodeticOutOpt->orientation();
     return true;
   }
   if (coordsys == simCore::COORD_SYS_ECI)
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, *out_orientation, getElapsedEciTime());
-    simCore::Coordinate out;
-    simCore::CoordinateConverter::convertEcefToEci(in, out);
-    *out_position = out.position();
-    *out_orientation = out.orientation();
+    const std::optional<simCore::Coordinate> eciOutOpt = simCore::CoordinateConverter::convertEcefToEci(in);
+    if (!eciOutOpt)
+    {
+      assert(false); // cannot fail, `in` guaranteed to be ECEF
+      return false;
+    }
+    *out_position = eciOutOpt->position();
+    *out_orientation = eciOutOpt->orientation();
     return true;
   }
   // unsupported coordsys
@@ -518,17 +548,25 @@ bool Locator::getOrientation_(osg::Matrixd& ori, unsigned int comps) const
       // painful: need to convert to body-local, remove unwanted components,
       // and convert back to ECEF.
       simCore::CoordinateConverter conv;
-      simCore::Coordinate lla;
-      conv.convert(ecefCoord_, lla, simCore::COORD_SYS_LLA);
-      assert(lla.hasOrientation());
-      lla.setOrientation(
-        (comps & COMP_HEADING) != 0 ? lla.yaw() : 0.0,
-        (comps & COMP_PITCH) != 0 ? lla.pitch() : 0.0,
-        (comps & COMP_ROLL) != 0 ? lla.roll() : 0.0);
+      std::optional<simCore::Coordinate> llaCoordOpt = conv.convert(ecefCoord_, simCore::COORD_SYS_LLA);
+      if (!llaCoordOpt)
+      {
+        assert(false); // ecef -> lla does not need ref origin. conversion cannot fail
+        return false;
+      }
+      assert(llaCoordOpt->hasOrientation()); // ecef coord must have orientation, therefore lla coord must have orientation
+      llaCoordOpt->setOrientation(
+        (comps & COMP_HEADING) != 0 ? llaCoordOpt->yaw() : 0.0,
+        (comps & COMP_PITCH) != 0 ? llaCoordOpt->pitch() : 0.0,
+        (comps & COMP_ROLL) != 0 ? llaCoordOpt->roll() : 0.0);
 
-      simCore::Coordinate ecef;
-      conv.convert(lla, ecef, simCore::COORD_SYS_ECEF);
-      simVis::Math::ecefEulerToEnuRotMatrix(ecef.orientation(), ori);
+      const std::optional<simCore::Coordinate> ecefCoordOpt = conv.convert(*llaCoordOpt, simCore::COORD_SYS_ECEF);
+      if (!ecefCoordOpt)
+      {
+        assert(false); // lla -> ecef does not need ref origin. conversion cannot fail
+        return false;
+      }
+      simVis::Math::ecefEulerToEnuRotMatrix(ecefCoordOpt->orientation(), ori);
       return true;
     }
   }
@@ -539,12 +577,12 @@ int Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg
 {
   local2world.makeTranslate(ecefPos);
 
-  simCore::Vec3 llaPos;
-  if (simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), llaPos))
-    return 1;
+  const auto geodeticVecOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()));
+  if (!geodeticVecOpt)
+    return 1; // can't assert, not guaranteed to be ecef
 
   double rotationMatrixENU_[3][3];
-  simCore::CoordinateConverter::setLocalToEarthMatrix(llaPos.lat(), llaPos.lon(), simCore::LOCAL_LEVEL_FRAME_ENU, rotationMatrixENU_);
+  simCore::CoordinateConverter::setLocalToEarthMatrix(geodeticVecOpt->lat(), geodeticVecOpt->lon(), simCore::LOCAL_LEVEL_FRAME_ENU, rotationMatrixENU_);
 
   // set matrix
   local2world(0,0) = rotationMatrixENU_[0][0];
