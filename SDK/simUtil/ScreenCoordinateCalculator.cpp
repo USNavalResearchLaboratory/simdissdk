@@ -124,6 +124,8 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simVis::EntityNode&
     return INVALID_COORDINATE;
   lla.setAlt(0.0);
   std::optional<simCore::Vec3> ecefOutOpt = simCore::CoordinateConverter::convertGeodeticPosToEcef(lla);
+  if (!ecefOutOpt)
+    return INVALID_COORDINATE;
   return matrixCalculate_(osg::Vec3d(ecefOutOpt->x(), ecefOutOpt->y(), ecefOutOpt->z()));
 }
 
