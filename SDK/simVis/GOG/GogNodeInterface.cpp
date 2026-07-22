@@ -104,13 +104,25 @@ int findLocalGeometryPosition(T* node, osgEarth::GeoPoint* referencePosition, os
     simCore::CoordinateConverter converter;
     converter.setReferenceOrigin(refPosition.y() * simCore::DEG2RAD, refPosition.x() * simCore::DEG2RAD, refPosition.z());
     simCore::Coordinate xEastCoord(simCore::COORD_SYS_XEAST, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
-    converter.convert(xEastCoord, llaCoord, simCore::COORD_SYS_LLA);
+    const std::optional<simCore::Coordinate> llaCoordOpt = converter.convert(xEastCoord, simCore::COORD_SYS_LLA);
+    if (!llaCoordOpt)
+    {
+      assert(false); // failure cases all handled beforehand, must succeed
+      return 1;
+    }
+    llaCoord = *llaCoordOpt;
   }
   else // convert from absolute center, ECEF to LLA
   {
     const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
     simCore::CoordinateConverter converter;
-    converter.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
+    const std::optional<simCore::Coordinate> llaCoordOpt = converter.convert(ecefCoord, simCore::COORD_SYS_LLA);
+    if (!llaCoordOpt)
+    {
+      assert(false); // failure cases handled beforehand, must succeed
+      return 1;
+    }
+    llaCoord = *llaCoordOpt;
   }
 
   position = osg::Vec3d(llaCoord.lon() * simCore::RAD2DEG, llaCoord.lat() * simCore::RAD2DEG, llaCoord.alt());
@@ -2572,9 +2584,13 @@ int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint*
 
   const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
   simCore::CoordinateConverter converter;
-  simCore::Coordinate llaCoord;
-  converter.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
-  position = osg::Vec3d(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, llaCoord.alt());
+  const std::optional<simCore::Coordinate> llaCoordOpt = converter.convert(ecefCoord, simCore::COORD_SYS_LLA);
+  if (!llaCoordOpt)
+  {
+    assert(false); // failure cases handled beforehand/in wrapper, must succeed
+    return 1;
+  }
+  position = osg::Vec3d(llaCoordOpt->lon()*simCore::RAD2DEG, llaCoordOpt->lat()*simCore::RAD2DEG, llaCoordOpt->alt());
 
   return 0;
 }

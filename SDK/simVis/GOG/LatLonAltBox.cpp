@@ -25,7 +25,6 @@
 #include "osgEarth/GeometryCompiler"
 #include "osgEarth/FeatureNode"
 #include "simCore/Calc/Angle.h"
-#include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/GOG/GogShape.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/LoaderUtils.h"

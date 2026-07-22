@@ -672,9 +672,8 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
       const double alt = lla1.alt() + percentOfFull * (lla2.alt() - lla1.alt());
 
       // Convert back to ECEF and add the vertex
-      simCore::Vec3 ecefPos;
-      simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt), ecefPos);
-      verts->push_back(osg::Vec3f(ecefPos.x(), ecefPos.y(), ecefPos.z()) - zeroPoint);
+      simCore::Vec3 ecefPosVec = simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt));
+      verts->push_back(osg::Vec3f(ecefPosVec.x(), ecefPosVec.y(), ecefPosVec.z()) - zeroPoint);
     }
 
 
@@ -703,9 +702,8 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
       const double alt = lla1.alt() + percentOfFull * (lla2.alt() - lla1.alt());
 
       // Convert back to ECEF and add the vertex
-      simCore::Vec3 ecefPos;
-      simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt), ecefPos);
-      verts->push_back(osg::Vec3f(ecefPos.x(), ecefPos.y(), ecefPos.z()) - zeroPoint);
+      simCore::Vec3 ecefPosVec = simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt));
+      verts->push_back(osg::Vec3f(ecefPosVec.x(), ecefPosVec.y(), ecefPosVec.z()) - zeroPoint);
     }
 
     // Finish up

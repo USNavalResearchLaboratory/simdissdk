@@ -67,7 +67,15 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
   // convert from ECEF to LLA if necessary, since osgEarth Terrain getHeight requires LLA
   simCore::Coordinate llaCoord;
   if (coord.coordinateSystem() == simCore::COORD_SYS_ECEF)
-    simCore::CoordinateConverter::convertEcefToGeodetic(coord, llaCoord);
+  {
+    const std::optional<simCore::Coordinate> llaCoordOpt = simCore::CoordinateConverter::convertEcefToGeodetic(coord);
+    if (!llaCoordOpt)
+    {
+      assert(0); // must succeed, guaranteed to be ecef
+      return;
+    }
+    llaCoord = *llaCoordOpt;
+  }
   else
     llaCoord = coord;
 
@@ -96,7 +104,15 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
 
   // convert back to ECEF if necessary
   if (coord.coordinateSystem() == simCore::COORD_SYS_ECEF)
-    simCore::CoordinateConverter::convertGeodeticToEcef(llaCoord, coord);
+  {
+    const std::optional<simCore::Coordinate> coordOpt = simCore::CoordinateConverter::convertGeodeticToEcef(llaCoord);
+    if (!coordOpt)
+    {
+      assert(false); // must succeed, guaranteed to be lla
+      return;
+    }
+    coord = *coordOpt;
+  }
   else
     coord = llaCoord;
 }
@@ -119,7 +135,15 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord, os
   // convert from ECEF to LLA if necessary, since osgEarth Terrain getHeight requires LLA
   simCore::Coordinate llaCoord;
   if (coord.coordinateSystem() == simCore::COORD_SYS_ECEF)
-    simCore::CoordinateConverter::convertEcefToGeodetic(coord, llaCoord);
+  {
+    const std::optional<simCore::Coordinate> llaCoordOpt = simCore::CoordinateConverter::convertEcefToGeodetic(coord);
+    if (!llaCoordOpt)
+    {
+      assert(false); // must succeed, guaranteed to be ECEF
+      return;
+    }
+    llaCoord = *llaCoordOpt;
+  }
   else
     llaCoord = coord;
 
@@ -148,7 +172,15 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord, os
 
   // convert back to ECEF if necessary
   if (coord.coordinateSystem() == simCore::COORD_SYS_ECEF)
-    simCore::CoordinateConverter::convertGeodeticToEcef(llaCoord, coord);
+  {
+    const std::optional<simCore::Coordinate> coordOpt = simCore::CoordinateConverter::convertGeodeticToEcef(llaCoord);
+    if (!coordOpt)
+    {
+      assert(false); // must succeed, guaranteed to be geodetic
+      return;
+    }
+    coord = *coordOpt;
+  }
   else
     coord = llaCoord;
 }

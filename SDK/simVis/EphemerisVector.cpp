@@ -154,9 +154,13 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
 
   // Reset the coordinate conversion center point
   const simCore::Coordinate asEcef(simCore::COORD_SYS_ECEF, simCore::Vec3(lastUpdate_.x(), lastUpdate_.y(), lastUpdate_.z()));
-  simCore::Coordinate asLla;
-  coordConvert_->convert(asEcef, asLla, simCore::COORD_SYS_LLA);
-  coordConvert_->setReferenceOrigin(asLla.position());
+  const std::optional<simCore::Coordinate> asLlaOpt = coordConvert_->convert(asEcef, simCore::COORD_SYS_LLA);
+  if (!asLlaOpt)
+  {
+    assert(false); // must succeed, guaranteed to be ecef (only failure condition)
+    return;
+  }
+  coordConvert_->setReferenceOrigin(asLlaOpt->position());
 
   // Figure out how long the lines should be based on the standard algorithm
   const float lineLength = VectorScaling::lineLength(modelNode_.get(), static_cast<float>(prefs.axisscale()));
@@ -190,12 +194,17 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
 void EphemerisVector::rebuildLine_(osgEarth::LineDrawable* geom, const osg::Vec3& ephemerisPosition, float lineLength) const
 {
   // Get the tangent plane (XEast) coordinates of the moon relative to platform-centric system
-  simCore::Coordinate asTp;
-  coordConvert_->convert(simCore::Coordinate(simCore::COORD_SYS_ECEF, simCore::Vec3(ephemerisPosition.x(), ephemerisPosition.y(), ephemerisPosition.z())),
-    asTp, simCore::COORD_SYS_XEAST);
+  const std::optional<simCore::Coordinate> asTpOpt = coordConvert_->convert(simCore::Coordinate(simCore::COORD_SYS_ECEF, simCore::Vec3(ephemerisPosition.x(), ephemerisPosition.y(), ephemerisPosition.z())),
+    simCore::COORD_SYS_XEAST);
+
+  if (!asTpOpt)
+  {
+    assert(false); // must succeed, guaranteed to be ECEF (only failure condition)
+    return;
+  }
 
   // Figure out the end point, relative to the platform
-  osg::Vec3d relToPlatform(asTp.x(), asTp.y(), asTp.z());
+  osg::Vec3d relToPlatform(asTpOpt->x(), asTpOpt->y(), asTpOpt->z());
   relToPlatform.normalize();
   relToPlatform *= lineLength;
 

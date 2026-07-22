@@ -473,7 +473,13 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
       // calculate host orientation in LLA, used for determining a relative LOB's true angle
       const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate->x(), platformUpdate->y(), platformUpdate->z()),
                                           simCore::Vec3(platformUpdate->psi(), platformUpdate->theta(), platformUpdate->phi()));
-      simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoord, llaCoord);
+      const std::optional<simCore::Coordinate> llaCoordOpt = simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoord);
+      if (!llaCoordOpt)
+      {
+        assert(false); // no valid failure cases
+        return;
+      }
+      llaCoord = *llaCoordOpt;
     }
 
     // calculate the clamped host platform coord only once, for all lines at this same time
@@ -654,17 +660,27 @@ void LobGroupNode::applyPlatformCoordClamping_(simCore::Coordinate& platformCoor
   assert(platformCoord.coordinateSystem() == simCore::COORD_SYS_ECEF);
 
   // convert to lla first, this is the native coord system for clamping
-  simCore::Coordinate platLla;
-  simCore::CoordinateConverter::convertEcefToGeodetic(platformCoord, platLla);
+  std::optional<simCore::Coordinate> platLlaOpt = simCore::CoordinateConverter::convertEcefToGeodetic(platformCoord);
+  if (!platLlaOpt)
+  {
+    assert(false); // guaranteed to be provided ecef coords
+    return;
+  }
 
   // clamp in ecef means: convert to lla, clamp, convert back to ecef; clamp in lla involves no coord conversion
-  surfaceClamping_->clampCoordToMapSurface(platLla);
+  surfaceClamping_->clampCoordToMapSurface(*platLlaOpt);
 
   // platform position is always our coordinate converter reference origin, in LLA (required for applyEndpointCoordClamping_)
-  coordConverter_->setReferenceOrigin(platLla.position());
+  coordConverter_->setReferenceOrigin(platLlaOpt->position());
 
   // now convert to ecef since that is what the caller requires
-  simCore::CoordinateConverter::convertGeodeticToEcef(platLla, platformCoord);
+  const std::optional<simCore::Coordinate> platEcefOpt = simCore::CoordinateConverter::convertGeodeticToEcef(*platLlaOpt);
+  if (!platEcefOpt)
+  {
+    assert(false); // no valid failure case
+    return;
+  }
+  platformCoord = *platEcefOpt;
 }
 
 void LobGroupNode::applyEndpointCoordClamping_(simCore::Coordinate& endpointCoord)
@@ -673,10 +689,14 @@ void LobGroupNode::applyEndpointCoordClamping_(simCore::Coordinate& endpointCoor
     return;
 
   // convert to lla for surface clamping call
-  simCore::Coordinate endLla;
-  coordConverter_->convert(endpointCoord, endLla, simCore::COORD_SYS_LLA);
-  surfaceClamping_->clampCoordToMapSurface(endLla);
-  coordConverter_->convert(endLla, endpointCoord, simCore::COORD_SYS_XEAST);
+  auto endLlaOpt = coordConverter_->convert(endpointCoord, simCore::COORD_SYS_LLA);
+  if (!endLlaOpt)
+  {
+    assert(false); // coordinate is not xeast, as assumed
+    return;
+  }
+  surfaceClamping_->clampCoordToMapSurface(*endLlaOpt);
+  coordConverter_->convert(*endLlaOpt, endpointCoord, simCore::COORD_SYS_XEAST);
 }
 
 void LobGroupNode::getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const

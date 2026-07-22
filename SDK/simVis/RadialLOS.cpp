@@ -213,9 +213,13 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
   }
 
   simCore::CoordinateConverter cc;
-  simCore::Coordinate originLlaCoord;
-  cc.convert(originCoord, originLlaCoord, simCore::COORD_SYS_LLA);
-  cc.setReferenceOrigin(originLlaCoord.position());
+  const std::optional<simCore::Coordinate> originLlaCoordOpt = cc.convert(originCoord, simCore::COORD_SYS_LLA);
+  if (!originLlaCoordOpt)
+  {
+    assert(false); // must be ecef or lla per convertCoordToGeoPoint
+    return false;
+  }
+  cc.setReferenceOrigin(originLlaCoordOpt->position());
 
   bool validLos = false;
   // step through the azimuthal range:
@@ -272,7 +276,7 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
         convertGeoPointToCoord(mapPoint, destCoord, mapNode);
 
         double elev;
-        simCore::calculateAbsAzEl(originLlaCoord.position(), destCoord.position(), nullptr, &elev, nullptr, simCore::FLAT_EARTH, &cc);
+        simCore::calculateAbsAzEl(originLlaCoordOpt->position(), destCoord.position(), nullptr, &elev, nullptr, simCore::FLAT_EARTH, &cc);
 
         bool visible = false;
         if (elev >= maxElev)
@@ -356,8 +360,12 @@ bool RadialLOS::getLineOfSight(const simCore::Coordinate& target, bool& out_isVi
 
   // Convert the target to local tangent frame:
   simCore::CoordinateConverter conv;
-  simCore::Coordinate targetECEF;
-  conv.convert(target, targetECEF, simCore::COORD_SYS_ECEF);
+  const std::optional<simCore::Coordinate> targetEcefOpt = conv.convert(target, simCore::COORD_SYS_ECEF);
+  if (!targetEcefOpt)
+  {
+    assert(false); // should not fail, unless target not in lla
+    return false;
+  }
 
   // compute the local frame transforms.
   // TODO: we can probably just cache these on first use
@@ -368,7 +376,7 @@ bool RadialLOS::getLineOfSight(const simCore::Coordinate& target, bool& out_isVi
   // convert the target coords to the local frame, record the target's range,
   // and normalize the vector to the target so we can use it for dot-product
   // visibility detection:
-  osg::Vec3d targetLocal = osg::Vec3d(targetECEF.x(), targetECEF.y(), targetECEF.z()) * world2local;
+  osg::Vec3d targetLocal = osg::Vec3d(targetEcefOpt->x(), targetEcefOpt->y(), targetEcefOpt->z()) * world2local;
   osg::Vec2d targetLocal2D(targetLocal.x(), targetLocal.y());
   double targetRange = targetLocal2D.length();
   targetLocal.normalize();

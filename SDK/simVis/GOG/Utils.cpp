@@ -27,7 +27,6 @@
 #include "osgEarth/LocalGeometryNode"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
-#include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/GOG/GogUtils.h"
 #include "simCore/GOG/Parser.h"

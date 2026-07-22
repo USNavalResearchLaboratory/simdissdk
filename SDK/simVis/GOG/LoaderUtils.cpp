@@ -138,12 +138,17 @@ osgEarth::GeoPoint LoaderUtils::getShapeGeoPosition(const simCore::GOG::GogShape
       simCore::CoordinateConverter cc;
       cc.setReferenceOrigin(refLla.lat(), refLla.lon(), refLla.alt());
       simCore::Coordinate coord(simCore::COORD_SYS_XEAST, simCore::Vec3(xyz.x(), xyz.y(), xyz.z()));
-      simCore::Coordinate outCoord;
-      cc.convert(coord, outCoord, simCore::COORD_SYS_LLA);
+      const std::optional<simCore::Coordinate> llaCoordOpt = cc.convert(coord, simCore::COORD_SYS_LLA);
 
-      xyz.y() = outCoord.lat() * simCore::RAD2DEG;
-      xyz.x() = outCoord.lon() * simCore::RAD2DEG;
-      xyz.z() = outCoord.alt();
+      if (!llaCoordOpt)
+      {
+        assert(false); // no possible failure case
+        return {};
+      }
+
+      xyz.y() = llaCoordOpt->lat() * simCore::RAD2DEG;
+      xyz.x() = llaCoordOpt->lon() * simCore::RAD2DEG;
+      xyz.z() = llaCoordOpt->alt();
       return osgEarth::GeoPoint(srs.get(), xyz, osgEarth::ALTMODE_ABSOLUTE);
     }
   }

@@ -475,10 +475,15 @@ TrackHistoryNode* PlatformNode::getTrackHistory()
 
 simCore::Vec3 PlatformNode::pointNorth_(const simCore::Vec3& ecef) const
 {
-  simCore::Vec3 lla;
-  simCore::CoordinateConverter::convertEcefToGeodeticPos(ecef, lla);
-  simCore::Vec3 orientation;
-  simCore::CoordinateConverter::convertGeodeticOriToEcef(lla, simCore::Vec3(0.0, 0.0, 0.0), orientation);
+  const std::optional<simCore::Vec3> llaVecOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(ecef);
+  if (!llaVecOpt)
+  {
+    SIM_ERROR << "Input ECEF Value was not in ECEF. Line: " << __LINE__ << std::endl;
+    return {};
+  }
+
+  simCore::Vec3 orientation = simCore::CoordinateConverter::convertGeodeticOriToEcef(*llaVecOpt, simCore::Vec3(0.0, 0.0, 0.0));
+
   return orientation;
 }
 
@@ -1249,22 +1254,32 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     return;
   }
 
-  simCore::Coordinate platLlaCoord;
   simCore::CoordinateConverter converter;
-  converter.convert(platCoord, platLlaCoord, simCore::COORD_SYS_LLA);
+  std::optional<simCore::Coordinate> platLlaCoordOpt = converter.convert(platCoord, simCore::COORD_SYS_LLA);
+
+  if (!platLlaCoordOpt)
+  {
+    assert(false); // cannot fail, converting ecef to lla
+    return;
+  }
+
   // Add the altitude offset after the conversion for correctness
-  platLlaCoord.setPositionLLA(platLlaCoord.x(), platLlaCoord.y(), platLlaCoord.z() + prefs.losaltitudeoffset());
+  platLlaCoordOpt->setPositionLLA(platLlaCoordOpt->x(), platLlaCoordOpt->y(), platLlaCoordOpt->z() + prefs.losaltitudeoffset());
 
   // Draw/update horizon
   simCore::Coordinate losCoord = los->getCoordinate();
 
   if (losCoord.coordinateSystem() != simCore::COORD_SYS_NONE) // losNode is not guaranteed to have a valid coord
   {
-    simCore::Coordinate losLlaCoord;
-    converter.convert(losCoord, losLlaCoord, simCore::COORD_SYS_LLA);
+    const std::optional<simCore::Coordinate> losLlaOpt = converter.convert(losCoord, simCore::COORD_SYS_LLA);
+    if (!losLlaOpt)
+    {
+      assert(false); // only fails if losCoord not ecef/lla/eci
+      return;
+    }
 
-    rangeDist = simCore::calculateGroundDist(losLlaCoord.position(), platLlaCoord.position(), simCore::WGS_84, nullptr);
-    altDist = fabs(losLlaCoord.alt() - platLlaCoord.alt());
+    rangeDist = simCore::calculateGroundDist(losLlaOpt->position(), platLlaCoordOpt->position(), simCore::WGS_84, nullptr);
+    altDist = fabs(losLlaOpt->alt() - platLlaCoordOpt->alt());
   }
   else
   {
@@ -1281,9 +1296,14 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   }
 
   // Need to convert the updated coord back to original system before giving to LOS Node
-  converter.convert(platLlaCoord, platCoord, platCoord.coordinateSystem());
-  los->setCoordinate(platCoord);
-  los->setMaxRange(osgEarth::Distance(simCore::calculateHorizonDist(platLlaCoord.position(), horizonType), osgEarth::Units::METERS));
+  const std::optional<simCore::Coordinate> platCoordOpt = converter.convert(*platLlaCoordOpt, platCoord.coordinateSystem());
+  if (!platCoordOpt)
+  {
+    assert(false); // can't fail since previous conversion worked
+    return;
+  }
+  los->setCoordinate(*platCoordOpt);
+  los->setMaxRange(osgEarth::Distance(simCore::calculateHorizonDist(platLlaCoordOpt->position(), horizonType), osgEarth::Units::METERS));
 
   // Reactivate the LOS, undoing the setActive(false) above
   los->setActive(true);
