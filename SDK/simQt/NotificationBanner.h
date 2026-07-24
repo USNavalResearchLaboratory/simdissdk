@@ -23,6 +23,7 @@
 #pragma once
 
 #include <QFrame>
+#include "simCore/Common/Export.h"
 
 class QEvent;
 class QLabel;
@@ -35,7 +36,7 @@ namespace simQt {
 /**
 * @brief Shows information in a banner that drops from the top of the parent widget
 */
-class NotificationBanner : public QFrame
+class SDKQT_EXPORT NotificationBanner : public QFrame
 {
   Q_OBJECT
 
