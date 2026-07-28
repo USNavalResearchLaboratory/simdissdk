@@ -23,6 +23,7 @@
 #include <QMenu>
 #include <QContextMenuEvent>
 #include <QRegularExpression>
+#include "simQt/OverrideShortcut.h"
 #include "simQt/EntityFilterLineEdit.h"
 
 namespace simQt {
@@ -35,26 +36,32 @@ EntityFilterLineEdit::EntityFilterLineEdit(QWidget *parent)
   caseSensitiveAction_ = new QAction(tr("Case Sensitive"), this);
   connect(caseSensitiveAction_, SIGNAL(triggered()), this, SLOT(caseSensitive()));
   caseSensitiveAction_->setCheckable(true);
-  caseSensitiveAction_->setShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_S));
   addAction(caseSensitiveAction_);
 
   regularAction_ = new QAction(tr("&Regular Expression"), this);
   connect(regularAction_, SIGNAL(triggered()), this, SLOT(regularExpression()));
   regularAction_->setCheckable(true);
-  regularAction_->setShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_R));
   addAction(regularAction_);
 
   wildcardAction_ = new QAction(tr("&Wildcard"), this);
   connect(wildcardAction_, SIGNAL(triggered()), this, SLOT(wildcard()));
   wildcardAction_->setCheckable(true);
-  wildcardAction_->setShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_I));
   addAction(wildcardAction_);
 
   fixedAction_ = new QAction(tr("&Fixed String"), this);
   connect(fixedAction_, SIGNAL(triggered()), this, SLOT(fixedString()));
   fixedAction_->setCheckable(true);
-  fixedAction_->setShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_N));
   addAction(fixedAction_);
+
+  // hotkey shortcuts will only apply when the line edit has focus
+  simQt::OverrideShortcut* caseSensitiveOverride = new simQt::OverrideShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_S), this);
+  connect(caseSensitiveOverride, &simQt::OverrideShortcut::activated, this, &EntityFilterLineEdit::caseSensitive);
+  simQt::OverrideShortcut* regExpOverride = new simQt::OverrideShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_R), this);
+  connect(regExpOverride, &simQt::OverrideShortcut::activated, this, &EntityFilterLineEdit::regularExpression);
+  simQt::OverrideShortcut* wildcardOverride = new simQt::OverrideShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_I), this);
+  connect(wildcardOverride, &simQt::OverrideShortcut::activated, this, &EntityFilterLineEdit::wildcard);
+  simQt::OverrideShortcut* fixedOverride = new simQt::OverrideShortcut(QKeySequence(static_cast<int>(Qt::CTRL) + Qt::Key_N), this);
+  connect(fixedOverride, &simQt::OverrideShortcut::activated, this, &EntityFilterLineEdit::fixedString);
 
   rightMouseClickMenu_ = new QMenu(this);
   rightMouseClickMenu_->addAction(caseSensitiveAction_);
