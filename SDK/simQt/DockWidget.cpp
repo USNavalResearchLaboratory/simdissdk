@@ -607,7 +607,6 @@ void DockWidget::init_()
   closeAction_->setToolTip(formatTooltip(tr("Close"), tr("Close the window")));
   closeAction_->setIcon(QIcon(":/simQt/images/Close.png"));
   connect(closeAction_, SIGNAL(triggered()), this, SLOT(closeWindow_()));
-  closeAction_->setShortcuts(QKeySequence::Close);
 
   // Create the monochrome icons for doing focus
   const QSize titleBarIconSize(8, 8);
@@ -1215,6 +1214,9 @@ void DockWidget::restoreDefaultLayout()
 
 void DockWidget::verifyDockState_(bool floating)
 {
+  // only set shortcut when floating; if multiple dockwidgets are docked the shortcut event is ambigious since they all share focus
+  closeAction_->setShortcuts(floating ? QKeySequence::Close : QKeySequence::UnknownKey);
+
   // there are cases where Qt will dock this widget despite the allowedAreas, e.g. restoreState or double clicking on title bar
   if (!floating && allowedAreas() == Qt::NoDockWidgetArea)
     setFloating(true);
