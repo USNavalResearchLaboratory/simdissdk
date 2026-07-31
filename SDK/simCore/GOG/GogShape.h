@@ -171,7 +171,7 @@ public:
   * @return 0 if value was set, non-zero otherwise
   */
   [[deprecated("Deprecated, please use std::optional<std::string> getName() instead")]]
-  virtual int getName(std::string& name) const;
+  int getName(std::string& name) const;
 
   /// Set user friendly display name of the shape
   void setName(const std::string& gogName);
@@ -836,10 +836,6 @@ public:
   ShapeType shapeType() const override;
   /// Return text as name value if it exists and no name is defined
   std::optional<std::string> getName() const override;
-
-  /// Return text as name value if it exists and no name is defined
-  [[deprecated("Deprecated, please use std::optional<std::string> getName() instead")]]
-  int getName(std::string& name) const override;
 
   /// Get the display text of the annotation
   std::string text() const;

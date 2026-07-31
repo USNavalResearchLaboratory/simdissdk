@@ -296,7 +296,7 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   // for performance reasons, cache all style updates, apply once when done
   beginStyleUpdates_();
 
-  std::optional<std::string> name  = shape->getName();
+  std::optional<std::string> name = shape->getName();
   // always set the name, use default if not set
   osgNode_->setName(name.value_or(shape->shapeTypeToString(shape->shapeType())));
 
