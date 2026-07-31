@@ -21,13 +21,14 @@
  *
  */
 #include <cmath>
+#include <thread>
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateSystem.h"
-#include "simCore/Calc/Random.h"
 #include "simCore/Calc/NumericalAnalysis.h"
+#include "simCore/Calc/Random.h"
 
 namespace {
 
@@ -2074,6 +2075,73 @@ int testNewConvenienceMethods()
   return rv;
 }
 
+int calculateEwmaTest()
+{
+  int rv = 0;
+
+  // Test default alpha weighting from initial zero state
+  double avg = simCore::calculateEwma(100.0, 0.0, 0.6, 0.05);
+  rv += SDK_ASSERT(simCore::areEqual(avg, 60.0));
+
+  // Test successive accumulation
+  avg = simCore::calculateEwma(100.0, avg, 0.6, 0.05);
+  rv += SDK_ASSERT(simCore::areEqual(avg, 84.0));
+
+  // Test snap-to-zero thresholding when result falls below threshold
+  const double decayed = simCore::calculateEwma(0.0, 0.1, 0.6, 0.05);
+  rv += SDK_ASSERT(simCore::areEqual(decayed, 0.0));
+
+  // Test that values above threshold are not zeroed
+  const double aboveThreshold = simCore::calculateEwma(0.0, 0.2, 0.6, 0.05);
+  rv += SDK_ASSERT(simCore::areEqual(aboveThreshold, 0.08));
+
+  // Test edge cases for alpha bounds
+  rv += SDK_ASSERT(simCore::areEqual(simCore::calculateEwma(50.0, 10.0, 1.0, 0.0), 50.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::calculateEwma(50.0, 10.0, 0.0, 0.0), 10.0));
+
+  return rv;
+}
+
+int eventRateTrackerTest()
+{
+  int rv = 0;
+
+  simCore::EventRateTracker tracker(0.5, 0.05);
+
+  // Test initial rate defaults to zero via both getRate() and evaluate()
+  rv += SDK_ASSERT(simCore::areEqual(tracker.getRate(), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(tracker.evaluate(), 0.0));
+
+  // Test that adding events does not alter getRate() before evaluate() is called
+  tracker.add(100);
+  rv += SDK_ASSERT(simCore::areEqual(tracker.getRate(), 0.0));
+
+  // Allow time to elapse so the rate calculation yields > 0.0
+  std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
+  // Test that getRate() is strictly passive (remains 0.0 until evaluate() updates state)
+  rv += SDK_ASSERT(simCore::areEqual(tracker.getRate(), 0.0));
+
+  // Test that evaluate() updates the rate based on accumulated count and elapsed time
+  const double rateAfterTime = tracker.evaluate();
+  rv += SDK_ASSERT(rateAfterTime > 0.0);
+
+  // Test that getRate() now reflects the newly evaluated rate
+  rv += SDK_ASSERT(simCore::areEqual(tracker.getRate(), rateAfterTime));
+
+  // Test that consecutive evaluations with no added events and negligible time delta
+  // stabilize or maintain the last rate without throwing off the calculation
+  const double secondEval = tracker.evaluate();
+  rv += SDK_ASSERT(simCore::areEqual(secondEval, rateAfterTime));
+
+  // Test clear resets accumulator, rate history, and timestamp state
+  tracker.clear();
+  rv += SDK_ASSERT(simCore::areEqual(tracker.getRate(), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(tracker.evaluate(), 0.0));
+
+  return rv;
+}
+
 }
 
 int CalculationTest(int argc, char* argv[])
@@ -2105,5 +2173,8 @@ int CalculationTest(int argc, char* argv[])
   rv += testBoresightAlphaBeta();
   rv += testTangentPlane2Sphere();
   rv += testNewConvenienceMethods();
+  rv += calculateEwmaTest();
+  rv += eventRateTrackerTest();
+
   return rv;
 }

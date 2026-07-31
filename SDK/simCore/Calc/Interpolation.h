@@ -245,4 +245,4 @@ namespace simCore
   Vec3 linearInterpolate<Vec3>(const Vec3 &prev, const Vec3 &next, double mixFactor);
 }
 
-#endif /*SIMCORE_CALC_INTERPOLATION_H */
+#endif /* SIMCORE_CALC_INTERPOLATION_H */
