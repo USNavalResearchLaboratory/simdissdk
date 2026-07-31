@@ -161,10 +161,18 @@ public:
   virtual ShapeType shapeType() const = 0;
 
   /**
+  * Get user friendly display name of shape
+  * @return std::optional containing the name if one has been set
+  */
+  virtual std::optional<std::string> getName() const;
+
+  /**
   * Get user friendly display name of shape; if value is not set, default name is returned
   * @return 0 if value was set, non-zero otherwise
   */
+  [[deprecated("Deprecated, please use std::optional<std::string> getName() instead")]]
   virtual int getName(std::string& name) const;
+
   /// Set user friendly display name of the shape
   void setName(const std::string& gogName);
 
@@ -827,6 +835,10 @@ public:
   bool canRotate() const override;
   ShapeType shapeType() const override;
   /// Return text as name value if it exists and no name is defined
+  std::optional<std::string> getName() const override;
+
+  /// Return text as name value if it exists and no name is defined
+  [[deprecated("Deprecated, please use std::optional<std::string> getName() instead")]]
   int getName(std::string& name) const override;
 
   /// Get the display text of the annotation

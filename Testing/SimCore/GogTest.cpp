@@ -159,8 +159,7 @@ int testGeneralSyntax()
 int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
 {
   int rv = 0;
-  std::string name;
-  rv += SDK_ASSERT(shape->getName(name) != 0);
+  rv += SDK_ASSERT(!shape->getName().has_value());
   bool draw = false;
   rv += SDK_ASSERT(shape->getIsDrawn(draw) != 0);
   rv += SDK_ASSERT(draw);
@@ -546,9 +545,7 @@ auto testFollowFunc = [](const simCore::GOG::GogShape* shape) -> int
 int testBaseOptionalFields(const simCore::GOG::GogShape* shape)
 {
   int rv = 0;
-  std::string name;
-  rv += SDK_ASSERT(shape->getName(name) == 0);
-  rv += SDK_ASSERT(name == "my favorite shape");
+  rv += SDK_ASSERT(shape->getName().value_or("") == "my favorite shape");
   bool draw = true;
   rv += SDK_ASSERT(shape->getIsDrawn(draw) == 0);
   rv += SDK_ASSERT(!draw);
@@ -1106,9 +1103,7 @@ int testAnnotation()
     nameAnnotation.setPosition(simCore::Vec3());
 
     // name should be the same as text if no name was set
-    std::string name;
-    rv += SDK_ASSERT(nameAnnotation.getName(name) == 0);
-    rv += SDK_ASSERT(name == "Text");
+    rv += SDK_ASSERT(nameAnnotation.getName().value_or("") == "Text");
 
     std::stringstream os;
     nameAnnotation.serializeToStream(os);
@@ -1118,9 +1113,8 @@ int testAnnotation()
     rv += SDK_ASSERT(serialized.find("3d name") == std::string::npos);
 
     nameAnnotation.setName("Name");
-    nameAnnotation.getName(name);
     // now that name is set, verify it is returned
-    rv += SDK_ASSERT(name == "Name");
+    rv += SDK_ASSERT(nameAnnotation.getName() == "Name");
     nameAnnotation.serializeToStream(os);
     serialized = os.str();
     // verify text is serialized out correctly when name is set

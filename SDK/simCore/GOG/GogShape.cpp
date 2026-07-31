@@ -52,6 +52,11 @@ bool GogShape::isRelative() const
   return relative_;
 }
 
+std::optional<std::string> GogShape::getName() const
+{
+  return name_;
+}
+
 int GogShape::getName(std::string& name) const
 {
   name = name_.value_or(shapeTypeToString(shapeType()));
@@ -1227,6 +1232,14 @@ Annotation::Annotation(bool relative)
   setCanExtrude_(false);
   setCanFollow_(false);
   setRelative(relative);
+}
+
+std::optional<std::string> Annotation::getName() const
+{
+  std::optional<std::string> name = GogShape::getName();
+  if (!name.has_value() && !text_.empty())
+    name = text_;
+  return name;
 }
 
 int Annotation::getName(std::string& name) const
