@@ -72,6 +72,11 @@ void GogShape::setName(const std::string& gogName)
     name_ = cleanName;
 }
 
+std::optional<bool> GogShape::getIsDrawn() const
+{
+  return draw_;
+}
+
 int GogShape::getIsDrawn(bool& draw) const
 {
   draw = draw_.value_or(true);
@@ -93,6 +98,11 @@ void GogShape::setEditMode(EditMode editMode)
   editMode_ = editMode;
 }
 
+std::optional<bool> GogShape::getIsDepthBufferActive() const
+{
+  return depthBuffer_;
+}
+
 int GogShape::getIsDepthBufferActive(bool& depthBuffer) const
 {
   depthBuffer = depthBuffer_.value_or(false);
@@ -102,6 +112,11 @@ int GogShape::getIsDepthBufferActive(bool& depthBuffer) const
 void GogShape::setDepthBufferActive(bool depthBuffer)
 {
   depthBuffer_ = depthBuffer;
+}
+
+std::optional<double> GogShape::getAltitudeOffset() const
+{
+  return altitudeOffset_;
 }
 
 int GogShape::getAltitudeOffset(double& altitudeOffset) const

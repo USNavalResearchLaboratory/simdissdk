@@ -166,10 +166,6 @@ public:
   */
   virtual std::optional<std::string> getName() const;
 
-  /**
-  * Get user friendly display name of shape; if value is not set, default name is returned
-  * @return 0 if value was set, non-zero otherwise
-  */
   [[deprecated("Deprecated, please use std::optional<std::string> getName() instead")]]
   int getName(std::string& name) const;
 
@@ -177,7 +173,11 @@ public:
   void setName(const std::string& gogName);
 
   /// Draw state of the shape
+  std::optional<bool> getIsDrawn() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getIsDrawn() instead")]]
   int getIsDrawn(bool& draw) const;
+
   void setDrawn(bool draw);
 
   /// Edit mode for the shape
@@ -188,7 +188,11 @@ public:
   * Get flag indicating if depth buffer is active for the shape; if value is not set, default value is returned
   * @return 0 if value was set, non-zero otherwise
   */
+  std::optional<bool> getIsDepthBufferActive() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getIsDepthBufferActive() instead")]]
   int getIsDepthBufferActive(bool& depthBuffer) const;
+
   /// Set depth buffer active for the shape
   void setDepthBufferActive(bool depthBuffer);
 
@@ -196,7 +200,11 @@ public:
   * Get altitude offset in meters; if value is not set, default value is returned.
   * @return 0 if value was set, non-zero otherwise
   */
+  std::optional<double> getAltitudeOffset() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::double> getAltitudeOffset() instead")]]
   int getAltitudeOffset(double& altitudeOffset) const;
+
   /// Altitude offset to apply to shape's position, in meters; won't accept EXTRUDE if canExtrude_ is false
   void setAltitudeOffset(double altOffsetMeters);
 

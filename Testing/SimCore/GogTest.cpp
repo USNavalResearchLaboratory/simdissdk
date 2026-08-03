@@ -160,15 +160,10 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
 {
   int rv = 0;
   rv += SDK_ASSERT(!shape->getName().has_value());
-  bool draw = false;
-  rv += SDK_ASSERT(shape->getIsDrawn(draw) != 0);
-  rv += SDK_ASSERT(draw);
-  bool depthBuffer = true;
-  rv += SDK_ASSERT(shape->getIsDepthBufferActive(depthBuffer) != 0);
-  rv += SDK_ASSERT(!depthBuffer);
-  double altOffset = 10.;
-  rv += SDK_ASSERT(shape->getAltitudeOffset(altOffset) != 0);
-  rv += SDK_ASSERT(altOffset == 0.);
+  std::optional<bool> draw = shape->getIsDrawn();
+  rv += SDK_ASSERT(!shape->getName().has_value());
+  rv += SDK_ASSERT(!shape->getIsDepthBufferActive().has_value());
+  rv += SDK_ASSERT(!shape->getAltitudeOffset().has_value());
   simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::CLAMP_TO_GROUND;
   rv += SDK_ASSERT(shape->getAltitudeMode(mode) != 0);
   rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::NONE);
@@ -546,15 +541,9 @@ int testBaseOptionalFields(const simCore::GOG::GogShape* shape)
 {
   int rv = 0;
   rv += SDK_ASSERT(shape->getName().value_or("") == "my favorite shape");
-  bool draw = true;
-  rv += SDK_ASSERT(shape->getIsDrawn(draw) == 0);
-  rv += SDK_ASSERT(!draw);
-  bool depthBuffer = false;
-  rv += SDK_ASSERT(shape->getIsDepthBufferActive(depthBuffer) == 0);
-  rv += SDK_ASSERT(depthBuffer);
-  double altOffset = 0.;
-  rv += SDK_ASSERT(shape->getAltitudeOffset(altOffset) == 0);
-  rv += SDK_ASSERT(altOffset == 120.);
+  rv += SDK_ASSERT(!shape->getIsDrawn().value_or(true));
+  rv += SDK_ASSERT(shape->getIsDepthBufferActive().value_or(false));
+  rv += SDK_ASSERT(shape->getAltitudeOffset().value_or(0.) == 120.);
   simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
   rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
   rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::RELATIVE_TO_GROUND);

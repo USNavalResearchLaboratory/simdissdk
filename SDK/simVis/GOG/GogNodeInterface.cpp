@@ -300,14 +300,13 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   // always set the name, use default if not set
   osgNode_->setName(name.value_or(shape->shapeTypeToString(shape->shapeType())));
 
-  bool draw = true;
+  const bool draw = shape->getIsDrawn().value_or(true);
   // always set draw, use default if not set
-  shape->getIsDrawn(draw);
   setDrawState(draw);
 
-  double altitudeOffset = 0.;
-  if (shape->getAltitudeOffset(altitudeOffset) == 0)
-    setAltOffset(altitudeOffset);
+  std::optional<double> altitudeOffset = shape->getAltitudeOffset();
+  if (altitudeOffset.has_value())
+    setAltOffset(altitudeOffset.value());
 
   simCore::GOG::AltitudeMode altMode = simCore::GOG::AltitudeMode::NONE;
   if (shape->getAltitudeMode(altMode) == 0)
@@ -364,9 +363,8 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   }
 
   // Depth buffer must be set after tessellation if tessellation is set
-  bool depthBuffer = false;
-  // always set depth buffer, use default if not set
-  shape->getIsDepthBufferActive(depthBuffer);
+  // always set depth buffer, use default(false) if not set
+  const bool depthBuffer = shape->getIsDepthBufferActive().value_or(false);
   setDepthBuffer(depthBuffer);
 
   const simCore::GOG::Points* points = dynamic_cast<const simCore::GOG::Points*>(shape.get());

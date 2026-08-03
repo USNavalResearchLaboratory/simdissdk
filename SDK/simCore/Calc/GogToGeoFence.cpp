@@ -52,9 +52,7 @@ int GogToGeoFence::parse(std::istream& is, const std::string& gogFileName)
   for (const auto& shapePtr : shapes)
   {
     // Don't create a fence if the off keyword was found in this shape
-    bool draw = true;
-    shapePtr->getIsDrawn(draw);
-    if (!draw)
+    if (!shapePtr->getIsDrawn().value_or(true))
       continue;
 
     if (shapePtr->isRelative() ||
