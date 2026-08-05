@@ -185,8 +185,8 @@ public:
   void setEditMode(EditMode editMode);
 
   /**
-  * Get flag indicating if depth buffer is active for the shape; if value is not set, default value is returned
-  * @return 0 if value was set, non-zero otherwise
+  * Get flag indicating if depth buffer is active for the shape
+  * return std::optional containing the flag if it has been set
   */
   std::optional<bool> getIsDepthBufferActive() const;
 
@@ -197,8 +197,8 @@ public:
   void setDepthBufferActive(bool depthBuffer);
 
   /**
-  * Get altitude offset in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get altitude offset in meters
+  * @return std::optional containing the value if it has been set
   */
   std::optional<double> getAltitudeOffset() const;
 
@@ -209,36 +209,52 @@ public:
   void setAltitudeOffset(double altOffsetMeters);
 
   /**
-  * Get mode that determines special behavior with regards to shape's altitude values; if value is not set, default value is returned
-  * @return 0 if value was set, non-zero otherwise
+  * Get mode that determines special behavior with regards to shape's altitude values
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<AltitudeMode> getAltitudeMode() const;
+
+  [[deprecated("Deprecated, please use std::optional<AltitudeMode> getAltitudeMode() instead")]]
   int getAltitudeMode(AltitudeMode& mode) const;
+
   /// Set mode that determines special behavior with regards to shape's altitude values
   void setAltitudeMode(AltitudeMode mode);
 
   /**
-  * Get the shape's extrusion height in meters, only applies if altitude mode is extrude; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's extrusion height in meters, only applies if altitude mode is extrude
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getExtrudeHeight() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getExtrudeHeight() instead")]]
   int getExtrudeHeight(double& height) const;
+
   /// Set the shape's height in meters
   void setExtrudeHeight(double heightMeters);
 
   /**
-  * Get reference position, lla in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get reference position, lla in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::Vec3> getReferencePosition() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::Vec3> getReferencePosition() instead")]]
   int getReferencePosition(simCore::Vec3& refPos) const;
+
   /// Set reference position for relative shapes; expects LLA in radians. Fails (non-zero return) on non-relative shapes; 0 on success
   int setReferencePosition(const simCore::Vec3& refPos);
   /// Clear out the current reference position
   void clearReferencePosition();
 
   /**
-  * Get the scalar adjustment values for shape's the xyz components; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the scalar adjustment values for shape's the xyz components
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::Vec3> getScale() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::Vec3> getScale() instead")]]
   int getScale(simCore::Vec3& scale) const;
+
   /// Set the scalar adjustment values for shape's xyz components
   void setScale(const simCore::Vec3& scale);
 

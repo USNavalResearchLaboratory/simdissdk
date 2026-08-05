@@ -106,9 +106,7 @@ int GogToGeoFence::parse(std::istream& is, const std::string& gogFileName)
     if (rv == 0)
     {
       // warn about altitude mode
-      simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
-      shapePtr->getAltitudeMode(mode);
-      if (mode == simCore::GOG::AltitudeMode::NONE)
+      if (shapePtr->getAltitudeMode().value_or(simCore::GOG::AltitudeMode::NONE) == simCore::GOG::AltitudeMode::NONE)
       {
         SIM_DEBUG << "Added GOG \"" << name.value_or("no name") << "\" as geoFence.\n";
       }

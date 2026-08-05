@@ -308,13 +308,13 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   if (altitudeOffset.has_value())
     setAltOffset(altitudeOffset.value());
 
-  simCore::GOG::AltitudeMode altMode = simCore::GOG::AltitudeMode::NONE;
-  if (shape->getAltitudeMode(altMode) == 0)
-    setAltitudeMode(LoaderUtils::convertToVisAltitudeMode(altMode));
+  std::optional<simCore::GOG::AltitudeMode> altMode = shape->getAltitudeMode();
+  if (altMode.has_value())
+    setAltitudeMode(LoaderUtils::convertToVisAltitudeMode(altMode.value()));
 
-  double extrudeHeight = 0.;
-  if (shape->getExtrudeHeight(extrudeHeight) == 0)
-    setExtrudedHeight(extrudeHeight);
+  std::optional<double> extrudeHeight = shape->getExtrudeHeight();
+  if (extrudeHeight.has_value())
+    setExtrudedHeight(extrudeHeight.value());
 
   const simCore::GOG::OutlinedShape* outlined = dynamic_cast<const simCore::GOG::OutlinedShape*>(shape.get());
   if (outlined != nullptr)
@@ -680,9 +680,11 @@ int GogNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
   // Fall back on the shape pointer's value
   if (!shape_)
     return 1;
-  simCore::Vec3 lla;
-  if (shape_->getReferencePosition(lla) != 0)
+  std::optional<simCore::Vec3> llaOptional = shape_->getReferencePosition();
+  if (!llaOptional.has_value())
     return 1;
+  simCore::Vec3 lla = llaOptional.value();
+
   referencePosition.set(lla.lon() * simCore::RAD2DEG,
     lla.lat() * simCore::RAD2DEG,
     lla.alt());
@@ -721,7 +723,16 @@ int GogNodeInterface::getOpacity(float& opacity) const
 int GogNodeInterface::getScale(osg::Vec3d& scale) const
 {
   simCore::Vec3 vec(1., 1., 1.);
-  const int rv = (shape_ && shape_->getScale(vec) == 0) ? 0 : 1;
+  int rv = 1;
+  if (shape_)
+  {
+    std::optional<simCore::Vec3> vecOptional = shape_->getScale();
+    if (vecOptional.has_value())
+    {
+      rv = 0;
+      vec = vecOptional.value();
+    }
+  }
   scale.set(vec.x(), vec.y(), vec.z());
   return rv;
 }

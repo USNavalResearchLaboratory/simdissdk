@@ -285,7 +285,7 @@ void GogManipulator::syncDraggersToGog_()
   if (const auto* shape = activeGog_->shapeObject())
   {
     shape->getYawOffset(yawOffsetRad);
-    shape->getScale(scale);
+    scale = shape->getScale().value_or(simCore::Vec3(1,1,1));
   }
 
   const double currentScale = scale.x();

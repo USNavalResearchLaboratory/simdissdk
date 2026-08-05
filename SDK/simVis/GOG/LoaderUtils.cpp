@@ -82,8 +82,7 @@ bool LoaderUtils::geometryRequiresClipping(const simCore::GOG::GogShape& shape)
   // and potentially cause z-fighting.
 
   // non-relative terrain clamping: yes.
-  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
-  shape.getAltitudeMode(mode);
+  simCore::GOG::AltitudeMode mode = shape.getAltitudeMode().value_or(simCore::GOG::AltitudeMode::NONE);
   if (mode == simCore::GOG::AltitudeMode::CLAMP_TO_GROUND)
     return true;
 
@@ -97,9 +96,9 @@ bool LoaderUtils::geometryRequiresClipping(const simCore::GOG::GogShape& shape)
   if (!shape.isRelative())
     return true;
 
-  simCore::Vec3 referencePoint;
+  std::optional<simCore::Vec3> referencePoint = shape.getReferencePosition();
   // 2D, relative to a map position, and Z=0 on the map position? Clip.
-  if (shape.getReferencePosition(referencePoint) == 0 && referencePoint.alt() == 0.)
+  if (referencePoint.has_value() && referencePoint.value().alt() == 0.)
   {
     const simCore::GOG::CircularShape* circular = dynamic_cast<const simCore::GOG::CircularShape*>(&shape);
     if (circular)
@@ -120,13 +119,11 @@ osgEarth::GeoPoint LoaderUtils::getShapeGeoPosition(const simCore::GOG::GogShape
   shape.getVerticalDatum(vdatum);
   osg::ref_ptr<osgEarth::SpatialReference> srs = getSrs(vdatum);
 
-  simCore::Vec3 refLla;
   // handle relative un-attached
   if (shape.isRelative())
   {
     // use shape's reference position first, otherwise use the default ref point
-    if (shape.getReferencePosition(refLla) != 0)
-      refLla = refPoint;
+    simCore::Vec3 refLla = shape.getReferencePosition().value_or(refPoint);
 
     osg::Vec3d xyz(centerPoint.x(), centerPoint.y(), centerPoint.z());
     // if ignoring offset or center xyz has no offsets, set the ref point as the center
@@ -174,10 +171,11 @@ void LoaderUtils::setShapePositionOffsets(osgEarth::LocalGeometryNode& node, con
 
 void LoaderUtils::setScale(const simCore::GOG::GogShape& shape, osg::Node* node)
 {
-  simCore::Vec3 scale;
-  if (shape.getScale(scale) != 0)
+  std::optional<simCore::Vec3> scaleOptional = shape.getScale();
+  if (!shape.getScale().has_value())
     return;
 
+  simCore::Vec3 scale = scaleOptional.value();
   // Find the osgEarth AnnotationNode (which is likely a GeoPositionNode). Note, this is
   // NOT the same as a GOG annotation (text string). Most shapes are AnnotationNodes.
   osgEarth::AnnotationNode* anno = osgEarth::findTopMostNodeOfType<osgEarth::AnnotationNode>(node);

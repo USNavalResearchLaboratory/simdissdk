@@ -164,15 +164,9 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
   rv += SDK_ASSERT(!shape->getName().has_value());
   rv += SDK_ASSERT(!shape->getIsDepthBufferActive().has_value());
   rv += SDK_ASSERT(!shape->getAltitudeOffset().has_value());
-  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::CLAMP_TO_GROUND;
-  rv += SDK_ASSERT(shape->getAltitudeMode(mode) != 0);
-  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::NONE);
-  simCore::Vec3 refPos(25., 25., 25.);
-  rv += SDK_ASSERT(shape->getReferencePosition(refPos) != 0);
-  rv += SDK_ASSERT(refPos == simCore::Vec3());
-  simCore::Vec3 scalar(10., 10., 10.);
-  rv += SDK_ASSERT(shape->getScale(scalar) != 0);
-  rv += SDK_ASSERT(scalar == simCore::Vec3(1., 1., 1.));
+  rv += SDK_ASSERT(!shape->getAltitudeMode().has_value());
+  rv += SDK_ASSERT(!shape->getReferencePosition().has_value());
+  rv += SDK_ASSERT(!shape->getScale().has_value());
   bool followYaw = true;
   rv += SDK_ASSERT(shape->getIsFollowingYaw(followYaw) != 0);
   rv += SDK_ASSERT(!followYaw);
@@ -191,9 +185,7 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
   double rollOffset = 10.;
   rv += SDK_ASSERT(shape->getPitchOffset(rollOffset) != 0);
   rv += SDK_ASSERT(rollOffset == 0.);
-  double extrudeHeight = 10.;
-  rv += SDK_ASSERT(shape->getExtrudeHeight(extrudeHeight) != 0);
-  rv += SDK_ASSERT(extrudeHeight == 0.);
+  rv += SDK_ASSERT(!shape->getExtrudeHeight().has_value());
   std::string vdatum = "?";
   rv += SDK_ASSERT(shape->getVerticalDatum(vdatum) != 0);
   rv += SDK_ASSERT(vdatum == "wgs84");
@@ -544,12 +536,8 @@ int testBaseOptionalFields(const simCore::GOG::GogShape* shape)
   rv += SDK_ASSERT(!shape->getIsDrawn().value_or(true));
   rv += SDK_ASSERT(shape->getIsDepthBufferActive().value_or(false));
   rv += SDK_ASSERT(shape->getAltitudeOffset().value_or(0.) == 120.);
-  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
-  rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
-  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::RELATIVE_TO_GROUND);
-  simCore::Vec3 scale;
-  rv += SDK_ASSERT(shape->getScale(scale) == 0);
-  rv += SDK_ASSERT(scale == simCore::Vec3(2., 1.3, 0.5));
+  rv += SDK_ASSERT(shape->getAltitudeMode().value_or(simCore::GOG::AltitudeMode::NONE) == simCore::GOG::AltitudeMode::RELATIVE_TO_GROUND);
+  rv += SDK_ASSERT(shape->getScale().value_or(simCore::Vec3()) == simCore::Vec3(2., 1.3, 0.5));
   std::string vdatum;
   rv += SDK_ASSERT(shape->getVerticalDatum(vdatum) == 0);
   rv += SDK_ASSERT(vdatum == "egm1984");
@@ -562,9 +550,9 @@ int testBaseOptionalFields(const simCore::GOG::GogShape* shape)
   // test reference point if relative
   if (shape->isRelative())
   {
-    simCore::Vec3 refLla;
-    rv += SDK_ASSERT(shape->getReferencePosition(refLla) == 0);
-    rv += SDK_ASSERT(refLla == simCore::Vec3(24.5 * simCore::DEG2RAD, 55.6 * simCore::DEG2RAD, 10.));
+    std::optional<simCore::Vec3> refLla = shape->getReferencePosition();
+    rv += SDK_ASSERT(shape->getReferencePosition().has_value());
+    rv += SDK_ASSERT(refLla.value_or(simCore::Vec3()) == simCore::Vec3(24.5 * simCore::DEG2RAD, 55.6 * simCore::DEG2RAD, 10.));
   }
 
   // only certain shapes can follow
@@ -1383,33 +1371,21 @@ int testUnits()
 auto testExtrudeFunc = [](const simCore::GOG::GogShape* shape) -> int
 {
   int rv = 0;
-  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
-  rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
-  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::EXTRUDE);
-  double extrudeHeight = 0.;
-  rv += SDK_ASSERT(shape->getExtrudeHeight(extrudeHeight) == 0);
-  rv += SDK_ASSERT(extrudeHeight == 250.);
+  rv += SDK_ASSERT(shape->getAltitudeMode().value_or(simCore::GOG::AltitudeMode::NONE) == simCore::GOG::AltitudeMode::EXTRUDE);
+  rv += SDK_ASSERT(shape->getExtrudeHeight().value_or(0.) == 250.);
   return rv;
 };
 
 // test that altitude mode is clamp to ground
 auto testClampFunc = [](const simCore::GOG::GogShape* shape) -> int
 {
-  int rv = 0;
-  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
-  rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
-  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::CLAMP_TO_GROUND);
-  return rv;
+  return SDK_ASSERT(shape->getAltitudeMode().value_or(simCore::GOG::AltitudeMode::NONE) == simCore::GOG::AltitudeMode::CLAMP_TO_GROUND);
 };
 
 // test that altitude mode is not set
 auto testAltModeUnsetFunc = [](const simCore::GOG::GogShape* shape) -> int
 {
-  int rv = 0;
-  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::EXTRUDE;
-  rv += SDK_ASSERT(shape->getAltitudeMode(mode) != 0);
-  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::NONE);
-  return rv;
+  return SDK_ASSERT(!shape->getAltitudeMode().has_value());
 };
 // test that all the altitude mode options work
 int testAltitudeModes()
@@ -2077,9 +2053,7 @@ auto testBooleansFunc = [](const simCore::GOG::FillableShape* shape) -> int
   bool outlined;
   rv += SDK_ASSERT(shape->getIsOutlined(outlined) == 0);
   rv += SDK_ASSERT(!outlined);
-  simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
-  rv += SDK_ASSERT(shape->getAltitudeMode(mode) == 0);
-  rv += SDK_ASSERT(mode == simCore::GOG::AltitudeMode::EXTRUDE);
+  rv += SDK_ASSERT(shape->getAltitudeMode().value_or(simCore::GOG::AltitudeMode::NONE) == simCore::GOG::AltitudeMode::EXTRUDE);
   return rv;
 };
 
@@ -2280,28 +2254,22 @@ int testReferencePositionField()
   simCore::GOG::Line line(false);
   simCore::Vec3 refPoint(1, 2, 3);
   line.setReferencePosition(refPoint);
-  simCore::Vec3 setRefPoint;
   // ref position should not be set when shape is absolute
-  rv += SDK_ASSERT(line.getReferencePosition(setRefPoint) != 0);
-  rv += SDK_ASSERT(setRefPoint != refPoint);
+  rv += SDK_ASSERT(!line.getReferencePosition().has_value());
   line.setRelative(true);
   line.setReferencePosition(refPoint);
   // ref position should now be set successfully since shape is relative
-  rv += SDK_ASSERT(line.getReferencePosition(setRefPoint) == 0);
-  rv += SDK_ASSERT(setRefPoint == refPoint);
+  rv += SDK_ASSERT(line.getReferencePosition().value_or(simCore::Vec3()) == refPoint);
   line.clearReferencePosition();
   // clearing ref position should work, even when relative
-  rv += SDK_ASSERT(line.getReferencePosition(setRefPoint) != 0);
-  rv += SDK_ASSERT(setRefPoint != refPoint);
+  rv += SDK_ASSERT(!line.getReferencePosition().has_value());
 
   line.setReferencePosition(refPoint);
   // verify ref position set successfully again
-  rv += SDK_ASSERT(line.getReferencePosition(setRefPoint) == 0);
-  rv += SDK_ASSERT(setRefPoint == refPoint);
+  rv += SDK_ASSERT(line.getReferencePosition().value_or(simCore::Vec3()) == refPoint);
   line.setRelative(false);
   // ref position should be cleared when shape was set to absolute
-  rv += SDK_ASSERT(line.getReferencePosition(setRefPoint) != 0);
-  rv += SDK_ASSERT(setRefPoint != refPoint);
+  rv += SDK_ASSERT(!line.getReferencePosition().has_value());
 
   return rv;
 }
@@ -2406,9 +2374,7 @@ int testScaleField()
   simCore::GOG::Circle circle(false);
   simCore::Vec3 testScale(5.0, 0.5, 2.0);
   circle.setScale(testScale);
-  simCore::Vec3 outScale;
-  rv += SDK_ASSERT(circle.getScale(outScale) == 0);
-  rv += SDK_ASSERT(outScale == testScale);
+  rv += SDK_ASSERT(circle.getScale().value_or(simCore::Vec3()) == testScale);
 
   // Helper lambda to parse and evaluate string inputs
   auto parseAndCheckScale = [](const std::string& scaleStr, bool getScaleSuccess, const simCore::Vec3& expectedVal) -> int
@@ -2425,8 +2391,9 @@ int testScaleField()
       localRv += SDK_ASSERT(shapes.size() == 1);
       if (!shapes.empty())
       {
-        simCore::Vec3 parsedScale;
-        localRv += SDK_ASSERT(shapes.front()->getScale(parsedScale) == (getScaleSuccess ? 0 : 1));
+        std::optional<simCore::Vec3> parsedScaleOptional = shapes.front()->getScale();
+        simCore::Vec3 parsedScale = parsedScaleOptional.value_or(simCore::Vec3(1., 1., 1.));
+        localRv += SDK_ASSERT(shapes.front()->getScale().has_value() == getScaleSuccess);
         localRv += SDK_ASSERT(simCore::areEqual(parsedScale.x(), expectedVal.x()));
         localRv += SDK_ASSERT(simCore::areEqual(parsedScale.y(), expectedVal.y()));
         localRv += SDK_ASSERT(simCore::areEqual(parsedScale.z(), expectedVal.z()));

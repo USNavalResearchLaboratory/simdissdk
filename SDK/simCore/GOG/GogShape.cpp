@@ -130,6 +130,11 @@ void GogShape::setAltitudeOffset(double altOffsetMeters)
   altitudeOffset_ = altOffsetMeters;
 }
 
+std::optional<AltitudeMode> GogShape::getAltitudeMode() const
+{
+  return altitudeMode_;
+}
+
 int GogShape::getAltitudeMode(AltitudeMode& mode) const
 {
   mode = altitudeMode_.value_or(AltitudeMode::NONE);
@@ -143,6 +148,11 @@ void GogShape::setAltitudeMode(AltitudeMode mode)
   altitudeMode_ = mode;
 }
 
+std::optional<double> GogShape::getExtrudeHeight() const
+{
+  return extrudeHeight_;
+}
+
 int GogShape::getExtrudeHeight(double& height) const
 {
   height = extrudeHeight_.value_or(0.);
@@ -152,6 +162,11 @@ int GogShape::getExtrudeHeight(double& height) const
 void GogShape::setExtrudeHeight(double heightMeters)
 {
   extrudeHeight_ = heightMeters;
+}
+
+std::optional<simCore::Vec3> GogShape::getReferencePosition() const
+{
+  return referencePosition_;
 }
 
 int GogShape::getReferencePosition(simCore::Vec3& refPos) const
@@ -177,6 +192,11 @@ int GogShape::setReferencePosition(const simCore::Vec3& refPos)
 void GogShape::clearReferencePosition()
 {
   referencePosition_.reset();
+}
+
+std::optional<simCore::Vec3> GogShape::getScale() const
+{
+  return scale_;
 }
 
 int GogShape::getScale(simCore::Vec3& scale) const
