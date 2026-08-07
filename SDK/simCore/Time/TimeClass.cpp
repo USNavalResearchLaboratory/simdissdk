@@ -469,6 +469,13 @@ int TimeStampStr::strptime(TimeStamp& timeStamp, const std::string& timeStr, con
     std::tm tm = {};
     if (remainder)
       remainder->clear();
+    
+    // Helper lambda for clean error exits
+    auto fail = [&]() {
+      if (remainder) 
+        *remainder = timeStr;
+      return 1;
+    };
 
 #ifdef _MSC_VER
     // Adapted from https://stackoverflow.com/questions/321849/strptime-equivalent-on-windows
@@ -479,11 +486,7 @@ int TimeStampStr::strptime(TimeStamp& timeStamp, const std::string& timeStr, con
     // reported as broken in MSVC 2015.
     is_ >> std::get_time(&tm, format.c_str());
     if (is_.fail())
-    {
-      if (remainder)
-        *remainder = timeStr;
-      return 1;
-    }
+      return fail();
 
     // Fill out the remainder value
     if (remainder && !is_.eof())
@@ -492,11 +495,8 @@ int TimeStampStr::strptime(TimeStamp& timeStamp, const std::string& timeStr, con
     // Linux use strptime(), which returns null on error
     const char* rv = ::strptime(timeStr.c_str(), format.c_str(), &tm);
     if (!rv)
-    {
-      if (remainder)
-        *remainder = timeStr;
-      return 1;
-    }
+      return fail();
+
     if (remainder)
       *remainder = rv;
 #endif
@@ -513,20 +513,15 @@ int TimeStampStr::strptime(TimeStamp& timeStamp, const std::string& timeStr, con
     if (tm.tm_yday > 0 && tm.tm_mday == 1 && tm.tm_mon == 0)
       simCore::getMonthAndDayOfMonth(tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_yday);
 
-    // mktime() will return in local time, use timezone to offset back to UTC
 #ifdef _MSC_VER
-    auto asTime = std::mktime(&tm) - _timezone;
+    auto asTime = _mkgmtime(&tm);
 #else
-    auto asTime = std::mktime(&tm) - timezone;
+    auto asTime = timegm(&tm); 
 #endif
 
     // Check for failure state
     if (asTime < 0)
-    {
-      if (remainder)
-        *remainder = timeStr;
-      return 1;
-    }
+      return fail();
 
     timeStamp.setTime(1970, static_cast<double>(asTime));
     return 0;

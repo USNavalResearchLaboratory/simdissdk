@@ -22,15 +22,15 @@
  */
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstring>
 #include <iomanip>
 #include <limits>
-#include <vector>
 #include <sstream>
+#include <vector>
 
 #include "simCore/Calc/Math.h"
-#include "simCore/Common/Time.h"
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/Exception.h"
 #include "simCore/Time/String.h"
@@ -41,148 +41,97 @@
 
 int simCore::currentYear()
 {
-  struct timeval tp;
+  const auto now = std::chrono::system_clock::now();
+  const std::chrono::year_month_day currentDate{ std::chrono::floor<std::chrono::days>(now) };
 
-  // get the current system time, using timezone value of 0
-  // returns UTC time
-  gettimeofday(&tp, nullptr);
-
-  // put system time into a tm struct
-  const time_t t(tp.tv_sec);
-  const struct tm* pTime = gmtime(&t);
-
-  if (pTime == nullptr)
-    return std::numeric_limits<int>::max();
-
-  // years are stored as values since 1900
-  return static_cast<int>(pTime->tm_year + 1900);
+  return static_cast<int>(currentDate.year());
 }
 
 //------------------------------------------------------------------------
 
 double simCore::getSystemTime()
 {
-  struct timeval tp;
+  const auto now = std::chrono::system_clock::now();
+  const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
 
-  // get the current system time, using timezone value of 0
-  // returns UTC time
-  gettimeofday(&tp, nullptr);
-
-  return tp.tv_sec + tp.tv_usec * 1e-06;
+  return std::chrono::duration<double>(duration).count();
 }
 
 //------------------------------------------------------------------------
 
 double simCore::systemTimeToSecsBgnYr()
 {
-  struct timeval tp;
+  const auto now = std::chrono::floor<std::chrono::microseconds>(std::chrono::system_clock::now());
 
-  // get the current system time, using timezone value of 0
-  // returns UTC time
-  gettimeofday(&tp, nullptr);
+  const std::chrono::year_month_day currentDate{ std::chrono::floor<std::chrono::days>(now) };
+  const std::chrono::sys_days startOfCurrentYear{ currentDate.year() / std::chrono::January / 1 };
+  const std::chrono::microseconds elapsed = now - startOfCurrentYear;
 
-  // put system time into a tm struct
-  const time_t t(tp.tv_sec);
-  const struct tm* pTime = gmtime(&t);
-
-  if (pTime == nullptr)
-    return std::numeric_limits<double>::max();
-
-  // assemble a UTC "system time"
-  const unsigned int pSecs = static_cast<unsigned int>(pTime->tm_sec)  +
-    ((static_cast<unsigned int>(pTime->tm_min)) * simCore::SECPERMIN) +
-    ((static_cast<unsigned int>(pTime->tm_hour)) * simCore::SECPERHOUR) +
-    ((static_cast<unsigned int>(pTime->tm_yday)) * simCore::SECPERDAY);
-
-  return pSecs + (tp.tv_usec * 1e-06);
+  return std::chrono::duration<double>(elapsed).count();
 }
 
 //------------------------------------------------------------------------
 
 void simCore::systemTimeToSecsBgnYr(unsigned int &pSecs, unsigned short &pMillisec)
 {
-  struct timeval tp;
+  const auto now = std::chrono::system_clock::now();
 
-  // get the current system time, using timezone value of 0
-  // returns UTC time
-  gettimeofday(&tp, nullptr);
-
-  // put system time into a tm struct
-  const time_t t(tp.tv_sec);
-  const struct tm* pTime = gmtime(&t);
-
-  if (pTime == nullptr)
+  if (now == std::chrono::system_clock::time_point{})
   {
     pSecs = std::numeric_limits<unsigned int>::max();
     pMillisec = std::numeric_limits<unsigned short>::max();
+    return;
   }
-  else
-  {
-    // assemble a UTC "system time"
-    pSecs = static_cast<unsigned int>(pTime->tm_sec) +
-      ((static_cast<unsigned int>(pTime->tm_min)) * simCore::SECPERMIN) +
-      ((static_cast<unsigned int>(pTime->tm_hour)) * simCore::SECPERHOUR) +
-      ((static_cast<unsigned int>(pTime->tm_yday)) * simCore::SECPERDAY);
 
-    pMillisec = static_cast<unsigned short>(tp.tv_usec * 1e-03);
-  }
+  const std::chrono::year_month_day currentDate{ std::chrono::floor<std::chrono::days>(now) };
+  const std::chrono::sys_days startOfCurrentYear{ currentDate.year() / std::chrono::January / 1 };
+
+  const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - startOfCurrentYear);
+  const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed);
+  const auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed - elapsedSeconds);
+
+  pSecs = static_cast<unsigned int>(elapsedSeconds.count());
+  pMillisec = static_cast<unsigned short>(elapsedMilliseconds.count());
 }
 
 //------------------------------------------------------------------------
 
 double simCore::systemTimeToSecsBgnDay()
 {
-  struct timeval tp;
+  const auto now = std::chrono::floor<std::chrono::microseconds>(std::chrono::system_clock::now());
+  const std::chrono::sys_days startOfDay{ std::chrono::floor<std::chrono::days>(now) };
+  const std::chrono::microseconds elapsed = now - startOfDay;
 
-  // get the current system time, using timezone value of 0
-  // returns UTC time
-  gettimeofday(&tp, nullptr);
-
-  // put system time into a tm struct
-  time_t t(tp.tv_sec);
-  struct tm* pTime = gmtime(&t);
-
-  if (pTime == nullptr)
-    return std::numeric_limits<double>::max();
-
-  // assemble a UTC "system time"
-  const unsigned int pSecs = (static_cast<unsigned int>(pTime->tm_sec) +
-    ((static_cast<unsigned int>(pTime->tm_min)) * simCore::SECPERMIN) +
-    ((static_cast<unsigned int>(pTime->tm_hour)) * simCore::SECPERHOUR));
-
-  return pSecs + (tp.tv_usec * 1e-06);
+  return std::chrono::duration<double>(elapsed).count();
 }
 
 //------------------------------------------------------------------------
 
 void simCore::timeSinceJan1970ToSecsBgnYr(double timeSinceJan1970, unsigned int &pSecs, unsigned short &pMillisec, unsigned int &pRefyear)
 {
-  // 64bit int required, since secs from 1970 - 2200 can overflow int
-  const int64_t seconds = static_cast<int64_t>(floor(timeSinceJan1970));
-
-  // put system time into a tm struct
-  time_t t(seconds);
-  const struct tm* pTime = gmtime(&t);
-
-  if (pTime == nullptr)
+  if (std::isnan(timeSinceJan1970) || timeSinceJan1970 < 0.0)
   {
-    // timeSinceJan1970 is invalid
     pSecs = 0;
     pMillisec = 0;
     pRefyear = 1970;
     return;
   }
 
-  // assemble a UTC "system time"
-  pSecs = static_cast<unsigned int>(pTime->tm_sec) +
-    ((static_cast<unsigned int>(pTime->tm_min)) * simCore::SECPERMIN) +
-    ((static_cast<unsigned int>(pTime->tm_hour)) * simCore::SECPERHOUR) +
-    ((static_cast<unsigned int>(pTime->tm_yday)) * simCore::SECPERDAY);
+  const std::chrono::duration<double> duration{ timeSinceJan1970 };
+  const std::chrono::system_clock::time_point time{ std::chrono::duration_cast<std::chrono::milliseconds>(duration)
+  };
 
-  pMillisec = static_cast<unsigned short>((timeSinceJan1970 - seconds) * 1e+03);
+  const std::chrono::year_month_day current_date{ std::chrono::floor<std::chrono::days>(time) };
+  pRefyear = static_cast<unsigned int>(static_cast<int>(current_date.year()));
 
-  // years are stored as values since 1900
-  pRefyear = static_cast<unsigned int>(pTime->tm_year + 1900);
+  const std::chrono::sys_days startOfYear{ current_date.year() / std::chrono::January / 1 };
+  const auto elapsed = time - startOfYear;
+
+  const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed);
+  const auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed - elapsedSeconds);
+
+  pSecs = static_cast<unsigned int>(elapsedSeconds.count());
+  pMillisec = static_cast<unsigned short>(elapsedMilliseconds.count());
 }
 
 //------------------------------------------------------------------------
