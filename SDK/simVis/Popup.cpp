@@ -397,16 +397,13 @@ void PopupHandler::enable(bool v)
 
 void PopupHandler::clear()
 {
-  if (currentEntity_.valid())
+  currentEntity_ = nullptr;
+  if (installed_ && (view_.valid()))
   {
-    currentEntity_ = nullptr;
-    if (installed_ && (view_.valid()))
-    {
-      view_->getOrCreateHUD()->removeChild(popup_.get());
-      installed_ = false;
-    }
-    entityLocatorRev_.reset();
+    view_->getOrCreateHUD()->removeChild(popup_.get());
+    installed_ = false;
   }
+  entityLocatorRev_.reset();
 }
 
 bool PopupHandler::isEnabled() const
