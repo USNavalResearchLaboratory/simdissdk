@@ -210,6 +210,11 @@ void GogShape::setScale(const simCore::Vec3& scale)
   scale_ = scale;
 }
 
+std::optional<bool> GogShape::getIsFollowingYaw() const
+{
+  return followYaw_;
+}
+
 int GogShape::getIsFollowingYaw(bool& follow) const
 {
   follow = followYaw_.value_or(false);
@@ -220,6 +225,11 @@ void GogShape::setFollowYaw(bool follow)
 {
   if (canFollow_)
     followYaw_ = follow;
+}
+
+std::optional<bool> GogShape::getIsFollowingPitch() const
+{
+  return followPitch_;
 }
 
 int GogShape::getIsFollowingPitch(bool& follow) const
@@ -234,6 +244,11 @@ void GogShape::setFollowPitch(bool follow)
     followPitch_ = follow;
 }
 
+std::optional<bool> GogShape::getIsFollowingRoll() const
+{
+  return followRoll_;
+}
+
 int GogShape::getIsFollowingRoll(bool& follow) const
 {
   follow = followRoll_.value_or(false);
@@ -244,6 +259,11 @@ void GogShape::setFollowRoll(bool follow)
 {
   if (canFollow_)
     followRoll_ = follow;
+}
+
+std::optional<double> GogShape::getYawOffset() const
+{
+  return yawOffset_;
 }
 
 int GogShape::getYawOffset(double& offset) const
@@ -258,6 +278,11 @@ void GogShape::setYawOffset(double offset)
     yawOffset_ = offset;
 }
 
+std::optional<double> GogShape::getPitchOffset() const
+{
+  return pitchOffset_;
+}
+
 int GogShape::getPitchOffset(double& offset) const
 {
   offset = pitchOffset_.value_or(0.);
@@ -268,6 +293,11 @@ void GogShape::setPitchOffset(double offset)
 {
   if (canFollow_)
     pitchOffset_ = offset;
+}
+
+std::optional<double> GogShape::getRollOffset() const
+{
+  return rollOffset_;
 }
 
 int GogShape::getRollOffset(double& offset) const

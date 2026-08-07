@@ -167,24 +167,12 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
   rv += SDK_ASSERT(!shape->getAltitudeMode().has_value());
   rv += SDK_ASSERT(!shape->getReferencePosition().has_value());
   rv += SDK_ASSERT(!shape->getScale().has_value());
-  bool followYaw = true;
-  rv += SDK_ASSERT(shape->getIsFollowingYaw(followYaw) != 0);
-  rv += SDK_ASSERT(!followYaw);
-  bool followPitch = true;
-  rv += SDK_ASSERT(shape->getIsFollowingPitch(followPitch) != 0);
-  rv += SDK_ASSERT(!followPitch);
-  bool followRoll = true;
-  rv += SDK_ASSERT(shape->getIsFollowingRoll(followRoll) != 0);
-  rv += SDK_ASSERT(!followRoll);
-  double yawOffset = 10.;
-  rv += SDK_ASSERT(shape->getYawOffset(yawOffset) != 0);
-  rv += SDK_ASSERT(yawOffset == 0.);
-  double pitchOffset = 10.;
-  rv += SDK_ASSERT(shape->getPitchOffset(pitchOffset) != 0);
-  rv += SDK_ASSERT(pitchOffset == 0.);
-  double rollOffset = 10.;
-  rv += SDK_ASSERT(shape->getPitchOffset(rollOffset) != 0);
-  rv += SDK_ASSERT(rollOffset == 0.);
+  rv += SDK_ASSERT(!shape->getIsFollowingYaw().has_value());
+  rv += SDK_ASSERT(!shape->getIsFollowingPitch().has_value());
+  rv += SDK_ASSERT(!shape->getIsFollowingRoll().has_value());
+  rv += SDK_ASSERT(!shape->getYawOffset().has_value());
+  rv += SDK_ASSERT(!shape->getPitchOffset().has_value());
+  rv += SDK_ASSERT(!shape->getPitchOffset().has_value());
   rv += SDK_ASSERT(!shape->getExtrudeHeight().has_value());
   std::string vdatum = "?";
   rv += SDK_ASSERT(shape->getVerticalDatum(vdatum) != 0);
@@ -507,24 +495,12 @@ bool canFollow(simCore::GOG::ShapeType type, bool relative)
 auto testFollowFunc = [](const simCore::GOG::GogShape* shape) -> int
 {
   int rv = 0;
-  bool followYaw = false;
-  rv += SDK_ASSERT(shape->getIsFollowingYaw(followYaw) == 0);
-  rv += SDK_ASSERT(followYaw);
-  bool followPitch = false;
-  rv += SDK_ASSERT(shape->getIsFollowingPitch(followPitch) == 0);
-  rv += SDK_ASSERT(followPitch);
-  bool followRoll = false;
-  rv += SDK_ASSERT(shape->getIsFollowingRoll(followRoll) == 0);
-  rv += SDK_ASSERT(followRoll);
-  double yawOffset = 0.;
-  rv += SDK_ASSERT(shape->getYawOffset(yawOffset) == 0);
-  rv += SDK_ASSERT(simCore::areEqual(yawOffset * simCore::RAD2DEG, 45.));
-  double pitchOffset = 0.;
-  rv += SDK_ASSERT(shape->getPitchOffset(pitchOffset) == 0);
-  rv += SDK_ASSERT(simCore::areEqual(pitchOffset * simCore::RAD2DEG, 10.));
-  double rollOffset = 0.;
-  rv += SDK_ASSERT(shape->getRollOffset(rollOffset) == 0);
-  rv += SDK_ASSERT(simCore::areEqual(rollOffset * simCore::RAD2DEG, 5.));
+  rv += SDK_ASSERT(shape->getIsFollowingYaw().value_or(false));
+  rv += SDK_ASSERT(shape->getIsFollowingPitch().value_or(false));
+  rv += SDK_ASSERT(shape->getIsFollowingRoll().value_or(false));
+  rv += SDK_ASSERT(simCore::areEqual(shape->getYawOffset().value_or(0.) * simCore::RAD2DEG, 45.));
+  rv += SDK_ASSERT(simCore::areEqual(shape->getPitchOffset().value_or(0.) * simCore::RAD2DEG, 10.));
+  rv += SDK_ASSERT(simCore::areEqual(shape->getRollOffset().value_or(0.) * simCore::RAD2DEG, 5.));
   return rv;
 };
 
@@ -2290,17 +2266,12 @@ int testShapeRotation(const std::string& shapeString, bool canRotate)
   // nothing more to test if shape can't apply rotation
   if (!canRotate)
     return rv;
-  double yawOffset = 0.;
-  // check shape has yaw offset
-  rv += SDK_ASSERT(shapes.front()->getYawOffset(yawOffset) == 0);
-  // check that yaw offset is correct
-  rv += SDK_ASSERT(simCore::areEqual(yawOffset * simCore::RAD2DEG, 45.));
+  // check that yaw offset is correct. if shape doesn't have yaw offset, zero will cause failure
+  rv += SDK_ASSERT(simCore::areEqual(shapes.front()->getYawOffset().value_or(0.) * simCore::RAD2DEG, 45.));
 
   shapes.front()->setYawOffset(M_PI);
-  shapes.front()->getYawOffset(yawOffset);
-
   // check that updated yaw offset is correct
-  rv += SDK_ASSERT(simCore::areEqual(yawOffset * simCore::RAD2DEG, 180.));
+  rv += SDK_ASSERT(simCore::areEqual(shapes.front()->getYawOffset().value_or(0.) * simCore::RAD2DEG, 180.));
 
   return rv;
 }

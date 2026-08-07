@@ -259,50 +259,74 @@ public:
   void setScale(const simCore::Vec3& scale);
 
   /**
-  * Get flag indicating if shape's yaw component is locked to a reference orientation; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get flag indicating if shape's yaw component is locked to a reference orientation
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<bool> getIsFollowingYaw() const;
+
+  [[deprecated("Deprecated, please use std::optional<bool> getIsFollowingYaw() instead")]]
   int getIsFollowingYaw(bool& follow) const;
+
   /// Set flag indicating if shape's yaw component is locked to a reference orientation; no effect if canFollow_ is false
   void setFollowYaw(bool follow);
 
   /**
-  * Get flag indicating if shape's pitch component is locked to a reference orientation; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get flag indicating if shape's pitch component is locked to a reference orientation
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<bool> getIsFollowingPitch() const;
+
+  [[deprecated("Deprecated, please use std::optional<bool> getIsFollowingPitch() instead")]]
   int getIsFollowingPitch(bool& follow) const;
+
   /// Set flag indicating if shape's pitch component is locked to a reference orientation; no effect if canFollow_ is false
   void setFollowPitch(bool follow);
 
   /**
-  * Get flag indicating if shape's roll component is locked to a reference orientation; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get flag indicating if shape's roll component is locked to a reference orientation
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<bool> getIsFollowingRoll() const;
+
+  [[deprecated("Deprecated, please use std::optional<bool> getIsFollowingRoll() instead")]]
   int getIsFollowingRoll(bool& follow) const;
+
   /// Set flag indicating if shape's roll component is locked to a reference orientation; no effect if canFollow_ is false
   void setFollowRoll(bool follow);
 
   /**
-  * Get yaw angle offset from reference orientation in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get yaw angle offset from reference orientation in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getYawOffset() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getYawOffset() instead")]]
   int getYawOffset(double& offset) const;
+
   /// Set yaw angle offset from reference orientation in radians
   void setYawOffset(double offsetRad);
 
   /**
-  * Get pitch angle offset from reference orientation in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get pitch angle offset from reference orientation in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getPitchOffset() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getPitchOffset() instead")]]
   int getPitchOffset(double& offset) const;
+
   /// Set pitch angle offset from reference orientation in radians
   void setPitchOffset(double offsetRad);
 
   /**
-  * Get roll angle offset from reference orientation in radians; if value is not set, default value is returned.
+  * Get roll angle offset from reference orientation in radians
   * @return 0 if value was set, non-zero otherwise
   */
+  std::optional<double> getRollOffset() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getRollOffset() instead")]]
   int getRollOffset(double& offset) const;
+
   /// Set roll angle offset from reference orientation in radians
   void setRollOffset(double offsetRad);
 

@@ -136,15 +136,9 @@ void applyOrientationOffsetsToNode_(const simCore::GOG::GogShape& shape, osgEart
   if (node == nullptr)
     return;
 
-  double yawOffset = 0.;
-  shape.getYawOffset(yawOffset);
-  osg::Quat yaw(yawOffset, -osg::Vec3(0, 0, 1));
-  double pitchOffset = 0.;
-  shape.getPitchOffset(pitchOffset);
-  osg::Quat pitch(pitchOffset, osg::Vec3(1, 0, 0));
-  double rollOffset = 0.;
-  shape.getRollOffset(rollOffset);
-  osg::Quat roll(rollOffset, osg::Vec3(0, 1, 0));
+  osg::Quat yaw(shape.getYawOffset().value_or(0.), -osg::Vec3(0, 0, 1));
+  osg::Quat pitch(shape.getPitchOffset().value_or(0.), osg::Vec3(1, 0, 0));
+  osg::Quat roll(shape.getRollOffset().value_or(0.), osg::Vec3(0, 1, 0));
   node->setLocalRotation(roll * pitch * yaw);
 }
 
@@ -409,15 +403,15 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   // set orientation offsets, only for relative shapes, after shape is defined
   if (shape_->canRotate())
   {
-    double yawOffset = 0.;
-    if (shape->getYawOffset(yawOffset) == 0)
-      setYawOffset(yawOffset);
-    double pitchOffset = 0.;
-    if (shape->getPitchOffset(pitchOffset) == 0)
-      setPitchOffset(pitchOffset);
-    double rollOffset = 0.;
-    if (shape->getRollOffset(rollOffset) == 0)
-      setRollOffset(rollOffset);
+    std::optional<double> yawOffset = shape->getYawOffset();
+    if (yawOffset.has_value())
+      setYawOffset(yawOffset.value());
+    std::optional<double> pitchOffset = shape->getPitchOffset();
+    if (pitchOffset.has_value())
+      setPitchOffset(pitchOffset.value());
+    std::optional<double> rollOffset = shape->getRollOffset();
+    if (rollOffset.has_value())
+      setRollOffset(rollOffset.value());
   }
 }
 

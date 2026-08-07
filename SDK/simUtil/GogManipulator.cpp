@@ -72,7 +72,7 @@ public:
     // Orientation offset comes from the underlying GOG Shape, the node interface does not expose a getter
     double currentYawRad = cachedYawRad_;
     if (const auto* shape = gog.shapeObject())
-      shape->getYawOffset(currentYawRad);
+      currentYawRad = shape->getYawOffset().value_or(0.0);
 
     // If anything changed externally (from GUI, plug-ins, etc), resync
     if (currentPos != cachedPos_ || currentYawRad != cachedYawRad_ || currentScale != cachedScale_)
@@ -284,7 +284,7 @@ void GogManipulator::syncDraggersToGog_()
   simCore::Vec3 scale(1, 1, 1);
   if (const auto* shape = activeGog_->shapeObject())
   {
-    shape->getYawOffset(yawOffsetRad);
+    yawOffsetRad = shape->getYawOffset().value_or(0.0);
     scale = shape->getScale().value_or(simCore::Vec3(1,1,1));
   }
 
