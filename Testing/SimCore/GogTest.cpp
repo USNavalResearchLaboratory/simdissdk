@@ -160,8 +160,7 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
 {
   int rv = 0;
   rv += SDK_ASSERT(!shape->getName().has_value());
-  std::optional<bool> draw = shape->getIsDrawn();
-  rv += SDK_ASSERT(!shape->getName().has_value());
+  rv += SDK_ASSERT(!shape->getIsDrawn().has_value());
   rv += SDK_ASSERT(!shape->getIsDepthBufferActive().has_value());
   rv += SDK_ASSERT(!shape->getAltitudeOffset().has_value());
   rv += SDK_ASSERT(!shape->getAltitudeMode().has_value());
@@ -174,14 +173,9 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
   rv += SDK_ASSERT(!shape->getPitchOffset().has_value());
   rv += SDK_ASSERT(!shape->getPitchOffset().has_value());
   rv += SDK_ASSERT(!shape->getExtrudeHeight().has_value());
-  std::string vdatum = "?";
-  rv += SDK_ASSERT(shape->getVerticalDatum(vdatum) != 0);
-  rv += SDK_ASSERT(vdatum == "wgs84");
-  simCore::TimeStamp stamp;
-  rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
-  rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
-  rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
-  rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+  rv += SDK_ASSERT(!shape->getVerticalDatum().has_value());
+  rv += SDK_ASSERT(!shape->getStartTime().has_value());
+  rv += SDK_ASSERT(!shape->getEndTime().has_value());
   return rv;
 
 }
@@ -514,14 +508,9 @@ int testBaseOptionalFields(const simCore::GOG::GogShape* shape)
   rv += SDK_ASSERT(shape->getAltitudeOffset().value_or(0.) == 120.);
   rv += SDK_ASSERT(shape->getAltitudeMode().value_or(simCore::GOG::AltitudeMode::NONE) == simCore::GOG::AltitudeMode::RELATIVE_TO_GROUND);
   rv += SDK_ASSERT(shape->getScale().value_or(simCore::Vec3()) == simCore::Vec3(2., 1.3, 0.5));
-  std::string vdatum;
-  rv += SDK_ASSERT(shape->getVerticalDatum(vdatum) == 0);
-  rv += SDK_ASSERT(vdatum == "egm1984");
-  simCore::TimeStamp stamp;
-  rv += SDK_ASSERT(shape->getStartTime(stamp) == 0);
-  rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 0));
-  rv += SDK_ASSERT(shape->getEndTime(stamp) == 0);
-  rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 3600));
+  rv += SDK_ASSERT(shape->getVerticalDatum().value_or("") == "egm1984");
+  rv += SDK_ASSERT(shape->getStartTime().value_or(simCore::INFINITE_TIME_STAMP) == simCore::TimeStamp(1970, 0));
+  rv += SDK_ASSERT(shape->getEndTime().value_or(simCore::INFINITE_TIME_STAMP) == simCore::TimeStamp(1970, 3600));
 
   // test reference point if relative
   if (shape->isRelative())
@@ -2128,7 +2117,6 @@ int testTimeStrings()
   int rv = 0;
   simCore::GOG::Parser parser;
   std::vector<simCore::GOG::GogShapePtr> shapes;
-  simCore::TimeStamp stamp;
 
   // Test neither start nor end
   std::stringstream noTime;
@@ -2138,10 +2126,8 @@ int testTimeStrings()
   if (!shapes.empty())
   {
     const auto& shape = shapes.front();
-    rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
-    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
-    rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
-    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+    rv += SDK_ASSERT(!shape->getStartTime().has_value());
+    rv += SDK_ASSERT(!shape->getEndTime().has_value());
   }
   shapes.clear();
 
@@ -2153,10 +2139,8 @@ int testTimeStrings()
   if (!shapes.empty())
   {
     const auto& shape = shapes.front();
-    rv += SDK_ASSERT(shape->getStartTime(stamp) == 0);
-    rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 0));
-    rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
-    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+    rv += SDK_ASSERT(shape->getStartTime().value_or(simCore::INFINITE_TIME_STAMP) == simCore::TimeStamp(1970, 0));
+    rv += SDK_ASSERT(!shape->getEndTime().has_value());
   }
   shapes.clear();
 
@@ -2168,10 +2152,8 @@ int testTimeStrings()
   if (!shapes.empty())
   {
     const auto& shape = shapes.front();
-    rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
-    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
-    rv += SDK_ASSERT(shape->getEndTime(stamp) == 0);
-    rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 0));
+    rv += SDK_ASSERT(!shape->getStartTime().has_value());
+    rv += SDK_ASSERT(shape->getEndTime().value_or(simCore::INFINITE_TIME_STAMP) == simCore::TimeStamp(1970, 0));
   }
   shapes.clear();
 
@@ -2183,10 +2165,8 @@ int testTimeStrings()
   if (!shapes.empty())
   {
     const auto& shape = shapes.front();
-    rv += SDK_ASSERT(shape->getStartTime(stamp) == 0);
-    rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 0));
-    rv += SDK_ASSERT(shape->getEndTime(stamp) == 0);
-    rv += SDK_ASSERT(stamp == simCore::TimeStamp(1970, 3600));
+    rv += SDK_ASSERT(shape->getStartTime().value_or(simCore::INFINITE_TIME_STAMP) == simCore::TimeStamp(1970, 0));
+    rv += SDK_ASSERT(shape->getEndTime().value_or(simCore::INFINITE_TIME_STAMP) == simCore::TimeStamp(1970, 3600));
   }
   shapes.clear();
 
@@ -2198,10 +2178,8 @@ int testTimeStrings()
   if (!shapes.empty())
   {
     const auto& shape = shapes.front();
-    rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
-    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
-    rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
-    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+    rv += SDK_ASSERT(!shape->getStartTime().has_value());
+    rv += SDK_ASSERT(!shape->getEndTime().has_value());
   }
   shapes.clear();
 
@@ -2213,10 +2191,8 @@ int testTimeStrings()
   if (!shapes.empty())
   {
     const auto& shape = shapes.front();
-    rv += SDK_ASSERT(shape->getStartTime(stamp) != 0);
-    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
-    rv += SDK_ASSERT(shape->getEndTime(stamp) != 0);
-    rv += SDK_ASSERT(stamp == simCore::INFINITE_TIME_STAMP);
+    rv += SDK_ASSERT(!shape->getStartTime().has_value());
+    rv += SDK_ASSERT(!shape->getEndTime().has_value());
   }
   shapes.clear();
 

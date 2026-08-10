@@ -317,6 +317,11 @@ const std::vector<std::string>& GogShape::comments() const
   return comments_;
 }
 
+std::optional<std::string> GogShape::getVerticalDatum() const
+{
+  return verticalDatum_;
+}
+
 int GogShape::getVerticalDatum(std::string& verticalDatum) const
 {
   verticalDatum = verticalDatum_.value_or("wgs84");
@@ -326,6 +331,11 @@ int GogShape::getVerticalDatum(std::string& verticalDatum) const
 void GogShape::setVerticalDatum(const std::string& verticalDatum)
 {
   verticalDatum_ = verticalDatum;
+}
+
+std::optional<simCore::TimeStamp> GogShape::getStartTime() const
+{
+  return startTime_;
 }
 
 int GogShape::getStartTime(simCore::TimeStamp& startTime) const
@@ -342,6 +352,11 @@ void GogShape::setStartTime(const simCore::TimeStamp& startTime)
 void GogShape::clearStartTime()
 {
   startTime_.reset();
+}
+
+std::optional<simCore::TimeStamp> GogShape::getEndTime() const
+{
+  return endTime_;
 }
 
 int GogShape::getEndTime(simCore::TimeStamp& endTime) const

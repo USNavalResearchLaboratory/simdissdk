@@ -95,9 +95,7 @@ GogNodeInterface* LatLonAltBox::createLatLonAltBox(const simCore::GOG::LatLonAlt
 
   Style style;
 
-  std::string vdatum;
-  llab.getVerticalDatum(vdatum);
-  osgEarth::SpatialReference* srs = LoaderUtils::getSrs(vdatum);
+  osgEarth::SpatialReference* srs = LoaderUtils::getSrs(llab.getVerticalDatum().value_or("wgs84"));
 
   GeoPoint minPoint(
     srs,

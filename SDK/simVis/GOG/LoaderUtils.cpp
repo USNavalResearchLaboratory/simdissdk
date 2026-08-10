@@ -115,9 +115,7 @@ bool LoaderUtils::geometryRequiresClipping(const simCore::GOG::GogShape& shape)
 
 osgEarth::GeoPoint LoaderUtils::getShapeGeoPosition(const simCore::GOG::GogShape& shape, const simCore::Vec3& centerPoint, const simCore::Vec3& refPoint, bool ignoreOffset)
 {
-  std::string vdatum;
-  shape.getVerticalDatum(vdatum);
-  osg::ref_ptr<osgEarth::SpatialReference> srs = getSrs(vdatum);
+  osg::ref_ptr<osgEarth::SpatialReference> srs = getSrs(shape.getVerticalDatum().value_or("wgs84"));
 
   // handle relative un-attached
   if (shape.isRelative())

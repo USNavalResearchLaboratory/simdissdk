@@ -201,11 +201,11 @@ public:
     if (hasTime && refYear >= 1970 && parent_ && parent_->shapeObject())
     {
       simCore::TimeStamp currTime(refYear, seconds);
-      simCore::TimeStamp start;
-      bool validStart = (parent_->shapeObject()->getStartTime(start) == 0);
-      simCore::TimeStamp end;
-      bool validEnd = (parent_->shapeObject()->getEndTime(end) == 0);
-      if ((validStart && currTime < start) || (validEnd && currTime > end))
+      std::optional<simCore::TimeStamp> start = parent_->shapeObject()->getStartTime();
+      bool validStart = start.has_value();
+      std::optional<simCore::TimeStamp> end = parent_->shapeObject()->getEndTime();
+      bool validEnd = end.has_value();
+      if ((validStart && currTime < start.value_or(simCore::INFINITE_TIME_STAMP)) || (validEnd && currTime > end.value_or(simCore::INFINITE_TIME_STAMP)))
       {
         // Returning without traversing here will cause the GOG node not to be drawn
         return;

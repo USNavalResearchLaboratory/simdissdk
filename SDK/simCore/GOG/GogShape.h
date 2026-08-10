@@ -320,7 +320,7 @@ public:
 
   /**
   * Get roll angle offset from reference orientation in radians
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
   std::optional<double> getRollOffset() const;
 
@@ -331,28 +331,40 @@ public:
   void setRollOffset(double offsetRad);
 
   /**
-  * Get the vertical datum string; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the vertical datum string
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<std::string> getVerticalDatum() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getVerticalDatum() instead")]]
   int getVerticalDatum(std::string& verticalDatum) const;
+
   /// Set the vertical datum string
   void setVerticalDatum(const std::string& verticalDatum);
 
   /**
-  * Get the start time; if value is not set, infinite time stamp is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the start time
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::TimeStamp> getStartTime() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::TimeStamp> getStartTime() instead")]]
   int getStartTime(simCore::TimeStamp& startTime) const;
+
   /// Set the start time
   void setStartTime(const simCore::TimeStamp& startTime);
   /// Clears the start time, setting it to an invalid state.
   void clearStartTime();
 
   /**
-  * Get the end time; if value is not set, infinite time stamp is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the end time
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::TimeStamp> getEndTime() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::TimeStamp> getEndTime() instead")]]
   int getEndTime(simCore::TimeStamp& startTime) const;
+
   /// Set the end time
   void setEndTime(const simCore::TimeStamp& startTime);
   /// Clears the end time, setting it to an invalid state.

@@ -53,9 +53,7 @@ GogNodeInterface* Polygon::createPolygon(const simCore::GOG::Polygon& polygon, b
 
     if (!polygon.isRelative())
     {
-      std::string vdatum;
-      polygon.getVerticalDatum(vdatum);
-      osgEarth::SpatialReference* srs = LoaderUtils::getSrs(vdatum);
+      osgEarth::SpatialReference* srs = LoaderUtils::getSrs(polygon.getVerticalDatum().value_or("wgs84"));
       Feature* feature = new Feature(geom, srs, style);
       FeatureNode* featureNode = new FeatureNode(feature);
       featureNode->setMapNode(mapNode);
