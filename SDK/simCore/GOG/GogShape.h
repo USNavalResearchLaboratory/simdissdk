@@ -446,10 +446,14 @@ public:
   bool canRotate() const override;
 
   /**
-  * Get outlined state flag; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get outlined state flag
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<bool> getIsOutlined() const;
+
+  [[deprecated("Deprecated, please use std::optional<bool> getIsOutlined() instead")]]
   int getIsOutlined(bool& outlined) const;
+
   /// Set the shape's outlined state flag
   void setOutlined(bool outlined);
 

@@ -646,6 +646,11 @@ bool OutlinedShape::canRotate() const
   return false;
 }
 
+std::optional<bool> OutlinedShape::getIsOutlined() const
+{
+  return outlined_;
+}
+
 int OutlinedShape::getIsOutlined(bool& outlined) const
 {
   outlined = outlined_.value_or(true);

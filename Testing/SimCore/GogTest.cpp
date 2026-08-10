@@ -184,9 +184,7 @@ int testBaseOptionalFieldsNotSet(const simCore::GOG::GogShape* shape)
 int testOutlinedOptionalFieldNotSet(const simCore::GOG::OutlinedShape* shape)
 {
   int rv = testBaseOptionalFieldsNotSet(shape);
-  bool outlined = false;
-  rv += SDK_ASSERT(shape->getIsOutlined(outlined) != 0);
-  rv += SDK_ASSERT(outlined);
+  rv += SDK_ASSERT(!shape->getIsOutlined().has_value());
   return rv;
 }
 
@@ -533,9 +531,7 @@ int testOutlinedField(const simCore::GOG::OutlinedShape* shape)
 {
   int rv = testBaseOptionalFields(shape);
 
-  bool outlined = false;
-  rv += SDK_ASSERT(shape->getIsOutlined(outlined) == 0);
-  rv += SDK_ASSERT(outlined);
+  rv += SDK_ASSERT(shape->getIsOutlined().value_or(false));
 
   return rv;
 }
@@ -2015,9 +2011,7 @@ auto testBooleansFunc = [](const simCore::GOG::FillableShape* shape) -> int
   bool filled;
   rv += SDK_ASSERT(shape->getIsFilled(filled) == 0);
   rv += SDK_ASSERT(filled);
-  bool outlined;
-  rv += SDK_ASSERT(shape->getIsOutlined(outlined) == 0);
-  rv += SDK_ASSERT(!outlined);
+  rv += SDK_ASSERT(!shape->getIsOutlined().value_or(true));
   rv += SDK_ASSERT(shape->getAltitudeMode().value_or(simCore::GOG::AltitudeMode::NONE) == simCore::GOG::AltitudeMode::EXTRUDE);
   return rv;
 };
