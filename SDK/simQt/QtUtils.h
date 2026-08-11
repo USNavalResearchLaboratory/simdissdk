@@ -28,8 +28,10 @@
 #include <QRect>
 #include "simCore/Common/Export.h"
 
+class QHeaderView;
 class QTabBar;
 class QTabWidget;
+class QTreeView;
 class QWidget;
 
 namespace simQt {
@@ -83,6 +85,20 @@ public:
    * @param parentScope Parent of the override shortcuts; shortcuts activate as children of this.
    */
   static void addTabShortcuts(QTabWidget& tabs, QWidget& parentScope);
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/** Utility methods for QTreeView */
+class SDKQT_EXPORT TreeViewUtils
+{
+public:
+  /** For all sections in the header view, reset the view order to match the section order ("unmove" sections) */
+  static void resetColumnOrder(QHeaderView& header);
+  /** Adds "Size All Columns to Fit" and "Reset Column Order" actions to header, and sets context menu policy to actions. */
+  static void addTreeHeaderColumnActions(QHeaderView& header);
+  /** Add checkable actions for showing and hiding columns to the tree's header. Precondition: Columns exist. */
+  static void addToggleVisibilityActions(QTreeView& treeView);
 };
 
 }

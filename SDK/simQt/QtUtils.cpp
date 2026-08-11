@@ -22,6 +22,7 @@
  */
 #include <QApplication>
 #include <QDialog>
+#include <QHeaderView>
 #include <QMainWindow>
 #include <QScreen>
 #ifdef WIN32
@@ -31,6 +32,7 @@
 #endif
 #include <QTabBar>
 #include <QTabWidget>
+#include <QTreeView>
 #include <QWidget>
 #include "simQt/OverrideShortcut.h"
 #include "simQt/QtUtils.h"
@@ -202,6 +204,82 @@ void QtUtils::addTabShortcuts(QTabWidget& tabs, QWidget& parentScope)
       tabWidget->setCurrentIndex(prevIdx);
     }
     });
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+void TreeViewUtils::resetColumnOrder(QHeaderView& header)
+{
+  // Move every visual index to match its logical index
+  const int numItems = header.count();
+  for (int k = 0; k < numItems; ++k)
+  {
+    const int visIndex = header.visualIndex(k);
+    if (visIndex != k)
+      header.moveSection(visIndex, k);
+  }
+}
+
+void TreeViewUtils::addTreeHeaderColumnActions(QHeaderView& header)
+{
+  // Resize all to contents
+  QAction* resizeAllColumns = new QAction(QObject::tr("Size All Columns to Fit"), &header);
+  QObject::connect(resizeAllColumns, &QAction::triggered, &header, [&header]() { header.resizeSections(QHeaderView::ResizeToContents); });
+
+  // Reset column order
+  QAction* resetColumnOrderAction = nullptr;
+  if (header.sectionsMovable())
+  {
+    resetColumnOrderAction = new QAction(QObject::tr("Reset Column Order"), &header);
+    // Initialize the enabled/disabled state of order action
+    resetColumnOrderAction->setDisabled(true);
+    for (int k = 0; k < header.count(); ++k)
+    {
+      if (header.visualIndex(k) != k)
+      {
+        resetColumnOrderAction->setEnabled(true);
+        break;
+      }
+    }
+
+    QObject::connect(resetColumnOrderAction, &QAction::triggered, &header, [&header, resetColumnOrderAction]() {
+      TreeViewUtils::resetColumnOrder(header);
+      resetColumnOrderAction->setEnabled(false);
+      });
+    QObject::connect(&header, &QHeaderView::sectionMoved, resetColumnOrderAction, [resetColumnOrderAction]() { resetColumnOrderAction->setEnabled(true); });
+  }
+
+  // Add right-click menu items to the event tree's header
+  header.setContextMenuPolicy(Qt::ActionsContextMenu);
+  header.addAction(resizeAllColumns);
+  if (resetColumnOrderAction)
+    header.addAction(resetColumnOrderAction);
+}
+
+void TreeViewUtils::addToggleVisibilityActions(QTreeView& treeView)
+{
+  QHeaderView* header = treeView.header();
+  QAbstractItemModel* dataModel = treeView.model();
+  if (!header || !dataModel)
+    return;
+
+  const int numColumns = header->count();
+  if (numColumns == 0)
+    return;
+
+  // Add a separator
+  QAction* separator = new QAction(&treeView);
+  separator->setSeparator(true);
+  header->addAction(separator);
+
+  for (int k = 0; k < numColumns; ++k)
+  {
+    QAction* hideColumnAction = new QAction(dataModel->headerData(k, Qt::Horizontal, Qt::DisplayRole).toString(), &treeView);
+    hideColumnAction->setCheckable(true);
+    hideColumnAction->setChecked(!treeView.isColumnHidden(k));
+    QObject::connect(hideColumnAction, &QAction::triggered, &treeView, [k, &treeView](bool isChecked) { treeView.setColumnHidden(k, !isChecked); });
+    header->addAction(hideColumnAction);
+  }
 }
 
 }
