@@ -833,7 +833,7 @@ void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
 
   if (prefs.commonprefs().labelprefs().draw())
   {
-    std::string text = labelContentCallback().createString(prefs, *labelUpdate_(prefs), prefs.commonprefs().labelprefs().displayfields());
+    std::string text = labelContentCallback().createString(prefs, *labelUpdate_(prefs), prefs.commonprefs().labelprefs().displayfields(), LabelContentCallback::TextType::DISPLAY);
 
     if (!text.empty())
     {
@@ -863,7 +863,7 @@ std::string PlatformNode::popupText() const
         prefix = getEntityName(EntityNode::ALIAS_NAME);
       prefix += "\n";
     }
-    return prefix + labelContentCallback().createString(lastPrefs_, *labelUpdate_(lastPrefs_), lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+    return prefix + labelContentCallback().createString(lastPrefs_, *labelUpdate_(lastPrefs_), lastPrefs_.commonprefs().labelprefs().hoverdisplayfields(), LabelContentCallback::TextType::HOVER);
   }
 
   return "";
@@ -875,7 +875,7 @@ std::string PlatformNode::hookText() const
   {
     // a valid_ platform should never have an update that does not have a time
     assert(lastUpdate_.has_time());
-    return labelContentCallback().createString(lastPrefs_, *labelUpdate_(lastPrefs_), lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+    return labelContentCallback().createString(lastPrefs_, *labelUpdate_(lastPrefs_), lastPrefs_.commonprefs().labelprefs().hookdisplayfields(), LabelContentCallback::TextType::HOOK);
   }
 
   return "";
@@ -887,7 +887,7 @@ std::string PlatformNode::legendText() const
   {
     // a valid_ platform should never have an update that does not have a time
     assert(lastUpdate_.has_time());
-    return labelContentCallback().createString(lastPrefs_, *labelUpdate_(lastPrefs_), lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
+    return labelContentCallback().createString(lastPrefs_, *labelUpdate_(lastPrefs_), lastPrefs_.commonprefs().labelprefs().legenddisplayfields(), LabelContentCallback::TextType::LEGEND);
   }
 
   return "";

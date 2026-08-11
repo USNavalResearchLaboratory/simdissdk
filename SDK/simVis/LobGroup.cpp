@@ -255,7 +255,7 @@ void LobGroupNode::updateLabel_(const simData::LobGroupPrefs& prefs)
 
     std::string text;
     if (prefs.commonprefs().labelprefs().draw())
-      text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
+      text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields(), LabelContentCallback::TextType::DISPLAY);
 
     if (!text.empty())
     {
@@ -282,7 +282,7 @@ std::string LobGroupNode::popupText() const
         prefix = getEntityName(EntityNode::ALIAS_NAME);
       prefix += "\n";
     }
-    return prefix + labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+    return prefix + labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields(), LabelContentCallback::TextType::HOVER);
   }
 
   return "";
@@ -291,14 +291,14 @@ std::string LobGroupNode::popupText() const
 std::string LobGroupNode::hookText() const
 {
   if (hasLastUpdate_ && lastPrefsValid_)
-    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields(), LabelContentCallback::TextType::HOOK);
   return "";
 }
 
 std::string LobGroupNode::legendText() const
 {
   if (hasLastUpdate_ && lastPrefsValid_)
-    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
+    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields(), LabelContentCallback::TextType::LEGEND);
   return "";
 }
 

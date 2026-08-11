@@ -96,7 +96,7 @@ void CustomRenderingNode::updateLabel_(const simData::CustomRenderingPrefs& pref
 
   std::string text;
   if (prefs.commonprefs().labelprefs().draw())
-    text = labelContentCallback().createString(getId(), prefs, prefs.commonprefs().labelprefs().displayfields());
+    text = labelContentCallback().createString(getId(), prefs, prefs.commonprefs().labelprefs().displayfields(), LabelContentCallback::TextType::DISPLAY);
 
   if (!text.empty())
   {
@@ -137,7 +137,7 @@ std::string CustomRenderingNode::popupText() const
         prefix = getEntityName(EntityNode::ALIAS_NAME);
       prefix += "\n";
     }
-    return prefix + labelContentCallback().createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+    return prefix + labelContentCallback().createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields(), LabelContentCallback::TextType::HOVER);
   }
 
   return "";
@@ -146,14 +146,14 @@ std::string CustomRenderingNode::popupText() const
 std::string CustomRenderingNode::hookText() const
 {
   if (hasLastPrefs_)
-    return labelContentCallback().createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+    return labelContentCallback().createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields(), LabelContentCallback::TextType::HOOK);
   return "";
 }
 
 std::string CustomRenderingNode::legendText() const
 {
   if (hasLastPrefs_)
-    return labelContentCallback().createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
+    return labelContentCallback().createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields(), LabelContentCallback::TextType::LEGEND);
   return "";
 }
 

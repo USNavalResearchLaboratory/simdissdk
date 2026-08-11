@@ -409,7 +409,7 @@ void BeamNode::updateLabel_(const simData::BeamPrefs& prefs)
 
     std::string text;
     if (prefs.commonprefs().labelprefs().draw())
-      text = labelContentCallback().createString(prefs, lastUpdateFromDS_, prefs.commonprefs().labelprefs().displayfields());
+      text = labelContentCallback().createString(prefs, lastUpdateFromDS_, prefs.commonprefs().labelprefs().displayfields(), LabelContentCallback::TextType::DISPLAY);
 
     if (!text.empty())
     {
@@ -436,7 +436,7 @@ std::string BeamNode::popupText() const
         prefix = getEntityName(EntityNode::ALIAS_NAME);
       prefix += "\n";
     }
-    return prefix + labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hoverdisplayfields());
+    return prefix + labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hoverdisplayfields(), LabelContentCallback::TextType::HOVER);
   }
 
   return "";
@@ -445,14 +445,14 @@ std::string BeamNode::popupText() const
 std::string BeamNode::hookText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)
-    return labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
+    return labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields(), LabelContentCallback::TextType::HOOK);
   return "";
 }
 
 std::string BeamNode::legendText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)
-    return labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().legenddisplayfields());
+    return labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().legenddisplayfields(), LabelContentCallback::TextType::LEGEND);
 
   return "";
 }
