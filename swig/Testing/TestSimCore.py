@@ -493,6 +493,39 @@ assert(simCore.VERTDATUM_WGS84 is not None)
 assert(simCore.VERTDATUM_MSL is not None)
 assert(simCore.VERTDATUM_USER is not None)
 
+# simCore/Formats
+
+#############################
+# DisModels.h
+
+temp_dis_file = "temp_test_model.dis"
+with open(temp_dis_file, "w") as f:
+    # Format: [DIS ID] [Model Name]
+    f.write("1.2.225.1.1.3.0 F-16.flt\n")
+    f.write("1.2.225.1.1.0.0 Generic_Fighter.flt\n")
+    f.write("1.2.0.0.0.0.0 Generic_Aircraft.flt\n")
+
+dis_models = simCore.DisModels()
+assert(dis_models is not None)
+assert(dis_models.empty() == True)
+
+assert(dis_models.loadFile(temp_dis_file) == 0)
+assert(dis_models.empty() == False)
+assert(dis_models.modelCount() == 3)
+
+assert(dis_models.getModel("1.2.225.1.1.3.0", 0) == "F-16.flt")
+
+assert(dis_models.getModel("1.2.225.1.1.99.0", 2) == "Generic_Fighter.flt")
+
+assert(dis_models.getModel("1.2.99.99.99.99.99", 5) == "Generic_Aircraft.flt")
+
+dis_models.clear()
+assert(dis_models.empty() == True)
+assert(dis_models.modelCount() == 0)
+
+if os.path.exists(temp_dis_file):
+    os.remove(temp_dis_file)
+
 # simCore/LUT
 
 #############################
