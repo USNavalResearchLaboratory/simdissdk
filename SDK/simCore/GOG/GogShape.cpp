@@ -701,6 +701,11 @@ void Points::addPoint(const simCore::Vec3& point)
   points_.push_back(point);
 }
 
+std::optional<int> Points::getPointSize() const
+{
+  return pointSize_;
+}
+
 int Points::getPointSize(int& size) const
 {
   size = pointSize_.value_or(1);
@@ -710,6 +715,11 @@ int Points::getPointSize(int& size) const
 void Points::setPointSize(int pointSizePixels)
 {
   pointSize_ = pointSizePixels;
+}
+
+std::optional<Color> Points::getColor() const
+{
+  return color_;
 }
 
 int Points::getColor(Color& color) const

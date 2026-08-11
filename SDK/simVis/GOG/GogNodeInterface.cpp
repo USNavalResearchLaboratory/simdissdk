@@ -360,12 +360,12 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   const simCore::GOG::Points* points = dynamic_cast<const simCore::GOG::Points*>(shape.get());
   if (points)
   {
-    int pointSize = 1;
-    if (points->getPointSize(pointSize) == 0)
-      setPointSize(pointSize);
-    simCore::GOG::Color color;
-    if (points->getColor(color) == 0)
-      setLineColor(LoaderUtils::convertToOsgColor(color));
+    std::optional<int> pointSize = points->getPointSize();
+    if (pointSize.has_value())
+      setPointSize(pointSize.value());
+    std::optional<simCore::GOG::Color> color = points->getColor();
+    if (color.has_value())
+      setLineColor(LoaderUtils::convertToOsgColor(color.value()));
   }
 
   const simCore::GOG::Annotation* anno = dynamic_cast<const simCore::GOG::Annotation*>(shape.get());

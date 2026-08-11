@@ -302,12 +302,8 @@ auto testPointsShapeMinimalFieldsFunc = [](const simCore::GOG::Points* shape, co
   rv += SDK_ASSERT(positions.size() == positionsOut.size());
   rv += SDK_ASSERT(comparePositionVectors(positions, positionsOut));
 
-  int pointSize = 0;
-  rv += SDK_ASSERT(shape->getPointSize(pointSize) != 0);
-  rv += SDK_ASSERT(pointSize == 1);
-  simCore::GOG::Color color(0, 255, 255, 0);
-  rv += SDK_ASSERT(shape->getColor(color) != 0);
-  rv += SDK_ASSERT(color == simCore::GOG::Color());
+  rv += SDK_ASSERT(!shape->getPointSize().has_value());
+  rv += SDK_ASSERT(!shape->getColor().has_value());
 
   return rv;
 };
@@ -589,12 +585,8 @@ auto testPointsOptionalFieldsFunc = [](const simCore::GOG::Points* shape) -> int
 {
   int rv = testOutlinedField(shape);
 
-  int pointSize = 0;
-  rv += SDK_ASSERT(shape->getPointSize(pointSize) == 0);
-  rv += SDK_ASSERT(pointSize == 5);
-  simCore::GOG::Color color;
-  rv += SDK_ASSERT(shape->getColor(color) == 0);
-  rv += SDK_ASSERT(color == simCore::GOG::Color(192, 0, 192, 255));
+  rv += SDK_ASSERT(shape->getPointSize().value_or(0) == 5);
+  rv += SDK_ASSERT(shape->getColor().value_or(simCore::GOG::Color()) == simCore::GOG::Color(192, 0, 192, 255));
 
   return rv;
 };

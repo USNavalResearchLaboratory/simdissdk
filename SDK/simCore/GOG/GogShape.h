@@ -485,18 +485,26 @@ public:
   void clearPoints();
 
   /**
-  * Get point size for all points in the shape in pixels; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get point size for all points in the shape in pixels
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<int> getPointSize() const;
+
+  [[deprecated("Deprecated, please use std::optional<int> getPointSize() instead")]]
   int getPointSize(int& size) const;
+
   /// Set the shape's point size in pixels
   void setPointSize(int pointSizePixels);
 
   /**
-  * Get the shape's color; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's color
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<Color> getColor() const;
+
+  [[deprecated("Deprecated, please use std::optional<Color> getColor() instead")]]
   int getColor(Color& color) const;
+
   /// Set the shape's color
   void setColor(const Color& gogColor);
 
@@ -504,7 +512,7 @@ protected:
   /// Serialize the shape's specific implementation attributes to the stream
   void serializeToStream_(std::ostream& gogOutputStream) const override;
 
-public:
+private:
   std::optional<int> pointSize_; ///< pixels
   std::optional<Color> color_;
   std::vector<simCore::Vec3> points_; ///< lla radians if absolute, xyz meters if relative
