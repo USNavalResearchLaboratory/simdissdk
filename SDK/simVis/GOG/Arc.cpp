@@ -250,8 +250,6 @@ GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string
   Distance iRadius(iRadiusM, Units::METERS);
 
   // whether to include the center point in the geometry.
-  bool filled = false;
-  arc.getIsFilled(filled);
   osgEarth::GeometryFactory gf;
   osg::ref_ptr<osgEarth::Geometry> outlineShape = new LineString();
   osg::ref_ptr<osgEarth::Geometry> filledShape = new osgEarth::Polygon();
@@ -320,7 +318,7 @@ GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string
   LoaderUtils::setShapePositionOffsets(*shapeNode, arc, center, refPoint, attached, false);
   LoaderUtils::setShapePositionOffsets(*fillNode, arc, center, refPoint, attached, false);
   // show the filled node only if filled
-  fillNode->setNodeMask(filled ? simVis::DISPLAY_MASK_GOG : simVis::DISPLAY_MASK_NONE);
+  fillNode->setNodeMask(arc.getIsFilled().value_or(false) ? simVis::DISPLAY_MASK_GOG : simVis::DISPLAY_MASK_NONE);
   g->addChild(fillNode);
   g->addChild(shapeNode);
 

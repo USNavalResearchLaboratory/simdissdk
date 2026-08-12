@@ -318,29 +318,25 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   const simCore::GOG::FillableShape* fillable = dynamic_cast<const simCore::GOG::FillableShape*>(shape.get());
   if (fillable != nullptr)
   {
-    int lineWidth = 0;
-    if (fillable->getLineWidth(lineWidth) == 0)
-      setLineWidth(lineWidth);
+    std::optional<int> lineWidth = fillable->getLineWidth();
+    if (lineWidth.has_value())
+      setLineWidth(lineWidth.value());
 
-    simCore::GOG::Color lineColor;
-    fillable->getLineColor(lineColor);
-    setLineColor(LoaderUtils::convertToOsgColor(lineColor));
+    setLineColor(LoaderUtils::convertToOsgColor(fillable->getLineColor().value_or(simCore::GOG::Color())));
 
-    simCore::GOG::LineStyle style = simCore::GOG::LineStyle::SOLID;
-    if (fillable->getLineStyle(style) == 0)
-      setLineStyle(LoaderUtils::convertToVisLineStyle(style));
+    std::optional<simCore::GOG::LineStyle> style = fillable->getLineStyle();
+    if (style.has_value())
+      setLineStyle(LoaderUtils::convertToVisLineStyle(style.value()));
 
-    bool filled = false;
-    fillable->getIsFilled(filled);
     // always set filled state, use default if not set in shape
-    setFilledState(filled);
+    setFilledState(fillable->getIsFilled().value_or(false));
 
     // always set a fill color
-    simCore::GOG::Color fillColor;
+    std::optional<simCore::GOG::Color> fillColor = fillable->getFillColor();
     // if fill color is not set, then try to get line color, which will be default if not set
-    if (fillable->getFillColor(fillColor) != 0)
-      fillable->getLineColor(fillColor);
-    setFillColor(LoaderUtils::convertToOsgColor(fillColor));
+    if (!fillColor.has_value())
+      fillColor = fillable->getLineColor();
+    setFillColor(LoaderUtils::convertToOsgColor(fillColor.value_or(simCore::GOG::Color())));
   }
 
   const simCore::GOG::PointBasedShape* lined = dynamic_cast<const simCore::GOG::PointBasedShape*>(shape.get());

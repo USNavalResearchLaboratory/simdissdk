@@ -97,8 +97,7 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
     shape = gf.createArc(osg::Vec3d(0, 0, 0), radius, start, end, 0u, tgeom.get(), true);
 
   osg::ref_ptr<osg::Group> g = new osg::Group();
-  bool filled = false;
-  cyl.getIsFilled(filled);
+  const bool filled = cyl.getIsFilled().value_or(false);
 
   // use the ref point as the center if no center defined by the shape
   simCore::Vec3 center;

@@ -178,9 +178,7 @@ GogNodeInterface* LatLonAltBox::createLatLonAltBox(const simCore::GOG::LatLonAlt
   }
 
   // An unfilled LLB should be drawn as lines, so remove any conflicting symbology
-  bool filled = false;
-  llab.getIsFilled(filled);
-  if (!filled)
+  if (!llab.getIsFilled().value_or(false))
     style.remove<PolygonSymbol>();
 
   Feature* featureBottom = new Feature(linesBottom, srs, style);

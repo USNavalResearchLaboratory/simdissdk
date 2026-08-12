@@ -192,21 +192,11 @@ int testOutlinedOptionalFieldNotSet(const simCore::GOG::OutlinedShape* shape)
 int testFillableOptionalFieldsNotSet(const simCore::GOG::FillableShape* shape)
 {
   int rv = testOutlinedOptionalFieldNotSet(shape);
-  int lineWidth = 0;
-  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) != 0);
-  rv += SDK_ASSERT(lineWidth == 1);
-  simCore::GOG::LineStyle style = simCore::GOG::LineStyle::DASHED;
-  rv += SDK_ASSERT(shape->getLineStyle(style) != 0);
-  rv += SDK_ASSERT(style == simCore::GOG::LineStyle::SOLID);
-  simCore::GOG::Color color(0, 255, 255, 0);
-  rv += SDK_ASSERT(shape->getLineColor(color) != 0);
-  rv += SDK_ASSERT(color == simCore::GOG::Color());
-  bool filled = true;
-  rv += SDK_ASSERT(shape->getIsFilled(filled) != 0);
-  rv += SDK_ASSERT(!filled);
-  simCore::GOG::Color fillColor(0, 255, 255, 0);
-  rv += SDK_ASSERT(shape->getFillColor(fillColor) != 0);
-  rv += SDK_ASSERT(fillColor == simCore::GOG::Color());
+  rv += SDK_ASSERT(!shape->getLineWidth().has_value());
+  rv += SDK_ASSERT(!shape->getLineStyle().has_value());
+  rv += SDK_ASSERT(!shape->getLineColor().has_value());
+  rv += SDK_ASSERT(!shape->getIsFilled().has_value());
+  rv += SDK_ASSERT(!shape->getFillColor().has_value());
   return rv;
 }
 
@@ -537,25 +527,11 @@ auto testFillableShapeOptionalFieldsFunc = [](const simCore::GOG::FillableShape*
 {
   int rv = testOutlinedField(shape);
 
-  int lineWidth = 0;
-  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
-  rv += SDK_ASSERT(lineWidth == 4);
-
-  simCore::GOG::LineStyle style = simCore::GOG::LineStyle::SOLID;
-  rv += SDK_ASSERT(shape->getLineStyle(style) == 0);
-  rv += SDK_ASSERT(style == simCore::GOG::LineStyle::DASHED);
-
-  simCore::GOG::Color lineColor;
-  rv += SDK_ASSERT(shape->getLineColor(lineColor) == 0);
-  rv += SDK_ASSERT(lineColor == simCore::GOG::Color(0, 255, 0, 255));
-
-  bool filled = false;
-  rv += SDK_ASSERT(shape->getIsFilled(filled) == 0);
-  rv += SDK_ASSERT(filled);
-
-  simCore::GOG::Color fillColor;
-  rv += SDK_ASSERT(shape->getFillColor(fillColor) == 0);
-  rv += SDK_ASSERT(fillColor == simCore::GOG::Color(255, 255, 0, 255));
+  rv += SDK_ASSERT(shape->getLineWidth().value_or(0) == 4);
+  rv += SDK_ASSERT(shape->getLineStyle().value_or(simCore::GOG::LineStyle::SOLID) == simCore::GOG::LineStyle::DASHED);
+  rv += SDK_ASSERT(shape->getLineColor().value_or(simCore::GOG::Color()) == simCore::GOG::Color(0, 255, 0, 255));
+  rv += SDK_ASSERT(shape->getIsFilled().value_or(false));
+  rv += SDK_ASSERT(shape->getFillColor().value_or(simCore::GOG::Color()) == simCore::GOG::Color(255, 255, 0, 255));
 
   return rv;
 };
@@ -1981,9 +1957,7 @@ int testColors()
     rv += SDK_ASSERT(circle != nullptr);
     if (circle != nullptr)
     {
-      simCore::GOG::Color color;
-      circle->getLineColor(color);
-      rv += SDK_ASSERT(color == colors[i]);
+      rv += SDK_ASSERT(circle->getLineColor().value_or(simCore::GOG::Color()) == colors[i]);
       std::stringstream os;
       circle->serializeToStream(os);
       std::string serialized = os.str();
@@ -2000,9 +1974,7 @@ int testColors()
 auto testBooleansFunc = [](const simCore::GOG::FillableShape* shape) -> int
 {
   int rv = 0;
-  bool filled;
-  rv += SDK_ASSERT(shape->getIsFilled(filled) == 0);
-  rv += SDK_ASSERT(filled);
+  rv += SDK_ASSERT(shape->getIsFilled().value_or(false));
   rv += SDK_ASSERT(!shape->getIsOutlined().value_or(true));
   rv += SDK_ASSERT(shape->getAltitudeMode().value_or(simCore::GOG::AltitudeMode::NONE) == simCore::GOG::AltitudeMode::EXTRUDE);
   return rv;
@@ -2035,9 +2007,7 @@ auto testPointSizeFunc = [](const simCore::GOG::Points* shape) -> int
 auto testLineWidthFunc = [](const simCore::GOG::FillableShape* shape) -> int
 {
   int rv = 0;
-  int lineWidth = 0;
-  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
-  rv += SDK_ASSERT(lineWidth == 3);
+  rv += SDK_ASSERT(shape->getLineWidth().value_or(0) == 3);
   return rv;
 };
 
@@ -2064,27 +2034,21 @@ int testDoublesToInts()
 auto testLineWidthThinFunc = [](const simCore::GOG::FillableShape* shape) -> int
 {
   int rv = 0;
-  int lineWidth = 0;
-  rv += SDK_ASSERT(shape->getLineWidth(lineWidth)== 0);
-  rv += SDK_ASSERT(lineWidth == 1);
+  rv += SDK_ASSERT(shape->getLineWidth().value_or(0) == 1);
   return rv;
 };
 
 auto testLineWidthMediumFunc = [](const simCore::GOG::FillableShape* shape) -> int
 {
   int rv = 0;
-  int lineWidth = 0;
-  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
-  rv += SDK_ASSERT(lineWidth == 2);
+  rv += SDK_ASSERT(shape->getLineWidth().value_or(0) == 2);
   return rv;
 };
 
 auto testLineWidthThickFunc = [](const simCore::GOG::FillableShape* shape) -> int
 {
   int rv = 0;
-  int lineWidth = 0;
-  rv += SDK_ASSERT(shape->getLineWidth(lineWidth) == 0);
-  rv += SDK_ASSERT(lineWidth == 4);
+  rv += SDK_ASSERT(shape->getLineWidth().value_or(0) == 4);
   return rv;
 };
 

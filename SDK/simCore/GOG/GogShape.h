@@ -524,41 +524,61 @@ class SDKCORE_EXPORT FillableShape : public OutlinedShape
 public:
   /**
   * Get the line width in pixels; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<int> getLineWidth() const;
+
+  [[deprecated("Deprecated, please use std::optional<int> getLineWidth() instead")]]
   int getLineWidth(int& lineWidth) const;
+
   /// Set the shape's line width in pixels
   void setLineWidth(int widthPixels);
 
   /**
   * Get the line color; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<Color> getLineColor() const;
+
+  [[deprecated("Deprecated, please use std::optional<Color> getLineColor() instead")]]
   int getLineColor(Color& color) const;
+
   /// Set the shape's line color
   void setLineColor(const Color& color);
 
   /**
   * Get the line style; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<LineStyle> getLineStyle() const;
+
+  [[deprecated("Deprecated, please use std::optional<LineStyle> getLineStyle() instead")]]
   int getLineStyle(LineStyle& style) const;
+
   /// Set the shape's line style
   void setLineStyle(LineStyle style);
 
   /**
   * Get the filled state; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<bool> getIsFilled() const;
+
+  [[deprecated("Deprecated, please use std::optional<bool> getIsFilled() instead")]]
   int getIsFilled(bool& filled) const;
+
   /// Set the shape's filled state
   void setFilled(bool filled);
 
   /**
   * Get the fill color; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<Color> getFillColor() const;
+
+  [[deprecated("Deprecated, please use std::optional<Color> getFillColor() instead")]]
   int getFillColor(Color& color) const;
+
   /// Set the shape's fill color
   void setFillColor(const Color& color);
 

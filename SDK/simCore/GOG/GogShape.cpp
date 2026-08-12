@@ -754,14 +754,25 @@ FillableShape::FillableShape()
 {
 }
 
+std::optional<int> FillableShape::getLineWidth() const
+{
+  return lineWidth_;
+}
+
 int FillableShape::getLineWidth(int& lineWidth) const
 {
   lineWidth = lineWidth_.value_or(1);
   return (lineWidth_.has_value() ? 0 : 1);
 }
+
 void FillableShape::setLineWidth(int widthPixels)
 {
   lineWidth_ = widthPixels;
+}
+
+std::optional<Color> FillableShape::getLineColor() const
+{
+  return lineColor_;
 }
 
 int FillableShape::getLineColor(Color& color) const
@@ -775,14 +786,25 @@ void FillableShape::setLineColor(const Color& color)
   lineColor_ = color;
 }
 
+std::optional<LineStyle> FillableShape::getLineStyle() const
+{
+  return lineStyle_;
+}
+
 int FillableShape::getLineStyle(LineStyle& style) const
 {
   style = lineStyle_.value_or(LineStyle::SOLID);
   return (lineStyle_.has_value() ? 0 : 1);
 }
+
 void FillableShape::setLineStyle(LineStyle style)
 {
   lineStyle_ = style;
+}
+
+std::optional<bool> FillableShape::getIsFilled() const
+{
+  return filled_;
 }
 
 int FillableShape::getIsFilled(bool& filled) const
@@ -794,6 +816,11 @@ int FillableShape::getIsFilled(bool& filled) const
 void FillableShape::setFilled(bool filled)
 {
   filled_ = filled;
+}
+
+std::optional<Color> FillableShape::getFillColor() const
+{
+  return fillColor_;
 }
 
 int FillableShape::getFillColor(Color& color) const
