@@ -204,12 +204,9 @@ int testFillableOptionalFieldsNotSet(const simCore::GOG::FillableShape* shape)
 auto testCircularShapeMinimalFieldsFunc = [](const simCore::GOG::CircularShape* shape, const std::vector<simCore::Vec3>& positions) -> int
 {
   int rv = testFillableOptionalFieldsNotSet(shape);
-  simCore::Vec3 center;
-  rv += SDK_ASSERT(shape->getCenterPosition(center) == 0);
-  rv += SDK_ASSERT(comparePositions(center, positions.front()));
-  double radius = 0.;
+  rv += SDK_ASSERT(comparePositions(shape->getCenterPosition().value_or(simCore::Vec3()), positions.front()));
   // verify radius wasn't set
-  rv += SDK_ASSERT(shape->getRadius(radius) == 1);
+  rv += SDK_ASSERT(!shape->getRadius().has_value());
 
   return rv;
 };
@@ -279,7 +276,7 @@ auto testPointBasedShapeMinimalFieldsFunc = [](const simCore::GOG::PointBasedSha
 
   // verify that tessellation has not been set
   simCore::GOG::TessellationStyle style = simCore::GOG::TessellationStyle::NONE;
-  rv += SDK_ASSERT(shape->getTessellation(style) != 0);
+  rv += SDK_ASSERT(!shape->getTessellation().has_value());
   rv += SDK_ASSERT(style == simCore::GOG::TessellationStyle::NONE);
   return rv;
 };
@@ -540,9 +537,7 @@ auto testFillableShapeOptionalFieldsFunc = [](const simCore::GOG::FillableShape*
 auto testCircularShapeOptionalFieldsFunc = [](const simCore::GOG::CircularShape* shape) -> int
 {
   int rv = testFillableShapeOptionalFieldsFunc(shape);
-  double radius = 0.;
-  rv += SDK_ASSERT(shape->getRadius(radius) == 0);
-  rv += SDK_ASSERT(radius == 1000.);
+  rv += SDK_ASSERT(shape->getRadius().value_or(shape->originalUnits().rangeUnits().convertTo(simCore::Units::METERS, 1000.)) == 1000.);
   return rv;
 };
 
@@ -550,9 +545,7 @@ auto testCircularShapeOptionalFieldsFunc = [](const simCore::GOG::CircularShape*
 auto testPointBasedShapeOptionalFieldsFunc = [](const simCore::GOG::PointBasedShape* shape) -> int
 {
   int rv = testFillableShapeOptionalFieldsFunc(shape);
-  simCore::GOG::TessellationStyle style = simCore::GOG::TessellationStyle::NONE;
-  rv += SDK_ASSERT(shape->getTessellation(style) == 0);
-  rv += SDK_ASSERT(style == simCore::GOG::TessellationStyle::GREAT_CIRCLE);
+  rv += SDK_ASSERT(shape->getTessellation().value_or(simCore::GOG::TessellationStyle::NONE) == simCore::GOG::TessellationStyle::GREAT_CIRCLE);
   return rv;
 };
 
@@ -1069,9 +1062,7 @@ auto testCylinderHeightFunc = [](const simCore::GOG::Cylinder* shape) -> int
 auto testCircularRadiusFunc = [](const simCore::GOG::CircularShape* shape) -> int
 {
   int rv = 0;
-  double radius = 0.;
-  rv += SDK_ASSERT(shape->getRadius(radius) == 0);
-  rv += SDK_ASSERT(simCore::areEqual(radius, 2000.));
+  rv += SDK_ASSERT(simCore::areEqual(shape->getRadius().value_or(shape->originalUnits().rangeUnits().convertTo(simCore::Units::METERS, 1000.)), 2000.));
   return rv;
 };
 
@@ -1102,18 +1093,14 @@ int testUnits()
     rv += SDK_ASSERT(circle != nullptr);
     if (circle)
     {
-      simCore::Vec3 center;
-      rv += SDK_ASSERT(circle->getCenterPosition(center) == 0);
       simCore::Units altMeters(simCore::Units::METERS);
       simCore::Units altFeet(simCore::Units::FEET);
       // verify output in meters matches input in feet
-      rv += SDK_ASSERT(comparePositions(center, simCore::Vec3(25.1 * simCore::DEG2RAD, 58.2 * simCore::DEG2RAD, altFeet.convertTo(altMeters, 12.))));
+      rv += SDK_ASSERT(comparePositions(circle->getCenterPosition().value_or(simCore::Vec3()), simCore::Vec3(25.1 * simCore::DEG2RAD, 58.2 * simCore::DEG2RAD, altFeet.convertTo(altMeters, 12.))));
 
-      double radius = 0.;
       // verify output in meters matches input in feet
-      rv += SDK_ASSERT(circle->getRadius(radius) == 0);
       simCore::Units altYards(simCore::Units::YARDS);
-      rv += SDK_ASSERT(simCore::areEqual(radius, altYards.convertTo(altMeters, 100.)));
+      rv += SDK_ASSERT(simCore::areEqual(circle->getRadius().value_or(circle->originalUnits().rangeUnits().convertTo(simCore::Units::METERS, 1000.)), altYards.convertTo(altMeters, 100.)));
     }
   }
   shapes.clear();
@@ -1129,15 +1116,11 @@ int testUnits()
     rv += SDK_ASSERT(circle != nullptr);
     if (circle)
     {
-      simCore::Vec3 center;
-      rv += SDK_ASSERT(circle->getCenterPosition(center) == 0);
       // verify output in meters matches input in meters
-      rv += SDK_ASSERT(comparePositions(center, simCore::Vec3(25.1 * simCore::DEG2RAD, 58.2 * simCore::DEG2RAD, 10.)));
+      rv += SDK_ASSERT(comparePositions(circle->getCenterPosition().value_or(simCore::Vec3()), simCore::Vec3(25.1 * simCore::DEG2RAD, 58.2 * simCore::DEG2RAD, 10.)));
 
-      double radius = 0.;
       // verify radius is 10 km
-      rv += SDK_ASSERT(circle->getRadius(radius) == 0);
-      rv += SDK_ASSERT(simCore::areEqual(radius, 10000.));
+      rv += SDK_ASSERT(simCore::areEqual(circle->getRadius().value_or(circle->originalUnits().rangeUnits().convertTo(simCore::Units::METERS, 1000.)), 10000.));
     }
   }
   shapes.clear();
@@ -1352,8 +1335,7 @@ int testFollow()
 auto testCircularNoCenterFunc = [](const simCore::GOG::CircularShape* shape) -> int
 {
   int rv = 0;
-  simCore::Vec3 center;
-  rv += SDK_ASSERT(shape->getCenterPosition(center) != 0);
+  rv += SDK_ASSERT(!shape->getCenterPosition().has_value());
   return rv;
 };
 
@@ -1387,9 +1369,7 @@ int testCenteredDefault()
 auto testCircularRadiusDefaultFunc = [](const simCore::GOG::CircularShape* shape) -> int
 {
   int rv = 0;
-  double radius = 0.;
-  rv += SDK_ASSERT(shape->getRadius(radius) != 0);
-  rv += SDK_ASSERT(simCore::areEqual(radius, 914.4));
+  rv += SDK_ASSERT(simCore::areEqual(shape->getRadius().value_or(shape->originalUnits().rangeUnits().convertTo(simCore::Units::METERS, 1000.)), 914.4));
   return rv;
 };
 

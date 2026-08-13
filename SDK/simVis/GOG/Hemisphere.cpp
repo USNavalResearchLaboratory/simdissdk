@@ -38,8 +38,7 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Hemisphere::createHemisphere(const simCore::GOG::Hemisphere& hemi, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  double radiusM = 0.;
-  hemi.getRadius(radiusM);
+  const double radiusM = hemi.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
   osgEarth::Distance radius(radiusM, osgEarth::Units::METERS);
 
   osg::Vec4f color(osgEarth::Color::White);
@@ -69,10 +68,13 @@ GogNodeInterface* Hemisphere::createHemisphere(const simCore::GOG::Hemisphere& h
   node->setName("GOG Hemisphere Position");
 
   // use the ref point as the center if no center defined by the shape
-  simCore::Vec3 center;
-  if (hemi.getCenterPosition(center) != 0 && !attached)
+  std::optional<simCore::Vec3> center = hemi.getCenterPosition();
+  if (!center.has_value() && !attached)
     center = refPoint;
-  LoaderUtils::setShapePositionOffsets(*node, hemi, center, refPoint, attached, false);
+  else if (!center.has_value())
+    center = simCore::Vec3();
+
+  LoaderUtils::setShapePositionOffsets(*node, hemi, *center, refPoint, attached, false);
   GogMetaData metaData;
   return new SphericalNodeInterface(node, metaData);
 }

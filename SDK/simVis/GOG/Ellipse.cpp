@@ -46,10 +46,10 @@ GogNodeInterface* Ellipse::createEllipse(const simCore::GOG::Ellipse& ellipse, b
   if (ellipse.getMinorAxis(minorAxis) == 0)
     minorRadius = Distance(0.5 * minorAxis, Units::METERS);
 
-  double radius = 0.;
-  if (ellipse.getRadius(radius) == 0)
+  const std::optional<double> radius = ellipse.getRadius();
+  if (radius.has_value())
   {
-    majorRadius = Distance(radius, Units::METERS);
+    majorRadius = Distance(radius.value(), Units::METERS);
     minorRadius = majorRadius;
   }
 
@@ -74,11 +74,13 @@ GogNodeInterface* Ellipse::createEllipse(const simCore::GOG::Ellipse& ellipse, b
   node->setName("GOG Ellipse Position");
 
   // use the ref point as the center if no center defined by the shape
-  simCore::Vec3 center;
-  if (ellipse.getCenterPosition(center) != 0 && !attached)
+  std::optional<simCore::Vec3> center = ellipse.getCenterPosition();
+  if (!center.has_value() && !attached)
     center = refPoint;
+  else if (!center.has_value())
+    center = simCore::Vec3();
 
-  LoaderUtils::setShapePositionOffsets(*node, ellipse, center, refPoint, attached, false);
+  LoaderUtils::setShapePositionOffsets(*node, ellipse, *center, refPoint, attached, false);
   GogMetaData metaData;
   return new LocalGeometryNodeInterface(node, metaData);
 }

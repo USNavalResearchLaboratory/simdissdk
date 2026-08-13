@@ -35,8 +35,7 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Sphere::createSphere(const simCore::GOG::Sphere& sphere, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  double radiusM;
-  sphere.getRadius(radiusM);
+  double radiusM = sphere.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
 
   // cannot create a sphere with no radius
   if (radiusM <= 0.)
@@ -64,10 +63,13 @@ GogNodeInterface* Sphere::createSphere(const simCore::GOG::Sphere& sphere, bool 
   node->setName("GOG Sphere Position");
 
   // use the ref point as the center if no center defined by the shape
-  simCore::Vec3 center;
-  if (sphere.getCenterPosition(center) != 0 && !attached)
+  std::optional<simCore::Vec3> center = sphere.getCenterPosition();
+  if (!center.has_value() && !attached)
     center = refPoint;
-  LoaderUtils::setShapePositionOffsets(*node, sphere, center, refPoint, attached, false);
+  else if (!center.has_value())
+    center = simCore::Vec3();
+
+  LoaderUtils::setShapePositionOffsets(*node, sphere, *center, refPoint, attached, false);
   GogMetaData metaData;
   return new SphericalNodeInterface(node, metaData);
 }

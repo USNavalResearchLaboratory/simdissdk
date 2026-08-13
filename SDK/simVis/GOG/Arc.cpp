@@ -226,9 +226,7 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string& filename, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  double radiusM = 0.;
-  arc.getRadius(radiusM);
-  Distance radius(radiusM, Units::METERS);
+  Distance radius(arc.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.)), Units::METERS);
   Angle rotation(0., Units::DEGREES); // Rotation handled in setShapePositionOffsets()
   double angleStart = 0.;
   arc.getAngleStart(angleStart);
@@ -312,11 +310,14 @@ GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string
   fillNode->setName("Arc Fill Node");
 
   // use the ref point as the center if no center defined by the shape
-  simCore::Vec3 center;
-  if (arc.getCenterPosition(center) != 0 && !attached)
+  std::optional<simCore::Vec3> center = arc.getCenterPosition();
+  if (!center.has_value() && !attached)
     center = refPoint;
-  LoaderUtils::setShapePositionOffsets(*shapeNode, arc, center, refPoint, attached, false);
-  LoaderUtils::setShapePositionOffsets(*fillNode, arc, center, refPoint, attached, false);
+  else if (!center.has_value())
+    center = simCore::Vec3();
+
+  LoaderUtils::setShapePositionOffsets(*shapeNode, arc, *center, refPoint, attached, false);
+  LoaderUtils::setShapePositionOffsets(*fillNode, arc, *center, refPoint, attached, false);
   // show the filled node only if filled
   fillNode->setNodeMask(arc.getIsFilled().value_or(false) ? simVis::DISPLAY_MASK_GOG : simVis::DISPLAY_MASK_NONE);
   g->addChild(fillNode);

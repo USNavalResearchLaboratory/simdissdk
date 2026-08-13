@@ -50,10 +50,10 @@ GogNodeInterface* Ellipsoid::createEllipsoid(const simCore::GOG::Ellipsoid& elli
   osgEarth::Distance x_diam(majorAxis, osgEarth::Units::METERS);
   osgEarth::Distance z_diam(height, osgEarth::Units::METERS);
 
-  double radius = 0.;
-  if (ellipsoid.getRadius(radius) == 0)
+  const std::optional<double> radius = ellipsoid.getRadius();
+  if (radius.has_value())
   {
-    x_diam.set(radius * 2, osgEarth::Units::METERS);
+    x_diam.set(radius.value() * 2, osgEarth::Units::METERS);
     y_diam = x_diam;
     // use radius for height if it wasn't set, or if it was set to 0
     if (!heightSet || z_diam == 0.0)
@@ -84,11 +84,13 @@ GogNodeInterface* Ellipsoid::createEllipsoid(const simCore::GOG::Ellipsoid& elli
   node->setName("GOG Ellipsoid Position");
 
   // use the ref point as the center if no center defined by the shape
-  simCore::Vec3 center;
-  if (ellipsoid.getCenterPosition(center) != 0 && !attached)
+  std::optional<simCore::Vec3> center = ellipsoid.getCenterPosition();
+  if (!center.has_value() && !attached)
     center = refPoint;
+  else if (!center.has_value())
+    center = simCore::Vec3();
 
-  LoaderUtils::setShapePositionOffsets(*node, ellipsoid, center, refPoint, attached, false);
+  LoaderUtils::setShapePositionOffsets(*node, ellipsoid, center.value(), refPoint, attached, false);
   GogMetaData metaData;
   return new SphericalNodeInterface(node, metaData);
 }

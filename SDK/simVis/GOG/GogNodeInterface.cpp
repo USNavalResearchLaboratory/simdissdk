@@ -342,8 +342,7 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   const simCore::GOG::PointBasedShape* lined = dynamic_cast<const simCore::GOG::PointBasedShape*>(shape.get());
   if (lined != nullptr)
   {
-    simCore::GOG::TessellationStyle tessellation = simCore::GOG::TessellationStyle::NONE;
-    lined->getTessellation(tessellation);
+    const simCore::GOG::TessellationStyle tessellation = lined->getTessellation().value_or(simCore::GOG::TessellationStyle::NONE);
     // always set tessellation to initialize fields in style, defaults to off
     setTessellation(LoaderUtils::convertToVisTessellation(tessellation));
   }

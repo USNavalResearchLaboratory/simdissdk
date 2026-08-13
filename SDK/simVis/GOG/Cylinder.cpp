@@ -53,8 +53,7 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  double radiusM = 0.;
-  cyl.getRadius(radiusM);
+  const double radiusM = cyl.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
   Distance radius(radiusM, Units::METERS);
   Angle rotation(0., Units::DEGREES); // Rotation handled in setShapePositionOffsets()
   double heightM = 0.;
@@ -100,9 +99,11 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
   const bool filled = cyl.getIsFilled().value_or(false);
 
   // use the ref point as the center if no center defined by the shape
-  simCore::Vec3 center;
-  if (cyl.getCenterPosition(center) != 0 && !attached)
+  std::optional<simCore::Vec3> center = cyl.getCenterPosition();
+  if (!center.has_value() && !attached)
     center = refPoint;
+  else if (!center.has_value())
+    center = simCore::Vec3();
 
   // first the extruded side shape:
   LocalGeometryNode* sideNode = nullptr;
@@ -134,7 +135,7 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
       sideNode->getOrCreateStateSet()->setAttributeAndModes(new osg::FrontFace(osg::FrontFace::CLOCKWISE), osg::StateAttribute::ON);
 
     sideNode->setName("Cylinder Side");
-    LoaderUtils::setShapePositionOffsets(*sideNode, cyl, center, refPoint, attached, false);
+    LoaderUtils::setShapePositionOffsets(*sideNode, cyl, *center, refPoint, attached, false);
     g->addChild(sideNode);
   }
 
@@ -157,7 +158,7 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
       topCapNode = new HostedLocalGeometryNode(shape.get(), style);
     topCapNode->setName("Cylinder Top");
 
-    LoaderUtils::setShapePositionOffsets(*topCapNode, cyl, center, refPoint, attached, false);
+    LoaderUtils::setShapePositionOffsets(*topCapNode, cyl, *center, refPoint, attached, false);
     // offset the top cap node's altitude by the height
     topCapNode->getPositionAttitudeTransform()->setPivotPoint(osg::Vec3(0, 0, -heightM));
 
@@ -182,7 +183,7 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
     else
       bottomCapNode = new HostedLocalGeometryNode(shape.get(), style);
     bottomCapNode->setName("Cylinder Bottom");
-    LoaderUtils::setShapePositionOffsets(*bottomCapNode, cyl, center, refPoint, attached, false);
+    LoaderUtils::setShapePositionOffsets(*bottomCapNode, cyl, *center, refPoint, attached, false);
 
     // Set the frontface on bottom to clockwise, since we cannot easily rewind vertices
     bottomCapNode->getOrCreateStateSet()->setAttributeAndModes(new osg::FrontFace(osg::FrontFace::CLOCKWISE), osg::StateAttribute::ON);

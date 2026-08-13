@@ -37,8 +37,7 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Circle::createCircle(const simCore::GOG::Circle& circle, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  double radiusMeters = 0.;
-  circle.getRadius(radiusMeters);
+  const double radiusMeters = circle.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
   Distance radius(radiusMeters, Units::METERS);
 
   osgEarth::GeometryFactory gf;
@@ -61,11 +60,13 @@ GogNodeInterface* Circle::createCircle(const simCore::GOG::Circle& circle, bool 
   node->setName("GOG Circle Position");
 
   // use the ref point as the center if no center defined by the shape
-  simCore::Vec3 center;
-  if (circle.getCenterPosition(center) != 0 && !attached)
+  std::optional<simCore::Vec3> center = circle.getCenterPosition();
+  if (!center.has_value() && !attached)
     center = refPoint;
+  else if (!center.has_value())
+    center = simCore::Vec3();
 
-  LoaderUtils::setShapePositionOffsets(*node, circle, center, refPoint, attached, false);
+  LoaderUtils::setShapePositionOffsets(*node, circle, *center, refPoint, attached, false);
   GogMetaData metaData;
   return new LocalGeometryNodeInterface(node, metaData);
 }

@@ -891,6 +891,11 @@ void PointBasedShape::clearPoints()
   points_.clear();
 }
 
+std::optional<TessellationStyle> PointBasedShape::getTessellation() const
+{
+  return tessellation_;
+}
+
 int PointBasedShape::getTessellation(TessellationStyle& tessellation) const
 {
   tessellation = tessellation_.value_or(TessellationStyle::NONE);
@@ -968,6 +973,11 @@ CircularShape::CircularShape()
   setCanFollow_(true);
 }
 
+std::optional<simCore::Vec3> CircularShape::getCenterPosition() const
+{
+  return center_;
+}
+
 int CircularShape::getCenterPosition(simCore::Vec3& centerPosition) const
 {
   centerPosition = center_.value_or(simCore::Vec3());
@@ -977,6 +987,11 @@ int CircularShape::getCenterPosition(simCore::Vec3& centerPosition) const
 void CircularShape::setCenterPosition(const simCore::Vec3& centerPosition)
 {
   center_ = centerPosition;
+}
+
+std::optional<double> CircularShape::getRadius() const
+{
+  return radius_;
 }
 
 int CircularShape::getRadius(double& radius) const
@@ -1075,8 +1090,7 @@ void Orbit::setCenterPosition2(const simCore::Vec3& center2)
 {
   center2_ = center2;
   // always use z from center position
-  simCore::Vec3 center1;
-  getCenterPosition(center1);
+  simCore::Vec3 center1 = getCenterPosition().value_or(simCore::Vec3());
   center2_.setZ(center1.z());
 }
 

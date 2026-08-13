@@ -611,10 +611,14 @@ public:
   void clearPoints();
 
   /**
-  * Get the shape's tessellation style; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's tessellation style
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<TessellationStyle> getTessellation() const;
+
+  [[deprecated("Deprecated, please use std::optional<TessellationStyle> getTessellation() instead")]]
   int getTessellation(TessellationStyle& tessellation) const;
+
   /// Set the shape's tessellation style
   void setTessellation(TessellationStyle tessellation);
 
@@ -663,18 +667,26 @@ public:
   bool canRotate() const override;
 
   /**
-  * Get the shape's center position in lla radians if absolute or xyz meters if relative; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's center position in lla radians if absolute or xyz meters if relative
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::Vec3> getCenterPosition() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::Vec3> getCenterPosition() instead")]]
   int getCenterPosition(simCore::Vec3& centerPosition) const;
+
   /// Set the shape's center position; in lla radians if absolute, xyz meters if relative
   void setCenterPosition(const simCore::Vec3& centerPosition);
 
   /**
-  * Get the shape's radius in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's radius in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getRadius() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getRadius() const instead")]]
   int getRadius(double& radius) const;
+
   /// Set the shape's radius in meters
   void setRadius(double radiusMeters);
 

@@ -56,12 +56,10 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Orbit::createOrbit(const simCore::GOG::Orbit& orbit, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  double radius = 0.;
-  orbit.getRadius(radius);
+  const double radius = orbit.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
 
-  simCore::Vec3 center1;
-  orbit.getCenterPosition(center1);
-  simCore::Vec3 center2 = orbit.centerPosition2();
+  const simCore::Vec3 center1 = orbit.getCenterPosition().value_or(simCore::Vec3());
+  const simCore::Vec3 center2 = orbit.centerPosition2();
 
   osgEarth::LocalGeometryNode* node = nullptr;
   osgEarth::Style style;

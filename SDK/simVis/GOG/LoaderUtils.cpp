@@ -102,11 +102,7 @@ bool LoaderUtils::geometryRequiresClipping(const simCore::GOG::GogShape& shape)
   {
     const simCore::GOG::CircularShape* circular = dynamic_cast<const simCore::GOG::CircularShape*>(&shape);
     if (circular)
-    {
-      simCore::Vec3 center;
-      circular->getCenterPosition(center);
-      return (circular && center.z() > 0.);
-    }
+      return (circular && circular->getCenterPosition().value_or(simCore::Vec3()).z() > 0.);
   }
 
   // Out of things to check. No clip.
