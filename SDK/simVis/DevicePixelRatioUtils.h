@@ -23,45 +23,65 @@
 #ifndef SIMVIS_DEVICEPIXELRATIOUTILS_H
 #define SIMVIS_DEVICEPIXELRATIOUTILS_H
 
+#include "osg/ref_ptr"
+#include "osg/NodeCallback"
+#include "osg/Vec2d"
 #include "simCore/Common/Common.h"
 
-namespace osg {
-  class Node;
-  class Vec3f;
-}
-namespace osgText { class TextBase; }
+namespace osgGA { class GUIEventAdapter; }
+namespace osgText { class Text; }
 
 namespace simVis {
 
 /**
  * Utilities for dealing with device pixel ratio (DPR) changes. A device pixel ratio of 1.0
- * is 100% scaling (e.g. 1.5 is 150% scaling). SIMDIS SDK applies scaling based on a 100%
- * display, and will up-scale as needed. For example, a line of width 4 on a 100% display
- * should have an actual line width of 6 on a 150% display. This class accomplishes that by
- * detecting an intended width of 4, and multiplying that by the DPR to get a stored width
- * of 6.
+ * is 100% scaling (e.g. 1.5 is 150% scaling).
  *
- * This class relies on User Data Values (osg::Node::getUserValue) to get and store values.
- * It assumes any value supplied by an end user is at 100% scaling and will upscale as needed
- * based on the current DPR.
- *
- * In the future, DPR might apply directly in shaders, eliminating the need for some or all
- * of these functions.
+ * This class primarily manages texture resolution for text to ensure crisp rendering
+ * on high-DPI displays. Layout scaling (positions and sizes) is handled natively by
+ * View HUD orthographic projections using logical coordinates.
  */
 class SDKVIS_EXPORT DevicePixelRatioUtils
 {
 public:
-  /** Marks a node as device-pixel-ratio disabled; no scaling is performed. */
-  static void setDprDisabled(osg::Node& node);
-  /** Returns true if the DPR calculations are disabled for this node. */
-  static bool isDprDisabled(osg::Node& node);
+  /** Retrieves the current Device Pixel Ratio (DPR). 1.0 is standard, 2.0 is 4K/Retina. Never 0.0. */
+  static double getDpr();
 
-  // Clean wrappers for commonly scaled values; accepts values at 100% scaling.
-  static void setTextCharacterSize(osgText::TextBase& text, float characterSize);
-  static void setTextPosition(osgText::TextBase& text, const osg::Vec3f& position);
+  /** Converts a physical pixel value (from GL/OSG) to a logical layout value. */
+  static double toLogical(double physical);
+  /** Converts a logical layout value to a physical pixel value. */
+  static double toPhysical(double logical);
 
-  /** Extracts the current DPR from osgEarth's registry, and applies it recursively to the node tree and all children */
-  static void updateScenePixelRatio(osg::Node& rootNode);
+  /** Extracts the mouse coordinates from an OSG event and converts them to logical space. */
+  static osg::Vec2d getLogicalMousePosition(const osgGA::GUIEventAdapter& ea);
+};
+
+/**
+ * Monitors the device pixel ratio and dynamically updates the font size and resolution
+ * when the application is dragged between screens with different DPI settings. This
+ * is most useful in osgText::Text using SCREEN_COORDS coordinate system, that is in the
+ * 3D scene. Text on SuperHUD does not need this, because they should not be using
+ * SCREEN_COORDS and should already be logically scaled.
+ */
+class DpiTextScalingCallback : public osg::NodeCallback
+{
+public:
+  explicit DpiTextScalingCallback(float logicalFontSize);
+
+  /** Changes the character size */
+  void setCharacterSize(float logicalFontSize);
+
+  // From NodeCallback:
+  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv) override;
+
+  /** Helper function to install the node callback AND set the logical size at the same time */
+  static osg::ref_ptr<DpiTextScalingCallback> install(osgText::Text& textNode, float logicalFontSize);
+
+private:
+  /** Internal function to change the physical size based on current DPR */
+  void applyScaling_(osgText::Text& textNode) const;
+
+  float logicalFontSize_ = 10.f;
 };
 
 }
