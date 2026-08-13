@@ -68,6 +68,7 @@ public:
         picker_.mouseXy_.set(ea.getX(), ea.getY());
         picker_.pickThisFrame_();
       }
+      break;
 
     case osgGA::GUIEventAdapter::FRAME:
       // If the mouse moved, we need to re-pick to capture movement
