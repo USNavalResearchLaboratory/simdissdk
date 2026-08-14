@@ -22,9 +22,11 @@
  */
 #include "osgText/Font"
 #include "osgText/Text"
+#include "simCore/Calc/Math.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Registry.h"
-#include "simVis/View.h"
 #include "simVis/Utils.h"
+#include "simVis/View.h"
 #include "simVis/ClassificationBanner.h"
 
 namespace simVis
@@ -64,8 +66,13 @@ ClassificationLabelNode::ClassificationLabelNode()
 
   // Configure text defaults that are good for classification strings
   setFont("arialbd.ttf");
+
+  // Scale font resolution for crispness
+  const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+  unsigned int res = static_cast<unsigned int>(simCore::sdkMax(32.0, 24.0 * dpr));
+  setFontResolution(res, res);
+
   setCharacterSize(simVis::osgFontSize(24.f));
-  setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
   setAxisAlignment(osgText::TextBase::SCREEN);
   setBackdropType(osgText::Text::OUTLINE);
   setBackdropColor(osg::Vec4f(0.f, 0.f, 0.f, 1.f));
@@ -124,41 +131,29 @@ public:
       traverse(node, nv);
       return;
     }
-    // Get the Model-View-Projection-Window matrix (MVPW) from the visitor
-    const osg::RefMatrixd* mvpw = cv->getMVPW();
-    if (!mvpw)
-    {
-      traverse(node, nv);
-      return;
-    }
-    // Nothing to do if the MVPW hasn't changed
-    if (lastMvpw_ == (*mvpw))
-    {
-      traverse(node, nv);
-      return;
-    }
-    lastMvpw_ = *mvpw;
 
-    double width = cv->getViewport()->width();
-    // Banners should be horizontally centered and ten pixels from the top and bottom
-    osg::Vec3 topPixelPos(width / 2, cv->getViewport()->height() - 10, 0);
-    osg::Vec3 bottomPixelPos(width / 2, 10, 0);
-    // Multiply the desired pixel position of the banners with the inverse mvpw to get the local position to set the banners to
-    osg::Matrix inverseMvpw = osg::Matrix::inverse(lastMvpw_);
-    osg::Vec3 topLocalPos = topPixelPos * inverseMvpw;
-    osg::Vec3 bottomLocalPos = bottomPixelPos * inverseMvpw;
-    // Z coordinate should always be 0 for HUD text, but can be something else after multiplying by inverse matrix
-    topLocalPos.z() = 0;
-    bottomLocalPos.z() = 0;
-    parent_->classLabelUpper_->setPosition(topLocalPos);
-    parent_->classLabelLower_->setPosition(bottomLocalPos);
+    // Since this is drawn in the HUD camera, the viewport represents physical pixels,
+    // but the coordinate system of this node is logical.
+    const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+    const double logicalWidth = cv->getViewport()->width() / dpr;
+    const double logicalHeight = cv->getViewport()->height() / dpr;
+
+    // Banners should be horizontally centered and ten logical pixels from the top and bottom
+    const osg::Vec3 topLocalPos(logicalWidth / 2.0, logicalHeight - 10.0, 0.0);
+    const osg::Vec3 bottomLocalPos(logicalWidth / 2.0, 10.0, 0.0);
+
+    // Only update if it actually moved (prevents constant dirtying of geometry)
+    if (parent_->classLabelUpper_->getPosition() != topLocalPos)
+    {
+      parent_->classLabelUpper_->setPosition(topLocalPos);
+      parent_->classLabelLower_->setPosition(bottomLocalPos);
+    }
 
     traverse(node, nv);
   }
 
 private:
-  ClassificationBanner* parent_;
-  osg::Matrix lastMvpw_;
+  ClassificationBanner* parent_ = nullptr;
 };
 
 //////////////////////////////////////////////
@@ -217,6 +212,13 @@ void ClassificationBanner::setFontFile(const std::string& fontFile)
 
 void ClassificationBanner::setFontSize(unsigned int fontSize)
 {
+  // Scale font resolution for crispness
+  const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+  unsigned int res = static_cast<unsigned int>(simCore::sdkMax(32.0, static_cast<double>(fontSize) * dpr));
+
+  classLabelUpper_->setFontResolution(res, res);
+  classLabelLower_->setFontResolution(res, res);
+
   classLabelUpper_->setCharacterSize(simVis::osgFontSize(fontSize));
   classLabelLower_->setCharacterSize(simVis::osgFontSize(fontSize));
 }

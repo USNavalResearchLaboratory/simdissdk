@@ -37,6 +37,7 @@
 #include "simCore/String/Constants.h"
 #include "simCore/Time/Utils.h"
 #include "simVis/CustomRendering.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Locator.h"
 #include "simVis/Picker.h"
 #include "simVis/Platform.h"
@@ -89,7 +90,9 @@ bool EntityPopup::WindowResizeHandler::handle(const osgGA::GUIEventAdapter& ea, 
     return false;
   // Pull the width and height out of the viewport
   const osg::Viewport* vp = view->getCamera()->getViewport();
-  const osg::Vec2f newSize(vp->width(), vp->height());
+  const osg::Vec2f newSize(simVis::DevicePixelRatioUtils::toLogical(vp->width()),
+    simVis::DevicePixelRatioUtils::toLogical(vp->height()));
+
   if (newSize == windowSize_)
     return false;
   windowSize_ = newSize;
@@ -126,6 +129,11 @@ EntityPopup::EntityPopup()
   titleLabel_->setName("EntityPopup Title");
   titleLabel_->setColor(DEFAULT_TITLE_COLOR);
   titleLabel_->setFont(DEFAULT_FONT);
+
+  const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+  unsigned int titleRes = static_cast<unsigned int>(simCore::sdkMax(32.0, static_cast<double>(DEFAULT_TITLE_SIZE) * dpr));
+  titleLabel_->setFontResolution(titleRes, titleRes);
+
   titleLabel_->setCharacterSize(simVis::osgFontSize(DEFAULT_TITLE_SIZE));
   titleLabel_->setAlignment(osgText::TextBase::LEFT_BOTTOM_BASE_LINE);
   addChild(titleLabel_);
@@ -135,6 +143,10 @@ EntityPopup::EntityPopup()
   contentLabel_->setName("EntityPopup Content");
   contentLabel_->setColor(DEFAULT_CONTENT_COLOR);
   contentLabel_->setFont(DEFAULT_FONT);
+
+  unsigned int contentRes = static_cast<unsigned int>(simCore::sdkMax(32.0, static_cast<double>(DEFAULT_CONTENT_SIZE) * dpr));
+  contentLabel_->setFontResolution(contentRes, contentRes);
+
   contentLabel_->setCharacterSize(simVis::osgFontSize(DEFAULT_CONTENT_SIZE));
   contentLabel_->setAlignment(osgText::TextBase::LEFT_BOTTOM_BASE_LINE);
   contentLabel_->setMaximumWidth(300.f);
@@ -520,8 +532,9 @@ bool PopupHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
   // This only fires for the view associated with addEventHandler()
   if (ea.getEventType() == ea.MOVE)
   {
-    lastMX_ = ea.getX();
-    lastMY_ = ea.getY();
+    const osg::Vec2d logicalMouse = simVis::DevicePixelRatioUtils::getLogicalMousePosition(ea);
+    lastMX_ = logicalMouse.x();
+    lastMY_ = logicalMouse.y();
     mouseDirty_ = true;
     aa.requestRedraw();
   }
@@ -633,13 +646,23 @@ void PopupHandler::applySettings_()
 {
   if (!popup_.valid() || !popup_->titleLabel() || !popup_->contentLabel())
     return;
+
+  const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+
   popup_->setBorderWidth(borderWidth_);
   popup_->setBorderColor(borderColor_);
   popup_->setBackgroundColor(backColor_);
+
   popup_->titleLabel()->setColor(titleColor_);
+  const unsigned int titleRes = static_cast<unsigned int>(simCore::sdkMax(32.0, static_cast<double>(titleFontSize_) * dpr));
+  popup_->titleLabel()->setFontResolution(titleRes, titleRes);
   popup_->titleLabel()->setCharacterSize(simVis::osgFontSize(titleFontSize_));
+
   popup_->contentLabel()->setColor(contentColor_);
+  unsigned int contentRes = static_cast<unsigned int>(simCore::sdkMax(32.0, static_cast<double>(contentFontSize_) * dpr));
+  popup_->contentLabel()->setFontResolution(contentRes, contentRes);
   popup_->contentLabel()->setCharacterSize(simVis::osgFontSize(contentFontSize_));
+
   popup_->setPadding(padding_);
   popup_->setChildSpacing(childSpacing_);
   popup_->setMaxWidth(maxWidth_);

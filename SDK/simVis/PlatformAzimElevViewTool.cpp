@@ -30,6 +30,7 @@
 #include "osgEarth/VirtualProgram"
 #include "simCore/Calc/Angle.h"
 #include "simVis/Beam.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Gate.h"
 #include "simVis/GeoFence.h"
 #include "simVis/Locator.h"
@@ -446,7 +447,7 @@ namespace
   {
     osgText::Text* t = new osgText::Text();
     t->setCharacterSizeMode(osgText::Text::SCREEN_COORDS);
-    t->setCharacterSize(24);
+    simVis::DpiTextScalingCallback::install(*t, 24);
     t->setText("S");
     t->setDataVariance(osg::Object::DYNAMIC);
     t->setAutoRotateToScreen(true);

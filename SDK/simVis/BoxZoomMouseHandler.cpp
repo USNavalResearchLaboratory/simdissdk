@@ -23,8 +23,9 @@
 #include <cassert>
 #include "osgEarth/EarthManipulator"
 #include "osgEarth/ViewFitter"
-#include "simVis/EarthManipulator.h"
 #include "simVis/BoxGraphic.h"
+#include "simVis/DevicePixelRatioUtils.h"
+#include "simVis/EarthManipulator.h"
 #include "simVis/ModKeyHandler.h"
 #include "simVis/SceneManager.h"
 #include "simVis/View.h"
@@ -108,8 +109,8 @@ bool BoxMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
     view_->enableWatchMode(nullptr, nullptr);
     view_->enableCockpitMode(nullptr);
 
-    originX_ = ea.getX();
-    originY_ = ea.getY();
+    originX_ = simVis::DevicePixelRatioUtils::toLogical(ea.getX());
+    originY_ = simVis::DevicePixelRatioUtils::toLogical(ea.getY());
     box_ = new BoxGraphic();
     view_->getOrCreateHUD()->addChild(box_);
 
@@ -162,9 +163,13 @@ bool BoxMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
     viewWidth -= 3 * padding;
     viewHeight -= 3 * padding;
 
+    // Convert incoming drag physical coordinates to logical coordinates
+    const double logicalCurX = simVis::DevicePixelRatioUtils::toLogical(ea.getX());
+    const double logicalCurY = simVis::DevicePixelRatioUtils::toLogical(ea.getY());
+
     // Clamp the current X values
-    const double curX = osg::clampBetween(static_cast<double>(ea.getX()), viewX, viewX + viewWidth);
-    const double curY = osg::clampBetween(static_cast<double>(ea.getY()), viewY, viewY + viewHeight);
+    const double curX = osg::clampBetween(logicalCurX, viewX, viewX + viewWidth);
+    const double curY = osg::clampBetween(logicalCurY, viewY, viewY + viewHeight);
 
     // now calculate the new width and height and update the box geometry
     const double width = curX - originX_;
@@ -277,17 +282,25 @@ void BoxZoomMouseHandler::processGeometry_(double originX, double originY, doubl
   if (!view_.valid() || !mapNodeForView_(*view_))
     return;
 
+  osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
+
+  // The arguments to this function are now logical pixels. We must convert them
+  // to physical pixels before passing them to calculateGeoPointFromScreenXY_
+  const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+  const double physOriginX = originX * dpr;
+  const double physOriginY = originY * dpr;
+  const double physWidth = widthPixels * dpr;
+  const double physHeight = heightPixels * dpr;
+
   // if box is too small, treat as a single click and center on new position
   if (abs(widthPixels) < 2.0 || abs(heightPixels) < 2.0)
   {
-    // Set up the SRS
-    osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
-
     // calculate the GeoPoint from the screen coords
     std::vector<osgEarth::GeoPoint> points;
-    calculateGeoPointFromScreenXY_(originX, originY, *view_, srs.get(), points);
+    calculateGeoPointFromScreenXY_(physOriginX, physOriginY, *view_, srs.get(), points);
     if (points.empty())
       return;
+
     simVis::Viewpoint vp = view_->getViewpoint();
     vp.focalPoint()->vec3d() = osg::Vec3d(points.front().x(), points.front().y(), 0.);
     // Adjust the range by the factor provided
@@ -304,15 +317,12 @@ void BoxZoomMouseHandler::processGeometry_(double originX, double originY, doubl
     return;
   }
 
-  // Set up the SRS
-  osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
-
-  // calculate the 4 corner GeoPoints from the screen coords
+  // calculate the 4 corner GeoPoints from the screen coords, physical pixels
   std::vector<osgEarth::GeoPoint> points;
-  calculateGeoPointFromScreenXY_(originX, originY, *view_, srs.get(), points);
-  calculateGeoPointFromScreenXY_(originX + widthPixels, originY, *view_, srs.get(), points);
-  calculateGeoPointFromScreenXY_(originX + widthPixels, originY + heightPixels, *view_, srs.get(), points);
-  calculateGeoPointFromScreenXY_(originX, originY + heightPixels, *view_, srs.get(), points);
+  calculateGeoPointFromScreenXY_(physOriginX, physOriginY, *view_, srs.get(), points);
+  calculateGeoPointFromScreenXY_(physOriginX + physWidth, physOriginY, *view_, srs.get(), points);
+  calculateGeoPointFromScreenXY_(physOriginX + physWidth, physOriginY + physHeight, *view_, srs.get(), points);
+  calculateGeoPointFromScreenXY_(physOriginX, physOriginY + physHeight, *view_, srs.get(), points);
 
   // not enough points found for a reasonable zoom
   if (points.size() < 2)

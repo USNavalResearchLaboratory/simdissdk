@@ -39,6 +39,7 @@
 #include "simCore/Time/TimeClass.h"
 
 #include "simVis/Constants.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Locator.h"
 #include "simVis/Platform.h"
 #include "simVis/Registry.h"
@@ -80,9 +81,12 @@ public:
     const float outlineThickness = simVis::outlineThickness(prefs.gridlabeltextoutline());
     setBackdropOffset(outlineThickness, outlineThickness);
     setColor(simVis::Color(prefs.gridlabelcolor(), simVis::Color::RGBA));
+
     setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
-    setCharacterSize(simVis::osgFontSize(prefs.gridlabelfontsize()));
     setAlignment(osgText::TextBase::LEFT_BOTTOM);
+
+    setDataVariance(osg::Object::DYNAMIC);
+    DpiTextScalingCallback::install(*this, simVis::osgFontSize(prefs.gridlabelfontsize()));
   }
 
   LocalGridLabel(const LocalGridLabel& text, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY)
