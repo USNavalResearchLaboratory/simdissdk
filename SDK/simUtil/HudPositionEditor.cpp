@@ -27,6 +27,8 @@
 #include "osgText/Text"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/NodeUtils"
+#include "simCore/Calc/Math.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"
@@ -150,6 +152,12 @@ void WindowNodePx::recreateGeometry_(const std::string& name, const osg::Vec3d& 
   windowNameText->setCharacterSize(TITLE_POINTSIZE);
   windowNameText->setColor(TITLE_COLOR);
   windowNameText->setFont(TITLE_FONT);
+
+  // Scale font resolution for crispness
+  const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+  unsigned int res = static_cast<unsigned int>(simCore::sdkMax(32.0, TITLE_POINTSIZE * dpr));
+  windowNameText->setFontResolution(res, res);
+
   windowNameText->setBackdropColor(osg::Vec4f(0.f, 0.f, 0.f, 1.f));
   windowNameText->setBackdropType(osgText::Text::DROP_SHADOW_BOTTOM_RIGHT);
   windowNameText->setPosition(box_.center());
@@ -384,20 +392,23 @@ void HudEditorGui::traverse(osg::NodeVisitor& nv)
 
     // Determine if resize happened (we can't rely on resize events, they don't always include right size)
     if (viewport)
-      handleResize_(viewport->width(), viewport->height());
+    {
+      handleResize_(simVis::DevicePixelRatioUtils::toLogical(viewport->width()),
+        simVis::DevicePixelRatioUtils::toLogical(viewport->height()));
+    }
   }
   osg::Camera::traverse(nv);
 }
 
-void HudEditorGui::handleResize_(double width, double height)
+void HudEditorGui::handleResize_(double widthLogical, double heightLogical)
 {
-  if (widthPx_ == width && heightPx_ == height)
+  if (widthPx_ == widthLogical && heightPx_ == heightLogical)
     return;
 
   // Save the values, update our projection, and fix the background
-  widthPx_ = width;
-  heightPx_ = height;
-  background_->setMatrix(osg::Matrix::scale(width, height, 1.0));
+  widthPx_ = widthLogical;
+  heightPx_ = heightLogical;
+  background_->setMatrix(osg::Matrix::scale(widthLogical, heightLogical, 1.0));
   setProjectionMatrixAsOrtho2D(0.0, widthPx_ - 1.0, 0.0, heightPx_ - 1.0);
   osg::ref_ptr<simUtil::HudPositionManager> hud;
 
@@ -508,7 +519,8 @@ int HudEditorMouse::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapt
     return 0;
 
   // Detect the item under the mouse
-  const std::string underMouse = hudUnderMouse_(ea.getX(), ea.getY(), mouseOffsetPx_);
+  const osg::Vec2d logicalMouse = simVis::DevicePixelRatioUtils::getLogicalMousePosition(ea);
+  const std::string underMouse = hudUnderMouse_(logicalMouse.x(), logicalMouse.y(), mouseOffsetPx_);
   if (underMouse != currentSelection_)
   {
     // Draw the selection rectangle around "underMouse"
@@ -538,7 +550,8 @@ int HudEditorMouse::drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapt
     return 1;
 
   // Tell the HUD to update the position
-  const osg::Vec2d newPosPx(ea.getX() + mouseOffsetPx_.x(), ea.getY() + mouseOffsetPx_.y());
+  const osg::Vec2d logicalMouse = simVis::DevicePixelRatioUtils::getLogicalMousePosition(ea);
+  const osg::Vec2d newPosPx(logicalMouse.x() + mouseOffsetPx_.x(), logicalMouse.y() + mouseOffsetPx_.y());
   hud->setPosition(currentSelection_, osg::Vec2d(newPosPx.x() / widthPx_, newPosPx.y() / heightPx_));
 
   // Tell the GUI to update to the HUD values
@@ -585,8 +598,8 @@ int HudEditorMouse::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 
   // Save the width and height for future mouse movement calculations
   const osg::Viewport* vp = view->getCamera()->getViewport();
-  widthPx_ = vp->width();
-  heightPx_ = vp->height();
+  widthPx_ = simVis::DevicePixelRatioUtils::toLogical(vp->width());
+  heightPx_ = simVis::DevicePixelRatioUtils::toLogical(vp->height());
   return 0;
 }
 

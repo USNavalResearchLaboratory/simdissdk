@@ -22,6 +22,7 @@
  */
 #include "osgGA/GUIActionAdapter"
 #include "osgEarth/LineDrawable"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/View.h"
 #include "simVis/Utils.h"
 #include "simUtil/ResizeViewManipulator.h"
@@ -201,7 +202,9 @@ int ResizeViewManipulator::push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActi
   if (!view.valid() || view == mainView_.get())
     return 0;
 
-  const osg::Vec2d mousePosition = osg::Vec2d(ea.getX(), ea.getY());
+  // Convert the ea X/Y from physical into logical coordinates
+  const osg::Vec2d mousePosition = simVis::DevicePixelRatioUtils::getLogicalMousePosition(ea);
+
   setDragPoint_(calculateDragPoint_(*view, mousePosition));
   // If calculated to be outside of the rectangle, ignore the point
   if (dragPoint_ == NONE)
@@ -261,7 +264,10 @@ int ResizeViewManipulator::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActi
   }
 
   rubberBand_->setBold(false);
-  osg::Vec2d mouseXY = osg::Vec2d(ea.getX(), ea.getY());
+
+  // Convert from physical OSG coordinates to logical coordinates
+  const osg::Vec2d mouseXY = simVis::DevicePixelRatioUtils::getLogicalMousePosition(ea);
+
   setDragPoint_(calculateDragPoint_(*underMouse, mouseXY));
   rubberBand_->highlightCorner(dragPoint_);
   rubberBand_->attach(underMouse.get());
@@ -284,8 +290,9 @@ int ResizeViewManipulator::drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActi
   if ((ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON) == 0)
     return 1;
 
-  // Adjust the corner/side of the view as needed
-  osg::Vec2d newPosition = osg::Vec2d(ea.getX(), ea.getY());
+  // Adjust the corner/side of the view as needed, using logical coordinates converted from physical
+  const osg::Vec2d newPosition = simVis::DevicePixelRatioUtils::getLogicalMousePosition(ea);
+
   drag_(newPosition);
   // Update the position of the rubber band
   rubberBand_->attach(view.get());
@@ -422,11 +429,14 @@ void ResizeViewManipulator::toAbsoluteExtents_(const simVis::View& view, simVis:
   if (rvp == nullptr)
     return;
 
-  // Calculate the absolute pixels
-  extents.height_ *= rvp->height();
-  extents.y_ *= rvp->height();
-  extents.width_ *= rvp->width();
-  extents.x_ *= rvp->width();
+  const double logicalWidth = simVis::DevicePixelRatioUtils::toLogical(rvp->width());
+  const double logicalHeight = simVis::DevicePixelRatioUtils::toLogical(rvp->height());
+
+  // Calculate the absolute pixels (logical extents, NOT physical)
+  extents.height_ *= logicalHeight;
+  extents.y_ *= logicalHeight;
+  extents.width_ *= logicalWidth;
+  extents.x_ *= logicalWidth;
   extents.isRatio_ = false;
 }
 
@@ -444,10 +454,13 @@ void ResizeViewManipulator::toRatioExtents_(const simVis::View& view, simVis::Vi
   if (rvp == nullptr)
     return;
 
-  extents.height_ /= rvp->height();
-  extents.y_ /= rvp->height();
-  extents.width_ /= rvp->width();
-  extents.x_ /= rvp->width();
+  const double logicalWidth = simVis::DevicePixelRatioUtils::toLogical(rvp->width());
+  const double logicalHeight = simVis::DevicePixelRatioUtils::toLogical(rvp->height());
+
+  extents.height_ /= logicalHeight;
+  extents.y_ /= logicalHeight;
+  extents.width_ /= logicalWidth;
+  extents.x_ /= logicalWidth;
   extents.isRatio_ = true;
 }
 

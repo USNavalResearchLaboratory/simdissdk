@@ -90,7 +90,7 @@ protected:
 
 private:
   /** Detects resize of screen and repositions and resizes widgets as needed */
-  void handleResize_(double width, double height);
+  void handleResize_(double widthLogical, double heightLogical);
   /** Helper method to move a matrix transform to a particular translation in percentage coords */
   void movePercent_(osg::MatrixTransform* xform, const osg::Vec2d& posPct) const;
 
@@ -104,9 +104,9 @@ private:
   /** Each window pointer, sorted by name */
   std::map<std::string, osg::ref_ptr<WindowNodePx> > windows_;
 
-  /** Most recent screen width (in pixels) */
+  /** Most recent screen width (in logical pixels) */
   double widthPx_;
-  /** Most recent screen height (in pixels) */
+  /** Most recent screen height (in logical pixels) */
   double heightPx_;
 };
 
@@ -171,6 +171,8 @@ private:
   double widthPx_;
   double heightPx_;
   std::string currentSelection_;
+
+  /** Mouse offset in logical coordinates */
   osg::Vec3d mouseOffsetPx_;
 };
 

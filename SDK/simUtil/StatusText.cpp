@@ -22,8 +22,9 @@
  */
 #include <cassert>
 #include "simCore/String/TextReplacer.h"
-#include "simUtil/HudManager.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/View.h"
+#include "simUtil/HudManager.h"
 #include "simUtil/StatusText.h"
 
 namespace simUtil
@@ -109,8 +110,9 @@ public:
       const osg::Viewport* viewport = (camera) ? camera->getViewport() : nullptr;
       if (viewport)
       {
-        const int widthPx = static_cast<int>(viewport->width());
-        const int heightPx = static_cast<int>(viewport->height());
+        // Convert physical viewport resize events to logical bounds
+        const int widthPx = static_cast<int>(simVis::DevicePixelRatioUtils::toLogical(viewport->width()));
+        const int heightPx = static_cast<int>(simVis::DevicePixelRatioUtils::toLogical(viewport->height()));
         if (widthPx != widthPx_ || heightPx != heightPx_)
         {
           widthPx_ = widthPx;
@@ -145,8 +147,9 @@ StatusText::StatusText(simVis::View* view, simCore::TextReplacerPtr textReplacer
     position_(pos)
 {
   const osg::Viewport* vp = view->getCamera()->getViewport();
-  windowWidthPx_ = static_cast<int>(vp->width());
-  windowHeightPx_ = static_cast<int>(vp->height());
+  // Convert physical viewport bounds to logical window size
+  windowWidthPx_ = static_cast<int>(simVis::DevicePixelRatioUtils::toLogical(vp->width()));
+  windowHeightPx_ = static_cast<int>(simVis::DevicePixelRatioUtils::toLogical(vp->height()));
   frameEventHandler_ = new FrameEventHandler(this);
 }
 

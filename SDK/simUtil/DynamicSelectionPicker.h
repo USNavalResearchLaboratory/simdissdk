@@ -59,7 +59,7 @@ public:
 
   /**
    * Changes the range (from center of object) in pixels that you can do selection.  Increasing
-   * this range will make objects pickable from farther away.
+   * this range will make objects pickable from farther away. Deals in logical pixels.
    */
   void setRange(double pixelsFromCenter);
 
@@ -144,12 +144,12 @@ private:
   /** Pointer to the scenario manager */
   osg::observer_ptr<simVis::ScenarioManager> scenario_;
 
-  /** Maximum valid range in pixels. */
-  double maximumValidRange_;
+  /** Maximum valid range in logical pixels. */
+  double maximumValidRangeLogical_ = 100.;
   /** Picking mask */
-  osg::Node::NodeMask pickMask_;
+  osg::Node::NodeMask pickMask_ = ~0;
   /** Percentage [0,1] of advantage given to platforms over other entity types. */
-  double platformAdvantagePct_;
+  double platformAdvantagePct_ = 0.7;
 };
 
 }

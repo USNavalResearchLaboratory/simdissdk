@@ -27,6 +27,7 @@
 #include "osgEarth/VirtualProgram"
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/GradientShader.h"
 #include "simUtil/Shaders.h"
 #include "simUtil/VelocityParticleLayer.h"
@@ -375,14 +376,15 @@ public:
 
   float getPointSize() const
   {
-    float value;
-    pointsNode_->getOrCreateStateSet()->getUniform("pointSize")->get(value);
-    return value;
+    float physicalValue = 1.0f;
+    pointsNode_->getOrCreateStateSet()->getUniform("pointSize")->get(physicalValue);
+    return static_cast<float>(simVis::DevicePixelRatioUtils::toLogical(physicalValue));
   }
 
   void setPointSize(float value)
   {
-    pointsNode_->getOrCreateStateSet()->getUniform("pointSize")->set(value);
+    const float physicalSize = static_cast<float>(simVis::DevicePixelRatioUtils::toPhysical(value));
+    pointsNode_->getOrCreateStateSet()->getUniform("pointSize")->set(physicalSize);
   }
 
   float getParticleAltitude() const

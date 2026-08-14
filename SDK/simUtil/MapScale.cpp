@@ -28,6 +28,7 @@
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Registry.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
@@ -102,9 +103,12 @@ MapScale::MapScale()
   getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
 
   osgText::Font* font = simVis::Registry::instance()->getOrCreateFont("arial.ttf");
+  const double dpr = simVis::DevicePixelRatioUtils::getDpr();
 
   unitsText_ = new osgText::Text;
   unitsText_->setFont(font);
+  unsigned int unitsRes = static_cast<unsigned int>(simCore::sdkMax(32.0, 12.0 * dpr));
+  unitsText_->setFontResolution(unitsRes, unitsRes);
   unitsText_->setCharacterSize(simVis::osgFontSize(12.f));
   unitsText_->setPosition(osg::Vec3f(0.f, 0.f, 0.f));
   unitsText_->setAlignment(osgText::TextBase::LEFT_BOTTOM_BASE_LINE);
@@ -113,6 +117,8 @@ MapScale::MapScale()
 
   valueTextPrototype_ = new osgText::Text();
   valueTextPrototype_->setFont(font);
+  unsigned int valRes = static_cast<unsigned int>(simCore::sdkMax(32.0, 13.0 * dpr));
+  valueTextPrototype_->setFontResolution(valRes, valRes);
   valueTextPrototype_->setCharacterSize(simVis::osgFontSize(13.f));
   valueTextPrototype_->setPosition(osg::Vec3f(0.f, 0.f, 0.f));
   valueTextPrototype_->setAlignment(osgText::TextBase::CENTER_TOP);
@@ -272,6 +278,10 @@ void MapScale::setUnitsCharacterSize(float sizePx)
 {
   if (!simCore::areEqual(sizePx, unitsText_->getCharacterHeight()))
   {
+    const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+    unsigned int res = static_cast<unsigned int>(simCore::sdkMax(32.0, sizePx * dpr));
+    unitsText_->setFontResolution(res, res);
+
     unitsText_->setCharacterSize(sizePx);
     recalculateHeight_();
   }
@@ -297,6 +307,10 @@ void MapScale::setValuesCharacterSize(float sizePx)
 {
   if (!simCore::areEqual(sizePx, valueTextPrototype_->getCharacterHeight()))
   {
+    const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+    unsigned int res = static_cast<unsigned int>(simCore::sdkMax(32.0, sizePx * dpr));
+    valueTextPrototype_->setFontResolution(res, res);
+
     valueTextPrototype_->setCharacterSize(sizePx);
     recalculateHeight_();
   }
@@ -363,9 +377,13 @@ void MapScale::recalculatePixelDistance_()
   const int x = viewport->x() + viewport->width() / 2;
   const int y = viewport->y() + viewport->height() / 2;
 
+  const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+  const float physicalWidthPx = widthPx_ * dpr;
+
+
   osgUtil::LineSegmentIntersector::Intersections results;
-  // Note the need to subtract a pixel in order to stay inside the viewport on both left and right
-  const float calcWidth = simCore::sdkMin(widthPx_, static_cast<float>(viewport->width() - 1));
+  // Use the physical width to clamp against the physical viewport
+  const float calcWidth = simCore::sdkMin(physicalWidthPx, static_cast<float>(viewport->width() - 1));
   const float halfWidth = calcWidth * 0.5f;
   if (view->computeIntersections(x - halfWidth, y, mapNodePath, results))
   {
@@ -374,12 +392,13 @@ void MapScale::recalculatePixelDistance_()
     if (view->computeIntersections(x + halfWidth, y, mapNodePath, results))
     {
       const osg::Vec3d point2 = results.begin()->getWorldIntersectPoint();
-      // Calculate total distance, then scale it down to the pixel range
-      const double dist1 = (point2 - point1).length();
-      const double distPerPixel = dist1 / calcWidth;
 
-      // Scale it back up to the range of widthPx_
-      recalculateScale_(distPerPixel * widthPx_);
+      // Calculate total geographic distance, then scale it down to the physical pixel range
+      const double dist1 = (point2 - point1).length();
+      const double distPerPhysicalPixel = dist1 / calcWidth;
+
+      // Scale it back up to the range of the entire bar (using physical)
+      recalculateScale_(distPerPhysicalPixel * physicalWidthPx);
       return;
     }
   }

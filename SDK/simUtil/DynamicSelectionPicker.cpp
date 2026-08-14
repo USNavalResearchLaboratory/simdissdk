@@ -23,6 +23,7 @@
 #include "simCore/Calc/Math.h"
 #include "simVis/Beam.h"
 #include "simVis/CustomRendering.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
 #include "simVis/Platform.h"
@@ -35,7 +36,7 @@
 namespace simUtil {
 
 // pixel amount to test if a mouse position has moved enough to initiate a new pick
-static const float MOUSE_MOVEMENT_PICK_THRESHOLD = 10.0;
+static const float MOUSE_MOVEMENT_PICK_THRESHOLD_LOGICAL = 10.0;
 
 /** GUI Event Handler that forwards events to the picker */
 class DynamicSelectionPicker::RepickEventHandler : public osgGA::GUIEventHandler
@@ -60,15 +61,18 @@ public:
       break;
 
     case osgGA::GUIEventAdapter::PUSH:
+    {
+      const auto thresholdPhysical = simVis::DevicePixelRatioUtils::toPhysical(MOUSE_MOVEMENT_PICK_THRESHOLD_LOGICAL);
       // if mouse position has changed, initiated a repick immediately, since push event can occur before move/drag has updated repick state
-      if (fabs(ea.getX() - picker_.mouseXy_.x()) > MOUSE_MOVEMENT_PICK_THRESHOLD ||
-        fabs(ea.getY() - picker_.mouseXy_.y()) > MOUSE_MOVEMENT_PICK_THRESHOLD)
+      if (fabs(ea.getX() - picker_.mouseXy_.x()) > thresholdPhysical ||
+        fabs(ea.getY() - picker_.mouseXy_.y()) > thresholdPhysical)
       {
         picker_.lastMouseView_ = dynamic_cast<simVis::View*>(aa.asView());
         picker_.mouseXy_.set(ea.getX(), ea.getY());
         picker_.pickThisFrame_();
       }
       break;
+    }
 
     case osgGA::GUIEventAdapter::FRAME:
       // If the mouse moved, we need to re-pick to capture movement
@@ -100,9 +104,7 @@ DynamicSelectionPicker::DynamicSelectionPicker(simVis::ViewManager* viewManager,
   : Picker(scenarioManager->getOrCreateStateSet()),
     viewManager_(viewManager),
     scenario_(scenarioManager),
-    maximumValidRange_(100.0), // pixels
-    pickMask_(simVis::DISPLAY_MASK_PLATFORM|simVis::DISPLAY_MASK_PLATFORM_MODEL),
-    platformAdvantagePct_(0.7)
+    pickMask_(simVis::DISPLAY_MASK_PLATFORM|simVis::DISPLAY_MASK_PLATFORM_MODEL)
 {
   // By default, only platforms are picked.  Gates are feasibly pickable though.
   guiEventHandler_ = new RepickEventHandler(*this);
@@ -168,7 +170,7 @@ void DynamicSelectionPicker::pickThisFrame_()
     // to be the desired entity. However, fall back to later items (likely attachments) the farther the
     // mouse is from the center.
     const double mouseRangePx = sqrt(mouseRangeSquaredPx);
-    const double platformAdvantagePx = platformAdvantagePct_ * maximumValidRange_;
+    const double platformAdvantagePx = platformAdvantagePct_ * maximumValidRangeLogical_;
     if (mouseRangePx < platformAdvantagePx)
     {
       savePicked(nodes[0].get());
@@ -209,7 +211,7 @@ void DynamicSelectionPicker::pickToVector_(simVis::EntityVector& nodes, PickBeha
   scenario_->getAllEntities(allEntities);
 
   // We square the range to avoid sqrt() in a tight loop
-  const double maximumValidRangeSquared = osg::square(maximumValidRange_);
+  const double maximumValidRangeSquared = osg::square(simVis::DevicePixelRatioUtils::toPhysical(maximumValidRangeLogical_));
   mouseRangeSquaredPx = maximumValidRangeSquared;
 
   // Loop through all entities
@@ -397,7 +399,7 @@ double DynamicSelectionPicker::lineSegmentDistanceSquared_(const osg::Vec2d& a, 
 
 void DynamicSelectionPicker::setRange(double pixelsFromCenter)
 {
-  maximumValidRange_ = pixelsFromCenter;
+  maximumValidRangeLogical_ = pixelsFromCenter;
 }
 
 void DynamicSelectionPicker::setPickMask(osg::Node::NodeMask pickMask)

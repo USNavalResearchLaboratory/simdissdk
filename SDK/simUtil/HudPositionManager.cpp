@@ -27,6 +27,7 @@
 #include "osg/Vec2d"
 #include "osgViewer/ViewerBase"
 #include "osgGA/GUIEventHandler"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simUtil/HudPositionManager.h"
 
 namespace simUtil {
@@ -252,9 +253,11 @@ public:
       const osg::View* view = aa.asView();
       if (!view || !view->getCamera() || !view->getCamera()->getViewport())
         return false;
-      // Pull the width and height out of the viewport
+
+      // Pull the width and height out of the viewport and convert to logical coordinates
       const osg::Viewport* vp = view->getCamera()->getViewport();
-      const osg::Vec2d newSize(vp->width(), vp->height());
+      const osg::Vec2d newSize(simVis::DevicePixelRatioUtils::toLogical(vp->width()),
+        simVis::DevicePixelRatioUtils::toLogical(vp->height()));
       if (newSize == windowSize_)
         return false;
       windowSize_ = newSize;
