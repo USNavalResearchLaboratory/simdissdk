@@ -120,7 +120,7 @@ private:
 
   /** Called during the update traversals to reposition text boxes around new screen position */
   void checkViewportSize_();
-  /** Called to reposition text boxes based on the given screen width/height */
+  /** Called to reposition text boxes based on the given screen logical width/height */
   void setSize_(int width, int height);
   /** Refreshes all text strings for any text bin that is dirty; called during update traversal */
   void refreshAllDirtyTextBins_();
@@ -131,8 +131,8 @@ private:
   TextBin* textBinForBinId_(BinId binId) const;
 
   osg::observer_ptr<osg::Camera> camera_;
-  int width_ = 100;
-  int height_ = 100;
+  int logicalWidth_ = 100;
+  int logicalHeight_ = 100;
   TextId nextPublicId_ = 1;
   std::map<TextId, BinAndTextId> publicIdToBinAndId_;
   std::vector<std::unique_ptr<TextBin>> bins_;
