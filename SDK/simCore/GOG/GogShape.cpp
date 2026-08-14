@@ -1150,6 +1150,11 @@ EllipticalShape::EllipticalShape()
 {
 }
 
+std::optional<double> EllipticalShape::getAngleStart() const
+{
+  return angleStart_;
+}
+
 int EllipticalShape::getAngleStart(double& angle) const
 {
   angle = angleStart_.value_or(0.);
@@ -1159,6 +1164,11 @@ int EllipticalShape::getAngleStart(double& angle) const
 void EllipticalShape::setAngleStart(double angleStartRad)
 {
   angleStart_ = angleStartRad;
+}
+
+std::optional<double> EllipticalShape::getAngleSweep() const
+{
+  return angleSweep_;
 }
 
 int EllipticalShape::getAngleSweep(double& angle) const
@@ -1172,6 +1182,11 @@ void EllipticalShape::setAngleSweep(double angleSweepRad)
   angleSweep_ = angleSweepRad;
 }
 
+std::optional<double> EllipticalShape::getMajorAxis() const
+{
+  return majorAxis_;
+}
+
 int EllipticalShape::getMajorAxis(double& axis) const
 {
   axis = majorAxis_.value_or(0.);
@@ -1181,6 +1196,12 @@ int EllipticalShape::getMajorAxis(double& axis) const
 void EllipticalShape::setMajorAxis(double majorAxisMeters)
 {
   majorAxis_ = majorAxisMeters;
+}
+
+
+std::optional<double> EllipticalShape::getMinorAxis() const
+{
+  return minorAxis_;
 }
 
 int EllipticalShape::getMinorAxis(double& axis) const
@@ -1220,6 +1241,11 @@ Arc::Arc(bool relative)
 ShapeType Arc::shapeType() const
 {
   return ShapeType::ARC;
+}
+
+std::optional<double> Arc::getInnerRadius() const
+{
+  return innerRadius_;
 }
 
 int Arc::getInnerRadius(double& innerRadiusMeters) const
@@ -1266,6 +1292,11 @@ ShapeType Cylinder::shapeType() const
   return ShapeType::CYLINDER;
 }
 
+std::optional<double> Cylinder::getHeight() const
+{
+  return height_;
+}
+
 int Cylinder::getHeight(double& height) const
 {
   // default height is 1000 unitless
@@ -1288,6 +1319,11 @@ void Cylinder::serializeToStream_(std::ostream& gogOutputStream) const
 CircularHeightShape::CircularHeightShape()
   : CircularShape()
 {}
+
+std::optional<double> CircularHeightShape::getHeight() const
+{
+  return height_;
+}
 
 int CircularHeightShape::getHeight(double& height) const
 {
@@ -1332,6 +1368,11 @@ ShapeType Ellipsoid::shapeType() const
   return ShapeType::ELLIPSOID;
 }
 
+std::optional<double> Ellipsoid::getMajorAxis() const
+{
+  return majorAxis_;
+}
+
 int Ellipsoid::getMajorAxis(double& axis) const
 {
   axis = majorAxis_.value_or(1000.);
@@ -1341,6 +1382,11 @@ int Ellipsoid::getMajorAxis(double& axis) const
 void Ellipsoid::setMajorAxis(double majorAxisMeters)
 {
   majorAxis_ = majorAxisMeters;
+}
+
+std::optional<double> Ellipsoid::getMinorAxis() const
+{
+  return minorAxis_;
 }
 
 int Ellipsoid::getMinorAxis(double& axis) const

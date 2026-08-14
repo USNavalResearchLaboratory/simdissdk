@@ -684,7 +684,7 @@ public:
   */
   std::optional<double> getRadius() const;
 
-  [[deprecated("Deprecated, please use std::optional<double> getRadius() const instead")]]
+  [[deprecated("Deprecated, please use std::optional<double> getRadius() instead")]]
   int getRadius(double& radius) const;
 
   /// Set the shape's radius in meters
@@ -768,34 +768,50 @@ class SDKCORE_EXPORT EllipticalShape : public CircularShape
 {
 public:
   /**
-  * Get the shape's start angle in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's start angle in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getAngleStart() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getAngleStart() instead")]]
   int getAngleStart(double& angle) const;
+
   /// Set the start angle in radians
   void setAngleStart(double angleStartRad);
 
   /**
-  * Get the shape's angle sweep in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's angle sweep in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getAngleSweep() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getAngleSweep() instead")]]
   int getAngleSweep(double& angle) const;
+
   /// Set the shape's angle sweep in radians
   void setAngleSweep(double angleSweepRad);
 
   /**
-  * Get the shape's major axis in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's major axis in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getMajorAxis() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getMajorAxis() instead")]]
   int getMajorAxis(double& axis) const;
+
   /// Set the shape's major axis in meters
   void setMajorAxis(double majorAxisMeters);
 
   /**
-  * Get the shape's major axis in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's major axis in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getMinorAxis() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getMinorAxis() instead")]]
   int getMinorAxis(double& axis) const;
+
   /// Set the shape's minor axis in meters
   void setMinorAxis(double minorAxisMeters);
 
@@ -820,10 +836,14 @@ public:
   ShapeType shapeType() const override;
 
   /**
- * Get the shape's inner radius in meters; if value is not set, default value is returned.
- * @return 0 if value was set, non-zero otherwise
+ * Get the shape's inner radius in meters
+ * @return std::optional containing the value if it has been set
  */
+  std::optional<double> getInnerRadius() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getInnerRadius() instead")]]
   int getInnerRadius(double& innerRadius) const;
+
   /// Set the shape's inner radius in meters
   void setInnerRadius(double innerRadius);
 
@@ -853,10 +873,14 @@ public:
   ShapeType shapeType() const override;
 
   /**
-  * Get the shape's height in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's height in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getHeight() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getHeight() instead")]]
   int getHeight(double& height) const;
+
   /// Set the shape's height in meters
   void setHeight(double heightMeters);
 
@@ -872,10 +896,14 @@ class SDKCORE_EXPORT CircularHeightShape : public CircularShape
 {
 public:
   /**
-  * Get the shape's height in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's height in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getHeight() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getHeight() instead")]]
   int getHeight(double& height) const;
+
   /// Set the shape's height in meters
   void setHeight(double heightMeters);
 
@@ -906,18 +934,26 @@ public:
   ShapeType shapeType() const override;
 
   /**
-  * Get the shape's major axis in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's major axis in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getMajorAxis() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getMajorAxis() instead")]]
   int getMajorAxis(double& axis) const;
+
   /// Set the shape's major axis in meters
   void setMajorAxis(double majorAxisMeters);
 
   /**
-  * Get the shape's major axis in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's major axis in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getMinorAxis() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getMinorAxis() instead")]]
   int getMinorAxis(double& axis) const;
+
   /// Set the shape's minor axis in meters
   void setMinorAxis(double minorAxisMeters);
 

@@ -38,13 +38,13 @@ GogNodeInterface* Ellipse::createEllipse(const simCore::GOG::Ellipse& ellipse, b
 {
   Distance majorRadius, minorRadius;
 
-  double majorAxis = 0.;
-  if (ellipse.getMajorAxis(majorAxis) == 0)
-    majorRadius = Distance(0.5 * majorAxis, Units::METERS);
+  const std::optional<double> majorAxis = ellipse.getMajorAxis();
+  if (majorAxis.has_value())
+    majorRadius = Distance(0.5 * majorAxis.value(), Units::METERS);
 
-  double minorAxis = 0.;
-  if (ellipse.getMinorAxis(minorAxis) == 0)
-    minorRadius = Distance(0.5 * minorAxis, Units::METERS);
+  const std::optional<double> minorAxis = ellipse.getMinorAxis();
+  if (minorAxis.has_value())
+    minorRadius = Distance(0.5 * minorAxis.value(), Units::METERS);
 
   const std::optional<double> radius = ellipse.getRadius();
   if (radius.has_value())

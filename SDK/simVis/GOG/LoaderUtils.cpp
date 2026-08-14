@@ -41,11 +41,7 @@ bool LoaderUtils::isShape3D(const simCore::GOG::GogShape& shape)
   {
     const simCore::GOG::Cylinder* cyl = dynamic_cast<const simCore::GOG::Cylinder*>(&shape);
     if (cyl)
-    {
-      double height = 0.;
-      cyl->getHeight(height);
-      return height > 0.;
-    }
+      return cyl->getHeight().value_or(cyl->originalUnits().altitudeUnits().convertTo(simCore::Units::METERS, 1000.)) > 0.;
     else
       assert(0); // dev error, parser provided incorrect object for type
   }
@@ -53,11 +49,7 @@ bool LoaderUtils::isShape3D(const simCore::GOG::GogShape& shape)
   {
     const simCore::GOG::CircularHeightShape* heightShape = dynamic_cast<const simCore::GOG::CircularHeightShape*>(&shape);
     if (heightShape)
-    {
-      double height = 0.;
-      heightShape->getHeight(height);
-      return height > 0.;
-    }
+      return heightShape->getHeight().value_or(heightShape->originalUnits().altitudeUnits().convertTo(simCore::Units::METERS, 1000.)) > 0.;
     else
       assert(0); // dev error, parser provided incorrect object for type
   }

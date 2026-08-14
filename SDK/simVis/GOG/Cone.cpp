@@ -33,8 +33,7 @@ namespace simVis { namespace GOG {
 GogNodeInterface* Cone::createCone(const simCore::GOG::Cone& cone, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
   const double radiusM = cone.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
-  double heightM = 0.;
-  cone.getHeight(heightM);
+  const double heightM = cone.getHeight().value_or(cone.originalUnits().altitudeUnits().convertTo(simCore::Units::METERS, 1000.));
 
   // Set up geometry
   osg::ref_ptr<osg::Geometry> coneGeom = new osg::Geometry;

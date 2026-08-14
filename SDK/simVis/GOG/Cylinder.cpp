@@ -56,20 +56,18 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
   const double radiusM = cyl.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
   Distance radius(radiusM, Units::METERS);
   Angle rotation(0., Units::DEGREES); // Rotation handled in setShapePositionOffsets()
-  double heightM = 0.;
-  cyl.getHeight(heightM);
-  double angleStart = 0;
-  cyl.getAngleStart(angleStart);
+  const double heightM = cyl.getHeight().value_or(cyl.originalUnits().altitudeUnits().convertTo(simCore::Units::METERS, 1000.));
+  const double angleStart = cyl.getAngleStart().value_or(0.);
   Angle start(angleStart * simCore::RAD2DEG, Units::DEGREES);
 
   // default to a full circle if no angle sweep specified
   Angle end(360., Units::DEGREES);
-  double sweepRad = 0.;
-  if (cyl.getAngleSweep(sweepRad) == 0)
+  const std::optional<double> sweepRad = cyl.getAngleSweep();
+  if (sweepRad.has_value())
   {
-    if (simCore::areEqual(sweepRad, 0.))
+    if (simCore::areEqual(sweepRad.value(), 0.))
       radius = Distance(0, Units::METERS);
-    Angle sweep = Angle(sweepRad * simCore::RAD2DEG, Units::DEGREES);
+    Angle sweep = Angle(sweepRad.value() * simCore::RAD2DEG, Units::DEGREES);
     // Use fmod to keep the correct sign for correct sweep angle
     end = start + Angle(::fmod(sweep.as(Units::RADIANS), M_TWOPI), Units::RADIANS);
   }
@@ -77,16 +75,16 @@ GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bo
   osg::ref_ptr<Geometry> tgeom = simCore::areAnglesEqual(start.as(Units::RADIANS), end.as(Units::RADIANS)) ? dynamic_cast<Geometry*>(new Ring()) : dynamic_cast<Geometry*>(new LineString());
   osg::ref_ptr<Geometry> shape;
 
-  double majorAxis = 0.;
+  const std::optional<double> majorAxis = cyl.getMajorAxis();
   bool elliptical = false;
-  if (cyl.getMajorAxis(majorAxis) == 0)
+  if (majorAxis.has_value())
   {
-    radius = Distance(0.5 * majorAxis, Units::METERS);
-    double minorAxis = 0.;
-    if (cyl.getMinorAxis(minorAxis) == 0)
+    radius = Distance(0.5 * majorAxis.value(), Units::METERS);
+    const std::optional<double> minorAxis = cyl.getMinorAxis();
+    if (minorAxis.has_value())
     {
       elliptical = true;
-      Distance minorRadius = Distance(0.5 * minorAxis, Units::METERS);
+      Distance minorRadius = Distance(0.5 * minorAxis.value(), Units::METERS);
       shape = gf.createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, 0u, tgeom.get(), true);
     }
     else
