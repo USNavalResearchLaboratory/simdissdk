@@ -71,11 +71,11 @@ public:
   /** Changes the character size */
   void setCharacterSize(float logicalFontSize);
 
-  // From NodeCallback:
-  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv) override;
-
   /** Helper function to install the node callback AND set the logical size at the same time */
   static osg::ref_ptr<DpiTextScalingCallback> install(osgText::Text& textNode, float logicalFontSize);
+
+  // From NodeCallback:
+  void operator()(osg::Node* node, osg::NodeVisitor* nv) override;
 
 private:
   /** Internal function to change the physical size based on current DPR */
