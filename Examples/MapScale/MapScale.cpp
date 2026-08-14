@@ -33,6 +33,7 @@
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Units.h"
 #include "simVis/BoxGraphic.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
@@ -67,6 +68,7 @@ public:
     if (!isVisible())
       return;
 
+    ImGui::GetIO().FontGlobalScale = simVis::DevicePixelRatioUtils::getDpr();
     ImGui::SetNextWindowPos(ImVec2(5, 25), ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
@@ -222,11 +224,14 @@ public:
   // Override GUIEventHandler
   bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) override
   {
+    const osg::Vec2d logicalMouse = simVis::DevicePixelRatioUtils::getLogicalMousePosition(ea);
+    const osg::Vec3f logicalMouseV3(logicalMouse.x(), logicalMouse.y(), 0.0f);
+
     switch (ea.getEventType())
     {
     case osgGA::GUIEventAdapter::MOVE:
       // Show the outline with correct size if the mouse is inside
-      if (isInside_(osg::Vec3f(ea.getX(), ea.getY(), 0.0)))
+      if (isInside_(logicalMouseV3))
       {
         // Give a boundary around the scale
         outline_->setGeometry(-5, -5, scale_->width() + 10, scale_->height() + 10);
@@ -240,7 +245,7 @@ public:
       // If we had clicked, do a final reposition for accuracy and then show the outline
       if (clicked_)
       {
-        processDrag_(osg::Vec3f(ea.getX(), ea.getY(), 0.0));
+        processDrag_(logicalMouseV3);
         outline_->setNodeMask(~0);
         clicked_ = false;
         return true;
@@ -251,7 +256,7 @@ public:
       // If we had clicked, move the box around
       if (clicked_)
       {
-        processDrag_(osg::Vec3f(ea.getX(), ea.getY(), 0.0));
+        processDrag_(logicalMouseV3);
         return true;
       }
       break;
@@ -260,7 +265,7 @@ public:
       // Only care about left button presses that are inside the scale
       if (ea.getButton() == ea.LEFT_MOUSE_BUTTON)
       {
-        clickPos_ = osg::Vec3f(ea.getX(), ea.getY(), 0.0);
+        clickPos_ = logicalMouseV3;
         if (isInside_(clickPos_))
         {
           // Remember where the scale started (don't accumulate mouse x/y changes)

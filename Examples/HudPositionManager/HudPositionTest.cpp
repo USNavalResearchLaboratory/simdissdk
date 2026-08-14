@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include "osgViewer/GraphicsWindow"
 #include "osgEarth/CullingUtils"
 #include "osgEarth/Version"
 #include "simNotify/Notify.h"
@@ -44,7 +45,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#include <osgViewer/api/Win32/GraphicsWindowWin32>
+#include "osgViewer/api/Win32/GraphicsWindowWin32"
 #endif
 
 // Uncomment this define to add various GridTransform test grids
@@ -173,6 +174,9 @@ struct ControlPanel : public simExamples::SimExamplesGui
   {
     if (!isVisible())
       return;
+
+    bool dprChanged = false; // Track if the user touches the DPR controls
+
     ImGui::GetIO().FontGlobalScale = app_.dpr;
     ImGui::SetNextWindowPos(ImVec2(5 * app_.dpr, 25 * app_.dpr), ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(.6f);
@@ -194,13 +198,15 @@ struct ControlPanel : public simExamples::SimExamplesGui
 
 #ifdef _WIN32
     // Only Windows can adjust DPR automatically at this time
-    ImGui::Checkbox("Automatic DPR", &autoDpr_);
+    if (ImGui::Checkbox("Automatic DPR", &autoDpr_))
+      dprChanged = true;
 #endif
 
     ImGui::Text("DPR: %.2f", app_.dpr);
     // Slider to adjust the DPR (Disabled when in auto mode)
     ImGui::BeginDisabled(autoDpr_);
-    ImGui::SliderFloat("Manual DPR", &app_.dpr, 0.5f, 2.0f, "%.2f");
+    if (ImGui::SliderFloat("Manual DPR", &app_.dpr, 0.5f, 2.0f, "%.2f"))
+      dprChanged = true;
     ImGui::EndDisabled();
 
     ImGui::End();
@@ -211,6 +217,22 @@ struct ControlPanel : public simExamples::SimExamplesGui
       app_.dpr = getGraphicsContextDpr(app_.mainView->getCamera()->getGraphicsContext());
     osgEarth::Registry::instance()->setDevicePixelRatio(app_.dpr);
 #endif
+
+    // If the DPR was synthetically modified, trick OSG into rebuilding the logical
+    // HUD matrices by injecting a synthetic window resize event using the current bounds.
+    if (dprChanged)
+    {
+      auto* gw = dynamic_cast<osgViewer::GraphicsWindow*>(app_.mainView->getCamera()->getGraphicsContext());
+      if (gw)
+      {
+        int x = 0;
+        int y = 0;
+        int width = 0;
+        int height = 0;
+        gw->getWindowRectangle(x, y, width, height);
+        gw->getEventQueue()->windowResize(x, y, width, height);
+      }
+    }
 
     handlePressedKeys_();
   }
