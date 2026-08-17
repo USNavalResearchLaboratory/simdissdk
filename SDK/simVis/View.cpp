@@ -958,7 +958,8 @@ bool View::setExtents(const Extents& e)
         const double nw = rvp->width() * e.width_;
         const double nh = rvp->height() * e.height_;
 
-        fixProjectionForNewViewport_(nx, ny, nw, nh);
+        // Use std::round to ensure physical pixels don't suffer float truncation
+        fixProjectionForNewViewport_(std::round(nx), std::round(ny), std::round(nw), std::round(nh));
       }
     }
     else
@@ -969,7 +970,9 @@ bool View::setExtents(const Extents& e)
   }
   else
   {
-    fixProjectionForNewViewport_(e.x_ * dpr, e.y_ * dpr, e.width_ * dpr, e.height_ * dpr);
+    // Use std::round on logical conversion, to perfectly map back to physical integers
+    fixProjectionForNewViewport_(std::round(e.x_ * dpr), std::round(e.y_ * dpr),
+      std::round(e.width_ * dpr), std::round(e.height_ * dpr));
   }
 
   // save a copy so we can adjust the viewport based on a resize event.
@@ -981,8 +984,7 @@ bool View::setExtents(const Extents& e)
   if (vp)
   {
     // Viewport remains physical pixels
-    getOrCreateHUD()->setViewport(static_cast<int>(vp->x()), static_cast<int>(vp->y()),
-      static_cast<int>(vp->width()), static_cast<int>(vp->height()));
+    getOrCreateHUD()->setViewport(vp->x(), vp->y(), vp->width(), vp->height());
 
     // Projection becomes logical pixels
     double logicalWidth = DevicePixelRatioUtils::toLogical(vp->width() - 1.0);
@@ -991,15 +993,11 @@ bool View::setExtents(const Extents& e)
   }
   // if we have a border node, update that too.
   if (borderNode_.valid() && vp)
-  {
     static_cast<BorderNode*>(borderNode_.get())->set(vp, borderProps_);
-  }
 
   // if we have inset views, refresh their extents now.
   for (InsetViews::iterator i = insets_.begin(); i != insets_.end(); ++i)
-  {
     i->get()->refreshExtents();
-  }
 
   fireCallbacks_(simVis::View::Callback::VIEW_EXTENT_CHANGE);
   return true;
