@@ -1436,6 +1436,11 @@ ShapeType Annotation::shapeType() const
   return ShapeType::ANNOTATION;
 }
 
+std::optional<simCore::Vec3> Annotation::getPosition() const
+{
+  return position_;
+}
+
 int Annotation::getPosition(simCore::Vec3& position) const
 {
   position = position_.value_or(simCore::Vec3());
@@ -1457,6 +1462,11 @@ void Annotation::setText(const std::string& text)
   text_ = text;
 }
 
+std::optional<std::string> Annotation::getFontName() const
+{
+  return fontName_;
+}
+
 int Annotation::getFontName(std::string& fontName) const
 {
   fontName = fontName_.value_or("arial.ttf");
@@ -1466,6 +1476,11 @@ int Annotation::getFontName(std::string& fontName) const
 void Annotation::setFontName(const std::string& fontName)
 {
   fontName_ = fontName;
+}
+
+std::optional<int> Annotation::getTextSize() const
+{
+  return textSize_;
 }
 
 int Annotation::getTextSize(int& textSize) const
@@ -1479,6 +1494,11 @@ void Annotation::setTextSize(int textPointSize)
   textSize_ = textPointSize;
 }
 
+std::optional<Color> Annotation::getTextColor() const
+{
+  return textColor_;
+}
+
 int Annotation::getTextColor(Color& color) const
 {
   color = textColor_.value_or(Color());
@@ -1488,6 +1508,11 @@ int Annotation::getTextColor(Color& color) const
 void Annotation::setTextColor(const Color& color)
 {
   textColor_ = color;
+}
+
+std::optional<Color> Annotation::getOutlineColor() const
+{
+  return outlineColor_;
 }
 
 int Annotation::getOutlineColor(Color& color) const
@@ -1501,6 +1526,11 @@ void Annotation::setOutlineColor(const Color& color)
   outlineColor_ = color;
 }
 
+std::optional<OutlineThickness> Annotation::getOutlineThickness() const
+{
+  return outlineThickness_;
+}
+
 int Annotation::getOutlineThickness(OutlineThickness& thickness) const
 {
   thickness = outlineThickness_.value_or(OutlineThickness::THIN);
@@ -1510,6 +1540,11 @@ int Annotation::getOutlineThickness(OutlineThickness& thickness) const
 void Annotation::setOutlineThickness(OutlineThickness thickness)
 {
   outlineThickness_ = thickness;
+}
+
+std::optional<std::string> Annotation::getImageFile() const
+{
+  return imageFile_;
 }
 
 int Annotation::getImageFile(std::string& imageFile) const
@@ -1522,6 +1557,12 @@ void Annotation::setImageFile(const std::string& imageFile)
 {
   imageFile_ = imageFile;
 }
+
+std::optional<double> Annotation::getPriority() const
+{
+  return priority_;
+}
+
 
 int Annotation::getPriority(double& priority) const
 {
@@ -1639,6 +1680,11 @@ void LatLonAltBox::setAltitude(double altitudeMeters)
   altitude_ = altitudeMeters;
 }
 
+std::optional<double> LatLonAltBox::getHeight() const
+{
+  return height_;
+}
+
 int LatLonAltBox::getHeight(double& height) const
 {
   height = height_.value_or(0.);
@@ -1736,6 +1782,11 @@ std::string ImageOverlay::imageFile() const
 void ImageOverlay::setImageFile(const std::string& imageFile)
 {
   imageFile_ = imageFile;
+}
+
+std::optional<double> ImageOverlay::getOpacity() const
+{
+  return opacity_;
 }
 
 int ImageOverlay::getOpacity(double& opacity) const

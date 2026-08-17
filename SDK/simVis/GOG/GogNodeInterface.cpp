@@ -355,32 +355,26 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   const simCore::GOG::Points* points = dynamic_cast<const simCore::GOG::Points*>(shape.get());
   if (points)
   {
-    std::optional<int> pointSize = points->getPointSize();
+    const std::optional<int> pointSize = points->getPointSize();
     if (pointSize.has_value())
-      setPointSize(pointSize.value());
-    std::optional<simCore::GOG::Color> color = points->getColor();
+      setPointSize(*pointSize);
+    const std::optional<simCore::GOG::Color> color = points->getColor();
     if (color.has_value())
-      setLineColor(LoaderUtils::convertToOsgColor(color.value()));
+      setLineColor(LoaderUtils::convertToOsgColor(*color));
   }
 
   const simCore::GOG::Annotation* anno = dynamic_cast<const simCore::GOG::Annotation*>(shape.get());
   if (anno != nullptr)
   {
     // always set annotation fields, uses default values if not set in the shape
-    std::string font;
-    int textSize = 12;
-    simCore::GOG::Color textColor;
-    anno->getFontName(font);
-    anno->getTextSize(textSize);
-     anno->getTextColor(textColor);
+    const std::string font = anno->getFontName().value_or("arial.ttf");
+    const int textSize = anno->getTextSize().value_or(15);
+    const simCore::GOG::Color textColor = anno->getTextColor().value_or(simCore::GOG::Color());
     setFont(font, textSize, LoaderUtils::convertToOsgColor(textColor));
-    simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::NONE;
-    simCore::GOG::Color outlineColor;
-    anno->getOutlineThickness(thickness);
-    anno->getOutlineColor(outlineColor);
+    const simCore::GOG::OutlineThickness thickness = anno->getOutlineThickness().value_or(simCore::GOG::OutlineThickness::THIN);
+    const simCore::GOG::Color outlineColor = anno->getOutlineColor().value_or(simCore::GOG::Color(0, 0, 0, 255));
     setTextOutline(LoaderUtils::convertToOsgColor(outlineColor), LoaderUtils::convertToVisOutlineThickness(thickness));
-    double priority = -1.;
-    anno->getPriority(priority);
+    const double priority = anno->getPriority().value_or(-1.);
     setDeclutterPriority(static_cast<int>(priority));
   }
 
@@ -2029,8 +2023,7 @@ void LabelNodeInterface::serializeToStream(std::ostream& gogOutputStream)
     assert(0); // Dev error, should not have generated a LabelNodeInterface from another shape type
     return;
   }
-  std::string imageFile;
-  annoShape->getImageFile(imageFile);
+  const std::string imageFile = annoShape->getImageFile().value_or("");
   const std::string& filename = saveImageToFile_(placeNode->getIconImage(), imageFile, saveDirPath_);
 
   if (!filename.empty())

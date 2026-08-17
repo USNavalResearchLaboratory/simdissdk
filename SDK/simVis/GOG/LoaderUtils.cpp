@@ -57,11 +57,7 @@ bool LoaderUtils::isShape3D(const simCore::GOG::GogShape& shape)
   {
     const simCore::GOG::LatLonAltBox* llab = dynamic_cast<const simCore::GOG::LatLonAltBox*>(&shape);
     if (llab)
-    {
-      double height = 0.;
-      llab->getHeight(height);
-      return height > 0.;
-    }
+      return llab->getHeight().value_or(0.) > 0.;
     else
       assert(0); // dev error, parser provided incorrect object for type
   }

@@ -80,8 +80,7 @@ GogNodeInterface* LatLonAltBox::createLatLonAltBox(const simCore::GOG::LatLonAlt
   osgEarth::Angle maxLon(llab.east() * simCore::RAD2DEG, Units::DEGREES);
   osgEarth::Distance minAlt(llab.altitude(), Units::METERS);
 
-  double height = 0.;
-  llab.getHeight(height);
+  const double height = llab.getHeight().value_or(0.);
   osgEarth::Distance maxAlt(height + llab.altitude(), Units::METERS);
 
 

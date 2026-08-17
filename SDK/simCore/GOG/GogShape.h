@@ -983,66 +983,98 @@ public:
   void setText(const std::string& text);
 
   /**
-  * Get the shape's position; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's position
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::Vec3> getPosition() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::Vec3> getPosition() instead")]]
   int getPosition(simCore::Vec3& position) const;
+
   /// Set the label's position; in lla radians if absolute, xyz meters if relative
   void setPosition(const simCore::Vec3& position);
 
   /**
-  * Get the font filename; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the font filename
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<std::string> getFontName() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getFontName() instead")]]
   int getFontName(std::string& fontName) const;
+
   /// Set the font filename
   void setFontName(const std::string& fontName);
 
   /**
-  * Get the text point size; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the text point size
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<int> getTextSize() const;
+
+  [[deprecated("Deprecated, please use std::optional<int> getTextSize() instead")]]
   int getTextSize(int& size) const;
+
   /// Set the text point size
   void setTextSize(int textPointSize);
 
   /**
-  * Get the text color; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the text color
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<Color> getTextColor() const;
+
+  [[deprecated("Deprecated, please use std::optional<Color> getTextColor() instead")]]
   int getTextColor(Color& color) const;
+
   /// Set the text color
   void setTextColor(const Color& color);
 
   /**
-  * Get the text outline color; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the text outline color
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<Color> getOutlineColor() const;
+
+  [[deprecated("Deprecated, please use std::optional<Color> getOutlineColor() instead")]]
   int getOutlineColor(Color& color) const;
+
   /// Set the text outline color
   void setOutlineColor(const Color& color);
 
   /**
-  * Get the text outline thickness style; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the text outline thickness style
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<OutlineThickness> getOutlineThickness() const;
+
+  [[deprecated("Deprecated, please use std::optional<OutlineThickness> getOutlineThickness() instead")]]
   int getOutlineThickness(OutlineThickness& thickness) const;
+
   /// Set the text outline thickness style
   void setOutlineThickness(OutlineThickness thickness);
 
   /**
-  * Get the image file to display; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the image file to display
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<std::string> getImageFile() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getImageFile() instead")]]
   int getImageFile(std::string& imageFile) const;
+
   /// Set the image file to display
   void setImageFile(const std::string& imageFile);
 
   /**
-  * Get the text deconfliction priority value; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the text deconfliction priority value
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getPriority() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getPriority() instead")]]
   int getPriority(double& priority) const;
+
   /// Set the text deconfliction priority value
   void setPriority(double priority);
 
@@ -1090,7 +1122,11 @@ public:
   void setAltitude(double altitudeMeters);
 
   /// Box optional height in meters
+  std::optional<double> getHeight() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getHeight() instead")]]
   int getHeight(double& height) const;
+
   void setHeight(double heightMeters);
 
 private:
@@ -1140,7 +1176,11 @@ public:
   void setImageFile(const std::string& imageFile);
 
   /// opacity value for image (0.0 transparent, 1.0 opaque)
+  std::optional<double> getOpacity() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getOpacity() instead")]]
   int getOpacity(double& opacity) const;
+
   void setOpacity(double opacity);
 
 private:

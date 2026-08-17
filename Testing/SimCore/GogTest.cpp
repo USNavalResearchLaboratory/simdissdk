@@ -306,9 +306,7 @@ auto testLatLonAltBoxMinimalFieldsFunc = [](const simCore::GOG::LatLonAltBox* sh
   rv += SDK_ASSERT(simCore::areEqual(shape->east(), positions[0].lon()));
   rv += SDK_ASSERT(simCore::areEqual(shape->west(), positions[1].lon()));
   rv += SDK_ASSERT(shape->altitude() == positions[0].alt());
-  double height = 10.;
-  rv += SDK_ASSERT(shape->getHeight(height) != 0);
-  rv += SDK_ASSERT(height == 0.);
+  rv += SDK_ASSERT(!shape->getHeight().has_value());
   return rv;
 };
 
@@ -786,9 +784,9 @@ auto testAnnotationCenterFunc = [](const simCore::GOG::Annotation* shape, const 
   assert(!positions.empty());
   if (!positions.empty())
   {
-    simCore::Vec3 position;
-    rv += SDK_ASSERT(shape->getPosition(position) == 0);
-    rv += SDK_ASSERT(comparePositions(position, positions[0]));
+    rv += SDK_ASSERT(shape->getPosition().has_value());
+    if (shape->getPosition().has_value())
+      rv += SDK_ASSERT(comparePositions(shape->getPosition().value(), positions[0]));
   }
   return rv;
 };
@@ -812,30 +810,17 @@ int testAnnotation()
     if (anno)
     {
       rv += SDK_ASSERT(anno->text() == "label 1");
-      simCore::Vec3 position;
-      rv += SDK_ASSERT(anno->getPosition(position) == 0);
-      rv += SDK_ASSERT(comparePositions(position, simCore::Vec3(24.5 * simCore::DEG2RAD, 54.6 * simCore::DEG2RAD, 0.)));
+      rv += SDK_ASSERT(anno->getPosition().has_value());
+      if (anno->getPosition().has_value())
+        rv += SDK_ASSERT(comparePositions(anno->getPosition().value(), simCore::Vec3(24.5 * simCore::DEG2RAD, 54.6 * simCore::DEG2RAD, 0.)));
       // make sure optional fields were not set
-      std::string fontName;
-      rv += SDK_ASSERT(anno->getFontName(fontName) != 0);
-      int textSize = 0;
-      rv += SDK_ASSERT(anno->getTextSize(textSize) != 0);
-      rv += SDK_ASSERT(textSize == 15);
-      simCore::GOG::Color textColor(0,255,255,0);
-      rv += SDK_ASSERT(anno->getTextColor(textColor) != 0);
-      rv += SDK_ASSERT(textColor == simCore::GOG::Color());
-      simCore::GOG::Color outlineColor(0,255,255,0);
-      rv += SDK_ASSERT(anno->getOutlineColor(outlineColor) != 0);
-      rv += SDK_ASSERT(outlineColor == simCore::GOG::Color(0,0,0,255));
-      simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::THICK;
-      rv += SDK_ASSERT(anno->getOutlineThickness(thickness) != 0);
-      rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::THIN);
-      std::string iconFile = "someFile";
-      rv += SDK_ASSERT(anno->getImageFile(iconFile) != 0);
-      rv += SDK_ASSERT(iconFile.empty());
-      double priority = 0.;
-      rv += SDK_ASSERT(anno->getPriority(priority) != 0);
-      rv += SDK_ASSERT(priority == -1.);
+      rv += SDK_ASSERT(!anno->getFontName().has_value());
+      rv += SDK_ASSERT(!anno->getTextSize().has_value());
+      rv += SDK_ASSERT(!anno->getTextColor().has_value());
+      rv += SDK_ASSERT(!anno->getOutlineColor().has_value());
+      rv += SDK_ASSERT(!anno->getOutlineThickness().has_value());
+      rv += SDK_ASSERT(!anno->getImageFile().has_value());
+      rv += SDK_ASSERT(!anno->getPriority().has_value());
     }
   }
   shapes.clear();
@@ -851,31 +836,18 @@ int testAnnotation()
     rv += SDK_ASSERT(anno != nullptr);
     if (anno)
     {
-      simCore::Vec3 position;
-      rv += SDK_ASSERT(anno->getPosition(position) == 0);
-      rv += SDK_ASSERT(comparePositions(position, simCore::Vec3(24.5 * simCore::DEG2RAD, 54.6 * simCore::DEG2RAD, 0.)));
+      rv += SDK_ASSERT(anno->getPosition().has_value());
+      if (anno->getPosition().has_value())
+        rv += SDK_ASSERT(comparePositions(anno->getPosition().value(), simCore::Vec3(24.5 * simCore::DEG2RAD, 54.6 * simCore::DEG2RAD, 0.)));
       rv += SDK_ASSERT(anno->text() == "label 1");
-      std::string fontName;
-      rv += SDK_ASSERT(anno->getFontName(fontName) == 0);
-      rv += SDK_ASSERT(fontName.find("georgia.ttf") != std::string::npos);
-      int textSize = 0;
-      rv += SDK_ASSERT(anno->getTextSize(textSize) == 0);
-      rv += SDK_ASSERT(textSize == 24);
-      simCore::GOG::Color textColor;
-      rv += SDK_ASSERT(anno->getTextColor(textColor) == 0);
-      rv += SDK_ASSERT(textColor == simCore::GOG::Color(255, 160, 255, 160));
-      simCore::GOG::Color outlineColor;
-      rv += SDK_ASSERT(anno->getOutlineColor(outlineColor) == 0);
-      rv += SDK_ASSERT(outlineColor == simCore::GOG::Color(0, 0, 255, 255));
-      simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::NONE;
-      rv += SDK_ASSERT(anno->getOutlineThickness(thickness) == 0);
-      rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::THIN);
-      std::string iconFile;
-      rv += SDK_ASSERT(anno->getImageFile(iconFile) == 0);
-      rv += SDK_ASSERT(iconFile == "icon.png");
-      double priority = 0.;
-      rv += SDK_ASSERT(anno->getPriority(priority) == 0);
-      rv += SDK_ASSERT(priority == 10.);
+      rv += SDK_ASSERT(anno->getFontName().has_value());
+      rv += SDK_ASSERT(anno->getFontName().value_or("").find("georgia.ttf") != std::string::npos);
+      rv += SDK_ASSERT(anno->getTextSize().value_or(0) == 24);
+      rv += SDK_ASSERT(anno->getTextColor().value_or(simCore::GOG::Color()) == simCore::GOG::Color(255, 160, 255, 160));
+      rv += SDK_ASSERT(anno->getOutlineColor().value_or(simCore::GOG::Color()) == simCore::GOG::Color(0, 0, 255, 255));
+      rv += SDK_ASSERT(anno->getOutlineThickness().value_or(simCore::GOG::OutlineThickness::NONE) == simCore::GOG::OutlineThickness::THIN);
+      rv += SDK_ASSERT(anno->getImageFile().value_or("") == "icon.png");
+      rv += SDK_ASSERT(anno->getPriority().value_or(0.) == 10.);
     }
   }
   shapes.clear();
@@ -901,32 +873,22 @@ int testAnnotation()
       rv += SDK_ASSERT(anno != nullptr);
       if (anno)
       {
-        simCore::Vec3 position;
-        rv += SDK_ASSERT(anno->getPosition(position) == 0);
-        rv += SDK_ASSERT(comparePositions(position, positions[textId]));
+        rv += SDK_ASSERT(anno->getPosition().has_value());
+        if (anno->getPosition().has_value())
+          rv += SDK_ASSERT(comparePositions(anno->getPosition().value(), positions[textId]));
+
         std::ostringstream os;
         os << "label " << textId++;
         rv += SDK_ASSERT(anno->text() == os.str());
         rv += SDK_ASSERT(!anno->isRelative());
 
-        std::string fontName;
-        rv += SDK_ASSERT(anno->getFontName(fontName) == 0);
-        rv += SDK_ASSERT(fontName.find("georgia.ttf") != std::string::npos);
-        int textSize = 0;
-        rv += SDK_ASSERT(anno->getTextSize(textSize) == 0);
-        rv += SDK_ASSERT(textSize == 24);
-        simCore::GOG::Color textColor;
-        rv += SDK_ASSERT(anno->getTextColor(textColor) == 0);
-        rv += SDK_ASSERT(textColor == simCore::GOG::Color(255, 160, 255, 160));
-        simCore::GOG::Color outlineColor;
-        rv += SDK_ASSERT(anno->getOutlineColor(outlineColor) == 0);
-        rv += SDK_ASSERT(outlineColor == simCore::GOG::Color(0, 0, 255, 255));
-        simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::NONE;
-        rv += SDK_ASSERT(anno->getOutlineThickness(thickness) == 0);
-        rv += SDK_ASSERT(thickness == simCore::GOG::OutlineThickness::THIN);
-        double priority = 0.;
-        rv += SDK_ASSERT(anno->getPriority(priority) == 0);
-        rv += SDK_ASSERT(priority == 10.);
+        rv += SDK_ASSERT(anno->getFontName().has_value());
+        rv += SDK_ASSERT(anno->getFontName().value_or("").find("georgia.ttf") != std::string::npos);
+        rv += SDK_ASSERT(anno->getTextSize().value_or(0) == 24);
+        rv += SDK_ASSERT(anno->getTextColor().value_or(simCore::GOG::Color()) == simCore::GOG::Color(255, 160, 255, 160));
+        rv += SDK_ASSERT(anno->getOutlineColor().value_or(simCore::GOG::Color()) == simCore::GOG::Color(0, 0, 255, 255));
+        rv += SDK_ASSERT(anno->getOutlineThickness().value_or(simCore::GOG::OutlineThickness::NONE) == simCore::GOG::OutlineThickness::THIN);
+        rv += SDK_ASSERT(anno->getPriority().value_or(0.) == 10.);
       }
     }
   }
@@ -1343,8 +1305,7 @@ auto testCircularNoCenterFunc = [](const simCore::GOG::CircularShape* shape) -> 
 auto testAnnotationNoPositionFunc = [](const simCore::GOG::Annotation* shape) -> int
 {
   int rv = 0;
-  simCore::Vec3 pos;
-  rv += SDK_ASSERT(shape->getPosition(pos) != 0);
+  rv += SDK_ASSERT(!shape->getPosition().has_value());
   return rv;
 };
 
@@ -1994,9 +1955,7 @@ auto testLineWidthFunc = [](const simCore::GOG::FillableShape* shape) -> int
 auto testTextSizeFunc = [](const simCore::GOG::Annotation* shape) -> int
 {
   int rv = 0;
-  int textSize = 0;
-  rv += SDK_ASSERT(shape->getTextSize(textSize) == 0);
-  rv += SDK_ASSERT(textSize == 3);
+  rv += SDK_ASSERT(shape->getTextSize().value_or(0) == 3);
   return rv;
 };
 
