@@ -268,8 +268,8 @@ public:
   /**
   * Find an entity by intersecting the scene under the provided mouse coordinates.
   * @param view     View within to search
-  * @param x        X mouse coordinate
-  * @param y        Y mouse coordinate
+  * @param x        X mouse coordinate - physical coordinates
+  * @param y        Y mouse coordinate - physical coordinates
   * @param typeMask Traversal mask of node type to find, or ~0 to find anything
   * @return         Entity node, or nullptr if nothing was hit
   */
@@ -285,8 +285,8 @@ public:
   /**
   * Find an entity by intersecting the scene under the provided mouse coordinates.
   * @param view     View within to search
-  * @param x        X mouse coordinate
-  * @param y        Y mouse coordinate
+  * @param x        X mouse coordinate - physical coordinates
+  * @param y        Y mouse coordinate - physical coordinates
   * @param typeMask Traversal mask of node type to find, or ~0 to find anything
   * @return         Entity node, or nullptr if nothing was hit
   */

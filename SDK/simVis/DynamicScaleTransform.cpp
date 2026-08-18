@@ -25,6 +25,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simVis/Constants.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"
 #include "simVis/DynamicScaleTransform.h"
@@ -447,7 +448,12 @@ osg::Vec3f DynamicScaleTransform::computeDynamicScale_(double range, osg::CullSt
     // Note the use of 0.48f is about half a pixel, matches constant from osg/AutoTransform.cpp
     const float pixelSize = cullStack->pixelSize(osg::Vec3f(), 0.48f);
     const double safeDs = (dynamicScalar_ == 0. ? 1. : dynamicScalar_);
-    const double scale = staticScalar_ * (pixelSize == 0.f ? 0. : (1.0 / pixelSize)) / safeDs;
+
+    // pixelSize is physical. Scale the resulting physical requirement by the DPR,
+    // so the object maintains logical visual size on high-DPI.
+    const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+    const double scale = dpr * staticScalar_ * (pixelSize == 0.f ? 0. : (1.0 / pixelSize)) / safeDs;
+
     // Do not bother with dynamic scale offset; it only really makes sense in the context of the dynamic
     // scale algorithm, which helps to prevent viewport items from being too big based on eye range.
     return osg::Vec3f(scale, scale, scale);
