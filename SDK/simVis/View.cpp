@@ -179,6 +179,18 @@ private:
   osg::ref_ptr<osg::StateSet> depthState_;
 };
 
+/** Update callback to keep the oe_dpr uniform synchronized with the system DPR every frame */
+class DprUniformCallback : public osg::Uniform::Callback
+{
+public:
+  DprUniformCallback() = default;
+  void operator()(osg::Uniform* uniform, osg::NodeVisitor* nv) override
+  {
+    if (uniform)
+      uniform->set(static_cast<float>(simVis::DevicePixelRatioUtils::getDpr()));
+  }
+};
+
 } // namespace
 
 //-------------------------------------------------------------------
@@ -589,6 +601,12 @@ View::View()
   osg::Group* root = new osg::Group();
   root->setName("Scene Manager Root");
   osgViewer::View::setSceneData(root);
+
+  // osgEarth shaders require oe_dpr for scaling, and some SDK shaders also depend on this.
+  // We put it here to guarantee that it's always set on all insets and HUDs.
+  osg::ref_ptr<osg::Uniform> dprUniform = new osg::Uniform("oe_dpr", static_cast<float>(simVis::DevicePixelRatioUtils::getDpr()));
+  dprUniform->setUpdateCallback(new DprUniformCallback());
+  root->getOrCreateStateSet()->addUniform(dprUniform.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
 #ifdef OSG_GL3_AVAILABLE
   // For GL3, Point Sprite is always on.  But the mode validity flags need to be configured

@@ -7,13 +7,15 @@
 
 // Expected value 0-8 inclusive
 uniform uint simvis_stippleindex;
+// osgEarth built-in for device pixel ratio
+uniform float oe_dpr;
 
 void simvis_polygon_stipple(inout vec4 color)
 {
 #ifdef SIMVIS_USE_POLYGON_STIPPLE
-  bool evenY = (mod(gl_FragCoord.y, 2.0) < 1.0);
+  bool evenY = (mod(gl_FragCoord.y / oe_dpr, 2.0) < 1.0);
   // Modulate the X by 4; corresponds to a nibble in the stipple patterns
-  uint modX = uint(floor(mod(gl_FragCoord.x, 4.0)));
+  uint modX = uint(floor(mod(gl_FragCoord.x / oe_dpr, 4.0)));
   if (evenY)
   {
     if ((simvis_stippleindex / 3u) == 0u) {

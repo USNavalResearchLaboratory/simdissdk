@@ -33,10 +33,12 @@ uniform vec4 svfe_color;
 
 // OSG built-in for frame time
 uniform float osg_FrameTime;
+// osgEarth built-in for device pixel ratio
+uniform float oe_dpr;
 
 void svfe_forward_stripe(inout vec4 color)
 {
-  if (mod(gl_FragCoord.x * 0.5 - gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  if (mod((gl_FragCoord.x / oe_dpr) * 0.5 - (gl_FragCoord.y / oe_dpr), SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
   {
     color = vec4(svfe_color.rgb, svfe_color.a * color.a);
     if (color.a <= 0.0)
@@ -46,7 +48,7 @@ void svfe_forward_stripe(inout vec4 color)
 
 void svfe_backward_stripe(inout vec4 color)
 {
-  if (mod(gl_FragCoord.x * 0.5 + gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  if (mod((gl_FragCoord.x / oe_dpr) * 0.5 + (gl_FragCoord.y / oe_dpr), SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
   {
     color = vec4(svfe_color.rgb, svfe_color.a * color.a);
     if (color.a <= 0.0)
@@ -56,7 +58,7 @@ void svfe_backward_stripe(inout vec4 color)
 
 void svfe_horizontal_stripe(inout vec4 color)
 {
-  if (mod(gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  if (mod((gl_FragCoord.y / oe_dpr), SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
   {
     color = vec4(svfe_color.rgb, svfe_color.a * color.a);
     if (color.a <= 0.0)
@@ -66,7 +68,7 @@ void svfe_horizontal_stripe(inout vec4 color)
 
 void svfe_vertical_stripe(inout vec4 color)
 {
-  if (mod(gl_FragCoord.x, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  if (mod((gl_FragCoord.x / oe_dpr), SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
   {
     color = vec4(svfe_color.rgb, svfe_color.a * color.a);
     if (color.a <= 0.0)
@@ -76,7 +78,7 @@ void svfe_vertical_stripe(inout vec4 color)
 
 void svfe_checkerboard(inout vec4 color)
 {
-  if (mod(gl_FragCoord.x, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX || mod(gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  if (mod((gl_FragCoord.x / oe_dpr), SVFE_TOTAL_PX) < SVFE_HIDDEN_PX || mod((gl_FragCoord.y / oe_dpr), SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
   {
     color = vec4(svfe_color.rgb, svfe_color.a * color.a);
     if (color.a <= 0.0)
@@ -87,8 +89,8 @@ void svfe_checkerboard(inout vec4 color)
 void svfe_diamond(inout vec4 color)
 {
   // Combine forward and backward stripe
-  if (mod(gl_FragCoord.x * 0.5 - gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX ||
-      mod(gl_FragCoord.x * 0.5 + gl_FragCoord.y, SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
+  if (mod((gl_FragCoord.x / oe_dpr) * 0.5 - (gl_FragCoord.y / oe_dpr), SVFE_TOTAL_PX) < SVFE_HIDDEN_PX ||
+      mod((gl_FragCoord.x / oe_dpr) * 0.5 + (gl_FragCoord.y / oe_dpr), SVFE_TOTAL_PX) < SVFE_HIDDEN_PX)
   {
     color = vec4(svfe_color.rgb, svfe_color.a * color.a);
     if (color.a <= 0.0)
