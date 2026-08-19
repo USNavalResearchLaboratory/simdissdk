@@ -97,5 +97,4 @@ void DpiTextScalingCallback::applyScaling_(osgText::Text& textNode) const
   }
 }
 
-
 }

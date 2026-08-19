@@ -61,9 +61,19 @@ public:
  * when the application is dragged between screens with different DPI settings. This
  * is most useful in osgText::Text using SCREEN_COORDS coordinate system, that is in the
  * 3D scene. Text on SuperHUD does not need this, because they should not be using
- * SCREEN_COORDS and should already be logically scaled.
+ * SCREEN_COORDS and should already be logically scaled. For example:
+ *
+ * <code>
+ * osg::ref_ptr<osgText::Text> text = new osgText::Text;
+ * text->setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
+ * simVis::DpiTextScalingCallback::install(*text, 14);
+ * </code>
+ *
+ * The `install()` will automatically set a valid physical size based on logical size
+ * provided. An explicit call to setCharacterSize() is not required when using the
+ * `DpiTextScalingCallback::install()` helper.
  */
-class DpiTextScalingCallback : public osg::NodeCallback
+class SDKVIS_EXPORT DpiTextScalingCallback : public osg::NodeCallback
 {
 public:
   explicit DpiTextScalingCallback(float logicalFontSize);
