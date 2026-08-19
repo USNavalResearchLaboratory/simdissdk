@@ -32,14 +32,37 @@
 namespace simData
 {
 
-/// define the text outline style
+/**
+ * CommonPreferences.h, EntityPreferences.h, and DataTypeProperties.h define the underlying data format for SIMDIS SDK's simData module.
+ *
+ * Entity types include platforms, beams, gates, lasers, projectors, line of bearing (LOB) groups, and Custom Rendering
+ * Entities are generally broken up into 3 components:
+ *
+ *   Properties - Settings for an entity, such as ID that are mostly unchanging
+ *   Preferences - Changeable settings for an entity, including PrefsTool-like settings;
+ *                 can be time stamped by using Commands
+ *   Commands - A time stamp and a (likely) sparse list of preferences to apply at the time
+ *
+ * Unless otherwise specified, all units are in metric: radians for angles, meters for distance,
+ * and meters per second for speed values.
+ *
+ * Notes on Draw / dataDraw flags: Draw is a user preference. This is equivalent to the Draw setting
+ * in PrefsTool. The dataDraw flag is a data setting that is managed through the data provider and
+ * is similar to the On/Off settings in SIMDIS 9. The dataDraw flag is hierarchical -- a gate is not
+ * drawn if its beam's dataDraw is off, and even if the gate's dataDraw and draw flags are true. The draw flag is not
+ * hierarchical.  An entity is only drawn if its dataDraw is on, its host is active, and its draw flag is on.
+ * The dataDraw flag is not set for, and is completely ignored by Platforms.
+ * Beams and gates still require that their platform host be active, but this is signaled by other means than the dataDraw flag.
+ */
+
+/// Define the text outline style
 enum class TextOutline {
   TO_NONE = 0,
   TO_THIN,
   TO_THICK
 };
 
-/// define OSG text backdrop types
+/// Define OSG text backdrop types
 enum class BackdropType {
   BDT_SHADOW_BOTTOM_RIGHT = 0,
   BDT_SHADOW_CENTER_RIGHT,
@@ -53,7 +76,7 @@ enum class BackdropType {
   BDT_NONE
 };
 
-/// define OSG text backdrop implementation
+/// Define OSG text backdrop implementation
 enum class BackdropImplementation {
   BDI_POLYGON_OFFSET = 0,
   BDI_NO_DEPTH_BUFFER,
@@ -62,7 +85,7 @@ enum class BackdropImplementation {
   BDI_DELAYED_DEPTH_WRITES,
 };
 
-/// define OSG text alignment
+/// Define OSG text alignment
 enum class TextAlignment {
   ALIGN_LEFT_TOP = 0,
   ALIGN_LEFT_CENTER,
@@ -192,44 +215,78 @@ class SDKDATA_EXPORT DisplayFields : public FieldList
 {
 public:
   SIMDATA_DECLARE_DEFAULT_METHODS(DisplayFields);
+  /// Toggle display of X or Latitude value in the label (based on coordinateSystem)
   SIMDATA_DECLARE_FIELD(xLat_, xlat, bool);
+  /// Toggle display of Y or Longitude value in the label (based on coordinateSystem)
   SIMDATA_DECLARE_FIELD(yLon_, ylon, bool);
+  /// Toggle display of Z or Altitude value in the label (based on coordinateSystem)
   SIMDATA_DECLARE_FIELD(zAlt_, zalt, bool);
+  /// Toggle all generic data
   SIMDATA_DECLARE_FIELD(genericData_, genericdata, bool);
+  /// Toggle all category data on and off
   SIMDATA_DECLARE_FIELD(categoryData_, categorydata, bool);
+  /// Toggle Platform Yaw or Psi (based on coordinateSystem)
   SIMDATA_DECLARE_FIELD(yaw_, yaw, bool);
+  /// Toggle Platform Pitch or Theta (based on coordinateSystem)
   SIMDATA_DECLARE_FIELD(pitch_, pitch, bool);
+  /// Toggle Platform Roll or Phi (based on coordinateSystem)
   SIMDATA_DECLARE_FIELD(roll_, roll, bool);
+  /// Toggle course on/off for platform (velocity-based azimuth)
   SIMDATA_DECLARE_FIELD(course_, course, bool);
+  /// Toggle flight path angle on/off for platform (velocity-based elevation)
   SIMDATA_DECLARE_FIELD(flightPathElevation_, flightpathelevation, bool);
+  /// Toggle velocity X component (based on coordinateSystem)
   SIMDATA_DECLARE_FIELD(displayVX_, displayvx, bool);
+  /// Toggle velocity Y component (based on coordinateSystem)
   SIMDATA_DECLARE_FIELD(displayVY_, displayvy, bool);
+  /// Toggle velocity Z component (based on coordinateSystem)
   SIMDATA_DECLARE_FIELD(displayVZ_, displayvz, bool);
+  /// Toggle speed component
   SIMDATA_DECLARE_FIELD(speed_, speed, bool);
+  /// Toggle mach component
   SIMDATA_DECLARE_FIELD(mach_, mach, bool);
+  /// Toggle angle of attack (alpha) component; roll affects calculation if applyRoll set
   SIMDATA_DECLARE_FIELD(angleOfAttack_, angleofattack, bool);
+  /// Toggle side slip (beta) component; roll affects calculation if applyRoll is set
   SIMDATA_DECLARE_FIELD(sideSlip_, sideslip, bool);
+  /// Toggle total angle of attack
   SIMDATA_DECLARE_FIELD(totalAngleOfAttack_, totalangleofattack, bool);
+  /// Toggle azimuth angle to sun
   SIMDATA_DECLARE_FIELD(solarAzimuth_, solarazimuth, bool);
+  /// Toggle elevation angle to the sun
   SIMDATA_DECLARE_FIELD(solarElevation_, solarelevation, bool);
+  /// Toggle solar illuminance value
   SIMDATA_DECLARE_FIELD(solarIlluminance_, solarilluminance, bool);
+  /// Toggle azimuth angle to moon
   SIMDATA_DECLARE_FIELD(lunarAzimuth_, lunarazimuth, bool);
+  /// Toggle elevation angle to the moon
   SIMDATA_DECLARE_FIELD(lunarElevation_, lunarelevation, bool);
+  /// Toggle illuminance value from moon
   SIMDATA_DECLARE_FIELD(lunarIlluminance_, lunarilluminance, bool);
+  /// Toggle late value which is seconds since last point
   SIMDATA_DECLARE_FIELD(late_, late, bool);
+  /// Flag to use embedded scripting to generate the label text
   SIMDATA_DECLARE_FIELD(useLabelCode_, uselabelcode, bool);
+  /// Embedded scripting code to generate the label
   SIMDATA_DECLARE_FIELD_CONST_REF(labelCode_, labelcode, std::string);
 };
 
+/// Preferences which all labels share
 class SDKDATA_EXPORT LabelPrefs : public FieldList
 {
 public:
   SIMDATA_DECLARE_METHODS(LabelPrefs);
+  /// Display contents of the label
   SIMDATA_DECLARE_SUBFIELD_LIST(displayFields_, displayfields, simData::DisplayFields);
+  /// Display contents of the legend
   SIMDATA_DECLARE_SUBFIELD_LIST(legendDisplayFields_, legenddisplayfields, simData::DisplayFields);
+  /// Display contents of the mouse-over/hover text popup
   SIMDATA_DECLARE_SUBFIELD_LIST(hoverDisplayFields_, hoverdisplayfields, simData::DisplayFields);
+  /// Display contents of the hook window
   SIMDATA_DECLARE_SUBFIELD_LIST(hookDisplayFields_, hookdisplayfields, simData::DisplayFields);
+  /// Toggles display of the label
   SIMDATA_DECLARE_FIELD(draw_, draw, bool);
+  /// Label color
   SIMDATA_DECLARE_FIELD(color_, color, uint32_t);
   SIMDATA_DECLARE_FIELD(textOutline_, textoutline, simData::TextOutline);
   SIMDATA_DECLARE_FIELD(outlineColor_, outlinecolor, uint32_t);
@@ -240,24 +297,43 @@ public:
   SIMDATA_DECLARE_FIELD(offsetX_, offsetx, int32_t);
   SIMDATA_DECLARE_FIELD(offsetY_, offsety, int32_t);
   SIMDATA_DECLARE_FIELD(alignment_, alignment, simData::TextAlignment);
+  /// Positive high values have precedence over positive low values; Negative values are always shown
   SIMDATA_DECLARE_FIELD(priority_, priority, double);
+  /// Toggle height above terrain for LLA altitude
   SIMDATA_DECLARE_FIELD(applyHeightAboveTerrain_, applyheightaboveterrain, bool);
+  /// Toggle use of roll in AoA and Side slip calculations
   SIMDATA_DECLARE_FIELD(applyRoll_, applyroll, bool);
+  /// Earth model to use for label calculations
   SIMDATA_DECLARE_FIELD(coordinateSystem_, coordinatesystem, simData::CoordinateSystem);
+  /// Vertical datum to apply to altitude values for display
   SIMDATA_DECLARE_FIELD(verticalDatum_, verticaldatum, simData::VerticalDatum);
+  /// Magnetic variance to apply to horizontal angle calculations for display
   SIMDATA_DECLARE_FIELD(magneticVariance_, magneticvariance, simData::MagneticVariance);
+  /// Distance units for distance based label values
   SIMDATA_DECLARE_FIELD(distanceUnits_, distanceunits, simData::DistanceUnits);
+  /// Angle units for angle based label values
   SIMDATA_DECLARE_FIELD(angleUnits_, angleunits, simData::AngleUnits);
+  /// Speed units are only used in platform calculations
   SIMDATA_DECLARE_FIELD(speedUnits_, speedunits, simData::SpeedUnits);
+  /// number of digits of precision in numerical displays but can be overridden by the fields below
   SIMDATA_DECLARE_FIELD(precision_, precision, int32_t);
+  /// Maximum length of the name (character limit)
   SIMDATA_DECLARE_FIELD(nameLength_, namelength, int32_t);
+  /// Units for display LLA angles, Degrees, Degrees-Minutes, Degrees-Minutes-Seconds
   SIMDATA_DECLARE_FIELD(geodeticUnits_, geodeticunits, simData::GeodeticUnits);
+  /// Units for displaying altitude
   SIMDATA_DECLARE_FIELD(altitudeUnits_, altitudeunits, simData::DistanceUnits);
+  /// If set overrides the precision field and sets the precision for distance
   SIMDATA_DECLARE_FIELD(distancePrecision_, distanceprecision, int32_t);
+  /// If set overrides the precision field and sets the precision for angle
   SIMDATA_DECLARE_FIELD(anglePrecision_, angleprecision, int32_t);
+  /// If set overrides the precision field and sets the precision for speed
   SIMDATA_DECLARE_FIELD(speedPrecision_, speedprecision, int32_t);
+  /// If set overrides the precision field and sets the precision for geodetic
   SIMDATA_DECLARE_FIELD(geodeticPrecision_, geodeticprecision, int32_t);
+  /// If set overrides the precision field and sets the precision for altitude
   SIMDATA_DECLARE_FIELD(altitudePrecision_, altitudeprecision, int32_t);
+  /// If set overrides the precision field and sets the precision for time
   SIMDATA_DECLARE_FIELD(timePrecision_, timeprecision, int32_t);
 
 public:
@@ -266,32 +342,47 @@ public:
     DISPLAY_VALUE = 1 ///< labels use display value, which may include adjustments like clamping and offsets
   };
 
+  /// Indicates which value to use in labels
   SIMDATA_DECLARE_FIELD(useValues_, usevalues, UseValue);
 };
 
+/// Settings for SPEED_RINGS mode
 class SDKDATA_EXPORT SpeedRing : public FieldList
 {
 public:
   SIMDATA_DECLARE_DEFAULT_METHODS(SpeedRing);
+  /// Use fixedTime below, instead of using radius (which is a relative time)
   SIMDATA_DECLARE_FIELD(useFixedTime_, usefixedtime, bool);
+  /// This ordinal-format time specifies speed rings extent for speed rings
   SIMDATA_DECLARE_FIELD_CONST_REF(fixedTime_, fixedtime, std::string);
+  /// User-specified units for the speed rings radius value and for speed ring labels
   SIMDATA_DECLARE_FIELD(timeFormat_, timeformat, simData::ElapsedTimeFormat);
+  /// If !useFixedTimetime, this value specifies speed rings extent for speed rings, in units specified by timeFormat above
   SIMDATA_DECLARE_FIELD(radius_, radius, double);
+  /// Use platform's speed for speed rings calculations
   SIMDATA_DECLARE_FIELD(usePlatformSpeed_, useplatformspeed, bool);
+  /// If !usePlatformSpeed, use this user-specified speed for speed rings calculations
   SIMDATA_DECLARE_FIELD(speedToUse_, speedtouse, double);
+  /// When set, speed rings labels display time, rather than distance
   SIMDATA_DECLARE_FIELD(displayTime_, displaytime, bool);
+  /// User-specified units for speedToUse, determines conversion of speedToUse to m/s
   SIMDATA_DECLARE_FIELD(speedUnits_, speedunits, simData::SpeedUnits);
 };
 
+/// Grid division settings (all modes)
 class SDKDATA_EXPORT GridSettings : public FieldList
 {
 public:
   SIMDATA_DECLARE_DEFAULT_METHODS(GridSettings);
+  /// Bold, thick lines spaced evenly out to grid size
   SIMDATA_DECLARE_FIELD(numDivisions_, numdivisions, uint32_t);
+  /// Lighter lines placed in between divisions
   SIMDATA_DECLARE_FIELD(numSubDivisions_, numsubdivisions, uint32_t);
+  /// For polar plots and speed rings
   SIMDATA_DECLARE_FIELD(sectorAngle_, sectorangle, double);
 };
 
+/// Position in 3D space
 class SDKDATA_EXPORT Position : public FieldList
 {
 public:
@@ -301,6 +392,7 @@ public:
   SIMDATA_DECLARE_FIELD(z_, z, double);
 };
 
+/// Alignment of a body in 3D space, angles in radians; body centric
 class SDKDATA_EXPORT BodyOrientation : public FieldList
 {
 public:
@@ -310,10 +402,11 @@ public:
   SIMDATA_DECLARE_FIELD(roll_, roll, double);
 };
 
+/// A grid attached to an entity
 class SDKDATA_EXPORT LocalGridPrefs : public FieldList
 {
 public:
-  /// shape of local grid
+  /// Shape of local grid
   enum class Type {
     CARTESIAN = 1,   ///< a square grid
     POLAR = 2,       ///< circles drawn at each range subdivision, with lines sectoring
@@ -325,43 +418,81 @@ public:
   SIMDATA_DECLARE_METHODS(LocalGridPrefs);
   SIMDATA_DECLARE_SUBFIELD_LIST(speedRing_, speedring, simData::SpeedRing);
   SIMDATA_DECLARE_SUBFIELD_LIST(gridSettings_, gridsettings, simData::GridSettings);
+  /// x/y/z offset in units as described below
   SIMDATA_DECLARE_SUBFIELD_LIST(gridPositionOffset_, gridpositionoffset, simData::Position);
+  /// Yaw/pitch/roll offset in radians
   SIMDATA_DECLARE_SUBFIELD_LIST(gridOrientationOffset_, gridorientationoffset, simData::BodyOrientation);
+  /// Draw mode
   SIMDATA_DECLARE_FIELD(gridType_, gridtype, simData::LocalGridPrefs::Type);
+  /// Is the grid label shown in the display
   SIMDATA_DECLARE_FIELD(gridLabelDraw_, gridlabeldraw, bool);
+  /// Color of the grid label text (default: yellow)
   SIMDATA_DECLARE_FIELD(gridLabelColor_, gridlabelcolor, uint32_t);
+  /// Style of the grid label text outline
   SIMDATA_DECLARE_FIELD(gridLabelTextOutline_, gridlabeltextoutline, simData::TextOutline);
+  /// Color of the grid label text outline (default: black)
   SIMDATA_DECLARE_FIELD(gridLabelOutlineColor_, gridlabeloutlinecolor, uint32_t);
+  /// Font file name of the grid label text
   SIMDATA_DECLARE_FIELD_CONST_REF(gridLabelFontName_, gridlabelfontname, std::string);
+  /// Font point size of the grid label text
   SIMDATA_DECLARE_FIELD(gridLabelFontSize_, gridlabelfontsize, uint32_t);
+  /// Precision to use for grid label text
   SIMDATA_DECLARE_FIELD(gridLabelPrecision_, gridlabelprecision, int32_t);
+  /// Is the grid shown in the display
   SIMDATA_DECLARE_FIELD(drawGrid_, drawgrid, bool);
+  /// Color for lines (text has its own color settings)(default: yellow)
   SIMDATA_DECLARE_FIELD(gridColor_, gridcolor, uint32_t);
+  /// Total grid size (full diameter of the local grid, in sizeUnits)
   SIMDATA_DECLARE_FIELD(size_, size, double);
   SIMDATA_DECLARE_FIELD(positionOffsetUnits_, positionoffsetunits, simData::DistanceUnits);
   SIMDATA_DECLARE_FIELD(followYaw_, followyaw, bool);
   SIMDATA_DECLARE_FIELD(followPitch_, followpitch, bool);
   SIMDATA_DECLARE_FIELD(followRoll_, followroll, bool);
+  /// Units of the local grid size value, and of grid labels
   SIMDATA_DECLARE_FIELD(sizeUnits_, sizeunits, simData::DistanceUnits);
 };
 
+/// Preferences shared by all entity types
 class SDKDATA_EXPORT CommonPrefs : public FieldList
 {
 public:
   SIMDATA_DECLARE_METHODS(CommonPrefs);
+  /// Points to label preferences, includes alias settings
   SIMDATA_DECLARE_SUBFIELD_LIST(labelPrefs_, labelprefs, LabelPrefs);
+  /// Controls the local grid
   SIMDATA_DECLARE_SUBFIELD_LIST(localGrid_, localgrid, LocalGridPrefs);
+  /**
+   * Indicates that the entity is marked for drawing in the data stream.  This is intended as an internal
+   * flag that is supposed to match up with items like a BeamOnOffCmd.  A user may alter the "draw" flag
+   * to turn an object on or off, but if the data overrides the draw from the user, the item is still not
+   * drawn.  In other words, an entity that is off in data cannot be forced to draw by the end user.
+   */
   SIMDATA_DECLARE_FIELD(dataDraw_, datadraw, bool);
+  /**
+   * User-controlled preference for drawing or not drawing an entity.  An entity is only drawn if this flag
+   * is turned on, and the dataDraw flag is also enabled.  This is a more-or-less public flag that corresponds
+   * to the Draw flag in Super Form.
+   */
   SIMDATA_DECLARE_FIELD(draw_, draw, bool);
+  /// Entity name string
   SIMDATA_DECLARE_FIELD_CONST_REF(name_, name, std::string);
+  /// Indicates whether alias should be used over proper name
   SIMDATA_DECLARE_FIELD(useAlias_, usealias, bool);
+  /// Optional secondary name that can be swapped in and out
   SIMDATA_DECLARE_FIELD_CONST_REF(alias_, alias, std::string);
+  /// Data-driven color for the entity
   SIMDATA_DECLARE_FIELD(color_, color, uint32_t);
+  /// Override the normal coloration
   SIMDATA_DECLARE_FIELD(useOverrideColor_, useoverridecolor, bool);
+  /// Override color when useOverrideColor is true
   SIMDATA_DECLARE_FIELD(overrideColor_, overridecolor, uint32_t);
+  /// Entity-specific data limiting value in seconds of history; <= 0 indicates no limiting applied
   SIMDATA_DECLARE_FIELD(dataLimitTime_, datalimittime, double);
+  /// Entity-specific data limiting value in number of data points; == 0 indicates no limiting applied
   SIMDATA_DECLARE_FIELD(dataLimitPoints_, datalimitpoints, uint32_t);
+  /// Control Legend display; this may get replaced by more detailed control of legends
   SIMDATA_DECLARE_FIELD(includeInLegend_, includeinlegend, bool);
+  /// Current accepted projector IDs; may contain up to 4 projector IDs
   SIMDATA_DECLARE_VECTOR_FIELD(acceptProjectorIds_, acceptprojectorids, uint64_t);
 };
 
