@@ -115,7 +115,7 @@ public:
   SIMDATA_DECLARE_FIELD(overrideFovAngle_, overridefovangle, double);
   /// Override the field of view X (horizontal FOV) value display if true, using overrideFovValue and ignoring projector updates
   SIMDATA_DECLARE_FIELD(overrideHFov_, overridehfov, bool);
-  /// Field of view for projector X (horizontal FOV) value in radians, if overrideFov is true (default is ~10 degrees)
+  /// Field of view for projector X (horizontal FOV) value in radians, if overrideHFov is true (default is ~10 degrees)
   SIMDATA_DECLARE_FIELD(overrideHFovAngle_, overridehfovangle, double);
   /// Determine if the projector should use shadow mapping
   SIMDATA_DECLARE_FIELD(shadowMapping_, shadowmapping, bool);

@@ -138,7 +138,7 @@ enum class DistanceUnits {
   UNITS_KILOYARDS = 29,      ///< Kiloyards constant flag
   UNITS_DATAMILES = 30,      ///< Data Miles constant flag
   UNITS_FATHOMS = 31,        ///< Fathoms constant flag
-  UNITS_KILOFEET = 32        ///< Kilofeet constant flag = 1000 feet)
+  UNITS_KILOFEET = 32        ///< Kilofeet constant flag (equal to 1000 feet)
 };
 
 
@@ -357,7 +357,7 @@ public:
   SIMDATA_DECLARE_FIELD_CONST_REF(fixedTime_, fixedtime, std::string);
   /// User-specified units for the speed rings radius value and for speed ring labels
   SIMDATA_DECLARE_FIELD(timeFormat_, timeformat, simData::ElapsedTimeFormat);
-  /// If !useFixedTimetime, this value specifies speed rings extent for speed rings, in units specified by timeFormat above
+  /// If !useFixedTime, this value specifies speed rings extent for speed rings, in units specified by timeFormat above
   SIMDATA_DECLARE_FIELD(radius_, radius, double);
   /// Use platform's speed for speed rings calculations
   SIMDATA_DECLARE_FIELD(usePlatformSpeed_, useplatformspeed, bool);
