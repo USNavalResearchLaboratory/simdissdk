@@ -976,8 +976,9 @@ bool View::setExtents(const Extents& e)
         const double nw = rvp->width() * e.width_;
         const double nh = rvp->height() * e.height_;
 
-        // Use std::round to ensure physical pixels don't suffer float truncation
-        fixProjectionForNewViewport_(std::round(nx), std::round(ny), std::round(nw), std::round(nh));
+        // Pass raw doubles. OSG will preserve them for aspect ratio math,
+        // and safely truncate them to GLints right before GPU execution.
+        fixProjectionForNewViewport_(nx, ny, nw, nh);
       }
     }
     else
@@ -988,9 +989,8 @@ bool View::setExtents(const Extents& e)
   }
   else
   {
-    // Use std::round on logical conversion, to perfectly map back to physical integers
-    fixProjectionForNewViewport_(std::round(e.x_ * dpr), std::round(e.y_ * dpr),
-      std::round(e.width_ * dpr), std::round(e.height_ * dpr));
+    // Pass raw doubles here as well
+    fixProjectionForNewViewport_(e.x_ * dpr, e.y_ * dpr, e.width_ * dpr, e.height_ * dpr);
   }
 
   // save a copy so we can adjust the viewport based on a resize event.
