@@ -221,6 +221,7 @@ public:
   LineStrip()
     : osgEarth::LineDrawable(GL_LINE_STRIP)
   {
+    setLineSmooth(true);
     allocate(NUM_POINTS_PER_LINE_STRIP);
     setColor(simVis::Color::White);
   }
@@ -339,6 +340,7 @@ public:
     : osgEarth::LineDrawable(GL_LINE_LOOP),
       ring_(ring)
   {
+    setLineSmooth(true);
     setName("simVis::LocalGridNode::RangeRing");
     setColor(simVis::Color::White);
   }

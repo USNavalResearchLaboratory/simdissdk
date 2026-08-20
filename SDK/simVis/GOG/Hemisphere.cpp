@@ -41,7 +41,7 @@ GogNodeInterface* Hemisphere::createHemisphere(const simCore::GOG::Hemisphere& h
   const double radiusMeters = hemi.getRadius().value_or(
     hemi.originalUnits().rangeUnits().convertTo(
       simCore::Units::METERS, 1000.));
-  Distance radius(radiusMeters, Units::METERS);
+  osgEarth::Distance radius(radiusMeters, osgEarth::Units::METERS);
 
   osg::Vec4f color(osgEarth::Color::White);
 
