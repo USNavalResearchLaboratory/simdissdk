@@ -38,8 +38,10 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Hemisphere::createHemisphere(const simCore::GOG::Hemisphere& hemi, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  const double radiusM = hemi.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
-  osgEarth::Distance radius(radiusM, osgEarth::Units::METERS);
+  const double radiusMeters = hemi.getRadius().value_or(
+    hemi.originalUnits().rangeUnits().convertTo(
+      simCore::Units::METERS, 1000.));
+  Distance radius(radiusMeters, Units::METERS);
 
   osg::Vec4f color(osgEarth::Color::White);
 

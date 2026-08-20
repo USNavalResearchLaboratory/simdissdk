@@ -37,7 +37,9 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Circle::createCircle(const simCore::GOG::Circle& circle, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  const double radiusMeters = circle.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
+  const double radiusMeters = circle.getRadius().value_or(
+    circle.originalUnits().rangeUnits().convertTo(
+      simCore::Units::METERS, 1000.));
   Distance radius(radiusMeters, Units::METERS);
 
   osgEarth::GeometryFactory gf;

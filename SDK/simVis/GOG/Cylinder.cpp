@@ -53,8 +53,11 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Cylinder::createCylinder(const simCore::GOG::Cylinder& cyl, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  const double radiusM = cyl.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
-  Distance radius(radiusM, Units::METERS);
+  const double radiusMeters = cyl.getRadius().value_or(
+    cyl.originalUnits().rangeUnits().convertTo(
+      simCore::Units::METERS, 1000.));
+  Distance radius(radiusMeters, Units::METERS);
+
   Angle rotation(0., Units::DEGREES); // Rotation handled in setShapePositionOffsets()
   const double heightM = cyl.getHeight().value_or(cyl.originalUnits().altitudeUnits().convertTo(simCore::Units::METERS, 1000.));
   const double angleStart = cyl.getAngleStart().value_or(0.);

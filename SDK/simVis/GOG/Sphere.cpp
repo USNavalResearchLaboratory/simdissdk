@@ -35,7 +35,9 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Sphere::createSphere(const simCore::GOG::Sphere& sphere, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  double radiusM = sphere.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.));
+  const double radiusM = sphere.getRadius().value_or(
+    sphere.originalUnits().rangeUnits().convertTo(
+      simCore::Units::METERS, 1000.));
 
   // cannot create a sphere with no radius
   if (radiusM <= 0.)

@@ -226,7 +226,11 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string& filename, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  Distance radius(arc.getRadius().value_or(simCore::Units().convertTo(simCore::Units::METERS, 1000.)), Units::METERS);
+  const double radiusMeters = arc.getRadius().value_or(
+    arc.originalUnits().rangeUnits().convertTo(
+      simCore::Units::METERS, 1000.));
+  Distance radius(radiusMeters, Units::METERS);
+
   Angle rotation(0., Units::DEGREES); // Rotation handled in setShapePositionOffsets()
   const double angleStart = arc.getAngleStart().value_or(0.);
   Angle start(angleStart * simCore::RAD2DEG, Units::DEGREES);
