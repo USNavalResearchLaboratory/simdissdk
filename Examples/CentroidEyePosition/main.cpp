@@ -301,6 +301,7 @@ void untrackNode(const App& app, simData::ObjectId id)
 int main(int argc, char **argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   // Set up the registry so the SDK can find platform models
   simExamples::configureSearchPaths();
 

@@ -506,6 +506,7 @@ void centerInsetView(simVis::View& view, simData::ObjectId objectId)
 int main(int argc, char **argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   /// set up the registry so the SDK can find platform models
   simExamples::configureSearchPaths();
 

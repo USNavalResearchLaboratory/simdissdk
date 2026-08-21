@@ -86,6 +86,8 @@ namespace simExamples
    * as DPI-aware and install an osgEarth callback for testing GraphicsContext DPR values. If called
    * before instantiation of OSG windows, this will allow for support of DPI-awareness V2 on Windows;
    * if not, OSG's initial setting of DPI-awareness V1 will take effect.
+   *
+   * This function is not required or useful for Qt-based applications that use simQt::ViewerWidgetAdapter.
    */
   extern SDKUTIL_EXPORT void enableHighDpiSupport();
 

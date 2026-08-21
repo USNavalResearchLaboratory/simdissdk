@@ -234,6 +234,7 @@ void simulatePlatform(const simData::ObjectId& id, simUtil::PlatformSimulatorMan
 int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
 
   unsigned numPlatforms;
   double   duration;

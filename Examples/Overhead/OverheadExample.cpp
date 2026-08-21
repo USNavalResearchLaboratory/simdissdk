@@ -347,6 +347,7 @@ simData::ObjectId createPlatform(simData::DataStore& dataStore, simUtil::Platfor
 int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   simExamples::configureSearchPaths();
 
   std::string earthFile;

@@ -537,6 +537,7 @@ void addGog(osg::Group* parentNode, osgEarth::MapNode* mapNode)
 int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   osg::ArgumentParser arguments(&argc, argv);
   simExamples::configureSearchPaths();
 

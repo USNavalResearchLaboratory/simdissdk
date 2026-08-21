@@ -482,6 +482,7 @@ int main(int argc, char** argv)
     std::cout << "Usage: example_gogreader <gogfiles...> [--attach] [--showElevation] [--mark] [--sky] [--iconFile <icon file>]" << std::endl;
     return 0;
   }
+  simExamples::enableHighDpiSupport();
 
   // Parse OpenSceneGraph standard arguments
   const bool sky = ap.read("--sky");

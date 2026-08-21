@@ -291,6 +291,7 @@ int main(int argc, char **argv)
 {
   // Set up the scene:
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   simExamples::configureSearchPaths();
 
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();

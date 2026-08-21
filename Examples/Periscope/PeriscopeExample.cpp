@@ -234,6 +234,7 @@ namespace
 int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   simExamples::configureSearchPaths();
 
   // Construct a map - this one uses all local data and was bathymetry

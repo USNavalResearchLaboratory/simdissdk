@@ -214,6 +214,7 @@ private:
 int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   osg::ArgumentParser arguments(&argc, argv);
   if (arguments.read("--multisample"))
     osg::DisplaySettings::instance()->setNumMultiSamples(4);

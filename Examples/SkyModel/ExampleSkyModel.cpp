@@ -293,6 +293,7 @@ int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
   osg::ArgumentParser arguments(&argc, argv);
+  simExamples::enableHighDpiSupport();
   simExamples::configureSearchPaths();
 
   if (arguments.read("--help"))
