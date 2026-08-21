@@ -25,6 +25,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "simCore/Common/Export.h"
 
 namespace simCore
 {
