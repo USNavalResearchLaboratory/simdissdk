@@ -8,6 +8,7 @@ uniform sampler2D directionSampler;
 uniform vec2 resolution;
 uniform float pointSize;
 uniform float altitude;
+uniform float oe_dpr;
 
 uniform mat4 osg_ViewMatrix;
 
@@ -61,7 +62,7 @@ void simutil_vpl_rtt_vertex(inout vec4 vertexModel)
 
   // Compute the heading based on the view matrix that will orient the rotation angle correctly based on the camera orientation.
   vec3 upVector = vec3(osg_ViewMatrix[2][0], osg_ViewMatrix[2][1], osg_ViewMatrix[2][2]);
-  normalize(upVector);
+  upVector = normalize(upVector);
   // Compute azimuth offset from eye using arc tangent
   float heading = atan(upVector.x, upVector.y);
   rotate_angle -= heading;
@@ -71,5 +72,5 @@ void simutil_vpl_rtt_vertex(inout vec4 vertexModel)
   vertexModel.xyz = xyz;
 
   // Scale the point size higher if rendering points, to account for circular radius blending
-  gl_PointSize = pointSize;
+  gl_PointSize = pointSize * oe_dpr;
 }

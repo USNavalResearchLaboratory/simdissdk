@@ -66,7 +66,7 @@ public:
     OE_OPTION(float, dieSpeed);
     /** Factor multiplied against the particles to slow down movement. */
     OE_OPTION(float, speedFactor);
-    /** Size of the particle on screen */
+    /** Size of the particle on screen in logical pixels */
     OE_OPTION(float, pointSize);
     /** Likelihood that particle will spontaneously drop, outside its typical life reduction from dieSpeed. */
     OE_OPTION(float, dropChance);
@@ -106,7 +106,7 @@ public:
   float getSpeedFactor() const;
   void setSpeedFactor(float value);
   float getPointSize() const;
-  void setPointSize(float value);
+  void setPointSize(float logicalValue);
   float getDropChance() const;
   void setDropChance(float value);
   float getParticleAltitude() const;

@@ -376,15 +376,14 @@ public:
 
   float getPointSize() const
   {
-    float physicalValue = 1.0f;
-    pointsNode_->getOrCreateStateSet()->getUniform("pointSize")->get(physicalValue);
-    return static_cast<float>(simVis::DevicePixelRatioUtils::toLogical(physicalValue));
+    float logicalValue = 1.0f;
+    pointsNode_->getOrCreateStateSet()->getUniform("pointSize")->get(logicalValue);
+    return logicalValue;
   }
 
-  void setPointSize(float value)
+  void setPointSize(float logicalValue)
   {
-    const float physicalSize = static_cast<float>(simVis::DevicePixelRatioUtils::toPhysical(value));
-    pointsNode_->getOrCreateStateSet()->getUniform("pointSize")->set(physicalSize);
+    pointsNode_->getOrCreateStateSet()->getUniform("pointSize")->set(logicalValue);
   }
 
   float getParticleAltitude() const
@@ -761,10 +760,10 @@ float VelocityParticleLayer::getPointSize() const
   return *_options->pointSize();
 }
 
-void VelocityParticleLayer::setPointSize(float value)
+void VelocityParticleLayer::setPointSize(float logicalSize)
 {
-  _options->pointSize() = value;
-  VPL_SET_NODE(setPointSize, value);
+  _options->pointSize() = logicalSize;
+  VPL_SET_NODE(setPointSize, logicalSize);
 }
 
 float VelocityParticleLayer::getDropChance() const
