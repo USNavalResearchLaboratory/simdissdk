@@ -66,18 +66,6 @@ static const std::string KEY_LEGEND = "Legend";
 
 //----------------------------------------------------------------------------
 
-/** Helper that returns the device pixel ratio for a given graphics context. */
-float getGraphicsContextDpr(const osg::GraphicsContext* gc)
-{
-#ifdef _WIN32
-  // Convert from DPI to a device pixel ratio, assuming 96 (default screen) DPI for 1.0
-  if (auto* win = dynamic_cast<const osgViewer::GraphicsWindowWin32*>(gc))
-    return GetDpiForWindow(win->getHWND()) / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
-  return GetDpiForSystem() / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
-#endif
-  return 1.f;
-}
-
 /** Contains vital parts of the application */
 struct HudApp
 {
@@ -107,7 +95,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     osgEarth::Registry::instance()->setDevicePixelRatioFunction([this](osg::GraphicsContext* gc)
       {
         if (autoDpr_)
-          app_.dpr = getGraphicsContextDpr(gc);
+          app_.dpr = simExamples::getGraphicsContextDpr(gc);
         return app_.dpr;
       });
 #endif
@@ -214,7 +202,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
 #if OSGEARTH_SOVERSION < 180
     // The callback handles this in newer osgEarth; we must manually do it here in older osgEarth
     if (autoDpr_)
-      app_.dpr = getGraphicsContextDpr(app_.mainView->getCamera()->getGraphicsContext());
+      app_.dpr = simExamples::getGraphicsContextDpr(app_.mainView->getCamera()->getGraphicsContext());
     osgEarth::Registry::instance()->setDevicePixelRatio(app_.dpr);
 #endif
 
@@ -365,6 +353,7 @@ int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
   osg::ArgumentParser arguments(&argc, argv);
+  simExamples::enableHighDpiSupport();
   simExamples::configureSearchPaths();
 
   // initialize a SIMDIS viewer and load a planet.
@@ -372,7 +361,7 @@ int main(int argc, char** argv)
   app.viewer = new simVis::Viewer(arguments);
   app.viewer->setMap(simExamples::createDefaultExampleMap());
   app.mainView = app.viewer->getMainView();
-  app.dpr = getGraphicsContextDpr(app.mainView->getCamera()->getGraphicsContext());
+  app.dpr = simExamples::getGraphicsContextDpr(app.mainView->getCamera()->getGraphicsContext());
 
   // Create a mouse dispatcher for the HUD Editor
   simUtil::MouseDispatcher mouseDispatcher;
