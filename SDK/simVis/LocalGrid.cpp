@@ -349,9 +349,13 @@ public:
   {
     if (sizeM <= 0.0)
     {
-      setCount(0);
+      // Don't use DISPLAY_MASK_* values because the parent is managed by those
+      setNodeMask(0);
       return;
     }
+    // Turn on rendering since size is valid
+    setNodeMask(~0);
+
     const unsigned int numDivisions = prefs.gridsettings().numdivisions();
     const unsigned int numSubDivisions = prefs.gridsettings().numsubdivisions();
     const unsigned int numRings = osg::maximum(1u, (numDivisions + 1) * (numSubDivisions + 1));
