@@ -518,13 +518,24 @@ void simExamples::IdleClockCallback::operator()(osg::Node* node, osg::NodeVisito
 float simExamples::getGraphicsContextDpr(const osg::GraphicsContext* gc)
 {
 #ifdef _WIN32
+  static std::optional<float> s_LastDpr;
+
   // Convert from DPI to a device pixel ratio, assuming 96 (default screen) DPI for 1.0
   if (auto* win = dynamic_cast<const osgViewer::GraphicsWindowWin32*>(gc))
   {
     const float windowValue = GetDpiForWindow(win->getHWND()) / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
     if (windowValue > 0.f)
+    {
+      s_LastDpr = windowValue;
       return windowValue;
+    }
   }
+
+  // Return the last determined DPR before falling back to system DPR, which is unchanging.
+  // This is done for cases where nullptr is passed in, e.g. with DevicePixelRatioUtils.
+  if (!gc && s_LastDpr.has_value())
+    return *s_LastDpr;
+
   const float systemValue = GetDpiForSystem() / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
   if (systemValue > 0.f)
     return systemValue;

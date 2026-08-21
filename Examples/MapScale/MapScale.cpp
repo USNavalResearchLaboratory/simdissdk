@@ -68,7 +68,6 @@ public:
     if (!isVisible())
       return;
 
-    ImGui::GetIO().FontGlobalScale = simVis::DevicePixelRatioUtils::getDpr();
     ImGui::SetNextWindowPos(ImVec2(5, 25), ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
@@ -324,6 +323,7 @@ int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
   osg::ArgumentParser arguments(&argc, argv);
+  simExamples::enableHighDpiSupport();
   simExamples::configureSearchPaths();
 
   // initialize a SIMDIS viewer and load a planet.

@@ -165,8 +165,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
 
     bool dprChanged = false; // Track if the user touches the DPR controls
 
-    ImGui::GetIO().FontGlobalScale = app_.dpr;
-    ImGui::SetNextWindowPos(ImVec2(5 * app_.dpr, 25 * app_.dpr), ImGuiCond_Once);
+    ImGui::SetNextWindowPos(ImVec2(5, 25), ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("1 : Move 'Demo Text' to the mouse position");
