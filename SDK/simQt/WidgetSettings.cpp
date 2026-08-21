@@ -109,8 +109,8 @@ int WidgetSettings::saveQTreeView_(simQt::Settings& settings, const QString& pat
 
     if (view->isSortingEnabled())
     {
-      settings.setValue(path + SORT_COLUMN, view->header()->sortIndicatorSection());
-      settings.setValue(path + SORT_ORDER, static_cast<int>(view->header()->sortIndicatorOrder()));
+      settings.setValue(path + SORT_COLUMN, view->header()->sortIndicatorSection(), simQt::Settings::MetaData::makeInteger(QVariant(), "", simQt::Settings::PRIVATE));
+      settings.setValue(path + SORT_ORDER, static_cast<int>(view->header()->sortIndicatorOrder()), simQt::Settings::MetaData::makeInteger(QVariant(), "", simQt::Settings::PRIVATE));
     }
   }
 
