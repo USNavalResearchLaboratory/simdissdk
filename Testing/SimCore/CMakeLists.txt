@@ -17,6 +17,7 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
     CsvWriterTest.cpp
     DisModelsTest.cpp
     EMTest.cpp
+    FileFinderTest.cpp
     FileTest.cpp
     GarsTest.cpp
     GeoFenceTest.cpp
@@ -100,6 +101,7 @@ add_test(NAME SimCoreGogTest COMMAND SimCoreTests GogTest)
 add_test(NAME XmlWriterTest COMMAND SimCoreTests XmlWriterTest)
 add_test(NAME SimCoreFileTest COMMAND SimCoreTests FileTest)
 add_test(NAME DisModelsTest COMMAND SimCoreTests DisModelsTest)
+add_test(NAME FileFinderTest COMMAND SimCoreTests FileFinderTest ${SimCore_UnitTests_SOURCE_DIR}/TestDirectory)
 
 # Try to locate the correct file for the RCS test...
 set(FILE_LOCATIONS
