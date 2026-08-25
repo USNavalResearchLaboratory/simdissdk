@@ -49,7 +49,8 @@ enum NavMode
   NAVMODE_CENTERVIEW,
   NAVMODE_GIS,
   NAVMODE_BUILDER,
-  NAVMODE_NGTS
+  NAVMODE_NGTS,
+  NAVMODE_PLANAR
 };
 
 /// A camera viewpoint configuration
