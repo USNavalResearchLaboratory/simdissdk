@@ -307,8 +307,7 @@ void TimeTicks::addUpdate_(double tickTime)
     text->setAlignment(osgText::TextBase::RIGHT_BOTTOM);
     text->setBackdropType(osgText::Text::DROP_SHADOW_BOTTOM_RIGHT);
 
-    // SIM-20045: This needs to scale based on simVis::osgFontSize()
-    simVis::DpiTextScalingCallback::install(*text, timeTicks.labelfontpointsize());
+    simVis::DpiTextScalingCallback::install(*text, simVis::osgFontSize(timeTicks.labelfontpointsize()));
 
     text->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_LABEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
     osg::Depth* noDepthTest = new osg::Depth(osg::Depth::ALWAYS, 0, 1, false);
