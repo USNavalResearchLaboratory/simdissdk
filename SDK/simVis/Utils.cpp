@@ -1787,9 +1787,10 @@ void FilteringOsgNotifyDecorator::addFilter(const std::string& filter)
 
 void FilteringOsgNotifyDecorator::notify(osg::NotifySeverity severity, const char* message)
 {
+#ifdef WIN32
   // Convert message to std::string for easier manipulation
   std::string msg(message);
-  // Check if the message contains the specific error
+  // SIM-18144 details issues with 571. - 573. drivers on Windows; check if the message contains the specific error
   for (const auto& filter : filters_)
   {
     if (msg.contains(filter))
@@ -1804,8 +1805,8 @@ void FilteringOsgNotifyDecorator::notify(osg::NotifySeverity severity, const cha
       // suppress anything else
       return;
     }
-
   }
+#endif
   child_->notify(severity, message);
 }
 
