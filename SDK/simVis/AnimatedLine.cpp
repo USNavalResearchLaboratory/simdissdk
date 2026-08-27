@@ -485,18 +485,18 @@ void AnimatedLineNode::update_(double t)
   if (numShifts >= 1.0)
   {
     // note: lines are tessellated end-to-start,
-    // so we bit-shift in the opposite direction to achieve
-    // proper stippling direction.
+    // but to match osgEarth's default shader stipple direction,
+    // we swap the bit-shift directions here.
     const unsigned short bits = shortRound(numShifts);
     if (shiftsPerSecond_ > 0.0)
     {
-      rol(stipple1_, bits);
-      rol(stipple2_, bits);
+      ror(stipple1_, bits);
+      ror(stipple2_, bits);
     }
     else
     {
-      ror(stipple1_, bits);
-      ror(stipple2_, bits);
+      rol(stipple1_, bits);
+      rol(stipple2_, bits);
     }
 
     firstHalf_.line1->setStipplePattern(stipple1_);
