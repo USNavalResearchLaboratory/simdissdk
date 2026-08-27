@@ -302,11 +302,11 @@ void Capabilities::checkVendorOpenGlSupport_(const std::string& vendor, const st
       return;
     }
 #endif
-    // testing indicates that 304.125 and most drivers > 340 work; SIM-18144 details issues with 571. - 573. drivers
-    // as of 2025-06, all known drivers >= 571 have memory leak issues; revisit before SR18 to see if newer nVidia are free of issues.
-    const bool usable = (nVidiaMajor == 304 && nVidiaMinor >= 125) || (nVidiaMajor >= 340 && nVidiaMajor < 571);
+    // testing indicates that 304.125 and most drivers > 340 work
+    const bool usable = (nVidiaMajor == 304 && nVidiaMinor >= 125) || (nVidiaMajor >= 340);
     if (usable)
       return;
+
     // testing indicates that: nvidia 331 drivers were not usable, most drivers <= 340 had issues
     const bool unusable = (nVidiaMajor == 331);
     recordUsabilityConcern_((unusable ? UNUSABLE : USABLE_WITH_ARTIFACTS), osgEarth::Stringify() << "nVidia driver version " << nVidiaMajor << "." << nVidiaMinor);
