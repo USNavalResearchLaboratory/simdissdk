@@ -21,6 +21,7 @@
  *
  */
 #include <iostream>
+#include <sstream>
 #include "simCore/Calc/Angle.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/EM/AntennaPattern.h"
@@ -709,6 +710,77 @@ int testMaximumUnambiguousRange()
   return rv;
 }
 
+int testBeamWidthAntennaPattern()
+{
+  int rv = 0;
+  std::cout << "  testBeamWidthAntennaPattern..." << std::endl;
+
+  // Create a dummy stream that mimics a Type 1 (Beamwidth) Antenna Table file
+  const std::string BEAMWIDTH_ANTENNA_FILE = R"(// Dummy Type 1 (beamwidth) antenna pattern table
+1 1      // Type 1, Symmetry 1
+5        // 5 data points
+0.0   0.0
+0.5  -3.0
+1.0 -10.0
+1.5 -20.0
+2.0 -30.0
+)";
+  std::stringstream ss(BEAMWIDTH_ANTENNA_FILE);
+
+  simCore::AntennaPatternTable apt;
+  const int readStat = apt.readPat(ss);
+
+  rv += SDK_ASSERT(readStat == 0);
+  rv += SDK_ASSERT(apt.valid());
+
+  // Set up parameters: 0.1 rad beamwidths, 10.0 dB reference gain
+  simCore::AntennaGainParameters params;
+  params.hbw_ = 0.1f;
+  params.vbw_ = 0.1f;
+  params.refGain_ = 10.0f;
+
+  // Unweighted, exact match
+  // 0.05 rad / 0.1 hbw = 0.5 BW on azim axis
+  // 0.0 rad  / 0.1 vbw = 0.0 BW on elev axis
+  params.azim_ = 0.05f;
+  params.elev_ = 0.0f;
+  params.weighting_ = false;
+  float gain = apt.gain(params);
+  // Math: az_gain(at 0.5) = -3.0. el_gain(at 0.0) = 0.0
+  // Unweighted formula: refGain + (az_gain + el_gain) / 2
+  // 10.0 + (-3.0 + 0.0) / 2 = 8.5 dB
+  rv += SDK_ASSERT(simCore::areEqual(gain, 8.5f, 1e-4f));
+
+  // Weighted, exact match
+  // With 0.5 BW azim and 0.0 BW elev, radius (phi) = 0.5
+  params.weighting_ = true;
+  gain = apt.gain(params);
+  // Math: phi = 0.5. Lookup both axes at phi (0.5) -> -3.0 for both
+  // Weighted formula (when hbw == vbw): refGain + (az_gain + el_gain) / 2
+  // 10.0 + (-3.0 + -3.0) / 2 = 7.0 dB
+  rv += SDK_ASSERT(simCore::areEqual(gain, 7.0f, 1e-4f));
+
+  // Unweighted Interpolation
+  // 0.075 rad / 0.1 hbw = 0.75 BW on azim axis
+  params.azim_ = 0.075f;
+  params.elev_ = 0.0f;
+  params.weighting_ = false;
+  gain = apt.gain(params);
+  // Math: az_gain = interp(-3.0 to -10.0 at 0.75) = -6.5. el_gain = 0.0
+  // 10.0 + (-6.5 + 0.0) / 2 = 6.75 dB
+  rv += SDK_ASSERT(simCore::areEqual(gain, 6.75f, 1e-4f));
+
+  // Out of bounds query
+  // 0.25 rad / 0.1 hbw = 2.5 BW on azim axis (exceeds table max of 2.0 BW)
+  params.azim_ = 0.25f;
+  gain = apt.gain(params);
+  // Math: gainAtAngle fails to find a valid bounds so it returns SMALL_DB_VAL (-300.f)
+  // calculateGain bubbles that up if any axis fails
+  rv += SDK_ASSERT(simCore::areEqual(gain, simCore::SMALL_DB_VAL));
+
+  return rv;
+}
+
 }
 
 int EMTest(int argc, char* argv[])
@@ -723,6 +795,7 @@ int EMTest(int argc, char* argv[])
   rv += testLossToPpf();
   rv += antennaPatternTest(argc, argv);
   rv += testMaximumUnambiguousRange();
+  rv += testBeamWidthAntennaPattern();
 
   std::cout << "EMTests " << ((rv == 0) ? "Passed" : "Failed") << std::endl;
 

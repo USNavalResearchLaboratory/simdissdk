@@ -588,7 +588,8 @@ float calculateGain(const std::map<float, float> *azimData,
   float hbw,
   float vbw,
   float maxGain,
-  bool applyWeight)
+  bool applyWeight,
+  bool isBeamwidthType)
 {
   if (!azimData || azimData->empty() || !elevData || elevData->empty())
     return SMALL_DB_VAL;
@@ -607,10 +608,14 @@ float calculateGain(const std::map<float, float> *azimData,
 
   if (!applyWeight)
   {
-    const float az_gain = gainAtAngle(static_cast<float>(azim), *azimData);
+    // If table is beamwidths, divide by hbw/vbw. Otherwise, use exact az/el
+    const float azQuery = isBeamwidthType ? static_cast<float>(azim / hbw) : static_cast<float>(azim);
+    const float elQuery = isBeamwidthType ? static_cast<float>(elev / vbw) : static_cast<float>(elev);
+
+    const float az_gain = gainAtAngle(azQuery, *azimData);
     if (az_gain == SMALL_DB_VAL)
       return SMALL_DB_VAL;
-    const float el_gain = gainAtAngle(static_cast<float>(elev), *elevData);
+    const float el_gain = gainAtAngle(elQuery, *elevData);
     if (el_gain == SMALL_DB_VAL)
       return SMALL_DB_VAL;
 
@@ -635,13 +640,25 @@ float calculateGain(const std::map<float, float> *azimData,
   if (!applyWeight)
     return gain;
 
-  const double azim_ang = (azim < 0) ? sdkMax(-1 * phi * hbw, -M_PI) : sdkMin(phi * hbw, M_PI);
-  const float az_gain = gainAtAngle(static_cast<float>(azim_ang), *azimData);
+  // Determine the correct query angle, differs based on isBeamwidthType
+  double azimQuery = 0.;
+  double elevQuery = 0.;
+  if (isBeamwidthType)
+  {
+    azimQuery = (azim < 0) ? -phi : phi;
+    elevQuery = (elev < 0) ? -phi : phi;
+  }
+  else
+  {
+    azimQuery = (azim < 0) ? sdkMax(-phi * hbw, -M_PI) : sdkMin(phi * hbw, M_PI);
+    elevQuery = (elev < 0) ? sdkMax(-phi * vbw, -M_PI_2) : sdkMin(phi * vbw, M_PI_2);
+  }
+
+  const float az_gain = gainAtAngle(static_cast<float>(azimQuery), *azimData);
   if (az_gain == SMALL_DB_VAL)
     return SMALL_DB_VAL;
 
-  const double elev_ang = (elev < 0) ? sdkMax(-1 * phi * vbw, -M_PI_2) : sdkMin(phi * vbw, M_PI_2);
-  const float el_gain = gainAtAngle(static_cast<float>(elev_ang), *elevData);
+  const float el_gain = gainAtAngle(static_cast<float>(elevQuery), *elevData);
   if (el_gain == SMALL_DB_VAL)
     return SMALL_DB_VAL;
 
@@ -695,7 +712,8 @@ float AntennaPatternTable::gain(const AntennaGainParameters &params)
     params.hbw_,
     params.vbw_,
     params.refGain_,
-    params.weighting_);
+    params.weighting_,
+    beamWidthType_);
 }
 
 int AntennaPatternTable::readPat(std::istream& fp)
@@ -727,12 +745,12 @@ int AntennaPatternTable::readPat(std::istream& fp)
     SIM_ERROR << "Encountered invalid number for antenna pattern table type" << std::endl;
     return 1;
   }
-  if (!(type == 0))
+  if (type != 0 && type != 1)
   {
-    SIM_ERROR << "Only Antenna Table Type 0 is currently supported : \n";
+    SIM_ERROR << "Antenna Table Type must be 0 or 1 : " << type << std::endl;
     return 1;
   }
-  beamWidthType_ = false;
+  beamWidthType_ = (type != 0);
 
   int symmetry = 0;
   if (!isValidNumber(tmpvec[1], symmetry))
@@ -808,11 +826,6 @@ int AntennaPatternTable::readPat(std::istream& fp)
     }
   }
 
-  // SIM-19910: not correctly implementing the beamWidthType_ true / Antenna Table Type 1, in which angles are specified in units of beamwidth
-  // probably would need to convert from beamwidths to angles here. but beamwidth is a pref that can be changed.
-  if (beamWidthType_)
-    beamWidthType_ = false;
-
   const float m_pi_2 = static_cast<float>(M_PI_2);
 
   // The antenna symmetry value indicates the number of tables the user is going to provide.
@@ -826,24 +839,28 @@ int AntennaPatternTable::readPat(std::istream& fp)
     {
       for (const TablePair& pair : table[0])
       {
-        const float angFixPi = static_cast<float>(angFixPI(pair.first));
-        azimData_[angFixPi] = pair.second;
-        azimData_[-angFixPi] = pair.second;
+        const float key = beamWidthType_ ? pair.first : static_cast<float>(angFixPI(pair.first));
+        azimData_[key] = pair.second;
+        azimData_[-key] = pair.second;
 
-        // transfer only values within (-pi/2, pi/2) to elev table; do not clamp angle values outside of that into elev table.
-        if (angFixPi > -m_pi_2 && angFixPi < m_pi_2)
+        // if angles: transfer only values within (-pi/2, pi/2). if beamwidths: no bounds limit
+        if (beamWidthType_ || (key > -m_pi_2 && key < m_pi_2))
         {
-          elevData_[angFixPi] = pair.second;
-          elevData_[-angFixPi] = pair.second;
+          elevData_[key] = pair.second;
+          elevData_[-key] = pair.second;
         }
       }
-      // ensure that elev table gets entries for -M_PI_2 and M_PI_2, if those values exist
-      float azGainVal = gainAtAngle(m_pi_2, azimData_);
-      if (azGainVal != SMALL_DB_VAL)
-        elevData_[m_pi_2] = azGainVal;
-      azGainVal = gainAtAngle(-m_pi_2, azimData_);
-      if (azGainVal != SMALL_DB_VAL)
-        elevData_[-m_pi_2] = azGainVal;
+
+      if (!beamWidthType_)
+      {
+        // ensure that elev table gets entries for -M_PI_2 and M_PI_2, if those values exist
+        float azGainVal = gainAtAngle(m_pi_2, azimData_);
+        if (azGainVal != SMALL_DB_VAL)
+          elevData_[m_pi_2] = azGainVal;
+        azGainVal = gainAtAngle(-m_pi_2, azimData_);
+        if (azGainVal != SMALL_DB_VAL)
+          elevData_[-m_pi_2] = azGainVal;
+      }
     }
     break;
 
@@ -854,20 +871,19 @@ int AntennaPatternTable::readPat(std::istream& fp)
     {
       for (const TablePair& pair : table[0])
       {
-        const float azimFixPi = static_cast<float>(angFixPI(pair.first));
-        azimData_[azimFixPi] = pair.second;
+        const float key = beamWidthType_ ? pair.first : static_cast<float>(angFixPI(pair.first));
+        azimData_[key] = pair.second;
         // mirror missing data
-        azimData_[-azimFixPi] = pair.second;
+        azimData_[-key] = pair.second;
       }
       for (const TablePair& pair : table[1])
       {
-        const float elevFixPi = static_cast<float>(angFixPI(pair.first));
-        // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored
-        if (elevFixPi >= -m_pi_2 && elevFixPi <= m_pi_2)
+        const float key = beamWidthType_ ? pair.first : static_cast<float>(angFixPI(pair.first));
+        // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored (in angle mode)
+        if (beamWidthType_ || (key >= -m_pi_2 && key <= m_pi_2))
         {
-          elevData_[elevFixPi] = pair.second;
-          // mirror missing data
-          elevData_[-elevFixPi] = pair.second;
+          elevData_[key] = pair.second;
+          elevData_[-key] = pair.second;
         }
       }
     }
@@ -879,30 +895,30 @@ int AntennaPatternTable::readPat(std::istream& fp)
       for (const TablePair& pair : table[0])
       {
         // this table is supposed to contain the negative azim angle values, but not strictly enforced
-        const float azimFixPi = static_cast<float>(angFixPI(pair.first));
-        azimData_[azimFixPi] = pair.second;
+        const float key = beamWidthType_ ? pair.first : static_cast<float>(angFixPI(pair.first));
+        azimData_[key] = pair.second;
       }
       for (const TablePair& pair : table[1])
       {
         // this table is supposed to contain the positive azim angle values, but not strictly enforced
-        const float azimFixPi = static_cast<float>(angFixPI(pair.first));
-        azimData_[azimFixPi] = pair.second;
+        const float key = beamWidthType_ ? pair.first : static_cast<float>(angFixPI(pair.first));
+        azimData_[key] = pair.second;
       }
       for (const TablePair& pair : table[2])
       {
         // this table is supposed to contain the negative elev angle values, but not strictly enforced
-        const float elevFixPi = static_cast<float>(angFixPI(pair.first));
-        // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored
-        if (elevFixPi >= -m_pi_2 && elevFixPi <= m_pi_2)
-          elevData_[elevFixPi] = pair.second;
+        const float key = beamWidthType_ ? pair.first : static_cast<float>(angFixPI(pair.first));
+        // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored (in angle mode)
+        if (beamWidthType_ || (key >= -m_pi_2 && key <= m_pi_2))
+          elevData_[key] = pair.second;
       }
       for (const TablePair& pair : table[3])
       {
         // this table is supposed to contain the positive elev angle values, but not strictly enforced
-        const float elevFixPi = static_cast<float>(angFixPI(pair.first));
-        // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored
-        if (elevFixPi >= -m_pi_2 && elevFixPi <= m_pi_2)
-          elevData_[elevFixPi] = pair.second;
+        const float key = beamWidthType_ ? pair.first : static_cast<float>(angFixPI(pair.first));
+        // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored (in angle mode)
+        if (beamWidthType_ || (key >= -m_pi_2 && key <= m_pi_2))
+          elevData_[key] = pair.second;
       }
     }
     break;
@@ -997,7 +1013,8 @@ float AntennaPatternRelativeTable::gain(const AntennaGainParameters &params)
     params.hbw_,
     params.vbw_,
     params.refGain_,
-    params.weighting_);
+    params.weighting_,
+    false);
 }
 
 int AntennaPatternRelativeTable::readPat_(std::istream& fp)
@@ -2170,6 +2187,7 @@ float AntennaPatternNSMA::gain(const AntennaGainParameters &params)
       halfPowerBeamWidth_,
       halfPowerBeamWidth_,
       midBandGain_ + params.refGain_,
+      false,
       false);
     break;
 
@@ -2183,6 +2201,7 @@ float AntennaPatternNSMA::gain(const AntennaGainParameters &params)
       halfPowerBeamWidth_,
       halfPowerBeamWidth_,
       midBandGain_ + params.refGain_,
+      false,
       false);
     break;
 
@@ -2196,6 +2215,7 @@ float AntennaPatternNSMA::gain(const AntennaGainParameters &params)
       halfPowerBeamWidth_,
       halfPowerBeamWidth_,
       midBandGain_ + params.refGain_,
+      false,
       false);
     break;
 
@@ -2208,6 +2228,7 @@ float AntennaPatternNSMA::gain(const AntennaGainParameters &params)
       halfPowerBeamWidth_,
       halfPowerBeamWidth_,
       midBandGain_ + params.refGain_,
+      false,
       false);
     break;
   }
