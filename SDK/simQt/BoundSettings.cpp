@@ -230,14 +230,31 @@ void BoundIntegerSetting::bindTo(QComboBox* comboBox, bool populateToolTip, bool
     {
       if (populateToolTip)
         comboBox->setToolTip(metaData.toolTip());
-      // Very limited use cases for this.  Must be enumeration and have strictly increasing valid values
       if (populateItems)
         populateCombo_(metaData, comboBox);
     }
   }
-  comboBox->setCurrentIndex(value());
-  connect(comboBox, qOverload<int>(&QComboBox::currentIndexChanged), this, &simQt::BoundIntegerSetting::setValue);
-  connect(this, &simQt::BoundIntegerSetting::valueChanged, comboBox, &QComboBox::setCurrentIndex);
+  int index = comboBox->findData(QVariant(value_)); // enum int is stored in combobox item data to support enums not starting at 0
+  if (index != -1)
+    comboBox->setCurrentIndex(index);
+
+  connect(comboBox, qOverload<int>(&QComboBox::currentIndexChanged), this, [this, comboBox](int index) {
+    QVariant data = comboBox->currentData();
+    this->setValue(data.toInt());
+  });
+
+  connect(this, &simQt::BoundIntegerSetting::valueChanged, comboBox, [this, comboBox](const QVariant &value) {
+    int index = comboBox->findData(value);
+    if (index != -1)
+    {
+      comboBox->setCurrentIndex(index);
+    }
+    else
+    {
+      SIM_ERROR << "Unable to assign combo box index for " << this->variableName_.toStdString()
+        << ", due to value (" << value.toString().toStdString() << ") not being found." << std::endl;
+    }
+    });
 }
 
 void BoundIntegerSetting::bindTo(QSpinBox* spinBox, bool populateToolTip, bool populateLimits)
@@ -308,21 +325,10 @@ int BoundIntegerSetting::populateCombo_(const Settings::MetaData& metaData, QCom
     return 1;
   }
 
-  // Must start with 0 and end with numItems-1; implies integral order
-  int firstItem = enumValues.begin().key();
-  int lastItem = (--enumValues.end()).key();
-  if (firstItem != 0 || lastItem != enumValues.size() - 1)
-  {
-    SIM_ERROR << "Unable to populate combo box for " << variableName_.toStdString()
-      << ", enumeration values not strictly increasing from 0." << std::endl;
-    return 1;
-  }
-
   // At this point we can clear out the values and add our own
   comboBox->clear();
-  auto values = enumValues.values();
-  for (auto it = values.begin(); it != values.end(); ++it)
-    comboBox->addItem(*it);
+  for (auto it = enumValues.constBegin(); it != enumValues.constEnd(); ++it)
+    comboBox->addItem(it.value(), QVariant(it.key())); // enum int is stored in combobox item data to support enums not starting at 0
   return 0;
 }
 
