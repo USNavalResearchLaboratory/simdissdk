@@ -21,6 +21,7 @@
  *
  */
 #include <cassert>
+#include "osg/NodeVisitor"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/PointDrawable"
 #include "simVis/Locator.h"
@@ -28,8 +29,76 @@
 #include "simVis/Utils.h"
 #include "simVis/TrackChunkNode.h"
 
+/**
+ * A bug has been identified but not yet patched in osgEarth that causes the bounding box
+ * for LineDrawable to be incorrect if you are pushing vertices constantly after initial
+ * build, especially with setFirst / setCount, which is used extensively here but rarely
+ * else in SIMDIS SDK. A quick proof of concept patch to fix the bug has been developed
+ * here in a place that won't have a larger performance or other impact. Remove this
+ * definition to remove the change, instead relying on LineDrawable::dirtyBound() directly.
+ *
+ * Without this change, then the inner geometry LineDrawable::_geom bounds are incorrect in
+ * many cases, including e.g. a radius of 0 even though there are additional points.
+ */
+#define SV_DIRTY_LINEDRAWABLE_INNER_GEOMETRY
+
 namespace simVis
 {
+
+namespace {
+
+#ifdef SV_DIRTY_LINEDRAWABLE_INNER_GEOMETRY
+
+/** Visitor to reach inside LineDrawable and steal a pointer to the private _geom, used for culling fix */
+struct HiddenGeomExtractor : public osg::NodeVisitor
+{
+  osg::ref_ptr<osg::Geometry> geom;
+
+  HiddenGeomExtractor()
+    : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN)
+  {
+  }
+
+  void apply(osg::Node& node) override
+  {
+    if (!geom)
+      geom = dynamic_cast<osg::Geometry*>(&node);
+    traverse(node);
+  }
+  void apply(osg::Drawable& drawable) override
+  {
+    if (!geom)
+      geom = drawable.asGeometry();
+  }
+};
+
+/** Simple function to directly access osgEarth::LineDrawable::_geom using a visitor */
+osg::ref_ptr<osg::Geometry> getHiddenGeom(osgEarth::LineDrawable* ld)
+{
+  if (!ld)
+    return {};
+  HiddenGeomExtractor extractor;
+  ld->traverse(extractor);
+  return extractor.geom;
+}
+#endif
+
+/** Marks the line drawable AND the geometry as dirty-bounded */
+void dirtyLineDrawable(osgEarth::LineDrawable* ld)
+{
+  if (!ld)
+    return;
+  ld->dirtyBound(); // Dirty the LineDrawable outer wrapper
+
+#ifdef SV_DIRTY_LINEDRAWABLE_INNER_GEOMETRY
+  auto geom = getHiddenGeom(ld);
+  if (geom)
+    geom->dirtyBound(); // Clear the stuck internal cache bounds
+#endif
+}
+
+}
+
 TrackPointsChunk::TrackPointsChunk(unsigned int maxSize)
   : maxSize_(maxSize)
 {
@@ -331,23 +400,27 @@ void TrackChunkNode::updatePrimitiveSets_()
   {
     centerPoints_->setFirst(offset_);
     centerPoints_->setCount(count_);
+    centerPoints_->dirtyBound();
     return;
   }
 
   // center line is always drawn in all other cases
   centerLine_->setFirst(offset_);
   centerLine_->setCount(count_);
+  dirtyLineDrawable(centerLine_.get());
 
   if (mode_ == simData::TrackPrefs::Mode::BRIDGE)
   {
     drop_->setFirst(2*offset_);
     drop_->setCount(2*count_);
+    dirtyLineDrawable(drop_.get());
   }
   else if (mode_ == simData::TrackPrefs::Mode::RIBBON)
   {
     // TODO: fix for the first segment, which only has 2 instead of 6.
     ribbon_->setFirst(6*offset_);
     ribbon_->setCount(6*count_);
+    dirtyLineDrawable(ribbon_.get());
   }
 }
 
@@ -363,6 +436,8 @@ void TrackChunkNode::fixGraphicsAfterRemoval_()
     // reset verts that linked to a previous point that has been removed
     ribbon_->setVertex(6 * offset_, ribbon_->getVertex(6*offset_+1));
     ribbon_->setVertex(6 * offset_ + 2, ribbon_->getVertex(6*offset_+3));
+
+    dirtyLineDrawable(ribbon_.get());
   }
 }
 
