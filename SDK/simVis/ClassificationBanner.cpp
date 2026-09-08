@@ -73,7 +73,7 @@ ClassificationLabelNode::ClassificationLabelNode()
   setFontResolution(res, res);
 
   setCharacterSize(simVis::osgFontSize(24.f));
-  setAxisAlignment(osgText::TextBase::SCREEN);
+  setAxisAlignment(osgText::TextBase::XY_PLANE);
   setBackdropType(osgText::Text::OUTLINE);
   setBackdropColor(osg::Vec4f(0.f, 0.f, 0.f, 1.f));
   setBackdropOffset(OUTLINE_THICKNESS);

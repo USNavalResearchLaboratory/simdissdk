@@ -66,6 +66,7 @@
 #include "simCore/String/Format.h"
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Registry.h"
@@ -1729,7 +1730,11 @@ osg::Matrixd PixelScaleHudTransform::computeMatrix_(osg::NodeVisitor* nv) const
 {
   osg::CullStack* cs = nv ? nv->asCullStack() : nullptr;
   if (cs)
-    invertedMvpw_ = osg::Matrix::inverse(*cs->getMVPW());
+  {
+    const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+    // Scale logical coordinates up to physical pixels before applying the inverse MVPW
+    invertedMvpw_ = osg::Matrixd::scale(dpr, dpr, 1.0) * osg::Matrix::inverse(*cs->getMVPW());
+  }
   return invertedMvpw_;
 }
 
