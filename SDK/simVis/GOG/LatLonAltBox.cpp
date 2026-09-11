@@ -25,7 +25,6 @@
 #include "osgEarth/GeometryCompiler"
 #include "osgEarth/FeatureNode"
 #include "simCore/Calc/Angle.h"
-#include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/GOG/GogShape.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/LoaderUtils.h"
@@ -81,8 +80,7 @@ GogNodeInterface* LatLonAltBox::createLatLonAltBox(const simCore::GOG::LatLonAlt
   osgEarth::Angle maxLon(llab.east() * simCore::RAD2DEG, Units::DEGREES);
   osgEarth::Distance minAlt(llab.altitude(), Units::METERS);
 
-  double height = 0.;
-  llab.getHeight(height);
+  const double height = llab.getHeight().value_or(0.);
   osgEarth::Distance maxAlt(height + llab.altitude(), Units::METERS);
 
 
@@ -96,9 +94,7 @@ GogNodeInterface* LatLonAltBox::createLatLonAltBox(const simCore::GOG::LatLonAlt
 
   Style style;
 
-  std::string vdatum;
-  llab.getVerticalDatum(vdatum);
-  osgEarth::SpatialReference* srs = LoaderUtils::getSrs(vdatum);
+  osgEarth::SpatialReference* srs = LoaderUtils::getSrs(llab.getVerticalDatum().value_or("wgs84"));
 
   GeoPoint minPoint(
     srs,
@@ -181,9 +177,7 @@ GogNodeInterface* LatLonAltBox::createLatLonAltBox(const simCore::GOG::LatLonAlt
   }
 
   // An unfilled LLB should be drawn as lines, so remove any conflicting symbology
-  bool filled = false;
-  llab.getIsFilled(filled);
-  if (!filled)
+  if (!llab.getIsFilled().value_or(false))
     style.remove<PolygonSymbol>();
 
   Feature* featureBottom = new Feature(linesBottom, srs, style);

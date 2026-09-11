@@ -79,14 +79,15 @@ public:
   /// Returns the last LLA point in degrees and absolute altitude in meters that the mouse moved to
   osgEarth::GeoPoint lastLLA() const;
   /**
-  * Fills in the last cached x and y mouse coordinates. units are screen coordinates or 0.0 if the mouse has not yet entered the screen
-  * 0,0 is the lower left corner
-  */
+   * Fills in the last cached x and y mouse coordinates. Units are physical screen pixels,
+   * or 0.0 if the mouse has not yet entered the screen. To convert to UI-safe logical
+   * pixels, divide by simVis::DevicePixelRatioUtils::getDpr(). 0,0 is the lower left corner.
+   */
   void getLastXY(float& lastX, float& lastY) const;
 
-  /// Returns an LLA point in degrees and absolute altitude in meters based on the mouse x,y point passed in or -DBL_MAX if the point is off the globe
+  /// Returns an LLA point in degrees and absolute altitude in meters based on the physical mouse x,y point passed in or -DBL_MAX if the point is off the globe
   osgEarth::GeoPoint getLLA(float mx, float my, bool queryElevation) const;
-  /// Returns an LLA point in degrees and absolute altitude in meters based on the cached lastMouseX_,lastMouseY_ point or -DBL_MAX if the point is off the globe
+  /// Returns an LLA point in degrees and absolute altitude in meters based on the cached physical lastMouseX_,lastMouseY_ point or -DBL_MAX if the point is off the globe
   osgEarth::GeoPoint getLLA(bool queryElevation) const;
   /// Adds a listener for mouse over lat long events
   void addListener(Listener* listener, bool queryElevation);

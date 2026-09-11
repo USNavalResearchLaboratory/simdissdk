@@ -485,18 +485,18 @@ void AnimatedLineNode::update_(double t)
   if (numShifts >= 1.0)
   {
     // note: lines are tessellated end-to-start,
-    // so we bit-shift in the opposite direction to achieve
-    // proper stippling direction.
+    // but to match osgEarth's default shader stipple direction,
+    // we swap the bit-shift directions here.
     const unsigned short bits = shortRound(numShifts);
     if (shiftsPerSecond_ > 0.0)
     {
-      rol(stipple1_, bits);
-      rol(stipple2_, bits);
+      ror(stipple1_, bits);
+      ror(stipple2_, bits);
     }
     else
     {
-      ror(stipple1_, bits);
-      ror(stipple2_, bits);
+      rol(stipple1_, bits);
+      rol(stipple2_, bits);
     }
 
     firstHalf_.line1->setStipplePattern(stipple1_);
@@ -672,9 +672,8 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
       const double alt = lla1.alt() + percentOfFull * (lla2.alt() - lla1.alt());
 
       // Convert back to ECEF and add the vertex
-      simCore::Vec3 ecefPos;
-      simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt), ecefPos);
-      verts->push_back(osg::Vec3f(ecefPos.x(), ecefPos.y(), ecefPos.z()) - zeroPoint);
+      simCore::Vec3 ecefPosVec = simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt));
+      verts->push_back(osg::Vec3f(ecefPosVec.x(), ecefPosVec.y(), ecefPosVec.z()) - zeroPoint);
     }
 
 
@@ -703,9 +702,8 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
       const double alt = lla1.alt() + percentOfFull * (lla2.alt() - lla1.alt());
 
       // Convert back to ECEF and add the vertex
-      simCore::Vec3 ecefPos;
-      simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt), ecefPos);
-      verts->push_back(osg::Vec3f(ecefPos.x(), ecefPos.y(), ecefPos.z()) - zeroPoint);
+      simCore::Vec3 ecefPosVec = simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt));
+      verts->push_back(osg::Vec3f(ecefPosVec.x(), ecefPosVec.y(), ecefPosVec.z()) - zeroPoint);
     }
 
     // Finish up

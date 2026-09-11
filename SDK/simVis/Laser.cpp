@@ -116,7 +116,7 @@ void LaserNode::updateLabel_(const simData::LaserPrefs& prefs)
 
   std::string text;
   if (prefs.commonprefs().labelprefs().draw())
-    text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
+    text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields(), LabelContentCallback::TextType::DISPLAY);
 
   if (!text.empty())
   {
@@ -142,7 +142,7 @@ std::string LaserNode::popupText() const
         prefix = getEntityName(EntityNode::ALIAS_NAME);
       prefix += "\n";
     }
-    return prefix + labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+    return prefix + labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields(), LabelContentCallback::TextType::HOVER);
   }
 
   return "";
@@ -151,14 +151,14 @@ std::string LaserNode::popupText() const
 std::string LaserNode::hookText() const
 {
   if (hasLastUpdate_ && hasLastPrefs_)
-    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields(), LabelContentCallback::TextType::HOOK);
   return "";
 }
 
 std::string LaserNode::legendText() const
 {
   if (hasLastUpdate_ && hasLastPrefs_)
-    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
+    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields(), LabelContentCallback::TextType::LEGEND);
   return "";
 }
 

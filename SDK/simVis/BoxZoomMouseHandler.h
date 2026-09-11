@@ -104,10 +104,11 @@ protected:
 
   /** Overrides from BoxMouseHandler */
   bool validateView_(const simVis::View& view) const override;
+  /** Expects logical coordinates */
   void processGeometry_(double originX, double originY, double widthPixels, double heightPixels) override;
 
 private:
-  /** Calculates an LLA GeoPoint based on the screen x and y coordinates provided. If the resulting GeoPoint is valid, it gets added to the provided points vector */
+  /** Calculates an LLA GeoPoint based on the screen x and y coordinates provided. If the resulting GeoPoint is valid, it gets added to the provided points vector; expects physical coords */
   void calculateGeoPointFromScreenXY_(double x, double y, simVis::View& view, osgEarth::SpatialReference* srs, std::vector<osgEarth::GeoPoint>& points) const;
   /** Retrieves the map node given a view */
   osgEarth::MapNode* mapNodeForView_(const simVis::View& view) const;

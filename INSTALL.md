@@ -21,7 +21,6 @@ Compilers officially supported by the SIMDIS SDK:
 
 * Windows compilers:
   - Microsoft Visual C++ 2026 (VC-14.5)
-  - Microsoft Visual C++ 2022 (VC-14.3)
 * Linux compilers:
   - GCC, with CXX20 ABI
 

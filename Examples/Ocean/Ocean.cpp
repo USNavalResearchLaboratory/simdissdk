@@ -783,6 +783,7 @@ int main(int argc, char** argv)
   // the end, to avoid osgEarth Linux crashes with HTTP static objects.
   {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
 
   // check for ocean and sky options.
   osg::ArgumentParser ap(&argc, argv);

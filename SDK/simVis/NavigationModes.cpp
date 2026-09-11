@@ -686,4 +686,69 @@ void NgtsNavigationMode::initPerspective_()
   bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON, 0, RotateOptions());
 }
 
+// ==========================================================================
+
+PlanarNavigationMode::PlanarNavigationMode(simVis::View* view, bool watchMode)
+{
+  init_(view, watchMode);
+}
+
+PlanarNavigationMode::~PlanarNavigationMode()
+{
+  if (view_.valid())
+  {
+    if (boxZoomLeftCtrl_.valid())
+      view_->removeEventHandler(boxZoomLeftCtrl_);
+    if (boxZoomMiddle_.valid())
+      view_->removeEventHandler(boxZoomMiddle_);
+  }
+}
+
+void PlanarNavigationMode::init_(simVis::View* view, bool watchMode)
+{
+  const bool canZoom = !watchMode;
+  view_ = view;
+
+  // left mouse + ctl+shift => box zoom (done with an external event handler)
+  if (canZoom && view_.valid())
+  {
+    EarthManipulator::ActionOptions boxZoomOpts;
+    boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
+    boxZoomOpts.add(EarthManipulator::OPTION_DURATION, 1.0);
+    // Single-click left mouse button and drag + ctrl: box zoom
+    boxZoomLeftCtrl_ = new BoxZoomMouseHandler(boxZoomOpts);
+    boxZoomLeftCtrl_->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+    boxZoomLeftCtrl_->setModKeyMask(osgGA::GUIEventAdapter::MODKEY_CTRL);
+    view_->addEventHandler(boxZoomLeftCtrl_);
+    // Single-click middle mouse button and drag: box zoom
+    boxZoomMiddle_ = new BoxZoomMouseHandler(boxZoomOpts);
+    boxZoomMiddle_->setButtonMask(osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON);
+    view_->addEventHandler(boxZoomMiddle_);
+  }
+
+  NavigationMode::GoToOptions goToOpt;
+  // Double-click left mouse button: center view
+  bindMouseDoubleClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, 0, goToOpt);
+  // Single-click left mouse button + ctrl: center view
+  bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_CTRL, goToOpt);
+  // Single-click middle mouse button: center view
+  bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON, 0, goToOpt);
+
+  // Zooming not permitted in watch mode
+  if (canZoom)
+  {
+    // scroll wheel => fixed zoom
+    NavigationMode::FixedZoomOptions fixedZoomOpt;
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, 0, fixedZoomOpt);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, 0, fixedZoomOpt);
+  }
+
+  // Scroll wheel + shift: pan east
+  bindScroll(EarthManipulator::ACTION_PAN_LEFT, osgGA::GUIEventAdapter::SCROLL_DOWN, osgGA::GUIEventAdapter::MODKEY_SHIFT);
+  bindScroll(EarthManipulator::ACTION_PAN_RIGHT, osgGA::GUIEventAdapter::SCROLL_UP, osgGA::GUIEventAdapter::MODKEY_SHIFT);
+  // Scroll wheel + ctrl: pan north 
+  bindScroll(EarthManipulator::ACTION_PAN_UP, osgGA::GUIEventAdapter::SCROLL_DOWN, osgGA::GUIEventAdapter::MODKEY_CTRL);
+  bindScroll(EarthManipulator::ACTION_PAN_DOWN, osgGA::GUIEventAdapter::SCROLL_UP, osgGA::GUIEventAdapter::MODKEY_CTRL);
+}
+
 }

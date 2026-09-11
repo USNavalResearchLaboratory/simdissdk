@@ -39,6 +39,7 @@
 #include "simData/DataTable.h"
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/PlatformFilter.h"
@@ -305,7 +306,9 @@ void TimeTicks::addUpdate_(double tickTime)
     text->setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
     text->setAlignment(osgText::TextBase::RIGHT_BOTTOM);
     text->setBackdropType(osgText::Text::DROP_SHADOW_BOTTOM_RIGHT);
-    text->setCharacterSize(timeTicks.labelfontpointsize());
+
+    simVis::DpiTextScalingCallback::install(*text, simVis::osgFontSize(timeTicks.labelfontpointsize()));
+
     text->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_LABEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
     osg::Depth* noDepthTest = new osg::Depth(osg::Depth::ALWAYS, 0, 1, false);
     text->getOrCreateStateSet()->setAttributeAndModes(noDepthTest, 1);

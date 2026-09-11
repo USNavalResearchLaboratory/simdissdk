@@ -32,11 +32,7 @@
 namespace simQt {
 
 FileSelectorWidget::FileSelectorWidget(QWidget* parent)
-  : QWidget(parent),
-    registryKey_("Private/file"),
-    label_(tr("File")),
-    browserTitle_(tr("Load Data File")),
-    customFileFilter_(tr("All Files (*)"))
+  : QWidget(parent)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -193,6 +189,7 @@ QString FileSelectorWidget::filename() const
 
 void FileSelectorWidget::loadButton_()
 {
+  // FileDialog will prepend "Private/" in both setRegistryDir() and save/loadFile()
   if (!defaultPath().isEmpty())
     simQt::FileDialog::setRegistryDir(registryKey_, defaultPath());
   QString file;

@@ -30,13 +30,12 @@
 #include "osgEarth/ImageLayer"
 #include "osgEarth/Map"
 #include "osgEarth/Version"
-#include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
-#include "simUtil/ExampleResources.h"
+#include "simCore/Common/Version.h"
+#include "simVis/DBFormat.h"
 #include "simVis/Viewer.h"
 #include "simVis/osgEarthVersion.h"
 #include "simUtil/ExampleResources.h"
-#include "simVis/DBFormat.h"
 
 int main(int argc, char** argv)
 {
@@ -48,6 +47,7 @@ int main(int argc, char** argv)
   }
 
   // Start by creating an empty map.
+  simExamples::enableHighDpiSupport();
   osg::ref_ptr<osgEarth::Map> map = new osgEarth::Map();
 
   for (int i = 1; i < argc; ++i)

@@ -24,6 +24,7 @@
 #define SIMCORE_CALC_COORDCONVERT_H
 
 #include <cassert>
+#include <optional>
 
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/CoordinateSystem.h"
@@ -522,6 +523,184 @@ namespace simCore
     */
     static void convertEcefToGeodeticAccel(const Vec3 &llaPos, const Vec3 &ecefAcc, Vec3 &llaAcc, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
 
+    // Modern overloads for convenience
+
+    /**
+    * @brief Perform coordinate conversions between the supported projections, velocity, acceleration & Euler are referenced to a NED system
+    * @param inCoord Coordinate value class that contains the position, orientation, velocity and acceleration data of the incoming projection system; when converting to/from ECI
+    * @param outSystem Flag that describes the outgoing projection system
+    * @return Converted coordinate on success, nullopt on failure
+    */
+    std::optional<Coordinate> convert(const Coordinate& inCoord, CoordinateSystem outSystem) const;
+
+    /**
+    * @brief Swaps input vector between NED and ENU systems
+    * @param inVec vector in the form of a NED or ENU system
+    * @return vector swapped to the opposite of the input (NED->ENU or ENU->NED)
+    */
+    static Vec3 swapNedEnu(const Vec3& inVec);
+
+    /**
+    * @brief Swaps input vector between NED and ENU systems
+    * @param inCoord Coordinate value to swap
+    * @return Swapped coordinate on success, nullopt on failure
+    */
+    static std::optional<Coordinate> swapNedEnu(const Coordinate& inCoord);
+
+    /**
+    * @brief Swaps input vector between NED and NWU systems
+    *
+    * Swaps input vector between NED and NWU systems
+    * @param inVec vector in the form of a NED or NWU system
+    * @return vector swapped to the opposite of the input (NED->NWU or NWU->NED)
+    */
+    static Vec3 swapNedNwu(const Vec3& inVec);
+
+    /**
+    * @brief Swaps input vector between NED and NWU systems
+    *
+    * Swaps input coordinate between NED and NWU systems
+    * @param inVec coordinate in the form of a NED or NWU system
+    * @return coordinate swapped to the opposite of the input (NED->NWU or NWU->NED) on success, nullopt on failure
+    */
+    static std::optional<Coordinate> swapNedNwu(const Coordinate& inCoord);
+
+    /**
+    * @brief Converts input ENU vector to a NWU vector
+    *
+    * Converts input ENU vector to a NWU vector
+    * @param inVec vector in the form of a ENU system
+    * @return vector swapped to a NWU system
+    */
+    static Vec3 convertEnuToNwu(const Vec3& inVec);
+
+    /**
+    * @brief Converts input ENU coordinate to a NWU coordinate
+    * @param inCoord coordinate in the form of a ENU system
+    * @return coordinate swapped to a NWU system on success, nullopt on failure
+    */
+    static std::optional<Coordinate> convertEnuToNwu(const Coordinate& inCoord);
+
+    /**
+    * @brief Converts input NWU vector to an ENU vector
+    *
+    * Converts input NWU vector to an ENU vector
+    * @param inVec vector in the form of a NWU system
+    * @return vector swapped to an ENU system
+    */
+    static Vec3 convertNwuToEnu(const Vec3& inVec);
+
+    /**
+    * @brief Converts input NWU vector to an ENU vector
+    *
+    * Converts input NWU vector to an ENU vector
+    * @param inCoord coordinate in the form of a NWU system
+    * @return coordinate swapped to an ENU system on success, nullopt on failure
+    */
+    static std::optional<Coordinate> convertNwuToEnu(const Coordinate& inCoord);
+
+    /**
+    * @brief Converts a geodetic coordinate to an Earth Centered Earth Fixed (ECEF) coordinate
+    *
+    * Converts a geodetic coordinate to an Earth Centered Earth Fixed (ECEF) coordinate
+    * @param inCoord Coordinate in geodetic to convert to ECEF
+    * @param localLevelFrame alignment of local geodetic horizon system (NED, ENU, NWU)
+    * @return Converted coordinate in ECEF on success, nullopt on failure
+    */
+    static std::optional<Coordinate> convertGeodeticToEcef(const Coordinate& inCoord, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
+
+    /**
+    * @brief Converts an Earth Centered Earth Fixed (ECEF) coordinate to a geodetic coordinate
+    *
+    * Converts a geodetic coordinate to an Earth Centered Earth Fixed (ECEF) coordinate
+    * @param inCoord coordinate in ECEF to be converted to ECEF
+    * @param localLevelFrame alignment of local geodetic horizon system (NED, ENU, NWU)
+    * @return Converted coordinate in geodetic on success, nullopt on failure
+    */
+    static std::optional<Coordinate> convertEcefToGeodetic(const Coordinate& inCoord, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
+
+    /**
+    * @brief Converts an Earth Centered Inertial (ECI) coordinate to an Earth Centered Earth Fixed (ECEF) coordinate
+    *
+    * Converts an Earth Centered Inertial (ECI) coordinate to an Earth Centered Earth Fixed (ECEF) coordinate
+    * @param inCoord Coordinate in ECI to be converted to ECEF
+    * @return Converted coordinate in ECEF on success, nullopt on failure
+    */
+    static std::optional<Coordinate> convertEciToEcef(const Coordinate& inCoord);
+
+    /**
+    * @brief Converts an Earth Centered Earth Fixed (ECEF) coordinate to an Earth Centered Inertial (ECI) coordinate
+    *
+    * Converts an Earth Centered Earth Fixed (ECEF) coordinate to an Earth Centered Inertial (ECI) coordinate
+    * @param inCoord Coordinate in ECEF to be converted to ECI
+    * @return Converted coordinate in ECI on success, nullopt on failure
+    */
+    static std::optional<Coordinate> convertEcefToEci(const Coordinate& inCoord);
+
+    /**
+    * @brief Converts a geodetic position to an Earth Centered Earth Fixed (ECEF) position
+    *
+    * Converts a geodetic position to an Earth Centered Earth Fixed (ECEF) position
+    * @param inPos latitude (rad), longitude (rad), altitude (m)
+    * @param semiMajor semi major Earth radius
+    * @param eccentricitySquared Earth eccentricity, squared
+    * @return Converted position vector in ECEF
+    */
+    static Vec3 convertGeodeticPosToEcef(const Vec3& inPos, double semiMajor = WGS_A, double eccentricitySquared = WGS_ESQ);
+
+    /**
+    * @brief Converts geodetic Euler angles to an Earth Centered Earth Fixed (ECEF) Euler orientation
+    *
+    * Converts geodetic Euler angles to an Earth Centered Earth Fixed (ECEF) Euler orientation
+    * @param inPos geodetic position
+    * @param inOri geodetic orientation
+    * @param localLevelFrame alignment of local geodetic horizon system (NED, ENU, NWU)
+    * @return Converted orientation vector in ECEF
+    */
+    static Vec3 convertGeodeticOriToEcef(const Vec3& llaPos, const Vec3& llaOri, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
+
+    /**
+    * @brief Converts an Earth Centered Earth Fixed (ECEF) position to geodetic
+    *
+    * Converts an Earth Centered Earth Fixed (ECEF) position to geodetic
+    * @param inPos ECEF Position vector to be converted to geodetic
+    * @return Converted geodetic position vector on success, nullopt on failure
+    */
+    static std::optional<Vec3> convertEcefToGeodeticPos(const Vec3& inPos);
+
+    /**
+    * @brief Converts an Earth Centered Earth Fixed (ECEF) orientation to geodetic
+    *
+    * Converts Earth Centered Earth Fixed (ECEF) orientation to geodetic Euler angles
+    * @param inPos geodetic position
+    * @param inOri ECEF orientation
+    * @param localLevelFrame alignment of local geodetic horizon system (NED, ENU, NWU)
+    * @return geodetic orientation
+    */
+    static Vec3 convertEcefToGeodeticOri(const Vec3& llaPos, const Vec3& ecefOri, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
+
+    /**
+    * @brief Converts an Earth Centered Earth Fixed (ECEF) velocity to geodetic
+    *
+    * Converts an Earth Centered Earth Fixed (ECEF) velocity to geodetic
+    * @param inPos geodetic position
+    * @param inVel ECEF velocity
+    * @param localLevelFrame alignment of local geodetic horizon system (NED, ENU, NWU)
+    * @return geodetic velocity
+    */
+    static Vec3 convertEcefToGeodeticVel(const Vec3& llaPos, const Vec3& ecefVel, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
+
+    /**
+    * @brief Converts an Earth Centered Earth Fixed (ECEF) acceleration to geodetic
+    *
+    * Converts Earth Centered Earth Fixed (ECEF) acceleration to geodetic
+    * @param inPos geodetic position
+    * @param inAccel ECEF acceleration
+    * @param localLevelFrame alignment of local geodetic horizon system (NED, ENU, NWU)
+    * @return geodetic acceleration
+    */
+    static Vec3 convertEcefToGeodeticAccel(const Vec3& llaPos, const Vec3& ecefAcc, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
+
   private: // data
     double latRadius_;                   /// radius of earth at reference  latitude (m)
     double lonRadius_;                   /// radius of earth at reference longitude (m)
@@ -659,7 +838,7 @@ namespace simCore
     * @param[out] gtpCoord generic (translated and rotated) tangent plane coordinate
     * @pre gtpCoord param valid and reference origin must be set
     */
-    void reverseTPOffsetRotate_(Coordinate &gtpCoord) const;
+    void reverseTPOffsetRotate_(Coordinate& gtpCoord) const;
   };
 
 } // End namespace simCore

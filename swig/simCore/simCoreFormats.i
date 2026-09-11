@@ -1,0 +1,4 @@
+////////////////////////////////////////////////
+// simCore/Formats
+%include "simCore/Formats/DisModels.h"
+

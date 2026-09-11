@@ -52,9 +52,7 @@ int GogToGeoFence::parse(std::istream& is, const std::string& gogFileName)
   for (const auto& shapePtr : shapes)
   {
     // Don't create a fence if the off keyword was found in this shape
-    bool draw = true;
-    shapePtr->getIsDrawn(draw);
-    if (!draw)
+    if (!shapePtr->getIsDrawn().value_or(true))
       continue;
 
     if (shapePtr->isRelative() ||
@@ -66,9 +64,7 @@ int GogToGeoFence::parse(std::istream& is, const std::string& gogFileName)
     }
 
     // parser seems to assign default names if no name provided so "no name" is unlikely
-    std::string name = "no name";
-    shapePtr->getName(name);
-
+    std::optional<std::string> name = shapePtr->getName();
 
     int rv = 0;
 
@@ -87,10 +83,10 @@ int GogToGeoFence::parse(std::istream& is, const std::string& gogFileName)
       // and last point match, with a total of 3 unique points.
       if (coordinates[0] != coordinates[coordinates.size() - 1] || coordinates.size() < 4)
       {
-        SIM_ERROR << "Fence \"" << name  << "\" is not closed. The first and last coordinates must be the same. This line shape will not act as an exclusion zone.\n";
+        SIM_ERROR << "Fence \"" << name.value_or("no name") << "\" is not closed. The first and last coordinates must be the same. This line shape will not act as an exclusion zone.\n";
         continue;
       }
-      rv = generateGeoFence_(name, coordinates);
+      rv = generateGeoFence_(name.value_or("no name"), coordinates);
     }
 
     else if (shapePtr->shapeType() == simCore::GOG::ShapeType::POLYGON)
@@ -104,21 +100,19 @@ int GogToGeoFence::parse(std::istream& is, const std::string& gogFileName)
       }
       // Coordinates do not need to be closed
       const Vec3String& coordinates = poly->points();
-      rv = generateGeoFence_(name, coordinates);
+      rv = generateGeoFence_(name.value_or("no name"), coordinates);
     }
 
     if (rv == 0)
     {
       // warn about altitude mode
-      simCore::GOG::AltitudeMode mode = simCore::GOG::AltitudeMode::NONE;
-      shapePtr->getAltitudeMode(mode);
-      if (mode == simCore::GOG::AltitudeMode::NONE)
+      if (shapePtr->getAltitudeMode().value_or(simCore::GOG::AltitudeMode::NONE) == simCore::GOG::AltitudeMode::NONE)
       {
-        SIM_DEBUG << "Added GOG \"" << name << "\" as geoFence.\n";
+        SIM_DEBUG << "Added GOG \"" << name.value_or("no name") << "\" as geoFence.\n";
       }
       else
       {
-        SIM_WARN << "GOG \"" << name << "\" added as a geoFence. The geofence will ignore the altitude mode.\n";
+        SIM_WARN << "GOG \"" << name.value_or("no name") << "\" added as a geoFence. The geofence will ignore the altitude mode.\n";
       }
     }
   }

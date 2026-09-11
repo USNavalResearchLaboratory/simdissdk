@@ -291,6 +291,7 @@ public:
 * @param[in ] vbw Vertical beam width of radar (rad), must be non-zero
 * @param[in ] maxGain Maximum (normalized) antenna gain (dB)
 * @param[in ] applyWeight Boolean toggle to apply weighting (true) to the antenna gain
+* @param[in ] isBeamwidthType Boolean toggle, val false: angles in radians, true: angles in beamwidth (m)
 * @return Antenna pattern gain (dB).
 */
 SDKCORE_EXPORT float calculateGain(const std::map<float, float> *azimData,
@@ -301,7 +302,8 @@ SDKCORE_EXPORT float calculateGain(const std::map<float, float> *azimData,
   float hbw,
   float vbw,
   float maxGain,
-  bool applyWeight);
+  bool applyWeight,
+  bool isBeamwidthType);
 
 // ----------------------------------------------------------------------------
 

@@ -156,7 +156,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
 
     static std::unique_ptr<simData::EnumerationText> names = simData::EnumerationText::makeIconRotationName();
     ImGui::SetNextWindowPos(ImVec2(5, 25), ImGuiCond_Once);
-    
+
     ImGui::SetNextWindowBgAlpha(.6f);
     ImGui::Begin(name(), visible(), ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -214,6 +214,7 @@ simUtil::SimulatorEventHandler* createSimulation(simUtil::PlatformSimulatorManag
 int main(int argc, char **argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   // set up the registry so the SDK can find platform models
   simExamples::configureSearchPaths();
 

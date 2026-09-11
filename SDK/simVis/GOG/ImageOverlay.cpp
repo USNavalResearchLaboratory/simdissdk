@@ -64,9 +64,7 @@ GogNodeInterface* ImageOverlay::createImageOverlay(const simCore::GOG::ImageOver
 
   GogMetaData metaData;
   auto* rv = new ImageOverlayInterface(imageNode, metaData);
-  double shapeOpacity = 1.;
-  imageOverlay.getOpacity(shapeOpacity);
-  rv->setOpacity(shapeOpacity);
+  rv->setOpacity(imageOverlay.getOpacity().value_or(1.));
   return rv;
 }
 

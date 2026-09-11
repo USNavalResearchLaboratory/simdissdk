@@ -54,9 +54,7 @@ GogNodeInterface* Points::createPoints(const simCore::GOG::Points& points, bool 
 
     if (!points.isRelative())
     {
-      std::string vdatum;
-      points.getVerticalDatum(vdatum);
-      osgEarth::SpatialReference* srs = LoaderUtils::getSrs(vdatum);
+      osgEarth::SpatialReference* srs = LoaderUtils::getSrs(points.getVerticalDatum().value_or("wgs84"));
       Feature* feature = new Feature(geom, srs, style);
 
       FeatureNode* featureNode = new FeatureNode(feature);

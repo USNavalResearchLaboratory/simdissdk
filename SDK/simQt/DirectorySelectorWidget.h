@@ -59,7 +59,13 @@ public:
   DirectorySelectorWidget(QWidget* parent=nullptr);
   virtual ~DirectorySelectorWidget();
 
-  /** Sets the registry key for saving/loading files; defaults to SETTINGS/file */
+  /**
+   * Sets the registry key for saving/loading files; defaults to "directory".
+   * All DirectorySelectorWidgets with the same registry key will open to the
+   * same location, and changing one will change the others.
+   * To prevent these keys from showing in the SIMDIS Settings dialog,
+   * "Private/" is prepended during operation.
+   */
   void setRegistryKey(const QString& regKey);
   /** Retrieves current registry key setting */
   QString registryKey() const;
@@ -119,18 +125,18 @@ private Q_SLOTS:
 
 private:
   Ui_DirectorySelectorWidget* ui_;
-  /** location for saving state information */
-  QString registryKey_;
+  /** Settings key for saving state information. Note that we don't need to prepend "Private/" because simQt::FileDialog handles it during processing */
+  QString registryKey_ = "directory";
   /** Default path string for the registry key (possibly empty) */
   QString defaultPath_;
   /** The optional label to the left */
-  QLabel* labelWidget_;
+  QLabel* labelWidget_ = nullptr;
   /** True means the label is included */
-  bool includeLabel_;
+  bool includeLabel_ = false;
   /** The Optional text to the left of the text field for the file name */
-  QString label_;
+  QString label_ = QObject::tr("Directory");
   /** The title for the file browser */
-  QString browserTitle_;
+  QString browserTitle_ = QObject::tr("Select Directory");
   /** Open directory button */
   QPushButton* openDirectoryButton_ = nullptr;
   /** Whether to show the open directory button */

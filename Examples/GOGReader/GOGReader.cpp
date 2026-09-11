@@ -482,6 +482,7 @@ int main(int argc, char** argv)
     std::cout << "Usage: example_gogreader <gogfiles...> [--attach] [--showElevation] [--mark] [--sky] [--iconFile <icon file>]" << std::endl;
     return 0;
   }
+  simExamples::enableHighDpiSupport();
 
   // Parse OpenSceneGraph standard arguments
   const bool sky = ap.read("--sky");
@@ -563,9 +564,9 @@ int main(int argc, char** argv)
         bool followRoll = false;
         if (const auto* shape = gogInterface->shapeObject())
         {
-          shape->getIsFollowingYaw(followYaw);
-          shape->getIsFollowingPitch(followPitch);
-          shape->getIsFollowingRoll(followRoll);
+          followYaw = shape->getIsFollowingYaw().value_or(false);
+          followPitch = shape->getIsFollowingPitch().value_or(false);
+          followRoll = shape->getIsFollowingRoll().value_or(false);
         }
 
         simVis::Locator* locator = new simVis::Locator(platform->getLocator(),

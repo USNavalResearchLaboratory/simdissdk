@@ -36,6 +36,7 @@
 #include "simCore/Calc/Calculations.h"
 #include "simNotify/Notify.h"
 
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
@@ -101,8 +102,9 @@ public:
 
     const float x = 0.0f;
     const float y = 0.0f;
-    const float w = vp->width() - 1.f;  // Offset width and height by 1 to avoid border problem
-    const float h = vp->height() - 1.f;
+    // Scale physical viewport bounds down to logical HUD space
+    const float w = simVis::DevicePixelRatioUtils::toLogical(vp->width() - 1.f);  // Offset width and height by 1 to avoid border problem
+    const float h = simVis::DevicePixelRatioUtils::toLogical(vp->height() - 1.f);
     const int t = props.thickness_;
 
     osg::ref_ptr<osg::Vec3Array> verts = static_cast<osg::Vec3Array*>(this->getDrawable(0)->asGeometry()->getVertexArray());
@@ -175,6 +177,18 @@ struct SetNearFarCallback : public osg::NodeCallback
   }
 private:
   osg::ref_ptr<osg::StateSet> depthState_;
+};
+
+/** Update callback to keep the oe_dpr uniform synchronized with the system DPR every frame */
+class DprUniformCallback : public osg::Uniform::Callback
+{
+public:
+  DprUniformCallback() = default;
+  void operator()(osg::Uniform* uniform, osg::NodeVisitor* nv) override
+  {
+    if (uniform)
+      uniform->set(static_cast<float>(simVis::DevicePixelRatioUtils::getDpr()));
+  }
 };
 
 } // namespace
@@ -588,6 +602,12 @@ View::View()
   root->setName("Scene Manager Root");
   osgViewer::View::setSceneData(root);
 
+  // osgEarth shaders require oe_dpr for scaling, and some SDK shaders also depend on this.
+  // We put it here to guarantee that it's always set on all insets and HUDs.
+  osg::ref_ptr<osg::Uniform> dprUniform = new osg::Uniform("oe_dpr", static_cast<float>(simVis::DevicePixelRatioUtils::getDpr()));
+  dprUniform->setUpdateCallback(new DprUniformCallback());
+  root->getOrCreateStateSet()->addUniform(dprUniform.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+
 #ifdef OSG_GL3_AVAILABLE
   // For GL3, Point Sprite is always on.  But the mode validity flags need to be configured
   // properly, and there is a bug in OSG 3.6.2 where mode validity flags are only initialized
@@ -940,6 +960,8 @@ simVis::View* View::getInsetByName(const std::string& name) const
 
 bool View::setExtents(const Extents& e)
 {
+  const double dpr = DevicePixelRatioUtils::getDpr();
+
   if (e.isRatio_)
   {
     simVis::View* host = getHostView();
@@ -954,6 +976,8 @@ bool View::setExtents(const Extents& e)
         const double nw = rvp->width() * e.width_;
         const double nh = rvp->height() * e.height_;
 
+        // Pass raw doubles. OSG will preserve them for aspect ratio math,
+        // and safely truncate them to GLints right before GPU execution.
         fixProjectionForNewViewport_(nx, ny, nw, nh);
       }
     }
@@ -965,31 +989,33 @@ bool View::setExtents(const Extents& e)
   }
   else
   {
-    fixProjectionForNewViewport_(e.x_, e.y_, e.width_, e.height_);
+    // Pass raw doubles here as well
+    fixProjectionForNewViewport_(e.x_ * dpr, e.y_ * dpr, e.width_ * dpr, e.height_ * dpr);
   }
 
-  // save a copy so we can adjust the viewport based on a resize event
+  // save a copy so we can adjust the viewport based on a resize event.
+  // we save the original logical/ratio extents, NOT physical ones.
   this->extents_ = e;
 
   // update the HUD
   const osg::Viewport* vp = this->getCamera()->getViewport();
   if (vp)
   {
-    getOrCreateHUD()->setViewport(static_cast<int>(vp->x()), static_cast<int>(vp->y()),
-      static_cast<int>(vp->width()), static_cast<int>(vp->height()));
-    getOrCreateHUD()->setProjectionMatrix(osg::Matrix::ortho2D(0, vp->width()-1, 0, vp->height()-1));
+    // Viewport remains physical pixels
+    getOrCreateHUD()->setViewport(vp->x(), vp->y(), vp->width(), vp->height());
+
+    // Projection becomes logical pixels
+    double logicalWidth = DevicePixelRatioUtils::toLogical(vp->width() - 1.0);
+    double logicalHeight = DevicePixelRatioUtils::toLogical(vp->height() - 1.0);
+    getOrCreateHUD()->setProjectionMatrix(osg::Matrix::ortho2D(0, logicalWidth, 0, logicalHeight));
   }
   // if we have a border node, update that too.
   if (borderNode_.valid() && vp)
-  {
     static_cast<BorderNode*>(borderNode_.get())->set(vp, borderProps_);
-  }
 
   // if we have inset views, refresh their extents now.
   for (InsetViews::iterator i = insets_.begin(); i != insets_.end(); ++i)
-  {
     i->get()->refreshExtents();
-  }
 
   fireCallbacks_(simVis::View::Callback::VIEW_EXTENT_CHANGE);
   return true;
@@ -1005,22 +1031,19 @@ void View::refreshExtents()
   setExtents(this->extents_);
 }
 
-void View::processResize(int width, int height)
+void View::processResize(int widthPhysical, int heightPhysical)
 {
   // each main view is responsible for resizing its insets in setExtents(), by iterating over and calling refreshExtents()
   if (viewType_ == VIEW_INSET || !getCamera())
     return;
 
-  // limit the resize processing to the main view that has same height/width as the event report
-  const osg::Viewport* vp = getCamera()->getViewport();
-
-  // this is the main view (or superhud) that the resize event was for. Make sure the width and height
-  // are positive values, else the projection and view matrix gets broken. This can happen in rare
-  // cases on Linux, NVIDIA driver, Qt 5.9 with osgQt, with external display on laptop where
-  // the external display is marked primary display. Since this is such a specific use case,
-  // it's hard to know if there are other cases where the problem shows up, so we just always
-  // force the width and height to be valid.
-  setExtents(Extents(this->extents_.x_, this->extents_.y_, simCore::sdkMax(1, width), simCore::sdkMax(1, height)));
+  // The width and height from the underlying graphics context are PHYSICAL pixels.
+  // We divide by DPR to store them as LOGICAL pixels in the Extents struct,
+  // which setExtents() will later multiply back to physical for the GL Viewport.
+  const float logicalWidth = DevicePixelRatioUtils::toLogical(widthPhysical);
+  const float logicalHeight = DevicePixelRatioUtils::toLogical(heightPhysical);
+  setExtents(Extents(this->extents_.x_, this->extents_.y_,
+    simCore::sdkMax(1.0f, logicalWidth), simCore::sdkMax(1.0f, logicalHeight)));
 }
 
 void View::setViewManager(simVis::ViewManager* viewman)
@@ -1507,6 +1530,8 @@ void View::setNavigationMode(const NavMode& mode)
     manip->applySettings(new BuilderNavigationMode(overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_NGTS)
     manip->applySettings(new NgtsNavigationMode(this, overheadEnabled_, watchEnabled_));
+  else if (mode == NAVMODE_PLANAR)
+    manip->applySettings(new PlanarNavigationMode(this, watchEnabled_));
 
   // Restore the retained settings
   manip->getSettings()->setArcViewpointTransitions(arcTransitions);
@@ -1948,8 +1973,13 @@ osg::Camera* View::createHUD_() const
 #endif
   if (vp)
   {
+    // Viewport remains physical pixels
     hud->setViewport(osg::clone(vp, osg::CopyOp::DEEP_COPY_ALL));
-    hud->setProjectionMatrix(osg::Matrix::ortho2D(0, vp->width() - 1, 0, vp->height() - 1));
+
+    // Projection becomes logical pixels
+    const double logicalWidth = DevicePixelRatioUtils::toLogical(vp->width() - 1.0);
+    const double logicalHeight = DevicePixelRatioUtils::toLogical(vp->height() - 1.0);
+    hud->setProjectionMatrix(osg::Matrix::ortho2D(0, logicalWidth, 0, logicalHeight));
   }
   else
   {

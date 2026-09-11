@@ -52,10 +52,17 @@ bool GogShape::isRelative() const
   return relative_;
 }
 
+std::optional<std::string> GogShape::getName() const
+{
+  return name_;
+}
+
 int GogShape::getName(std::string& name) const
 {
-  name = name_.value_or(shapeTypeToString(shapeType()));
-  return (name_.has_value() ? 0 : 1);
+  std::optional<std::string> optionalName = getName();
+  int rv = optionalName.has_value() ? 0 : 1;
+  name = getName().value_or(shapeTypeToString(shapeType()));
+  return rv;
 }
 
 void GogShape::setName(const std::string& gogName)
@@ -63,6 +70,11 @@ void GogShape::setName(const std::string& gogName)
   const std::string& cleanName = simCore::StringUtils::trim(gogName);
   if (!cleanName.empty())
     name_ = cleanName;
+}
+
+std::optional<bool> GogShape::getIsDrawn() const
+{
+  return draw_;
 }
 
 int GogShape::getIsDrawn(bool& draw) const
@@ -86,6 +98,11 @@ void GogShape::setEditMode(EditMode editMode)
   editMode_ = editMode;
 }
 
+std::optional<bool> GogShape::getIsDepthBufferActive() const
+{
+  return depthBuffer_;
+}
+
 int GogShape::getIsDepthBufferActive(bool& depthBuffer) const
 {
   depthBuffer = depthBuffer_.value_or(false);
@@ -97,6 +114,11 @@ void GogShape::setDepthBufferActive(bool depthBuffer)
   depthBuffer_ = depthBuffer;
 }
 
+std::optional<double> GogShape::getAltitudeOffset() const
+{
+  return altitudeOffset_;
+}
+
 int GogShape::getAltitudeOffset(double& altitudeOffset) const
 {
   altitudeOffset = altitudeOffset_.value_or(0.);
@@ -106,6 +128,11 @@ int GogShape::getAltitudeOffset(double& altitudeOffset) const
 void GogShape::setAltitudeOffset(double altOffsetMeters)
 {
   altitudeOffset_ = altOffsetMeters;
+}
+
+std::optional<AltitudeMode> GogShape::getAltitudeMode() const
+{
+  return altitudeMode_;
 }
 
 int GogShape::getAltitudeMode(AltitudeMode& mode) const
@@ -121,6 +148,11 @@ void GogShape::setAltitudeMode(AltitudeMode mode)
   altitudeMode_ = mode;
 }
 
+std::optional<double> GogShape::getExtrudeHeight() const
+{
+  return extrudeHeight_;
+}
+
 int GogShape::getExtrudeHeight(double& height) const
 {
   height = extrudeHeight_.value_or(0.);
@@ -130,6 +162,11 @@ int GogShape::getExtrudeHeight(double& height) const
 void GogShape::setExtrudeHeight(double heightMeters)
 {
   extrudeHeight_ = heightMeters;
+}
+
+std::optional<simCore::Vec3> GogShape::getReferencePosition() const
+{
+  return referencePosition_;
 }
 
 int GogShape::getReferencePosition(simCore::Vec3& refPos) const
@@ -157,6 +194,11 @@ void GogShape::clearReferencePosition()
   referencePosition_.reset();
 }
 
+std::optional<simCore::Vec3> GogShape::getScale() const
+{
+  return scale_;
+}
+
 int GogShape::getScale(simCore::Vec3& scale) const
 {
   scale = scale_.value_or(simCore::Vec3(1., 1., 1.));
@@ -166,6 +208,11 @@ int GogShape::getScale(simCore::Vec3& scale) const
 void GogShape::setScale(const simCore::Vec3& scale)
 {
   scale_ = scale;
+}
+
+std::optional<bool> GogShape::getIsFollowingYaw() const
+{
+  return followYaw_;
 }
 
 int GogShape::getIsFollowingYaw(bool& follow) const
@@ -180,6 +227,11 @@ void GogShape::setFollowYaw(bool follow)
     followYaw_ = follow;
 }
 
+std::optional<bool> GogShape::getIsFollowingPitch() const
+{
+  return followPitch_;
+}
+
 int GogShape::getIsFollowingPitch(bool& follow) const
 {
   follow = followPitch_.value_or(false);
@@ -190,6 +242,11 @@ void GogShape::setFollowPitch(bool follow)
 {
   if (canFollow_)
     followPitch_ = follow;
+}
+
+std::optional<bool> GogShape::getIsFollowingRoll() const
+{
+  return followRoll_;
 }
 
 int GogShape::getIsFollowingRoll(bool& follow) const
@@ -204,6 +261,11 @@ void GogShape::setFollowRoll(bool follow)
     followRoll_ = follow;
 }
 
+std::optional<double> GogShape::getYawOffset() const
+{
+  return yawOffset_;
+}
+
 int GogShape::getYawOffset(double& offset) const
 {
   offset = yawOffset_.value_or(0.);
@@ -216,6 +278,11 @@ void GogShape::setYawOffset(double offset)
     yawOffset_ = offset;
 }
 
+std::optional<double> GogShape::getPitchOffset() const
+{
+  return pitchOffset_;
+}
+
 int GogShape::getPitchOffset(double& offset) const
 {
   offset = pitchOffset_.value_or(0.);
@@ -226,6 +293,11 @@ void GogShape::setPitchOffset(double offset)
 {
   if (canFollow_)
     pitchOffset_ = offset;
+}
+
+std::optional<double> GogShape::getRollOffset() const
+{
+  return rollOffset_;
 }
 
 int GogShape::getRollOffset(double& offset) const
@@ -245,6 +317,11 @@ const std::vector<std::string>& GogShape::comments() const
   return comments_;
 }
 
+std::optional<std::string> GogShape::getVerticalDatum() const
+{
+  return verticalDatum_;
+}
+
 int GogShape::getVerticalDatum(std::string& verticalDatum) const
 {
   verticalDatum = verticalDatum_.value_or("wgs84");
@@ -254,6 +331,11 @@ int GogShape::getVerticalDatum(std::string& verticalDatum) const
 void GogShape::setVerticalDatum(const std::string& verticalDatum)
 {
   verticalDatum_ = verticalDatum;
+}
+
+std::optional<simCore::TimeStamp> GogShape::getStartTime() const
+{
+  return startTime_;
 }
 
 int GogShape::getStartTime(simCore::TimeStamp& startTime) const
@@ -270,6 +352,11 @@ void GogShape::setStartTime(const simCore::TimeStamp& startTime)
 void GogShape::clearStartTime()
 {
   startTime_.reset();
+}
+
+std::optional<simCore::TimeStamp> GogShape::getEndTime() const
+{
+  return endTime_;
 }
 
 int GogShape::getEndTime(simCore::TimeStamp& endTime) const
@@ -559,6 +646,11 @@ bool OutlinedShape::canRotate() const
   return false;
 }
 
+std::optional<bool> OutlinedShape::getIsOutlined() const
+{
+  return outlined_;
+}
+
 int OutlinedShape::getIsOutlined(bool& outlined) const
 {
   outlined = outlined_.value_or(true);
@@ -609,6 +701,11 @@ void Points::addPoint(const simCore::Vec3& point)
   points_.push_back(point);
 }
 
+std::optional<int> Points::getPointSize() const
+{
+  return pointSize_;
+}
+
 int Points::getPointSize(int& size) const
 {
   size = pointSize_.value_or(1);
@@ -618,6 +715,11 @@ int Points::getPointSize(int& size) const
 void Points::setPointSize(int pointSizePixels)
 {
   pointSize_ = pointSizePixels;
+}
+
+std::optional<Color> Points::getColor() const
+{
+  return color_;
 }
 
 int Points::getColor(Color& color) const
@@ -652,14 +754,25 @@ FillableShape::FillableShape()
 {
 }
 
+std::optional<int> FillableShape::getLineWidth() const
+{
+  return lineWidth_;
+}
+
 int FillableShape::getLineWidth(int& lineWidth) const
 {
   lineWidth = lineWidth_.value_or(1);
   return (lineWidth_.has_value() ? 0 : 1);
 }
+
 void FillableShape::setLineWidth(int widthPixels)
 {
   lineWidth_ = widthPixels;
+}
+
+std::optional<Color> FillableShape::getLineColor() const
+{
+  return lineColor_;
 }
 
 int FillableShape::getLineColor(Color& color) const
@@ -673,14 +786,25 @@ void FillableShape::setLineColor(const Color& color)
   lineColor_ = color;
 }
 
+std::optional<LineStyle> FillableShape::getLineStyle() const
+{
+  return lineStyle_;
+}
+
 int FillableShape::getLineStyle(LineStyle& style) const
 {
   style = lineStyle_.value_or(LineStyle::SOLID);
   return (lineStyle_.has_value() ? 0 : 1);
 }
+
 void FillableShape::setLineStyle(LineStyle style)
 {
   lineStyle_ = style;
+}
+
+std::optional<bool> FillableShape::getIsFilled() const
+{
+  return filled_;
 }
 
 int FillableShape::getIsFilled(bool& filled) const
@@ -692,6 +816,11 @@ int FillableShape::getIsFilled(bool& filled) const
 void FillableShape::setFilled(bool filled)
 {
   filled_ = filled;
+}
+
+std::optional<Color> FillableShape::getFillColor() const
+{
+  return fillColor_;
 }
 
 int FillableShape::getFillColor(Color& color) const
@@ -760,6 +889,11 @@ void PointBasedShape::addPoint(const simCore::Vec3& point)
 void PointBasedShape::clearPoints()
 {
   points_.clear();
+}
+
+std::optional<TessellationStyle> PointBasedShape::getTessellation() const
+{
+  return tessellation_;
 }
 
 int PointBasedShape::getTessellation(TessellationStyle& tessellation) const
@@ -839,6 +973,11 @@ CircularShape::CircularShape()
   setCanFollow_(true);
 }
 
+std::optional<simCore::Vec3> CircularShape::getCenterPosition() const
+{
+  return center_;
+}
+
 int CircularShape::getCenterPosition(simCore::Vec3& centerPosition) const
 {
   centerPosition = center_.value_or(simCore::Vec3());
@@ -848,6 +987,11 @@ int CircularShape::getCenterPosition(simCore::Vec3& centerPosition) const
 void CircularShape::setCenterPosition(const simCore::Vec3& centerPosition)
 {
   center_ = centerPosition;
+}
+
+std::optional<double> CircularShape::getRadius() const
+{
+  return radius_;
 }
 
 int CircularShape::getRadius(double& radius) const
@@ -946,8 +1090,7 @@ void Orbit::setCenterPosition2(const simCore::Vec3& center2)
 {
   center2_ = center2;
   // always use z from center position
-  simCore::Vec3 center1;
-  getCenterPosition(center1);
+  simCore::Vec3 center1 = getCenterPosition().value_or(simCore::Vec3());
   center2_.setZ(center1.z());
 }
 
@@ -1007,6 +1150,11 @@ EllipticalShape::EllipticalShape()
 {
 }
 
+std::optional<double> EllipticalShape::getAngleStart() const
+{
+  return angleStart_;
+}
+
 int EllipticalShape::getAngleStart(double& angle) const
 {
   angle = angleStart_.value_or(0.);
@@ -1016,6 +1164,11 @@ int EllipticalShape::getAngleStart(double& angle) const
 void EllipticalShape::setAngleStart(double angleStartRad)
 {
   angleStart_ = angleStartRad;
+}
+
+std::optional<double> EllipticalShape::getAngleSweep() const
+{
+  return angleSweep_;
 }
 
 int EllipticalShape::getAngleSweep(double& angle) const
@@ -1029,6 +1182,11 @@ void EllipticalShape::setAngleSweep(double angleSweepRad)
   angleSweep_ = angleSweepRad;
 }
 
+std::optional<double> EllipticalShape::getMajorAxis() const
+{
+  return majorAxis_;
+}
+
 int EllipticalShape::getMajorAxis(double& axis) const
 {
   axis = majorAxis_.value_or(0.);
@@ -1038,6 +1196,12 @@ int EllipticalShape::getMajorAxis(double& axis) const
 void EllipticalShape::setMajorAxis(double majorAxisMeters)
 {
   majorAxis_ = majorAxisMeters;
+}
+
+
+std::optional<double> EllipticalShape::getMinorAxis() const
+{
+  return minorAxis_;
 }
 
 int EllipticalShape::getMinorAxis(double& axis) const
@@ -1077,6 +1241,11 @@ Arc::Arc(bool relative)
 ShapeType Arc::shapeType() const
 {
   return ShapeType::ARC;
+}
+
+std::optional<double> Arc::getInnerRadius() const
+{
+  return innerRadius_;
 }
 
 int Arc::getInnerRadius(double& innerRadiusMeters) const
@@ -1123,6 +1292,11 @@ ShapeType Cylinder::shapeType() const
   return ShapeType::CYLINDER;
 }
 
+std::optional<double> Cylinder::getHeight() const
+{
+  return height_;
+}
+
 int Cylinder::getHeight(double& height) const
 {
   // default height is 1000 unitless
@@ -1145,6 +1319,11 @@ void Cylinder::serializeToStream_(std::ostream& gogOutputStream) const
 CircularHeightShape::CircularHeightShape()
   : CircularShape()
 {}
+
+std::optional<double> CircularHeightShape::getHeight() const
+{
+  return height_;
+}
 
 int CircularHeightShape::getHeight(double& height) const
 {
@@ -1189,6 +1368,11 @@ ShapeType Ellipsoid::shapeType() const
   return ShapeType::ELLIPSOID;
 }
 
+std::optional<double> Ellipsoid::getMajorAxis() const
+{
+  return majorAxis_;
+}
+
 int Ellipsoid::getMajorAxis(double& axis) const
 {
   axis = majorAxis_.value_or(1000.);
@@ -1198,6 +1382,11 @@ int Ellipsoid::getMajorAxis(double& axis) const
 void Ellipsoid::setMajorAxis(double majorAxisMeters)
 {
   majorAxis_ = majorAxisMeters;
+}
+
+std::optional<double> Ellipsoid::getMinorAxis() const
+{
+  return minorAxis_;
 }
 
 int Ellipsoid::getMinorAxis(double& axis) const
@@ -1229,16 +1418,12 @@ Annotation::Annotation(bool relative)
   setRelative(relative);
 }
 
-int Annotation::getName(std::string& name) const
+std::optional<std::string> Annotation::getName() const
 {
-  int rv = GogShape::getName(name);
-  // return text as name if no name was defined and text is valid, per legacy SIMDIS 9 behavior
-  if (rv != 0 && !text_.empty())
-  {
+  std::optional<std::string> name = GogShape::getName();
+  if (!name.has_value() && !text_.empty())
     name = text_;
-    return 0;
-  }
-  return rv;
+  return name;
 }
 
 bool Annotation::canRotate() const
@@ -1249,6 +1434,11 @@ bool Annotation::canRotate() const
 ShapeType Annotation::shapeType() const
 {
   return ShapeType::ANNOTATION;
+}
+
+std::optional<simCore::Vec3> Annotation::getPosition() const
+{
+  return position_;
 }
 
 int Annotation::getPosition(simCore::Vec3& position) const
@@ -1272,6 +1462,11 @@ void Annotation::setText(const std::string& text)
   text_ = text;
 }
 
+std::optional<std::string> Annotation::getFontName() const
+{
+  return fontName_;
+}
+
 int Annotation::getFontName(std::string& fontName) const
 {
   fontName = fontName_.value_or("arial.ttf");
@@ -1281,6 +1476,11 @@ int Annotation::getFontName(std::string& fontName) const
 void Annotation::setFontName(const std::string& fontName)
 {
   fontName_ = fontName;
+}
+
+std::optional<int> Annotation::getTextSize() const
+{
+  return textSize_;
 }
 
 int Annotation::getTextSize(int& textSize) const
@@ -1294,6 +1494,11 @@ void Annotation::setTextSize(int textPointSize)
   textSize_ = textPointSize;
 }
 
+std::optional<Color> Annotation::getTextColor() const
+{
+  return textColor_;
+}
+
 int Annotation::getTextColor(Color& color) const
 {
   color = textColor_.value_or(Color());
@@ -1303,6 +1508,11 @@ int Annotation::getTextColor(Color& color) const
 void Annotation::setTextColor(const Color& color)
 {
   textColor_ = color;
+}
+
+std::optional<Color> Annotation::getOutlineColor() const
+{
+  return outlineColor_;
 }
 
 int Annotation::getOutlineColor(Color& color) const
@@ -1316,6 +1526,11 @@ void Annotation::setOutlineColor(const Color& color)
   outlineColor_ = color;
 }
 
+std::optional<OutlineThickness> Annotation::getOutlineThickness() const
+{
+  return outlineThickness_;
+}
+
 int Annotation::getOutlineThickness(OutlineThickness& thickness) const
 {
   thickness = outlineThickness_.value_or(OutlineThickness::THIN);
@@ -1325,6 +1540,11 @@ int Annotation::getOutlineThickness(OutlineThickness& thickness) const
 void Annotation::setOutlineThickness(OutlineThickness thickness)
 {
   outlineThickness_ = thickness;
+}
+
+std::optional<std::string> Annotation::getImageFile() const
+{
+  return imageFile_;
 }
 
 int Annotation::getImageFile(std::string& imageFile) const
@@ -1337,6 +1557,12 @@ void Annotation::setImageFile(const std::string& imageFile)
 {
   imageFile_ = imageFile;
 }
+
+std::optional<double> Annotation::getPriority() const
+{
+  return priority_;
+}
+
 
 int Annotation::getPriority(double& priority) const
 {
@@ -1454,6 +1680,11 @@ void LatLonAltBox::setAltitude(double altitudeMeters)
   altitude_ = altitudeMeters;
 }
 
+std::optional<double> LatLonAltBox::getHeight() const
+{
+  return height_;
+}
+
 int LatLonAltBox::getHeight(double& height) const
 {
   height = height_.value_or(0.);
@@ -1551,6 +1782,11 @@ std::string ImageOverlay::imageFile() const
 void ImageOverlay::setImageFile(const std::string& imageFile)
 {
   imageFile_ = imageFile;
+}
+
+std::optional<double> ImageOverlay::getOpacity() const
+{
+  return opacity_;
 }
 
 int ImageOverlay::getOpacity(double& opacity) const

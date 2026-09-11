@@ -28,6 +28,7 @@
  * creates a unit circle and scales the size by a counter.  The unit
  * circle could represent an error ellipse.
  */
+#include "osgEarth/LineDrawable"
 
 #include "simCore/Common/Version.h"
 #include "simCore/Time/ClockImpl.h"
@@ -132,7 +133,7 @@ public:
   LabelCallback() {}
 
   /** Override the Custom Rendering version of the string to create a custom label. */
-  std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields) override
+  std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields, TextType type) override
   {
     // The default implementation for a Custom Rendering node's Entity Callback only shows
     // the name pref.  This implementation shows a custom string instead.  You can query
@@ -189,9 +190,9 @@ public:
       locatorNode->removeChildren(0, locatorNode->getNumChildren());
 
       // In this example do a simple unit circle.  It gets scaled below.
-      osg::Geometry* geom = makeUnitCircle_();
+      osg::ref_ptr<osgEarth::LineDrawable> geom = makeUnitCircle_();
       transform_ = new osg::MatrixTransform;
-      transform_->addChild(geom);
+      transform_->addChild(geom.get());
       locatorNode->addChild(transform_);
       node_->setCustomActive(true);
       locatorNode->dirtyBound();
@@ -241,9 +242,9 @@ public:
 
 private:
   /** Creates a line loop of a unit circle, for the rendering graphics */
-  osg::Geometry* makeUnitCircle_() const
+  osg::ref_ptr<osgEarth::LineDrawable> makeUnitCircle_() const
   {
-    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
+    osg::ref_ptr<osgEarth::LineDrawable> line = new osgEarth::LineDrawable(GL_LINE_LOOP);
 
     // Set a white color to the geometry so that the prefs.color value, when
     // multiplied against white, shows up exactly as white.  Changing this
@@ -252,32 +253,27 @@ private:
     //  1) Set the prefs.color value to white, and alter the colors of your geometry.
     //  2) Turn off the simVis::OverrideColor shader in your stateset, and alter the
     //     colors of your geometry.
-    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-    (*colors)[0] = osg::Vec4(1, 1, 1, 1);
-    geom->setColorArray(colors.get());
+    line->setColor(osg::Vec4f(1.f, 1.f, 1.f, 1.f));
 
     // Build 4 quarters at once to reduce number of calls to sin() and cos()
     const int pointsPerQuarter = 20;
-    osg::ref_ptr<osg::Vec3Array> fillVerts = new osg::Vec3Array(4 * pointsPerQuarter);
+    line->allocate(4 * pointsPerQuarter);
+
     for (auto ii = 0; ii < pointsPerQuarter; ++ii)
     {
-      float arg = static_cast<float>(ii) / static_cast<float>(pointsPerQuarter)* static_cast<float>(M_PI_2);
-      float x = static_cast<float>(cos(arg));
-      float y = static_cast<float>(sin(arg));
+      const float arg = static_cast<float>(ii) / static_cast<float>(pointsPerQuarter) * static_cast<float>(M_PI_2);
+      const float x = static_cast<float>(cos(arg));
+      const float y = static_cast<float>(sin(arg));
 
-      (*fillVerts)[ii].set(x, y, 0);
-      (*fillVerts)[ii + pointsPerQuarter].set(-y, x, 0);
-      (*fillVerts)[ii + 2 * pointsPerQuarter].set(-x, -y, 0);
-      (*fillVerts)[ii + 3 * pointsPerQuarter].set(y, -x, 0);
+      line->setVertex(ii, osg::Vec3f(x, y, 0));
+      line->setVertex(ii + pointsPerQuarter, osg::Vec3(-y, x, 0));
+      line->setVertex(ii + 2 * pointsPerQuarter, osg::Vec3(-x, -y, 0));
+      line->setVertex(ii + 3 * pointsPerQuarter, osg::Vec3(y, -x, 0));
     }
 
-    // Set up the rest of the geometry
-    geom->setVertexArray(fillVerts.get());
-    geom->setDataVariance(osg::Object::DYNAMIC);
-    geom->setUseDisplayList(false);
-    geom->setUseVertexBufferObjects(true);
-    geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, 0, 4 * pointsPerQuarter));
-    return geom.release();
+    line->setDataVariance(osg::Object::DYNAMIC);
+    line->dirty();
+    return line;
   }
 
   osg::observer_ptr<simVis::CustomRenderingNode> node_;
@@ -345,6 +341,7 @@ private:
 int main(int argc, char **argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   // set up the registry so the SDK can find platform models
   simExamples::configureSearchPaths();
 

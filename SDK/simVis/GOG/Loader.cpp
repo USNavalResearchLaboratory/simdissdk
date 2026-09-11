@@ -107,9 +107,8 @@ GogNodeInterfacePtr Loader::buildGogNode_(simCore::GOG::GogShapePtr gog, const s
 
   if (attached && !gog->isRelative())
   {
-    std::string gogName;
-    gog->getName(gogName);
-    SIM_WARN << "GOG: Attempting to load attached GOG with absolute points, cannot create shape for " << gogName << (!filename.empty() ? "in " + filename : "") << "\n";
+    std::optional<std::string> gogName = gog->getName();
+    SIM_WARN << "GOG: Attempting to load attached GOG with absolute points, cannot create shape for " << gogName.value_or(gog->shapeTypeToString(gog->shapeType())) << (!filename.empty() ? "in " + filename : "") << "\n";
     return nullptr;
   }
 

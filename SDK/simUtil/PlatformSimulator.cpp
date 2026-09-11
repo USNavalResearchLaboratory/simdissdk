@@ -196,21 +196,26 @@ int PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upda
       simCore::Vec3(bearing_rad, pitch_rad, roll_rad),
       velocityVector);
 
-    simCore::Coordinate ecefCoords;
     simCore::CoordinateConverter coordConverter;
-    coordConverter.convertGeodeticToEcef(inCoords, ecefCoords, simCore::LOCAL_LEVEL_FRAME_NED);
+    const std::optional<simCore::Coordinate> ecefCoordsOpt = coordConverter.convertGeodeticToEcef(inCoords, simCore::LOCAL_LEVEL_FRAME_NED);
+
+    if (!ecefCoordsOpt)
+    {
+      assert(false); // inCoords guaranteed to be in LLA
+      return 1;
+    }
 
     // Fill update with new position.
     update->set_time(now);
-    update->set_x(ecefCoords.x());
-    update->set_y(ecefCoords.y());
-    update->set_z(ecefCoords.z());
-    update->set_psi(ecefCoords.psi());
-    update->set_theta(ecefCoords.theta());
-    update->set_phi(ecefCoords.phi());
-    update->set_vx(ecefCoords.vx());
-    update->set_vy(ecefCoords.vy());
-    update->set_vz(ecefCoords.vz());
+    update->set_x(ecefCoordsOpt->x());
+    update->set_y(ecefCoordsOpt->y());
+    update->set_z(ecefCoordsOpt->z());
+    update->set_psi(ecefCoordsOpt->psi());
+    update->set_theta(ecefCoordsOpt->theta());
+    update->set_phi(ecefCoordsOpt->phi());
+    update->set_vx(ecefCoordsOpt->vx());
+    update->set_vy(ecefCoordsOpt->vy());
+    update->set_vz(ecefCoordsOpt->vz());
 
     // Calculate the velocity vector
     //simCore::Vec3 new_lla( lat_rad, lon_rad, alt );
@@ -244,12 +249,16 @@ void PlatformSimulator::updateBeam(double now, simData::BeamUpdate *update, simD
   simCore::Vec3 ecefOri;
   platform->orientation(ecefOri);
   simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), simCore::Vec3(ecefOri.psi(), ecefOri.theta(), ecefOri.phi()));
-  simCore::Coordinate llaCoord;
-  simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoord, llaCoord, simCore::LOCAL_LEVEL_FRAME_NED);
+  const std::optional<simCore::Coordinate> llaCoordOpt = simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoord, simCore::LOCAL_LEVEL_FRAME_NED);
+  if (!llaCoordOpt)
+  {
+    assert(false); // ecefCoord guaranteed to be ecef
+    return;
+  }
 
   update->set_time(now);
-  update->set_azimuth(azimuth + llaCoord.yaw());
-  update->set_elevation(llaCoord.pitch());
+  update->set_azimuth(azimuth + llaCoordOpt->yaw());
+  update->set_elevation(llaCoordOpt->pitch());
   update->set_range(range);
 }
 
@@ -261,12 +270,16 @@ void PlatformSimulator::updateGate(double now, simData::GateUpdate *update, simD
   simCore::Vec3 ecefOri;
   platform->orientation(ecefOri);
   simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), simCore::Vec3(ecefOri.psi(), ecefOri.theta(), ecefOri.phi()));
-  simCore::Coordinate llaCoord;
-  simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoord, llaCoord, simCore::LOCAL_LEVEL_FRAME_NED);
+  const std::optional<simCore::Coordinate> llaCoordOpt = simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoord, simCore::LOCAL_LEVEL_FRAME_NED);
+  if (!llaCoordOpt)
+  {
+    assert(false); // ecefCoord guaranteed to be ecef
+    return;
+  }
 
   update->set_time(now);
-  update->set_azimuth(azimuth + llaCoord.yaw());
-  update->set_elevation(llaCoord.pitch());
+  update->set_azimuth(azimuth + llaCoordOpt->yaw());
+  update->set_elevation(llaCoordOpt->pitch());
   update->set_width(osg::DegreesToRadians(60.0));
   update->set_height(osg::DegreesToRadians(30.0));
   update->set_minrange(85000);

@@ -24,6 +24,7 @@
 #include <QLabel>
 #include <QString>
 #include "osgEarth/NodeUtils"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Utils.h"
 #include "simQt/QWidgetNode.h"
 #include "simQt/HudTextBinManager.h"
@@ -533,10 +534,10 @@ std::string HudTextBinManager::text(TextId uid) const
 
 void HudTextBinManager::setSize_(int width, int height)
 {
-  if (!sizeDirty_ && width_ == width && height_ == height) [[likely]]
+  if (!sizeDirty_ && logicalWidth_ == width && logicalHeight_ == height) [[likely]]
     return;
-  width_ = width;
-  height_ = height;
+  logicalWidth_ = width;
+  logicalHeight_ = height;
 
   // Constants
   constexpr int NUM_ROWS = 3;
@@ -596,7 +597,11 @@ void HudTextBinManager::checkViewportSize_()
   // the size if there are no bins (performance optimization)
   const osg::Viewport* vp = camera_->getViewport();
   if (vp && !publicIdToBinAndId_.empty())
-    setSize_(vp->width(), vp->height());
+  {
+    const int logicalWidth = static_cast<int>(simVis::DevicePixelRatioUtils::toLogical(vp->width()));
+    const int logicalHeight = static_cast<int>(simVis::DevicePixelRatioUtils::toLogical(vp->height()));
+    setSize_(logicalWidth, logicalHeight);
+  }
 }
 
 void HudTextBinManager::refreshAllDirtyTextBins_()

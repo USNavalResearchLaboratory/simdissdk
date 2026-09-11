@@ -35,68 +35,84 @@ namespace simVis
   class LabelContentCallback : public osg::Referenced
   {
   public:
+    /// Type of Display Field passed into the createString() method
+    enum class TextType
+    {
+      DISPLAY,
+      LEGEND,
+      HOVER,
+      HOOK
+    };
+
     /**
     * Returns a platform label content based on the given preference and update
     * @param prefs Preferences for the platform; must be valid
     * @param lastUpdate Location of platform; must be valid
     * @param fields Display fields to use when forming the display string
+    * @param type The type of displayed field passed into the method
     * @return A label content based on the given preference and update; does not include platform name/alias
     */
-    virtual std::string createString(const simData::PlatformPrefs& prefs, const simData::PlatformUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::PlatformPrefs& prefs, const simData::PlatformUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type = TextType::DISPLAY) = 0;
 
     /**
     * Returns a beam label content based on the given preference and update
     * @param prefs Preferences for the beam; must be valid
     * @param lastUpdate Location of beam; must be valid
     * @param fields Display fields to use when forming the display string
+    * @param type The type of displayed field passed into the method
     * @return A label content based on the given preference and update; does not include beam name/alias
     */
-    virtual std::string createString(const simData::BeamPrefs& prefs, const simData::BeamUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::BeamPrefs& prefs, const simData::BeamUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type = TextType::DISPLAY) = 0;
 
     /**
     * Returns a gate label content based on the given preference and update
     * @param prefs Preferences for the gate; must be valid
     * @param lastUpdate Location of gate; must be valid
     * @param fields Display fields to use when forming the display string
+    * @param type The type of displayed field passed into the method
     * @return A label content based on the given preference and update; does not include gate name/alias
     */
-    virtual std::string createString(const simData::GatePrefs& prefs, const simData::GateUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::GatePrefs& prefs, const simData::GateUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type = TextType::DISPLAY) = 0;
 
     /**
     * Returns a laser label content based on the given preference and update
     * @param prefs Preferences for the laser; must be valid
     * @param lastUpdate Location of laser; must be valid
     * @param fields Display fields to use when forming the display string
+    * @param type The type of displayed field passed into the method
     * @return A label content based on the given preference and update; does not include laser name/alias
     */
-    virtual std::string createString(const simData::LaserPrefs& prefs, const simData::LaserUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::LaserPrefs& prefs, const simData::LaserUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type = TextType::DISPLAY) = 0;
 
     /**
     * Returns a LOB Group label content based on the given preference and update
     * @param prefs Preferences for the LOB Group; must be valid
     * @param lastUpdate Location of LOB Group; must be valid
     * @param fields Display fields to use when forming the display string
+    * @param type The type of displayed field passed into the method
     * @return A label content based on the given preference and update; does not include LOB Group name/alias
     */
-    virtual std::string createString(const simData::LobGroupPrefs& prefs, const simData::LobGroupUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::LobGroupPrefs& prefs, const simData::LobGroupUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type = TextType::DISPLAY) = 0;
 
     /**
     * Returns a projector label content based on the given preference and update
     * @param prefs Preferences for the projector; must be valid
     * @param lastUpdate Location of projector; must be valid
     * @param fields Display fields to use when forming the display string
+    * @param type The type of displayed field passed into the method
     * @return A label content based on the given preference and update; does not include projector name/alias
     */
-    virtual std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::DisplayFields& fields) = 0;
+    virtual std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type = TextType::DISPLAY) = 0;
 
     /**
     * Returns a custom rendering label content based on the given preference
     * @param id Since there is no update for custom rendering, need the id get information for the text string
     * @param prefs Preferences for the custom rendering; must be valid
     * @param fields Display fields to use when forming the display string
+    * @param type The type of displayed field passed into the method
     * @return A label content based on the given preference; does not include custom rendering name/alias
     */
-    virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields) = 0;
+    virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields, TextType type = TextType::DISPLAY) = 0;
 
   protected:
     virtual ~LabelContentCallback() = default;
@@ -120,37 +136,37 @@ namespace simVis
   public:
     NullEntityCallback() = default;
 
-    std::string createString(const simData::PlatformPrefs& prefs, const simData::PlatformUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::PlatformPrefs& prefs, const simData::PlatformUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type) override
     {
       return "";
     }
 
-    std::string createString(const simData::BeamPrefs& prefs, const simData::BeamUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::BeamPrefs& prefs, const simData::BeamUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type) override
     {
       return "";
     }
 
-    std::string createString(const simData::GatePrefs& prefs, const simData::GateUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::GatePrefs& prefs, const simData::GateUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type) override
     {
       return "";
     }
 
-    std::string createString(const simData::LaserPrefs& prefs, const simData::LaserUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::LaserPrefs& prefs, const simData::LaserUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type) override
     {
       return "";
     }
 
-    std::string createString(const simData::LobGroupPrefs& prefs, const simData::LobGroupUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::LobGroupPrefs& prefs, const simData::LobGroupUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type) override
     {
       return "";
     }
 
-    std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::DisplayFields& fields) override
+    std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::DisplayFields& fields, TextType type) override
     {
       return "";
     }
 
-    std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields) override
+    std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::DisplayFields& fields, TextType type) override
     {
       return "";
     }

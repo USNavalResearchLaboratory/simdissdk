@@ -20,21 +20,22 @@
  * disclose, or release this software.
  *
  */
+#include "osg/CullFace"
 #include "osg/Geometry"
 #include "osg/ImageStream"
 #include "osg/MatrixTransform"
 #include "osg/Notify"
-#include "osg/CullFace"
 #include "osg/PolygonOffset"
 #include "osgDB/ReadFile"
 #include "osgUtil/CullVisitor"
+#include "osgEarth/CameraUtils"
+#include "osgEarth/LineDrawable"
 #include "osgEarth/Horizon"
-#include "osgEarth/Shadowing"
+#include "osgEarth/LogarithmicDepthBuffer"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/ObjectIndex"
-#include "osgEarth/CameraUtils"
+#include "osgEarth/Shadowing"
 #include "osgEarth/TerrainEngineNode"
-#include "osgEarth/LogarithmicDepthBuffer"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
@@ -63,36 +64,21 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
   // (NOTE: some of this code is borrowed from OSG's osgthirdpersonview example)
   void makeFrustum(const osg::Matrixd& proj, const osg::Matrixd& mv, osg::MatrixTransform* mt)
   {
-    osg::ref_ptr<osg::Geometry> geom;
-    osg::ref_ptr<osg::Vec3Array> v;
-
+    osgEarth::LineDrawable* line;
     if (mt->getNumChildren() > 0)
-    {
-      geom = dynamic_cast<osg::Geometry*>(mt->getChild(0));
-      v = dynamic_cast<osg::Vec3Array*>(geom->getVertexArray());
-    }
+      line = dynamic_cast<osgEarth::LineDrawable*>(mt->getChild(0));
     else
     {
-      geom = new osg::Geometry();
-      v = new osg::Vec3Array(9);
-      v->setDataVariance(osg::Object::DYNAMIC);
-      geom->setVertexArray(v.get());
-      geom->setDataVariance(osg::Object::DYNAMIC);
+      line = new osgEarth::LineDrawable(GL_LINES);
+      // 4 apex lines + 4 near plane lines + 4 far plane lines = 12 lines (24 vertices)
+      line->allocate(24);
+      line->setDataVariance(osg::Object::DYNAMIC);
 
-      osg::ref_ptr<osg::Vec4Array> c = new osg::Vec4Array(osg::Array::BIND_OVERALL);
-      c->push_back(simVis::Color::White);
-      geom->setColorArray(c.get());
+      line->setColor(simVis::Color::White);
+      line->setLineSmooth(true);
+      simVis::setLighting(line->getOrCreateStateSet(), osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
 
-      GLubyte idxLines[8] = { 0, 5, 0, 6, 0, 7, 0, 8 };
-      GLubyte idxLoops0[4] = { 1, 2, 3, 4 };
-      GLubyte idxLoops1[4] = { 5, 6, 7, 8 };
-      geom->addPrimitiveSet(new osg::DrawElementsUByte(osg::PrimitiveSet::LINES, 8, idxLines));
-      geom->addPrimitiveSet(new osg::DrawElementsUByte(osg::PrimitiveSet::LINE_LOOP, 4, idxLoops0));
-      geom->addPrimitiveSet(new osg::DrawElementsUByte(osg::PrimitiveSet::LINE_LOOP, 4, idxLoops1));
-
-      simVis::setLighting(geom->getOrCreateStateSet(), osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
-
-      mt->addChild(geom.get());
+      mt->addChild(line);
     }
 
     // Get near and far from the Projection matrix.
@@ -111,16 +97,38 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
     const double fTop = fz * (1.0+proj(2, 1)) / proj(1, 1);
     const double fBottom = fz * (proj(2, 1)-1.0) / proj(1, 1);
 
-    (*v)[0].set(0., 0., 0.);
-    (*v)[1].set(nLeft, nBottom, -nz);
-    (*v)[2].set(nRight, nBottom, -nz);
-    (*v)[3].set(nRight, nTop, -nz);
-    (*v)[4].set(nLeft, nTop, -nz);
-    (*v)[5].set(fLeft, fBottom, -fz);
-    (*v)[6].set(fRight, fBottom, -fz);
-    (*v)[7].set(fRight, fTop, -fz);
-    (*v)[8].set(fLeft, fTop, -fz);
-    v->dirty();
+    // Precalculate corner positions
+    const osg::Vec3 v0(0., 0., 0.);
+    const osg::Vec3 v1(nLeft, nBottom, -nz);
+    const osg::Vec3 v2(nRight, nBottom, -nz);
+    const osg::Vec3 v3(nRight, nTop, -nz);
+    const osg::Vec3 v4(nLeft, nTop, -nz);
+    const osg::Vec3 v5(fLeft, fBottom, -fz);
+    const osg::Vec3 v6(fRight, fBottom, -fz);
+    const osg::Vec3 v7(fRight, fTop, -fz);
+    const osg::Vec3 v8(fLeft, fTop, -fz);
+
+    unsigned int idx = 0;
+
+    // Apex to far plane corners
+    line->setVertex(idx++, v0); line->setVertex(idx++, v5);
+    line->setVertex(idx++, v0); line->setVertex(idx++, v6);
+    line->setVertex(idx++, v0); line->setVertex(idx++, v7);
+    line->setVertex(idx++, v0); line->setVertex(idx++, v8);
+
+    // Near plane loop
+    line->setVertex(idx++, v1); line->setVertex(idx++, v2);
+    line->setVertex(idx++, v2); line->setVertex(idx++, v3);
+    line->setVertex(idx++, v3); line->setVertex(idx++, v4);
+    line->setVertex(idx++, v4); line->setVertex(idx++, v1);
+
+    // Far plane loop
+    line->setVertex(idx++, v5); line->setVertex(idx++, v6);
+    line->setVertex(idx++, v6); line->setVertex(idx++, v7);
+    line->setVertex(idx++, v7); line->setVertex(idx++, v8);
+    line->setVertex(idx++, v8); line->setVertex(idx++, v5);
+
+    line->dirty();
 
     mt->setMatrix(osg::Matrixd::inverse(mv));
   }
@@ -443,7 +451,7 @@ void ProjectorNode::updateLabel_(const simData::ProjectorPrefs& prefs)
 
   std::string text;
   if (prefs.commonprefs().labelprefs().draw())
-    text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
+    text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields(), LabelContentCallback::TextType::DISPLAY);
 
   if (!text.empty())
   {
@@ -534,7 +542,7 @@ std::string ProjectorNode::popupText() const
         prefix = getEntityName(EntityNode::ALIAS_NAME);
       prefix += "\n";
     }
-    return prefix + labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+    return prefix + labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields(), LabelContentCallback::TextType::HOVER);
   }
 
   return "";
@@ -543,14 +551,14 @@ std::string ProjectorNode::popupText() const
 std::string ProjectorNode::hookText() const
 {
   if (hasLastUpdate_ && hasLastPrefs_)
-    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields(), LabelContentCallback::TextType::HOOK);
   return "";
 }
 
 std::string ProjectorNode::legendText() const
 {
   if (hasLastUpdate_ && hasLastPrefs_)
-    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
+    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields(), LabelContentCallback::TextType::LEGEND);
   return "";
 }
 
@@ -936,13 +944,14 @@ void ProjectorNode::syncWithLocator()
 
   const osg::Vec3d& hostPosEcef = locatorMat.getTrans();
   simCore::Vec3 hostPosLla;
-  if (0 == simCore::CoordinateConverter::convertEcefToGeodeticPos(convertToSim(hostPosEcef), hostPosLla))
+  const std::optional<simCore::Vec3> hostPosLlaOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(convertToSim(hostPosEcef));
+  if (hostPosLlaOpt)
   {
     // extend the projector vector at least as far as the earth surface to guarantee an intersection
-    const osg::Vec3d& vector = osg::Vec3d(cen - eye) * 2.0 * hostPosLla.alt();
+    const osg::Vec3d& vector = osg::Vec3d(cen - eye) * 2.0 * hostPosLlaOpt->alt();
     const osg::Vec3d& endpoint = eye + vector;
     osg::Vec3d ellipsoidIntersection;
-    if (calculateEarthIntersection(hostPosLla.lat(), eye, endpoint, ellipsoidIntersection))
+    if (calculateEarthIntersection(hostPosLlaOpt->lat(), eye, endpoint, ellipsoidIntersection))
     {
       // if ellipsoid intersection can be calculated, use that result as the projector position
       const simCore::Vec3& intersection = convertToSim(ellipsoidIntersection);

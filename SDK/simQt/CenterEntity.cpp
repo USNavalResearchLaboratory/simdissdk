@@ -137,9 +137,9 @@ simVis::EntityNode* CenterEntity::getViewCenterableNode(uint64_t id) const
 
 BindCenterEntityToEntityTreeComposite::BindCenterEntityToEntityTreeComposite(CenterEntity& centerEntity, EntityTreeComposite& tree, simData::DataStore& dataStore, QObject* parent)
   : QObject(parent),
-    centerEntity_(centerEntity),
     tree_(tree),
     dataStore_(dataStore),
+    centerEntity_(centerEntity),
     timeFormatter_(new simCore::TimeFormatterRegistry),
     newTime_(INVALID_TIME)
 {
@@ -187,15 +187,14 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
   // Make sure all entities are active
   for (auto it = ids.begin(); it != ids.end(); ++it)
   {
-    auto node = centerEntity_.getViewCenterableNode(*it);
-    if ((node == nullptr) || (node->isActive() && !node->isVisible()))
+    const auto node = centerEntity_.getViewCenterableNode(*it);
+    if (node == nullptr)
     {
       tree_.setUseCenterAction(false, reason);
       return;
     }
-
-    // If there is one selected entity look for a time to make the center command valid
-    if (!node->isActive())
+    // If entity is not active or not drawn, look for a reason and a time to make the center command valid
+    if (!node->isActive() || !node->isVisible())
     {
       // If more than one entity is selected don't try to find a time where all are active
       if (ids.size() != 1)
@@ -291,16 +290,18 @@ std::tuple<double, QString> BindCenterEntityToEntityTreeComposite::getPlatformNe
   auto pref = dataStore_.platformPrefs(id, &trans);
   if (pref == nullptr)
     return { INVALID_TIME, tr("Invalid platform") };
-  if (!pref->commonprefs().draw())
-    return { INVALID_TIME, tr("Draw flag off") };
   if (!pref->commonprefs().datadraw())
     return { INVALID_TIME, tr("Data draw flag off") };
-  trans.release(&pref);
 
   // Next check data points
   auto slice = dataStore_.platformUpdateSlice(id);
   if ((slice == nullptr) || (slice->numItems() == 0))
     return { INVALID_TIME, tr("No TSPI points") };
+
+  // Check draw flag last because a subclass does further processing if draw flag is off and the above tests pass
+  if (!pref->commonprefs().draw())
+    return { INVALID_TIME, tr("Draw flag off") };
+  trans.release(&pref);
 
   auto iter = slice->upper_bound(time);
 

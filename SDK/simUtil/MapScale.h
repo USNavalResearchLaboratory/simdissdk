@@ -153,9 +153,9 @@ private:
   /** Calculates the right placement for the background box. */
   void fixBackgroundPosition_();
 
-  /** Internal, calculated height based on text height and bar height, excluding any padding */
+  /** Internal, calculated height based on text height and bar height, excluding any padding; virtual pixels */
   float heightPx_;
-  /** Width of the scale graphics content in pixels, excluding any padding */
+  /** Width of the scale graphics content in pixels, excluding any padding; virtual pixels */
   float widthPx_;
 
   /** Top level group that adjusts based on padding */

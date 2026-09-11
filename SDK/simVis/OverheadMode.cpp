@@ -25,7 +25,6 @@
 #include "osgEarth/NodeUtils"
 #include "osgEarth/VirtualProgram"
 #include "simNotify/Notify.h"
-#include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/String/Format.h"
 #include "simVis/LocatorNode.h"

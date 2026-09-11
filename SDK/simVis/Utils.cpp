@@ -58,14 +58,15 @@
 #include "simCore/Calc/Math.h"
 #endif
 
+#include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/String/FilePatterns.h"
 #include "simCore/String/Format.h"
-#include "simNotify/Notify.h"
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Registry.h"
@@ -845,15 +846,20 @@ void Math::clampMatrixOrientation(osg::Matrixd& mat, osg::Vec3d& min_hpr_deg, os
 
 osg::Vec3d Math::ecefEarthPoint(const simCore::Vec3& ecefPos, const osg::Matrixd& world2local)
 {
-  simCore::Vec3 llaPos;
-  simCore::CoordinateConverter::convertEcefToGeodeticPos(ecefPos, llaPos);
-  const double cosLon = cos(llaPos.lon());
-  const double cosLat = cos(llaPos.lat());
-  const double sinLon = sin(llaPos.lon());
-  const double sinLat = sin(llaPos.lat());
+  std::optional<simCore::Vec3> llaPosOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(ecefPos);
+  if (!llaPosOpt)
+  {
+    SIM_ERROR << "Failed to generate ECEF earth point, Coordinate conversion failed: " << __LINE__ << std::endl;
+    assert(false); // can only fail if ecefPos not in ECEF
+    return osg::Vec3d();
+  }
+  const double cosLon = cos(llaPosOpt->lon());
+  const double cosLat = cos(llaPosOpt->lat());
+  const double sinLon = sin(llaPosOpt->lon());
+  const double sinLat = sin(llaPosOpt->lat());
   osg::Vec3d up(cosLon*cosLat, sinLon*cosLat, sinLat);
   up.normalize();
-  return (osg::Vec3d(ecefPos.x(), ecefPos.y(), ecefPos.z()) - up*llaPos.alt()) * world2local;
+  return (osg::Vec3d(ecefPos.x(), ecefPos.y(), ecefPos.z()) - up*llaPosOpt->alt()) * world2local;
 }
 
 osg::Vec4f ColorUtils::RgbaToVec4(unsigned int color)
@@ -924,13 +930,18 @@ bool convertCoordToGeoPoint(const simCore::Coordinate& input, osgEarth::GeoPoint
 {
   if (srs && input.coordinateSystem() == simCore::COORD_SYS_ECEF)
   {
-    simCore::Vec3 llaPos;
-    simCore::CoordinateConverter::convertEcefToGeodeticPos(input.position(), llaPos);
+    std::optional<simCore::Vec3> llaPosOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(input.position());
+    if (!llaPosOpt)
+    {
+      SIM_ERROR << "Cannot convert coordinate to geodetic point, Coordinate conversion failed: " << __LINE__ << std::endl;
+      assert(false); // can only fail if input not ecef
+      return false;
+    }
     output.set(
       srs->getGeographicSRS(),
-      osg::RadiansToDegrees(llaPos.lon()),
-      osg::RadiansToDegrees(llaPos.lat()),
-      llaPos.alt(),
+      osg::RadiansToDegrees(llaPosOpt->lon()),
+      osg::RadiansToDegrees(llaPosOpt->lat()),
+      llaPosOpt->alt(),
       osgEarth::ALTMODE_ABSOLUTE);
 
     return true;
@@ -1255,9 +1266,14 @@ simCore::Vec3 computeNodeGeodeticPosition(const osg::Node* node)
   if (node == nullptr)
     return simCore::Vec3();
   const osg::Vec3d& ecefPos = computeLocalToWorld(node).getTrans();
-  simCore::Vec3 llaPos;
-  simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), llaPos);
-  return llaPos;
+  std::optional<simCore::Vec3> llaPosOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()));
+  if (!llaPosOpt)
+  {
+    SIM_ERROR << "Cannot compute node geodetic position, Coordinate conversion failed: " << __LINE__ << std::endl;
+    assert(false); // Cannot fail unless ecefPos not in ECEF
+    return simCore::Vec3();
+  }
+  return *llaPosOpt;
 }
 
 
@@ -1714,7 +1730,11 @@ osg::Matrixd PixelScaleHudTransform::computeMatrix_(osg::NodeVisitor* nv) const
 {
   osg::CullStack* cs = nv ? nv->asCullStack() : nullptr;
   if (cs)
-    invertedMvpw_ = osg::Matrix::inverse(*cs->getMVPW());
+  {
+    const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+    // Scale logical coordinates up to physical pixels before applying the inverse MVPW
+    invertedMvpw_ = osg::Matrixd::scale(dpr, dpr, 1.0) * osg::Matrix::inverse(*cs->getMVPW());
+  }
   return invertedMvpw_;
 }
 
@@ -1772,9 +1792,10 @@ void FilteringOsgNotifyDecorator::addFilter(const std::string& filter)
 
 void FilteringOsgNotifyDecorator::notify(osg::NotifySeverity severity, const char* message)
 {
+#ifdef WIN32
   // Convert message to std::string for easier manipulation
   std::string msg(message);
-  // Check if the message contains the specific error
+  // SIM-18144 details issues with 571. - 573. drivers on Windows; check if the message contains the specific error
   for (const auto& filter : filters_)
   {
     if (msg.contains(filter))
@@ -1789,8 +1810,8 @@ void FilteringOsgNotifyDecorator::notify(osg::NotifySeverity severity, const cha
       // suppress anything else
       return;
     }
-
   }
+#endif
   child_->notify(severity, message);
 }
 

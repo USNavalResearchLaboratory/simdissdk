@@ -424,6 +424,44 @@ class View;
     void initPerspective_();
   };
 
+  /**
+  * PlanarNavigationMode provides a planar navigation mode.
+  * Pass an instance of PlanarNavigationMode to EarthManipulator::applySettings in order to enable
+  * this navigation mode.<p>
+  * <ul>
+  * <li>Double-click left mouse button: center view</li>
+  * <li>Single-click left mouse button + ctrl: center view</li>
+  * <li>Single-click middle mouse button: center view</li>
+  * <li>Scroll wheel: zoom</li>
+  * <li>Scroll wheel + shift: pan east/west</li>
+  * <li>Scroll wheel + ctrl: pan north/south</li>
+  * <li>Single-click left mouse button and drag + ctrl: box zoom</li>
+  * <li>Single-click middle mouse button and drag: box zoom</li>
+  * </ul>
+  */
+  class SDKVIS_EXPORT PlanarNavigationMode : public NavigationMode
+  {
+  public:
+    /**
+    * Initialize the range navigation mode.
+    * @param watchMode if true, no rotate actions will be applied, as
+    * rotation is disabled in watchMode
+    */
+    PlanarNavigationMode(simVis::View* view, bool watchMode);
+
+  protected:
+    /// osg::Referenced-derived
+    virtual ~PlanarNavigationMode();
+
+  private:
+    /** Initializes the bindings given the parameters. */
+    void init_(simVis::View* view, bool watchMode);
+
+    osg::observer_ptr<View> view_;
+    osg::ref_ptr<BoxZoomMouseHandler> boxZoomLeftCtrl_;
+    osg::ref_ptr<BoxZoomMouseHandler> boxZoomMiddle_;
+  };
+
 }
 
 #endif // SIMVIS_UI_NAVIGATION_MODES

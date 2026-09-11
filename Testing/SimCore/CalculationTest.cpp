@@ -21,13 +21,14 @@
  *
  */
 #include <cmath>
+#include <thread>
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateSystem.h"
-#include "simCore/Calc/Random.h"
 #include "simCore/Calc/NumericalAnalysis.h"
+#include "simCore/Calc/Random.h"
 
 namespace {
 
@@ -663,6 +664,7 @@ int validateGeodeticEcef(double lat, double lon, double alt, double x, double y,
 
   simCore::Coordinate ecef(simCore::COORD_SYS_ECEF, simCore::Vec3(x, y, z));
   simCore::Coordinate llaResults;
+
   simCore::CoordinateConverter::convertEcefToGeodetic(ecef, llaResults);
 
   rv += SDK_ASSERT(simCore::areAnglesEqual(llaResults.lat(), lat*simCore::DEG2RAD));
@@ -1822,6 +1824,324 @@ int testTangentPlane2Sphere()
   return rv;
 }
 
+int testNewConvenienceMethods()
+{
+  int rv = 0;
+  simCore::CoordinateConverter cc;
+  cc.setReferenceOrigin();
+
+  std::vector<simCore::CoordinateSystem> coords;
+  coords.push_back(simCore::COORD_SYS_NED);
+  coords.push_back(simCore::COORD_SYS_NWU);
+  coords.push_back(simCore::COORD_SYS_ENU);
+  coords.push_back(simCore::COORD_SYS_LLA);
+  coords.push_back(simCore::COORD_SYS_ECEF);
+
+  simCore::Coordinate inCoord = simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3(1, 2, 3), simCore::Vec3(4, 5, 6), simCore::Vec3(7, 8, 9), simCore::Vec3(10, 11, 12));
+
+  for (std::vector<simCore::CoordinateSystem>::const_iterator coordSystem = coords.begin(); coordSystem < coords.end(); coordSystem++)
+  {
+    simCore::Coordinate outCoord;
+    std::optional<simCore::Coordinate> result = cc.convert(inCoord, *coordSystem);
+    simCore::Coordinate resultCoord = result.value_or(simCore::Coordinate());
+    cc.convert(inCoord, outCoord, *coordSystem);
+
+    rv += SDK_ASSERT(result.has_value());
+
+    rv += SDK_ASSERT(simCore::v3AreEqual(resultCoord.position(), outCoord.position()));
+    rv += SDK_ASSERT(simCore::v3AreEqual(resultCoord.orientation(), outCoord.orientation()));
+    rv += SDK_ASSERT(simCore::v3AreEqual(resultCoord.velocity(), outCoord.velocity()));
+    rv += SDK_ASSERT(simCore::v3AreEqual(resultCoord.acceleration(), outCoord.acceleration()));
+
+    // forward declare vars for switch statement
+    // needed to compare swaps properly
+    std::optional<simCore::Coordinate> tempOpt;
+    std::optional<simCore::Vec3> temp;
+    simCore::Coordinate tempCoord;
+    simCore::Coordinate swapped;
+    simCore::Vec3 swappedVec3;
+    simCore::Vec3 tempVec3;
+
+    switch (*coordSystem)
+    {
+    case simCore::COORD_SYS_NED:
+      // swapNedEnu
+      tempOpt = simCore::CoordinateConverter::swapNedEnu(resultCoord);
+      rv += SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::swapNedEnu(resultCoord, tempCoord);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+
+      swappedVec3 = simCore::CoordinateConverter::swapNedEnu(resultCoord.position());
+      simCore::CoordinateConverter::swapNedEnu(resultCoord.position(), tempVec3);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      // swapNedNwu
+      tempOpt = simCore::CoordinateConverter::swapNedNwu(resultCoord);
+      rv += SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::swapNedNwu(resultCoord, tempCoord);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+
+      swappedVec3 = simCore::CoordinateConverter::swapNedNwu(resultCoord.position());
+      simCore::CoordinateConverter::swapNedNwu(resultCoord.position(), tempVec3);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      break;
+    case simCore::COORD_SYS_ENU:
+      // swapNedEnu
+      tempOpt = simCore::CoordinateConverter::swapNedEnu(resultCoord);
+      SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::swapNedEnu(resultCoord, tempCoord);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+
+      swappedVec3 = simCore::CoordinateConverter::swapNedEnu(resultCoord.position());
+      simCore::CoordinateConverter::swapNedEnu(resultCoord.position(), tempVec3);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      // convertEnuToNwu
+      tempOpt = simCore::CoordinateConverter::convertEnuToNwu(resultCoord);
+      SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::convertEnuToNwu(resultCoord, tempCoord);
+
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+
+      swappedVec3 = simCore::CoordinateConverter::convertEnuToNwu(resultCoord.position());
+      simCore::CoordinateConverter::convertEnuToNwu(resultCoord.position(), tempVec3);
+
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      break;
+    case simCore::COORD_SYS_NWU:
+      // swapNedNwu
+      tempOpt = simCore::CoordinateConverter::swapNedNwu(resultCoord);
+      rv += SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::swapNedNwu(resultCoord, tempCoord);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+
+      swappedVec3 = simCore::CoordinateConverter::swapNedNwu(resultCoord.position());
+      simCore::CoordinateConverter::swapNedNwu(resultCoord.position(), tempVec3);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      // convertNwuToEnu
+      tempOpt = simCore::CoordinateConverter::convertNwuToEnu(resultCoord);
+      SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::convertNwuToEnu(resultCoord, tempCoord);
+
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+
+      swappedVec3 = simCore::CoordinateConverter::convertNwuToEnu(resultCoord.position());
+      simCore::CoordinateConverter::convertNwuToEnu(resultCoord.position(), tempVec3);
+
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      break;
+    case simCore::COORD_SYS_ECEF:
+      // convertEcefToGeodetic
+      tempOpt = simCore::CoordinateConverter::convertEcefToGeodetic(resultCoord);
+      SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::convertEcefToGeodetic(resultCoord, tempCoord);
+
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+
+      // convertEcefToGeodeticPos
+      temp = simCore::CoordinateConverter::convertEcefToGeodeticPos(resultCoord.position());
+      rv += SDK_ASSERT(temp.has_value());
+
+      swappedVec3 = temp.value_or(simCore::Vec3());
+      simCore::CoordinateConverter::convertEcefToGeodeticPos(resultCoord.position(), tempVec3);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      // convertEcefToGeodeticOri
+      temp = simCore::CoordinateConverter::convertEcefToGeodeticOri(resultCoord.orientation(), simCore::Vec3());
+      rv += SDK_ASSERT(temp.has_value());
+
+      swappedVec3 = temp.value_or(simCore::Vec3());
+      simCore::CoordinateConverter::convertEcefToGeodeticOri(resultCoord.orientation(), simCore::Vec3(), tempVec3);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      // convertEcefToGeodeticVel
+      temp = simCore::CoordinateConverter::convertEcefToGeodeticVel(resultCoord.velocity(), simCore::Vec3());
+      rv += SDK_ASSERT(temp.has_value());
+
+      swappedVec3 = temp.value_or(simCore::Vec3());
+      simCore::CoordinateConverter::convertEcefToGeodeticVel(resultCoord.velocity(), simCore::Vec3(), tempVec3);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      // convertEcefToGeodeticAccel
+      temp = simCore::CoordinateConverter::convertEcefToGeodeticAccel(resultCoord.acceleration(), simCore::Vec3());
+      rv += SDK_ASSERT(temp.has_value());
+
+      swappedVec3 = temp.value_or(simCore::Vec3());
+      simCore::CoordinateConverter::convertEcefToGeodeticAccel(resultCoord.acceleration(), simCore::Vec3(), tempVec3);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      // convertEcefToEci
+      tempOpt = simCore::CoordinateConverter::convertEcefToEci(resultCoord);
+      rv += SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::convertEcefToEci(resultCoord, tempCoord);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+      break;
+    case simCore::COORD_SYS_LLA:
+      // convertGeodeticToEcef
+      tempOpt = simCore::CoordinateConverter::convertGeodeticToEcef(resultCoord);
+      rv += SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::convertGeodeticToEcef(resultCoord, tempCoord);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+
+      // convertGeodeticPosToEcef
+      temp = simCore::CoordinateConverter::convertGeodeticPosToEcef(resultCoord.position());
+      rv += SDK_ASSERT(temp.has_value());
+
+      swappedVec3 = temp.value_or(simCore::Vec3());
+      simCore::CoordinateConverter::convertGeodeticPosToEcef(resultCoord.position(), tempVec3);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      // convertGeodeticOriToEcef
+      temp = simCore::CoordinateConverter::convertGeodeticOriToEcef(resultCoord.orientation(), simCore::Vec3());
+      rv += SDK_ASSERT(temp.has_value());
+
+      swappedVec3 = temp.value_or(simCore::Vec3());
+      simCore::CoordinateConverter::convertGeodeticOriToEcef(resultCoord.orientation(), simCore::Vec3(), tempVec3);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swappedVec3, tempVec3));
+
+      break;
+    case simCore::COORD_SYS_ECI:
+      // convertEciToEcef
+      tempOpt = simCore::CoordinateConverter::convertEciToEcef(resultCoord);
+      rv += SDK_ASSERT(tempOpt.has_value());
+
+      swapped = tempOpt.value_or(simCore::Coordinate());
+      simCore::CoordinateConverter::convertEciToEcef(resultCoord, tempCoord);
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.position(), tempCoord.position()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.orientation(), tempCoord.orientation()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.velocity(), tempCoord.velocity()));
+      rv += SDK_ASSERT(simCore::v3AreEqual(swapped.acceleration(), tempCoord.acceleration()));
+
+      break;
+
+    case simCore::COORD_SYS_XEAST:
+    case simCore::COORD_SYS_GTP:
+    case simCore::COORD_SYS_NONE:
+    case simCore::COORD_SYS_MAX:
+      // unreachable
+      return 1;
+    }
+  }
+
+  return rv;
+}
+
+int calculateEwmaTest()
+{
+  int rv = 0;
+
+  // Test default alpha weighting from initial zero state
+  double avg = simCore::calculateEwma(100.0, 0.0, 0.6, 0.05);
+  rv += SDK_ASSERT(simCore::areEqual(avg, 60.0));
+
+  // Test successive accumulation
+  avg = simCore::calculateEwma(100.0, avg, 0.6, 0.05);
+  rv += SDK_ASSERT(simCore::areEqual(avg, 84.0));
+
+  // Test snap-to-zero thresholding when result falls below threshold
+  const double decayed = simCore::calculateEwma(0.0, 0.1, 0.6, 0.05);
+  rv += SDK_ASSERT(simCore::areEqual(decayed, 0.0));
+
+  // Test that values above threshold are not zeroed
+  const double aboveThreshold = simCore::calculateEwma(0.0, 0.2, 0.6, 0.05);
+  rv += SDK_ASSERT(simCore::areEqual(aboveThreshold, 0.08));
+
+  // Test edge cases for alpha bounds
+  rv += SDK_ASSERT(simCore::areEqual(simCore::calculateEwma(50.0, 10.0, 1.0, 0.0), 50.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::calculateEwma(50.0, 10.0, 0.0, 0.0), 10.0));
+
+  return rv;
+}
+
+int eventRateTrackerTest()
+{
+  int rv = 0;
+
+  simCore::EventRateTracker tracker(0.5, 0.05);
+
+  // Test initial rate defaults to zero via both getRate() and evaluate()
+  rv += SDK_ASSERT(simCore::areEqual(tracker.getRate(), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(tracker.evaluate(), 0.0));
+
+  // Test that adding events does not alter getRate() before evaluate() is called
+  tracker.add(100);
+  rv += SDK_ASSERT(simCore::areEqual(tracker.getRate(), 0.0));
+
+  // Allow time to elapse so the rate calculation yields > 0.0
+  std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
+  // Test that getRate() is strictly passive (remains 0.0 until evaluate() updates state)
+  rv += SDK_ASSERT(simCore::areEqual(tracker.getRate(), 0.0));
+
+  // Test that evaluate() updates the rate based on accumulated count and elapsed time
+  const double rateAfterTime = tracker.evaluate();
+  rv += SDK_ASSERT(rateAfterTime > 0.0);
+
+  // Test that getRate() now reflects the newly evaluated rate
+  rv += SDK_ASSERT(simCore::areEqual(tracker.getRate(), rateAfterTime));
+
+  // Test that consecutive evaluations with no added events and negligible time delta
+  // stabilize or maintain the last rate without throwing off the calculation
+  const double secondEval = tracker.evaluate();
+  rv += SDK_ASSERT(simCore::areEqual(secondEval, rateAfterTime));
+
+  // Test clear resets accumulator, rate history, and timestamp state
+  tracker.clear();
+  rv += SDK_ASSERT(simCore::areEqual(tracker.getRate(), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(tracker.evaluate(), 0.0));
+
+  return rv;
+}
+
 }
 
 int CalculationTest(int argc, char* argv[])
@@ -1852,5 +2172,9 @@ int CalculationTest(int argc, char* argv[])
   rv += testAoaSideslipTotalAoa();
   rv += testBoresightAlphaBeta();
   rv += testTangentPlane2Sphere();
+  rv += testNewConvenienceMethods();
+  rv += calculateEwmaTest();
+  rv += eventRateTrackerTest();
+
   return rv;
 }

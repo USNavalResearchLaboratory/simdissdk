@@ -32,7 +32,6 @@
 #include "simCore/String/ValidNumber.h"
 #include "simCore/Time/String.h"
 #include "simCore/Calc/Angle.h"
-#include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Mgrs.h"
 #include "simCore/Calc/Units.h"
@@ -990,9 +989,8 @@ GogShapePtr Parser::getShape_(const ParsedShape& parsed) const
     std::unique_ptr<Orbit> orbit(new Orbit(relative));
     parseCircularOptional_(parsed, relative, name, units, orbit.get());
     bool hasPoints = false;
-    simCore::Vec3 center1;
     // orbit requires both center positions
-    if (orbit->getCenterPosition(center1) == 0)
+    if (orbit->getCenterPosition().has_value())
     {
       simCore::Vec3 center2;
       ShapeParameter param = (relative ? ShapeParameter::CENTERXY2 : ShapeParameter::CENTERLL2);

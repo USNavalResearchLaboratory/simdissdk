@@ -161,15 +161,23 @@ public:
   virtual ShapeType shapeType() const = 0;
 
   /**
-  * Get user friendly display name of shape; if value is not set, default name is returned
-  * @return 0 if value was set, non-zero otherwise
+  * Get user friendly display name of shape
+  * @return std::optional containing the name if one has been set
   */
-  virtual int getName(std::string& name) const;
+  virtual std::optional<std::string> getName() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getName() instead")]]
+  int getName(std::string& name) const;
+
   /// Set user friendly display name of the shape
   void setName(const std::string& gogName);
 
   /// Draw state of the shape
+  std::optional<bool> getIsDrawn() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getIsDrawn() instead")]]
   int getIsDrawn(bool& draw) const;
+
   void setDrawn(bool draw);
 
   /// Edit mode for the shape
@@ -177,126 +185,186 @@ public:
   void setEditMode(EditMode editMode);
 
   /**
-  * Get flag indicating if depth buffer is active for the shape; if value is not set, default value is returned
-  * @return 0 if value was set, non-zero otherwise
+  * Get flag indicating if depth buffer is active for the shape
+  * return std::optional containing the flag if it has been set
   */
+  std::optional<bool> getIsDepthBufferActive() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getIsDepthBufferActive() instead")]]
   int getIsDepthBufferActive(bool& depthBuffer) const;
+
   /// Set depth buffer active for the shape
   void setDepthBufferActive(bool depthBuffer);
 
   /**
-  * Get altitude offset in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get altitude offset in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getAltitudeOffset() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::double> getAltitudeOffset() instead")]]
   int getAltitudeOffset(double& altitudeOffset) const;
+
   /// Altitude offset to apply to shape's position, in meters; won't accept EXTRUDE if canExtrude_ is false
   void setAltitudeOffset(double altOffsetMeters);
 
   /**
-  * Get mode that determines special behavior with regards to shape's altitude values; if value is not set, default value is returned
-  * @return 0 if value was set, non-zero otherwise
+  * Get mode that determines special behavior with regards to shape's altitude values
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<AltitudeMode> getAltitudeMode() const;
+
+  [[deprecated("Deprecated, please use std::optional<AltitudeMode> getAltitudeMode() instead")]]
   int getAltitudeMode(AltitudeMode& mode) const;
+
   /// Set mode that determines special behavior with regards to shape's altitude values
   void setAltitudeMode(AltitudeMode mode);
 
   /**
-  * Get the shape's extrusion height in meters, only applies if altitude mode is extrude; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's extrusion height in meters, only applies if altitude mode is extrude
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getExtrudeHeight() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getExtrudeHeight() instead")]]
   int getExtrudeHeight(double& height) const;
+
   /// Set the shape's height in meters
   void setExtrudeHeight(double heightMeters);
 
   /**
-  * Get reference position, lla in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get reference position, lla in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::Vec3> getReferencePosition() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::Vec3> getReferencePosition() instead")]]
   int getReferencePosition(simCore::Vec3& refPos) const;
+
   /// Set reference position for relative shapes; expects LLA in radians. Fails (non-zero return) on non-relative shapes; 0 on success
   int setReferencePosition(const simCore::Vec3& refPos);
   /// Clear out the current reference position
   void clearReferencePosition();
 
   /**
-  * Get the scalar adjustment values for shape's the xyz components; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the scalar adjustment values for shape's the xyz components
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::Vec3> getScale() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::Vec3> getScale() instead")]]
   int getScale(simCore::Vec3& scale) const;
+
   /// Set the scalar adjustment values for shape's xyz components
   void setScale(const simCore::Vec3& scale);
 
   /**
-  * Get flag indicating if shape's yaw component is locked to a reference orientation; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get flag indicating if shape's yaw component is locked to a reference orientation
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<bool> getIsFollowingYaw() const;
+
+  [[deprecated("Deprecated, please use std::optional<bool> getIsFollowingYaw() instead")]]
   int getIsFollowingYaw(bool& follow) const;
+
   /// Set flag indicating if shape's yaw component is locked to a reference orientation; no effect if canFollow_ is false
   void setFollowYaw(bool follow);
 
   /**
-  * Get flag indicating if shape's pitch component is locked to a reference orientation; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get flag indicating if shape's pitch component is locked to a reference orientation
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<bool> getIsFollowingPitch() const;
+
+  [[deprecated("Deprecated, please use std::optional<bool> getIsFollowingPitch() instead")]]
   int getIsFollowingPitch(bool& follow) const;
+
   /// Set flag indicating if shape's pitch component is locked to a reference orientation; no effect if canFollow_ is false
   void setFollowPitch(bool follow);
 
   /**
-  * Get flag indicating if shape's roll component is locked to a reference orientation; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get flag indicating if shape's roll component is locked to a reference orientation
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<bool> getIsFollowingRoll() const;
+
+  [[deprecated("Deprecated, please use std::optional<bool> getIsFollowingRoll() instead")]]
   int getIsFollowingRoll(bool& follow) const;
+
   /// Set flag indicating if shape's roll component is locked to a reference orientation; no effect if canFollow_ is false
   void setFollowRoll(bool follow);
 
   /**
-  * Get yaw angle offset from reference orientation in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get yaw angle offset from reference orientation in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getYawOffset() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getYawOffset() instead")]]
   int getYawOffset(double& offset) const;
+
   /// Set yaw angle offset from reference orientation in radians
   void setYawOffset(double offsetRad);
 
   /**
-  * Get pitch angle offset from reference orientation in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get pitch angle offset from reference orientation in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getPitchOffset() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getPitchOffset() instead")]]
   int getPitchOffset(double& offset) const;
+
   /// Set pitch angle offset from reference orientation in radians
   void setPitchOffset(double offsetRad);
 
   /**
-  * Get roll angle offset from reference orientation in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get roll angle offset from reference orientation in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getRollOffset() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getRollOffset() instead")]]
   int getRollOffset(double& offset) const;
+
   /// Set roll angle offset from reference orientation in radians
   void setRollOffset(double offsetRad);
 
   /**
-  * Get the vertical datum string; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the vertical datum string
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<std::string> getVerticalDatum() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getVerticalDatum() instead")]]
   int getVerticalDatum(std::string& verticalDatum) const;
+
   /// Set the vertical datum string
   void setVerticalDatum(const std::string& verticalDatum);
 
   /**
-  * Get the start time; if value is not set, infinite time stamp is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the start time
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::TimeStamp> getStartTime() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::TimeStamp> getStartTime() instead")]]
   int getStartTime(simCore::TimeStamp& startTime) const;
+
   /// Set the start time
   void setStartTime(const simCore::TimeStamp& startTime);
   /// Clears the start time, setting it to an invalid state.
   void clearStartTime();
 
   /**
-  * Get the end time; if value is not set, infinite time stamp is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the end time
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::TimeStamp> getEndTime() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::TimeStamp> getEndTime() instead")]]
   int getEndTime(simCore::TimeStamp& startTime) const;
+
   /// Set the end time
   void setEndTime(const simCore::TimeStamp& startTime);
   /// Clears the end time, setting it to an invalid state.
@@ -378,10 +446,14 @@ public:
   bool canRotate() const override;
 
   /**
-  * Get outlined state flag; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get outlined state flag
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<bool> getIsOutlined() const;
+
+  [[deprecated("Deprecated, please use std::optional<bool> getIsOutlined() instead")]]
   int getIsOutlined(bool& outlined) const;
+
   /// Set the shape's outlined state flag
   void setOutlined(bool outlined);
 
@@ -413,18 +485,26 @@ public:
   void clearPoints();
 
   /**
-  * Get point size for all points in the shape in pixels; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get point size for all points in the shape in pixels
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<int> getPointSize() const;
+
+  [[deprecated("Deprecated, please use std::optional<int> getPointSize() instead")]]
   int getPointSize(int& size) const;
+
   /// Set the shape's point size in pixels
   void setPointSize(int pointSizePixels);
 
   /**
-  * Get the shape's color; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's color
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<Color> getColor() const;
+
+  [[deprecated("Deprecated, please use std::optional<Color> getColor() instead")]]
   int getColor(Color& color) const;
+
   /// Set the shape's color
   void setColor(const Color& gogColor);
 
@@ -432,7 +512,7 @@ protected:
   /// Serialize the shape's specific implementation attributes to the stream
   void serializeToStream_(std::ostream& gogOutputStream) const override;
 
-public:
+private:
   std::optional<int> pointSize_; ///< pixels
   std::optional<Color> color_;
   std::vector<simCore::Vec3> points_; ///< lla radians if absolute, xyz meters if relative
@@ -444,41 +524,61 @@ class SDKCORE_EXPORT FillableShape : public OutlinedShape
 public:
   /**
   * Get the line width in pixels; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<int> getLineWidth() const;
+
+  [[deprecated("Deprecated, please use std::optional<int> getLineWidth() instead")]]
   int getLineWidth(int& lineWidth) const;
+
   /// Set the shape's line width in pixels
   void setLineWidth(int widthPixels);
 
   /**
   * Get the line color; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<Color> getLineColor() const;
+
+  [[deprecated("Deprecated, please use std::optional<Color> getLineColor() instead")]]
   int getLineColor(Color& color) const;
+
   /// Set the shape's line color
   void setLineColor(const Color& color);
 
   /**
   * Get the line style; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<LineStyle> getLineStyle() const;
+
+  [[deprecated("Deprecated, please use std::optional<LineStyle> getLineStyle() instead")]]
   int getLineStyle(LineStyle& style) const;
+
   /// Set the shape's line style
   void setLineStyle(LineStyle style);
 
   /**
   * Get the filled state; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<bool> getIsFilled() const;
+
+  [[deprecated("Deprecated, please use std::optional<bool> getIsFilled() instead")]]
   int getIsFilled(bool& filled) const;
+
   /// Set the shape's filled state
   void setFilled(bool filled);
 
   /**
   * Get the fill color; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<Color> getFillColor() const;
+
+  [[deprecated("Deprecated, please use std::optional<Color> getFillColor() instead")]]
   int getFillColor(Color& color) const;
+
   /// Set the shape's fill color
   void setFillColor(const Color& color);
 
@@ -511,10 +611,14 @@ public:
   void clearPoints();
 
   /**
-  * Get the shape's tessellation style; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's tessellation style
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<TessellationStyle> getTessellation() const;
+
+  [[deprecated("Deprecated, please use std::optional<TessellationStyle> getTessellation() instead")]]
   int getTessellation(TessellationStyle& tessellation) const;
+
   /// Set the shape's tessellation style
   void setTessellation(TessellationStyle tessellation);
 
@@ -563,18 +667,26 @@ public:
   bool canRotate() const override;
 
   /**
-  * Get the shape's center position in lla radians if absolute or xyz meters if relative; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's center position in lla radians if absolute or xyz meters if relative
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::Vec3> getCenterPosition() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::Vec3> getCenterPosition() instead")]]
   int getCenterPosition(simCore::Vec3& centerPosition) const;
+
   /// Set the shape's center position; in lla radians if absolute, xyz meters if relative
   void setCenterPosition(const simCore::Vec3& centerPosition);
 
   /**
-  * Get the shape's radius in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's radius in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getRadius() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getRadius() instead")]]
   int getRadius(double& radius) const;
+
   /// Set the shape's radius in meters
   void setRadius(double radiusMeters);
 
@@ -656,34 +768,50 @@ class SDKCORE_EXPORT EllipticalShape : public CircularShape
 {
 public:
   /**
-  * Get the shape's start angle in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's start angle in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getAngleStart() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getAngleStart() instead")]]
   int getAngleStart(double& angle) const;
+
   /// Set the start angle in radians
   void setAngleStart(double angleStartRad);
 
   /**
-  * Get the shape's angle sweep in radians; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's angle sweep in radians
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getAngleSweep() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getAngleSweep() instead")]]
   int getAngleSweep(double& angle) const;
+
   /// Set the shape's angle sweep in radians
   void setAngleSweep(double angleSweepRad);
 
   /**
-  * Get the shape's major axis in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's major axis in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getMajorAxis() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getMajorAxis() instead")]]
   int getMajorAxis(double& axis) const;
+
   /// Set the shape's major axis in meters
   void setMajorAxis(double majorAxisMeters);
 
   /**
-  * Get the shape's major axis in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's major axis in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getMinorAxis() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getMinorAxis() instead")]]
   int getMinorAxis(double& axis) const;
+
   /// Set the shape's minor axis in meters
   void setMinorAxis(double minorAxisMeters);
 
@@ -708,10 +836,14 @@ public:
   ShapeType shapeType() const override;
 
   /**
- * Get the shape's inner radius in meters; if value is not set, default value is returned.
- * @return 0 if value was set, non-zero otherwise
+ * Get the shape's inner radius in meters
+ * @return std::optional containing the value if it has been set
  */
+  std::optional<double> getInnerRadius() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getInnerRadius() instead")]]
   int getInnerRadius(double& innerRadius) const;
+
   /// Set the shape's inner radius in meters
   void setInnerRadius(double innerRadius);
 
@@ -741,10 +873,14 @@ public:
   ShapeType shapeType() const override;
 
   /**
-  * Get the shape's height in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's height in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getHeight() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getHeight() instead")]]
   int getHeight(double& height) const;
+
   /// Set the shape's height in meters
   void setHeight(double heightMeters);
 
@@ -760,10 +896,14 @@ class SDKCORE_EXPORT CircularHeightShape : public CircularShape
 {
 public:
   /**
-  * Get the shape's height in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's height in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getHeight() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getHeight() instead")]]
   int getHeight(double& height) const;
+
   /// Set the shape's height in meters
   void setHeight(double heightMeters);
 
@@ -794,18 +934,26 @@ public:
   ShapeType shapeType() const override;
 
   /**
-  * Get the shape's major axis in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's major axis in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getMajorAxis() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getMajorAxis() instead")]]
   int getMajorAxis(double& axis) const;
+
   /// Set the shape's major axis in meters
   void setMajorAxis(double majorAxisMeters);
 
   /**
-  * Get the shape's major axis in meters; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's major axis in meters
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getMinorAxis() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getMinorAxis() instead")]]
   int getMinorAxis(double& axis) const;
+
   /// Set the shape's minor axis in meters
   void setMinorAxis(double minorAxisMeters);
 
@@ -827,7 +975,7 @@ public:
   bool canRotate() const override;
   ShapeType shapeType() const override;
   /// Return text as name value if it exists and no name is defined
-  int getName(std::string& name) const override;
+  std::optional<std::string> getName() const override;
 
   /// Get the display text of the annotation
   std::string text() const;
@@ -835,66 +983,98 @@ public:
   void setText(const std::string& text);
 
   /**
-  * Get the shape's position; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the shape's position
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<simCore::Vec3> getPosition() const;
+
+  [[deprecated("Deprecated, please use std::optional<simCore::Vec3> getPosition() instead")]]
   int getPosition(simCore::Vec3& position) const;
+
   /// Set the label's position; in lla radians if absolute, xyz meters if relative
   void setPosition(const simCore::Vec3& position);
 
   /**
-  * Get the font filename; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the font filename
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<std::string> getFontName() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getFontName() instead")]]
   int getFontName(std::string& fontName) const;
+
   /// Set the font filename
   void setFontName(const std::string& fontName);
 
   /**
-  * Get the text point size; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the text point size
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<int> getTextSize() const;
+
+  [[deprecated("Deprecated, please use std::optional<int> getTextSize() instead")]]
   int getTextSize(int& size) const;
+
   /// Set the text point size
   void setTextSize(int textPointSize);
 
   /**
-  * Get the text color; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the text color
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<Color> getTextColor() const;
+
+  [[deprecated("Deprecated, please use std::optional<Color> getTextColor() instead")]]
   int getTextColor(Color& color) const;
+
   /// Set the text color
   void setTextColor(const Color& color);
 
   /**
-  * Get the text outline color; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the text outline color
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<Color> getOutlineColor() const;
+
+  [[deprecated("Deprecated, please use std::optional<Color> getOutlineColor() instead")]]
   int getOutlineColor(Color& color) const;
+
   /// Set the text outline color
   void setOutlineColor(const Color& color);
 
   /**
-  * Get the text outline thickness style; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the text outline thickness style
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<OutlineThickness> getOutlineThickness() const;
+
+  [[deprecated("Deprecated, please use std::optional<OutlineThickness> getOutlineThickness() instead")]]
   int getOutlineThickness(OutlineThickness& thickness) const;
+
   /// Set the text outline thickness style
   void setOutlineThickness(OutlineThickness thickness);
 
   /**
-  * Get the image file to display; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the image file to display
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<std::string> getImageFile() const;
+
+  [[deprecated("Deprecated, please use std::optional<std::string> getImageFile() instead")]]
   int getImageFile(std::string& imageFile) const;
+
   /// Set the image file to display
   void setImageFile(const std::string& imageFile);
 
   /**
-  * Get the text deconfliction priority value; if value is not set, default value is returned.
-  * @return 0 if value was set, non-zero otherwise
+  * Get the text deconfliction priority value
+  * @return std::optional containing the value if it has been set
   */
+  std::optional<double> getPriority() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getPriority() instead")]]
   int getPriority(double& priority) const;
+
   /// Set the text deconfliction priority value
   void setPriority(double priority);
 
@@ -942,7 +1122,11 @@ public:
   void setAltitude(double altitudeMeters);
 
   /// Box optional height in meters
+  std::optional<double> getHeight() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getHeight() instead")]]
   int getHeight(double& height) const;
+
   void setHeight(double heightMeters);
 
 private:
@@ -992,7 +1176,11 @@ public:
   void setImageFile(const std::string& imageFile);
 
   /// opacity value for image (0.0 transparent, 1.0 opaque)
+  std::optional<double> getOpacity() const;
+
+  [[deprecated("Deprecated, please use std::optional<double> getOpacity() instead")]]
   int getOpacity(double& opacity) const;
+
   void setOpacity(double opacity);
 
 private:

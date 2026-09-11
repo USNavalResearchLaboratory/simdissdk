@@ -55,9 +55,7 @@ GogNodeInterface* Line::createLine(const simCore::GOG::Line& line, bool attached
 
     if (!line.isRelative())
     {
-      std::string vdatum;
-      line.getVerticalDatum(vdatum);
-      osg::ref_ptr<osgEarth::SpatialReference> srs = LoaderUtils::getSrs(vdatum);
+      osg::ref_ptr<osgEarth::SpatialReference> srs = LoaderUtils::getSrs(line.getVerticalDatum().value_or("wgs84"));
       Feature* feature = new Feature(geom, srs.get(), style);
       FeatureNode* node = new FeatureNode(feature);
       node->setMapNode(mapNode);

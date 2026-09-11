@@ -63,12 +63,16 @@ double ProfileContext::adjustHeight(const simCore::Vec3& xEast) const
   if (datumConvert_.get())
   {
     // determine lla at x,y offset from reflla
-    simCore::Coordinate out;
     simCore::Coordinate in(simCore::COORD_SYS_XEAST, xEast);
-    coordConvert_.convert(in, out, simCore::COORD_SYS_LLA);
+    const std::optional<simCore::Coordinate> llaCoordOpt = coordConvert_.convert(in, simCore::COORD_SYS_LLA);
+    if (!llaCoordOpt)
+    {
+      assert(false); // coordConvert_ not set up properly only fail case
+      return 0.0;
+    }
 
     // determine conversion from MSL to HAE, force use of EGM96
-    const double mslToHaeM = datumConvert_->convertVerticalDatum(simCore::Vec3(out.lat(), out.lon(), 0.), simCore::TimeStamp(1996, 0.),
+    const double mslToHaeM = datumConvert_->convertVerticalDatum(simCore::Vec3(llaCoordOpt->lat(), llaCoordOpt->lon(), 0.), simCore::TimeStamp(1996, 0.),
       simCore::COORD_SYS_LLA, simCore::VERTDATUM_MSL, simCore::VERTDATUM_WGS84, 0.);
     return xEast.z() + mslToHaeM;
   }

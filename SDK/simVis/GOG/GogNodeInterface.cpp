@@ -104,13 +104,25 @@ int findLocalGeometryPosition(T* node, osgEarth::GeoPoint* referencePosition, os
     simCore::CoordinateConverter converter;
     converter.setReferenceOrigin(refPosition.y() * simCore::DEG2RAD, refPosition.x() * simCore::DEG2RAD, refPosition.z());
     simCore::Coordinate xEastCoord(simCore::COORD_SYS_XEAST, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
-    converter.convert(xEastCoord, llaCoord, simCore::COORD_SYS_LLA);
+    const std::optional<simCore::Coordinate> llaCoordOpt = converter.convert(xEastCoord, simCore::COORD_SYS_LLA);
+    if (!llaCoordOpt)
+    {
+      assert(false); // failure cases all handled beforehand, must succeed
+      return 1;
+    }
+    llaCoord = *llaCoordOpt;
   }
   else // convert from absolute center, ECEF to LLA
   {
     const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
     simCore::CoordinateConverter converter;
-    converter.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
+    const std::optional<simCore::Coordinate> llaCoordOpt = converter.convert(ecefCoord, simCore::COORD_SYS_LLA);
+    if (!llaCoordOpt)
+    {
+      assert(false); // failure cases handled beforehand, must succeed
+      return 1;
+    }
+    llaCoord = *llaCoordOpt;
   }
 
   position = osg::Vec3d(llaCoord.lon() * simCore::RAD2DEG, llaCoord.lat() * simCore::RAD2DEG, llaCoord.alt());
@@ -124,15 +136,9 @@ void applyOrientationOffsetsToNode_(const simCore::GOG::GogShape& shape, osgEart
   if (node == nullptr)
     return;
 
-  double yawOffset = 0.;
-  shape.getYawOffset(yawOffset);
-  osg::Quat yaw(yawOffset, -osg::Vec3(0, 0, 1));
-  double pitchOffset = 0.;
-  shape.getPitchOffset(pitchOffset);
-  osg::Quat pitch(pitchOffset, osg::Vec3(1, 0, 0));
-  double rollOffset = 0.;
-  shape.getRollOffset(rollOffset);
-  osg::Quat roll(rollOffset, osg::Vec3(0, 1, 0));
+  osg::Quat yaw(shape.getYawOffset().value_or(0.), -osg::Vec3(0, 0, 1));
+  osg::Quat pitch(shape.getPitchOffset().value_or(0.), osg::Vec3(1, 0, 0));
+  osg::Quat roll(shape.getRollOffset().value_or(0.), osg::Vec3(0, 1, 0));
   node->setLocalRotation(roll * pitch * yaw);
 }
 
@@ -195,11 +201,11 @@ public:
     if (hasTime && refYear >= 1970 && parent_ && parent_->shapeObject())
     {
       simCore::TimeStamp currTime(refYear, seconds);
-      simCore::TimeStamp start;
-      bool validStart = (parent_->shapeObject()->getStartTime(start) == 0);
-      simCore::TimeStamp end;
-      bool validEnd = (parent_->shapeObject()->getEndTime(end) == 0);
-      if ((validStart && currTime < start) || (validEnd && currTime > end))
+      std::optional<simCore::TimeStamp> start = parent_->shapeObject()->getStartTime();
+      bool validStart = start.has_value();
+      std::optional<simCore::TimeStamp> end = parent_->shapeObject()->getEndTime();
+      bool validEnd = end.has_value();
+      if ((validStart && currTime < start.value_or(simCore::INFINITE_TIME_STAMP)) || (validEnd && currTime > end.value_or(simCore::INFINITE_TIME_STAMP)))
       {
         // Returning without traversing here will cause the GOG node not to be drawn
         return;
@@ -284,109 +290,91 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   // for performance reasons, cache all style updates, apply once when done
   beginStyleUpdates_();
 
-  std::string name;
+  std::optional<std::string> name = shape->getName();
   // always set the name, use default if not set
-  shape->getName(name);
-  osgNode_->setName(name);
+  osgNode_->setName(name.value_or(shape->shapeTypeToString(shape->shapeType())));
 
-  bool draw = true;
+  const bool draw = shape->getIsDrawn().value_or(true);
   // always set draw, use default if not set
-  shape->getIsDrawn(draw);
   setDrawState(draw);
 
-  double altitudeOffset = 0.;
-  if (shape->getAltitudeOffset(altitudeOffset) == 0)
-    setAltOffset(altitudeOffset);
+  std::optional<double> altitudeOffset = shape->getAltitudeOffset();
+  if (altitudeOffset.has_value())
+    setAltOffset(altitudeOffset.value());
 
-  simCore::GOG::AltitudeMode altMode = simCore::GOG::AltitudeMode::NONE;
-  if (shape->getAltitudeMode(altMode) == 0)
-    setAltitudeMode(LoaderUtils::convertToVisAltitudeMode(altMode));
+  std::optional<simCore::GOG::AltitudeMode> altMode = shape->getAltitudeMode();
+  if (altMode.has_value())
+    setAltitudeMode(LoaderUtils::convertToVisAltitudeMode(altMode.value()));
 
-  double extrudeHeight = 0.;
-  if (shape->getExtrudeHeight(extrudeHeight) == 0)
-    setExtrudedHeight(extrudeHeight);
+  std::optional<double> extrudeHeight = shape->getExtrudeHeight();
+  if (extrudeHeight.has_value())
+    setExtrudedHeight(extrudeHeight.value());
 
   const simCore::GOG::OutlinedShape* outlined = dynamic_cast<const simCore::GOG::OutlinedShape*>(shape.get());
   if (outlined != nullptr)
-  {
-    bool outlinedState = true;
     // always set outlined, use default if not set in shape
-    outlined->getIsOutlined(outlinedState);
-    setOutlineState(outlinedState);
-  }
+    setOutlineState(outlined->getIsOutlined().value_or(true));
 
   const simCore::GOG::FillableShape* fillable = dynamic_cast<const simCore::GOG::FillableShape*>(shape.get());
   if (fillable != nullptr)
   {
-    int lineWidth = 0;
-    if (fillable->getLineWidth(lineWidth) == 0)
-      setLineWidth(lineWidth);
+    std::optional<int> lineWidth = fillable->getLineWidth();
+    if (lineWidth.has_value())
+      setLineWidth(lineWidth.value());
 
-    simCore::GOG::Color lineColor;
-    fillable->getLineColor(lineColor);
-    setLineColor(LoaderUtils::convertToOsgColor(lineColor));
+    setLineColor(LoaderUtils::convertToOsgColor(fillable->getLineColor().value_or(simCore::GOG::Color())));
 
-    simCore::GOG::LineStyle style = simCore::GOG::LineStyle::SOLID;
-    if (fillable->getLineStyle(style) == 0)
-      setLineStyle(LoaderUtils::convertToVisLineStyle(style));
+    std::optional<simCore::GOG::LineStyle> style = fillable->getLineStyle();
+    if (style.has_value())
+      setLineStyle(LoaderUtils::convertToVisLineStyle(style.value()));
 
-    bool filled = false;
-    fillable->getIsFilled(filled);
     // always set filled state, use default if not set in shape
-    setFilledState(filled);
+    setFilledState(fillable->getIsFilled().value_or(false));
 
     // always set a fill color
-    simCore::GOG::Color fillColor;
+    std::optional<simCore::GOG::Color> fillColor = fillable->getFillColor();
     // if fill color is not set, then try to get line color, which will be default if not set
-    if (fillable->getFillColor(fillColor) != 0)
-      fillable->getLineColor(fillColor);
-    setFillColor(LoaderUtils::convertToOsgColor(fillColor));
+    if (!fillColor.has_value())
+      fillColor = fillable->getLineColor();
+    setFillColor(LoaderUtils::convertToOsgColor(fillColor.value_or(simCore::GOG::Color())));
   }
 
   const simCore::GOG::PointBasedShape* lined = dynamic_cast<const simCore::GOG::PointBasedShape*>(shape.get());
   if (lined != nullptr)
   {
-    simCore::GOG::TessellationStyle tessellation = simCore::GOG::TessellationStyle::NONE;
-    lined->getTessellation(tessellation);
+    const simCore::GOG::TessellationStyle tessellation = lined->getTessellation().value_or(simCore::GOG::TessellationStyle::NONE);
     // always set tessellation to initialize fields in style, defaults to off
     setTessellation(LoaderUtils::convertToVisTessellation(tessellation));
   }
 
   // Depth buffer must be set after tessellation if tessellation is set
-  bool depthBuffer = false;
-  // always set depth buffer, use default if not set
-  shape->getIsDepthBufferActive(depthBuffer);
+  // always set depth buffer, use default(false) if not set
+  const bool depthBuffer = shape->getIsDepthBufferActive().value_or(false);
   setDepthBuffer(depthBuffer);
 
   const simCore::GOG::Points* points = dynamic_cast<const simCore::GOG::Points*>(shape.get());
   if (points)
   {
-    int pointSize = 1;
-    if (points->getPointSize(pointSize) == 0)
-      setPointSize(pointSize);
-    simCore::GOG::Color color;
-    if (points->getColor(color) == 0)
-      setLineColor(LoaderUtils::convertToOsgColor(color));
+    const std::optional<int> pointSize = points->getPointSize();
+    if (pointSize.has_value())
+      setPointSize(*pointSize);
+    const std::optional<simCore::GOG::Color> color = points->getColor();
+    if (color.has_value())
+      setLineColor(LoaderUtils::convertToOsgColor(*color));
   }
 
   const simCore::GOG::Annotation* anno = dynamic_cast<const simCore::GOG::Annotation*>(shape.get());
   if (anno != nullptr)
   {
     // always set annotation fields, uses default values if not set in the shape
-    std::string font;
-    int textSize = 12;
-    simCore::GOG::Color textColor;
-    anno->getFontName(font);
-    anno->getTextSize(textSize);
-     anno->getTextColor(textColor);
+    const std::string font = anno->getFontName().value_or("arial.ttf");
+    const int textSize = anno->getTextSize().value_or(15);
+    const simCore::GOG::Color textColor = anno->getTextColor().value_or(simCore::GOG::Color());
     setFont(font, textSize, LoaderUtils::convertToOsgColor(textColor));
-    simCore::GOG::OutlineThickness thickness = simCore::GOG::OutlineThickness::NONE;
-    simCore::GOG::Color outlineColor;
-    anno->getOutlineThickness(thickness);
-    anno->getOutlineColor(outlineColor);
+    const simCore::GOG::OutlineThickness thickness = anno->getOutlineThickness().value_or(simCore::GOG::OutlineThickness::THIN);
+    const simCore::GOG::Color outlineColor = anno->getOutlineColor().value_or(simCore::GOG::Color(0, 0, 0, 255));
     setTextOutline(LoaderUtils::convertToOsgColor(outlineColor), LoaderUtils::convertToVisOutlineThickness(thickness));
-    double priority = -1.;
-    anno->getPriority(priority);
+    const double priority = anno->getPriority().value_or(-1.);
     setDeclutterPriority(static_cast<int>(priority));
   }
 
@@ -400,15 +388,15 @@ void GogNodeInterface::setShapeObject(simCore::GOG::GogShapePtr shape)
   // set orientation offsets, only for relative shapes, after shape is defined
   if (shape_->canRotate())
   {
-    double yawOffset = 0.;
-    if (shape->getYawOffset(yawOffset) == 0)
-      setYawOffset(yawOffset);
-    double pitchOffset = 0.;
-    if (shape->getPitchOffset(pitchOffset) == 0)
-      setPitchOffset(pitchOffset);
-    double rollOffset = 0.;
-    if (shape->getRollOffset(rollOffset) == 0)
-      setRollOffset(rollOffset);
+    std::optional<double> yawOffset = shape->getYawOffset();
+    if (yawOffset.has_value())
+      setYawOffset(yawOffset.value());
+    std::optional<double> pitchOffset = shape->getPitchOffset();
+    if (pitchOffset.has_value())
+      setPitchOffset(pitchOffset.value());
+    std::optional<double> rollOffset = shape->getRollOffset();
+    if (rollOffset.has_value())
+      setRollOffset(rollOffset.value());
   }
 }
 
@@ -671,9 +659,11 @@ int GogNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
   // Fall back on the shape pointer's value
   if (!shape_)
     return 1;
-  simCore::Vec3 lla;
-  if (shape_->getReferencePosition(lla) != 0)
+  std::optional<simCore::Vec3> llaOptional = shape_->getReferencePosition();
+  if (!llaOptional.has_value())
     return 1;
+  simCore::Vec3 lla = llaOptional.value();
+
   referencePosition.set(lla.lon() * simCore::RAD2DEG,
     lla.lat() * simCore::RAD2DEG,
     lla.alt());
@@ -712,7 +702,16 @@ int GogNodeInterface::getOpacity(float& opacity) const
 int GogNodeInterface::getScale(osg::Vec3d& scale) const
 {
   simCore::Vec3 vec(1., 1., 1.);
-  const int rv = (shape_ && shape_->getScale(vec) == 0) ? 0 : 1;
+  int rv = 1;
+  if (shape_)
+  {
+    std::optional<simCore::Vec3> vecOptional = shape_->getScale();
+    if (vecOptional.has_value())
+    {
+      rv = 0;
+      vec = vecOptional.value();
+    }
+  }
   scale.set(vec.x(), vec.y(), vec.z());
   return rv;
 }
@@ -2024,8 +2023,7 @@ void LabelNodeInterface::serializeToStream(std::ostream& gogOutputStream)
     assert(0); // Dev error, should not have generated a LabelNodeInterface from another shape type
     return;
   }
-  std::string imageFile;
-  annoShape->getImageFile(imageFile);
+  const std::string imageFile = annoShape->getImageFile().value_or("");
   const std::string& filename = saveImageToFile_(placeNode->getIconImage(), imageFile, saveDirPath_);
 
   if (!filename.empty())
@@ -2572,9 +2570,13 @@ int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint*
 
   const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
   simCore::CoordinateConverter converter;
-  simCore::Coordinate llaCoord;
-  converter.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
-  position = osg::Vec3d(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, llaCoord.alt());
+  const std::optional<simCore::Coordinate> llaCoordOpt = converter.convert(ecefCoord, simCore::COORD_SYS_LLA);
+  if (!llaCoordOpt)
+  {
+    assert(false); // failure cases handled beforehand/in wrapper, must succeed
+    return 1;
+  }
+  position = osg::Vec3d(llaCoordOpt->lon()*simCore::RAD2DEG, llaCoordOpt->lat()*simCore::RAD2DEG, llaCoordOpt->alt());
 
   return 0;
 }

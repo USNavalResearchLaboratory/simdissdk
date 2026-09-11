@@ -226,16 +226,16 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string& filename, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  double radiusM = 0.;
-  arc.getRadius(radiusM);
-  Distance radius(radiusM, Units::METERS);
+  const double radiusMeters = arc.getRadius().value_or(
+    arc.originalUnits().rangeUnits().convertTo(
+      simCore::Units::METERS, 1000.));
+  Distance radius(radiusMeters, Units::METERS);
+
   Angle rotation(0., Units::DEGREES); // Rotation handled in setShapePositionOffsets()
-  double angleStart = 0.;
-  arc.getAngleStart(angleStart);
+  const double angleStart = arc.getAngleStart().value_or(0.);
   Angle start(angleStart * simCore::RAD2DEG, Units::DEGREES);
 
-  double sweepRad = 0.;
-  arc.getAngleSweep(sweepRad);
+  const double sweepRad = arc.getAngleSweep().value_or(0.);
   if (simCore::areEqual(sweepRad, 0.))
   {
     SIM_ERROR << "GOG: Cannot create Arc with sweep of 0" << (!filename.empty() ? " in " + filename : "") << "\n";
@@ -245,25 +245,23 @@ GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string
   // Use fmod to keep the correct sign for correct sweep angle
   Angle end = start + Angle(::fmod(sweep.as(Units::RADIANS), M_TWOPI), Units::RADIANS);
 
-  double iRadiusM = 0.;
-  bool hasInnerRadius = (arc.getInnerRadius(iRadiusM) == 0);
+  const double iRadiusM = arc.getInnerRadius().value_or(arc.originalUnits().rangeUnits().convertTo(simCore::Units::METERS, 0.));
+  const bool hasInnerRadius = arc.getInnerRadius().has_value();
   Distance iRadius(iRadiusM, Units::METERS);
 
   // whether to include the center point in the geometry.
-  bool filled = false;
-  arc.getIsFilled(filled);
   osgEarth::GeometryFactory gf;
   osg::ref_ptr<osgEarth::Geometry> outlineShape = new LineString();
   osg::ref_ptr<osgEarth::Geometry> filledShape = new osgEarth::Polygon();
 
-  double majorAxis = 0.;
-  if (arc.getMajorAxis(majorAxis) == 0)
+  const std::optional<double> majorAxis = arc.getMajorAxis();
+  if (majorAxis.has_value())
   {
-    radius = Distance(0.5 * majorAxis, Units::METERS);
-    double minorAxis = 0.;
-    if (arc.getMinorAxis(minorAxis) == 0)
+    radius = Distance(0.5 * majorAxis.value(), Units::METERS);
+    const std::optional<double> minorAxis = arc.getMinorAxis();
+    if (minorAxis.has_value())
     {
-      Distance minorRadius = Distance(0.5 * minorAxis, Units::METERS);
+      Distance minorRadius = Distance(0.5 * minorAxis.value(), Units::METERS);
       outlineShape = createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, hasInnerRadius, iRadius, false, outlineShape.get(), gf);
       filledShape = createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, hasInnerRadius, iRadius, true, filledShape.get(), gf);
     }
@@ -314,13 +312,16 @@ GogNodeInterface* Arc::createArc(const simCore::GOG::Arc& arc, const std::string
   fillNode->setName("Arc Fill Node");
 
   // use the ref point as the center if no center defined by the shape
-  simCore::Vec3 center;
-  if (arc.getCenterPosition(center) != 0 && !attached)
+  std::optional<simCore::Vec3> center = arc.getCenterPosition();
+  if (!center.has_value() && !attached)
     center = refPoint;
-  LoaderUtils::setShapePositionOffsets(*shapeNode, arc, center, refPoint, attached, false);
-  LoaderUtils::setShapePositionOffsets(*fillNode, arc, center, refPoint, attached, false);
+  else if (!center.has_value())
+    center = simCore::Vec3();
+
+  LoaderUtils::setShapePositionOffsets(*shapeNode, arc, *center, refPoint, attached, false);
+  LoaderUtils::setShapePositionOffsets(*fillNode, arc, *center, refPoint, attached, false);
   // show the filled node only if filled
-  fillNode->setNodeMask(filled ? simVis::DISPLAY_MASK_GOG : simVis::DISPLAY_MASK_NONE);
+  fillNode->setNodeMask(arc.getIsFilled().value_or(false) ? simVis::DISPLAY_MASK_GOG : simVis::DISPLAY_MASK_NONE);
   g->addChild(fillNode);
   g->addChild(shapeNode);
 

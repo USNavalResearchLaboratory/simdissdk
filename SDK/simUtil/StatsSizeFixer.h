@@ -26,6 +26,7 @@
 #include "osg/Camera"
 #include "osgGA/GUIEventHandler"
 #include "osgViewer/ViewerEventHandlers"
+#include "simVis/DevicePixelRatioUtils.h"
 
 namespace simUtil {
 
@@ -46,9 +47,7 @@ class StatsSizeFixer : public osgGA::GUIEventHandler
 {
 public:
   StatsSizeFixer(osgViewer::StatsHandler* stats)
-    : stats_(stats),
-      init_(false),
-      sizeMultiplier_(1.0)
+    : stats_(stats)
   {
   }
 
@@ -92,7 +91,7 @@ public:
 
 private:
   /** Given a canvas width/height, adjusts camera matrices on stats handler to have consistent text size */
-  void fixCameraSize_(int windowWidth, int windowHeight)
+  void fixCameraSize_(int windowWidthPhysical, int windowHeightPhysical)
   {
     // an idealized screen ratio for good screen text sizing
     static const double SCREEN_RATIO = 1024.0 / 768.0;
@@ -103,13 +102,18 @@ private:
     osg::Camera* camera = stats_->getCamera();
     if (camera->getGraphicsContext() == nullptr)
       return;
-    camera->setProjectionMatrixAsOrtho2D(0, windowWidth / sizeMultiplier_,
-      STATS_HEIGHT - windowHeight * SCREEN_RATIO / sizeMultiplier_, STATS_HEIGHT);
+
+    // Convert physical window dimensions to logical pixels for the orthographic projection
+    const double logicalWidth = simVis::DevicePixelRatioUtils::toLogical(windowWidthPhysical);
+    const double logicalHeight = simVis::DevicePixelRatioUtils::toLogical(windowHeightPhysical);
+
+    camera->setProjectionMatrixAsOrtho2D(0, logicalWidth / sizeMultiplier_,
+      STATS_HEIGHT - logicalHeight * SCREEN_RATIO / sizeMultiplier_, STATS_HEIGHT);
 
     // Need to set the viewport and view matrix at least once
     if (!init_)
     {
-      camera->setViewport(0, 0, windowWidth, windowHeight);
+      camera->setViewport(0, 0, windowWidthPhysical, windowHeightPhysical);
       camera->setViewMatrixAsLookAt(
         osg::Vec3d(0, 0, 100),
         osg::Vec3d(0, 0, 0),
@@ -120,9 +124,9 @@ private:
     }
   }
 
-  osgViewer::StatsHandler* stats_;
-  bool init_;
-  double sizeMultiplier_;
+  osgViewer::StatsHandler* stats_ = nullptr;
+  bool init_ = false;
+  double sizeMultiplier_ = 1.0;
 };
 
 }

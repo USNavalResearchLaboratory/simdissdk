@@ -148,6 +148,7 @@ source_group("Source Files\\String" FILES ${CORE_STRING_SOURCES})
 set(CORE_SYSTEM_HEADERS
     System/DescriptorStringCapture.h
     System/File.h
+    System/FileFinder.h
     System/MemoryInfo.h
     System/ShellWindow.h
     System/Utils.h
@@ -155,6 +156,7 @@ set(CORE_SYSTEM_HEADERS
 set(CORE_SYSTEM_SOURCES
     System/DescriptorStringCapture.cpp
     System/File.cpp
+    System/FileFinder.cpp
     System/MemoryInfo.cpp
     System/ShellWindow.cpp
     System/Utils.cpp

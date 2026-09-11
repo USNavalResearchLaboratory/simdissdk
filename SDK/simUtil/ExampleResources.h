@@ -69,6 +69,7 @@
 
 #define EXAMPLE_ROCKET_BURN_TEXTURE       "p.rgb"
 
+namespace osg { class GraphicsContext; }
 namespace osgEarth { class Map; }
 namespace simCore { class ClockImpl; }
 namespace simData { class DataStore; }
@@ -80,6 +81,19 @@ namespace simVis
 
 namespace simExamples
 {
+  /**
+   * Enables High DPI support for a standalone application. Will register the application executable
+   * as DPI-aware and install an osgEarth callback for testing GraphicsContext DPR values. If called
+   * before instantiation of OSG windows, this will allow for support of DPI-awareness V2 on Windows;
+   * if not, OSG's initial setting of DPI-awareness V1 will take effect.
+   *
+   * This function is not required or useful for Qt-based applications that use simQt::ViewerWidgetAdapter.
+   */
+  extern SDKUTIL_EXPORT void enableHighDpiSupport();
+
+  /** Helper that returns the device pixel ratio for a given graphics context. */
+  extern SDKUTIL_EXPORT float getGraphicsContextDpr(const osg::GraphicsContext* gc);
+
   /** Creates a map for use with the examples. */
   extern SDKUTIL_EXPORT osgEarth::Map* createDefaultExampleMap();
 

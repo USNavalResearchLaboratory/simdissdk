@@ -349,6 +349,7 @@ int main(int argc, char **argv)
   {
   // Set up the scene:
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   simExamples::configureSearchPaths();
 
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();

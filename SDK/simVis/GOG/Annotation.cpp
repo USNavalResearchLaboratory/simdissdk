@@ -49,14 +49,14 @@ GogNodeInterface* TextAnnotation::createAnnotation(const simCore::GOG::Annotatio
   osgEarth::GeoPositionNode* label = nullptr;
   osgEarth::Style style;
 
-  std::string imageFile = "";
-  if (anno.getImageFile(imageFile) == 0)
+  const std::optional<std::string> imageFile = anno.getImageFile();
+  if (imageFile.has_value())
   {
-    osg::ref_ptr<osg::Image> image = Utils::readRefImage(imageFile);
+    osg::ref_ptr<osg::Image> image = Utils::readRefImage(*imageFile);
     // if icon can't load, use default icon
     if (!image.valid())
     {
-      SIM_WARN << "Failed to load image file " << imageFile << "\n";
+      SIM_WARN << "Failed to load image file " << *imageFile << "\n";
       image = osgDB::readImageFile(PLACEMARK_ICON);
     }
 
@@ -69,8 +69,8 @@ GogNodeInterface* TextAnnotation::createAnnotation(const simCore::GOG::Annotatio
     label = new osgEarth::LabelNode(text, style);
   label->setName("GOG Label");
 
-  simCore::Vec3 position;
-  if (anno.getPosition(position) != 0 && !attached)
+  simCore::Vec3 position = anno.getPosition().value_or(simCore::Vec3());
+  if (!anno.getPosition().has_value() && !attached)
     position = refPoint;
   if (!attached)
   {

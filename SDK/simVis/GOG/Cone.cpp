@@ -32,10 +32,10 @@ namespace simVis { namespace GOG {
 
 GogNodeInterface* Cone::createCone(const simCore::GOG::Cone& cone, bool attached, const simCore::Vec3& refPoint, osgEarth::MapNode* mapNode)
 {
-  double radiusM = 0.;
-  cone.getRadius(radiusM);
-  double heightM = 0.;
-  cone.getHeight(heightM);
+  const double radiusM = cone.getRadius().value_or(
+    cone.originalUnits().rangeUnits().convertTo(
+      simCore::Units::METERS, 1000.));
+  const double heightM = cone.getHeight().value_or(cone.originalUnits().altitudeUnits().convertTo(simCore::Units::METERS, 1000.));
 
   // Set up geometry
   osg::ref_ptr<osg::Geometry> coneGeom = new osg::Geometry;
@@ -99,11 +99,13 @@ GogNodeInterface* Cone::createCone(const simCore::GOG::Cone& cone, bool attached
   node->setName("simVis::GOG::Cone");
 
   // use the ref point as the center if no center defined by the shape
-  simCore::Vec3 center;
-  if (cone.getCenterPosition(center) != 0 && !attached)
+  std::optional<simCore::Vec3> center = cone.getCenterPosition();
+  if (!center.has_value() && !attached)
     center = refPoint;
+  else if (!center.has_value())
+    center = simCore::Vec3();
 
-  LoaderUtils::setShapePositionOffsets(*node, cone, center, refPoint, attached, false);
+  LoaderUtils::setShapePositionOffsets(*node, cone, *center, refPoint, attached, false);
   GogMetaData metaData;
   GogNodeInterface* rv = new ConeNodeInterface(node, metaData);
   rv->setFilledState(true); // always filled

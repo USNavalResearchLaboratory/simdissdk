@@ -21,6 +21,7 @@
  *
  */
 #include <cassert>
+#include "simNotify/Notify.h"
 #include "simCore/Calc/MultiFrameCoordinate.h"
 #include "simCore/Calc/CoordinateConverter.h"
 
@@ -84,9 +85,14 @@ int MultiFrameCoordinate::setCoordinate(const simCore::Coordinate& coordinate, c
   }
 
   // Convert the coordinate and pass in using setCoordinate
-  simCore::Coordinate llaValues;
-  converter.convert(coordinate, llaValues, simCore::COORD_SYS_LLA);
-  return setCoordinate(llaValues);
+  auto llaValuesOpt = converter.convert(coordinate, simCore::COORD_SYS_LLA);
+  if (!llaValuesOpt)
+  {
+    SIM_ERROR << "Internal error: Cannot set coordinate, Coordinate conversion failed: " << __LINE__ << std::endl;
+    assert(false); // Convert guaranteed to succeed
+    return 1;
+  }
+  return setCoordinate(*llaValuesOpt);
 }
 
 void MultiFrameCoordinate::clear()
@@ -107,7 +113,15 @@ const simCore::Coordinate& MultiFrameCoordinate::llaCoordinate() const
   // Need to convert from ECEF into LLA, if ECEF is valid but LLA is not
   if (ecefValid_ && !llaValid_)
   {
-    simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoordinate_, llaCoordinate_);
+    auto llaCoordOpt = simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoordinate_);
+    if (!llaCoordOpt)
+    {
+      SIM_ERROR << "Internal error: cannot get LLA Coordinate, Coordinate conversion failed: " << __LINE__ << std::endl;
+      assert(false); // Will only fail if ecefCoordinate_ is using the wrong system
+      // Like below, return LLA value, even though it's known invalid
+      return llaCoordinate_;
+    }
+    llaCoordinate_ = *llaCoordOpt;
     llaValid_ = true;
   }
   // Return the LLA value, either valid or not
@@ -119,7 +133,14 @@ const simCore::Coordinate& MultiFrameCoordinate::ecefCoordinate() const
   // Need to convert from LLA into ECEF, if LLA is valid but ECEF is not
   if (llaValid_ && !ecefValid_)
   {
-    simCore::CoordinateConverter::convertGeodeticToEcef(llaCoordinate_, ecefCoordinate_);
+    auto ecefCoordOpt = simCore::CoordinateConverter::convertGeodeticToEcef(llaCoordinate_);
+    if (!ecefCoordOpt)
+    {
+      SIM_ERROR << "Internal error: cannot get LLA Coordinate, Coordinate conversion failed: " << __LINE__ << std::endl;
+      assert(false); // Will only fail if llaCoordinate_ is using the wrong system
+      return ecefCoordinate_;
+    }
+    ecefCoordinate_ = *ecefCoordOpt;
     ecefValid_ = true;
   }
   // Return the ECEF value, either valid or not
@@ -133,12 +154,26 @@ void MultiFrameCoordinate::synchronizeCoordinates()
 
   if (!llaValid_)
   {
-    simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoordinate_, llaCoordinate_);
+    auto llaCoordOpt = simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoordinate_);
+    if (!llaCoordOpt)
+    {
+      SIM_ERROR << "Could not synchronize coordinates, Coordinate conversion failed: " << __LINE__ << std::endl;
+      assert(false); // Conversion will only fail if ecefCoordinate_ is not in ECEF system
+      return;
+    }
+    llaCoordinate_ = *llaCoordOpt;
     llaValid_ = true;
     return;
   }
 
-  simCore::CoordinateConverter::convertGeodeticToEcef(llaCoordinate_, ecefCoordinate_);
+  auto ecefCoordOpt = simCore::CoordinateConverter::convertGeodeticToEcef(llaCoordinate_);
+  if (!ecefCoordOpt)
+  {
+    SIM_ERROR << "Could not synchronize coordinates, Coordinate conversion failed: " << __LINE__ << std::endl;
+    assert(false); // Conversion only fails if llaCoordinate_ is not lla
+    return;
+  }
+  ecefCoordinate_ = *ecefCoordOpt;
   ecefValid_ = true;
 }
 

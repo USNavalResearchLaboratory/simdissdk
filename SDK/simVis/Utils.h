@@ -826,7 +826,8 @@ namespace simVis
   /**
    * Utility class that is intended to do a transform to screen coordinates, backing out MVPW.
    * This is similar to osg::AutoTransform but does not attempt to maintain an aspect ratio,
-   * instead preferring to back out to pixel scale in both the X and the Y axes.
+   * instead preferring to back out to pixel scale in both the X and the Y axes. Note that this
+   * will expose LOGICAL pixels to children, not physical pixels.
    */
   class SDKVIS_EXPORT PixelScaleHudTransform : public osg::Transform
   {

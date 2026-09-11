@@ -23,12 +23,12 @@
 #include <limits>
 #include "osg/Image"
 #include "osgDB/FileUtils"
-
-#include "simVis/View.h"
-#include "simVis/Utils.h"
-#include "simVis/Registry.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/Calc/Math.h"
+#include "simVis/DevicePixelRatioUtils.h"
+#include "simVis/Registry.h"
+#include "simVis/Utils.h"
+#include "simVis/View.h"
 #include "simUtil/HudManager.h"
 
 namespace simUtil {
@@ -159,9 +159,12 @@ void HudTextAdapter::update_()
       addDrawable(osgText.get());
 
       osgText->setFont(simVis::Registry::instance()->getOrCreateFont(requestedFont_));
+
       // Set a minimum font size so that large text doesn't invoke magnification filtering
-      if (requestedFontSize_ > 32)
-        osgText->setFontResolution(static_cast<unsigned int>(requestedFontSize_), static_cast<unsigned int>(requestedFontSize_));
+      const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+      unsigned int res = static_cast<unsigned int>(simCore::sdkMax(32.0, requestedFontSize_ * dpr));
+      osgText->setFontResolution(res, res);
+
       osgText->setCharacterSize(simVis::osgFontSize(requestedFontSize_));
       osgText->setPosition(osg::Vec3(0.0f, 0.0f, 0.0f));
       osgText->setColor(color_);
@@ -198,9 +201,11 @@ void HudTextAdapter::update_()
       if (requestedFontSize_ != currentFontSize_)
       {
         osgText->setCharacterSize(simVis::osgFontSize(requestedFontSize_));
+
         // Set a minimum font size so that large text doesn't invoke magnification filtering
-        if (requestedFontSize_ > 32)
-          osgText->setFontResolution(static_cast<unsigned int>(requestedFontSize_), static_cast<unsigned int>(requestedFontSize_));
+        const double dpr = simVis::DevicePixelRatioUtils::getDpr();
+        unsigned int res = static_cast<unsigned int>(simCore::sdkMax(32.0, requestedFontSize_ * dpr));
+        osgText->setFontResolution(res, res);
       }
 
       // Update the color of the text
@@ -476,9 +481,7 @@ class HudManager::ResizeHandler : public osgGA::GUIEventHandler
 public:
   /** Constructor */
   explicit ResizeHandler(HudManager* manager)
-   : manager_(manager),
-     width_(0),
-     height_(0)
+   : manager_(manager)
   { }
 
   /** Checks for resize events */
@@ -495,8 +498,10 @@ public:
       const osg::Viewport* viewport = (camera) ? camera->getViewport() : nullptr;
       if (viewport)
       {
-        int width = static_cast<int>(viewport->width());
-        int height = static_cast<int>(viewport->height());
+        // Convert physical viewport resize events to logical bounds
+        int width = static_cast<int>(simVis::DevicePixelRatioUtils::toLogical(viewport->width()));
+        int height = static_cast<int>(simVis::DevicePixelRatioUtils::toLogical(viewport->height()));
+
         if (width != width_ || height != height_)
         {
           width_  = width;
@@ -517,9 +522,9 @@ public:
 protected:
   virtual ~ResizeHandler() {}
 private:
-  HudManager* manager_;
-  int width_;
-  int height_;
+  HudManager* manager_ = nullptr;
+  int width_ = 0;
+  int height_ = 0;
 };
 
 //-------------------------------------------------------------------------------------------------------
@@ -537,8 +542,9 @@ HudManager::HudManager(osgViewer::View* view, osg::Group* parentNode)
   }
 
   const osg::Viewport* vp = view->getCamera()->getViewport();
-  windowWidth_ = static_cast<int>(vp->width());
-  windowHeight_ = static_cast<int>(vp->height());
+  // Convert physical viewport bounds to logical window size
+  windowWidth_ = static_cast<int>(simVis::DevicePixelRatioUtils::toLogical(vp->width()));
+  windowHeight_ = static_cast<int>(simVis::DevicePixelRatioUtils::toLogical(vp->height()));
 
   handler_ = new ResizeHandler(this);
   if (view_.valid())

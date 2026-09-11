@@ -29,6 +29,7 @@
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
 
+#include "simNotify/Notify.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Interpolation.h"
 #include "simData/LimitData.h"
@@ -437,12 +438,16 @@ osg::Matrixd VaporTrail::calcWakeMatrix_(const simCore::Vec3& ecefPosition)
 {
   // convert an lla coordinate with null orientation to an ecef coordinate.
   // the resultant ecef orientation will be flat on the earth/ocean surface
-  simCore::Vec3 llaPos;
-  simCore::Vec3 ecefOri;
-  simCore::CoordinateConverter::convertEcefToGeodeticPos(ecefPosition, llaPos);
-  simCore::CoordinateConverter::convertGeodeticOriToEcef(llaPos, simCore::Vec3(0., -M_PI_2, 0.), ecefOri);
+  std::optional<simCore::Vec3> llaPosOpt = simCore::CoordinateConverter::convertEcefToGeodeticPos(ecefPosition);
+  if (!llaPosOpt)
+  {
+    SIM_ERROR << "Internal error: Could not calculate wake matrix, Coordinate conversion failed: " << __LINE__ << std::endl;
+    assert(false); // Only fails if ecefPosition is not in ECEF
+    return osg::Matrixd();
+  }
+  simCore::Vec3 ecefOriVec = simCore::CoordinateConverter::convertGeodeticOriToEcef(*llaPosOpt, simCore::Vec3(0., -M_PI_2, 0.));
   osg::Matrixd mat;
-  simVis::Math::ecefEulerToEnuRotMatrix(ecefOri, mat);
+  simVis::Math::ecefEulerToEnuRotMatrix(ecefOriVec, mat);
   mat.setTrans(ecefPosition.x(), ecefPosition.y(), ecefPosition.z());
   return mat;
 }

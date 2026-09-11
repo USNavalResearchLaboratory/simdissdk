@@ -32,12 +32,7 @@
 namespace simQt {
 
 DirectorySelectorWidget::DirectorySelectorWidget(QWidget* parent)
-  : QWidget(parent),
-    registryKey_("Private/directory"),
-    labelWidget_(nullptr),
-    includeLabel_(false),
-    label_(tr("Directory")),
-    browserTitle_(tr("Select Directory"))
+  : QWidget(parent)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -165,6 +160,7 @@ bool DirectorySelectorWidget::showOpenDirectoryButton() const
 
 void DirectorySelectorWidget::loadButton_()
 {
+  // FileDialog will prepend "Private/" in both setRegistryDir() and findDirectory()
   if (!defaultPath().isEmpty())
     simQt::FileDialog::setRegistryDir(registryKey_, defaultPath());
   QString dir = simQt::FileDialog::findDirectory(this, browserTitle_, registryKey_);

@@ -938,6 +938,7 @@ void readASI(osg::ArgumentParser& args, AppData& app)
 int main(int argc, char **argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   simExamples::configureSearchPaths();
 
   osg::ArgumentParser args(&argc, argv);

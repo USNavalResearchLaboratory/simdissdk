@@ -49,8 +49,12 @@ QString FileDialog::getRegistryDir(const QString& registryDir)
   if (!registryDir.isEmpty())
   {
     QSettings settings;
-    // Prepend "private/" to the front of the setting name to prevent it from being visible to the user
-    return QString::fromStdString(simCore::expandEnv(settings.value(PRIVATE_PREFIX + registryDir).toString().toStdString()));
+    // Prepend "Private/" to the front of the setting name to prevent it from being visible to the user
+    // Removed duplicate "Private/" insertion from a number of SIMDIS usages; check for single "Private\" before checking for legacy setting key
+    QVariant regDirVariant = settings.value(PRIVATE_PREFIX + registryDir);
+    if (!regDirVariant.isValid())
+      regDirVariant = settings.value(PRIVATE_PREFIX + PRIVATE_PREFIX + registryDir);
+    return QString::fromStdString(simCore::expandEnv(regDirVariant.toString().toStdString()));
   }
   return "";
 }

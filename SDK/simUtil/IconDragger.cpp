@@ -26,6 +26,7 @@
 #include "osg/Texture2D"
 #include "osgEarth/GeoPositionNodeAutoScaler"
 #include "osgEarth/GLUtils"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Utils.h"
 #include "IconDragger.h"
 
@@ -35,11 +36,13 @@ IconDragger::IconDragger(osgEarth::MapNode* mapNode, osg::Image* image)
   : Dragger(mapNode),
   texture_(new osg::Texture2D)
 {
+  const double physicalSize = simVis::DevicePixelRatioUtils::toPhysical(size_);
+
   // Create the quad geometry, centered on 0,0
   geometry_ = osg::createTexturedQuadGeometry(
-    osg::Vec3(-size_ / 2.0f, -size_ / 2.0f, 0.0f),
-    osg::Vec3(size_, 0.0f, 0.0f),
-    osg::Vec3(0.0f, size_, 0.0f)
+    osg::Vec3(-physicalSize / 2.0f, -physicalSize / 2.0f, 0.0f),
+    osg::Vec3(physicalSize, 0.0f, 0.0f),
+    osg::Vec3(0.0f, physicalSize, 0.0f)
   );
   // Data variance required for size and color changes
   geometry_->setDataVariance(osg::Object::DYNAMIC);
@@ -123,13 +126,15 @@ void IconDragger::setSize(float size)
 {
   if (size_ == size)
     return;
+
   size_ = size;
+  const double physicalSize = simVis::DevicePixelRatioUtils::toPhysical(size_);
 
   // Update the vertex array to match the new size
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geometry_->getVertexArray());
   if (verts && verts->size() == 4)
   {
-    const float half = size_ / 2.0f;
+    const float half = physicalSize / 2.0f;
     (*verts)[0].set(-half, -half, 0.0f);
     (*verts)[1].set(half, -half, 0.0f);
     (*verts)[2].set(half, half, 0.0f);

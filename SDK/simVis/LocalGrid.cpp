@@ -29,6 +29,7 @@
 
 #include "osgEarth/Color"
 #include "osgEarth/GLUtils"
+#include "osgEarth/LineDrawable"
 #include "osgEarth/PointDrawable"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
@@ -39,6 +40,7 @@
 #include "simCore/Time/TimeClass.h"
 
 #include "simVis/Constants.h"
+#include "simVis/DevicePixelRatioUtils.h"
 #include "simVis/Locator.h"
 #include "simVis/Platform.h"
 #include "simVis/Registry.h"
@@ -80,9 +82,12 @@ public:
     const float outlineThickness = simVis::outlineThickness(prefs.gridlabeltextoutline());
     setBackdropOffset(outlineThickness, outlineThickness);
     setColor(simVis::Color(prefs.gridlabelcolor(), simVis::Color::RGBA));
+
     setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
-    setCharacterSize(simVis::osgFontSize(prefs.gridlabelfontsize()));
     setAlignment(osgText::TextBase::LEFT_BOTTOM);
+
+    setDataVariance(osg::Object::DYNAMIC);
+    DpiTextScalingCallback::install(*this, simVis::osgFontSize(prefs.gridlabelfontsize()));
   }
 
   LocalGridLabel(const LocalGridLabel& text, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY)
@@ -208,49 +213,26 @@ private:
   unsigned int ring_;
   bool isMajorAxisLabel_;
 };
+
 /// Geometry for a simple linestrip with fixed NUM_POINTS_PER_LINE_STRIP
-class LineStrip : public osg::Geometry
+class LineStrip : public osgEarth::LineDrawable
 {
 public:
   LineStrip()
+    : osgEarth::LineDrawable(GL_LINE_STRIP)
   {
-    setUseVertexBufferObjects(true);
-    setUseDisplayList(false);
-
-    osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, NUM_POINTS_PER_LINE_STRIP);
-    setVertexArray(vertexArray.get());
-
-    osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-    (*colorArray)[0] = simVis::Color::White;
-    setColorArray(colorArray.get());
-
-    addPrimitiveSet(new osg::DrawArrays(GL_LINE_STRIP, 0, vertexArray->size()));
-  }
-
-  void setColor(const osg::Vec4f& color)
-  {
-    osg::Vec4Array* colorArray = static_cast<osg::Vec4Array*>(getColorArray());
-    if (!colorArray)
-    {
-      assert(0);
-      return;
-    }
-    (*colorArray)[0] = color;
+    setLineSmooth(true);
+    allocate(NUM_POINTS_PER_LINE_STRIP);
+    setColor(simVis::Color::White);
   }
 
   void update(const osg::Vec3f& start, const osg::Vec3f& end)
   {
-    osg::ref_ptr<osg::Vec3Array> vertexArray = dynamic_cast<osg::Vec3Array*>(getVertexArray());
-    if (!vertexArray)
-    {
-      assert(0);
-      return;
-    }
-    assert(vertexArray->getNumElements() == NUM_POINTS_PER_LINE_STRIP);
-    VectorScaling::generatePoints(*(vertexArray), start, end);
-    vertexArray->dirty();
+    VectorScaling::generatePoints(*this, start, end);
+    dirty();
   }
 };
+
 /// Geometry for SpeedLine grid types.
 class SpeedLine : public LineStrip
 {
@@ -351,52 +333,29 @@ private:
 };
 
 /// Geometry for range rings in Polar, RangeRing and SpeedRing grid types.
-class RangeRing : public osg::Geometry
+class RangeRing : public osgEarth::LineDrawable
 {
 public:
   explicit RangeRing(unsigned int ring)
-    : ring_(ring)
+    : osgEarth::LineDrawable(GL_LINE_LOOP),
+      ring_(ring)
   {
+    setLineSmooth(true);
     setName("simVis::LocalGridNode::RangeRing");
-    setUseVertexBufferObjects(true);
-    setUseDisplayList(false);
-
-    osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
-    setVertexArray(vertexArray.get());
-
-    osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-    (*colorArray)[0] = simVis::Color::White;
-    setColorArray(colorArray.get());
-
-    drawArray_ = new osg::DrawArrays(GL_LINE_LOOP);
-    addPrimitiveSet(drawArray_.get());
-  }
-
-  void setColor(const osg::Vec4f& color)
-  {
-    osg::Vec4Array* colorArray = static_cast<osg::Vec4Array*>(getColorArray());
-    if (!colorArray)
-    {
-      assert(0);
-      return;
-    }
-    (*colorArray)[0] = color;
+    setColor(simVis::Color::White);
   }
 
   void update(const simData::LocalGridPrefs& prefs, double sizeM)
   {
-    osg::ref_ptr<osg::Vec3Array> vertexArray = dynamic_cast<osg::Vec3Array*>(getVertexArray());
-    if (!vertexArray)
-    {
-      assert(0);
-      return;
-    }
     if (sizeM <= 0.0)
     {
-      drawArray_->setFirst(0);
-      drawArray_->setCount(0);
+      // Don't use DISPLAY_MASK_* values because the parent is managed by those
+      setNodeMask(0);
       return;
     }
+    // Turn on rendering since size is valid
+    setNodeMask(~0);
+
     const unsigned int numDivisions = prefs.gridsettings().numdivisions();
     const unsigned int numSubDivisions = prefs.gridsettings().numsubdivisions();
     const unsigned int numRings = osg::maximum(1u, (numDivisions + 1) * (numSubDivisions + 1));
@@ -406,23 +365,21 @@ public:
     const unsigned int segs = simCore::sdkMax(MIN_NUM_LINE_SEGMENTS, static_cast<unsigned int>(::ceil(circum / CIRCLE_QUANT_LEN)));
     const float inc = M_TWOPI / segs;
 
-    vertexArray->resize(segs);
+    allocate(segs);
+    setCount(segs);
 
     for (unsigned int j = 0; j < segs; ++j)
     {
       const float angle = inc * j;
       const float x = sin(angle);
       const float y = cos(angle);
-      assert(j < vertexArray->getNumElements());
-      (*vertexArray)[j] = osg::Vec3(x * radiusM, y * radiusM, 0.0f);
+      setVertex(j, osg::Vec3(x * radiusM, y * radiusM, 0.0f));
     }
-    vertexArray->dirty();
-    drawArray_->setFirst(0);
-    drawArray_->setCount(vertexArray->size());
+    dirty();
   }
+
 private:
-  osg::ref_ptr<osg::DrawArrays> drawArray_;
-  unsigned int ring_;
+  unsigned int ring_ = 0;
 };
 }
 

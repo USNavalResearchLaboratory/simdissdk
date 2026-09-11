@@ -418,6 +418,7 @@ private:
 int main(int argc, char **argv)
 {
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   simExamples::configureSearchPaths();
 
   osg::ArgumentParser argParse(&argc, argv);

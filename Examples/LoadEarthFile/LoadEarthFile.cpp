@@ -230,6 +230,7 @@ int main(int argc, char** argv)
 {
   // Set up the scene:
   simCore::checkVersionThrow();
+  simExamples::enableHighDpiSupport();
   simExamples::configureSearchPaths();
 
   if (argc < 3)
