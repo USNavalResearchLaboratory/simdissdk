@@ -110,22 +110,7 @@ GogManipulator::GogManipulator(osgEarth::MapNode* mapNode)
 {
   addChild(handlesGroup_.get());
 
-  // Setup Translation Dragger (Center)
-  transDragger_ = new simUtil::IconDragger(mapNode_.get(), simVis::makeCursorTranslateImage());
-  transDragger_->setNodeMask(0); // Hidden by default
-
-  // Setup Rotation Dragger (Offset Handle)
-  rotDragger_ = new simUtil::IconDragger(mapNode_.get(), simVis::makeCursorRotateImage());
-  rotDragger_->setNodeMask(0);
-
-  // Setup Scale Dragger (Corner Handle)
-  scaleDragger_ = new simUtil::IconDragger(mapNode_.get(), simVis::makeCursorDiagonalLlUrImage());
-  scaleDragger_->setNodeMask(0);
-
-  handlesGroup_->addChild(transDragger_.get());
-  handlesGroup_->addChild(rotDragger_.get());
-  handlesGroup_->addChild(scaleDragger_.get());
-  handlesGroup_->addChild(guideGroup_.get());
+  recreateDraggers_();
 
   // Center to Rotation handle
   centerToRotLine_ = new simVis::AnimatedLineNode(2.0f, false);
@@ -146,34 +131,6 @@ GogManipulator::GogManipulator(osgEarth::MapNode* mapNode)
     boxLines_.emplace_back(boxLine);
     guideGroup_->addChild(boxLine);
   }
-
-  // Generate drag event callbacks
-  auto makeDragHandler = [this](auto updateFunc) {
-    return [this, updateFunc](const auto* sender, const auto& geoPoint) {
-      if (!sender)
-        return;
-
-      if (sender->getDragging())
-      {
-        isDragging_ = true;
-        (this->*updateFunc)(geoPoint);
-      }
-      else if (isDragging_)
-      {
-        isDragging_ = false;
-        (this->*updateFunc)(geoPoint); // Ensure final position is applied
-
-        // Notify the application layer that an edit just finished
-        if (editFinishedCallback_ && activeGog_)
-          editFinishedCallback_(activeGog_);
-      }
-      };
-    };
-
-  // Attach Callbacks
-  transDragger_->onPositionChanged(makeDragHandler(&GogManipulator::handleTranslation_));
-  rotDragger_->onPositionChanged(makeDragHandler(&GogManipulator::handleRotation_));
-  scaleDragger_->onPositionChanged(makeDragHandler(&GogManipulator::handleScale_));
 
   setUpdateCallback(new SynchronizeCallback());
 }
@@ -416,6 +373,72 @@ bool GogManipulator::canEdit(const simVis::GOG::GogNodeInterface& gog)
 void GogManipulator::setEditFinishedCallback(EditFinishedCallback cb)
 {
   editFinishedCallback_ = std::move(cb);
+}
+
+void GogManipulator::setMapNode(osgEarth::MapNode* mapNode)
+{
+  if (mapNode_ == mapNode)
+    return;
+
+  mapNode_ = mapNode;
+  // Must recreate draggers due to them referencing the Map Node
+  recreateDraggers_();
+  // Reset target from scratch to get back to a good state
+  auto storage = activeGog_;
+  clearTarget();
+  if (storage)
+    setTarget(storage);
+  syncDraggersToGog_();
+}
+
+void GogManipulator::recreateDraggers_()
+{
+  handlesGroup_->removeChildren(0, handlesGroup_->getNumChildren());
+
+  // Setup Translation Dragger (Center)
+  transDragger_ = new simUtil::IconDragger(mapNode_.get(), simVis::makeCursorTranslateImage());
+  transDragger_->setNodeMask(0); // Hidden by default
+
+  // Setup Rotation Dragger (Offset Handle)
+  rotDragger_ = new simUtil::IconDragger(mapNode_.get(), simVis::makeCursorRotateImage());
+  rotDragger_->setNodeMask(0);
+
+  // Setup Scale Dragger (Corner Handle)
+  scaleDragger_ = new simUtil::IconDragger(mapNode_.get(), simVis::makeCursorDiagonalLlUrImage());
+  scaleDragger_->setNodeMask(0);
+
+  handlesGroup_->addChild(transDragger_.get());
+  handlesGroup_->addChild(rotDragger_.get());
+  handlesGroup_->addChild(scaleDragger_.get());
+  handlesGroup_->addChild(guideGroup_.get());
+
+  // Generate drag event callbacks
+  auto makeDragHandler = [this](auto updateFunc) {
+    return [this, updateFunc](const auto* sender, const auto& geoPoint) {
+      if (!sender)
+        return;
+
+      if (sender->getDragging())
+      {
+        isDragging_ = true;
+        (this->*updateFunc)(geoPoint);
+      }
+      else if (isDragging_)
+      {
+        isDragging_ = false;
+        (this->*updateFunc)(geoPoint); // Ensure final position is applied
+
+        // Notify the application layer that an edit just finished
+        if (editFinishedCallback_ && activeGog_)
+          editFinishedCallback_(activeGog_);
+      }
+      };
+    };
+
+  // Attach Callbacks
+  transDragger_->onPositionChanged(makeDragHandler(&GogManipulator::handleTranslation_));
+  rotDragger_->onPositionChanged(makeDragHandler(&GogManipulator::handleRotation_));
+  scaleDragger_->onPositionChanged(makeDragHandler(&GogManipulator::handleScale_));
 }
 
 }

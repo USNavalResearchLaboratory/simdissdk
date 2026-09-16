@@ -27,6 +27,7 @@
 #include <vector>
 #include "osg/Group"
 #include "osgEarth/MapNode"
+#include "osgEarth/MapNodeObserver"
 #include "simCore/Common/Common.h"
 
 namespace osgEarth { class GeoPoint; }
@@ -45,7 +46,7 @@ class IconDragger;
  * optionally fired off. This class works with GogNodeInterface, e.g. single GOG Shapes. A
  * single GOG file might contain one or more shapes.
  */
-class SDKUTIL_EXPORT GogManipulator : public osg::Group
+class SDKUTIL_EXPORT GogManipulator : public osg::Group, public osgEarth::MapNodeObserver
 {
 public:
   /** Create a GOG Manipulator for the given map node. */
@@ -70,6 +71,13 @@ public:
   /** Attach a listener to be notified when a drag operation completes */
   void setEditFinishedCallback(EditFinishedCallback cb);
 
+public: // MapNodeObserver
+
+  /** Gets the map node */
+  osgEarth::MapNode* getMapNode() override { return mapNode_.get(); }
+  /** Sets the map node */
+  void setMapNode(osgEarth::MapNode* mapNode) override;
+
 private:
   class SynchronizeCallback;
 
@@ -77,6 +85,8 @@ private:
   void handleTranslation_(const osgEarth::GeoPoint& newPos);
   void handleRotation_(const osgEarth::GeoPoint& handlePos);
   void handleScale_(const osgEarth::GeoPoint& handlePos);
+  /** Recreate mouse drag points from scratch */
+  void recreateDraggers_();
 
   std::shared_ptr<simVis::GOG::GogNodeInterface> activeGog_;
   osg::observer_ptr<osgEarth::MapNode> mapNode_;

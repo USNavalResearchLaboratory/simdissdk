@@ -27,6 +27,7 @@
 #include "osg/Group"
 #include "osg/observer_ptr"
 #include "osgEarth/MapNode"
+#include "osgEarth/MapNodeObserver"
 #include "simCore/Common/Export.h"
 #include "simUtil/GogManipulator.h"
 
@@ -35,7 +36,7 @@ namespace simVis::GOG { class GogNodeInterface; }
 namespace simUtil {
 
 /** Centralized manager coordinating multiple GOG Manipulators on multiple GOGs */
-class SDKUTIL_EXPORT GogManipulatorController
+class SDKUTIL_EXPORT GogManipulatorController : public osgEarth::MapNodeObserver
 {
 public:
   /**
@@ -81,6 +82,16 @@ public:
   void notifyShapesAdded(const std::vector<std::shared_ptr<simVis::GOG::GogNodeInterface>>& addedShapes);
   /** Call this before shapes are removed from memory to safely destroy active draggers. */
   void notifyShapesRemoved(const std::vector<std::shared_ptr<simVis::GOG::GogNodeInterface>>& removedShapes);
+  /** Notify mouse controls when GOG visibility changes to trigger a resync */
+  void notifyShapesDrawChanged(const std::vector<std::shared_ptr<simVis::GOG::GogNodeInterface>>& changedShapes);
+
+
+public: // MapNodeObserver
+
+  /** Gets the map node */
+  osgEarth::MapNode* getMapNode() override { return mapNode_.get(); }
+  /** Sets the map node */
+  void setMapNode(osgEarth::MapNode* mapNode) override;
 
 private:
   struct EditState
@@ -100,6 +111,9 @@ private:
 
   /** Helper to safely update the count and fire the callback if needed */
   void updateGloballyEditableCount_(int delta);
+
+  /** Resynchronize mouse controls with GOG */
+  void resyncGog_(std::shared_ptr<simVis::GOG::GogNodeInterface> gog);
 
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
   osg::observer_ptr<osg::Group> manipulatorRoot_;

@@ -294,6 +294,11 @@ private:
       }
       updateStatusAndLabel_();
       return true;
+
+    case 'q': // reset the map
+      viewer_->setMap(simExamples::createDefaultExampleMap());
+      updateStatusAndLabel_();
+      return true;
     }
     return false;
   }

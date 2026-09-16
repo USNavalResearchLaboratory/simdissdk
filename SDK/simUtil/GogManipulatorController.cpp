@@ -113,6 +113,21 @@ void GogManipulatorController::removeGog(std::shared_ptr<simVis::GOG::GogNodeInt
   }
 }
 
+void GogManipulatorController::resyncGog_(std::shared_ptr<simVis::GOG::GogNodeInterface> gog)
+{
+  if (!gog)
+    return;
+
+  auto manipIt = activeManipulators_.find(gog.get());
+  if (manipIt != activeManipulators_.end())
+  {
+    // The above find() should not have succeeded if this assert fails. Something is out of sync
+    assert(manipIt->second.manipulator->target() == gog);
+    manipIt->second.manipulator->clearTarget();
+    manipIt->second.manipulator->setTarget(gog);
+  }
+}
+
 bool GogManipulatorController::isEditing(const simVis::GOG::GogNodeInterface& gog) const
 {
   return activeManipulators_.find(&gog) != activeManipulators_.end();
@@ -213,6 +228,12 @@ void GogManipulatorController::notifyShapesRemoved(const std::vector<std::shared
     removeGog(shape);
 }
 
+void GogManipulatorController::notifyShapesDrawChanged(const std::vector<std::shared_ptr<simVis::GOG::GogNodeInterface>>& changedShapes)
+{
+  for (const auto& shape : changedShapes)
+    resyncGog_(shape);
+}
+
 void GogManipulatorController::setGlobalEditAvailabilityCallback(GlobalEditAvailabilityCallback cb)
 {
   availabilityCallback_ = std::move(cb);
@@ -221,6 +242,12 @@ void GogManipulatorController::setGlobalEditAvailabilityCallback(GlobalEditAvail
 bool GogManipulatorController::hasGloballyEditableShapes() const
 {
   return globallyEditableCount_ > 0;
+}
+
+void GogManipulatorController::setMapNode(osgEarth::MapNode* mapNode)
+{
+  for (auto manip : activeManipulators_)
+    manip.second.manipulator->setMapNode(mapNode);
 }
 
 void GogManipulatorController::updateGloballyEditableCount_(int delta)
