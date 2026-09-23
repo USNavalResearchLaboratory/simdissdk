@@ -357,9 +357,10 @@ bool GogManipulator::canEdit(const simVis::GOG::GogNodeInterface& gog)
   if (gog.isAttached())
     return false;
 
-  // No editing Lat/Lon box or ImageOverlay; does not work
+  // No editing Lat/Lon box, ImageOverlay, or absolute annotation; does not work
   const auto shape = gog.shape();
-  if (shape == simVis::GOG::GOG_LATLONALTBOX || shape == simVis::GOG::GOG_IMAGEOVERLAY)
+  if (shape == simVis::GOG::GOG_LATLONALTBOX || shape == simVis::GOG::GOG_IMAGEOVERLAY
+    || (shape == simVis::GOG::GOG_ANNOTATION && !gog.isRelative()))
     return false;
 
   // Must be able to get a reference position cleanly
