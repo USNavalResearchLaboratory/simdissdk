@@ -84,6 +84,24 @@ public:
     /** Reposition the window with the given X/Y percentage positions. */
     virtual void setPosition(const std::string& name, const osg::Vec2d& positionPct) = 0;
 
+    /**
+     * Applies a logical-pixel offset to the window position.
+     *
+     * HudPositionManager calculates this offset from the selected
+     * HudWindowAlignment and the window's current bounds. The offset is
+     * applied in addition to the position supplied through setPosition().
+     * An offset of (0,0) removes any alignment correction.
+     *
+     * Implementations that position content in logical pixels should override
+     * this method and apply the offset without treating it as a user position
+     * change. The default implementation is intentionally a no-op for
+     * compatibility with existing RepositionCallback implementations.
+     *
+     * @param name Name of the HUD window receiving the offset.
+     * @param offsetPx Additional logical-pixel translation to apply.
+     */
+    virtual void setAlignmentOffsetPx(const std::string& name, const osg::Vec2d& offsetPx) = 0;
+
   protected:
     /** osg::Referenced classes have protected destructors to avoid double delete. */
     virtual ~RepositionCallback() = default;
@@ -184,19 +202,30 @@ private:
     void setPosition(const osg::Vec2d& positionPct);
     /** Sends the current position to the callback. */
     void emitPosition();
+    /** Returns true if the position has been explicitly initialized. */
+    bool hasPosition() const;
     /** Retrieves position in percentage */
     osg::Vec2d position() const;
+
     /** Changes the default position, in percentage */
     void setDefaultPosition(const osg::Vec2d& posPct);
     /** Retrieves the default position in percentage */
     osg::Vec2d defaultPosition() const;
 
-    /** Changes the optional user-selected alignment. */
+    /**
+     * Changes the optional user-selected alignment and sends the resulting
+     * logical-pixel offset to the callback.
+     */
     void setAlignment(std::optional<HudWindowAlignment> alignment);
     /** Retrieves the optional user-selected alignment. */
     std::optional<HudWindowAlignment> alignment() const;
+    /** Sends the current alignment-derived offset to the callback. */
+    void emitAlignmentOffset();
 
-    /** Changes size data, which is just metadata about the window */
+    /**
+     * Changes visual bounds relative to the window's native anchor. If an
+     * alignment is selected, sends an updated alignment offset callback.
+     */
     void setSize(const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx);
     /** Retrieves size data about the window */
     void getSize(osg::Vec2d& minXyPx, osg::Vec2d& maxXyPx) const;
@@ -205,11 +234,15 @@ private:
     virtual ~WindowData();
 
   private:
+    /** Calculates the offset implied by selectedAlignment_ and current bounds. */
+    osg::Vec2d alignmentOffsetPx_() const;
+
     const std::string name_;
     osg::Vec2d positionPct_;
     osg::Vec2d defaultPositionPct_;
     osg::Vec2d minXyPx_;
     osg::Vec2d maxXyPx_;
+    bool hasPosition_ = false;
     std::optional<HudWindowAlignment> selectedAlignment_;
     osg::ref_ptr<HudPositionManager::RepositionCallback> callback_;
   };
@@ -227,6 +260,12 @@ public:
 
   /** Overrides RepositionCallback to convert the percentages to pixels. */
   void setPosition(const std::string& name, const osg::Vec2d& positionPct) override;
+  /**
+   * Stores an additional logical-pixel offset and reapplies the current
+   * position, if one has been supplied. The offset persists across viewport
+   * resizes and is applied by setPosition().
+   */
+  void setAlignmentOffsetPx(const std::string& name, const osg::Vec2d& offsetPx) override;
 
 protected:
   /** osg::Referenced classes have protected destructors to avoid double delete. */
@@ -234,9 +273,22 @@ protected:
 
 private:
   class ResizeCallback;
+  /** Position and alignment-offset data for a HUD window. */
+  struct SavedPositionData
+  {
+    osg::Vec2d positionPct;
+    osg::Vec2d alignmentOffsetPx;
+    bool hasPosition = false;
+  };
+
+  /** Retrieves existing saved data or creates a new record for the given window. */
+  SavedPositionData& getOrCreateSavedPosition_(const std::string& name);
+
   osg::observer_ptr<ResizeCallback> resizeCb_;
   osg::observer_ptr<osg::Node> cbAttachNode_;
-  std::map<std::string, osg::Vec2d> savedPositionsPct_;
+
+  /** Saved positioning data, keyed by HUD window name. */
+  std::map<std::string, SavedPositionData> savedPositions_;
 };
 
 /** Intended to be used by osg::MatrixTransform users that reposition based on pixel values. */

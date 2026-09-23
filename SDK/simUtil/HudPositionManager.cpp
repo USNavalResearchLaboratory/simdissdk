@@ -54,9 +54,13 @@ HudPositionManager::RepositionCallback* HudPositionManager::WindowData::repositi
 
 void HudPositionManager::WindowData::setPosition(const osg::Vec2d& positionPct)
 {
-  if (positionPct_ == positionPct)
+  // A newly created WindowData starts at (0,0), but that is not necessarily
+  // an initialized position. The first setPosition() must always notify.
+  if (hasPosition_ && positionPct_ == positionPct)
     return;
+
   positionPct_ = positionPct;
+  hasPosition_ = true;
   emitPosition();
 }
 
@@ -64,6 +68,11 @@ void HudPositionManager::WindowData::emitPosition()
 {
   if (callback_.valid())
     callback_->setPosition(name_, positionPct_);
+}
+
+bool HudPositionManager::WindowData::hasPosition() const
+{
+  return hasPosition_;
 }
 
 osg::Vec2d HudPositionManager::WindowData::position() const
@@ -83,7 +92,11 @@ osg::Vec2d HudPositionManager::WindowData::defaultPosition() const
 
 void HudPositionManager::WindowData::setAlignment(std::optional<HudWindowAlignment> alignment)
 {
+  if (selectedAlignment_ == alignment)
+    return;
+
   selectedAlignment_ = alignment;
+  emitAlignmentOffset();
 }
 
 std::optional<HudWindowAlignment> HudPositionManager::WindowData::alignment() const
@@ -91,10 +104,63 @@ std::optional<HudWindowAlignment> HudPositionManager::WindowData::alignment() co
   return selectedAlignment_;
 }
 
+void HudPositionManager::WindowData::emitAlignmentOffset()
+{
+  if (callback_.valid())
+    callback_->setAlignmentOffsetPx(name_, alignmentOffsetPx_());
+}
+
 void HudPositionManager::WindowData::setSize(const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
 {
+  if (minXyPx_ == minXyPx && maxXyPx_ == maxXyPx)
+    return;
+
   minXyPx_ = minXyPx;
   maxXyPx_ = maxXyPx;
+  emitAlignmentOffset();
+}
+
+osg::Vec2d HudPositionManager::WindowData::alignmentOffsetPx_() const
+{
+  if (!selectedAlignment_)
+    return osg::Vec2d();
+
+  const double centerX = (minXyPx_.x() + maxXyPx_.x()) * 0.5;
+  const double centerY = (minXyPx_.y() + maxXyPx_.y()) * 0.5;
+
+  switch (*selectedAlignment_)
+  {
+  case HudWindowAlignment::LEFT_TOP:
+    return osg::Vec2d(-minXyPx_.x(), -maxXyPx_.y());
+
+  case HudWindowAlignment::LEFT_CENTER:
+    return osg::Vec2d(-minXyPx_.x(), -centerY);
+
+  case HudWindowAlignment::LEFT_BOTTOM:
+    return osg::Vec2d(-minXyPx_.x(), -minXyPx_.y());
+
+  case HudWindowAlignment::CENTER_TOP:
+    return osg::Vec2d(-centerX, -maxXyPx_.y());
+
+  case HudWindowAlignment::CENTER_CENTER:
+    return osg::Vec2d(-centerX, -centerY);
+
+  case HudWindowAlignment::CENTER_BOTTOM:
+    return osg::Vec2d(-centerX, -minXyPx_.y());
+
+  case HudWindowAlignment::RIGHT_TOP:
+    return osg::Vec2d(-maxXyPx_.x(), -maxXyPx_.y());
+
+  case HudWindowAlignment::RIGHT_CENTER:
+    return osg::Vec2d(-maxXyPx_.x(), -centerY);
+
+  case HudWindowAlignment::RIGHT_BOTTOM:
+    return osg::Vec2d(-maxXyPx_.x(), -minXyPx_.y());
+  }
+
+  // Unexpected alignment flag
+  assert(0);
+  return osg::Vec2d();
 }
 
 void HudPositionManager::WindowData::getSize(osg::Vec2d& minXyPx, osg::Vec2d& maxXyPx) const
@@ -134,26 +200,26 @@ void HudPositionManager::addWindow(const std::string& name, const osg::Vec2d& de
     allWindows_[name] = newWindow;
     newWindow->setDefaultPosition(defaultPositionPct);
     newWindow->setPosition(defaultPositionPct);
+    newWindow->emitAlignmentOffset();
   }
   else
   {
     // Assertion failure means window was not removed before being added, which is
-    // likely a developer error unless a reasonable use case is presented.  There are
-    // cases where we will eventually expect that the WindowData* exists, but has
-    // no callback, due to being removed or due to being loaded with a position
-    // "externally" such as through a settings file.
+    // likely a developer error unless a reasonable use case is presented. Several
+    // functions can create windows e.g. from settings or mementos, but they won't
+    // be setting reposition callbacks in those cases.
     assert(i->second->repositionCallback() == nullptr);
 
-    // It is not necessarily an error to add a window that exists already.  Just update
-    // the reposition callback, but don't bother setting the position, because we already
-    // had a position for it in our records.
-    // The use case for this is when the window is created due to being loaded from
-    // a settings file.  We know a window will exist with this name, and know its
-    // position, but it hasn't yet been created.  So we'll have a WindowData created
-    // that doesn't have a callback yet.
+    // Existing data may have been loaded by setPosition(), setAlignment(), or
+    // a memento restore before the actual HUD window was constructed.
     i->second->setRepositionCallback(reposCallback);
     i->second->setDefaultPosition(defaultPositionPct);
-    i->second->emitPosition();
+
+    if (i->second->hasPosition())
+      i->second->emitPosition();
+    else
+      i->second->setPosition(defaultPositionPct);
+    i->second->emitAlignmentOffset();
   }
 }
 
@@ -300,11 +366,16 @@ public:
       if (!parent_.lock(parent))
         return false;
 
-      // For each of the saved positions, update the size and emit setPosition
-      for (auto i = parent->savedPositionsPct_.begin(); i != parent->savedPositionsPct_.end(); ++i)
+      // For each saved position, update the pixel coordinates for the new viewport size.
+      for (const auto& [name, savedPosition] : parent->savedPositions_)
       {
-        const osg::Vec2d newPosition(windowSize_.x() * i->second.x(), windowSize_.y() * i->second.y());
-        parent->setPositionPx(i->first, newPosition);
+        if (!savedPosition.hasPosition)
+          continue;
+
+        const osg::Vec2d newPosition(
+          windowSize_.x() * savedPosition.positionPct.x() + savedPosition.alignmentOffsetPx.x(),
+          windowSize_.y() * savedPosition.positionPct.y() + savedPosition.alignmentOffsetPx.y());
+        parent->setPositionPx(name, newPosition);
       }
     }
     return false;
@@ -341,18 +412,47 @@ RepositionPixelsCallback::~RepositionPixelsCallback()
 
 void RepositionPixelsCallback::setPosition(const std::string& name, const osg::Vec2d& positionPct)
 {
-  // Record the position so that on resize we can re-call setPositionPx correctly
-  savedPositionsPct_[name] = positionPct;
+  SavedPositionData& savedPosition = getOrCreateSavedPosition_(name);
+  savedPosition.positionPct = positionPct;
+  savedPosition.hasPosition = true;
 
   // Get a hard lock on the callback
   osg::ref_ptr<ResizeCallback> resizeCb;
   if (!resizeCb_.lock(resizeCb))
     return;
 
-  // Calculate the pixel position based on the last seen window size and the incoming percentage values
+  // Calculate the pixel position based on the last seen window size, and apply the
+  // manager-provided logical-pixel alignment offset.
   const auto& windowSize = resizeCb->windowSize();
-  osg::Vec2d asPixels(positionPct.x() * windowSize.x(), positionPct.y() * windowSize.y());
+  const osg::Vec2d asPixels(
+    positionPct.x() * windowSize.x() + savedPosition.alignmentOffsetPx.x(),
+    positionPct.y() * windowSize.y() + savedPosition.alignmentOffsetPx.y());
   setPositionPx(name, asPixels);
+}
+
+void RepositionPixelsCallback::setAlignmentOffsetPx(const std::string& name, const osg::Vec2d& offsetPx)
+{
+  SavedPositionData& savedPosition = getOrCreateSavedPosition_(name);
+  if (savedPosition.alignmentOffsetPx == offsetPx)
+    return;
+
+  savedPosition.alignmentOffsetPx = offsetPx;
+
+  // If no position has been supplied yet, retain the offset. A later
+  // setPosition() call will apply it.
+  if (!savedPosition.hasPosition)
+    return;
+
+  osg::ref_ptr<ResizeCallback> resizeCb;
+  if (!resizeCb_.lock(resizeCb))
+    return;
+
+  const auto& windowSize = resizeCb->windowSize();
+  const osg::Vec2d positionPx(
+    savedPosition.positionPct.x() * windowSize.x() + offsetPx.x(),
+    savedPosition.positionPct.y() * windowSize.y() + offsetPx.y());
+
+  setPositionPx(name, positionPx);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -365,6 +465,17 @@ RepositionMatrixPxCallback::RepositionMatrixPxCallback(osg::MatrixTransform* xfo
 
 RepositionMatrixPxCallback::~RepositionMatrixPxCallback()
 {
+}
+
+RepositionPixelsCallback::SavedPositionData& RepositionPixelsCallback::getOrCreateSavedPosition_(const std::string& name)
+{
+  auto i = savedPositions_.find(name);
+  if (i == savedPositions_.end())
+  {
+    const auto result = savedPositions_.insert({ name, SavedPositionData() });
+    i = result.first;
+  }
+  return i->second;
 }
 
 void RepositionMatrixPxCallback::setPositionPx(const std::string& name, const osg::Vec2d& positionPx)
