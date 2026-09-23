@@ -81,6 +81,16 @@ osg::Vec2d HudPositionManager::WindowData::defaultPosition() const
   return defaultPositionPct_;
 }
 
+void HudPositionManager::WindowData::setAlignment(std::optional<HudWindowAlignment> alignment)
+{
+  selectedAlignment_ = alignment;
+}
+
+std::optional<HudWindowAlignment> HudPositionManager::WindowData::alignment() const
+{
+  return selectedAlignment_;
+}
+
 void HudPositionManager::WindowData::setSize(const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
 {
   minXyPx_ = minXyPx;
@@ -181,6 +191,29 @@ int HudPositionManager::setPosition(const std::string& name, const osg::Vec2d& p
     return 0;
   }
   i->second->setPosition(positionPct);
+  return 0;
+}
+
+std::optional<HudWindowAlignment> HudPositionManager::getAlignment(const std::string& name) const
+{
+  const auto i = allWindows_.find(name);
+  if (i == allWindows_.end())
+    return {};
+  return i->second->alignment();
+}
+
+int HudPositionManager::setAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment)
+{
+  auto i = allWindows_.find(name);
+  if (i == allWindows_.end())
+  {
+    auto* newWindow = new WindowData(name);
+    newWindow->setAlignment(alignment);
+    allWindows_[name] = newWindow;
+    return 0;
+  }
+
+  i->second->setAlignment(alignment);
   return 0;
 }
 

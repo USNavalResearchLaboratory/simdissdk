@@ -24,6 +24,7 @@
 #define SIMUTIL_HUDPOSITIONMANAGER_H
 
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 #include "osg/observer_ptr"
@@ -39,6 +40,20 @@ namespace osg {
 namespace osgViewer { class ViewerBase; }
 
 namespace simUtil {
+
+/** User-selected placement alignment for a HUD window, particularly for simUtil::HudPositionManager. */
+enum class HudWindowAlignment
+{
+  LEFT_TOP = 0,
+  LEFT_CENTER,
+  LEFT_BOTTOM,
+  CENTER_TOP,
+  CENTER_CENTER,
+  CENTER_BOTTOM,
+  RIGHT_TOP,
+  RIGHT_CENTER,
+  RIGHT_BOTTOM
+};
 
 /**
  * Responsible for centralizing the management of window positioning in a HUD system.  Relies
@@ -114,6 +129,25 @@ public:
    */
   int setPosition(const std::string& name, const osg::Vec2d& positionPct);
 
+  /**
+   * Retrieves the user-selected alignment for a HUD window.  A value of std::nullopt
+   * means no alignment selection has been made and legacy placement behavior applies.
+   * @param name Window or HUD element name to query
+   * @return Window's user alignment, or nullopt on legacy behavior, or if the window
+   *   does not exist.
+   */
+  std::optional<HudWindowAlignment> getAlignment(const std::string& name) const;
+
+  /**
+   * Sets or clears the user-selected alignment for a HUD window.  Passing std::nullopt
+   * clears the selected alignment and restores legacy placement semantics.  As with
+   * setPosition(), alignment may be stored before the window is registered.
+   * @param name Existing HUD element name
+   * @param alignment New user-selected alignment, or nullopt to clear and use default
+   * @return 0 on success.  It is not an error to pass in a name that does not yet exist.
+   */
+  int setAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment);
+
   /** Resets the given window name to its default position. */
   int resetPosition(const std::string& name);
   /** Resets the position of all windows. */
@@ -157,6 +191,11 @@ private:
     /** Retrieves the default position in percentage */
     osg::Vec2d defaultPosition() const;
 
+    /** Changes the optional user-selected alignment. */
+    void setAlignment(std::optional<HudWindowAlignment> alignment);
+    /** Retrieves the optional user-selected alignment. */
+    std::optional<HudWindowAlignment> alignment() const;
+
     /** Changes size data, which is just metadata about the window */
     void setSize(const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx);
     /** Retrieves size data about the window */
@@ -171,6 +210,7 @@ private:
     osg::Vec2d defaultPositionPct_;
     osg::Vec2d minXyPx_;
     osg::Vec2d maxXyPx_;
+    std::optional<HudWindowAlignment> selectedAlignment_;
     osg::ref_ptr<HudPositionManager::RepositionCallback> callback_;
   };
   std::map<std::string, osg::ref_ptr<WindowData> > allWindows_;
