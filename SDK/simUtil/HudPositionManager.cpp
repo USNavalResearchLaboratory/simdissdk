@@ -92,16 +92,48 @@ osg::Vec2d HudPositionManager::WindowData::defaultPosition() const
 
 void HudPositionManager::WindowData::setAlignment(std::optional<HudWindowAlignment> alignment)
 {
-  if (selectedAlignment_ == alignment)
+  if (alignmentOverride_ == alignment)
     return;
 
-  selectedAlignment_ = alignment;
+  alignmentOverride_ = alignment;
   emitAlignmentOffset();
 }
 
 std::optional<HudWindowAlignment> HudPositionManager::WindowData::alignment() const
 {
-  return selectedAlignment_;
+  if (alignmentOverride_)
+    return alignmentOverride_;
+  return defaultAlignment_;
+}
+
+std::optional<HudWindowAlignment> HudPositionManager::WindowData::alignmentOverride() const
+{
+  return alignmentOverride_;
+}
+
+void HudPositionManager::WindowData::setDefaultAlignment(std::optional<HudWindowAlignment> alignment)
+{
+  if (defaultAlignment_ == alignment)
+    return;
+
+  defaultAlignment_ = alignment;
+  // A user override has precedence and should not be disturbed.
+  if (!alignmentOverride_)
+    emitAlignmentOffset();
+}
+
+std::optional<HudWindowAlignment> HudPositionManager::WindowData::defaultAlignment() const
+{
+  return defaultAlignment_;
+}
+
+void HudPositionManager::WindowData::resetAlignment()
+{
+  if (!alignmentOverride_)
+    return;
+
+  alignmentOverride_.reset();
+  emitAlignmentOffset();
 }
 
 void HudPositionManager::WindowData::emitAlignmentOffset()
@@ -122,13 +154,14 @@ void HudPositionManager::WindowData::setSize(const osg::Vec2d& minXyPx, const os
 
 osg::Vec2d HudPositionManager::WindowData::alignmentOffsetPx_() const
 {
-  if (!selectedAlignment_)
+  const std::optional<HudWindowAlignment> effectiveAlignment = alignment();
+  if (!effectiveAlignment)
     return osg::Vec2d();
 
   const double centerX = (minXyPx_.x() + maxXyPx_.x()) * 0.5;
   const double centerY = (minXyPx_.y() + maxXyPx_.y()) * 0.5;
 
-  switch (*selectedAlignment_)
+  switch (*effectiveAlignment)
   {
   case HudWindowAlignment::LEFT_TOP:
     return osg::Vec2d(-minXyPx_.x(), -maxXyPx_.y());
@@ -268,6 +301,14 @@ std::optional<HudWindowAlignment> HudPositionManager::getAlignment(const std::st
   return i->second->alignment();
 }
 
+std::optional<HudWindowAlignment> HudPositionManager::getAlignmentOverride(const std::string& name) const
+{
+  const auto i = allWindows_.find(name);
+  if (i == allWindows_.end())
+    return {};
+  return i->second->alignmentOverride();
+}
+
 int HudPositionManager::setAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment)
 {
   auto i = allWindows_.find(name);
@@ -281,6 +322,65 @@ int HudPositionManager::setAlignment(const std::string& name, std::optional<HudW
 
   i->second->setAlignment(alignment);
   return 0;
+}
+
+std::optional<HudWindowAlignment> HudPositionManager::getDefaultAlignment(const std::string& name) const
+{
+  const auto i = allWindows_.find(name);
+  if (i == allWindows_.end())
+    return {};
+  return i->second->defaultAlignment();
+}
+
+int HudPositionManager::setDefaultAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment)
+{
+  auto i = allWindows_.find(name);
+  if (i == allWindows_.end())
+  {
+    auto* newWindow = new WindowData(name);
+    newWindow->setDefaultAlignment(alignment);
+    allWindows_[name] = newWindow;
+    return 0;
+  }
+
+  i->second->setDefaultAlignment(alignment);
+  return 0;
+}
+
+int HudPositionManager::resetAlignment(const std::string& name)
+{
+  const auto i = allWindows_.find(name);
+  if (i == allWindows_.end())
+    return 1;
+
+  i->second->resetAlignment();
+  return 0;
+}
+
+void HudPositionManager::resetAllAlignments()
+{
+  for (auto i = allWindows_.begin(); i != allWindows_.end(); ++i)
+    i->second->resetAlignment();
+}
+
+int HudPositionManager::resetPlacement(const std::string& name)
+{
+  const auto i = allWindows_.find(name);
+  if (i == allWindows_.end())
+    return 1;
+
+  i->second->setPosition(i->second->defaultPosition());
+  i->second->resetAlignment();
+  return 0;
+}
+
+void HudPositionManager::resetAllPlacements()
+{
+  for (auto i = allWindows_.begin(); i != allWindows_.end(); ++i)
+  {
+    i->second->setPosition(i->second->defaultPosition());
+    i->second->resetAlignment();
+  }
 }
 
 int HudPositionManager::resetPosition(const std::string& name)

@@ -293,6 +293,11 @@ int testAlignmentOffsets()
   checkAlignment(simUtil::HudWindowAlignment::RIGHT_CENTER, osg::Vec2d(0.0, 25.0));
   checkAlignment(simUtil::HudWindowAlignment::RIGHT_BOTTOM, osg::Vec2d(0.0, 50.0));
 
+  // Setting an unchanged alignment does not emit another offset callback.
+  const unsigned int unchangedAlignmentCalls = callback->numAlignmentOffsetCalls();
+  rv += SDK_ASSERT(hud->setAlignment(name, simUtil::HudWindowAlignment::RIGHT_BOTTOM) == 0);
+  rv += SDK_ASSERT(callback->numAlignmentOffsetCalls() == unchangedAlignmentCalls);
+
   // Dynamic bounds changes update the offset without generating a position callback.
   rv += SDK_ASSERT(hud->setAlignment(name, simUtil::HudWindowAlignment::LEFT_TOP) == 0);
   const unsigned int offsetCalls = callback->numAlignmentOffsetCalls();
@@ -305,6 +310,11 @@ int testAlignmentOffsets()
   rv += SDK_ASSERT(hud->setAlignment(name, std::nullopt) == 0);
   rv += SDK_ASSERT(callback->numCalls() == positionCalls);
   rv += SDK_ASSERT(callback->lastAlignmentOffsetPx() == osg::Vec2d());
+
+  // Clearing an already-clear override is also a no-op.
+  const unsigned int clearedAlignmentCalls = callback->numAlignmentOffsetCalls();
+  rv += SDK_ASSERT(hud->setAlignment(name, std::nullopt) == 0);
+  rv += SDK_ASSERT(callback->numAlignmentOffsetCalls() == clearedAlignmentCalls);
 
   return rv;
 }
@@ -332,6 +342,23 @@ int testAlignmentBeforeRegistration()
   const auto alignment = hud->getAlignment(name);
   rv += SDK_ASSERT(alignment.has_value());
   rv += SDK_ASSERT(*alignment == simUtil::HudWindowAlignment::RIGHT_BOTTOM);
+
+  // Default alignment can also create a future window record. Registration
+  // must later apply its normal default position.
+  const std::string defaultOnlyName = "Future Default Alignment Window";
+  const osg::Vec2d defaultOnlyPosition(0.3, 0.7);
+
+  rv += SDK_ASSERT(hud->setDefaultAlignment(defaultOnlyName, simUtil::HudWindowAlignment::LEFT_TOP) == 0);
+  rv += SDK_ASSERT(hud->getDefaultAlignment(defaultOnlyName).has_value());
+  rv += SDK_ASSERT(*hud->getDefaultAlignment(defaultOnlyName) == simUtil::HudWindowAlignment::LEFT_TOP);
+
+  rv += SDK_ASSERT(hud->getAlignment(defaultOnlyName).has_value());
+  rv += SDK_ASSERT(*hud->getAlignment(defaultOnlyName) == simUtil::HudWindowAlignment::LEFT_TOP);
+
+  osg::ref_ptr<TestRepositionCallback> defaultOnlyCallback = new TestRepositionCallback;
+  hud->addWindow(defaultOnlyName, defaultOnlyPosition, defaultOnlyCallback.get());
+  rv += SDK_ASSERT(defaultOnlyCallback->numCalls() == 1);
+  rv += SDK_ASSERT(defaultOnlyCallback->lastPosition() == defaultOnlyPosition);
 
   return rv;
 }
@@ -412,6 +439,75 @@ int testAlignmentOffsetBeforePosition()
   return rv;
 }
 
+int testDefaultAlignmentAndPlacementReset()
+{
+  int rv = 0;
+  osg::ref_ptr<simUtil::HudPositionManager> hud = new simUtil::HudPositionManager;
+  osg::ref_ptr<TestRepositionCallback> callback = new TestRepositionCallback;
+
+  const std::string name = "Default Alignment Window";
+  const osg::Vec2d defaultPosition(0.8, 0.9);
+  const osg::Vec2d movedPosition(0.2, 0.3);
+
+  hud->addWindow(name, defaultPosition, callback.get());
+  rv += SDK_ASSERT(hud->setSize(name, osg::Vec2d(-100.0, -50.0), osg::Vec2d()) == 0);
+
+  // Default alignment takes effect when no override exists.
+  rv += SDK_ASSERT(hud->setDefaultAlignment(name, simUtil::HudWindowAlignment::RIGHT_TOP) == 0);
+  rv += SDK_ASSERT(!hud->getAlignmentOverride(name).has_value());
+
+  // Setting an unchanged default alignment is a no-op.
+  const unsigned int unchangedDefaultCalls = callback->numAlignmentOffsetCalls();
+  rv += SDK_ASSERT(hud->setDefaultAlignment(name, simUtil::HudWindowAlignment::RIGHT_TOP) == 0);
+  rv += SDK_ASSERT(callback->numAlignmentOffsetCalls() == unchangedDefaultCalls);
+
+  rv += SDK_ASSERT(hud->getDefaultAlignment(name).has_value());
+  rv += SDK_ASSERT(*hud->getDefaultAlignment(name) == simUtil::HudWindowAlignment::RIGHT_TOP);
+
+  rv += SDK_ASSERT(hud->getAlignment(name).has_value());
+  rv += SDK_ASSERT(*hud->getAlignment(name) == simUtil::HudWindowAlignment::RIGHT_TOP);
+
+  // Override the default, then move the window.
+  rv += SDK_ASSERT(hud->setAlignment(name, simUtil::HudWindowAlignment::LEFT_TOP) == 0);
+  rv += SDK_ASSERT(hud->getAlignmentOverride(name).has_value());
+  rv += SDK_ASSERT(*hud->getAlignmentOverride(name) == simUtil::HudWindowAlignment::LEFT_TOP);
+  rv += SDK_ASSERT(hud->setPosition(name, movedPosition) == 0);
+  rv += SDK_ASSERT(*hud->getAlignment(name) == simUtil::HudWindowAlignment::LEFT_TOP);
+
+  // Changing the default while an override exists must preserve the override and avoid applying a new offset
+  const unsigned int defaultChangeWithOverrideCalls = callback->numAlignmentOffsetCalls();
+  rv += SDK_ASSERT(hud->setDefaultAlignment(name, simUtil::HudWindowAlignment::CENTER_TOP) == 0);
+  rv += SDK_ASSERT(callback->numAlignmentOffsetCalls() == defaultChangeWithOverrideCalls);
+  rv += SDK_ASSERT(*hud->getDefaultAlignment(name) == simUtil::HudWindowAlignment::CENTER_TOP);
+  rv += SDK_ASSERT(*hud->getAlignment(name) == simUtil::HudWindowAlignment::LEFT_TOP);
+
+  // Position-only reset preserves the alignment override.
+  rv += SDK_ASSERT(hud->resetPosition(name) == 0);
+  rv += SDK_ASSERT(*hud->getAlignmentOverride(name) == simUtil::HudWindowAlignment::LEFT_TOP);
+
+  osg::Vec2d position;
+  rv += SDK_ASSERT(hud->getPosition(name, position) == 0);
+  rv += SDK_ASSERT(position == defaultPosition);
+  rv += SDK_ASSERT(*hud->getAlignment(name) == simUtil::HudWindowAlignment::LEFT_TOP);
+
+  // Alignment reset clears the override and restores the default.
+  rv += SDK_ASSERT(hud->resetAlignment(name) == 0);
+  rv += SDK_ASSERT(*hud->getAlignment(name) == simUtil::HudWindowAlignment::CENTER_TOP);
+  rv += SDK_ASSERT(!hud->getAlignmentOverride(name).has_value());
+
+  // Reset placement restores both values together.
+  rv += SDK_ASSERT(hud->setAlignment(name, simUtil::HudWindowAlignment::LEFT_TOP) == 0);
+  rv += SDK_ASSERT(hud->setPosition(name, movedPosition) == 0);
+
+  rv += SDK_ASSERT(hud->resetPlacement(name) == 0);
+
+  rv += SDK_ASSERT(hud->getPosition(name, position) == 0);
+  rv += SDK_ASSERT(position == defaultPosition);
+  rv += SDK_ASSERT(*hud->getAlignment(name) == simUtil::HudWindowAlignment::CENTER_TOP);
+
+  return rv;
+}
+
 }
 
 int HudPositionManagerTest(int argc, char* argv[])
@@ -427,6 +523,7 @@ int HudPositionManagerTest(int argc, char* argv[])
   rv += SDK_ASSERT(testAlignmentBeforeRegistration() == 0);
   rv += SDK_ASSERT(testMatrixCallbackAlignmentOffset() == 0);
   rv += SDK_ASSERT(testAlignmentOffsetBeforePosition() == 0);
+  rv += SDK_ASSERT(testDefaultAlignmentAndPlacementReset() == 0);
 
   return rv;
 }

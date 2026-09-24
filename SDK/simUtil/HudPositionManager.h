@@ -148,23 +148,73 @@ public:
   int setPosition(const std::string& name, const osg::Vec2d& positionPct);
 
   /**
-   * Retrieves the user-selected alignment for a HUD window.  A value of std::nullopt
-   * means no alignment selection has been made and legacy placement behavior applies.
+   * Retrieves the effective alignment for a HUD window. The effective alignment
+   * is the user override, if one is set, otherwise the widget default. A value
+   * of std::nullopt means no alignment is configured and legacy placement
+   * behavior applies.
    * @param name Window or HUD element name to query
-   * @return Window's user alignment, or nullopt on legacy behavior, or if the window
-   *   does not exist.
+   * @return Effective alignment, or nullopt if none is configured or the
+   *   window does not exist.
    */
   std::optional<HudWindowAlignment> getAlignment(const std::string& name) const;
 
   /**
-   * Sets or clears the user-selected alignment for a HUD window.  Passing std::nullopt
-   * clears the selected alignment and restores legacy placement semantics.  As with
-   * setPosition(), alignment may be stored before the window is registered.
+   * Retrieves the user alignment override for a HUD window. This does not return the
+   * default alignment when no override exists. This is primarily useful for serialization,
+   * as there are few cases where externally this value matters otherwise.
+   * @param name Window or HUD element name to query
+   * @return User alignment override, or nullopt if none is set or the window does not exist.
+   */
+  std::optional<HudWindowAlignment> getAlignmentOverride(const std::string& name) const;
+
+  /**
+   * Sets or clears the user-selected alignment override for a HUD window.
+   * Passing std::nullopt clears the override and causes the window to use its
+   * default alignment. If no default alignment is configured, this restores
+   * legacy placement behavior. As with setPosition(), alignment may be stored
+   * before the window is registered.
    * @param name Existing HUD element name
-   * @param alignment New user-selected alignment, or nullopt to clear and use default
-   * @return 0 on success.  It is not an error to pass in a name that does not yet exist.
+   * @param alignment User alignment override, or nullopt to clear the override
+   * @return 0 on success. It is not an error to pass in a name that does not yet exist.
    */
   int setAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment);
+
+  /**
+   * Retrieves the default alignment for a HUD window.
+   * @param name Window or HUD element name to query
+   * @return Default alignment, or nullopt if none is configured or the window does not exist.
+   */
+  std::optional<HudWindowAlignment> getDefaultAlignment(const std::string& name) const;
+
+  /**
+   * Sets the default alignment for a HUD window. If no user alignment override
+   * is active, the new default takes effect immediately. As with setPosition(),
+   * default alignment may be stored before the window is registered.
+   * @param name Existing or future HUD element name
+   * @param alignment Default alignment, or nullopt for legacy behavior
+   * @return 0 on success
+   */
+  int setDefaultAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment);
+
+  /**
+   * Clears the user alignment override for a window and reapplies its default alignment.
+   * @param name Name of the HUD window to reset
+   * @return 0 on success, non-zero if the window does not exist
+   */
+  int resetAlignment(const std::string& name);
+
+  /** Clears user alignment overrides for all HUD windows. */
+  void resetAllAlignments();
+
+  /**
+   * Resets both the position and alignment override for a HUD window.
+   * @param name Name of the HUD window to reset
+   * @return 0 on success, non-zero if the window does not exist
+   */
+  int resetPlacement(const std::string& name);
+
+  /** Resets both positions and alignment overrides for all HUD windows. */
+  void resetAllPlacements();
 
   /** Resets the given window name to its default position. */
   int resetPosition(const std::string& name);
@@ -212,13 +262,20 @@ private:
     /** Retrieves the default position in percentage */
     osg::Vec2d defaultPosition() const;
 
-    /**
-     * Changes the optional user-selected alignment and sends the resulting
-     * logical-pixel offset to the callback.
-     */
+    /** Changes the user alignment override. */
     void setAlignment(std::optional<HudWindowAlignment> alignment);
-    /** Retrieves the optional user-selected alignment. */
+    /** Retrieves the effective alignment. */
     std::optional<HudWindowAlignment> alignment() const;
+    /** Retrieves the user alignment override, if one exists. */
+    std::optional<HudWindowAlignment> alignmentOverride() const;
+
+    /** Changes the default alignment. */
+    void setDefaultAlignment(std::optional<HudWindowAlignment> alignment);
+    /** Retrieves the default alignment. */
+    std::optional<HudWindowAlignment> defaultAlignment() const;
+
+    /** Clears the user alignment override and reapplies the default alignment. */
+    void resetAlignment();
     /** Sends the current alignment-derived offset to the callback. */
     void emitAlignmentOffset();
 
@@ -234,7 +291,7 @@ private:
     virtual ~WindowData();
 
   private:
-    /** Calculates the offset implied by selectedAlignment_ and current bounds. */
+    /** Calculates the offset implied by the effective alignment and current bounds. */
     osg::Vec2d alignmentOffsetPx_() const;
 
     const std::string name_;
@@ -243,7 +300,8 @@ private:
     osg::Vec2d minXyPx_;
     osg::Vec2d maxXyPx_;
     bool hasPosition_ = false;
-    std::optional<HudWindowAlignment> selectedAlignment_;
+    std::optional<HudWindowAlignment> defaultAlignment_;
+    std::optional<HudWindowAlignment> alignmentOverride_;
     osg::ref_ptr<HudPositionManager::RepositionCallback> callback_;
   };
   std::map<std::string, osg::ref_ptr<WindowData> > allWindows_;
