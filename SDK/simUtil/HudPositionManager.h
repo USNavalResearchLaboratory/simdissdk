@@ -121,6 +121,23 @@ public:
       // noop
     }
 
+    /**
+     * Notifies the window owner that its placement was reset.
+     *
+     * This notification is emitted only by resetPlacement() and
+     * resetAllPlacements(). It occurs after the manager resets the stored
+     * position and clears any alignment override.
+     *
+     * The default implementation is intentionally a no-op because most HUD
+     * windows require no additional reset behavior.
+     *
+     * @param name Name of the HUD window whose placement was reset.
+     */
+    virtual void placementReset(const std::string& name)
+    {
+      // noop
+    }
+
   protected:
     /** osg::Referenced classes have protected destructors to avoid double delete. */
     virtual ~RepositionCallback() = default;
@@ -241,16 +258,6 @@ public:
   int setAllowedAlignments(const std::string& name, const std::set<HudWindowAlignment>& alignments);
 
   /**
-   * Clears the user alignment override for a window and reapplies its default alignment.
-   * @param name Name of the HUD window to reset
-   * @return 0 on success, non-zero if the window does not exist
-   */
-  int resetAlignment(const std::string& name);
-
-  /** Clears user alignment overrides for all HUD windows. */
-  void resetAllAlignments();
-
-  /**
    * Resets both the position and alignment override for a HUD window.
    * @param name Name of the HUD window to reset
    * @return 0 on success, non-zero if the window does not exist
@@ -330,10 +337,16 @@ private:
     /** Returns true if the alignment is supported by this window. */
     bool supportsAlignment(HudWindowAlignment alignment) const;
 
-    /** Clears the user alignment override and reapplies the default alignment. */
-    void resetAlignment();
     /** Sends the current alignment-derived offset to the callback. */
     void emitAlignmentOffset();
+
+    /**
+     * Resets both position and alignment override to their default values,
+     * then notifies the callback that placement reset is complete.
+     */
+    void resetPlacement();
+    /** Sends the placement-reset notification to the callback. */
+    void emitPlacementReset();
 
     /**
      * Changes visual bounds relative to the window's native anchor. If an

@@ -160,16 +160,23 @@ std::optional<HudWindowAlignment> HudPositionManager::WindowData::defaultAlignme
   return defaultAlignment_;
 }
 
-void HudPositionManager::WindowData::resetAlignment()
+void HudPositionManager::WindowData::resetPlacement()
 {
-  // setAlignment() will handle callbacks appropriately
+  setPosition(defaultPosition());
   setAlignment(std::nullopt);
+  emitPlacementReset();
 }
 
 void HudPositionManager::WindowData::emitAlignmentOffset()
 {
   if (callback_.valid())
     callback_->setAlignmentOffsetPx(name_, alignmentOffsetPx());
+}
+
+void HudPositionManager::WindowData::emitPlacementReset()
+{
+  if (callback_.valid())
+    callback_->placementReset(name_);
 }
 
 void HudPositionManager::WindowData::setSize(const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
@@ -446,40 +453,20 @@ int HudPositionManager::setAllowedAlignments(const std::string& name, const std:
   return 0;
 }
 
-int HudPositionManager::resetAlignment(const std::string& name)
-{
-  const auto i = allWindows_.find(name);
-  if (i == allWindows_.end())
-    return 1;
-
-  i->second->resetAlignment();
-  return 0;
-}
-
-void HudPositionManager::resetAllAlignments()
-{
-  for (auto i = allWindows_.begin(); i != allWindows_.end(); ++i)
-    i->second->resetAlignment();
-}
-
 int HudPositionManager::resetPlacement(const std::string& name)
 {
   const auto i = allWindows_.find(name);
   if (i == allWindows_.end())
     return 1;
 
-  i->second->setPosition(i->second->defaultPosition());
-  i->second->resetAlignment();
+  i->second->resetPlacement();
   return 0;
 }
 
 void HudPositionManager::resetAllPlacements()
 {
   for (auto i = allWindows_.begin(); i != allWindows_.end(); ++i)
-  {
-    i->second->setPosition(i->second->defaultPosition());
-    i->second->resetAlignment();
-  }
+    i->second->resetPlacement();
 }
 
 int HudPositionManager::resetPosition(const std::string& name)
