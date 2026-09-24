@@ -32,8 +32,30 @@
 
 namespace simUtil {
 
+namespace {
+
+/** Helper function that returns a default set of all possible window alignments (the default) */
+const std::set<HudWindowAlignment>& allHudWindowAlignments()
+{
+  static const std::set<HudWindowAlignment> s_alignments = {
+    HudWindowAlignment::LEFT_TOP,
+    HudWindowAlignment::LEFT_CENTER,
+    HudWindowAlignment::LEFT_BOTTOM,
+    HudWindowAlignment::CENTER_TOP,
+    HudWindowAlignment::CENTER_CENTER,
+    HudWindowAlignment::CENTER_BOTTOM,
+    HudWindowAlignment::RIGHT_TOP,
+    HudWindowAlignment::RIGHT_CENTER,
+    HudWindowAlignment::RIGHT_BOTTOM
+  };
+  return s_alignments;
+}
+
+}
+
 HudPositionManager::WindowData::WindowData(const std::string& name)
-  : name_(name)
+  : name_(name),
+    allowedAlignments_(allHudWindowAlignments())
 {
 }
 
@@ -90,13 +112,17 @@ osg::Vec2d HudPositionManager::WindowData::defaultPosition() const
   return defaultPositionPct_;
 }
 
-void HudPositionManager::WindowData::setAlignment(std::optional<HudWindowAlignment> alignment)
+int HudPositionManager::WindowData::setAlignment(std::optional<HudWindowAlignment> alignment)
 {
+  if (alignment && !supportsAlignment(*alignment))
+    return 1;
+
   if (alignmentOverride_ == alignment)
-    return;
+    return 0;
 
   alignmentOverride_ = alignment;
   emitAlignmentOffset();
+  return 0;
 }
 
 std::optional<HudWindowAlignment> HudPositionManager::WindowData::alignment() const
@@ -111,15 +137,19 @@ std::optional<HudWindowAlignment> HudPositionManager::WindowData::alignmentOverr
   return alignmentOverride_;
 }
 
-void HudPositionManager::WindowData::setDefaultAlignment(std::optional<HudWindowAlignment> alignment)
+int HudPositionManager::WindowData::setDefaultAlignment(std::optional<HudWindowAlignment> alignment)
 {
+  if (alignment && !supportsAlignment(*alignment))
+    return 1;
+
   if (defaultAlignment_ == alignment)
-    return;
+    return 0;
 
   defaultAlignment_ = alignment;
   // A user override has precedence and should not be disturbed.
   if (!alignmentOverride_)
     emitAlignmentOffset();
+  return 0;
 }
 
 std::optional<HudWindowAlignment> HudPositionManager::WindowData::defaultAlignment() const
@@ -200,6 +230,43 @@ void HudPositionManager::WindowData::getSize(osg::Vec2d& minXyPx, osg::Vec2d& ma
 {
   minXyPx = minXyPx_;
   maxXyPx = maxXyPx_;
+}
+
+int HudPositionManager::WindowData::setAllowedAlignments(const std::set<HudWindowAlignment>& alignments)
+{
+  // Must allow something, ignore nonsense input
+  if (alignments.empty())
+    return 1;
+  if (alignments == allowedAlignments_)
+    return 0;
+
+  // Hyper-vigilant on the allowed alignments
+  const auto& allAlignments = allHudWindowAlignments();
+  for (const auto alignment : alignments)
+  {
+    if (allAlignments.find(alignment) == allAlignments.end())
+      return 1;
+  }
+
+  // Validate both values, not merely the current effective alignment. A user
+  // might reset an override later and reveal the default alignment.
+  if (defaultAlignment_ && alignments.find(*defaultAlignment_) == alignments.end())
+    return 1;
+  if (alignmentOverride_ && alignments.find(*alignmentOverride_) == alignments.end())
+    return 1;
+
+  allowedAlignments_ = alignments;
+  return 0;
+}
+
+const std::set<HudWindowAlignment>& HudPositionManager::WindowData::allowedAlignments() const
+{
+  return allowedAlignments_;
+}
+
+bool HudPositionManager::WindowData::supportsAlignment(HudWindowAlignment alignment) const
+{
+  return allowedAlignments_.find(alignment) != allowedAlignments_.end();
 }
 
 HudPositionManager::WindowData::~WindowData()
@@ -314,14 +381,15 @@ int HudPositionManager::setAlignment(const std::string& name, std::optional<HudW
   auto i = allWindows_.find(name);
   if (i == allWindows_.end())
   {
-    auto* newWindow = new WindowData(name);
-    newWindow->setAlignment(alignment);
-    allWindows_[name] = newWindow;
+    osg::ref_ptr<WindowData> newWindow = new WindowData(name);
+    const int rv = newWindow->setAlignment(alignment);
+    if (rv != 0)
+      return rv;
+    allWindows_[name] = newWindow.get();
     return 0;
   }
 
-  i->second->setAlignment(alignment);
-  return 0;
+  return i->second->setAlignment(alignment);
 }
 
 std::optional<HudWindowAlignment> HudPositionManager::getDefaultAlignment(const std::string& name) const
@@ -337,13 +405,36 @@ int HudPositionManager::setDefaultAlignment(const std::string& name, std::option
   auto i = allWindows_.find(name);
   if (i == allWindows_.end())
   {
-    auto* newWindow = new WindowData(name);
-    newWindow->setDefaultAlignment(alignment);
-    allWindows_[name] = newWindow;
+    osg::ref_ptr<WindowData> newWindow = new WindowData(name);
+    const int rv = newWindow->setDefaultAlignment(alignment);
+    if (rv != 0)
+      return rv;
+    allWindows_[name] = newWindow.get();
     return 0;
   }
 
-  i->second->setDefaultAlignment(alignment);
+  return i->second->setDefaultAlignment(alignment);
+}
+
+std::set<HudWindowAlignment> HudPositionManager::getAllowedAlignments(const std::string& name) const
+{
+  const auto i = allWindows_.find(name);
+  if (i == allWindows_.end())
+    return {};
+  return i->second->allowedAlignments();
+}
+
+int HudPositionManager::setAllowedAlignments(const std::string& name, const std::set<HudWindowAlignment>& alignments)
+{
+  auto i = allWindows_.find(name);
+  if (i != allWindows_.end())
+    return i->second->setAllowedAlignments(alignments);
+
+  osg::ref_ptr<WindowData> newWindow = new WindowData(name);
+  const int rv = newWindow->setAllowedAlignments(alignments);
+  if (rv != 0)
+    return rv;
+  allWindows_[name] = newWindow.get();
   return 0;
 }
 

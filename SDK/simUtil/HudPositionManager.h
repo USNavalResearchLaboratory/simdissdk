@@ -25,6 +25,7 @@
 
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 #include "osg/observer_ptr"
@@ -197,6 +198,22 @@ public:
   int setDefaultAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment);
 
   /**
+   * Retrieves the alignments supported by a HUD window.
+   * @param name Window or HUD element name to query
+   * @return Set of supported alignments, or an empty set if the window does not exist.
+   */
+  std::set<HudWindowAlignment> getAllowedAlignments(const std::string& name) const;
+
+  /**
+   * Sets the alignments supported by a HUD window. The set must not be empty. The new
+   * set must include any current default alignment and user alignment override.
+   * @param name Existing or future HUD element name
+   * @param alignments Supported alignment values
+   * @return 0 on success, non-zero if the set is invalid or incompatible with existing alignment state.
+   */
+  int setAllowedAlignments(const std::string& name, const std::set<HudWindowAlignment>& alignments);
+
+  /**
    * Clears the user alignment override for a window and reapplies its default alignment.
    * @param name Name of the HUD window to reset
    * @return 0 on success, non-zero if the window does not exist
@@ -263,16 +280,26 @@ private:
     osg::Vec2d defaultPosition() const;
 
     /** Changes the user alignment override. */
-    void setAlignment(std::optional<HudWindowAlignment> alignment);
+    int setAlignment(std::optional<HudWindowAlignment> alignment);
     /** Retrieves the effective alignment. */
     std::optional<HudWindowAlignment> alignment() const;
     /** Retrieves the user alignment override, if one exists. */
     std::optional<HudWindowAlignment> alignmentOverride() const;
 
     /** Changes the default alignment. */
-    void setDefaultAlignment(std::optional<HudWindowAlignment> alignment);
+    int setDefaultAlignment(std::optional<HudWindowAlignment> alignment);
     /** Retrieves the default alignment. */
     std::optional<HudWindowAlignment> defaultAlignment() const;
+
+    /**
+     * Sets the supported alignment values. The set must not be empty and must
+     * include any current default alignment and user override.
+     */
+    int setAllowedAlignments(const std::set<HudWindowAlignment>& alignments);
+    /** Retrieves the supported alignment values. */
+    const std::set<HudWindowAlignment>& allowedAlignments() const;
+    /** Returns true if the alignment is supported by this window. */
+    bool supportsAlignment(HudWindowAlignment alignment) const;
 
     /** Clears the user alignment override and reapplies the default alignment. */
     void resetAlignment();
@@ -302,6 +329,7 @@ private:
     bool hasPosition_ = false;
     std::optional<HudWindowAlignment> defaultAlignment_;
     std::optional<HudWindowAlignment> alignmentOverride_;
+    std::set<HudWindowAlignment> allowedAlignments_;
     osg::ref_ptr<HudPositionManager::RepositionCallback> callback_;
   };
   std::map<std::string, osg::ref_ptr<WindowData> > allWindows_;

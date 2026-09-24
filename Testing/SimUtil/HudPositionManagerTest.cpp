@@ -21,6 +21,7 @@
  *
  */
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 #include "osg/MatrixTransform"
@@ -508,6 +509,69 @@ int testDefaultAlignmentAndPlacementReset()
   return rv;
 }
 
+int testAllowedAlignments()
+{
+  int rv = 0;
+  osg::ref_ptr<simUtil::HudPositionManager> hud = new simUtil::HudPositionManager;
+  osg::ref_ptr<TestRepositionCallback> callback = new TestRepositionCallback;
+
+  const std::string name = "Restricted Alignment Window";
+  hud->addWindow(name, osg::Vec2d(0.8, 0.9), callback.get());
+
+  // Newly registered windows allow all nine alignments.
+  rv += SDK_ASSERT(hud->getAllowedAlignments(name).size() == 9);
+
+  const std::set<simUtil::HudWindowAlignment> topAlignments = {
+    simUtil::HudWindowAlignment::LEFT_TOP,
+    simUtil::HudWindowAlignment::CENTER_TOP,
+    simUtil::HudWindowAlignment::RIGHT_TOP
+  };
+
+  // Default get/set
+  rv += SDK_ASSERT(hud->setAllowedAlignments(name, topAlignments) == 0);
+  rv += SDK_ASSERT(hud->getAllowedAlignments(name) == topAlignments);
+  // Setting an unchanged allowed-alignment set is a no-op.
+  rv += SDK_ASSERT(hud->setAllowedAlignments(name, topAlignments) == 0);
+  rv += SDK_ASSERT(hud->getAllowedAlignments(name) == topAlignments);
+
+  // Valid default/regular alignments succeed
+  rv += SDK_ASSERT(hud->setDefaultAlignment(name, simUtil::HudWindowAlignment::RIGHT_TOP) == 0);
+  // Unsupported default alignments are rejected.
+  rv += SDK_ASSERT(hud->setDefaultAlignment(name, simUtil::HudWindowAlignment::LEFT_CENTER) != 0);
+  rv += SDK_ASSERT(*hud->getDefaultAlignment(name) == simUtil::HudWindowAlignment::RIGHT_TOP);
+  rv += SDK_ASSERT(hud->setAlignment(name, simUtil::HudWindowAlignment::LEFT_TOP) == 0);
+
+  // Unsupported alignments are rejected and leave the current override intact.
+  rv += SDK_ASSERT(hud->setAlignment(name, simUtil::HudWindowAlignment::LEFT_CENTER) != 0);
+
+  const auto override = hud->getAlignmentOverride(name);
+  rv += SDK_ASSERT(override.has_value());
+  rv += SDK_ASSERT(*override == simUtil::HudWindowAlignment::LEFT_TOP);
+
+  // Empty restrictions are invalid.
+  rv += SDK_ASSERT(hud->setAllowedAlignments(name, {}) != 0);
+  // Invalid enum values are rejected.
+  const auto invalidAlignment = static_cast<simUtil::HudWindowAlignment>(999);
+  rv += SDK_ASSERT(hud->setAllowedAlignments(name, { invalidAlignment }) != 0);
+
+  // Cannot remove the current default or override from the allowed set.
+  rv += SDK_ASSERT(hud->setAllowedAlignments(name, { simUtil::HudWindowAlignment::RIGHT_TOP }) != 0);
+
+  // Clear the override, leaving only the RIGHT_TOP default.
+  rv += SDK_ASSERT(hud->resetAlignment(name) == 0);
+  // This set retains LEFT_TOP but excludes the current RIGHT_TOP default.
+  rv += SDK_ASSERT(hud->setAllowedAlignments(name, { simUtil::HudWindowAlignment::LEFT_TOP }) != 0);
+  // Failed updates leave the previous allowed set unchanged.
+  rv += SDK_ASSERT(hud->getAllowedAlignments(name) == topAlignments);
+
+  // Confirm default fallback explicitly
+  const auto effectiveAlignment = hud->getAlignment(name);
+  rv += SDK_ASSERT(effectiveAlignment.has_value());
+  rv += SDK_ASSERT(*effectiveAlignment == simUtil::HudWindowAlignment::RIGHT_TOP);
+
+  return rv;
+}
+
 }
 
 int HudPositionManagerTest(int argc, char* argv[])
@@ -524,6 +588,7 @@ int HudPositionManagerTest(int argc, char* argv[])
   rv += SDK_ASSERT(testMatrixCallbackAlignmentOffset() == 0);
   rv += SDK_ASSERT(testAlignmentOffsetBeforePosition() == 0);
   rv += SDK_ASSERT(testDefaultAlignmentAndPlacementReset() == 0);
+  rv += SDK_ASSERT(testAllowedAlignments() == 0);
 
   return rv;
 }
