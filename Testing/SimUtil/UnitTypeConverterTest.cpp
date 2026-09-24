@@ -130,7 +130,6 @@ int testFromOsgEarth()
 int testFromData()
 {
   int rv = 0;
-  const osgEarth::UnitsType OSGEARTH_NONE;
   simUtil::UnitTypeConverter conv;
 
   // time to osgEarth
@@ -143,10 +142,10 @@ int testFromData()
   rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_DEGREES) == osgEarth::Units::DEGREES);
   rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_DEGREES_MINUTES) == osgEarth::Units::DEGREES);
   rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_DEGREES_MINUTES_SECONDS) == osgEarth::Units::DEGREES);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_UTM) == OSGEARTH_NONE);
+  rv += SDK_ASSERT(!conv.toOsgEarth(simData::AngleUnits::UNITS_UTM).valid());
   rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_BAM) == osgEarth::Units::BAM);
   rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_MIL) == osgEarth::Units::NATO_MILS);
-  rv += SDK_ASSERT(conv.toOsgEarth(simData::AngleUnits::UNITS_MILLIRADIANS) == OSGEARTH_NONE);
+  rv += SDK_ASSERT(!conv.toOsgEarth(simData::AngleUnits::UNITS_MILLIRADIANS).valid());
 
   // distance to osgEarth
   rv += SDK_ASSERT(conv.toOsgEarth(simData::DistanceUnits::UNITS_METERS) == osgEarth::Units::METERS);
@@ -219,7 +218,6 @@ int testFromData()
 int testFromCore()
 {
   int rv = 0;
-  const osgEarth::UnitsType OSGEARTH_NONE;
   simUtil::UnitTypeConverter conv;
 
   // Distance to osgEarth
@@ -240,7 +238,7 @@ int testFromCore()
   // Angular to osgEarth
   rv += SDK_ASSERT(conv.toOsgEarth(simCore::Units::RADIANS) == osgEarth::Units::RADIANS);
   rv += SDK_ASSERT(conv.toOsgEarth(simCore::Units::DEGREES) == osgEarth::Units::DEGREES);
-  rv += SDK_ASSERT(conv.toOsgEarth(simCore::Units::MILLIRADIANS) == OSGEARTH_NONE);
+  rv += SDK_ASSERT(!conv.toOsgEarth(simCore::Units::MILLIRADIANS).valid());
   rv += SDK_ASSERT(conv.toOsgEarth(simCore::Units::BAM) == osgEarth::Units::BAM);
   rv += SDK_ASSERT(conv.toOsgEarth(simCore::Units::MIL) == osgEarth::Units::NATO_MILS);
 
@@ -333,8 +331,8 @@ int testAddMapping()
   rv += SDK_ASSERT(!conv.isRegistered(corePercent));
   rv += SDK_ASSERT(conv.toData(coreDbsm) == 0);
   rv += SDK_ASSERT(conv.toData(corePercent) == 0);
-  rv += SDK_ASSERT(conv.toOsgEarth(coreDbsm) == OSGEARTH_NONE);
-  rv += SDK_ASSERT(conv.toOsgEarth(corePercent) == OSGEARTH_NONE);
+  rv += SDK_ASSERT(!conv.toOsgEarth(coreDbsm).valid());
+  rv += SDK_ASSERT(!conv.toOsgEarth(corePercent).valid());
 
   // Will recognize the unit after registration
   conv.addMapping(OSGEARTH_NONE, coreDbsm, 0);
@@ -346,14 +344,18 @@ int testAddMapping()
   rv += SDK_ASSERT(conv.isRegistered(corePercent));
   rv += SDK_ASSERT(conv.toData(coreDbsm) == 0);
   rv += SDK_ASSERT(conv.toData(corePercent) == 5000);
-  rv += SDK_ASSERT(conv.toOsgEarth(coreDbsm) == OSGEARTH_NONE);
-  rv += SDK_ASSERT(conv.toOsgEarth(corePercent) == OSGEARTH_NONE);
-  rv += SDK_ASSERT(!conv.toCoreFromData(0).isValid());
+  rv += SDK_ASSERT(!conv.toOsgEarth(coreDbsm).valid());
+  rv += SDK_ASSERT(!conv.toOsgEarth(corePercent).valid());
+  rv += SDK_ASSERT(conv.toCoreFromData(0).isValid());
   rv += SDK_ASSERT(conv.toCoreFromData(5000).isValid());
   rv += SDK_ASSERT(conv.toCoreFromData(5001).isValid());
+  rv += SDK_ASSERT(conv.toCoreFromData(0).name() == "dBsm");
   rv += SDK_ASSERT(conv.toCoreFromData(5000).name() == "percent");
   rv += SDK_ASSERT(conv.toCoreFromData(5001).name() == "5001");
   rv += SDK_ASSERT(conv.toCoreFromData(5001).abbreviation() == "5k1");
+
+  // Should not get a valid unit from an index that hasn't been registered
+  rv += SDK_ASSERT(!conv.toCoreFromData(1000).isValid());
 
   rv += SDK_ASSERT(conv.toOsgEarthFromData(6001).getName().empty());
   return rv;
@@ -369,6 +371,10 @@ int testHasAllDefaultUnits()
   std::vector<std::string> fams = registry.families();
   for (auto f = fams.begin(); f != fams.end(); ++f)
   {
+    // UnitsRegistry includes unitless as an option. UnitTypeConverter has no use for unitless since there's obviously no conversions to be done with it
+    if (*f == "unitless")
+      continue;
+
     const std::vector<simCore::Units>& units = registry.units(*f);
     for (auto u = units.begin(); u != units.end(); ++u)
     {

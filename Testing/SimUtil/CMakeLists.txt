@@ -19,3 +19,4 @@ set_target_properties(SimUtilTests PROPERTIES
 
 add_test(NAME HudPositionManagerTest COMMAND SimUtilTests HudPositionManagerTest)
 add_test(NAME IdMapperTest COMMAND SimUtilTests IdMapperTest)
+add_test(NAME UnitTypeConverterTest COMMAND SimUtilTests UnitTypeConverterTest)
