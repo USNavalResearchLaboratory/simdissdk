@@ -274,6 +274,9 @@ int testAlignmentOffsets()
       rv += SDK_ASSERT(callback->lastAlignmentOffsetName() == name);
       rv += SDK_ASSERT(callback->lastAlignmentOffsetPx() == expectedOffset);
 
+      const osg::Vec2d managerOffset = hud->getAlignmentOffsetPx(name);
+      rv += SDK_ASSERT(managerOffset == expectedOffset);
+
       // Alignment changes must not modify the native bounds or their signs.
       osg::Vec2d actualMinSize;
       osg::Vec2d actualMaxSize;
@@ -311,6 +314,9 @@ int testAlignmentOffsets()
   rv += SDK_ASSERT(hud->setAlignment(name, std::nullopt) == 0);
   rv += SDK_ASSERT(callback->numCalls() == positionCalls);
   rv += SDK_ASSERT(callback->lastAlignmentOffsetPx() == osg::Vec2d());
+
+  const osg::Vec2d clearedManagerOffset = hud->getAlignmentOffsetPx(name);
+  rv += SDK_ASSERT(clearedManagerOffset == osg::Vec2d());
 
   // Clearing an already-clear override is also a no-op.
   const unsigned int clearedAlignmentCalls = callback->numAlignmentOffsetCalls();

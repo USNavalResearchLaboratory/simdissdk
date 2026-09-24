@@ -23,6 +23,8 @@
 #ifndef SIMUTIL_HUDPOSITIONEDITOR_H
 #define SIMUTIL_HUDPOSITIONEDITOR_H
 
+#include <optional>
+#include <set>
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
 #include "osg/Camera"
@@ -212,13 +214,25 @@ public:
   int removeWindow(const std::string& name);
   /** Resizes a window in the HUD Position Manager */
   int setSize(const std::string& name, const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx);
+  /** Sets the window's default alignment; @see HudPositionManager::setDefaultAlignment */
+  int setDefaultAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment);
+  /** Sets the window's allowed alignments; @see HudPositionManager::setAllowedAlignments */
+  int setAllowedAlignments(const std::string& name, const std::set<HudWindowAlignment>& alignments);
 
   /** Changes a single window's position */
   int setPosition(const std::string& name, const osg::Vec2d& positionPct);
+  /** Changes a single window's alignment */
+  int setAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment);
+
   /** Resets all windows to default locations */
   void resetAllPositions();
   /** Resets the position of a single window */
   int resetPosition(const std::string& name);
+
+  /** Resets the placement (position and alignment) of all windows to default */
+  void resetAllPlacements();
+  /** Resets the placement (position and alignment) of a single window */
+  int resetPlacement(const std::string& name);
 
 private:
   osg::ref_ptr<simUtil::HudPositionManager> hud_;

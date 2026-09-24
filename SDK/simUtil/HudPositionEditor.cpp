@@ -79,11 +79,17 @@ static const float ANCHOR_HALF_WIDTH = 6.f;
 class WindowNodePx : public osg::MatrixTransform
 {
 public:
-  /** Creates the window with the given name and the min/max XYZ values. */
-  WindowNodePx(const std::string& name, const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz);
+  /**
+   * Creates the window with native bounds and an alignment offset. The visual
+   * window frame is shifted by alignmentOffsetXyz while the anchor diamond
+   * remains at the local origin.
+   */
+  WindowNodePx(const std::string& name, const osg::Vec3d& minXyz,
+    const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz);
 
-  /** Changes the size of the window frame */
-  void updateSize(const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz);
+  /** Changes the size and alignment offset of the window frame. */
+  void updateSize(const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz,
+    const osg::Vec3d& alignmentOffsetXyz);
 
   /**
    * Retrieves the bounding box in window coordinates of the entire area.  This is expanded slightly for
@@ -104,36 +110,42 @@ private:
   osg::Geometry* diamond_(float halfWidth, const osg::Vec4f& color) const;
 
   /** Removes all children and recreates the geometry based on new size. */
-  void recreateGeometry_(const std::string& name, const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz);
+  void recreateGeometry_(const std::string& name, const osg::Vec3d& minXyz,
+    const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz);
 
   osg::Vec3d minXyz_;
   osg::Vec3d maxXyz_;
+  osg::Vec3d alignmentOffsetXyz_;
   osg::ref_ptr<osgEarth::LineDrawable> outline_;
   osg::BoundingBoxd box_;
-  bool selected_;
+  bool selected_ = false;
 };
 
 /////////////////////////////////////////////////////////
 
-WindowNodePx::WindowNodePx(const std::string& name, const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz)
-  : selected_(false)
+WindowNodePx::WindowNodePx(const std::string& name, const osg::Vec3d& minXyz,
+  const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz)
 {
   // Use osg::Node::setName() for storing the window's name
   setName(name);
-  recreateGeometry_(name, minXyz, maxXyz);
+  recreateGeometry_(name, minXyz, maxXyz, alignmentOffsetXyz);
 }
 
-void WindowNodePx::recreateGeometry_(const std::string& name, const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz)
+void WindowNodePx::recreateGeometry_(const std::string& name, const osg::Vec3d& minXyz,
+  const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz)
 {
   // Refuse to recreate if all parameters match
-  if (minXyz_ == minXyz && maxXyz_ == maxXyz)
+  if (minXyz_ == minXyz && maxXyz_ == maxXyz && alignmentOffsetXyz_ == alignmentOffsetXyz)
     return;
 
   removeChildren(0, getNumChildren());
 
+  const osg::Vec3d alignedMinXyz = minXyz + alignmentOffsetXyz;
+  const osg::Vec3d alignedMaxXyz = maxXyz + alignmentOffsetXyz;
+
   box_.init();
-  box_.expandBy(minXyz - osg::Vec3d(BOX_PADDING, BOX_PADDING, 0.));
-  box_.expandBy(maxXyz + osg::Vec3d(BOX_PADDING, BOX_PADDING, 0.));
+  box_.expandBy(alignedMinXyz - osg::Vec3d(BOX_PADDING, BOX_PADDING, 0.));
+  box_.expandBy(alignedMaxXyz + osg::Vec3d(BOX_PADDING, BOX_PADDING, 0.));
   box_.expandBy(-ANCHOR_HALF_WIDTH - BOX_PADDING, -ANCHOR_HALF_WIDTH - BOX_PADDING, 0.);
   box_.expandBy(ANCHOR_HALF_WIDTH + BOX_PADDING, ANCHOR_HALF_WIDTH + BOX_PADDING, 0.);
   box_.expandBy(-ANCHOR_HALF_WIDTH - BOX_PADDING, ANCHOR_HALF_WIDTH + BOX_PADDING, 0.);
@@ -181,11 +193,13 @@ void WindowNodePx::recreateGeometry_(const std::string& name, const osg::Vec3d& 
 
   minXyz_ = minXyz;
   maxXyz_ = maxXyz;
+  alignmentOffsetXyz_ = alignmentOffsetXyz;
 }
 
-void WindowNodePx::updateSize(const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz)
+void WindowNodePx::updateSize(const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz,
+  const osg::Vec3d& alignmentOffsetXyz)
 {
-  recreateGeometry_(getName(), minXyz, maxXyz);
+  recreateGeometry_(getName(), minXyz, maxXyz, alignmentOffsetXyz);
 }
 
 const osg::BoundingBoxd& WindowNodePx::boundingBoxPx() const
@@ -325,27 +339,30 @@ void HudEditorGui::updatePosition(const std::string& windowName)
   if (!hud_.lock(hud))
     return;
 
+  osg::Vec2d minXyPx;
+  osg::Vec2d maxXyPx;
+  if (hud->getSize(windowName, minXyPx, maxXyPx) != 0)
+    return;
+
+  const osg::Vec3d minXyz(minXyPx.x(), minXyPx.y(), 0.0);
+  const osg::Vec3d maxXyz(maxXyPx.x(), maxXyPx.y(), 0.0);
+  const osg::Vec2d alignmentOffsetPx = hud->getAlignmentOffsetPx(windowName);
+  const osg::Vec3d alignmentOffsetXyz(alignmentOffsetPx.x(), alignmentOffsetPx.y(), 0.0);
+
   // Get or create the window pointer
   auto i = windows_.find(windowName);
   WindowNodePx* window = nullptr;
   if (i == windows_.end())
   {
-    // Pull out size parameters; they're required on creation
-    osg::Vec2d minXyPx;
-    osg::Vec2d maxXyPx;
-    // This can only fail if we don't have a window
-    if (hud->getSize(windowName, minXyPx, maxXyPx) != 0)
-      return;
-
-    // Convert to pixels, then create and save the window for later
-    const osg::Vec3d minXyz(minXyPx, 0.);
-    const osg::Vec3d maxXyz(maxXyPx, 0.);
-    window = new WindowNodePx(windowName, minXyz, maxXyz);
+    window = new WindowNodePx(windowName, minXyz, maxXyz, alignmentOffsetXyz);
     root_->addChild(window);
     windows_[windowName] = window;
   }
   else
+  {
     window = i->second.get();
+    window->updateSize(minXyz, maxXyz, alignmentOffsetXyz);
+  }
 
   // Should not be possible to be nullptr here
   assert(window);
@@ -373,9 +390,12 @@ int HudEditorGui::updateSize(const std::string& windowName)
   auto i = windows_.find(windowName);
   if (i == windows_.end() || !i->second)
     return 1;
-  const osg::Vec3d minXyz(minXyPx, 0.);
-  const osg::Vec3d maxXyz(maxXyPx, 0.);
-  i->second->updateSize(minXyz, maxXyz);
+
+  const osg::Vec3d minXyz(minXyPx.x(), minXyPx.y(), 0.0);
+  const osg::Vec3d maxXyz(maxXyPx.x(), maxXyPx.y(), 0.0);
+  const osg::Vec2d alignmentOffsetPx = hud->getAlignmentOffsetPx(windowName);
+  const osg::Vec3d alignmentOffsetXyz(alignmentOffsetPx.x(), alignmentOffsetPx.y(), 0.0);
+  i->second->updateSize(minXyz, maxXyz, alignmentOffsetXyz);
   return 0;
 }
 
@@ -773,11 +793,32 @@ int HudPositionEditor::setSize(const std::string& name, const osg::Vec2d& minXyP
   return rv;
 }
 
+int HudPositionEditor::setDefaultAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment)
+{
+  const int rv = hud_->setDefaultAlignment(name, alignment);
+  if (rv == 0)
+    gui_->updatePosition(name);
+  return rv;
+}
+
+int HudPositionEditor::setAllowedAlignments(const std::string& name, const std::set<HudWindowAlignment>& alignments)
+{
+  return hud_->setAllowedAlignments(name, alignments);
+}
+
 int HudPositionEditor::setPosition(const std::string& name, const osg::Vec2d& positionPct)
 {
   const int rv = hud_->setPosition(name, positionPct);
   if (rv == 0)
     gui_->updatePosition(name);
+  return rv;
+}
+
+int HudPositionEditor::setAlignment(const std::string& name, std::optional<HudWindowAlignment> alignment)
+{
+  const int rv = hud_->setAlignment(name, alignment);
+  if (rv == 0)
+    gui_->updatePosition(name); // also updates alignment by design
   return rv;
 }
 
@@ -790,6 +831,20 @@ void HudPositionEditor::resetAllPositions()
 int HudPositionEditor::resetPosition(const std::string& name)
 {
   const int rv = hud_->resetPosition(name);
+  if (rv == 0)
+    gui_->updatePosition(name);
+  return rv;
+}
+
+void HudPositionEditor::resetAllPlacements()
+{
+  hud_->resetAllPlacements();
+  gui_->reset();
+}
+
+int HudPositionEditor::resetPlacement(const std::string& name)
+{
+  const int rv = hud_->resetPlacement(name);
   if (rv == 0)
     gui_->updatePosition(name);
   return rv;

@@ -93,10 +93,9 @@ public:
      * applied in addition to the position supplied through setPosition().
      * An offset of (0,0) removes any alignment correction.
      *
-     * Implementations that position content in logical pixels should override
-     * this method and apply the offset without treating it as a user position
-     * change. The default implementation is intentionally a no-op for
-     * compatibility with existing RepositionCallback implementations.
+     * Implementations must override this method. Implementations that position
+     * content in logical pixels should apply the offset without treating it as
+     * a user position change.
      *
      * @param name Name of the HUD window receiving the offset.
      * @param offsetPx Additional logical-pixel translation to apply.
@@ -158,6 +157,15 @@ public:
    *   window does not exist.
    */
   std::optional<HudWindowAlignment> getAlignment(const std::string& name) const;
+
+  /**
+   * Retrieves the effective logical-pixel alignment offset for a HUD window.
+   * This is the translation applied to the window's native origin in order to
+   * realize the effective alignment with its current bounds.
+   * @param name Window or HUD element name to query
+   * @return The logical-pixel alignment offset, or (0,0) if window does not exist.
+   */
+  osg::Vec2d getAlignmentOffsetPx(const std::string& name) const;
 
   /**
    * Retrieves the user alignment override for a HUD window. This does not return the
@@ -283,6 +291,8 @@ private:
     int setAlignment(std::optional<HudWindowAlignment> alignment);
     /** Retrieves the effective alignment. */
     std::optional<HudWindowAlignment> alignment() const;
+    /** Calculates the offset implied by the effective alignment and current bounds. */
+    osg::Vec2d alignmentOffsetPx() const;
     /** Retrieves the user alignment override, if one exists. */
     std::optional<HudWindowAlignment> alignmentOverride() const;
 
@@ -318,9 +328,6 @@ private:
     virtual ~WindowData();
 
   private:
-    /** Calculates the offset implied by the effective alignment and current bounds. */
-    osg::Vec2d alignmentOffsetPx_() const;
-
     const std::string name_;
     osg::Vec2d positionPct_;
     osg::Vec2d defaultPositionPct_;

@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <set>
 #include "osgViewer/GraphicsWindow"
 #include "osgEarth/CullingUtils"
 #include "osgEarth/Version"
@@ -107,6 +108,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
     addKeyFunc_(ImGuiKey_5, [this]() { moveWindowToMouse_(KEY_CLASSIFICATION_BOTTOM); });
     addKeyFunc_(ImGuiKey_6, [this]() { moveWindowToMouse_(KEY_COMPASS); });
     addKeyFunc_(ImGuiKey_7, [this]() { moveWindowToMouse_(KEY_LEGEND); });
+    addKeyFunc_(ImGuiKey_L, [this]() { cycleLegendAlignment_(); });
     addKeyFunc_(ImGuiKey_C, [this]()
       {
         // Cycle through a few different classification strings
@@ -131,7 +133,7 @@ struct ControlPanel : public simExamples::SimExamplesGui
         txn.complete(&props);
       });
     addKeyFunc_(ImGuiKey_E, [this]() { hudEditor_.setVisible(!hudEditor_.isVisible()); });
-    addKeyFunc_(ImGuiKey_R, [this]() { hudEditor_.resetAllPositions(); });
+    addKeyFunc_(ImGuiKey_R, [this]() { hudEditor_.resetAllPlacements(); });
     addKeyFunc_(ImGuiKey_W, [this]() { if (compass_.valid()) compass_->setWindVaneVisible(!compass_->isWindVaneVisible()); });
     addKeyFunc_(ImGuiKey_Z, [this]()
       {
@@ -177,7 +179,8 @@ struct ControlPanel : public simExamples::SimExamplesGui
     ImGui::Text("7 : Move 'Legend' to mouse position");
     ImGui::Text("c : Cycle classification string and color");
     ImGui::Text("e : Toggle HUD Editor mode");
-    ImGui::Text("r : Reset all to default positions");
+    ImGui::Text("l : Cycle Legend top alignment");
+    ImGui::Text("r : Reset all to default placements");
     ImGui::Text("W : Toggle Wind Vane on Compass");
     ImGui::Text("z : Cycle wind angle and speed values");
 
@@ -230,6 +233,28 @@ struct ControlPanel : public simExamples::SimExamplesGui
   }
 
 private:
+  void cycleLegendAlignment_()
+  {
+    const auto currentAlignment = hudEditor_.hud()->getAlignment(KEY_LEGEND);
+    const auto alignment = currentAlignment.value_or(simUtil::HudWindowAlignment::RIGHT_TOP);
+    simUtil::HudWindowAlignment nextAlignment;
+    switch (alignment)
+    {
+    case simUtil::HudWindowAlignment::RIGHT_TOP:
+      nextAlignment = simUtil::HudWindowAlignment::CENTER_TOP;
+      break;
+    case simUtil::HudWindowAlignment::CENTER_TOP:
+      nextAlignment = simUtil::HudWindowAlignment::LEFT_TOP;
+      break;
+    default:
+      nextAlignment = simUtil::HudWindowAlignment::RIGHT_TOP;
+      break;
+    }
+
+    if (hudEditor_.setAlignment(KEY_LEGEND, nextAlignment) != 0)
+      SIM_WARN << "Unable to set Legend alignment.\n";
+  }
+
   void moveWindowToMouse_(const std::string& windowName)
   {
     auto io = ImGui::GetIO();
@@ -601,6 +626,15 @@ int main(int argc, char** argv)
     // Add the text to the HUD at 80% / 50%
     hud->addWindow(KEY_LEGEND, osg::Vec2d(0.8, 0.5), new simUtil::RepositionMatrixPxCallback(legendGrid));
     hud->setSize(KEY_LEGEND, osg::Vec2d(0.0, 0.0), osg::Vec2d(legendGrid->width(), legendGrid->height()));
+
+    // Restrict legend to only top alignments
+    const std::set<simUtil::HudWindowAlignment> legendAlignments = {
+      simUtil::HudWindowAlignment::LEFT_TOP,
+      simUtil::HudWindowAlignment::CENTER_TOP,
+      simUtil::HudWindowAlignment::RIGHT_TOP
+    };
+    hud->setAllowedAlignments(KEY_LEGEND, legendAlignments);
+    hud->setDefaultAlignment(KEY_LEGEND, simUtil::HudWindowAlignment::RIGHT_TOP);
   }
 
   // for status and debugging

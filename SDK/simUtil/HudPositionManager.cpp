@@ -169,7 +169,7 @@ void HudPositionManager::WindowData::resetAlignment()
 void HudPositionManager::WindowData::emitAlignmentOffset()
 {
   if (callback_.valid())
-    callback_->setAlignmentOffsetPx(name_, alignmentOffsetPx_());
+    callback_->setAlignmentOffsetPx(name_, alignmentOffsetPx());
 }
 
 void HudPositionManager::WindowData::setSize(const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
@@ -182,7 +182,7 @@ void HudPositionManager::WindowData::setSize(const osg::Vec2d& minXyPx, const os
   emitAlignmentOffset();
 }
 
-osg::Vec2d HudPositionManager::WindowData::alignmentOffsetPx_() const
+osg::Vec2d HudPositionManager::WindowData::alignmentOffsetPx() const
 {
   const std::optional<HudWindowAlignment> effectiveAlignment = alignment();
   if (!effectiveAlignment)
@@ -366,6 +366,14 @@ std::optional<HudWindowAlignment> HudPositionManager::getAlignment(const std::st
   if (i == allWindows_.end())
     return {};
   return i->second->alignment();
+}
+
+osg::Vec2d HudPositionManager::getAlignmentOffsetPx(const std::string& name) const
+{
+  const auto i = allWindows_.find(name);
+  if (i == allWindows_.end())
+    return { 0., 0.};
+  return i->second->alignmentOffsetPx();
 }
 
 std::optional<HudWindowAlignment> HudPositionManager::getAlignmentOverride(const std::string& name) const
