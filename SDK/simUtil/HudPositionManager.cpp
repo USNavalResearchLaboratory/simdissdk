@@ -122,6 +122,9 @@ int HudPositionManager::WindowData::setAlignment(std::optional<HudWindowAlignmen
 
   alignmentOverride_ = alignment;
   emitAlignmentOffset();
+  if (callback_.valid())
+    callback_->alignmentOverrideChanged(name_, alignmentOverride_);
+
   return 0;
 }
 
@@ -159,11 +162,8 @@ std::optional<HudWindowAlignment> HudPositionManager::WindowData::defaultAlignme
 
 void HudPositionManager::WindowData::resetAlignment()
 {
-  if (!alignmentOverride_)
-    return;
-
-  alignmentOverride_.reset();
-  emitAlignmentOffset();
+  // setAlignment() will handle callbacks appropriately
+  setAlignment(std::nullopt);
 }
 
 void HudPositionManager::WindowData::emitAlignmentOffset()

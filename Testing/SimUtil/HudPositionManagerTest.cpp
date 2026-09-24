@@ -49,6 +49,13 @@ public:
     lastAlignmentOffsetPx_ = offsetPx;
   }
 
+  void alignmentOverrideChanged(const std::string& name, std::optional<simUtil::HudWindowAlignment> alignmentOverride) override
+  {
+    ++numAlignmentOverrideCalls_;
+    lastAlignmentOverrideName_ = name;
+    lastAlignmentOverride_ = alignmentOverride;
+  }
+
   unsigned int numCalls() const
   {
     return numCalls_;
@@ -79,16 +86,34 @@ public:
     return lastAlignmentOffsetPx_;
   }
 
+  unsigned int numAlignmentOverrideCalls() const
+  {
+    return numAlignmentOverrideCalls_;
+  }
+
+  const std::string& lastAlignmentOverrideName() const
+  {
+    return lastAlignmentOverrideName_;
+  }
+
+  std::optional<simUtil::HudWindowAlignment> lastAlignmentOverride() const
+  {
+    return lastAlignmentOverride_;
+  }
+
 protected:
   virtual ~TestRepositionCallback() = default;
 
 private:
   unsigned int numCalls_ = 0;
   unsigned int numAlignmentOffsetCalls_ = 0;
+  unsigned int numAlignmentOverrideCalls_ = 0;
   std::string lastName_;
   std::string lastAlignmentOffsetName_;
+  std::string lastAlignmentOverrideName_;
   osg::Vec2d lastPosition_;
   osg::Vec2d lastAlignmentOffsetPx_;
+  std::optional<simUtil::HudWindowAlignment> lastAlignmentOverride_;
 };
 int testUnknownWindow()
 {
@@ -267,6 +292,7 @@ int testAlignmentOffsets()
     const osg::Vec2d& expectedOffset)
     {
       const unsigned int offsetCalls = callback->numAlignmentOffsetCalls();
+      const unsigned int overrideCalls = callback->numAlignmentOverrideCalls();
 
       rv += SDK_ASSERT(hud->setAlignment(name, alignment) == 0);
       rv += SDK_ASSERT(callback->numCalls() == positionCalls);
@@ -276,6 +302,12 @@ int testAlignmentOffsets()
 
       const osg::Vec2d managerOffset = hud->getAlignmentOffsetPx(name);
       rv += SDK_ASSERT(managerOffset == expectedOffset);
+
+      rv += SDK_ASSERT(callback->numAlignmentOverrideCalls() == overrideCalls + 1);
+      rv += SDK_ASSERT(callback->lastAlignmentOverrideName() == name);
+      const auto lastOverride = callback->lastAlignmentOverride();
+      rv += SDK_ASSERT(lastOverride.has_value());
+      rv += SDK_ASSERT(*lastOverride == alignment);
 
       // Alignment changes must not modify the native bounds or their signs.
       osg::Vec2d actualMinSize;
@@ -299,8 +331,10 @@ int testAlignmentOffsets()
 
   // Setting an unchanged alignment does not emit another offset callback.
   const unsigned int unchangedAlignmentCalls = callback->numAlignmentOffsetCalls();
+  const unsigned int unchangedOverrideCalls = callback->numAlignmentOverrideCalls();
   rv += SDK_ASSERT(hud->setAlignment(name, simUtil::HudWindowAlignment::RIGHT_BOTTOM) == 0);
   rv += SDK_ASSERT(callback->numAlignmentOffsetCalls() == unchangedAlignmentCalls);
+  rv += SDK_ASSERT(callback->numAlignmentOverrideCalls() == unchangedOverrideCalls);
 
   // Dynamic bounds changes update the offset without generating a position callback.
   rv += SDK_ASSERT(hud->setAlignment(name, simUtil::HudWindowAlignment::LEFT_TOP) == 0);
@@ -314,6 +348,7 @@ int testAlignmentOffsets()
   rv += SDK_ASSERT(hud->setAlignment(name, std::nullopt) == 0);
   rv += SDK_ASSERT(callback->numCalls() == positionCalls);
   rv += SDK_ASSERT(callback->lastAlignmentOffsetPx() == osg::Vec2d());
+  rv += SDK_ASSERT(!callback->lastAlignmentOverride().has_value());
 
   const osg::Vec2d clearedManagerOffset = hud->getAlignmentOffsetPx(name);
   rv += SDK_ASSERT(clearedManagerOffset == osg::Vec2d());

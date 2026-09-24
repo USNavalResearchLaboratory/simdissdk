@@ -102,6 +102,25 @@ public:
      */
     virtual void setAlignmentOffsetPx(const std::string& name, const osg::Vec2d& offsetPx) = 0;
 
+    /**
+     * Notifies the window owner that its user alignment override changed.
+     *
+     * This notification is emitted only when HudPositionManager::setAlignment()
+     * changes the override. It is not emitted for default-alignment changes,
+     * bounds changes, or ordinary position changes.
+     *
+     * The default implementation is intentionally a no-op because most
+     * reposition callbacks only need the resulting pixel offset.
+     *
+     * @param name Name of the HUD window.
+     * @param alignmentOverride New user alignment override, or std::nullopt
+     *   when the override was cleared.
+     */
+    virtual void alignmentOverrideChanged(const std::string& name, std::optional<HudWindowAlignment> alignmentOverride)
+    {
+      // noop
+    }
+
   protected:
     /** osg::Referenced classes have protected destructors to avoid double delete. */
     virtual ~RepositionCallback() = default;
