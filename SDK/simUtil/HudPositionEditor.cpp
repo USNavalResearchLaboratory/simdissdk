@@ -58,8 +58,10 @@ static const GLint OUTLINE_STIPPLE_FACTOR = 3;
 static const double BOX_PADDING = 4.0;
 /** Background color of a window */
 static const osg::Vec4f WINDOW_BG_COLOR(1.f, 1.f, 1.f, 0.25f);
-/** Color of the anchor */
+/** Color of the anchor (yellowish) when it's not able to change from alignment */
 static const osg::Vec4f ANCHOR_DIAMOND_COLOR(0.8f, 0.8f, 0.f, 1.f);
+/** Color of the anchor (cyanish) when it IS able to change from alignment */
+static const osg::Vec4f ANCHOR_ALIGNMENT_ENABLED_COLOR(0.f, 0.85f, 0.95f, 1.f);
 
 /** Font name for the title text */
 static const std::string TITLE_FONT = "arialbd.ttf";
@@ -85,11 +87,12 @@ public:
    * remains at the local origin.
    */
   WindowNodePx(const std::string& name, const osg::Vec3d& minXyz,
-    const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz);
+    const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz,
+    const osg::Vec4f& anchorColor);
 
   /** Changes the size and alignment offset of the window frame. */
   void updateSize(const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz,
-    const osg::Vec3d& alignmentOffsetXyz);
+    const osg::Vec3d& alignmentOffsetXyz, const osg::Vec4f& anchorColor);
 
   /**
    * Retrieves the bounding box in window coordinates of the entire area.  This is expanded slightly for
@@ -111,11 +114,13 @@ private:
 
   /** Removes all children and recreates the geometry based on new size. */
   void recreateGeometry_(const std::string& name, const osg::Vec3d& minXyz,
-    const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz);
+    const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz,
+    const osg::Vec4f& anchorColor);
 
   osg::Vec3d minXyz_;
   osg::Vec3d maxXyz_;
   osg::Vec3d alignmentOffsetXyz_;
+  osg::Vec4f anchorColor_;
   osg::ref_ptr<osgEarth::LineDrawable> outline_;
   osg::BoundingBoxd box_;
   bool selected_ = false;
@@ -124,18 +129,19 @@ private:
 /////////////////////////////////////////////////////////
 
 WindowNodePx::WindowNodePx(const std::string& name, const osg::Vec3d& minXyz,
-  const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz)
+  const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz, const osg::Vec4f& anchorColor)
 {
   // Use osg::Node::setName() for storing the window's name
   setName(name);
-  recreateGeometry_(name, minXyz, maxXyz, alignmentOffsetXyz);
+  recreateGeometry_(name, minXyz, maxXyz, alignmentOffsetXyz, anchorColor);
 }
 
 void WindowNodePx::recreateGeometry_(const std::string& name, const osg::Vec3d& minXyz,
-  const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz)
+  const osg::Vec3d& maxXyz, const osg::Vec3d& alignmentOffsetXyz, const osg::Vec4f& anchorColor)
 {
   // Refuse to recreate if all parameters match
-  if (minXyz_ == minXyz && maxXyz_ == maxXyz && alignmentOffsetXyz_ == alignmentOffsetXyz)
+  if (minXyz_ == minXyz && maxXyz_ == maxXyz && alignmentOffsetXyz_ == alignmentOffsetXyz &&
+    anchorColor_ == anchorColor)
     return;
 
   removeChildren(0, getNumChildren());
@@ -153,7 +159,7 @@ void WindowNodePx::recreateGeometry_(const std::string& name, const osg::Vec3d& 
 
   // Draw the background, then draw the anchor
   addChild(filledBox_(box_.corner(0), box_.corner(3), WINDOW_BG_COLOR));
-  addChild(diamond_(ANCHOR_HALF_WIDTH, ANCHOR_DIAMOND_COLOR));
+  addChild(diamond_(ANCHOR_HALF_WIDTH, anchorColor));
 
   // Text draws on top
   osg::ref_ptr<osgText::Text> windowNameText = new osgText::Text;
@@ -194,12 +200,13 @@ void WindowNodePx::recreateGeometry_(const std::string& name, const osg::Vec3d& 
   minXyz_ = minXyz;
   maxXyz_ = maxXyz;
   alignmentOffsetXyz_ = alignmentOffsetXyz;
+  anchorColor_ = anchorColor;
 }
 
 void WindowNodePx::updateSize(const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz,
-  const osg::Vec3d& alignmentOffsetXyz)
+  const osg::Vec3d& alignmentOffsetXyz, const osg::Vec4f& anchorColor)
 {
-  recreateGeometry_(getName(), minXyz, maxXyz, alignmentOffsetXyz);
+  recreateGeometry_(getName(), minXyz, maxXyz, alignmentOffsetXyz, anchorColor);
 }
 
 const osg::BoundingBoxd& WindowNodePx::boundingBoxPx() const
@@ -349,19 +356,22 @@ void HudEditorGui::updatePosition(const std::string& windowName)
   const osg::Vec2d alignmentOffsetPx = hud->getAlignmentOffsetPx(windowName);
   const osg::Vec3d alignmentOffsetXyz(alignmentOffsetPx.x(), alignmentOffsetPx.y(), 0.0);
 
+  const osg::Vec4f anchorColor = hud->getDefaultAlignment(windowName).has_value()
+    ? ANCHOR_ALIGNMENT_ENABLED_COLOR : ANCHOR_DIAMOND_COLOR;
+
   // Get or create the window pointer
   auto i = windows_.find(windowName);
   WindowNodePx* window = nullptr;
   if (i == windows_.end())
   {
-    window = new WindowNodePx(windowName, minXyz, maxXyz, alignmentOffsetXyz);
+    window = new WindowNodePx(windowName, minXyz, maxXyz, alignmentOffsetXyz, anchorColor);
     root_->addChild(window);
     windows_[windowName] = window;
   }
   else
   {
     window = i->second.get();
-    window->updateSize(minXyz, maxXyz, alignmentOffsetXyz);
+    window->updateSize(minXyz, maxXyz, alignmentOffsetXyz, anchorColor);
   }
 
   // Should not be possible to be nullptr here
@@ -395,7 +405,11 @@ int HudEditorGui::updateSize(const std::string& windowName)
   const osg::Vec3d maxXyz(maxXyPx.x(), maxXyPx.y(), 0.0);
   const osg::Vec2d alignmentOffsetPx = hud->getAlignmentOffsetPx(windowName);
   const osg::Vec3d alignmentOffsetXyz(alignmentOffsetPx.x(), alignmentOffsetPx.y(), 0.0);
-  i->second->updateSize(minXyz, maxXyz, alignmentOffsetXyz);
+
+  const osg::Vec4f anchorColor = hud->getDefaultAlignment(windowName).has_value()
+    ? ANCHOR_ALIGNMENT_ENABLED_COLOR : ANCHOR_DIAMOND_COLOR;
+
+  i->second->updateSize(minXyz, maxXyz, alignmentOffsetXyz, anchorColor);
   return 0;
 }
 
