@@ -309,7 +309,7 @@ void TimeTicks::addUpdate_(double tickTime)
 
     simVis::DpiTextScalingCallback::install(*text, simVis::osgFontSize(timeTicks.labelfontpointsize()));
 
-    text->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_LABEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
+    text->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_SCREEN_SPACE_LABEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
     osg::Depth* noDepthTest = new osg::Depth(osg::Depth::ALWAYS, 0, 1, false);
     text->getOrCreateStateSet()->setAttributeAndModes(noDepthTest, 1);
     text->setColor(textColor_);

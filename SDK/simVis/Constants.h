@@ -152,7 +152,10 @@ namespace simVis
     BIN_VAPOR_TRAIL         = 15,
 
     // Bin type = BIN_GLOBAL_SIMSDK
+#ifdef ENABLE_DEPRECATED_SIMDISSDK_API
+    // BIN_LABEL is deprecated. Replace all uses with BIN_SCREEN_SPACE_LABEL
     BIN_LABEL               = 35, // Labels must be drawn after other items to avoid blending artifacts
+#endif
     BIN_OCEAN               = 98, // Ocean draws late because we needs to be able to see through it
 
     // Following this are graphics that render with depth-writing OFF
