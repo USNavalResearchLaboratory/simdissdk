@@ -314,6 +314,7 @@ void TimeTicks::addUpdate_(double tickTime)
     text->getOrCreateStateSet()->setAttributeAndModes(noDepthTest, 1);
     text->setColor(textColor_);
     locNode->addChild(text);
+    locNode->addCullCallback(new osgEarth::HorizonCullCallback);
     labelGroup_->addChild(locNode);
     labels_[toDrawTime_(tickTime)] = locNode;
   }
