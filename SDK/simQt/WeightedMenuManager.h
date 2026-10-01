@@ -100,8 +100,6 @@ protected:
   void insertBefore_(QWidget* widget, int weight, QAction* action) const;
   /** Inserts a menu into a QMenu or a QMenuBar, using the weight as a guideline for insertion */
   void insertBefore_(QWidget* menuOrBar, int weight, QMenu* menu) const;
-  /** Inserts an action into a widget using the weight as a guideline for insertion */
-  void insertBefore_(QToolBar* toolBar, int weight, QWidget* widget) const;
 
   /** Inserts a separator into a QMenu or QToolBar, before the given action; does not change weights */
   void insertSeparator_(QWidget* menuOrToolBar, QAction* beforeAction) const;

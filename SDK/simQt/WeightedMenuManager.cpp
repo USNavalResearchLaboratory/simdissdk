@@ -64,6 +64,11 @@ namespace simQt {
  * properties table (unique to all QWidgets).  Note that this must be a char*.
  */
 static const char* WEIGHTS_PROPERTY = "weights";
+/**
+ * Path string property for user facing strings, e.g. "Menu Name > SubMenu Name > Action Name..."
+ * Note that this must be a char*.
+ */
+static const char* PATHSTR_PROPERTY = "pathStr";
 
 WeightedMenuManager::WeightedMenuManager(bool debugMenuWeights)
   : debugMenuWeights_(debugMenuWeights),
@@ -85,9 +90,19 @@ QWidget* WeightedMenuManager::topLevelMenu()
 
 QMenu* WeightedMenuManager::getOrCreateMenu(QMenu* underMenu, int weight, const QString& menuName)
 {
+  QMenu* newMenu = nullptr;
   if (underMenu == nullptr)
-    return findOrCreateMenu_(topLevelMenu(), weight, menuName);
-  return findOrCreateMenu_(underMenu, weight, menuName);
+  {
+    newMenu = findOrCreateMenu_(topLevelMenu(), weight, menuName);
+    newMenu->setProperty(PATHSTR_PROPERTY, menuName);
+  }
+  else
+  {
+    QString path = QString("%1 > %2").arg(underMenu->property(PATHSTR_PROPERTY).toString(), menuName);
+    newMenu = findOrCreateMenu_(underMenu, weight, menuName);
+    newMenu->setProperty(PATHSTR_PROPERTY, path);
+  }
+  return newMenu;
 }
 
 void WeightedMenuManager::insertMenuAction(QMenu* menu, int weight, const simQt::Action* action)
@@ -98,9 +113,17 @@ void WeightedMenuManager::insertMenuAction(QMenu* menu, int weight, const simQt:
 void WeightedMenuManager::insertMenuAction(QMenu* menu, int weight, QAction* action)
 {
   if (menu == nullptr)
+  {
     insertBefore_(topLevelMenu(), weight, action);
+    QString path = QString("%1 > %2").arg(topLevelMenu()->property(PATHSTR_PROPERTY).toString(), action->text().replace("&", ""));
+    action->setProperty(PATHSTR_PROPERTY, path);
+  }
   else
+  {
     insertBefore_(menu, weight, action);
+    QString path = QString("%1 > %2").arg(menu->property(PATHSTR_PROPERTY).toString(), action->text().replace("&", ""));
+    action->setProperty(PATHSTR_PROPERTY, path);
+  }
 }
 
 void WeightedMenuManager::insertMenuSeparator(QMenu* menu, int weight)
