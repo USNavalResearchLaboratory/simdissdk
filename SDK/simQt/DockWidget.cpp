@@ -310,8 +310,10 @@ public:
       // Construct a drag enter event from the drag move and pass it to our dock widget
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
       QDragEnterEvent simulatedEvent(dragEvt->pos(), dragEvt->possibleActions(), dragEvt->mimeData(), dragEvt->mouseButtons(), dragEvt->keyboardModifiers());
-#else
+#elif QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
       QDragEnterEvent simulatedEvent(dragEvt->position().toPoint(), dragEvt->possibleActions(), dragEvt->mimeData(), dragEvt->buttons(), dragEvt->modifiers());
+#else
+      QDragEnterEvent simulatedEvent(dragEvt->position(), dragEvt->possibleActions(), dragEvt->mimeData(), dragEvt->buttons(), dragEvt->modifiers());
 #endif
       simulatedEvent.ignore();
       dockWidget_.dragEnterEvent(&simulatedEvent);

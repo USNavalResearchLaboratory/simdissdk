@@ -73,7 +73,11 @@ class SDKQT_EXPORT EntityTreeComposite : public QWidget
 {
   Q_OBJECT;
   Q_PROPERTY(bool useEntityIcons READ useEntityIcons WRITE setUseEntityIcons);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
   Q_ENUMS(QAbstractItemView::SelectionMode); // Needed even though this is a Qt enum
+#endif
+
   Q_PROPERTY(QAbstractItemView::SelectionMode selectionMode READ selectionMode WRITE setSelectionMode);
   Q_PROPERTY(bool useCenterAction READ useCenterAction WRITE setUseCenterAction);
   Q_PROPERTY(bool expandsOnDoubleClick READ expandsOnDoubleClick WRITE setExpandsOnDoubleClick);

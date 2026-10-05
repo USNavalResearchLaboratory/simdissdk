@@ -60,7 +60,6 @@ class SDKQT_EXPORT DockWidget : public QDockWidget
 {
   Q_OBJECT;
   // Features that can be set in Qt Designer
-  Q_FLAGS(ExtraFeatures);
   Q_PROPERTY(bool dockable READ isDockable WRITE setDockable);
   Q_PROPERTY(bool searchEnabled READ searchEnabled WRITE setSearchEnabled);
   Q_PROPERTY(bool escapeClosesWidget READ escapeClosesWidget WRITE setEscapeClosesWidget);
@@ -101,6 +100,7 @@ public:
   };
   /** Create a flags enumeration */
   Q_DECLARE_FLAGS(ExtraFeatures, ExtraDockFlagHint);
+  Q_FLAG(ExtraFeatures);
 
   /**
    * Create a new Dock Widget.  The title will be non-unique, so be sure to update the title
@@ -423,7 +423,7 @@ private:
   /** Global flag that can be used to turn off all docking at once. */
   simQt::BoundBooleanSetting* disableAllDocking_;
 
-  /** Setting to update border thickess */
+  /** Setting to update border thickness */
   simQt::BoundIntegerSetting* borderThickness_ = nullptr;
 
   /** Event filter for tab bar when widget is tabbed */

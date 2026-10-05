@@ -46,14 +46,10 @@ class SDKQT_EXPORT FileSelectorWidget : public QWidget
   Q_PROPERTY(QString label READ label WRITE setLabel);
   /** Sets/gets the Save/Load in Qt Designer */
   Q_PROPERTY(FileOption typeOfOperation READ fileOptions WRITE setFileOptions);
-  /** Enum for either save or load in Qt Designer */
-  Q_ENUMS(FileOption);
   /** Sets/gets the title for file browser in Qt Designer */
   Q_PROPERTY(QString titleForFileBrowser READ browserTitle WRITE setBrowserTitle);
   /** Sets/gets the filter options in Qt Designer */
   Q_PROPERTY(FilterOptions filterForFileBrowser READ filterOption WRITE setFilterOption);
-  /** Enum for filter options in Qt Designer */
-  Q_ENUMS(FilterOptions);
   /** Sets/gets the custom filter in Qt Designer */
   Q_PROPERTY(QString customFileFilter READ customFileFilter WRITE setCustomFileFilter);
   /** Sets/gets the default file name in Qt Designer */
@@ -82,6 +78,8 @@ public:
     /** Save dialog is presented; user prompted to overwrite on selecting existing file */
     FileSave = 0x1
   };
+  /** Enum for either save or load in Qt Designer */
+  Q_ENUM(FileOption);
 
   /// Options for file extension filtering.
   enum FilterOptions
@@ -120,10 +118,12 @@ public:
     XML_FILE_PATTERNS,
     CUSTOM_USERDEFINED_FILTER
     };
+  /** Enum for filter options in Qt Designer */
+  Q_ENUM(FilterOptions);
 
-  /** 
+  /**
    * Sets the registry key for saving/loading files; defaults to "file".
-   * All FileSelectorWidgets with the same registry key will open to the 
+   * All FileSelectorWidgets with the same registry key will open to the
    * same location, and changing one will change the others.
    * To prevent these keys from showing in the SIMDIS Settings dialog,
    * "Private/" is prepended during operation.
