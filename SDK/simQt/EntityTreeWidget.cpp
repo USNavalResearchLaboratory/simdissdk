@@ -585,6 +585,9 @@ void EntityTreeWidget::selectionCleared_()
 
 void EntityTreeWidget::emitItemsSelected_()
 {
+  // Cache current selected IDs to determine if selection actually changed
+  QSet<uint64_t> previousSelections = selectionSet_;
+
   // Clear out our selection
   selectionList_.clear();
   selectionSet_.clear();
@@ -608,8 +611,11 @@ void EntityTreeWidget::emitItemsSelected_()
   // that either the data store reported a duplicate ID, or tree is storing a dupe ID
   assert(selectionSet_.size() == selectionList_.size());
 
-  // Tell listeners about the new selections (could be empty list)
-  Q_EMIT itemsSelected(selectionList_);
+  // QTreeWidget's selection model may emit a selection changed signal if the row indexes shifted (if rows were inserted, for instance)
+  // but actual selection did not change. Check to see if any of the selected IDs actually changed.
+  // Tell listeners about the new selections if there was a change in selected IDs (could be empty list)
+  if (selectionSet_ != previousSelections)
+    Q_EMIT itemsSelected(selectionList_);
   emitItemsSelectedTimer_->stop();
   lastSelectionChangedTime_ = simCore::getSystemTime();
 }
