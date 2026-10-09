@@ -49,9 +49,11 @@ namespace simVis
 // static:
 int ProjectorManager::baseTextureImageUnit_ = 6;
 
-ProjectorManager::ProjectorLayer::ProjectorLayer(simData::ObjectId id)
+ProjectorManager::ProjectorLayer::ProjectorLayer(ProjectorNode* proj)
   : osgEarth::Layer(),
-    id_(id)
+    id_(proj->getId()),
+    texture_(proj->getTexture()),
+    shadowMap_(proj->getShadowMap())
 {
   setRenderType(RENDERTYPE_TERRAIN_SURFACE);
 }
@@ -59,6 +61,60 @@ ProjectorManager::ProjectorLayer::ProjectorLayer(simData::ObjectId id)
 simData::ObjectId ProjectorManager::ProjectorLayer::id() const
 {
   return id_;
+}
+
+void ProjectorManager::ProjectorLayer::removedFromMap(const osgEarth::Map* map)
+{
+  releaseTextureUnits_();
+  osgEarth::Layer::removedFromMap(map);
+}
+
+#if OSGEARTH_SOVERSION >= 101
+void ProjectorManager::ProjectorLayer::prepareForRendering(osgEarth::TerrainEngine* engine)
+{
+  osgEarth::Layer::prepareForRendering(engine);
+  reserveTextureUnits_(engine->getResources());
+}
+#else
+void ProjectorManager::ProjectorLayer::setTerrainResources(osgEarth::TerrainResources* resources)
+{
+  osgEarth::Layer::setTerrainResources(resources);
+  reserveTextureUnits_(resources);
+}
+#endif
+
+void ProjectorManager::ProjectorLayer::reserveTextureUnits_(osgEarth::TerrainResources* resources)
+{
+  releaseTextureUnits_();
+
+  // Terrain bindings vary with osgEarth versions and enabled layers. Per-layer
+  // reservations avoid collisions while allowing different projectors to reuse units.
+  if (!resources->reserveTextureImageUnitForLayer(textureUnit_, this, "SIMSDK Projector image") ||
+      !resources->reserveTextureImageUnitForLayer(shadowMapUnit_, this, "SIMSDK Projector shadow map"))
+  {
+    releaseTextureUnits_();
+    setStatus(osgEarth::Status::ResourceUnavailable, "No texture image units available for projector");
+    return;
+  }
+
+  osg::StateSet* stateSet = getOrCreateStateSet();
+  stateSet->addUniform(new osg::Uniform("simProjSampler", textureUnit_.unit()));
+  stateSet->setTextureAttribute(textureUnit_.unit(), texture_.get());
+  stateSet->addUniform(new osg::Uniform("simProjShadowMap", shadowMapUnit_.unit()));
+  stateSet->setTextureAttribute(shadowMapUnit_.unit(), shadowMap_.get());
+}
+
+void ProjectorManager::ProjectorLayer::releaseTextureUnits_()
+{
+  osg::StateSet* stateSet = getOrCreateStateSet();
+  if (textureUnit_.valid())
+    stateSet->removeTextureAttribute(textureUnit_.unit(), osg::StateAttribute::TEXTURE);
+  if (shadowMapUnit_.valid())
+    stateSet->removeTextureAttribute(shadowMapUnit_.unit(), osg::StateAttribute::TEXTURE);
+  stateSet->removeUniform("simProjSampler");
+  stateSet->removeUniform("simProjShadowMap");
+  textureUnit_.release();
+  shadowMapUnit_.release();
 }
 
 //-------------------------------------------------------------------------
@@ -221,11 +277,10 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
 
   projectors_.emplace_back(proj);
 
-  ProjectorLayer* layer = new ProjectorLayer(proj->getId());
+  ProjectorLayer* layer = new ProjectorLayer(proj);
   layer->setName("SIMSDK Projector");
   layer->setCullCallback(new UpdateProjMatrix(proj));
   projectorLayers_[proj->getId()] = layer;
-  mapNode_->getMap()->addLayer(layer);
 
   osg::StateSet* projStateSet = layer->getOrCreateStateSet();
 
@@ -237,18 +292,6 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
 
   projStateSet->setDefine("SIMVIS_USE_REX");
 
-  // tells the shader where to bind the sampler uniform
-  projStateSet->addUniform(new osg::Uniform("simProjSampler", getTextureImageUnit()));
-
-  // Set texture from projector into state set
-  projStateSet->setTextureAttribute(getTextureImageUnit(), proj->getTexture());
-
-  // tells the shader where to bind the shadow map sampler
-  projStateSet->addUniform(new osg::Uniform("simProjShadowMap", getShadowMapImageUnit()));
-
-  // Bind the shadow map texture to the shader
-  projStateSet->setTextureAttribute(getShadowMapImageUnit(), proj->getShadowMap());
-
   // ask the projector to apply its particular values to the stateset
   proj->applyToStateSet(projStateSet);
 
@@ -257,6 +300,9 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
 
   // attach the projector to the active map node
   proj->setMapNode(getMapNode());
+
+  // Adding the layer prepares it for rendering and reserves its texture units.
+  mapNode_->getMap()->addLayer(layer);
 }
 
 void ProjectorManager::unregisterProjector(const ProjectorNode* proj)
