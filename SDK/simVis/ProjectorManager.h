@@ -25,6 +25,7 @@
 
 #include "osgEarth/MapNode"
 #include "osgEarth/MapNodeObserver"
+#include "osgEarth/TerrainResources"
 #include "simVis/Projector.h"
 #include "simCore/Common/Common.h"
 #include "simData/ObjectId.h"
@@ -60,13 +61,13 @@ public:
   */
   void clear();
 
-  /** Texture image unit used by projectors */
+  /** Texture image unit used by projectors on entities; terrain layers reserve their own units. */
   static const int getTextureImageUnit();
 
-  /// Texture image unit for shadow map raster
+  /// Texture image unit for shadow map raster on entities
   static const int getShadowMapImageUnit();
 
-  /// Set the base (starting) texture image unit for projector textures.
+  /// Set the base (starting) texture image unit for projector textures on entities.
   static void setBaseTextureImageUnit(int unit);
 
 public: // MapNodeObserver
@@ -111,12 +112,30 @@ private:
   class ProjectorLayer : public osgEarth::Layer
   {
   public:
-    ProjectorLayer(simData::ObjectId id);
+    explicit ProjectorLayer(ProjectorNode* proj);
     /// Return owner entity id
     simData::ObjectId id() const;
+    /// Release texture units when this layer leaves its map.
+    void removedFromMap(const osgEarth::Map* map) override;
+  protected:
+#if OSGEARTH_SOVERSION >= 101
+    /// Reserve texture units from the terrain engine before rendering this layer.
+    void prepareForRendering(osgEarth::TerrainEngine* engine) override;
+#else
+    /// Reserve texture units from the terrain engine before rendering this layer.
+    void setTerrainResources(osgEarth::TerrainResources* resources) override;
+#endif
   private:
+    /// Bind projector textures to units that do not conflict with the terrain engine.
+    void reserveTextureUnits_(osgEarth::TerrainResources* resources);
+    /// Remove texture bindings and release any reservations from the previous map.
+    void releaseTextureUnits_();
     /// Owner entity id
     simData::ObjectId id_;
+    osg::ref_ptr<osg::Texture2D> texture_;
+    osg::ref_ptr<osg::Texture2D> shadowMap_;
+    osgEarth::TextureImageUnitReservation textureUnit_;
+    osgEarth::TextureImageUnitReservation shadowMapUnit_;
   };
 
   /// Vector of projectorLayers that have been added to the mapNode
