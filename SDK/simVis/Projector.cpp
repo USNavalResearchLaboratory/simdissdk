@@ -58,9 +58,35 @@
 namespace
 {
 
-/** Maximum number of projectors a single node can accept */
+/**
+ * Maximum number of projectors supported on one entity node.
+ *
+ * Each projector requires one element in the entity projector sampler and
+ * uniform arrays, and one texture image unit in the contiguous range beginning
+ * at ENTITY_PROJECTOR_FIRST_TEXTURE_UNIT. This value therefore controls the
+ * maximum simultaneous projectors on a node and the size of the fixed texture
+ * image-unit range used below.
+ *
+ * If changed, verify the projector-on-entity shader expectations, uniform-array
+ * setup, and texture-attribute cleanup.
+ */
 static constexpr unsigned int MAX_NODE_PROJECTORS = 4u;
-/** Texture image unit for the first of MAX_NODE_PROJECTORS on a node */
+
+/**
+ * First texture image unit in the fixed contiguous range used for entity
+ * projector textures. With the current MAX_NODE_PROJECTORS value, entity
+ * projectors use texture image units 7 through 10 inclusive.
+ *
+ * These textures are applied through an entity node's StateSet, rather than as
+ * terrain-layer textures, so they are not allocated through
+ * osgEarth::TerrainResources. A fixed range is used because this code needs
+ * one known texture image unit per projector for the simProjSampler array.
+ *
+ * Unit 7 is a legacy starting point. If this value or MAX_NODE_PROJECTORS
+ * changes, verify that the full resulting range does not conflict with texture
+ * image units used by entity model materials, including PBR textures, or by
+ * other inherited rendering state.
+ */
 static constexpr unsigned int ENTITY_PROJECTOR_FIRST_TEXTURE_UNIT = 7u;
 
 static constexpr double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
