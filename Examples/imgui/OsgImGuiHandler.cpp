@@ -25,8 +25,9 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "OsgImGuiHandler.h"
-#include "osgEarth/Version"
 #include "osgEarth/ShaderLoader"
+#include "osgEarth/TerrainEngineNode"
+#include "osgEarth/Version"
 #include "osgEarth/VirtualProgram"
 
 #if OSGEARTH_SOVERSION >= 159
