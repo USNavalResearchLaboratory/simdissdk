@@ -27,11 +27,15 @@
 #include <QDragLeaveEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
+#include <QEvent>
+#include <QMouseEvent>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QTimer>
 #include <QVBoxLayout>
 #include "osg/DisplaySettings"
+#include "osgGA/EventQueue"
+#include "osgViewer/GraphicsWindow"
 #include "osgViewer/Viewer"
 #include "osgEarth/Registry"
 #include "osgEarth/Version"
@@ -130,6 +134,58 @@ public:
   }
 
 protected:
+  /** From osgQOpenGLWidget: Starts drag tracking and clears prior drag suppression. */
+  void mousePressEvent(QMouseEvent* event) override
+  {
+    dragActive_ = true;
+    suppressDrag_ = false;
+    osgQOpenGLWidget::mousePressEvent(event);
+  }
+
+  /** From osgQOpenGLWidget: Suppresses outside drag movement and re-anchors OSG on re-entry. */
+  void mouseMoveEvent(QMouseEvent* event) override
+  {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    const QPoint localPosition = event->pos();
+#else
+    const QPoint localPosition = event->position().toPoint();
+#endif
+
+    const bool inBounds = rect().contains(localPosition);
+    if (suppressDrag_)
+    {
+      // Re-entered while still dragging: reset OSG's stored mouse position
+      // without creating movement, then resume on the next in-map move.
+      if (inBounds && event->buttons() != Qt::NoButton && reanchorMouse_(localPosition) == 0)
+        suppressDrag_ = false;
+      return;
+    }
+
+    if (event->buttons() != Qt::NoButton && !inBounds)
+    {
+      suppressDrag_ = true;
+      return;
+    }
+
+    osgQOpenGLWidget::mouseMoveEvent(event);
+  }
+
+  /** From osgQOpenGLWidget: Clears drag tracking when the mouse button is released. */
+  void mouseReleaseEvent(QMouseEvent* event) override
+  {
+    dragActive_ = false;
+    suppressDrag_ = false;
+    osgQOpenGLWidget::mouseReleaseEvent(event);
+  }
+
+  /** From QWidget: Suppresses an active drag after the cursor leaves the GL widget. */
+  void leaveEvent(QEvent* event) override
+  {
+    if (dragActive_)
+      suppressDrag_ = true;
+    osgQOpenGLWidget::leaveEvent(event);
+  }
+
   // From osgQOpenGLWidget:
   void resizeGL(int logicalWidth, int logicalHeight) override
   {
@@ -147,6 +203,26 @@ protected:
   }
 
 private:
+  /**
+   * Re-anchors OSG's stored mouse position without creating a movement event.
+   * @return 0 if the mouse was re-anchored; nonzero if OSG input is unavailable.
+   */
+  int reanchorMouse_(const QPoint& localPosition) const
+  {
+    osgViewer::GraphicsWindow* graphicsWindow = getGraphicsWindow();
+    if (graphicsWindow == nullptr || graphicsWindow->getEventQueue() == nullptr)
+      return 1;
+
+    const double dpr = devicePixelRatio();
+    const float x = static_cast<float>(localPosition.x() * dpr);
+    const float y = static_cast<float>(height() * dpr - localPosition.y() * dpr - 1.0);
+    graphicsWindow->getEventQueue()->mouseWarped(x, y);
+    return 0;
+  }
+
+  bool dragActive_ = false;
+  bool suppressDrag_ = false;
+
   osg::ref_ptr<osgViewer::Viewer> viewer_;
   std::function<void(int, int, double)> notifyResize_;
   std::function<void()> notifyPrePaint_;
