@@ -61,15 +61,6 @@ public:
   */
   void clear();
 
-  /** Texture image unit used by projectors on entities; terrain layers reserve their own units. */
-  static const int getTextureImageUnit();
-
-  /// Texture image unit for shadow map raster on entities
-  static const int getShadowMapImageUnit();
-
-  /// Set the base (starting) texture image unit for projector textures on entities.
-  static void setBaseTextureImageUnit(int unit);
-
 public: // MapNodeObserver
 
   /** Gets the map node */
@@ -103,10 +94,6 @@ private:
 
   /// Vector for holding projector nodes created by the scenario
   std::vector< osg::ref_ptr<ProjectorNode> > projectors_;
-
-  /// Map for associating projector node Ids to projector state sets
-  typedef std::map<simData::ObjectId, osg::ref_ptr<osg::Group> > GroupMap;
-  GroupMap groupMap_;
 
   /// REX Layer for a projector (REX engine only)
   class ProjectorLayer : public osgEarth::Layer
@@ -151,9 +138,6 @@ private:
 
   /// A flag to mark when projector layers need to be moved to ensure visibility
   bool needReorderProjectorLayers_;
-
-  /// Base (starting) texture image unit for projector textures
-  static int baseTextureImageUnit_;
 };
 }
 

@@ -57,8 +57,14 @@
 
 namespace
 {
-static const double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
-static const float DEFAULT_ALPHA_VALUE = 0.1f;
+
+/** Maximum number of projectors a single node can accept */
+static constexpr unsigned int MAX_NODE_PROJECTORS = 4u;
+/** Texture image unit for the first of MAX_NODE_PROJECTORS on a node */
+static constexpr unsigned int ENTITY_PROJECTOR_FIRST_TEXTURE_UNIT = 7u;
+
+static constexpr double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
+static constexpr float DEFAULT_ALPHA_VALUE = 0.1f;
 
   // draws the geometry of the projection frustum.
   // (NOTE: some of this code is borrowed from OSG's osgthirdpersonview example)
@@ -140,8 +146,6 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
    * will be replaced with osg::Callback, after which these two can be
    * unified.
    */
-#define SIM_MAX_NODE_PROJECTORS 4
-
   class ProjectOnNodeUpdater : public osg::NodeCallback
   {
     using ProjectorObserver = osg::observer_ptr<simVis::ProjectorNode>;
@@ -159,7 +163,7 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
     int add(simVis::ProjectorNode* node)
     {
       OE_SOFT_ASSERT_AND_RETURN(node != nullptr, -1);
-      OE_SOFT_ASSERT_AND_RETURN(projectors_.size() < SIM_MAX_NODE_PROJECTORS, -1);
+      OE_SOFT_ASSERT_AND_RETURN(projectors_.size() < MAX_NODE_PROJECTORS, -1);
 
       prune();
 
@@ -210,17 +214,17 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
         "simProjSampler",
         osg::Uniform::SAMPLER_2D,
         ss,
-        SIM_MAX_NODE_PROJECTORS);
+        MAX_NODE_PROJECTORS);
 
       unsigned count = projectors_.size();
       unsigned index = 0;
 
       for (auto& proj : projectors_)
       {
-        sampler.setElement(index, (int)(simVis::ProjectorManager::getTextureImageUnit() + index));
+        sampler.setElement(index, (int)(ENTITY_PROJECTOR_FIRST_TEXTURE_UNIT + index));
 
         ss->setTextureAttribute(
-          simVis::ProjectorManager::getTextureImageUnit() + index,
+          ENTITY_PROJECTOR_FIRST_TEXTURE_UNIT + index,
           proj->getTexture());
 
         ++index;
@@ -242,9 +246,9 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
       }
 
       // disable projector-active on the stateset for any remaining projectors
-      for (; index < SIM_MAX_NODE_PROJECTORS; ++index)
+      for (; index < MAX_NODE_PROJECTORS; ++index)
       {
-        osgEarth::Util::ArrayUniform u("projectorActive", osg::Uniform::BOOL, ss, SIM_MAX_NODE_PROJECTORS);
+        osgEarth::Util::ArrayUniform u("projectorActive", osg::Uniform::BOOL, ss, MAX_NODE_PROJECTORS);
         u.setElement(index, false);
       }
     }
@@ -263,7 +267,7 @@ static const float DEFAULT_ALPHA_VALUE = 0.1f;
 
       // TODO: can we just put this on the node's stateset??
       osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
-      osg::Uniform* u = new osg::Uniform(osg::Uniform::FLOAT_MAT4, "simProjTexGenMat", SIM_MAX_NODE_PROJECTORS);
+      osg::Uniform* u = new osg::Uniform(osg::Uniform::FLOAT_MAT4, "simProjTexGenMat", MAX_NODE_PROJECTORS);
       ss->addUniform(u);
 
       osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
@@ -1211,7 +1215,11 @@ int ProjectorNode::removeProjectionFromNode(osg::Node* entity)
 
       stateSet->removeDefine("SIMVIS_NUM_PROJECTORS");
       stateSet->removeUniform("simProjSampler");
-      stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
+      for (unsigned int i = 0; i < MAX_NODE_PROJECTORS; ++i)
+      {
+        stateSet->removeTextureAttribute(ENTITY_PROJECTOR_FIRST_TEXTURE_UNIT + i,
+          osg::StateAttribute::TEXTURE);
+      }
 
       removeFromStateSet(stateSet);
     }
@@ -1220,7 +1228,7 @@ int ProjectorNode::removeProjectionFromNode(osg::Node* entity)
       projOnNodeCallback->configureStateSet(stateSet);
 
       // remove the last one
-      stateSet->removeTextureAttribute(count, osg::StateAttribute::TEXTURE);
+      stateSet->removeTextureAttribute(ENTITY_PROJECTOR_FIRST_TEXTURE_UNIT + count, osg::StateAttribute::TEXTURE);
     }
   }
 

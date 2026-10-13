@@ -46,8 +46,6 @@
 
 namespace simVis
 {
-// static:
-int ProjectorManager::baseTextureImageUnit_ = 6;
 
 ProjectorManager::ProjectorLayer::ProjectorLayer(ProjectorNode* proj)
   : osgEarth::Layer(),
@@ -201,21 +199,6 @@ ProjectorManager::~ProjectorManager()
 {
   if (mapNode_.valid())
     mapNode_->getMap()->removeMapCallback(mapListener_.get());
-}
-
-void ProjectorManager::setBaseTextureImageUnit(int value)
-{
-  baseTextureImageUnit_ = value;
-}
-
-const int ProjectorManager::getTextureImageUnit()
-{
-  return baseTextureImageUnit_ + 1;
-}
-
-const int ProjectorManager::getShadowMapImageUnit()
-{
-  return baseTextureImageUnit_;
 }
 
 void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)

@@ -313,7 +313,6 @@ private:
   osg::ref_ptr<osg::Uniform> projectorAlpha_;
   osg::ref_ptr<osg::Uniform> texProjPosUniform_;
   osg::ref_ptr<osg::Uniform> texProjDirUniform_;
-  osg::ref_ptr<osg::Uniform> texProjSamplerUniform_;
   osg::ref_ptr<osg::Uniform> useColorOverrideUniform_;
   osg::ref_ptr<osg::Uniform> colorOverrideUniform_;
   osg::ref_ptr<osg::Uniform> projectorMaxRangeSquaredUniform_;
