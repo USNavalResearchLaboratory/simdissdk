@@ -25,13 +25,15 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
+#include <QSurfaceFormat>
 #include <QWidget>
+#include "osg/observer_ptr"
 #include "simCore/Common/Common.h"
 
 class QOpenGLContext;
 class QOpenGLWidget;
 class QOpenGLWindow;
-class QSurfaceFormat;
 namespace osgViewer {
   class GraphicsWindow;
   class ViewerBase;
@@ -144,6 +146,15 @@ public:
   /** Combines create() with QCoreApplication::processEvents(), as a convenience */
   void createAndProcessEvents();
 
+  /**
+   * Queues recreation of the inner Widget- or Window-mode rendering GL platform.
+   *
+   * This preserves the ViewerWidgetAdapter object itself while invalidating
+   * pointers returned by glWidget(), glWindow(), qtGraphicsContext(),
+   * getGraphicsContext(), and getGraphicsWindow().
+   */
+  void requestGlPlatformRecreation();
+
   // From QWidget:
   QSize sizeHint() const override;
 
@@ -172,9 +183,27 @@ private Q_SLOTS:
   void postGlInitialize_();
 
 private:
-  /** Initializes the surface format based on OSG defaults */
+  /** Creates and connects the active Widget- or Window-mode OpenGL platform. */
+  void createGlPlatform_();
+  /** Destroys the current inner Widget- or Window-mode OpenGL platform. */
+  void destroyGlPlatform_();
+  /** Rebuilds the current inner OpenGL platform from cached configuration. */
+  void recreateGlPlatform_();
+
+  /** Applies cached viewer/render/timer/format state to a newly created OpenGL platform. */
+  void restoreGlPlatformConfiguration_();
+  /** Installs filters that belong to the current inner OpenGL platform widget. */
+  void installGlPlatformEventFilters_();
+  /** Initializes the surface format based on OSG defaults. */
   void initializeSurfaceFormat_();
 
+  GlImplementation glImplementation_;
+  std::optional<QSurfaceFormat> requestedFormat_;
+  osg::observer_ptr<osgViewer::ViewerBase> viewer_;
+  std::function<void(double simulationTime)> renderFunction_;
+  int timerIntervalMs_ = 10;
+
+  bool glPlatformRecreationQueued_ = false;
   std::unique_ptr<GlPlatformInterface> glPlatform_;
 };
 

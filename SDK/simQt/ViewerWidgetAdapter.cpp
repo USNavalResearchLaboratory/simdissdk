@@ -444,7 +444,14 @@ GlWindowPlatform::GlWindowPlatform(QWidget* parent)
 
 GlWindowPlatform::~GlWindowPlatform()
 {
-  delete glWindow_;
+  if (glWindow_)
+  {
+    // QWidget::createWindowContainer() transfers ownership of the QWindow to
+    // the returned QWidget container. Deleting the container also deletes the
+    // embedded osgQOpenGLWindow and its OSGRenderer.
+    delete glWindow_->asWidget();
+    glWindow_ = nullptr;
+  }
 }
 
 QWidget* GlWindowPlatform::widget() const
@@ -757,7 +764,8 @@ std::unique_ptr<GlPlatformInterface> createGlPlatform(GlImplementation glImpl, Q
 ///////////////////////////////////////////////////////////////////////
 
 ViewerWidgetAdapter::ViewerWidgetAdapter(GlImplementation glImpl, QWidget* parent)
-  : QWidget(parent)
+  : QWidget(parent),
+  glImplementation_(glImpl)
 {
   simVis::applyMesaGlVersionOverride();
 #if OSGEARTH_SOVERSION >= 180
@@ -765,7 +773,21 @@ ViewerWidgetAdapter::ViewerWidgetAdapter(GlImplementation glImpl, QWidget* paren
   osgEarth::Registry::instance()->setDevicePixelRatioFunction([this](auto* unused) { return devicePixelRatio(); });
 #endif
 
-  glPlatform_ = createGlPlatform(glImpl, this);
+  QVBoxLayout* layout = new QVBoxLayout(this);
+  layout->setContentsMargins(0, 0, 0, 0);
+  setLayout(layout);
+  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  setFocusPolicy(Qt::StrongFocus);
+  createGlPlatform_();
+  initializeSurfaceFormat_();
+  installGlPlatformEventFilters_();
+}
+
+void ViewerWidgetAdapter::createGlPlatform_()
+{
+  // Cannot call this with a glPlatform still defined
+  assert(!glPlatform_);
+  glPlatform_ = createGlPlatform(glImplementation_, this);
 
   glPlatform_->setResizeSignal([this](int logicalWidth, int logicalHeight, double pixelScale) { Q_EMIT glResized(logicalWidth, logicalHeight, pixelScale); });
   glPlatform_->setPrePaintSignal([this]() { Q_EMIT aboutToPaintGl(); });
@@ -774,46 +796,115 @@ ViewerWidgetAdapter::ViewerWidgetAdapter(GlImplementation glImpl, QWidget* paren
   glPlatform_->connectToInitializedSignal([this]() { postGlInitialize_(); });
   glPlatform_->connectToAboutToRenderFirstFrameSignal([this]() { Q_EMIT aboutToRenderFirstFrame(); });
 
-  initializeSurfaceFormat_();
+  auto* layout = qobject_cast<QVBoxLayout*>(this->layout());
+  // Layout must be set, and is set in constructor
+  assert(layout != nullptr);
+  if (layout == nullptr)
+    return;
 
-  QVBoxLayout* layout = new QVBoxLayout(this);
-  layout->setContentsMargins(0, 0, 0, 0);
   QWidget* windowOrWidgetContainer = glPlatform_->widget();
   layout->addWidget(windowOrWidgetContainer);
-  setLayout(layout);
-  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  setFocusPolicy(Qt::StrongFocus);
   // The widget also needs strong focus for OSG key processing to work
   windowOrWidgetContainer->setFocusPolicy(Qt::StrongFocus);
+}
 
-  // Intercept drag and drop events for the window, try to process as our own
-  if (glImpl == GlImplementation::Window)
+void ViewerWidgetAdapter::destroyGlPlatform_()
+{
+  if (!glPlatform_)
+    return;
+
+  QWidget* windowOrWidgetContainer = glPlatform_->widget();
+  auto* layout = qobject_cast<QVBoxLayout*>(this->layout());
+  assert(layout != nullptr); // Set in constructor, must be valid
+  if (layout != nullptr)
+    layout->removeWidget(windowOrWidgetContainer);
+
+  // Both GlWidgetPlatform and GlWindowPlatform now own and destroy their
+  // complete inner widget/window platform through their destructors.
+  glPlatform_.reset();
+}
+
+void ViewerWidgetAdapter::recreateGlPlatform_()
+{
+  destroyGlPlatform_();
+  createGlPlatform_();
+  restoreGlPlatformConfiguration_();
+  installGlPlatformEventFilters_();
+
+  QWidget* windowOrWidgetContainer = glPlatform_->widget();
+  // The outer adapter is normally visible when this runs after a dock-state
+  // transition. Explicitly show and update the new child in that case.
+  if (isVisible())
   {
-    const auto& evtFilter = [windowOrWidgetContainer, this](QEvent* evt) -> bool {
-      auto clonedEvent = cloneDragDropEvent_(evt);
-      if (clonedEvent)
-        QCoreApplication::postEvent(this, clonedEvent.release());
-      return true;
-      };
-    glPlatform_->installEventFilter(new simQt::DragDropEventFilter(evtFilter, this));
-    windowOrWidgetContainer->setAcceptDrops(true);
+    windowOrWidgetContainer->show();
+    windowOrWidgetContainer->update();
   }
+}
 
-  // Fix auto-repeat
-  glPlatform_->installEventFilter(new simQt::AutoRepeatFilter(this));
+void ViewerWidgetAdapter::requestGlPlatformRecreation()
+{
+  if (glPlatformRecreationQueued_)
+    return;
+
+  // Prevent multiple successive recreation requests from creating a bad state
+  glPlatformRecreationQueued_ = true;
+  QTimer::singleShot(0, this, [this]() {
+    glPlatformRecreationQueued_ = false;
+    recreateGlPlatform_();
+    });
+}
+
+void ViewerWidgetAdapter::restoreGlPlatformConfiguration_()
+{
+  // Must be called with a valid GL Platform (set in constructor / createGlPlatform_()).
+  // Failure here means a failure in ordering of helper function calls.
+  assert(glPlatform_);
+
+  if (requestedFormat_.has_value())
+    glPlatform_->setFormat(*requestedFormat_);
+  if (viewer_.valid())
+    glPlatform_->setOsgViewer(viewer_.get());
+  glPlatform_->setTimerInterval(timerIntervalMs_);
+  glPlatform_->setRenderFunction(renderFunction_);
+}
+
+void ViewerWidgetAdapter::installGlPlatformEventFilters_()
+{
+  // Must be called with a valid GL Platform (set in constructor / createGlPlatform_()).
+  // Failure here means a failure in ordering of helper function calls.
+  assert(glPlatform_);
+  QWidget* windowOrWidgetContainer = glPlatform_->widget();
+
+  // The filters are owned by the current inner OpenGL platform widget. If a future
+  // platform replacement removes that widget, the filters are destroyed with
+  // it rather than remaining attached to a stale platform.
+  glPlatform_->installEventFilter(new simQt::AutoRepeatFilter(windowOrWidgetContainer));
 
   // Intercept multi-touch events and queue them into OSG
-  auto* multiTouchEventFilter = new simQt::MultiTouchEventFilter(this);
+  auto* multiTouchEventFilter = new simQt::MultiTouchEventFilter(windowOrWidgetContainer);
   glPlatform_->installEventFilter(multiTouchEventFilter);
 
-  // Set up the graphics window on initialization
+  // Set up the graphics window multi-touch event filter for touch events
   if (getGraphicsWindow())
     multiTouchEventFilter->setGraphicsWindow(getGraphicsWindow());
   else
   {
     glPlatform_->connectToInitializedSignal([multiTouchEventFilter, this]() {
       multiTouchEventFilter->setGraphicsWindow(getGraphicsWindow());
-    });
+      });
+  }
+
+  // Intercept drag and drop events for the window, try to process as our own
+  if (glImplementation_ == GlImplementation::Window)
+  {
+    const auto& evtFilter = [this](QEvent* evt) -> bool {
+      auto clonedEvent = cloneDragDropEvent_(evt);
+      if (clonedEvent)
+        QCoreApplication::postEvent(this, clonedEvent.release());
+      return true;
+      };
+    glPlatform_->installEventFilter(new simQt::DragDropEventFilter(evtFilter, windowOrWidgetContainer));
+    windowOrWidgetContainer->setAcceptDrops(true);
   }
 }
 
@@ -832,17 +923,20 @@ osgViewer::ViewerBase* ViewerWidgetAdapter::getViewer() const
 
 void ViewerWidgetAdapter::setViewer(osgViewer::ViewerBase* viewer)
 {
-  glPlatform_->setOsgViewer(viewer);
+  viewer_ = viewer;
+  glPlatform_->setOsgViewer(viewer_.get());
 }
 
 void ViewerWidgetAdapter::setRenderFunction(const std::function<void(double simulationTime)>& renderFunc)
 {
-  glPlatform_->setRenderFunction(renderFunc);
+  renderFunction_ = renderFunc;
+  glPlatform_->setRenderFunction(renderFunction_);
 }
 
 void ViewerWidgetAdapter::setTimerInterval(int intervalMs)
 {
-  glPlatform_->setTimerInterval(intervalMs);
+  timerIntervalMs_ = intervalMs;
+  glPlatform_->setTimerInterval(timerIntervalMs_);
 }
 
 osg::GraphicsContext* ViewerWidgetAdapter::getGraphicsContext() const
@@ -872,7 +966,8 @@ QSurfaceFormat ViewerWidgetAdapter::format() const
 
 void ViewerWidgetAdapter::setFormat(const QSurfaceFormat& format)
 {
-  glPlatform_->setFormat(format);
+  requestedFormat_ = format;
+  glPlatform_->setFormat(*requestedFormat_);
 }
 
 QOpenGLContext* ViewerWidgetAdapter::qtGraphicsContext() const
