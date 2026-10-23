@@ -16,6 +16,9 @@ if(@SIMQT_HAVE_OSGQOPENGL@)
 endif()
 if(@SIMQT_HAVE_QOPENGL@)
     find_dependency(Qt@SIMQT_QT_VERSION@OpenGL)
+    # simQt links OpenGL::GL publicly whenever Qt OpenGL is available, so the
+    # exported targets pull in the system OpenGL package for downstream consumers.
+    find_dependency(OpenGL)
 endif()
 
 # The dependencies below are only required for static builds (private links)

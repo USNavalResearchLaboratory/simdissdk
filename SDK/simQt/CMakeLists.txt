@@ -390,6 +390,9 @@ if(TARGET simVis)
 endif()
 if(Qt${SIMQT_QT_VERSION}OpenGL_FOUND)
     target_link_libraries(simQt PUBLIC Qt::OpenGL)
+    if(TARGET OpenGL::GL)
+        target_link_libraries(simQt PUBLIC OpenGL::GL)
+    endif()
 endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
