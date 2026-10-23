@@ -30,6 +30,7 @@
 #include <QSignalMapper>
 #include <QClipboard>
 #include "simQt/AbstractEntityTreeModel.h"
+#include "simQt/BoundSettings.h"
 #include "simQt/EntityFilterLineEdit.h"
 #include "simQt/EntityNameFilter.h"
 #include "simQt/EntityTreeWidget.h"
@@ -47,6 +48,31 @@ namespace simQt {
 const QString SETTING_NAME_FILTER = "/FilterSettings/";
 const QString FILTER_DIALOG_GEOMETRY = "/FilterDialogGeometry";
 const QString PINNED_CUSTOM_FILTER = "/PinnedCustomFilter";
+const QString EntityTreeComposite::PINNED_ENTITY_IDS_SETTING = "Shared Entity Tree/Pinned Entity IDs";
+
+namespace
+{
+  QStringList pinIdsToStrings(const QList<simData::ObjectId>& ids)
+  {
+    QStringList rv;
+    for (const auto id : ids)
+      rv.push_back(QString::number(id));
+    return rv;
+  }
+
+  QSet<simData::ObjectId> stringsToPinIds(const QStringList& values)
+  {
+    QSet<simData::ObjectId> rv;
+    for (const auto& value : values)
+    {
+      bool ok = false;
+      const simData::ObjectId id = value.toULongLong(&ok);
+      if (ok && id != 0)
+        rv.insert(id);
+    }
+    return rv;
+  }
+}
 
 FilterDialog::FilterDialog(SettingsPtr settings, QWidget* parent)
   :QDialog(parent),
@@ -252,6 +278,7 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   connect(entityTreeWidget_, &EntityTreeWidget::itemsSelected, this, &EntityTreeComposite::itemsSelected);  // Echo out the signal
   connect(entityTreeWidget_, &EntityTreeWidget::itemDoubleClicked, this, &EntityTreeComposite::itemDoubleClicked); // Echo out the signal
   connect(entityTreeWidget_, &EntityTreeWidget::filterSettingsChanged, this, &EntityTreeComposite::filterSettingsChanged); // Echo out the signal
+  connect(entityTreeWidget_, &EntityTreeWidget::pinnedEntitiesChanged, this, &EntityTreeComposite::pinnedEntitiesChanged);
 
   // model is null at startup. Will be updated in the name filter in the call to setModel()
   nameFilter_ = new EntityNameFilter(nullptr);
@@ -430,6 +457,46 @@ simData::ObjectId EntityTreeComposite::alwaysShow() const
 void EntityTreeComposite::setAlwaysShow(simData::ObjectId id)
 {
   entityTreeWidget_->setAlwaysShow(id);
+}
+
+QSet<simData::ObjectId> EntityTreeComposite::pinnedEntities() const
+{
+  return entityTreeWidget_->pinnedEntities();
+}
+
+void EntityTreeComposite::setPinnedEntities(const QSet<simData::ObjectId>& ids)
+{
+  entityTreeWidget_->setPinnedEntities(ids);
+}
+
+void EntityTreeComposite::bindPinnedEntitiesToSetting(Settings& settings, const QString& settingName)
+{
+  delete pinnedEntitiesSetting_;
+  pinnedEntitiesSetting_ = nullptr;
+
+  const Settings::MetaData metaData(Settings::STRING_LIST, QStringList(), "", Settings::PRIVATE);
+
+  pinnedEntitiesSetting_ = new BoundStringListSetting(this, settings, settingName, metaData);
+
+  connect(pinnedEntitiesSetting_, &BoundStringListSetting::valueChanged, this, &EntityTreeComposite::applyPinnedEntitySetting_);
+  connect(this, &EntityTreeComposite::pinnedEntitiesChanged, this, &EntityTreeComposite::savePinnedEntities_);
+
+  applyPinnedEntitySetting_(pinnedEntitiesSetting_->value());
+}
+
+void EntityTreeComposite::applyPinnedEntitySetting_(const QStringList& values)
+{
+  applyingPinnedEntitySetting_ = true;
+  setPinnedEntities(stringsToPinIds(values));
+  applyingPinnedEntitySetting_ = false;
+}
+
+void EntityTreeComposite::savePinnedEntities_(const QList<simData::ObjectId>& ids)
+{
+  if (applyingPinnedEntitySetting_ || pinnedEntitiesSetting_ == nullptr)
+    return;
+
+  pinnedEntitiesSetting_->setValue(pinIdsToStrings(ids));
 }
 
 void EntityTreeComposite::getFilterSettings(QMap<QString, QVariant>& settings) const

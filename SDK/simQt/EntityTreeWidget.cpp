@@ -83,6 +83,7 @@ EntityTreeWidget::EntityTreeWidget(QTreeView* view)
   connect(proxyModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(delaySend_()));
   connect(proxyModel_, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(delaySend_()));
   connect(proxyModel_, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>)), this, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>))); // Echo out the signal
+  connect(proxyModel_, &EntityProxyModel::pinnedEntitiesChanged, this, &EntityTreeWidget::pinnedEntitiesChanged);
   connect(view_->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(selectionChanged_(const QItemSelection&, const QItemSelection&)));
   connect(view_, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(doubleClicked_(const QModelIndex&)));
   connect(emitItemsSelectedTimer_, SIGNAL(timeout()), this, SLOT(emitItemsSelected_()));
@@ -425,6 +426,16 @@ simData::ObjectId EntityTreeWidget::alwaysShow() const
 void EntityTreeWidget::setAlwaysShow(simData::ObjectId id)
 {
   proxyModel_->setAlwaysShow(id);
+}
+
+QSet<simData::ObjectId> EntityTreeWidget::pinnedEntities() const
+{
+  return proxyModel_->pinnedEntities();
+}
+
+void EntityTreeWidget::setPinnedEntities(const QSet<simData::ObjectId>& ids)
+{
+  proxyModel_->setPinnedEntities(ids);
 }
 
 void EntityTreeWidget::getFilterSettings(QMap<QString, QVariant>& settings) const

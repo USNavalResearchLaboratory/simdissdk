@@ -25,6 +25,7 @@
 
 #include <QDate>
 #include <QList>
+#include <QSet>
 #include <QSortFilterProxyModel>
 #include "simCore/Common/Export.h"
 #include "simData/ObjectId.h"
@@ -58,6 +59,10 @@ public:
   simData::ObjectId alwaysShow() const;
   /** The given ID will always pass all filters; zero means no ID always pass */
   void setAlwaysShow(simData::ObjectId id);
+  /** Returns pinned entity IDs that remain visible when filters change */
+  QSet<simData::ObjectId> pinnedEntities() const;
+  /** Sets pinned entity IDs that remain visible when filters change */
+  void setPinnedEntities(const QSet<simData::ObjectId>& ids);
   /** Get the settings for all the filters */
   void getFilterSettings(QMap<QString, QVariant>& settings) const;
   /** Set filters to the given settings */
@@ -68,6 +73,8 @@ Q_SIGNALS:
   void filterChanged();
   /** A filter setting was changed */
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
+  /** Pinned entity IDs that remain visible when filters change */
+  void pinnedEntitiesChanged(const QList<simData::ObjectId>& ids);
 
 protected:
   /// filtering function
@@ -93,6 +100,8 @@ private:
   bool checkFilters_(simData::ObjectId id) const;
   QList<EntityFilter*> entityFilters_;
   simData::ObjectId alwaysShow_;
+  /// User-pinned entities that remain visible when filters change
+  QSet<simData::ObjectId> pinnedEntities_;
   AbstractEntityTreeModel* model_;
 };
 

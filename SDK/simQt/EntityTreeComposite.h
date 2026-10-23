@@ -27,6 +27,8 @@
 #include <QWidget>
 #include <QLayout>
 #include <QAbstractItemView>
+#include <QSet>
+#include <QStringList>
 #include "simCore/Common/Common.h"
 #include "simData/ObjectId.h"
 #include "simQt/Settings.h"
@@ -39,6 +41,7 @@ class Ui_EntityTreeComposite;
 
 namespace simQt {
 
+class BoundStringListSetting;
 class EntityFilter;
 class EntityNameFilter;
 class EntityTreeWidget;
@@ -83,6 +86,11 @@ class SDKQT_EXPORT EntityTreeComposite : public QWidget
   Q_PROPERTY(bool expandsOnDoubleClick READ expandsOnDoubleClick WRITE setExpandsOnDoubleClick);
 
 public:
+  /** Maximum number of entities that may be pinned */
+  static constexpr int MAX_PINNED_ENTITIES = 10;
+  /** Shared setting used for pinned entity IDs */
+  static const QString PINNED_ENTITY_IDS_SETTING;
+
   /** Constructor needs the parent widget */
   explicit EntityTreeComposite(QWidget* parent);
   virtual ~EntityTreeComposite();
@@ -132,6 +140,13 @@ public:
   simData::ObjectId alwaysShow() const;
   /** The given ID will always pass all filters; zero means no ID always pass */
   void setAlwaysShow(simData::ObjectId id);
+
+  /** Returns pinned entity IDs that remain visible when filters change */
+  QSet<simData::ObjectId> pinnedEntities() const;
+  /** Sets pinned entity IDs that remain visible when filters change */
+  void setPinnedEntities(const QSet<simData::ObjectId>& ids);
+  /** Synchronizes pinned entity IDs with a shared string-list setting */
+  void bindPinnedEntitiesToSetting(Settings& settings, const QString& settingName);
 
   /**
    * Get the settings for all the filters
@@ -218,6 +233,8 @@ Q_SIGNALS:
   void itemsSelected(QList<uint64_t> ids);
   /** The unique ID of the entity just double clicked */
   void itemDoubleClicked(uint64_t id);
+  /** Fired when pinned entity IDs change */
+  void pinnedEntitiesChanged(const QList<simData::ObjectId>& ids);
   /** Fired when the Center On Selection context menu action is triggered with a single id */
   void centerOnEntityRequested(uint64_t id);
   /** Fired when the Center On Selection context menu action is triggered with a list of ids */
@@ -278,6 +295,10 @@ private:
   QIcon configIconForIndex_(int index) const;
   /** Set the pin text and tooltip and update the button highlight for the specified actions based on the pinned state */
   void setPinnedState_(ButtonActions& actions, bool pinned);
+  /** Converts shared setting values into local pin collection */
+  void applyPinnedEntitySetting_(const QStringList& values);
+  /** Saves the local pin collection into the shared setting */
+  void savePinnedEntities_(const QList<simData::ObjectId>& ids);
 
   Ui_EntityTreeComposite* composite_ = nullptr;
   EntityTreeWidget* entityTreeWidget_ = nullptr;
@@ -298,6 +319,9 @@ private:
   SettingsPtr settings_;
   simQt::Settings::ObserverPtr observer_;
   std::vector<ButtonActions*> buttonActions_;
+
+  BoundStringListSetting* pinnedEntitiesSetting_ = nullptr;
+  bool applyingPinnedEntitySetting_ = false;
 
   /// Whether or not to use the entity icons, vs the names
   bool useEntityIcons_ = true;

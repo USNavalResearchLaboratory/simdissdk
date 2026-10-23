@@ -98,6 +98,10 @@ public:
 
   /** Get the settings for all the filters */
   void getFilterSettings(QMap<QString, QVariant>& settings) const;
+  /** Returns pinned entity IDs that remain visible when filters change */
+  QSet<simData::ObjectId> pinnedEntities() const;
+  /** Sets pinned entity IDs that remain visible when filters change */
+  void setPinnedEntities(const QSet<simData::ObjectId>& ids);
 
   /** Set the type(s) to use when counting entity types for the numFilteredItemsChanged signal*/
   void setCountEntityType(simData::ObjectType type);
@@ -127,6 +131,8 @@ Q_SIGNALS:
   void numFilteredItemsChanged(int numFilteredItems, int numTotalItems);
   /** A filter setting was changed */
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
+  /** Pinned entity IDs that remain visible when filters change */
+  void pinnedEntitiesChanged(const QList<simData::ObjectId>& ids);
 
 private Q_SLOTS:
   /** Intercepts the clicked message from the tree, so we can send the signal for itemsSelected() */

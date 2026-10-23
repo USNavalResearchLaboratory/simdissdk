@@ -67,18 +67,25 @@ namespace simQt {
     // Let the model handle the data call as normal
     const QVariant rv = QSortFilterProxyModel::data(index, role);
 
-    // if alwaysShow_ not set return early
-    if (alwaysShow_ == 0)
+    // If there are no pinned or alwaysShow entities, return early
+    if ((alwaysShow_ == 0) && pinnedEntities_.isEmpty())
+      return rv;
+
+    // Avoid dereferencing model_ before it has been set
+    if (model_ == nullptr)
       return rv;
 
     const QModelIndex sourceIndex = mapToSource(index);
-    const QModelIndex showIndex = model_->index(alwaysShow_);
+    const simData::ObjectId id = model_->uniqueId(sourceIndex);
 
-    // If the index in question is the always shown index,
-    // handle the special cases for Qt::FontRole and Qt::ToolTipRole
-    if (sourceIndex != showIndex)
+    const bool isAlwaysShow = ((alwaysShow_ != 0) && (alwaysShow_ == id));
+    const bool isPinned = pinnedEntities_.contains(id);
+
+    // Return unless the entity is pinned or always shown
+    if (!isAlwaysShow && !isPinned)
       return rv;
 
+    // Pinned and alwaysShow entities are italicized
     if (role == Qt::FontRole)
     {
       QFont font;
@@ -87,8 +94,12 @@ namespace simQt {
     }
 
     if (role == Qt::ToolTipRole)
-      return rv.toString().append(tr("\n\nThis entity was manually selected but does not pass current filter settings."));
-
+    {
+      if (isPinned)
+        return rv.toString().append(tr("\n\nThis entity is pinned and remains visible despite current filter settings."));
+      else
+        return rv.toString().append(tr("\n\nThis entity was manually selected but does not pass current filter settings."));
+    }
     return rv;
   }
 
@@ -141,6 +152,33 @@ namespace simQt {
     invalidate();
   }
 
+  QSet<simData::ObjectId> EntityProxyModel::pinnedEntities() const
+  {
+    return pinnedEntities_;
+  }
+
+  void EntityProxyModel::setPinnedEntities(const QSet<simData::ObjectId>& ids)
+  {
+    QSet<simData::ObjectId> newPins = ids;
+    newPins.remove(0);
+
+    if (newPins == pinnedEntities_)
+      return;
+
+    // Determine which pinned entities are being removed
+    QSet<simData::ObjectId> removedPins = pinnedEntities_;
+    for (const auto id : newPins)
+      removedPins.remove(id);
+
+    // Clear the temporary exception if its entity is being unpinned
+    if (removedPins.contains(alwaysShow_))
+      alwaysShow_ = 0;
+
+    pinnedEntities_ = newPins;
+    invalidate();
+    Q_EMIT pinnedEntitiesChanged(pinnedEntities_.values());
+  }
+
   bool EntityProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
   {
     QModelIndex index0 = sourceModel()->index(sourceRow, 0, sourceParent);
@@ -155,9 +193,8 @@ namespace simQt {
       return false;
     }
 
-    // Make sure alwaysShow_ is active before comparing; otherwise there is a conflict
-    // with the Scenario entry which uses an ID of 0.
-    if ((alwaysShow_ != 0) && (alwaysShow_ == id))
+    // Pinned and alwaysShow entities bypass normal filters, pinned entities remain visible when filters change
+    if (((alwaysShow_ != 0) && (alwaysShow_ == id)) || pinnedEntities_.contains(id))
       return true;
 
     // check against all filters
@@ -177,6 +214,20 @@ namespace simQt {
 
   bool EntityProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
   {
+    // Get entity IDs from column 0 regardless of the sort column
+    const QModelIndex leftEntityIndex = left.sibling(left.row(), 0);
+    const QModelIndex rightEntityIndex = right.sibling(right.row(), 0);
+
+    const simData::ObjectId leftId = model_ ? model_->uniqueId(leftEntityIndex) : 0;
+    const simData::ObjectId rightId = model_ ? model_->uniqueId(rightEntityIndex) : 0;
+
+    const bool leftPinned = pinnedEntities_.contains(leftId);
+    const bool rightPinned = pinnedEntities_.contains(rightId);
+
+    // Sort pinned entities before unpinned entities
+    if (leftPinned != rightPinned)
+      return leftPinned;
+
     if (left.column() == 0)
     {
       const auto& leftString = left.data().toString();
@@ -302,29 +353,55 @@ namespace simQt {
 
   void EntityProxyModel::entitiesRemoved_(const QModelIndex &parent, int start, int end)
   {
-    if (alwaysShow_ == 0)
+    if ((alwaysShow_ == 0) && pinnedEntities_.isEmpty())
       return;
 
-    // Clear if the entity is about to be removed
-    for (int ii = start; ii < end; ++ii)
+    bool pinsChanged = false;
+
+    // Clear temporary and pinned entities that are being removed
+    for (int ii = start; ii <= end; ++ii)
     {
-      QModelIndex index = model_->index(ii, 0, parent);
-      if (model_->uniqueId(index) == alwaysShow_)
-      {
+      const QModelIndex index = model_->index(ii, 0, parent);
+      const simData::ObjectId id = model_->uniqueId(index);
+
+      if (id == alwaysShow_)
         alwaysShow_ = 0;
-        break;
-      }
+
+      if (pinnedEntities_.remove(id))
+        pinsChanged = true;
     }
+
+    if (pinsChanged)
+      Q_EMIT pinnedEntitiesChanged(pinnedEntities_.values());
   }
 
   void EntityProxyModel::entitiesUpdated_()
   {
-    if (alwaysShow_ == 0)
+    if ((alwaysShow_ == 0) && pinnedEntities_.isEmpty())
       return;
 
     // Clear if entity does not exist anymore
-    if (model_->index(alwaysShow_) == QModelIndex())
+    if ((alwaysShow_ != 0) && (model_->index(alwaysShow_) == QModelIndex()))
       alwaysShow_ = 0;
+
+    // Remove stale pins
+    bool pinsChanged = false;
+    for (auto iter = pinnedEntities_.begin(); iter != pinnedEntities_.end(); )
+    {
+      if (model_->index(*iter) == QModelIndex())
+      {
+        iter = pinnedEntities_.erase(iter);
+        pinsChanged = true;
+      }
+      else
+        ++iter;
+    }
+
+    if (pinsChanged)
+    {
+      invalidate();
+      Q_EMIT pinnedEntitiesChanged(pinnedEntities_.values());
+    }
   }
 }
 
