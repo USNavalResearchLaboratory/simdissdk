@@ -476,16 +476,8 @@ void HudEditorGui::setVisible(bool flag)
     return;
 
   setNodeMask(flag ? ~0 : 0);
-  osg::ref_ptr<HudPositionManager> hud;
-  if (!flag || !hud_.lock(hud))
-    return;
-
-  // Iterate and update each window in case it was created after us
-  std::vector<std::string> names;
-  // Always hide everything, but only show the active windows
-  hud->getAllWindows(names, flag);
-  for (auto nameIter = names.begin(); nameIter != names.end(); ++nameIter)
-    updatePosition(*nameIter);
+  if (flag)
+    reset();
 }
 
 void HudEditorGui::setSelected(const std::string& name, bool selected)
