@@ -83,6 +83,7 @@ public:
   static std::unique_ptr<EnumerationText> makeGateTypeName();
   static std::unique_ptr<EnumerationText> makeGeodeticUnitsName();
   static std::unique_ptr<EnumerationText> makeIconRotationName();
+  static std::unique_ptr<EnumerationText> makeLegendBinName();
   static std::unique_ptr<EnumerationText> makeLifespanModeName();
   static std::unique_ptr<EnumerationText> makeLocalGridTypeName();
   static std::unique_ptr<EnumerationText> makeMagneticVarianceName();

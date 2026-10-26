@@ -499,6 +499,21 @@ std::unique_ptr<EnumerationText> EnumerationText::makeOverrideColorCombineModeNa
   return rv;
 }
 
+std::unique_ptr<EnumerationText> EnumerationText::makeLegendBinName()
+{
+  auto rv = std::make_unique<EnumerationText>();
+  rv->insert_(0, "LEGEND_1");
+  rv->append_("LEGEND_2");
+  rv->append_("LEGEND_3");
+  rv->append_("LEGEND_4");
+  rv->append_("LEGEND_5");
+  rv->append_("LEGEND_6");
+  rv->append_("LEGEND_7");
+  rv->append_("LEGEND_8");
+
+  return rv;
+}
+
 std::unique_ptr<EnumerationText> EnumerationText::makeLifespanModeName()
 {
   auto rv = std::make_unique<EnumerationText>();

@@ -211,6 +211,18 @@ enum class IconRotation {
   IR_3D_YAW = 4
 };
 
+/// Selects the legend bin when includeInLegend is enabled. LEGEND_1 is the primary, main default legend
+enum class LegendBin {
+  LEGEND_1 = 0,
+  LEGEND_2,
+  LEGEND_3,
+  LEGEND_4,
+  LEGEND_5,
+  LEGEND_6,
+  LEGEND_7,
+  LEGEND_8
+};
+
 class SDKDATA_EXPORT DisplayFields : public FieldList
 {
 public:
@@ -494,6 +506,8 @@ public:
   SIMDATA_DECLARE_FIELD(includeInLegend_, includeinlegend, bool);
   /// Current accepted projector IDs; may contain up to 4 projector IDs
   SIMDATA_DECLARE_VECTOR_FIELD(acceptProjectorIds_, acceptprojectorids, uint64_t);
+  /// Selects the legend bin when includeInLegend is enabled.
+  SIMDATA_DECLARE_FIELD(legendBin_, legendbin, simData::LegendBin);
 };
 
 }

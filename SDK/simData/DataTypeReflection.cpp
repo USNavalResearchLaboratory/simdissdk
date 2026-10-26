@@ -1173,6 +1173,8 @@ std::unique_ptr<Reflection> Reflection::makeCommonPreferences()
   rv->SIMDATA_REFLECTION_ADD_SUBFIELD_LIST(localGrid, localgrid, CommonPrefs, grid);
   rv->SIMDATA_REFLECTION_ADD_FIELD(includeInLegend, includeinlegend, CommonPrefs, getBoolean, ReflectionDataType::Boolean);
   rv->SIMDATA_REFLECTION_ADD_VECTOR_FIELD(acceptProjectorIds, acceptprojectorids, CommonPrefs, getIds, ReflectionDataType::IdVector);
+  std::shared_ptr<EnumerationText> legendBinEnum = EnumerationText::makeLegendBinName();
+  rv->SIMDATA_REFLECTION_ADD_ENUM(legendBin, legendbin, CommonPrefs, LegendBin, legendBinEnum);
 
   return rv;
 }

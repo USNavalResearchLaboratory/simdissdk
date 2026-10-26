@@ -651,6 +651,7 @@ SIMDATA_DEFINE_FIELD(CommonPrefs, dataLimitTime_, datalimittime, double, -1.0);
 SIMDATA_DEFINE_FIELD(CommonPrefs, dataLimitPoints_, datalimitpoints, uint32_t, 1000);
 SIMDATA_DEFINE_FIELD(CommonPrefs, includeInLegend_, includeinlegend, bool, false);
 SIMDATA_DEFINE_VECTOR_FIELD(CommonPrefs, acceptProjectorIds_, acceptprojectorids, uint64_t);
+SIMDATA_DEFINE_FIELD(CommonPrefs, legendBin_, legendbin, simData::LegendBin, simData::LegendBin::LEGEND_1);
 
 void CommonPrefs::MergeFrom(const CommonPrefs& from)
 {
@@ -694,6 +695,9 @@ void CommonPrefs::MergeFrom(const CommonPrefs& from)
     includeInLegend_ = from.includeInLegend_;
 
   acceptProjectorIds_.insert(acceptProjectorIds_.end(), from.acceptProjectorIds_.begin(), from.acceptProjectorIds_.end());
+
+  if (from.has_legendbin())
+    legendBin_ = from.legendBin_;
 }
 
 void CommonPrefs::CopyFrom(const CommonPrefs& from)
@@ -716,7 +720,9 @@ void CommonPrefs::CopyFrom(const CommonPrefs& from)
   dataLimitPoints_ = from.dataLimitPoints_;
   includeInLegend_ = from.includeInLegend_;
   acceptProjectorIds_ = from.acceptProjectorIds_;
+  legendBin_ = from.legendBin_;
 }
+
 bool CommonPrefs::operator==(const CommonPrefs& rhs) const
 {
   if (&rhs == this)
@@ -736,7 +742,8 @@ bool CommonPrefs::operator==(const CommonPrefs& rhs) const
     (dataLimitTime_ == rhs.dataLimitTime_) &&
     (dataLimitPoints_ == rhs.dataLimitPoints_) &&
     (includeInLegend_ == rhs.includeInLegend_) &&
-    (acceptProjectorIds_ == rhs.acceptProjectorIds_));
+    (acceptProjectorIds_ == rhs.acceptProjectorIds_) &&
+    (legendBin_ == rhs.legendBin_));
 }
 
 void CommonPrefs::Prune()
