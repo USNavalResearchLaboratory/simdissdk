@@ -1472,7 +1472,7 @@ std::unique_ptr<Reflection> Reflection::makePlatformPreferences()
   rv->SIMDATA_REFLECTION_ADD_FIELD(rcsDetail, rcsdetail, PlatformPrefs, getDouble, ReflectionDataType::Double);
   rv->SIMDATA_REFLECTION_ADD_FIELD(drawCircleHilight, drawcirclehilight, PlatformPrefs, getBoolean, ReflectionDataType::Boolean);
   rv->SIMDATA_REFLECTION_ADD_FIELD(circleHilightColor, circlehilightcolor, PlatformPrefs, getUint32, ReflectionDataType::Uint32);
-  std::shared_ptr<EnumerationText> circleHilightEnum = EnumerationText::makeCircleHilightShapeName();
+  std::shared_ptr<EnumerationText> circleHilightEnum = EnumerationText::makeCircleHighlightShapeName();
   rv->SIMDATA_REFLECTION_ADD_ENUM(circleHilightShape, circlehilightshape, PlatformPrefs, CircleHilightShape , circleHilightEnum);
   rv->SIMDATA_REFLECTION_ADD_FIELD(circleHilightSize, circlehilightsize, PlatformPrefs, getDouble, ReflectionDataType::Double);
   rv->SIMDATA_REFLECTION_ADD_FIELD(hilightFollowYaw, hilightfollowyaw, PlatformPrefs, getBoolean, ReflectionDataType::Boolean);

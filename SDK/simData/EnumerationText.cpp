@@ -74,7 +74,7 @@ void EnumerationText::visit(VisitorFn fn) const
     fn(index, enumText);
 }
 
-void EnumerationText::insert_(size_t value, const std::string& text)
+void EnumerationText::insert(size_t value, const std::string& text)
 {
   // No duplicates
   assert(text_.find(value) == text_.end());
@@ -83,24 +83,24 @@ void EnumerationText::insert_(size_t value, const std::string& text)
   values_.push_back(value);
 }
 
-void EnumerationText::append_(const std::string& text)
+void EnumerationText::append(const std::string& text)
 {
   if (text_.empty())
   {
-    // Must set the initial value by calling insert_() before calling append_()
+    // Must set the initial value by calling insert() before calling append()
     assert(false);
     return;
   }
 
-  insert_(text_.rbegin()->first + 1, text);
+  insert(text_.rbegin()->first + 1, text);
 }
 
 std::unique_ptr<EnumerationText> EnumerationText::makeBeamDrawModeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "WIRE");
-  rv->append_("SOLID");
-  rv->append_("WIRE_ON_SOLID");
+  rv->insert(0, "WIRE");
+  rv->append("SOLID");
+  rv->append("WIRE_ON_SOLID");
 
   return rv;
 }
@@ -108,10 +108,10 @@ std::unique_ptr<EnumerationText> EnumerationText::makeBeamDrawModeName()
 std::unique_ptr<EnumerationText> EnumerationText::makeBeamDrawTypeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "BEAM_3DB");      ///< Beam drawn using 3 dB half power points
-  rv->append_("ANTENNA_PATTERN");  ///< Beam drawn using antenna pattern
-  rv->append_("COVERAGE");         ///< Beam drawn as a spherical slice (cap only)
-  rv->append_("LINE");             ///< Beam drawn as a line
+  rv->insert(0, "BEAM_3DB");      ///< Beam drawn using 3 dB half power points
+  rv->append("ANTENNA_PATTERN");  ///< Beam drawn using antenna pattern
+  rv->append("COVERAGE");         ///< Beam drawn as a spherical slice (cap only)
+  rv->append("LINE");             ///< Beam drawn as a line
 
   return rv;
 }
@@ -119,9 +119,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeBeamDrawTypeName()
 std::unique_ptr<EnumerationText> EnumerationText::makeBeamTypeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(1, "ABSOLUTE_POSITION"); ///< Beam pointing is defined based on data
-  rv->append_("BODY_RELATIVE");        ///< Beam pointing is relative to host's body orientation
-  rv->append_("TARGET");               ///< Beam pointing is towards specified target platform
+  rv->insert(1, "ABSOLUTE_POSITION"); ///< Beam pointing is defined based on data
+  rv->append("BODY_RELATIVE");        ///< Beam pointing is relative to host's body orientation
+  rv->append("TARGET");               ///< Beam pointing is towards specified target platform
 
   return rv;
 }
@@ -129,25 +129,25 @@ std::unique_ptr<EnumerationText> EnumerationText::makeBeamTypeName()
 std::unique_ptr<EnumerationText> EnumerationText::makeBeamRangeMode()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "BEAM_UPDATE"); ///< Beam uses range as provided in beam update
-  rv->append_("ONE_WAY_FREE_SPACE");  ///< Beam uses calculated one-way free-space range
-  rv->append_("TWO_WAY_FREE_SPACE");  ///< Beam uses calculated two-way free-space range
+  rv->insert(0, "BEAM_UPDATE"); ///< Beam uses range as provided in beam update
+  rv->append("ONE_WAY_FREE_SPACE");  ///< Beam uses calculated one-way free-space range
+  rv->append("TWO_WAY_FREE_SPACE");  ///< Beam uses calculated two-way free-space range
 
   return rv;
 }
 std::unique_ptr<EnumerationText> EnumerationText::makeGateDrawModeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "UNKNOWN");
-  rv->append_("RANGE");
-  rv->append_("GUARD");
-  rv->insert_(4, "ANGLE");
-  rv->append_("RAIN");
-  rv->append_("CLUTTER");
-  rv->append_("FOOTPRINT");
-  rv->append_("SECTOR");
-  rv->append_("PUSH");
-  rv->append_("COVERAGE");  ///< Gate rendered as a spherical slice
+  rv->insert(0, "UNKNOWN");
+  rv->append("RANGE");
+  rv->append("GUARD");
+  rv->insert(4, "ANGLE");
+  rv->append("RAIN");
+  rv->append("CLUTTER");
+  rv->append("FOOTPRINT");
+  rv->append("SECTOR");
+  rv->append("PUSH");
+  rv->append("COVERAGE");  ///< Gate rendered as a spherical slice
 
   return rv;
 }
@@ -155,11 +155,11 @@ std::unique_ptr<EnumerationText> EnumerationText::makeGateDrawModeName()
 std::unique_ptr<EnumerationText> EnumerationText::makeGateFillPatternName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "STIPPLE");
-  rv->append_("SOLID");
-  rv->append_("ALPHA");
-  rv->append_("WIRE");
-  rv->append_("CENTROID");
+  rv->insert(0, "STIPPLE");
+  rv->append("SOLID");
+  rv->append("ALPHA");
+  rv->append("WIRE");
+  rv->append("CENTROID");
 
   return rv;
 }
@@ -167,9 +167,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeGateFillPatternName()
 std::unique_ptr<EnumerationText> EnumerationText::makeGateTypeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(1, "ABSOLUTE_POSITION"); ///< Gate pointing is defined based on data
-  rv->append_("BODY_RELATIVE");        ///< Gate pointing is relative to host's body orientation
-  rv->append_("TARGET");               ///< Gate pointing is towards specified target platform
+  rv->insert(1, "ABSOLUTE_POSITION"); ///< Gate pointing is defined based on data
+  rv->append("BODY_RELATIVE");        ///< Gate pointing is relative to host's body orientation
+  rv->append("TARGET");               ///< Gate pointing is towards specified target platform
 
   return rv;
 }
@@ -177,14 +177,14 @@ std::unique_ptr<EnumerationText> EnumerationText::makeGateTypeName()
 std::unique_ptr<EnumerationText> EnumerationText::makeCoordinateSystemName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(1, "NED"); ///< North/East/Down
-  rv->append_("NWU");    ///< North/West/Up
-  rv->append_("ENU");    ///< East/North/Up
-  rv->append_("LLA");    ///< Lat/Lon/Alt
-  rv->append_("ECEF");   ///< Earth-centered, Earth-fixed (stationary frame)
-  rv->append_("ECI");    ///< Earth-centered, inertial (rotates in time)
-  rv->append_("XEAST");  ///< Tangent plane, X-axis pointing East
-  rv->append_("GTP");    ///< Generic tangent plane that can be rotated and/or translated)
+  rv->insert(1, "NED"); ///< North/East/Down
+  rv->append("NWU");    ///< North/West/Up
+  rv->append("ENU");    ///< East/North/Up
+  rv->append("LLA");    ///< Lat/Lon/Alt
+  rv->append("ECEF");   ///< Earth-centered, Earth-fixed (stationary frame)
+  rv->append("ECI");    ///< Earth-centered, inertial (rotates in time)
+  rv->append("XEAST");  ///< Tangent plane, X-axis pointing East
+  rv->append("GTP");    ///< Generic tangent plane that can be rotated and/or translated)
 
   return rv;
 }
@@ -192,9 +192,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeCoordinateSystemName()
 std::unique_ptr<EnumerationText> EnumerationText::makeMagneticVarianceName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(1, "MV_WMM"); ///< Variance based on World Magnetic Model (WMM)
-  rv->append_("MV_TRUE");   ///< No variance, also known as True North
-  rv->append_("MV_USER");   ///< User defined variance
+  rv->insert(1, "MV_WMM"); ///< Variance based on World Magnetic Model (WMM)
+  rv->append("MV_TRUE");   ///< No variance, also known as True North
+  rv->append("MV_USER");   ///< User defined variance
 
   return rv;
 }
@@ -202,9 +202,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeMagneticVarianceName()
 std::unique_ptr<EnumerationText> EnumerationText::makeVerticalDatumName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(1, "VD_WGS84"); ///< Referenced to WGS-84 ellipsoid
-  rv->append_("VD_MSL");      ///< Referenced to Earth Gravity Model (EGM)
-  rv->append_("VD_USER");     ///< User defined datum
+  rv->insert(1, "VD_WGS84"); ///< Referenced to WGS-84 ellipsoid
+  rv->append("VD_MSL");      ///< Referenced to Earth Gravity Model (EGM)
+  rv->append("VD_USER");     ///< User defined datum
 
   return rv;
 }
@@ -212,9 +212,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeVerticalDatumName()
 std::unique_ptr<EnumerationText> EnumerationText::makeTextOutlineName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "TO_NONE");
-  rv->append_("TO_THIN");
-  rv->append_("TO_THICK");
+  rv->insert(0, "TO_NONE");
+  rv->append("TO_THIN");
+  rv->append("TO_THICK");
 
   return rv;
 }
@@ -222,9 +222,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeTextOutlineName()
 std::unique_ptr<EnumerationText> EnumerationText::makeTimeTickDrawStyleName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "NONE");
-  rv->append_("POINT");
-  rv->append_("LINE");
+  rv->insert(0, "NONE");
+  rv->append("POINT");
+  rv->append("LINE");
 
   return rv;
 }
@@ -232,11 +232,11 @@ std::unique_ptr<EnumerationText> EnumerationText::makeTimeTickDrawStyleName()
 std::unique_ptr<EnumerationText> EnumerationText::makeTrackModeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "OFF");
-  rv->append_("POINT");
-  rv->append_("LINE");
-  rv->append_("RIBBON");
-  rv->append_("BRIDGE");
+  rv->insert(0, "OFF");
+  rv->append("POINT");
+  rv->append("LINE");
+  rv->append("RIBBON");
+  rv->append("BRIDGE");
 
   return rv;
 }
@@ -245,16 +245,16 @@ std::unique_ptr<EnumerationText> EnumerationText::makeBackdropTypeName()
 {
   auto rv = std::make_unique<EnumerationText>();
 
-  rv->insert_(0, "BDT_SHADOW_BOTTOM_RIGHT");
-  rv->append_("BDT_SHADOW_CENTER_RIGHT");
-  rv->append_("BDT_SHADOW_TOP_RIGHT");
-  rv->append_("BDT_SHADOW_BOTTOM_CENTER");
-  rv->append_("BDT_SHADOW_TOP_CENTER");
-  rv->append_("BDT_SHADOW_BOTTOM_LEFT");
-  rv->append_("BDT_SHADOW_CENTER_LEFT");
-  rv->append_("BDT_SHADOW_TOP_LEFT");
-  rv->append_("BDT_OUTLINE");
-  rv->append_("BDT_NONE");
+  rv->insert(0, "BDT_SHADOW_BOTTOM_RIGHT");
+  rv->append("BDT_SHADOW_CENTER_RIGHT");
+  rv->append("BDT_SHADOW_TOP_RIGHT");
+  rv->append("BDT_SHADOW_BOTTOM_CENTER");
+  rv->append("BDT_SHADOW_TOP_CENTER");
+  rv->append("BDT_SHADOW_BOTTOM_LEFT");
+  rv->append("BDT_SHADOW_CENTER_LEFT");
+  rv->append("BDT_SHADOW_TOP_LEFT");
+  rv->append("BDT_OUTLINE");
+  rv->append("BDT_NONE");
 
   return rv;
 }
@@ -263,11 +263,11 @@ std::unique_ptr<EnumerationText> EnumerationText::makeBackdropImplementationName
 {
   auto rv = std::make_unique<EnumerationText>();
 
-  rv->insert_(0, "BDI_POLYGON_OFFSET");
-  rv->append_("BDI_NO_DEPTH_BUFFER");
-  rv->append_("BDI_DEPTH_RANGE");
-  rv->append_("BDI_STENCIL_BUFFER");
-  rv->append_("BDI_DELAYED_DEPTH_WRITES");
+  rv->insert(0, "BDI_POLYGON_OFFSET");
+  rv->append("BDI_NO_DEPTH_BUFFER");
+  rv->append("BDI_DEPTH_RANGE");
+  rv->append("BDI_STENCIL_BUFFER");
+  rv->append("BDI_DELAYED_DEPTH_WRITES");
 
   return rv;
 }
@@ -275,15 +275,15 @@ std::unique_ptr<EnumerationText> EnumerationText::makeBackdropImplementationName
 std::unique_ptr<EnumerationText> EnumerationText::makeTextAlignmentName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "ALIGN_LEFT_TOP");
-  rv->append_("ALIGN_LEFT_CENTER");
-  rv->append_("ALIGN_LEFT_BOTTOM");
-  rv->append_("ALIGN_CENTER_TOP");
-  rv->append_("ALIGN_CENTER_CENTER");
-  rv->append_("ALIGN_CENTER_BOTTOM");
-  rv->append_("ALIGN_RIGHT_TOP");
-  rv->append_("ALIGN_RIGHT_CENTER");
-  rv->append_("ALIGN_RIGHT_BOTTOM");
+  rv->insert(0, "ALIGN_LEFT_TOP");
+  rv->append("ALIGN_LEFT_CENTER");
+  rv->append("ALIGN_LEFT_BOTTOM");
+  rv->append("ALIGN_CENTER_TOP");
+  rv->append("ALIGN_CENTER_CENTER");
+  rv->append("ALIGN_CENTER_BOTTOM");
+  rv->append("ALIGN_RIGHT_TOP");
+  rv->append("ALIGN_RIGHT_CENTER");
+  rv->append("ALIGN_RIGHT_BOTTOM");
 
   return rv;
 }
@@ -291,9 +291,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeTextAlignmentName()
 std::unique_ptr<EnumerationText> EnumerationText::makeElapsedTimeFormatName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(1, "ELAPSED_SECONDS");
-  rv->append_("ELAPSED_MINUTES");
-  rv->append_("ELAPSED_HOURS");
+  rv->insert(1, "ELAPSED_SECONDS");
+  rv->append("ELAPSED_MINUTES");
+  rv->append("ELAPSED_HOURS");
 
   return rv;
 }
@@ -301,14 +301,14 @@ std::unique_ptr<EnumerationText> EnumerationText::makeElapsedTimeFormatName()
 std::unique_ptr<EnumerationText> EnumerationText::makeAngleUnitsName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(10, "UNITS_RADIANS");
-  rv->append_("UNITS_DEGREES");
-  rv->append_("UNITS_DEGREES_MINUTES");
-  rv->append_("UNITS_DEGREES_MINUTES_SECONDS");
-  rv->append_("UNITS_UTM");
-  rv->append_("UNITS_BAM");
-  rv->append_("UNITS_MIL");
-  rv->append_("UNITS_MILLIRADIANS");
+  rv->insert(10, "UNITS_RADIANS");
+  rv->append("UNITS_DEGREES");
+  rv->append("UNITS_DEGREES_MINUTES");
+  rv->append("UNITS_DEGREES_MINUTES_SECONDS");
+  rv->append("UNITS_UTM");
+  rv->append("UNITS_BAM");
+  rv->append("UNITS_MIL");
+  rv->append("UNITS_MILLIRADIANS");
 
   return rv;
 }
@@ -316,9 +316,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeAngleUnitsName()
 std::unique_ptr<EnumerationText> EnumerationText::makeAnimatedLineBendName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "ALB_AUTO");
-  rv->append_("ALB_STRAIGHT");
-  rv->append_("ALB_BEND");
+  rv->insert(0, "ALB_AUTO");
+  rv->append("ALB_STRAIGHT");
+  rv->append("ALB_BEND");
 
   return rv;
 }
@@ -326,11 +326,11 @@ std::unique_ptr<EnumerationText> EnumerationText::makeAnimatedLineBendName()
 std::unique_ptr<EnumerationText> EnumerationText::makeAntennaPatternAlgorithmName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(1, "PEDESTAL");
-  rv->append_("GAUSS");
-  rv->append_("CSCSQ");
-  rv->append_("SINXX");
-  rv->append_("OMNI");
+  rv->insert(1, "PEDESTAL");
+  rv->append("GAUSS");
+  rv->append("CSCSQ");
+  rv->append("SINXX");
+  rv->append("OMNI");
 
   return rv;
 }
@@ -338,13 +338,13 @@ std::unique_ptr<EnumerationText> EnumerationText::makeAntennaPatternAlgorithmNam
 std::unique_ptr<EnumerationText> EnumerationText::makeAntennaPatternFileFormatName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(6, "TABLE");
-  rv->append_("MONOPULSE");
-  rv->insert_(9, "RELATIVE_TABLE");
-  rv->append_("BILINEAR");
-  rv->append_("NSMA");
-  rv->append_("EZNEC");
-  rv->append_("XFDTD");
+  rv->insert(6, "TABLE");
+  rv->append("MONOPULSE");
+  rv->insert(9, "RELATIVE_TABLE");
+  rv->append("BILINEAR");
+  rv->append("NSMA");
+  rv->append("EZNEC");
+  rv->append("XFDTD");
 
   return rv;
 }
@@ -352,9 +352,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeAntennaPatternFileFormatNa
 std::unique_ptr<EnumerationText> EnumerationText::makeAntennaPatternTypeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "NONE");
-  rv->append_("FILE");
-  rv->append_("ALGORITHM");
+  rv->insert(0, "NONE");
+  rv->append("FILE");
+  rv->append("ALGORITHM");
 
   return rv;
 }
@@ -362,9 +362,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeAntennaPatternTypeName()
 std::unique_ptr<EnumerationText> EnumerationText::makeGeodeticUnitsName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(11, "GEODETIC_DEGREES");
-  rv->append_("GEODETIC_DEGREES_MINUTES");
-  rv->append_("GEODETIC_DEGREES_MINUTES_SECONDS");
+  rv->insert(11, "GEODETIC_DEGREES");
+  rv->append("GEODETIC_DEGREES_MINUTES");
+  rv->append("GEODETIC_DEGREES_MINUTES_SECONDS");
 
   return rv;
 }
@@ -372,19 +372,19 @@ std::unique_ptr<EnumerationText> EnumerationText::makeGeodeticUnitsName()
 std::unique_ptr<EnumerationText> EnumerationText::makeDistanceUnitsName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(20, "UNITS_METERS");
-  rv->append_("UNITS_KILOMETERS");
-  rv->append_("UNITS_YARDS");
-  rv->append_("UNITS_MILES");
-  rv->append_("UNITS_FEET");
-  rv->append_("UNITS_INCHES");
-  rv->append_("UNITS_NAUTICAL_MILES");
-  rv->append_("UNITS_CENTIMETERS");
-  rv->append_("UNITS_MILLIMETERS");
-  rv->append_("UNITS_KILOYARDS");
-  rv->append_("UNITS_DATAMILES");
-  rv->append_("UNITS_FATHOMS");
-  rv->append_("UNITS_KILOFEET");
+  rv->insert(20, "UNITS_METERS");
+  rv->append("UNITS_KILOMETERS");
+  rv->append("UNITS_YARDS");
+  rv->append("UNITS_MILES");
+  rv->append("UNITS_FEET");
+  rv->append("UNITS_INCHES");
+  rv->append("UNITS_NAUTICAL_MILES");
+  rv->append("UNITS_CENTIMETERS");
+  rv->append("UNITS_MILLIMETERS");
+  rv->append("UNITS_KILOYARDS");
+  rv->append("UNITS_DATAMILES");
+  rv->append("UNITS_FATHOMS");
+  rv->append("UNITS_KILOFEET");
 
   return rv;
 }
@@ -392,15 +392,15 @@ std::unique_ptr<EnumerationText> EnumerationText::makeDistanceUnitsName()
 std::unique_ptr<EnumerationText> EnumerationText::makeSpeedUnitsName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(40, "UNITS_METERS_PER_SECOND");
-  rv->append_("UNITS_KILOMETERS_PER_HOUR");
-  rv->append_("UNITS_KNOTS");
-  rv->append_("UNITS_MILES_PER_HOUR");
-  rv->append_("UNITS_FEET_PER_SECOND");
+  rv->insert(40, "UNITS_METERS_PER_SECOND");
+  rv->append("UNITS_KILOMETERS_PER_HOUR");
+  rv->append("UNITS_KNOTS");
+  rv->append("UNITS_MILES_PER_HOUR");
+  rv->append("UNITS_FEET_PER_SECOND");
   // Note: Index 45 is reserved and not for public use.
-  rv->insert_(46, "UNITS_KILOMETERS_PER_SECOND");
-  rv->append_("UNITS_DATAMILES_PER_HOUR");
-  rv->append_("UNITS_YARDS_PER_SECOND");
+  rv->insert(46, "UNITS_KILOMETERS_PER_SECOND");
+  rv->append("UNITS_DATAMILES_PER_HOUR");
+  rv->append("UNITS_YARDS_PER_SECOND");
 
   return rv;
 }
@@ -408,15 +408,15 @@ std::unique_ptr<EnumerationText> EnumerationText::makeSpeedUnitsName()
 std::unique_ptr<EnumerationText> EnumerationText::makePolarityName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "POL_UNKNOWN");
-  rv->append_("POL_HORIZONTAL");
-  rv->append_("POL_VERTICAL");
-  rv->append_("POL_CIRCULAR");
-  rv->append_("POL_HORZVERT");
-  rv->append_("POL_VERTHORZ");
-  rv->append_("POL_LEFTCIRC");
-  rv->append_("POL_RIGHTCIRC");
-  rv->append_("POL_LINEAR");
+  rv->insert(0, "POL_UNKNOWN");
+  rv->append("POL_HORIZONTAL");
+  rv->append("POL_VERTICAL");
+  rv->append("POL_CIRCULAR");
+  rv->append("POL_HORZVERT");
+  rv->append("POL_VERTHORZ");
+  rv->append("POL_LEFTCIRC");
+  rv->append("POL_RIGHTCIRC");
+  rv->append("POL_LINEAR");
 
   return rv;
 }
@@ -424,8 +424,8 @@ std::unique_ptr<EnumerationText> EnumerationText::makePolarityName()
 std::unique_ptr<EnumerationText> EnumerationText::makeVolumeTypeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "GAIN_AS_RANGE_SCALAR");
-  rv->append_("FREE_SPACE_RANGE_LINEAR");
+  rv->insert(0, "GAIN_AS_RANGE_SCALAR");
+  rv->append("FREE_SPACE_RANGE_LINEAR");
 
   return rv;
 }
@@ -433,9 +433,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeVolumeTypeName()
 std::unique_ptr<EnumerationText> EnumerationText::makeModelDrawModeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "MDM_SOLID");
-  rv->append_("MDM_WIRE");
-  rv->append_("MDM_POINTS");
+  rv->insert(0, "MDM_SOLID");
+  rv->append("MDM_WIRE");
+  rv->append("MDM_POINTS");
 
   return rv;
 }
@@ -443,11 +443,11 @@ std::unique_ptr<EnumerationText> EnumerationText::makeModelDrawModeName()
 std::unique_ptr<EnumerationText> EnumerationText::makeIconRotationName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "IR_2D_UP");
-  rv->append_("IR_2D_YAW");
-  rv->append_("IR_3D_YPR");
-  rv->append_("IR_3D_NORTH");
-  rv->append_("IR_3D_YAW");
+  rv->insert(0, "IR_2D_UP");
+  rv->append("IR_2D_YAW");
+  rv->append("IR_3D_YPR");
+  rv->append("IR_3D_NORTH");
+  rv->append("IR_3D_YAW");
 
   return rv;
 }
@@ -455,8 +455,8 @@ std::unique_ptr<EnumerationText> EnumerationText::makeIconRotationName()
 std::unique_ptr<EnumerationText> EnumerationText::makeUseValueName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "ACTUAL_VALUE");
-  rv->append_("DISPLAY_VALUE");
+  rv->insert(0, "ACTUAL_VALUE");
+  rv->append("DISPLAY_VALUE");
 
   return rv;
 }
@@ -464,11 +464,11 @@ std::unique_ptr<EnumerationText> EnumerationText::makeUseValueName()
 std::unique_ptr<EnumerationText> EnumerationText::makeLocalGridTypeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(1, "CARTESIAN");
-  rv->append_("POLAR");
-  rv->append_("RANGE_RINGS");
-  rv->append_("SPEED_RINGS");
-  rv->append_("SPEED_LINE");
+  rv->insert(1, "CARTESIAN");
+  rv->append("POLAR");
+  rv->append("RANGE_RINGS");
+  rv->append("SPEED_RINGS");
+  rv->append("SPEED_LINE");
 
   return rv;
 }
@@ -476,15 +476,15 @@ std::unique_ptr<EnumerationText> EnumerationText::makeLocalGridTypeName()
 std::unique_ptr<EnumerationText> EnumerationText::makeFragmentEffectName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "FE_NONE");
-  rv->append_("FE_FORWARD_STRIPE");
-  rv->append_("FE_BACKWARD_STRIPE");
-  rv->append_("FE_HORIZONTAL_STRIPE");
-  rv->append_("FE_VERTICAL_STRIPE");
-  rv->append_("FE_CHECKERBOARD");
-  rv->append_("FE_DIAMOND");
-  rv->append_("FE_GLOW");
-  rv->append_("FE_FLASH");
+  rv->insert(0, "FE_NONE");
+  rv->append("FE_FORWARD_STRIPE");
+  rv->append("FE_BACKWARD_STRIPE");
+  rv->append("FE_HORIZONTAL_STRIPE");
+  rv->append("FE_VERTICAL_STRIPE");
+  rv->append("FE_CHECKERBOARD");
+  rv->append("FE_DIAMOND");
+  rv->append("FE_GLOW");
+  rv->append("FE_FLASH");
 
   return rv;
 }
@@ -492,9 +492,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeFragmentEffectName()
 std::unique_ptr<EnumerationText> EnumerationText::makeOverrideColorCombineModeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "MULTIPLY_COLOR");
-  rv->append_("REPLACE_COLOR");
-  rv->append_("INTENSITY_GRADIENT");
+  rv->insert(0, "MULTIPLY_COLOR");
+  rv->append("REPLACE_COLOR");
+  rv->append("INTENSITY_GRADIENT");
 
   return rv;
 }
@@ -502,14 +502,14 @@ std::unique_ptr<EnumerationText> EnumerationText::makeOverrideColorCombineModeNa
 std::unique_ptr<EnumerationText> EnumerationText::makeLegendBinName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "LEGEND_1");
-  rv->append_("LEGEND_2");
-  rv->append_("LEGEND_3");
-  rv->append_("LEGEND_4");
-  rv->append_("LEGEND_5");
-  rv->append_("LEGEND_6");
-  rv->append_("LEGEND_7");
-  rv->append_("LEGEND_8");
+  rv->insert(0, "LEGEND_1");
+  rv->append("LEGEND_2");
+  rv->append("LEGEND_3");
+  rv->append("LEGEND_4");
+  rv->append("LEGEND_5");
+  rv->append("LEGEND_6");
+  rv->append("LEGEND_7");
+  rv->append("LEGEND_8");
 
   return rv;
 }
@@ -517,21 +517,21 @@ std::unique_ptr<EnumerationText> EnumerationText::makeLegendBinName()
 std::unique_ptr<EnumerationText> EnumerationText::makeLifespanModeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "LIFE_FIRST_LAST_POINT");
-  rv->append_("LIFE_EXTEND_SINGLE_POINT");
+  rv->insert(0, "LIFE_FIRST_LAST_POINT");
+  rv->append("LIFE_EXTEND_SINGLE_POINT");
 
   return rv;
 }
 
-std::unique_ptr<EnumerationText> EnumerationText::makeCircleHilightShapeName()
+std::unique_ptr<EnumerationText> EnumerationText::makeCircleHighlightShapeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "CH_PULSING_CIRCLE");
-  rv->append_("CH_CIRCLE");
-  rv->append_("CH_DIAMOND");
-  rv->append_("CH_SQUARE");
-  rv->append_("CH_SQUARE_RETICLE");
-  rv->append_("CH_COFFIN");
+  rv->insert(0, "CH_PULSING_CIRCLE");
+  rv->append("CH_CIRCLE");
+  rv->append("CH_DIAMOND");
+  rv->append("CH_SQUARE");
+  rv->append("CH_SQUARE_RETICLE");
+  rv->append("CH_COFFIN");
 
   return rv;
 }
@@ -539,9 +539,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makeCircleHilightShapeName()
 std::unique_ptr<EnumerationText> EnumerationText::makePolygonFaceName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "FRONT_AND_BACK");
-  rv->append_("FRONT");
-  rv->append_("BACK");
+  rv->insert(0, "FRONT_AND_BACK");
+  rv->append("FRONT");
+  rv->append("BACK");
 
   return rv;
 }
@@ -549,9 +549,9 @@ std::unique_ptr<EnumerationText> EnumerationText::makePolygonFaceName()
 std::unique_ptr<EnumerationText> EnumerationText::makePolygonModeName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0x1B00, "POINT");
-  rv->insert_(0x1B01, "LINE");
-  rv->insert_(0x1B02, "FILL");
+  rv->insert(0x1B00, "POINT");
+  rv->insert(0x1B01, "LINE");
+  rv->insert(0x1B02, "FILL");
 
   return rv;
 }
@@ -559,8 +559,8 @@ std::unique_ptr<EnumerationText> EnumerationText::makePolygonModeName()
 std::unique_ptr<EnumerationText> EnumerationText::makeDynamicScaleAlgorithmName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "DSA_CONSISTENT_SIZING");
-  rv->append_("DSA_METERS_TO_PIXELS");
+  rv->insert(0, "DSA_CONSISTENT_SIZING");
+  rv->append("DSA_METERS_TO_PIXELS");
 
   return rv;
 }
@@ -568,8 +568,8 @@ std::unique_ptr<EnumerationText> EnumerationText::makeDynamicScaleAlgorithmName(
 std::unique_ptr<EnumerationText> EnumerationText::makePlatformDrawOffBehaviorName()
 {
   auto rv = std::make_unique<EnumerationText>();
-  rv->insert_(0, "DEFAULT_BEHAVIOR");
-  rv->append_("OMIT_CHILDREN_AND_VIS_UPDATE");
+  rv->insert(0, "DEFAULT_BEHAVIOR");
+  rv->append("OMIT_CHILDREN_AND_VIS_UPDATE");
 
   return rv;
 }
