@@ -25,6 +25,7 @@
 
 #include <cstdint>
 #include <chrono>
+#include <optional>
 #include <vector>
 #include "simCore/Common/Common.h"
 
@@ -226,7 +227,7 @@ private:
   double alpha_ = 0.6;
   double snapThreshold_ = 0.05;
   uint64_t accumulator_ = 0;
-  double currentRate_ = 0.0;
+  std::optional<double> currentRate_;
   std::chrono::steady_clock::time_point lastSampleTime_;
 };
 

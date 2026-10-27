@@ -359,29 +359,47 @@ double EventRateTracker::evaluate()
   const std::chrono::duration<double> elapsed = now - lastSampleTime_;
   const double dt = elapsed.count();
 
-  // Only recompute if enough time has passed (e.g., > 10ms) to avoid divide-by-zero
-  // on rapid consecutive getRate() calls.
+  // Avoid recalculating from very short sample intervals, which would return
+  // noisy instantaneous rates during rapid consecutive evaluate() calls
   if (dt > 0.010)
   {
     const double instRate = static_cast<double>(accumulator_) / dt;
-    currentRate_ = calculateEwma(instRate, currentRate_, alpha_, snapThreshold_);
+    if (!currentRate_.has_value())
+    {
+      // Do not establish a rate baseline merely because an idle period elapsed.
+      if (accumulator_ != 0)
+      {
+        if (instRate < snapThreshold_)
+          currentRate_.reset();
+        else
+          currentRate_ = instRate;
+      }
+    }
+    else
+    {
+      const double updatedRate = calculateEwma(instRate, *currentRate_, alpha_, snapThreshold_);
+      if (updatedRate == 0.0)
+        currentRate_.reset();
+      else
+        currentRate_ = updatedRate;
+    }
 
     accumulator_ = 0;
     lastSampleTime_ = now;
   }
 
-  return currentRate_;
+  return getRate();
 }
 
 double EventRateTracker::getRate() const
 {
-  return currentRate_;
+  return currentRate_.value_or(0.);
 }
 
 void EventRateTracker::clear()
 {
   accumulator_ = 0;
-  currentRate_ = 0.0;
+  currentRate_.reset();
   lastSampleTime_ = std::chrono::steady_clock::now();
 }
 
