@@ -73,6 +73,7 @@ using ReflectionData = std::variant<std::monostate, bool, int32_t, uint32_t, uin
 class SDKDATA_EXPORT ReflectionValue
 {
 public:
+  ReflectionValue();
   explicit ReflectionValue(bool value);
   explicit ReflectionValue(int32_t value);
   explicit ReflectionValue(uint32_t value);

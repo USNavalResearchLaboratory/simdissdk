@@ -33,6 +33,10 @@
 namespace simData
 {
 
+ReflectionValue::ReflectionValue()
+{
+}
+
 ReflectionValue::ReflectionValue(bool value)
   : data_(value)
 {
