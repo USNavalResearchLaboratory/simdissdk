@@ -24,7 +24,6 @@
 #define SIMCORE_SYSTEM_FILE_H
 
 #include <string>
-#include <tuple>
 #include <vector>
 #include "simCore/Common/Export.h"
 
@@ -187,6 +186,17 @@ SDKCORE_EXPORT std::vector<std::string> filesMissingFromPath(const std::string& 
  * ("\\" on Windows and "/" on Linux)
  */
 SDKCORE_EXPORT std::string normalizeFilepath(const std::string& filePath);
+
+/**
+ * Returns the subdirectories for the given directory with depth control.
+ * The special paths of . and .. are skipped and syslinks are not followed. Directories will only be visited once.
+ * Note that slashes in the return value will always be the filesystem "preferred":
+ * ("\\" on Windows and "/" on Linux)
+ * @param directory The directory to search
+ * @param maxLevels  0 = no subdirectories, 1 = immediate child directories, 1 = children and grandchildren, and so on
+ * @return A list of subdirectories.  Empty on error.
+ */
+SDKCORE_EXPORT std::vector<std::string> getSubdirectories(const std::string& directory, size_t maxLevels);
 }
 
 #endif /* SIMCORE_SYSTEM_FILE_H */

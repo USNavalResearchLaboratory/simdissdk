@@ -20,12 +20,15 @@
  * disclose, or release this software.
  *
  */
+
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <filesystem>
 #include "simCore/Common/ScopeGuard.h"
 #include "simCore/String/Utils.h"
 #include "simCore/System/File.h"
+#include "simNotify/Notify.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -334,6 +337,53 @@ std::string normalizeFilepath(const std::string& filePath)
 {
   // Expand the EnvVars, then normalize it
   return std::filesystem::path(simCore::expandEnv(filePath)).lexically_normal().string();
+}
+
+std::vector<std::string> getSubdirectories(const std::string& directory, size_t maxLevels)
+{
+  std::vector<std::string> subdirectories;
+
+  if (maxLevels == 0)
+    return subdirectories;
+
+  std::error_code error;
+  std::filesystem::recursive_directory_iterator iter(directory, std::filesystem::directory_options::skip_permission_denied, error);
+
+  if (error)
+  {
+    SIM_DEBUG << "Failed to enumerate directory: " << directory << " (" << error.message() << ")\n";
+    return subdirectories;
+  }
+
+  const std::filesystem::recursive_directory_iterator end;
+  for (; iter != end; iter.increment(error))
+  {
+    if (error)
+    {
+      SIM_DEBUG << "Failed while enumerating subdirectories of: " << directory << " (" << error.message() << ")\n";
+      error.clear();
+      continue;
+    }
+
+    if (!iter->is_directory(error))
+    {
+      if (error)
+      {
+        SIM_DEBUG << "Failed to inspect path: " << iter->path().string() << " (" << error.message() << ")\n";
+        error.clear();
+      }
+      continue;
+    }
+
+    subdirectories.push_back(iter->path().string());
+
+    // depth() is zero for an immediate child of directory so add one for correct comparison with maxLevel.
+    if (static_cast<size_t>(iter.depth() + 1) >= maxLevels)
+      iter.disable_recursion_pending();
+  }
+
+  std::sort(subdirectories.begin(), subdirectories.end());
+  return subdirectories;
 }
 
 }
